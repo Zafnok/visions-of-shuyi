@@ -317,6 +317,9 @@ fn one_frame_of_a_strike() {
     );
     assert_eq!(cell(&buf, 0, 14).glyph, '╚');
     assert!(is_bar(&buf, 12, "Ellery"));
+    // The bar is the name and a cell either side, no more.
+    let bar = |x| cell(&buf, x, 12).bg == ink(Ink::Black);
+    assert!(bar(2) && bar(9) && !bar(10));
     assert!(!is_bar(&buf, 12, "Brigand"));
     assert!(row(&buf, 12).contains("HP 13/20"), "{}", row(&buf, 12));
     assert_eq!(text(&buf, 0, 13, 25), "║ 8 dmg  Hit 96  Crit 3 ║");
@@ -363,9 +366,55 @@ fn a_banner_and_no_counter() {
     let buf = painted(&c, &view);
     // The art's name at the top in the middle; the result a row lower.
     assert_eq!(find(&buf, 0, "Sunder"), Some(25 - 4 + 1));
-    assert!(find(&buf, 1, "MISS").is_some());
+    assert_eq!(find(&buf, 1, "MISS"), Some(288 / 8 - 3 + 1));
     assert!(find(&buf, 0, "MISS").is_none());
     assert_eq!(text(&buf, 25, 13, 25).trim(), "│ no counter            │");
+    // Each box's black edge a pixel outside its cells, cut at the screen's
+    // top: the banner's 8 cells from cell 21 on row 0, the result's 6 from
+    // cell 33 on row 1.
+    let black = ink(Ink::Black);
+    let edge = |x, y, w, h| Overlay::new(PxRect::new(x, y, w, h), black, Layer::Over);
+    let edges: Vec<Overlay> = buf
+        .overlays()
+        .into_iter()
+        .filter(|o| o.layer == Layer::Over)
+        .collect();
+    let expected = [
+        edge(167, 16, 66, 1),
+        edge(167, 0, 1, 16),
+        edge(232, 0, 1, 16),
+        edge(263, 15, 50, 1),
+        edge(263, 32, 50, 1),
+        edge(263, 16, 1, 16),
+        edge(312, 16, 1, 16),
+    ];
+    assert_eq!(edges, expected);
+}
+
+#[test]
+fn the_result_goes_on_the_row_over_the_targets_head() {
+    let c = pd_ctx();
+    let view = stage(&c);
+    let cells = scene(SCREEN);
+    // The lord's head at 44 (188 − 144): row 1; the brigand's at 28: row 0.
+    assert_eq!(result_row(&view, 0, cells, 0), 1);
+    assert_eq!(result_row(&view, 1, cells, 0), 0);
+    // Never above the row it is given.
+    assert_eq!(result_row(&view, 1, cells, 1), 1);
+    // No picture: the row over the ground.
+    let mut bare = view.clone();
+    bare.fighters[0].picture = None;
+    assert_eq!(result_row(&bare, 0, cells, 0), 188 / 16 - 1);
+}
+
+#[test]
+fn a_long_banner_is_shown_across_the_screen() {
+    let c = pd_ctx();
+    let mut view = stage(&c);
+    let name = "A Very Long Name For An Art, Thirty-Eight";
+    view.banner = Some(name.to_owned());
+    let buf = painted(&c, &view);
+    assert_eq!(find(&buf, 0, name), Some(25 - 21 + 1));
 }
 
 #[test]
@@ -381,8 +430,16 @@ fn a_long_name_and_big_numbers_are_cut_to_the_plate() {
         hit: 100,
         crit: 10,
     });
+    // Numbers of 22 cells with two spaces would touch the frame: one.
+    view.fighters[1].numbers = Some(Numbers {
+        damage: 12,
+        heals: false,
+        hit: 96,
+        crit: 3,
+    });
     let buf = painted(&c, &view);
     assert_eq!(text(&buf, 0, 12, 25), "┌─ Bartho…  HP 100/100 ─┐");
     // Two spaces between the numbers don't fit: one does, up to the frame.
     assert_eq!(text(&buf, 0, 13, 25), "│ 12 dmg Hit 100 Crit 10│");
+    assert_eq!(text(&buf, 25, 13, 25), "│ 12 dmg Hit 96 Crit 3  │");
 }

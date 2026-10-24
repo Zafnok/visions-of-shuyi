@@ -275,7 +275,7 @@ pub fn make(width: u32, height: u32, rgba: &[u8], job: &Job<'_>) -> Result<Vec<u
 /// style. The rim stops at the picture's edge, which keeps its size.
 pub fn with_rim(file: &[u8], width: u16) -> Result<Vec<u8>, String> {
     let bitmap = Bitmap::parse(file)?;
-    let Some(mask) = bitmap.mask().filter(|_| width > 0) else {
+    let Some(mask) = bitmap.mask() else {
         return Ok(file.to_vec());
     };
     let (w, h) = (usize::from(bitmap.width()), usize::from(bitmap.height()));
@@ -561,11 +561,19 @@ mod tests {
 
     /// A 7 × 7 one-bit picture, black, showing only the pixels `shown`.
     fn dots(shown: &[(usize, usize)]) -> Vec<u8> {
-        let mut mask = [0u8; 7];
+        square(7, shown)
+    }
+
+    /// A `side` × `side` one-bit picture, black, showing only the pixels
+    /// `shown`.
+    fn square(side: u16, shown: &[(usize, usize)]) -> Vec<u8> {
+        let stride = Bitmap::stride(side);
+        let mut mask = vec![0u8; stride * usize::from(side)];
         for &(x, y) in shown {
-            mask[y] |= 0x80 >> x;
+            mask[y * stride + x / 8] |= 0x80 >> (x % 8);
         }
-        encode((7, 7), (7, 7), &[&[0; 7]], Some(&mask)).unwrap()
+        let black = vec![0; mask.len()];
+        encode((side, side), (side, side), &[&black], Some(&mask)).unwrap()
     }
 
     /// Each row of `file`'s first style: `#` black, `.` white, ` ` see-through.
@@ -591,6 +599,20 @@ mod tests {
             "       ", "  ...  ", " ..... ", " ..#.. ", " ..... ", "  ...  ", "       ",
         ];
         assert_eq!(drawn(&file), rows);
+        // Three pixels wide: every pixel up to 3.5 away (r² + r = 12).
+        let wide = with_rim(&square(9, &[(4, 4)]), 3).unwrap();
+        let rows = [
+            "         ",
+            "   ...   ",
+            "  .....  ",
+            " ....... ",
+            " ...#... ",
+            " ....... ",
+            "  .....  ",
+            "   ...   ",
+            "         ",
+        ];
+        assert_eq!(drawn(&wide), rows);
         // It stops at the picture's edge, which keeps its size.
         let corner = with_rim(&dots(&[(0, 0)]), 2).unwrap();
         assert_eq!(drawn(&corner)[..3], ["#..    ", "...    ", "..     "]);
