@@ -26,7 +26,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
   │ Mag   0              ││ Mag   0              ││ Mag   0              │║ Mag   0              ║  
   │ Dex   7              ││ Dex   7              ││ Dex   7              │║ Dex   7              ║  
   │ Spd   5              ││ Spd   5              ││ Spd   5              │║ Spd   5              ║  
-  │ Def  49              ││ Def  49              ││ Def  49              │║ Def  49              ║  
+  │ Def  99              ││ Def  99              ││ Def  99              │║ Def  99              ║  
   │ Res   0              ││ Res   0              ││ Res   0              │║ Res   0              ║  
   │                      ││                      ││                      │║                      ║  
   │                      ││                      ││                      │║                      ║  

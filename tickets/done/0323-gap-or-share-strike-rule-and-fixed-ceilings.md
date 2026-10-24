@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-23
 ---
 
 # 0323 — Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100
@@ -79,15 +79,15 @@ Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] Example 3 of `stats-and-combat.md` (diff 14 → 3 strikes; diff 13 → 2;
+- [x] Example 3 of `stats-and-combat.md` (diff 14 → 3 strikes; diff 13 → 2;
       Spd 40 vs 16 → 4) and Example 4 (AS 75 vs 40 → 3 strikes) pass as
       table-driven tests.
-- [ ] A slower side with attack speed ≤ 0 needs only the gaps (test).
-- [ ] Every existing combat test still passes with unchanged results for
+- [x] A slower side with attack speed ≤ 0 needs only the gaps (test).
+- [x] Every existing combat test still passes with unchanged results for
       Chapter 1's numbers (the shares never beat the gaps at Chapter 1's
       attack speeds).
-- [ ] `classes.ron` has the new ceilings; content validation passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `classes.ron` has the new ceilings; content validation passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,5 +99,17 @@ Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done as planned. `CombatRules::strike_thresholds` became `strike_steps`
+(`StrikeStep { gap, share_percent }`, defaults `(4,25) (14,75) (24,150)`);
+`strikes(diff, slower_as)` uses `max(gap, max(0, slower_as) * share / 100)`.
+`classes.ron` has the ceilings HP 200 / others 100 and the level cap comment.
+
+- Tests: a table of Examples 3 and 4 with each boundary and AS <= 0, a
+  property test (monotone in the gap and in the slower speed, always
+  `1..=max_strikes`), and the data-driven steps test.
+- Deviation: the class-change screen tests and their snapshots built a unit
+  at Def "ceiling - 1" (49 of 50); they now read 99 of 100. The content
+  test for ceilings reads 200 / 100.
+- Engine friction: under 2x (about 40 estimated, about 45 measured).
+- No *Claude's starting rules*. Late-game strike counts go on the Act 1
+  playtest checklist (1064).

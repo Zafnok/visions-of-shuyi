@@ -24,7 +24,9 @@
 //! crit       = clamp(weapon.crit + A.Dex / 2 - B.Dex / 4, 0, 100)   (Absorb: 0)
 //! burden     = max(0, weapon.weight + armour.weight - A.Str / 5)
 //! AS         = A.Spd + rank_speed[rank] - burden
-//! strikes    = 1 + number of thresholds [4, 14, 24] that AS_A - AS_B reaches
+//! strikes    = 1 + number of steps k that AS_A - AS_B reaches, where
+//!              need(k) = max(gap[k], max(0, AS_B) * share[k] / 100),
+//!              gap = [4, 14, 24], share = [25, 75, 150]
 //! ```
 //!
 //! A flying `B` gets no terrain Def or Avoid. Physical attacks ignore
@@ -132,12 +134,24 @@ impl WeaponStats {
     }
 }
 
+/// One extra strike's price (ticket 0323): the attack speed gap over the
+/// other side must reach `max(gap, slower AS * share_percent / 100)`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StrikeStep {
+    /// The fixed attack speed gap.
+    pub gap: StatValue,
+    /// The share of the slower side's attack speed, in percent.
+    pub share_percent: StatValue,
+}
+
 /// Every combat constant. [`Default`] is the design's values; balance tickets
 /// change them here (or load them as data), never in the formulas.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CombatRules {
-    /// Speed gaps that give strikes 2, 3, 4… (`[4, 14, 24]`).
-    pub strike_thresholds: Vec<StatValue>,
+    /// The steps that give strikes 2, 3, 4…: each needs a fixed gap or a
+    /// share of the slower side's attack speed, whichever is bigger
+    /// (`[(4, 25), (14, 75), (24, 150)]`).
+    pub strike_steps: Vec<StrikeStep>,
     /// Attack speed bonus per weapon rank, E to S.
     pub rank_speed: [StatValue; 6],
     /// Str that carries 1 weight (5).
@@ -175,7 +189,9 @@ pub struct CombatRules {
 impl Default for CombatRules {
     fn default() -> Self {
         Self {
-            strike_thresholds: vec![4, 14, 24],
+            strike_steps: [(4, 25), (14, 75), (24, 150)]
+                .map(|(gap, share_percent)| StrikeStep { gap, share_percent })
+                .to_vec(),
             rank_speed: [0, 0, 1, 2, 3, 4],
             str_per_weight: 5,
             hit_per_dex: 2,
@@ -217,15 +233,17 @@ impl CombatRules {
 
     /// The largest number of strikes one side can get.
     pub fn max_strikes(&self) -> u8 {
-        u8::try_from(self.strike_thresholds.len() + 1).unwrap_or(u8::MAX)
+        u8::try_from(self.strike_steps.len() + 1).unwrap_or(u8::MAX)
     }
 
-    /// Strikes for a side whose attack speed is `diff` above the other's.
-    pub fn strikes(&self, diff: StatValue) -> u8 {
+    /// Strikes for a side whose attack speed is `diff` above the other's,
+    /// the other (slower) side having attack speed `slower_as`.
+    pub fn strikes(&self, diff: StatValue, slower_as: StatValue) -> u8 {
+        let base = slower_as.max(0);
         let reached = self
-            .strike_thresholds
+            .strike_steps
             .iter()
-            .filter(|&&t| diff >= t)
+            .filter(|s| diff >= s.gap.max(base * s.share_percent / 100))
             .count();
         u8::try_from(reached + 1).unwrap_or(u8::MAX)
     }
@@ -473,7 +491,7 @@ fn side(
         1
     } else {
         rules
-            .strikes(diff)
+            .strikes(diff, b.attack_speed(rules))
             .saturating_add(a.mods.extra_strikes)
             .min(rules.max_strikes())
     };

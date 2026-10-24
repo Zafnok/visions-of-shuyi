@@ -21,7 +21,8 @@
 // Sky Tyrant) have no numbers yet, so they are left out and Flier's
 // `promotes_to` stays empty.
 (
-    // Highest character level (placeholder; may become huge, ticket 0013).
+    // Highest character level: 99 through Act 1 (ticket 0013); may be raised
+    // for Acts 2-3.
     level_cap: 99,
     // EXP pace (progression.md, Pace; ticket 0608): (from character level,
     // percent of every unit EXP award). TUNABLE. A battle's awards give
@@ -33,7 +34,7 @@
     // Absolute limits no stat may exceed (stats-and-combat.md). Classes have no
     // stat caps of their own (progression.md, Stat caps):
     //              (HP, Str, Mag, Dex, Spd, Def, Res)
-    hard_ceilings: (80, 50, 50, 50, 50, 50, 50),
+    hard_ceilings: (200, 100, 100, 100, 100, 100, 100),
     mov_ceiling: 15,
     // Per tier, index 0 = tier 1. Both must never decrease as the tier rises.
     min_gains: [2, 2, 3],

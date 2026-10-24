@@ -26,7 +26,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
   │ Mag   0              │║ Mag   0              ║                                                  
   │ Dex   7 → 9   +2     │║ Dex   7 → 9   +2     ║                                                  
   │ Spd   5 → 7   +2     │║ Spd   5 → 9   +4     ║                                                  
-  │ Def  49 → 50  +1 MAX │║ Def  49 → 50  +1 MAX ║                                                  
+  │ Def  99 → 100 +1 MAX │║ Def  99 → 100 +1 MAX ║                                                  
   │ Res   0 → 2   +2     │║ Res   0 → 2   +2     ║                                                  
   │                      │║                      ║                                                  
   │                      │║                      ║                                                  
