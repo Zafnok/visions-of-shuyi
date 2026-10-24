@@ -25,7 +25,7 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use shuyi_assets::bitmap::EXTENSION;
-use shuyi_assets::bitmap::convert::{Rgba, convert, png_pixels};
+use shuyi_assets::bitmap::convert::png_pixels;
 
 /// The Playdate's one-bit pictures: which and how (the game's table, also
 /// `trpg_content::playdate_images`).
@@ -207,9 +207,7 @@ fn convert_pictures(
         let png =
             std::fs::read(Path::new(folder).join(job.path)).unwrap_or_else(|e| fail(e.to_string()));
         let (width, height, rgba) = png_pixels(&png).unwrap_or_else(|e| fail(e));
-        let image = Rgba::new(width, height, &rgba)
-            .unwrap_or_else(|| fail("decoded to the wrong number of pixels".into()));
-        let file = convert(&image, job.scale, &job.kind.methods()).unwrap_or_else(|e| fail(e));
+        let file = playdate_images::make(width, height, &rgba, job).unwrap_or_else(|e| fail(e));
         let out = out_dir().join(one_bit_file(dir, job.path));
         if let Some(folder) = out.parent() {
             std::fs::create_dir_all(folder)

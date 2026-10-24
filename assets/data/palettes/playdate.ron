@@ -83,6 +83,12 @@
     // PC dims because it can't be chosen is grey dots in a window.
     "window_text_off": "grey",
 
+    // The combat picture's own (1041): a fighter that is hit shows as a
+    // black shape (the PC's white one would vanish on the white ground),
+    // and a critical flips the whole picture, as a flashing map tile does.
+    "stage_flash": "black",
+    "stage_veil": "invert",
+
     // Terrain: black glyphs on the white ground.
     "grass": "black",
     "grass_bg": "white",

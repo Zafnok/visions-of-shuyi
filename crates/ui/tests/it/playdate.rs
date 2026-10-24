@@ -891,3 +891,57 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     h.pad("East East");
     assert!(h.screen::<RewindScreen>().is_none());
 }
+
+/// Ticket 1041: a fight on the Playdate's skins plays its combat picture
+/// to the end, read from the stage's view: the lord on the left, its
+/// strike's result over the brigand, the brigand's HP drained, then the
+/// lord's EXP bar. The screen shows it with the Playdate's paint: the
+/// plates along its bottom rows.
+#[test]
+fn a_fight_plays_its_combat_picture_to_the_end_on_the_playdate() {
+    use trpg_ui::screens::battle::view::ProgressView;
+    let mut h = quick_battle_on_the_playdate();
+    // The lord beside the brigand, Attack, the forecast, then A: the fight.
+    h.pad("South DpadRight DpadRight DpadRight DpadUp South")
+        .wait(0.5)
+        .pad("South");
+    assert!(battle_view(&h).forecast.is_some(), "no forecast");
+    h.pad("South");
+    let (mut frames, mut results, mut lowest) = (0, Vec::new(), None);
+    while let Some(stage) = battle_view(&h).stage {
+        let [left, right] = [stage.left, 1 - stage.left].map(|i| &stage.fighters[i]);
+        assert_eq!(
+            (left.faction, right.faction),
+            (Faction::Player, Faction::Enemy)
+        );
+        if let Some((on, text)) = stage.result
+            && results.last() != Some(&(on, text.clone()))
+        {
+            results.push((on, text));
+        }
+        lowest = Some(right.hp.min(lowest.unwrap_or(right.hp)));
+        if frames == 0 {
+            let buf = h.game().buffer();
+            let corner = buf.get(0, 12).map(|c| c.glyph);
+            assert!(matches!(corner, Some('┌' | '╔')), "{corner:?}");
+        }
+        frames += 1;
+        assert!(frames < 600, "the fight never ends");
+        h.wait(trpg_ui::harness::FRAME_DT);
+    }
+    assert!(frames > 30, "the fight was over in {frames} frames");
+    // The lord's strike first, over the brigand (the attacker is first).
+    let Some((on, first)) = results.first() else {
+        panic!("no result shown");
+    };
+    assert_eq!(*on, 1);
+    assert!(first.starts_with("HIT") || first.starts_with("MISS") || first.starts_with("CRIT"));
+    if first.starts_with("HIT") {
+        assert!(lowest < Some(20), "the brigand's HP never drained");
+    }
+    let progress = battle_view(&h).progress;
+    assert!(
+        matches!(progress, Some(ProgressView::Exp(_))),
+        "{progress:?}"
+    );
+}

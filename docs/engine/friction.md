@@ -47,6 +47,7 @@ read this table.
 | 2026-10-22 | 0506 (sweep) | what a try measures (`measures.rs`, `BattleMeasure`) | 110 | 117 | 1.1× | 4: accept, the game's events and modes (what a fall is, which items count); the turn cap's off-by-one is 3 lines | — |
 | 2026-10-22 | 0506 (sweep) | an entrant: the battle in its mode, the persona on the Player phase, the enemy AI elsewhere (`playtest.rs` `BattleEntrant`, `BattleStage`); the talk rule (`PersonaBot`) | 80 | 108 | 1.4× | under 2× | — |
 | 2026-10-22 | 1039 | the Playdate's forecast, unit info, fight box, EXP and level-up pages and rewind screen: five paints of existing views, and the views' few new fields | 450 | 776 | 1.7× | 1: a crank step in the engine's frame-png script (the game added `--crank` and `--then-pad` to its own options), follow-up | engine#2540, 1182 |
+| 2026-10-23 | 1041 | the Playdate's paint of the combat stage: a backdrop above a horizon, two fighters at double size, plates and the result; the fighters' rim and the backdrop's lift made when the pictures are converted | 200 | 317 | 1.6× | 2: a performance budget missed (on the device a fight's frame renders in 136–169 ms on average, up to 640, against 33): the one-bit renderer draws a sprite a pixel at a time with two 64-bit multiply-divides each; a fast path, follow-up | engine#3056, 1078 |
 
 ## Sweeps
 

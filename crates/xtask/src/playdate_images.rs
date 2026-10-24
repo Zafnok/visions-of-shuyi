@@ -20,9 +20,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
-use shuyi_assets::bitmap::convert::{Rgba, convert, png_pixels};
+use shuyi_assets::bitmap::convert::png_pixels;
 use shuyi_assets::bitmap::{Bitmap, EXTENSION};
-use trpg_content::playdate_images::{Job, jobs, touch_ups};
+use trpg_content::playdate_images::{Job, jobs, make, touch_ups};
 use trpg_ui::ImageId;
 use trpg_ui::onebit::{Image, Images};
 
@@ -47,8 +47,7 @@ PNG's path and a PNG of each style to look at. The Playdate's build converts its
 /// The one-bit picture file of PNG file `png`, made as `job` says.
 pub fn convert_png(png: &[u8], job: &Job<'_>) -> Result<Vec<u8>, String> {
     let (width, height, rgba) = png_pixels(png)?;
-    let image = Rgba::new(width, height, &rgba).ok_or("decoded to the wrong number of pixels")?;
-    convert(&image, job.scale, &job.kind.methods())
+    make(width, height, &rgba, job)
 }
 
 /// The names of the style files of the picture at `path` (one per style,
