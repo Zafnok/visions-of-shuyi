@@ -31,6 +31,20 @@ Source: Nick, in conversation; tickets 0042, 0043 and 0045 settle the details
 > and I already named the game after her so I may as well add ML translated
 > Chinese (Mandarin / Simple) too
 
+2026-10-23, at the end of ticket 0736 (the research on dialogue craft),
+on its final sample scenes:
+
+> this is serviceable... still reads incredibly AI written but at least
+> there's something here. It has the facade of a soul behind it.
+> Eventually, we'll strip all the script for a real human made script but
+> we'll ship with this AI script until I make enough money for a rewrite.
+> One thing - when writing up the script, I think our dialogue format
+> should have cues for voice acting synthesis that do not render in the
+> game dialogue viewer (i.e. Wenna talks calmly, Wenna shouts loudly) this
+> way it can be mass fed into AI voice synthesis like Suno or Elevenlabs.
+
+The cues are ticket **0752**.
+
 ## What this decides
 
 One idea, three times: **ship a machine-made version now, built so that a

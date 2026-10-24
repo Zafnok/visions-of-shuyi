@@ -15,6 +15,7 @@ real arcs → outline → per-chapter beat sheets → scripts in `assets/dialogu
 | [`outline.md`](outline.md) | Acts and chapters; which arcs each chapter advances; the twists | 0701 | ✅ gate 2 approved 2026-09-28 |
 | [`chapters/chNN.md`](chapters/) | Scene-by-scene beat sheet per chapter | 0701 (ch01), later tickets | ✅ ch01 · later chapters ⏳ |
 | [`ledger.md`](ledger.md) | Continuity: what each character knows/did as of each chapter | 0701, updated by each script ticket | ✅ start of Chapter 1 · after Chapter 1 (0707) |
+| [`craft.md`](craft.md) | Research on what makes fantasy game dialogue compelling: sources, what went wrong in Chapter 1, what each studied game does, scene lengths. The rules are the `story-writing` skill's *Craft* | 0736 | ✅ 2026-10-23 |
 
 Scripts themselves live in `assets/dialogue/*.dlg` (format: ticket 0702).
 Written so far: Chapter 1, `ch01.dlg` (0707; played straight by 0724, reworked scene by scene by 0728).
@@ -37,6 +38,8 @@ this is what to read, in order:
 7. [`ledger.md`](ledger.md): what each character knows and has done as of
    each chapter.
 8. [`names.md`](names.md): the id of every name, to look up while writing.
+9. [`craft.md`](craft.md): why the first Chapter 1 scripts were rejected,
+   and what the studied games do instead.
 
 **The ledger must be updated after a rewrite** that changes who knows or
 did what: add to (or correct) the section for that chapter, so the next

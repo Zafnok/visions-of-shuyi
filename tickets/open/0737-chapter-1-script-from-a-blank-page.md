@@ -48,7 +48,11 @@ into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 
 The ticket's `model` follows ADR-0010 (creative writing → fable-5.1).
 Nick named Fable as the writer of 0728's rewrite; if he runs this one on
-another model, that's his call.
+another model, that's his call. **0736 tested it:** in blind tests with
+two judges, Fable 5.1 wrote warmer, more human scenes than Opus 5.5 every
+time (`docs/story/craft.md`, "Round 2's samples"), so the story-writing
+skill says to write scripts on Fable 5.1. If this ticket is started on
+Opus, say so to Nick before writing.
 
 ## Nick input
 
@@ -76,6 +80,16 @@ it):
   the story gates read, and the line ids voice clips use, if any are kept.
 - Shorter: keep inside 0736's scene-length budget.
 - The three kept words (above).
+- The objective is Defeat Harl (0845): the rest of the Red Company runs
+  when he falls. No line says that all of them must die (the old script's
+  "it has to be all of them" was the reason for the Rout objective).
+- The character sheets of everyone who speaks in Chapter 1: each gets a
+  voice card (the skill's *Voices*), replacing the "under threat" notes
+  and the sample lines that 0724 and 0728 copied from the rejected
+  script. New sample lines are written fresh, one per situation (under
+  fire, at camp, lying, grieving), and never copied into a script (0736
+  found that a report-shaped sample line produces a character who
+  reports).
 - The title cinematic reuses lines from `ch01_intro` and `ch01_prebattle`
   (`assets/cinematics/title.ron`, its `talk` shots). Update the box
   indices it plays, so it still shows the three captions and Tamsin's
@@ -86,15 +100,26 @@ it):
   reply's consequences. If the beats can't work without a change, stop
   and ask Nick with `ask-nick`.
 - The intro cinematic's cinematography (**0063**).
-- Voices (0722 regenerates them after this).
+- Voices (0722 regenerates them after this). Voice-direction cues
+  (0752), either order: if 0752 is done, write a direction where the
+  punctuation and the expression don't already make the delivery
+  obvious; if not, 0752 files the ticket that adds them.
 
 ## Implementation steps
 
-1. Read 0736's craft section and `docs/story/beats.md`,
+1. Read 0736's craft section (the story-writing skill's *Craft*, and
+   `docs/story/craft.md`'s "What went wrong") and `docs/story/beats.md`,
    `docs/story/chapters/ch01.md`, the character sheets and
-   `setting-and-tone.md`. Do **not** open `ch01.dlg`'s text yet.
-2. Draft each scene in a scratch file from the beats.
-3. Run the story-writing skill's critique pass on each scene.
+   `setting-and-tone.md`. Do **not** open `ch01.dlg`'s text yet, and skip
+   the lines the sheets and the beat sheet quote: they come from the
+   rejected drafts (the skill's blank-page rule).
+2. Write each speaker's voice card into their sheet, and a scene card for
+   each scene (the skill's *Craft*). Then draft each scene from its card
+   in a scratch file.
+3. Run the story-writing skill's critique pass on each scene, the cold
+   read by a fresh subagent included. If 0751 is done, add its voice
+   profile of the draft to the critique; if not, the cold read's
+   names-removed test covers it.
 4. Now open `ch01.dlg` and carry over only the structure listed in Scope
    (ids, directives, replies the gates read). Replace the text.
 5. Fix the title cinematic's talk shots if box indices moved.
@@ -109,6 +134,8 @@ it):
       survives except the three kept words.
 - [ ] Each scene is within 0736's length budget; total box count is lower
       than today's.
+- [ ] Every Chapter 1 speaker's sheet has a voice card, and no sample
+      line there is a line of the old script.
 - [ ] Story gates, replies and the Classic/Casual line variants (0715,
       0716) still work: their tests pass.
 - [ ] The title cinematic still shows the intended boxes.
