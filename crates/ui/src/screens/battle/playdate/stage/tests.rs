@@ -408,6 +408,35 @@ fn the_result_goes_on_the_row_over_the_targets_head() {
 }
 
 #[test]
+fn a_box_too_long_for_the_screen_is_cut_and_kept_on_it() {
+    let c = pd_ctx();
+    let mut view = stage(&c);
+    // A banner of 60 letters: 48 shown, its box the screen's width.
+    view.banner = Some("x".repeat(60));
+    // A long result over the right fighter: moved left to stay on screen.
+    let result = "CRITICAL! -27 and twenty more letters";
+    view.result = Some((1, result.to_owned()));
+    let buf = painted(&c, &view);
+    assert_eq!(cell(&buf, 0, 0).glyph, ' ');
+    assert_eq!(text(&buf, 1, 0, 48), "x".repeat(47) + "…");
+    let at = find(&buf, 1, result).unwrap();
+    assert_eq!(at + pd::to_i32(result.len()) + 1, 50);
+}
+
+#[test]
+fn with_the_enemy_on_the_left_its_plate_is_on_the_left() {
+    let c = pd_ctx();
+    let mut view = stage(&c);
+    view.left = 1;
+    view.fighters[1].name = "Brigand of the Red Company".to_owned();
+    view.fighters[0].name = "Ellery Veyne".to_owned();
+    let buf = painted(&c, &view);
+    // Each name cut where its plate's HP begins.
+    assert_eq!(text(&buf, 0, 12, 25), "┌─ Brigand …  HP 13/20 ─┐");
+    assert_eq!(text(&buf, 25, 12, 25), "┌─ Ellery V…  HP 13/20 ─┐");
+}
+
+#[test]
 fn a_long_banner_is_shown_across_the_screen() {
     let c = pd_ctx();
     let mut view = stage(&c);

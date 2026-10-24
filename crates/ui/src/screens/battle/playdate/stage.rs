@@ -283,7 +283,7 @@ pub fn paint(ctx: &Ctx, view: &StageView, area: Rect, buf: &mut GlyphBuffer) {
     let y = cells_scene.y + cells_scene.h;
     for (slot, i) in [view.left, 1 - view.left].into_iter().enumerate() {
         let x = area.x + pd::to_i32(slot) * w;
-        let rect = Rect::new(x, y, if slot == 0 { w } else { area.w - w }, PLATE_ROWS);
+        let rect = Rect::new(x, y, w, PLATE_ROWS);
         plate(ctx, buf, rect, &view.fighters[i], view.striker == Some(i));
     }
 }

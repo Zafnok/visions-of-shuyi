@@ -617,6 +617,13 @@ mod tests {
         let corner = with_rim(&dots(&[(0, 0)]), 2).unwrap();
         assert_eq!(drawn(&corner)[..3], ["#..    ", "...    ", "..     "]);
         assert_eq!(bitmap_size(&corner), (7, 7));
+        // A white picture's rim is white too, whatever its see-through
+        // pixels held.
+        let mut mask = [0u8; 7];
+        mask[3] = 0x10;
+        let white = encode((7, 7), (7, 7), &[&[0xff; 7]], Some(&mask)).unwrap();
+        let rimmed = with_rim(&white, 2).unwrap();
+        assert_eq!(drawn(&rimmed)[3], " ..... ");
         // No rim, or no mask: the file as it was.
         assert_eq!(with_rim(&dots(&[(3, 3)]), 0).unwrap(), dots(&[(3, 3)]));
         let solid = encode((7, 1), (7, 1), &[&[0]], None).unwrap();
