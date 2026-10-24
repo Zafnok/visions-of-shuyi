@@ -46,8 +46,9 @@ features: {
   `Blacksmith` repairs and sells nothing (empty list). Armouries and
   vendors buy anything at half price.
 - **Chests** hold `Gold(n)` or one `Item(id)`, opened once by a player unit.
-- **Villages** are not supported yet: Nick deferred every building tile
-  except `fort` (`docs/design/terrain.md`).
+- **Villages** are not a feature: a village house is the `house` terrain
+  (`docs/design/terrain.md`, *Building tiles*), like `fort`, `gate` and
+  `throne`. `test_buildings.map` (in `assets-test/maps/`) has all four.
 
 ### Look
 

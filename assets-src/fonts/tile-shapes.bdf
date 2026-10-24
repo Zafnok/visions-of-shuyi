@@ -1,0 +1,148 @@
+STARTFONT 2.1
+COMMENT The building tiles' pictures (ticket 0322): our own glyphs, each
+COMMENT tile one 16x16 drawing split over its two 8x16 cells, the left
+COMMENT half then the right. Not part of Terminus Font. Merged into the
+COMMENT atlas by `cargo shuyi font-atlas` (assets/fonts/README.md).
+FONT -trpg-TileShapes-Medium-R-Normal--16-160-72-72-C-80-ISO10646-1
+SIZE 16 72 72
+FONTBOUNDINGBOX 8 16 0 -4
+CHARS 6
+STARTCHAR houseleft
+ENCODING 9750
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+00
+00
+00
+00
+03
+1F
+7F
+2A
+30
+20
+2C
+2C
+20
+7F
+00
+00
+ENDCHAR
+STARTCHAR houseright
+ENCODING 9751
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+00
+00
+00
+38
+F8
+F8
+FC
+A8
+08
+E8
+A8
+A8
+A8
+FE
+00
+00
+ENDCHAR
+STARTCHAR gateleft
+ENCODING 9960
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+00
+0F
+34
+54
+7F
+92
+92
+FF
+92
+92
+FF
+92
+92
+92
+FF
+00
+ENDCHAR
+STARTCHAR gateright
+ENCODING 9961
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+00
+F0
+98
+94
+F4
+49
+49
+FF
+49
+49
+FF
+49
+49
+49
+FF
+00
+ENDCHAR
+STARTCHAR throneleft
+ENCODING 9812
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+11
+1B
+1F
+10
+13
+12
+13
+10
+78
+4F
+48
+7F
+30
+30
+30
+00
+ENDCHAR
+STARTCHAR throneright
+ENCODING 9813
+SWIDTH 500 0
+DWIDTH 8 0
+BBX 8 16 0 -4
+BITMAP
+88
+D8
+F8
+08
+C8
+48
+C8
+08
+1E
+F2
+12
+FE
+0C
+0C
+0C
+00
+ENDCHAR
+ENDFONT

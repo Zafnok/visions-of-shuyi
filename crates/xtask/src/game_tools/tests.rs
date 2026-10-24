@@ -403,10 +403,12 @@ fn the_project_checks_the_credits_the_content_reads() {
 }
 
 /// The font sources the committed atlas is built from, relative to the
-/// repo root: Terminus, then our own extra glyphs.
-const SOURCES: [&str; 2] = [
+/// repo root: Terminus, then our own extra glyphs (the controller
+/// buttons, the building tiles).
+const SOURCES: [&str; 3] = [
     "assets-src/fonts/ter-u16n.bdf",
     "assets-src/fonts/pad-shapes.bdf",
+    "assets-src/fonts/tile-shapes.bdf",
 ];
 
 /// The controller button shapes are our own glyphs, in the atlas next
@@ -442,6 +444,40 @@ fn the_pad_shapes_are_in_the_atlas() {
     let atlas = fs::read_to_string(root.join("assets/fonts/atlas.ron")).unwrap();
     let atlas: FontAtlasDef = ron::from_str(&atlas).unwrap();
     assert!(shapes.glyphs.keys().all(|c| atlas.glyphs.contains_key(c)));
+}
+
+/// The house, gate and throne (ticket 0322) are each one 16×16 picture
+/// over the tile's two cells: our own glyphs, the terrain's pair, in the
+/// atlas.
+#[test]
+fn the_tile_shapes_are_the_terrains_pictures() {
+    let root = repo_root();
+    let shapes = read_font(&root.join(SOURCES[2])).unwrap();
+    assert_eq!(shapes.glyphs.keys().collect::<String>(), "☖☗♔♕⛨⛩");
+    let picture = |[left, right]: [char; 2]| -> Vec<String> {
+        let half = |c: char| shapes.glyphs[&c].chunks(8).collect::<Vec<_>>();
+        let (left, right) = (half(left), half(right));
+        (0..16)
+            .map(|y| {
+                let row = left[y].iter().chain(right[y]);
+                row.map(|&on| if on { '#' } else { '.' }).collect()
+            })
+            .collect()
+    };
+    let terrain = trpg_content::terrain::TerrainDef::load(None).unwrap();
+    let glyphs = |id: &str| {
+        let id = terrain.display.id_of(id).unwrap();
+        terrain.display.get(id).unwrap().glyphs
+    };
+    assert_eq!(picture(glyphs("house"))[13], ".##############.");
+    assert_eq!(picture(glyphs("gate"))[7], "################");
+    assert_eq!(picture(glyphs("throne"))[0], "...#...##...#...");
+    let atlas = fs::read_to_string(root.join("assets/fonts/atlas.ron")).unwrap();
+    let atlas: FontAtlasDef = ron::from_str(&atlas).unwrap();
+    for c in shapes.glyphs.keys() {
+        assert!(ATLAS_RANGES.iter().any(|(lo, hi)| (lo..=hi).contains(&c)));
+        assert!(atlas.glyphs.contains_key(c), "{c}");
+    }
 }
 
 /// The committed atlas must be exactly what the tool produces from the

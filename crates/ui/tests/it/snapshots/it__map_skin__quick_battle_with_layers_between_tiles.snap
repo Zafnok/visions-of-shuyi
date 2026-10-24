@@ -142,10 +142,10 @@ under sprite 240,240 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 256,240 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 272,240 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 288,240 16x16  tilesets/test_auto.png 0,0 16x16
-under sprite 304,240 16x16  tilesets/test_auto.png 240,0 16x16
-under sprite 320,240 16x16  tilesets/test_auto.png 240,0 16x16
-under sprite 336,240 16x16  tilesets/test_auto.png 240,0 16x16
-under sprite 352,240 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 304,240 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 320,240 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 336,240 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 352,240 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 368,240 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 160,256 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 176,256 16x16  tilesets/test_auto.png 64,0 16x16
@@ -156,10 +156,10 @@ under sprite 240,256 16x16  tilesets/test_auto.png 160,0 16x16
 under sprite 256,256 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 272,256 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 288,256 16x16  tilesets/test_auto.png 0,0 16x16
-under sprite 304,256 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 304,256 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 320,256 16x16  tilesets/test_auto.png 48,0 16x16
 under sprite 336,256 16x16  tilesets/test_auto.png 160,0 16x16
-under sprite 352,256 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 352,256 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 368,256 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 160,272 16x16  tilesets/test_auto.png 64,0 16x16
 under sprite 176,272 16x16  tilesets/test_auto.png 64,0 16x16
@@ -170,10 +170,10 @@ under sprite 240,272 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 256,272 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 272,272 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 288,272 16x16  tilesets/test_auto.png 0,0 16x16
-under sprite 304,272 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 304,272 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 320,272 16x16  tilesets/test_auto.png 48,0 16x16
 under sprite 336,272 16x16  tilesets/test_auto.png 48,0 16x16
-under sprite 352,272 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 352,272 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 368,272 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 160,288 16x16  tilesets/test_auto.png 64,0 16x16
 under sprite 176,288 16x16  tilesets/test_auto.png 80,0 16x16
@@ -184,10 +184,10 @@ under sprite 240,288 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 256,288 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 272,288 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 288,288 16x16  tilesets/test_auto.png 0,0 16x16
-under sprite 304,288 16x16  tilesets/test_auto.png 240,0 16x16
-under sprite 320,288 16x16  tilesets/test_auto.png 240,0 16x16
-under sprite 336,288 16x16  tilesets/test_auto.png 176,0 16x16
-under sprite 352,288 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 304,288 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 320,288 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 336,288 16x16  tilesets/test_auto.png 224,0 16x16
+under sprite 352,288 16x16  tilesets/test_auto.png 32,16 16x16
 under sprite 368,288 16x16  tilesets/test_auto.png 0,0 16x16
 under sprite 232,168 16x16  tilesets/test_auto.png 160,32 16x16 clip=232,176 8x8
 under sprite 232,168 16x16  tilesets/test_auto.png 160,32 16x16 clip=240,176 8x8

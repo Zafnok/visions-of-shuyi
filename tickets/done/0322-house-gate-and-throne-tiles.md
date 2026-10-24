@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0037"]
 nick_input: none
-completed:
+completed: 2026-10-23
 ---
 
 # 0322 — House, gate and throne tiles
@@ -127,14 +127,14 @@ six glyphs, three tileset layers, the Playdate skin's cases); compare
 
 ## Acceptance criteria
 
-- [ ] `terrain.ron` has `house`, `gate`, `throne` with `terrain.md`'s
+- [x] `terrain.ron` has `house`, `gate`, `throne` with `terrain.md`'s
       numbers; terrain tests cover them.
-- [ ] The atlas has the six new glyphs; a map with the three tiles draws
+- [x] The atlas has the six new glyphs; a map with the three tiles draws
       each as one picture in the glyph look (frame-png in the PR).
-- [ ] The picture skin and the Playdate skin draw all three (frame-png
+- [x] The picture skin and the Playdate skin draw all three (frame-png
       in the PR, built with `--features private-assets`).
-- [ ] `look-and-feel.md` lists the three stand-ins.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `look-and-feel.md` lists the three stand-ins.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -144,5 +144,46 @@ six glyphs, three tileset layers, the Playdate skin's cases); compare
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done as specified; data, glyphs and tests, one production line of Rust
+(a required-glyphs row). Run on Opus 5.5 (the ticket says Sonnet 5).
+
+- **Terrain:** `house` (0 Def / +10 Avoid), `gate` (+3 / +20), `throne`
+  (+3 / +30), all cost 1 for every movement type, `heal_percent: 0`;
+  terrain tests cover them.
+- **Glyphs:** Nick's three drawings as six glyphs, `☖☗` house, `⛨⛩`
+  gate, `♔♕` throne. Placed at code points Terminus lacks inside the
+  atlas's ranges: the engine's `ATLAS_RANGES` has no Private Use Area,
+  and the ticket allowed "wherever `ATLAS_RANGES` allows", so no engine
+  change. The atlas is 557 glyphs; `REQUIRED_GLYPHS` and `shuyi.ron`
+  list them.
+- **Picture look:** stand-ins in `tiny_tales.ron`: house = World Map
+  Icons tile 0 (the small pointed-roof house), gate = Fortress tile 26
+  (the archway), throne = Overworld Interiors tile 205 (a cushioned
+  chair), on grass, grass and the floor. Re-imported. The private
+  repository has the new tileset (398701e), and `assets-private.rev`
+  pins it. `look-and-feel.md` lists the three as stand-ins (0471).
+- **Playdate skin:** nothing to change; it draws each terrain's glyphs in
+  the Playdate palette's inks, which already have `wood`, `fort`,
+  `stone_bg`, `floor_bg`.
+- **Test map:** `assets-test/maps/test_buildings.map` (a fort, houses,
+  an outdoor gate, a gate in a wall, a throne in a hall); a map test
+  checks it has all four building tiles. The glyph skin has a test of
+  the four tiles' cells and colours.
+
+**Deviations.** The glyphs went in a new `assets-src/fonts/tile-shapes.bdf`
+instead of `pad-shapes.bdf`: an xtask test requires every pad-shapes glyph
+to be a 7×7 button shape on the baseline, and these are 16×16 pictures.
+The README's regeneration command and the atlas test take the third file.
+The PR's pictures were made on the Quick Battle's map with the three tiles
+put on it for the picture only (`frame-png --map` paints a battle's map,
+and no battle uses `test_buildings`), not committed.
+
+**Snapshots changed:** the glyph sampler (557 glyphs) and four map
+snapshots whose test-tileset tile positions moved (the regenerated test
+tilesets have three more terrains).
+
+**Claude's starting rules:** none. **For the Act 1 playtest (1064):** the
+three stand-in pictures, the gate's archway is a small dark opening on
+the grass.
+
+Engine friction: estimate 10, measured 1 (under 2×).

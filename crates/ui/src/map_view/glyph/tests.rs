@@ -169,6 +169,34 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     assert_eq!(yellow.len(), 2);
 }
 
+/// The building tiles (ticket 0322): the house, the gate and the throne
+/// are each one picture over the tile's two cells, our own glyphs, in
+/// their colours; the fort keeps its battlements.
+#[test]
+fn the_building_tiles_are_one_picture_each() {
+    let c = ctx();
+    let pal = &c.palette;
+    let display = &c.game.content.terrain.display;
+    let tiles = [
+        ("fort", ['╦', '╦'], "fort", "fort_bg"),
+        ("house", ['☖', '☗'], "wood", "wood_bg"),
+        ("gate", ['⛨', '⛩'], "fort", "stone_bg"),
+        ("throne", ['♔', '♕'], "fort", "floor_bg"),
+    ];
+    let mut scene = MapScene::new(p(0, 0), (4, 1));
+    for (x, (id, ..)) in (0..).zip(tiles) {
+        scene.tile_mut(p(x, 0)).unwrap().terrain = display.id_of(id);
+    }
+    let mut buf = blank();
+    MapSkin::glyph().paint(&c, &scene, Rect::new(0, 0, 8, 1), &mut buf);
+    for (x, (id, [left, right], fg, bg)) in (0..).zip(tiles) {
+        let (fg, bg) = (pal.lookup(fg).unwrap(), pal.lookup(bg).unwrap());
+        let cells = (*buf.get(2 * x, 0).unwrap(), *buf.get(2 * x + 1, 0).unwrap());
+        let expected = (Cell::new(left, fg, bg), Cell::new(right, fg, bg));
+        assert_eq!(cells, expected, "{id}");
+    }
+}
+
 #[test]
 fn paints_terrain_then_tints_then_units_path_and_cursor() {
     let c = ctx();

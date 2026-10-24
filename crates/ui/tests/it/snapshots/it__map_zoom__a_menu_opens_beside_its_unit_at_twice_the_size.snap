@@ -133,8 +133,8 @@ under sprite 256,240 48x48  tilesets/test.png 0,0 24x24 clip=296,272 8x16
 under sprite 304,240 48x48  tilesets/test.png 0,0 24x24
 under sprite 352,240 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,240 48x48  tilesets/test.png 0,0 24x24
-under sprite 448,240 48x48  tilesets/test.png 168,24 24x24
-under sprite 496,240 48x48  tilesets/test.png 168,24 24x24
+under sprite 448,240 48x48  tilesets/test.png 48,48 24x24
+under sprite 496,240 48x48  tilesets/test.png 48,48 24x24
 under sprite 16,288 48x48  tilesets/test.png 0,0 24x24
 under sprite 64,288 48x48  tilesets/test.png 96,0 24x24
 under sprite 112,288 48x48  tilesets/test.png 24,0 24x24
@@ -144,7 +144,7 @@ under sprite 256,288 48x48  tilesets/test.png 48,24 24x24 clip=296,288 8x48
 under sprite 304,288 48x48  tilesets/test.png 0,0 24x24
 under sprite 352,288 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,288 48x48  tilesets/test.png 0,0 24x24
-under sprite 448,288 48x48  tilesets/test.png 168,24 24x24
+under sprite 448,288 48x48  tilesets/test.png 48,48 24x24
 under sprite 496,288 48x48  tilesets/test.png 72,0 24x24
 under sprite 16,336 48x48  tilesets/test.png 96,0 24x24
 under sprite 64,336 48x48  tilesets/test.png 96,0 24x24
@@ -155,7 +155,7 @@ under sprite 256,336 48x48  tilesets/test.png 0,0 24x24 clip=296,336 8x48
 under sprite 304,336 48x48  tilesets/test.png 0,0 24x24
 under sprite 352,336 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,336 48x48  tilesets/test.png 0,0 24x24
-under sprite 448,336 48x48  tilesets/test.png 168,24 24x24
+under sprite 448,336 48x48  tilesets/test.png 48,48 24x24
 under sprite 496,336 48x48  tilesets/test.png 72,0 24x24
 under sprite 16,384 48x48  tilesets/test.png 96,0 24x24
 under sprite 64,384 48x48  tilesets/test.png 120,0 24x24
@@ -168,8 +168,8 @@ under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 clip=296,384 8x16
 under sprite 304,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 352,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,384 48x48  tilesets/test.png 0,0 24x24
-under sprite 448,384 48x48  tilesets/test.png 168,24 24x24
-under sprite 496,384 48x48  tilesets/test.png 168,24 24x24
+under sprite 448,384 48x48  tilesets/test.png 48,48 24x24
+under sprite 496,384 48x48  tilesets/test.png 48,48 24x24
 over  sprite 352,90 48x48  tilesets/test.png 24,192 24x24 solid=enemy
 over  sprite 352,94 48x48  tilesets/test.png 24,192 24x24 solid=enemy
 over  sprite 350,92 48x48  tilesets/test.png 24,192 24x24 solid=enemy

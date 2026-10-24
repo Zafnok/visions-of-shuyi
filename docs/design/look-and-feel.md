@@ -362,6 +362,9 @@ so they aren't in this repository (ADR-0032).
   | Burnt | Bare grey trees (Trees 3) on dark ground ("Grounds") |
   | Burning | **A stand-in.** Nothing in the bundle burns: the forest's trees, recoloured in our `fire` colour (each pixel as bright as it was) |
   | Floor, Wall, Door | The Dungeons 1 "Fortress" set: blue-grey slabs, tan brick, a wooden door |
+  | House | **A stand-in** (ticket 0322, until 0471): the World Map set's small single-tile house, on the grass; the bundle's houses are "too modern/nice" (Nick) |
+  | Gate | **A stand-in** (0322, until 0471): the Fortress set's open archway, on the grass ("serviceable", Nick) |
+  | Throne | **A stand-in** (0322, until 0471): the bundle has no throne, so a cushioned chair (Overworld Interiors), on the floor's slabs |
 
   A map **indoors** (its file says so: `look: (tiles: "indoor")`) is the
   Fortress set: slabs for the floor, brick for the walls, the door, and
