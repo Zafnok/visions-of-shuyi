@@ -250,7 +250,14 @@ pub fn breaking_lines(pr: &EnginePr) -> Vec<String> {
                 what.is_empty() || lower.starts_with("none") || lower.starts_with("no break");
             (!none).then(|| what.to_owned())
         })
-        .collect()
+        // The engine copies its ticket's notes into the PR body, so the
+        // same line is usually in both.
+        .fold(Vec::new(), |mut lines, what| {
+            if !lines.contains(&what) {
+                lines.push(what);
+            }
+            lines
+        })
 }
 
 /// The text under a ticket's `## Completion notes` heading.
