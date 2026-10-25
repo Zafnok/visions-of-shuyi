@@ -5,7 +5,7 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0506", "engine#2127", "engine#2541"]
 nick_input: none
 completed:
@@ -161,16 +161,16 @@ Measure with `cargo xtask code-lines`, and at 3× run the
 
 ## Acceptance criteria
 
-- [ ] On a test battle made deliberately too hard (enemies +5 levels),
+- [x] On a test battle made deliberately too hard (enemies +5 levels),
       `cargo shuyi autobalance --stage <it>` finds changes after which
       all three bots are inside their bands, and `--apply` writes them.
-- [ ] Unit test `autobalance_never_touches_named_units_map_or_objectives`:
+- [x] Unit test `autobalance_never_touches_named_units_map_or_objectives`:
       every knob at every step of its range leaves them as authored.
-- [ ] Same seed → same changes.
-- [ ] No search, distance or prune code in the game, and no
+- [x] Same seed → same changes.
+- [x] No search, distance or prune code in the game, and no
       `cargo xtask autobalance`, thread pool, options parser or report
       format (the PR says which engine pieces it uses).
-- [ ] 1183 is in `tickets/done/` with "done by 0509".
+- [x] 1183 is in `tickets/done/` with "done by 0509".
 - [ ] Chapter 1 (`ch01`) report before/after in Completion notes; if
       Chapter 1 already meets its bands, say so and don't change it.
 - [ ] All gates in the `run-gates` skill pass.
@@ -186,3 +186,82 @@ Measure with `cargo xtask code-lines`, and at 3× run the
   `--apply` writes the battle file.
 
 ## Completion notes
+
+**Estimate (ADR-0092):** 290 production lines, the ticket's own (kind 30,
+knobs 200, plan and write 60), judged by the engine's hello-grid plan
+(about 60 lines) and 0506's playtest wiring. **Measured:** 652 added, 8
+removed (`cargo xtask code-lines`): 2.2×. Friction: accepted, about 230
+lines are the comment-keeping write of the enemy list
+(`content/battle/tune.rs`), which the estimate left to "the RON writer"
+(RON has none that keeps a file's layout); row in
+`docs/engine/friction.md`.
+
+What was done:
+
+- **Kind.** `kind: Story | FixedSkirmish | SideQuest | RandomSkirmish`
+  in the battle file (default `Story`), `BattleDef::kind`
+  (`trpg_core::BattleKind`), read by the loader, documented in
+  `assets/battles/README.md`. Every battle file keeps `Story` by
+  default; the new test battle is a `FixedSkirmish`.
+- **The battle file, changed and written back**
+  (`trpg_content::battle::tune::BattleText`): the file's text with an
+  editable enemy list (`foes`). `text()` rewrites only the enemy list:
+  unchanged enemies keep their text byte for byte (a test checks every
+  battle file round-trips), a changed one has only its changed fields
+  rewritten or added, a copy goes on its own line after its original,
+  a removed one takes its line and the comment lines above it (unless
+  it was first). `load()` checks it with the real loader.
+- **Knobs** (`crates/bots/src/balance.rs`, the engine's `Knob` over
+  `TunedBattle`): every unnamed enemy's level (−10…+10, stride 4), then
+  per unnamed enemy its level (−5…+5), count (−1, +1), class and weapon
+  (−1, +1). A step whose battle doesn't load is `None` (skipped). Every
+  kind gets this set until 0510.
+- **The plan** (`crates/xtask/src/game_tools/balance.rs`):
+  `Trpg::autobalance_plan` with `playtest_stages` (the battle ids) and
+  `playtest_defaults` (0506's 100 tries from seed 1 to turn 60). The
+  three personas, `targets.ron`'s checks for the battle's tier, one try
+  played with `play_tries`, and `write` for `--apply`.
+- **Engine pieces used, none rewritten:** `Knob`, `BalanceSettings`,
+  `autobalance_by`, `distance` (engine#2127); `cargo shuyi autobalance`,
+  its options, threads, time limit, report and `--apply`,
+  `GameTools::autobalance_plan`, `AutobalancePlan`, `Tunable`
+  (engine#2541); `play_tries` (engine#2126). No search, distance, prune,
+  thread pool, option parser or report format in the game.
+- **Test battle** `assets-test/battles/test_too_hard.ron`: the lead alone
+  against two brigands and a raider, each 5 levels over its template.
+  With `--tries 20 --quick 10 --budget 40 --turns 20` the search finds
+  "every unnamed enemy −8 levels": Casual 0 → 8/20, Normal 1 → 10/20,
+  Hardcore 2 → 13/20, all in their Normal-tier bands, in about 2 s.
+  (A first try with three player units couldn't land: with more than
+  one unit Casual, which only has to win, always beats Normal, which
+  must lose nobody, so Casual stayed over its 55% while Normal reached
+  50%. With the lead alone both rules are "win".)
+- **1183** moved to `done/` ("done by 0509").
+- Docs: `docs/playtesting.md` *Autobalancing*.
+
+Tests: the writer (`battle::tune::tests`), each knob, the named-units
+guard `autobalance_never_touches_named_units_map_or_objectives` (every
+step of every knob on ch01, quick, test, test_hold, test_escape), a
+property test that any setting loads, the plan and `--apply` into a temp
+folder with the same changes twice (`game_tools::balance::tests`), and
+`cargo shuyi autobalance` in `crates/xtask/tests/cli.rs`.
+
+**Claude's starting rules** (the design docs don't say; for the Act 1
+playtest, 1064, to agree or veto):
+
+- An enemy with an `id` (named by a cinematic or a battle note) or a
+  `name` counts as *named*, like bosses and characters: the autobalance
+  never changes it. In Chapter 1 that leaves 10 of its 14 enemies.
+- "Which classes appear" picks among the generic templates the battle
+  already uses (a template is a class with its gear), at the enemy's
+  level, with that template's gear.
+- A weapon's tier is its place among the weapons of its kind, by rank
+  then might (iron → steel).
+- A copy goes on the nearest free tile within 2 steps of the original,
+  scanning in a fixed order; levels stay within 1 and the level cap.
+- Story battles get the same knobs as fixed skirmishes (the design doc's
+  reading already said so).
+
+For the Act 1 playtest (1064): Nick plays one autobalanced battle on the
+Pages build and says whether it felt about as tight as the design asks
+("a bit tight" in Casual).

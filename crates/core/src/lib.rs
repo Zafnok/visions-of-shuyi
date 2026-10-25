@@ -50,8 +50,8 @@ pub use battle::{
     Reinforcement, SellFrom, ShopTxn, TileRect, Trigger, TriggerWhen, Turn, UnitAction, Who,
 };
 pub use campaign::{
-    ApplyError, BattleDef, BattleMusic, BattleRewards, Campaign, Difficulty, GameTables,
-    PlayerSlot, TutorialLevel, UNUSED_CHARGE_PERCENT,
+    ApplyError, BattleDef, BattleKind, BattleMusic, BattleRewards, Campaign, Difficulty,
+    GameTables, PlayerSlot, TutorialLevel, UNUSED_CHARGE_PERCENT,
 };
 pub use class::{
     ArmourWeight, ClassDef, ClassId, ClassLevel, ClassPoints, ClassTable, Tier, UnitTag, UnitTags,

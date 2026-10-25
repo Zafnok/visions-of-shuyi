@@ -21,12 +21,16 @@
 //!   engine's named measures, from [`BattleMeasures`].
 //! - [`Targets`]: what the personas should achieve, from `targets.ron`,
 //!   as the engine's checks for a battle's tier.
+//! - [`knobs`]: what the autobalance may change in a battle file
+//!   ([`TunedBattle`], ticket 0509), the engine's `Knob`s.
 
+mod balance;
 mod bot;
 mod measures;
 mod persona;
 mod playtest;
 
+pub use balance::{TunedBattle, knobs};
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::BattleMeasures;
 pub use persona::{
