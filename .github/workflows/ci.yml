@@ -240,6 +240,9 @@ jobs:
       # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097).
       - name: Check the engine's skill pack
         run: cargo xtask skill-pack --check
+      # Every skill in .claude/skills keeps the engine's skill rules (ADR-0097).
+      - name: Check the skills
+        run: cargo shuyi check-skills .claude/skills
       # No new screen text written as a string literal (ADR-0045).
       - name: Check for screen text written as literals
         run: cargo shuyi check-text
