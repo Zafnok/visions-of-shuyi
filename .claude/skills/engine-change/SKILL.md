@@ -164,10 +164,11 @@ this order:
    before moving lists them; `cargo xtask engine-pin --check` fails
    until the section is there.
 
-   The MCP server (`.mcp.json`) is still the old engine's until it
-   reconnects: run `cargo shuyi mcp --ready` (it builds the server and
-   the game's tool program, so the first connection doesn't time out),
-   then reconnect it (`/mcp` in Claude Code, or a new session).
+   Run `cargo shuyi mcp --ready`: it builds the server (`.mcp.json`)
+   and the game's tool program on the new pin, so the next call doesn't
+   wait for a compile. A running server follows the pin by itself: one
+   whose engine moved under it hands its calls to a fresh one
+   (engine#2546).
 
 7. **The game PR** goes up after the pin moves. Before that it can't
    pass CI: CI never has the patch, so the game builds on the old pin,
