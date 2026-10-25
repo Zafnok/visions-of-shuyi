@@ -1,6 +1,8 @@
 ---
 name: engine-pin
-description: Move the game's Shuyi Engine pin to the engine's main and review what the engine PRs it passes give the game, for a GitHub issue labelled engine-pin (filed by the engine watcher), or for the engine PRs a game ticket's own pin move passes. Use when pointed at an engine-pin issue, asked to move or bump the engine pin, or when a ticket moves the pin itself (engine-change §3.6 and §7).
+description: Move the game's Shuyi Engine pin to the engine's main and review what the engine PRs it passes give the game, for a GitHub issue labelled engine-pin (filed by the engine watcher), or for the engine PRs a game ticket's own pin move passes. Use when pointed at an engine-pin issue, asked to move or bump the engine pin, or when a ticket moves the pin itself (engine-change §3.6 and §7). Not for making an engine change (engine-change).
+metadata:
+  version: "1.0"
 ---
 
 # Move the engine pin
@@ -8,7 +10,7 @@ description: Move the game's Shuyi Engine pin to the engine's main and review wh
 One `engine-pin` GitHub issue is one PR. The issue body **is** the ticket:
 the second exception to "work one ticket at a time from `tickets/open/`"
 (`CLAUDE.md` hard rule 1,
-[ADR-0096](../../../docs/adr/0096-a-watcher-on-the-engines-main-moves-the-pin-when-its-public-api-changes.md)),
+ADR-0096),
 like a `sonar` issue. There is no ticket file to write or move.
 `.github/workflows/engine-watch.yml` files the issue and keeps it up to
 date as the engine's `main` moves.
@@ -47,7 +49,14 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    git switch -c engine-pin/<8 hex>
    cargo xtask engine --off
    cargo xtask engine-pin <main's full commit>
+   cargo xtask skill-pack
    ```
+
+   `skill-pack` builds with the new pin and copies its skill pack into
+   `.claude/skills/shuyi-*` (ADR-0097); commit what it changes. When a
+   pack skill this game folds into its own changed (`shuyi-input` under
+   `keyboard-input`, `shuyi-gates` under `run-gates`), take out of the
+   game's skill any rule the pack's now states.
 
    Run the gates (`run-gates`). Fix every *Breaking* row **on the game
    side, with behaviour unchanged**: the row's `Breaking:` lines say what
@@ -108,7 +117,8 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
 
 7. **Check:** `cargo xtask engine-pin --check` (the ledger's last
    section is the pin, every row has a decision, every `adopt → NNNN`
-   names a ticket) and `cargo xtask ticket-lint`.
+   names a ticket), `cargo xtask skill-pack --check` and `cargo xtask
+   ticket-lint`.
 
 8. **Commit and PR.** Commit as `Engine pin: <old 8> → <new 8>`. The PR
    is titled `Engine pin: <old 8> → <new 8> (N engine PRs)`, and its body

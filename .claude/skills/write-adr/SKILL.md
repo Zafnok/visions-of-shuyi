@@ -1,6 +1,8 @@
 ---
 name: write-adr
-description: Record a technical/architecture decision as an ADR in docs/adr/. Use when a ticket introduces a new pattern, file format, widely-used dependency, crate, or changes/supersedes an existing ADR.
+description: Record a technical/architecture decision as an ADR in docs/adr/. Use when a ticket introduces a new pattern, file format, widely-used dependency, crate, or changes/supersedes an existing ADR. Not for game-design decisions, which are Nick's (ask-nick).
+metadata:
+  version: "1.0"
 ---
 
 # Write an ADR

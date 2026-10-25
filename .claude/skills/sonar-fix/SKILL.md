@@ -1,6 +1,8 @@
 ---
 name: sonar-fix
-description: Fix one batch of SonarQube findings filed as a GitHub issue labelled sonar. Use when pointed at a sonar(...) issue, asked to fix Sonar code smells, clear a sonar batch, or work the sonar debt queue.
+description: Fix one batch of SonarQube findings filed as a GitHub issue labelled sonar. Use when pointed at a sonar(...) issue, asked to fix Sonar code smells, clear a sonar batch, or work the sonar debt queue. Not for filing or refreshing the sonar issues (sonar-triage).
+metadata:
+  version: "1.0"
 ---
 
 # Fix a Sonar batch
@@ -8,7 +10,7 @@ description: Fix one batch of SonarQube findings filed as a GitHub issue labelle
 One `sonar`-labelled GitHub issue is one PR. The issue body **is** the
 ticket (goal, findings table, acceptance criteria): the one exception to
 "work one ticket at a time from `tickets/open/`" (`CLAUDE.md` hard rule 1,
-[ADR-0071](../../../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md)).
+ADR-0071).
 There is no ticket file to write or move.
 
 `work-ticket` still governs everything this skill doesn't change: scope,

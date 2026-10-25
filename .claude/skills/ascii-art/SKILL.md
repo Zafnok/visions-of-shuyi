@@ -1,6 +1,8 @@
 ---
 name: ascii-art
-description: Author visual content — map terrain glyphs, UI mockups, title screen art, and the small edits allowed on bought portraits and battle art — following the project's visual style (ADR-0018, ADR-0032, docs/design/look-and-feel.md). Use for map files, portrait edits, and any mockup shown to Nick.
+description: Author visual content — map terrain glyphs, UI mockups, title screen art, and the small edits allowed on bought portraits and battle art — following the project's visual style (ADR-0018, ADR-0032, docs/design/look-and-feel.md). Use for map files, portrait edits, and any mockup shown to Nick. Not for new character art, which is bought and never drawn, or for a screen's input (keyboard-input).
+metadata:
+  version: "1.0"
 ---
 
 # ASCII art

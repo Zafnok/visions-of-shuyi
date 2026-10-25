@@ -1,6 +1,8 @@
 ---
 name: write-ticket
-description: Create a new ticket file in tickets/open/ using the repo template — for follow-ups found while working, bugs or feedback Nick reports after playing, or new features. Use whenever work is discovered that is outside the current ticket's scope, or when Nick reports a bug/concern.
+description: Create a new ticket file in tickets/open/ using the repo template — for follow-ups found while working, bugs or feedback Nick reports after playing, or new features. Use whenever work is discovered that is outside the current ticket's scope, or when Nick reports a bug/concern. Not for working a ticket (work-ticket) or for an engine ticket (engine-change).
+metadata:
+  version: "1.0"
 ---
 
 # Write a ticket

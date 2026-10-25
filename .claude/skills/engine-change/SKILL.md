@@ -1,6 +1,8 @@
 ---
 name: engine-change
-description: Make a Shuyi Engine change from a game ticket and land both repositories in order (engine PR, then the game PR that moves the pin), or hand it to the engine as a ticket and ship the game with a marked workaround. Use when a game ticket needs the engine changed, when the engine-friction skill says "engine feature" or "engine ergonomics", when writing a game ticket blocked by an engine ticket (`engine#NNNN`), or when starting engine work in a session of its own.
+description: Make a Shuyi Engine change from a game ticket and land both repositories in order (engine PR, then the game PR that moves the pin), or hand it to the engine as a ticket and ship the game with a marked workaround. Use when a game ticket needs the engine changed, when the engine-friction skill says "engine feature" or "engine ergonomics", when writing a game ticket blocked by an engine ticket (`engine#NNNN`), or when starting engine work in a session of its own. Not for judging whether game code is too big (engine-friction) or for moving the pin alone (engine-pin).
+metadata:
+  version: "1.0"
 ---
 
 # Change the engine from the game

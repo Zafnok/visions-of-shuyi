@@ -1,12 +1,14 @@
 ---
 name: sonar-triage
-description: Refresh the SonarQube debt queue. Use when asked to triage Sonar findings, file or update sonar GitHub issues, run sonar-triage, or decide whether a Sonar finding is wrong for this repo.
+description: Refresh the SonarQube debt queue. Use when asked to triage Sonar findings, file or update sonar GitHub issues, run sonar-triage, or decide whether a Sonar finding is wrong for this repo. Not for fixing a batch (sonar-fix).
+metadata:
+  version: "1.0"
 ---
 
 # Sonar triage
 
 Turns SonarCloud's overall backlog into batched GitHub issues labelled `sonar`.
-Design: [ADR-0071](../../../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md).
+Design: ADR-0071.
 Tool reference: `tools/sonar-triage/README.md`. This skill is the judgement
 part; the script is the mechanical part. A scheduled job already runs it every
 Monday, so a manual run is for a new verdict or a check after a fix lands.

@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1189"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1192 — Take the engine's skill pack and fold keyboard-input and run-gates
@@ -84,12 +84,14 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A new session in the repository lists the pack's `shuyi-*` skills.
-- [ ] `keyboard-input` and `run-gates` each link their pack skill and
+- [x] A new session in the repository lists the pack's `shuyi-*` skills.
+- [x] `keyboard-input` and `run-gates` each link their pack skill and
       repeat none of its rules; every gate command is still in `run-gates`.
-- [ ] `cargo shuyi check-skills .claude/skills` passes.
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [ ] `cargo shuyi check-skills .claude/skills` passes. *Not met: the
+      game's 13 own skills fail only the worked-example rule (completion
+      notes); engine#2559 and 1194.*
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -97,5 +99,46 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **Copy, not plugin** (ADR-0097). The plugin follows the engine's
+  `main` (its marketplace entry has no version), and `check-skills` only
+  accepts a link to a file in the folder it checks, so a game skill can
+  link `../shuyi-input/SKILL.md` only with the pack beside it. The 15
+  skills are in `.claude/skills/shuyi-*`, the four waiting ones
+  included, unedited. A session lists them because Claude Code loads
+  every `.claude/skills/<name>/SKILL.md`; this session started before
+  the copy, so it wasn't seen in a fresh session here.
+- **`cargo xtask skill-pack [--check]`** (`crates/xtask/src/skill_pack.rs`)
+  writes the pack the pinned `shuyi-cli` embeds, and `--check` fails on a
+  missing, changed or extra file or an old `shuyi-*` skill; a test does
+  the same on the real repository (skipped with the local checkout on).
+  Deviation: the ticket said `cargo xtask engine-pin` refreshes it. It
+  can't: the xtask that moves the pin was built with the old one, and on
+  Windows it can't rebuild itself while running. So `engine-pin` says to
+  run `skill-pack` next, the `engine-pin` skill's step 3 runs it, and CI
+  runs `--check` beside `engine-pin --check`.
+- **`keyboard-input`** keeps the game's files, actions, Nick's defaults,
+  the allowed files, help-text helpers, the Playdate's chords, crank and
+  system menu; **`run-gates`** keeps every gate command (now also
+  `skill-pack --check` and `ticket-lint`), the environment, the
+  private-assets tests, `insta` and CI's mutation testing. Each links its
+  pack skill once at the top.
+- **`check-skills`**: the pack passes, and so do the game's own skills on
+  every rule but one. Fixed in all 13: a `Not …` sentence in each
+  description, `metadata.version`, links out of `.claude/skills/` named in
+  words, and `story-writing` (663 lines) split into
+  `references/examples.md` and `references/critique-pass.md`. **Not met:**
+  each of the 13 still fails "no worked example (example.ron)". A worked
+  example is a script the engine runs on a fresh game, so a skill about
+  this repository's workflow can't have one, and faking one (or a
+  `waits_for`) would weaken the check. Filed engine#2559 (engine PR #114,
+  the ticket alone) so the check asks it only of the pack's skills, and
+  **1194** to make `check-skills` a gate once the pin is past it.
+- `check-skills` (like any `cargo shuyi` run) first prints cargo errors
+  about `{{crate_name}}` in the engine's `templates/`; they are noise from
+  cargo reading the engine's git checkout and don't change the result.
+- Friction: estimate 90 production lines (by `engine.rs`'s file-agreement
+  check), measured 145 in `crates/xtask` (1.6×, under 2×). `code-lines`
+  also counts the pack's copied `example/*.rs` (647 lines) as game code;
+  they aren't the game's, and only a pin move that changes the pack
+  changes them.
+- Nick: nothing to check; no gameplay change.

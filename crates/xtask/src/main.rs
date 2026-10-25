@@ -25,6 +25,7 @@ mod playdate_images;
 mod playtest;
 mod portrait_import;
 mod sfx;
+mod skill_pack;
 mod test_auto;
 mod test_card;
 mod test_tileset;
@@ -47,6 +48,7 @@ ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/REA
 engine [--off]                     build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check]    move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
+skill-pack [--check]               copy the pinned engine's skill pack into .claude/skills/, or check the copy (ADR-0097)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
@@ -86,6 +88,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
         Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
+        Some("skill-pack") => skill_pack(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
@@ -189,6 +192,34 @@ fn engine_pin(args: &[String]) -> u8 {
         [] => report(engine::pin(&repo_root(), None)),
         _ => {
             eprintln!("{}", engine::USAGE);
+            2
+        }
+    }
+}
+
+/// `skill-pack [--check]`: the pinned engine's skill pack in `.claude/skills/`.
+fn skill_pack(args: &[String]) -> u8 {
+    let pack = shuyi_cli::skills::Pack::embedded();
+    match args {
+        [] => report(skill_pack::write(&repo_root(), &pack)),
+        [flag] if flag == "--check" => match skill_pack::check(&repo_root(), &pack) {
+            Ok(said) => {
+                println!("{said}");
+                0
+            }
+            Err(problems) => {
+                eprintln!(
+                    "skill-pack: {} problem(s); `cargo xtask skill-pack` writes the copy",
+                    problems.len()
+                );
+                for problem in &problems {
+                    eprintln!("  {problem}");
+                }
+                1
+            }
+        },
+        _ => {
+            eprintln!("{}", skill_pack::USAGE);
             2
         }
     }
