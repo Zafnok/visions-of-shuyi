@@ -445,7 +445,7 @@ mod tests {
 
         h.keys("d");
         assert_eq!(h.top_screen(), "");
-        assert!(h.screens().is_empty());
+        assert_eq!(h.screens(), [] as [&str; 0]);
         assert!(h.quit_requested());
     }
 
@@ -531,8 +531,11 @@ mod tests {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.cursor_tile(), None);
         assert_eq!(h.unit_at(Pos::new(3, 5)), None);
-        assert!(h.tints_at(Pos::new(3, 5)).is_empty());
-        assert!(h.path().is_empty());
+        assert_eq!(
+            h.tints_at(Pos::new(3, 5)),
+            [] as [shuyi_ui::grid::RangeName; 0]
+        );
+        assert_eq!(h.path(), [] as [trpg_core::Pos; 0]);
         // The Quick Battle: the cursor on the lord, nothing selected.
         h.keys("Down f Left f f");
         let (lord, plain, fort) = (Pos::new(3, 5), Pos::new(4, 5), Pos::new(5, 5));
@@ -540,7 +543,7 @@ mod tests {
         let unit = h.unit_at(lord).unwrap();
         assert_eq!((unit.label.as_str(), unit.pos), ("Lo", lord));
         assert_eq!(h.unit_at(plain), None);
-        assert!(h.tints_at(plain).is_empty());
+        assert_eq!(h.tints_at(plain), [] as [shuyi_ui::grid::RangeName; 0]);
         assert!(h.path().len() <= 1, "{:?}", h.path());
         // The lord selected and steered to the fort: its ranges and path.
         h.keys("f Right Right");

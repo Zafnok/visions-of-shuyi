@@ -533,7 +533,7 @@ mod tests {
         assert_eq!(pixels, [[0; 4], SKIN, SKIN, [0; 4]].concat());
         let mut empty: Vec<u8> = Vec::new();
         key_out(&mut empty);
-        assert!(empty.is_empty());
+        assert_eq!(empty, [] as [u8; 0]);
     }
 
     #[test]

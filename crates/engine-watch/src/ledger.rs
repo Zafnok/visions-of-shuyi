@@ -186,12 +186,15 @@ mod tests {
         assert_eq!(sections.len(), 2);
         assert_eq!(sections[0].to, "3f2256d4");
         assert_eq!(sections[0].date, "2026-10-25");
-        assert!(sections[0].rows.is_empty());
+        assert_eq!(sections[0].rows, [] as [crate::ledger::LedgerRow; 0]);
         assert_eq!(sections[1].to, "6e7f71fd");
         assert_eq!(sections[1].rows.len(), 2);
         assert_eq!(sections[1].rows[0].pr, "#88");
         assert_eq!(sections[1].rows[1].decision, "adopt → 1191");
-        assert!(problems(&sections, PIN, &ids(&["1191"])).is_empty());
+        assert_eq!(
+            problems(&sections, PIN, &ids(&["1191"])),
+            [] as [std::string::String; 0]
+        );
     }
 
     #[test]
@@ -216,7 +219,10 @@ mod tests {
         assert_eq!(found.len(), 1, "{found:?}");
         assert!(found[0].contains("last section pins 3f2256d4"), "{found:?}");
         assert!(found[0].contains(PIN), "{found:?}");
-        assert!(problems(&sections, "3f2256d46ac066ee\n", &ids(&[])).is_empty());
+        assert_eq!(
+            problems(&sections, "3f2256d46ac066ee\n", &ids(&[])),
+            [] as [std::string::String; 0]
+        );
         let none = problems(&[], PIN, &ids(&[]));
         assert!(none[0].contains("has no section"), "{none:?}");
     }
@@ -249,7 +255,10 @@ mod tests {
             found[0].contains("`adopt → 1192` names no ticket"),
             "{found:?}"
         );
-        assert!(adopted("not for the game: templates").is_empty());
-        assert!(adopted("adopt → 12").is_empty());
+        assert_eq!(
+            adopted("not for the game: templates"),
+            [] as [std::string::String; 0]
+        );
+        assert_eq!(adopted("adopt → 12"), [] as [std::string::String; 0]);
     }
 }

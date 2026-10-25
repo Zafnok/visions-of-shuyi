@@ -153,7 +153,10 @@ mod tests {
             screen.update(&mut ctx, &frame(&[], dt));
             assert!((screen.time() - 0.5).abs() < 1e-3, "{dt}");
         }
-        assert!(ctx.audio.take().is_empty());
+        assert_eq!(
+            ctx.audio.take(),
+            [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+        );
     }
 
     #[test]

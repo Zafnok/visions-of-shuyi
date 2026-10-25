@@ -119,7 +119,10 @@ fn focus_line(s: &mut BattleScreen, c: &mut Ctx, i: usize) {
         let Mode::List { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
-        assert!(!menu.skills().is_empty());
+        assert_ne!(
+            menu.skills(),
+            [] as [crate::screens::battle::skills::SkillChoice; 0]
+        );
         if menu.focus() == i {
             return;
         }
@@ -217,7 +220,10 @@ fn brace_from_the_menu_raises_def_on_the_info_screen_until_the_next_own_phase() 
     let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!(!menu.skills().is_empty());
+    assert_ne!(
+        menu.skills(),
+        [] as [crate::screens::battle::skills::SkillChoice; 0]
+    );
     assert_eq!(menu.items().len(), 1);
     let buf = render(&s, &c);
     let line = (0..30)
@@ -373,7 +379,10 @@ fn focused_note(s: &BattleScreen) -> Option<String> {
     let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!(!menu.skills().is_empty());
+    assert_ne!(
+        menu.skills(),
+        [] as [crate::screens::battle::skills::SkillChoice; 0]
+    );
     menu.view().focused().and_then(|i| i.note.clone())
 }
 
@@ -524,7 +533,7 @@ fn shove_picks_an_adjacent_enemy_and_pushes_it() {
         let raider = shown_unit(s, c, "Ra");
         s.scene(c).tints_at(raider.pos)
     };
-    assert!(raider_tints(&s, &c).is_empty());
+    assert_eq!(raider_tints(&s, &c), [] as [shuyi_ui::grid::RangeName; 0]);
     let i = choices.iter().position(|c| c.skill.0 == "shove").unwrap();
     focus_line(&mut s, &mut c, i);
     step(&mut s, &mut c, &[Action::Confirm]);
@@ -646,7 +655,7 @@ fn the_scene_marks_who_a_skill_can_target() {
     // The skill list: no cursor, no range.
     let scene = s.scene(&c);
     assert_eq!(scene.cursor, None);
-    assert!(scene.tinted(range::ATTACK).is_empty());
+    assert_eq!(scene.tinted(range::ATTACK), [] as [trpg_core::Pos; 0]);
     focus_line(&mut s, &mut c, i);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::SkillTarget(_)), "{:?}", s.mode());
@@ -658,5 +667,5 @@ fn the_scene_marks_who_a_skill_can_target() {
     }
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(7, 2)));
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(7, 1)));
-    assert!(scene.path.is_empty());
+    assert_eq!(scene.path, [] as [trpg_core::Pos; 0]);
 }

@@ -146,10 +146,10 @@ fn defaults_fill_what_a_battle_leaves_out() {
     let def = load(&c, source).unwrap_or_else(|e| panic!("{e:?}"));
     assert!(def.enemies.is_empty() && def.reinforcements.is_empty());
     assert_eq!(def.pack_cap, c.items.rules.default_pack_cap);
-    assert!(def.default_pack.is_empty());
+    assert_eq!(def.default_pack, [] as [trpg_core::ItemId; 0]);
     assert_eq!(def.clear_gold, 0);
-    assert!(def.triggers.is_empty());
-    assert!(def.battle_notes.is_empty());
+    assert_eq!(def.triggers, [] as [trpg_core::Trigger; 0]);
+    assert_eq!(def.battle_notes, [] as [trpg_core::BattleNote; 0]);
     assert_eq!(
         def.objective,
         Objective::Seize {

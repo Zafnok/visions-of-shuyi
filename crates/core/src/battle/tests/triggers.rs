@@ -174,7 +174,7 @@ fn entering_an_area_fires_after_the_move_that_ends_in_it() {
     assert_eq!(scenes(&events), ["lord_in", "player_in"]);
     // Staying put in it is no move: nothing.
     let events = act(&mut s, 2, p(1, 1), UnitAction::Wait);
-    assert!(scenes(&events).is_empty());
+    assert_eq!(scenes(&events), [] as [&str; 0]);
     assert!(!s.has_fired(2));
 }
 
@@ -204,7 +204,7 @@ fn a_move_after_an_attack_can_enter_an_area() {
         art: None,
     };
     let events = act(&mut s, 1, p(4, 3), attack);
-    assert!(scenes(&events).is_empty());
+    assert_eq!(scenes(&events), [] as [&str; 0]);
     let events = s
         .apply(&Command::MoveAfter {
             unit: UnitId(1),
@@ -227,10 +227,10 @@ fn a_combat_start_scene_plays_before_the_combat_attacked_or_attacking() {
     assert_eq!(bare(&events)[at - 1], scene("engage"));
     assert_eq!(scenes(&events), ["engage"]);
     // Once per battle: not against unit 2, nor when unit 3 attacks back.
-    assert!(scenes(&act(&mut s, 2, p(2, 1), attack(3))).is_empty());
+    assert_eq!(scenes(&act(&mut s, 2, p(2, 1), attack(3))), [] as [&str; 0]);
     end(&mut s);
     let events = act(&mut s, 3, p(2, 0), attack(1));
-    assert!(scenes(&events).is_empty());
+    assert_eq!(scenes(&events), [] as [&str; 0]);
 }
 
 #[test]
@@ -254,7 +254,7 @@ fn a_line_for_one_opponent_replaces_the_default_for_that_pair() {
     assert_eq!(scenes(&act(&mut s, 2, p(2, 1), attack(3))), ["default"]);
     // Both spent; the lord never gets the default either.
     end(&mut s);
-    assert!(scenes(&act(&mut s, 3, p(2, 0), attack(1))).is_empty());
+    assert_eq!(scenes(&act(&mut s, 3, p(2, 0), attack(1))), [] as [&str; 0]);
 }
 
 #[test]
@@ -269,7 +269,7 @@ fn the_default_line_never_plays_to_a_character_with_its_own_line() {
     assert_eq!(scenes(&act(&mut s, 1, p(1, 0), attack(3))), ["vs_lord"]);
     end(&mut s);
     // The lord again: its line has played, and the default stays unplayed.
-    assert!(scenes(&act(&mut s, 3, p(2, 0), attack(1))).is_empty());
+    assert_eq!(scenes(&act(&mut s, 3, p(2, 0), attack(1))), [] as [&str; 0]);
     assert!(!s.has_fired(0));
 }
 
@@ -339,7 +339,7 @@ fn the_half_hp_line_plays_after_the_combat_that_brings_it_to_half() {
         ],
     );
     // 10 → 7: nothing.
-    assert!(scenes(&act(&mut s, 1, p(1, 0), attack(3))).is_empty());
+    assert_eq!(scenes(&act(&mut s, 1, p(1, 0), attack(3))), [] as [&str; 0]);
     // 7 → 4: right after the combat.
     let events = act(&mut s, 2, p(2, 1), attack(3));
     let at = events
@@ -363,7 +363,7 @@ fn a_blow_that_defeats_plays_no_half_hp_line() {
     ];
     let half = TriggerWhen::HalfHp { unit: c(3) };
     let mut s = triggered(units, vec![trigger(half, "half", true)]);
-    assert!(scenes(&act(&mut s, 1, p(1, 0), attack(3))).is_empty());
+    assert_eq!(scenes(&act(&mut s, 1, p(1, 0), attack(3))), [] as [&str; 0]);
 }
 
 // ---- Falling -----------------------------------------------------------------
@@ -400,7 +400,7 @@ fn a_death_quote_plays_just_before_the_fall() {
         .unwrap();
     assert_eq!(bare(&events)[at - 1], scene("last_words"));
     assert_eq!(scenes(&events), ["last_words"]);
-    assert!(s.recruited().is_empty());
+    assert_eq!(s.recruited(), []);
 }
 
 #[test]
@@ -489,8 +489,14 @@ fn talk_targets_are_adjacent_units_with_an_unfired_talk_either_way() {
     assert_eq!(s.talk_targets(UnitId(2), p(0, 1)), [UnitId(1)]);
     assert_eq!(s.talk_targets(UnitId(1), p(0, 1)), [UnitId(2)]);
     // Too far, or nobody.
-    assert!(s.talk_targets(UnitId(4), p(6, 2)).is_empty());
-    assert!(s.talk_targets(UnitId(9), p(0, 1)).is_empty());
+    assert_eq!(
+        s.talk_targets(UnitId(4), p(6, 2)),
+        [] as [crate::unit::UnitId; 0]
+    );
+    assert_eq!(
+        s.talk_targets(UnitId(9), p(0, 1)),
+        [] as [crate::unit::UnitId; 0]
+    );
 }
 
 #[test]
@@ -503,9 +509,12 @@ fn talking_is_free_the_unit_stays_ready_where_it_was() {
     assert!(s.has_fired(0));
     // Nothing changes sides; the enemy is still an enemy on the map.
     assert_eq!(s.unit(UnitId(3)).unwrap().faction, Faction::Enemy);
-    assert!(s.recruited().is_empty());
+    assert_eq!(s.recruited(), []);
     // Once: nothing more to say to it.
-    assert!(s.talk_targets(UnitId(1), p(1, 0)).is_empty());
+    assert_eq!(
+        s.talk_targets(UnitId(1), p(1, 0)),
+        [] as [crate::unit::UnitId; 0]
+    );
     // The lord still moves and acts.
     let events = act(&mut s, 1, p(1, 0), attack(3));
     assert!(events.contains(&Event::UnitActed { unit: UnitId(1) }));

@@ -36,7 +36,10 @@ fn a_new_history_has_the_battles_charges_and_no_commands() {
     assert!(h.is_empty());
     assert_eq!(h.len(), 0);
     assert_eq!(h.state_at(0), s);
-    assert!(h.replay().is_empty());
+    assert_eq!(
+        h.replay(),
+        [] as [shuyi_core::Replayed<crate::battle::BattleState>; 0]
+    );
 }
 
 #[test]

@@ -121,11 +121,7 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     let mut scene = MapScene::new(p(2, 2), (4, 3));
     scene.push_unit(brigand(p(5, 3)));
     scene.path = vec![p(2, 2), p(3, 2)];
-    scene.cursor = Some(CursorView {
-        pos: p(3, 2),
-        brightness: 1.0,
-        style: CursorStyle::Corners,
-    });
+    scene.cursor = Some(CursorView::new(p(3, 2), 1.0, CursorStyle::Corners));
     let mut buf = blank();
     MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     let before = buf.overlays();
@@ -223,11 +219,7 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
     // A highlighted unit: its tile's colours swapped.
     scene.push_unit(brigand(p(2, 3)).highlighted(true));
     scene.path = vec![p(2, 2), p(3, 2)];
-    scene.cursor = Some(CursorView {
-        pos: p(5, 2),
-        brightness: 1.0,
-        style: CursorStyle::Corners,
-    });
+    scene.cursor = Some(CursorView::new(p(5, 2), 1.0, CursorStyle::Corners));
     let mut buf = blank();
     MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     let cell = |x, y| *buf.get(x, y).unwrap();
@@ -372,11 +364,7 @@ fn units_and_the_cursor_off_the_view_are_not_drawn() {
     let mut scene = MapScene::new(p(0, 0), (2, 1));
     // Not through `push_unit`: a scene built by hand.
     scene.units.push(brigand(p(2, 0)));
-    scene.cursor = Some(CursorView {
-        pos: p(0, 1),
-        brightness: 1.0,
-        style: CursorStyle::TileGlow,
-    });
+    scene.cursor = Some(CursorView::new(p(0, 1), 1.0, CursorStyle::TileGlow));
     let mut buf = blank();
     MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     assert_eq!(buf, blank());
@@ -457,7 +445,7 @@ prop_compose! {
             CursorStyle::TileGlow,
         ]),
     ) -> CursorView {
-        CursorView { pos, brightness, style }
+        CursorView::new(pos, brightness, style)
     }
 }
 
@@ -485,7 +473,18 @@ prop_compose! {
             x: Ends { before: left, after: right },
             y: Ends { before: up, after: down },
         };
-        MapScene { origin, size, more, tiles, ranges, rim, look, units, cursor, path, threat, clock_ms }
+        let mut scene = MapScene::new(origin, size);
+        scene.more = more;
+        scene.tiles = tiles;
+        scene.ranges = ranges;
+        scene.rim = rim;
+        scene.look = look;
+        scene.units = units;
+        scene.cursor = cursor;
+        scene.path = path;
+        scene.threat = threat;
+        scene.clock_ms = clock_ms;
+        scene
     }
 }
 

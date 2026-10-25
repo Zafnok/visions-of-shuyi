@@ -168,7 +168,10 @@ fn typed_names_have_rules() {
     let mut s = typing(&mut c);
     // Digits and letters outside A-Z are refused; typing is silent.
     assert_eq!(typed_sounds(&mut s, &mut c, &[], "1é"), ["menu_cancel"; 2]);
-    assert!(typed_sounds(&mut s, &mut c, &[], "abcdef").is_empty());
+    assert_eq!(
+        typed_sounds(&mut s, &mut c, &[], "abcdef"),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(s.first_name(), "Elleryabcdef");
     assert_eq!(typed_sounds(&mut s, &mut c, &[], "g"), ["menu_cancel"]);
     assert_eq!(s.first_name().chars().count(), MAX_NAME_LEN);
@@ -179,7 +182,10 @@ fn typed_names_have_rules() {
         typed_sounds(&mut s, &mut c, &[Key::Backspace], ""),
         ["menu_cancel"]
     );
-    assert!(typed_sounds(&mut s, &mut c, &[Key::Backspace], "").is_empty());
+    assert_eq!(
+        typed_sounds(&mut s, &mut c, &[Key::Backspace], ""),
+        [] as [std::string::String; 0]
+    );
     // No space first, or twice; Enter on a blank name is refused.
     assert_eq!(typed_sounds(&mut s, &mut c, &[], " "), ["menu_cancel"]);
     assert_eq!(
@@ -337,12 +343,21 @@ fn menu_sounds() {
     assert_eq!(sounds(&mut s, &mut c, &[CursorDown]), ["menu_move"]);
     assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     // The typing box is open: the game's keys play nothing.
-    assert!(sounds(&mut s, &mut c, &[CursorRight, Confirm, Cancel]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[CursorRight, Confirm, Cancel]),
+        [] as [std::string::String; 0]
+    );
     // An action with nothing to do plays nothing.
     let mut s = LeadSelectScreen::new();
-    assert!(sounds(&mut s, &mut c, &[Action::Info]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[Action::Info]),
+        [] as [std::string::String; 0]
+    );
     let mut s = spelling(&mut c);
-    assert!(sounds(&mut s, &mut c, &[Action::Info]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[Action::Info]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(sounds(&mut s, &mut c, &[CursorDown]), ["menu_move"]);
     let mut s = LeadSelectScreen::new();
     assert_eq!(sounds(&mut s, &mut c, &[Cancel]), ["menu_cancel"]);

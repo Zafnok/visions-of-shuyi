@@ -357,7 +357,10 @@ mod tests {
         assert_eq!(plain.mov, lord.move_points());
         assert_eq!(plain.stats.len(), 6);
         assert!(plain.stats.iter().all(|s| !s.changed), "{:?}", plain.stats);
-        assert!(plain.effects.is_empty());
+        assert_eq!(
+            plain.effects,
+            [] as [crate::screens::battle::view::InfoEffectView; 0]
+        );
         let equipped = lord.loadout.equipped_slot().unwrap();
         let weapons: Vec<bool> = plain.weapons.iter().flatten().map(|w| w.equipped).collect();
         assert_eq!(weapons.iter().filter(|&&e| e).count(), 1);

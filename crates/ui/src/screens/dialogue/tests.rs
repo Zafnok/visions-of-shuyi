@@ -419,10 +419,10 @@ fn the_page_waits_once_revealed() {
     let log_hint = c.text_with("dialogue.log_hint", &[]);
     assert_eq!(
         waiting,
-        Some(WaitView {
-            key: "f".to_owned(),
-            log_hint: Some(log_hint),
-            marker: true,
+        Some({
+            let mut wait = WaitView::new("f", true);
+            wait.log_hint = Some(log_hint);
+            wait
         })
     );
     let marker = |s: &DialogueScreen, c: &Ctx| s.view(c).text.waiting.map(|w| w.marker);
@@ -603,7 +603,7 @@ fn replies_are_picked_with_the_cursor_keys_and_confirm() {
     // Cancel doesn't skip past a choice, and makes no sound.
     press(&mut s, &mut c, Action::Cancel);
     assert!(!s.is_asking_skip());
-    assert!(sounds(&mut c).is_empty());
+    assert_eq!(sounds(&mut c), [] as [std::string::String; 0]);
     // End turn confirms, like everywhere in dialogue.
     press(&mut s, &mut c, Action::EndTurn);
     assert_eq!(sounds(&mut c), ["menu_select"]);
@@ -728,7 +728,7 @@ fn music_changes_when_its_line_is_reached() {
         narrate("Three."),
         Step::Music(MusicLine::Stop),
     ]));
-    assert!(c.audio.pending().is_empty());
+    assert_eq!(c.audio.pending(), []);
     s.update(&mut c, &frame(&[], 0.0, false));
     assert_eq!(music_requests(&mut c), [play_music("village")]);
     // Not again on later frames, nor when revealing or reading on to a

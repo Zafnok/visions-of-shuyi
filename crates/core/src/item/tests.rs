@@ -451,17 +451,19 @@ fn attack_ranges_of_usable_weapons() {
         [(1, 1), (1, 2)]
     );
     let u = equipped(&["axe"], None, None);
-    assert!(u.attack_ranges(&classes(), &items(), &no_spells).is_empty());
-    assert!(
-        unit()
-            .attack_ranges(&classes(), &items(), &no_spells)
-            .is_empty()
+    assert_eq!(
+        u.attack_ranges(&classes(), &items(), &no_spells),
+        [] as [(u32, u32); 0]
+    );
+    assert_eq!(
+        unit().attack_ranges(&classes(), &items(), &no_spells),
+        [] as [(u32, u32); 0]
     );
     let mut lost = equipped(&["sword"], None, None);
     lost.class = ClassId("nope".into());
-    assert!(
-        lost.attack_ranges(&classes(), &items(), &no_spells)
-            .is_empty()
+    assert_eq!(
+        lost.attack_ranges(&classes(), &items(), &no_spells),
+        [] as [(u32, u32); 0]
     );
 }
 
@@ -476,23 +478,20 @@ fn attack_ranges_of_castable_attack_spells() {
     );
     // At 0 uses, no range.
     let out_of_uses = learn(mage(), "fire", 0);
-    assert!(
-        out_of_uses
-            .attack_ranges(&mage_classes(), &items(), &spells)
-            .is_empty()
+    assert_eq!(
+        out_of_uses.attack_ranges(&mage_classes(), &items(), &spells),
+        [] as [(u32, u32); 0]
     );
     // Heal spells never add a range.
     let with_heal = learn(mage(), "heal", 8);
-    assert!(
-        with_heal
-            .attack_ranges(&mage_classes(), &items(), &spells)
-            .is_empty()
+    assert_eq!(
+        with_heal.attack_ranges(&mage_classes(), &items(), &spells),
+        [] as [(u32, u32); 0]
     );
     // Not learned: no range either, even with uses recorded.
-    assert!(
-        mage()
-            .attack_ranges(&mage_classes(), &items(), &spells)
-            .is_empty()
+    assert_eq!(
+        mage().attack_ranges(&mage_classes(), &items(), &spells),
+        [] as [(u32, u32); 0]
     );
     // A spell range equal to a weapon's isn't repeated.
     let with_javelin = learn(equipped(&["javelin"], None, None), "fire", 10);

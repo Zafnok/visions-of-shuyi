@@ -157,7 +157,10 @@ fn use_art(s: &mut BattleScreen, c: &mut Ctx, name: &str, target: UnitId) {
         let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
-        assert!(!menu.arts().is_empty());
+        assert_ne!(
+            menu.arts(),
+            [] as [crate::screens::battle::art_list::ArtLine; 0]
+        );
         if menu.focus() == at {
             break;
         }
@@ -189,7 +192,10 @@ fn lines(s: &BattleScreen) -> Vec<(String, bool, Option<String>)> {
     let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!(!menu.arts().is_empty());
+    assert_ne!(
+        menu.arts(),
+        [] as [crate::screens::battle::art_list::ArtLine; 0]
+    );
     shown(menu)
 }
 
@@ -433,7 +439,10 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     let Mode::List { menu, .. } = s.mode() else {
         unreachable!()
     };
-    assert!(!menu.arts().is_empty());
+    assert_ne!(
+        menu.arts(),
+        [] as [crate::screens::battle::art_list::ArtLine; 0]
+    );
     let labels: Vec<&str> = menu
         .items()
         .iter()
@@ -556,7 +565,10 @@ fn focused_note(s: &BattleScreen) -> Option<String> {
     let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!(!menu.arts().is_empty());
+    assert_ne!(
+        menu.arts(),
+        [] as [crate::screens::battle::art_list::ArtLine; 0]
+    );
     menu.view().focused().and_then(|i| i.note.clone())
 }
 

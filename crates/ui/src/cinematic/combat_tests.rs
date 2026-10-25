@@ -164,7 +164,7 @@ fn a_fight_the_rules_no_longer_allow_is_blank() {
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     player.draw(&ctx, 0.5, 1.0, &mut buf);
-    assert!(buf.sprites().is_empty());
+    assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     assert_eq!(buf.get(50, 10), Some(&blank));
 }
 

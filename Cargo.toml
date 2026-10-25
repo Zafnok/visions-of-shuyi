@@ -7,7 +7,7 @@ resolver = "3"
 [workspace.package]
 version = "0.3.0"
 edition = "2024"
-rust-version = "1.98"
+rust-version = "1.99"
 publish = false
 license-file = "LICENSE"
 repository = "https://github.com/Zafnok/visions-of-shuyi"
@@ -30,12 +30,12 @@ insta = "1"
 # `shuyi-engine.rev`: `cargo xtask engine-pin <commit>` moves both. The
 # crates the Playdate builds without `std` have their default features off
 # here; a crate that needs `std` turns it on.
-shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be", default-features = false }
-shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be", default-features = false }
-shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be", default-features = false }
-shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be", default-features = false }
-shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be" }
-shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "3f2256d46ac066ee4656489d6d63d007990eb8be" }
+shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535", default-features = false }
+shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535", default-features = false }
+shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535", default-features = false }
+shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535", default-features = false }
+shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535" }
+shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "b4591a8119219b3af199b46db259789a9bf11535" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

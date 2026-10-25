@@ -339,7 +339,7 @@ mod tests {
                 .iter()
                 .all(|id| id.len() == 4)
         );
-        assert!(!ledger(root()).unwrap().is_empty());
+        assert_ne!(ledger(root()).unwrap(), [] as [crate::ledger::Section; 0]);
         assert_eq!(pin(root()).unwrap().len(), 40);
     }
 }

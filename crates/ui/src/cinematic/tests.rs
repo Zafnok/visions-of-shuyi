@@ -74,14 +74,11 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     assert_eq!(picture.point_px((5.75, 3.5)), (100.0, 64.0));
     assert_eq!(picture.point_px((-0.5, 7.5)), (0.0, 128.0));
     // The units are on it: the lead's tile isn't bare terrain.
-    let bare = MapPicture::paint(
-        &ctx,
-        &ctx.game.map_skin,
-        &MapScene {
-            units: vec![],
-            ..scene.clone()
-        },
-    )
+    let bare = MapPicture::paint(&ctx, &ctx.game.map_skin, &{
+        let mut bare = scene.clone();
+        bare.units = vec![];
+        bare
+    })
     .unwrap();
     assert_ne!(picture.scene.get(6, 5), bare.scene.get(6, 5));
     assert_eq!(picture.scene.get(0, 0), bare.scene.get(0, 0));
@@ -92,7 +89,7 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     assert_eq!((picture.scene.width(), picture.scene.height()), (42, 12));
     assert_eq!(picture.tile_px, (24, 24));
     assert_eq!(picture.point_px((1.0, 2.0)), (36.0, 60.0));
-    assert!(!picture.scene.sprites().is_empty());
+    assert_ne!(picture.scene.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     // A size that isn't whole cells is rounded up to them.
     let odd = MapScene::new(Pos::new(0, 0), (1, 1));
     let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &odd).unwrap();
@@ -234,7 +231,7 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
             assert_eq!(buf.get(x, y), Some(&hole), "({x}, {y})");
         }
     }
-    assert!(buf.items().is_empty());
+    assert_eq!(buf.items(), []);
 }
 
 #[test]
@@ -317,7 +314,7 @@ fn a_pan_over_a_sprite_map_fades_its_sprites() {
         buf.backdrop().unwrap().scene().sprites()
     };
     let (full, half) = (scene_sprites(1.0), scene_sprites(0.5));
-    assert!(!full.is_empty());
+    assert_ne!(full, [] as [shuyi_ui::frame::Sprite; 0]);
     assert_eq!(full.len(), half.len());
     for (full, half) in full.iter().zip(&half) {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]

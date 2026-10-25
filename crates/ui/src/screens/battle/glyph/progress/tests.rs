@@ -89,7 +89,7 @@ fn a_unit_without_a_face_gets_the_placeholder_box() {
         expression: "happy".into(),
     };
     let buf = painted(&gains(Some(lost), vec![]));
-    assert!(buf.sprites().is_empty());
+    assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     let label: String = (20..28).map(|x| buf.get(x, 15).unwrap().glyph).collect();
     assert_eq!(label, "portrait");
 }

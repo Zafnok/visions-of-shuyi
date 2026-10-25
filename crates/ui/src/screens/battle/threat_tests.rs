@@ -51,9 +51,15 @@ fn the_enemies_that_could_attack_a_unit_on_a_tile_are_listed_by_their_tiles() {
     let all = [p(8, 2), p(7, 4), p(7, 1)];
     assert_eq!(threat_enemies(state, LORD, p(6, 5)), all);
     // The mage, where it stands: nobody.
-    assert!(threat_enemies(state, UnitId(8), p(3, 6)).is_empty());
+    assert_eq!(
+        threat_enemies(state, UnitId(8), p(3, 6)),
+        [] as [trpg_core::Pos; 0]
+    );
     // A unit the battle doesn't have: nothing, not a panic.
-    assert!(threat_enemies(state, UnitId(99), p(3, 5)).is_empty());
+    assert_eq!(
+        threat_enemies(state, UnitId(99), p(3, 5)),
+        [] as [trpg_core::Pos; 0]
+    );
 }
 
 #[test]

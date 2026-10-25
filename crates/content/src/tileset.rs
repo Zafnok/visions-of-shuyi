@@ -386,11 +386,10 @@ pub fn parse_tileset(
     for (name, file) in &def.looks {
         problems.extend(look::missing(Some(name), &file.terrain, refs));
     }
-    let terrain = own.zip(sheet).map(|(look, image)| TerrainTiles {
-        image,
-        tile_px,
-        look,
-        looks,
+    let terrain = own.zip(sheet).map(|(look, image)| {
+        let mut tiles = TerrainTiles::new(image, tile_px, look);
+        tiles.looks = looks;
+        tiles
     });
     match fallback {
         Some(fallback) if problems.is_empty() => Ok(Tileset {
@@ -624,7 +623,7 @@ mod tests {
         );
         let huge = grid_rect((u32::MAX, 1), (24, 24), (1, 0));
         assert_eq!((huge.x, huge.y), (u32::MAX, 24));
-        let info = |width, height| ImageInfo { width, height };
+        let info = ImageInfo::new;
         let rect = |x, y, w, h| ImageRect { x, y, w, h };
         assert!(inside(rect(24, 24, 24, 24), info(48, 48)));
         assert!(!inside(rect(25, 24, 24, 24), info(48, 48)));
@@ -752,10 +751,7 @@ mod tests {
         assert!(test.walking.is_empty());
         assert_eq!(
             f.content.images.info(guard.image),
-            Some(ImageInfo {
-                width: 48,
-                height: 80
-            })
+            Some(ImageInfo::new(48, 80))
         );
         // The fixture with layers and looks: 16 × 16 tiles, a shore and
         // the woods' edge between tiles, a fort and a bridge on theirs,

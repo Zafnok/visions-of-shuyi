@@ -292,7 +292,10 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
         (g.banner.as_str(), g.line.as_str()),
         ("PROMOTED!", "Guard → Iron Rider")
     );
-    assert!(g.stats.is_empty());
+    assert_eq!(
+        g.stats,
+        [] as [crate::screens::battle::view::StatGainView; 0]
+    );
     assert_eq!(view.help, "f skip · hold f fast");
     // A press reveals every stat, the next closes the page and the screen.
     let t = step(&mut s, &mut c, &[Confirm]);
@@ -394,7 +397,10 @@ fn a_unit_with_nowhere_to_go_sees_an_empty_screen() {
     assert_eq!(s.options().len(), 0);
     let view = columns(&s, &c);
     assert_eq!(view.none.as_deref(), Some("No class to change to."));
-    assert!(view.columns.is_empty());
+    assert_eq!(
+        view.columns,
+        [] as [crate::screens::class_change::view::ColumnView; 0]
+    );
     assert_eq!(
         (view.seal, view.more_left, view.more_right),
         (None, None, None)

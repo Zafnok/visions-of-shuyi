@@ -257,7 +257,7 @@ fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
         ..BattleRewards::default()
     };
     let mut s = ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 500);
-    assert!(s.rows().is_empty());
+    assert_eq!(s.rows(), []);
     assert!(s.filled());
     let t = tally(&s);
     let gold = t.gold.unwrap();
@@ -266,7 +266,7 @@ fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
         ("Gold for clearing the map", 500, "(now 500)")
     );
     assert_eq!(t.bonus, None);
-    assert!(t.units.is_empty());
+    assert_eq!(t.units, [] as [crate::screens::results::view::UnitView; 0]);
     assert_eq!(s.view(&ctx()).help, "f continue");
     assert!(press(&mut s, Action::Confirm));
 }

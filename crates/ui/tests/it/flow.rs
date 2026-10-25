@@ -558,7 +558,7 @@ fn no_notes_box_for_a_battle_without_notes() {
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert!(battle(&h).battle_notes().is_empty());
+    assert_eq!(battle(&h).battle_notes(), []);
     assert!(!notes_open(&h));
     assert!(!shows(&h, "BATTLE NOTES"));
     // It opens on the `PLAYER PHASE` banner.

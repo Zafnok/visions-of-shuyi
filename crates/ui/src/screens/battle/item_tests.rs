@@ -179,7 +179,7 @@ fn select_move_item_potion_ally_heals_the_ally_and_ends_the_action() {
         }]
     );
     wait(&mut s, &mut c, TIMINGS.heal_popup + 0.1);
-    assert!(s.popups().is_empty());
+    assert_eq!(s.popups(), []);
 }
 
 #[test]
@@ -208,7 +208,7 @@ fn an_item_can_be_used_on_oneself_and_targets_cycle_both_ways() {
     let max = s.state().unit(UnitId(1)).unwrap().stats.hp;
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.state().unit(UnitId(1)).unwrap().hp, max);
-    assert!(s.state().pack().items.is_empty());
+    assert_eq!(s.state().pack().items, [] as [trpg_core::ItemId; 0]);
 }
 
 #[test]
@@ -298,7 +298,7 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
     let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Equip);
     assert_eq!(s.state(), &before);
-    assert!(s.popups().is_empty());
+    assert_eq!(s.popups(), []);
 }
 
 #[test]
@@ -433,7 +433,10 @@ fn targets_are_hurt_allies_beside_the_destination_in_row_order() {
     assert_eq!(item_targets(&s, UnitId(1), p(3, 3)), [UnitId(1)]);
     // Unhurt units are not targets, the user included.
     let s = placed(&c, p(3, 5), p(4, 5), 0);
-    assert!(item_targets(&s, UnitId(1), p(3, 5)).is_empty());
+    assert_eq!(
+        item_targets(&s, UnitId(1), p(3, 5)),
+        [] as [trpg_core::UnitId; 0]
+    );
     // A hostile unit beside the lord is never one (a hurt brigand).
     let (map, mut units) = quick_units(&c);
     let brigand = units.iter().position(|u| u.id == UnitId(4)).unwrap();
@@ -441,7 +444,10 @@ fn targets_are_hurt_allies_beside_the_destination_in_row_order() {
     units[brigand].hp = 1;
     let rout = Objective::Rout { turn_limit: None };
     let s = battle_packed(&c, map, units, rout, 0, BattlePack::default());
-    assert!(item_targets(&s, UnitId(1), p(3, 5)).is_empty());
+    assert_eq!(
+        item_targets(&s, UnitId(1), p(3, 5)),
+        [] as [trpg_core::UnitId; 0]
+    );
 }
 
 #[test]
@@ -485,7 +491,7 @@ fn a_heal_of_nothing_shows_no_popup_and_popups_last_their_time() {
         },
     };
     s.apply(&use_on_full);
-    assert!(s.popups().is_empty());
+    assert_eq!(s.popups(), []);
     // A real heal: the popup stays for exactly its time.
     let mut s = BattleScreen::new(placed(&c, p(3, 5), p(4, 5), 5));
     s.apply(&trpg_core::Command::Act {
@@ -569,7 +575,7 @@ fn the_scene_marks_who_an_item_can_target() {
     // The pack: no cursor, no range.
     let scene = s.scene(&c);
     assert_eq!(scene.cursor, None);
-    assert!(scene.tinted(range::HEAL).is_empty());
+    assert_eq!(scene.tinted(range::HEAL), [] as [trpg_core::Pos; 0]);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::ItemTarget(_)), "{:?}", s.mode());
     let scene = s.scene(&c);
@@ -625,7 +631,10 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
     let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!(!menu.groups().is_empty());
+    assert_ne!(
+        menu.groups(),
+        [] as [crate::screens::battle::items::PackGroup; 0]
+    );
     let labels = |menu: &crate::widgets::menu::Menu<super::mode::Line>| -> Vec<String> {
         let labels = menu
             .items()

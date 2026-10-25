@@ -59,7 +59,7 @@ fn the_view_lists_the_entries_and_asks_before_a_rewind() {
     // Nothing to go back to.
     let empty = screen(0, 0).list_view(Words::ENGLISH);
     assert_eq!(empty.nothing.as_deref(), Some("Nothing to rewind yet"));
-    assert!(empty.entries.is_empty());
+    assert_eq!(empty.entries, [] as [std::string::String; 0]);
 }
 
 #[test]

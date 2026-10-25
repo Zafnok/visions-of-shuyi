@@ -98,7 +98,7 @@ mod tests {
         paint(&ctx, &view(1), &mut buf);
         let shown = rows(&buf);
         assert_eq!(shown[8], "Casual: a unit that falls retreats.");
-        assert!(shown[9].is_empty());
+        assert_eq!(shown[9], "");
         assert!(is_bar(&buf, 5, "Casual"));
     }
 
@@ -114,7 +114,7 @@ mod tests {
             shown[8..13].iter().all(|r| r.starts_with("word")),
             "{shown:#?}"
         );
-        assert!(shown[13].is_empty());
+        assert_eq!(shown[13], "");
         assert_eq!(shown[14], v.help);
     }
 }

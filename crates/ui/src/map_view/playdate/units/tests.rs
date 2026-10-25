@@ -182,7 +182,10 @@ fn the_hp_line_is_as_long_as_the_hp_left() {
             [bar(25, 7, black), bar(32, 7, white)]
         );
         assert_eq!(line(side, (0, 30), false, true), [bar(25, 14, white)]);
-        assert!(line(side, (15, 30), false, false).is_empty());
+        assert_eq!(
+            line(side, (15, 30), false, false),
+            [] as [(shuyi_ui::frame::Rect, shuyi_ui::frame::Rgb); 0]
+        );
     }
     assert_eq!(line(Player, (30, 30), false, true), [bar(25, 14, white)]);
     assert_eq!(
@@ -190,7 +193,10 @@ fn the_hp_line_is_as_long_as_the_hp_left() {
         [bar(25, 7, white), bar(32, 7, grey)]
     );
     assert_eq!(line(Player, (0, 30), false, true), [bar(25, 14, grey)]);
-    assert!(line(Player, (15, 30), false, false).is_empty());
+    assert_eq!(
+        line(Player, (15, 30), false, false),
+        [] as [(shuyi_ui::frame::Rect, shuyi_ui::frame::Rgb); 0]
+    );
     // Once it has acted: black letters, so a black line.
     assert_eq!(
         line(Player, (15, 30), true, true),
@@ -226,7 +232,7 @@ fn a_picked_out_or_struck_unit_is_flipped_and_a_fallen_one_gone() {
             .collect::<Vec<_>>()
     };
     let base = unit(Faction::Enemy, Pos::new(0, 0));
-    assert!(invert(base.clone()).is_empty());
+    assert_eq!(invert(base.clone()), [] as [shuyi_ui::frame::Rect; 0]);
     assert_eq!(invert(base.clone().highlighted(true)), [TILE]);
     for (flash, flipped) in [(0.5, true), (1.0, true), (0.49, false), (f32::NAN, false)] {
         let struck = UnitView {

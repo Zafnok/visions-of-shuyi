@@ -433,10 +433,12 @@ mod tests {
     /// in the `.pdx`).
     fn manifest() -> AudioManifest {
         let mut m = AudioManifest::default();
-        let sound = |files: &[&str], volume| SoundCue {
-            files: files.iter().map(|f| (*f).to_owned()).collect(),
-            volume,
-            credit: CreditRef::Own,
+        let sound = |files: &[&str], volume| {
+            SoundCue::new(
+                files.iter().map(|f| (*f).to_owned()).collect(),
+                volume,
+                CreditRef::Own,
+            )
         };
         m.sounds
             .insert("click".into(), sound(&["sfx/click.wav"], 50));
@@ -540,7 +542,7 @@ mod tests {
             audio.take_warnings(),
             ["sound \"step\": audio/sfx/step_b is not in the .pdx"]
         );
-        assert!(audio.take_warnings().is_empty());
+        assert_eq!(audio.take_warnings(), [] as [std::string::String; 0]);
     }
 
     #[test]
@@ -583,7 +585,7 @@ mod tests {
                 .iter()
                 .all(|c| *c == Call::Play(0, "audio/sfx/step_a".into(), 1.0))
         );
-        assert!(audio.take_warnings().is_empty());
+        assert_eq!(audio.take_warnings(), [] as [std::string::String; 0]);
     }
 
     #[test]

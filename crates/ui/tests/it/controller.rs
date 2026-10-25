@@ -174,7 +174,7 @@ fn the_lord_fights_the_near_brigand_with_a_pad() {
     with_pad.pad("South South South East South").wait(0.5);
     assert_eq!(as_keys(&mut with_pad), with_keys.snapshot());
     assert_eq!(with_pad.sounds(), with_keys.sounds());
-    assert!(!with_pad.sounds().is_empty());
+    assert_ne!(with_pad.sounds(), [] as [std::string::String; 0]);
 }
 
 #[test]
@@ -234,7 +234,7 @@ fn a_button_ends_the_titles_wait() {
     let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
-    assert!(h.sounds().is_empty());
+    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
     assert_eq!(as_keys(&mut h), title().snapshot());
     // The title's help names the pad's buttons from then on.
     assert!(shows(&h, "A select"));

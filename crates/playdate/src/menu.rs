@@ -107,7 +107,7 @@ mod tests {
     fn titles_say_which_names_changed() {
         let mut titles = Titles::default();
         assert_eq!(titles.update(["A", "B", "C"]), [0, 1, 2]);
-        assert!(titles.update(["A", "B", "C"]).is_empty());
+        assert_eq!(titles.update(["A", "B", "C"]), [] as [usize; 0]);
         assert_eq!(titles.update(["A", "b", "C"]), [1]);
         assert_eq!(titles.get(1), "b");
         assert_eq!(titles.get(9), "");

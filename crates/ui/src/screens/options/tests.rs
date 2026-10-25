@@ -301,7 +301,7 @@ fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
     // Left stops at Full; right steps to Short, then None, and stops.
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Full));
-    assert!(sounds(&mut c).is_empty());
+    assert_eq!(sounds(&mut c), [] as [std::string::String; 0]);
     assert!(!s.changed(&c));
     press(&mut s, &mut c, &[Action::CursorRight]);
     assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Short));
@@ -349,7 +349,7 @@ fn layout_and_key_bindings_open_their_screens() {
         assert_eq!(press(&mut on(row), &mut c, &keys), "None");
     }
     assert_eq!(*c.settings(), before);
-    assert!(sounds(&mut c).is_empty());
+    assert_eq!(sounds(&mut c), [] as [std::string::String; 0]);
 }
 
 #[test]

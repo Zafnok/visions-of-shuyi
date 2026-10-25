@@ -875,7 +875,7 @@ detached
                 elsewhere.display()
             ))
         );
-        assert!(lines.is_empty());
+        assert_eq!(lines, [] as [std::string::String; 0]);
         assert!(scratch.target("merged").is_dir());
     }
 

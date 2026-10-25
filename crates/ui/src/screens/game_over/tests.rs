@@ -143,7 +143,10 @@ fn a_press_ends_the_animation_and_does_nothing_else() {
     s.update(&mut c, &FrameInput::new(vec![Action::Confirm], 0.1, vec![]));
     assert_eq!(s.progress(), FULL);
     // No sound for the skip.
-    assert!(c.audio.take().is_empty());
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
 }
 
 /// The flow's way to the finished screen (back from the rewind screen).

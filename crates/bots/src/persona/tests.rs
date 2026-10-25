@@ -688,7 +688,10 @@ fn order_offers_each_ready_unit_its_advance() {
         &wait_at(6),
         &mut advances,
     );
-    assert!(advances.is_empty());
+    assert_eq!(
+        advances,
+        [] as [(trpg_core::UnitId, i64, trpg_core::Command); 0]
+    );
     let mut goals = Goals::of(&s).unwrap();
     advance(
         &s,
@@ -906,7 +909,10 @@ fn hold_and_advance_keep_each_units_nearest_the_first_on_a_tie() {
         &wait(1, 0),
         &mut advances,
     );
-    assert!(advances.is_empty());
+    assert_eq!(
+        advances,
+        [] as [(trpg_core::UnitId, i64, trpg_core::Command); 0]
+    );
     advance(
         &s,
         &mut goals,

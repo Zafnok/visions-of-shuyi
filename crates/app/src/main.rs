@@ -32,16 +32,11 @@ const _: () = assert!(
 /// The window: the console at 2x (1600x1024) plus a small margin, since the
 /// framebuffer can come out a pixel smaller than asked, which would drop
 /// to 1x. The icon is from `assets/icon/` (ticket 0902, `cargo xtask icon`).
-const WINDOW: Window = Window {
-    title: "Visions of Shuyi",
-    width: 1640,
-    height: 1064,
-    icon: Some(Icon {
-        small: include_bytes!("../../../assets/icon/icon-16.png"),
-        medium: include_bytes!("../../../assets/icon/icon-32.png"),
-        big: include_bytes!("../../../assets/icon/icon-64.png"),
-    }),
-};
+const WINDOW: Window = Window::new("Visions of Shuyi", 1640, 1064).with_icon(Some(Icon::new(
+    include_bytes!("../../../assets/icon/icon-16.png"),
+    include_bytes!("../../../assets/icon/icon-32.png"),
+    include_bytes!("../../../assets/icon/icon-64.png"),
+)));
 
 /// Where saves and settings are kept: never change it, or every player's
 /// saves are lost (`%APPDATA%/tactical-rpg`, `localStorage` keys under
@@ -50,27 +45,24 @@ const STORAGE_NAME: &str = "tactical-rpg";
 
 /// What the platform shell needs to know about the game.
 fn config() -> AppConfig {
-    AppConfig {
-        window: WINDOW,
-        storage_name: STORAGE_NAME,
-        files: bundle::bytes,
-        font_png: font::ATLAS_PNG_PATH,
-        sounds: trpg_content::audio::files(None),
-        voices: Some(VoiceFiles {
-            folder: voice::VOICE_DIR,
-            lang: voice::SOURCE_LANG,
-            manifest: voice::MANIFEST_FILE,
-        }),
-        text_input: None,
-    }
+    let mut config = AppConfig::new(
+        WINDOW,
+        STORAGE_NAME,
+        bundle::bytes,
+        font::ATLAS_PNG_PATH,
+        trpg_content::audio::files(None),
+    );
+    config.voices = Some(VoiceFiles::new(
+        voice::VOICE_DIR,
+        voice::SOURCE_LANG,
+        voice::MANIFEST_FILE,
+    ));
+    config
 }
 
 /// What the game's frames are painted with: its font atlas and pictures.
 fn look(game: &Shuyi) -> Look<'_> {
-    Look {
-        font: &game.content.font,
-        images: &game.content.images,
-    }
+    Look::new(&game.content.font, &game.content.images)
 }
 
 /// The game on the platform `setup` describes: at the title, or on the

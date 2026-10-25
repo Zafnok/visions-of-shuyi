@@ -227,7 +227,7 @@ fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
     assert_eq!(text_row(&buf), "The rain had");
     assert_eq!(buf.get(4, 23).unwrap().fg, p.get(UiColor::TextDim));
     // Nobody is up yet.
-    assert!(buf.sprites().is_empty());
+    assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     assert_eq!(row(&buf, 19).trim(), "");
 }
 
@@ -349,7 +349,7 @@ fn a_talk_shot_without_its_scene_or_its_boxes_is_blank() {
             assert_eq!(buf.get(x, y), Some(&blank), "({x}, {y})");
         }
     }
-    assert!(buf.items().is_empty());
+    assert_eq!(buf.items(), []);
 }
 
 #[test]
@@ -484,7 +484,7 @@ fn a_characters_shot_draws_each_face_in_its_frame_over_its_name() {
     // Before anyone is in, the screen is empty; then the lead's frame
     // comes in at the right edge.
     let empty = draw(&ctx, &player, 10.0);
-    assert!(empty.sprites().is_empty());
+    assert_eq!(empty.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     assert_eq!(row(&empty, 6).trim(), "");
     let entering = draw(&ctx, &player, 10.1);
     assert_eq!(row(&entering, 6).trim_start(), "╔══");
@@ -540,5 +540,5 @@ fn a_characters_shot_with_nobody_is_blank() {
     let player = player(&ctx);
     assert_eq!(player.faces(2), Some(&[][..]));
     assert_eq!(player.frame(&ctx, 12.0, SCREEN), Frame::Blank);
-    assert!(draw(&ctx, &player, 12.0).items().is_empty());
+    assert_eq!(draw(&ctx, &player, 12.0).items(), []);
 }

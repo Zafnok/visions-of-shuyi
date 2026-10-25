@@ -463,7 +463,7 @@ fn confirm_on_an_enemy_toggles_its_range() {
     h.keys("Right Right Right Right Right Up Up Up");
     assert_eq!(panel(&h)[4], "Brigand");
     let reach = Pos::new(8, 7);
-    assert!(h.tints_at(reach).is_empty());
+    assert_eq!(h.tints_at(reach), [] as [trpg_ui::map_view::RangeName; 0]);
     h.keys("f");
     assert_eq!(h.tints_at(reach), [range::ATTACK], "(8, 7) is in its range");
     assert!(
@@ -472,9 +472,9 @@ fn confirm_on_an_enemy_toggles_its_range() {
         help(&h)
     );
     h.keys("f");
-    assert!(h.tints_at(reach).is_empty());
+    assert_eq!(h.tints_at(reach), [] as [trpg_ui::map_view::RangeName; 0]);
     h.keys("f d");
-    assert!(h.tints_at(reach).is_empty());
+    assert_eq!(h.tints_at(reach), [] as [trpg_ui::map_view::RangeName; 0]);
     assert_eq!(h.top_screen(), "battle");
 }
 

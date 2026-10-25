@@ -280,5 +280,8 @@ fn an_attacker_tries_what_it_has_equipped_first_then_its_other_weapons() {
     // Nothing to attack with: nothing to try.
     unit.loadout.weapons = Default::default();
     unit.loadout.equipped = None;
-    assert!(crate::cinematic::combat::attacks(&unit, BRIGAND).is_empty());
+    assert_eq!(
+        crate::cinematic::combat::attacks(&unit, BRIGAND),
+        [] as [trpg_core::UnitAction; 0]
+    );
 }

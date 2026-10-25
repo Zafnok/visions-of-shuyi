@@ -658,13 +658,19 @@ completed:
             ticket("0100", Folder::Done, "done", &[]),
             ticket("0101", Folder::Open, "todo", &["0100"]),
         ];
-        assert!(check_blocked_by_exists(&tickets).is_empty());
+        assert_eq!(
+            check_blocked_by_exists(&tickets),
+            [] as [std::string::String; 0]
+        );
     }
 
     #[test]
     fn an_engine_id_is_accepted_without_a_lookup() {
         let tickets = vec![ticket("0101", Folder::Open, "todo", &["engine#1234"])];
-        assert!(check_blocked_by_exists(&tickets).is_empty());
+        assert_eq!(
+            check_blocked_by_exists(&tickets),
+            [] as [std::string::String; 0]
+        );
     }
 
     #[test]
@@ -731,7 +737,10 @@ completed:
     #[test]
     fn pr_branch_ok_when_ticket_is_done() {
         let tickets = vec![ticket("0304", Folder::Done, "done", &[])];
-        assert!(check_pr_branch(&tickets, "t0304-pathfinding").is_empty());
+        assert_eq!(
+            check_pr_branch(&tickets, "t0304-pathfinding"),
+            [] as [std::string::String; 0]
+        );
     }
 
     #[test]
@@ -753,8 +762,14 @@ completed:
     #[test]
     fn pr_branch_ignores_non_ticket_branches() {
         let tickets: Vec<Ticket> = Vec::new();
-        assert!(check_pr_branch(&tickets, "main").is_empty());
-        assert!(check_pr_branch(&tickets, "dependabot/cargo/foo-1.2.3").is_empty());
+        assert_eq!(
+            check_pr_branch(&tickets, "main"),
+            [] as [std::string::String; 0]
+        );
+        assert_eq!(
+            check_pr_branch(&tickets, "dependabot/cargo/foo-1.2.3"),
+            [] as [std::string::String; 0]
+        );
     }
 
     #[test]
@@ -820,7 +835,7 @@ completed:
 
         let errors = run(&root, None, false);
 
-        assert!(!errors.is_empty());
+        assert_ne!(errors, [] as [std::string::String; 0]);
         assert!(
             errors
                 .iter()

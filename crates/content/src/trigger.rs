@@ -162,9 +162,8 @@ mod tests {
     }
 
     fn dialogue(ids: &[&str]) -> DialogueTable {
-        DialogueTable {
-            scenes: ids
-                .iter()
+        DialogueTable::new(
+            ids.iter()
                 .map(|id| {
                     let scene = Scene {
                         id: (*id).into(),
@@ -173,8 +172,7 @@ mod tests {
                     ((*id).into(), scene)
                 })
                 .collect(),
-            ..DialogueTable::default()
-        }
+        )
     }
 
     fn trigger(when: TriggerWhen, scene: &str) -> Trigger {

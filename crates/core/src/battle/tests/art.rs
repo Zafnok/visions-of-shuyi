@@ -785,7 +785,10 @@ fn sidestep_is_a_stance_from_this_combat_until_the_next_own_phase() {
         source: EffectSource::Art(aid("sidestep")),
     }));
     assert_eq!(s.phase(), Phase::Player);
-    assert!(s.unit(UnitId(1)).unwrap().effects.is_empty());
+    assert_eq!(
+        s.unit(UnitId(1)).unwrap().effects,
+        [] as [crate::skill::TimedEffect; 0]
+    );
 }
 
 #[test]

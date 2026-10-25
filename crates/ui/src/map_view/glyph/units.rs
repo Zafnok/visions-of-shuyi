@@ -300,7 +300,7 @@ mod tests {
             b.get(2, 1),
             Some(&Cell::new(',', bg.lerp(terrain, 0.5), bg))
         );
-        assert!(b.overlays().is_empty());
+        assert_eq!(b.overlays(), [] as [shuyi_ui::frame::Overlay; 0]);
         // Gone: the tile as it was.
         let b = fading(1.0);
         let mut plain = GlyphBuffer::new(4, 2, Cell::new('.', terrain, bg));

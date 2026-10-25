@@ -331,7 +331,10 @@ fn each_page_says_what_it_shows_as_far_as_it_has_played() {
         ("LEVEL UP!", "Test Lord", "Lv 1 → 2")
     );
     assert_eq!(g.placeholder, "portrait");
-    assert!(g.stats.is_empty());
+    assert_eq!(
+        g.stats,
+        [] as [crate::screens::battle::view::StatGainView; 0]
+    );
     pb.tick(T.level_intro + T.stat_reveal, false);
     let Some(ProgressView::Gains(g)) = shown(&pb) else {
         panic!()

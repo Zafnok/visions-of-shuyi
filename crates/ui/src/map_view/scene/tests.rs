@@ -116,7 +116,7 @@ fn tints_go_on_visible_tiles_in_the_order_laid_on() {
     assert_eq!(s.tints_at(p(3, 2)), [range::DANGER, range::MOVE]);
     assert_eq!(s.tinted(range::DANGER), [p(1, 1), p(3, 2)]);
     assert_eq!(s.tinted(range::MOVE), [p(2, 1), p(3, 2)]);
-    assert!(s.tinted(range::ATTACK).is_empty());
+    assert_eq!(s.tinted(range::ATTACK), [] as [trpg_core::Pos; 0]);
 }
 
 #[test]
@@ -287,11 +287,7 @@ fn to_text_lists_tiles_units_cursor_and_path() {
     lord.effects.bonus = true;
     lord.highlight = true;
     s.push_unit(lord);
-    s.cursor = Some(CursorView {
-        pos: p(1, 3),
-        brightness: 0.756,
-        style: CursorStyle::Corners,
-    });
+    s.cursor = Some(CursorView::new(p(1, 3), 0.756, CursorStyle::Corners));
     s.path = vec![p(1, 3), p(1, 2)];
     assert_eq!(
         s.to_text(&TerrainLooks(display)),

@@ -9,14 +9,12 @@ use crate::glyph_buffer::{Cell, Layer, Rect, Sprite};
 const BLANK: Cell = Cell::new(' ', Rgb::new(200, 200, 200), Rgb::new(0, 0, 0));
 
 fn size(width: u32, height: u32) -> ImageInfo {
-    ImageInfo { width, height }
+    ImageInfo::new(width, height)
 }
 
 /// A portrait whose one expression, `neutral`, is a `width × height` image.
 fn portrait(width: u32, height: u32) -> Portrait {
-    let table = ImageTable {
-        images: [("portraits/t/neutral.png", size(width, height))].into(),
-    };
+    let table = ImageTable::new([("portraits/t/neutral.png", size(width, height))].into());
     let image = table.id("portraits/t/neutral.png").unwrap();
     Portrait {
         character: "t".to_owned(),

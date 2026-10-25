@@ -21,11 +21,11 @@ use crate::settings::MapZoom;
 /// palette, this game's terrains and its lights.
 pub fn with_looks<R>(ctx: &Ctx, paint: impl FnOnce(&Looks) -> R) -> R {
     let terrains = TerrainLooks(&ctx.game.content.terrain.display);
-    paint(&Looks {
-        palette: &ctx.palette,
-        terrains: &terrains,
-        lights: &ctx.game.content.lighting,
-    })
+    paint(&Looks::new(
+        &ctx.palette,
+        &terrains,
+        &ctx.game.content.lighting,
+    ))
 }
 
 /// Paints battle maps: a kit skin and the painter of this game's units

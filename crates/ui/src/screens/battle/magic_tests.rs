@@ -202,7 +202,10 @@ fn casting_with(
         let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
-        assert!(!menu.spells().is_empty());
+        assert_ne!(
+            menu.spells(),
+            [] as [crate::screens::battle::magic::SpellChoice; 0]
+        );
         if menu.focus() == at {
             break;
         }
@@ -344,8 +347,14 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     assert!(knows_spells(&s, MAGE));
     assert!(!knows_spells(&s, UnitId(1)));
     assert!(!knows_spells(&s, UnitId(99)));
-    assert!(spell_choices(&s, UnitId(1), p(3, 5)).is_empty());
-    assert!(spell_choices(&s, UnitId(99), p(3, 5)).is_empty());
+    assert_eq!(
+        spell_choices(&s, UnitId(1), p(3, 5)),
+        [] as [crate::screens::battle::magic::SpellChoice; 0]
+    );
+    assert_eq!(
+        spell_choices(&s, UnitId(99), p(3, 5)),
+        [] as [crate::screens::battle::magic::SpellChoice; 0]
+    );
     assert!(can_cast(&choices));
     assert!(!can_cast(&none[1..2]));
     assert!(!can_cast(&[]));
@@ -465,7 +474,10 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     let scene = s.scene(&c);
     let plain = BattleScreen::new(s.state().clone()).scene(&c);
     for (x, y) in [(1, 4), (2, 4)] {
-        assert!(plain.tints_at(p(x, y)).is_empty());
+        assert_eq!(
+            plain.tints_at(p(x, y)),
+            [] as [shuyi_ui::grid::RangeName; 0]
+        );
         assert_eq!(scene.tints_at(p(x, y)), [range::ATTACK]);
     }
     for (x, y) in [(1, 5), (0, 6)] {
@@ -617,9 +629,9 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
     let state = field(&c, 0);
     let choices = spell_choices(&state, MAGE, p(0, 4));
     assert_eq!(choices[1].active, Some(SkillId::new("overcast")));
-    assert!(choices[1].targets.is_empty());
+    assert_eq!(choices[1].targets, [] as [trpg_core::CastTarget; 0]);
     assert!(choices[1].blocked.is_some());
-    assert!(!choices[0].targets.is_empty());
+    assert_ne!(choices[0].targets, [] as [trpg_core::CastTarget; 0]);
     let menu = spell_menu(&state, Words::ENGLISH, MAGE, &choices);
     assert!(menu.items()[0].enabled);
     assert!(!menu.items()[1].enabled);
@@ -770,7 +782,10 @@ fn frost_names_the_ice_and_heal_changes_no_tile() {
     assert_eq!(targeting(&s).target(), on_unit(7));
     assert_eq!(preview(&s), None);
     let heal = casting(&mut c, state, 2);
-    assert!(targeting(&heal).tile_changes(heal.state()).is_empty());
+    assert_eq!(
+        targeting(&heal).tile_changes(heal.state()),
+        [] as [(trpg_core::Pos, trpg_core::TerrainId); 0]
+    );
     assert!(targeting(&heal).forecast().is_none());
 }
 
@@ -801,17 +816,17 @@ fn casting_fire_on_a_forest_sets_it_burning_with_a_flash() {
     assert_eq!(flashes(&scene, 1, 5), [1.0]);
     // The other forest is a forest again.
     assert_eq!(looks(&c, &scene, 0, 6), "forest");
-    assert!(flashes(&scene, 0, 6).is_empty());
+    assert_eq!(flashes(&scene, 0, 6), [] as [f32; 0]);
     wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
     let [half] = flashes(&s.scene(&c), 1, 5)[..] else {
         panic!("{:?}", s.flashes());
     };
     assert!((half - 0.5).abs() < 1e-6, "{half}");
     wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
-    assert!(s.flashes().is_empty());
+    assert_eq!(s.flashes(), []);
     let scene = s.scene(&c);
     assert_eq!(looks(&c, &scene, 1, 5), "burning");
-    assert!(flashes(&scene, 1, 5).is_empty());
+    assert_eq!(flashes(&scene, 1, 5), [] as [f32; 0]);
 }
 
 #[test]
@@ -893,7 +908,7 @@ fn a_fire_burning_out_flashes_too() {
         &[Action::NextUnit, Action::NextUnit, Action::Confirm],
     );
     wait(&mut s, &mut c, 1.0);
-    assert!(s.flashes().is_empty());
+    assert_eq!(s.flashes(), []);
     // The enemy's phase passes; the fire burns out as the player's starts.
     s.apply(&Command::EndPhase);
     through_ai_phases(&mut s, &mut c, 0.01);
@@ -937,7 +952,7 @@ fn burning_arrival(c: &Ctx, hp: StatValue) -> BattleState {
 fn a_fire_burning_out_under_a_unit_shows_the_damage() {
     let mut c = ctx();
     let mut s = BattleScreen::new(burning_arrival(&c, 12));
-    assert!(s.popups().is_empty());
+    assert_eq!(s.popups(), []);
     // Nobody acts: the fire burns out as the player's phase starts.
     s.apply(&Command::EndPhase);
     assert_eq!(s.state().phase(), Phase::Player);
@@ -983,7 +998,7 @@ fn a_fire_that_burns_nothing_off_shows_no_popup() {
     s.apply(&Command::EndPhase);
     assert_eq!(terrain(&c, s.state(), 1, 5), "burnt");
     assert_eq!(s.state().unit(UnitId(99)).unwrap().hp, 1);
-    assert!(s.popups().is_empty());
+    assert_eq!(s.popups(), []);
 }
 
 #[test]
@@ -1016,7 +1031,10 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
     assert_eq!(text(&buf, 1, 30, 40), "Heal on Test Knight: HP 2 → 18");
     // The ally is tinted as a heal target.
     let plain = BattleScreen::new(s.state().clone()).scene(&c);
-    assert!(plain.tints_at(p(0, 5)).is_empty());
+    assert_eq!(
+        plain.tints_at(p(0, 5)),
+        [] as [shuyi_ui::grid::RangeName; 0]
+    );
     assert_eq!(s.scene(&c).tints_at(p(0, 5)), [range::HEAL]);
     step(&mut s, &mut c, &[Action::Confirm]);
     let state = s.state();
@@ -1071,7 +1089,7 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
         assert_eq!(s.mode(), &Mode::default());
         assert_eq!(s.state(), &before);
         assert_eq!(s.history().len(), 0);
-        assert!(s.flashes().is_empty());
+        assert_eq!(s.flashes(), []);
     }
 }
 
@@ -1200,7 +1218,10 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
             .iter()
             .all(|i| crate::widgets::menu::text_of(&i.label).is_empty())
     );
-    assert!(equip_choices(&state, UnitId(99)).is_empty());
+    assert_eq!(
+        equip_choices(&state, UnitId(99)),
+        [] as [crate::screens::battle::items::EquipChoice; 0]
+    );
     // Fire with a single use, spent on the forest: dimmed in both lists,
     // and with Frost alone there is nothing to choose in Equip.
     let mut c = ctx();
@@ -1232,7 +1253,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     );
     assert!(!menu.items()[0].enabled);
     let spells = plain_choices(&state, MAGE, p(0, 4));
-    assert!(spells[0].targets.is_empty());
+    assert_eq!(spells[0].targets, [] as [trpg_core::CastTarget; 0]);
     let list = spell_menu(&state, Words::ENGLISH, MAGE, &spells);
     assert_eq!(
         crate::widgets::menu::text_of(&list.items()[0].label),
@@ -1263,7 +1284,10 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
         "{shown:?}"
     );
     // A mage has no affinities: no heading.
-    assert!(info_of(&s, &c).affinities.is_empty());
+    assert_eq!(
+        info_of(&s, &c).affinities,
+        [] as [(std::string::String, std::string::String); 0]
+    );
     // The elemental: its affinities, under its (empty) weapon ranks.
     s.cursor.jump(p(1, 4));
     step(&mut s, &mut c, &[Action::Cancel]);
@@ -1378,7 +1402,7 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     let scene = s.scene(&c);
     assert_eq!(units(&s), [p(1, 4), p(2, 4)]);
     assert_eq!(scene.tinted(range::ATTACK), units(&s));
-    assert!(scene.tinted(range::HEAL).is_empty());
+    assert_eq!(scene.tinted(range::HEAL), [] as [trpg_core::Pos; 0]);
     let burning = c.game.content.terrain.display.id_of("burning");
     assert!(burning.is_some());
     assert_eq!(scene.tile(p(1, 5)).unwrap().becomes, burning);
@@ -1392,7 +1416,7 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     let scene = heal.scene(&c);
     assert_eq!(units(&heal), [p(0, 5)]);
     assert_eq!(scene.tinted(range::HEAL), units(&heal));
-    assert!(scene.tinted(range::ATTACK).is_empty());
+    assert_eq!(scene.tinted(range::ATTACK), [] as [trpg_core::Pos; 0]);
     assert_eq!(changing(&scene), 0);
     // Fire cast on the forest at (1, 5): it burns, and flashes for a while.
     step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);
@@ -1414,7 +1438,7 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     assert_eq!(strengths.len(), 1);
     assert!((strengths[0] - 0.5).abs() < 1e-6, "{strengths:?}");
     wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
-    assert!(flashing(&s, &c).is_empty());
+    assert_eq!(flashing(&s, &c), [] as [f32; 0]);
 }
 
 // ---- Pointing at an enemy to cast at it (0430) ------------------------------------
@@ -1764,7 +1788,10 @@ fn cinder_oath_shows_no_counter_in_chapter_1() {
         let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
-        assert!(!menu.spells().is_empty());
+        assert_ne!(
+            menu.spells(),
+            [] as [crate::screens::battle::magic::SpellChoice; 0]
+        );
         if menu.focus() == oath {
             break;
         }

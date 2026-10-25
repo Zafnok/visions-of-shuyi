@@ -138,7 +138,7 @@ mod tests {
                 "  reach the bridge.",
             ]
         );
-        assert!(unwrap_notes(&[]).is_empty());
+        assert_eq!(unwrap_notes(&[]), [] as [std::string::String; 0]);
     }
 
     #[test]

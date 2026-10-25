@@ -168,7 +168,13 @@ fn tags_are_read_with_their_attributes() {
     assert_eq!(attribute(14, "id"), Some("6"));
     assert_eq!(tags[2].1.len(), 0);
     // No element, a bare one, and an attribute cut short.
-    assert!(super::tags("no tags").is_empty());
+    assert_eq!(
+        super::tags("no tags"),
+        [] as [(
+            std::string::String,
+            std::collections::BTreeMap<std::string::String, std::string::String>
+        ); 0]
+    );
     assert_eq!(super::tags("<a/>")[0], ("a".to_owned(), BTreeMap::new()));
     assert!(super::tags("<a b=\"c>")[0].1.is_empty());
     assert_eq!(unescape("&lt;a&gt; &apos;b&apos; &amp;lt;"), "<a> 'b' &lt;");

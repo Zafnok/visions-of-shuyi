@@ -221,7 +221,7 @@ mod tests {
             ]
         );
         // Only sprites: no rectangles stand in for a picture.
-        assert!(buf.overlays().is_empty());
+        assert_eq!(buf.overlays(), [] as [shuyi_ui::frame::Overlay; 0]);
     }
 
     #[test]
@@ -255,7 +255,7 @@ mod tests {
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
         let stay = screen.update(&mut ctx, &frame(&[Action::Confirm, Action::CursorDown]));
         assert!(matches!(stay, Transition::None));
-        assert!(ctx.audio.pending().is_empty());
+        assert_eq!(ctx.audio.pending(), []);
         let pop = screen.update(&mut ctx, &frame(&[Action::Confirm, Action::Cancel]));
         assert!(matches!(pop, Transition::Pop));
         let sounds = ctx.audio.take();

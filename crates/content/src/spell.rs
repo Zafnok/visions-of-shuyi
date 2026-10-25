@@ -458,19 +458,22 @@ mod tests {
         let heal = "id: \"x\", name: \"X\", kind: Heal(heal_power: 0), element: None, range: (1, 1), uses: 1";
         bad(heal, "spell \"x\": heal_power must be at least 1");
         bad(&with("id: \"x\"", "id: \"\""), "a spell id is empty");
-        assert!(check(&one(&heal.replace("power: 0", "power: 1"))).is_empty());
+        assert_eq!(
+            check(&one(&heal.replace("power: 0", "power: 1"))),
+            [] as [std::string::String; 0]
+        );
         // Boundaries that are fine: min == max, 1 use, zeros.
-        assert!(
+        assert_eq!(
             check(&one(
                 &with("range: (1, 2)", "range: (2, 2)").replace("uses: 3", "uses: 1")
-            ))
-            .is_empty()
+            )),
+            [] as [std::string::String; 0]
         );
-        assert!(
+        assert_eq!(
             check(&one(&with("might: 1", "might: 0")
                 .replace("hit: 2", "hit: 0")
-                .replace("crit: 3", "crit: 0")))
-            .is_empty()
+                .replace("crit: 3", "crit: 0"))),
+            [] as [std::string::String; 0]
         );
     }
 
@@ -493,7 +496,7 @@ mod tests {
         );
         // No damage at all is fine.
         let harmless = burn.replace("damage: 5", "damage: 0");
-        assert!(check(&with(&harmless)).is_empty());
+        assert_eq!(check(&with(&harmless)), [] as [std::string::String; 0]);
         // Dropped without a terrain table (the terrain file failed).
         let t = from_source("s.ron", &with(burn), None).unwrap_or_default();
         assert_eq!(
@@ -596,7 +599,7 @@ mod tests {
         let line = bundle::file(CLASSES_PATH)
             .and_then(|src| line_of(src, &format!("id: \"{}\"", id.0)))
             .unwrap_or(0);
-        assert!(!mage.spells.is_empty());
+        assert_ne!(mage.spells, [] as [(u8, trpg_core::SpellId); 0]);
         assert!(
             first.starts_with(&format!("assets/data/classes.ron:{line}: ")),
             "{first}"

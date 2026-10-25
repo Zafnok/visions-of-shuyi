@@ -419,7 +419,7 @@ fn a_heal_in_a_combat_command_plays_as_the_outro_starts() {
         true,
         &state,
     );
-    assert!(cues.is_empty());
+    assert_eq!(cues, [] as [(f32, &str); 0]);
 }
 
 #[test]
@@ -444,7 +444,10 @@ fn a_spell_cast_outside_a_combat_plays_its_cast_sound_at_once() {
     assert_eq!(cues(by(Element::None)), []);
     // In a combat command the strikes cast instead.
     let fire = by(Element::Fire);
-    assert!(super::event_sounds::event_cues(&[fire], None, true, &state).is_empty());
+    assert_eq!(
+        super::event_sounds::event_cues(&[fire], None, true, &state),
+        [] as [(f32, &str); 0]
+    );
 }
 
 #[test]
@@ -539,5 +542,5 @@ fn a_cue_already_reached_does_not_play_again() {
     let (at, cue) = playback.cues()[0];
     assert_eq!(playback.sounds(at, false), [cue]);
     playback.tick(at, false);
-    assert!(playback.sounds(0.01, false).is_empty());
+    assert_eq!(playback.sounds(0.01, false), [] as [&str; 0]);
 }

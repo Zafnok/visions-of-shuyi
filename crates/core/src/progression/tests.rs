@@ -268,7 +268,7 @@ fn worked_example_three_natural_gains_skip_the_net() {
     let u = fresh();
     let (gains, totals) = roll(&u, &swordsman(), 2, [10, 20, 50, 30, 77, 30, 40], &[]);
     assert_eq!(gains, StatGains([1, 1, 0, 1, 0, 0, 0]));
-    assert!(totals.is_empty());
+    assert_eq!(totals, [] as [u32; 0]);
 }
 
 #[test]
@@ -300,7 +300,7 @@ fn stats_at_the_ceiling_and_zero_growth_never_gain_and_are_not_net_candidates() 
     let u = unit_in("swordsman", [18, 20, 0, 7, 8, 3, 1]);
     let (gains, totals) = roll_under(&ceilings, &u, &class, 0, [0, 0, 0, 99, 99, 99, 99], &[]);
     assert_eq!(gains, StatGains([1, 0, 0, 0, 0, 0, 0]));
-    assert!(totals.is_empty());
+    assert_eq!(totals, [] as [u32; 0]);
     // With the net, Str and Mag are left out of the total: 280 − 40 − 10.
     // 70 → Dex (70 HP, then Dex's 55 brings it to 125); then HP.
     let (gains, totals) = roll_under(&ceilings, &u, &class, 2, [99; 7], &[70, 0]);
@@ -325,7 +325,7 @@ fn a_stat_above_its_ceiling_never_grows() {
     let u = unit_in("swordsman", [50, 5, 0, 7, 8, 3, 1]);
     let (gains, totals) = roll_under(&tight(), &u, &swordsman(), 2, [0; 7], &[]);
     assert_eq!(gains, StatGains([0, 1, 1, 1, 1, 1, 1]));
-    assert!(totals.is_empty());
+    assert_eq!(totals, [] as [u32; 0]);
 }
 
 #[test]
@@ -392,7 +392,7 @@ fn net_is_limited_by_the_eligible_stats() {
     let capped = unit_in("swordsman", [40, 20, 10, 24, 25, 18, 15]);
     let (gains, totals) = roll_under(&tight(), &capped, &swordsman(), 3, [0; 7], &[]);
     assert_eq!(gains, StatGains::default());
-    assert!(totals.is_empty());
+    assert_eq!(totals, [] as [u32; 0]);
 }
 
 #[test]

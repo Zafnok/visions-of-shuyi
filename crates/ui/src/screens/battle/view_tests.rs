@@ -36,11 +36,11 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
     assert_eq!(view.scene, s.scene(&c));
     assert_eq!(view.menu, None);
-    assert!(view.popups.is_empty());
+    assert_eq!(view.popups, [] as [crate::screens::battle::HealPopup; 0]);
     assert_eq!(view.stage, None);
     assert_eq!(view.dialog, None);
     assert_eq!(view.notes, None);
-    assert!(view.noted.is_empty());
+    assert_eq!(view.noted, [] as [trpg_core::Pos; 0]);
     assert_eq!(view.banner, None);
     assert_eq!(view.tip, None);
     assert_eq!(view.message, None);
@@ -147,7 +147,7 @@ fn the_objective_page_shows_the_goal_and_the_turn_and_closes() {
     assert_eq!(page.turn, "Turn 1");
     // The Quick Battle has no notes.
     assert_eq!(page.notes, None);
-    assert!(s.view(&c).noted.is_empty());
+    assert_eq!(s.view(&c).noted, [] as [trpg_core::Pos; 0]);
     assert_eq!(s.view(&c).menu, None);
     step(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.view(&c).dialog, None);
@@ -295,14 +295,14 @@ fn the_battle_notes_show_at_the_start_with_their_units_and_close() {
         panic!("no notes");
     };
     assert_eq!(title, "BATTLE NOTES");
-    assert!(!lines.is_empty());
+    assert_ne!(lines, [] as [std::string::String; 0]);
     // The brigand the first note is about, where it stands.
     let brigand = s.state().unit(UnitId(3)).unwrap().pos;
     assert!(view.noted.contains(&brigand), "{:?}", view.noted);
     step(&mut s, &mut c, &[Action::Confirm]);
     let view = s.view(&c);
     assert_eq!(view.notes, None);
-    assert!(view.noted.is_empty());
+    assert_eq!(view.noted, [] as [trpg_core::Pos; 0]);
 }
 
 #[test]

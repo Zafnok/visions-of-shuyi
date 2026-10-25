@@ -90,7 +90,7 @@ fn targets_give_the_design_docs_bands_per_tier() {
     let targets = targets();
     let band = |tier, name: &str| match &targets.checks(tier, &[name])[0] {
         Check::Rate { band, .. } => (band.min, band.max),
-        Check::Median { .. } => unreachable!(),
+        _ => unreachable!(),
     };
     let rows = [
         (Difficulty::Easy, [(45, 70), (65, 90), (65, 90)]),
@@ -117,7 +117,7 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
         .iter()
         .map(|c| match c {
             Check::Rate { entrant, floor, .. } => (entrant.clone(), *floor),
-            Check::Median { .. } => unreachable!(),
+            _ => unreachable!(),
         })
         .collect();
     assert_eq!(
@@ -130,18 +130,16 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
     );
     assert_eq!(
         checks[3],
-        Check::Median {
-            entrant: "hardcore".to_owned(),
-            measure: "turns".to_owned(),
-            among: targets.success["hardcore"][..2].to_vec(),
-            want: Want::Lower,
-            than: "normal".to_owned(),
-        }
+        Check::median("hardcore", "turns", Want::Lower, "normal")
+            .with_among(targets.success["hardcore"][..2].to_vec())
     );
     // Without both of them, no faster check.
     assert_eq!(targets.checks(Difficulty::Normal, &["hardcore"]).len(), 1);
     assert_eq!(targets.checks(Difficulty::Normal, &["normal"]).len(), 1);
-    assert!(targets.checks(Difficulty::Normal, &["baseline"]).is_empty());
+    assert_eq!(
+        targets.checks(Difficulty::Normal, &["baseline"]),
+        [] as [shuyi_core::bots::playtest::Check; 0]
+    );
     assert!(Targets::from_ron("(success: {})").is_err());
 }
 

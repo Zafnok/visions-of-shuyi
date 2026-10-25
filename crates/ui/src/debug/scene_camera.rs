@@ -51,11 +51,7 @@ fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
     scene.path = [(2, 3), (3, 3), (4, 3), (4, 4), (5, 4)]
         .map(|(x, y)| Pos::new(x, y))
         .to_vec();
-    scene.cursor = Some(CursorView {
-        pos: Pos::new(7, 3),
-        brightness: 1.0,
-        style: CursorStyle::Corners,
-    });
+    scene.cursor = Some(CursorView::new(Pos::new(7, 3), 1.0, CursorStyle::Corners));
     MapPicture::paint(ctx, &ctx.game.map_skin, &scene).map(|picture| picture.0.scene)
 }
 
@@ -134,7 +130,7 @@ mod tests {
         assert_ne!(scene.get(0, 0).unwrap().glyph, ' ');
         assert!(scene.backdrop().is_none());
         // The path and the cursor are rectangles on it.
-        assert!(!scene.overlays().is_empty());
+        assert_ne!(scene.overlays(), [] as [shuyi_ui::frame::Overlay; 0]);
         assert!(near(screen.centre(), (112.0, 64.0)));
         assert_eq!(screen.zoom(), 1);
         // The test tileset's tiles are 24 px: 336 × 192, in whole cells.
@@ -142,7 +138,7 @@ mod tests {
         let screen = scene_camera(&ctx);
         let scene = screen.picture().unwrap();
         assert_eq!((scene.width(), scene.height()), (42, 12));
-        assert!(!scene.sprites().is_empty());
+        assert_ne!(scene.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
         assert!(near(screen.centre(), (168.0, 96.0)));
     }
 

@@ -194,7 +194,7 @@ mod tests {
             .flat_map(|kind| Button::ALL.iter().map(move |&b| kind.button_name(b)))
             .chain(pad::DIRECTION_SETS.map(|(name, _)| name));
         for name in names {
-            assert!(!name.is_empty());
+            assert_ne!(name, "");
             for c in name.chars() {
                 assert!(
                     font.glyphs.contains_key(&c),

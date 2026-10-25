@@ -215,7 +215,7 @@ fn an_unkillable_unit_goes_down_with_kill_exp_to_the_striker() {
     assert_eq!(s.unit(UnitId(4)), None);
     let down = &s.down()[0];
     assert_eq!((down.id, down.pos, down.hp), (UnitId(4), p(2, 2), 0));
-    assert!(s.fallen().is_empty());
+    assert_eq!(s.fallen(), []);
     assert!(s.is_defeated(UnitId(4)));
     assert_eq!(s.outcome(), None);
 }
@@ -343,7 +343,7 @@ fn a_down_units_defeated_line_plays_and_it_stays_in_the_scenes() {
     assert!(matches!(&events[at - 1],
         Event::SceneTriggered { scene, present } if scene == "down" && present.contains(&c4)));
     // A downed unit is never recruited.
-    assert!(s.recruited().is_empty());
+    assert_eq!(s.recruited(), []);
     let events = end(&mut s);
     assert!(matches!(events.last(),
         Some(Event::SceneTriggered { scene, present }) if scene == "later" && present.contains(&c4)));

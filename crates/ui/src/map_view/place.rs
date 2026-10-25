@@ -85,7 +85,7 @@ mod tests {
         let content = trpg_content::load_embedded().unwrap();
         let place = Place::of_map(&content.maps["ch01"]);
         assert_eq!((place.tiles.width(), place.tiles.height()), (24, 16));
-        assert!(place.units.is_empty());
+        assert_eq!(place.units, [] as [crate::map_view::scene::UnitView; 0]);
         // A view smaller than the map: the tile in the middle.
         let scene = place.scene(p(12, 8), (10, 6));
         assert_eq!((scene.origin, scene.size), (p(7, 5), (10, 6)));
@@ -122,7 +122,7 @@ mod tests {
         place.units = setup.units.iter().map(UnitView::of).collect();
         let scene = place.scene(p(20, 2), (10, 6));
         // Only the units on the part shown.
-        assert!(!scene.units.is_empty());
+        assert_ne!(scene.units, [] as [crate::map_view::scene::UnitView; 0]);
         assert!(scene.units.len() < place.units.len());
         assert!(scene.units.iter().all(|u| scene.contains(u.pos)));
     }

@@ -62,11 +62,11 @@ None. Nick asked for this pin move once engine 2546, 2542 and 1134 land
 ## Scope
 
 **In:**
-- `cargo xtask engine-pin <commit>` to the engine's `main`: its newest
+- ~~`cargo xtask engine-pin <commit>` to the engine's `main`: its newest
   commit when the ticket is worked, at or past the commits that closed
-  engine#2546, engine#2542 and engine#1134.
-- Whatever the game needs to build and pass the gates on the new pin,
-  game side only, keeping every behaviour the same.
+  engine#2546, engine#2542 and engine#1134.~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
+- ~~Whatever the game needs to build and pass the gates on the new pin,
+  game side only, keeping every behaviour the same.~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
 - `cargo shuyi mcp install --yes` in the root, then commit what it
   writes: `.claude/settings.json` (new, with `MCP_TIMEOUT`) and
   `.mcp.json` if it changed. If the game has a `.claude/settings.json`
@@ -113,14 +113,16 @@ None. Nick asked for this pin move once engine 2546, 2542 and 1134 land
 
 ## Implementation steps
 
-1. `cargo xtask engine --off` if a local checkout is patched in.
-2. Read the bodies of the engine PRs since `3f2256d4`
+1. ~~`cargo xtask engine --off` if a local checkout is patched in.~~
+2. ~~Read the bodies of the engine PRs since `3f2256d4`
    (`gh api repos/Zafnok/shuyi-engine/compare/3f2256d4...main`, then each
-   PR) for API changes the game must follow.
-3. `cargo xtask engine-pin <engine main's commit>`.
-4. Build and run the gates (`run-gates` skill); fix what the new engine
+   PR) for API changes the game must follow.~~
+3. ~~`cargo xtask engine-pin <engine main's commit>`.~~
+4. ~~Build and run the gates (`run-gates` skill); fix what the new engine
    needs, game side only. If a snapshot changes, say why in the PR (the
-   engine ticket that changed it).
+   engine ticket that changed it).~~
+   Steps 1–4 done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`: the pin is past engine#2546, engine#2542
+   and engine#1134. Run the gates once more before the PR.
 5. `cargo shuyi mcp install --yes`; look at the diff it prints; commit
    its files.
 6. The `engine-change` skill's step 6, as in Scope.

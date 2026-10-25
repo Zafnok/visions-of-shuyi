@@ -23,10 +23,7 @@ fn picture(image: ImageId, (w, h): (u32, u32), faces: Facing, scale: (u32, u32))
     Battler {
         id: "t".to_owned(),
         image,
-        size: ImageInfo {
-            width: w,
-            height: h,
-        },
+        size: ImageInfo::new(w, h),
         faces,
         scale,
     }

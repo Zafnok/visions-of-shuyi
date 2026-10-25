@@ -25,56 +25,49 @@ use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiCol
 
 /// The game's `frame-png` options.
 const OPTIONS: [GameOption; 8] = [
-    GameOption {
-        flag: "--layout",
-        value: Some("right|left"),
-        help: "the key layout picked before (default right)",
-    },
-    GameOption {
-        flag: "--playdate",
-        value: None,
-        help: "the Playdate's screen: a 50×15 console in the Playdate's\n\
+    GameOption::new("--layout", "the key layout picked before (default right)")
+        .with_value(Some("right|left")),
+    GameOption::new(
+        "--playdate",
+        "the Playdate's screen: a 50×15 console in the Playdate's\n\
                palette, drawn black and white by the one-bit renderer,\n\
                with the one-bit pictures the Playdate's build makes (1040);\n\
                no keyboard and the Playdate's buttons, as on the device\n\
                (steer it with --pad)",
-    },
-    GameOption {
-        flag: "--map",
-        value: None,
-        help: "the battle's map alone over the whole screen, painted by\n\
+    ),
+    GameOption::new(
+        "--map",
+        "the battle's map alone over the whole screen, painted by\n\
                the game's map skin (with --playdate the Playdate's), with\n\
                no windows over it",
-    },
-    GameOption {
-        flag: "--prompt",
-        value: None,
-        help: "start as the game does (the title waits for a key or button)",
-    },
-    GameOption {
-        flag: "--tips",
-        value: None,
-        help: "show the guide's tips and lessons, as the game does",
-    },
-    GameOption {
-        flag: "--light",
-        value: Some("NAME"),
-        help: "fight every battle in this light of assets/data/lighting.ron,\n\
+    ),
+    GameOption::new(
+        "--prompt",
+        "start as the game does (the title waits for a key or button)",
+    ),
+    GameOption::new(
+        "--tips",
+        "show the guide's tips and lessons, as the game does",
+    ),
+    GameOption::new(
+        "--light",
+        "fight every battle in this light of assets/data/lighting.ron,\n\
                whatever its map and its battle file say",
-    },
+    )
+    .with_value(Some("NAME")),
     // engine-friction: engine#2540
-    GameOption {
-        flag: "--crank",
-        value: Some("DEGREES"),
-        help: "after the steps, wind the Playdate's crank that far in a frame\n\
+    GameOption::new(
+        "--crank",
+        "after the steps, wind the Playdate's crank that far in a frame\n\
                (backwards is negative), as its front end reports it",
-    },
-    GameOption {
-        flag: "--then-pad",
-        value: Some("BUTTONS"),
-        help: "after the steps (and a --crank given before it), press and\n\
+    )
+    .with_value(Some("DEGREES")),
+    GameOption::new(
+        "--then-pad",
+        "after the steps (and a --crank given before it), press and\n\
                release each button in turn, as --pad",
-    },
+    )
+    .with_value(Some("BUTTONS")),
 ];
 
 /// What `frame-png --help` adds about the game's pictures.
@@ -200,14 +193,14 @@ impl GameTools for Trpg {
 
     fn lang(&self) -> Result<GameLang, String> {
         let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
-        Ok(GameLang {
-            lang: (**content.lang).clone(),
-            variants: trpg_content::lang::RULES
+        Ok(GameLang::new(
+            (**content.lang).clone(),
+            trpg_content::lang::RULES
                 .variants
                 .iter()
                 .map(|&variant| variant.to_owned())
                 .collect(),
-        })
+        ))
     }
 }
 
@@ -223,11 +216,9 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
             After::Pad(buttons) => h.pad(buttons),
         };
     }
-    Ok(Shot {
-        image: picture(start, &h, scale)?,
-        shows: h.top_screen().to_owned(),
-        warning: cfg!(feature = "private-assets").then(|| BOUGHT_ART.to_owned()),
-    })
+    let mut shot = Shot::new(picture(start, &h, scale)?, h.top_screen());
+    shot.warning = cfg!(feature = "private-assets").then(|| BOUGHT_ART.to_owned());
+    Ok(shot)
 }
 
 /// The session (`cargo shuyi run`, `scene`, the MCP server's; ticket
@@ -249,12 +240,9 @@ fn scene(h: &Core) -> Result<Scene, String> {
             h.top_screen()
         )
     })?;
-    Ok(Scene {
-        screen: h.top_screen().to_owned(),
-        kind: "grid map".to_owned(),
-        text: harness::map_text(h),
-        data: battle_data(battle.state()),
-    })
+    let mut scene = Scene::new(h.top_screen(), "grid map", harness::map_text(h));
+    scene.data = battle_data(battle.state());
+    Ok(scene)
 }
 
 /// `state` as JSON: all of it but its map, which is the scene's text (JSON

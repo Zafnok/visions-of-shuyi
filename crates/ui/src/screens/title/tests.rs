@@ -114,7 +114,10 @@ fn menu_sounds() {
         ["menu_move"; 2]
     );
     // Nothing to back out of: Cancel is silent.
-    assert!(sounds_of(&mut t, &mut c, &[Cancel]).is_empty());
+    assert_eq!(
+        sounds_of(&mut t, &mut c, &[Cancel]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(sounds_of(&mut t, &mut c, &[Confirm]), ["menu_select"]);
 }
 
@@ -124,14 +127,20 @@ fn title_music_plays_on_show_and_again_after_a_quick_battle() {
     let mut c = ctx();
     let mut t = TitleScreen::with_quick_battle(&ctx());
     assert_eq!(music_of(&mut t, &mut c, &[]), [TITLE_MUSIC]);
-    assert!(music_of(&mut t, &mut c, &[CursorDown]).is_empty());
+    assert_eq!(
+        music_of(&mut t, &mut c, &[CursorDown]),
+        [] as [std::string::String; 0]
+    );
     let pool = c.game.content.audio.pools[QUICK_BATTLE_MUSIC_POOL].clone();
     let first = music_of(&mut t, &mut c, &[Confirm]);
     assert_eq!(first.len(), 1);
     assert!(pool.contains(&first[0]), "{first:?}");
     // Back on top after the battle: the title music again, once.
     assert_eq!(music_of(&mut t, &mut c, &[]), [TITLE_MUSIC]);
-    assert!(music_of(&mut t, &mut c, &[]).is_empty());
+    assert_eq!(
+        music_of(&mut t, &mut c, &[]),
+        [] as [std::string::String; 0]
+    );
 }
 
 /// New Game's battles change the music too, so the title asks for its
@@ -142,9 +151,15 @@ fn title_music_plays_again_after_new_game() {
     let mut t = TitleScreen::new(&ctx());
     assert_eq!(music_of(&mut t, &mut c, &[]), [TITLE_MUSIC]);
     // The mode screen keeps the title music: nothing asked.
-    assert!(music_of(&mut t, &mut c, &[Action::Confirm]).is_empty());
+    assert_eq!(
+        music_of(&mut t, &mut c, &[Action::Confirm]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(music_of(&mut t, &mut c, &[]), [TITLE_MUSIC]);
-    assert!(music_of(&mut t, &mut c, &[]).is_empty());
+    assert_eq!(
+        music_of(&mut t, &mut c, &[]),
+        [] as [std::string::String; 0]
+    );
 }
 
 #[test]
@@ -971,7 +986,10 @@ fn the_song_starts_again_after_the_skips_silence() {
     c.audio.take();
     c.music_clock = None;
     t.update(&mut c, &tick(16.7));
-    assert!(c.audio.take().is_empty());
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
     assert_eq!(playing(&t, &c), None);
     assert!((t.cinematic_time() - 133.7).abs() < 1e-3);
     // The end of the silence: the song, once, and the time at 0.
@@ -985,7 +1003,10 @@ fn the_song_starts_again_after_the_skips_silence() {
     assert!(t.cinematic_time().abs() < f32::EPSILON);
     assert_eq!(t.phase, Phase::FadingOut { f: 0.0 });
     t.update(&mut c, &tick(0.05));
-    assert!(c.audio.take().is_empty());
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
 }
 
 /// Any press with the menu up starts the 15 seconds again, and takes the
@@ -1152,7 +1173,10 @@ fn the_prompt_waits_without_a_cinematic() {
     let view = t.view(&c);
     assert_eq!((&view.cinematic, view.menu_opacity), (&None, FULL));
     assert!(view.prompt.is_some());
-    assert!(c.audio.take().is_empty());
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
     // The press: the song and the menu; the 15 seconds start now.
     c.key_prompt = KeyPrompt::Pressed;
     assert_eq!(music_of(&mut t, &mut c, &[Action::Confirm]), [TITLE_MUSIC]);

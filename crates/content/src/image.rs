@@ -65,10 +65,7 @@ mod tests {
         let card = table.id(TEST_CARD_PATH);
         assert_eq!(
             card.and_then(|id| table.info(id)),
-            Some(ImageInfo {
-                width: 16,
-                height: 16
-            })
+            Some(ImageInfo::new(16, 16))
         );
         assert_eq!(table.id(ATLAS_PNG_PATH), None);
         assert!(bundle::bytes(ATLAS_PNG_PATH).is_some());

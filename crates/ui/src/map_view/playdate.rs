@@ -40,10 +40,7 @@ pub use shuyi_ui::grid::glyph::style::FLASH_SHOWN;
 /// 24-tile map in the middle and room for the cursor's marks beside the
 /// first and last tile.
 pub const ONE_BIT: GlyphSkin = GlyphSkin {
-    colors: MapColors {
-        threat: "map_threat",
-        ..MAP_COLORS
-    },
+    colors: MapColors::new(MAP_COLORS.path, MAP_COLORS.cursor, "map_threat"),
     style: GlyphStyle {
         range: RangeLook::Fill {
             glyphs: "map_marked_glyph",

@@ -339,11 +339,7 @@ pub(crate) mod tests {
         for skin in skins {
             let mut scene = plains(&c);
             scene.push_unit(brigand(p(1, 1)));
-            scene.cursor = Some(CursorView {
-                pos: p(1, 1),
-                brightness: 1.0,
-                style: CursorStyle::Corners,
-            });
+            scene.cursor = Some(CursorView::new(p(1, 1), 1.0, CursorStyle::Corners));
             let mut buf = blank();
             skin.paint(&c, &scene, area, &mut buf);
             let before = buf.items().len();
@@ -619,11 +615,7 @@ pub(crate) mod tests {
         let black = c.palette.get(UiColor::Black);
         let painted_with = |skin: &MapSkin, pos, style, brightness| {
             let mut scene = plains(&c);
-            scene.cursor = Some(CursorView {
-                pos,
-                brightness,
-                style,
-            });
+            scene.cursor = Some(CursorView::new(pos, brightness, style));
             painted(&c, skin, &scene)
         };
         let buf = painted_with(&s, p(1, 1), CursorStyle::Corners, 1.0);
@@ -738,11 +730,7 @@ pub(crate) mod tests {
         enemy.effects.penalty = true;
         scene.push_unit(enemy);
         scene.path = vec![p(0, 0), p(0, 1)];
-        scene.cursor = Some(CursorView {
-            pos: p(0, 1),
-            brightness: 1.0,
-            style: CursorStyle::Corners,
-        });
+        scene.cursor = Some(CursorView::new(p(0, 1), 1.0, CursorStyle::Corners));
         let text = painted(&c, &s, &scene).to_snapshot(&c.palette);
         let items = text.split("--- overlays ---\n").nth(1).unwrap_or_default();
         assert_snapshot!(items);
@@ -828,27 +816,32 @@ pub(crate) mod tests {
         with: MapScene,
     }
 
+    /// The names of the fields at the top of `debug`, a struct's `{:#?}`.
+    fn fields(debug: &str) -> Vec<&str> {
+        debug
+            .lines()
+            .filter_map(|line| line.strip_prefix("    "))
+            .filter(|line| !line.starts_with(' '))
+            .filter_map(|line| line.split_once(':').map(|(name, _)| name))
+            .collect()
+    }
+
     /// Names every field of a scene, its tiles, its units and its cursor,
-    /// so a new one doesn't compile until it is listed here and given a
-    /// feature in [`features`], or the reason it has none.
+    /// so a new one fails (to compile, or this check) until it is listed
+    /// here and given a feature in [`features`], or the reason it has none.
+    /// The engine's scene and cursor can't be destructured outside it
+    /// (`#[non_exhaustive]`): their fields are checked by name.
     fn every_field_is_listed(scene: &MapScene) {
-        let MapScene {
-            origin: _, // where the tiles are: every feature moves with it
-            size: _,   // how many tiles: likewise
-            more: _,
-            tiles: _,
-            ranges: _,
+        let scene_fields = [
+            "origin", // where the tiles are: every feature moves with it
+            "size",   // how many tiles: likewise
+            "more", "tiles", "ranges",
             // Painted only by a tileset with layers, and one with other
             // looks: `the_ring_and_the_look_are_painted_by_a_tileset_
             // that_has_layers_and_looks`.
-            rim: _,
-            look: _,
-            units: _,
-            cursor: _,
-            path: _,
-            threat: _,
-            clock_ms: _,
-        } = scene;
+            "rim", "look", "units", "cursor", "path", "threat", "clock_ms",
+        ];
+        assert_eq!(fields(&format!("{scene:#?}")), scene_fields);
         let TileView {
             terrain: _,
             flashes: _,
@@ -877,21 +870,17 @@ pub(crate) mod tests {
             flash: _,
             marks: _,
         } = &scene.units[0];
-        let CursorView {
-            pos: _,
-            brightness: _,
-            style: _,
-        } = CursorView {
-            pos: p(0, 0),
-            brightness: 1.0,
-            style: CursorStyle::Corners,
-        };
+        let cursor = CursorView::new(p(0, 0), 1.0, CursorStyle::Corners);
+        assert_eq!(
+            fields(&format!("{cursor:#?}")),
+            ["pos", "brightness", "style"]
+        );
     }
 
     /// Every feature of a [`MapScene`], each as a scene without it and the
     /// same scene with it. Every field of the scene is listed below, so a
-    /// new one doesn't compile until it is listed here too, with a feature
-    /// or the reason it has none.
+    /// new one fails until it is listed here too, with a feature or the
+    /// reason it has none.
     fn features(c: &Ctx) -> Vec<Feature> {
         let display = &c.game.content.terrain.display;
         let mut base = plains(c);
@@ -954,11 +943,7 @@ pub(crate) mod tests {
             match style {
                 CursorStyle::Corners | CursorStyle::LargeCorners | CursorStyle::TileGlow => {}
             }
-            let at = move |brightness| CursorView {
-                pos: p(0, 1),
-                brightness,
-                style,
-            };
+            let at = move |brightness| CursorView::new(p(0, 1), brightness, style);
             out.push(feature("cursor", &move |s| s.cursor = Some(at(1.0))));
             let mut dim = feature("cursor brightness", &move |s| s.cursor = Some(at(0.5)));
             dim.without.cursor = Some(at(1.0));
@@ -1053,11 +1038,7 @@ pub(crate) mod tests {
         let mut scene = plains(&c);
         scene.tint([p(1, 0)], range::MOVE);
         scene.path = vec![p(0, 0), p(1, 0)];
-        scene.cursor = Some(CursorView {
-            pos: p(2, 1),
-            brightness: 1.0,
-            style: CursorStyle::Corners,
-        });
+        scene.cursor = Some(CursorView::new(p(2, 1), 1.0, CursorStyle::Corners));
         assert_eq!(
             s.tile_px(&scene, area, p(1, 1)),
             MapSkin::glyph().tile_px(&scene, area, p(1, 1))
@@ -1152,11 +1133,7 @@ pub(crate) mod tests {
         enemy.effects.penalty = true;
         scene.push_unit(enemy);
         scene.push_unit(brigand(p(2, 1)).highlighted(true));
-        scene.cursor = Some(CursorView {
-            pos: p(1, 1),
-            brightness: 1.0,
-            style: CursorStyle::Corners,
-        });
+        scene.cursor = Some(CursorView::new(p(1, 1), 1.0, CursorStyle::Corners));
         let mut buf = GlyphBuffer::new(10, 4, fill());
         s.paint(&c, &scene, Rect::new(2, 1, 6, 2), &mut buf);
         assert_snapshot!(buf.to_snapshot(&c.palette));

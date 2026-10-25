@@ -14,10 +14,7 @@ fn picture(c: &Ctx, (w, h): (u32, u32), faces: Facing, scale: (u32, u32)) -> Bat
     Battler {
         id: "t".to_owned(),
         image: c.game.content.battlers.battlers["default"].image,
-        size: ImageInfo {
-            width: w,
-            height: h,
-        },
+        size: ImageInfo::new(w, h),
         faces,
         scale,
     }

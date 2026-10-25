@@ -510,7 +510,7 @@ mod tests {
         // A unit off the view: nothing.
         let mut scene = plains(&c);
         scene.units.push(brigand(p(2, 0)));
-        assert!(self::items(&c, &scene).is_empty());
+        assert_eq!(self::items(&c, &scene), [] as [shuyi_ui::frame::Item; 0]);
     }
 
     #[test]
@@ -1129,7 +1129,7 @@ mod tests {
         let left = items(&c, &scene);
         assert_eq!((left.len(), sprites(&left).len()), (1, 1));
         scene.units[0].fade = 1.0;
-        assert!(items(&c, &scene).is_empty());
+        assert_eq!(items(&c, &scene), [] as [shuyi_ui::frame::Item; 0]);
         scene.units[0].fade = 0.49;
         assert_eq!(items(&c, &scene).len(), 5 + 1 + 1);
     }
@@ -1277,7 +1277,10 @@ mod tests {
         c.game.lead = LeadProfile::new("A", LeadGender::Male);
         assert_eq!(src(&c, &s, named.clone()).x, 48);
         assert_eq!(picture_ids(&c, &named), [id("lead_m"), id("lead")]);
-        assert!(picture_ids(&c, &brigand(p(0, 0))).is_empty());
+        assert_eq!(
+            picture_ids(&c, &brigand(p(0, 0))),
+            [] as [trpg_core::CharacterId; 0]
+        );
         // Nobody else goes by the lead's pictures.
         named.character = Some(lord.clone());
         assert_eq!(picture_ids(&c, &named), [lord]);

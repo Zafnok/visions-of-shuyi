@@ -89,7 +89,10 @@ fn the_key_flips_the_skins_zoom_and_saves_it() {
     // The battle and the cursor are untouched; nothing was heard or said.
     assert_eq!((s.state(), s.cursor().pos), (&state, cursor));
     assert_eq!(s.toast(), None);
-    assert!(c.audio.take().is_empty());
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
 }
 
 /// Under a skin that can't zoom the key does nothing: the saved zoom is

@@ -689,7 +689,7 @@ fn threats_are_the_hostile_units_whose_threat_area_holds_the_tile() {
     assert_eq!(s.threats(p(5, 0), &[(1, 1)]), [1, 2]);
     assert_eq!(s.threats(p(0, 0), &[(1, 1)]), [1]);
     // Nobody reaches with no weapon.
-    assert!(s.threats(p(5, 0), &[]).is_empty());
+    assert_eq!(s.threats(p(5, 0), &[]), [] as [u32; 0]);
     // An enemy asks about the players' side.
     let s = scene_as(&["@..p.e"], "foot", 2, Faction::Enemy);
     assert_eq!(s.threats(p(0, 0), &[(1, 1)]), [1]);
@@ -709,10 +709,10 @@ fn threats_count_the_unit_on_the_tile_asked_about_not_where_it_stands() {
     // doesn't reach a mover that stepped next to it.
     let s = scene(&["@.e"], "foot", 0);
     assert_eq!(s.threats(p(0, 0), &[(2, 2)]), [1]);
-    assert!(s.threats(p(1, 0), &[(2, 2)]).is_empty());
+    assert_eq!(s.threats(p(1, 0), &[(2, 2)]), [] as [u32; 0]);
     // The mover's old tile is free for the enemy to attack from.
     let s = scene(&["#####", "#.@e#", "#.###", "#####"], "foot", 1);
-    assert!(s.threats(p(1, 2), &[(1, 1)]).is_empty());
+    assert_eq!(s.threats(p(1, 2), &[(1, 1)]), [] as [u32; 0]);
     let s = scene(&["#####", "#.@e#", "#.###", "#####"], "foot", 2);
     assert_eq!(s.threats(p(1, 2), &[(1, 1)]), [1]);
 }
@@ -723,13 +723,13 @@ fn a_unit_that_never_moves_threatens_only_from_its_own_tile() {
     let mut s = scene(&["@...e"], "foot", 5);
     assert_eq!(s.threats(p(0, 0), &[(1, 2)]), [1]);
     s.units[1].ai = AiBehavior::Stationary;
-    assert!(s.threats(p(0, 0), &[(1, 2)]).is_empty());
-    assert!(s.threats(p(1, 0), &[(1, 2)]).is_empty());
+    assert_eq!(s.threats(p(0, 0), &[(1, 2)]), [] as [u32; 0]);
+    assert_eq!(s.threats(p(1, 0), &[(1, 2)]), [] as [u32; 0]);
     assert_eq!(s.threats(p(2, 0), &[(1, 2)]), [1]);
     assert_eq!(s.threats(p(3, 0), &[(1, 2)]), [1]);
     // Its minimum range counts too.
-    assert!(s.threats(p(3, 0), &[(2, 2)]).is_empty());
-    assert!(s.threats(p(3, 0), &[]).is_empty());
+    assert_eq!(s.threats(p(3, 0), &[(2, 2)]), [] as [u32; 0]);
+    assert_eq!(s.threats(p(3, 0), &[]), [] as [u32; 0]);
     // One that waits for someone to come within reach moves to attack.
     s.units[1].ai = AiBehavior::Guard;
     assert_eq!(s.threats(p(0, 0), &[(1, 2)]), [1]);

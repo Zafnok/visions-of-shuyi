@@ -91,7 +91,7 @@ fn opens_on_the_loadouts_tab_with_an_empty_pack() {
     assert_eq!(s.message(), None);
     assert!(!s.is_asking_leave());
     assert_eq!(s.pack_header(&c), "Pack 0/6");
-    assert!(s.packed().is_empty());
+    assert_eq!(s.packed(), [] as [(trpg_core::ItemId, usize); 0]);
     assert_eq!(
         s.spare(),
         [(ItemId::new("elixir"), 2), (ItemId::new("potion"), 6)]
@@ -311,7 +311,10 @@ fn cancel_goes_back_one_list_at_a_time() {
     }
     // Left and Right do nothing inside the loadouts.
     update(&mut s, &mut c, &[Confirm]);
-    assert!(sounds(&mut s, &mut c, &[CursorLeft, CursorRight]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[CursorLeft, CursorRight]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!((s.tab(), s.focus()), (Tab::Loadouts, Focus::Units));
     // The unit list wraps, and a new unit starts on its first slot.
     update(
@@ -352,7 +355,10 @@ fn pack_items_go_back_to_the_stock() {
     let mut s = screen(&c);
     // Nothing packed: Right stays on the stock.
     update(&mut s, &mut c, &[CursorRight, Confirm]);
-    assert!(sounds(&mut s, &mut c, &[CursorRight]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[CursorRight]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(s.focus(), Focus::Spare);
     update(&mut s, &mut c, &[CursorDown, Confirm, Confirm]);
     assert_eq!(s.packed(), [(potion(), 2)]);
@@ -367,7 +373,7 @@ fn pack_items_go_back_to_the_stock() {
     assert_eq!(s.focus(), Focus::Pack);
     // The last one out: back to the stock's list.
     update(&mut s, &mut c, &[Confirm]);
-    assert!(s.packed().is_empty());
+    assert_eq!(s.packed(), [] as [(trpg_core::ItemId, usize); 0]);
     assert_eq!(s.focus(), Focus::Spare);
     assert_eq!(s.setup().stock.count(&potion()), 6);
     assert_eq!(sounds(&mut s, &mut c, &[Cancel]), ["menu_cancel"]);
@@ -381,7 +387,7 @@ fn the_pack_tab_opens_on_the_pack_when_the_stock_has_no_consumables() {
     s.prep.setup.stock.items.retain(|id, _| *id != potion());
     update(&mut s, &mut c, &[CursorRight, Confirm, Confirm, Confirm]);
     // Both Elixirs packed, none left: the cursor moved to the pack.
-    assert!(s.spare().is_empty());
+    assert_eq!(s.spare(), [] as [(trpg_core::ItemId, u32); 0]);
     assert_eq!(s.focus(), Focus::Pack);
     update(&mut s, &mut c, &[Cancel, Confirm]);
     assert_eq!(s.focus(), Focus::Pack);
@@ -408,7 +414,10 @@ fn leaving_asks_first_and_only_when_allowed() {
 
     let mut s = PreparationsScreen::new(setup(&c), false);
     assert_eq!(s.prep().bench.len(), 1);
-    assert!(sounds(&mut s, &mut c, &[Cancel]).is_empty());
+    assert_eq!(
+        sounds(&mut s, &mut c, &[Cancel]),
+        [] as [std::string::String; 0]
+    );
     assert!(!s.is_asking_leave());
     assert!(!s.help(&c).contains("leave"));
 }
@@ -855,7 +864,10 @@ fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
     );
     assert_eq!(tab.spare.state, ListState::Idle);
     assert_eq!(tab.pack.title, "Pack 0/6");
-    assert!(tab.pack.rows.is_empty());
+    assert_eq!(
+        tab.pack.rows,
+        [] as [crate::screens::preparations::view::ConsumableRowView; 0]
+    );
     assert_eq!(tab.pack.state, ListState::Idle);
 
     // An Elixir and five Potions fill it; one more is refused.
@@ -936,7 +948,10 @@ fn the_view_of_an_empty_army_has_no_gear() {
         .retain(|u| u.faction != trpg_core::Faction::Player);
     s.prep.bench.clear();
     let view = s.view(&c);
-    assert!(loadouts(&view).units.rows.is_empty());
+    assert_eq!(
+        loadouts(&view).units.rows,
+        [] as [crate::screens::preparations::view::UnitRowView; 0]
+    );
     assert_eq!(loadouts(&view).gear, None);
 }
 

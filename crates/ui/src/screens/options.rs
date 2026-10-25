@@ -202,17 +202,17 @@ impl Row {
             Row::Theme => choice::<Theme>(self),
             Row::CombatAnimations => OptionRow::new(
                 self.key(),
-                RowValue::Toggle {
-                    get: |ctx| ctx.settings().game.combat_animations,
-                    set: |ctx, on| ctx.preview_settings(|s| s.game.combat_animations = on),
-                },
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.combat_animations,
+                    |ctx, on| ctx.preview_settings(|s| s.game.combat_animations = on),
+                ),
             ),
             Row::AutoEnd => OptionRow::new(
                 self.key(),
-                RowValue::Toggle {
-                    get: |ctx| ctx.settings().game.auto_end_turn,
-                    set: |ctx, on| ctx.preview_settings(|s| s.game.auto_end_turn = on),
-                },
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.auto_end_turn,
+                    |ctx, on| ctx.preview_settings(|s| s.game.auto_end_turn = on),
+                ),
             ),
             Row::Cursor => cursor_row(),
             Row::Layout => layout_row(),
@@ -233,22 +233,22 @@ impl Row {
 fn cursor_row() -> OptionRow {
     OptionRow::new(
         Row::Cursor.key(),
-        RowValue::Choice {
-            values: |ctx| cursor_styles(ctx).iter().map(|&s| cursor_key(s)).collect(),
-            get: |ctx| {
+        RowValue::choice(
+            |ctx| cursor_styles(ctx).iter().map(|&s| cursor_key(s)).collect(),
+            |ctx| {
                 let shown = shown_cursor_style(ctx);
                 cursor_styles(ctx)
                     .iter()
                     .position(|&s| s == shown)
                     .unwrap_or(0)
             },
-            set: |ctx, i| {
+            |ctx, i| {
                 let Some(&style) = cursor_styles(ctx).get(i) else {
                     return false;
                 };
                 ctx.preview_settings(|s| s.game.cursor_style = style)
             },
-        },
+        ),
     )
 }
 
@@ -256,14 +256,14 @@ fn cursor_row() -> OptionRow {
 fn layout_row() -> OptionRow {
     OptionRow::new(
         Row::Layout.key(),
-        RowValue::Action {
-            value: |ctx| {
+        RowValue::action(
+            |ctx| {
                 let layout = ctx.layout().map(|l| layout_picker::label(ctx, l));
                 Some(layout.unwrap_or_default().to_owned())
             },
-            confirm: |ctx| RowAction::Open(Box::new(layout_picker::change(ctx))),
-            help: |_| HELP_OPEN,
-        },
+            |ctx| RowAction::Open(Box::new(layout_picker::change(ctx))),
+            |_| HELP_OPEN,
+        ),
     )
 }
 
@@ -271,11 +271,11 @@ fn layout_row() -> OptionRow {
 fn key_bindings_row() -> OptionRow {
     OptionRow::new(
         Row::KeyBindings.key(),
-        RowValue::Action {
-            value: |_| None,
-            confirm: |ctx| RowAction::Open(Box::new(key_bindings::screen(ctx))),
-            help: |_| HELP_OPEN,
-        },
+        RowValue::action(
+            |_| None,
+            |ctx| RowAction::Open(Box::new(key_bindings::screen(ctx))),
+            |_| HELP_OPEN,
+        ),
     )
 }
 
@@ -283,20 +283,20 @@ fn key_bindings_row() -> OptionRow {
 fn game_mode_row() -> OptionRow {
     OptionRow::new(
         Row::GameMode.key(),
-        RowValue::Action {
-            value: |ctx| {
+        RowValue::action(
+            |ctx| {
                 let mode = ctx.game.campaign_mode?;
                 Some(ctx.text(mode_key(mode)).to_owned())
             },
-            confirm: switch_mode,
-            help: |ctx| {
+            switch_mode,
+            |ctx| {
                 if can_switch_mode(ctx) {
                     "options.help.switch"
                 } else {
                     "options.help.none"
                 }
             },
-        },
+        ),
     )
 }
 
@@ -304,20 +304,20 @@ fn game_mode_row() -> OptionRow {
 fn tutorial_row() -> OptionRow {
     OptionRow::new(
         Row::Tutorial.key(),
-        RowValue::Choice {
+        RowValue::choice(
             // None without a campaign: the row shows nothing.
-            values: |ctx| match ctx.game.campaign_tutorial {
+            |ctx| match ctx.game.campaign_tutorial {
                 Some(_) => TUTORIAL_LEVELS.map(tutorial_key).to_vec(),
                 None => Vec::new(),
             },
-            get: |ctx| {
+            |ctx| {
                 let level = ctx.game.campaign_tutorial;
                 TUTORIAL_LEVELS
                     .iter()
                     .position(|&l| Some(l) == level)
                     .unwrap_or(0)
             },
-            set: |ctx, i| {
+            |ctx, i| {
                 let to = TUTORIAL_LEVELS.get(i).copied();
                 let changed = to.is_some() && ctx.game.campaign_tutorial != to;
                 if changed {
@@ -325,7 +325,7 @@ fn tutorial_row() -> OptionRow {
                 }
                 changed
             },
-        },
+        ),
     )
     // The campaign's, not a setting: kept or put back with them.
     .unsaved()
@@ -335,9 +335,9 @@ fn tutorial_row() -> OptionRow {
 fn reset_tips_row() -> OptionRow {
     OptionRow::new(
         Row::ResetTips.key(),
-        RowValue::Action {
-            value: |_| None,
-            confirm: |_| {
+        RowValue::action(
+            |_| None,
+            |_| {
                 RowAction::Ask(options::Question {
                     key: Question::ResetTips.key(),
                     yes: |ctx| {
@@ -349,8 +349,8 @@ fn reset_tips_row() -> OptionRow {
                     },
                 })
             },
-            help: |_| "options.help.reset",
-        },
+            |_| "options.help.reset",
+        ),
     )
 }
 
@@ -475,19 +475,19 @@ impl Named for Theme {
 fn choice<T: Named>(row: Row) -> OptionRow {
     OptionRow::new(
         row.key(),
-        RowValue::Choice {
-            values: |_| T::ALL.iter().map(|&v| v.key()).collect(),
-            get: |ctx| {
+        RowValue::choice(
+            |_| T::ALL.iter().map(|&v| v.key()).collect(),
+            |ctx| {
                 let now = T::get(ctx.settings());
                 T::ALL.iter().position(|&v| v == now).unwrap_or(0)
             },
-            set: |ctx, i| {
+            |ctx, i| {
                 let Some(&to) = T::ALL.get(i) else {
                     return false;
                 };
                 ctx.preview_settings(|s| to.put(s))
             },
-        },
+        ),
     )
 }
 

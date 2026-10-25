@@ -2309,11 +2309,11 @@ impl BattleScreen {
             | Mode::AiAction(_)
             | Mode::MapMenu { .. } => {}
         }
-        Some(CursorView {
+        Some(CursorView::new(
             pos,
-            brightness: self.cursor.brightness(),
-            style: ctx.settings().game.cursor_style,
-        })
+            self.cursor.brightness(),
+            ctx.settings().game.cursor_style,
+        ))
     }
 
     /// What the screen shows this frame (ADR-0054): the map's

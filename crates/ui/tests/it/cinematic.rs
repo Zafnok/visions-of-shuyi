@@ -218,7 +218,7 @@ fn it_follows_the_map_skin_in_use() {
     let scene = h.game().buffer().backdrop().unwrap().scene();
     // The test tileset: 14 × 8 tiles of 24 px, in whole cells.
     assert_eq!((scene.width(), scene.height()), (42, 12));
-    assert!(!scene.sprites().is_empty());
+    assert_ne!(scene.sprites(), [] as [trpg_ui::Sprite; 0]);
     // Its units are sprites: a walking one is drawn somewhere else each
     // moment, the ground the same.
     let sprites = |h: &Harness| h.game().buffer().backdrop().unwrap().scene().sprites();

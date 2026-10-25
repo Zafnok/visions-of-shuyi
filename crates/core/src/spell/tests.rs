@@ -304,7 +304,10 @@ fn units_are_created_knowing_their_spells() {
     )
     .unwrap();
     assert_eq!(generic.learned, set(&["heal"]));
-    assert!(generic.personal_spells.is_empty());
+    assert_eq!(
+        generic.personal_spells,
+        [] as [(u32, crate::spell::SpellId); 0]
+    );
     assert!(generic.spells.uses_left.is_empty());
     // A character adds its personal spells at its level.
     let def = crate::unit::CharacterDef {
