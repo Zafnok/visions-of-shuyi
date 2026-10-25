@@ -29,7 +29,7 @@ The pins before this one were moved by tickets (1177 and 1188, both
 2026-10-22) without this review. The engine watcher's first report starts
 from here.
 
-## 2026-10-25: 3f2256d4 → b4591a81 (29 engine PRs)
+## 2026-10-25: 3f2256d4 → b4591a81 (29 engine PRs), #425
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
