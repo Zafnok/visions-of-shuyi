@@ -55,30 +55,50 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 | Maud (`keeper`) | Corrupting influence | Tamsin teaches her dice, and Maud teaches Tamsin to write the ledger properly |
 | Rue (`heretic`) | Partners in trouble | Two people with bad manners and no permission |
 
-## Voice notes
+## Voice card
 
-- Quick and loud. Everything is a cost, a debt or a payment, joking or not.
-  **Off duty** (camp, the road, supports) her long sentences turn into a
-  punchline, and the ledger is her running joke: "Put it on the crown's
-  tab." **With a fight coming or under way she doesn't joke**
-  (`setting-and-tone.md`, *Where the jokes go*): she reports like a
-  sergeant, short and exact, and the ledger is a grief, not a gag.
-- Uses soldier slang ("hayburner", "the Unpaid", "payday" for a battle she
-  expects to win).
-- Calls people by nicknames: "Your Former Grace", "Keeper", "Sparks" for Rue,
-  "Brennish" for Aske, "Captain" for Hollis.
-- **Won't say:** "I'm scared" or "I'm sorry". She says "that'll cost us"
-  instead.
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines**
+- **Age and experience:** twenty-seven, a soldier since seventeen, a
+  sergeant since twenty-two. A sergeant's mouth: fast, loud, bossy, and
+  she talks over people. She knows horses, pay, drill, what a company
+  eats and what it costs. **Off duty** (camp, the road, supports) the
+  long sentence turns into a punchline and the ledger is her running
+  joke. **With a fight coming or under way she doesn't joke**
+  (`setting-and-tone.md`, *Where the jokes go*), and she stays fast:
+  short orders, exact, and a nickname for everyone.
+- **Temperature:** hot. The most `!` in the cast, and still no more than
+  one box in five.
+- **Openness:** says it angrily, or as a price. The grief goes in the
+  book, and the book comes out when she can't say a thing.
+- **When scared:** louder and busier. Gives orders nobody asked for.
+- **Care signature:** who is mounted and who is slow; girths; who hasn't
+  slept. She feeds the horse before herself and notices who else hasn't
+  eaten.
+- **Fault the others put up with:** bossy; nicknames nobody asked for
+  ("Your Former Grace" (kept, `setting-and-tone.md`), "Captain",
+  "Keeper", "Sparks", "Brennish"); can't sit still; eats off other
+  people's plates; writes everything down, including you.
+- **Line length and habit:** a long run-on and then a short one.
+  Questions fired like orders ("You listening?"). Soldier slang
+  ("hayburner", "the Unpaid", "payday").
+- **Words from her life:** the mare, the saddle, the book, the company,
+  pay, bread and ale, the road.
+- **Won't say:** "I'm scared" or "I'm sorry". She says what it'll cost.
+- **Punctuation:** `!` at her peaks and `?` everywhere; a `...` only where
+  the book comes out.
 
-- (Under threat) "Harl won't leave with that paper unpaid. Any of them who
-  gets away comes back tonight with torches. So it has to be all of them."
-- (Downtime) "Harl's whole sorry company, on foot, before breakfast. I'm
-  adding breakfast to the ledger."
-- "Your Former Grace, if we're committing treason, I'd like it noted I'm doing
-  it for free. Well. For bread."
-- "I held the horses. That's all. I held the horses and I watched it burn."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Keeper, behind the horse! Behind it, not beside it, she
+  kicks!"
+- *At camp:* "Who's eating? Nobody? Right, then nobody minds if I-- hey.
+  Hey, that was going spare, you weren't even looking at it."
+- *Lying:* "Why'd I leave him? Pay. There wasn't any. ...What else would
+  it be."
+- *Grieving:* "Four thousand two hundred and twelve. ...Hold on, I've put
+  him under the wrong column."
 
 ## Portrait brief
 

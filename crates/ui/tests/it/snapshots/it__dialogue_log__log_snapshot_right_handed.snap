@@ -3,55 +3,58 @@ source: crates/ui/tests/it/dialogue_log.rs
 expression: h.snapshot()
 ---
 ┌── Log ───────────────────────────────────────────────────────────────────────────────────────────┐
-│           Hollis Marr                                                                            │
-│           Leave it where it is. Sit down, kid. There's something in my coat that I've spent all  │
-│           morning not giving you.                                                                │
-│                                                                                                  │
+│           He sits down on the chopping block to get his breath, and his hand goes into his coat  │
+│           and comes out with a letter. It has been folded and unfolded more than once.           │
 │                                                                                                  │
 │           Hollis Marr                                                                            │
-│           A peddler left it last night. No seal, no name. It didn't need one. I'd know that      │
-│           handwriting anywhere, and so will you.                                                 │
+│           Peddler brought it last night, after you'd gone to bed. I should have woken you. ...I  │
+│           didn't.                                                                                │
 │                                                                                                  │
 │                                                                                                  │
-│           "Leave the march. Tonight. They are coming for everyone who was there that night.      │
-│           Burn this."                                                                            │
+│           No name on it. "Get out of the march. Tonight. They are coming for everyone who was    │
+│           there that night. Burn this."                                                          │
 │                                                                                                  │
-│ ▶         Ellery                                                                                 │
+│           Ellery                                                                                 │
 │           Dace.                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
+│ ▶         Hollis Marr                                                                            │
+│           Aye. That's the boy's hand. I sat behind it while it learned its letters, same table   │
+│           as yours.                                                                              │
+│                                                                                                  │
+│                                                                                                  │
 │           Hollis Marr                                                                            │
-│           Four years. Not a line to you. Not one to his own father. And when he finally writes,  │
-│           it's that.                                                                             │
+│           Everyone who was there. Four of us, at that mill. My girl's dead. So that's you and    │
+│           me, and him, writing letters.                                                          │
 │                                                                                                  │
 │                                                                                                  │
 │           Ellery                                                                                 │
-│           > Four years of silence, and now he's urgent.                                          │
-│                                                                                                  │
-│                                                                                                  │
-│                                                                                                  │
+│           > Four years, and this is the letter I get.                                            │
 │                                                                                                  │
 │                                                                                                  │
 └───────────────────────────────────────────────────── arrows move · f go to this line · d close ──┘
 --- colours ---
 aaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcccccca
-acccccccccccdddddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcccca
+acccccccccccdddddddddddddddddddddddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-aefeeeeeeeeeffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
-aeeeeeeeeeeefffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
-aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+acccccccccccbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+aefeeeeeeeeefffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aeeeeeeeeeeeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeea
+aeeeeeeeeeeefffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -60,9 +63,6 @@ accccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -75,5 +75,5 @@ d = fg:text_dim bg:panel_bg
 e = fg:text bg:black
 f = fg:text_highlight bg:black
 --- overlays ---
-under sprite 24,224 64x64  portraits/lead_m/neutral.png 0,0 32x32
-under sprite 24,384 64x64  portraits/lead_m/neutral.png 0,0 32x32
+under sprite 24,192 64x64  portraits/lead_m/neutral.png 0,0 32x32
+under sprite 24,432 64x64  portraits/lead_m/neutral.png 0,0 32x32

@@ -58,28 +58,50 @@ gently. That report is why the killers came.
 | Rue (`heretic`) | Guilt → reconciliation | She sheltered her, and reported her |
 | Crane (`vowmaster`) | Reverence → defiance | Crane ordained her |
 
-## Voice notes
+## Voice card
 
-- Long, polite sentences that interrupt themselves; qualifiers ("I think,
-  possibly, with respect..."). In quiet scenes her fussing is funny. Under
-  real danger it isn't played for laughs (`setting-and-tone.md`, *Where the
-  jokes go*): she gets shorter, apologizes and says the plain thing.
-- Quotes vows and small prayers to Ama, then adds a practical comment ("Ama
-  keep you. Also, keep pressure on that."): a downtime habit.
-- Can't lie. When she tries, she fails out loud ("I was not... that is, I have
-  no... yes. Yes, I did.").
-- **Won't say:** anything cruel, even to Crane. Her defiance is polite, which
-  makes it land harder.
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines**
+- **Age and experience:** twenty-seven, six years a keeper, raised in the
+  Vigil's schools. A healer: she knows wounds, fevers, herbs, the prayers
+  and the paperwork, and the children she has buried. She has never been
+  in a fight before Chapter 1 and says so by how she talks in one.
+- **Temperature:** anxious and warm.
+- **Openness:** says it straight and clumsily. Trying to hide a thing, she
+  fails out loud in the same breath, and then apologizes for failing.
+- **When scared:** fusses, apologizes, prays once, offers bandages, talks
+  too much, then says one short plain sentence that costs her.
+- **Care signature:** hands, wounds and sleep. "Let me see that." She
+  notices a cut nobody mentioned, and the lead's before anyone's.
+- **Fault the others put up with:** fusses; cries; loses at dice; is late;
+  keeps things in her sleeves; says sorry when she has nothing to be sorry
+  for.
+- **Line length and habit:** long, polite sentences that interrupt
+  themselves and qualify themselves ("I think, possibly, with respect").
+  In quiet scenes her fussing is funny; under danger it isn't played for
+  laughs (`setting-and-tone.md`, *Where the jokes go*). A small prayer to
+  Ama followed by a practical remark is a downtime habit, once a chapter
+  at most.
+- **Words from her life:** the chapel, the sick, salve, ink, the register,
+  the children.
+- **Won't say:** anything cruel, even to Crane. Her defiance is polite,
+  which makes it land harder.
+- **Punctuation:** the most `...` and `--` in the cast; questions she
+  answers herself. A `!` only when someone is hurt.
 
-- (Downtime, a scraped knee) "Ama keep you. Also, and I say this as a
-  keeper, please keep pressure on that."
-- (Under threat) "Please go down. It is you they have come for."
-- "I wrote to them. About you. I asked them to be gentle. I thought... I
-  thought that was a thing you could ask."
-- "With respect, Master Crane, and I do mean that, I have a great deal of
-  respect: no."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Don't pull it out! Don't-- leave it in, leave it, I'm
+  coming, I'm nearly-- I'm here."
+- *At camp:* "Ama keep you. Also, and I say this as a keeper and not as
+  your friend, you are not to put weight on that for two days. ...One
+  day. You will anyway."
+- *Lying:* "I didn't write to anyone about-- that is, I wrote, I write to
+  the Abbey every quarter, it's required, but not-- ...Yes. About her.
+  Yes."
+- *Grieving:* "She owed me a sock. One sock. She'd lost the other and said
+  it was a loan. ...I don't know why I'm telling you that."
 
 ## Portrait brief
 

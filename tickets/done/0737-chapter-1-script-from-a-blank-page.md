@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
-status: todo
+status: done
 blocked_by: ["0736"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 0737 — Write the Chapter 1 script again from the beats
@@ -149,4 +149,109 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done 2026-10-25 on Fable 5.1 (the model the skill asks for), by the
+skill's blank-page process: voice cards and scene cards first (a scratch
+file, not committed), a draft from the cards with the old `ch01.dlg`
+closed, three rounds of critique (each round two fresh subagents: a cold
+read of the boxes as the player sees them, and a names-removed speaker
+test), fixes from each round, then the old file opened only to carry over
+its header comments, scene ids and directives.
+
+**Box counts, longest path (old counts from `docs/story/craft.md`):**
+
+| Scene | Before | After | Budget |
+| ----- | ------ | ----- | ------ |
+| `ch01_intro` (3 captions included) | 19 | 13 | 8–14, cap 16 |
+| `ch01_prebattle` | 21 | 14 | 5–10, cap 12 + 4 first-met |
+| All talk before the first move | 38–41 | 27 | cap 28 |
+| Battle lines | 1–4 each | 1 each; Harl and Tamsin 4; Harl's death 2 | 1–2; 2–4; 1–2 |
+| `ch01_victory` | 20 | 13 (everyone alive, and with only Hollis alive) | 6–12, cap 16 |
+| `ch01_tbc` | 6 | 6 | 3–6 |
+
+**The voice, two or three lines a scene** (the token-free reading):
+
+- The letter: "That's good. No-- don't help me up, I'm getting up. That
+  was good, kid." / "Peddler brought it last night, after you'd gone to
+  bed. I should have woken you. ...I didn't." / "Eat something. Then
+  boots, the good ones. And nobody is burning anything in this house."
+- By the chapel: Rue to Aske, "You. Eat this. You're gray in the face, and
+  if you fall over before they've even shot at us I'm not carrying you."
+  / Aske, "I am not cold. I am angry. ... Half. You eat half, you are
+  thinner than me." / Maud, "I have buried four children from this village
+  and I am not burying you. Go down. Please."
+- The battle: Hollis dying, "The porridge pot's still on the fire at the
+  house. Somebody take it off." / Harl to Tamsin, "I brought forty men
+  home from that war. Forty! And the crown gave us the road to starve
+  on." / Tamsin, "...I know what I held."
+- The fort: Tamsin over Harl, "He put me on my first horse. I fell off it
+  in front of the whole yard and he laughed till he had to sit down. ...It
+  was a job. That's what I'm writing. A job." / Rue, "Was it you? ...Was
+  it your father?" / Hollis, "Find me a shovel. I'm not leaving Harl to
+  the crows."
+- Veyne Hall: "Tell him it's done. Tell him I said so." / "One thing I've
+  asked of you in four years, and you-- Of course you didn't."
+
+**What the critique rounds caught and the draft fixed:** one "..."
+rhythm in every mouth (45 of 57 boxes in round 1, 8 in the shipped
+script); Tamsin and Rue telling apart only by their nicknames for the
+lead (Tamsin now runs on and deflects into the horse; Rue hammers short
+imperatives, overstates and corrects herself, "I can burn all of them--
+I can burn some of them"); five death lines on one template (now an
+errand, a question, a will, a plea and a cold-fire question); the crest
+identified four times (now once by Harl dying and once over the body);
+Maud as a stammer (she now finishes a sentence and takes the lead's
+hidden cut); a joiners' roll call in the victory scene (Aske asks Tamsin
+why she's smiling; Rue's joining line cut); a dozen British words
+("wet through", "asked did I want", "mind" as a tag, "gone up", "I'll
+not", "I've men").
+
+**Kept words:** Hollis's "Aye" (three boxes), Tamsin's "Your Former
+Grace" (two boxes in the chapter plus one reply reaction). "Greywater
+Abbey" doesn't come up in Chapter 1's new script; its spelling stands
+for whenever it does.
+
+**Facts said differently (the ledger records each):** the letter reads
+"Get out of the march. Tonight. They are coming for everyone who was
+there that night. Burn this."; no count of the fort's men is said (the
+map shows them: Nick's "14 archers stuff"); Aske wants nine arrows back,
+not eleven; Harl's order is never read aloud, so three hundred crowns a
+head is said only by Harl to the lead if the lead fights him; Coldwell is
+"a farm", with nothing said about anyone in it (the old line's "people"
+was mine, not the sheets'); Hollis says "My girl's dead" once, to the
+lead (the one allowed mention of Wren); Tamsin dying asks who else is
+down and for her mare, and no longer asks for her ledger, so who has it
+after a Classic death is a later chapter's call; Rue no longer says she
+walks behind the lead (she still suspects the lead's family to their
+face); Hollis goes out to pick up spears, not to the horses, so the
+horses stay Tamsin's.
+
+**Not a line-by-line rewrite:** no scene keeps the old order of boxes or
+speakers; the yard opens after the disarm instead of before it, the
+chapel scene starts on Tamsin alone from the saddle and runs Rue–Aske and
+Maud–Rue exchanges instead of one line each to the lead, the fort scene
+starts on Tamsin writing in the ledger and ends on the shovel.
+
+**The title cinematic:** unchanged. The three captions are still
+`ch01_intro`'s boxes 0–2 and Tamsin's news is still `ch01_prebattle`'s
+box 0, so `title.ron`'s `Talk` shots play the intended boxes; its two
+snapshots changed with the words.
+
+**Deviations:** step 3's voice profile (0751) isn't built, so the
+names-removed test covered it, as the ticket allows. 0752 isn't done, so
+no delivery cues were written; 0752 files the ticket that adds them. The
+plain build has no portrait for anyone but the lead, so the script uses
+only the five expressions every character has (`weary`, `flustered`,
+`sneer`, `smug`, `cold` would fail the validator here); the sheets still
+list them for the bought art. Pictures: `cargo shuyi frame-png` of the
+yard and the chapel scenes were checked and are in the PR's description
+as text (the picture files aren't committed).
+
+**Claude's starting rules:** none that touch play. For the Act 1
+playtest (1064): do the conversations still drag, and does the chapter
+sound like a game Nick wants to play (the question this ticket inherited
+from round 3).
+
+**Follow-ups:** none filed. 0722 regenerates the voices from the new line
+ids; 0751 and 0752 stand as written.
+
+**Engine friction:** none, no Rust code beyond the test updates.

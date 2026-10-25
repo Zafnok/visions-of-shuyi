@@ -2,7 +2,7 @@
 source: crates/ui/tests/it/places.rs
 expression: h.snapshot()
 ---
-                                        The green, Harrowby                                         
+                                      Harrowby, by the chapel                                       
  ┌────────────────────────────────┐                              ╔════════════════════════════════╗ 
  │                                │                              ║                                ║ 
  │                                │                              ║                                ║ 
@@ -21,12 +21,12 @@ expression: h.snapshot()
  │                                │.............··......♣♣♣♣.....║                                ║ 
  │                                │.............··....♣♣♣♣♣♣♣♣...║                                ║ 
  └────────────────────────────────┘·............··......♣♣♣♣.....╚════════════════════════════════╝ 
-            Hollis Marr            ······························           Tamsin Rook             
+               Ellery              ······························           Tamsin Rook             
                           ....╦╦..··................................^^^^^^                          
 ┌── Tamsin Rook ───────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                  │
-│   Captain. Your Former Grace. Red Harl is in the toll-fort with the whole company. I rode up     │
-│   to the gate to ask him what he wanted here. He asked me if I wanted my old job back.           │
+│   Red Harl's in the toll-fort, Your Former Grace! Took it in the night. I rode up to the gate    │
+│   like a fool and he leaned over the wall and asked if I wanted my old job back.                 │
 │                                                                                                  │
 │                                                                                     b log   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -35,7 +35,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
@@ -54,7 +54,7 @@ aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffffllllllldeeeeeeeeeeeeee
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffggggfffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffggggggggfffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 accccccccccccccccccccccccccccccccccjffffffffffffjjffffffggggfffffdddddddddddddddddddddddddddddddddda
-aeeeeeeeeeeennnnnnnnnnneeeeeeeeeeeejjjjjjjjjjjjjjjjjjjjjjjjjjjjjjeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aeeeeeeeeeeeeeennnnnneeeeeeeeeeeeeejjjjjjjjjjjjjjjjjjjjjjjjjjjjjjeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 aaaaaaaaaaaaaaaaaaaaaaaaaaffffooffjjffffffffffffffffffffffffffffffffhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaa
 cccpppppppppppppcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
@@ -84,3 +84,5 @@ m = fg:#3e2a17 bg:#080e13
 n = fg:text_dim bg:panel_bg
 o = fg:#534326 bg:#120e0a
 p = fg:text_highlight bg:panel_bg
+--- overlays ---
+under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

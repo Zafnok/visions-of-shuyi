@@ -3,68 +3,68 @@ source: crates/ui/tests/it/dialogue_log.rs
 expression: h.snapshot()
 ---
 ┌── Log ───────────────────────────────────────────────────────────────────────────────────────────┐
-│           Three years after the Ash Peace.                                                       │
-│                                                                                                  │
-│           The war is won. The soldiers who won it were never paid.                               │
-│                                                                                                  │
-│           In the Thornmarch, a long way from any court, an exile chops wood.                     │
-│                                                                                                  │
-│           Dawn, in the yard behind a rented house. Two practice swords crack together, wood on   │
-│           wood, as they have every morning for four years.                                       │
+│           In the Thornmarch, at the far edge of the kingdom, an exile is up before dawn with a   │
+│           wooden sword.                                                                          │
 │                                                                                                  │
 │           Hollis Marr                                                                            │
-│           Guard up, Veyne. Higher. It drops when you're tired. Don't let it.                     │
+│           That's good. No-- don't help me up, I'm getting up. That was good, kid. You dropped    │
+│           your shoulder after, though. Don't drop it after.                                      │
 │                                                                                                  │
 │                                                                                                  │
+│           He sits down on the chopping block to get his breath, and his hand goes into his coat  │
+│           and comes out with a letter. It has been folded and unfolded more than once.           │
+│                                                                                                  │
+│           Hollis Marr                                                                            │
+│           Peddler brought it last night, after you'd gone to bed. I should have woken you. ...I  │
+│           didn't.                                                                                │
+│                                                                                                  │
+│                                                                                                  │
+│ ▶         No name on it. "Get out of the march. Tonight. They are coming for everyone who was    │
+│           there that night. Burn this."                                                          │
 │                                                                                                  │
 │           Ellery                                                                                 │
-│           Again.                                                                                 │
-│                                                                                                  │
-│                                                                                                  │
-│                                                                                                  │
-│ ▶         Three strokes. On the fourth, the old man's sword is lying in the dirt between them.   │
-│                                                                                                  │
-│           Hollis Marr                                                                            │
-│           ...Good. That's good. Four years I've been waiting for you to do that.                 │
+│           Dace.                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 │           Hollis Marr                                                                            │
-│           Leave it where it is. Sit down, kid. There's something in my coat that I've spent all  │
-│           morning not giving you.                                                                │
+│           Aye. That's the boy's hand. I sat behind it while it learned its letters, same table   │
+│           as yours.                                                                              │
 │                                                                                                  │
+│                                                                                                  │
+│           Back to latest                                                                         │
 └─────────────────────────────────────────────────────── wasd move · j go to this line · k close ──┘
 --- colours ---
 aaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-acccccccccccddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-aefeeeeeeeeeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeea
+aefeeeeeeeeefffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeea
+aeeeeeeeeeeefffffffffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccccccccccccca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccca
+acccccccccccaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacca
-acccccccccccaaaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddddddddddaaa
 --- legend ---
@@ -75,4 +75,4 @@ d = fg:text_dim bg:panel_bg
 e = fg:text bg:black
 f = fg:text_highlight bg:black
 --- overlays ---
-under sprite 24,240 64x64  portraits/lead_m/neutral.png 0,0 32x32
+under sprite 24,320 64x64  portraits/lead_m/neutral.png 0,0 32x32 opacity=102

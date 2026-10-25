@@ -46,19 +46,46 @@ exile, the old man, and the girl with the burned hands" at Harrowby.
 | The lead | A job | "Nothing personal, Your Grace. You're three hundred crowns." |
 | Dace (`rival`) | His client | Never met him; took his silver |
 
-## Voice notes
+## Voice card
 
-- Gravelly, blunt and tired. Soldier's jokes gone sour. Calls everyone by
-  their price or rank.
-- **Won't say:** that he's ashamed. He says "the war did this".
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines (boss engage and death quote ideas for 0707)**
+- **Age and experience:** forty-six; a sergeant and then a captain through
+  ten years of war, and three years since of watching his men go hungry.
+  He talks like a captain who stopped expecting anything: everyone is a
+  price or a rank, and he gives the numbers because the numbers are what
+  he has.
+- **Temperature:** gravelly, tired, bitter. The soldier's jokes have gone
+  sour, and in a fight they aren't jokes, just sourness.
+- **Openness:** says what he wants (pay, food for his men) and what he
+  blames (the crown, the war), and nothing of what he feels about either.
+- **When scared** (half HP, dying): not tidy. He talks to himself, blames
+  himself out loud for the wrong thing, and his last thoughts are of his
+  men and of hurting the one who beat him.
+- **Care signature:** his men's food. It is the one thing left of the
+  captain he was.
+- **Fault:** he has a reason for everything and it is never him.
+- **Line length and habit:** short, heavy sentences. "Your Grace" to the
+  lead as sarcasm (gender-neutral). "Rook" to Tamsin.
+- **Words from his life:** the company, the road, the crown's promises,
+  what a man costs to feed.
+- **Won't say:** that he's ashamed. "The war did this." "The crown did
+  this."
+- **Punctuation:** flat periods, a `...` when it turns on him, and one
+  `!` at a peak (his grievance, or dying).
 
-- (Engage, the lead) "Nothing personal, Your Grace. You're three hundred
-  crowns and a hot meal for my lads."
-- (Engage, Tamsin) "Rook. You left before pay-day. Bad habit."
-- (Death) "The new lord of Veyne pays in good silver... Your own crest on
-  the order, and everything. Must be nice, having friends."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Archers, the wall! Not the road, the wall, they're
+  under you!"
+- *At camp (the fort, the night before):* "Oats. Again. ...Eat it, it's
+  what there is. Somebody wake me when the girl comes back with an
+  answer."
+- *Lying:* "Nobody hired us. We took the fort because it was empty. Ask
+  anyone."
+- *Grieving:* "Pell. The little one, with the cough. He had a mother in
+  Cairnford. ...Somebody'll have to write."
 
 ## Portrait brief
 

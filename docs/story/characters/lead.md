@@ -91,21 +91,24 @@ Each option is at most 60 characters (0708).
 | **Wry** | Deflects with dry humour; noble irony. | Tamsin and Rue light up; Hollis sighs; Aske doesn't get it. |
 | **Blunt** | Short, hard and practical. | Aske and Hollis approve; Maud winces; Rue pushes back. |
 
-**Sample choice (Chapter 1, after reading Dace's letter):**
+**Sample choice** (illustrative only, a made-up camp moment; never a
+script's lines. Each reply moves the companion before it informs,
+`story-writing` skill, *The silent lead*):
 
 ```
 @choice
-* earnest: He's warning us. He still cares, Hollis.
-  retainer[sad]: Aye. That's what worries me.
-* wry: Four years of silence, and now he's urgent.
-  retainer[happy]: Ha. He never did write unless he needed something.
-* blunt: What does he want?
-  retainer[angry]: Us gone. The question is why.
+* earnest: Sit down. I'll take the watch.
+  sergeant[surprised]: You'll-- fine. Fine. Wake me if the mare does anything.
+* wry: You snore, you know.
+  sergeant[happy]: I do not! ...Who told you that. Was it the Keeper.
+* blunt: Sleep. That's an order.
+  sergeant[angry]: You don't give me orders, Your Former Grace. ...Right.
+    Two hours.
 @endchoice
 ```
 
-(Syntax per ticket 0708; the text is illustrative. The real lines are written
-in 0707.)
+(Syntax per ticket 0708. Chapter 1's real choices are in
+`assets/dialogue/ch01.dlg`, written by 0737.)
 
 ## Relationships
 
