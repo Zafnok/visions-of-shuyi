@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use shuyi_assets::font::FontAtlasDef;
 use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
+use shuyi_cli::contract::{bots, check, replay};
 use shuyi_cli::font_atlas::{ATLAS_RANGES, ONE_BIT_FILE, read_font};
 use shuyi_cli::frame_png::{self, Image, Options};
 use shuyi_cli::lang_status::{self, Part};
@@ -566,4 +567,86 @@ fn the_session_reads_the_battles_scene_and_paints_its_frame() {
     let shot = frame(&Start::of(&[]).unwrap(), &script, Some(1)).unwrap();
     assert_eq!((picture.width, picture.height), (800, 512));
     assert_eq!(picture, shot.image);
+}
+
+/// Ticket 1193: `check` (the MCP server's) passes on the game's content.
+#[test]
+fn check_passes_on_the_content() {
+    let answer = check::check(&Trpg, &check::CheckInput::default());
+    let errors = answer.result.as_ref().map(|r| r.errors.clone());
+    assert!(answer.ok, "{:?} {errors:?}", answer.error);
+    assert_eq!(errors, Some(Vec::new()));
+}
+
+/// Ticket 1193: a broken file is an error of `check`, with its file and
+/// line.
+#[test]
+fn check_finds_a_broken_file_by_file_and_line() {
+    static BROKEN: &[(&str, &[u8])] = &[("data/ai.ron", b"(\n  oops\n")];
+    let mut layers = vec![trpg_content::bundle::Layer::table("assets", BROKEN)];
+    layers.extend(trpg_content::bundle::layers());
+    let bundle = Box::leak(Box::new(trpg_content::bundle::Bundle::new(layers)));
+    let answer = trpg_content::bundle::reading(bundle, || {
+        check::check(&Trpg, &check::CheckInput::default())
+    });
+    assert!(!answer.ok);
+    let errors = answer.result.unwrap().errors;
+    let ai = errors.iter().find(|e| e.file == "assets/data/ai.ron");
+    assert!(ai.is_some_and(|e| e.line.is_some()), "{errors:?}");
+}
+
+/// Ticket 1193: `bots` plays as many games as asked, each with a record.
+#[test]
+fn bots_play_three_games_with_records() {
+    let mut input = bots::BotsInput::default();
+    input.games = 3;
+    input.seed = 1;
+    let answer = bots::bots(&Trpg, &input);
+    assert!(answer.ok, "{:?}", answer.error);
+    let output = answer.result.unwrap();
+    assert_eq!(output.games, 3);
+    assert_eq!(output.outcomes.values().sum::<u32>(), 3);
+    let seeds: Vec<u64> = output.plays.iter().map(|p| p.seed).collect();
+    assert_eq!(seeds, [1, 2, 3]);
+    assert!(output.plays.iter().all(|p| p.record.is_some()));
+    assert!(output.measures.contains_key("won"), "{:?}", output.measures);
+}
+
+/// Ticket 1193: a record the bots wrote replays to the same hashes twice,
+/// and to the play's own end.
+#[test]
+fn a_bots_record_replays_the_same_twice() {
+    let mut input = bots::BotsInput::default();
+    input.games = 1;
+    let play = bots::bots(&Trpg, &input).result.unwrap().plays.remove(0);
+    let dir = std::env::temp_dir().join(format!("xtask-replay-{}", std::process::id()));
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("play.ron"), play.record.unwrap()).unwrap();
+    let answer = replay::replay(&Trpg, &dir, &replay::ReplayInput::new("play.ron"));
+    let _ = fs::remove_dir_all(&dir);
+    assert!(answer.ok, "{:?} {:?}", answer.error, answer.limits);
+    let output = answer.result.unwrap();
+    let [first, second] = &output.runs[..] else {
+        panic!("two runs: {output:?}")
+    };
+    assert_eq!(first, second);
+    assert_eq!(
+        first.steps.len(),
+        usize::try_from(play.commands).unwrap() + 1
+    );
+    let refused = first.steps.iter().filter(|s| s.refused.is_some()).count();
+    assert_eq!(refused, 0);
+    let ended = first.outcome.as_deref().unwrap_or(bots::UNFINISHED);
+    assert_eq!(ended, play.outcome);
+}
+
+/// Ticket 1193: a record that isn't the game's is an error naming it.
+#[test]
+fn replay_refuses_a_record_that_isnt_one() {
+    let record = Record {
+        file: "x.ron".to_owned(),
+        text: "(version: 9, battle: \"ch01\", mode: Classic, seed: 0, commands: [])".to_owned(),
+    };
+    let error = Trpg.replay(&record).unwrap_err();
+    assert!(error.starts_with("x.ron: a record of version 9"), "{error}");
 }

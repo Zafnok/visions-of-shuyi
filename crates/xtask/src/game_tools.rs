@@ -4,6 +4,8 @@
 //! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
 //! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
 //!
+//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s.
+//!
 //! The session (ticket 1181) is the game started as `frame-png` starts it,
 //! its scene the battle's map and its picture `frame-png`'s.
 //!
@@ -11,6 +13,9 @@
 //! options: the layout picked before, the Playdate's screen (ADR-0074),
 //! the map alone, the prompt start, the tips and a light for every battle.
 
+use shuyi_assets::ContentError;
+use shuyi_cli::contract::bots::{BotsInput, BotsOutput};
+use shuyi_cli::contract::replay::{Record, ReplayRun};
 use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{GameArg, GameLang, GameOption, GameTools};
@@ -202,6 +207,22 @@ impl GameTools for Trpg {
                 .collect(),
         ))
     }
+
+    fn check(&self) -> Result<Vec<ContentError>, String> {
+        Ok(plays::check())
+    }
+
+    fn replay(&self, record: &Record) -> Result<ReplayRun, String> {
+        plays::replay(record)
+    }
+
+    fn bots(&self, input: &BotsInput) -> Result<BotsOutput, String> {
+        // The options are about the look, which the bots never see
+        // (ADR-0038 §5): checked, and the same battle played whatever they
+        // say.
+        Start::of(&input.start)?;
+        plays::bots(input)
+    }
 }
 
 /// Plays `script` in a Harness started as `start` says and paints the
@@ -366,6 +387,8 @@ fn playdate_palette() -> Result<Palette, String> {
     Palette::new::<UiColor>(&def)
         .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
 }
+
+mod plays;
 
 #[cfg(test)]
 mod tests;

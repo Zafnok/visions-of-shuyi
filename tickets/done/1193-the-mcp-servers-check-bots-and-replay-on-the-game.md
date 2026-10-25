@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1193 — The MCP server's check, bots and replay on the game
@@ -79,12 +79,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] The MCP server's `check` answers ok with no errors on `main`'s
+- [x] The MCP server's `check` answers ok with no errors on `main`'s
       content, and an error with file and line when a test breaks a file.
-- [ ] `bots` with `games: 3` answers ok with three outcomes.
-- [ ] `replay` of a record the bots wrote gives the same hashes twice.
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `bots` with `games: 3` answers ok with three outcomes.
+- [x] `replay` of a record the bots wrote gives the same hashes twice.
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -92,5 +92,40 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Done 2026-10-25.
+
+- `impl GameTools for Trpg` gives `check`, `bots` and `replay`
+  (`crates/xtask/src/game_tools/plays.rs`):
+  - `check` is `trpg_content::load_embedded`'s errors, which are already
+    the engine's `ContentError`s (file, line, column).
+  - `bots` plays the story's first battle (`new_game.first_chapter`'s,
+    Chapter 1's today) with the baseline bot in Classic, the engine's
+    play loop (`play_observed`) with `trpg-bots`' entrant and measures,
+    summed by `tally`. The game's start options are checked, then
+    ignored: they are about the look, which bots never see (ADR-0038 §5).
+  - `replay` reads a `PlayRecord` and re-runs it with
+    `contract::replay::turns`.
+- **New: the play record format.** The game had none (0508 plans one
+  and is still open), so this ticket adds the smallest: RON
+  `(version: 1, battle, mode, seed, commands)`, nothing about the look.
+  0508 may grow it or move it out of xtask (its human records add
+  rewinds, restarts and play time); the `version` field is there for that.
+- `playtest::stage` is the battle setup `cargo xtask playtest` built
+  inline, pulled out so `bots` and `replay` build the same battle.
+
+**Deviations.**
+- Tests: xtask is a binary with no library and has no `tests/it/`
+  (its one integration file, `tests/cli.rs`, runs the binary). An
+  integration test can't break an embedded file, so the tests are unit
+  tests in `crates/xtask/src/game_tools/tests.rs`, beside the session's
+  (1181), calling `shuyi_cli::contract::{check, bots, replay}` with
+  `&Trpg`, the functions the MCP server calls. The broken file is laid
+  over the bundle with `bundle::reading`.
+- The engine's `play_tries` drops a try's commands, so `bots` keeps its
+  own copy of that loop (~10 lines) to write the record. Small: noted,
+  not filed.
+
+**Estimate (ADR-0092):** 120 production lines (the ticket's, judged by
+`Trpg::lang` and `frame`). Measured: 115 added (0.96×), under 2×.
+
+**Claude's starting rules:** none (dev tooling; no gameplay rule).
