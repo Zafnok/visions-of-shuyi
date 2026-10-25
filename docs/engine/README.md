@@ -18,6 +18,12 @@ code now: the game depends on the engine's crates by a git revision.
   `Cargo.lock`. `cargo xtask engine-pin <commit>` moves all three (and
   with no commit, pins the commit the local checkout is at, once it is
   on the engine's `main`). CI's `cargo xtask engine-pin --check` fails when they disagree.
+- **The skill pack** (ADR-0097, ticket 1192). The engine's skills
+  (`shuyi-*`, its `skills/`) are copied into `.claude/skills/` at the
+  pin, beside the game's own: `cargo xtask skill-pack` writes the pack
+  the pinned `shuyi-cli` embeds, after a pin move, and CI's `cargo xtask
+  skill-pack --check` fails on a copy that isn't the pin's. Never edit a
+  `shuyi-*` skill here: a gap in one is an engine ticket.
 - **The engine watcher** (ADR-0096, ticket 1190) moves the pin at a pace
   everyone can see. `.github/workflows/engine-watch.yml` runs when the
   engine's `main` moves (the engine dispatches it, engine#2031) and

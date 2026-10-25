@@ -329,7 +329,8 @@ pub fn pin(root: &Path, commit: Option<&str>) -> Result<String, String> {
         ));
     }
     Ok(format!(
-        "{REV_FILE}, Cargo.toml and Cargo.lock now name {rev}: commit them with your change"
+        "{REV_FILE}, Cargo.toml and Cargo.lock now name {rev}: run `cargo xtask skill-pack` \
+         (it builds with the new pin) and commit them with what it writes and your change"
     ))
 }
 

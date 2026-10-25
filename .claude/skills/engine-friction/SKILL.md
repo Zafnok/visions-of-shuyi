@@ -1,6 +1,8 @@
 ---
 name: engine-friction
-description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0092). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, when the friction log shows three "accept" rows on one engine area, or to run a sweep of the whole game (after a roadmap milestone closes, or three accept or 2×–3× rows on one engine area).
+description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0092). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, when the friction log shows three "accept" rows on one engine area, or to run a sweep of the whole game (after a roadmap milestone closes, or three accept or 2×–3× rows on one engine area). Not for making the engine change it decides on (engine-change).
+metadata:
+  version: "1.0"
 ---
 
 # Engine friction review

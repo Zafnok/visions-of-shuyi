@@ -374,7 +374,10 @@ Candle joins outside battle.
   label, or a `pub` line until then) within minutes. The `engine-pin`
   skill works it: each move reviews what the engine PRs give the game
   and writes `docs/engine/pins.md`, which CI checks. No more pin
-  tickets.
+  tickets. **1192** (done) took the skill pack into `.claude/skills/`
+  at the pin (ADR-0097) → engine#2559 (`check-skills` asks a worked
+  example only of the pack's skills) → **1194** makes `check-skills` a
+  gate.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
