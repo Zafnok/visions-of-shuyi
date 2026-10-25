@@ -31,14 +31,22 @@ fn face(portrait: &str, name: &str) -> FaceView {
 /// A page of `lines`, all shown, waiting for nothing.
 fn text(lines: &[&str]) -> TextView {
     let lines: Vec<String> = lines.iter().map(|&l| l.to_owned()).collect();
-    TextView {
-        narration: false,
-        shown: lines.iter().map(|l| l.chars().count()).sum(),
-        lines,
-        choices: None,
-        skip: None,
-        waiting: None,
-    }
+    let shown = lines.iter().map(|l| l.chars().count()).sum();
+    TextView::new(lines, shown)
+}
+
+/// A page of narration, `lines`, all shown.
+fn narration(lines: &[&str]) -> TextView {
+    let mut view = text(lines);
+    view.narration = true;
+    view
+}
+
+/// `lines`, all shown, asking `replies`.
+fn asking(lines: &[&str], replies: MenuView) -> TextView {
+    let mut view = text(lines);
+    view.choices = Some(replies);
+    view
 }
 
 /// Lord on the left saying `Hi.` to the knight on the right.
@@ -162,10 +170,7 @@ fn narration_dims_both_and_starts_at_the_speech_column() {
     let c = ctx();
     let view = DialogueView {
         speaker: None,
-        text: TextView {
-            narration: true,
-            ..text(&["Rain."])
-        },
+        text: narration(&["Rain."]),
         ..two_speakers()
     };
     let buf = painted(&view);
@@ -187,10 +192,7 @@ fn two_lines_of_narration_start_at_the_top() {
     let (a, b) = ("a".repeat(60), "b".repeat(60));
     let view = DialogueView {
         speaker: None,
-        text: TextView {
-            narration: true,
-            ..text(&[&a, &b])
-        },
+        text: narration(&[&a, &b]),
         ..two_speakers()
     };
     let buf = painted(&view);
@@ -201,10 +203,7 @@ fn two_lines_of_narration_start_at_the_top() {
 #[test]
 fn only_the_revealed_text_is_shown() {
     let view = DialogueView {
-        text: TextView {
-            shown: 8,
-            ..text(&["Hello", "there, knight."])
-        },
+        text: TextView::new(vec!["Hello".to_owned(), "there, knight.".to_owned()], 8),
         ..two_speakers()
     };
     let buf = painted(&view);
@@ -361,11 +360,7 @@ fn a_waiting_page_shows_its_key_and_the_blinking_arrow() {
         ""
     );
     let mut view = two_speakers();
-    view.text.waiting = Some(WaitView {
-        key: "f".to_owned(),
-        log_hint: None,
-        marker: true,
-    });
+    view.text.waiting = Some(WaitView::new("f", true));
     assert!(row(&painted(&view), arrow_row).ends_with(" f ▼  │"));
     // The arrow out, the key stays.
     if let Some(waiting) = &mut view.text.waiting {
@@ -432,10 +427,7 @@ fn a_choice_lists_its_replies_under_the_question() {
         speaker: Some(Side::Right),
         ..two_speakers()
     };
-    view.text = TextView {
-        choices: Some(replies(&["Yes.", "He knows."], 0)),
-        ..text(&["Ready?"])
-    };
+    view.text = asking(&["Ready?"], replies(&["Yes.", "He knows."], 0));
     // The question, a blank row, then the replies, the focused one
     // marked; this fits the usual box, so it doesn't grow.
     assert_eq!(text_box(&view.text), (TEXT_BOX, TEXT_Y));
@@ -470,10 +462,10 @@ fn the_text_box_grows_to_fit_the_replies() {
         speaker: Some(Side::Right),
         ..two_speakers()
     };
-    view.text = TextView {
-        choices: Some(replies(&["A.", "B.", "C."], 0)),
-        ..text(&[line.trim(), line.trim(), line.trim()])
-    };
+    view.text = asking(
+        &[line.trim(), line.trim(), line.trim()],
+        replies(&["A.", "B.", "C."], 0),
+    );
     // 3 question rows, a blank one and 3 replies: 7 rows from row 20.
     let (rect, text_y) = text_box(&view.text);
     assert_eq!(text_y, 20);
@@ -489,10 +481,7 @@ fn the_text_box_grows_to_fit_the_replies() {
 #[test]
 fn replies_without_a_question_start_at_the_top() {
     let mut view = two_speakers();
-    view.text = TextView {
-        choices: Some(replies(&["A.", "B.", "C.", "D."], 0)),
-        ..text(&[])
-    };
+    view.text = asking(&[], replies(&["A.", "B.", "C.", "D."], 0));
     assert_eq!(text_box(&view.text), (TEXT_BOX, TEXT_Y));
     let buf = painted(&view);
     assert!(row(&buf, TEXT_Y).starts_with("│   > A.  "));
@@ -520,5 +509,5 @@ fn the_open_log_covers_the_scene() {
     for y in 0..32 {
         assert_eq!(row(&got, y), row(&expected, y), "row {y}");
     }
-    assert!(got.sprites().is_empty());
+    assert_eq!(got.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
 }

@@ -31,7 +31,10 @@ fn embedded_chapters_and_new_game_load() {
     assert_eq!(test.intro_scenes, ["test_intro"]);
     assert_eq!(test.victory_scenes, ["test_victory"]);
     assert_eq!(test.next, None);
-    assert!(c.chapters["quick"].intro_scenes.is_empty());
+    assert_eq!(
+        c.chapters["quick"].intro_scenes,
+        [] as [std::string::String; 0]
+    );
     // New Game starts Chapter 1 with its six (chapter-1.md).
     let ch01 = &c.chapters["ch01"];
     assert_eq!(ch01.battle, "ch01");
@@ -82,9 +85,9 @@ fn next_must_be_a_chapter() {
         ("a".to_owned(), chapter("a")),
         ("b".to_owned(), chapter("b")),
     ]);
-    assert!(check_next(&chapters).is_empty());
+    assert_eq!(check_next(&chapters), [] as [shuyi_assets::ContentError; 0]);
     chapters.get_mut("a").unwrap().next = Some("b".into());
-    assert!(check_next(&chapters).is_empty());
+    assert_eq!(check_next(&chapters), [] as [shuyi_assets::ContentError; 0]);
     chapters.get_mut("b").unwrap().next = Some("z".into());
     let e = check_next(&chapters);
     assert_eq!(messages(e.clone()), ["next: no chapter \"z\""]);

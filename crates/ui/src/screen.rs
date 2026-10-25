@@ -443,9 +443,9 @@ pub(crate) mod tests {
         // No manifest yet: nothing has a voice.
         c.play_voice(&lines[0]);
         assert!(!c.has_voice(&lines[0]));
-        assert!(c.audio.pending().is_empty());
+        assert_eq!(c.audio.pending(), []);
         c.set_voice_manifest(&manifest);
-        assert!(c.take_warnings().is_empty());
+        assert_eq!(c.take_warnings(), [] as [std::string::String; 0]);
         assert!(c.has_voice(&lines[0]));
         assert!(!c.has_voice(&unvoiced));
         c.play_voice(&lines[0]);
@@ -463,7 +463,7 @@ pub(crate) mod tests {
         assert!(!c.has_voice(&lines[0]));
         c.play_voice(&lines[0]);
         c.preload_voices(&lines);
-        assert!(c.audio.pending().is_empty());
+        assert_eq!(c.audio.pending(), []);
         // Stopping is always passed on: a voice may still be playing.
         c.stop_voice();
         assert_eq!(c.audio.take(), [AudioRequest::StopVoice]);
@@ -486,7 +486,7 @@ pub(crate) mod tests {
         assert!(!c.has_voice(&line));
         c.play_voice(&line);
         c.preload_voices(std::slice::from_ref(&line));
-        assert!(c.audio.pending().is_empty());
+        assert_eq!(c.audio.pending(), []);
     }
 
     #[test]
@@ -600,11 +600,7 @@ pub(crate) mod tests {
         let audio = &mut ctx.game.content.audio;
         for &cue in sounds {
             let files = vec![format!("sfx/{cue}.wav")];
-            let sound = SoundCue {
-                files,
-                volume: 100,
-                credit: CreditRef::Own,
-            };
+            let sound = SoundCue::new(files, 100, CreditRef::Own);
             audio.sounds.insert(cue.to_owned(), sound);
         }
         for &cue in music {
@@ -805,7 +801,7 @@ pub(crate) mod tests {
         let storage = std::mem::take(&mut c.storage).into_computer();
         let mut again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.settings(), c.settings());
-        assert!(again.take_warnings().is_empty());
+        assert_eq!(again.take_warnings(), [] as [std::string::String; 0]);
     }
 
     /// Ticket 0839: a previewed change applies at once and is saved only
@@ -1036,7 +1032,7 @@ pub(crate) mod tests {
             ]
         );
         assert_eq!(*c.settings(), Settings::default());
-        assert!(c.take_warnings().is_empty());
+        assert_eq!(c.take_warnings(), [] as [std::string::String; 0]);
     }
 
     /// `Info` on `g` instead of its default key.
@@ -1148,7 +1144,7 @@ pub(crate) mod tests {
             b.keymap(again.game.content.keymap.repeat)
                 .with_default_pad(&again.game.content.keymap)
         );
-        assert!(again.take_warnings().is_empty());
+        assert_eq!(again.take_warnings(), [] as [std::string::String; 0]);
     }
 
     #[test]

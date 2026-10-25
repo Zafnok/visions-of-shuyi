@@ -46,13 +46,7 @@ pub fn sound_path(file: &str) -> String {
 /// The game's files: sounds from the embedded bundle, and music read by
 /// `music` (`None` in the game itself, which can't see the music folder).
 pub fn files(music: Option<&dyn Fn(&str) -> Bytes>) -> Files<'_> {
-    Files {
-        sound: &embedded_sound,
-        sound_shown: &shown_sound,
-        sound_left_out: &left_out_sound,
-        music_dir: MUSIC_DIR,
-        music,
-    }
+    Files::new(&embedded_sound, &shown_sound, &left_out_sound, MUSIC_DIR).with_music(music)
 }
 
 /// The embedded sound file named `file` in the manifest.

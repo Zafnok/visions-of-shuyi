@@ -79,7 +79,7 @@ fn the_letter_grid_opens_in_a_window_over_the_screen() {
     assert!(is_bar(&buf, 6, " A "));
     assert!(find(&buf, 10, "Done").is_some());
     // The help is still on the bottom row.
-    assert!(!shown[14].is_empty());
+    assert_ne!(shown[14], "");
 }
 
 #[test]

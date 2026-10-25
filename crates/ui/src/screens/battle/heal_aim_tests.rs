@@ -147,7 +147,7 @@ fn the_heal_list_has_every_heal_and_starts_each_on_the_ally_pointed_at() {
     // From two tiles away only Vigil Light reaches the archer: Heal is
     // dimmed, even though it reaches the knight from there.
     let lines = heal_choices(&s, MAGE, p(3, 6), ARCHER);
-    assert!(lines[0].targets.is_empty());
+    assert_eq!(lines[0].targets, [] as [trpg_core::CastTarget; 0]);
     assert_eq!(lines[1].targets[0], CastTarget::Unit(ARCHER));
 }
 

@@ -480,7 +480,10 @@ fn play_reports_every_try_by_seed() {
         .collect();
     assert_eq!(seeds, [5, 6, 7, 8, 9, 10]);
     // The baseline has no target.
-    assert!(record.report.checks.is_empty());
+    assert_eq!(
+        record.report.checks,
+        [] as [shuyi_core::bots::playtest::Judged; 0]
+    );
     assert!(!record.report.blocked);
 }
 

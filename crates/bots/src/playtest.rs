@@ -245,23 +245,18 @@ impl Targets {
         let mut checks: Vec<Check> = entrants
             .iter()
             .filter_map(|&name| {
-                Some(Check::Rate {
-                    entrant: name.to_owned(),
-                    success: self.success.get(name)?.clone(),
-                    band: *bands?.get(name)?,
-                    floor: self.floors.get(name).copied(),
-                })
+                Some(
+                    Check::rate(name, self.success.get(name)?.clone(), *bands?.get(name)?)
+                        .with_floor(self.floors.get(name).copied()),
+                )
             })
             .collect();
         let faster = &self.faster;
         if entrants.contains(&faster.entrant.as_str()) && entrants.contains(&faster.than.as_str()) {
-            checks.push(Check::Median {
-                entrant: faster.entrant.clone(),
-                measure: faster.measure.clone(),
-                among: faster.among.clone(),
-                want: Want::Lower,
-                than: faster.than.clone(),
-            });
+            checks.push(
+                Check::median(&faster.entrant, &faster.measure, Want::Lower, &faster.than)
+                    .with_among(faster.among.clone()),
+            );
         }
         checks
     }

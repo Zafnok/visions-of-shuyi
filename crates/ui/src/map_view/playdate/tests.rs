@@ -273,7 +273,7 @@ fn terrain_is_its_glyphs_black_on_white() {
     for x in [0, 5, 6, 49] {
         assert_eq!(buf.get(x, 0), blank().get(x, 0), "cell {x}");
     }
-    assert!(buf.items().is_empty());
+    assert_eq!(buf.items(), []);
 }
 
 /// The move range is dots, the attack range diagonal lines (and the heal
@@ -381,11 +381,7 @@ fn threat_arrows_are_black_edged_in_white_over_everything() {
     let ctx = pd_ctx();
     let mut scene = plains(&ctx);
     scene.push_unit(unit(Faction::Enemy, p(5, 3)));
-    scene.cursor = Some(CursorView {
-        pos: p(2, 2),
-        brightness: 1.0,
-        style: CursorStyle::Corners,
-    });
+    scene.cursor = Some(CursorView::new(p(2, 2), 1.0, CursorStyle::Corners));
     let before = painted(&ctx, &scene).overlays();
     let threat = ThreatView {
         tile: p(2, 2),
@@ -400,7 +396,7 @@ fn threat_arrows_are_black_edged_in_white_over_everything() {
     });
     let expect = threat::threat_overlays(&threat, &grid, threat::Start::Edge, colors);
     assert_eq!(&after[before.len()..], expect);
-    assert!(!expect.is_empty());
+    assert_ne!(expect, [] as [shuyi_ui::frame::Overlay; 0]);
     let colors: Vec<Rgb> = expect.iter().map(|o| o.color).collect();
     assert!(colors.contains(&c(Ink::Black)) && colors.contains(&c(Ink::White)));
 }
@@ -415,7 +411,7 @@ fn the_path_is_the_shared_arrow_in_black() {
     let grid = MapSkin::playdate().grid(&scene, SCREEN);
     let expect = path::path_overlays(&scene.path, &grid, c(Ink::Black));
     assert_eq!(buf.overlays(), expect);
-    assert!(!expect.is_empty());
+    assert_ne!(expect, [] as [shuyi_ui::frame::Overlay; 0]);
 }
 
 /// Units, the cursor and marks off the view are not drawn.
@@ -424,11 +420,7 @@ fn nothing_off_the_view_is_drawn() {
     let ctx = pd_ctx();
     let mut scene = MapScene::new(p(0, 0), (2, 1));
     scene.units.push(unit(Faction::Player, p(2, 0)));
-    scene.cursor = Some(CursorView {
-        pos: p(0, 1),
-        brightness: 1.0,
-        style: CursorStyle::TileGlow,
-    });
+    scene.cursor = Some(CursorView::new(p(0, 1), 1.0, CursorStyle::TileGlow));
     assert_eq!(painted(&ctx, &scene), blank());
 }
 

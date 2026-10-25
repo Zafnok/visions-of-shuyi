@@ -103,7 +103,7 @@ fn both_sides_their_numbers_strikes_and_totals() {
     assert_eq!(brigand.total, Some(total(Side::Defender)));
     assert!(lord.total.unwrap().strikes > 0 && brigand.total.unwrap().strikes > 0);
     assert_eq!((v.no_counter, v.skill), (None, None));
-    assert!(v.notes.is_empty());
+    assert_eq!(v.notes, [] as [std::string::String; 0]);
 }
 
 #[test]

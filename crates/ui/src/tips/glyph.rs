@@ -311,7 +311,7 @@ mod tests {
             Some(cx.palette.get(UiColor::TextHighlight))
         );
         assert_eq!(fg(x + 2, y + 3), Some(cx.palette.get(UiColor::Text)));
-        assert!(buf.sprites().is_empty());
+        assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     }
 
     /// A lesson's box with `lines` lines of text and `items` items.
@@ -408,7 +408,7 @@ mod tests {
         assert_eq!(glyph(r.x + 20, r.y + r.h - 2), Some('x'));
         // Without the portrait the face's place stays empty.
         let buf = painted(&ctx(), &v);
-        assert!(buf.sprites().is_empty());
+        assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
     }
 
     /// Ticket 0459: beside the face a 60-character line wraps, and the box
@@ -461,7 +461,7 @@ mod tests {
             wrapped(&lines(&["aa bb cc dd"]), 5),
             lines(&["aa bb", "cc dd"])
         );
-        assert!(wrapped(&[], 5).is_empty());
+        assert_eq!(wrapped(&[], 5), [] as [std::string::String; 0]);
     }
 
     /// Ticket 0459: an item too long for the room beside the face goes on
@@ -512,13 +512,19 @@ mod tests {
                 && r.y >= MAP_VIEW.y
                 && r.y + r.h <= MAP_VIEW.y + MAP_VIEW.h
         };
-        assert!(!c.game.content.tips.tips.is_empty());
+        assert_ne!(
+            c.game.content.tips.tips,
+            [] as [shuyi_assets::tip::Tip<trpg_content::TipTrigger>; 0]
+        );
         for tip in &c.game.content.tips.tips {
             let mut v = TipView::new(&c, tip);
             v.face = face();
             assert!(inside(rect(&v)), "{:?}: {:?}", tip.trigger, rect(&v));
         }
-        assert!(!c.game.content.lessons.lessons.is_empty());
+        assert_ne!(
+            c.game.content.lessons.lessons,
+            [] as [trpg_content::Lesson; 0]
+        );
         for lesson in &c.game.content.lessons.lessons {
             let mut v = LessonView::new(&c, lesson, &[], trpg_core::Pos::new(0, 0));
             v.face = face();

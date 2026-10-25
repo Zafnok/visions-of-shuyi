@@ -209,7 +209,7 @@ fn new_game_names_the_lead_and_rests_the_roster() {
     assert_eq!(game.roster[1].name, "ann", "only the lead is renamed");
     assert_eq!(game.roster[1].hp, game.roster[1].stats.hp);
     assert!(!game.roster[1].acted);
-    assert!(game.roster[1].effects.is_empty());
+    assert_eq!(game.roster[1].effects, [] as [crate::skill::TimedEffect; 0]);
     assert_eq!(game.mode, GameMode::Casual);
     assert_eq!(game.chapter, "ch01");
     assert_eq!(game.gold, 5);
@@ -314,7 +314,7 @@ fn casual_retreat_stays_in_the_roster_at_full_hp() {
     let rewards = game.apply_result(&def, &s, 0).unwrap();
     let names: Vec<_> = game.roster.iter().map(|u| u.name.as_str()).collect();
     assert_eq!(names, ["lord", "ann", "ben", "rook"]);
-    assert!(rewards.lost.is_empty());
+    assert_eq!(rewards.lost, [] as [shuyi_core::CharacterId; 0]);
     let ann = &game.roster[1];
     assert_eq!(ann.hp, ann.stats.hp);
     assert_eq!(game.stock.weapons, []);
@@ -719,7 +719,7 @@ fn escaped_units_count_as_standing() {
     let rewards = game.apply_result(&def, &s, 1).unwrap();
     let deployed: Vec<_> = rewards.deployed.iter().map(|u| u.name.as_str()).collect();
     assert_eq!(deployed, ["lord", "ann"]);
-    assert!(rewards.lost.is_empty());
+    assert_eq!(rewards.lost, [] as [shuyi_core::CharacterId; 0]);
     assert!(rewards.exp_gained(UnitId(1)) > 0);
     assert!(rewards.exp_gained(UnitId(2)) > 0);
 }

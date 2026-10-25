@@ -675,7 +675,10 @@ fn selecting_shows_ranges_and_marks_the_panel() {
     let mut c = ctx();
     let mut s = quick();
     assert!(!panel(&s, &c).selected);
-    assert!(s.scene(&c).tints_at(Pos::new(6, 5)).is_empty());
+    assert_eq!(
+        s.scene(&c).tints_at(Pos::new(6, 5)),
+        [] as [shuyi_ui::grid::RangeName; 0]
+    );
     step(&mut s, &mut c, &[Action::Confirm]);
     let scene = s.scene(&c);
     // The cursor stays on the lord, as corner marks.
@@ -769,7 +772,7 @@ fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
     );
     // No cursor, no ranges, the panel shows the lord.
     assert_eq!(scene.cursor, None);
-    assert!(scene.ranges.is_empty());
+    assert_eq!(scene.ranges, [] as [shuyi_ui::grid::RangeLayer; 0]);
     let unit = view.panel.and_then(|p| p.unit).unwrap();
     assert_eq!(unit.name, "Test Lord");
 }
@@ -799,7 +802,10 @@ fn an_enemys_threat_area_is_tinted_until_hidden() {
     let mut s = quick();
     let brigand = Pos::new(8, 2);
     s.cursor.jump(brigand);
-    assert!(s.scene(&c).tints_at(brigand).is_empty());
+    assert_eq!(
+        s.scene(&c).tints_at(brigand),
+        [] as [shuyi_ui::grid::RangeName; 0]
+    );
     step(&mut s, &mut c, &[Action::Confirm]);
     // The brigand's tile and one it can reach.
     let shown = s.scene(&c);
@@ -807,7 +813,10 @@ fn an_enemys_threat_area_is_tinted_until_hidden() {
         assert_eq!(shown.tints_at(pos), [range::ATTACK], "{pos:?}");
     }
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert!(s.scene(&c).tints_at(brigand).is_empty());
+    assert_eq!(
+        s.scene(&c).tints_at(brigand),
+        [] as [shuyi_ui::grid::RangeName; 0]
+    );
 }
 
 #[test]
@@ -822,7 +831,10 @@ fn a_pending_move_after_an_attack_is_chosen_on_the_map() {
     assert_eq!(*unit, UnitId(3));
     // Its tiles are in a move range.
     assert_eq!(s.scene(&c).tints_at(tiles[0]), [range::MOVE]);
-    assert!(quick().scene(&c).tints_at(tiles[0]).is_empty());
+    assert_eq!(
+        quick().scene(&c).tints_at(tiles[0]),
+        [] as [shuyi_ui::grid::RangeName; 0]
+    );
     s.cursor.jump(Pos::new(8, 4));
     assert_eq!(s.help(&c), "arrows move · f stay");
     s.cursor.jump(tiles[0]);

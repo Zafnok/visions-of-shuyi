@@ -77,13 +77,7 @@ fn parses_a_valid_portrait() {
     assert_eq!(names, REQUIRED_EXPRESSIONS);
     let happy = p.expression("happy").unwrap();
     assert_eq!(happy.image.path(), "portraits/t/happy.png");
-    assert_eq!(
-        happy.size,
-        ImageInfo {
-            width: 64,
-            height: 64
-        }
-    );
+    assert_eq!(happy.size, ImageInfo::new(64, 64));
     assert_eq!(p.expression("bored"), None);
 }
 
@@ -102,10 +96,7 @@ fn an_expression_may_use_any_image_and_two_may_share_one() {
     assert_eq!(image("angry"), image("neutral"));
     assert_eq!(
         p.expression("happy").map(|e| e.size),
-        Some(ImageInfo {
-            width: 48,
-            height: 48
-        })
+        Some(ImageInfo::new(48, 48))
     );
 }
 
@@ -143,7 +134,7 @@ fn an_image_as_big_as_the_frame_fits() {
     let (width, height) = FRAME_PX;
     assert_eq!(
         p.expression("big").map(|e| e.size),
-        Some(ImageInfo { width, height })
+        Some(ImageInfo::new(width, height))
     );
 }
 

@@ -629,7 +629,7 @@ mod tests {
     #[test]
     fn the_games_files_decode() {
         let heal = fs::read(root().join("assets/audio/sfx/heal.wav")).unwrap();
-        assert!(!decode("heal.wav", &heal).unwrap().is_empty());
+        assert_ne!(decode("heal.wav", &heal).unwrap(), [] as [i16; 0]);
         let jingle = fs::read(root().join("music/win_jingle_brass.ogg")).unwrap();
         let samples = decode("win_jingle_brass.ogg", &jingle).unwrap();
         let manifest = audio::load().unwrap();

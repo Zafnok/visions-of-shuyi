@@ -310,7 +310,7 @@ fn legal_commands_is_deterministic() {
 fn nothing_is_legal_once_the_battle_is_over() {
     let mut s = start(setup(cast()));
     s.outcome = Some(Outcome::Victory);
-    assert!(legal_commands(&s).is_empty());
+    assert_eq!(legal_commands(&s), [] as [crate::battle::Command; 0]);
 }
 
 #[test]
@@ -452,7 +452,7 @@ fn planning_never_sees_pending_reinforcements() {
         ..setup(cast())
     });
     let copy = s.determinize(Phase::Player, 7);
-    assert!(copy.reinforcements().is_empty());
+    assert_eq!(copy.reinforcements(), []);
     assert_eq!(s.reinforcements().len(), 2);
     assert_eq!(copy.rng, SimRng::new(7));
     assert_eq!(legal_commands(&copy), legal_commands(&s));

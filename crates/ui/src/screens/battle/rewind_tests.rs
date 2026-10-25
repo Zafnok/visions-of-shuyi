@@ -163,7 +163,7 @@ fn rewind_opens_only_while_browsing() {
     assert!(!s.help(&c).contains("rewind"), "{}", s.help(&c));
     press(&mut s, &mut c, &[Cancel, Rewind], 0.0);
     let r = s.rewind().expect("open while browsing");
-    assert!(r.entries().is_empty());
+    assert_eq!(r.entries(), []);
     assert!(!r.can_rewind());
     // Nothing listed: Confirm does nothing, Cancel closes.
     press(&mut s, &mut c, &[Confirm], 0.0);
@@ -177,7 +177,7 @@ fn rewind_opens_only_while_browsing() {
     assert_eq!(r.title, "Rewind");
     assert_eq!(r.charges, "3 of 3 charges left");
     assert_eq!(r.nothing.as_deref(), Some("Nothing to rewind yet"));
-    assert!(r.entries.is_empty());
+    assert_eq!(r.entries, [] as [std::string::String; 0]);
     assert_eq!(help(&h), "d close");
 }
 
@@ -290,7 +290,7 @@ fn skipping_is_silent() {
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.0);
     assert_eq!(cues(&mut c), ["menu_select", "cursor_move", "menu_select"]);
     press(&mut s, &mut c, &[Confirm], 0.0);
-    assert!(cues(&mut c).is_empty());
+    assert_eq!(cues(&mut c), [] as [std::string::String; 0]);
     // Attack, the iron sword, the brigand, attack; Cancel skips the combat.
     press(
         &mut s,
@@ -300,7 +300,7 @@ fn skipping_is_silent() {
     );
     assert_eq!(cues(&mut c).last().map(String::as_str), Some("menu_select"));
     press(&mut s, &mut c, &[Cancel], 0.0);
-    assert!(cues(&mut c).is_empty());
+    assert_eq!(cues(&mut c), [] as [std::string::String; 0]);
 }
 
 /// The rewind screen's map scene (ADR-0038): the battle as it was just
@@ -334,5 +334,5 @@ fn the_scene_is_the_map_before_the_highlighted_action() {
     assert_ne!(scene.units, now.units);
     assert_eq!(scene.tiles, now.tiles);
     assert_eq!(scene.cursor, None);
-    assert!(scene.path.is_empty());
+    assert_eq!(scene.path, [] as [trpg_core::Pos; 0]);
 }

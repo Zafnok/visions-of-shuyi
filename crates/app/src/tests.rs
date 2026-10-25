@@ -77,7 +77,7 @@ fn without_a_voice_folder_there_are_no_voices_and_no_warnings() {
     let dir = format!("{}/voice/en", nowhere.path().display());
     assert_eq!(block_on(read_voice_manifest(&dir, MANIFEST_FILE)), Ok(None));
     let mut ctx = Ctx::embedded().unwrap();
-    assert!(ctx.take_warnings().is_empty());
+    assert_eq!(ctx.take_warnings(), [] as [std::string::String; 0]);
     assert!(!ctx.has_voice(&line(0)));
 }
 

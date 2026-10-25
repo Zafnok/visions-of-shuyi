@@ -236,7 +236,7 @@ fn a_folder_gives_its_bust_files_before_its_faces_before_everything() {
     assert_eq!(pick_files(&faces), ["face_neutral"]);
     let other = stems(&["knight_neutral", "knight_sad"]);
     assert_eq!(pick_files(&other), ["knight_neutral", "knight_sad"]);
-    assert!(pick_files(&[]).is_empty());
+    assert_eq!(pick_files(&[]), [] as [&std::string::String; 0]);
     assert_eq!(expression_of("bust_neutral"), "neutral");
     assert_eq!(expression_of("bust_dark_knight_sly"), "sly");
     assert_eq!(expression_of("neutral"), "neutral");
@@ -263,17 +263,14 @@ fn the_stub_is_a_sidecar_the_game_loads() {
          \"surprise\": \"knight_a/surprise.png\",\n        \
          \"unique\": \"knight_a/unique.png\",\n    },\n)\n"
     );
-    let size = ImageInfo {
-        width: CUT,
-        height: CUT,
-    };
-    let images = ImageTable {
-        images: bought
+    let size = ImageInfo::new(CUT, CUT);
+    let images = ImageTable::new(
+        bought
             .iter()
             .map(|e| -> &'static str { format!("portraits/knight_a/{e}.png").leak() })
             .map(|path| (path, size))
             .collect(),
-    };
+    );
     let portrait = parse_portrait("knight_a.ron", "knight_a", &stub, &images).unwrap();
     assert_eq!(portrait.expressions.len(), 11);
     for required in REQUIRED_EXPRESSIONS {

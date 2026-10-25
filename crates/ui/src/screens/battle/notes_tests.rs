@@ -55,7 +55,7 @@ fn the_notes_open_only_for_a_battle_just_started_that_has_some() {
     assert!(!BattleScreen::new(state).notes_open());
     // No notes: no box.
     let quick = quick_battle(&c.game.content).unwrap();
-    assert!(quick.battle_notes().is_empty());
+    assert_eq!(quick.battle_notes(), []);
     let s = BattleScreen::start(quick, &[]);
     assert!(!s.notes_open());
     assert!(!shows(&s, &c, c.text(NOTES_TITLE)));
@@ -72,7 +72,7 @@ fn a_battle_decided_at_its_start_skips_the_notes() {
     setup.units.retain(|u| u.faction == Faction::Player);
     let (state, events) = BattleState::new(setup);
     assert!(state.outcome().is_some());
-    assert!(!state.battle_notes().is_empty());
+    assert_ne!(state.battle_notes(), []);
     let outcome = state.outcome().map(BannerKind::Outcome);
     let mut s = BattleScreen::start(state, &events);
     assert!(!s.notes_open());
@@ -281,11 +281,11 @@ fn the_scene_highlights_the_noted_unit_as_it_blinks() {
     assert_eq!(highlighted(&s, &c), [BRIGAND]);
     // Off for the second half of the blink, then on again.
     frame(&mut s, &mut c, &[], BLINK_S * 1.1);
-    assert!(highlighted(&s, &c).is_empty());
+    assert_eq!(highlighted(&s, &c), [] as [trpg_core::UnitId; 0]);
     frame(&mut s, &mut c, &[], BLINK_S);
     assert_eq!(highlighted(&s, &c), [BRIGAND]);
     // The notes closed: no unit is picked out.
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert!(!s.notes_open());
-    assert!(highlighted(&s, &c).is_empty());
+    assert_eq!(highlighted(&s, &c), [] as [trpg_core::UnitId; 0]);
 }

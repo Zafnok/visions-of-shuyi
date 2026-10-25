@@ -255,7 +255,7 @@ fn a_no_counter_spell_leaves_the_defender_no_counter() {
         _ => None,
     });
     let strikes = &outcome.unwrap().strikes;
-    assert!(!strikes.is_empty());
+    assert_ne!(strikes.as_slice(), []);
     assert!(strikes.iter().all(|st| st.by == Side::Attacker));
     assert_eq!(s.unit(UnitId(2)).map(|u| u.hp), Some(10));
 }

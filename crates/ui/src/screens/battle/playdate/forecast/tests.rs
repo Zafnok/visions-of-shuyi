@@ -108,7 +108,7 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
         .iter()
         .map(|o| (o.rect.x / 8, o.rect.y / 16))
         .collect();
-    assert!(!skulls.is_empty());
+    assert_ne!(skulls, [] as [(i32, i32); 0]);
     assert!(skulls.iter().all(|&s| s == (x + 7, 8)), "{skulls:?}");
     assert!(buf.overlays().iter().all(|o| o.color == ink(Ink::Black)));
     // The brigand's counter and the lord's second strike, after the fall.
@@ -120,7 +120,7 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
     // In pixels: the skull is drawn black over the white inside.
     let frame = shown(&buf);
     let picture = braille(&frame);
-    assert!(!picture.is_empty());
+    assert_ne!(picture, "");
     let (cw, ch) = ConsoleSpec::PLAYDATE.cell_px();
     let (sx, sy) = ((x + 7) * cw, 8 * ch);
     let inked = (sx..sx + cw)
@@ -227,7 +227,7 @@ fn the_affinity_line_and_a_counters_kill_skull_sit_in_the_targets_column() {
         .iter()
         .map(|o| (o.rect.x / 8, o.rect.y / 16))
         .collect();
-    assert!(!skulls.is_empty());
+    assert_ne!(skulls, [] as [(i32, i32); 0]);
     assert!(skulls.iter().all(|&s| s == (rx + 2 + 7, 10)), "{skulls:?}");
 }
 

@@ -238,7 +238,7 @@ fn the_focus_wraps_and_the_list_scrolls_with_it() {
         "None"
     );
     assert_eq!(s.focused_slot(), 20);
-    assert!(sounds(&mut c).is_empty());
+    assert_eq!(sounds(&mut c), [] as [std::string::String; 0]);
 }
 
 /// The picker always lists every slot, but moving never divides by a

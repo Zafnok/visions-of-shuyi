@@ -95,7 +95,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
     let mut c = ctx();
     let mut s = quick();
     assert_eq!(s.danger(), None);
-    assert!(s.scene(&c).tinted(range::DANGER).is_empty());
+    assert_eq!(s.scene(&c).tinted(range::DANGER), [] as [trpg_core::Pos; 0]);
     press(&mut s, &mut c, &[Action::DangerZone]);
     let state = s.state();
     let expected = danger_zone(

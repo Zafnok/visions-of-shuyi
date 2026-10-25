@@ -629,14 +629,12 @@ impl DialogueScreen {
             }
         });
         let waits = !self.is_asking_skip() && self.menu.is_none() && self.is_revealed();
-        TextView {
-            narration,
-            lines: self.page_lines().to_vec(),
-            shown,
-            choices: self.menu.as_ref().map(Menu::view),
-            skip,
-            waiting: waits.then(|| self.wait_view(ctx)),
-        }
+        let mut text = TextView::new(self.page_lines().to_vec(), shown);
+        text.narration = narration;
+        text.choices = self.menu.as_ref().map(Menu::view);
+        text.skip = skip;
+        text.waiting = waits.then(|| self.wait_view(ctx));
+        text
     }
 
     /// What shows while the page waits: the key that goes on, the log's
@@ -644,11 +642,9 @@ impl DialogueScreen {
     fn wait_view(&self, ctx: &Ctx) -> WaitView {
         let km = ctx.help_keys();
         let log_mapped = key_name(km, Action::DialogueLog) != km.not_mapped();
-        WaitView {
-            key: key_name(km, Action::Confirm),
-            log_hint: log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[])),
-            marker: self.text.marker_lit(),
-        }
+        let mut wait = WaitView::new(key_name(km, Action::Confirm), self.text.marker_lit());
+        wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]));
+        wait
     }
 }
 

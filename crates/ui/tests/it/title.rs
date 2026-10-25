@@ -191,7 +191,7 @@ fn menu_sounds() {
     assert_eq!(h.sounds(), ["menu_move", "menu_move"]);
     // Nothing to back out of on the title screen.
     h.clear_audio().keys("d");
-    assert!(h.sounds().is_empty());
+    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
     h.keys("f");
     assert_eq!(h.top_screen(), "mode_select");
     assert_eq!(h.sounds(), ["menu_select"]);
@@ -242,7 +242,7 @@ fn the_title_waits_for_a_key_or_button() {
     let snap = h.snapshot();
     assert!(snap.contains("├─┴┬┴─┴┬┴─┤     Press any key or button     │ ┼ ╭─╮ ◯ │"));
     assert_snapshot!(snap);
-    assert!(music(&h).is_empty());
+    assert_eq!(music(&h), [] as [std::string::String; 0]);
     // Every glyph of the pictures is in the font.
     let font = trpg_content::font::load().unwrap_or_default();
     let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
@@ -278,7 +278,7 @@ fn the_key_that_ends_the_wait_does_nothing_else() {
     // and nothing opens, and no menu sound plays.
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
-    assert!(h.sounds().is_empty());
+    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
     assert_eq!(h.snapshot(), title().snapshot());
     h.keys("f");
     assert_eq!(h.top_screen(), "mode_select");
@@ -320,7 +320,7 @@ fn first_launch_a_key_at_the_prompt_opens_the_layout_picker() {
         assert_eq!(h.screens(), ["title", "layout_picker"], "{key}");
         assert_eq!(h.game().ctx().layout(), None, "{key}");
         assert_eq!(picker_focus(&h), Some(RIGHT_HANDED), "{key}");
-        assert!(music(&h).is_empty());
+        assert_eq!(music(&h), [] as [std::string::String; 0]);
     }
     // Picked: the title's menu and music, no prompt again.
     h.keys("f Down f").wait(0.1);

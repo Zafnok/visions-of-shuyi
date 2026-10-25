@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn root_and_missing_directories() {
         assert!(files_in("").iter().all(|p| !p.contains('/')));
-        assert!(files_in("no_such_dir").is_empty());
+        assert_eq!(files_in("no_such_dir"), [] as [&str; 0]);
     }
 
     #[test]
@@ -312,7 +312,7 @@ mod tests {
         assert!(data.contains(&"data/palettes/moonlit.ron"));
         assert!(files_in("data").iter().all(|f| data.contains(f)));
         assert!(!files_in("data").contains(&"data/palettes/moonlit.ron"));
-        assert!(files_under("no_such_dir").is_empty());
+        assert_eq!(files_under("no_such_dir"), [] as [&str; 0]);
     }
 
     /// The `no_std` bundle (`build.rs`'s table) and `include_dir` list the

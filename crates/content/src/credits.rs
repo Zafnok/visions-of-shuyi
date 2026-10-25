@@ -125,7 +125,7 @@ mod tests {
         assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
         // Without the manifest: the file's entries alone.
         let alone = load(None).unwrap_or_default();
-        assert!(!alone.entries.is_empty());
+        assert_ne!(alone.entries, [] as [shuyi_assets::credits::CreditEntry; 0]);
         assert!(alone.entries.iter().all(|e| !e.group.is_audio()));
     }
 

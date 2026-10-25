@@ -245,7 +245,7 @@ fn skill_kinds() {
         get("white_magic_1").passive_effects(),
         [PassiveEffect::HealBonus(2)]
     );
-    assert!(get("keen_edge").passive_effects().is_empty());
+    assert_eq!(get("keen_edge").passive_effects(), []);
     assert!(t.get(&sid("nope")).is_none());
 }
 
@@ -730,9 +730,9 @@ fn the_current_class_active_is_usable_from_class_level_1() {
         Some(1)
     );
     assert_eq!(usable(&u), ["long_shot"]);
-    assert!(usable(&unit_in("plain")).is_empty());
+    assert_eq!(usable(&unit_in("plain")), [] as [std::string::String; 0]);
     // An active missing from the table is skipped.
-    assert!(usable(&unit_in("ghost")).is_empty());
+    assert_eq!(usable(&unit_in("ghost")), [] as [std::string::String; 0]);
 }
 
 #[test]

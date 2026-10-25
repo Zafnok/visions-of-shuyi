@@ -396,7 +396,10 @@ mod tests {
         assert_eq!(errs.len(), 1);
         assert!(errs[0].message.contains("more than 256"));
         let max: Vec<String> = (0..256).map(|i| format!("\"m{i}\"")).collect();
-        assert!(errors(&file(&max.join(", "), &[])).is_empty());
+        assert_eq!(
+            errors(&file(&max.join(", "), &[])),
+            [] as [shuyi_assets::ContentError; 0]
+        );
     }
 
     #[test]

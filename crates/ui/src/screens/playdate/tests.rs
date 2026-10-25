@@ -124,7 +124,7 @@ fn wrap_breaks_by_words_and_keeps_the_texts_own_line_breaks() {
         wrap("one two three\nfour five", 9),
         ["one two", "three", "four five"]
     );
-    assert!(wrap("", 9).is_empty());
+    assert_eq!(wrap("", 9), [] as [std::string::String; 0]);
 }
 
 #[test]

@@ -77,7 +77,7 @@ tries (seeds 1–5), each phase run three times, the fastest kept.
 
 ### 1. Toolchain: stable Rust and the SDK's own C build, GNU tools only
 
-- **Rust:** the repository's pinned stable toolchain (1.98.1) and the
+- **Rust:** the repository's pinned stable toolchain (1.99.1) and the
   tier-2 target `thumbv7em-none-eabihf` (its `core`/`alloc` come
   prebuilt; no nightly, no `build-std`). Flags:
   `-C target-cpu=cortex-m7 -C target-feature=-fp64 -C relocation-model=pic`

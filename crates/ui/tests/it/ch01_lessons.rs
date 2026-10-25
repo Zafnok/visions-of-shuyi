@@ -493,7 +493,7 @@ fn short_shows_no_basic_controls_and_none_shows_nothing() {
         assert!(basics.is_empty(), "{level:?}: {basics:?}");
         if level == TutorialLevel::None {
             assert!(seen.is_empty(), "{seen:?}");
-            assert!(done(&h).is_empty());
+            assert_eq!(done(&h), [] as [std::string::String; 0]);
         } else {
             assert_eq!(seen.first().map(String::as_str), Some("keys"));
             assert_eq!(seen.last().map(String::as_str), Some("rewind"));
@@ -546,7 +546,7 @@ fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
     };
     quiet(&h);
     // Closed, not done: it can come back if the level goes back up.
-    assert!(done(&h).is_empty());
+    assert_eq!(done(&h), [] as [std::string::String; 0]);
     go(&mut h, SERGEANT);
     h.keys("f").wait(0.1);
     quiet(&h);
@@ -562,7 +562,7 @@ fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
     h.keys("f");
     to_turn(&mut h, 2);
     quiet(&h);
-    assert!(done(&h).is_empty());
+    assert_eq!(done(&h), [] as [std::string::String; 0]);
 }
 
 /// Full → Short drops the `Full`-only lessons waiting (the cursor one

@@ -1147,7 +1147,10 @@ mod tests {
         .flatten()
         .collect();
         assert_eq!(ok.len(), 5);
-        assert!(check_map_labels("m.map", &ok).is_empty());
+        assert_eq!(
+            check_map_labels("m.map", &ok),
+            [] as [shuyi_assets::ContentError; 0]
+        );
         let mut clash = ok;
         clash.extend(named("Ab", 5, Faction::Player));
         clash.extend(named("Ab", 6, Faction::Player));

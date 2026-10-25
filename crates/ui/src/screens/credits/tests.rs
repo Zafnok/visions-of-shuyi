@@ -82,7 +82,10 @@ fn rows_group_the_entries_under_headings() {
             Detail
         ]
     );
-    assert!(CreditsScreen::new(&ctx_with(vec![])).rows.is_empty());
+    assert_eq!(
+        CreditsScreen::new(&ctx_with(vec![])).rows,
+        [] as [(crate::screens::credits::CreditRowKind, String); 0]
+    );
 }
 
 #[test]
@@ -116,7 +119,10 @@ fn scrolling_moves_a_row_at_a_time_and_stops_at_the_ends() {
     assert_eq!((s.top, s.max_top()), (0, 36));
     assert!(!s.more_above() && s.more_below());
     // Already at the top: nothing moves, no sound.
-    assert!(sounds_of(&mut s, &mut c, &[CursorUp]).is_empty());
+    assert_eq!(
+        sounds_of(&mut s, &mut c, &[CursorUp]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(s.top, 0);
     assert_eq!(
         sounds_of(&mut s, &mut c, &[CursorDown, CursorDown]),
@@ -144,7 +150,10 @@ fn a_short_list_does_not_scroll() {
     let mut c = ctx_with(vec![entry(CreditGroup::Fonts, "Font")]);
     let mut s = CreditsScreen::new(&c);
     assert!(!s.more_above() && !s.more_below());
-    assert!(sounds_of(&mut s, &mut c, &[Action::CursorDown]).is_empty());
+    assert_eq!(
+        sounds_of(&mut s, &mut c, &[Action::CursorDown]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!(s.top, 0);
     let view = s.view(&c);
     assert!(!view.more_above && !view.more_below);
@@ -167,7 +176,10 @@ fn cancel_closes_with_the_cancel_sound_and_other_actions_do_nothing() {
     assert_eq!(s.name(), "credits");
     assert!(!s.is_overlay());
     let others = [Action::CursorLeft, Action::CursorRight, Action::Info];
-    assert!(sounds_of(&mut s, &mut c, &others).is_empty());
+    assert_eq!(
+        sounds_of(&mut s, &mut c, &others),
+        [] as [std::string::String; 0]
+    );
     assert!(s.is_rolling());
     assert_eq!(s.top, 0);
     // Actions after Cancel are dropped.
@@ -341,7 +353,10 @@ fn scrolling_by_hand_stops_the_rolling() {
     assert_eq!((s.top, s.is_rolling()), (1, false));
     c.audio.take();
     let mut s = CreditsScreen::new(&c);
-    assert!(sounds_of(&mut s, &mut c, &[Action::CursorUp]).is_empty());
+    assert_eq!(
+        sounds_of(&mut s, &mut c, &[Action::CursorUp]),
+        [] as [std::string::String; 0]
+    );
     assert_eq!((s.top, s.is_rolling()), (0, false));
     // The frame's time passes before its keys: the row that was due
     // rolls, then Down scrolls one more.
@@ -369,7 +384,7 @@ fn the_screen_asks_for_the_title_music_once() {
     assert_eq!(music(&mut c), [TITLE_MUSIC]);
     pass(&mut s, &mut c, 1.0);
     s.update(&mut c, &input(&[Action::Confirm, Action::CursorDown]));
-    assert!(music(&mut c).is_empty());
+    assert_eq!(music(&mut c), [] as [std::string::String; 0]);
 }
 
 /// The real list: every entry's four parts are on a row.

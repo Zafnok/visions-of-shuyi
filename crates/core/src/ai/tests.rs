@@ -777,7 +777,7 @@ fn spells_without_uses_and_heals_are_not_attacks() {
         class: ClassId("nobody".into()),
         ..spent
     };
-    assert!(with(&lost).is_empty());
+    assert_eq!(with(&lost), [] as [crate::item::Equipped; 0]);
 }
 
 #[test]

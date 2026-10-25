@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn placeholders_are_listed_in_order() {
         assert_eq!(placeholders("{A} x {B}{C} {"), ["A", "B", "C"]);
-        assert!(placeholders("none {open").is_empty());
+        assert_eq!(placeholders("none {open"), [] as [&str; 0]);
     }
 
     #[test]

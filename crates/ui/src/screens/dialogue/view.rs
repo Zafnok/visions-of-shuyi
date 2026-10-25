@@ -126,13 +126,7 @@ pub fn told(
     lines: &[String],
     shown: usize,
 ) -> DialogueView {
-    let text = TextView {
-        narration: view.narration,
-        lines: lines[..lines.len().min(TEXT_LINES)].to_vec(),
-        shown,
-        choices: None,
-        skip: None,
-        waiting: None,
-    };
+    let mut text = TextView::new(lines[..lines.len().min(TEXT_LINES)].to_vec(), shown);
+    text.narration = view.narration;
     scene(ctx, lead, view, text, false)
 }

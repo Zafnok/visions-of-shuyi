@@ -92,7 +92,7 @@ mod tests {
         let (rows, _) = frame.as_chunks::<ROW_BYTES>();
         let inked = |row: &[u8; ROW_BYTES]| row[..50].iter().any(|&b| b != u8::MAX);
         let inked_rows: Vec<usize> = (0..240).filter(|&y| inked(&rows[y])).collect();
-        assert!(!inked_rows.is_empty());
+        assert_ne!(inked_rows, [] as [usize; 0]);
         assert!(inked_rows.iter().all(|y| (7 * 16..8 * 16).contains(y)));
         // No ink left of the name's first cell nor right of its last.
         for row in rows {

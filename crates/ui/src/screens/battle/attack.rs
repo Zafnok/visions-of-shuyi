@@ -423,8 +423,14 @@ mod tests {
         let s = battle_with(&c, s.map().clone(), units, rout);
         assert_eq!(targets(&s, UnitId(1), p(7, 3), 0), [UnitId(5), UnitId(4)]);
         // An empty slot, or a tile the lord can't reach: none.
-        assert!(targets(&s, UnitId(1), p(7, 3), 2).is_empty());
-        assert!(targets(&s, UnitId(1), p(0, 0), 0).is_empty());
+        assert_eq!(
+            targets(&s, UnitId(1), p(7, 3), 2),
+            [] as [trpg_core::UnitId; 0]
+        );
+        assert_eq!(
+            targets(&s, UnitId(1), p(0, 0), 0),
+            [] as [trpg_core::UnitId; 0]
+        );
     }
 
     #[test]
@@ -460,7 +466,10 @@ mod tests {
         // No weapon reaches: no forecast.
         assert_eq!(Targeting::attack(&s, sel.clone(), &[]), None);
         // Nobody in reach: no choices.
-        assert!(weapon_choices(&s, &at(&s, p(6, 3))).is_empty());
+        assert_eq!(
+            weapon_choices(&s, &at(&s, p(6, 3))),
+            [] as [crate::screens::battle::attack::WeaponChoice; 0]
+        );
         // An empty slot has no name.
         assert_eq!(weapon_name(&s, Words::ENGLISH, UnitId(1), 2), "");
     }

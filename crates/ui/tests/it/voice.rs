@@ -62,7 +62,7 @@ fn only_lines_with_a_playable_clip_are_asked_for() {
     let lines = lines(&h);
     // No manifest: the tool has nothing to say.
     h.clear_audio().keys("f");
-    assert!(h.voices().is_empty());
+    assert_eq!(h.voices(), [] as [std::string::String; 0]);
     // The first line has a clip, the second a stale one, the third none,
     // the fourth a clip.
     let source = manifest(&[
@@ -71,7 +71,7 @@ fn only_lines_with_a_playable_clip_are_asked_for() {
         (&lines[3].0, &lines[3].1),
     ]);
     h.ctx_mut().set_voice_manifest(&source);
-    assert!(h.ctx_mut().take_warnings().is_empty());
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [std::string::String; 0]);
     h.clear_audio().keys("f");
     let preload = AudioRequest::PreloadVoices {
         lines: vec![
@@ -96,7 +96,10 @@ fn only_lines_with_a_playable_clip_are_asked_for() {
     h.clear_audio().keys("f");
     h.ctx_mut().play_voice(&lines[0].0);
     h.wait(0.0);
-    assert!(voice_requests(&h).is_empty());
+    assert_eq!(
+        voice_requests(&h),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
     assert_eq!(h.sounds(), ["menu_select"]);
 }
 

@@ -1085,7 +1085,7 @@ mod tests {
         events.retain(|e| !matches!(e, Event::UnitFell { .. }));
         let mut pb = Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap();
         assert_eq!(pb.bouts()[1].defender.start, 12);
-        assert!(pb.falls().is_empty());
+        assert_eq!(pb.falls(), []);
         pb.tick(pb.total(), false);
         assert_eq!(pb.hp(UnitId(4)), Some(3));
         assert_eq!(pb.message(Words::ENGLISH), None);

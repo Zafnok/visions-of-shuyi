@@ -545,7 +545,7 @@ fn swoop_offers_a_move_chosen_after_the_combat() {
     );
     assert_eq!(s.unit(UnitId(1)).map(|u| u.pos), Some(p(0, 0)));
     assert_eq!(s.pending_move(), None);
-    assert!(s.move_after_tiles().is_empty());
+    assert_eq!(s.move_after_tiles(), [] as [shuyi_core::Pos; 0]);
     refused(
         &mut s,
         &move_after(1, None),

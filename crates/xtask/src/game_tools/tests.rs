@@ -549,9 +549,7 @@ fn the_session_reads_the_battles_scene_and_paints_its_frame() {
     let mut session = Trpg.session(&[]).unwrap();
     let error = session.scene().unwrap_err();
     assert!(error.contains("`title`"), "{error}");
-    let script = Script {
-        steps: vec![frame_png::Step::Keys("Down f Left f".into())],
-    };
+    let script = Script::new(vec![frame_png::Step::Keys("Down f Left f".into())]);
     session.play(&script);
     let scene = session.scene().unwrap();
     assert_eq!(
@@ -560,7 +558,7 @@ fn the_session_reads_the_battles_scene_and_paints_its_frame() {
     );
     let mut h = harness(&Start::of(&[]).unwrap()).unwrap();
     script.play(&mut h);
-    assert!(!scene.text.is_empty());
+    assert_ne!(scene.text, "");
     assert_eq!(scene.text, h.map_text());
     let units = scene.data["units"].as_array();
     assert!(units.is_some_and(|u| !u.is_empty()), "{}", scene.data);

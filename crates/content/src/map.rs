@@ -41,10 +41,7 @@ pub const MAX_MAP_SIZE: usize = 64;
 pub const TILE_LOOKS: [&str; 2] = [DEFAULT_TILES, "indoor"];
 
 /// What the game's maps may be.
-const FORMAT: MapFormat<'static> = MapFormat {
-    looks: &TILE_LOOKS,
-    max_size: MAX_MAP_SIZE,
-};
+const FORMAT: MapFormat<'static> = MapFormat::new(&TILE_LOOKS, MAX_MAP_SIZE);
 
 /// A map's legend: tile character → terrain string id, plus the resolved
 /// [`TerrainId`]s.
@@ -463,7 +460,7 @@ mod tests {
             m.chest(Pos::new(1, 1)),
             Some(&Loot::Item(ItemId::new("potion")))
         );
-        assert!(check(FEATURES).is_empty());
+        assert_eq!(check(FEATURES), [] as [std::string::String; 0]);
     }
 
     #[test]
@@ -547,7 +544,10 @@ mod tests {
         let def = parse(&FEATURES.replace("(1, 0): Shop", "(2, 0): Shop"))
             .unwrap_or_else(|e| panic!("{e:?}"));
         let maps = BTreeMap::from([("f".to_owned(), def)]);
-        assert!(check_features(&maps, &feature_items(), &terrain).is_empty());
+        assert_eq!(
+            check_features(&maps, &feature_items(), &terrain),
+            [] as [shuyi_assets::ContentError; 0]
+        );
     }
 
     #[test]

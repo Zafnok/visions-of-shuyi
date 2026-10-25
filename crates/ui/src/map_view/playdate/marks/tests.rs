@@ -50,7 +50,7 @@ fn the_danger_zone_has_a_dashed_edge_round_it() {
             r(70, 16, 2, 16),
         ]
     );
-    assert!(edges(&[]).is_empty());
+    assert_eq!(edges(&[]), [] as [shuyi_ui::frame::Rect; 0]);
 }
 
 /// Where the zone runs on past the view, it has no edge there; where it
@@ -104,11 +104,7 @@ fn the_cursor_is_the_pcs_corner_marks_flipping_what_they_cover() {
     let cursor = |style, brightness| {
         let mut scene = plains(&ctx);
         scene.push_unit(unit(Faction::Player, p(1, 1)));
-        scene.cursor = Some(CursorView {
-            pos: p(1, 1),
-            brightness,
-            style,
-        });
+        scene.cursor = Some(CursorView::new(p(1, 1), brightness, style));
         let buf = painted(&ctx, &scene);
         let flips: Vec<Rect> = buf
             .overlays()

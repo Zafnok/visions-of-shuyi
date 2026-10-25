@@ -291,13 +291,13 @@ mod tests {
         c.game.campaign_tutorial = Some(TutorialLevel::Short);
         assert_eq!(queued(&c, Some("test")), ["short"]);
         c.game.campaign_tutorial = Some(TutorialLevel::None);
-        assert!(queued(&c, Some("test")).is_empty());
+        assert_eq!(queued(&c, Some("test")), [] as [std::string::String; 0]);
         // Done in this campaign: never again.
         c.game.campaign_tutorial = Some(TutorialLevel::Full);
         c.game.campaign_lessons.insert("full".into());
         assert_eq!(queued(&c, None), ["short"]);
         c.game.lessons = Lessons::Off;
-        assert!(queued(&c, None).is_empty());
+        assert_eq!(queued(&c, None), [] as [std::string::String; 0]);
     }
 
     #[test]

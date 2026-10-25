@@ -23,11 +23,11 @@ pub use shuyi_ui::grid::glyph::{
 
 /// This game's palette names of the map's path, cursor and threat
 /// arrows: the path's and the cursor's colours, and the enemy's.
-pub const MAP_COLORS: MapColors = MapColors {
-    path: UiColor::Path.name(),
-    cursor: UiColor::Cursor.name(),
-    threat: UiColor::Enemy.name(),
-};
+pub const MAP_COLORS: MapColors = MapColors::new(
+    UiColor::Path.name(),
+    UiColor::Cursor.name(),
+    UiColor::Enemy.name(),
+);
 
 /// The kit's glyph skin as this game paints it: its colours, its walk
 /// speeds, and the cursor's lower arms above the 2 px HP bar. Terrain,

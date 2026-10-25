@@ -60,8 +60,8 @@ checklist (1064).
 ## Scope
 
 **In:**
-- Move the pin past the seven engine tickets (`engine-change` skill,
-  step 3.6 and §7).
+- ~~Move the pin past the seven engine tickets (`engine-change` skill,
+  step 3.6 and §7).~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
 - `cargo shuyi playtest` is the game's playtest command: `Trpg` in
   `crates/xtask/src/game_tools.rs` implements `playtest_stages` (the
   battle ids of `assets/battles/`), `playtest_plan` and
@@ -123,15 +123,16 @@ this ticket's PR.
 ## Implementation steps
 
 1. **A baseline to compare with**, before anything changes: on the
-   current pin, run `cargo xtask playtest <Chapter 1's battle id> --bot
+   current pin (the pin move of 2026-10-25 changed no behaviour, so it
+   stands for the old pin in step 9 and the acceptance criteria), run `cargo xtask playtest <Chapter 1's battle id> --bot
    all --runs 20 --json before.json` and the same without `--bot all`
    into `before-baseline.json` (the id is the one `assets/battles/`
    names Chapter 1). Keep both files outside the repo.
-2. **Pin.** Check each engine ticket is in the engine's `tickets/done/`,
+2. ~~**Pin.** Check each engine ticket is in the engine's `tickets/done/`,
    then `cargo xtask engine`, `git -C shuyi-engine switch main`,
    `git -C shuyi-engine pull --ff-only`, `cargo xtask engine --off`,
    `cargo xtask engine-pin`. Fix what the engine's breaking changes
-   break (engine#2532 replaces `GameTools::playtest`).
+   break (engine#2532 replaces `GameTools::playtest`).~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
 3. **The scoring** (`crates/bots/src/persona.rs`): a `const FEATURES:
    [&str; 16]` with today's names (`won`, `lost`, `lord fell`, …; spaces
    or underscores, matching `personas.ron`'s keys); `Tally::between`

@@ -115,7 +115,7 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
     let cursor = scene.cursor.unwrap();
     assert_eq!((cursor.pos, cursor.style), (p(3, 5), CursorStyle::Corners));
     assert!((cursor.brightness - 1.0).abs() < 1e-6);
-    assert!(scene.path.is_empty());
+    assert_eq!(scene.path, [] as [trpg_core::Pos; 0]);
 }
 
 #[test]
@@ -199,7 +199,10 @@ fn an_enemys_threat_area_is_an_attack_range() {
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(8, 2)));
     // Hidden again: no range.
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert!(ranges(&s.scene(&c)).is_empty());
+    assert_eq!(
+        ranges(&s.scene(&c)),
+        [] as [(shuyi_ui::grid::RangeName, usize); 0]
+    );
 }
 
 #[test]
@@ -210,7 +213,7 @@ fn where_a_unit_may_move_after_its_attack_is_a_move_range() {
     let s = BattleScreen::new(state);
     assert!(matches!(s.mode(), Mode::MoveAfter { .. }), "{:?}", s.mode());
     let scene = s.scene(&c);
-    assert!(!tiles.is_empty());
+    assert_ne!(tiles, [] as [trpg_core::Pos; 0]);
     assert_eq!(scene.tinted(range::MOVE), rows(tiles.iter().copied()));
     assert_eq!(ranges(&scene), [(range::MOVE, tiles.len())]);
     assert_eq!(scene.cursor.map(|c| c.pos), Some(s.cursor().pos));
@@ -255,7 +258,7 @@ fn the_targets_of_an_attack_are_an_attack_range() {
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(7, 2)));
     assert_eq!(s.state().unit(UnitId(1)).unwrap().pos, p(6, 2));
     assert_eq!(scene.cursor.map(|c| c.pos), Some(at(t.target())));
-    assert!(scene.path.is_empty());
+    assert_eq!(scene.path, [] as [trpg_core::Pos; 0]);
 }
 
 #[test]

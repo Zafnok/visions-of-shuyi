@@ -1963,7 +1963,7 @@ mod tests {
         };
         assert_eq!(*unit, UnitId(3));
         assert_eq!(tiles, &s.move_after_tiles());
-        assert!(!tiles.is_empty());
+        assert_ne!(tiles.as_slice(), []);
         assert!(mode.cursor_free());
         assert_eq!(mode.selection(), None);
         let to = tiles[0];

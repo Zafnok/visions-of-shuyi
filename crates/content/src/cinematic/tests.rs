@@ -251,7 +251,7 @@ fn the_opening_boxes_are_the_text_before_the_first_reply_choice() {
     assert!(!choice);
     let texts = intro.steps.iter().filter(|s| s.text().is_some()).count();
     assert_eq!(boxes.len(), texts);
-    assert!(!boxes.is_empty());
+    assert_ne!(boxes, [] as [std::string::String; 0]);
 }
 
 #[test]

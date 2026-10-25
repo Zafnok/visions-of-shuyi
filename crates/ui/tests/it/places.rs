@@ -91,9 +91,9 @@ fn map_place(ctx: &Ctx, map: &str, centre: Pos) -> MapScene {
 
 /// `scene` without anyone on it.
 fn bare(scene: Option<MapScene>) -> Option<MapScene> {
-    scene.map(|scene| MapScene {
-        units: Vec::new(),
-        ..scene
+    scene.map(|mut scene| {
+        scene.units = Vec::new();
+        scene
     })
 }
 

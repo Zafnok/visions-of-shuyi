@@ -69,7 +69,7 @@ fn a_unit_has_its_classes_weapon_slots_then_armour_and_accessory() {
     );
     let mage = prep_with(classes_with(mage_class()), &[], &[]);
     assert_eq!(mage.gear_slots(U), [GearSlot::Armour, GearSlot::Accessory]);
-    assert!(s.gear_slots(UnitId(9)).is_empty());
+    assert_eq!(s.gear_slots(UnitId(9)), [] as [crate::prep::GearSlot; 0]);
     assert_eq!(s.player_units().count(), 1);
 }
 
@@ -78,7 +78,7 @@ fn only_player_units_are_prepared() {
     let mut s = prep(&["sword"], &["vest", "potion"]);
     s.units[0].faction = Faction::Enemy;
     assert_eq!(s.player_units().count(), 0);
-    assert!(s.gear_slots(U).is_empty());
+    assert_eq!(s.gear_slots(U), [] as [crate::prep::GearSlot; 0]);
     assert_eq!(s.attack_speed(U, None), None);
     assert_eq!(s.unusable(U, &id("bow")), None);
     let before = s.clone();
@@ -108,7 +108,7 @@ fn a_stock_weapon_goes_in_a_slot_and_is_equipped_if_nothing_is() {
     );
     assert_eq!(slot_weapon(&s, 0), Some("javelin"));
     assert_eq!(s.units[0].loadout.equipped, Some(Equipped::Weapon(1)));
-    assert!(s.stock.weapons.is_empty());
+    assert_eq!(s.stock.weapons, [] as [crate::item::WeaponInstance; 0]);
 }
 
 #[test]
@@ -326,7 +326,7 @@ fn the_pack_takes_consumables_from_the_stock_up_to_its_cap() {
     assert_eq!(s.pack_to_stock(&id("potion")), Err(PrepError::NotInPack));
     s.stock.items.clear();
     assert_eq!(s.pack_from_stock(&id("potion")), Err(PrepError::NotInStock));
-    assert!(s.pack.items.is_empty());
+    assert_eq!(s.pack.items, [] as [crate::item::ItemId; 0]);
 }
 
 #[test]
@@ -407,7 +407,10 @@ fn the_army_is_the_deployed_units_then_the_bench() {
     assert_eq!(a.unit(PrepUnit::Deployed(UnitId(9))), None);
     assert_eq!(a.gear_slots(BEN).len(), 5);
     assert_eq!(a.gear_slots(FENCER), a.setup.gear_slots(U));
-    assert!(a.gear_slots(PrepUnit::Benched(1)).is_empty());
+    assert_eq!(
+        a.gear_slots(PrepUnit::Benched(1)),
+        [] as [crate::prep::GearSlot; 0]
+    );
     assert_eq!(
         a.unusable(BEN, &id("bow")),
         Some(Unusable::Kind(WeaponKind::Bow))
@@ -457,7 +460,10 @@ fn a_benched_units_gear_is_traded_through_the_stock() {
     assert_eq!(a.bench[0].loadout.weapon(2), Some(&copy("sword", 20)));
     assert_eq!(a.bench[0].loadout.equipped, Some(Equipped::Weapon(2)));
     assert_eq!(a.bench[0].loadout.armour, Some(id("vest")));
-    assert!(a.setup.stock.weapons.is_empty());
+    assert_eq!(
+        a.setup.stock.weapons,
+        [] as [crate::item::WeaponInstance; 0]
+    );
     // The same refusals as for a deployed unit.
     let before = a.clone();
     assert_eq!(
@@ -538,7 +544,10 @@ fn two_units_swap_what_their_slots_hold() {
     assert_eq!(a.setup.units[0].loadout.equipped, Some(Equipped::Weapon(1)));
     assert_eq!(a.bench[0].loadout.weapon(0), Some(&copy("sword", 20)));
     assert_eq!(a.bench[0].loadout.equipped, Some(Equipped::Weapon(0)));
-    assert!(a.setup.stock.weapons.is_empty());
+    assert_eq!(
+        a.setup.stock.weapons,
+        [] as [crate::item::WeaponInstance; 0]
+    );
     // Into an empty slot: the giver's slot is left empty, and the giver
     // wields nothing.
     assert_eq!(

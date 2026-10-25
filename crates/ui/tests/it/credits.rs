@@ -55,7 +55,10 @@ fn the_list_rolls_by_itself() {
     assert!(glyphs(&rolled).contains("\"Battle Theme A\" by cynicmusic"));
     assert!(glyphs(&rolled).contains('▲'));
     // Rolling makes no sound.
-    assert!(h.clear_audio().wait(2.0).sounds().is_empty());
+    assert_eq!(
+        h.clear_audio().wait(2.0).sounds(),
+        [] as [std::string::String; 0]
+    );
 }
 
 #[test]

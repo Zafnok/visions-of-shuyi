@@ -74,7 +74,7 @@ fn at_full_the_lesson_opens_holds_the_turn_and_closes() {
     assert_eq!(battle(&h).state().phase(), Phase::Player);
     h.keys("Down Right Left");
     assert!(battle(&h).lesson_open());
-    assert!(lessons_done(&h).is_empty());
+    assert_eq!(lessons_done(&h), [] as [std::string::String; 0]);
     h.keys("Up");
     assert_eq!(battle(&h).shown_lesson(), None);
     assert!(!h.snapshot().contains("Moving the cursor"));
@@ -148,5 +148,5 @@ fn a_lesson_left_open_opens_again_after_continue() {
     h.keys("f").wait(0.1);
     assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
     assert_eq!(battle(&h).lesson_ticks(), [false; 4]);
-    assert!(lessons_done(&h).is_empty());
+    assert_eq!(lessons_done(&h), [] as [std::string::String; 0]);
 }

@@ -256,7 +256,7 @@ fn m_and_f_come_as_a_pair() {
     );
     // With only one of the pair beside it, both problems are reported.
     assert_eq!(errors(&all[..2]).len(), 2);
-    assert!(errors(&all[1..]).is_empty());
+    assert_eq!(errors(&all[1..]), [] as [std::string::String; 0]);
 }
 
 #[test]

@@ -438,10 +438,13 @@ mod tests {
         assert_eq!(names, CRATES.map(|(n, _)| n));
         assert!(revs.iter().all(|(_, r)| r == REV));
         // A crate of the same name from somewhere else isn't the engine's.
-        assert!(manifest_revs("shuyi-core = { path = \"x\", rev = \"y\" }\n").is_empty());
-        assert!(
-            manifest_revs("# shuyi-core = { git = \"https://github.com/Zafnok/shuyi-engine\" }\n")
-                .is_empty()
+        assert_eq!(
+            manifest_revs("shuyi-core = { path = \"x\", rev = \"y\" }\n"),
+            [] as [(std::string::String, std::string::String); 0]
+        );
+        assert_eq!(
+            manifest_revs("# shuyi-core = { git = \"https://github.com/Zafnok/shuyi-engine\" }\n"),
+            [] as [(std::string::String, std::string::String); 0]
         );
     }
 
@@ -528,7 +531,10 @@ mod tests {
 
     #[test]
     fn with_the_checkout_on_the_lock_is_not_checked() {
-        assert!(problems(REV, &manifest(REV), &lock(None), true).is_empty());
+        assert_eq!(
+            problems(REV, &manifest(REV), &lock(None), true),
+            [] as [std::string::String; 0]
+        );
         assert_eq!(
             problems(REV, &manifest(OTHER), &lock(None), true).len(),
             CRATES.len()

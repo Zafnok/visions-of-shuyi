@@ -125,7 +125,7 @@ fn a_player_fire_burns_until_the_next_player_phase() {
         [changed(WOOD, BURNING, BURNT), started(2, Phase::Player)]
     );
     assert_eq!(tile(&s, WOOD), BURNT);
-    assert!(s.burning().is_empty());
+    assert_eq!(s.burning(), []);
     assert!(passable(&s, 1, WOOD));
     act(&mut s, 1, WOOD, UnitAction::Wait);
     // …for good.
@@ -288,7 +288,7 @@ fn frost_freezes_sea_for_good() {
     assert!(!passable(&s, 1, sea));
     let events = act(&mut s, 2, p(2, 2), on_tile("frost", sea));
     assert_eq!(events[1], changed(sea, SEA, ICE));
-    assert!(s.burning().is_empty());
+    assert_eq!(s.burning(), []);
     // A foot unit crosses at once…
     act(&mut s, 1, p(4, 2), UnitAction::Wait);
     // …and on every later turn.
@@ -335,7 +335,7 @@ fn a_cast_at_a_unit_never_changes_terrain() {
         },
     );
     assert_eq!(tile(&s, WOOD), FOREST);
-    assert!(s.burning().is_empty());
+    assert_eq!(s.burning(), []);
 }
 
 #[test]

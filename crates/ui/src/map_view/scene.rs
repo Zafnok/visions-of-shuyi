@@ -56,11 +56,9 @@ impl Terrains for TerrainLooks<'_> {
     }
 
     fn glyphs(&self, id: TerrainId) -> Option<TerrainGlyphs<'_>> {
-        self.0.get(id).map(|t| TerrainGlyphs {
-            glyphs: t.glyphs,
-            fg: &t.fg,
-            bg: &t.bg,
-        })
+        self.0
+            .get(id)
+            .map(|t| TerrainGlyphs::new(t.glyphs, &t.fg, &t.bg))
     }
 }
 

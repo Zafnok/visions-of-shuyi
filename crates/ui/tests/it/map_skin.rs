@@ -222,7 +222,7 @@ fn quick_battle_with_layers_between_tiles() {
     // What is shown is what the glyph skin shows.
     assert_eq!(h.map_text(), glyphs.map_text());
     let scene = h.map_scene().unwrap();
-    assert!(!scene.tinted(range::MOVE).is_empty());
+    assert_ne!(scene.tinted(range::MOVE), [] as [trpg_core::Pos; 0]);
     assert_eq!(scene.look.tiles, "outdoor");
     assert_snapshot!(h.snapshot());
 }

@@ -33,7 +33,7 @@ fn the_debug_menu_opens_the_sprite_test_and_cancel_closes_it() {
     assert_eq!(h.top_screen(), "debug_menu");
     assert_eq!(h.sounds(), ["menu_cancel"]);
     // The menu is drawn without the tool's pictures.
-    assert!(h.game().buffer().sprites().is_empty());
+    assert_eq!(h.game().buffer().sprites(), [] as [trpg_ui::Sprite; 0]);
 }
 
 #[test]

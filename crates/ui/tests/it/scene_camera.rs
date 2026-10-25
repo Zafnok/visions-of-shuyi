@@ -135,7 +135,7 @@ fn a_sprite_skinned_map_is_a_scene_of_sprites() {
     assert_eq!((scene.width(), scene.height()), (84, 24));
     assert!(scene.sprites().len() >= 14 * 8);
     // The console's own items stay its own: the scene's aren't copied in.
-    assert!(h.game().buffer().items().is_empty());
+    assert_eq!(h.game().buffer().items(), []);
     assert!(h.snapshot().contains(" sprite "));
 }
 

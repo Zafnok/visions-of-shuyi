@@ -53,13 +53,7 @@ fn a_sidecar_names_its_image_its_facing_and_its_scale() {
     let b = parse(r#"(id: "t", image: "t.png", faces: Left, scale: (5, 4))"#).unwrap();
     assert_eq!(b.id, "t");
     assert_eq!(b.image.path(), "battlers/t.png");
-    assert_eq!(
-        b.size,
-        ImageInfo {
-            width: 64,
-            height: 72
-        }
-    );
+    assert_eq!(b.size, ImageInfo::new(64, 72));
     assert_eq!(b.faces, Facing::Left);
     assert_eq!(b.scale, (5, 4));
     // 64 × 5/4 and 72 × 5/4; doubled for the scene.

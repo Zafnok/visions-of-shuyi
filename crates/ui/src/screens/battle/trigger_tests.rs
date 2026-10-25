@@ -279,7 +279,7 @@ fn talking_plays_the_scene_and_keeps_the_units_turn() {
     // Nobody changes sides; the lord hasn't used its turn: its menu is
     // open again, with no Talk (it has been said).
     assert_eq!(s.state().unit(UnitId(7)).unwrap().faction, Faction::Enemy);
-    assert!(s.state().recruited().is_empty());
+    assert_eq!(s.state().recruited(), []);
     assert!(!s.state().unit(UnitId(1)).unwrap().acted);
     assert_eq!(s.history().len(), 1);
     let Mode::ActionMenu { menu, .. } = s.mode() else {
@@ -607,7 +607,7 @@ fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
     let drawn: Vec<Pos> = place.units.iter().map(|u| u.pos).collect();
     let standing: Vec<Pos> = s.state().units().iter().map(|u| u.pos).collect();
     assert_eq!(drawn, standing);
-    assert!(!drawn.is_empty());
+    assert_ne!(drawn, [] as [trpg_core::Pos; 0]);
     let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
     let Transition::Push(screen) = s.update(&mut c, &input) else {
         panic!("no scene");

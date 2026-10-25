@@ -471,7 +471,7 @@ mod tests {
         let seen = seen.borrow();
         assert_eq!(seen[0].actions, [Action::Confirm]);
         assert!(seen[0].is_held(Action::Confirm));
-        assert!(seen[1].actions.is_empty());
+        assert_eq!(seen[1].actions, [] as [trpg_content::Action; 0]);
         assert!(!seen[1].is_held(Action::Confirm));
     }
 
@@ -702,7 +702,7 @@ mod tests {
         assert!((seen[0].dt() - 0.1).abs() < f32::EPSILON);
         assert!(seen[0].is_held(Action::CursorRight));
         assert!(seen[0].is_held(Action::Confirm));
-        assert!(seen[1].actions.is_empty());
+        assert_eq!(seen[1].actions, [] as [trpg_content::Action; 0]);
         assert!(seen[1].is_held(Action::CursorRight));
         assert!(!seen[1].is_held(Action::Confirm));
         // Every press of the frame, in order; releases aren't presses.
@@ -710,7 +710,7 @@ mod tests {
             seen[0].pressed_chords(),
             [Chord::plain(Key::Right), Chord::plain(Key::F)]
         );
-        assert!(seen[1].pressed_chords().is_empty());
+        assert_eq!(seen[1].pressed_chords(), []);
     }
 
     #[test]
@@ -720,7 +720,7 @@ mod tests {
         let shifted = Chord::shifted(Key::Z);
         game.frame(&[down(Key::Delete), RawInputEvent::Down(shifted)], 0.0);
         let seen = seen.borrow();
-        assert!(seen[0].actions.is_empty());
+        assert_eq!(seen[0].actions, [] as [trpg_content::Action; 0]);
         assert_eq!(
             seen[0].pressed_chords(),
             [Chord::plain(Key::Delete), shifted]
@@ -746,9 +746,9 @@ mod tests {
             seen[0].pressed_buttons(),
             [Button::RightStickUp, Button::South]
         );
-        assert!(seen[0].released_buttons().is_empty());
+        assert_eq!(seen[0].released_buttons(), []);
         assert!(seen[0].pad_pressed());
-        assert!(seen[1].pressed_buttons().is_empty());
+        assert_eq!(seen[1].pressed_buttons(), []);
         assert_eq!(
             seen[1].released_buttons(),
             [Button::South, Button::RightStickUp]
@@ -777,8 +777,8 @@ mod tests {
         let pressed = [Chord::plain(Key::A), Chord::plain(Key::Backspace)];
         assert_eq!(seen[0].pressed_chords(), pressed);
         assert_eq!(seen[0].text(), ['a', 'é']);
-        assert!(seen[1].pressed_chords().is_empty());
-        assert!(seen[1].text().is_empty());
+        assert_eq!(seen[1].pressed_chords(), []);
+        assert_eq!(seen[1].text(), [] as [char; 0]);
     }
 
     /// The Harness types as the app does: each character with its key
@@ -879,11 +879,11 @@ mod tests {
         assert_eq!(out.music, [music("title", load), music("title", begin)]);
         let out = game.frame(&[down(Key::F)], 0.0);
         assert_eq!(out.audio, [beep(1.0)]);
-        assert!(out.music.is_empty());
+        assert_eq!(out.music, []);
         // Each frame holds only its own requests.
         let out = game.frame(&[RawInputEvent::Up(Key::F)], 0.0);
-        assert!(out.audio.is_empty());
-        assert!(game.ctx().audio.pending().is_empty());
+        assert_eq!(out.audio, []);
+        assert_eq!(game.ctx().audio.pending(), []);
     }
 
     #[test]
@@ -909,8 +909,8 @@ mod tests {
         assert!(out.quit);
         assert_eq!(out.audio[1..], [beep(0.5)]);
         let out = game.frame(&[RawInputEvent::Up(Key::Up), down(Key::F)], 0.0);
-        assert!(out.audio.is_empty());
-        assert!(out.music.is_empty());
+        assert_eq!(out.audio, []);
+        assert_eq!(out.music, []);
     }
 
     #[test]
@@ -1002,12 +1002,12 @@ mod tests {
         assert_eq!(music, [sting]);
         assert_eq!(game.screens(), ["title", "battle"]);
         // Past the VICTORY banner, back at the title.
-        assert!(game.frame(&[down(Key::F)], 0.0).audio.is_empty());
+        assert_eq!(game.frame(&[down(Key::F)], 0.0).audio, []);
         assert_eq!(game.screens(), ["title"]);
         let title = AudioRequest::PlayMusic {
             cue: "title".into(),
         };
         assert_eq!(game.frame(&[RawInputEvent::Up(Key::F)], 0.0).audio, [title]);
-        assert!(game.frame(&[], 0.1).audio.is_empty());
+        assert_eq!(game.frame(&[], 0.1).audio, []);
     }
 }

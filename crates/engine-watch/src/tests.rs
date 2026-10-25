@@ -98,9 +98,15 @@ fn a_ticket_id_comes_from_each_title_form() {
         ticket_ids("Tickets 2741-2768: dungeon crawlers"),
         ["2741", "2768"]
     );
-    assert!(ticket_ids("Bump rust-toolchain in / (#83)").is_empty());
-    assert!(ticket_ids("[fix] typo").is_empty());
-    assert!(ticket_ids("A title with 2026 in it").is_empty());
+    assert_eq!(
+        ticket_ids("Bump rust-toolchain in / (#83)"),
+        [] as [std::string::String; 0]
+    );
+    assert_eq!(ticket_ids("[fix] typo"), [] as [std::string::String; 0]);
+    assert_eq!(
+        ticket_ids("A title with 2026 in it"),
+        [] as [std::string::String; 0]
+    );
 }
 
 #[test]
@@ -221,7 +227,7 @@ fn breaking_lines_come_from_the_body_and_the_ticket_notes() {
     let mut none = pr(91, "[2025] No breaks", vec![]);
     none.body = "No breaking change.\nNo break here.\nA `Breaking:` line is required.\n".to_owned();
     none.ticket_notes = Some("Breaking: none\nBreaking: no break\nBreaking:\n".to_owned());
-    assert!(breaking_lines(&none).is_empty());
+    assert_eq!(breaking_lines(&none), [] as [std::string::String; 0]);
     // A `Breaking:` line counts as an API change, whatever the label says.
     assert!(changes_public_api(&labelled(noted, "api: none"), &dirs()));
 }
@@ -388,7 +394,7 @@ fn an_open_ticket_gives_its_id_and_blockers() {
         })
     );
     let empty = open_ticket("1190-x.md", "---\nblocked_by: []\n---\n").unwrap();
-    assert!(empty.blocked_by.is_empty());
+    assert_eq!(empty.blocked_by, [] as [std::string::String; 0]);
     assert_eq!(open_ticket("README.md", text), None);
     assert_eq!(open_ticket("1180-x.md", "no frontmatter"), None);
 }

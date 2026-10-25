@@ -182,12 +182,8 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
 
 /// Where the text box goes: rows 21–27, the text from column 4 of row 23,
 /// narration from there too, like speech.
-pub const BOX_PLACE: BoxPlace = BoxPlace {
-    frame: TEXT_BOX,
-    text_x: TEXT_X,
-    text_y: TEXT_Y,
-    narration: NarrationAlign::Left,
-};
+pub const BOX_PLACE: BoxPlace =
+    BoxPlace::new(TEXT_BOX, TEXT_X, TEXT_Y).with_narration(NarrationAlign::Left);
 
 /// The text box ([`shuyi_ui::dialogue::text_box::glyph::paint`]), with the
 /// name of whoever speaks on its border.

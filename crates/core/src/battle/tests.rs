@@ -981,7 +981,7 @@ pub(crate) fn setup(units: Vec<Unit>) -> BattleSetup {
 
 fn start(setup: BattleSetup) -> BattleState {
     let (state, events) = BattleState::new(setup);
-    assert!(!events.is_empty());
+    assert_ne!(events, [] as [crate::battle::Event; 0]);
     state
 }
 
@@ -1074,8 +1074,8 @@ fn new_starts_turn_one_player_phase() {
     assert_eq!(events, [started(1, Phase::Player)]);
     assert_eq!((s.turn(), s.phase(), s.outcome()), (1, Phase::Player, None));
     assert_eq!(s.units(), cast().as_slice());
-    assert!(s.fallen().is_empty());
-    assert!(s.reinforcements().is_empty());
+    assert_eq!(s.fallen(), []);
+    assert_eq!(s.reinforcements(), []);
     assert_eq!(s.rewind_charges(), 3);
     assert_eq!(s.objective(), Objective::Rout { turn_limit: None });
     assert_eq!(s.map(), &map(&OPEN));
@@ -1817,7 +1817,7 @@ fn defeat_unit_is_won_with_enemies_left_and_they_stay_by_default() {
     let (s, events) = won_with_leftovers(Leftovers::Stay);
     assert_eq!(s.outcome(), Some(Outcome::Victory));
     assert!(s.unit(UnitId(5)).is_some());
-    assert!(s.fled().is_empty());
+    assert_eq!(s.fled(), []);
     assert!(!events.iter().any(|e| matches!(e, Event::Fled { .. })));
 }
 
@@ -2003,7 +2003,7 @@ fn reinforcements_arrive_done_at_their_phase_and_act_next_turn() {
             started(2, Phase::Enemy),
         ]
     );
-    assert!(s.reinforcements().is_empty());
+    assert_eq!(s.reinforcements(), []);
     assert!(s.unit(UnitId(9)).unwrap().acted);
     refused_act(
         &mut s,
@@ -2481,7 +2481,7 @@ fn healing_never_exceeds_max_hp() {
             amount: 9,
         }
     );
-    assert!(s.pack().items.is_empty());
+    assert_eq!(s.pack().items, [] as [crate::item::ItemId; 0]);
 }
 
 #[test]
@@ -2671,7 +2671,10 @@ fn a_green_units_item_heals_up_to_max_hp_and_adjacent_allies() {
     }
     act(&mut s, 5, p(6, 1), use_own_item(0, 6));
     assert_eq!(s.unit(UnitId(6)).unwrap().hp, 10);
-    assert!(s.unit(UnitId(5)).unwrap().carried.is_empty());
+    assert_eq!(
+        s.unit(UnitId(5)).unwrap().carried,
+        [] as [crate::item::ItemId; 0]
+    );
 }
 
 #[test]
@@ -2813,7 +2816,7 @@ fn commands_and_events_round_trip_through_ron() {
 fn the_turn_rules_are_the_battles_own_methods() {
     let s = start(setup(skirmish()));
     let legal = TurnRules::legal_commands(&s);
-    assert!(!legal.is_empty());
+    assert_ne!(legal, [] as [crate::battle::Command; 0]);
     assert_eq!(legal, legal_commands(&s));
     let enemy_acts = Command::Act {
         unit: UnitId(3),
@@ -2832,7 +2835,10 @@ fn the_turn_rules_are_the_battles_own_methods() {
     assert_eq!(TurnRules::outcome(&s), None);
     let (won, _) = BattleState::new(setup(vec![lord(1, p(0, 0))]));
     assert_eq!(TurnRules::outcome(&won), Some(Outcome::Victory));
-    assert!(TurnRules::legal_commands(&won).is_empty());
+    assert_eq!(
+        TurnRules::legal_commands(&won),
+        [] as [crate::battle::Command; 0]
+    );
 }
 
 #[test]
