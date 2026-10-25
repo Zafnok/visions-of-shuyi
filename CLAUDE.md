@@ -17,9 +17,11 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 
 1. **Work one ticket at a time** from `tickets/open/`, using the `work-ticket`
    skill. One ticket = one branch = one PR. The PR moves the ticket to
-   `tickets/done/`. One exception: a GitHub issue labelled `sonar` is its
+   `tickets/done/`. Two exceptions: a GitHub issue labelled `sonar` is its
    own ticket, filed weekly from SonarCloud and fixed with the `sonar-fix`
-   skill (ADR-0071). A ticket that needs an engine change follows the
+   skill (ADR-0071), and so is one labelled `engine-pin`, filed by a
+   watcher on the engine's `main` when its public API changes and worked
+   with the `engine-pin` skill (ADR-0096). A ticket that needs an engine change follows the
    `engine-change` skill (an engine PR in `Zafnok/shuyi-engine` first,
    then the game's PR that moves the pin).
 2. **No unticketed work.** Don't write game code "to get a head start". Found
@@ -68,8 +70,8 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change` |
-| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change`, `engine-pin` |
+| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `engine-watch` (`trpg-engine-watch`, the watcher on the engine's `main` and the pin ledger's check: dev tooling, ADR-0096), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
 | `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the web build, the private repository. `cargo shuyi` is `cargo xtask shuyi`: xtask runs the engine's `shuyi-cli` at the pin, with the game's `frame-png` and `lang-status` (`cargo xtask <command>` still works too) |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |
 | `assets/` | Everything embedded in the game: `data/`, `fonts/` (later: maps, dialogue, portraits) |

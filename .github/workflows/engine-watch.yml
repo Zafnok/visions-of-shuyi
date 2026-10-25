@@ -1,0 +1,179 @@
+name: Engine watch
+
+# Watches Shuyi Engine's `main` and files the one open issue labelled
+# `engine-pin` when a pin move is due: an engine PR past the pin changed the
+# public API, unblocks a game ticket, or changed engine code more than 48
+# hours ago (ADR-0096, ticket 1190). The `engine-pin` skill works the issue.
+#
+# The engine starts this on every push to its `main` (engine#2031), passing
+# `engine_sha`, with a token that can only run workflows here. The hourly
+# schedule is the backstop for a dispatch that never came. From the Actions
+# tab it is a dry run unless `dry_run` is unticked.
+#
+# Stage 1 asks GitHub, with no checkout and no Rust, whether anything moved
+# since the issue's marker (or the pin, with no issue open), and stops if
+# not. Stage 2 builds `trpg-engine-watch`, which needs neither the engine
+# nor macroquad, and syncs the issue.
+on:
+  workflow_dispatch:
+    inputs:
+      engine_sha:
+        description: "The engine's new main, sent by its dispatch (engine#2031); a run with it applies"
+        type: string
+        required: false
+        default: ""
+      dry_run:
+        description: "Without engine_sha: report without creating, editing or closing an issue"
+        type: boolean
+        default: true
+  schedule:
+    # Hourly, off the hour: GitHub's schedules run late on the hour.
+    - cron: "17 * * * *"
+
+concurrency:
+  group: engine-watch
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  watch:
+    name: watch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Has the engine's main moved?
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          # Read through the environment rather than interpolated into the
+          # script. Both are empty on a scheduled run.
+          EVENT: ${{ github.event_name }}
+          ENGINE_SHA: ${{ inputs.engine_sha }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # What started the run, and whether it may change the issue.
+          if [ "$EVENT" = schedule ]; then trigger=schedule; apply=true
+          elif [ -n "$ENGINE_SHA" ]; then trigger=dispatch; apply=true
+          elif [ "$DRY_RUN" = false ]; then trigger=manual; apply=true
+          else trigger=manual; apply=false
+          fi
+          read -r main main_date < <(gh api repos/Zafnok/shuyi-engine/commits/main \
+            --jq '.sha + " " + .commit.committer.date')
+          pin=$(gh api "repos/$GH_REPO/contents/shuyi-engine.rev" \
+            -H "Accept: application/vnd.github.raw" | tr -d '[:space:]')
+          # The newest engine-pin issue, open or closed: its marker says what
+          # the last run saw, and whether a dispatch ever reached here.
+          newest() { gh issue list --label engine-pin --state all --limit 1 --json number,state,body --jq "$1"; }
+          issue=$(newest '.[0] | select(.state == "OPEN") | .number')
+          body=$(newest '.[0].body // ""')
+          marker=$(grep -o '<!-- engine-pin:v1 [^>]*-->' <<<"$body" | head -n 1 || true)
+          field() { sed -n "s/.* $1=\([^ ]*\).*/\1/p" <<<"$marker"; }
+          seen=$(field dispatch_seen)
+          dispatched=$(field dispatched)
+          [ "$dispatched" = none ] && dispatched=
+          if [ "$trigger" = dispatch ]; then seen=true; dispatched=$main; fi
+          [ "$seen" = true ] || seen=false
+          if [ -n "$issue" ]; then
+            seen_main=$(field main); seen_pin=$(field pin)
+          else
+            seen_main=$pin; seen_pin=$pin
+          fi
+          # A backstop run that finds engine commits over two hours old that
+          # no dispatch reported says so in the issue, once dispatches have
+          # been seen at all (engine#2031 may not have landed yet).
+          missed=false
+          age=$(( $(date +%s) - $(date -d "$main_date" +%s) ))
+          if [ "$trigger" = schedule ] && [ -n "$issue" ] && [ "$seen" = true ] \
+            && [ "$dispatched" != "$main" ] && [ "$age" -gt 7200 ]; then
+            missed=true
+          fi
+          had_missed=false
+          if [ -n "$issue" ] && grep -q "dispatch didn't reach the game" <<<"$body"; then had_missed=true; fi
+          go=true
+          if [ "$trigger" != manual ] && [ "$main" = "$seen_main" ] && [ "$pin" = "$seen_pin" ] \
+            && [ "$missed" = "$had_missed" ]; then
+            go=false
+            echo "Nothing moved: the engine's main is $main and the pin $pin, as the last run saw."
+          fi
+          {
+            echo "go=$go"; echo "trigger=$trigger"; echo "apply=$apply"; echo "issue=$issue"
+            echo "seen=$seen"; echo "dispatched=$dispatched"; echo "missed=$missed"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.check.outputs.go == 'true'
+        with:
+          persist-credentials: false
+      - if: steps.check.outputs.go == 'true'
+        run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        if: steps.check.outputs.go == 'true'
+
+      - name: Report the engine PRs past the pin
+        if: steps.check.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIGGER: ${{ steps.check.outputs.trigger }}
+          SEEN: ${{ steps.check.outputs.seen }}
+          DISPATCHED: ${{ steps.check.outputs.dispatched }}
+          MISSED: ${{ steps.check.outputs.missed }}
+        run: |
+          set -euo pipefail
+          args=(--json --trigger "$TRIGGER")
+          [ "$SEEN" = true ] && args+=(--dispatch-seen)
+          [ -n "$DISPATCHED" ] && args+=(--dispatched "$DISPATCHED")
+          [ "$MISSED" = true ] && args+=(--missed-dispatch)
+          cargo run -p trpg-engine-watch --locked --quiet -- "${args[@]}" > "$RUNNER_TEMP/report.json"
+
+      - name: Sync the engine-pin issue
+        if: steps.check.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          APPLY: ${{ steps.check.outputs.apply }}
+          ISSUE: ${{ steps.check.outputs.issue }}
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/report.json"
+          behind=$(jq -r .behind "$report")
+          due=$(jq -r '.due // ""' "$report")
+          title=$(jq -r .title "$report")
+          jq -r .body "$report" > "$RUNNER_TEMP/body.md"
+          {
+            echo "## Engine watch"
+            echo
+            echo "$behind engine PRs past the pin; move due: ${due:-no}."
+            echo
+            if [ -n "$title" ]; then echo "### $title"; echo; cat "$RUNNER_TEMP/body.md"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$APPLY" != true ]; then
+            echo "::notice::Dry run: re-run from the Actions tab with dry_run unticked to sync the issue."
+            echo "$title"
+            cat "$RUNNER_TEMP/body.md"
+            exit 0
+          fi
+          if [ "$behind" = 0 ]; then
+            if [ -n "$ISSUE" ]; then
+              gh issue close "$ISSUE" --comment "The pin is at the engine's main: nothing to move."
+            fi
+            exit 0
+          fi
+          if [ -z "$due" ]; then
+            if [ -n "$ISSUE" ]; then
+              gh issue close "$ISSUE" --comment "No move is due any more: the pin passed the engine PRs that made one due. The rest wait for the next."
+            fi
+            exit 0
+          fi
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh issue create --title "$title" --body-file "$RUNNER_TEMP/body.md" --label engine-pin
+          fi

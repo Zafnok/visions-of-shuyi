@@ -365,12 +365,16 @@ Candle joins outside battle.
   a PC. Its first user is the enemy AI on the Playdate (**1051**,
   which doesn't wait for it). The MCP server's fixes, engine#2545
   (done), engine#2546 and engine#2542, and the skill pack, engine#1134,
-  → **1189** moves the pin past them. **1190** replaces pin tickets
-  with a watcher on the engine's `main`. The engine starts it on each
-  merge (engine#2031, a token Nick sets up once), and an `engine-pin`
-  issue follows a public API change (engine#2030's label) within
-  minutes. Each move reviews what the engine PRs give the game and
-  writes a ledger CI checks. After it, no more pin tickets.
+  → **1189** moves the pin past them. **1190** (done) replaced pin
+  tickets with a watcher on the engine's `main`
+  ([ADR-0096](adr/0096-a-watcher-on-the-engines-main-moves-the-pin-when-its-public-api-changes.md)):
+  1177, 1188 and 1189 were the last. The engine starts it on each merge
+  (engine#2031, a token Nick sets up once; until then it runs hourly),
+  and an `engine-pin` issue follows a public API change (engine#2030's
+  label, or a `pub` line until then) within minutes. The `engine-pin`
+  skill works it: each move reviews what the engine PRs give the game
+  and writes `docs/engine/pins.md`, which CI checks. No more pin
+  tickets.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →

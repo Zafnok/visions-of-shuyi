@@ -157,6 +157,13 @@ this order:
    Run the game's gates (`run-gates`) on the new pin, then commit those
    three files with the game change.
 
+   The move passes every engine PR between the old pin and the new one,
+   not only yours: follow the `engine-pin` skill's review and ledger
+   steps (its steps 4 to 7) for them, and write the move's section in
+   `docs/engine/pins.md` (ADR-0096). `cargo xtask engine-pin --report`
+   before moving lists them; `cargo xtask engine-pin --check` fails
+   until the section is there.
+
    The MCP server (`.mcp.json`) is still the old engine's until it
    reconnects: run `cargo shuyi mcp --ready` (it builds the server and
    the game's tool program, so the first connection doesn't time out),
@@ -218,7 +225,12 @@ and follow-up".
 `tickets/done/` **and** the game's pin is at or past the commit that
 closed it. When it is done but the pin is behind, moving the pin is the
 first step of that game ticket (step 3.6, starting at
-`cargo xtask engine-pin <commit of the engine's main>`).
+`cargo xtask engine-pin <commit of the engine's main>`, with the
+`engine-pin` skill's review and ledger section for the engine PRs it
+passes). When an `engine-pin` PR is already open, the ticket may wait for
+it to merge instead (`work-ticket` §1). Don't write a ticket only to
+move the pin: the engine watcher files that as an `engine-pin` issue
+(ADR-0096).
 
 ## Don'ts
 

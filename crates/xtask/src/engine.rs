@@ -5,7 +5,10 @@
 //! written in three places: `shuyi-engine.rev`, the `rev` of each engine
 //! crate in the root `Cargo.toml`'s `[workspace.dependencies]`, and each
 //! engine package's source in `Cargo.lock`. `cargo xtask engine-pin` moves
-//! all three, and `--check` (in CI) fails when they disagree.
+//! all three, and `--check` (in CI) fails when they disagree or when the
+//! pin ledger, `docs/engine/pins.md`, has no section for the pin
+//! (ADR-0096). `--report` runs the engine watcher (`trpg-engine-watch`)
+//! here: what the `engine-pin` issue says.
 //!
 //! `cargo xtask engine` clones the engine into `shuyi-engine/` and writes
 //! `.cargo/engine-patch.toml`, a `[patch]` that `.cargo/config.toml`
@@ -18,6 +21,8 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+
+use trpg_engine_watch::{Run, fetch, ledger, markdown, render};
 
 /// The engine's repository.
 pub const URL: &str = "https://github.com/Zafnok/shuyi-engine";
@@ -43,7 +48,10 @@ engine        clone Shuyi Engine at the pinned commit into shuyi-engine/ (a chec
 is there already is fetched and left where it is) and build the game on it\n\
 engine --off  build the game on the pinned commit again; do this before committing\n\
 engine-pin    pin the commit the checkout is at (it must be on the engine's main), or <commit>\n\
-engine-pin --check  fail when shuyi-engine.rev, Cargo.toml and Cargo.lock disagree";
+engine-pin --check  fail when shuyi-engine.rev, Cargo.toml and Cargo.lock disagree, or when\n              \
+docs/engine/pins.md lacks this pin's section or a decision (ADR-0096)\n\
+engine-pin --report the engine PRs between the pin and the engine's main, sorted, and whether\n              \
+a move is due: what the engine-pin issue says (ADR-0096)";
 
 /// The commit `text` names: 40 lower-case hex digits.
 pub fn parse_rev(text: &str) -> Result<String, String> {
@@ -207,6 +215,33 @@ fn read(root: &Path, file: &str) -> Result<String, String> {
     fs::read_to_string(root.join(file)).map_err(|e| format!("{file}: {e}"))
 }
 
+/// What is wrong with the pin ledger, `docs/engine/pins.md` (ADR-0096 §6):
+/// its last section isn't `rev_text`'s commit, a row has no decision, or
+/// an `adopt → NNNN` names no ticket.
+fn ledger_problems(root: &Path, rev_text: &str) -> Vec<String> {
+    let found = fetch::ledger(root).and_then(|sections| {
+        let ids = fetch::ticket_ids(root)?;
+        Ok(ledger::problems(&sections, rev_text, &ids))
+    });
+    found.unwrap_or_else(|e| vec![e])
+}
+
+/// `engine-pin --report`: the engine watcher's report (ADR-0096), as the
+/// `engine-pin` issue would say it.
+///
+/// Not covered by mutation testing (`#[mutants::skip]`): it only joins the
+/// watcher's `gh` calls to its renderer, which `trpg-engine-watch` tests.
+#[mutants::skip]
+pub fn watch_report(root: &Path) -> Result<String, String> {
+    let watch = fetch::watch(root, fetch::now())?;
+    let run = Run {
+        trigger: "manual".to_owned(),
+        ..Run::default()
+    };
+    let rendered = render(&watch.report, &watch.ledger, &watch.open_ids, &run);
+    Ok(markdown(&watch.report, rendered.as_ref()))
+}
+
 /// `engine-pin --check`.
 pub fn check(root: &Path) -> Result<String, Vec<String>> {
     let files = (|| {
@@ -218,15 +253,22 @@ pub fn check(root: &Path) -> Result<String, Vec<String>> {
     })();
     let (rev, manifest, lock) = files.map_err(|e: String| vec![e])?;
     let patched = root.join(PATCH_FILE).exists();
-    let found = problems(&rev, &manifest, &lock, patched);
+    let mut found = problems(&rev, &manifest, &lock, patched);
+    found.extend(ledger_problems(root, &rev));
     if !found.is_empty() {
         return Err(found);
     }
     let rev = rev.trim();
     Ok(if patched {
-        format!("engine-pin: OK, at {rev} (the local checkout is on: Cargo.lock not checked)")
+        format!(
+            "engine-pin: OK, at {rev}, and {} has its section (the local checkout is on: Cargo.lock not checked)",
+            ledger::PATH
+        )
     } else {
-        format!("engine-pin: OK, at {rev}")
+        format!(
+            "engine-pin: OK, at {rev}, and {} has its section",
+            ledger::PATH
+        )
     })
 }
 
@@ -532,6 +574,43 @@ mod tests {
             Vec::<String>::new()
         );
         assert!(check(&root).is_ok());
+    }
+
+    #[test]
+    fn the_check_fails_on_each_ledger_problem() {
+        let dir = std::env::temp_dir().join(format!("engine-pin-ledger-{}", std::process::id()));
+        for folder in ["docs/engine", "tickets/open", "tickets/done"] {
+            fs::create_dir_all(dir.join(folder)).unwrap();
+        }
+        fs::write(dir.join(REV_FILE), format!("{REV}\n")).unwrap();
+        fs::write(dir.join("Cargo.toml"), manifest(REV)).unwrap();
+        fs::write(dir.join("Cargo.lock"), lock(Some(&git_source(REV)))).unwrap();
+        fs::write(dir.join("tickets/done/1191-x.md"), "").unwrap();
+        let check_with = |ledger: &str| {
+            fs::write(dir.join(ledger::PATH), ledger).unwrap();
+            check(&dir)
+        };
+        let good =
+            "## 2026-10-25: baseline → 5aa0f666\n| #78 | 2511 | A prelude | adopt → 1191 |\n";
+        assert!(check_with(good).unwrap().contains("has its section"));
+        let stale = check_with(&good.replace("5aa0f666", "01234567")).unwrap_err();
+        assert!(
+            stale[0].contains("the last section pins 01234567"),
+            "{stale:?}"
+        );
+        let undecided = check_with(&good.replace("adopt → 1191", "")).unwrap_err();
+        assert!(
+            undecided[0].contains("the row of #78 has no decision"),
+            "{undecided:?}"
+        );
+        let unknown = check_with(&good.replace("1191", "1192")).unwrap_err();
+        assert!(
+            unknown[0].contains("`adopt → 1192` names no ticket"),
+            "{unknown:?}"
+        );
+        fs::remove_file(dir.join(ledger::PATH)).unwrap();
+        assert!(check(&dir).unwrap_err()[0].contains("pins.md"));
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

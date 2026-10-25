@@ -18,6 +18,28 @@ code now: the game depends on the engine's crates by a git revision.
   `Cargo.lock`. `cargo xtask engine-pin <commit>` moves all three (and
   with no commit, pins the commit the local checkout is at, once it is
   on the engine's `main`). CI's `cargo xtask engine-pin --check` fails when they disagree.
+- **The engine watcher** (ADR-0096, ticket 1190) moves the pin at a pace
+  everyone can see. `.github/workflows/engine-watch.yml` runs when the
+  engine's `main` moves (the engine dispatches it, engine#2031) and
+  hourly as a backstop. It lists the engine PRs past the pin
+  (`crates/engine-watch`; `cargo xtask engine-pin --report` runs it
+  here) and sorts them into *Breaking*, *Unblocks*, *New for games* and
+  *Nothing for the game*. **A move is due** when one of them changes the
+  public API (the engine's `api:` label, engine#2030, or else a `pub`
+  line in a public crate's `src/`, or a `Breaking:` line), unblocks a
+  game ticket (it moves an engine ticket an open game ticket's
+  `blocked_by` or an `// engine-friction:` marker names into the
+  engine's `tickets/done/`), or changed engine code more than 48 hours
+  ago. It then keeps one open issue labelled `engine-pin`, which is its
+  own ticket, worked by the
+  [`engine-pin`](../../.claude/skills/engine-pin/SKILL.md) skill: one PR
+  that pins the engine's `main`, fixes the breaks on the game side,
+  decides each *New for games* row (`adopt → NNNN` or `not for the game`)
+  and writes the move's section in **the ledger,
+  [`pins.md`](pins.md)**. `engine-pin --check` fails when the ledger's
+  last section isn't the pin, a row has no decision, or an adoption
+  names no ticket, so a ticket's own pin move (`engine-change` §3.6)
+  writes its section too.
 - **The local checkout.** Over the 30 days before the move, 24 of the 83
   game PRs merged since `engine/` existed changed it (29%; 24 of all 332
   merged PRs in those 30 days), so the engine's API is still moving and

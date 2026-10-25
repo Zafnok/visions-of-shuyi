@@ -12,6 +12,9 @@ workspace = true
 
 [dependencies]
 trpg-bots = { path = "../bots" }
+# The engine watcher's report and the pin ledger's check, for `engine-pin
+# --report` and `--check` (ticket 1190).
+trpg-engine-watch = { path = "../engine-watch" }
 # The engine's playtest runner, which `playtest` plays and judges the tries
 # with (ticket 0506).
 shuyi-core = { workspace = true, features = ["std"] }

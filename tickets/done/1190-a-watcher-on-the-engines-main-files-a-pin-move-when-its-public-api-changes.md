@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1190 — A watcher on the engine's main files a pin move when its public API changes
@@ -444,7 +444,7 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask engine-pin --report` on the day the ticket is worked
+- [x] `cargo xtask engine-pin --report` on the day the ticket is worked
       prints a report whose four sections hold every engine PR between
       the pin and `main`, and says whether a move is due and why. If the
       pin is still at `3f2256d4`:
@@ -455,32 +455,32 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
 
       If the pin has moved past them, the report against that day's gap
       is in the Completion notes instead.
-- [ ] Unit tests cover:
-  - [ ] a ticket id from each title form;
-  - [ ] `API_CRATES` read from a fixture of the engine's `api.rs`, and
+- [x] Unit tests cover:
+  - [x] a ticket id from each title form;
+  - [x] `API_CRATES` read from a fixture of the engine's `api.rs`, and
         the fallback;
-  - [ ] an `api: none` label wins over a `pub` line in the patch, an
+  - [x] an `api: none` label wins over a `pub` line in the patch, an
         `api: added` label counts with no `pub` line, and `api:
         breaking` puts the PR in *Breaking*;
-  - [ ] a `+pub fn` in `crates/core/src/` is a public API change, while
+  - [x] a `+pub fn` in `crates/core/src/` is a public API change, while
         `pub(crate) fn`, a change under `crates/core/tests/`, and a
         change in a crate outside `API_CRATES` are not;
-  - [ ] a `Breaking:` line is found in the body and in the ticket
+  - [x] a `Breaking:` line is found in the body and in the ticket
         notes, and a "No break" line is ignored;
-  - [ ] a `Breaking:` PR that also unblocks a ticket is in *Breaking*;
-  - [ ] a move is due for a public API change, for an unblock, and for
+  - [x] a `Breaking:` PR that also unblocks a ticket is in *Breaking*;
+  - [x] a move is due for a public API change, for an unblock, and for
         code merged 49 hours before `now`, and not for code merged 47
         hours before or for tickets-only PRs;
-  - [ ] an `@word` in a title comes out in backticks;
-  - [ ] an empty gap renders no issue.
-- [ ] `cargo xtask engine-pin --check` fails, with a message naming the
+  - [x] an `@word` in a title comes out in backticks;
+  - [x] an empty gap renders no issue.
+- [x] `cargo xtask engine-pin --check` fails, with a message naming the
       problem, on each of these (tests):
       - a ledger whose last section isn't the pin;
       - a row with an empty decision;
       - an `adopt → NNNN` with no such ticket.
 
       It passes on the real repository.
-- [ ] `.github/workflows/engine-watch.yml` exists and passes the
+- [x] `.github/workflows/engine-watch.yml` exists and passes the
       `zizmor` job of `security.yml` on the PR. Stage 1 stops the job
       without checking out when the engine's `main` hasn't moved, and a
       dry run changes no issue.
@@ -489,16 +489,16 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
       engine#2031 is done by then, the Completion notes link the first
       run the engine started (`gh run list --workflow engine-watch.yml
       --event workflow_dispatch`).
-- [ ] `trpg-engine-watch` builds without `macroquad` or any `shuyi-*`
+- [x] `trpg-engine-watch` builds without `macroquad` or any `shuyi-*`
       crate (`cargo tree -p trpg-engine-watch` shows neither).
-- [ ] `.claude/skills/engine-pin/SKILL.md` exists, and `CLAUDE.md`,
+- [x] `.claude/skills/engine-pin/SKILL.md` exists, and `CLAUDE.md`,
       `tickets/README.md`, `docs/engine/README.md`, `engine-change`,
       `work-ticket`, `write-ticket` and `docs/ROADMAP.md` say what step
       6 says.
-- [ ] ADR-0096 (or the next number) is in `docs/adr/` and its index.
-- [ ] The `engine-pin` label exists on the repository.
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] ADR-0096 (or the next number) is in `docs/adr/` and its index.
+- [x] The `engine-pin` label exists on the repository.
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -511,5 +511,79 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** `crates/engine-watch` (`trpg-engine-watch`: the classifier, the
+due rule, the renderer and the ledger parser are pure and unit-tested;
+`fetch.rs` makes the `gh` calls and reads files; `main.rs` is the
+binary). `cargo xtask engine-pin --report`, and the ledger check inside
+`engine-pin --check`. `.github/workflows/engine-watch.yml`.
+`docs/engine/pins.md` with its baseline section. The `engine-pin` skill.
+ADR-0096. The text in `CLAUDE.md`, `tickets/README.md`,
+`docs/engine/README.md`, `engine-change` §3.6 and §7, `work-ticket` §1,
+`write-ticket` and `docs/ROADMAP.md` lane F. The `engine-pin` label
+(colour `5319e7`). ADR-0004 doesn't name every crate, so it is
+unchanged.
+
+**The report on 2026-10-25** (`cargo xtask engine-pin --report`; the pin
+is still `3f2256d4`, and the engine's `main` is `94e85875`, 27 PRs ahead,
+because #106 merged while this was worked). Title: "Engine pin: 27
+engine PRs behind (public API changed in #76)".
+- *Breaking:* #88, #90, #91, #93, #97, #98, #101, #105, #106. #88 (engine
+  2013) is here because its body has `Breaking:` lines.
+- *Unblocks:* #77 (engine 2546 → 1189), #102 (engine 2131 → 1180), #104
+  (engine 2132 → 1180).
+- *New for games:* #76, #78, #95.
+- *Nothing for the game:* #75 (tickets only), #79, #80, #83, #84, #89,
+  #92, #94, #99, #100, #103, #111.
+
+**Deviations:**
+- **A PR unblocks a ticket only when it moves the engine ticket into
+  `tickets/done/`.** The Context says engine 3056 unblocks 1078, but #94
+  ("Ticket 3056: …") only *files* 3056 in `tickets/open/`. Matching on
+  the title alone would have unblocked 1078 wrongly. 1078 stays blocked
+  until 3056 is done.
+- `EnginePr` has `tickets: Vec<String>`, not `ticket: Option<String>`:
+  `Tickets NNNN, NNNN and NNNN: …` titles name several. The ticket notes
+  are read for each one the PR moves to `done/`.
+- **The network part is the library module `fetch.rs`**, not only
+  `main.rs`, so `engine-pin --report` calls it directly instead of
+  running `cargo run`. `fetch.rs` and `main.rs` are in `.cargo/mutants.toml`'s
+  exclusions (no test reaches the network), and xtask's `watch_report`
+  has a `#[mutants::skip]` with the reason, like `clean_targets`'s.
+- **The marker has more fields:**
+  `<!-- engine-pin:v1 main=… pin=… trigger=… dispatch_seen=… dispatched=… -->`.
+  `pin=` lets stage 1 notice a pin moved by a ticket. `dispatched=` (the
+  `main` the last dispatch reported) lets an hourly run find commits no
+  dispatch reported, even after it has handled them itself. The binary
+  takes `--trigger`, `--dispatch-seen`, `--dispatched` and
+  `--missed-dispatch` for them.
+- **An open issue is closed when no move is due any more** (a ticket's
+  own pin move passed the PRs that made it due), so it never claims a
+  move that isn't due. The ticket said to change nothing then.
+- A manual run always goes to stage 2, so a dry run prints the report.
+  Stage 1 reads issues with `gh … --jq` instead of `jq`, so the script
+  also runs locally (it was run here against GitHub for both triggers).
+- **Model:** the `engine-pin` skill and the issue say Opus 5.5 at medium
+  effort, not Sonnet. Nick asked for this while the ticket was worked
+  (2026-10-25).
+- With no issue open, stage 1 compares `main` with the pin. A gap that
+  is never due (tickets only) runs stage 2 every hour, a cached build of
+  a few seconds (in the ADR's Consequences).
+
+**Not done here:** the `workflow_dispatch` check (`gh workflow run
+engine-watch.yml -f engine_sha=…`). GitHub runs `workflow_dispatch` only
+for a workflow on the default branch, so it can't run before this
+merges. The first hourly run after the merge (`:17`) is the first real
+run. Engine 2030 (the label) and 2031 (the dispatch) are still open in
+the engine's `tickets/open/`; until they land, the `pub`-line fallback
+and the hourly run do their jobs. The first issue should appear within
+the hour after the merge, since #76 changed the public API. 1189 is
+still open: under the new rules it is worked as a pin move with a ledger
+section.
+
+**Engine friction:** estimate 400 (the ticket's), measured 977 (2.4×).
+Accepted: this is repository tooling about the engine's GitHub PRs,
+which no engine could provide. The extra lines are the marker, fetching
+PRs eight at a time, the `--json` form and rustfmt's line splits. There
+is a row in `docs/engine/friction.md`.
+
+No gameplay rules were decided.

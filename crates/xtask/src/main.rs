@@ -45,7 +45,8 @@ available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n    \
 [--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
 engine [--off]                     build the game on Shuyi Engine checked out in shuyi-engine/\n  \
-engine-pin [<commit> | --check]    move the engine's pinned commit, or check it (ADR-0063 §8)\n  \
+engine-pin [<commit> | --check]    move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
+engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
@@ -167,7 +168,7 @@ fn engine(args: &[String]) -> u8 {
     report(engine::checkout(&repo_root(), off))
 }
 
-/// `engine-pin [<commit> | --check]`: the engine's pinned commit.
+/// `engine-pin [<commit> | --check | --report]`: the engine's pinned commit.
 fn engine_pin(args: &[String]) -> u8 {
     match args {
         [flag] if flag == "--check" => match engine::check(&repo_root()) {
@@ -183,6 +184,7 @@ fn engine_pin(args: &[String]) -> u8 {
                 1
             }
         },
+        [flag] if flag == "--report" => report(engine::watch_report(&repo_root())),
         [commit] if !commit.starts_with('-') => report(engine::pin(&repo_root(), Some(commit))),
         [] => report(engine::pin(&repo_root(), None)),
         _ => {
