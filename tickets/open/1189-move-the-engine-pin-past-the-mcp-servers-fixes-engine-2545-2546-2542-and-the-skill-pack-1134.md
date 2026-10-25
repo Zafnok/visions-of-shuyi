@@ -104,7 +104,7 @@ None. Nick asked for this pin move once engine 2546, 2542 and 1134 land
   `run-gates`: that is the follow-up ticket above, if one is needed.
 - Engine changes. If the new pin breaks something the game can't fix
   on its side, stop and follow the `engine-change` skill.
-- The weekly pin move (1190). Either order: if 1190 has merged, this
+- The engine watcher and its pin moves (1190). Either order: if 1190 has merged, this
   move also follows the `engine-pin` skill's review and writes the next
   section of `docs/engine/pins.md` (`engine-pin --check` fails
   otherwise), and it closes the open `engine-pin` issue if it pins the
