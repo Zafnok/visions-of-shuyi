@@ -227,6 +227,25 @@ fn breaking_lines_come_from_the_body_and_the_ticket_notes() {
 }
 
 #[test]
+fn breaking_lines_are_listed_once_across_the_body_and_the_notes() {
+    let mut copied = pr(88, "[2013] Public types", vec![internal_change()]);
+    copied.body =
+        "Breaking: shuyi-app: Window::new\nBreaking: shuyi-ui: BoxPlace::new\n".to_owned();
+    copied.ticket_notes = Some(
+        "- Breaking: shuyi-ui: BoxPlace::new\nBreaking: shuyi-app: Window::new\nBreaking: shuyi-cli: LogEntry\n"
+            .to_owned(),
+    );
+    assert_eq!(
+        breaking_lines(&copied),
+        [
+            "shuyi-app: Window::new",
+            "shuyi-ui: BoxPlace::new",
+            "shuyi-cli: LogEntry"
+        ]
+    );
+}
+
+#[test]
 fn a_breaking_pr_that_also_unblocks_is_in_breaking() {
     let mut pr = finishes_2131(vec![api_change()]);
     pr.body = "Breaking: shuyi-core: threat moved\n".to_owned();
