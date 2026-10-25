@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#2546", "engine#2542", "engine#1134"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1189 — Move the engine pin past the MCP server's fixes and the skill pack
@@ -132,21 +132,21 @@ None. Nick asked for this pin move once engine 2546, 2542 and 1134 land
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commits that closed
+- [x] `shuyi-engine.rev` is at or past the commits that closed
       engine#2546, engine#2542 and engine#1134 (`gh api
       repos/Zafnok/shuyi-engine/compare/<commit>...<pin>` says `ahead` or
       `identical` for each).
-- [ ] `cargo xtask engine-pin --check` passes.
-- [ ] No behaviour changes: snapshots and play records unchanged, or
+- [x] `cargo xtask engine-pin --check` passes.
+- [x] No behaviour changes: snapshots and play records unchanged, or
       each change explained by an engine ticket.
-- [ ] `.claude/settings.json` holds `env.MCP_TIMEOUT` and is committed.
-- [ ] `cargo shuyi mcp --ready` succeeds.
-- [ ] The `engine-change` skill no longer says to reconnect the server
+- [x] `.claude/settings.json` holds `env.MCP_TIMEOUT` and is committed.
+- [x] `cargo shuyi mcp --ready` succeeds.
+- [x] The `engine-change` skill no longer says to reconnect the server
       after a pin move.
-- [ ] The completion notes give both results of the check by hand, and
+- [x] The completion notes give both results of the check by hand, and
       the follow-up ticket's id or why there is none.
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -155,5 +155,36 @@ None. Nick asked for this pin move once engine 2546, 2542 and 1134 land
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **Pin:** moved to `b4591a81` by the pin move of 2026-10-25 (PR #425), past
+  engine#2546, engine#2542 and engine#1134; nothing more here.
+- **`.claude/settings.json`** written by `cargo shuyi mcp install --yes`:
+  `env.MCP_TIMEOUT` = `300000` (5 minutes). There was no settings file
+  before, so nothing to merge. `.mcp.json` was "set up already" and is
+  unchanged. Why it matters: on 2026-10-25 a new worktree's session
+  failed with "connection timed out after 30000ms", because the first
+  `cargo shuyi mcp` built `xtask` cold; once built it starts in about
+  0.3 s. Install also wrote `.vscode/mcp.json` (git-ignored) and
+  `.gemini/settings.json`; neither was committed, as in 1181.
+- **`engine-change` step 6:** no longer says to reconnect; keeps
+  `cargo shuyi mcp --ready` and says a running server follows the pin by
+  itself (engine#2546).
+- **Check by hand on Windows** (this session's Claude Code server, in a
+  worktree):
+  1. `start` answered (0.2 s), then `step` reached the Quick Battle map.
+  2. A comment added to `crates/xtask/src/game_tools.rs`, then `start`
+     again: answered ok in 4 s (the rebuild), stopping the old game on
+     frame 134. No lock error.
+  3. The worktree's `target/debug/xtask.exe` was relinked at the second
+     start (13:30:47); the main checkout's `D:\tactical-rpg\target\debug\xtask.exe`
+     kept its 13:10:42 time. So a relative `project` built the
+     worktree's `xtask`. The MCP log (`mcp-logs-shuyi`) records the calls
+     and times but not cargo's stderr, so the target path came from the
+     files' times instead.
+- **Skill pack:** engine 1134's notes name a step (the plugin
+  `shuyi@shuyi-engine`, and `shuyi new` copying the pack into a game's
+  `.claude/skills/`), so 1192 takes it and folds `keyboard-input` and
+  `run-gates`.
+- **Found while checking:** the server's `check`, `bots` and `replay`
+  answer `SH3001` on this game: 1193. (`playtest` and `autobalance` are
+  1180 and 1183.)
+- No Rust code; no gameplay rules decided; nothing for Nick to check.
