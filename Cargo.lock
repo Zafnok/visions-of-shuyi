@@ -1304,6 +1304,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "trpg-engine-watch"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "trpg-playdate"
 version = "0.3.0"
 dependencies = [
@@ -1637,6 +1644,7 @@ dependencies = [
  "trpg-bots",
  "trpg-content",
  "trpg-core",
+ "trpg-engine-watch",
  "trpg-ui",
 ]
 

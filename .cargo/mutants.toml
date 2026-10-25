@@ -8,8 +8,14 @@
 # with the crate's `sdk` feature for the device and the Simulator, so no
 # host test compiles it, and every mutant there would count as missed
 # (ticket 1031). CI's `playdate` job builds it.
+#
+# The engine watcher's `fetch.rs` and `main.rs` only ask `gh` about the
+# engine's repository and read files (ticket 1190); no test reaches the
+# network. The parsing and sorting they hand the answers to are tested.
 exclude_globs = [
     "crates/app/**",
     "crates/playdate/src/pd/**",
+    "crates/engine-watch/src/fetch.rs",
+    "crates/engine-watch/src/main.rs",
 ]
 timeout_multiplier = 3.0

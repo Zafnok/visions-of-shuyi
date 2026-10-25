@@ -74,11 +74,20 @@ Use the **`work-ticket`** skill. Summary: branch `t<NNNN>-<slug>` → implement
 within scope → run gates → fill in Completion notes → `git mv` to `done/` →
 PR titled `[NNNN] Title`.
 
-**The one exception:** a GitHub issue labelled `sonar` is its own ticket.
-`tools/sonar-triage/` files SonarCloud's findings as batched issues every
-week; each is fixed in one PR on a `sonar/<slug>` branch with the
-**`sonar-fix`** skill, with no ticket file
-([ADR-0071](../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md)).
+**The two exceptions:** a GitHub issue labelled `sonar` or `engine-pin`
+is its own ticket, worked in one PR with no ticket file.
+
+- `sonar`: `tools/sonar-triage/` files SonarCloud's findings as batched
+  issues every week; each is fixed on a `sonar/<slug>` branch with the
+  **`sonar-fix`** skill
+  ([ADR-0071](../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md)).
+- `engine-pin`: the engine watcher (`.github/workflows/engine-watch.yml`)
+  files it when the engine's `main` has moved past the pin far enough
+  that a move is due (its public API changed, a game ticket is unblocked,
+  or engine code has waited 48 hours). It is worked on an
+  `engine-pin/<8 hex>` branch with the **`engine-pin`** skill
+  ([ADR-0096](../docs/adr/0096-a-watcher-on-the-engines-main-moves-the-pin-when-its-public-api-changes.md)).
+  So no ticket is written only to move the pin.
 
 ## Nick input legend
 

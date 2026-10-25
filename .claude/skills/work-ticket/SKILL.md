@@ -35,8 +35,11 @@ discipline here is the whole quality system.
 
   `ahead` or `identical`: the pin has it. `behind` or `diverged`: the
   engine ticket is done but the pin is not past it, so the ticket is ready
-  and its first step moves the pin (`engine-change` skill, step 7). Not in
-  `done/`: blocked. `cargo xtask ticket-lint --check-engine` reports an
+  and its first step moves the pin (`engine-change` skill, step 7, with
+  the `engine-pin` skill's review and ledger section for the engine PRs
+  the move passes). When a PR for an `engine-pin` issue is already open
+  (`gh pr list --search "head:engine-pin/"`), the ticket may wait for it
+  to merge instead of moving the pin itself. Not in `done/`: blocked. `cargo xtask ticket-lint --check-engine` reports an
   `engine#NNNN` that doesn't exist at all.
 - If the ticket's **Nick input** says *Answer first* and the design doc it needs
   doesn't exist yet in `docs/design/`, stop and tell the user which `00xx`

@@ -47,6 +47,10 @@ without asking questions.
      map skin), and its tests of behaviour read the scene or the state.
    - Model/effort per the routing table in ADR-0010.
    - `blocked_by`: every ticket whose output this one needs.
+   - **No ticket only to move the engine pin.** The engine watcher files
+     that as an `engine-pin` issue (ADR-0096). A ticket that needs a
+     newer engine says that its first step moves the pin
+     (`engine-change` §7), or that it waits for the open `engine-pin` PR.
 5. Keep it small: one PR's worth of work (roughly ≤ 600 changed lines excluding
    snapshots/data). Split otherwise.
 6. **Check the chain** (see below) before you finish.
