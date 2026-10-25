@@ -319,6 +319,8 @@ fn a_move_is_due_for_an_api_change_an_unblock_or_code_that_waited() {
         Some(Why::Unblocks("1180".to_owned()))
     );
     assert_eq!(due(vec![internal.clone()], &[], soon), None);
+    // More than 48 hours: exactly 48 isn't yet.
+    assert_eq!(due(vec![internal.clone()], &[], merged() + 48 * HOUR), None);
     assert_eq!(
         due(vec![internal], &[], later),
         Some(Why::Waited("2026-10-23".to_owned()))

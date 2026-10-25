@@ -202,6 +202,11 @@ mod tests {
         assert!(err.contains(":1: expected `## YYYY-MM-DD"), "{err}");
         assert!(parse("## 2026-1-25: a → 3f2256d4\n").is_err());
         assert!(parse("## 2026-10-25: a → main\n").is_err());
+        // The date is ten characters, the commit 7 to 40 hex digits.
+        assert!(parse("## 2026-10-251: a → 3f2256d4\n").is_err());
+        assert!(parse("## 2026-10-25: a → zzzzzzzz\n").is_err());
+        assert!(parse("## 2026-10-25: a → 3f2\n").is_err());
+        assert!(parse("## 2026-10-25: a → 3f2256d\n").is_ok());
     }
 
     #[test]
