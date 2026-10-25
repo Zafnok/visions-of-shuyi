@@ -44,6 +44,7 @@ cargo shuyi check-keys                    # no hard-coded keys (keyboard-input s
 cargo shuyi check-text                    # no new screen text written as a literal (ADR-0045)
 cargo xtask engine-pin --check           # the engine's pin agrees in shuyi-engine.rev, Cargo.toml, Cargo.lock (ADR-0063 §8)
 cargo xtask skill-pack --check           # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097)
+cargo shuyi check-skills .claude/skills   # every skill here keeps the engine's skill rules (ADR-0097)
 cargo xtask ticket-lint                   # tickets/ follows tickets/README.md
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown

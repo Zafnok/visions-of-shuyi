@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: ["engine#2559"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1194 — Gate the game's skills with check-skills
@@ -52,10 +52,10 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi check-skills .claude/skills` passes.
-- [ ] It is in the `run-gates` skill and in CI.
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo shuyi check-skills .claude/skills` passes.
+- [x] It is in the `run-gates` skill and in CI.
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -63,5 +63,13 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- Moved the engine pin b4591a81 → 555bba71 (the engine's `main`, 2 PRs:
+  #114 and #115, ticket 2559), with its section in `docs/engine/pins.md`.
+  No breaking changes; `cargo xtask skill-pack` changed no pack skill.
+- `cargo shuyi check-skills .claude/skills` now passes on all 28 skills
+  with nothing to fix in the game's own. It is in the `run-gates` list
+  after `skill-pack --check`, and a step after it in CI's `tickets` job.
+- It notes that `waits_for` ids go unchecked without `--tickets`; only the
+  pack's skills have `waits_for`, and they name engine tickets, so the
+  game's `tickets/open` isn't passed.
+- No follow-up tickets. Engine friction: none, no Rust code.

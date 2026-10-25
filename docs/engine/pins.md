@@ -50,3 +50,11 @@ from here.
 | #95 | 2372 | A module's debug menu entries | not for the game: the game has no modules |
 
 Nothing for the game: 14 PRs (#75, #79, #80, #83, #84, #89, #92, #94, #99, #100, #103, #111, #112, #113). #83 and #89 moved the engine to Rust 1.99, so the game's toolchain moves with it (`rust-toolchain.toml`, `rust-version`), and clippy 1.99's new `assert_is_empty` lint is fixed as it suggests in the game's tests.
+
+## 2026-10-25: b4591a81 → 555bba71 (2 engine PRs), #432
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #115 | 2559 | check-skills checks a project's own skills without asking for a worked example | unblocks 1194 |
+
+Nothing for the game: 1 PR (#114).
