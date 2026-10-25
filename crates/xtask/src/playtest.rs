@@ -22,7 +22,7 @@ use shuyi_core::bots::playtest::{
 };
 use trpg_bots::{BattleEntrant, BattleStage, Player, Targets, personas_from_ron};
 use trpg_content::{Content, battle_campaign};
-use trpg_core::{GameMode, LeadGender, LeadProfile, Turn};
+use trpg_core::{BattleDef, GameMode, LeadGender, LeadProfile, Turn};
 
 /// The command's usage text.
 pub const USAGE: &str = "usage: cargo xtask playtest <battle-id> [options]\n\n\
@@ -271,6 +271,20 @@ pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
     })
 }
 
+/// The battle `def` as the bots play it. The army: the characters of the
+/// battle's player slots, fresh from the character data (as the debug
+/// Quick Battle fields them).
+pub fn stage(content: &Content, def: &BattleDef) -> BattleStage {
+    let setup = |mode| {
+        let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+        battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
+    };
+    BattleStage {
+        classic: setup(GameMode::Classic),
+        casual: setup(GameMode::Casual),
+    }
+}
+
 /// Plays every try of `options` with the personas of `personas` (the text
 /// of `personas.ron`) and judges them with `targets` (`targets.ron`'s):
 /// the record, but for its date and commit.
@@ -288,16 +302,7 @@ pub fn play(
             known.join(", ")
         ));
     };
-    // The army: the characters of the battle's player slots, fresh from the
-    // character data (as the debug Quick Battle fields them).
-    let setup = |mode| {
-        let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-        battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
-    };
-    let stage = BattleStage {
-        classic: setup(GameMode::Classic),
-        casual: setup(GameMode::Casual),
-    };
+    let stage = stage(content, def);
     let personas = personas_from_ron(personas)?;
     let targets = Targets::from_ron(targets)?;
     let entrants = options
