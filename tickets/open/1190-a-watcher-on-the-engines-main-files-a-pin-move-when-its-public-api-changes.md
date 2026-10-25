@@ -56,15 +56,32 @@ What the ad hoc moves cost, measured on 2026-10-24:
 
 ### The decision (this ticket's ADR records it)
 
-1. **A watcher.** `.github/workflows/engine-watch.yml` runs every 15
-   minutes (cron `7,22,37,52 * * * *`, off the hour, when GitHub's
-   schedules run late) and from the Actions tab as a dry run. Each run
-   does two stages:
+1. **A watcher the engine starts.** `.github/workflows/engine-watch.yml`
+   runs on `workflow_dispatch` with an `engine_sha` input. The engine
+   starts it on every push to its `main` (engine#2031), using a
+   fine-grained token that can only run workflows here (Actions:
+   write), so the watcher runs within a minute of each engine merge.
+   Nick (2026-10-25) chose a token over polling. The same workflow
+   also runs hourly as a backstop (cron `17 * * * *`, off the hour,
+   when GitHub's schedules run late), for a dispatch that never came:
+   an expired token, a GitHub outage, or before engine#2031 lands. It
+   also runs from the Actions tab as a dry run (`dry_run`, default
+   true there; a run the engine starts passes `engine_sha` and no
+   `dry_run`, so it applies). Each run does two stages:
    - **A cheap check, seconds and no Rust.** Read the engine `main`'s
      head (`gh api repos/Zafnok/shuyi-engine/commits/main --jq .sha`)
      and the `main=<sha>` that the open `engine-pin` issue's marker
      recorded (or the pin, when no issue is open). If they are equal,
-     stop.
+     stop. A backstop run that finds engine commits more than two hours
+     old that no dispatch reported adds a line to the issue: "The
+     engine's dispatch didn't reach the game: check the token (engine
+     2031's *Nick input*)". It knows by the `trigger=` the marker
+     records (`dispatch` or `schedule`).
+     **Either order with engine#2031:** if engine#2031 is done, dispatches
+     arrive and the hourly run only backs them up. If not, nothing to
+     do: the hourly run is the watcher until dispatches arrive, and the
+     missing-dispatch line stays off until the first dispatch has been
+     seen (`dispatch_seen` in the marker).
    - **The report**, only when the engine has new commits.
      `cargo run -p engine-watch --locked` lists every engine PR between
      the pin and `main`, sorts them (point 3), and says whether a pin
@@ -72,7 +89,7 @@ What the ad hoc moves cost, measured on 2026-10-24:
      open issue labelled `engine-pin`. If not, nothing changes on
      GitHub. When the pin is at `main`, it closes the issue.
 
-   An engine PR shows up as an issue within about 15 minutes, and one
+   An engine PR shows up as an issue within a minute or two, and one
    open issue at a time keeps it controlled: the issue gathers the
    engine's PRs until someone works it, and that session pins the
    engine's `main` as it stands then.
@@ -171,10 +188,12 @@ passes; the watcher's next report then starts from its pin.
 
 ## Nick input
 
-None. Nick asked for the change (2026-10-24) and for the watcher
-instead of a weekly move (2026-10-25); how it works is Claude's call.
-Nick sees it as an `engine-pin` issue on GitHub soon after the engine's
-API changes, and a PR that closes it.
+None here. Nick asked for the change (2026-10-24), for the watcher
+instead of a weekly move, and for a token instead of polling
+(2026-10-25); how it works is Claude's call. The token is engine#2031's
+one-time setup (its *Nick input*), not this ticket's. Nick sees an
+`engine-pin` issue on GitHub soon after the engine's API changes, and a
+PR that closes it.
 
 ## Scope
 
@@ -203,19 +222,16 @@ API changes, and a PR that closes it.
 
 **Out (do not do):**
 - Moving the pin. The first issue the watcher files does that, within
-  15 minutes of this merging if the engine's API has moved. 1189 can
+  the hour after this merges if the engine's API has moved. 1189 can
   land in either order. If it is still open when this lands, it is
   worked as a pin move under the new rules: it writes the ledger's next
   section, and the watcher's next report starts from its pin. If it
   merges first, the ledger's first section is its pin.
 - Adopting any engine feature (1180, 1078 and the rest are their own
   tickets).
-- Engine changes. The exact public API label is engine#2030, which
-  lands in either order (point 2). A `repository_dispatch` from the
-  engine's `main` to this repository would remove the 15-minute delay,
-  but it needs a token in the engine's secrets that can write to this
-  repository, and engine ADR-0037 keeps tokens out of CI where it can.
-  It is left out on both sides.
+- Engine changes. The exact public API label is engine#2030 and the
+  dispatch on push to `main` is engine#2031. Both land in either order
+  (points 1 and 2), and their PRs are the engine's.
 - Working the issue automatically (a Claude session started by the
   issue). The issue is worked like a `sonar` issue, by a session someone
   starts; automating that is its own decision.
@@ -302,8 +318,13 @@ API changes, and a PR that closes it.
    Keep `the_real_repo_agrees_with_itself` passing on the real files.
 4. **The workflow** `.github/workflows/engine-watch.yml`, modelled on
    `sonar-triage.yml`:
-   - Triggers: `schedule: cron "7,22,37,52 * * * *"`, and
-     `workflow_dispatch` with `dry_run` (default true).
+   - Triggers: `workflow_dispatch` with inputs `engine_sha` (string,
+     optional) and `dry_run` (boolean, default true), and `schedule:
+     cron "17 * * * *"`. A run with `engine_sha` set is the engine's
+     dispatch (engine#2031) and applies, whatever `dry_run` says. A
+     run started by hand without it obeys `dry_run`. A scheduled run
+     applies. Write the trigger and `dispatch_seen` into the issue
+     marker (point 1).
    - `concurrency: engine-watch` with `cancel-in-progress: false`.
    - `permissions: {}` at the top and `contents: read`, `issues: write`
      on the job; actions pinned by SHA as in the other workflows.
@@ -395,11 +416,14 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
   ten pin PRs and gate runs a day, each colliding with game PRs in
   flight. One open issue that gathers PRs until it is worked moves just
   as fast with a fraction of the churn.
-- **A push from the engine (`repository_dispatch`).** No delay, but it
-  needs a token that can write to this repository in the engine's
-  secrets, while the engine keeps tokens out of CI where it can
-  (engine 2011). A 15-minute poll of a public repository needs no
-  secret. This can be added later.
+- **Polling every 15 minutes without a token.** The second version of
+  this ticket. It needs no secret, but it adds up to 15 minutes of delay
+  and about 100 runs a day. Nick (2026-10-25) preferred a token. The
+  hourly backstop keeps polling's robustness for when a dispatch is
+  missed.
+- **`repository_dispatch` instead of `workflow_dispatch`.** It needs a
+  token with Contents: write here, which can push code.
+  `workflow_dispatch` needs only Actions: write (engine#2031).
 - **The exact public API diff** (engine ADR-0038's `cargo xtask api`)
   run here: it needs a pinned nightly, `cargo-public-api` and
   `cargo-semver-checks`, and minutes per run. The engine already
@@ -460,6 +484,11 @@ workflow is about 80 lines of YAML, which `code-lines` doesn't count.
       `zizmor` job of `security.yml` on the PR. Stage 1 stops the job
       without checking out when the engine's `main` hasn't moved, and a
       dry run changes no issue.
+- [ ] `gh workflow run engine-watch.yml -f engine_sha=<engine main>`
+      (what engine#2031 sends) starts a run that applies. If
+      engine#2031 is done by then, the Completion notes link the first
+      run the engine started (`gh run list --workflow engine-watch.yml
+      --event workflow_dispatch`).
 - [ ] `trpg-engine-watch` builds without `macroquad` or any `shuyi-*`
       crate (`cargo tree -p trpg-engine-watch` shows neither).
 - [ ] `.claude/skills/engine-pin/SKILL.md` exists, and `CLAUDE.md`,
