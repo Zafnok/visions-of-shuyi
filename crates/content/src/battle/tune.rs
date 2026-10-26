@@ -212,37 +212,50 @@ fn indent(source: &str, at: usize) -> &str {
 }
 
 /// `source`'s bytes with every string's contents and every comment
-/// blanked, so brackets and names in them don't count.
+/// blanked, so brackets and names in them don't count. One pass, byte by
+/// byte.
 fn code(source: &str) -> Vec<u8> {
     let b = source.as_bytes();
     let mut out = b.to_vec();
-    let mut i = 0;
-    while i < b.len() {
-        let end = match (b[i], b.get(i + 1)) {
-            (b'"', _) => {
-                let mut j = i + 1;
-                while j < b.len() && b[j] != b'"' {
-                    j += if b[j] == b'\\' { 2 } else { 1 };
-                }
-                // The quotes stay.
-                out[i + 1..j.min(b.len())].fill(b' ');
-                j + 1
-            }
-            (b'/', Some(b'/')) => {
-                let j = source[i..].find('\n').map_or(b.len(), |n| i + n);
-                out[i..j].fill(b' ');
-                j
-            }
-            (b'/', Some(b'*')) => {
-                let j = source[i..].find("*/").map_or(b.len(), |n| i + n + 2);
-                out[i..j].fill(b' ');
-                j
-            }
-            _ => i + 1,
+    let mut state = In::Code;
+    for (i, &c) in b.iter().enumerate() {
+        let (blank, next) = match (state, c, b.get(i + 1)) {
+            (In::Code, b'"', _) => (false, In::Str),
+            (In::Code, b'/', Some(b'/')) => (true, In::Line),
+            (In::Code, b'/', Some(b'*')) => (true, In::BlockOpen),
+            // A string's quotes and a line comment's end stay.
+            (In::Code, ..) | (In::Str, b'"', _) | (In::Line, b'\n', _) => (false, In::Code),
+            (In::Str, b'\\', _) => (true, In::Escape),
+            (In::Str | In::Escape, ..) => (true, In::Str),
+            (In::Line, ..) => (true, In::Line),
+            (In::BlockStar, b'/', _) => (true, In::Code),
+            (In::Block | In::BlockStar, b'*', _) => (true, In::BlockStar),
+            (In::BlockOpen | In::Block | In::BlockStar, ..) => (true, In::Block),
         };
-        i = end.min(b.len());
+        if blank {
+            out[i] = b' ';
+        }
+        state = next;
     }
     out
+}
+
+/// Where [`code`] is in the text.
+#[derive(Debug, Clone, Copy)]
+enum In {
+    Code,
+    /// Inside a string.
+    Str,
+    /// After a `\` in a string.
+    Escape,
+    /// In a `//` comment.
+    Line,
+    /// On the `*` that opens a `/*` comment.
+    BlockOpen,
+    /// In a `/* */` comment.
+    Block,
+    /// In a `/* */` comment, after a `*`.
+    BlockStar,
 }
 
 /// Where field `key` is in `code`, at bracket depth `depth`: the byte
