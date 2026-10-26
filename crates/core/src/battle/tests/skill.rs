@@ -362,6 +362,26 @@ fn a_threat_forecast_counts_a_bosss_harder_active() {
     let (plain, boss) = (threat(Role::Regular, keen()), threat(Role::Boss, keen()));
     assert_eq!(boss.attacker.damage, plain.attacker.damage);
     assert!(boss.attacker.hit > plain.attacker.hit);
+    // Guarding hits no harder or surer (its Def only blunts the counter):
+    // a tie, so the plain attack's forecast, counter and all.
+    let guarding = || with_skill(unit(3, Faction::Enemy, p(4, 0)), "guarding");
+    let (plain, boss) = (
+        threat(Role::Regular, guarding()),
+        threat(Role::Boss, guarding()),
+    );
+    assert_eq!(boss, plain);
+    let boss = Unit {
+        role: Role::Boss,
+        ..guarding()
+    };
+    let s = start(setup(vec![lord(1, p(1, 0)), boss.clone()]));
+    let guarded = s
+        .attack_forecast(&boss, p(2, 0), &[p(2, 0)], &attack_with(1, "guarding"))
+        .unwrap()
+        .0;
+    assert_eq!(guarded.attacker.all_hit(), plain.attacker.all_hit());
+    assert_eq!(guarded.attacker.hit, plain.attacker.hit);
+    assert_ne!(guarded.defender, plain.defender);
 }
 
 #[test]

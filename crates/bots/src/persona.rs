@@ -425,8 +425,7 @@ fn threats(state: &BattleState) -> Vec<Threat<'_>> {
 
 /// The damage of `side`'s strikes if every one hits.
 fn all_hit(side: &SideForecast) -> i64 {
-    let followups = i64::from(side.strikes.saturating_sub(1));
-    i64::from(side.damage) + followups * i64::from(side.followup_damage)
+    i64::from(side.all_hit())
 }
 
 /// The HP of the enemies on the map.

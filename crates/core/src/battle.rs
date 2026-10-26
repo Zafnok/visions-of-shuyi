@@ -2242,8 +2242,8 @@ impl BattleState {
     /// the numbers a player reads off by checking an enemy that threatens
     /// a unit. With a combat active or Combat Art `attacker` may use and pay
     /// for (a boss's Heavy Blow), the hardest-hitting of those and the plain
-    /// attack: the most damage if every strike hits, then the most expected,
-    /// the plain attack first on a tie (ticket 0518). `None` if either isn't
+    /// attack: the most damage if every strike hits, then the surest, the
+    /// plain attack first on a tie (ticket 0518). `None` if either isn't
     /// on the map, nothing is equipped, or no tile in range gives a
     /// forecast. **For the playtest bots only** (ticket 0506), which weigh
     /// the danger a unit stands in without knowing whom the enemy will
@@ -2271,11 +2271,7 @@ impl BattleState {
                     self.fight_forecast(unit, target, &fight(from))
                 })
             });
-            let hits = |f: &Forecast| {
-                let a = &f.attacker;
-                let all = a.damage + i32::from(a.strikes.saturating_sub(1)) * a.followup_damage;
-                (all, all * i32::from(a.hit))
-            };
+            let hits = |f: &Forecast| (f.attacker.all_hit(), f.attacker.hit);
             if let Some(found) = found
                 && best.as_ref().is_none_or(|b| hits(&found) > hits(b))
             {
