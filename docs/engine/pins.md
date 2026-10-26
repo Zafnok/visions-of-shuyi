@@ -67,3 +67,13 @@ Nothing for the game: 1 PR (#114).
 | #116 | 3063 | Frame times and spans as data: the platform's clock, `Ctx::span`, `App`'s record of each frame | adopt → 1057 (its bench build times a battle frame's parts with the engine's clock, spans and `FrameRecord`s instead of marks of its own; nothing to delete: the game times no part of a frame yet, and the device report's whole-frame and render times stay) |
 
 Nothing for the game: 0 PRs.
+
+## 2026-10-26: d04bc2d1 → 6f0a8209 (6 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #118 | 2560 | MCP's session attached to a running build over the live link | fixed: nothing to change (the game builds no `StartInput` or `StartOutput`) |
+| #119 | 2553 | Perf traces agents read: `shuyi run --perf`, an MCP `perf` tool | fixed: nothing to change (the game matches no `contract::Op`) |
+| #120 | 3064 | The heap counter in debug builds | fixed: nothing to change (the game names no `DEFAULT_CRATES`; its only `#[global_allocator]` is the Playdate crate's, which doesn't link `shuyi-app`) |
+
+Nothing for the game: 3 PRs (#86, #87, #121). The skill pack gains `shuyi-perf`.
