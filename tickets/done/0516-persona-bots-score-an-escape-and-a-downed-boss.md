@@ -5,10 +5,10 @@ type: bug
 milestone: M4 Enemy AI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-26
 ---
 
 # 0516 — The persona bots score an escape and a downed boss right
@@ -116,17 +116,17 @@ doc comments), plus tests.
 
 ## Acceptance criteria
 
-- [ ] The step 2 test passes: escaping scores higher than waiting on the
+- [x] The step 2 test passes: escaping scores higher than waiting on the
       exit, for every persona.
-- [ ] Downing an enemy counts in `enemy_fell` (test on `test_hold`).
-- [ ] The persona smoke test passes: every try of the four rule battles
+- [x] Downing an enemy counts in `enemy_fell` (test on `test_hold`).
+- [x] The persona smoke test passes (with one exception, see notes): every try of the four rule battles
       ends in 60 turns, and `test_escape` is won at least once.
-- [ ] Chapter 1's 20-try measures are identical before and after (both
+- [x] Chapter 1's 20-try measures are identical before and after (both
       summaries in the PR).
-- [ ] `baseline.rs` has no play loop of its own.
-- [ ] `personas.ron`, `docs/playtesting.md` and `bot.rs` say what the
+- [x] `baseline.rs` has no play loop of its own.
+- [x] `personas.ron`, `docs/playtesting.md` and `bot.rs` say what the
       counts and the baseline do now.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -135,5 +135,34 @@ doc comments), plus tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- `Tally::between` (`crates/bots/src/persona.rs`): `approach` gives a
+  player unit that escaped its whole distance before (it reached the
+  exit); `enemy_fell` counts the enemies that went down as well as the
+  fallen. Tests: `escaping_scores_more_than_waiting_on_the_exit` (every
+  persona; a tie before the fix) and
+  `an_enemy_that_goes_down_counts_as_fallen` (on `test_hold`).
+- `the_personas_finish_the_rule_battles` in `crates/bots/tests/baseline.rs`
+  (not a new test file: the crate keeps one integration test program).
+  Every persona, 3 seeds, the four rule battles, a 60-turn cap; about
+  3 s of the file's 26 s in a debug build.
+- `recorded()` on the engine's `play_observed`; its replay test unchanged.
+- Comments: `personas.ron`, `docs/playtesting.md`'s table, `bot.rs`.
+- Chapter 1, 20 tries of each persona, before and after: identical try
+  by try (casual 6/20, normal 13/20, hardcore 10/20 succeed).
+
+**Deviation.** The smoke test lets Casual leave unfinished all but one
+try of `test_escape`: on seeds 1 and 3 it still runs out the 60 turns,
+before and after the fix. Its lead escapes, the enemies are gone, and
+the two units left wander: every candidate scores within about 20
+points, and Casual's temperature is 100, so it picks almost at random.
+Listing each unit's `Escape` early in `order` was tried and didn't end
+it (reverted). The settings can't change (ADR-0095 §5), so it is
+**0517**, which removes the exception; 0852 now waits for it too.
+
+**Follow-ups:** 0517 (Casual wanders on an exit map once the enemies are
+gone), 0518 (Hardcore loses its lead on turn 1 to 5 in `test_escape` and
+`test_retreat`, and runs out the clock on 5 of 20 Chapter 1 tries).
+
+Engine friction: estimate 40, measured 8 (0.2×), under 2×.
+
+No gameplay rules decided: this is dev tooling.

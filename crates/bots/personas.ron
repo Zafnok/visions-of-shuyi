@@ -29,11 +29,14 @@
 //   lord_fell, unit_fell  a lord, another player unit fallen
 //   hp_lost, lord_hp_lost HP lost in the candidate's own fight (a heal
 //                         counts back)
-//   enemy_fell            an enemy fallen
+//   enemy_fell            an enemy fallen, or gone down (a boss who
+//                         can't be killed)
 //   progress              enemy HP taken in a rout (the boss's in a boss
-//                         fight, a tile closer in a seize)
+//                         fight, a tile closer in a seize, a unit escaped
+//                         in an escape)
 //   approach              a tile the units came closer to the nearest
-//                         enemy (the boss, the tile to seize), walking
+//                         enemy (the boss, the tile to seize, the exit),
+//                         walking; a unit that escaped reached the exit
 //   exposed, lord_exposed HP the enemies that can reach a unit are
 //                         expected to take from it next phase, by the
 //                         forecast
