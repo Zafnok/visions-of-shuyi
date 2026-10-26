@@ -58,3 +58,12 @@ Nothing for the game: 14 PRs (#75, #79, #80, #83, #84, #89, #92, #94, #99, #100,
 | #115 | 2559 | check-skills checks a project's own skills without asking for a worked example | unblocks 1194 |
 
 Nothing for the game: 1 PR (#114).
+
+## 2026-10-25: 555bba71 → d04bc2d1 (2 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #117 | 2521 | The live link: `shuyi attach` and MCP read a running windowed build | fixed: nothing to change (the game matches no `contract::Op`) |
+| #116 | 3063 | Frame times and spans as data: the platform's clock, `Ctx::span`, `App`'s record of each frame | adopt → 1057 (its bench build times a battle frame's parts with the engine's clock, spans and `FrameRecord`s instead of marks of its own; nothing to delete: the game times no part of a frame yet, and the device report's whole-frame and render times stay) |
+
+Nothing for the game: 0 PRs.

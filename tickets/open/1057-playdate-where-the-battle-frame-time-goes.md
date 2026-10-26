@@ -62,10 +62,17 @@ second.
   (`cargo xtask playdate --release --bench`, `crates/playdate/src/pd/bench.rs`,
   ADR-0077 §4) to time the parts of `Game::frame` in a battle: input,
   the screen's `update`, building the map scene, the skins painting the
-  buffer, anything else the numbers point at. Time them from the front
-  end around calls `trpg-ui` exposes for it (as `onebit::render_marked`
-  does), never with a clock inside `core` or `ui` (ADR-0004). Record the
-  numbers in the completion notes.
+  buffer, anything else the numbers point at. Use the engine's frame
+  times and spans (`shuyi_ui::perf`, engine#3063, in the pin since
+  2026-10-25), not marks of the game's own: the bench build gives the
+  game's context the device's microsecond clock
+  (`ctx_mut().set_perf_clock(Some(PerfClock::Real(..)))`) and brackets
+  each frame with `begin_perf_frame` / `end_perf_frame`, so
+  `Game::frame` times the update and the drawing apart; the parts
+  inside them are `Ctx::span("name", ..)` in `trpg-ui`, which reads no
+  clock of its own (ADR-0004 holds: the clock is the front end's). The
+  report logs the `FrameRecord`s. Record the numbers in the completion
+  notes.
 - Cut the biggest costs where the numbers point, without changing what
   any screen shows or what the game decides (snapshots and play records
   unchanged).
@@ -90,8 +97,9 @@ second.
    (`crates/ui/src/screens/battle*`).
 2. Time a battle frame's parts on the PC first (a release-mode timing
    test like 1055's probe, through the Harness on `ConsoleSpec::PLAYDATE`
-   in the first battle) to know where to put the device's marks.
-3. Add the marks to the bench build, build it, ask Nick to sideload and
+   in the first battle, with a real clock by `Harness::set_clock` and
+   the records from `Harness::perf`) to know where to put the spans.
+3. Add the spans and the bench build's clock, build it, ask Nick to sideload and
    paste the console (one Nick turn: also hand him the normal build).
 4. Cut the biggest parts; keep every test and snapshot as it is.
 5. Measure on the device again; put before / after in the completion
