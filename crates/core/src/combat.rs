@@ -380,6 +380,14 @@ pub struct SideForecast {
     pub affinity: Option<Affinity>,
 }
 
+impl SideForecast {
+    /// The damage of its strikes if every one hits (no crit).
+    pub fn all_hit(&self) -> StatValue {
+        let followups = StatValue::from(self.strikes.saturating_sub(1));
+        self.damage + followups * self.followup_damage
+    }
+}
+
 /// The combat forecast. The defender side is `None` when it can't counter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Forecast {

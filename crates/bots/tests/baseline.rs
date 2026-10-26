@@ -70,7 +70,8 @@ fn chapter_1_difficulty() {
 }
 
 /// Every persona plays the rule battles of the test files (ticket 0516):
-/// each try ends in 60 turns, and the escape is won at least once. Except
+/// each try ends in 60 turns, the escape is won at least once, and Hardcore
+/// wins 2 of 3 of the escape and the retreat (0518). Except
 /// Casual in the escape, which may wander once the enemies are gone
 /// (0517): it ends at least one try.
 #[test]
@@ -95,7 +96,12 @@ fn the_personas_finish_the_rule_battles() {
                 unfinished.len() <= allowed,
                 "{id}, {name}: no end in 60 turns, seeds {unfinished:?}"
             );
-            won += tries.iter().filter(|t| t.measures["won"] == 1).count();
+            let wins = tries.iter().filter(|t| t.measures["won"] == 1).count();
+            // Hardcore, the best player, keeps its lead alive (0518).
+            if name == "hardcore" && matches!(id, "test_escape" | "test_retreat") {
+                assert!(wins >= 2, "{id}, hardcore: won {wins} of 3");
+            }
+            won += wins;
         }
         if id == "test_escape" {
             assert!(won > 0, "no persona won the escape");

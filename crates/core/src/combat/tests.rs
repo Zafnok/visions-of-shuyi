@@ -110,6 +110,13 @@ fn numbers(
     }
 }
 
+#[test]
+fn all_hit_is_the_first_strike_and_every_followup() {
+    assert_eq!(numbers(7, 5, 80, 0, 1).all_hit(), 7);
+    assert_eq!(numbers(7, 5, 80, 0, 3).all_hit(), 17);
+    assert_eq!(numbers(0, 0, 80, 0, 0).all_hit(), 0);
+}
+
 fn hp(current: StatValue, max: StatValue) -> CombatHp {
     CombatHp { current, max }
 }

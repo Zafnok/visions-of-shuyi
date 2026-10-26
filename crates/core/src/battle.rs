@@ -2240,19 +2240,69 @@ impl BattleState {
     /// stands, with the weapon or spell `attacker` has equipped, from the
     /// first tile in range (nearest first, then in [`Dir::ALL`]'s order):
     /// the numbers a player reads off by checking an enemy that threatens
-    /// a unit. `None` if either isn't on the map, nothing is equipped, or no
-    /// tile in range gives a forecast. **For the playtest bots only**
-    /// (ticket 0506), which weigh the danger a unit stands in without
-    /// knowing whom the enemy will choose.
+    /// a unit. With a combat active or Combat Art `attacker` may use and pay
+    /// for (a boss's Heavy Blow), the hardest-hitting of those and the plain
+    /// attack: the most damage if every strike hits, then the surest, the
+    /// plain attack first on a tie (ticket 0518). `None` if either isn't
+    /// on the map, nothing is equipped, or no tile in range gives a
+    /// forecast. **For the playtest bots only** (ticket 0506), which weigh
+    /// the danger a unit stands in without knowing whom the enemy will
+    /// choose.
     pub fn threat_forecast(&self, attacker: UnitId, target: UnitId) -> Option<Forecast> {
         let (unit, target) = (self.unit(attacker)?, self.unit(target)?);
         let with = unit.loadout.equipped.clone()?;
-        (1..=THREAT_FORECAST_REACH).find_map(|d| {
-            Dir::ALL.into_iter().find_map(|dir| {
-                let from = (0..d).fold(target.pos, |at, _| at.step(dir));
-                self.plain_forecast(unit, from, 0, target, &with)
-            })
-        })
+        let (actives, arts) = self.threat_techniques(unit, &with);
+        let plain = (None, None);
+        let uses = core::iter::once(plain)
+            .chain(arts.iter().map(|a| (None, Some(a))))
+            .chain(actives.iter().map(|a| (Some(a), None)));
+        let mut best: Option<Forecast> = None;
+        for (active, art) in uses {
+            let fight = |dest| Fight {
+                dest,
+                moved: 0,
+                with: &with,
+                active,
+                art,
+            };
+            let found = (1..=THREAT_FORECAST_REACH).find_map(|d| {
+                Dir::ALL.into_iter().find_map(|dir| {
+                    let from = (0..d).fold(target.pos, |at, _| at.step(dir));
+                    self.fight_forecast(unit, target, &fight(from))
+                })
+            });
+            let hits = |f: &Forecast| (f.attacker.all_hit(), f.attacker.hit);
+            if let Some(found) = found
+                && best.as_ref().is_none_or(|b| hits(&found) > hits(b))
+            {
+                best = Some(found);
+            }
+        }
+        best
+    }
+
+    /// The combat actives and Combat Arts `unit` may use and pay for when
+    /// attacking with `with`, validated as an `Act`'s are; none for a unit
+    /// that may not use them ([`Self::threat_forecast`]).
+    fn threat_techniques(&self, unit: &Unit, with: &Equipped) -> (Vec<ActiveUse>, Vec<ArtUse>) {
+        if check_arts_allowed(unit).is_err() {
+            return (Vec::new(), Vec::new());
+        }
+        let tables = &self.tables;
+        let skills = unit.usable_skills(&tables.classes, &tables.skills);
+        let actives = skills
+            .into_iter()
+            .filter_map(|def| self.plan_active(unit, &def.id, with).ok())
+            .collect();
+        let arts = match *with {
+            Equipped::Weapon(slot) => unit
+                .usable_arts(slot, &tables.classes, &tables.items, &tables.arts)
+                .into_iter()
+                .filter_map(|def| self.plan_art(unit, &def.id, with).ok())
+                .collect(),
+            Equipped::Spell(_) => Vec::new(),
+        };
+        (actives, arts)
     }
 
     /// Validates `cmd` (see [`Self::apply`]): what to carry out.
@@ -2562,10 +2612,16 @@ impl BattleState {
             active: None,
             art: None,
         };
-        let (a, d, _) = self.fighters(unit, target, &fight).ok()?;
-        let distance = Pos::manhattan(dest, target.pos);
+        self.fight_forecast(unit, target, &fight)
+    }
+
+    /// The forecast of `unit` attacking `target` as `fight` says, unchecked
+    /// like [`Self::plain_forecast`].
+    fn fight_forecast(&self, unit: &Unit, target: &Unit, fight: &Fight) -> Option<Forecast> {
+        let (a, d, _) = self.fighters(unit, target, fight).ok()?;
+        let distance = Pos::manhattan(fight.dest, target.pos);
         let mut forecast = forecast(&self.tables.items.combat_rules(), &a, &d, distance)?;
-        if self.uncounterable(with) {
+        if self.uncounterable(fight.with) {
             forecast.defender = None;
         }
         Some(forecast)

@@ -1137,6 +1137,35 @@ fn danger_counts_the_threats_a_player_can_see() {
     assert_eq!(danger(&alone).lord_exposed, 0);
     assert_eq!(danger(&alone).lord_at_risk, 0);
     assert!(danger(&alone).counter > 0);
+    // Unless walking or waiting wins (0518): in an escape, a seize or a
+    // survive, the lone lord's danger counts as any lord's.
+    let area = trpg_core::TileRect {
+        x: 13,
+        y: 0,
+        w: 1,
+        h: 8,
+    };
+    for objective in [
+        Objective::Escape { area },
+        Objective::Seize {
+            pos: Pos::new(13, 4),
+            by_lord: true,
+            turn_limit: None,
+        },
+        Objective::Survive { turns: 5 },
+    ] {
+        let (walks, _) = BattleState::new(BattleSetup {
+            objective,
+            ..setup(vec![lord(player(1, 0)), enemy(4, 2)])
+        });
+        let on_lord = walks.threat_forecast(UnitId(4), UnitId(1)).unwrap();
+        assert_eq!(
+            danger(&walks).lord_exposed,
+            expected_damage(&on_lord.attacker) / 100,
+            "{objective:?}"
+        );
+        assert!(danger(&walks).lord_exposed > 0, "{objective:?}");
+    }
     // Nobody in reach: no danger.
     let mut far = stationary(enemy(3, 0));
     far.pos = Pos::new(13, 7);
