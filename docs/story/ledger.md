@@ -80,118 +80,138 @@ fix an error; add a new one.
 ## After Chapter 1
 
 Written by 0707 from `assets/dialogue/ch01.dlg`; 0724 and 0728 reworked
-the lines; **0737 wrote the script again from the beats on a blank page**
-and rewrote this section to what is now said. It describes a battle
-everyone lived through. What changes when a companion died in it
-(Classic) is in "If a companion died in Chapter 1", at the end of this
-section (0716, updated by 0737).
+the lines; **0737 wrote the script again from the outline on a blank
+page** (Nick, on 0737's first draft, 2026-10-25: it "still reads
+semantically the same as before"; the script was then built again with
+different scenes) and rewrote this section to what is now said. It
+describes a battle everyone lived through. What changes when a companion
+died in it (Classic) is in "If a companion died in Chapter 1", at the end
+of this section (0716, updated by 0737).
 
 ### What happened
 
-- At dawn, in the yard, the lead disarmed Hollis for the first time, and
-  he said so ("That was good, kid") before he gave the lead Dace's letter,
-  unsigned: "Get out of the march. Tonight. They are coming for everyone
-  who was there that night. Burn this." It had come by peddler the night
-  before; Hollis admitted he should have woken the lead and didn't. The
-  lead named Dace; Hollis didn't ("That's the boy's hand"). He counted
-  "everyone who was there" as four, and said, flat, "My girl's dead" (the
-  only mention of Wren in the chapter). **Hollis didn't burn it. He still
-  carries it in his coat**, and told the house nobody was burning anything.
-- Tamsin rode in: Harl had taken the toll-fort in the night and, when she
-  rode up to the gate ("like a fool"), offered her her old job back. He
-  showed her a sealed paper (his thumb over the seal the whole time) that
-  named nobody: "The exile. The old man. The girl with the burned hands."
-  A price by each. He read it to her slowly.
-- Maud, hearing "burned hands", asked how they knew about her hands and
-  who would have told them, and stopped herself. Nobody asked.
-- Rue told everyone to stop looking at her hands, and was glad the heir
-  was on the list too ("Then it isn't only me"). She gave Aske bread
-  because Aske was gray in the face; Aske said she wasn't cold, she was
-  angry, and told Rue to eat half.
-- Aske had lain under the fort wall all night. The men shot at her deer
-  from it, "a hundred arrows for three deer", took one and left two for
-  the crows. She wants them out of her woods. **No count of the fort's men
-  was said** (the map shows them).
-- Maud asked Rue to hide in the chapel cellar ("I have buried four children
-  from this village and I am not burying you"); Rue refused: enough
-  cellars, she is sworn to fire, she can burn "all of them-- some of them".
-- Hollis brought out the two swords from under the floor, told the lead to
-  pick one and asked what they were doing. The lead took the nearer sword;
-  Hollis took the other.
-- Tamsin: it's Harl they want; the men are his, not the paper's, and they
-  will run when he falls. She has watched them run.
-- The six fought the Red Company at the ford. Harl is dead, and the rest
-  of the company ran when he fell (0845). One barn in Harrowby burned.
-- Harl's last words were to the lead: the new lord of Veyne paid for the
-  lead up front, in good silver, with the lead's own crest in the wax, "and
-  he never blinked". Then he begged for his men ("don't let them hang my
-  boys. They were hungry"). If the lead fought him, he had already named
-  the price: three hundred crowns a head.
-- Over Harl's body Tamsin wrote him up in the ledger and put her hand
-  over his eyes. He put her on her first horse; she fell off in front of
-  the whole yard and he laughed till he had to sit down. "It was a job.
-  That's what I'm writing. A job."
-- Hollis found the order in Harl's coat, sealed in blue wax, and said
-  nothing. Tamsin said it for him: the Captain's boy holds the lead's
-  title, the hero of the war, and it is his seal. Hollis folded the paper,
-  put it in the lead's hand without a word, and went out to pick up the
-  dead men's spears. The lead has the paper.
-- Rue, to the lead's face: she has seen that wax before, nailed to a cart
-  at night with children in it. "Was it you? Was it your father?" The lead
-  didn't answer; she explained nothing.
-- Maud: they can't stay, any of them; the Vigil knows Rue is-- somebody
-  knows she is here, and more will come. Then she took the lead's hand,
-  the one the lead had been hiding a cut on, and saw to it.
-- Aske: nine of her arrows are in the dead and she is taking them back,
-  and she is coming after "for the rest of them". Tamsin, when Aske asked
-  why she was smiling: she isn't; Aske comes for arrows and she for pay,
-  "further than the pay, probably", and has anybody fed her horse.
-- Hollis: "The boy's at Veyne Hall", north past the boundary stone, past
-  which the lead is an outlaw. "Your call. Not mine." Then he went for a
-  shovel: he would not leave Harl to the crows. **Hollis buried Harl
-  himself.**
+- At dawn in the yard, Hollis mended the lead's boot by the fire while
+  the lead split wood. He had not slept; the letter was in his coat, and
+  he said nothing about it. He said he has never seen the sea in forty
+  years on his feet, because it is the one thing the boy wrote home about
+  from the war that he believed; and asked what the lead will do when
+  the exile lifts (the lead's reply isn't recorded). The chapel bell rang
+  an hour early. He sent the lead under the floor for the two real
+  swords. **The lead bears steel from then on.**
+- A paper was nailed to the chapel door in the night: the village burns
+  at noon unless three people walk up to the toll-fort, "the exile, the
+  old man, the girl with the burned hands". Maud found it and rang the
+  bell. She heard a keeper's phrasing in the description of Rue and said
+  only that it was how a keeper writes, and that her hands wouldn't hold
+  it. Nobody asked.
+- Tamsin took the paper: Harl's writing on somebody else's paper (he
+  writes on the backs of things); he will do it, he burned a farm last
+  winter for less. Rue offered to walk up herself, hands out of her
+  sleeves; Tamsin asked what she had to do with any of it; "Why don't you
+  ask whoever wrote it?"
+- **Hollis took the letter out of his coat in front of everyone.** It
+  came by peddler in the night, unsigned; in his words it said get out of
+  the march by tonight, they are coming for everyone who was at the mill
+  that night, burn this. Tamsin asked whose hand. Hollis didn't say; the
+  lead did, to all of them: Dace's. "Aye. Burn it. Somebody. I can't."
+  **Rue took it from his hand and burned it with her fire**, looking at
+  the lead, not the letter. No letter exists.
+- Aske had lain under the fort wall all night: they shot three of her
+  deer from the wall, ate one raw and left two; men that hungry would not
+  wait for noon. **No count of the fort's men was said.**
+- Hollis: the ford is the only road out and they are sitting on it; the
+  whole hamlet into the chapel; they have steel. Tamsin: Harl stands on
+  walls to be seen; she would go around by the river and come at him from
+  behind. The lead's reply (the plan) isn't recorded.
+- The six fought the Red Company at the toll-fort. Harl is dead, and the
+  rest of the company ran out of the gate when he fell (0845). Nothing
+  in the hamlet burned.
+- Harl's last words: first a plea not to hang the boys, they were
+  hungry; then, to the lead: a lord bought you, your own wax on the
+  paper, your own crest, silver up front; ask the new one in your hall
+  what you cost him. If the lead fought him, he had already said
+  "walk up, you were told, and we'd have done it quiet" and named the
+  price, three hundred a head. To anyone else: forty men he brought home
+  from a war, and the crown gave them a road. If Tamsin fought him: he
+  had her down as dead in a ditch; he put her on her first horse and
+  could put her off it; "And I held the horses at that farm after, and
+  watched. ...Get off the wall."
+- Tamsin went to the body after the seal, so as not to look at Hollis.
+  She cut the red cloth off Harl's head, kept it, didn't look at his
+  face, wrote one word in her ledger and shut it (the word isn't shown),
+  and said he had picked her out of a muster line once, fourteen of them;
+  then asked Maud how to spell "fourteen".
+- Rue, going through the dead men's packs for food, found the order in
+  Harl's coat (three lines, a price, and the seal in blue wax). The lead
+  named the seal unprompted ("That's the Veyne seal"): the crest the lead
+  cut off their coat. The last time she saw that wax it was on a cart at
+  night full of children. "Your house's wax. Did you know?" The lead
+  answered (a reply; not recorded); Rue wasn't convinced, whichever it
+  was. **Rue has the order.**
+- Hollis looked at the wax over the lead's shoulder, said nothing, and
+  went and sat on the gate step with his back to everyone. Tamsin, to
+  the lead: don't look at him, give him a minute; it's the boy's; the
+  hall, the title and the wax all went to him with the king's thanks.
+- Maud began to say she would write to Greywater Abbey and tell them Rue
+  was no danger, and stopped: she can't write to the Abbey, not ever
+  again. And past the boundary stone they hang the lead for that coat.
+  She saw to the lead's hands.
+- **Rue decided the road**, paper in hand: the seal has a hall, everybody
+  knows where Veyne Hall is, she is going there, alone if she has to. The
+  lead: "Not alone." Rue: in front of her, then, where she can see them.
+  Aske had made everyone sit and eat before any of that (nobody had
+  eaten since the bell; she did the deer). She said nothing about coming;
+  she came.
+- **Hollis said nothing about the hall or the boy**, at any point after
+  the chapel. He got up off the step, cleaned the lead's sword on his
+  own sleeve and gave it back. **Nobody buried Harl.** Down in the hamlet
+  somebody found the bell rope.
 - At dusk all six left Harrowby for Veyne Hall, to ask Dace.
-- That night at Veyne Hall a Vigil messenger asked Dace, for the Master of
-  Vows, whether it was done. Dace had a report saying every man of the Red
-  Company was dead and the exile was not. He said "Tell him it's done.
-  Tell him I said so", burned the report with the poker, and said to the
-  lead who wasn't there that he had written it down, "Get out. Tonight",
-  one thing asked in four years, and of course the lead hadn't.
+- That night at Veyne Hall, Dace had two letters sealed on the desk,
+  written before any news came; the news was Harl dead in the toll-fort
+  and the exile walking north with five others. A Vigil messenger asked,
+  for the Master of Vows, whether it was done, in writing; Dace handed
+  him one of the two letters: "It's done. That says so." Alone, he
+  locked the other, still sealed, in the desk drawer on top of the seal,
+  sat in the old lord's chair, and said to the lead who wasn't there,
+  by name, that they never once did as they were told. "Good."
 
 ### Who knows what (changes since the start of Chapter 1)
 
 | Fact | Now knows | Still doesn't know |
 | ---- | --------- | ------------------ |
-| Dace wrote the warning letter | the lead, Hollis | the other four (nobody told them on screen) |
-| The kill order bore the Veyne seal, which goes with the title, and Dace holds the title | all six (Tamsin said it over the body; Harl said "the new lord of Veyne" and "your own crest" as he died) | why; that the order came from Crane; what the order says beyond the seal (nobody read it aloud) |
-| Harl's price: three hundred crowns a head | the lead, if the lead fought him (`ch01_boss_engage_lead`); otherwise nobody in the party | — |
-| Rue saw the Veyne seal "nailed to a cart, at night", with children in it | all six heard her say it | what the cart was, that she was in it, that Dace was there (she explained nothing; Chapter 3) |
-| Rue is gifted and swears fire | all six: she told Maud by the chapel "I'm sworn to fire" and fought with fire | that she was a Candle (Chapter 3); only Maud had guessed she was gifted before today |
-| Maud's report brought the killers | Maud (she understood at "the girl with the burned hands") | everyone else. She gave herself away twice in front of them ("how do they know about her hands? Who would have--", and later "the Vigil knows she's-- somebody knows she's here") and nobody asked |
-| Hollis's daughter is dead, as he believes | the lead has always known; Hollis said "My girl's dead" in the yard, to the lead alone | the other four heard nothing of her |
+| Dace wrote the warning letter | **all six**: Hollis read it out by the chapel and the lead named the hand in front of everyone. Rue burned it; no letter exists | — |
+| Harl demanded the three by noon or the village burns, in his own writing on a lord's paper | all six, and the hamlet (it was on the chapel door) | — |
+| The kill order bore the Veyne seal, which goes with the hall, and Dace holds the hall | all six (Tamsin said it over Hollis's back, and the party had heard Dace's name by the chapel; Harl said "the new one in your hall" and "your own crest" as he died) | why; that the order came from Crane; what the order says beyond the seal (nobody read it aloud) |
+| Harl's price: three hundred a head | the lead, if the lead fought him (`ch01_boss_engage_lead`); otherwise nobody in the party | — |
+| Rue saw the Veyne seal on a road pass "nailed to the side of a cart, at night", with children in it | all six heard her say it | what the cart was, that she was in it, that Dace was there (she explained nothing; Chapter 3) |
+| Rue is gifted and swears fire | all six: she burned Dace's letter in her fingers by the chapel, and fought with fire | that she was a Candle (Chapter 3); only Maud had guessed she was gifted before today |
+| Rue is on the paper for a reason she won't give | all six heard Tamsin ask and Rue refuse | the reason (the cart; Chapter 3) |
+| Maud's report brought the killers | Maud (she understood at "the girl with the burned hands": a keeper's phrasing) | everyone else. She gave herself away twice ("That's how a keeper writes it down"; "I can't write to the Abbey, can I. Not ever again") and nobody asked |
+| Hollis has never seen the sea, and the boy wrote home about it from the war | the lead | the other four (said in the yard, to the lead alone) |
 | Dace's masters believe the three are dead | the player | the party; Crane will learn otherwise (when is later chapters' call) |
 | Dace answers to "the Master of Vows" | the player | the party has not heard the title |
-| The Red Company burned "a farm" for a lord's purse, and Tamsin held the horses | Tamsin, Harl (dead). Said aloud only if Tamsin fought Harl (`ch01_boss_engage_sergeant`), and nobody else is shown hearing it | the party: Coldwell is still hers to tell, and nothing said whether anyone was in the farm |
-| Harl put Tamsin on her first horse | whoever stood near her over his body; treat it as known to the five | what else he was to her |
-| The lead had a cut on one hand and hid it | Maud (she took the hand); treat it as seen by the others | — |
+| The Red Company burned "a farm" for a lord's purse, and Tamsin held the horses | Tamsin, Harl (dead); Tamsin told the green only that he burned a farm last winter. "I held the horses at that farm" was said only if Tamsin fought Harl (`ch01_boss_engage_sergeant`), and nobody else is shown hearing it | the party: Coldwell is still hers to tell, and nothing said whether anyone was in the farm |
+| Harl was Tamsin's captain, picked her from a muster line and put her on her first horse | the five (his writing, his wall, the muster line over his body; the first horse, if she fought him) | what else he was to her |
 
 Unchanged and still secret: everything else in the start-of-chapter table
 (Dace and Vosse, Hollis's burned purse, Wren alive, the prince, the Door,
-Aske's spying).
+Aske's spying). Wren was not mentioned at all.
 
 ### Relationships (changes)
 
 | Pair | State |
 | ---- | ----- |
-| The lead ↔ Rue | Open suspicion, said to the lead's face: "Was it you? Was it your father?" The lead didn't answer. She comes along without saying so (if the lead chose the blunt plan by the chapel, she said she wanted the lead in front of her). |
-| The lead ↔ Hollis | Hollis has said nothing about the seal. What he did say: "The boy's at Veyne Hall", and "Your call. Not mine." He corrected the lead's shoulder in the yard and in the battle's first turn. |
-| Hollis ↔ Dace | Hollis has his son's letter and has seen his son's seal on a kill order. He hasn't said his son's name once ("the boy's hand", "him, writing letters", "how's my father"). |
-| Tamsin ↔ Harl | Over. She wrote him up in the ledger and closed his eyes. "He put me on my first horse. ...It was a job. That's what I'm writing. A job." |
-| The lead ↔ Tamsin | She comes for the pay, "further than the pay, probably". She said whose seal it was when nobody else would, to Hollis's face ("It's the boy's. Isn't it."). |
-| The lead ↔ Aske | She came for her deer and her woods, then for her arrows: "I am coming after, for the rest of them." Still "noble". |
-| Aske ↔ Rue | Rue gave her bread; Aske told her to eat half. Still strangers. |
-| Maud ↔ Rue | Maud knows what her letter did and hasn't told Rue. She tried to put Rue in the chapel cellar; Rue fought instead. |
-| Maud ↔ the lead | She noticed the cut the lead was hiding and saw to it. |
+| The lead ↔ Rue | Open suspicion, said to the lead's face over the seal: "Was it you? Was it your father?" The lead answered; she wasn't convinced. She has the order, and she set the road: Veyne Hall, with the lead in front of her where she can see them. She looked at the lead, not the letter, as she burned it. |
+| The lead ↔ Hollis | He mended the lead's boot and told the lead the one thing about himself he has told anyone (the sea). He read the letter out but would not name the hand; the lead did it for him. After the fight he cleaned the lead's sword and gave it back, and has said nothing about the seal, the hall or the boy. |
+| Hollis ↔ Dace | Hollis read his son's letter aloud to five people and could not say his name or burn it himself; he has seen his son's seal on a kill order and sat down with his back to everyone. "The boy", "you know whose". |
+| Tamsin ↔ Harl | Over. She cut the red cloth off his head and kept it, wrote one word in the ledger and shut it, and remembered the muster line aloud. What she wrote isn't shown. |
+| The lead ↔ Tamsin | She said whose seal it was when nobody else would, and told the lead to give Hollis a minute. Nothing said about pay. |
+| The lead ↔ Aske | "Not you, noble." She fed everyone before the road was named, and came without saying why. Still "noble". |
+| Tamsin ↔ Rue | "Sparks." Tamsin asked her, in front of everyone, what she had to do with any of it, and was refused. |
+| Hollis ↔ Rue | She burned his son's letter for him when he asked somebody to. He gave her nothing back. |
+| Maud ↔ Rue | Maud knows what her letter did and hasn't told Rue. She tried to write to the Abbey for her and stopped. |
+| Maud ↔ the lead | She saw to the lead's hands after the fight. |
 | The party | It exists. Nobody has called it anything. |
 
 ### Status
@@ -200,14 +220,14 @@ Aske's spying).
 - The lead, Hollis, Tamsin, Aske, Maud and Rue are on the road north out
   of the Thornmarch at dusk, heading for Veyne Hall by Kell's Ford (Chapter
   2). Dace is at Veyne Hall.
-- The lead's exile terms: the lead bears arms, and is on the road out of
-  the Thornmarch (the crossing itself is Kell's Ford, Chapter 2). No scene
-  has the lead claim the Veyne name or wear the crest; others call them
-  "Veyne", as they always have.
+- The lead's exile terms: the lead has borne arms since the morning, and
+  is on the road out of the Thornmarch (the crossing itself is Kell's
+  Ford, Chapter 2). No scene has the lead claim the Veyne name or wear
+  the crest; others call them "Veyne", as they always have.
 - Maud has left her chapel without leave. She is not yet an apostate in
   the Vigil's eyes; Chapter 3 does that.
-- The lead's three replies (the letter, the plan, leaving) are not
-  recorded: tones never change what happened.
+- The lead's three replies (the plan for after, the plan for the fight,
+  the answer to Rue) are not recorded: tones never change what happened.
 
 ### If a companion died in Chapter 1 (Classic)
 
@@ -216,32 +236,34 @@ six lived through. In Classic a companion who fell in it is dead, and
 `ch01_victory` plays without them. A companion who **retreated** (Casual)
 is alive and was there: nothing below applies to them.
 
-**True on every path**, whoever died: the lead has Harl's order and saw
-the Veyne seal on it; the lead knows that only the holder of the title,
-Dace, seals with it; the lead left Harrowby at dusk for Veyne Hall, an
-outlaw past the boundary stone. Everyone alive left with the lead.
+**True on every path**, whoever died: the lead saw Harl's order and the
+Veyne seal on it; the lead knows that only the holder of the hall, Dace,
+seals with it; the lead left Harrowby at dusk for Veyne Hall, an outlaw
+past the boundary stone. Everyone alive left with the lead. Everyone
+heard Dace's name by the chapel, before the battle.
 
-**The dead.** If Hollis lived, he buried them, and Harl after them. If
-Hollis died, the lead buried them and nobody buried Harl. The graves are
-at Harrowby's chapel.
+**The dead.** If Hollis lived, he buried them (he says so over each). If
+Hollis died, the lead buried them. Nobody buried Harl on any path. The
+graves are at Harrowby's chapel.
 
-**What Dace knows:** his report says the Red Company is dead and the exile
-is not (`ch01_tbc`). It doesn't say who else died. Whether and when Dace
-learns that his order killed someone (his own father, if Hollis fell) is
-for later chapters.
+**What Dace knows:** his report says Harl is dead and the exile walked
+north with five others (`ch01_tbc`). It doesn't say who else died.
+Whether and when Dace learns that his order killed someone (his own
+father, if Hollis fell) is for later chapters.
 
 What each death changes. Several can hold at once.
 
 #### Hollis died
 
-- His last words were to the lead: stay in the line, shoulder up, and
-  "The porridge pot's still on the fire at the house. Somebody take it
-  off."
+- His last words were to the lead: stay in your line; "The sea. I'd have
+  liked to see it. Tell the boy that, if you see him. Not the rest." The
+  one errand he ever gave the lead for his son.
 - He never saw his son's seal on the order. Tamsin (if alive) said so:
   "The Captain never had to see this, at least."
-- **The lead has Dace's letter.** The lead took it from Hollis's coat and
-  didn't burn it either. The lead dug the graves alone.
-- Nobody asked the lead to go. The lead chose Veyne Hall unprompted.
+- There is no letter: Rue burned it by the chapel. The lead dug the
+  graves alone.
+- Nobody asked the lead to go. Rue (if alive) set the road; otherwise the
+  lead chose Veyne Hall alone.
 - **His secret died with him:** the purse, the list and the stamped pass
   he burned. Nobody in the party suspects Dace of anything before the
   order. Only Rue (if alive) and Dace know what Dace did for Vosse.
@@ -253,17 +275,18 @@ What each death changes. Several can hold at once.
 
 #### Tamsin died
 
-- Her last words were questions: who's down, is anybody else down, and
-  get the mare out of this, "she's never seen blood". She asked for
+- Her last words were about the mare: don't let her run back to the
+  fort, "she'll go to him, she always--"; get my mare. She asked for
   nothing for herself. **Her ledger** was on her belt; nobody is shown
   taking it (who has it is a later chapter's call).
-- She never wrote Harl up, never closed his eyes: he "lies where he fell
-  with his eyes open. Nobody closes them."
-- Nobody said Dace's name aloud over the seal; the player is told whose
-  title and seal it is.
+- Nobody went to Harl's body; nobody took the red cloth; the muster line
+  was never told; nobody told the lead to give Hollis a minute.
+- Nobody said whose seal it is aloud; the player is told whose hall and
+  seal it is. The party had heard Dace's name by the chapel all the same.
 - **Coldwell is known to nobody alive**: she and Harl were the only ones.
-  If she fought Harl, the lines about "a farm" were said and nobody
-  followed them up.
+  The green heard only that Harl burned a farm last winter. If she
+  fought Harl, "I held the horses at that farm" was said and nobody
+  followed it up.
 - Her horse stood saddled at the gate (Hollis, if alive: "Somebody see to
   it"). Who took it isn't said.
 - Hollis (if alive) remembered her by the two crowns she owed him at dice
@@ -273,17 +296,17 @@ What each death changes. Several can hold at once.
 
 #### Maud died
 
-- Her last words were about Rue, if Rue was alive: "don't let her go in a
-  cellar. Not ever, not for anyone." If Rue was already dead: that the
-  children at the chapel should be seen to eat, "they won't ask". Nobody
-  knew what the cellar meant beyond the morning's quarrel.
+- Her last words: somebody ring the bell when it's over, or the people
+  in the chapel won't come out; "Promise me the bell." (Somebody did: it
+  rings at the end of the fort scene.)
 - **The report is known to nobody alive in the party.** Rue never learns
   who told the Vigil where she was, unless a record says so (the Greywater
   register is Chapter 3's to decide). Maud's Chapter 3 confession can't
   happen.
-- Nobody said the Vigil knows Rue is in Harrowby, or that more will
-  come. The party left because of the order and the hall, not the Vigil.
-- Nobody saw to the lead's hidden cut.
+- Nobody started a letter to Greywater Abbey; nobody said the Vigil
+  knows; nobody said what the boundary stone means for the lead. The
+  party left because of the order and the hall.
+- Nobody saw to the lead's hands.
 - Nobody said rites over any of the dead: she was the only one who knew
   them. The party has no keeper and no healer.
 - Hollis (if alive) remembered that she couldn't lie and couldn't play
@@ -292,33 +315,38 @@ What each death changes. Several can hold at once.
 
 #### Rue died
 
-- **"I've seen that wax before" was never said.** Nobody in the party
-  knows the Veyne seal was on a cart of children, that Rue was in that
-  cart, or that Dace was beside it. Nobody suspects the lead's family.
-- Her last words: somebody has to find "the others, from the barracks,
-  the ones who got out", and not the heir; then that it was cold. The
-  party heard "the barracks" and knows nothing of what it means.
+- **The cart was never mentioned.** The order was found by the lead;
+  nobody in the party knows the Veyne seal was on a cart of children,
+  that Rue was in that cart, or that Dace was beside it. Nobody suspects
+  the lead's family.
+- Her last words: who is going to find "the others, from the barracks,
+  the ones who got out"; then that it was cold. The party heard "the
+  barracks" and knows nothing of what it means.
+- Tamsin's question by the chapel ("What do you have to do with any of
+  this?") was never answered. She burned Dace's letter before she fell.
 - **Nobody in the party knows Wren walked out of the Ashfields alive.**
   Only Crane and the king do. Hollis has nobody to hear it from
   (Chapter 6), and his Chapter 8 last words depend on it.
 - What Dace did at the mill must reach the lead another way (the
   Greywater register, Dace himself): Chapter 3's to decide.
-- She was still "the girl with the burned hands" on the order. The party
-  knows she was gifted (she said so by the chapel) and nothing more; she
+- She was still "the girl with the burned hands" on the paper. The party
+  knows she had fire (they saw it by the chapel) and nothing more; she
   was buried under the one name they had for her.
 - Maud (if alive) knows her report got Rue killed, and nearly said so:
-  "somebody was told she was here. Somebody." She can never confess it to
-  Rue. Whether she tells anyone is later chapters' call.
+  "I can't write to the Abbey, can I. Not ever again." She can never
+  confess it to Rue. Whether she tells anyone is later chapters' call.
 - Hollis (if alive), at her grave: she took bread off his table twice
   that week and glared at him for noticing; she was next to him on that
   paper, and he doesn't know her family to tell them.
+- The road was the lead's choice alone (the choice about leaving, with
+  nobody answering).
 
 #### Aske died
 
-- Her last words: there is silver in her left boot for her *mor*, it goes
-  north, and "Noble. You take it north. You promise me." Treat the lead as
-  having the silver and the promise.
-- She never said she was coming, and never asked for her nine arrows.
+- Her last words: she counted the wall wrong (three, not two); "Noble.
+  Left boot. Silver, for my *mor*. North." Treat the lead as having the
+  silver and the errand.
+- Nobody fed the party at the fort; nobody did the deer.
 - Her selling news to Brennish raiders is known to nobody.
 - The party has nobody Brennish: nobody to see through the false flag at
   Kell's Ford by the boots (Chapter 2).

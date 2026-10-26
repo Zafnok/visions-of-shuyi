@@ -3,33 +3,33 @@ source: crates/ui/tests/it/dialogue_log.rs
 expression: h.snapshot()
 ---
 ┌── Log ───────────────────────────────────────────────────────────────────────────────────────────┐
-│           In the Thornmarch, at the far edge of the kingdom, an exile is up before dawn with a   │
-│           wooden sword.                                                                          │
+│           Some went home. Some are still on the roads, in their old companies, under their old   │
+│           captains.                                                                              │
+│                                                                                                  │
+│           In the Thornmarch, at the far edge of the kingdom, an exile chops wood.                │
+│                                                                                                  │
+│           Hollis sits on the block by the fire with one of Ellery's boots on his knee and an     │
+│           awl in his fist. He has not slept. There is a folded paper in his coat that he keeps   │
+│           touching.                                                                              │
 │                                                                                                  │
 │           Hollis Marr                                                                            │
-│           That's good. No-- don't help me up, I'm getting up. That was good, kid. You dropped    │
-│           your shoulder after, though. Don't drop it after.                                      │
+│           Sideways, with the grain. You'll have the axe in your foot, and then who mends the     │
+│           boot? Give me the other one.                                                           │
 │                                                                                                  │
 │                                                                                                  │
-│           He sits down on the chopping block to get his breath, and his hand goes into his coat  │
-│           and comes out with a letter. It has been folded and unfolded more than once.           │
+│ ▶         Hollis Marr                                                                            │
+│           Forty years on my feet in other people's boots. Never seen the sea. Did you know       │
+│           that? Forty years. Pass me the thread.                                                 │
 │                                                                                                  │
-│           Hollis Marr                                                                            │
-│           Peddler brought it last night, after you'd gone to bed. I should have woken you. ...I  │
-│           didn't.                                                                                │
-│                                                                                                  │
-│                                                                                                  │
-│ ▶         No name on it. "Get out of the march. Tonight. They are coming for everyone who was    │
-│           there that night. Burn this."                                                          │
 │                                                                                                  │
 │           Ellery                                                                                 │
-│           Dace.                                                                                  │
+│           Why the sea?                                                                           │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 │           Hollis Marr                                                                            │
-│           Aye. That's the boy's hand. I sat behind it while it learned its letters, same table   │
-│           as yours.                                                                              │
+│           Because it's the one thing the boy wrote home about from the war that I believed.      │
+│           ...There. Try that. And what'll you do, when this lifts? It lifts. Kings forget.       │
 │                                                                                                  │
 │                                                                                                  │
 │           Back to latest                                                                         │
@@ -37,32 +37,32 @@ expression: h.snapshot()
 --- colours ---
 aaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccca
-acccccccccccdddddddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccca
+acccccccccccdddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-aefeeeeeeeeefffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeea
-aeeeeeeeeeeefffffffffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aefeeeeeeeeefffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aeeeeeeeeeeeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeeeeeea
+aeeeeeeeeeeeffffffffffffffffffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccaaaaaaccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaaaccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccca
-acccccccccccaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacccccca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca

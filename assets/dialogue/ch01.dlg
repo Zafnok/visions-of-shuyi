@@ -1,6 +1,8 @@
-# Chapter 1: The Letter. Written from the beats on a blank page by ticket
+# Chapter 1: The Letter. Written from the outline on a blank page by ticket
 # 0737 (the story-writing skill, "Rewrites start on a blank page"), after
-# 0707's script and the 0724 and 0728 reworks were set aside.
+# 0707's script and the 0724 and 0728 reworks were set aside, and built
+# again with different scenes when Nick found the first draft the old
+# script's moments in a new voice (2026-10-25).
 # Beat sheet: docs/story/chapters/ch01.md. Continuity: docs/story/ledger.md.
 # Voice cards: docs/story/characters/*.md.
 #
@@ -33,7 +35,7 @@
 #
 # The title cinematic (assets/cinematics/title.ron) shows the first three
 # boxes of ch01_intro (the opening captions) and the first box of
-# ch01_prebattle (Tamsin's news). Keep those boxes first.
+# ch01_prebattle (Maud's news). Keep those boxes first.
 #
 # Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the opening and the battle are played
@@ -59,85 +61,90 @@
 # Before the battle
 # ---------------------------------------------------------------------------
 
-# The yard behind the rented house, at dawn (harrowby_yard.map). Hollis
-# has just lost a bout for the first time in four years, and has had the
-# letter in his coat since the peddler came. The lead says the name; he
-# won't. He ends on porridge, boots and an order about the fire.
+# The yard behind the rented house, at dawn (harrowby_yard.map). An
+# ordinary morning with the letter unread in Hollis's coat: a boot, the
+# sea he has never seen, what the lead will do when the exile lifts. The
+# bell rings early, and he sends the lead for the swords.
 
 @scene ch01_intro
 @music village_home
 > Three years after {n:event.ash_peace}. The war is over. The soldiers who fought it were never paid.
 > Some went home. Some are still on the roads, in their old companies, under their old captains.
-> In {n:place.thornmarch}, at the far edge of the kingdom, an exile is up before dawn with a wooden sword.
+> In {n:place.thornmarch}, at the far edge of the kingdom, an exile chops wood.
 @caption {N:place.harrowby}, dawn
 @place harrowby_yard 12,8
 @opening ch01_sparring
 @left lead neutral
 @right retainer neutral
-retainer: That's good. No-- don't help me up, I'm getting up. That was good, kid. You dropped your shoulder after, though. Don't drop it after.
-> He sits down on the chopping block to get his breath, and his hand goes into his coat and comes out with a letter. It has been folded and unfolded more than once.
-retainer: Peddler brought it last night, after you'd gone to bed. I should have woken you. ...I didn't.
-> No name on it. "Get out of the march. Tonight. They are coming for everyone who was there that night. Burn this."
-lead: {n:rival.first}.
-retainer[sad]: Aye. That's the boy's hand. I sat behind it while it learned its letters, same table as yours.
-retainer: Everyone who was there. Four of us, at that mill. My girl's dead. So that's you and me, and him, writing letters.
+> {n:retainer.first} sits on the block by the fire with one of {lead}'s boots on his knee and an awl in his fist. He has not slept. There is a folded paper in his coat that he keeps touching.
+retainer: Sideways, with the grain. You'll have the axe in your foot, and then who mends the boot? Give me the other one.
+retainer: Forty years on my feet in other people's boots. Never seen the sea. Did you know that? Forty years. Pass me the thread.
+lead: Why the sea?
+retainer[sad]: Because it's the one thing the boy wrote home about from the war that I believed. ...There. Try that. And what'll you do, when this lifts? It lifts. Kings forget.
 @choice
-* earnest: He's still looking out for us, {n:retainer.first}.
-  retainer[sad]: Is he. Four years, and that's what he sends. Not "how are you". Not "how's my father".
-* wry: Four years, and this is the letter I get.
-  retainer: Hm. That's him, start to finish. Never wrote a line in his life that wasn't an order.
-* blunt: Who's "they"?
-  retainer[angry]: If I knew that I'd be saddling the horse, not sitting on a block in the cold.
+* earnest: Stay. Fix the mill right.
+  retainer[happy]: The mill. Aye. Somebody should, before it falls in the river.
+* wry: Beat you without you letting me.
+  retainer: Letting you. Hm. Put the boot on.
+* blunt: Go home.
+  retainer[sad]: ...Aye. Well. Put the boot on.
 @endchoice
-> He takes the letter back and puts it inside his coat, nowhere near the fire.
-retainer[neutral]: Eat something. Then boots, the good ones. And nobody is burning anything in this house.
+> {lead} puts the boot on. Across the hamlet the chapel bell starts, an hour early, and goes on ringing.
+retainer[neutral]: That's not the hour. Get the swords. Under the floor, you know where. Go on.
 @end
 
-# By the chapel, minutes later (ch01.map, where the party starts). Tamsin
-# talks down from the saddle; Maud gives herself away and nobody asks;
-# Rue feeds the wet girl; Hollis says nothing until the swords are out.
+# By the chapel, minutes later (ch01.map, where the party starts). The
+# paper on the door; Hollis takes the letter out in front of everyone and
+# the lead names the hand; Rue burns it; the plan.
 
 @scene ch01_prebattle
 @caption {N:place.harrowby}, by the chapel
 @place battle 3,12
 @music dungeon_tense
 @left lead neutral
+@right keeper surprised
+keeper: This was nailed to the chapel door. I took it down before anyone-- I took it down, and I rang the bell. They'll burn the village at noon unless three people walk up to the toll-fort.
+keeper: "The exile. The old man. The girl with the burned hands." ...That's not how a soldier says it. That's how a keeper writes it down. ...Go on, somebody else read it. My hands won't.
 @right sergeant angry
-sergeant: {n:red_captain.nickname}'s in the toll-fort, Your Former Grace! Took it in the night. I rode up to the gate like a fool and he leaned over the wall and asked if I wanted my old job back.
-sergeant: He had a paper. A lord's seal on it, and his thumb over the seal the whole time. "The exile. The old man. The girl with the burned hands." A price by each. He read it to me slow.
-@left keeper neutral
-keeper[surprised]: The girl with the burned-- how do they know about her hands? Who would have-- no. No, go on, I'm sorry. Go on.
+sergeant: Give it to me, Keeper, before you drop it. That's {n:red_captain.first}'s writing on somebody else's paper, he writes on the backs of things. And he'll do it. He burned a farm last winter for less.
 @right heretic angry
-heretic: You can all stop looking at my hands. They're hands. Is the heir on that list? Good. Then it isn't only me.
-@right poacher neutral
-poacher: They shoot badly. I lay under their wall all night. A hundred arrows for three deer, from a wall, and they took one and left two for the crows, noble.
-@right heretic neutral
-heretic: You. Eat this. You're gray in the face, and if you fall over before they've even shot at us I'm not carrying you.
-@right poacher angry
-poacher: I am not cold. I am angry. They were good deer, and I want those men out of my woods. Half. You eat half, you are thinner than me.
+heretic: I'm the one on the paper, and I'll go up. On my own feet, with my hands out of my sleeves.
+@right sergeant neutral
+sergeant: What do you have to do with any of this, Sparks? With their mill, with any of it?
 @right heretic angry
-keeper: {n:heretic}. The chapel cellar. It's dry, and nobody would think to-- I have buried four children from this village and I am not burying you. Go down. Please.
-heretic: I've had enough of cellars, Keeper. I'm sworn to fire, I can burn all of them-- I can burn some of them. I'm not sitting in a hole while you all die over my hands.
+heretic: Why don't you ask whoever wrote it?
 @right retainer neutral
-> {n:retainer.first} comes back out of the house with a blanket roll under his arm and unrolls it on the grass. Two swords, oiled, from under the floor.
-retainer: Pick one. Then it's your call, {n:family.veyne}. What are we doing?
+> {n:retainer.first} takes the folded paper out of his coat and holds it out, to nobody in particular.
+retainer: This came last night. By peddler. It says get out of the march by tonight, they're coming for everyone who was at the mill that night, burn this. It isn't signed.
+@right sergeant neutral
+sergeant: Whose hand, Captain? ...It's the boy's, isn't it. Your boy's.
+lead: {n:rival.first}'s.
+@right retainer sad
+retainer: Aye. ...Burn it. Somebody. I can't.
+@right heretic neutral
+> {n:heretic} takes it out of his hand, and it is ash between her fingers before anyone can speak. She is looking at {lead}, not at the letter.
+@right sergeant neutral
+sergeant: Sparks. Your sleeve's smoking.
+@right heretic neutral
+heretic: It does that.
+@right poacher neutral
+poacher: Nobody goes up. Not you, noble, not her. They shot three of my deer from the wall last night, ate one raw and left two. Men who cannot wait to cook a deer will not wait for noon.
+@right retainer neutral
+retainer: Then we don't wait either. The ford's the only road out, and they're sitting on it. Keeper, the whole hamlet goes in the chapel. We have steel.
 @choice
-* earnest: Nobody in {n:place.harrowby} pays for this but us.
-  @right poacher surprised
-  poacher: Good. That is good. The miller's wife has a bad hip. She cannot run.
+* earnest: Nobody goes up to that fort but us.
+  @right keeper surprised
+  keeper: Thank you. No-- I mean-- yes. Go. {N:god.mother.name} keep you, all of you. I'll get them inside.
   @right retainer neutral
-* wry: A lord's seal, and they didn't even use my name.
+* wry: He wants three of us. I'm flattered.
   @right sergeant happy
-  sergeant: Ha! Did you hear that, Captain? Did you hear what-- right, enough, I'm shutting up. Who's got a spare girth, mine's rotten through.
+  sergeant: Don't make me laugh, Your Former Grace. Not this morning. Where's my horse.
   @right retainer neutral
-* blunt: We go to the fort and we kill him.
-  @right heretic angry
-  heretic: Oh, now the heir wants a fight? Good. You first, though. I want you in front of me.
+* blunt: We go now. Before they eat.
+  @right poacher surprised
+  poacher: Yes. Now. You listened to me. Nobody listens to me.
   @right retainer neutral
 @endchoice
-@right sergeant neutral
-sergeant: It's {n:red_captain.first}. Get him and you've got all of them, those men are his, not the paper's, and the minute he's down they're a mob nobody's paying and they'll run. I've watched them run.
-> {lead} picks up the nearer sword. {n:retainer.first} takes the other.
 @end
 
 # ---------------------------------------------------------------------------
@@ -146,7 +153,7 @@ sergeant: It's {n:red_captain.first}. Get him and you've got all of them, those 
 
 @scene ch01_first_turn
 @left retainer neutral
-retainer: Stay by me, kid. Let them come down the road to us. And keep that shoulder up.
+retainer: Kid. Boots holding? Good. Keep the road under you. The fort's not going anywhere.
 @end
 
 # Harl's first fight. A scene written for him and one character replaces
@@ -154,190 +161,188 @@ retainer: Stay by me, kid. Let them come down the road to us. And keep that shou
 
 @scene ch01_boss_engage
 @right red_captain neutral
-red_captain: You're not on my paper. Nobody's paying for you, so what's this, charity? Go home. I've got men to feed.
+red_captain: Forty men I brought home from a war, and the crown gave us a road. Go home, whoever you are, before I take it out on you.
 @end
 
 @scene ch01_boss_engage_lead
 @left lead neutral
 @right red_captain neutral
-red_captain: Your Grace. Three hundred crowns a head, you are, and I'd have done it for less. Who's paying? Come and take the paper off me, and read it.
+red_captain: There you are, Your Grace. You could have walked up like the paper said. Three hundred a head, somebody's paying for you. Hold still and earn it.
 @end
 
 @scene ch01_boss_engage_sergeant
 @left sergeant angry
 @right red_captain neutral
-red_captain: {n:sergeant.last}. Look at you. Fat on village bread while the rest of us ate the horses.
-sergeant: You burned a farm for a lord's purse, {n:red_captain.first}. Don't you talk to me about hungry!
-red_captain[angry]: I brought forty men home from that war. Forty! And the crown gave us the road to starve on. You held the horses at that farm, {n:sergeant.last}. Don't stand there like you didn't.
-sergeant[sad]: ...I know what I held.
+red_captain: Who's that on the gray? ...{n:sergeant.last}? {n:sergeant.last}, you're alive. I had you down as dead in a ditch.
+sergeant: You had me down as a lot of things. Get off the wall, {n:red_captain.first}.
+red_captain[angry]: Come up and fetch me! I put you on your first horse, girl. I can put you off it.
+sergeant[sad]: You did. And I held the horses at that farm after, and watched. ...Get off the wall.
 @end
 
 @scene ch01_boss_half
 @right red_captain angry
-red_captain: Ah-- that's-- no. Not here, not for a-- Come on, then! I'm not done yet.
+red_captain: Should've cooked the deer. Should've waited for-- Come on, then! I'm still standing.
 @end
 
 # Said to the lead, who may be nowhere near him. He hands over the one
-# thing he knows (the seal, the silver) because it hurts, then begs for
+# thing he knows (the seal, the silver) because it hurts, then pleads for
 # his men.
 
 @scene ch01_death_red_captain
 @left lead neutral
 @right red_captain sad
-red_captain: Your Grace... here's a thing to take home. The new lord of {n:family.veyne} paid for you up front, in good silver. Your own crest in the wax, and he never blinked.
-red_captain: My boys-- don't let them hang my boys. They were hungry. That's all they ever were, was hungry.
+red_captain: Don't hang the boys. They were hungry, that's all they-- Your Grace. Your Grace, come here.
+red_captain: A lord bought you. Your own wax on the paper, your own crest, silver up front. Ask the new one in your hall what you cost him.
 @end
 
 # The lead's fall is game over in both modes.
 
 @scene ch01_death_lead
 @left lead sad
-> {lead} goes down in the road. Somebody is shouting {their} name, too far away.
+> {lead} is down. In {n:place.harrowby} the bell goes on ringing for a while, and then it stops.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). Last words are about the living;
-# the shapes differ on purpose (an errand, a question, a will, a plea).
-# They can fire in any order, so a line about another companion sits in
-# an @if block for them (Maud's).
+# the shapes differ on purpose. They can fire in any order, so none
+# speaks to another companion by name.
 
 @scene ch01_death_retainer
 @left retainer sad
-retainer: Don't come over here, kid. Stay in the line. Shoulder up-- that's it. ...The porridge pot's still on the fire at the house. Somebody take it off.
+retainer: Kid-- no. Don't. ...The sea. I'd have liked to see it. Tell the boy that, if you see him. Not the rest.
 @end
 
 @scene ch01_retreat_retainer
 @left retainer angry
-retainer: Leg. Close up where I was. Don't look at me, close it up. I'm going back up the road.
+retainer: My knee. The other one, this time. I'm not hurt, I'm old. Fill the gap.
 @end
 
 @scene ch01_death_sergeant
 @left sergeant sad
-sergeant: Who's down? Is anybody else down? Tell me-- no, I want to know, tell me who's-- and get the mare out of this, she's never seen blood.
+sergeant: Stand in front of me. Whoever's nearest, stand in front, I won't be seen like this. ...The mare goes to whoever feeds her. She'll pick.
 @end
 
 @scene ch01_retreat_sergeant
 @left sergeant angry
-sergeant: Catch the mare! Get her by the bridle before she's in the river. It's only my arm. The horse, get the horse.
+sergeant: Down. I'm down, I'm not out. Help me up-- no, don't, I'll do it. Ride on.
 @end
 
 @scene ch01_death_poacher
 @left poacher sad
-poacher: My left boot. There is silver in it, for my {n:word.mother}. It goes north. Noble. You take it north. You promise me.
+poacher: They had a third man on the wall. I did not see him. ...Skin the deer properly, before it turns. Noble. I did not see him.
 @end
 
 @scene ch01_retreat_poacher
 @left poacher angry
-poacher: The draw arm. Four arrows left in the quiver. Take them, they are good ones. Do not waste them.
+poacher: I cannot draw. Give me a sword. I have never held a sword. Give me one anyway.
 @end
 
 @scene ch01_death_keeper
 @left keeper sad
-@if heretic
-keeper: {n:heretic}-- don't let her go in a cellar. Not ever, not for anyone, I-- oh. Oh, I'm not finished, I haven't--
-@else
-keeper: The children at the chapel-- somebody see that they've eaten, they won't ask. Oh. Oh, I'm not finished, I haven't--
-@endif
+keeper: The bell. Somebody ring the bell when it's over, or they won't come out of the chapel. They won't come out until they hear it. Promise me the bell.
 @end
 
 @scene ch01_retreat_keeper
 @left keeper surprised
-keeper: Is it bad? Don't tell me, I can-- I can see it's bad. {n:god.mother.name} keep me. All right, I'm going back to the chapel, I know the way.
+keeper: Oh. Oh, that's a lot of blood, and it's mine, isn't it. I'm going to sit down now. Leave me, I can do my own hands.
 @end
 
 @scene ch01_death_heretic
 @left heretic sad
-heretic: Who's going to find the others now? From the barracks, the ones who got out-- not you. Not you, heir. ...Why is it cold? It's never cold, I'm never-- why is it cold?
+heretic: I burned it for the old man and he didn't even-- never mind. ...It isn't noon yet. It isn't noon, so why is it dark?
 @end
 
 @scene ch01_retreat_heretic
 @left heretic angry
-heretic: It won't light. Why won't it light, it always lights! Fine. I'm going behind the wall. I'm not running, I'm going behind the wall.
+heretic: Enough. I'm out, I'm empty, don't-- I'll be in the ditch. Don't look for me.
 @end
 
 # ---------------------------------------------------------------------------
 # After the battle
 # ---------------------------------------------------------------------------
 
-# The toll-fort, just below its keep at (20, 2). Tamsin over the body;
-# Hollis finds the order and says nothing; Tamsin names the boy; Rue has
-# seen the wax before; Maud takes the lead's hidden cut; Aske wants her
-# arrows; Hollis names the day's dead and goes for a shovel.
+# The toll-fort, just below its keep at (20, 2). Rue finds the order and
+# the lead answers her; Hollis sits down with his back to everyone; Tamsin
+# says it for him, then goes to the body; Aske feeds everyone; Rue sets
+# the road; Hollis digs.
 
 @scene ch01_victory
-@caption The toll-fort, noon
+@caption The toll-fort, before noon
 @place battle 20,3
 @music scene_sad
-> One barn in {n:place.harrowby} is still smoking. Inside the fort there is a dead fire, a sack of moldy oats, and {n:red_captain.first}.
+> The gate stands open. What was left of {n:faction.red_company} went out through it at a run when {n:red_captain.first} fell. Inside: a cold fire, a half-skinned deer, and {n:red_captain.first}.
 @left lead neutral
-@if sergeant
-@right sergeant neutral
-> {n:sergeant.first} kneels by him with the ledger open on her knee and writes. Then she puts her hand over his eyes for a moment.
-sergeant[sad]: He put me on my first horse. I fell off it in front of the whole yard and he laughed till he had to sit down. ...It was a job. That's what I'm writing. A job.
+@if heretic
+@right heretic neutral
+> {n:heretic} is going through the dead men's packs for food. In {n:red_captain.first}'s coat she finds a paper: three lines, a price, a seal in blue wax. She stops with it in both hands.
+lead: That's the {n:family.veyne} seal.
+heretic[angry]: Yours. The one you cut off your coat. ...The last time I saw this wax it was on a cart, at night, and the cart was full of children. Your house's wax. Did you know?
+@choice
+* earnest: No. And I'll find out who did.
+  heretic: Then find out. I'll be watching while you do.
+* wry: Carts? I chopped wood.
+  heretic: Somebody chopped wood. Somebody stamped the passes. Fine, heir.
+* blunt: Say what you mean.
+  heretic: I did. ...Keep the paper. No. Give it here. I'll keep it.
+@endchoice
 @right clear
 @else
-> {n:red_captain.first} lies where he fell with his eyes open. Nobody closes them.
+> In {n:red_captain.first}'s coat, a folded paper sealed in blue wax: the crest of {n:house.veyne}, the one {lead} cut off {their} own coat.
+@choice
+* earnest: We go and ask him. To his face.
+  > Nobody argues.
+* wry: Outlaw. It has a ring to it.
+  > Nobody laughs.
+* blunt: {N:place.veyne_hall}. Tonight.
+  > Nobody says otherwise.
+@endchoice
 @endif
 @if retainer
-> {n:retainer.first} goes through the dead man's coat the way he has gone through a hundred, and stops. A folded paper, sealed in blue wax.
-@else
-> {lead} goes through the dead man's coat {themself}. A folded paper, sealed in blue wax.
+@right retainer sad
+> {n:retainer.first} looks at the wax over {lead}'s shoulder for a long moment. Then he goes and sits down on the gate step with his back to everyone.
+@right clear
 @endif
 @if sergeant
 @right sergeant angry
 @if retainer
-sergeant: Captain? Captain, sit down, you're white as paper. ...It's the boy's. Isn't it. Your title, Your Former Grace, and his boy holding it, the hero of the war, and that's his seal.
+sergeant: Don't look at him. Give him a minute. ...It's the boy's, Your Former Grace. The hall, the title, the wax, it all went to him with the king's thanks. You knew that. You just never saw it in wax.
 @else
-sergeant: That's your title's seal, Your Former Grace, and the one holding your title is the hero of the war. {n:rival}. The Captain's boy. He never had to see this, at least. There's that.
+sergeant: It's the boy's, Your Former Grace. The Captain's boy, {n:rival.first}, who wrote the letter. The hall, the title, the wax, all his with the king's thanks. The Captain never had to see it.
+@endif
+> She goes to the body, cuts the red cloth off his head with her knife, and doesn't look at his face. She takes out the ledger, writes one word in it, and shuts it.
+@if keeper
+sergeant[sad]: He picked me out of a muster line once. Fourteen of us. ...Keeper. How do you spell "fourteen"?
+@else
+sergeant[sad]: He picked me out of a muster line once. Fourteen of us. ...I can't spell "fourteen". It'll have to be the number.
 @endif
 @right clear
 @else
-> In the wax, the crest of {n:house.veyne}, the one {lead} cut off {their} own coat. Only the one who holds the title seals with it, and the title is {n:rival}'s now.
+> Only the one who holds the hall seals with it, and the hall is {n:rival}'s now. Nobody goes to the body.
 @endif
-@if retainer
-@right retainer sad
-> {n:retainer.first} folds the paper along its folds and puts it in {lead}'s hand without a word. Then he goes out and starts picking up the dead men's spears.
+@if poacher
+@right poacher neutral
+poacher: Sit down. All of you. Nobody has eaten since the bell. Sit. I will do the deer. You will only make it worse.
+@right clear
+@endif
+@if keeper
+@right keeper sad
+@if heretic
+keeper: I'll write to {n:place.greywater} and tell them she's no danger-- ...No. I can't write to the Abbey, can I. Not ever again. And past the stone they hang you for that coat. Let me see your hands.
+@else
+keeper: I'll write to {n:place.greywater} and tell them that-- No. I can't write to the Abbey, can I. Not ever again. And past the boundary stone they hang you for that coat. Give me your hand.
+@endif
 @right clear
 @endif
 @if heretic
 @right heretic angry
-heretic: I've seen that wax before, heir. Nailed to a cart, at night. There were children in it. Was it you? ...Was it your father?
-@right clear
-@endif
-@if keeper
-@left keeper sad
-@if heretic
-keeper: We can't stay here. Any of us. {N:faction.vigil} knows she's-- somebody knows she's here, and they'll send more. Give me your hand. No, the other one, the one you've been hiding. Hold still.
-@else
-keeper: We can't stay here. Any of us. They'll send more, and-- somebody was told she was here. Somebody. Give me your hand. No, the other one, the one you've been hiding. Hold still.
-@endif
-@left lead neutral
-@endif
-@if poacher
-@right poacher neutral
-poacher: Nine of my arrows are in those men and I am taking every one back. And I am coming after, for the rest of them. You would lose them otherwise. It is for the arrows. Why are you smiling.
-@right clear
-@endif
-@if sergeant
-@right sergeant neutral
-@if poacher
-sergeant: I'm not. She's coming for arrows and I'm coming for pay, and anybody who writes it down different can take it up with me. Further than the pay, probably. Has anybody fed my horse?
-@else
-sergeant: I'm coming for the pay, and anybody who writes it down different can take it up with me. Further than the pay, probably. Don't make a thing of it. Has anybody fed my horse?
-@endif
+heretic: This seal belongs to a hall. Everybody knows where {n:place.veyne_hall} is. When the deer's eaten I'm going there, with this. Alone, if I have to.
+lead: Not alone.
+heretic: Fine. In front of me, then. Where I can see you.
 @right clear
 @endif
 @if retainer
 @right retainer neutral
-retainer: The boy's at {n:place.veyne_hall}. North, past the boundary stone, and past the stone you're an outlaw. Your call. Not mine.
-@choice
-* earnest: We go and ask him. To his face.
-  retainer[sad]: Aye. Ask him. ...Ask him why he didn't come himself.
-* wry: Outlaw. It has a ring to it.
-  retainer: Hm. Pack dry socks.
-* blunt: {N:place.veyne_hall}. Tonight.
-  retainer: Tonight, then.
-@endchoice
+> {n:retainer.first} gets up off the step. He takes {lead}'s sword, cleans the blade on his own sleeve, and gives it back. He says nothing about the hall, or the boy.
 @if sergeant
 @else
 retainer[sad]: {n:sergeant.first} owed me two crowns at dice and brought it up every week like I'd forget. Her horse is still standing saddled at the gate. Somebody see to it.
@@ -354,37 +359,28 @@ retainer[sad]: The girl. Twice this week she took bread off my table and glared 
 @else
 retainer[sad]: {n:poacher} drilled worse than any recruit I ever had, and came back every morning to be told so. She faces north. See she faces north.
 @endif
-retainer[neutral]: Find me a shovel. I'm not leaving {n:red_captain.first} to the crows. ...There must be one in this place, they dug a latrine.
 @right clear
 @else
-> {n:retainer.first}'s letter is in {lead}'s coat now, out of his. {They} doesn't burn it either. {N:place.veyne_hall} is north, past the boundary stone, and past the stone {they} is an outlaw.
-@choice
-* earnest: We go and ask him. To his face.
-  > Nobody argues.
-* wry: Outlaw. It has a ring to it.
-  > Nobody laughs.
-* blunt: {N:place.veyne_hall}. Tonight.
-  > Nobody says otherwise.
-@endchoice
 > {lead} digs the graves by the chapel {themself}, one by one. Nobody digs one for {n:red_captain.first}.
 @endif
+> Down in {n:place.harrowby}, somebody has found the bell rope. It's ringing again.
 @end
 
-# The old lord's study, at night (veyne_study.map). Dace lies to the
-# Vigil's messenger and burns the report.
+# The old lord's study, at night (veyne_study.map). Two letters written
+# before the news; Dace hands over the lie and locks the other away.
 
 @scene ch01_tbc
 @caption {N:place.veyne_hall}
 @place veyne_study 12,7
 @music talk_antagonist
 @opening ch01_pacing
-> Night. The old lord's study, the old lord's chair, and a fire somebody else laid. {n:rival.first} reads a report standing up.
+> Night. The old lord's study. Two sealed letters on the desk, written before the news. The news, an hour old: {n:red_captain.nickname} dead in the toll-fort, the exile walking north with five others.
 @left rival neutral
 @right messenger neutral
-messenger: My lord. {N:vowmaster.title} asks whether it is done.
-> The report says every man of {n:faction.red_company} is dead, and the exile is not.
-rival: Tell him it's done. Tell him I said so.
+messenger: My lord. {N:vowmaster.title} asks whether it is done. He asked me to bring your answer in writing.
+> {n:rival.first} looks at the two letters for as long as it takes to breathe in, and hands him the one on the left.
+rival: It's done. That says so. Go.
 @right clear
-> When the door shuts he puts the report in the fire and holds it there with the poker until it is gone. Over the hearth hangs the blue sash, and on it the whole crest.
-rival[sad]: I wrote it down for you, {n:family.veyne}. Get out. Tonight. One thing I've asked of you in four years, and you-- Of course you didn't.
+> When the door shuts he locks the other letter in the desk drawer, still sealed, on top of the seal, and sits down in the old lord's chair, which he never does when anyone can see.
+rival[happy]: You never once did as you were told, {n:family.veyne}. Your whole life. ...Good.
 @end

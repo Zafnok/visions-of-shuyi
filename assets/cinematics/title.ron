@@ -73,7 +73,7 @@
             who: ["lead", "retainer", "sergeant", "poacher", "keeper", "heretic"],
             expression: "neutral",
         )),
-        // 4. Tamsin's news of the Red Company.
+        // 4. Maud's news of the Red Company: the paper on the chapel door.
         (at: 50.0, shot: Talk(scene: "ch01_prebattle", first: 0, count: 1)),
         // 5. Turn 1: the party sets off; the brigand comes to meet the lead.
         (at: 56.0, shot: MapPan(battle: "ch01", from: (7.85, 10.15), to: (10, 10.15), zoom: 3,

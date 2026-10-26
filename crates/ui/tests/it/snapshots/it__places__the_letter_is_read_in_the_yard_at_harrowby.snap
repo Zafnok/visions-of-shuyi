@@ -3,32 +3,32 @@ source: crates/ui/tests/it/places.rs
 expression: h.snapshot()
 ---
                                            Harrowby, dawn                                           
- ┌────────────────────────────────┐                              ╔════════════════════════════════╗ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱║                                ║ 
- │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱║                                ║ 
- │                                │││││││││││││││││││││││││││││││║                                ║ 
- │                                │││││││││││││││││││││││││││││││║                                ║ 
- │                                ││││││││││││││▐▌│││││││││││││││║                                ║ 
- │                                │·····························.║                                ║ 
- │                                │·······††††········()········.║                                ║ 
- │                                │·····························.║                                ║ 
- │                                │.··········El··Ho··········...║                                ║ 
- │                                │...······················.....║                                ║ 
- └────────────────────────────────┘..............................╚════════════════════════════════╝ 
+ ┌────────────────────────────────┐                              ┌────────────────────────────────┐ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱│                                │ 
+ │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱│                                │ 
+ │                                ││││││││││││││││││││││││││││││││                                │ 
+ │                                ││││││││││││││││││││││││││││││││                                │ 
+ │                                ││││││││││││││▐▌││││││││││││││││                                │ 
+ │                                │·····························.│                                │ 
+ │                                │·······††††········()········.│                                │ 
+ │                                │·····························.│                                │ 
+ │                                │.··········El··Ho··········...│                                │ 
+ │                                │...······················.....│                                │ 
+ └────────────────────────────────┘..............................└────────────────────────────────┘ 
                Ellery              ..............................           Hollis Marr             
                         ♣♣♣♣..∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩······∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩..♣♣♣♣                          
-┌── Hollis Marr ───────────────────────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                  │
-│   That's good. No-- don't help me up, I'm getting up. That was good, kid. You dropped your       │
-│   shoulder after, though. Don't drop it after.                                                   │
+│   Hollis sits on the block by the fire with one of Ellery's boots on his knee and an awl in      │
+│   his fist. He has not slept. There is a folded paper in his coat that he keeps touching.        │
 │                                                                                                  │
-│                                                                                     b log   f    │
+│                                                                                     b log   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
                                                                                                     
                                                                                                     
@@ -36,32 +36,32 @@ expression: h.snapshot()
                                                                                                     
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecffffffffffffffffffffffffffffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecffffffffffffffffffffffffffffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecggggggggggggggggggggggggggggggdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecggggggggggggggggggggggggggggggdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecggggggggggggggggggggggggggggggdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeechhhhhhhhhhhhhhhhhhhhhhhhhhhhhideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeechhhhhhhjjjjhhhhhhhhkkhhhhhhhhideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeechhhhhhhhhhhhhhhhhhhhhhhhhhhhhideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecihhhhhhhhhhllhhllhhhhhhhhhhiiideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeciiihhhhhhhhhhhhhhhhhhhhhhiiiiideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-acccccccccccccccccccccccccccccccccciiiiiiiiiiiiiiiiiiiiiiiiiiiiiidddddddddddddddddddddddddddddddddda
-aeeeeeeeeeeeeeemmmmmmeeeeeeeeeeeeeeiiiiiiiiiiiiiiiiiiiiiiiiiiiiiieeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
-aaaaaaaaaaaaaaaaaaaaaaaannnniioooooooooooooooohhhhhhooooooooooooooooiinnnnaaaaaaaaaaaaaaaaaaaaaaaaaa
-cccpppppppppppppcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeemmmmmeeemeeeec
+accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddceeeeeeeeeeeeeeeeeeeeeeeeeeeeeecddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddceeeeeeeeeeeeeeeeeeeeeeeeeeeeeecddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcgggggggiiiiggggggggjjgggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddchggggggggggkkggkkgggggggggghhhcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddchhhgggggggggggggggggggggghhhhhcddddddddddddddddddddddddddddddddca
+acccccccccccccccccccccccccccccccccchhhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccccccccccccccccccccccccccccccccca
+addddddddddddddllllllddddddddddddddhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdddddddddddllllllllllldddddddddddda
+aaaaaaaaaaaaaaaaaaaaaaaammmmhhnnnnnnnnnnnnnnnnggggggnnnnnnnnnnnnnnnnhhmmmmaaaaaaaaaaaaaaaaaaaaaaaaaa
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
+cdddlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllddddddc
+cdddlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllddddddddc
+cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddllllldddldoddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -71,18 +71,17 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 a = fg:#534e43 bg:black
 b = fg:text_highlight bg:black
 c = fg:panel_border bg:panel_bg
-d = fg:panel_border_focus bg:panel_bg
-e = fg:text bg:panel_bg
-f = fg:#3e3b36 bg:#0e0a06
-g = fg:#3e2a17 bg:#0e0a06
-h = fg:#4a402d bg:#110e08
-i = fg:#31331d bg:#0b0b06
-j = fg:#3e2a17 bg:#110e08
-k = fg:#3e3b36 bg:#080e13
-l = fg:#5a502d bg:#110e08
-m = fg:text_dim bg:panel_bg
-n = fg:#263a16 bg:#080d06
-o = fg:#263a16 bg:#0b0b06
-p = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:#3e3b36 bg:#0e0a06
+f = fg:#3e2a17 bg:#0e0a06
+g = fg:#4a402d bg:#110e08
+h = fg:#31331d bg:#0b0b06
+i = fg:#3e2a17 bg:#110e08
+j = fg:#3e3b36 bg:#080e13
+k = fg:#5a502d bg:#110e08
+l = fg:text_dim bg:panel_bg
+m = fg:#263a16 bg:#080d06
+n = fg:#263a16 bg:#0b0b06
+o = fg:text_highlight bg:panel_bg
 --- overlays ---
 under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

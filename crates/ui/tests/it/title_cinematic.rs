@@ -548,7 +548,7 @@ fn the_storyboard_plays_shot_by_shot() {
     let faces = h.snapshot();
     assert!(faces.contains("Tamsin") && faces.contains("Aske"));
     assert_snapshot!("title_cinematic_3_faces", faces);
-    // 4 (0:50): the opening line of `ch01_prebattle`, one box, for six
+    // 4 (0:50): the opening line of `ch01_prebattle` (Maud's news), one box, for six
     // seconds.
     wait_until(&mut h, 53.0);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));

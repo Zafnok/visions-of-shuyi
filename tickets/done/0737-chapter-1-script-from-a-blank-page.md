@@ -149,107 +149,139 @@ it):
 
 ## Completion notes
 
-Done 2026-10-25 on Fable 5.1 (the model the skill asks for), by the
-skill's blank-page process: voice cards and scene cards first (a scratch
-file, not committed), a draft from the cards with the old `ch01.dlg`
-closed, three rounds of critique (each round two fresh subagents: a cold
-read of the boxes as the player sees them, and a names-removed speaker
-test), fixes from each round, then the old file opened only to carry over
-its header comments, scene ids and directives.
+Done 2026-10-25 on Fable 5.1 (the model the skill asks for), in two
+passes.
 
-**Box counts, longest path (old counts from `docs/story/craft.md`):**
+**Pass 1** followed the skill's process: voice cards and scene cards (a
+scratch file, not committed), a draft from the cards with the old
+`ch01.dlg` closed, three rounds of critique (two fresh subagents each
+round: a cold read of the boxes as the player sees them, and a
+names-removed speaker test), then the old file opened only for its
+header comments, ids and directives. Nick read it the same day: "the
+script still reads semantically the same as before. I thought the script
+was supposed to be rewritten without referencing the old version?" He
+was right. The draft had been written from `docs/story/chapters/ch01.md`,
+and by then that beat sheet was the old script in outline form (0707,
+0724 and 0728 had each written their moments back into it). Asked how
+far to go, Nick chose **from the outline only**: keep the outline's beats
+and the sheets' arcs, give every scene new construction, and rewrite the
+beat sheet from the result.
+
+**Pass 2** started from `docs/story/outline.md`'s Chapter 1 entry and the
+character sheets, and went through six drafts, each read by a fresh cold
+reader, a names-removed speaker test and a third reader who laid the new
+draft's moments beside pass 1's and said, bluntly, whether it was a
+different construction. The first three were not (the same yard, the
+same letter handover, the same seal exchange with one variable changed
+each time); the last comparison passed the opening and the closing as
+new constructions and named the middle moments that still echoed, and
+those were reshaped last. The shipped script:
+
+- **The yard** is an ordinary morning: Hollis mends the lead's boot, has
+  not slept, keeps touching the letter in his coat and says nothing about
+  it; he has never seen the sea (the Chapter 8 plant); the choice is what
+  the lead will do when the exile lifts; the bell rings early and he sends
+  the lead for the swords.
+- **By the chapel**, Maud found the Red Company's demand nailed to the
+  door (three walk up to the fort by noon or the village burns) and heard
+  a keeper's phrasing in "the girl with the burned hands"; Hollis takes
+  the letter out in front of everyone, the lead names the hand, and Rue
+  burns it with her fire, looking at the lead.
+- **The battle lines** are written from this chapter's own setup (noon,
+  the bell, the river, the deer, the boots, the sea): Harl's grievance to
+  anyone, Harl not recognising Tamsin on the gray, the plea for his boys
+  before the knife, each death a different shape.
+- **The fort**: Rue finds the order while looking for food; the lead names
+  the seal and the third choice is the lead answering her "Did you know?";
+  Hollis sits on the step with his back to everyone; Tamsin tells the lead
+  to give him a minute and says it for him, then goes to the body and
+  writes one word in her ledger; Aske makes everyone eat; Rue sets the
+  road and the lead says "Not alone."; Hollis cleans the lead's sword and
+  says nothing. Nobody buries Harl.
+- **Veyne Hall**: Dace has two letters written before the news, hands the
+  messenger the lie, locks the other away on top of the seal, and is glad.
+
+`docs/story/chapters/ch01.md` is rewritten from this script, after it,
+and says so at its top; `docs/story/ledger.md`'s Chapter 1 sections
+record what is now said on every Classic path.
+
+**Box counts, everyone alive (old counts from `docs/story/craft.md`):**
 
 | Scene | Before | After | Budget |
 | ----- | ------ | ----- | ------ |
-| `ch01_intro` (3 captions included) | 19 | 13 | 8–14, cap 16 |
-| `ch01_prebattle` | 21 | 14 | 5–10, cap 12 + 4 first-met |
-| All talk before the first move | 38–41 | 27 | cap 28 |
+| `ch01_intro` (3 captions included) | 19 | 11 | 8–14, cap 16 |
+| `ch01_prebattle` | 21 | 17 | 5–10, cap 12 + 4 first-met |
+| All talk before the first move | 38–41 | 28 | cap 28 |
 | Battle lines | 1–4 each | 1 each; Harl and Tamsin 4; Harl's death 2 | 1–2; 2–4; 1–2 |
-| `ch01_victory` | 20 | 13 (everyone alive, and with only Hollis alive) | 6–12, cap 16 |
+| `ch01_victory` | 20 | 16 | 6–12, cap 16 |
 | `ch01_tbc` | 6 | 6 | 3–6 |
 
-**The voice, two or three lines a scene** (the token-free reading):
+The chapel scene is one over its own cap because the letter now comes
+out there too (two papers in one scene); the two scenes together are at
+the 28 the skill allows before the first move, not over it.
 
-- The letter: "That's good. No-- don't help me up, I'm getting up. That
-  was good, kid." / "Peddler brought it last night, after you'd gone to
-  bed. I should have woken you. ...I didn't." / "Eat something. Then
-  boots, the good ones. And nobody is burning anything in this house."
-- By the chapel: Rue to Aske, "You. Eat this. You're gray in the face, and
-  if you fall over before they've even shot at us I'm not carrying you."
-  / Aske, "I am not cold. I am angry. ... Half. You eat half, you are
-  thinner than me." / Maud, "I have buried four children from this village
-  and I am not burying you. Go down. Please."
-- The battle: Hollis dying, "The porridge pot's still on the fire at the
-  house. Somebody take it off." / Harl to Tamsin, "I brought forty men
-  home from that war. Forty! And the crown gave us the road to starve
-  on." / Tamsin, "...I know what I held."
-- The fort: Tamsin over Harl, "He put me on my first horse. I fell off it
-  in front of the whole yard and he laughed till he had to sit down. ...It
-  was a job. That's what I'm writing. A job." / Rue, "Was it you? ...Was
-  it your father?" / Hollis, "Find me a shovel. I'm not leaving Harl to
-  the crows."
-- Veyne Hall: "Tell him it's done. Tell him I said so." / "One thing I've
-  asked of you in four years, and you-- Of course you didn't."
+**The voice, two or three lines a scene:**
 
-**What the critique rounds caught and the draft fixed:** one "..."
-rhythm in every mouth (45 of 57 boxes in round 1, 8 in the shipped
-script); Tamsin and Rue telling apart only by their nicknames for the
-lead (Tamsin now runs on and deflects into the horse; Rue hammers short
-imperatives, overstates and corrects herself, "I can burn all of them--
-I can burn some of them"); five death lines on one template (now an
-errand, a question, a will, a plea and a cold-fire question); the crest
-identified four times (now once by Harl dying and once over the body);
-Maud as a stammer (she now finishes a sentence and takes the lead's
-hidden cut); a joiners' roll call in the victory scene (Aske asks Tamsin
-why she's smiling; Rue's joining line cut); a dozen British words
-("wet through", "asked did I want", "mind" as a tag, "gone up", "I'll
-not", "I've men").
+- The yard: "Forty years on my feet in other people's boots. Never seen
+  the sea." / "Because it's the one thing the boy wrote home about from
+  the war that I believed." / "That's not the hour. Get the swords."
+- By the chapel: Maud, "That's not how a soldier says it. That's how a
+  keeper writes it down. ...Go on, somebody else read it. My hands
+  won't." / Hollis, "Aye. ...Burn it. Somebody. I can't." / Tamsin,
+  "Sparks. Your sleeve's smoking." Rue: "It does that."
+- The battle: Harl, "Who's that on the gray? ...Rook? Rook, you're alive.
+  I had you down as dead in a ditch." / Hollis dying, "The sea. I'd have
+  liked to see it. Tell the boy that, if you see him. Not the rest." /
+  Rue, "It isn't noon yet. It isn't noon, so why is it dark?"
+- The fort: Rue, "Your house's wax. Did you know?" / Tamsin, "Don't look
+  at him. Give him a minute." / Aske, "Sit. I will do the deer. You will
+  only make it worse."
+- Veyne Hall: "It's done. That says so. Go." / "You never once did as you
+  were told, Veyne. Your whole life. ...Good."
 
-**Kept words:** Hollis's "Aye" (three boxes), Tamsin's "Your Former
-Grace" (two boxes in the chapter plus one reply reaction). "Greywater
-Abbey" doesn't come up in Chapter 1's new script; its spelling stands
-for whenever it does.
+**What the readers caught, round by round, and the drafts fixed:** one
+"..." rhythm in every mouth (45 of 57 boxes in the first draft, under
+twenty now, most of them Hollis's and Maud's); Tamsin and Rue told apart
+only by their nicknames for the lead; death lines on one template; the
+crest identified four times; Maud as a stammer and not a person; a
+roll call of joiners after the battle; a script term leaking into
+narration; a charge from Rue the player had no way to answer; Tamsin
+telling Hollis what he already knew for the player's benefit; Dace's
+closing line with no name in the scene; the sealed order nobody opened;
+and two dozen British words across the drafts ("wet through", "asked did
+I", "mind" as a tag, "gone up", "I'll not", "I've men", "Give it here",
+"go round", "Right.", "I'm off", "a leg up", "properly").
 
-**Facts said differently (the ledger records each):** the letter reads
-"Get out of the march. Tonight. They are coming for everyone who was
-there that night. Burn this."; no count of the fort's men is said (the
-map shows them: Nick's "14 archers stuff"); Aske wants nine arrows back,
-not eleven; Harl's order is never read aloud, so three hundred crowns a
-head is said only by Harl to the lead if the lead fights him; Coldwell is
-"a farm", with nothing said about anyone in it (the old line's "people"
-was mine, not the sheets'); Hollis says "My girl's dead" once, to the
-lead (the one allowed mention of Wren); Tamsin dying asks who else is
-down and for her mare, and no longer asks for her ledger, so who has it
-after a Classic death is a later chapter's call; Rue no longer says she
-walks behind the lead (she still suspects the lead's family to their
-face); Hollis goes out to pick up spears, not to the horses, so the
-horses stay Tamsin's.
+**Kept words:** Hollis's "Aye" (four boxes), Tamsin's "Your Former
+Grace" (three boxes), and "Greywater Abbey" (Maud, at the fort).
 
-**Not a line-by-line rewrite:** no scene keeps the old order of boxes or
-speakers; the yard opens after the disarm instead of before it, the
-chapel scene starts on Tamsin alone from the saddle and runs Rue–Aske and
-Maud–Rue exchanges instead of one line each to the lead, the fort scene
-starts on Tamsin writing in the ledger and ends on the shovel.
+**Facts said differently (the ledger records each):** the letter is read
+out by Hollis by the chapel and burned by Rue, so no letter exists and
+all six heard Dace's name before the battle; no count of the fort's men
+is said; Harl's price is said only by Harl to the lead if the lead fights
+him; Coldwell is "a farm" with nothing said about anyone in it; Wren is
+not mentioned at all; Tamsin writes one word in her ledger and it isn't
+shown; Rue holds the order and sets the road; Hollis never speaks of the
+hall or the boy after the chapel; nobody buries Harl; Harl's man count
+("forty men I brought home") is his own claim to strangers.
 
-**The title cinematic:** unchanged. The three captions are still
-`ch01_intro`'s boxes 0–2 and Tamsin's news is still `ch01_prebattle`'s
-box 0, so `title.ron`'s `Talk` shots play the intended boxes; its two
-snapshots changed with the words.
+**The title cinematic:** the three captions are still `ch01_intro`'s
+boxes 0–2 and the chapel scene's first box is still shown (Maud's news
+now, not Tamsin's); `title.ron`'s shots are unchanged and its comment
+updated; its two snapshots changed with the words.
 
 **Deviations:** step 3's voice profile (0751) isn't built, so the
 names-removed test covered it, as the ticket allows. 0752 isn't done, so
 no delivery cues were written; 0752 files the ticket that adds them. The
 plain build has no portrait for anyone but the lead, so the script uses
-only the five expressions every character has (`weary`, `flustered`,
-`sneer`, `smug`, `cold` would fail the validator here); the sheets still
-list them for the bought art. Pictures: `cargo shuyi frame-png` of the
-yard and the chapel scenes were checked and are in the PR's description
-as text (the picture files aren't committed).
+only the five expressions every character has. The sheets' voice cards
+were written in pass 1 and stand. Pictures: `cargo shuyi frame-png` of
+the yard and the chapel scenes were checked (the picture files aren't
+committed).
 
 **Claude's starting rules:** none that touch play. For the Act 1
-playtest (1064): do the conversations still drag, and does the chapter
-sound like a game Nick wants to play (the question this ticket inherited
-from round 3).
+playtest (1064): does the chapter sound like a game Nick wants to play,
+and do the conversations still drag.
 
 **Follow-ups:** none filed. 0722 regenerates the voices from the new line
 ids; 0751 and 0752 stand as written.
