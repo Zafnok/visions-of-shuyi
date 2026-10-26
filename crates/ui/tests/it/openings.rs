@@ -103,7 +103,7 @@ fn the_letter_opens_on_the_lead_and_hollis_sparring() {
     assert!(!dialogue(&h).is_opening());
     let talk = view(&h);
     assert_eq!(talk.opening, None);
-    assert!(talk.text.lines[0].starts_with("Dawn, in the yard"));
+    assert!(talk.text.lines[0].starts_with("Hollis sits on the block"));
     assert!(talk.text.shown > 0);
     // They stand where it left them, darkened with the yard, behind the
     // talk.
@@ -129,7 +129,7 @@ fn confirm_skips_the_opening_to_the_first_line() {
     assert!(!dialogue(&h).is_opening());
     let talk = view(&h);
     assert!(talk.opening.is_none());
-    assert!(talk.text.lines[0].starts_with("Dawn, in the yard"));
+    assert!(talk.text.lines[0].starts_with("Hollis sits on the block"));
     // Where the opening would have left them.
     assert_eq!(standing(&h)[0], at("lead", p(11, 8), Facing::Right));
 }
@@ -145,7 +145,7 @@ fn the_skip_question_still_works_during_the_opening() {
     assert!(dialogue(&h).is_asking_skip());
     h.keys("d");
     assert!(!dialogue(&h).is_asking_skip());
-    assert!(view(&h).text.lines[0].starts_with("Dawn, in the yard"));
+    assert!(view(&h).text.lines[0].starts_with("Hollis sits on the block"));
     // Skipping from the captions passes over the opening: the reply choice
     // comes up at once.
     let mut h = preview("ch01_intro", LeadGender::Male);

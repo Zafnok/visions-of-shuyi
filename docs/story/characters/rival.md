@@ -84,24 +84,43 @@ Id: `rival` · [Name registry](../names.md)
 | Crane (`vowmaster`) | Contempt and dependence | Crane knows everything, and uses it |
 | Rue (`heretic`) | A face he's forgotten | He lifted her into the cart. She remembers. He doesn't, until she says it |
 
-## Voice notes
+## Voice card
 
-- Warm, quick and funny, the charm of a born talker. Says the lead's name a
-  lot ("Veyne. Veyne. Listen to me."). Mimics voices; tells stories about
-  their childhood to disarm people.
-- When cornered, the charm goes cold and precise: short clauses, no jokes.
-- He always has a reason, and always says it first.
-- **Won't say:** "I'm sorry" until Act 3, and when he finally does, it's the
-  whole confession.
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines**
+- **Age and experience:** twenty-two; raised in a lord's hall as the
+  servant's boy, a war hero at nineteen, a lord at twenty. He talks like
+  a born talker who learned the manners of a hall by watching: warm,
+  quick, funny, and he says the lead's name a lot ("Veyne. Veyne. Listen
+  to me."). He mimics voices and tells stories about their childhood to
+  disarm people.
+- **Temperature:** warm by choice. Cornered, the charm goes cold and
+  precise: short clauses, no jokes.
+- **Openness:** says a great deal and none of it is the thing. He always
+  has a reason, and always says it first.
+- **When scared:** colder, shorter, and he gives an order.
+- **Care signature:** he notices what people are wearing and whether they
+  have slept, and says so as a joke.
+- **Fault:** self-justification; he is the hero of every story he tells.
+- **Line length and habit:** long and easy when charming; three or four
+  words when cornered. Alone, he talks to the lead who isn't there.
+- **Words from his life:** the hall, the yard, Wren, the war, the Hounds,
+  what things cost.
+- **Won't say:** "I'm sorry" until Act 3, and when he finally does, it's
+  the whole confession.
+- **Punctuation:** questions and `...` when he's working on someone; flat
+  periods when he's done.
 
-- "Veyne. You look terrible. Exile suits you about as well as the title did,
-  and you wore that like a borrowed coat."
-- "I did what fed us. You had a house. I had a sister and a father who made
-  soldier's pay. Don't you dare call it choosing."
-- "You gave me my life. I've been paying interest on it every day since. Do
-  you know what that's like? No. You don't. You've never owed anyone."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Archers hold. Hold, I said, that's-- hold!"
+- *At camp (his, not the party's):* "Pellam, you've slept in that coat.
+  No, I like it, it's a look. Sit. Eat. Then tell me what you saw."
+- *Lying:* "The exile? Dead with the rest, I'm told. ...I'll want it
+  confirmed. Send somebody who can count."
+- *Grieving (Chapter 8, after):* "...He always was late. For everything.
+  Forty years and he never once-- ...Get the horses."
 
 ## Portrait brief
 

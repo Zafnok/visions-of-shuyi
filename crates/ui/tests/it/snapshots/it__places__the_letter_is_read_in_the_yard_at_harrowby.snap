@@ -2,7 +2,7 @@
 source: crates/ui/tests/it/places.rs
 expression: h.snapshot()
 ---
-                                      Harrowby, the Thornmarch                                      
+                                           Harrowby, dawn                                           
  ┌────────────────────────────────┐                              ┌────────────────────────────────┐ 
  │                                │                              │                                │ 
  │                                │                              │                                │ 
@@ -25,17 +25,17 @@ expression: h.snapshot()
                         ♣♣♣♣..∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩······∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩..♣♣♣♣                          
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                  │
-│   Dawn, in the yard behind a rented house. Two practice swords crack together, wood on wood,     │
-│   as they have every morning for four years.                                                     │
+│   Hollis sits on the block by the fire with one of Ellery's boots on his knee and an awl in      │
+│   his fist. He has not slept. There is a folded paper in his coat that he keeps touching.        │
 │                                                                                                  │
-│                                                                                     b log   f    │
+│                                                                                     b log   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
                                                                                                     
                                                                                                     
                                                                                                     
                                                                                                     
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccca
 acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
 acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
@@ -58,10 +58,10 @@ addddddddddddddllllllddddddddddddddhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdddddddddddllll
 aaaaaaaaaaaaaaaaaaaaaaaammmmhhnnnnnnnnnnnnnnnnggggggnnnnnnnnnnnnnnnnhhmmmmaaaaaaaaaaaaaaaaaaaaaaaaaa
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllldddddc
-cdddlllllllllllllllllllllllllllllllllllllllllldddddddddddddddddddddddddddddddddddddddddddddddddddddc
+cdddlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllddddddc
+cdddlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddllllldddlddddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddllllldddldoddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -82,5 +82,6 @@ k = fg:#5a502d bg:#110e08
 l = fg:text_dim bg:panel_bg
 m = fg:#263a16 bg:#080d06
 n = fg:#263a16 bg:#0b0b06
+o = fg:text_highlight bg:panel_bg
 --- overlays ---
 under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

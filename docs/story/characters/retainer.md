@@ -67,25 +67,51 @@ the night at the mill, and has never said a word about it.
 | Aske (`poacher`) | Teacher | He sees a recruit who needs a sergeant, not a pity |
 | Rue (`heretic`) | Wary | She saw his son at the mill. He's afraid of what she knows |
 
-## Voice notes
+## Voice card
 
-- Short, flat sentences. Soldier's grammar ("Aye." "Not today." "Eat
-  something."). Never swears in front of Maud, and constantly in front of
-  Tamsin.
-- Calls the lead "Veyne", or "kid" when he's worried, and very rarely by
-  first name, when it matters. Never a gendered word ("lad", "lass"): the
-  script is gender-neutral (`setting-and-tone.md`).
-- Dry humour by understatement, in quiet hours only: when there is danger
-  he gives orders and says what he sees (`setting-and-tone.md`, *Where the
-  jokes go*). Never makes a speech, except once, in Chapter 8.
-- **Won't say:** Dace's name, if he can avoid it. He says "the boy" or "him".
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines**
+- **Age and experience:** fifty-six, forty years a soldier, twenty of
+  them giving orders to boys and fixing what they broke. He talks like
+  that: he doesn't explain himself, and he repeats an order rather than
+  give a reason. He knows horses, spears, fences, frost and porridge, and
+  nothing about letters, courts or vows.
+- **Temperature:** cold on the outside. The warmth comes out as orders
+  about food, sleep and boots, and as the lead's shoulder in a guard.
+- **Openness:** hides it; the others say it for him. When he gets near a
+  feeling he gives an order instead. He says one true thing sideways,
+  once, and then "Eat something."
+- **When scared:** quieter and busier. Checks straps, gives small orders,
+  stands closer to the lead.
+- **Care signature:** feeding people and checking their footing. "Sit."
+  "Eat." "Shoulder up." He looks at the lead's guard before he looks at
+  anything else.
+- **Fault the others put up with:** he treats everyone like a recruit,
+  his knee, he grumbles about the cold, and he will not say his son's
+  name, and everyone has noticed.
+- **Line length and habit:** short, one or two sentences. Calls the lead
+  "Veyne", "kid" when worried, the first name very rarely. Never a
+  gendered word ("lad", "lass"): the script is gender-neutral
+  (`setting-and-tone.md`). Never swears in front of Maud, constantly in
+  front of Tamsin. Dry understatement in quiet hours only; under threat he
+  says what he sees and what to do about it.
+- **Words from his life:** the yard, the guard-room, the hall, the
+  porridge pot, "my girl", "the boy", his knee.
+- **Won't say:** Dace's name, if he can avoid it. "The boy", "him".
+- **Punctuation:** flat periods are his gruffness. One `...` a chapter,
+  where it costs him. A `!` only across a battlefield.
 
-- "Four years of wooden swords. This one cuts. So will theirs."
-- "I've buried better men than Harl Coster. I'll dig this one's hole myself,
-  it's the least I can do for him."
-- "I knew. Not all of it. Enough. I told myself enough wasn't knowing."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Left. Your left, I said. Good. Now stay there."
+- *At camp:* "Who salted this? ...No, leave it. It's eaten. Sit down,
+  you've been on your feet since the river."
+- *Lying:* "Nothing in the boy's room worth keeping. Old boots. I burned
+  the lot, it was damp." (He is bad at it: too many words, and he looks at
+  the fire.)
+- *Grieving:* "She snored. Twelve years old and you could hear her through
+  the wall. ...Pass me that spade."
 
 ## Portrait brief
 

@@ -82,7 +82,7 @@ fn three_boxes_in_the_log_lists_the_three_lines_in_order() {
     let texts = texts(&view);
     assert_eq!(texts.len(), 3, "{texts:?}");
     assert!(texts[0].starts_with("Three years after"), "{texts:?}");
-    assert!(texts[1].starts_with("The war is won."), "{texts:?}");
+    assert!(texts[1].starts_with("Some went home."), "{texts:?}");
     assert!(texts[2].starts_with("In the Thornmarch"), "{texts:?}");
     // Narration: no name, no face. The cursor is on the line on screen.
     assert!(view.rows.iter().all(|r| r.kind == RowKind::Narration));
@@ -97,7 +97,7 @@ fn three_boxes_in_the_log_lists_the_three_lines_in_order() {
         .iter()
         .filter_map(|r| r.line.as_ref().map(ToString::to_string))
         .collect();
-    assert_eq!(lines[0], "ch01_intro_3aec73da");
+    assert_eq!(lines[0], "ch01_intro_bac90108");
     assert_eq!(lines.len(), 3);
     assert!(view.rows[2].focused);
     let focused = view.focused().map(|r| r.text.as_str());
@@ -144,65 +144,65 @@ fn jumping_back_shows_the_first_box_and_back_to_latest_the_third() {
 #[test]
 fn a_jump_back_shows_the_portraits_as_they_were_and_reading_on_keeps_the_lines() {
     let mut h = intro();
-    // Box 9: Hollis, sad, "Leave it where it is."
-    read_on(&mut h, 8);
-    assert!(on_screen(&h).starts_with("Leave it where it is."));
+    // Box 8: Hollis, sad, about the boy writing home.
+    read_on(&mut h, 7);
+    assert!(on_screen(&h).starts_with("Because it's the one thing the boy"));
     assert_eq!(right_expression(&h), "sad");
     h.keys("b");
     let view = log(&h);
-    let faces: Vec<_> = view.rows[6..9]
+    let faces: Vec<_> = view.rows[5..8]
         .iter()
         .map(|r| r.face.as_ref().map(|f| f.expression.as_str()))
         .collect();
-    // Narration, then Hollis surprised, then sad.
-    assert_eq!(faces, [None, Some("surprised"), Some("sad")]);
-    assert_eq!(view.rows[8].name.as_deref(), Some("Hollis Marr"));
-    assert_eq!(view.rows[5].name.as_deref(), Some("Ellery"));
+    // Hollis on the sea, the lead asking why, then Hollis sad.
+    assert_eq!(faces, [Some("neutral"), Some("neutral"), Some("sad")]);
+    assert_eq!(view.rows[7].name.as_deref(), Some("Hollis Marr"));
+    assert_eq!(view.rows[6].name.as_deref(), Some("Ellery"));
     assert_eq!(
-        view.rows[5].face.as_ref().map(|f| f.portrait.as_str()),
+        view.rows[6].face.as_ref().map(|f| f.portrait.as_str()),
         Some("lead_m")
     );
-    // Back two lines, to "Three strokes.": Hollis as he was then.
+    // Back two lines, to the sea: Hollis as he was then.
     h.keys("Up Up f");
-    assert!(on_screen(&h).starts_with("Three strokes."));
+    assert!(on_screen(&h).starts_with("Forty years on my feet"));
     assert_eq!(right_expression(&h), "neutral");
     let caption = dialogue(&h)
         .player()
         .current()
         .caption
         .map(std::borrow::Cow::into_owned);
-    assert_eq!(caption.as_deref(), Some("Harrowby, the Thornmarch"));
+    assert_eq!(caption.as_deref(), Some("Harrowby, dawn"));
     // Reading on goes through the lines kept; nothing is added.
     read_on(&mut h, 2);
-    assert!(on_screen(&h).starts_with("Leave it where it is."));
+    assert!(on_screen(&h).starts_with("Because it's the one thing the boy"));
     assert_eq!(right_expression(&h), "sad");
-    assert_eq!(dialogue(&h).history().seen().len(), 9);
-    assert_eq!(dialogue(&h).history().at(), 8);
+    assert_eq!(dialogue(&h).history().seen().len(), 8);
+    assert_eq!(dialogue(&h).history().at(), 7);
 }
 
 #[test]
 fn a_reply_passed_on_the_way_back_is_asked_again() {
     let mut h = intro();
-    // "Four years. Not a line to you…", then the replies.
-    read_on(&mut h, 13);
+    // "What'll you do, when this lifts?", then the replies.
+    read_on(&mut h, 8);
     assert!(dialogue(&h).menu().is_some());
     h.keys("Down f");
-    assert!(on_screen(&h).starts_with("Ha. He never did write"));
+    assert!(on_screen(&h).starts_with("Letting you. Hm."));
     h.keys("b");
     let view = log(&h);
-    let reply = &view.rows[13];
+    let reply = &view.rows[8];
     assert_eq!(reply.kind, RowKind::Reply);
-    assert_eq!(reply.text, "Four years of silence, and now he's urgent.");
+    assert_eq!(reply.text, "Beat you without you letting me.");
     assert_eq!(reply.name.as_deref(), Some("Ellery"));
     assert!(reply.face.is_some(), "the lead's face");
     let line = reply.line.as_ref().map(ToString::to_string);
     assert!(line.is_some_and(|l| l.starts_with("ch01_intro_")));
     // Back to the line it answers: the reply and what follows are gone.
     h.keys("Up Up f");
-    assert!(on_screen(&h).starts_with("Four years. Not a line"));
+    assert!(on_screen(&h).starts_with("Because it's the one thing the boy"));
     h.keys("b");
     let view = log(&h);
-    assert_eq!(view.rows.len(), 13);
+    assert_eq!(view.rows.len(), 8);
     assert_eq!(view.back_to_latest, None, "forward stops before the reply");
     // Reading on asks again, and another answer is kept.
     h.keys("d");
@@ -210,23 +210,23 @@ fn a_reply_passed_on_the_way_back_is_asked_again() {
     let replies = dialogue(&h).menu().map(trpg_ui::widgets::Menu::focus);
     assert_eq!(replies, Some(0), "the replies are up again");
     h.keys("f");
-    assert!(on_screen(&h).starts_with("Aye. That's what worries me."));
+    assert!(on_screen(&h).starts_with("The mill. Aye."));
     h.keys("b");
     let view = log(&h);
-    assert_eq!(view.rows[13].kind, RowKind::Reply);
-    assert!(view.rows[13].text.starts_with("He's warning us."));
-    assert_eq!(view.rows.len(), 15);
+    assert_eq!(view.rows[8].kind, RowKind::Reply);
+    assert!(view.rows[8].text.starts_with("Stay. Fix the mill"));
+    assert_eq!(view.rows.len(), 10);
 }
 
 #[test]
 fn going_to_a_reply_opens_its_replies_again() {
     let mut h = intro();
-    read_on(&mut h, 13);
+    read_on(&mut h, 8);
     h.keys("Down f b Up f");
     let d = dialogue(&h);
     assert!(d.menu().is_some(), "the replies are up");
-    assert!(on_screen(&h).starts_with("Four years. Not a line"));
-    assert_eq!(d.history().seen().len(), 13);
+    assert!(on_screen(&h).starts_with("Because it's the one thing the boy"));
+    assert_eq!(d.history().seen().len(), 8);
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn on_a_key_the_scene_uses_the_scene_wins() {
     assert!(log(&h).rows[0].focused);
     h.keys("d");
     // At the replies, Up moves between them.
-    read_on(&mut h, 12);
+    read_on(&mut h, 7);
     h.keys("Down");
     assert_eq!(
         dialogue(&h).menu().map(trpg_ui::widgets::Menu::focus),
@@ -313,7 +313,7 @@ fn the_text_box_names_the_log_key_only_while_it_has_one() {
 #[test]
 fn log_snapshot_right_handed() {
     let mut h = intro();
-    read_on(&mut h, 13);
+    read_on(&mut h, 8);
     h.keys("Down f b Up Up Up");
     assert_snapshot!(h.snapshot());
 }

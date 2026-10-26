@@ -70,24 +70,46 @@ Maud at Harrowby as her "cook" (she can't cook).
 | Maud (`keeper`) | Guilt → reconciliation | Maud sheltered her and reported her |
 | Wren (`sister`) | A friend from the Candles' barracks | The girl she couldn't take with her |
 
-## Voice notes
+## Voice card
 
-- Short and rude. Answers questions with questions. Swears by the dead
-  gods irreverently ("Vael's teeth"). Talks about food constantly; she was
-  hungry for years. She is funny once she is safe and among people she has
-  started to trust (downtime, supports); cornered, she is only sharp.
-- Precise and cold when she talks about the Candles; no jokes there, ever.
-- Calls the lead "heir" (sarcastic) until she trusts them. Calls Maud "Keeper"
-  with a sneer, then "Maud" by the end.
-- **Won't say:** "please". She'll say "give it here" instead.
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
 
-**Sample lines**
+- **Age and experience:** nineteen; a charcoal-burners' kid, taken at
+  fifteen, a Candle at sixteen, hunted for three years since. She knows
+  fire, cellars, barracks talk, how to steal food and how to leave a town
+  before dawn. She was hungry for years and food is always on her mind.
+- **Temperature:** hot and sharp. About the Candles she goes cold and
+  exact, and nothing else.
+- **Openness:** says it angrily. Fear comes out as rudeness and as moving
+  to the front.
+- **When scared:** ruder; grabs things; goes forward. Cornered, she is
+  only sharp; funny only once she is safe among people she has started to
+  trust (downtime, supports).
+- **Care signature:** food. She notices who hasn't eaten, because she
+  didn't for years, and shoves bread at them without a word.
+- **Fault the others put up with:** steals food, eats everyone's, can't
+  cook, hogs the fire, glares, sleeps in her boots.
+- **Line length and habit:** short. Answers a question with a question.
+  Swears by the dead gods irreverently ("Vael's teeth"). Calls the lead
+  "heir" (sarcastic) until she trusts them; Maud "Keeper" with a sneer,
+  then "Maud" by the end.
+- **Words from her life:** cellars, the barracks, bread, hands, fire,
+  "the others" (the Candles who got out).
+- **Won't say:** "please". She says "give it here".
+- **Punctuation:** `?` more than anyone. A `!` when the fire won't come.
+  Flat periods when it's the Candles.
 
-- "No. I've hidden in enough cellars. I'm sworn to fire, Keeper, and you know
-  it. I can burn them. I'm fighting."
-- "I've seen that seal before, heir. On a cart. At night. With children in it."
-- "Your friend lifted me in by the collar. He said 'up you go, little one.' He
-  was very gentle about it."
+**Sample lines** (one per situation; never copied into a script)
+
+- *Under fire:* "Move. Move, I can't throw it past you-- is that your
+  blood or his? Fine. Fine, then move."
+- *At camp:* "Is anyone eating that? ...I'm asking because if nobody is
+  eating that, then I am eating that."
+- *Lying:* "I cook. I've always cooked. ...Why, what's wrong with it?"
+- *Grieving:* "She cheated at knuckles. In the barracks. Every night, and
+  nobody ever caught her at it, and I knew. ...Give me the bread, I'm not
+  hungry, I just want to hold it."
 
 ## Portrait brief
 

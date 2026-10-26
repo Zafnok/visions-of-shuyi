@@ -56,29 +56,45 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 | Maud (`keeper`) | Friendship | Maud teaches her to write, and helps with the letters home |
 | Rue (`heretic`) | Strangers; hatred from Ch3, understanding by Act 3 | Rue was a Candle, and Candles burned Aske's brother |
 
-## Voice notes
+## Voice card
 
-- Very short sentences, flat and literal. She means everything she says
-  exactly, and says what she counted and why it matters ("Fourteen in the
-  fort. I counted at dusk and again at first light."). She judges people
-  the way a hunter judges: by what they hit and what they waste. Any
-  comedy in that is by accident and belongs to quiet scenes; it is never a
-  punchline. No contractions: "I cannot", "do not".
-- Brennish words for home and family (*mor* for mother, *hus* for home);
-  Ardevali idioms trip her up ("Why would I hold my horses? I have no horse.").
-- Calls the lead "noble" until she doesn't. The day she says "Veyne" is a quiet
-  beat.
+Written by 0737 (the `story-writing` skill, *Voices*). The sample lines
+are illustrations of a situation, never lines for a script.
+
+- **Age and experience:** seventeen; a hill-hold girl who has hunted since
+  she was twelve and lived alone in the woods for three years. She means
+  every word, cannot take one back, and asks what a word means when she
+  doesn't know it. She reads badly (Maud is teaching her). Skills the life
+  didn't teach don't appear: no court manners, no history, no irony.
+- **Temperature:** cold surface over a hot center (hatred, pride).
+- **Openness:** says the true thing bluntly, sometimes the cruel one, and
+  then stands by it with her jaw out. She will say she is angry; never
+  that she is afraid or cold.
+- **When scared:** still, literal, angry. She counts things, and it comes
+  out as a hunter's judgment of what people hit and what they waste.
+- **Care signature:** food, and whether people are wet. She leaves rabbits
+  on doorsteps, undercharges people who can't pay, and would deny both.
+- **Fault the others put up with:** pride; sulks; smells of smoke; never
+  says thank you; is seventeen and sure.
+- **Line length and habit:** very short, flat, literal. No contractions
+  ("I cannot", "do not"). Ardevali idioms trip her up. Calls the lead
+  "noble" until she doesn't; the day she says "Veyne" is a quiet beat.
+- **Words from her life:** *mor*, *hus*, "my brother", the hill, the
+  woods, "my deer", arrows (she counts them).
 - **Won't say:** "Ardeval" without a sneer, until Act 3.
+- **Punctuation:** periods and questions. A `!` about once a chapter, and
+  it is anger.
 
-**Sample lines**
+**Sample lines** (one per situation; never copied into a script)
 
-- "Fourteen in the fort. I counted at dusk and again at first light. Three
-  have bows. Last night they shot at the deer from the wall. Many arrows.
-  Most of them hit nothing."
-- "You say sorry for the Ashfields. You were not there. It is a cheap sorry,
-  noble."
-- "These are not Brennish. Brennish do not wear boots like this. Brennish
-  cannot afford boots like this."
+- *Under fire:* "Two more. Behind the cart. ...I said behind the cart,
+  why are you looking at the barn."
+- *At camp:* "You cooked this? ...It is not bad. It is not good. Give me
+  the pot, you are burning the bottom."
+- *Lying:* "I was at the ford. All night. Setting lines. ...Fish lines."
+  (She can't do it either: she adds detail, and the detail is wrong.)
+- *Grieving:* "He could not whistle. My brother. He tried for years. ...I
+  am going to check the snares."
 
 ## Portrait brief
 
