@@ -101,6 +101,12 @@ fn evacuate_saves_a_house_for_good() {
     let v = s.village().unwrap();
     assert_eq!(v.house(p(2, 0)), Some(HouseState::Saved));
     assert_eq!((v.total(), v.saved(), v.lost(), v.minimum()), (3, 1, 0, 1));
+    assert_eq!(
+        v.houses().keys().copied().collect::<Vec<_>>(),
+        HOUSES.to_vec()
+    );
+    let two = village(villagers(), goal(2, vec![]));
+    assert_eq!(two.village().map(Village::minimum), Some(2));
     assert_eq!(v.standing().collect::<Vec<_>>(), [p(5, 0), p(5, 4)]);
     assert_eq!(s.outcome(), None);
 }
@@ -160,6 +166,24 @@ fn a_burned_house_cant_be_evacuated() {
         UnitAction::Evacuate,
         CommandError::HouseLost(p(5, 0)),
     );
+}
+
+#[test]
+fn village_errors_say_what_is_wrong() {
+    let cases = [
+        (CommandError::NoHouse(p(1, 0)), "no house at (1, 0)"),
+        (
+            CommandError::HouseAlreadySaved(p(2, 0)),
+            "the house at (2, 0) is already saved",
+        ),
+        (
+            CommandError::HouseLost(p(5, 0)),
+            "the house at (5, 0) burned",
+        ),
+    ];
+    for (err, text) in cases {
+        assert_eq!(err.to_string(), text);
+    }
 }
 
 // ---- Burning ---------------------------------------------------------------

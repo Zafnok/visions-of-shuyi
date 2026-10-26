@@ -1003,6 +1003,11 @@ fn village_errors_are_reported() {
         village_errors(&c, "village: (minimum: 0, rewards: []),", ""),
         ["village: minimum 0; save at least 1 house"]
     );
+    // Every house may be the minimum.
+    assert_eq!(
+        village_errors(&c, "village: (minimum: 5),", ""),
+        [] as [String; 0]
+    );
     assert_eq!(
         village_errors(&c, "village: (minimum: 6),", ""),
         ["village: minimum 6 but the map has 5 houses"]

@@ -267,6 +267,37 @@ fn tally_counts_what_changed() {
     assert_eq!(Tally::between(&begin, &battle.state).turns, 1);
 }
 
+/// Houses saved count up and houses burned count down (0313).
+#[test]
+fn tally_counts_houses_saved_less_houses_burned() {
+    let mut raider = enemy(2, 8);
+    raider.raider = true;
+    let village = trpg_core::VillageGoal {
+        houses: vec![tile(2), tile(4), tile(6)],
+        minimum: 1,
+        rewards: vec![],
+        burnt: content().terrain.display.id_of("burnt").unwrap(),
+    };
+    let (state, _) = BattleState::new(BattleSetup {
+        village: Some(village),
+        ..setup(vec![lord(player(1, 0)), raider])
+    });
+    let mut battle = Scripted::new(state);
+    let begin = battle.state.clone();
+    battle.act(1, 2, UnitAction::Evacuate);
+    let saved = battle.state.clone();
+    assert_eq!(Tally::between(&begin, &saved).houses, 1);
+    battle.end_phase();
+    battle.act(2, 7, UnitAction::Wait);
+    let burned = battle.state.clone();
+    assert_eq!(
+        burned.village().map(|v| (v.saved(), v.lost())),
+        Some((1, 1))
+    );
+    assert_eq!(Tally::between(&saved, &burned).houses, -1);
+    assert_eq!(Tally::between(&begin, &burned).houses, 0);
+}
+
 #[test]
 fn tally_counts_the_win_the_loss_and_the_lord() {
     let mut won = Scripted::new(start(vec![rigged(player(1, 5)), weak(enemy(2, 6))]));
