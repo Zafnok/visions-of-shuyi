@@ -116,6 +116,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # About 4 minutes on main; a stalled apt mirror once held it for over
+    # an hour (ticket 0132). Fail fast so the run can be re-run.
+    timeout-minutes: 20
     env:
       # The one place the SDK's version is pinned.
       PLAYDATE_SDK_VERSION: 3.1.2
@@ -127,7 +130,11 @@ jobs:
       - run: rustup target add thumbv7em-none-eabihf
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install the ARM compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+        timeout-minutes: 8
+        # No Recommends: they pull in the C++ standard library
+        # (libstdc++-arm-none-eabi-newlib, 487 MB), and the device build
+        # links only C (the shim, the SDK's C files) and newlib.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
       - name: Point at the Playdate SDK
         run: echo "PLAYDATE_SDK_PATH=$HOME/playdate-sdk" >> "$GITHUB_ENV"
       - name: Cache the Playdate SDK

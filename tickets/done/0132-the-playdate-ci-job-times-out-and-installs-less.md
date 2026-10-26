@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 0132 — The playdate CI job times out and installs less
@@ -116,5 +116,19 @@ None. Nothing a player sees changes; CI's `playdate` job is the check.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- The `playdate` job in `.github/workflows/ci.yml` has
+  `timeout-minutes: 20`, and its *Install the ARM compiler* step
+  `timeout-minutes: 8`. The install is now
+  `apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi`,
+  with a comment saying why the Recommends are left out.
+- **Before** (`main`'s last four green runs, 2026-10-25/26): the job took
+  3 m 40 s, 3 m 52 s, 4 m 44 s and 4 m 27 s; the install step 21 s, 24 s,
+  63 s and 47 s. The 4 m 27 s run's log: `Need to get 607 MB of archives`,
+  `Fetched 607 MB in 12s`, then about 30 s unpacking, most of it
+  `libstdc++-arm-none-eabi-newlib` (487 MB). No cold-cache run came near
+  20 minutes, so the job's limit stayed at 20.
+- **After** (this PR's run): AFTER_PLACEHOLDER
+- `zizmor .github/workflows/ci.yml` at CI's `min-severity: medium`: no
+  findings. Its one low finding (`self-repository`, line 22) is on `main`
+  already and untouched here.
+- No deviations, no follow-up tickets, no Nick input.
