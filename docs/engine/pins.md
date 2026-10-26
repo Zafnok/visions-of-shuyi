@@ -68,7 +68,7 @@ Nothing for the game: 1 PR (#114).
 
 Nothing for the game: 0 PRs.
 
-## 2026-10-26: d04bc2d1 → 6f0a8209 (6 engine PRs), #PRNUM
+## 2026-10-26: d04bc2d1 → 6f0a8209 (6 engine PRs), #440
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
