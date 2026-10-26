@@ -59,7 +59,7 @@ Nothing for the game: 14 PRs (#75, #79, #80, #83, #84, #89, #92, #94, #99, #100,
 
 Nothing for the game: 1 PR (#114).
 
-## 2026-10-25: 555bba71 → d04bc2d1 (2 engine PRs), #PRNUM
+## 2026-10-25: 555bba71 → d04bc2d1 (2 engine PRs), #434
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
