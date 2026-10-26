@@ -138,7 +138,9 @@ terrain, supports, the new game), the rules (`crates/core`), how content
 becomes a battle (`crates/content`), the bots, the engine pin, or the
 playtest itself. The list is `.github/playtest-levers.sh` (ticket 0514);
 "Run workflow" on the Actions page always plays. It fails only on a
-blocked battle; the tables are in the job's summary.
+blocked battle; the tables are in the job's summary. A push to `main`
+is never cancelled by the next one, so every push's own changes are
+judged (ticket 0515); a pull request's newer commit cancels its older run.
 
 ## Reading the report
 

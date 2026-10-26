@@ -5,10 +5,10 @@ type: infra
 milestone: M4 Enemy AI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-26
 ---
 
 # 0515 — Playtest CI on main plays every balance change
@@ -76,14 +76,14 @@ Expected size: no Rust; about 6 YAML lines and the comments.
 
 ## Acceptance criteria
 
-- [ ] The workflow's concurrency is as in step 1, with the comment.
-- [ ] A PR with two quick pushes still cancels the first run (push an
+- [x] The workflow's concurrency is as in step 1, with the comment.
+- [x] A PR with two quick pushes still cancels the first run (push an
       empty commit to the PR right after the first; the first run shows
       cancelled).
-- [ ] The Completion notes say how to see it on `main`: the next two
+- [x] The Completion notes say how to see it on `main`: the next two
       pushes that land close together each keep their Playtest run
       (`gh run list --workflow Playtest --branch main`).
-- [ ] All gates in the `run-gates` skill pass, and the workflow linters
+- [x] All gates in the `run-gates` skill pass, and the workflow linters
       CI runs.
 
 ## Tests required
@@ -92,5 +92,18 @@ Expected size: no Rust; about 6 YAML lines and the comments.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- `.github/workflows/playtest.yml`: the concurrency group is the commit
+  (`github.sha`) on a push and the ref otherwise; `cancel-in-progress` is
+  off on a push. So a push to `main` is never cancelled by the next one,
+  and every push's own range `before..HEAD` is judged. Pull requests and
+  "Run workflow" keep one group per ref with cancelling, as before. The
+  header comment says why.
+- `docs/playtesting.md`: one sentence where it says when CI plays.
+- zizmor (the workflow linter CI runs, in `security.yml`; CI runs no
+  actionlint) reports nothing on the workflow. No Rust changed.
+- The PR's cancel check: an empty commit pushed right after the first
+  one; the first run shows cancelled (see the PR).
+- **To see it on `main`:** the next time two pushes land close together,
+  `gh run list --workflow Playtest --branch main` shows a run for each
+  push, neither `cancelled`.
+- No deviations, no follow-up tickets, no starting rules.
