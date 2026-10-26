@@ -29,7 +29,7 @@
         // The footbridge's north end.
         (template: "red_brigand", pos: (5, 4), ai: Guard, id: "footbridge_brigand"),
         // The road bridge's north end.
-        (template: "red_raider", pos: (11, 5), ai: Guard),
+        (template: "red_raider", pos: (11, 5), ai: Guard, level: Some(2)),
         (template: "red_archer", pos: (14, 5), ai: Guard),
         (template: "red_brigand", pos: (16, 5), ai: Guard),
         // A rider on the fort road: spears are what hurt horses.
@@ -37,9 +37,9 @@
         // The toll bridge's north end: armour in the way (magic's job).
         (template: "red_guard", pos: (20, 6), ai: Guard),
         // The toll-fort.
-        (template: "red_brigand", level: Some(2), pos: (20, 5), ai: Guard),
-        (template: "red_raider", level: Some(2), pos: (19, 3), ai: Guard),
-        (template: "red_archer", level: Some(2), pos: (21, 3), ai: Guard),
+        (template: "red_brigand", level: Some(1), pos: (20, 5), ai: Guard),
+        (template: "red_raider", level: Some(1), pos: (19, 3), ai: Guard),
+        (template: "red_archer", level: Some(1), pos: (21, 3), ai: Guard),
         (character: "red_captain", pos: (20, 2), ai: Stationary, boss: true),
     ],
     preparations: false,

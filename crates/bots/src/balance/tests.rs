@@ -68,6 +68,12 @@ fn the_level_knobs_move_levels_within_the_cap() {
         .unwrap_or_else(|| panic!("no apply"));
     assert!(levels(&down).iter().all(|&l| l == 1));
     assert_eq!(knobs[0].describe(-4), "every unnamed enemy -4 levels");
+    // Back at its template's level, an enemy that gave none gives none.
+    let back = knobs[0]
+        .apply(&up, -4)
+        .unwrap_or_else(|| panic!("no apply"));
+    assert_eq!(levels(&back), before);
+    assert_eq!(back.text.text(), quick.text.text());
 
     let one = knob(&knobs, "Brigand at 7,4: level");
     let up = one.apply(&quick, 2).unwrap_or_else(|| panic!("no apply"));

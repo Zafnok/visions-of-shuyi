@@ -60,11 +60,20 @@ impl TunedBattle {
         foe.level.or(generic.map(|g| g.level)).unwrap_or(1)
     }
 
-    /// `foe`'s level moved `step`, kept within the level cap.
-    fn moved(&self, foe: &Foe, step: i32) -> Level {
+    /// `foe`'s `level` field with its level moved `step`, kept within 1
+    /// and the level cap: `None` (its template's) when its entry gives
+    /// none and the level is its template's, so the file doesn't gain a
+    /// `level` that changes nothing.
+    fn moved(&self, foe: &Foe, step: i32) -> Option<Level> {
         let cap = i64::from(self.content.classes.level_cap);
         let level = (i64::from(self.level(foe)) + i64::from(step)).clamp(1, cap);
-        Level::try_from(level).unwrap_or(1)
+        let level = Level::try_from(level).unwrap_or(1);
+        let template = Foe {
+            level: None,
+            ..foe.clone()
+        };
+        let authored = self.text.entries()[foe.entry].level;
+        (authored.is_some() || level != self.level(&template)).then_some(level)
     }
 
     /// `foe`'s loadout: its own, or its template's.
@@ -170,7 +179,7 @@ impl Knob<TunedBattle> for AllLevels {
         let entries = battle.text.entries();
         for foe in &mut out.text.foes {
             if entries[foe.entry].unnamed {
-                foe.level = Some(battle.moved(foe, step));
+                foe.level = battle.moved(foe, step);
             }
         }
         Some(out)
@@ -271,7 +280,7 @@ impl Knob<TunedBattle> for Each {
     fn apply(&self, battle: &TunedBattle, step: i32) -> Option<TunedBattle> {
         match &self.change {
             Change::Level => battle.with(self.entry, |b, foe| {
-                foe.level = Some(b.moved(foe, step));
+                foe.level = b.moved(foe, step);
                 Some(())
             }),
             Change::Count if step > 0 => self.add(battle),

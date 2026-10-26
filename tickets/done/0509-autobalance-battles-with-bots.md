@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: medium
-status: in-progress
+status: done
 blocked_by: ["0506", "engine#2127", "engine#2541"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 0509 — Autobalance battles with the persona bots
@@ -171,9 +171,9 @@ Measure with `cargo xtask code-lines`, and at 3× run the
       `cargo xtask autobalance`, thread pool, options parser or report
       format (the PR says which engine pieces it uses).
 - [x] 1183 is in `tickets/done/` with "done by 0509".
-- [ ] Chapter 1 (`ch01`) report before/after in Completion notes; if
+- [x] Chapter 1 (`ch01`) report before/after in Completion notes; if
       Chapter 1 already meets its bands, say so and don't change it.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -237,6 +237,30 @@ What was done:
   must lose nobody, so Casual stayed over its 55% while Normal reached
   50%. With the lead alone both rules are "win".)
 - **1183** moved to `done/` ("done by 0509").
+- **Chapter 1 was one try out of its bands, so it is rebalanced.**
+  `cargo shuyi autobalance --stage ch01 --time 3000 --apply` (release
+  build, 100 tries from seed 1 to turn 60, 19 evaluations, 48 min on 24
+  threads) found "every unnamed enemy −1 levels" and "Raider at 11,5 +1
+  levels". In `assets/battles/ch01.ron` that is: the toll-fort's
+  brigand, raider and archer at level 1 instead of 2, and the raider at
+  the road bridge's north end at level 2 instead of 1 (the others are
+  level 1 already). Report, 100 tries each:
+
+  | | before | after | band |
+  | - | - | - | - |
+  | Casual | 36 | 43 | 30–55 |
+  | Normal | 63 | 62 | 50–75 |
+  | Hardcore | 49 ✗ | 50 | 50–75 |
+  | Hardcore faster than Normal | 8 vs 9 ✓ | 8 vs 9 ✓ | |
+
+  `cargo xtask playtest ch01 --bot all` on the file as committed gives
+  the same "after". Hardcore sits on its band's lower edge; 32 of the
+  "after" tries (Casual's) reached turn 60 unfinished, as before.
+  The first `--apply` also wrote `level: Some(1)` on seven level-1
+  enemies whose −1 was clamped back to their template's level; the
+  writer now leaves a level equal to the template's unwritten when the
+  entry gave none (tested), and the file holds only the four real
+  changes.
 - Docs: `docs/playtesting.md` *Autobalancing*.
 
 Tests: the writer (`battle::tune::tests`), each knob, the named-units
