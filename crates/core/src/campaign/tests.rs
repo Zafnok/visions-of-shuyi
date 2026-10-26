@@ -137,6 +137,7 @@ fn def() -> BattleDef {
         }],
         exit_name: None,
         difficulty: Difficulty::Normal,
+        kind: BattleKind::Story,
         music: BattleMusic::Pool("skirmish".into()),
         seed: 3,
     }

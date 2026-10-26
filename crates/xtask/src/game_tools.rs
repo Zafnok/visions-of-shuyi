@@ -4,7 +4,8 @@
 //! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
 //! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
 //!
-//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s.
+//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s;
+//! `autobalance` (ticket 0509) is [`balance`]'s.
 //!
 //! The session (ticket 1181) is the game started as `frame-png` starts it,
 //! its scene the battle's map and its picture `frame-png`'s.
@@ -14,11 +15,13 @@
 //! the map alone, the prompt start, the tips and a light for every battle.
 
 use shuyi_assets::ContentError;
+use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::contract::bots::{BotsInput, BotsOutput};
 use shuyi_cli::contract::replay::{Record, ReplayRun};
 use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
-use shuyi_cli::{GameArg, GameLang, GameOption, GameTools};
+use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools};
+use shuyi_core::bots::playtest::Tries;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::BattleState;
 use trpg_ui::harness::{self, Core, Harness};
@@ -223,6 +226,24 @@ impl GameTools for Trpg {
         Start::of(&input.start)?;
         plays::bots(input)
     }
+
+    /// The battles, by id: what `autobalance --stage` takes.
+    fn playtest_stages(&self) -> Vec<String> {
+        balance::stages()
+    }
+
+    /// 0506's playtest: 100 tries from seed 1, each stopped at turn 60.
+    fn playtest_defaults(&self) -> Tries {
+        Tries::new(100, 1, 60)
+    }
+
+    fn autobalance_plan(
+        &self,
+        stage: Option<&str>,
+        input: &AutobalanceInput,
+    ) -> Result<AutobalancePlan, String> {
+        balance::plan(&crate::repo_root(), stage, input)
+    }
 }
 
 /// Plays `script` in a Harness started as `start` says and paints the
@@ -388,6 +409,7 @@ fn playdate_palette() -> Result<Palette, String> {
         .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
 }
 
+mod balance;
 mod plays;
 
 #[cfg(test)]

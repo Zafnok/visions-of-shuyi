@@ -212,6 +212,20 @@ impl Content {
         battles.find(|b| b.triggers.iter().any(|t| t.scene == scene))
     }
 
+    /// What a battle file refers to, as [`battle::from_source`] checks it.
+    pub fn battle_refs(&self) -> BattleRefs<'_> {
+        BattleRefs {
+            maps: &self.maps,
+            terrain: &self.terrain.rules,
+            terrain_looks: &self.terrain.display,
+            classes: &self.classes,
+            items: &self.items,
+            characters: &self.characters,
+            dialogue: &self.dialogue,
+            audio: &self.audio,
+        }
+    }
+
     /// The tables battles read, shared.
     pub fn tables(&self) -> GameTables {
         GameTables {

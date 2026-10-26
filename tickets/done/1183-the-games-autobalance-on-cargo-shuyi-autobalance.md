@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: blocked
+status: done
 blocked_by: ["0509", "engine#2541"]
 nick_input: none
-completed:
+completed: 2026-10-25
 ---
 
 # 1183 — The game's autobalance on `cargo shuyi autobalance`
@@ -92,5 +92,8 @@ wrapper does, and 1180 moves them with the rest.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Done by 0509: 0509 implemented engine#2541's plan hooks directly, so
+there was no `cargo xtask autobalance` to move. `Trpg::autobalance_plan`
+(`crates/xtask/src/game_tools/balance.rs`) gives `cargo shuyi
+autobalance` the battle, its kind's knobs, 0506's personas and checks and
+the battle file's `write`; the pin was already past engine#2541 (1188).

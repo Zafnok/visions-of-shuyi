@@ -16,6 +16,9 @@ workspace = true
 # The play loop and the `Bot` trait (ticket 1116).
 shuyi-core = { workspace = true, features = ["std"] }
 trpg-core = { path = "../core" }
+# The battle files the autobalance's knobs change, loaded as the content
+# check does (ticket 0509).
+trpg-content = { path = "../content" }
 # `personas.ron` and `targets.ron` (ticket 0506).
 ron = { workspace = true, features = ["std"] }
 serde.workspace = true

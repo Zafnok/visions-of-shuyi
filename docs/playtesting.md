@@ -185,6 +185,91 @@ shows as "47/100 succeed … was 58/100 succeed". The folder is under
 `target/`, so it isn't committed and `cargo clean` empties it; pass
 `--history <dir>` to keep runs somewhere else.
 
+## Autobalancing
+
+```bash
+cargo run --release -q -p xtask -- shuyi autobalance --stage ch01
+```
+
+(`cargo shuyi autobalance --stage ch01`, built optimised.) The three
+personas play the battle and, while one of them lands outside its band
+for the battle's tier, the search changes the battle and plays it again,
+until every band is met or its budget runs out. Only the battle changes,
+never the bots (`docs/design/playtest-bots.md`, *Autobalancing*). The
+search and the command are Shuyi Engine's (`autobalance`, `Knob`,
+engine#2127; `shuyi autobalance`, engine#2541); the game gives the plan
+(`crates/xtask/src/game_tools/balance.rs`) and the knobs
+(`crates/bots/src/balance.rs`).
+
+**What it may change** depends on the battle file's `kind`
+(`assets/battles/README.md`). Every kind has the *enemy numbers* for now:
+the unnamed enemies only (a template with no `id` or `name`, not a boss,
+not a green unit), each knob in the order the search tries it:
+
+| Knob | Steps | What a step does |
+| ---- | ----- | ---------------- |
+| `unnamed enemies' level` | −10 to +10, first in steps of 4 | Every unnamed enemy that many levels up or down (kept within 1 and the level cap). |
+| `<enemy>: level` | −5 to +5 | That enemy alone. |
+| `<enemy>: count` | −1, +1 | −1 removes it; +1 adds a copy of it (same group, same AI) on the nearest free tile within 2 of it, after it in the list. |
+| `<enemy>: class` | the battle's templates | Another template the battle already uses, in the battle's order, at the enemy's level, with that template's gear. |
+| `<enemy>: weapon` | −1, +1 | Its first weapon a tier down or up in the same kind (iron → steel). |
+
+`<enemy>` reads like `Brigand at 16,11`: its name and its tile as
+authored. Named units, the player's slots, reinforcements, the map, the
+objective and the story moments are never changed (a test checks every
+step of every knob). A step that can't apply (no free tile, no higher
+tier, a class that can't stand there) is skipped. A random skirmish
+gains terrain and layout knobs with its generator (0510).
+
+**The output** first names the battle, its tier and kind, then why the
+search stopped and how many evaluations it made, then each change it
+kept, in the knobs' words:
+
+```
+test_too_hard · Normal tier · FixedSkirmish
+
+stuck: no knob brings it nearer its bands · 28 evaluations
+unnamed enemies' level -8: every unnamed enemy -8 levels
+
+before: 20 tries (seeds 1–20)
+
+casual   · 0/20 succeed                 band 30–55%   ✗ too hard · blocked: under the 20% floor
+normal   · 1/20 succeed                 band 50–75%   ✗ too hard
+hardcore · 2/20 succeed                 band 50–75%   ✗ too hard
+…
+after: 20 tries (seeds 1–20)
+
+casual   · 8/20 succeed                 band 30–55%   ✓
+normal   · 10/20 succeed                band 50–75%   ✓
+hardcore · 13/20 succeed                band 50–75%   ✓
+```
+
+(`--tries 20 --quick 10 --budget 40 --turns 20` on the test battle.)
+Each change reads `<knob> <step>: <what it does>`. Then come the playtest
+reports (as above) of the battle as authored (`before`) and as changed
+(`after`), each at the full `--tries`: `after` decides whether the
+battle is in its bands, whatever the stop line says (the search judges
+its own runs at `--quick` tries, which can miss a band the full run
+meets). `already in bands` means the battle as authored meets them and
+nothing changed. The
+search's own runs use `--quick` tries (a fifth); `--budget` caps the
+evaluations (100), `--time` the seconds, `--threads` the threads (never
+the result: the same seed finds the same changes). It exits with 1 while
+a rate is still outside its band. `cargo shuyi autobalance --help` lists
+every option.
+
+**`--apply`** writes the changes to the battle file
+(`assets/battles/<id>.ron`, or the test files' `assets-test/battles/`).
+Only the enemy list is rewritten: everything else, comments too, stays as
+written; a changed enemy keeps its own line with only the changed fields
+rewritten (`level: Some(4)` added or replaced), a copy goes on its own
+line after its original, and a removed enemy's line goes with it. The
+comment lines above a removed enemy go too, unless it was the list's
+first. Review the diff and the `after` report before committing it.
+
+Autobalance is a dev tool Claude runs; CI never runs it, only the
+playtest.
+
 ## For developers
 
 - **The engine's part** (`shuyi_core::bots`): the bot trait and the play

@@ -94,3 +94,24 @@ fn shuyi_runs_the_engine_s_tools_with_the_game_s() {
     assert!(said.contains("cargo shuyi"), "{said}");
     assert!(said.contains("frame-png"), "{said}");
 }
+
+#[test]
+fn autobalance_brings_the_too_hard_battle_into_its_bands() {
+    // The engine's command on the game's plan (ticket 0509), without
+    // `--apply`: the game's tests write the file into a temp folder.
+    let output = xtask()
+        .args(["shuyi", "autobalance", "--stage", "test_too_hard"])
+        .args([
+            "--tries", "20", "--quick", "10", "--budget", "40", "--turns", "20",
+        ])
+        .output()
+        .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(output.status.code(), Some(0), "{stdout}");
+    assert!(
+        stdout.starts_with("test_too_hard · Normal tier · FixedSkirmish\n"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("every unnamed enemy -8 levels"), "{stdout}");
+    assert!(stdout.contains("\nafter: 20 tries"), "{stdout}");
+}

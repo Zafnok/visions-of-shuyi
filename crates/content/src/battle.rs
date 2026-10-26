@@ -7,9 +7,10 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{
-    AiBehavior, BattleDef, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable, Defeat,
-    Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Objective, PlayerSlot, Pos,
-    Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId, default_map_label,
+    AiBehavior, BattleDef, BattleKind, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable,
+    Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Objective,
+    PlayerSlot, Pos, Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId,
+    default_map_label,
 };
 
 use crate::audio::AudioManifest;
@@ -22,6 +23,8 @@ use crate::map::{MapDef, column_number, line_number};
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
 use crate::trigger::{check_triggers, off_map};
+
+pub mod tune;
 
 /// Directory of the battle files inside the asset bundle.
 pub const BATTLES_DIR: &str = "battles";
@@ -96,6 +99,9 @@ struct RawBattle {
     #[serde(default, deserialize_with = "bare")]
     exit_name: Option<String>,
     difficulty: Difficulty,
+    /// What the autobalance may change: `Story` if left out.
+    #[serde(default)]
+    kind: BattleKind,
     music: BattleMusic,
     seed: u64,
     /// The light the battle is fought in instead of its map's, written
@@ -407,6 +413,7 @@ pub fn from_source(
         battle_notes,
         exit_name,
         difficulty: raw.difficulty,
+        kind: raw.kind,
         music: raw.music,
         seed: raw.seed,
     })

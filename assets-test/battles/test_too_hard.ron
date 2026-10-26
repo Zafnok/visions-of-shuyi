@@ -1,0 +1,25 @@
+// TEST FILE: a skirmish made too hard on purpose, for the autobalance's
+// tests (ticket 0509): the lord alone against three enemies, each 5 levels
+// above its template's. `cargo shuyi autobalance --stage test_too_hard`
+// brings it back into the personas' bands.
+(
+    id: "test_too_hard",
+    map: "test_small",
+    player_slots: [
+        (character: "test_lord", pos: (3, 5)),
+    ],
+    enemies: [
+        // On the road.
+        (template: "test_brigand", level: Some(6), pos: (8, 4)),
+        (template: "test_brigand", level: Some(6), pos: (8, 2)),
+        // The raider rides in from the north.
+        (template: "test_raider", level: Some(7), pos: (7, 1)),
+    ],
+    pack_cap: 3,
+    default_pack: ["potion"],
+    objective: Rout(),
+    difficulty: Normal,
+    kind: FixedSkirmish,
+    music: Pool("skirmish"),
+    seed: 1,
+)

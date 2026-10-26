@@ -48,8 +48,8 @@ const DEFAULT_HISTORY: &str = "target/playtest-history";
 
 /// The personas' settings and the targets, from the repo root (dev
 /// tooling, not game content: ticket 0506).
-const PERSONAS_FILE: &str = "crates/bots/personas.ron";
-const TARGETS_FILE: &str = "crates/bots/targets.ron";
+pub const PERSONAS_FILE: &str = "crates/bots/personas.ron";
+pub const TARGETS_FILE: &str = "crates/bots/targets.ron";
 
 /// The lead's name in a playtest.
 const LEAD_NAME: &str = "Lead";

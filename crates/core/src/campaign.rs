@@ -153,6 +153,23 @@ pub struct PlayerSlot {
     pub id: UnitId,
 }
 
+/// What kind of battle it is (`docs/design/playtest-bots.md`,
+/// *Autobalancing*): it decides what the autobalance may change. No rule
+/// of play reads it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+pub enum BattleKind {
+    /// A battle of the story: its map, named units and objective stay as
+    /// authored.
+    #[default]
+    Story,
+    /// A skirmish authored once, on a fixed map.
+    FixedSkirmish,
+    /// A side quest's battle.
+    SideQuest,
+    /// A skirmish made by the generator (0510).
+    RandomSkirmish,
+}
+
 /// The music a battle plays from start to end (`docs/design/audio.md`):
 /// names from the audio manifest, checked by `content`. Core plays nothing
 /// and picks nothing; a pool's track is the UI's choice, never the
@@ -207,6 +224,8 @@ pub struct BattleDef {
     pub exit_name: Option<String>,
     /// Sets the rewind charges.
     pub difficulty: Difficulty,
+    /// What the autobalance may change.
+    pub kind: BattleKind,
     /// What plays during the battle.
     pub music: BattleMusic,
     /// Seed of the battle's RNG.
