@@ -117,8 +117,36 @@
 //! - **Chests** ([`UnitAction::Open`]): a player unit on an unopened chest
 //!   opens it ([`Event::ChestOpened`]): gold goes to the party (then
 //!   [`Event::GoldChanged`]), a consumable into the pack, equipment into the
-//!   stock. A chest opens once. Villages are on hold (no village tile,
-//!   `docs/design/terrain.md`).
+//!   stock. A chest opens once. There are no gift villages (0069): houses
+//!   are only for a village goal (below).
+//! - **Saving the village** ([`VillageGoal`], ticket 0313;
+//!   `turn-structure.md`, *Save the village*): a battle may have a village
+//!   goal, beside its [`Objective`]: its houses (every `house` terrain
+//!   tile, found by `content`), a minimum to save and a reward for each
+//!   house past it. Each house is standing, saved or burned
+//!   ([`HouseState`], in [`BattleState::village`]); saved and burned are
+//!   for good.
+//!   - **Evacuate** ([`UnitAction::Evacuate`]): a player unit on a
+//!     standing house's tile saves it ([`Event::HouseSaved`]). Refused for
+//!     other units ([`CommandError::PlayerOnly`]), off a house
+//!     ([`CommandError::NoHouse`]) and on a house saved or burned
+//!     ([`CommandError::HouseAlreadySaved`], [`CommandError::HouseLost`]).
+//!   - **Burning**: at the end of the action of an enemy marked as a
+//!     [raider](Unit::raider) still on the map, every standing house on its
+//!     tile or one of the four beside it burns ([`Event::HouseBurned`],
+//!     `(y, x)` order) and its tile becomes the goal's burnt terrain,
+//!     which gives no bonus (Nick; [`Event::TerrainChanged`] after each),
+//!     right before [`Event::UnitActed`] and the outcome check. A raider offered a move after its attack burns where that
+//!     move ends instead. Diagonals don't count (*Claude's starting
+//!     rule*, as for attacks). Being pushed or arriving burns nothing.
+//!   - **Loss**: the moment fewer houses than the minimum are left
+//!     unburned, the battle is lost (with the other loss conditions).
+//!   - **Win**: the houses still standing count as saved
+//!     ([`Event::HouseSaved`] with no unit), then each house saved past
+//!     the minimum gives the next of the goal's rewards
+//!     ([`Event::HouseReward`]), taken as a chest's loot; after the EXP
+//!     pool's shares and the leftovers' flight, before
+//!     [`Event::BattleEnded`].
 //! - **Skills** ([`crate::skill`] has the skill rules):
 //!   - **Passives** of both sides, the **timed effects** on them, and the
 //!     **ally auras** of other allied units (green ones too) in reach feed
@@ -284,8 +312,9 @@
 //!   or block tiles and never falls. Escaping gives no EXP. Green and enemy
 //!   units never escape. An escaped unit counts as standing: it gets its
 //!   share of the EXP pool and the campaign keeps it as a unit that stood.
-//! - **Outcome.** Defeat, in both modes, when a player lord falls or no player
-//!   unit is left on the map and none escaped. Victory per [`Objective`]. Both are checked
+//! - **Outcome.** Defeat, in both modes, when a player lord falls, no player
+//!   unit is left on the map and none escaped, or a village goal can no
+//!   longer be met. Victory per [`Objective`]. Both are checked
 //!   after every command and when a turn ends; nothing else changes them
 //!   (arrivals can't create a victory or a defeat). Loss is checked first.
 //!   Once decided ([`Event::BattleEnded`]) every command fails with
@@ -396,7 +425,8 @@
 //! the EXP pool,
 //! pending reinforcements, objective, turn, triggers and which have fired,
 //! recruits, the game mode,
-//! phase, RNG position, battle pack, gold, stock, opened chests, supports
+//! phase, RNG position, battle pack, gold, stock, opened chests, the
+//! village's houses, supports
 //! and outcome are all saved (spell uses left live on the units). The
 //! **terrain, class, item, spell, skill, art and support tables are not**: they are shared content, held by `Arc` and skipped. A
 //! deserialised state has empty tables (every `Act` fails with
@@ -620,6 +650,8 @@ pub struct BattleSetup {
     pub mode: GameMode,
     /// The battle's strategy hints (0411).
     pub battle_notes: Vec<BattleNote>,
+    /// The houses to save, if the battle has a village goal (0313).
+    pub village: Option<VillageGoal>,
 }
 
 /// What a unit does after moving. Ends its action.
@@ -665,6 +697,9 @@ pub enum UnitAction {
     },
     /// Open the chest on `dest`.
     Open,
+    /// Evacuate the house on `dest`: saved for good (see
+    /// [`BattleState::village`]).
+    Evacuate,
     /// Cast a learned spell (an attack spell also equips it).
     Cast {
         /// The spell.
@@ -1138,6 +1173,29 @@ pub enum Event {
         /// What was inside.
         loot: Loot,
     },
+    /// A house was saved for good: evacuated by `unit`
+    /// ([`UnitAction::Evacuate`]), or still standing when the battle was
+    /// won (`None`).
+    HouseSaved {
+        /// The house's tile.
+        pos: Pos,
+        /// The unit that evacuated it.
+        unit: Option<UnitId>,
+    },
+    /// A raider ended its action on or beside a standing house: it burned,
+    /// lost for good.
+    HouseBurned {
+        /// The house's tile.
+        pos: Pos,
+        /// The raider.
+        unit: UnitId,
+    },
+    /// A house standing past the village's minimum gave its reward, on a
+    /// win (gold is followed by [`Event::GoldChanged`]).
+    HouseReward {
+        /// What it gave.
+        loot: Loot,
+    },
     /// After its attack, a unit may move up to `tiles` tiles: it waits for a
     /// [`Command::MoveAfter`] (see [`BattleState::move_after_tiles`]).
     MoveAfterOffered {
@@ -1296,7 +1354,8 @@ pub enum CommandError {
     /// Escaping isn't possible: not an escape map, not in the exit area, or
     /// not a player unit.
     CannotEscape,
-    /// Only player units can shop, open chests or use items.
+    /// Only player units can shop, open chests, evacuate houses or use
+    /// items.
     PlayerOnly(UnitId),
     /// Only green units use their own items.
     GreenOnly(UnitId),
@@ -1315,6 +1374,12 @@ pub enum CommandError {
     NoChest(Pos),
     /// The chest on this tile was already opened.
     AlreadyOpened(Pos),
+    /// There is no house of the village on this tile.
+    NoHouse(Pos),
+    /// The house on this tile is already saved.
+    HouseAlreadySaved(Pos),
+    /// The house on this tile burned.
+    HouseLost(Pos),
     /// The unit hasn't learned this spell.
     SpellNotKnown {
         /// The unit.
@@ -1471,6 +1536,11 @@ impl fmt::Display for CommandError {
             CommandError::AlreadyOpened(p) => {
                 write!(f, "the chest at ({}, {}) is already open", p.x, p.y)
             }
+            CommandError::NoHouse(p) => write!(f, "no house at ({}, {})", p.x, p.y),
+            CommandError::HouseAlreadySaved(p) => {
+                write!(f, "the house at ({}, {}) is already saved", p.x, p.y)
+            }
+            CommandError::HouseLost(p) => write!(f, "the house at ({}, {}) burned", p.x, p.y),
             CommandError::SpellNotKnown { unit, spell } => {
                 write!(f, "unit {} doesn't know \"{}\"", unit.0, spell.0)
             }
@@ -1595,6 +1665,10 @@ pub struct BattleState {
     gold: Gold,
     stock: Stock,
     opened: BTreeSet<Pos>,
+    /// The houses to save and their states. Left out of a save without a
+    /// village goal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    village: Option<Village>,
     rng: SimRng,
     outcome: Option<Outcome>,
     pending_move: Option<PendingMove>,
@@ -1689,6 +1763,8 @@ enum Step {
         pos: Pos,
         loot: Loot,
     },
+    /// Evacuating the house on this tile.
+    Evacuate(Pos),
 }
 
 /// A validated combat.
@@ -1907,6 +1983,7 @@ impl BattleState {
             gold: setup.gold,
             stock: setup.stock,
             opened: BTreeSet::new(),
+            village: setup.village.map(Village::new),
             rng: SimRng::new(setup.seed),
             outcome: None,
             pending_move: None,
@@ -2310,6 +2387,7 @@ impl BattleState {
             }
             UnitAction::Shop { ref txns } => self.plan_shop(unit, dest, txns)?,
             UnitAction::Open => self.plan_open(unit, dest)?,
+            UnitAction::Evacuate => self.plan_evacuate(unit, dest)?,
             UnitAction::Cast {
                 ref spell,
                 target: CastTarget::Unit(target),
@@ -2853,6 +2931,15 @@ impl BattleState {
                 events.extend(till.events);
             }
             Step::Open { pos, loot } => self.open(id, pos, loot, events),
+            Step::Evacuate(pos) => self.evacuate(id, pos, events),
+        }
+        // A raider offered a move after its attack burns where that move
+        // ends instead (its action ends there).
+        let moves_on = self
+            .unit(id)
+            .is_some_and(|u| !self.move_after_paths(u, move_after).is_empty());
+        if !moves_on {
+            self.raid(id, events);
         }
         let outcome = if seized {
             Some(Outcome::Victory)
@@ -2953,6 +3040,13 @@ impl BattleState {
             pos,
             loot: loot.clone(),
         });
+        self.gain_loot(loot, events);
+    }
+
+    /// Gives the party `loot` (a chest's, a house's reward): gold (then
+    /// [`Event::GoldChanged`]), a consumable into the pack, equipment into
+    /// the stock. Its item is known (checked by `plan_open` and content).
+    fn gain_loot(&mut self, loot: Loot, events: &mut Vec<Event>) {
         match loot {
             Loot::Gold(n) => {
                 self.gold = self.gold.saturating_add(n);
@@ -2962,7 +3056,6 @@ impl BattleState {
                 if self.tables.items.consumable(&item).is_some() {
                     self.pack.gain(item);
                 } else {
-                    // Known (checked by `plan_open`).
                     let _ = shop::add_to_stock(&mut self.stock, &self.tables.items, &item);
                 }
             }
@@ -3344,7 +3437,7 @@ impl BattleState {
             .any(|u| u.faction == Faction::Player && u.is_lord);
         let side_left = |f| self.units.iter().any(|u| u.faction == f);
         let players_left = side_left(Faction::Player);
-        if lord_fell || (!players_left && self.escaped.is_empty()) {
+        if lord_fell || (!players_left && self.escaped.is_empty()) || self.village_failed() {
             return Some(Outcome::Defeat);
         }
         let won = match self.objective {
@@ -3368,6 +3461,7 @@ impl BattleState {
         if outcome == Outcome::Victory {
             self.share_exp_pool(events);
             self.flee(events);
+            self.reward_village(events);
         }
         self.outcome = Some(outcome);
         events.push(Event::BattleEnded { outcome });
@@ -3648,11 +3742,14 @@ mod arts;
 mod skills;
 mod supports;
 mod triggers;
+mod village;
 
 pub use arts::AttackPreview;
 use arts::{ArtUse, check_arts_allowed};
 use skills::{ActiveUse, AttackPlan, Fight, SkillStep};
 pub use triggers::{GameMode, TileRect, Trigger, TriggerWhen, Who};
+pub(crate) use village::burns;
+pub use village::{HouseState, Village, VillageGoal};
 
 #[cfg(test)]
 pub(crate) mod tests;

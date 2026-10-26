@@ -364,6 +364,7 @@ fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         weapon_ranks: BTreeMap::new(),
         talent: None,
         carried: Vec::new(),
+        raider: false,
         map_label: "Un".into(),
         weapon_exp: BTreeMap::new(),
         loadout: Loadout::default(),
@@ -450,6 +451,7 @@ fn setup(map: BattleMap, units: Vec<Unit>) -> BattleSetup {
         triggers: vec![],
         mode: crate::GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     }
 }
 
@@ -1943,4 +1945,85 @@ fn enemies_never_escape() {
             ..
         }
     ));
+}
+
+// ---- Saving the village (0313) ---------------------------------------------
+
+/// The scene's battle with a village of its `h` tiles (save at least 1),
+/// every enemy a raider when `raiders`, at the start of the Enemy phase
+/// (`enemy`) or the Player phase.
+fn village(rows: &[&str], raiders: bool, enemy: bool) -> BattleState {
+    let (map, mut units) = scene(rows);
+    for u in units.iter_mut().filter(|u| u.faction == Faction::Enemy) {
+        u.raider = raiders;
+    }
+    let houses = map
+        .tiles
+        .positions()
+        .filter(|pos| {
+            let row = rows[usize::try_from(pos.y).unwrap()];
+            row.as_bytes()[usize::try_from(pos.x).unwrap()] == b'h'
+        })
+        .collect();
+    let goal = crate::VillageGoal {
+        houses,
+        minimum: 1,
+        rewards: vec![],
+        burnt: TerrainId(0),
+    };
+    let (mut state, _) = BattleState::new(BattleSetup {
+        village: Some(goal),
+        ..setup(map, units)
+    });
+    if enemy {
+        state.apply(&Command::EndPhase).unwrap();
+    }
+    state
+}
+
+#[test]
+fn a_raider_burns_a_house_rather_than_attack() {
+    // It could strike the player unit; it goes beside the house instead.
+    let state = village(&["P.E...h"], true, true);
+    assert_eq!(next(&state), wait(2, p(5, 0)));
+    // Not a raider: it attacks.
+    let state = village(&["P.E...h"], false, true);
+    assert!(matches!(
+        next(&state),
+        Command::Act {
+            action: UnitAction::Attack { .. },
+            ..
+        }
+    ));
+}
+
+#[test]
+fn a_raider_attacks_from_a_tile_that_burns_a_house() {
+    let state = village(
+        &[
+            "E...h", //
+            "...P.", //
+        ],
+        true,
+        true,
+    );
+    let Command::Act { dest, action, .. } = next(&state) else {
+        panic!("not an act");
+    };
+    assert!(matches!(action, UnitAction::Attack { .. }), "{action:?}");
+    assert!(Pos::manhattan(dest, p(4, 0)) <= 1, "{dest:?}");
+}
+
+#[test]
+fn a_raider_out_of_reach_walks_to_the_nearest_house() {
+    let rows = ["P.....E.......h"];
+    assert_eq!(next(&village(&rows, true, true)), wait(2, p(10, 0)));
+    // Not a raider: it walks to the player unit.
+    assert_eq!(next(&village(&rows, false, true)), wait(2, p(2, 0)));
+}
+
+#[test]
+fn a_player_unit_evacuates_a_house_in_reach() {
+    let state = village(&["P..h....E"], true, false);
+    assert_eq!(next(&state), act(1, p(3, 0), UnitAction::Evacuate));
 }

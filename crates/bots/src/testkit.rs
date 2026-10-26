@@ -94,6 +94,7 @@ pub(crate) fn setup(units: Vec<Unit>) -> BattleSetup {
         seed: 1,
         triggers: vec![],
         battle_notes: vec![],
+        village: None,
         mode: GameMode::Classic,
     }
 }

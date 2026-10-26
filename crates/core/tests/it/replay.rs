@@ -161,6 +161,7 @@ pub(super) fn unit(id: u32, faction: Faction, x: i32, y: i32) -> Unit {
         defeat: trpg_core::Defeat::Falls,
         talent: None,
         carried: Vec::new(),
+        raider: false,
     }
     .with_loadout(&loadout, &classes(), &items())
     .unwrap_or_else(|e| panic!("{e}"))
@@ -290,6 +291,7 @@ pub(super) fn setup(seed: u64) -> BattleSetup {
         triggers: triggers(),
         mode: trpg_core::GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     }
 }
 

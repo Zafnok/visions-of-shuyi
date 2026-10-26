@@ -82,6 +82,7 @@ fn battle(units: Vec<Unit>) -> BattleState {
         triggers: vec![],
         mode: trpg_core::GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     })
     .0
 }

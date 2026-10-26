@@ -84,6 +84,7 @@ fn score_weighs_every_count() {
         counter: 16,
         turns: 9,
         items: 10,
+        houses: 17,
     };
     let only = |set: fn(&mut Weights)| {
         let mut weights = Weights::default();
@@ -106,6 +107,7 @@ fn score_weighs_every_count() {
     assert_eq!(only(|w| w.counter = 1000), 16_000);
     assert_eq!(only(|w| w.turns = 1000), 9000);
     assert_eq!(only(|w| w.items = -1000), -10_000);
+    assert_eq!(only(|w| w.houses = 1000), 17_000);
     let all = Weights {
         won: 1,
         lost: 1,
@@ -123,8 +125,9 @@ fn score_weighs_every_count() {
         counter: 1,
         turns: 1,
         items: 1,
+        houses: 1,
     };
-    assert_eq!(tally.score(&all), 136);
+    assert_eq!(tally.score(&all), 153);
     // Clamped, never wrapped.
     let huge = Tally {
         progress: i64::from(i32::MAX),
@@ -262,6 +265,37 @@ fn tally_counts_what_changed() {
     assert_eq!(tally.items, 1);
     battle.next_player_phase();
     assert_eq!(Tally::between(&begin, &battle.state).turns, 1);
+}
+
+/// Houses saved count up and houses burned count down (0313).
+#[test]
+fn tally_counts_houses_saved_less_houses_burned() {
+    let mut raider = enemy(2, 8);
+    raider.raider = true;
+    let village = trpg_core::VillageGoal {
+        houses: vec![tile(2), tile(4), tile(6)],
+        minimum: 1,
+        rewards: vec![],
+        burnt: content().terrain.display.id_of("burnt").unwrap(),
+    };
+    let (state, _) = BattleState::new(BattleSetup {
+        village: Some(village),
+        ..setup(vec![lord(player(1, 0)), raider])
+    });
+    let mut battle = Scripted::new(state);
+    let begin = battle.state.clone();
+    battle.act(1, 2, UnitAction::Evacuate);
+    let saved = battle.state.clone();
+    assert_eq!(Tally::between(&begin, &saved).houses, 1);
+    battle.end_phase();
+    battle.act(2, 7, UnitAction::Wait);
+    let burned = battle.state.clone();
+    assert_eq!(
+        burned.village().map(|v| (v.saved(), v.lost())),
+        Some((1, 1))
+    );
+    assert_eq!(Tally::between(&saved, &burned).houses, -1);
+    assert_eq!(Tally::between(&begin, &burned).houses, 0);
 }
 
 #[test]

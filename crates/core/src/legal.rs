@@ -36,7 +36,7 @@
 //!      - `UseOwnItem`: each index of the unit's carried items, on each unit;
 //!      - `UseSkill`: each non-combat active the unit can use (id order),
 //!        with no target, then on each unit;
-//!      - `Seize`, `Escape`, then `Open`;
+//!      - `Seize`, `Escape`, `Open`, then `Evacuate`;
 //!      - `Shop`: the visits below.
 //!
 //! # Exclusions
@@ -244,7 +244,12 @@ impl Options {
                 target,
             }));
         }
-        out.extend([UnitAction::Seize, UnitAction::Escape, UnitAction::Open]);
+        out.extend([
+            UnitAction::Seize,
+            UnitAction::Escape,
+            UnitAction::Open,
+            UnitAction::Evacuate,
+        ]);
         if let Some(shop) = state.map().shop(dest) {
             out.extend(
                 shop_visits(state, shop)

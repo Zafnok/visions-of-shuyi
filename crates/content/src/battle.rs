@@ -8,9 +8,9 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use trpg_core::{
     AiBehavior, BattleDef, BattleKind, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable,
-    Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Objective,
-    PlayerSlot, Pos, Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId,
-    default_map_label,
+    Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Loot, Objective,
+    PlayerSlot, Pos, Reinforcement, Role, TerrainId, TerrainTable, TileRect, Trigger, Turn, Unit,
+    UnitId, VillageGoal, default_map_label,
 };
 
 use crate::audio::AudioManifest;
@@ -98,6 +98,10 @@ struct RawBattle {
     /// `exit_name: "the Brennish lines"`.
     #[serde(default, deserialize_with = "bare")]
     exit_name: Option<String>,
+    /// The houses to save (0313), written bare: `village: (minimum: 3,
+    /// rewards: [...])`.
+    #[serde(default, deserialize_with = "bare")]
+    village: Option<RawVillage>,
     difficulty: Difficulty,
     /// What the autobalance may change: `Story` if left out.
     #[serde(default)]
@@ -109,6 +113,21 @@ struct RawBattle {
     /// in the [`BattleDef`].
     #[serde(default, deserialize_with = "bare")]
     light: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawVillage {
+    minimum: u32,
+    #[serde(default)]
+    rewards: Vec<RawLoot>,
+}
+
+/// A reward, as a map file writes a chest's loot.
+#[derive(Deserialize)]
+enum RawLoot {
+    Gold(u32),
+    Item(String),
 }
 
 #[derive(Deserialize)]
@@ -166,6 +185,9 @@ struct RawEnemy {
     /// A green unit's own consumables (0513), by item id.
     #[serde(default)]
     items: Vec<String>,
+    /// Burns the houses it ends its action on or next to (0313).
+    #[serde(default)]
+    raider: bool,
 }
 
 fn enemy_faction() -> Faction {
@@ -384,22 +406,14 @@ pub fn from_source(
     ));
     let battle_notes = v.notes(&raw.battle_notes, &everyone);
     let exit_name = v.exit_name(raw.exit_name.as_deref(), objective.as_ref());
+    let village = v.village(raw.village.as_ref(), &map, &everyone);
     if !v.errors.is_empty() {
         return Err(v.errors);
     }
     Ok(BattleDef {
         id: raw.id,
         map,
-        player_slots: raw
-            .player_slots
-            .iter()
-            .zip(&slot_ids)
-            .map(|(s, &id)| PlayerSlot {
-                character: CharacterId(s.character.clone()),
-                pos: pos(s.pos),
-                id,
-            })
-            .collect(),
+        player_slots: player_slots(&raw.player_slots, &slot_ids),
         enemies,
         reinforcements,
         preparations: raw.preparations,
@@ -412,6 +426,7 @@ pub fn from_source(
         triggers: raw.triggers,
         battle_notes,
         exit_name,
+        village,
         difficulty: raw.difficulty,
         kind: raw.kind,
         music: raw.music,
@@ -421,6 +436,19 @@ pub fn from_source(
 
 fn pos((x, y): (i32, i32)) -> Pos {
     Pos::new(x, y)
+}
+
+/// The player slots of `slots`, with their unit ids.
+fn player_slots(slots: &[RawSlot], ids: &[UnitId]) -> Vec<PlayerSlot> {
+    slots
+        .iter()
+        .zip(ids)
+        .map(|(s, &id)| PlayerSlot {
+            character: CharacterId(s.character.clone()),
+            pos: pos(s.pos),
+            id,
+        })
+        .collect()
 }
 
 /// The unit id of each slot: the slots numbered in order from 1, skipping
@@ -568,6 +596,10 @@ impl<'a, 'r> Checker<'a, 'r> {
         unit.defeat = e.defeat;
         unit.faction = self.faction(what, e);
         unit.carried = self.carried(what, e);
+        if e.raider && unit.faction != Faction::Enemy {
+            self.err(format!("{what}: only enemies are raiders"));
+        }
+        unit.raider = e.raider;
         if e.boss {
             unit.role = Role::Boss;
         }
@@ -723,6 +755,77 @@ impl<'a, 'r> Checker<'a, 'r> {
             self.err("exit_name: the name must be one line".to_owned());
         }
         Some(name.to_owned())
+    }
+
+    /// The village goal of `raw` on `map`: its houses are every `house`
+    /// tile; the minimum is 1 to their number; one known reward, never
+    /// `Gold(0)`, per house past the minimum. Without one, none of
+    /// `everyone` may be a raider.
+    fn village(
+        &mut self,
+        raw: Option<&RawVillage>,
+        map: &BattleMap,
+        everyone: &[Unit],
+    ) -> Option<VillageGoal> {
+        let Some(raw) = raw else {
+            if everyone.iter().any(|u| u.raider) {
+                self.err("raider: only a battle with a `village` has raiders".to_owned());
+            }
+            return None;
+        };
+        let looks = self.refs.terrain_looks;
+        let house = looks.id_of("house");
+        let burnt = looks.id_of("burnt").unwrap_or_else(|| {
+            self.err("village: no \"burnt\" terrain for burned houses".to_owned());
+            TerrainId(0)
+        });
+        let houses: Vec<Pos> = map
+            .tiles
+            .positions()
+            .filter(|&p| house.is_some_and(|h| map.tiles.get(p) == Some(&h)))
+            .collect();
+        let total = u32::try_from(houses.len()).unwrap_or(u32::MAX);
+        if raw.minimum == 0 {
+            self.err("village: minimum 0; save at least 1 house".to_owned());
+        } else if raw.minimum > total {
+            self.err(format!(
+                "village: minimum {} but the map has {total} houses",
+                raw.minimum
+            ));
+        }
+        let extra = total.saturating_sub(raw.minimum);
+        let given = u32::try_from(raw.rewards.len()).unwrap_or(u32::MAX);
+        if (1..=total).contains(&raw.minimum) && given != extra {
+            self.err(format!(
+                "village: {given} rewards; give one per house past the minimum ({extra})"
+            ));
+        }
+        let rewards = raw
+            .rewards
+            .iter()
+            .enumerate()
+            .map(|(i, r)| match r {
+                RawLoot::Gold(n) => {
+                    if *n == 0 {
+                        self.err(format!("village: reward {} is 0 gold", i + 1));
+                    }
+                    Loot::Gold(*n)
+                }
+                RawLoot::Item(item) => {
+                    let id = ItemId::new(item);
+                    if self.refs.items.get(&id).is_none() {
+                        self.err(format!("village: reward {}: no item \"{item}\"", i + 1));
+                    }
+                    Loot::Item(id)
+                }
+            })
+            .collect();
+        Some(VillageGoal {
+            houses,
+            minimum: raw.minimum,
+            rewards,
+            burnt,
+        })
     }
 
     /// The battle notes, their units resolved: each is a unit's `id`, or a

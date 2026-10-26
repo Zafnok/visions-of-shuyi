@@ -86,7 +86,7 @@ use serde::{Deserialize, Serialize};
 use crate::art::ArtTable;
 use crate::battle::{
     BattleNote, BattleSetup, BattleState, Event, GameMode, Objective, Outcome, Reinforcement,
-    Trigger,
+    Trigger, VillageGoal,
 };
 use crate::class::ClassTable;
 use crate::geom::Pos;
@@ -222,6 +222,8 @@ pub struct BattleDef {
     /// line (`the Brennish lines`; 0324). English: the screen translates
     /// it. Only on an [`Objective::Escape`] battle.
     pub exit_name: Option<String>,
+    /// The houses to save, if the battle has a village goal (0313).
+    pub village: Option<VillageGoal>,
     /// Sets the rewind charges.
     pub difficulty: Difficulty,
     /// What the autobalance may change.
@@ -455,6 +457,7 @@ impl Campaign {
             triggers: def.triggers.clone(),
             mode: self.mode,
             battle_notes: def.battle_notes.clone(),
+            village: def.village.clone(),
         }
     }
 

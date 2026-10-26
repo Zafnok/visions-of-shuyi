@@ -639,6 +639,7 @@
     "battle.rewind.escaped": "{who} escaped",
     "battle.rewind.shopped": "{who} visited a shop",
     "battle.rewind.opened": "{who} opened a chest",
+    "battle.rewind.evacuated": "{who} evacuated a house",
     "battle.rewind.cast": "{who} cast {what}",
     "battle.rewind.cast_on": "{who} cast {what} on {target}",
     "battle.rewind.equipped": "{who} changed weapons",

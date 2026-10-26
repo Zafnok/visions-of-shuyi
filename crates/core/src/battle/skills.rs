@@ -278,7 +278,7 @@ impl BattleState {
     /// post-action move: every tile it reaches in `1..=tiles` steps through
     /// empty tiles it can enter, with the path there (its tile first), in
     /// the order found (breadth-first, neighbours in `Dir::ALL` order).
-    fn move_after_paths(&self, unit: &Unit, tiles: u32) -> Vec<Vec<Pos>> {
+    pub(super) fn move_after_paths(&self, unit: &Unit, tiles: u32) -> Vec<Vec<Pos>> {
         let Ok(class) = self.class_of(unit) else {
             return Vec::new();
         };
@@ -378,7 +378,11 @@ impl BattleState {
             events.push(Event::UnitMoved { unit: id, path });
         }
         self.pending_move = None;
+        self.raid(id, events);
         events.push(Event::UnitActed { unit: id });
+        if let Some(outcome) = self.judge() {
+            self.finish(outcome, events);
+        }
     }
 
     /// The other units allied to `unit` within `radius` tiles of `dest`, in

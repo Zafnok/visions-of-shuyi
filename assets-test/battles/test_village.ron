@@ -1,0 +1,24 @@
+// TEST FILE: save the village (ticket 0313): five houses, save at least
+// three. Two raiders come from the east for the houses and burn the ones
+// they reach; a brigand holds the road. Each house standing past the
+// third gives a reward when the battle is won. The bots play it (`cargo
+// xtask playtest test_village`).
+(
+    id: "test_village",
+    map: "test_village",
+    player_slots: [
+        (character: "test_lord", pos: (2, 4)),
+        (character: "test_knight", pos: (3, 4)),
+        (character: "test_archer", pos: (1, 4)),
+    ],
+    enemies: [
+        (template: "test_raider", level: Some(1), pos: (13, 0), raider: true),
+        (template: "test_raider", level: Some(1), pos: (13, 7), raider: true),
+        (template: "test_brigand", pos: (13, 3)),
+    ],
+    objective: Rout(),
+    village: (minimum: 3, rewards: [Gold(300), Item("elixir")]),
+    difficulty: Normal,
+    music: Pool("skirmish"),
+    seed: 1,
+)

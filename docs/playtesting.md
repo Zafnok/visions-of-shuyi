@@ -93,6 +93,7 @@ negative):
 | `counter` | 10 | 10 | 15 | HP the units are expected to strike back at the enemies that can reach them |
 | `turns` | 0 | 0 | −200 | turn that began (a plan ends with its turn, so this counts only in a longer search) |
 | `items` | 0 | −50 | −300 | item used |
+| `houses` | 500 | 500 | 500 | house saved, less house burned, in a battle with a village goal (0313; one value for all, added with the rule) |
 
 Why the bots work this way, and what was changed after the first runs
 of Chapter 1 and why, is

@@ -49,6 +49,8 @@ features: {
 - **Villages** are not a feature: a village house is the `house` terrain
   (`docs/design/terrain.md`, *Building tiles*), like `fort`, `gate` and
   `throne`. `test_buildings.map` (in `assets-test/maps/`) has all four.
+  In a battle with a `village` goal every `house` tile is a house to save
+  (`assets/battles/README.md`; `test_village.map` has five).
 
 ### Look
 

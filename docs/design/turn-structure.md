@@ -441,6 +441,9 @@ extra reward.
   turn on or next to an unsaved house's door sets it burning. It is lost for
   good. (*Claude's starting rule:* "next to" means the four tiles beside the
   door, as for attacks.)
+  A burned house's tile becomes burnt ground (`burnt`, `terrain.md`): it
+  gives a unit standing on it no bonus (Nick, 2026-10-26, on ticket 0313:
+  "burned house should give no bonuses when standing on").
 - **Loss:** the moment too many houses are lost for the minimum to be met,
   the battle is lost (game over: Retry or Rewind, `death-and-difficulty.md`).
 - **Extra rewards:** each house standing at the end **past the minimum**

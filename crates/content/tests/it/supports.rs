@@ -87,6 +87,7 @@ fn battle(units: Vec<Unit>, bonds: SupportBook) -> BattleState {
         triggers: vec![],
         mode: GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     })
     .0
 }
