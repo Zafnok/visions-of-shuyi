@@ -19,6 +19,7 @@ fn goal(minimum: u32, rewards: Vec<Loot>) -> VillageGoal {
         houses: HOUSES.to_vec(),
         minimum,
         rewards,
+        burnt: BURNT,
     }
 }
 
@@ -51,11 +52,20 @@ fn to_enemy_phase(s: &mut BattleState) {
     assert_eq!(s.phase(), Phase::Enemy);
 }
 
-fn burned(pos: Pos, unit: u32) -> Event {
-    Event::HouseBurned {
-        pos,
-        unit: UnitId(unit),
-    }
+/// The events of unit `unit` burning the house at `pos`, a plain tile of
+/// the open map: it burns, then its tile becomes burnt terrain.
+fn burned(pos: Pos, unit: u32) -> [Event; 2] {
+    [
+        Event::HouseBurned {
+            pos,
+            unit: UnitId(unit),
+        },
+        Event::TerrainChanged {
+            pos,
+            from: TerrainId(0),
+            to: BURNT,
+        },
+    ]
 }
 
 fn acted(unit: u32) -> Event {
@@ -166,12 +176,22 @@ fn a_raider_burns_the_house_it_ends_beside() {
                 unit: UnitId(3),
                 path: vec![p(7, 0), p(6, 0)],
             },
-            burned(p(5, 0), 3),
+            Event::HouseBurned {
+                pos: p(5, 0),
+                unit: UnitId(3),
+            },
+            Event::TerrainChanged {
+                pos: p(5, 0),
+                from: TerrainId(0),
+                to: BURNT,
+            },
             acted(3),
         ]
     );
     let v = s.village().unwrap();
     assert_eq!(v.house(p(5, 0)), Some(HouseState::Burned));
+    // A burned house gives no bonus: its tile is burnt terrain now (Nick).
+    assert_eq!(s.map().tiles.get(p(5, 0)), Some(&BURNT));
     assert_eq!((v.saved(), v.lost()), (0, 1));
 }
 
@@ -180,7 +200,8 @@ fn a_raider_burns_the_house_it_stands_on() {
     let mut s = village(villagers(), goal(1, vec![]));
     to_enemy_phase(&mut s);
     let events = act(&mut s, 3, p(5, 0), UnitAction::Wait);
-    assert_eq!(events[1..], [burned(p(5, 0), 3), acted(3)]);
+    assert_eq!(events[1..3], burned(p(5, 0), 3));
+    assert_eq!(events[3..], [acted(3)]);
 }
 
 #[test]
@@ -233,8 +254,9 @@ fn a_raider_burns_after_its_attack_unless_it_fell() {
     let events = act(&mut s, 3, p(6, 0), attack(2));
     // After the combat and its weapon EXP.
     let n = events.len();
-    assert_eq!(events[n - 2..], [burned(p(5, 0), 3), acted(3)]);
-    assert!(matches!(events[n - 3], Event::WeaponExpGained { .. }));
+    assert_eq!(events[n - 3..n - 1], burned(p(5, 0), 3));
+    assert_eq!(events[n - 1], acted(3));
+    assert!(matches!(events[n - 4], Event::WeaponExpGained { .. }));
     // A raider that falls to the counter burns nothing.
     let mut units = units;
     units[1] = armed(units[1].clone(), 10);
@@ -262,10 +284,8 @@ fn the_battle_is_lost_when_the_minimum_cant_be_met() {
     let mut s = village(villagers(), goal(3, vec![]));
     to_enemy_phase(&mut s);
     let events = act(&mut s, 3, p(6, 0), UnitAction::Wait);
-    assert_eq!(
-        events[1..],
-        [burned(p(5, 0), 3), acted(3), ended(Outcome::Defeat)]
-    );
+    assert_eq!(events[1..3], burned(p(5, 0), 3));
+    assert_eq!(events[3..], [acted(3), ended(Outcome::Defeat)]);
     assert!(s.village().unwrap().is_failed());
     refused(&mut s, &Command::EndPhase, CommandError::BattleOver);
 }

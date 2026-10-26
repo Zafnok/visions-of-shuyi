@@ -2941,6 +2941,7 @@ fn prop_village(minimum: u32) -> VillageGoal {
         houses: PROP_HOUSES.to_vec(),
         minimum,
         rewards: rewards[..4 - minimum as usize].to_vec(),
+        burnt: BURNT,
     }
 }
 

@@ -129,10 +129,11 @@ Done (2026-10-26).
   taken as a chest's loot (the chest's code was factored into
   `gain_loot`). `BattleState::can_evacuate` and `village()` are there
   for the UI (0409).
-- **A burned house keeps its `house` terrain** and is marked `Burned` in
-  the village (the choice the ticket left open, recorded in the module
-  docs): no skin or tile cast has to know about burning; the skins can
-  read the state when 0409 or a look ticket wants a burnt look.
+- **A burned house turns into `burnt` terrain** (cost 1, no Defense or
+  Avoid, drawn as ash) and is marked `Burned` in the village, with an
+  `Event::TerrainChanged` after its `HouseBurned`. Nick, after the PR
+  opened: "burned house should give no bonuses when standing on". The
+  first version kept the `house` tile and its +10 Avoid.
 - **Content**: `village: (minimum, rewards)` in battle files (houses =
   every `house` tile, found from the map), `raider: true` on enemies,
   with the checks of the ticket plus: minimum 0, rewards not one per
@@ -178,8 +179,6 @@ and escape rules, 0308/0319), measured 404 (1.06×), under 2×.
   pushed (Shove) or arriving as a reinforcement next to a house burns
   nothing until it acts. One offered a move after its attack burns where
   that move ends.
-- **A burned house is still a house tile** to stand on (cost 1, +10
-  Avoid); only its saved/burned state changed.
 - **Rewards in order:** the battle file lists one reward per house past the
   minimum; with N houses standing past it, the first N rewards are given.
 - **The player side's AI (the bots) evacuates** any house it can reach

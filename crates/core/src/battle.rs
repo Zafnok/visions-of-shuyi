@@ -134,8 +134,9 @@
 //!   - **Burning**: at the end of the action of an enemy marked as a
 //!     [raider](Unit::raider) still on the map, every standing house on its
 //!     tile or one of the four beside it burns ([`Event::HouseBurned`],
-//!     `(y, x)` order), right before [`Event::UnitActed`] and the outcome
-//!     check. A raider offered a move after its attack burns where that
+//!     `(y, x)` order) and its tile becomes the goal's burnt terrain,
+//!     which gives no bonus (Nick; [`Event::TerrainChanged`] after each),
+//!     right before [`Event::UnitActed`] and the outcome check. A raider offered a move after its attack burns where that
 //!     move ends instead. Diagonals don't count (*Claude's starting
 //!     rule*, as for attacks). Being pushed or arriving burns nothing.
 //!   - **Loss**: the moment fewer houses than the minimum are left

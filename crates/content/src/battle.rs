@@ -9,8 +9,8 @@ use serde::Deserialize;
 use trpg_core::{
     AiBehavior, BattleDef, BattleKind, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable,
     Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Loot, Objective,
-    PlayerSlot, Pos, Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId,
-    VillageGoal, default_map_label,
+    PlayerSlot, Pos, Reinforcement, Role, TerrainId, TerrainTable, TileRect, Trigger, Turn, Unit,
+    UnitId, VillageGoal, default_map_label,
 };
 
 use crate::audio::AudioManifest;
@@ -773,7 +773,12 @@ impl<'a, 'r> Checker<'a, 'r> {
             }
             return None;
         };
-        let house = self.refs.terrain_looks.id_of("house");
+        let looks = self.refs.terrain_looks;
+        let house = looks.id_of("house");
+        let burnt = looks.id_of("burnt").unwrap_or_else(|| {
+            self.err("village: no \"burnt\" terrain for burned houses".to_owned());
+            TerrainId(0)
+        });
         let houses: Vec<Pos> = map
             .tiles
             .positions()
@@ -819,6 +824,7 @@ impl<'a, 'r> Checker<'a, 'r> {
             houses,
             minimum: raw.minimum,
             rewards,
+            burnt,
         })
     }
 

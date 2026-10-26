@@ -1969,6 +1969,7 @@ fn village(rows: &[&str], raiders: bool, enemy: bool) -> BattleState {
         houses,
         minimum: 1,
         rewards: vec![],
+        burnt: TerrainId(0),
     };
     let (mut state, _) = BattleState::new(BattleSetup {
         village: Some(goal),

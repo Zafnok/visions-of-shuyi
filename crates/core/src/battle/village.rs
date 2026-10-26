@@ -2,10 +2,11 @@
 //! village*): houses to save, `Evacuate`, raiders who burn them, the loss
 //! and the rewards. The rules are in the parent module's docs.
 //!
-//! A burned house keeps its `house` terrain and is marked lost here
-//! ([`HouseState::Burned`]), rather than turning into another terrain: the
-//! tile still plays as a house tile (cost 1, +10 Avoid), the skins read
-//! the state, and no tile cast or map file has to know about it.
+//! A burned house is marked lost here ([`HouseState::Burned`]) and its
+//! tile becomes the goal's [`burnt`](VillageGoal::burnt) terrain (Nick:
+//! a burned house gives no bonus to a unit standing on it), with an
+//! [`Event::TerrainChanged`] as any terrain change has. Its state stays
+//! here whatever the tile becomes later.
 
 use crate::prelude::*;
 
@@ -16,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use super::{BattleState, CommandError, Event, Step};
 use crate::geom::Pos;
 use crate::shop::Loot;
+use crate::terrain::TerrainId;
 use crate::unit::{Faction, Unit, UnitId};
 
 /// A battle's village goal, from its battle file: which houses there are,
@@ -31,6 +33,9 @@ pub struct VillageGoal {
     /// first extra house gives the first, and so on. One per house past
     /// the minimum (`content` checks it).
     pub rewards: Vec<Loot>,
+    /// The terrain a burned house's tile becomes (`burnt`, found by
+    /// `content`).
+    pub burnt: TerrainId,
 }
 
 /// Where a house stands.
@@ -48,6 +53,7 @@ pub enum HouseState {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Village {
     minimum: u32,
+    burnt: TerrainId,
     rewards: Vec<Loot>,
     houses: BTreeMap<Pos, HouseState>,
 }
@@ -57,6 +63,7 @@ impl Village {
     pub(super) fn new(goal: VillageGoal) -> Self {
         Village {
             minimum: goal.minimum,
+            burnt: goal.burnt,
             rewards: goal.rewards,
             houses: goal
                 .houses
@@ -165,7 +172,7 @@ impl BattleState {
 
     /// At the end of unit `id`'s action: if it is a raider still on the
     /// map, every standing house on or beside its tile burns, in `(y, x)`
-    /// order.
+    /// order, and becomes burnt terrain.
     pub(super) fn raid(&mut self, id: UnitId, events: &mut Vec<Event>) {
         let Some(at) = self
             .unit(id)
@@ -178,9 +185,16 @@ impl BattleState {
             return;
         };
         let burned: Vec<Pos> = v.standing().filter(|&p| burns(at, p)).collect();
+        let to = v.burnt;
         for pos in burned {
             v.houses.insert(pos, HouseState::Burned);
             events.push(Event::HouseBurned { pos, unit: id });
+            if let Some(tile) = self.map.tiles.get_mut(pos)
+                && *tile != to
+            {
+                let from = core::mem::replace(tile, to);
+                events.push(Event::TerrainChanged { pos, from, to });
+            }
         }
     }
 

@@ -979,6 +979,7 @@ fn a_village_and_its_raiders_load() {
         [p(4, 0), p(1, 2), p(6, 2), p(2, 6), p(6, 6)]
     );
     assert_eq!(village.minimum, 3);
+    assert_eq!(Some(village.burnt), c.terrain.display.id_of("burnt"));
     assert_eq!(
         village.rewards,
         [Loot::Gold(300), Loot::Item(ItemId::new("elixir"))]
