@@ -65,6 +65,8 @@ fn the_enemy_numbers_come_in_order_unnamed_enemies_only() {
     assert_eq!(knobs[0].stride(), 4);
     assert_eq!(knobs[0].range(), -10..=10);
     assert_eq!(knobs[1].range(), -5..=5);
+    assert_eq!(knob(&knobs, "Brigand at 8,2: count").range(), -1..=1);
+    assert_eq!(knob(&knobs, "Brigand at 8,2: weapon").range(), -1..=1);
 
     // ch01: the three with an `id` and the boss are named.
     let (ch01, knobs) = battle("ch01");
