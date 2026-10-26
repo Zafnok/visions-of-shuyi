@@ -2254,8 +2254,8 @@ impl BattleState {
         let (actives, arts) = self.threat_techniques(unit, &with);
         let plain = (None, None);
         let uses = core::iter::once(plain)
-            .chain(actives.iter().map(|a| (Some(a), None)))
-            .chain(arts.iter().map(|a| (None, Some(a))));
+            .chain(arts.iter().map(|a| (None, Some(a))))
+            .chain(actives.iter().map(|a| (Some(a), None)));
         let mut best: Option<Forecast> = None;
         for (active, art) in uses {
             let fight = |dest| Fight {
