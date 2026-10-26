@@ -87,9 +87,9 @@ negative):
 | `progress` | 10 | 10 | 15 | enemy HP taken in a rout (the boss's in a boss fight, a tile closer in a seize, a unit escaped in an escape) |
 | `approach` | 2 | 2 | 3 | tile the units came closer to the nearest enemy (the boss, the tile to seize, the exit), walking; a unit that escaped reached the exit |
 | `exposed` | 0 | −5 | −10 | HP the enemies that can reach a unit are expected to take from it next phase, by the forecast |
-| `lord_exposed` | −20 | −5 | −10 | the same for the lord (not counted once the lord is alone: waiting can't win) |
+| `lord_exposed` | −20 | −5 | −10 | the same for the lord (not counted once the lord is alone in a rout or a boss fight: waiting can't win) |
 | `at_risk` | −300 | −3000 | −3000 | unit that falls if every enemy that can reach it strikes and hits |
-| `lord_at_risk` | −5000 | −5000 | −5000 | the same for the lord (not counted once it is alone) |
+| `lord_at_risk` | −5000 | −5000 | −5000 | the same for the lord (not counted once it is alone in a rout or a boss fight) |
 | `counter` | 10 | 10 | 15 | HP the units are expected to strike back at the enemies that can reach them |
 | `turns` | 0 | 0 | −200 | turn that began (a plan ends with its turn, so this counts only in a longer search) |
 | `items` | 0 | −50 | −300 | item used |
@@ -285,7 +285,7 @@ playtest.
   - `trpg-core`: `Determinize` for `BattleState` (fresh luck, pending
     reinforcements dropped: `reseed_luck`, `drop_pending_reinforcements`)
     and `BattleState::threat_forecast` (the forecast a player reads off a
-    threatening enemy), all for the bots only.
+    threatening enemy, with a boss's hardest-hitting active or art), all for the bots only.
   - `crates/bots` (`trpg-bots`): `BaselineBot`; the personas
     (`persona.rs`: the candidates' `order`, the scoring `Tally` and
     `Weights` with the danger the units stand in, `PersonaBot` with the

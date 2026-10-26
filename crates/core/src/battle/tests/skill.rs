@@ -335,6 +335,35 @@ fn flurry_adds_a_strike() {
     assert_eq!(f.defender.map(|d| d.strikes), Some(1));
 }
 
+/// The danger a playtest bot reads off an enemy (0518): a boss's combat
+/// active counts when it hits harder, as a player checking the boss sees;
+/// an enemy that may not use actives strikes plainly.
+#[test]
+fn a_threat_forecast_counts_a_bosss_harder_active() {
+    let threat = |role, enemy: Unit| {
+        let s = start(setup(vec![lord(1, p(1, 0)), Unit { role, ..enemy }]));
+        s.threat_forecast(UnitId(3), UnitId(1)).unwrap()
+    };
+    let flurry = || with_skill(unit(3, Faction::Enemy, p(4, 0)), "flurry");
+    let (plain, boss) = (
+        threat(Role::Regular, flurry()),
+        threat(Role::Boss, flurry()),
+    );
+    assert_eq!(boss.attacker.strikes, plain.attacker.strikes + 1);
+    assert_eq!(boss.defender, plain.defender);
+    // Keen Edge adds hit and crit, not damage: it counts by the expected
+    // damage.
+    let keen = || {
+        with_skill(
+            wielding(unit(3, Faction::Enemy, p(4, 0)), blade(), 20),
+            "keen",
+        )
+    };
+    let (plain, boss) = (threat(Role::Regular, keen()), threat(Role::Boss, keen()));
+    assert_eq!(boss.attacker.damage, plain.attacker.damage);
+    assert!(boss.attacker.hit > plain.attacker.hit);
+}
+
 #[test]
 fn long_shot_needs_a_bow_and_reaches_further() {
     let archer = |id, pos, skill| {

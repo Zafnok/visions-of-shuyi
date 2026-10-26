@@ -131,7 +131,8 @@ pub struct Tally {
     /// counted at the end only.
     pub exposed: i64,
     /// The same for the lords, unless a lord is the last player unit
-    /// standing: then waiting can't win, and its danger isn't counted.
+    /// standing where only the enemies' fall wins (a rout, a boss): then
+    /// waiting can't win, and its danger isn't counted.
     pub lord_exposed: i64,
     /// Where the playout ends, the non-lord player units that would fall if
     /// every enemy that can reach them struck and hit.
@@ -336,12 +337,19 @@ struct Danger {
 fn danger(state: &BattleState) -> Danger {
     let threats = threats(state);
     let mut out = Danger::default();
-    // A lord left alone has nobody to wait for: waiting can't win, so its
-    // danger doesn't hold it back.
-    let alone = !state
-        .units()
-        .iter()
-        .any(|u| u.faction == Faction::Player && !u.is_lord);
+    // A lord left alone has nobody to wait for: where only the enemies'
+    // fall wins, waiting can't, so its danger doesn't hold it back. Where
+    // walking wins (an escape, a seize) or waiting does (a survive), it
+    // still does (0518).
+    let must_fight = matches!(
+        state.objective(),
+        Objective::Rout { .. } | Objective::DefeatUnit { .. }
+    );
+    let alone = must_fight
+        && !state
+            .units()
+            .iter()
+            .any(|u| u.faction == Faction::Player && !u.is_lord);
     for unit in state
         .units()
         .iter()
