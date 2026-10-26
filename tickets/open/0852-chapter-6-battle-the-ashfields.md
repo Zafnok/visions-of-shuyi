@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608", "0516"]
+blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608", "0516", "0517"]
 nick_input: none
 completed:
 ---
@@ -29,7 +29,8 @@ beat sheet and script (0748). The balance comes from the bots: 0509's
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
 the number scale first. It is the first escape map the personas play, so
 it waits for 0516, which makes their scoring prefer leaving by the exit
-to standing on it. As a world-map chapter it needs the world map (1007) and its skirmishes (1008), the new battle rules (0319), and the Act 1 world map's data (1070), whose story-battle node it fills in.
+to standing on it, and for 0517, which keeps Casual from wandering once
+the enemies are gone. As a world-map chapter it needs the world map (1007) and its skirmishes (1008), the new battle rules (0319), and the Act 1 world map's data (1070), whose story-battle node it fills in.
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.

@@ -83,9 +83,9 @@ negative):
 | `unit_fell` | −1000 | −15000 | −15000 | other unit fallen (for Normal and Hardcore more than a win is worth) |
 | `hp_lost` | 0 | −5 | −10 | HP a standing unit lost (a heal counts back) |
 | `lord_hp_lost` | −20 | −5 | −10 | HP the lord lost |
-| `enemy_fell` | 100 | 100 | 150 | enemy fallen |
-| `progress` | 10 | 10 | 15 | enemy HP taken in a rout (the boss's in a boss fight, a tile closer in a seize) |
-| `approach` | 2 | 2 | 3 | tile the units came closer to the nearest enemy (the boss, the tile to seize), walking |
+| `enemy_fell` | 100 | 100 | 150 | enemy fallen, or gone down (a boss who can't be killed) |
+| `progress` | 10 | 10 | 15 | enemy HP taken in a rout (the boss's in a boss fight, a tile closer in a seize, a unit escaped in an escape) |
+| `approach` | 2 | 2 | 3 | tile the units came closer to the nearest enemy (the boss, the tile to seize, the exit), walking; a unit that escaped reached the exit |
 | `exposed` | 0 | −5 | −10 | HP the enemies that can reach a unit are expected to take from it next phase, by the forecast |
 | `lord_exposed` | −20 | −5 | −10 | the same for the lord (not counted once the lord is alone: waiting can't win) |
 | `at_risk` | −300 | −3000 | −3000 | unit that falls if every enemy that can reach it strikes and hits |

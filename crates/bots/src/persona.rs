@@ -109,7 +109,7 @@ pub struct Tally {
     pub hp_lost: i64,
     /// HP the standing lords lost (less what they healed).
     pub lord_hp_lost: i64,
-    /// Enemies that fell.
+    /// Enemies that fell, or went down (a boss who can't be killed).
     pub enemy_fell: i64,
     /// Progress towards the objective: in a rout, the enemies' HP taken; in
     /// a boss fight, the boss's; in a seize, how many tiles closer the
@@ -118,7 +118,8 @@ pub struct Tally {
     pub progress: i64,
     /// Tiles the standing player units came closer to their goal, all
     /// added up: the nearest enemy in a rout, the boss, the tile to seize,
-    /// the exit area; nothing in a survive. Without it a search that looks one reply
+    /// the exit area (a unit that escaped reached it); nothing in a
+    /// survive. Without it a search that looks one reply
     /// ahead has no reason to walk towards enemies that hold their ground.
     pub approach: i64,
     /// Where the playout ends, the HP the non-lord player units stand to
@@ -157,6 +158,8 @@ impl Tally {
         let danger = danger(end);
         let fell = end.fallen().get(start.fallen().len()..).unwrap_or_default();
         let fell_count = |keep: &dyn Fn(&Unit) -> bool| count(fell.iter().filter(|u| keep(u)));
+        let went_down = end.down().get(start.down().len()..).unwrap_or_default();
+        let enemy = |u: &&Unit| u.faction == Faction::Enemy;
         let hp_lost = |lord: bool| -> i64 {
             start
                 .units()
@@ -172,7 +175,7 @@ impl Tally {
             unit_fell: fell_count(&|u| u.faction == Faction::Player && !u.is_lord),
             hp_lost: hp_lost(false),
             lord_hp_lost: hp_lost(true),
-            enemy_fell: fell_count(&|u| u.faction == Faction::Enemy),
+            enemy_fell: count(fell.iter().chain(went_down).filter(enemy)),
             progress: progress(start, end),
             approach: approach(start, end),
             exposed: danger.exposed,
@@ -247,8 +250,12 @@ fn approach(start: &BattleState, end: &BattleState) -> i64 {
         .filter(|u| u.faction == Faction::Player);
     player
         .filter_map(|u| {
+            let from = before.distance(u, u.pos)?;
+            if end.escaped().iter().any(|e| e.id == u.id) {
+                return Some(from);
+            }
             let now = end.unit(u.id)?;
-            Some(before.distance(u, u.pos)? - after.distance(now, now.pos)?)
+            Some(from - after.distance(now, now.pos)?)
         })
         .sum()
 }

@@ -69,6 +69,40 @@ fn chapter_1_difficulty() {
     );
 }
 
+/// Every persona plays the rule battles of the test files (ticket 0516):
+/// each try ends in 60 turns, and the escape is won at least once. Except
+/// Casual in the escape, which may wander once the enemies are gone
+/// (0517): it ends at least one try.
+#[test]
+fn the_personas_finish_the_rule_battles() {
+    let content = trpg_content::load_embedded().unwrap();
+    let personas = trpg_bots::personas_from_ron(include_str!("../personas.ron")).unwrap();
+    for id in ["test_escape", "test_retreat", "test_hold", "test_green"] {
+        let stage = stage(&content, &content.battles[id]);
+        let mut won = 0;
+        for (name, persona) in &personas {
+            let entrant = BattleEntrant::persona(name, *persona, content.ai, &stage);
+            let tries = play_tries(&stage, &entrant, 1..4, 60)
+                .unwrap_or_else(|e| panic!("{id}, {name}: {e}"));
+            let unfinished: Vec<u64> = tries
+                .iter()
+                .filter(|t| t.outcome.is_none())
+                .map(|t| t.seed)
+                .collect();
+            let wanders = id == "test_escape" && name == "casual";
+            let allowed = if wanders { tries.len() - 1 } else { 0 };
+            assert!(
+                unfinished.len() <= allowed,
+                "{id}, {name}: no end in 60 turns, seeds {unfinished:?}"
+            );
+            won += tries.iter().filter(|t| t.measures["won"] == 1).count();
+        }
+        if id == "test_escape" {
+            assert!(won > 0, "no persona won the escape");
+        }
+    }
+}
+
 /// A try: every command with its events, and the state it ended in.
 type Try = (
     Vec<(trpg_core::Command, Vec<trpg_core::Event>)>,
@@ -80,7 +114,8 @@ type Try = (
 /// and its events, in order, and the state it ends in.
 fn recorded(id: &str, seed: u64) -> Try {
     use shuyi_core::Bot;
-    use trpg_core::{Command, Phase, next_command};
+    use shuyi_core::bots::play_observed;
+    use trpg_core::Phase;
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let def = &content.battles[id];
     let lead = LeadProfile::new("Bot", LeadGender::Male);
@@ -88,19 +123,21 @@ fn recorded(id: &str, seed: u64) -> Try {
     let mut setup = campaign.battle_setup(def, &content.tables());
     setup.seed = seed;
     let (mut state, _) = BattleState::new(setup);
-    let mut bot = BaselineBot::new(content.ai);
+    let (mut player, mut enemy, mut other) = (
+        BaselineBot::new(content.ai),
+        BaselineBot::new(content.ai),
+        BaselineBot::new(content.ai),
+    );
+    let mut bots: [(Phase, &mut dyn Bot<BattleState>); 3] = [
+        (Phase::Player, &mut player),
+        (Phase::Enemy, &mut enemy),
+        (Phase::Other, &mut other),
+    ];
     let mut record = Vec::new();
-    while state.outcome().is_none() && state.turn() <= 60 {
-        let command = if state.phase() == Phase::Player {
-            bot.choose(&state)
-        } else {
-            next_command(&state, &content.ai).unwrap_or(Command::EndPhase)
-        };
-        let events = state
-            .apply(&command)
-            .unwrap_or_else(|e| panic!("{id}, seed {seed}: {command:?}: {e}"));
-        record.push((command, events));
-    }
+    play_observed(&mut state, &mut bots, 60, |_, command, events| {
+        record.push((command.clone(), events.to_vec()));
+    })
+    .unwrap_or_else(|e| panic!("{id}, seed {seed}: {e}"));
     (record, state)
 }
 

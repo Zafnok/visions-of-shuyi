@@ -23,8 +23,10 @@ impl<T: Bot<BattleState> + ?Sized> PlayerBot for T {}
 /// The baseline: the enemy AI ([`next_command`]) playing the player's
 /// side, ending the phase when it has nothing left to do. Every
 /// [`BattleEntrant`](crate::BattleEntrant) also plays the AI's phases with
-/// one, and the personas play their copies on with it. It never uses
-/// items and has no randomness of its own, so it takes no seed.
+/// one, and the personas play their copies on with it. It never chooses
+/// an item on the player's side; on the other phases [`next_command`] may
+/// have a green unit drink one of its own (0513). It has no randomness of
+/// its own, so it takes no seed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BaselineBot {
     weights: AiWeights,

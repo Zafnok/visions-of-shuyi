@@ -4,7 +4,8 @@ use trpg_core::{BattleSetup, CharacterId, Event, Trigger, TriggerWhen, Turn};
 use super::*;
 use crate::BaselineBot;
 use crate::testkit::{
-    Scripted, attack, content, enemy, lord, player, rigged, setup, start, stationary, tile, weak,
+    Scripted, attack, content, enemy, lord, player, rigged, setup, stage, start, stationary, tile,
+    weak,
 };
 
 fn personas() -> Personas {
@@ -412,6 +413,79 @@ fn progress_follows_the_objective() {
     // No one who may seize: no distance.
     let empty = start(vec![enemy(4, 8)]);
     assert_eq!(seize_distance(&empty, tile(0), false), 0);
+}
+
+/// A unit that walks onto the exit and leaves scores more than one that
+/// walks there and waits: leaving counts as reaching the goal, so it keeps
+/// the approach of its walk.
+#[test]
+fn escaping_scores_more_than_waiting_on_the_exit() {
+    let mut runner = player(1, 1);
+    runner.stats.mov = 8;
+    let (begin, _) = BattleState::new(BattleSetup {
+        objective: Objective::Escape {
+            area: trpg_core::TileRect {
+                x: 7,
+                y: 4,
+                w: 2,
+                h: 1,
+            },
+        },
+        ..setup(vec![runner, lord(player(2, 0))])
+    });
+    let after = |action| {
+        let mut state = begin.clone();
+        state
+            .apply(&Command::Act {
+                unit: UnitId(1),
+                dest: tile(7),
+                action,
+            })
+            .unwrap();
+        state
+    };
+    let (escaped, waited) = (after(UnitAction::Escape), after(UnitAction::Wait));
+    assert_eq!(escaped.escaped().len(), 1);
+    // Five tiles from the exit (stepping onto it is free), whether it left
+    // or stands on it.
+    assert_eq!(approach(&begin, &escaped), 5);
+    assert_eq!(approach(&begin, &waited), 5);
+    for (name, persona) in &personas() {
+        let score = |end: &BattleState| Tally::between(&begin, end).score(&persona.weights);
+        assert!(score(&escaped) > score(&waited), "{name}");
+    }
+}
+
+/// A boss who can't be killed going down counts as an enemy felled.
+#[test]
+fn an_enemy_that_goes_down_counts_as_fallen() {
+    let mut setup = stage("test_hold").classic;
+    let rogue = setup
+        .units
+        .iter_mut()
+        .find(|u| u.defeat == trpg_core::Defeat::GoesDown)
+        .unwrap();
+    rogue.hp = 1;
+    let (rogue, at) = (rogue.id, rogue.pos);
+    let striker = setup.units.iter_mut().find(|u| u.is_lord).unwrap();
+    *striker = rigged(striker.clone());
+    let striker = striker.id;
+    let (begin, _) = BattleState::new(setup);
+    let mut end = begin.clone();
+    end.apply(&Command::Act {
+        unit: striker,
+        dest: Pos::new(at.x - 1, at.y),
+        action: UnitAction::Attack {
+            target: rogue,
+            slot: 0,
+            active: None,
+            art: None,
+        },
+    })
+    .unwrap();
+    assert_eq!(end.down().len(), 1);
+    assert_eq!(end.fallen(), []);
+    assert_eq!(Tally::between(&begin, &end).enemy_fell, 1);
 }
 
 // ---- Order --------------------------------------------------------------------
