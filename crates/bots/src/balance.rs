@@ -278,19 +278,20 @@ impl Knob<TunedBattle> for Each {
     }
 
     fn apply(&self, battle: &TunedBattle, step: i32) -> Option<TunedBattle> {
-        match &self.change {
-            Change::Level => battle.with(self.entry, |b, foe| {
+        match (&self.change, step) {
+            (Change::Level, _) => battle.with(self.entry, |b, foe| {
                 foe.level = b.moved(foe, step);
                 Some(())
             }),
-            Change::Count if step > 0 => self.add(battle),
-            Change::Count => {
+            (Change::Count, 0) => Some(battle.clone()),
+            (Change::Count, 1..) => self.add(battle),
+            (Change::Count, _) => {
                 let mut out = battle.clone();
                 out.text.foes.retain(|f| f.entry != self.entry);
                 let gone = out.text.foes.len() < battle.text.foes.len();
                 (gone && !out.text.foes.is_empty() && out.load().is_ok()).then_some(out)
             }
-            Change::Class(at, all) => {
+            (Change::Class(at, all), _) => {
                 let to = at.checked_add_signed(isize::try_from(step).ok()?)?;
                 let (template, _) = all.get(to)?;
                 battle.with(self.entry, |b, foe| {
@@ -300,7 +301,7 @@ impl Knob<TunedBattle> for Each {
                     Some(())
                 })
             }
-            Change::Weapon => battle.with(self.entry, |b, foe| {
+            (Change::Weapon, _) => battle.with(self.entry, |b, foe| {
                 let mut loadout = b.loadout(foe)?;
                 let first = loadout.weapons.first_mut()?;
                 *first = b.tier(first, step)?;
@@ -312,17 +313,18 @@ impl Knob<TunedBattle> for Each {
 
     fn describe(&self, step: i32) -> String {
         let label = &self.label;
-        match &self.change {
-            Change::Level => format!("{label} {step:+} levels"),
-            Change::Count if step > 0 => format!("one more beside {label}"),
-            Change::Count => format!("removed {label}"),
-            Change::Class(at, all) => {
+        match (&self.change, step) {
+            (Change::Level, _) => format!("{label} {step:+} levels"),
+            (Change::Count | Change::Weapon, 0) => format!("{label} as authored"),
+            (Change::Count, 1..) => format!("one more beside {label}"),
+            (Change::Count, _) => format!("removed {label}"),
+            (Change::Class(at, all), _) => {
                 let to = at.checked_add_signed(isize::try_from(step).unwrap_or(0));
                 let class = to.and_then(|to| all.get(to)).map_or("?", |(_, name)| name);
                 format!("{label} → {class}")
             }
-            Change::Weapon if step > 0 => format!("{label}: weapon a tier up"),
-            Change::Weapon => format!("{label}: weapon a tier down"),
+            (Change::Weapon, 1..) => format!("{label}: weapon a tier up"),
+            (Change::Weapon, _) => format!("{label}: weapon a tier down"),
         }
     }
 }

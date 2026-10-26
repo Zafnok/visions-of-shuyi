@@ -18,6 +18,30 @@ fn battle(id: &str) -> (TunedBattle, Vec<Box<dyn Knob<TunedBattle>>>) {
     (battle, knobs)
 }
 
+/// A battle of its own: the lord far off, and `enemies` (entries) on the
+/// test map's open middle.
+fn own(enemies: &str) -> (TunedBattle, Vec<Box<dyn Knob<TunedBattle>>>) {
+    let source = format!(
+        "(
+    id: \"own\",
+    map: \"test_small\",
+             player_slots: [(character: \"test_lord\", pos: (2, 7))],
+             enemies: [
+{enemies}
+    ],
+    objective: Rout(),
+             difficulty: Normal,
+    music: Pool(\"skirmish\"),
+    seed: 1,
+)
+"
+    );
+    let text = BattleText::parse("own.ron", "own", &source).unwrap_or_else(|e| panic!("{e}"));
+    let battle = TunedBattle::new(text, Arc::clone(&CONTENT));
+    let knobs = knobs(&battle).unwrap_or_else(|e| panic!("{e}"));
+    (battle, knobs)
+}
+
 fn knob<'a>(knobs: &'a [Box<dyn Knob<TunedBattle>>], name: &str) -> &'a dyn Knob<TunedBattle> {
     let found = knobs.iter().find(|k| k.name() == name);
     found.unwrap_or_else(|| panic!("no knob {name}")).as_ref()
@@ -239,4 +263,75 @@ proptest! {
         }
         prop_assert!(battle.load().is_ok(), "{:?}", battle.load());
     }
+}
+
+#[test]
+fn copies_fill_every_free_tile_within_2_nearest_first_after_the_original() {
+    let (one, knobs) = own("        (template: \"test_brigand\", pos: (6, 4)),");
+    let count = knob(&knobs, "Brigand at 6,4: count");
+    let mut more = one.clone();
+    let mut tiles = Vec::new();
+    while let Some(next) = count.apply(&more, 1) {
+        more = next;
+        tiles.push(more.text.foes.iter().rfind(|f| f.copy).map(|f| f.pos));
+        assert!(tiles.len() <= 12, "only 12 tiles lie within 2");
+    }
+    // The first copy is just north of it, then the rest of the 4 tiles
+    // next to it before any 2 away; all 12 are open ground.
+    assert_eq!(tiles[..2], [Some((6, 3)), Some((5, 4))]);
+    let near: Vec<(i32, i32)> = tiles[..4].iter().flatten().copied().collect();
+    assert!(
+        near.iter().all(|(x, y)| (x - 6).abs() + (y - 4).abs() == 1),
+        "{near:?}"
+    );
+    let mut all: Vec<(i32, i32)> = tiles.iter().flatten().copied().collect();
+    all.sort_unstable();
+    all.dedup();
+    assert_eq!(all.len(), 12, "{tiles:?}");
+    let copies: Vec<bool> = more.text.foes.iter().map(|f| f.copy).collect();
+    assert!(!copies[0], "the original stays first");
+    assert!(copies[1..].iter().all(|&c| c));
+}
+
+#[test]
+fn removing_the_only_enemy_or_one_already_gone_doesn_t_apply() {
+    let (one, knobs) = own("        (template: \"test_brigand\", pos: (6, 4)),");
+    // One template: no class to pick.
+    assert!(knobs.iter().all(|k| !k.name().ends_with(": class")));
+    let count = knob(&knobs, "Brigand at 6,4: count");
+    assert!(count.apply(&one, -1).is_none());
+
+    let (two, knobs) = own("        (template: \"test_brigand\", pos: (6, 4)),
+                 (template: \"test_raider\", pos: (8, 4)),");
+    let count = knob(&knobs, "Brigand at 6,4: count");
+    let gone = count.apply(&two, -1).unwrap_or_else(|| panic!("no apply"));
+    assert!(count.apply(&gone, -1).is_none());
+    let level = knob(&knobs, "Brigand at 6,4: level");
+    assert!(level.apply(&gone, 1).is_none());
+    let weapon = knob(&knobs, "Brigand at 6,4: weapon");
+    assert!(weapon.apply(&gone, 1).is_none());
+
+    // At 0 a count knob changes nothing.
+    let same = count.apply(&two, 0).unwrap_or_else(|| panic!("no apply"));
+    assert_eq!(same.text.text(), two.text.text());
+    assert_eq!(count.describe(0), "Brigand at 6,4 as authored");
+}
+
+#[test]
+fn a_class_knob_steps_both_ways_from_the_enemy_s_own_template() {
+    let (quick, knobs) = battle("quick");
+    // test_raider is the second of quick's three templates.
+    let class = knob(&knobs, "Raider at 7,1: class");
+    assert_eq!(class.range(), -1..=1);
+    let brigand = class
+        .apply(&quick, -1)
+        .unwrap_or_else(|| panic!("no apply"));
+    assert_eq!(
+        brigand.text.foes[2].template.as_deref(),
+        Some("test_brigand")
+    );
+    assert_eq!(class.describe(-1), "Raider at 7,1 → Brigand");
+    let weapon = knob(&knobs, "Raider at 7,1: weapon");
+    assert_eq!(weapon.describe(-1), "Raider at 7,1: weapon a tier down");
+    assert_eq!(weapon.describe(0), "Raider at 7,1 as authored");
 }

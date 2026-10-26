@@ -110,11 +110,6 @@ impl BattleText {
         &self.file.entries
     }
 
-    /// Its human-facing name.
-    pub fn path(&self) -> &str {
-        &self.file.path
-    }
-
     /// The battle as the content check loads it.
     pub fn load(&self, refs: &BattleRefs<'_>) -> Result<BattleDef, Vec<ContentError>> {
         from_source(&self.file.path, &self.file.stem, &self.text(), refs)
