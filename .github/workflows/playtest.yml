@@ -13,6 +13,12 @@ name: Playtest
 # to main; "Run workflow" (workflow_dispatch) always plays. As ADR-0014
 # asks, the workflow always runs and reports, and the job is skipped by
 # `if:` (never by a workflow-level `paths` filter).
+#
+# A push to main is never cancelled by the next push (ticket 0515): each
+# push diffs only its own commits, so a cancelled run's balance change
+# would go unplayed (on 2026-10-22 two lever pushes were cancelled by a
+# third that changed no lever, and skipped). A pull request's newer commit
+# still cancels its older run; its range HEAD^1 HEAD covers both.
 
 on:
   pull_request:
@@ -24,8 +30,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: playtest-${{ github.ref }}
-  cancel-in-progress: true
+  # A push to main is never cancelled: the next push diffs only its
+  # own commits, so a cancelled run's balance change would go unplayed
+  # (ticket 0515). A PR's newer commit supersedes its older one.
+  group: playtest-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 env:
   CARGO_TERM_COLOR: always
