@@ -934,3 +934,107 @@ fn a_unit_that_cant_be_killed_is_never_recruited() {
         ["trigger 0: \"test_rogue\" is recruited but can't be killed: it goes down instead"]
     );
 }
+
+/// A battle on `test_village` (five houses) with this `village` entry and
+/// these enemy settings.
+fn village_battle(village: &str, enemy: &str) -> String {
+    format!(
+        r#"(
+    id: "t",
+    map: "test_village",
+    player_slots: [(character: "lead", pos: (2, 4))],
+    enemies: [(template: "test_raider", pos: (13, 0){enemy})],
+    objective: Rout(),
+    {village}
+    difficulty: Normal,
+    music: Cue("battle_bright"),
+    seed: 1,
+)"#
+    )
+}
+
+fn village_errors(c: &Content, village: &str, enemy: &str) -> Vec<String> {
+    load(c, &village_battle(village, enemy))
+        .err()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| e.message)
+        .collect()
+}
+
+/// A village goal (0313): its houses are the map's `house` tiles, in
+/// `(y, x)` order; raiders are marked.
+#[test]
+fn a_village_and_its_raiders_load() {
+    let c = content();
+    let src = village_battle(
+        "village: (minimum: 3, rewards: [Gold(300), Item(\"elixir\")]),",
+        ", raider: true",
+    );
+    let def = load(&c, &src).unwrap_or_else(|e| panic!("{e:?}"));
+    let village = def.village.unwrap();
+    let p = Pos::new;
+    assert_eq!(
+        village.houses,
+        [p(4, 0), p(1, 2), p(6, 2), p(2, 6), p(6, 6)]
+    );
+    assert_eq!(village.minimum, 3);
+    assert_eq!(
+        village.rewards,
+        [Loot::Gold(300), Loot::Item(ItemId::new("elixir"))]
+    );
+    assert!(def.enemies[0].raider);
+    // Neither is there by default.
+    let def = load(&c, OK).unwrap();
+    assert_eq!(def.village, None);
+    assert!(!def.enemies[0].raider);
+    // The test battle loads with both.
+    let battle = &c.battles["test_village"];
+    assert_eq!(battle.village.as_ref().map(|v| v.houses.len()), Some(5));
+    assert!(battle.enemies.iter().any(|u| u.raider));
+}
+
+#[test]
+fn village_errors_are_reported() {
+    let c = content();
+    let rewards = "rewards: [Gold(300), Item(\"elixir\")]";
+    assert_eq!(
+        village_errors(&c, "village: (minimum: 0, rewards: []),", ""),
+        ["village: minimum 0; save at least 1 house"]
+    );
+    assert_eq!(
+        village_errors(&c, "village: (minimum: 6),", ""),
+        ["village: minimum 6 but the map has 5 houses"]
+    );
+    assert_eq!(
+        village_errors(&c, "village: (minimum: 4, rewards: []),", ""),
+        ["village: 0 rewards; give one per house past the minimum (1)"]
+    );
+    assert_eq!(
+        village_errors(&c, &format!("village: (minimum: 2, {rewards}),"), ""),
+        ["village: 2 rewards; give one per house past the minimum (3)"]
+    );
+    assert_eq!(
+        village_errors(
+            &c,
+            "village: (minimum: 3, rewards: [Gold(0), Item(\"nothing\")]),",
+            ""
+        ),
+        [
+            "village: reward 1 is 0 gold",
+            "village: reward 2: no item \"nothing\""
+        ]
+    );
+    assert_eq!(
+        village_errors(&c, "", ", raider: true"),
+        ["raider: only a battle with a `village` has raiders"]
+    );
+    assert_eq!(
+        village_errors(
+            &c,
+            &format!("village: (minimum: 3, {rewards}),"),
+            ", raider: true, faction: Ally"
+        ),
+        ["enemy 1: only enemies are raiders"]
+    );
+}

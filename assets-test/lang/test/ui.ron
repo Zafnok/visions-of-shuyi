@@ -1179,6 +1179,7 @@
     (key: "battle.rewind.escaped", source: "{who} escaped", text: "{who} ESCAPED"),
     (key: "battle.rewind.shopped", source: "{who} visited a shop", text: "{who} VISITED A SHOP"),
     (key: "battle.rewind.opened", source: "{who} opened a chest", text: "{who} OPENED A CHEST"),
+    (key: "battle.rewind.evacuated", source: "{who} evacuated a house", text: "{who} EVACUATED A HOUSE"),
     (key: "battle.rewind.cast", source: "{who} cast {what}", text: "{who} CAST {what}"),
     (
         key: "battle.rewind.cast_on",

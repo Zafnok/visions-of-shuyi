@@ -230,6 +230,12 @@ pub struct Unit {
     /// saves still load (ADR-0039).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub carried: Vec<ItemId>,
+    /// An enemy that burns the houses it ends its action on or next to
+    /// (`turn-structure.md`, *Save the village*; [`crate::battle`]). Set by
+    /// chapter data. Left out of a save when false, so older saves still
+    /// load (ADR-0039).
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub raider: bool,
 }
 
 /// Letters in a map label.
@@ -393,6 +399,7 @@ impl Unit {
             skill_uses: SkillUses::default(),
             talent: None,
             carried: Vec::new(),
+            raider: false,
         }
     }
 }
@@ -573,6 +580,7 @@ mod tests {
             defeat: crate::Defeat::Falls,
             talent: Some(StatKind::Spd),
             carried: Vec::new(),
+            raider: false,
         };
         assert_eq!(unit, Ok(expected));
     }
@@ -700,6 +708,7 @@ mod tests {
             defeat: crate::Defeat::Falls,
             talent: None,
             carried: Vec::new(),
+            raider: false,
         };
         assert_eq!(unit, Ok(expected));
     }

@@ -924,6 +924,7 @@ pub(crate) fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         defeat: crate::Defeat::Falls,
         talent: None,
         carried: Vec::new(),
+        raider: false,
     };
     carrying(u, &[weapon(1, 1, 3)])
 }
@@ -976,6 +977,7 @@ pub(crate) fn setup(units: Vec<Unit>) -> BattleSetup {
         triggers: vec![],
         mode: crate::GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     }
 }
 
@@ -2920,6 +2922,28 @@ fn prop_map() -> BattleMap {
     m
 }
 
+/// The houses of the property test's map.
+const PROP_HOUSES: [Pos; 4] = [
+    Pos { x: 1, y: 0 },
+    Pos { x: 7, y: 3 },
+    Pos { x: 5, y: 4 },
+    Pos { x: 2, y: 5 },
+];
+
+/// The property test's village goal with this minimum (1 to 4).
+fn prop_village(minimum: u32) -> VillageGoal {
+    let rewards = [
+        Loot::Gold(40),
+        Loot::Item(item("tonic")),
+        Loot::Item(item("iron")),
+    ];
+    VillageGoal {
+        houses: PROP_HOUSES.to_vec(),
+        minimum,
+        rewards: rewards[..4 - minimum as usize].to_vec(),
+    }
+}
+
 /// Every unit's (on the map or fallen) uses left per spell.
 fn spell_uses(s: &BattleState) -> BTreeMap<(UnitId, SpellId), u8> {
     s.units()
@@ -2973,6 +2997,9 @@ fn gold_flow(events: &[Event]) -> i64 {
             Event::ChestOpened {
                 loot: Loot::Gold(n),
                 ..
+            }
+            | Event::HouseReward {
+                loot: Loot::Gold(n),
             } => i64::from(*n),
             _ => 0,
         })
@@ -3124,6 +3151,8 @@ prop_compose! {
         gold in 0u32..=1500,
         triggers in prop::collection::vec(arb_trigger(), 0..=6),
         casual in any::<bool>(),
+        village in 0u32..=4,
+        raiders in any::<u8>(),
     ) -> BattleSetup {
         let factions = [Faction::Player, Faction::Enemy, Faction::Ally, Faction::Neutral];
         let mut units = Vec::new();
@@ -3134,7 +3163,9 @@ prop_compose! {
             let character = Some(CharacterId(format!("c{id}")));
             // Green units carry a potion of their own (0513).
             let carried = if faction == Faction::Ally { vec![item("potion")] } else { vec![] };
-            Unit { id: UnitId(id), faction, pos, character, carried, ..stats.next().unwrap() }
+            // Enemies whose bit is set in `raiders` burn houses (0313).
+            let raider = faction == Faction::Enemy && raiders & (1 << (id % 8)) != 0;
+            Unit { id: UnitId(id), faction, pos, character, carried, raider, ..stats.next().unwrap() }
         };
         let mut tiles = tiles.into_iter();
         for (n, faction) in [
@@ -3177,6 +3208,8 @@ prop_compose! {
                 .map(|(i, t)| Trigger { scene: format!("s{i}"), ..t })
                 .collect(),
             mode: if casual { GameMode::Casual } else { GameMode::Classic },
+            // A village of the map's houses with this minimum, 0 for none.
+            village: (village > 0).then(|| prop_village(village)),
             ..setup(units)
         }
     }
@@ -3214,6 +3247,7 @@ proptest! {
             let turn = s.turn();
             let gold = s.gold();
             let opened = [p(4, 2), p(7, 0), p(1, 3)].map(|c| s.is_opened(c));
+            let houses_before = s.village().map(|v| v.houses().clone());
             let uses_before = spell_uses(&s);
             let skill_uses_before = skill_uses(&s);
             let durability_before: BTreeMap<(UnitId, usize), Option<u32>> = s
@@ -3347,6 +3381,29 @@ proptest! {
             {
                 prop_assert_eq!(*gold, s.gold());
             }
+            // A house changes only with its event: a standing one is saved
+            // or burns, a saved or burned one never changes again; a
+            // village that can't be saved any more has lost the battle.
+            if let (Some(before), Some(v)) = (&houses_before, s.village()) {
+                for (pos, &was) in before {
+                    let now = v.house(*pos).unwrap();
+                    let saved = events.iter().any(|e| matches!(e, Event::HouseSaved { pos: at, .. } if at == pos));
+                    let burned = events.iter().any(|e| matches!(e, Event::HouseBurned { pos: at, .. } if at == pos));
+                    match was {
+                        HouseState::Standing => {
+                            prop_assert_eq!(now == HouseState::Saved, saved);
+                            prop_assert_eq!(now == HouseState::Burned, burned);
+                        }
+                        _ => prop_assert!(now == was && !saved && !burned, "{:?}: {:?}", pos, events),
+                    }
+                }
+                if v.is_failed() {
+                    prop_assert_eq!(s.outcome(), Some(Outcome::Defeat));
+                }
+                if s.outcome() == Some(Outcome::Victory) {
+                    prop_assert!(v.standing().next().is_none());
+                }
+            }
             // An opened chest stays opened.
             for (c, was) in [p(4, 2), p(7, 0), p(1, 3)].into_iter().zip(opened) {
                 prop_assert!(!was || s.is_opened(c));
@@ -3400,7 +3457,9 @@ proptest! {
             let gained = events.iter().any(|e| {
                 matches!(
                     e,
-                    Event::Bought { to: Destination::Pack, .. } | Event::ChestOpened { .. }
+                    Event::Bought { to: Destination::Pack, .. }
+                        | Event::ChestOpened { .. }
+                        | Event::HouseReward { .. }
                 )
             });
             prop_assert!(gained || s.pack().items.len() <= pack);
@@ -3476,3 +3535,4 @@ mod spell;
 mod support;
 mod terrain;
 mod triggers;
+mod village;

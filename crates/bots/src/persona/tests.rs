@@ -84,6 +84,7 @@ fn score_weighs_every_count() {
         counter: 16,
         turns: 9,
         items: 10,
+        houses: 17,
     };
     let only = |set: fn(&mut Weights)| {
         let mut weights = Weights::default();
@@ -106,6 +107,7 @@ fn score_weighs_every_count() {
     assert_eq!(only(|w| w.counter = 1000), 16_000);
     assert_eq!(only(|w| w.turns = 1000), 9000);
     assert_eq!(only(|w| w.items = -1000), -10_000);
+    assert_eq!(only(|w| w.houses = 1000), 17_000);
     let all = Weights {
         won: 1,
         lost: 1,
@@ -123,8 +125,9 @@ fn score_weighs_every_count() {
         counter: 1,
         turns: 1,
         items: 1,
+        houses: 1,
     };
-    assert_eq!(tally.score(&all), 136);
+    assert_eq!(tally.score(&all), 153);
     // Clamped, never wrapped.
     let huge = Tally {
         progress: i64::from(i32::MAX),

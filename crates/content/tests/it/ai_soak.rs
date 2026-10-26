@@ -131,6 +131,7 @@ fn battle(content: &Content, seed: u64) -> BattleState {
         triggers: vec![],
         mode: trpg_core::GameMode::Classic,
         battle_notes: vec![],
+        village: None,
     });
     state
 }

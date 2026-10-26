@@ -16,6 +16,7 @@ that ships has none of them.**
 | `chapters/quick.ron`, `battles/quick.ron` | The debug Quick Battle (title screen, where the debug tools are on) |
 | `battles/test_escape.ron`, `battles/test_retreat.ron`, `battles/test_hold.ron`, `chapters/test_hold.ron` | One of Act 1's battle rules each (ticket 0319): an escape map, a boss who retreats, a boss who can't be killed in a hold whose closing scene (`dialogue/test_act1.dlg`) kills the knight with `@dies`. The bots play them (`cargo xtask playtest <id>`) |
 | `battles/test_green.ron` | A green villager with two Potions of its own (ticket 0513): it drinks one when wounded. The bots play it (`cargo xtask playtest test_green`) |
+| `battles/test_village.ron`, `maps/test_village.map` | Save the village (ticket 0313): five houses, save at least three, two raiders who burn them. The bots play it (`cargo xtask playtest test_village`) |
 | `maps/test_small.map` | The map of both battles |
 | `cinematics/test.ron` | The test cinematic: a pan over the test battle's map, on which the lead walks up to the brigand and fells it, two text boxes of the test scene, three faces crossing, then the logo. The debug menu's "Play test cinematic" plays it |
 | `dialogue/test*.dlg` | The test scenes: the dialogue test, the test chapter's scenes, the battle triggers' and the supports' |

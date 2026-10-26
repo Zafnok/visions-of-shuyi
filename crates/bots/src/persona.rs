@@ -69,6 +69,8 @@ pub struct Weights {
     pub turns: i32,
     /// Each battle-pack item used.
     pub items: i32,
+    /// Each house saved, less each house burned ([`Tally::houses`]).
+    pub houses: i32,
 }
 
 /// One player type: the mode it plays and how it thinks.
@@ -144,6 +146,9 @@ pub struct Tally {
     pub turns: i64,
     /// Battle-pack items used.
     pub items: i64,
+    /// Houses saved less houses burned, in a battle with a village goal
+    /// (0313).
+    pub houses: i64,
 }
 
 impl Tally {
@@ -177,6 +182,7 @@ impl Tally {
             counter: danger.counter,
             turns: i64::from(end.turn()) - i64::from(start.turn()),
             items: count(start.pack().items.iter()) - count(end.pack().items.iter()),
+            houses: houses(end) - houses(start),
         }
     }
 
@@ -199,10 +205,18 @@ impl Tally {
             (self.counter, weights.counter),
             (self.turns, weights.turns),
             (self.items, weights.items),
+            (self.houses, weights.houses),
         ];
         let total: i64 = terms.iter().map(|&(n, w)| n * i64::from(w)).sum();
         i32::try_from(total.clamp(i32::MIN.into(), i32::MAX.into())).unwrap_or(0)
     }
+}
+
+/// Houses saved less houses burned so far.
+fn houses(state: &BattleState) -> i64 {
+    state
+        .village()
+        .map_or(0, |v| i64::from(v.saved()) - i64::from(v.lost()))
 }
 
 fn count<T>(items: impl Iterator<Item = T>) -> i64 {
@@ -240,7 +254,8 @@ fn approach(start: &BattleState, end: &BattleState) -> i64 {
 }
 
 /// How far, walking, each tile is from the objective's goals (an enemy in
-/// a rout, the boss, the tile to seize, the exit area's tiles), worked out once per movement type:
+/// a rout, the boss, the tile to seize, the exit area's tiles; and a village's
+/// standing houses), worked out once per movement type:
 /// the engine's flow field, as the enemy AI walks ([`next_command`]).
 struct Goals<'a> {
     state: &'a BattleState,
@@ -267,6 +282,12 @@ impl<'a> Goals<'a> {
             }
             Objective::Survive { .. } => Vec::new(),
         };
+        // The houses still standing are goals too: a race to them (0313).
+        let houses = state
+            .village()
+            .into_iter()
+            .flat_map(trpg_core::Village::standing);
+        let goals: Vec<Pos> = goals.into_iter().chain(houses).collect();
         (!goals.is_empty()).then(|| Goals {
             state,
             targets: goals,

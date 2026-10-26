@@ -3029,6 +3029,7 @@ pub(crate) mod testing {
             triggers: vec![],
             mode: trpg_core::GameMode::Classic,
             battle_notes: vec![],
+            village: None,
         }
     }
 

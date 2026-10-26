@@ -61,6 +61,19 @@
 //!    that went down are no one's targets: they aren't among the battle's
 //!    units.
 //!
+//! 5. **Saving the village** (a battle with a village goal, ticket 0313):
+//!    a **player** unit that can stop on a standing house evacuates it,
+//!    from the lowest `(y, x)` such tile, before anything else but
+//!    escaping. A **raider** (*Claude's starting rule*, tuned by the bots),
+//!    whatever its behaviour, while a house stands: if it can stop where it
+//!    burns one (on a standing house or beside it), it goes there and makes
+//!    its best attack from such a tile, or else waits on the one that burns
+//!    the most houses (then the lowest `(y, x)`): burning comes before any
+//!    other attack. Otherwise it attacks if it can, else walks towards the
+//!    nearest standing house as an `Aggressive` unit with no attack walks
+//!    towards its targets (the flow distance to the tiles that burn one)
+//!    and waits. It is ordered by that flow distance.
+//!
 //! A unit **holding its tile** waits there. One that may use arts and
 //! actives (below) first uses a non-combat active (Brace, War Cry…) if a
 //! hostile unit could attack its tile this turn (the danger zone): the
@@ -124,7 +137,9 @@
 //! from it to a tile next to one of its targets, ignoring units (the
 //! engine's [`flow_field`](shuyi_core::path::flow_field), from every target
 //! at once). A tile it can't walk from has none. For a player unit on an
-//! escape map, the cost to walk into the exit area instead (0 inside it).
+//! escape map, the cost to walk into the exit area instead (0 inside it);
+//! for a raider, the cost to walk to a tile that burns a standing house
+//! (0 there).
 
 use crate::prelude::*;
 
@@ -138,8 +153,10 @@ use shuyi_core::path;
 
 use crate::art::ArtId;
 use crate::battle::{
-    BattleState, CastTarget, Command, Objective, PendingMove, Phase, TileRect, UnitAction,
+    BattleState, CastTarget, Command, HouseState, Objective, PendingMove, Phase, TileRect,
+    UnitAction, burns,
 };
+
 use crate::combat::{CombatHp, Forecast, Side, SideForecast, strike_order};
 use crate::geom::{Grid, Pos};
 use crate::item::{Equipped, WEAPON_SLOTS};
@@ -370,6 +387,8 @@ struct Planner<'a> {
     state: &'a BattleState,
     weights: &'a AiWeights,
     flows: RefCell<BTreeMap<(Faction, MovementTypeId), Rc<Flow>>>,
+    /// The raiders' flow fields, by movement type.
+    raids: RefCell<BTreeMap<MovementTypeId, Rc<Flow>>>,
     dangers: RefCell<BTreeMap<Faction, Rc<TileSet>>>,
 }
 
@@ -379,6 +398,7 @@ impl<'a> Planner<'a> {
             state,
             weights,
             flows: RefCell::default(),
+            raids: RefCell::default(),
             dangers: RefCell::default(),
         }
     }
@@ -428,6 +448,16 @@ impl<'a> Planner<'a> {
                 None => wait_at(approach(&reach, &dests, &flow).unwrap_or(unit.pos)),
             };
             return Some(other(command));
+        }
+        if let Some(dest) = evacuation(state, unit, &dests) {
+            return Some(other(Command::Act {
+                unit: unit.id,
+                dest,
+                action: UnitAction::Evacuate,
+            }));
+        }
+        if let Some(decision) = self.raid(unit, &reach, &dests) {
+            return Some(decision);
         }
         let (attack, can_kill) = self.best_attack(unit, &reach, &dests);
         if !can_kill && let Some(command) = self.own_item(unit) {
@@ -689,6 +719,71 @@ impl<'a> Planner<'a> {
             .unwrap_or(unit.pos)
     }
 
+    /// What raider `unit` does while a house stands (see the module docs);
+    /// `None` if it isn't a raider or no house stands.
+    fn raid(&self, unit: &Unit, reach: &Reach, dests: &[Pos]) -> Option<Decision> {
+        let state = self.state;
+        let standing: Vec<Pos> = raidable(state, unit)?;
+        let burned = |d: Pos| standing.iter().filter(|&&h| burns(d, h)).count();
+        let burning: Vec<Pos> = dests.iter().copied().filter(|&d| burned(d) > 0).collect();
+        let class = state.classes().get(&unit.class)?;
+        let flow = self.raid_flow(class.movement_type, &standing);
+        let distance = flow.get(unit.pos).copied().flatten().unwrap_or(u32::MAX);
+        let wait_at = |dest| Decision {
+            unit: unit.id,
+            rank: Rank::Other(distance),
+            command: Command::Act {
+                unit: unit.id,
+                dest,
+                action: UnitAction::Wait,
+            },
+        };
+        let attack = |dests: &[Pos]| {
+            let (attack, _) = self.best_attack(unit, reach, dests);
+            attack.map(|(score, command)| Decision {
+                unit: unit.id,
+                rank: Rank::Attack(score),
+                command,
+            })
+        };
+        if !burning.is_empty() {
+            let most = burning
+                .iter()
+                .copied()
+                .min_by_key(|&d| (Reverse(burned(d)), d.y, d.x))?;
+            return Some(attack(&burning).unwrap_or_else(|| wait_at(most)));
+        }
+        Some(
+            attack(dests)
+                .unwrap_or_else(|| wait_at(approach(reach, dests, &flow).unwrap_or(unit.pos))),
+        )
+    }
+
+    /// The flow distances to the tiles that burn a house of `standing`,
+    /// for `movement_type`.
+    fn raid_flow(&self, movement_type: MovementTypeId, standing: &[Pos]) -> Rc<Flow> {
+        let mut raids = self.raids.borrow_mut();
+        Rc::clone(raids.entry(movement_type).or_insert_with(|| {
+            let state = self.state;
+            let tiles = &state.map().tiles;
+            let goals = tiles
+                .positions()
+                .filter(|&p| standing.iter().any(|&h| burns(p, h)));
+            Rc::new(path::flow_field(
+                tiles.width(),
+                tiles.height(),
+                goals,
+                |pos| {
+                    let terrain = tiles.get(pos)?;
+                    state
+                        .terrain()
+                        .move_cost(*terrain, movement_type)
+                        .map(u32::from)
+                },
+            ))
+        }))
+    }
+
     /// The flow distances to `faction`'s targets for `movement_type`.
     fn flow(&self, faction: Faction, movement_type: MovementTypeId) -> Rc<Flow> {
         let mut flows = self.flows.borrow_mut();
@@ -823,6 +918,30 @@ fn approach(reach: &Reach, dests: &[Pos], flow: &Flow) -> Option<Pos> {
         })
         .min()
         .map(|(_, _, y, x)| Pos::new(x, y))
+}
+
+/// The tile of `dests` player unit `unit` evacuates a house from, if any:
+/// the lowest `(y, x)` standing house.
+fn evacuation(state: &BattleState, unit: &Unit, dests: &[Pos]) -> Option<Pos> {
+    if unit.faction != Faction::Player {
+        return None;
+    }
+    let village = state.village()?;
+    dests
+        .iter()
+        .copied()
+        .filter(|&d| village.house(d) == Some(HouseState::Standing))
+        .min_by_key(|d| (d.y, d.x))
+}
+
+/// The standing houses raider `unit` goes for; `None` if it isn't a raider
+/// or none stands.
+fn raidable(state: &BattleState, unit: &Unit) -> Option<Vec<Pos>> {
+    if !unit.raider || unit.faction != Faction::Enemy {
+        return None;
+    }
+    let standing: Vec<Pos> = state.village()?.standing().collect();
+    (!standing.is_empty()).then_some(standing)
 }
 
 /// The exit area `unit` runs for: a player unit's on an escape map.

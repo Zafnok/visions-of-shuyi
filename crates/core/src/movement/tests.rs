@@ -105,6 +105,7 @@ fn unit(id: u32, class: &str, faction: Faction, pos: Pos, mov: StatValue) -> Uni
         defeat: crate::Defeat::Falls,
         talent: None,
         carried: Vec::new(),
+        raider: false,
     }
 }
 

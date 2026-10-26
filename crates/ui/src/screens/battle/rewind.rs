@@ -381,6 +381,7 @@ pub fn describe(r: &Replayed, words: Words<'_>) -> String {
                 UnitAction::Escape => did("battle.rewind.escaped", who),
                 UnitAction::Shop { .. } => did("battle.rewind.shopped", who),
                 UnitAction::Open => did("battle.rewind.opened", who),
+                UnitAction::Evacuate => did("battle.rewind.evacuated", who),
                 UnitAction::Cast { spell, target, .. } => {
                     let spell = s
                         .spells()

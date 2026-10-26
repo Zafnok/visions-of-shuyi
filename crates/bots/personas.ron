@@ -43,6 +43,9 @@
 //                         enemies that can reach them, by the forecast
 //   turns                 a turn that began
 //   items                 a pack item used
+//   houses                a house saved, less a house burned, in a battle
+//                         with a village goal (0313); the same for every
+//                         persona, added with the rule, not tuned
 {
     // Plays in Casual mode and cares about winning and the lord. A fall
     // doesn't upset it ("the # of deaths does not influence bot at all"),
@@ -78,6 +81,7 @@
             counter: 10,
             turns: 0,
             items: 0,
+            houses: 500,
         ),
     ),
     // Plays Classic and wants nobody dead: a fallen unit costs more than a
@@ -112,6 +116,7 @@
             counter: 10,
             turns: 0,
             items: -50,
+            houses: 500,
         ),
     ),
     // Plays Classic like a veteran: nobody dead, few turns, few items, and
@@ -146,6 +151,7 @@
             counter: 15,
             turns: -200,
             items: -300,
+            houses: 500,
         ),
     ),
 }

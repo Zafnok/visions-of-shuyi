@@ -136,6 +136,7 @@ fn def() -> BattleDef {
             units: vec![UnitId(5)],
         }],
         exit_name: None,
+        village: None,
         difficulty: Difficulty::Normal,
         kind: BattleKind::Story,
         music: BattleMusic::Pool("skirmish".into()),

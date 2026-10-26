@@ -62,6 +62,7 @@ fn every_action(s: &BattleState, unit: &Unit) -> Vec<UnitAction> {
         UnitAction::Seize,
         UnitAction::Escape,
         UnitAction::Open,
+        UnitAction::Evacuate,
     ];
     for &target in &targets {
         for slot in 0..=WEAPON_SLOTS {

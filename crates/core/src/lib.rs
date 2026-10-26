@@ -46,8 +46,9 @@ pub use ai::{AiBehavior, AiWeights, next_command};
 pub use art::{ArtDef, ArtEffect, ArtId, ArtNote, ArtTable, Debuff};
 pub use battle::{
     AttackPreview, BattleNote, BattleSetup, BattleState, Burning, CastTarget, Command,
-    CommandError, Destination, Event, GameMode, Leftovers, Objective, Outcome, PendingMove, Phase,
-    Reinforcement, SellFrom, ShopTxn, TileRect, Trigger, TriggerWhen, Turn, UnitAction, Who,
+    CommandError, Destination, Event, GameMode, HouseState, Leftovers, Objective, Outcome,
+    PendingMove, Phase, Reinforcement, SellFrom, ShopTxn, TileRect, Trigger, TriggerWhen, Turn,
+    UnitAction, Village, VillageGoal, Who,
 };
 pub use campaign::{
     ApplyError, BattleDef, BattleKind, BattleMusic, BattleRewards, Campaign, Difficulty,
