@@ -60,6 +60,10 @@ picks one, or asks for another round.
 **In:**
 - Find candidates (OpenGameArt, freesound, itch.io free assets, and the
   libraries vetted in 0020). Check each licence on its source page.
+  Include **Adventure Map** by controllerhead (CC-BY 3.0,
+  https://opengameart.org/node/53699): Nick heard it on 0025's page and
+  said it "would be decent as capital city music, or a royal march theme"
+  (`audio.md`, *The world map*).
 - A listening page (an Artifact, like 0020's) with players for every
   candidate and the question above. Use the `ask-nick` skill.
 - Record the answer in `docs/design/audio.md`: a row in *Music cues* (cue,

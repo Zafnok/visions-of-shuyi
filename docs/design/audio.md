@@ -92,6 +92,35 @@ run out while the screen is still open, the piece **loops**, after a pause of
 the 0023 listening page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J).
 No story moment uses `scene_loss` yet.
 
+### The world map (ticket 0025, in progress)
+
+Round 1 (2026-10-26, listening page
+https://claude.ai/artifact/VLAU7eYPcqx7pWRmSsVLzw) settled how the world map
+music works but not the final track; Nick asked for more samples first.
+
+- **A new world map track per act**, and also **per story arc**: when
+  something tragic happens mid-act, the map swaps to a somber track until
+  the story turns again.
+- **The map track doesn't loop back to back.** It fades out, the map stays
+  quiet for a while, then the track fades back in. (The length of the quiet
+  is not decided yet.)
+- Front-runner for the ordinary world map: **The World At Your Door** (RPG
+  Orchestral Essentials) by Jonathan Shaw (InspectorJ),
+  [OGA](https://opengameart.org/node/108343), CC-BY 3.0, the MP3 in
+  `The World At Your Door MP3.zip` (2:41).
+- Kept for other places, as Nick heard them:
+
+| Kept for | Track | Composer | Source | License |
+| -------- | ----- | -------- | ------ | ------- |
+| The world map in a somber arc: after a catastrophe, "a lot of ppl died, and we're on a long quest", until "the pieces are put back together" | World Map (`World Map_0.mp3`, 3:16) | Scott Elliott | [OGA](https://opengameart.org/node/91067) | CC-BY 4.0 |
+| A small map section, e.g. a beginner area (not a whole world); same fade and quiet as above | RPG - Overworld - Melodies of the Future (the loop `.wav`, 1:13) | jocolloman (Joseph Collard) | [OGA](https://opengameart.org/node/129152) | CC-BY 4.0 |
+| Capital city music or a royal march (a candidate for 0026) | Adventure Map (`Adventure Map.mp3`, 3:23) | controllerhead | [OGA](https://opengameart.org/node/53699) | CC-BY 3.0 |
+| Travel scenes, an airship, or riding a mount ("chocobo music") | Beyond The Clouds (Orchestral Theme) (2:21) | Matthew Pablo | [OGA](https://opengameart.org/content/beyond-the-clouds-orchestral-theme) | CC-BY 3.0 |
+
+Orchestra Loop by Brandon Morris (CC0) got no comment. The story has no
+apocalypse, beginner area, airship or mount yet: these rows only say where
+each track would fit if one comes.
+
 Which story battle uses which `battle_*` cue, and which scene switches to
 which mood, is story content. Each battle file and scene script names its
 cue.
@@ -412,3 +441,40 @@ then added:
 
 > ensure the loop has a 10-15s pause between loops for defeat/game over, and
 > transition b/w defeat and game over should not reset music playhead
+
+**The world map music, round 1** (ticket 0025, 2026-10-26; listening page
+https://claude.ai/artifact/VLAU7eYPcqx7pWRmSsVLzw). Six candidates (A–F),
+three cues we already have (R1–R3), and a second question: one world map
+track for the whole game, or one per act:
+
+> A sounds quite good, the only thing I'd be wary about is that looping it
+> over and over might not be good but having it fade out and be quiet for a
+> bit and pick back up after a while would be a good idea
+>
+> B is good for when we're at an emotional part of the story but there's
+> still an overworld section so like... think some apocalyptic event
+> happened, and we're trying to undo it, but a lot of ppl died, and we're on
+> a long quest, then until the pieces are put back together, this can be the
+> world map music
+>
+> C would be decent as capital city music, or a royal march theme, doesn't
+> really give off world map feels
+>
+> D is good as a map theme, perhaps not as a whole world theme, like if we
+> had small map sections like a beginner area it might be good, with same
+> note as A about pausing and fading in and out
+>
+> F could be like airship music..? if that makes sense..? like if we have
+> any travel scenes it could work or if we're ever mounted this could be
+> like chocobo music
+>
+> I think we can get a few more samples and solidify the choices just record
+> what I said first
+>
+> as for question 2, I think probably a new track per act might make most
+> sense, or if we get to a new arc of the story (like if some tragic event
+> happens at act 2 midway then it can swap to a somber theme)
+
+(A: The World At Your Door by Jonathan Shaw. B: World Map by Scott Elliott.
+C: Adventure Map by controllerhead. D: Melodies of the Future by jocolloman.
+E: Orchestra Loop by Brandon Morris. F: Beyond The Clouds by Matthew Pablo.)

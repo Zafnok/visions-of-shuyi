@@ -5,7 +5,7 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: decision
 completed:
