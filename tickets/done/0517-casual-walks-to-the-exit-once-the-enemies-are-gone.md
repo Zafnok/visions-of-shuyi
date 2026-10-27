@@ -78,7 +78,7 @@ say so in the ticket, and it waits for 0508.
 - [x] `the_personas_finish_the_rule_battles` has no exception and passes.
 - [x] `personas.ron` is unchanged.
 - [x] Chapter 1's 20-try measures, before and after, in the PR.
-- [x] All gates in the `run-gates` skill pass, but `main`'s own red `every_design_cue_is_in_the_manifest` (0251).
+- [x] All gates in the `run-gates` skill pass, but `main`'s own red `every_design_cue_is_in_the_manifest` (fixed in another PR).
 
 ## Tests required
 
@@ -114,8 +114,9 @@ Verified:
 
 Engine friction: estimate 15, measured 14 (0.9×), under 2×.
 
-Follow-up: 0251. `main` has been red since #448 (0025): the world map
+Follow-ups: none. `main` has been red since #448 (0025): the world map
 cues are in `audio.md` but not in the manifest or the test's `RESERVED`
-list, so `every_design_cue_is_in_the_manifest` fails on every branch.
+list, so `every_design_cue_is_in_the_manifest` fails on every branch;
+another session's PR fixes it.
 
 No starting rules: bot tooling only, nothing a player sees.
