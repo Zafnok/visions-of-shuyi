@@ -270,8 +270,16 @@ mod tests {
     ];
 
     /// Cues `audio.md` reserves for a moment the story doesn't have yet
-    /// (0022, 0023): each is imported by the ticket that first plays it.
-    const RESERVED: [&str; 3] = ["victory_grand", "ceremony_intro", "scene_loss"];
+    /// (0022, 0023, 0025): each is imported by the ticket that first plays
+    /// it (`world_map` by 1007).
+    const RESERVED: [&str; 6] = [
+        "victory_grand",
+        "ceremony_intro",
+        "scene_loss",
+        "world_map",
+        "world_map_war",
+        "world_map_somber",
+    ];
 
     /// Every cue `audio.md` lists is in the manifest (ticket 0214), but
     /// for the [`RESERVED`] ones.

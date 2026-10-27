@@ -113,6 +113,9 @@ integration tests below play the same).
 7. Wire it into `ui::flow`: linear chapters → world map → battle → back to
    the map → next act.
 8. Add the test world map and tests.
+9. When importing `world_map`, remove it from `RESERVED` in
+   `crates/content/src/audio.rs`'s tests (0251); its "drop it from
+   RESERVED" assertion fails otherwise.
 
 ## Acceptance criteria
 
