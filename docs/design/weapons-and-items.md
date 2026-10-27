@@ -676,7 +676,8 @@ Distance 1.
 
 ## Open sub-questions (deferred)
 
-- **Combat Arts:** decided in [`combat-arts.md`](combat-arts.md) (0014).
+- **Combat Arts:** decided in [`combat-arts.md`](combat-arts.md) (0014;
+  ranks C–S and the first special weapons, 0018).
 - **Magic** weapons/tomes, their weight and traits: 0004.
 - **Class weapon kinds, starting/max ranks, armour limits, tags:** 0005.
 - **Pack cap, shops/villages/chests in Chapter 1:** decided in 0009

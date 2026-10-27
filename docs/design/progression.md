@@ -691,7 +691,7 @@ the Flier's are in the game for now; tiers 4+ come later.
 | ----- | ---- | --------------- | ----------------- |
 | Flier | 3 | **Swoop** (3 dur, combat, Sp): after this attack, may move 1 tile | **Sky Dodge 1**: avoid +10 against bows |
 | Sky Lancer | 4 | **Swoop** | **Sky Dodge 2**: avoid +20 against bows |
-| Sky Warden | 4 | **Dive** (5 dur, combat): might +6 | **Sky Guard**: Def +3 |
+| Sky Warden | 4 | **Dive** (5 dur, combat): attack an enemy up to 3 tiles away in a straight line, landing on the empty tile next to it; might +4 (ticket 0018, `combat-arts.md`) | **Sky Guard**: Def +3 |
 
 - **Skills learned twice:** a unit that learns an active it already knows
   (e.g. Swoop from Flier and Sky Lancer, Overcast from Mage and Sorcerer) gets

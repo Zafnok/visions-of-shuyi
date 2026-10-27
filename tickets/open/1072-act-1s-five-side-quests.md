@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["1070", "0018", "0069", "0746", "0747", "0749", "0509", "0013", "0323", "0608"]
+blocked_by: ["1070", "0018", "0069", "0746", "0747", "0749", "0509", "0013", "0323", "0608", "0329"]
 nick_input: decision
 completed:
 ---
@@ -29,7 +29,8 @@ story progress and conditions (`world-structure.md`). Act 1 has five
 | *Unwritten* | Maud | once Ossary is reached, Maud alive | she brings the register's names back to their families |
 
 Their rewards are of the kinds 0069 decided, and special weapons come
-from 0018. The chapters' scripts (0746, 0747, 0749) come first, so the
+from 0018 (`combat-arts.md`, *Special weapons*: a personal weapon is a
+special weapon locked to one character, built by 0329). The chapters' scripts (0746, 0747, 0749) come first, so the
 quests fit what the ledger says has happened. 1070 places their nodes,
 locked; this ticket writes and builds them and fills in the nodes.
 
