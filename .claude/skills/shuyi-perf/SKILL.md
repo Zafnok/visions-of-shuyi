@@ -1,9 +1,9 @@
 ---
 name: shuyi-perf
-description: Find what makes a game on Shuyi Engine slow or heavy, from the times of its frames and of the spans it marks around its own code and the heap's counts, read as JSON lines from a headless run, an MCP session or a running debug build. Use when a frame takes too long, a stage stutters, a bot's turn takes too long, or the heap grows. Not for a wrong result (shuyi-debug-replay), for writing a test (shuyi-test), or for how often bots win (shuyi-balance-bots).
+description: Find what makes a game on Shuyi Engine slow or heavy, from the times of its frames and of the spans it marks around its own code, and from the heap, its counts and its snapshots by memory tag (what holds it and what grew), read as JSON lines from a headless run, an MCP session or a running debug build. Use when a frame takes too long, a stage stutters, a bot's turn takes too long, the heap grows as the game plays, or a stage or a target runs out of memory. Not for a wrong result (shuyi-debug-replay), for writing a test (shuyi-test), or for how often bots win (shuyi-balance-bots).
 license: MIT OR Apache-2.0
 metadata:
-  version: "1.1"
+  version: "1.3"
 ---
 
 # Find what makes a game slow
@@ -83,7 +83,9 @@ changes what the game does, so a run plays the same with them on.
    `reset` the numbers start again: the limit says to read from 0.
 
 4. **A running build, in its window.** The real renderer's times come
-   from a desktop debug build:
+   from a desktop debug build: attach to it and follow its frames
+   (*A running build*, below). A build no agent attaches to writes its
+   own trace when started with a file named:
 
    ```bash
    SHUYI_PERF=perf.jsonl cargo run
@@ -103,6 +105,110 @@ A line reads:
 `depth` is how many spans it was inside. A frame keeps 64 spans and
 counts the rest in `spans_dropped`. `heap` is left out where the heap
 isn't counted.
+
+## A running build
+
+Read the build running in its window, not a headless `run`, when the
+window is the point: a stutter only the real renderer shows (`paint`
+and `present` are the window's), or a person playing while you read.
+
+1. **Start it with the live link**, in its own terminal:
+
+   ```bash
+   SHUYI_LINK=0 cargo run --features link
+   ```
+
+   A debug build listens on a free port, and its log's line ending
+   `listening on 127.0.0.1:<port>, token <token>` gives the address and
+   the token every `attach` below takes.
+
+2. **Follow its frames into a file**, in the background:
+
+   ```bash
+   cargo shuyi attach 127.0.0.1:<port> --token <token> --perf-follow perf.jsonl --for 30 --json
+   ```
+
+   Every 100 ms it reads the frames run since its last read and appends
+   each as a `frame` line, so the file grows as the build runs. It
+   prints nothing until it ends, after `--for` seconds (10 if not said,
+   at most 3,600) or when the build quits. Meanwhile read `perf.jsonl`
+   again from the last line you read, while the slow part is played. Its
+   answer is `perf_summary` over every frame it wrote (`file` the file's
+   path) and `follow`: `lines`, `dropped`, and `closed` if the build
+   quit.
+
+3. **Or read once:** `--perf-since 0` answers the frames the build keeps
+   (`perf`), their `perf_summary`, and `perf_next`, the `--perf-since`
+   of the next read. With MCP, `start` with `link` attaches the session,
+   and `perf` answers as it does on a headless session.
+
+4. **What holds its heap:** add `--perf-snapshot`. With `--perf-follow`
+   it takes a snapshot as the following starts and one as it ends; the
+   file ends with the two and their `diff`, and the summary has
+   `heap_tags` and `heap_growth` (*What holds the heap*, below).
+
+A build faster than the reads, more than 600 frames between two, loses
+the frames between: the limit says "N frame(s) were dropped between
+reads", and `follow.dropped` counts them. Compare the frames you have,
+or follow a build that runs at its own frame rate.
+
+[`example-follow.ron`](example-follow.ron) reads and follows a new
+`grid` game this way. It needs the game running in its window, so CI
+can't run it (it is marked manual): start the game with the link as its
+first comment says, then run it.
+
+## What holds the heap, and what grew
+
+Use it when the heap grows as the game plays (a `live_bytes` that climbs
+from frame to frame), or a stage or a target runs out of memory. The
+heap is counted by **memory tag**: each block under the tag current
+when it was allocated, or last grown. A tag's `class` says what it is:
+
+- `phase`: a part of the frame, `load` (the game's load), `update`,
+  `draw`, `paint`, `perf`, or `app` (the rest of the engine's frame);
+- `span`: a span you marked, by its name;
+- `asset`: an asset kind being decoded, `image`, `palette`, …;
+- `other`: `other`, allocated outside any tag, and `overflow`, the
+  names past the first 254.
+
+A tag says where the bytes were allocated, not who holds them now: a
+list built in `update` and kept counts in `update`.
+
+1. **From a run.** `run --perf` takes a heap snapshot once the game has
+   started, before the steps, and one after the last frame:
+
+   ```bash
+   cargo shuyi run --script "Enter" --frames 600 --perf --perf-out perf.jsonl --json
+   ```
+
+   `result.perf.heap_tags` is what holds the heap at the end: the first
+   10 tags, the most `live_bytes` first, each with its `class`, `name`,
+   `live_bytes`, `live_blocks`, `allocated_bytes` (ever) and
+   `peak_bytes`. `result.perf.heap_growth` is what changed between the
+   two: `from` and `to` (frames), `live_bytes` in all (less than 0 for
+   fewer), and the 10 largest changes in `tags`. The text line reads
+   `heap grew 124.0 KB from frame 0 to 600: update +96.0 KB, image
+   +24.0 KB, ai +4.0 KB`. `perf.jsonl` ends with the two `snapshot`
+   lines and their `diff`.
+
+2. **In an MCP session.** Call `perf` with `snapshot: true` to take one
+   now; the session keeps the last 8, and every answer lists their
+   frames in `kept`. Play on with `step`, then call `perf` with
+   `snapshot: true` and `diff_from` set to a kept frame: `diff` is what
+   changed from it to now (without `snapshot`, to the newest kept). A
+   `diff_from` that isn't kept is wrong arguments, `SH0001`, and the
+   error lists the kept frames.
+
+3. **Give the suspect code a tag of its own.** A tag that grows (most
+   often `update`) holds everything its part of the frame allocates.
+   Mark the suspect code with a span (*Steps*, 2): what the closure
+   allocates counts under the span's name, so the next diff says how
+   much of the growth is that code's. Narrow it as you would a slow
+   span.
+
+A running build's trace file (`SHUYI_PERF`) has a snapshot on its first
+frame and every 600 frames after, each followed by its diff from the
+one before: play, then read the `diff` lines.
 
 ## A game with its own allocator
 
@@ -126,6 +232,10 @@ Its frames then have no `heap`, and the times are still measured.
 - **`heap` is `null`, with the limit "the heap isn't counted":** the
   tool program is a release build, or the game opted out
   (`shuyi_no_heap_count`, above).
+- **`heap_tags` empty and `heap_growth` `null`, with the limit "the
+  heap isn't counted by memory tag":** the heap was counted without
+  tags, so no snapshot was taken. A `perf` call with `snapshot` answers
+  `snapshot` `null` and the same limit.
 - **The limit "the heap counts the whole tool program":** another
   thread ran beside the game (the MCP server reads its messages on
   one), and its allocations count too. Compare the heap over many
@@ -135,9 +245,13 @@ Its frames then have no `heap`, and the times are still measured.
   stream.
 - **`SH3004`:** the trace file can't be written: its folder is a file,
   or not yours. A relative path is from the project's folder.
-- **`SH3001` from `perf`** on a session attached to a running build:
-  the link doesn't carry the frames' records. Run the build with
-  `SHUYI_PERF` and read its file.
+- **`SH1006` from `attach`:** the build speaks another link version: it
+  was built with another engine. Attach with the `shuyi` of the build's
+  own engine.
+- **`SH3006` from `attach`** while following: another client is
+  attached (one at a time), or the link was lost. A build that quits
+  ends the following early instead, with `follow.closed` and the limit
+  "it quit", and the file keeps what was written.
 - **`SHUYI_PERF` writes nothing:** the build has no debug tools; its
   log says so. A file it can't create or write is one warning in the
   log, and the game goes on.
