@@ -40,7 +40,14 @@ Simulator console, as for 1036 and 1055.
 **In:**
 - **Measure:** the heap the content takes on the device today
   (Chapter 1), per kind of file (dialogue, maps, battles, pictures,
-  sound), and a projection for Act 1: Chapter 1's numbers times the
+  sound), counted by the engine's heap counter (engine PR #122, adopted
+  by the pin move of 2026-10-26): the Playdate's `SdkAlloc` wrapped in
+  `shuyi_alloc_count::CountingAlloc::with_tags` (the crate without `std`,
+  made for a console's allocator), and `shuyi_assets::format::watch_decodes`
+  entering each asset kind's tag around its decode, so each kind's live
+  bytes are its tag's row; no per-kind counting of the game's own. Only
+  in the measuring build: each block's tag header costs up to 8 bytes.
+  Then a projection for Act 1: Chapter 1's numbers times the
   chapters, or better, a generated stand-in content set of eight
   chapters' size in `assets-test/` (not real content). Record the
   numbers in the PR and `crates/playdate/README.md`.
@@ -68,7 +75,9 @@ Simulator console, as for 1036 and 1055.
 1. Read ADR-0070, 1036's completion notes, `crates/playdate/README.md`
    and how the content loads (`trpg_content::load_embedded`, the
    engine's registry).
-2. Add heap measurement to the Playdate build's log (per file kind).
+2. Add heap measurement to the Playdate build's log (per file kind),
+   from the engine's tagged counter and decode watch (see *Measure*):
+   the log prints its `rows()` after loading.
 3. Build the stand-in eight-chapter content set; sideload (Nick) and
    measure.
 4. Decide: fits, or lazy loading. Write the ADR either way.

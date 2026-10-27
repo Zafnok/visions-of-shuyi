@@ -77,3 +77,13 @@ Nothing for the game: 0 PRs.
 | #120 | 3064 | The heap counter in debug builds | fixed: nothing to change (the game names no `DEFAULT_CRATES`; its only `#[global_allocator]` is the Playdate crate's, which doesn't link `shuyi-app`) |
 
 Nothing for the game: 3 PRs (#86, #87, #121). The skill pack gains `shuyi-perf`.
+
+## 2026-10-26: 6f0a8209 → 883ad00a (6 engine PRs), #PR
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #122 | 3065 | Memory tags: live bytes by frame phase, span and asset kind's decode | adopt → 1068 (its device measurement wraps the Playdate's `SdkAlloc` in `CountingAlloc::with_tags` and tags decodes with `format::watch_decodes`, instead of counting per file kind itself; nothing to delete: the game counts no heap yet) |
+| #134 | 2554 | Heap snapshots and diffs in `run --perf`, MCP `perf` and a running build's trace | not for the game: tooling it gets through `cargo shuyi` and the MCP server at the pin; no game code or ticket snapshots the PC heap |
+| #135 | 2555 | Perf over the live link: `shuyi attach --perf-follow`, MCP `perf` on an attached session | not for the game: tooling a debug build on `shuyi-app` gets at the pin; the game reads no frames over the link |
+
+Nothing for the game: 3 PRs (#123, #136, #137). The skill pack's `shuyi-perf` gains its heap and running-build sections.
