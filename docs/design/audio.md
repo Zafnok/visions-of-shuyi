@@ -199,10 +199,10 @@ sign-off: "it should sound like a heal").
 - The menu select/confirm and cancel sounds play at 15 %: at 40 % Nick
   still found them "much too high" next to the rest (ticket 0223).
 - The world map's track (any `world_map*` cue, and a small map's) fades
-  out over 3 s at its end, the map is quiet for 13 s, then the track
-  starts again with a 3 s fade in. Nick asked for a fade and a quiet
-  pause (0025) but not its length; 13 s is close to the pause he picked
-  for `defeat`.
+  out over 3 s at its end, the map is quiet for 30 s, then the track
+  starts again with a 3 s fade in. Nick set the quiet at "probably more
+  like 30s pause or maybe longer" (0025): try longer after playing. The
+  3 s fades are Claude's.
 - The pause between two rounds of `defeat` is 13.8 s: the piece's own quiet
   ending (1.8 s) and 12 s of silence added to the file. Nick asked for
   10–15 s (ticket 0809).
@@ -514,5 +514,9 @@ the quiet between rounds is:
 "Water" versions. I: Exploration by johnclark. J: The Tread of War. K: The
 Enemy Marches by Peter Eastman. L: Leap into Eternity. M: Wipe Away Those
 Tears. G, H, J and M are by Jonathan Shaw. Recorded as: `world_map` is A,
-`world_map_war` is J, `world_map_somber` is B from round 1. The length of
-the quiet wasn't answered, so it's a starting value: 13 s.)
+`world_map_war` is J, `world_map_somber` is B from round 1.)
+
+The quiet between rounds wasn't answered on the page. Told it was set at
+13 s, Nick said:
+
+> probably more like 30s pause or maybe longer

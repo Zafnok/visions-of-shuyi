@@ -116,9 +116,10 @@ licences checked on their OpenGameArt pages. Recorded in `audio.md`
   step says the map's cue is per-act data and describes the fade and
   pause.
 
+- The quiet between two rounds of the map's track is 30 s (Nick, after
+  the page: "probably more like 30s pause or maybe longer").
+
 *Claude's starting rules* (Nick didn't give these; tunable):
-- The quiet between two rounds of the map's track is 13 s, with a 3 s
-  fade out and a 3 s fade in. The length question was asked but not
-  answered; 13 s is close to the pause he picked for `defeat`.
+- The map's track fades out over 3 s and back in over 3 s.
 
 Gates: docs only; `ticket-lint` and `typos` run (no code changed).

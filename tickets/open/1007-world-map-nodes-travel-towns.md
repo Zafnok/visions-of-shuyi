@@ -72,7 +72,7 @@ integration tests below play the same).
   names (0025: `world_map` for Act 1; Act 3 and a somber stretch name
   others, so the cue is data on the map, not fixed in code). The map's
   track never loops back to back: it fades out, the map is quiet for a
-  while (13 s to start, *tunable*), then it fades back in (`audio.md`,
+  while (30 s, Nick: "or maybe longer", *tunable*), then it fades back in (`audio.md`,
   *The world map*). Capitals play `capital` (decided in 0026); import both
   (`assets-src/audio/import.py`) and add them to `assets/audio/audio.ron`,
   `THIRD_PARTY_ASSETS.md` and the credits.
