@@ -456,6 +456,108 @@ fn escaping_scores_more_than_waiting_on_the_exit() {
     }
 }
 
+/// On an escape map with no enemy left, a persona weighs each unit's
+/// escape and advance, not a wait anywhere else (0517); with an enemy on
+/// the map, the other waits are back.
+#[test]
+fn with_no_enemy_left_order_offers_the_escapes_and_advances_only() {
+    let mut runner = player(1, 1);
+    runner.stats.mov = 8;
+    let exit = Objective::Escape {
+        area: trpg_core::TileRect {
+            x: 7,
+            y: 4,
+            w: 2,
+            h: 1,
+        },
+    };
+    let escape_map = |units| {
+        BattleState::new(BattleSetup {
+            objective: exit,
+            ..setup(units)
+        })
+        .0
+    };
+    let empty = escape_map(vec![runner.clone(), lord(player(2, 0))]);
+    let ordered = order(&empty, legal_commands(&empty), &content().ai, usize::MAX);
+    let escapes: Vec<&Command> = ordered
+        .iter()
+        .filter(|c| {
+            matches!(
+                c,
+                Command::Act {
+                    action: UnitAction::Escape,
+                    ..
+                }
+            )
+        })
+        .collect();
+    // Unit 1 reaches the exit; unit 2 (3 moves) doesn't. One escape each.
+    assert_eq!(escapes.len(), 1, "{ordered:?}");
+    assert!(matches!(
+        escapes[0],
+        Command::Act {
+            unit: UnitId(1),
+            ..
+        }
+    ));
+    let waits = |ordered: &[Command]| {
+        ordered
+            .iter()
+            .filter(|c| {
+                matches!(
+                    c,
+                    Command::Act {
+                        action: UnitAction::Wait,
+                        ..
+                    }
+                )
+            })
+            .count()
+    };
+    // At most the AI's pick and each unit's advance.
+    assert!(waits(&ordered) <= 3, "{ordered:?}");
+    assert_eq!(ordered.last(), Some(&Command::EndPhase));
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 0);
+    let guarded = escape_map(vec![runner, lord(player(2, 0)), far]);
+    let ordered = order(
+        &guarded,
+        legal_commands(&guarded),
+        &content().ai,
+        usize::MAX,
+    );
+    assert!(waits(&ordered) > 3, "{ordered:?}");
+    // The escape comes before every wait but the AI's own pick.
+    let pick = next_command(&guarded, &content().ai).unwrap();
+    let first_wait = ordered
+        .iter()
+        .position(|c| {
+            *c != pick
+                && matches!(
+                    c,
+                    Command::Act {
+                        action: UnitAction::Wait,
+                        ..
+                    }
+                )
+        })
+        .unwrap();
+    let escape = ordered
+        .iter()
+        .position(|c| {
+            matches!(
+                c,
+                Command::Act {
+                    action: UnitAction::Escape,
+                    ..
+                }
+            )
+        })
+        .unwrap();
+    assert!(escape < first_wait, "{ordered:?}");
+}
+
 /// A boss who can't be killed going down counts as an enemy felled.
 #[test]
 fn an_enemy_that_goes_down_counts_as_fallen() {

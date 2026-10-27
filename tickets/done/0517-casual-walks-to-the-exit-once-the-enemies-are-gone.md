@@ -5,10 +5,10 @@ type: bug
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-27
 ---
 
 # 0517 — The Casual persona walks to the exit once the enemies are gone
@@ -75,10 +75,10 @@ say so in the ticket, and it waits for 0508.
 
 ## Acceptance criteria
 
-- [ ] `the_personas_finish_the_rule_battles` has no exception and passes.
-- [ ] `personas.ron` is unchanged.
-- [ ] Chapter 1's 20-try measures, before and after, in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `the_personas_finish_the_rule_battles` has no exception and passes.
+- [x] `personas.ron` is unchanged.
+- [x] Chapter 1's 20-try measures, before and after, in the PR.
+- [x] All gates in the `run-gates` skill pass, but `main`'s own red `every_design_cue_is_in_the_manifest` (0251).
 
 ## Tests required
 
@@ -87,5 +87,35 @@ say so in the ticket, and it waits for 0508.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Why Casual stalled: with no enemy left, `order` still filled Casual's 10
+candidates with "the rest in the legal order", waits on any tile the
+units could reach, most of them no nearer the exit. Every candidate
+scored within about 20 points of the others, so at a temperature of 100
+Casual picked nearly at random among mostly pointless waits, and its
+escapes, listed last, were cut by the cap.
+
+The fix, in `trpg_bots::order` (`crates/bots/src/persona.rs`), no number
+in `personas.ron` changed:
+- each ready unit's escape is listed once, right after the heals and
+  before the advances;
+- when no enemy of the player is left on the map, the rest's unit
+  actions are left out (a player with nothing to fear doesn't wander):
+  the candidates are the AI's pick, the escapes and the advances (and a
+  move after acting, and ending the phase).
+
+Verified:
+- The smoke test without the exception failed on `test_escape`, casual,
+  seeds 1 and 3, before the fix, and passes after.
+- Unit test `with_no_enemy_left_order_offers_the_escapes_and_advances_only`.
+- Chapter 1 (`cargo xtask playtest ch01 --bot all --runs 20`): every
+  try's measures identical before and after (Casual 5/20, Normal 13/20,
+  Hardcore 10/20 succeed). Chapter 1 always has its boss on the map until
+  it is won, and has no exit, so neither change can touch it.
+
+Engine friction: estimate 15, measured 14 (0.9×), under 2×.
+
+Follow-up: 0251. `main` has been red since #448 (0025): the world map
+cues are in `audio.md` but not in the manifest or the test's `RESERVED`
+list, so `every_design_cue_is_in_the_manifest` fails on every branch.
+
+No starting rules: bot tooling only, nothing a player sees.
