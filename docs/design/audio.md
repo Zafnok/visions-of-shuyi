@@ -74,6 +74,9 @@ a player. **Version** is the file to import when the page has several.
 | `ceremony_intro` | **Reserved** for the start of "a royal crowning or some other regal ceremony"; only if the story has one; plays once (0022) | Victory Music Cue (13.3 s; the original `.wav` needs a freesound login, the public HQ preview does not) | Joshua Empyre | [freesound 404025](https://freesound.org/s/404025/) | CC-BY 4.0 |
 | `defeat` | A battle is lost: starts when the `DEFEAT` banner is shown and **carries on through the Game Over screen** without starting again (0023). It **loops, with a pause of 10–15 s between rounds** (0024, 0809) | The Fallen (RPG Orchestral Essentials), the whole piece (`The Fallen MP3.mp3` in `The Fallen MP3_0.zip`, 77 s) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music) | CC-BY 3.0 |
 | `scene_loss` | **Reserved** for "a story beat of a scripted loss of someone"; only if the story has one (0023) | Bittersweet (`bittersweet.mp3`, 34 s; it opens with 1.7 s of silence) | Emma_MA | [OGA](https://opengameart.org/content/bittersweet) | CC0 |
+| `world_map` | The Act 1 world map, outside towns and battles; fades out, a quiet pause, fades back in (0025) | The World At Your Door (RPG Orchestral Essentials) (`The World At Your Door MP3.mp3` in `The World At Your Door MP3.zip`, 2:41) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/108343) | CC-BY 3.0 |
+| `world_map_war` | The Act 3 world map (home at war); played like `world_map` (0025) | The Tread of War (RPG Orchestral Essentials) (`The Tread of War - MP3.mp3` in `The Tread of War MP3_0.zip`, 3:39) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-tread-of-war-rpg-orchestral-essentials-military-music) | CC-BY 3.0 |
+| `world_map_somber` | **Reserved** for a world map in a somber stretch: after a catastrophe, "a lot of ppl died, and we're on a long quest", until "the pieces are put back together"; only if the story has one (0025) | World Map (`World Map_0.mp3`, 3:16) | Scott Elliott | [OGA](https://opengameart.org/node/91067) | CC-BY 4.0 |
 
 The `victory` pool's 13 versions are the same 3.8 s tune on different
 instruments: Bandoneon, Brass, Doot, Fantasia, Fretless, Grand Piano, Jazz
@@ -92,34 +95,37 @@ run out while the screen is still open, the piece **loops**, after a pause of
 the 0023 listening page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J).
 No story moment uses `scene_loss` yet.
 
-### The world map (ticket 0025, in progress)
+### The world map (ticket 0025, 2026-10-26)
 
-Round 1 (2026-10-26, listening page
-https://claude.ai/artifact/VLAU7eYPcqx7pWRmSsVLzw) settled how the world map
-music works but not the final track; Nick asked for more samples first.
+Nick picked over two rounds of a listening page
+(https://claude.ai/artifact/VLAU7eYPcqx7pWRmSsVLzw).
 
 - **A new world map track per act**, and also **per story arc**: when
-  something tragic happens mid-act, the map swaps to a somber track until
-  the story turns again.
+  something tragic happens mid-act, the map swaps to a somber track
+  (`world_map_somber`) until the story turns again.
+- **Act 1:** `world_map`. **Act 3** (home at war): `world_map_war`, from
+  the same composer's set. **Act 2** (the Jade Reach) gets an eastern track
+  in the wuxia round (*Open sub-questions*).
 - **The map track doesn't loop back to back.** It fades out, the map stays
-  quiet for a while, then the track fades back in. (The length of the quiet
-  is not decided yet.)
-- Front-runner for the ordinary world map: **The World At Your Door** (RPG
-  Orchestral Essentials) by Jonathan Shaw (InspectorJ),
-  [OGA](https://opengameart.org/node/108343), CC-BY 3.0, the MP3 in
-  `The World At Your Door MP3.zip` (2:41).
-- Kept for other places, as Nick heard them:
+  quiet for a while, then the track fades back in. The same goes for a
+  small map's track (below).
+- Kept for other places and moments, as Nick heard them. None of these
+  exists in the story yet; each row says where the track would fit if one
+  comes:
 
 | Kept for | Track | Composer | Source | License |
 | -------- | ----- | -------- | ------ | ------- |
-| The world map in a somber arc: after a catastrophe, "a lot of ppl died, and we're on a long quest", until "the pieces are put back together" | World Map (`World Map_0.mp3`, 3:16) | Scott Elliott | [OGA](https://opengameart.org/node/91067) | CC-BY 4.0 |
+| Exploring a cave with "some crazy reward at the end", like unlocking the crystals' secret in Final Fantasy | A Tale of Peace (RPG Orchestral Essentials) (`A Tale of Peace - MP3.mp3` in `a_tale_of_peace_mp3.zip`, 3:34) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/115742) | CC-BY 3.0 |
+| The same place's windy or rainy parts: the same music as A Tale of Peace with howling wind or raindrops, so it can cross over from one area to the next | A Tale of Wind and Water (RPG Orchestral Essentials) (`A Tale of Wind - MP3.mp3`, 3:42; `A Tale of Water - MP3.mp3`, 3:38) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/98432) | CC-BY 3.0 |
+| A cutscene of an enemy mobilizing its forces | The Enemy Marches (`March.ogg`, 2:18) | Peter Eastman (peastman) | [OGA](https://opengameart.org/node/55086) | CC-BY 3.0 |
+| Very sad scenes | Leap into Eternity (the mix, `leapintoeternitymix.ogg`, 1:53) | Matthew Pablo; Of Far Different Nature (mixed by glitchart) | [OGA](https://opengameart.org/content/leap-into-eternity-matthew-pablo-of-far-different-nature) | CC-BY 4.0 |
+| Very sad scenes | Wipe Away Those Tears (RPG Orchestral Essentials) (`Wipe Away Those Tears - MP3.mp3`, 3:24) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/wipe-away-those-tears-rpg-orchestral-essentials-sad-happy-music) | CC-BY 3.0 |
 | A small map section, e.g. a beginner area (not a whole world); same fade and quiet as above | RPG - Overworld - Melodies of the Future (the loop `.wav`, 1:13) | jocolloman (Joseph Collard) | [OGA](https://opengameart.org/node/129152) | CC-BY 4.0 |
 | Capital city music or a royal march (a candidate for 0026) | Adventure Map (`Adventure Map.mp3`, 3:23) | controllerhead | [OGA](https://opengameart.org/node/53699) | CC-BY 3.0 |
 | Travel scenes, an airship, or riding a mount ("chocobo music") | Beyond The Clouds (Orchestral Theme) (2:21) | Matthew Pablo | [OGA](https://opengameart.org/content/beyond-the-clouds-orchestral-theme) | CC-BY 3.0 |
 
-Orchestra Loop by Brandon Morris (CC0) got no comment. The story has no
-apocalypse, beginner area, airship or mount yet: these rows only say where
-each track would fit if one comes.
+Not used: Orchestra Loop by Brandon Morris (no comment) and Exploration by
+johnclark ("doesn't sound too good to me").
 
 Which story battle uses which `battle_*` cue, and which scene switches to
 which mood, is story content. Each battle file and scene script names its
@@ -192,6 +198,11 @@ sign-off: "it should sound like a heal").
   0222). The map cursor tick is still 60 % of the menu move sound, so 24 %.
 - The menu select/confirm and cancel sounds play at 15 %: at 40 % Nick
   still found them "much too high" next to the rest (ticket 0223).
+- The world map's track (any `world_map*` cue, and a small map's) fades
+  out over 3 s at its end, the map is quiet for 13 s, then the track
+  starts again with a 3 s fade in. Nick asked for a fade and a quiet
+  pause (0025) but not its length; 13 s is close to the pause he picked
+  for `defeat`.
 - The pause between two rounds of `defeat` is 13.8 s: the piece's own quiet
   ending (1.8 s) and 12 s of silence added to the file. Nick asked for
   10–15 s (ticket 0809).
@@ -214,10 +225,11 @@ sign-off: "it should sound like a heal").
   shortlisted (freesound 389634, 670509), but none has been picked.
 - **Separate axe sound:** "same as lance is ok for now".
 - **The wuxia continent** (a later act, `setting-and-tone.md`) "would probably
-  have more eastern themes". It needs its own round.
-- **Places and moments without a cue yet:** capital city, world map, camp,
-  shops. Nick hasn't been asked about these (tickets 0025–0028). Level up
-  is Nick's own work.
+  have more eastern themes". It needs its own round, which also picks
+  Act 2's world map track (0025).
+- **Places and moments without a cue yet:** capital city, camp, shops.
+  Nick hasn't been asked about these (tickets 0026–0028). Level up is
+  Nick's own work.
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -478,3 +490,29 @@ track for the whole game, or one per act:
 (A: The World At Your Door by Jonathan Shaw. B: World Map by Scott Elliott.
 C: Adventure Map by controllerhead. D: Melodies of the Future by jocolloman.
 E: Orchestra Loop by Brandon Morris. F: Beyond The Clouds by Matthew Pablo.)
+
+**The world map music, round 2** (ticket 0025, 2026-10-26, the same page).
+G–I for an ordinary map, J–M for a map at war or in mourning, and how long
+the quiet between rounds is:
+
+> G sounds like if we are in a cave for exploration, and there is some
+> crazy reward at the end like unlocking the secret of the crystals or
+> something in final fantasy... not really an overworld map music piece.
+>
+> H1 and H2 are the same main music of G but with accompanying wind
+> howling and raindrops respectively. So I have the same notes as G but if
+> you want they can transition if we move to different areas.
+>
+> I doesn't sound too good to me
+>
+> Otherwise I like A more than G, H1, H2, and I
+>
+> J is best for act 3, while K is great for a cutscene about an enemy
+> mobilizing forces, and L and M are good for very sad scenes.
+
+(G: A Tale of Peace. H1, H2: A Tale of Wind and Water, the "Wind" and
+"Water" versions. I: Exploration by johnclark. J: The Tread of War. K: The
+Enemy Marches by Peter Eastman. L: Leap into Eternity. M: Wipe Away Those
+Tears. G, H, J and M are by Jonathan Shaw. Recorded as: `world_map` is A,
+`world_map_war` is J, `world_map_somber` is B from round 1. The length of
+the quiet wasn't answered, so it's a starting value: 13 s.)
