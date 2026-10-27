@@ -87,3 +87,16 @@ Nothing for the game: 3 PRs (#86, #87, #121). The skill pack gains `shuyi-perf`.
 | #135 | 2555 | Perf over the live link: `shuyi attach --perf-follow`, MCP `perf` on an attached session | not for the game: tooling a debug build on `shuyi-app` gets at the pin; the game reads no frames over the link |
 
 Nothing for the game: 3 PRs (#123, #136, #137). The skill pack's `shuyi-perf` gains its heap and running-build sections.
+
+## 2026-10-27: 883ad00a → 1d284a18 (11 engine PRs), #451
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #138 | 2513 | `shuyi doctor` checks the C linker and system libraries; `Probe::read` | fixed: nothing to change (the game implements no `Probe`) |
+| #139 | 3039 | Web builds carry a `NOTICES.txt`; `web::run` takes the game's works, `project::Config` gains `notices` | fixed: nothing to change (the game calls no `web::run` and builds no `project::Config` literal; `cargo shuyi web` loads `shuyi.ron`, which names no `notices`) |
+| #144 | 2542 | The CLI's seams: each output schema's `op` is a const of its op | fixed: nothing to change (the game reads no output schema's `op`) |
+| #148 | 2321 | A frame cap: `FrameOutput` is `#[non_exhaustive]` with `frame_cap` and `frame_cap_serial` | fixed: nothing to change (the game builds no `FrameOutput` and reads it field by field) |
+
+Nothing for the game: 7 PRs (#140, #141, #142, #143, #145, #146, #147). The skill pack's `shuyi-ship` gains the web build's `NOTICES.txt`, and `shuyi-new-game` the Linux setup script.
+
+Ticket 0909 (from #139): the web build's `NOTICES.txt` lists none of the game's own works yet; 0909 names the font, the music and their license texts in `shuyi.ron`'s `notices`. 0901 waits on it.
