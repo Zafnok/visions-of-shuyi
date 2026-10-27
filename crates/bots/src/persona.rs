@@ -488,16 +488,19 @@ impl Order<BattleState> for PersonaOrder {
 ///    included;
 /// 3. the heals (an item used on, or a heal cast at, a wounded unit), the
 ///    most wounded first, each once, from the healer's own tile if it can;
-/// 4. each ready unit's advance: waiting on the tile it can reach that is
+/// 4. each ready unit's escape, once, on an escape map (0517);
+/// 5. each ready unit's advance: waiting on the tile it can reach that is
 ///    nearest the objective's goals, walking (the engine's flow field), if that is
 ///    nearer than where it stands;
-/// 5. each ready unit's hold: waiting on the tile it can reach that no
+/// 6. each ready unit's hold: waiting on the tile it can reach that no
 ///    enemy can strike next phase (the danger zone), nearest the
 ///    objective's goals, if it isn't its advance;
-/// 6. the other attacks: each other way of striking (weapon, art or
+/// 7. the other attacks: each other way of striking (weapon, art or
 ///    active) once, from its best tile, the best first;
-/// 7. the rest in the legal order;
-/// 8. ending the phase last, in place of the last of the first `cap` if
+/// 8. the rest in the legal order, but for its unit actions when no enemy
+///    of the player is left on the map: a player with nothing left to
+///    fear doesn't wander, it walks to the goal (0517);
+/// 9. ending the phase last, in place of the last of the first `cap` if
 ///    there are that many, so the cap never cuts it.
 ///
 /// `Equip` is dropped (an attack equips its weapon) and so is `Talk` (the
@@ -517,6 +520,7 @@ pub fn order(
     let mut end_phase = false;
     let mut attacks = Vec::new();
     let mut heals = Vec::new();
+    let mut escapes = Vec::new();
     let mut rest = Vec::new();
     let mut goals = Goals::of(state);
     // Each unit's best advance yet: the unit, its distance, the command.
@@ -537,6 +541,8 @@ pub fn order(
                 } else if let Some(missing) = heal_need(state, *unit, *dest, action) {
                     let moves = state.unit(*unit).is_some_and(|u| u.pos != *dest);
                     heals.push(((missing, !moves), command));
+                } else if *action == UnitAction::Escape {
+                    escapes.push(command);
                 } else {
                     if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {
                         advance(state, goals, *unit, *dest, &command, &mut advances);
@@ -572,6 +578,11 @@ pub fn order(
             .into_iter()
             .filter(not_pick),
     );
+    out.extend(
+        once_per_action(escapes.into_iter())
+            .into_iter()
+            .filter(not_pick),
+    );
     let advances: Vec<Command> = advances.into_iter().map(|(_, _, c)| c).collect();
     let holds: Vec<Command> = holds
         .into_iter()
@@ -582,7 +593,12 @@ pub fn order(
     out.extend(advances.iter().filter(|c| not_pick(c)).cloned());
     out.extend(holds.iter().filter(|c| not_pick(c)).cloned());
     out.extend(others.into_iter().filter(not_pick));
-    out.extend(rest.into_iter().filter(not_listed));
+    let foes = state
+        .units()
+        .iter()
+        .any(|u| u.faction.is_hostile_to(Faction::Player));
+    let wanders = |c: &Command| !foes && matches!(c, Command::Act { .. });
+    out.extend(rest.into_iter().filter(|c| not_listed(c) && !wanders(c)));
     if end_phase {
         out.truncate(cap.max(1) - 1);
         out.push(Command::EndPhase);
