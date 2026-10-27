@@ -68,8 +68,12 @@ integration tests below play the same).
 - Place music (ticket 0020, [`docs/design/audio.md`](../../docs/design/audio.md)):
   a node may name a music cue (`village_home`, `village`, `city_first_visit`,
   `dungeon_tense`, `graveyard_desert`, `side_quest`), played through 0212 when
-  the army enters it. The world map itself plays `world_map` (decided in 0025)
-  and capitals play `capital` (decided in 0026); import both
+  the army enters it. The world map itself plays the cue its act's map
+  names (0025: `world_map` for Act 1; Act 3 and a somber stretch name
+  others, so the cue is data on the map, not fixed in code). The map's
+  track never loops back to back: it fades out, the map is quiet for a
+  while (30 s, Nick: "or maybe longer", *tunable*), then it fades back in (`audio.md`,
+  *The world map*). Capitals play `capital` (decided in 0026); import both
   (`assets-src/audio/import.py`) and add them to `assets/audio/audio.ron`,
   `THIRD_PARTY_ASSETS.md` and the credits.
 - World map menu: `Save` (0802 slots, any time no battle is running), `Camp`

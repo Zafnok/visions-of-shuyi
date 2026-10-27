@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-26
 ---
 
 # 0025 — Decide: the world map music
@@ -83,11 +83,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `world_map` row with a source URL and a licence that
+- [x] `audio.md` has a `world_map` row with a source URL and a licence that
       ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -95,4 +95,31 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Two rounds on a listening page
+(https://claude.ai/artifact/VLAU7eYPcqx7pWRmSsVLzw), 13 candidates, all
+licences checked on their OpenGameArt pages. Recorded in `audio.md`
+(*Music cues* and *The world map*), with Nick's words in the appendix.
+
+- `world_map` (Act 1): The World At Your Door by Jonathan Shaw, CC-BY 3.0.
+- Question 2 answered as "a new track per act, or per story arc", so the
+  ticket picked more than one cue: `world_map_war` (Act 3, The Tread of
+  War, Jonathan Shaw) and `world_map_somber` (reserved for a somber
+  stretch, World Map by Scott Elliott). Act 2's eastern map waits for the
+  wuxia round (already an open sub-question).
+- Nick asked that the map's track fade out, stay quiet for a while and fade
+  back in instead of looping back to back.
+- Seven more tracks are kept for places and moments Nick named while
+  listening (a crystal cave and its windy and rainy parts, an enemy
+  mobilizing, very sad scenes, a beginner area, an airship or mount, a
+  capital or royal march).
+- Downstream: 0026 now lists Adventure Map as a candidate; 1007's music
+  step says the map's cue is per-act data and describes the fade and
+  pause.
+
+- The quiet between two rounds of the map's track is 30 s (Nick, after
+  the page: "probably more like 30s pause or maybe longer").
+
+*Claude's starting rules* (Nick didn't give these; tunable):
+- The map's track fades out over 3 s and back in over 3 s.
+
+Gates: docs only; `ticket-lint` and `typos` run (no code changed).
