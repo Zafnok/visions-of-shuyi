@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0014"]
 nick_input: decision
-completed:
+completed: 2026-10-26
 ---
 
 # 0018 — Decide: higher-rank arts and special weapons
@@ -53,9 +53,41 @@ Update `docs/design/README.md`.
 
 ## Acceptance criteria
 
-- [ ] Nick answered 1–3.
-- [ ] `combat-arts.md` updated with exact numbers.
-- [ ] Implementation tickets created; design README updated.
-- [ ] Ticket archived.
+- [x] Nick answered 1–3.
+- [x] `combat-arts.md` updated with exact numbers.
+- [x] Implementation tickets created; design README updated.
+- [x] Ticket archived.
 
 ## Completion notes
+
+Asked 2026-10-26 with a page of the 20 proposed arts, three weapons and
+forecast mockups (<https://claude.ai/artifact/U13aJ3WFR1FWALZTiZonUn>),
+then one round of follow-ups. Recorded in `combat-arts.md` (*Ranks C–S*,
+*Special weapons*, *Class actives after the playtest*), with his words.
+
+- **Arts C–S:** sword, spear and bow as offered (Break Shot renamed
+  Rending Arrow; Overwatch made an action of its own, no attack, still
+  costs durability). Axe: Wide Swing became a 270° cleave with no normal
+  combat; Haft Break and Dread Swing were replaced by Hurl (B) and Skull
+  Splitter (A). Gauntlet: Deflect also strikes back.
+- **Special weapons:** Houndmaster's Axe and Fordwarden's Spear for
+  Chapter 2 approved. The Moonblade moved to the end of a long optional
+  questline (0075): a passive hits Res with Str, its art Moonwave reaches
+  1–2 with the higher of Str and Mag. Chapter 3 gets no special weapon.
+- **Actives:** Dive reflavoured (strike from up to 3 tiles away in a
+  line, might +4); Lance Rush stays might +5 (Nick: it must not double up
+  with Charge); Heavy Blow stays.
+
+*Claude's starting rules* (Nick may veto): every "Exact rules" bullet of
+*Ranks C–S* not quoted from him (Riposte only when it can counter; Disarm
+cancels the rest of this combat's counters; Cascade counts missed strikes;
+Unbroken Stride is a full move and action; Comet Lance in rows and columns
+only, passing allies; Overwatch triggers once, only on a unit that moved;
+Arrow Rain's four neighbours; Chain Strike's allies use no durability and
+get no EXP), the name Rending Arrow, special weapons can't be sold, the
+Houndmaster's Axe is given when Chapter 2 is won, and every cost and stat
+(*tunable*).
+
+Tickets created: 0325, 0326, 0327, 0328, 0329 (building it), 0075 (the
+Moonblade's questline). 0848 and 1072 now wait for 0329; 1064 waits for
+0325–0329.

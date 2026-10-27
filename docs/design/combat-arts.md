@@ -162,15 +162,18 @@ All numbers are FE-sized; ticket 0013 kept that scale.
   Anyone who can wield that weapon can use its art while attacking with it,
   whatever their rank (*Claude's starting rule*: the rank to wield the weapon
   already gates it).
+- A special weapon may also have a **passive** that costs nothing (the
+  Moonblade, *Special weapons* below).
 - Chapter 1 has **no special weapons** (no loot in Chapter 1, `chapter-1.md`).
-  The first ones are designed with later chapters.
+  The first ones come in Chapter 2 (*Special weapons*, ticket 0018).
 
 ## Using an art (exact rules)
 
 1. **When:** only when the unit **attacks on its own phase**, chosen in the
    `Arts` menu before the target (Nick, 2026-10-12; see *The arts menu and
    the forecast*). Never picked on counters or during another side's phase
-   (Nick).
+   (Nick). One exception: **Overwatch** (bow, rank B) is used as an action
+   of its own, without attacking (Nick, ticket 0018).
 2. **One per attack** (*Claude's starting rule*): an attack uses at most one
    art **or** one combat active, not both.
 3. **Can use** if: the art is usable (above) and the attacking weapon is
@@ -265,13 +268,332 @@ Details:
 - **Sidestep's** avoid is added to `avoid_B` whenever the user is the one
   being attacked, and to its avoid during the rest of this combat.
 
-### Later ranks
+## Ranks C–S (ticket 0018, 2026-10-26)
 
-Arts for ranks **C, B, A and S**, and the first **special weapons** with
-their own arts, come in a later decision (ticket 0018). Until then, reaching
-rank C teaches nothing new. Nick's example for a special weapon: a unique
-blade (like Dark Souls' Moonlight Greatsword) whose art makes that combat
-**Magical** (hitting Res instead of Def).
+### Nick's words
+
+Shown the 20 proposed arts on a page
+(<https://claude.ai/artifact/U13aJ3WFR1FWALZTiZonUn>), with a forecast
+mockup:
+
+> "I think sword and spear are good enough, maybe we change them super
+> later but for now they are ok. Not super happy about axe though... feels
+> too technical for haft break, and wide swing imo should not have a normal
+> combat phase but just be a cleave 270 degree rng 1. dread swing too
+> technical. felling blow is probably ok. Bow having break shot in mechanic
+> and name is too on the nose right? is that even legal? overwatch is ok, I
+> mean that's a military term we can use it. but maybe it should be a free
+> action rather than forcing an attack. still cost dur. others are ok for
+> bow. for gauntlet maybe deflect should be stronger to also parry. rest
+> are ok I guess."
+
+Follow-ups: for the axe's B and A he picked **Hurl** and **Skull Splitter**
+(over Shoulder Charge and Earthsplitter); Deflect's parry is "Miss, then
+strike back (Recommended)". Break Shot is renamed **Rending Arrow** with
+the same effect: a mechanic can't be owned, but the ticket asked for our
+own names and the name was Three Houses' (*Claude's choice*, Nick may
+rename it).
+
+### The list (*tunable* costs and numbers; the list is Nick's)
+
+C arts are for tier-1 classes (they top out at rank C), B and A for tier 2,
+S for tier 3. None is a plain "might +N" or "+1 strike": those are what
+class actives do.
+
+| Art | Kind | Rank | Cost | Range | Effect | Drawn from |
+| --- | ---- | ---- | ---- | ----- | ------ | ---------- |
+| **Riposte** | Sword | C | 4 | weapon | Stance: when an enemy attacks the user, the user **strikes first**. | FE's Vantage |
+| **Disarm** | Sword | B | 5 | weapon | On the first hit, the target is **disarmed** until the end of its next phase: it can't attack or counter with a weapon. | FFT's Rend Weapon, for one turn |
+| **Cascade** | Sword | A | 6 | weapon | Each strike after the first deals **+3 more than the one before** (2nd +3, 3rd +6, 4th +9). | Our own, on the sword trait |
+| **Unbroken Stride** | Sword | S | 8 | weapon | If the target falls this combat, the user **acts again** (full move and action). Once per phase. | Engage's / Fates' Galeforce |
+| **Long Thrust** | Spear | C | 3 | **1–2** | This attack, the spear reaches 2. Hit **−10**. | Three Houses' javelins |
+| **Spear Wall** | Spear | B | 4 | weapon | Stance: the user **counters at range 1–2**, and its counters get hit **+15**. | Fates' Distant Counter |
+| **Skypiercer** | Spear | A | 5 | weapon | This combat, effective against **Flying ×2**. | Three Houses' Knightkneeler, at the sky |
+| **Comet Lance** | Spear | S | 8 | **1–3, straight** | One strike at **every enemy on a straight line** of 3 tiles, nearest first. No counters. | Into the Breach's Laser Mech |
+| **Wide Swing** | Axe | C | 4 | 1 | A **cleave** instead of a combat: one strike at each enemy on the tiles **in front of, left of and right of** the user. No counters. | Battle Brothers' Round Swing |
+| **Hurl** | Axe | B | 4 | **1–2** | The user throws the axe: this attack reaches 2. Hit **−10**. | FE's Hand Axe |
+| **Skull Splitter** | Axe | A | 5 | weapon | This combat: crit **+30**. | Nick's pick |
+| **Felling Blow** | Axe | S | 8 | weapon | This combat, the axe's minimum damage is **a third of the target's max HP** (rounded down) when that is more than 5. | Our own, the axe trait taken to its end |
+| **Rending Arrow** | Bow | C | 4 | weapon | On the first hit: the target gets **Def −5** until the end of its next phase. | Three Houses' Break Shot (renamed) |
+| **Overwatch** | Bow | B | 5 | weapon | **An action of its own, no attack** (Nick: "a free action rather than forcing an attack. still cost dur"). Stance: the first enemy that **ends a move within the bow's range** is shot once, before it acts. | XCOM's Overwatch |
+| **Marked Shot** | Bow | A | 6 | weapon | On the first hit: the target is **marked** until the end of its next phase: every attack on it by its enemies gets hit **+20** and crit **+10**. | XCOM 2's Holo Targeting |
+| **Arrow Rain** | Bow | S | 8 | **2–3** | One strike at the target **and every enemy next to it**. No counters. | FFT's area skills; XCOM's grenades |
+| **Off Balance** | Gauntlet | C | 3 | weapon | On the first hit: the target gets **avoid −20** until the end of its next phase. | Our own; it lets axes land |
+| **Deflect** | Gauntlet | B | 5 | weapon | Stance: the first enemy strike that would hit the user **misses**, and the user **strikes back** at once. | FE's Pavise, made certain but once |
+| **Chain Strike** | Gauntlet | A | 6 | weapon | After the combat, if the target stands, **every ally next to it strikes it once**. | Engage's Chain Attack |
+| **Vital Point** | Gauntlet | S | 8 | weapon | On the first hit: the target gets **Str, Mag, Def, Res and Spd −4** until the end of its next phase. | Pressure Point taken all the way |
+
+Every art doubles the weapon-EXP base, as in rule 8. "Stance" is rule 7's
+stance: from this combat (or action) until the start of the user's next
+phase. "Until the end of its next phase" is rule 7's debuff: it doesn't
+stack with itself, and applying it again refreshes it. "Enemy" is a unit
+hostile to the user; allies (green units included) are never struck.
+
+### Exact rules (*Claude's starting rules* unless quoted; Nick may veto)
+
+- **Riposte.** While the stance lasts, in a combat where the user is the
+  defender and can counter (its weapon reaches the attacker), the user's
+  first counter strike comes **before** the attacker's first strike. The
+  rest of the order is as usual. A user who can't counter (out of reach,
+  disarmed) gets nothing from it. It does nothing in the combat it is used
+  in, where the user attacks.
+- **Disarm.** From the first hit on, the target's remaining counters in this
+  combat are cancelled. Until the end of its next phase it **can't counter**
+  any combat and **can't attack with a weapon**. It can still move, cast
+  spells and use non-attack actives. The forecast shows `no counter` once
+  the first strike is sure to hit, else `disarms on hit`. The boss AI
+  doesn't value it yet (as 0511 says for every debuff).
+- **Cascade.** Strike *k* of the user (k = 2, 3, 4) deals `+3 × (k − 1)`
+  damage on a hit. Strikes are counted whether they hit or miss. It is added
+  after the sword's follow-up bonus and before crit:
+  base → sword follow-up ×6/5 → **+3(k−1)** → crit ×3. With one strike it does
+  nothing, and the forecast shows that.
+- **Unbroken Stride.** If the target's HP reaches 0 from the user's strikes
+  in this combat, the user may **move its full Mov again from where it
+  stands and take another action**, as if its turn had just begun. It can
+  use other arts in that action, but not Unbroken Stride again in the same
+  phase. The forecast line reads `if it falls: act again`.
+- **Long Thrust / Hurl.** The weapon's range is **1–2** for this attack
+  (like Close Shot sets 1–2 for a bow). A target at 2 counters only if its
+  own weapon reaches 2. At distance 2 a diagonal target counts, as in Line
+  Pierce.
+- **Spear Wall.** While the stance lasts, the user can counter an attacker
+  at distance 1 **or 2** with its spear, whatever the spear's own range, and
+  each counter strike gets hit +15. Only counters get the bonus.
+- **Skypiercer** adds `(Flying, 2)` to the weapon's effective list for this
+  combat; the largest matching multiplier wins, as for Armor Cleave. A
+  flying unit isn't Mounted (`weapons-and-items.md`), so Unhorse never
+  applies to it.
+- **Comet Lance.** The player picks an enemy in the same row or column
+  within 3 tiles (no diagonals). The line is the 3 tiles from the user in
+  that direction. Every enemy on it takes **one strike**, nearest first;
+  allies on the line are passed over, and walls don't stop it. No counters,
+  no extra strikes. Each struck enemy counts as its own combat for unit EXP
+  and class points (as Line Pierce's strike does); weapon EXP is one award
+  with all the damage in `dealt`.
+- **Wide Swing** (Nick: "should not have a normal combat phase but just be
+  a cleave 270 degree rng 1"). The player picks an adjacent enemy, which
+  sets the user's facing. The cleave hits the **front** tile (that enemy),
+  then the **left** and **right** tiles: range 1 is the four tiles next to
+  the user, so 270° is three of them, and the tile **behind** is never hit.
+  Each enemy there takes **one strike**. No counters, no extra strikes, the
+  axe minimum applies. EXP as for Comet Lance.
+
+  ```
+        .  X  .        @ = the user, facing east (the picked enemy)
+        .  @  X        X = one strike each
+        .  X  .        the tile behind (west) is safe
+  ```
+- **Skull Splitter** adds 30 to every strike's crit this combat (clamped
+  to 100). It is the closest an art comes to Keen Edge (crit +10) and
+  Deadly Blow (crit ×2); Nick picked it.
+- **Felling Blow.** `axe minimum = max(5, target.max_hp / 3)` for this
+  combat, in place of 5 (or Crushing Swing's 8), applied on a hit before
+  crit. Against a 60-HP boss every hit deals at least 20.
+- **Rending Arrow** works like Pinning Shot: once per combat, on the first
+  strike that hits, `Def −5` (not below 0).
+- **Overwatch** (an exception to rule 1: an art used **without attacking**).
+  - It is a line of the `Arts` menu like any other. The unit may move first;
+    choosing Overwatch (with a bow that isn't broken) pays 5 durability,
+    ends the unit's action like `Wait`, and needs no target. The menu dims
+    it only when the bow is broken.
+  - Stance until the start of the user's next phase: the **first** enemy
+    that **ends a move** on a tile within the bow's range of the user
+    (distance 2 for a standard bow) is shot **once**, after its move and
+    before its action. One strike, the normal formulas, no counter, no
+    extra strikes. If it falls it doesn't act. Then the stance ends.
+  - An enemy that doesn't move (it attacks from where it stands) doesn't
+    trigger it.
+  - The shot gives weapon EXP as an art (base 4 / 2) and unit EXP as a
+    combat. On the map the user shows its stance, as Brace does.
+- **Marked Shot.** On the first hit, the target is marked until the end of
+  its next phase. Every attack on it (weapon or spell) by a unit hostile to
+  it gets hit +20 and crit +10, in that unit's forecast too. The mark isn't
+  a stat change; the forecast shows `marks: hit +20, crit +10`.
+- **Arrow Rain.** The target is an enemy at distance 2 or 3 (whatever the
+  bow's own range). It and every enemy on the four tiles next to it take
+  **one strike** each, target first, then the others clockwise from the
+  north. No counters, no extra strikes. EXP as for Comet Lance.
+- **Off Balance** is a debuff on `avoid`: `avoid −20` (not below 0) until
+  the end of the target's next phase, from the first hit.
+- **Deflect** (Nick: "should be stronger to also parry"). While the stance
+  lasts, the first enemy strike on the user that **would hit** (after the
+  hit roll) misses instead, and at once the user makes **one strike** back
+  at that attacker, if its equipped weapon reaches it. The strike back uses
+  the normal formulas, can crit, can't be countered, and doesn't use up one
+  of the user's own counters. Then the combat goes on. It works once per
+  stance.
+- **Chain Strike.** After the combat, if the target and the user are still
+  standing, each **ally of the user next to the target** whose equipped
+  weapon reaches it (distance 1) makes **one strike** at it with its own
+  weapon and stats, clockwise from the north. No counters, no durability,
+  no EXP for those allies; the user's weapon EXP counts their damage too.
+  A strike that fells the target ends the chain. Green combat allies join
+  it; non-combat ones don't.
+- **Vital Point** applies its five changes at once, on the first hit, each
+  not below 0.
+- **Strikes at several units** (Wide Swing, Comet Lance, Arrow Rain, Chain
+  Strike) use the 2RN hit roll and the crit roll in strike order. Their
+  forecast lists one row per unit struck (*Forecast mockups* below).
+
+### Forecast mockups
+
+A Duelist at sword B (the menu grows by rank; Keen Edge and Blade Flurry
+are its class actives):
+
+```
+ ┌─ Steel Sword 25/25 ───────────┐
+ │ Flowing Cut     −2 dur  E     │
+ │ Guard Break     −4 dur  D     │
+ │ Riposte         −4 dur  C     │
+ │▸Disarm          −5 dur  B     │
+ │ Keen Edge       −3 dur  active│
+ │ Blade Flurry    −5 dur  active│
+ └───────────────────────────────┘
+```
+
+A debuff that changes what the target can do, and an art that strikes
+several units (the numbers only show the layout):
+
+```
+ ╔════════ Forecast ══════════╗     ╔════════ Forecast ══════════╗
+ ║ Disarm (25 → 20)           ║     ║ Arrow Rain (25 → 17)       ║
+ ║ Joss          Hound Capt.  ║     ║ Aske          3 targets    ║
+ ║ Steel Sword   Steel Axe    ║     ║ Steel Bow     no counters  ║
+ ║ Hit    84     Hit   --     ║     ║ Hound    Hit 82  11 → 4    ║
+ ║ 10 dmg  → 22   no counter  ║     ║ Hound    Hit 76  11 → 9    ║
+ ║ 12 dmg  → 10               ║     ║ Warden   Hit 71   6 → 18   ║
+ ║ disarms: no weapon attacks ║     ╚════════════════════════════╝
+ ║   until end of its phase   ║
+ ╚════════════════════════════╝
+```
+
+A stance art (this combat is normal; the line says what lasts):
+
+```
+ ╔════════ Forecast ══════════╗
+ ║ Riposte (25 → 21)          ║
+ ║ Tamsin        Brigand      ║
+ ║ Steel Sword   Iron Axe     ║
+ ║ Hit    90     Hit   61     ║
+ ║  9 dmg  → 11   12 dmg → 8  ║
+ ║ stance: strikes first      ║
+ ║   until your next phase    ║
+ ╚════════════════════════════╝
+```
+
+Overwatch has no forecast (no target): its line in the `Arts` menu reads
+`Overwatch  −5 dur  B  ends action`.
+
+### Overlaps with class actives (Nick: "rare and make sense")
+
+- **Cascade** and **Blade Flurry** (Duelist, +1 strike): Cascade makes the
+  strikes a fast swordsman already has hit harder; Blade Flurry adds one.
+  One per attack, so a Duelist picks.
+- **Spear Wall** and **Brace / Fortify**: all stances, but one is reach and
+  the others are armour.
+- **Unbroken Stride** and **Vault / Swoop**: one step after an attack
+  against a whole turn after a kill.
+- **Wide Swing, Comet Lance, Arrow Rain** and **Flurry / Volley**: more
+  strikes, but at many units instead of one.
+- **Skull Splitter** and **Keen Edge / Deadly Blow**: all crit; Nick chose
+  it knowing.
+- **Felling Blow** and **Heavy Blow / Rampage**: all big hits, but Felling
+  Blow only matters against bosses and tanks.
+
+## Special weapons (ticket 0018)
+
+### Nick's words
+
+> "so I think MLGS should be the end of a very long optional questline like
+> they did in Elden Ring... as for its arts, I think it can have both. Str
+> against Res as a passive (never use dur, it's innate) and the wave effect
+> as an active. other weps are ok I guess I mean they are pretty early game
+> rewards don't need to be too special."
+
+and for the wave's power: "whichever is higher for the wielder".
+
+### Rules for every special weapon
+
+- A special weapon is an item with its **own art** in its `arts` list
+  (*Learning arts*, above): anyone who can wield it may use the art while
+  attacking with it, at any rank.
+- It may also have a **passive**: an effect built into the weapon that
+  applies to every strike made with it (attacks and counters) and costs
+  nothing (Nick: "never use dur, it's innate"). Only the Moonblade has one
+  so far.
+- **Personal weapons** (side-quest rewards, `world-structure.md`) are
+  special weapons that only one character can wield (like Lyn's Mani
+  Katti). Ticket 1072 designs each with its quest.
+- *Claude's starting rules:* special weapons are never sold in a shop and
+  **can't be sold**; they repair at a Blacksmith or the Preparations shop
+  for gold, by the usual formula on their listed price.
+
+### The first ones (*tunable* stats)
+
+| Weapon | Kind | Rank | Mt | Hit | Crit | Wt | Rng | Dur | Price | Where |
+| ------ | ---- | ---- | -- | --- | ---- | -- | --- | --- | ----- | ----- |
+| **Houndmaster's Axe** | Axe | D | 10 | 70 | 5 | 7 | 1 | 25 | 900 | Chapter 2: the Hound lieutenant's axe, given when the battle is won |
+| **Fordwarden's Spear** | Spear | E | 6 | 80 | 0 | 5 | 1–2 | 20 | 800 | Chapter 2: a reward for saving houses past the minimum |
+| **Moonblade** *(working name)* | Sword | C | 10 | 85 | 0 | 4 | 1 | 30 | 3000 | The end of a long optional questline (Nick; not Chapters 2–3) |
+
+- **Houndmaster's Axe: Pack Hunt** (3 dur): this combat, might **+2 for
+  each other unit of the user's side next to the target**, up to +6. The
+  lieutenant uses it against the player first (he is a boss: bosses use
+  arts), so the player sees that a weapon carries an art before winning
+  it. 0848 makes him an axe user.
+- **Fordwarden's Spear** is a throwing spear, the first spear with range 2,
+  so Line Pierce goes diagonal with it (Nick's 0312 review). **Hold the
+  Ford** (3 dur): stance: an enemy that steps onto a tile **next to the
+  user** must **stop there** (its move ends). One that starts its move next
+  to the user may move away freely. Fliers are stopped too. Like Battle
+  Brothers' zone of control.
+- **Moonblade** (Nick's Moonlight Greatsword):
+  - **Passive, Moonlit:** every strike with it hits **Res instead of Def**
+    (`mitigation = B.Res + terrain`), still powered by **Str** + might.
+    No cost.
+  - **Art, Moonwave** (4 dur): this attack reaches **1–2**, and its power is
+    **`max(Str, Mag)` + might** against Res (Nick: "whichever is higher for
+    the wielder"). A target at 2 counters only if it reaches 2.
+  - Its stats and rank are placeholders until its questline is placed
+    (ticket 0075); it is the late-game blade, so they are high.
+- **Chapter 3** gets no special weapon from this decision: the Moonblade
+  moved to its questline, and Greywater's reliquary chests are Chapter 3's
+  ticket's to fill.
+
+### Forecast of a passive and a wave
+
+```
+ ╔════════ Forecast ══════════╗
+ ║ Moonwave (30 → 26)         ║
+ ║ Mystic        Hound Guard  ║
+ ║ Moonblade     Iron Spear   ║
+ ║ Hit    88     Hit   --     ║
+ ║ 13 dmg  → 13   no counter  ║
+ ║ moonlit: hits Res          ║
+ ╚════════════════════════════╝
+```
+
+The `moonlit: hits Res` line shows on every forecast with the Moonblade,
+plain attacks included.
+
+## Class actives after the playtest (ticket 0018)
+
+Nick, asked whether Lance Rush and Dive should get their own flavour:
+
+> "dive is good to add but lance rush with rider's charge sounds
+> broken...? … I just dont want overlap between 2 skills when they will
+> definitely be used together it will just turn a lance mount class into a
+> one shot machine with no strategy"
+
+- **Dive** (Sky Warden, 5 dur): the user attacks an enemy **up to 3 tiles
+  away in a straight line** (row or column), landing on the tile **next to
+  it** on that line, which must be empty and one the user can stand on;
+  might **+4** (was +6). The flight there doesn't count as movement for
+  Charge. Tier 4 isn't built yet; this is the rule it is built with.
+- **Lance Rush stays might +5.** It never depends on how far the Rider
+  moved, so it doesn't double up with the Charge passive.
+- **Heavy Blow** stays: "one strike only" already sets it apart.
 
 ## What class actives cost
 
@@ -532,9 +854,11 @@ vs Brigand), with each sword art:
 
 ## Open sub-questions (deferred)
 
-- **Arts for ranks C–S, and special weapons with their own arts:** ticket
-  0018.
+- **Arts for ranks C–S, and special weapons with their own arts:** decided
+  by ticket 0018 (above); built by 0325–0329.
+- **The Moonblade's questline** (where it starts, how long, which acts):
+  ticket 0075.
 - **Tier-3 actives** must be spell actives for 0-weapon classes: ticket 1001.
-- **Whether any tier 1–2 active should be reflavoured** to overlap arts less:
-  judged in the Chapter 1 playtest (0804).
+- **Reflavouring tier 1–2 actives:** decided by 0018: Dive changes, Lance
+  Rush and Heavy Blow stay.
 - **Number scale:** decided by ticket 0013: FE-sized, so no rescale.

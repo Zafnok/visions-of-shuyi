@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608"]
+blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608", "0329"]
 nick_input: none
 completed:
 ---
@@ -46,6 +46,11 @@ before building.
 ## Scope
 
 **In:**
+- **The two special weapons** (0018, `combat-arts.md`, *Special weapons*):
+  the Hound lieutenant is an axe user carrying the **Houndmaster's Axe**
+  (he uses Pack Hunt; it is the player's when the battle is won), and the
+  **Fordwarden's Spear** is one of the rewards for saving houses past the
+  minimum. Both items come from 0329.
 - **The map** `assets/maps/ch02.map` with the bought tilesets
   (ADR-0052 auto-tiling) and its glyph look; the tiles the battle needs.
 - **The battle** `assets/battles/ch02.ron`: player slots

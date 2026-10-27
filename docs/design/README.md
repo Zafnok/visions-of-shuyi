@@ -16,7 +16,7 @@ here.
 | Four armour weights (cloth, leather, chain, plate) and who wears them | [`weapons-and-items.md`](weapons-and-items.md) | 0073 | ✅ decided 2026-10-21 (four weights by material; each class has a max weight and wears anything lighter; the lord never wears plate; four starter pieces from Chapter 2) |
 | The Steel armour sold from Chapter 5 | `weapons-and-items.md` | 0074 | ⏳ asked next (0073: Iron Plate from Ch 2, a Steel Plate later) |
 | Combat Arts (and active-skill costs) | [`combat-arts.md`](combat-arts.md) | 0014 | ✅ decided 2026-09-25 (non-attack actives cost uses per battle, 2026-10-01; arts in their own menu, 2026-10-12, ticket 0442) |
-| Combat Arts for ranks C–S, special weapons | `combat-arts.md` | 0018 | ⏳ after playtest 0804 |
+| Combat Arts for ranks C–S, special weapons | [`combat-arts.md`](combat-arts.md) (*Ranks C–S*, *Special weapons*) | 0018 | ✅ decided 2026-10-26 (four arts per kind at C/B/A/S; Overwatch is an action of its own; two Chapter 2 weapons with arts; the Moonblade hits Res as a passive and ends a long optional questline; Dive reflavoured, Lance Rush stays) |
 | Magic & healing | [`magic.md`](magic.md) | 0004 | ✅ decided 2026-09-25 (spells after a class change and terrain magic details revised 2026-09-27; casting on the battle screen added 2026-10-01) |
 | Level ups, classes, class tree | [`progression.md`](progression.md) | 0005, 0017, 0019 | ✅ decided 2026-09-25 (fliers moved to tier 3+ by 0017; no per-class stat caps, 0019, 2026-09-28; seals only between battles, 0603, 2026-09-30) |
 | Death, rewind, difficulty, saving | [`death-and-difficulty.md`](death-and-difficulty.md) | 0006 | ✅ decided 2026-09-25 |
