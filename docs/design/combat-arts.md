@@ -304,7 +304,7 @@ class actives do.
 | --- | ---- | ---- | ---- | ----- | ------ | ---------- |
 | **Riposte** | Sword | C | 4 | weapon | Stance: when an enemy attacks the user, the user **strikes first**. | FE's Vantage |
 | **Disarm** | Sword | B | 5 | weapon | On the first hit, the target is **disarmed** until the end of its next phase: it can't attack or counter with a weapon. | FFT's Rend Weapon, for one turn |
-| **Cascade** | Sword | A | 6 | weapon | Each strike after the first deals **+3 more than the one before** (2nd +3, 3rd +6, 4th +9). | Our own, on the sword trait |
+| **Cascade** | Sword | A | 6 | weapon | Each **hit** after the first deals **+3 more than the one before** (2nd hit +3, 3rd +6, 4th +9); misses don't count. | Our own, on the sword trait |
 | **Unbroken Stride** | Sword | S | 8 | weapon | If the target falls this combat, the user **acts again** (full move and action). Once per phase. | Engage's / Fates' Galeforce |
 | **Long Thrust** | Spear | C | 3 | **1–2** | This attack, the spear reaches 2. Hit **−10**. | Three Houses' javelins |
 | **Spear Wall** | Spear | B | 4 | weapon | Stance: the user **counters at range 1–2**, and its counters get hit **+15**. | Fates' Distant Counter |
@@ -343,11 +343,12 @@ hostile to the user; allies (green units included) are never struck.
   spells and use non-attack actives. The forecast shows `no counter` once
   the first strike is sure to hit, else `disarms on hit`. The boss AI
   doesn't value it yet (as 0511 says for every debuff).
-- **Cascade.** Strike *k* of the user (k = 2, 3, 4) deals `+3 × (k − 1)`
-  damage on a hit. Strikes are counted whether they hit or miss. It is added
-  after the sword's follow-up bonus and before crit:
-  base → sword follow-up ×6/5 → **+3(k−1)** → crit ×3. With one strike it does
-  nothing, and the forecast shows that.
+- **Cascade.** Only **hits** count (Nick, 2026-10-26: "cascade shouldnt
+  count missed strikes"): the user's *n*-th hit this combat (n = 2, 3, 4)
+  deals `+3 × (n − 1)` more. Example: hit, miss, hit, hit gives +0, —, +3,
+  +6. It is added after the sword's follow-up bonus and before crit:
+  base → sword follow-up ×6/5 → **+3(n−1)** → crit ×3. With one strike it
+  does nothing. The forecast shows the damage if every strike hits.
 - **Unbroken Stride.** If the target's HP reaches 0 from the user's strikes
   in this combat, the user may **move its full Mov again from where it
   stands and take another action**, as if its turn had just begun. It can
@@ -525,9 +526,14 @@ and for the wave's power: "whichever is higher for the wielder".
 - **Personal weapons** (side-quest rewards, `world-structure.md`) are
   special weapons that only one character can wield (like Lyn's Mani
   Katti). Ticket 1072 designs each with its quest.
-- *Claude's starting rules:* special weapons are never sold in a shop and
-  **can't be sold**; they repair at a Blacksmith or the Preparations shop
-  for gold, by the usual formula on their listed price.
+- **Selling** (Nick, 2026-10-26: "special weapons can be sold but should
+  warn the player"): a special weapon sells for half its price like any
+  other, but selling it asks first. Example: `Sell Moonblade for 1500?
+  No shop sells it, so it can't be bought back.` with **No** / Yes, the
+  cursor on No (*Claude's starting rule*: the wording and the default).
+  No shop ever stocks a special weapon, so a sold one is gone.
+- *Claude's starting rule:* special weapons repair at a Blacksmith or the
+  Preparations shop for gold, by the usual formula on their listed price.
 
 ### The first ones (*tunable* stats)
 

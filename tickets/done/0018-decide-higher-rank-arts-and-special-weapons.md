@@ -80,14 +80,19 @@ then one round of follow-ups. Recorded in `combat-arts.md` (*Ranks C–S*,
 
 *Claude's starting rules* (Nick may veto): every "Exact rules" bullet of
 *Ranks C–S* not quoted from him (Riposte only when it can counter; Disarm
-cancels the rest of this combat's counters; Cascade counts missed strikes;
+cancels the rest of this combat's counters;
 Unbroken Stride is a full move and action; Comet Lance in rows and columns
 only, passing allies; Overwatch triggers once, only on a unit that moved;
 Arrow Rain's four neighbours; Chain Strike's allies use no durability and
-get no EXP), the name Rending Arrow, special weapons can't be sold, the
+get no EXP), the name Rending Arrow, the selling question's wording, the
 Houndmaster's Axe is given when Chapter 2 is won, and every cost and stat
 (*tunable*).
 
 Tickets created: 0325, 0326, 0327, 0328, 0329 (building it), 0075 (the
 Moonblade's questline). 0848 and 1072 now wait for 0329; 1064 waits for
 0325–0329.
+
+After the PR was opened, Nick changed two starting rules (2026-10-26):
+"cascade shouldnt count missed strikes I think" (only hits count now) and
+"special weapons can be sold but should warn the player" (selling asks
+first). Both are in `combat-arts.md`, 0325 and 0329.

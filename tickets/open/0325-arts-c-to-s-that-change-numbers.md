@@ -27,7 +27,7 @@ only change one combat's numbers or put a debuff on the target, on top of
 | Skypiercer | Spear | A | 5 | none: `effective: [(Flying, 2)]` |
 | Skull Splitter | Axe | A | 5 | `crit: 30` (new field) |
 | Felling Blow | Axe | S | 8 | `axe_min_damage_max_hp_div: Some(3)` or similar (minimum = `max(5, max_hp / 3)`) |
-| Cascade | Sword | A | 6 | `cascade: Some(3)`: strike k deals `+3 × (k − 1)` after the sword follow-up, before crit |
+| Cascade | Sword | A | 6 | `cascade: Some(3)`: the n-th **hit** deals `+3 × (n − 1)` after the sword follow-up, before crit (misses don't count) |
 | Rending Arrow | Bow | C | 4 | none: `on_first_hit: (stat: Def, amount: 5)` |
 | Off Balance | Gauntlet | C | 3 | a debuff on **avoid** (avoid isn't a `Stat`: a combat-mod debuff) |
 | Vital Point | Gauntlet | S | 8 | `on_first_hit` takes several stats (Str, Mag, Def, Res, Spd −4) |
@@ -63,7 +63,7 @@ goes on the Act 1 playtest's checklist (1064).
    the combat formulas in `crates/core/src/combat.rs` and 0312's tests in
    `crates/core/src/battle/tests/art.rs`.
 2. Add the fields to `ArtEffect` (all `#[serde(default)]`), apply them in
-   `apply` or in the combat strike loop (Cascade needs the strike index;
+   `apply` or in the combat strike loop (Cascade needs a count of the hits so far;
    Felling Blow needs the target's max HP), and add `ArtNote`s.
 3. Make `on_first_hit` accept a list; avoid as a debuff target.
 4. Add the nine arts to `assets/data/arts.ron` with the design doc's ranks
@@ -76,7 +76,8 @@ goes on the Act 1 playtest's checklist (1064).
 - [ ] A unit at rank C/B/A/S of a kind knows that rank's arts from this
       list (content test over `arts.ron`).
 - [ ] Unit tests in `core` for each new effect, with the design doc's
-      numbers (Cascade's order: base → ×6/5 → +3(k−1) → crit; Felling
+      numbers (Cascade's order: base → ×6/5 → +3(n−1) → crit, with hit, miss,
+      hit, hit giving +0, —, +3, +6; Felling
       Blow's `max(5, max_hp / 3)`; Long Thrust/Hurl at distance 2 and the
       defender's counter only if it reaches 2).
 - [ ] Old `arts.ron` entries load unchanged.
