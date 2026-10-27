@@ -78,7 +78,7 @@ Nothing for the game: 0 PRs.
 
 Nothing for the game: 3 PRs (#86, #87, #121). The skill pack gains `shuyi-perf`.
 
-## 2026-10-26: 6f0a8209 → 883ad00a (6 engine PRs), #PR
+## 2026-10-26: 6f0a8209 → 883ad00a (6 engine PRs), #445
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
