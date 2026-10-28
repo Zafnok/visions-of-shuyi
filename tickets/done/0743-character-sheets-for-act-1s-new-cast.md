@@ -36,6 +36,8 @@ Crane's champion in the Undercroft (Chapter 7); Dace and Crane have
 sheets already. Name a boss only if the chapter needs one; a boss
 sheet can be short (want, voice, three lines).
 
+**Looks picked by 0070** (`docs/design/look-and-feel.md`, *Act 1's new cast*): Joss as the Thief hero (brown spiky hair, dark headband, vest; in combat sword and shield, dark Hound cloth); Gil slicked-back black hair, a scar over one eye, a goatee, bare-chested with gold fist wraps and a red sash in combat; Ragna dark-blonde hair in a bun, a traveller's coat; Oriel greying hair and stubble, a grey-and-gold court robe; Crane now has **long white hair and a full white beard** (his sheet is updated); Greywater's boss is **the prior** (a dark-robed priest), not the Hound captain; Crane's champion is **a woman** in blue armour with sword and shield. Hedda and the Hound lieutenant are 0076's: describe them loosely.
+
 Every Act 1 script (0744–0750, 1072, 1073) waits for this ticket, and
 all of them for 0736 (the craft research that governs the scripts).
 

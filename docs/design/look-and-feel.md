@@ -6,7 +6,7 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
 screen: 0811; descriptions in lists: 0429; places behind conversations:
-0029; arrows at the map's edges: 0449)
+0029; arrows at the map's edges: 0449; Act 1's new cast: 0070)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -1004,6 +1004,99 @@ like shit". What the search was held to after that:
   with mounted knights, dragon riders, map units and faces; "Makerシリーズ
   以外でも利用可・商用利用可"), in a 1990s semi-realistic style. Nick has
   the link; nothing is decided about it.
+
+#### Act 1's new cast
+
+Decided 2026-10-26 to 2026-10-28, ticket 0070 (Hedda and the Hound
+lieutenant left to 0076). Nick judged mockups
+in the scratchpad (never committed, ADR-0040): each candidate's bust cut
+as the dialogue frame shows it, and their combat picture at double size
+on the fields backdrop facing Harl or the lead. Faces that don't exist
+yet were rough mockups put together from the Character Generator's part
+images, as in 0706; Nick makes the real ones in the generator. Two
+searches beyond the bundle (itch.io, BOOTH, GameDev Market, CraftPix,
+the Japanese free-art sites, RPG Maker resources with open terms) found
+Shironejiya the only close match in style, so more of its pictures are
+used; its own faces are an older 48×48 style that doesn't fit our
+busts, so they aren't.
+
+| Who | Face | Combat picture | Status |
+| --- | ---- | -------------- | ------ |
+| Joss Pellam (`defector`) | The **Thief** hero (Heroes 1), with its map sprite | Shironejiya's **sword-and-shield hero** (`m_s_hero07`) at 1.25×, recoloured by Claude: hair brown and headband dark like the Thief's, and its red cloth turned Hound black | Decided ("F Hound black") |
+| Oriel Mast (`battlemage`) | A **generator** face: greying hair, stubble, a grey-and-gold coat | Shironejiya's **court mage** (`m_s_mage_middle_m01`) at 1.25×, casting with an arm out, his blue hair recoloured grey | Decided ("D Court mage") |
+| Crane (`vowmaster`) | A **generator** face: long white hair and a full white beard, with a spectacle rim added by Claude | Unchanged (0040): Shironejiya's old hooded man | Decided ("F Long hair"); his sheet becomes bearded |
+| Ragna Holt (`envoy`) | A **generator** face, no combat picture (she never fights): dark-blonde hair in a bun, a traveller's coat | none | Claude's pick of Nick's two (below) |
+| Dace (`rival`) in person | Unchanged (0706): his generator face | Unchanged (0040): the dark knight | Already decided; his map picture is 0735's |
+| Gil Parrow (`prizefighter`) | Generator face **B**: slicked-back black hair, a scar over one eye, a goatee | Sagak Art's **"8-Bit Heroes 2: Fighter"** (<https://sagak-art-pururu.itch.io/8bitheroes-fighter>, $3, not bought yet): bare-chested, gold fist wraps, red sash, about 45 pixels tall, drawn at **1.75×** | Decided |
+| Hedda Ravn (`shieldbearer`) | *Open* (both mockups were "ok") | *Open* | Left to ticket **0076** (Nick: "Follow-up ticket") |
+| The Hound lieutenant (Chapter 2 boss, axe) | Only if he speaks | *Open* | Left to ticket **0076** |
+| Greywater's boss: **the prior** (Chapter 3) | Only if he speaks | Shironejiya's **dark-robed priest** (`m_s_mage_dark_m01`) at 1.25× | Decided: the prior is the boss, not the Hound captain |
+| Crane's champion (Chapter 7 boss) | Only if she speaks | Shironejiya's **blue-armoured knight** with sword and shield (`m_s_val`) at 1.25×; the champion is a woman | Decided |
+
+**Nick's words:**
+
+> [Round 1, Joss:] "mostly like the thief hero but if its a swordsman
+> doesnt really work... the other battlers dont work for me at all. would
+> suggest looking at other packs." [Gil:] "B face looks best but the
+> battlers look very bizarre for this character." [Hedda:] "both
+> portraits are ok but is there any in between rather than scantily clad
+> (she almost looks naked) and totally full body armor...?" [During the
+> round:] "u can also look at other bundles from itch and wherever else if
+> our bundle doesn't suit the new chars..."
+>
+> [Round 2, the Thief's knife lengthened into a sword by an edit:] "well
+> his blade is tilted down which is bizarre and the aliasing on the sword
+> looks off so no" [Oriel:] "only C looks any good, I think zealot using a
+> sword is a bit weird, and the wizard in A is black while his portrait is
+> white what.... search some other packs" [Ragna:] "A or C I guess"
+> [Crane:] "make him bearded, better to have bearded sheet than
+> de-bearding a sprite. but A looks weird is he supposed to be bald? idk I
+> picture him with hair"
+>
+> [Round 3, Crane:] "F Long hair" [Ragna:] "idrc whichever fits her sheet
+> better" [Bosses' faces:] "Only if they speak"
+>
+> [Round 4, Shironejiya's pictures:] Joss "F Hound black", Gil "None",
+> Hedda "keep looking.", Oriel "D Court mage"
+>
+> [On the bosses' pictures:] "please give me more insights into who each
+> character is before asking me to pick each char. I frankly have not
+> kept pace with the story"
+>
+> [Round 5, after a summary of each boss:] lieutenant "Search more";
+> Greywater "the prior with the Shironejiya mage sprite, since the cleric
+> sprite is a female and priors can't be female afaik" (then, asked
+> which: "B Dark priest"); the champion "the valkyrie / blue knight looks
+> best but is female. is it ok for the story?" (yes: nothing in the
+> story fixes the champion's sex); bosses' faces "we can iterate on the
+> face together using generator components, and you can tell me what
+> components are necessary, and then I will use the generator program.
+> Since your simulated generator does not work as well as you think it
+> does."
+>
+> [Round 6, Gil with the Sagak fighter at 1.5× and 2×:] "1.75X with
+> sharpening might look ok? I like it but it's blurry." (The blur was
+> the store preview, pasted and scaled; the bought file is sharp pixel
+> art at its own size.) Hedda and the lieutenant: "idc keep looking."
+
+- **Generator faces are made by Nick from a list of parts.** Claude's
+  mockups pasted from the generator's part images are rough; for every
+  generator face still to make (Gil, Oriel, Crane, Ragna, and a boss who
+  speaks) the chapter ticket gives Nick the parts (body, hair, eyes,
+  facial hair, outfit, colours) and they iterate together; Nick builds it
+  in the generator.
+- **Gil's picture is bought by Nick** (paid art is fine, Nick decides
+  each purchase). It is credited (`assets/data/credits.ron`) and listed
+  in `THIRD_PARTY_ASSETS.md` when Chapter 4 imports it; its licence:
+  commercial use and edits allowed, no redistribution or resale.
+
+- **Ragna** *(Claude's pick)*: her sheet isn't written yet (0743), so
+  the bun and traveller's coat, which suit an envoy on the road, over the
+  long red hair and dress. 0743 describes her to match.
+- **Crane's sheet** changes from clean-shaven to a full white beard and
+  long white hair (Nick's call; it matches his combat picture).
+- **Lesson for these questions:** say who a character is in the story
+  before asking Nick to pick their look.
 
 ### Title screen
 

@@ -32,6 +32,7 @@ the number scale first. As a world-map chapter it needs the world map (1007) and
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
+0070 picked **Crane**'s face: a generator face with long white hair and a full white beard, plus a spectacle rim added by Claude (his combat picture is 0040's). **Crane's champion** is a woman: Shironejiya's blue-armoured knight `m_s_val` at 1.25×, and a face only if she speaks. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 

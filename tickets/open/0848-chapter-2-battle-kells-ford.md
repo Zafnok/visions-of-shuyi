@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608", "0329"]
+blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608", "0329", "0076"]
 nick_input: none
 completed:
 ---
@@ -32,6 +32,7 @@ the number scale first. It also needs the save-the-village rule (0313), the shop
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
+0070 picked **Joss**: the Thief hero's face, bust and map sprite, and Shironejiya's `m_s_hero07` at 1.25× recoloured (brown hair, dark headband, red cloth turned Hound black). The **Hound lieutenant's** picture is 0076's. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 
