@@ -101,7 +101,7 @@ Nothing for the game: 7 PRs (#140, #141, #142, #143, #145, #146, #147). The skil
 
 Ticket 0909 (from #139): the web build's `NOTICES.txt` lists none of the game's own works yet; 0909 names the font, the music and their license texts in `shuyi.ron`'s `notices`. 0901 waits on it.
 
-## 2026-10-28: 1d284a18 → c9fb84c9 (11 engine PRs), #PRNUM
+## 2026-10-28: 1d284a18 → c9fb84c9 (11 engine PRs), #465
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
