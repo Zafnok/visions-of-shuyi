@@ -135,7 +135,10 @@ fn play_chapter_1() -> Vec<String> {
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
     // What it started, and what the scenes it skipped would have: every
-    // `@music` of the Playdate's scenes.
+    // `@music` of Chapter 1's own scenes (its intro and victory scenes
+    // and its battle's triggers), not of every scene in the bundle: a
+    // later chapter's script may name a track the Playdate doesn't ship
+    // until that chapter does.
     let started = h
         .music_commands()
         .iter()
@@ -143,8 +146,16 @@ fn play_chapter_1() -> Vec<String> {
             MusicCommand::Start { cue } => Some(cue.clone()),
             _ => None,
         });
-    let scenes = h.game().ctx().game.content.dialogue.scenes.values();
-    let in_scenes = scenes
+    let content = &h.game().ctx().game.content;
+    let chapter = &content.chapters["ch01"];
+    let battle = &content.battles[&chapter.battle];
+    let ids = chapter
+        .intro_scenes
+        .iter()
+        .chain(&chapter.victory_scenes)
+        .chain(battle.triggers.iter().map(|trigger| &trigger.scene));
+    let in_scenes = ids
+        .filter_map(|id| content.dialogue.scenes.get(id))
         .flat_map(|scene| &scene.steps)
         .filter_map(|step| match step {
             Step::Music(MusicLine::Cue(cue)) => Some(cue.clone()),

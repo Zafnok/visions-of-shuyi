@@ -1,0 +1,534 @@
+# Chapter 2: Kell's Ford. Written on a blank page from the beat sheet's
+# cards by ticket 0744 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch02.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# Scene ids, for chapters/ch02.ron and battles/ch02.ron to wire (0848):
+#
+#   Before the battle (intro_scenes, in this order)
+#     ch02_intro                   a halt in the dark above the ford
+#     ch02_prebattle               the ford's edge; the boots; Maud's No
+#
+#   In the battle (triggers, each once)
+#     ch02_first_turn              TurnStart(turn: 1, phase: Player)
+#     ch02_refusal                 TurnStart, early (0848 picks the turn): Hendry and Joss
+#     ch02_boss_engage_lead        CombatStart(unit: "hound_lieutenant", against: Some("lead"))
+#     ch02_boss_engage_poacher     CombatStart(unit: "hound_lieutenant", against: Some("poacher"))
+#     ch02_boss_engage             CombatStart(unit: "hound_lieutenant"): anyone else
+#     ch02_boss_half               HalfHp(unit: "hound_lieutenant")
+#     ch02_death_hound_lieutenant  UnitFell(unit: "hound_lieutenant")
+#     ch02_house_keeper            UnitEntersArea(who: Character("keeper"), a house)
+#     ch02_death_lead              UnitFell(unit: "lead"): game over in both modes
+#     ch02_death_<id>              UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch02_retreat_<id>            UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic
+#
+#   After the battle (victory_scenes, in this order)
+#     ch02_victory                 the herald; Joss comes out of the river
+#     ch02_join                    the far bank; Joss joins
+#     ch02_tbc                     Veyne Hall: Dace and the old sergeant
+#
+# Until 0848 wires the triggers, the validator can't know which scene
+# plays for whom, so every companion line in a battle scene below sits
+# in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, the boss against Aske, Maud
+# at a house), that "@if" can only go one way and the validator reports
+# it: 0848 removes those blocks as it wires each trigger. The "@if" in
+# ch02_first_turn stays: a turn-start scene in a chapter after the first
+# can't count on anyone.
+#
+# No @place directives yet: the maps are 0848's. The @music lines are
+# this ticket's picks from the mood cues (0071); the battle's own cue,
+# battle_desperate, is Nick's and goes in the battle file.
+#
+# The five companions may have died in Chapter 1 (Classic), so outside
+# the battle every line of theirs is in an "@if" block, and each scene
+# reads through with any of them gone, and with all of them gone.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the halt and the ford are played straight.
+# The care is on the body (a boot, a knee, bread, cold hands). Downtime
+# after the fight (the far bank) may be light, briefly. Punctuation is
+# the voice acting: Tamsin runs on and asks, and raises her voice once a
+# scene at most; Joss runs on and asks whether that was right; Maud and
+# Joss break off; Aske and Hollis end flat, and Hollis trails off once.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised); the cast's portraits are bought art.
+
+# ---------------------------------------------------------------------------
+# Before the battle
+# ---------------------------------------------------------------------------
+
+# A stand of alders by the road an hour above Kell's Ford, before dawn.
+# No fire. The party has walked since dusk. Maud sat down.
+
+@scene ch02_intro
+@caption The road above {n:place.kells_ford}, before dawn
+@music talk_calm
+> No fire. A stand of alders by the road, and the river loud under it. The whole party has stopped.
+@left lead neutral
+@if keeper
+@right keeper sad
+@if retainer
+@left retainer neutral
+> {n:keeper} is in the road with one boot half off. {n:retainer.first} is holding the boot.
+retainer: Leave it on. You take it off now, it won't go back on, and then I'm carrying you.
+keeper: It's only-- I think it's only the heel, if I could see it I'd know, I'd-- yes. Yes, all right. I'm sorry. I'm the one who sat down, aren't I.
+@left lead neutral
+@else
+> {n:keeper} is in the road with one boot half off, looking at it as if it were somebody else's.
+keeper: I know. I know, it won't go back on if I take it off, I know that. I'm the one who sat down. I'm sorry. It's only the heel...
+@endif
+@right clear
+@endif
+@if sergeant
+@right sergeant neutral
+sergeant: Nobody's carrying anybody, the mare takes her and I walk, done. Hear that? River bottom, Your Former Grace, that's what that is. Forty acres of it they promised me. You could grow anything in it.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: We're not growing anything. We cross at the bridge when the watch changes, while the new ones are still rubbing their eyes. Kid, that coat. The crest's gone but the hole isn't. Inside out, or off.
+@right clear
+@endif
+@if poacher
+@right poacher neutral
+poacher: The watch changes at first light. The four who come down go to the bakehouse before anything else. You have until they have eaten.
+@if sergeant
+@right sergeant surprised
+sergeant: How do you know that?
+@right poacher neutral
+poacher: I hunt.
+@right clear
+@else
+@right clear
+@endif
+@endif
+@if heretic
+@right heretic neutral
+> {n:heretic} has walked in front all night and said nothing. She comes back down the line and puts half a loaf against {lead}'s chest, and holds it there until {lead} takes it.
+heretic: You've had nothing since the fort. I counted. ...What are you looking at me for? Eat it.
+@right clear
+@endif
+@if keeper
+@right keeper sad
+keeper: Go on ahead. All of you, truly. Leave me a little way behind and I'll catch up with you at the bridge, I'll be quicker without anyone watching me be slow, I--
+@choice
+* earnest: We're not leaving you on a road.
+  keeper[surprised]: ...Oh. All right, then I'm-- I'm getting up. Look. I'm up.
+* wry: And miss you fall in the river?
+  keeper[happy]: I would, too. Headfirst. Don't. Don't make me laugh, I'll cry, I'm so tired.
+* act: Lean on me.
+  keeper: I'm heavier than I-- all right. Only to the bridge. Only until I can feel my feet.
+@endchoice
+@right clear
+@else
+> Nobody has sat down. Nobody has said anything for an hour, either.
+@choice
+* earnest: We cross together. Whatever's there.
+  > Nobody argues.
+* wry: Anyone else's feet on fire?
+  > Nobody laughs. It is too early, and too cold.
+* blunt: Up. The bridge by first light.
+  > {They} is already walking.
+@endchoice
+@endif
+> Downriver, where the ford is, the sky is red under the cloud. A bell starts, small with the distance, and goes on.
+@if retainer
+@right retainer angry
+retainer: That's the ford. ...Up. Everybody up, now.
+@right clear
+@else
+> That is the ford.
+@endif
+@end
+
+# The south end of the village, by the ford, first light. A dead man in
+# the road; Aske and the boots; Hollis's order; Maud's No.
+
+@scene ch02_prebattle
+@caption {N:place.kells_ford}, first light
+@music dungeon_tense
+> The south end of the village. Thatch burning on both banks, and across the water the garrison's tower. A dead man in the road in {n:faction.brennmark.adj} colors, a hayfork in him.
+@left lead neutral
+@if sergeant
+@right sergeant angry
+sergeant: {N:faction.brennmark.adj}! Over the ford at night and gone by noon, I've seen this, I've seen this three times-- get me across that water. I want the ones on the far bank.
+@right clear
+@endif
+@if poacher
+@right poacher neutral
+> {n:poacher} turns the dead man over with her foot, and crouches.
+poacher: These are not {n:faction.brennmark.adj}. The boots. New. Nailed. {N:faction.brennmark.adj} cannot afford boots like this. And the badge is new. Sewn on this week.
+@if sergeant
+@right sergeant angry
+sergeant: Then who? Who torches a village in somebody else's colors? That's a hill badge, I've pulled those off dead men, I know what--
+@right poacher neutral
+poacher: I do not know who. I know they are not from home.
+@right clear
+@else
+@right clear
+@endif
+@endif
+@if retainer
+@right retainer angry
+@if keeper
+retainer: Enough. There's people in those houses. Houses first, the road second, and nobody waits for the bridge. Keeper, you stay back here.
+@right keeper sad
+keeper: No. ...No, I'm-- there are people burned in there, and I'm the only one of us who can do anything about a burn. So I'm going where they are. My hands are shaking, I know. Don't look.
+@right retainer neutral
+retainer: ...Then stay behind me. Kid, guard up. Coat or no coat, they've seen us now.
+@else
+retainer: Enough. There's people in those houses. Houses first, the road second, and nobody waits for the bridge. Kid, guard up. Coat or no coat, they've seen us.
+@endif
+@right clear
+@else
+@if keeper
+@right keeper sad
+keeper: There are people burned in there. I'm the only one of us who can do anything about a burn, so I'm going where they are. My hands are shaking, I know that. Don't look.
+@right clear
+@endif
+@endif
+@if heretic
+@right heretic angry
+heretic: They're not fighting anybody. Look at them. Light the roof, walk to the next one, like it's work. ...{N:god.pyre.name}'s teeth. I'm going first.
+@right clear
+@endif
+@if sergeant
+@right sergeant angry
+sergeant: And they're watching. Up there, lamps lit, spears on the wall, standing on their tower watching it burn. Can they see us? They can see us.
+@right clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene in a chapter after the first can't count on
+# anyone: the block stays.
+
+@scene ch02_first_turn
+@if sergeant
+@left sergeant angry
+sergeant: I'm fastest, so I'm going for the houses, and I'm not arguing about it. Keep the road.
+@left clear
+@endif
+@end
+
+# Hendry and the one who shares his history: the boy he picked, with a
+# torch. Drawn over the map at a turn start early in the battle (0848
+# picks the turn, and whether Joss is a unit who leaves the map after it).
+
+@scene ch02_refusal
+@left defector sad
+@right hound_lieutenant neutral
+hound_lieutenant: {N:defector.nickname}. The big house by the water next, the one with the loft. Yours. You haven't lit one yet. Go on.
+defector: There's somebody in the loft, Lieutenant, I saw the shutter move-- I'll do the barn? The barn's empty, I looked, I'll do the barn and the house can--
+hound_lieutenant: The house. I know there's somebody in it, {n:defector.nickname}. That's the job, and you've carried that torch all night, it's not any heavier now. The house.
+defector: I can't. I'm sorry, I thought I could, I did the-- I can't do the house. I can't.
+hound_lieutenant[angry]: {N:defector.nickname}! ...Stand by me. You were in the smoke. You never saw that house. That's what we'll say. {N:defector.nickname}. Look at me.
+> {n:defector.first} walks into the ford until the water is at his belt, lets the torch go, and watches it hiss out. He doesn't come back. Nobody goes in after him.
+@end
+
+@scene ch02_boss_engage
+@right hound_lieutenant neutral
+hound_lieutenant: Put that down and walk off the road. Nobody's paying me for you, and I'd as soon keep it that way. This isn't your village.
+@end
+
+@scene ch02_boss_engage_lead
+@left lead neutral
+@right hound_lieutenant neutral
+hound_lieutenant: I know that coat. The hole where the crest was. {n:rival.first}'s exile. He tells stories about the hall when he's drunk, and you're in them. ...Walk off. I don't want to tell him I killed you.
+@end
+
+# The @if goes when 0848 wires this as the boss against Aske.
+
+@scene ch02_boss_engage_poacher
+@if poacher
+@left poacher angry
+@right hound_lieutenant neutral
+poacher: You. Take that badge off.
+hound_lieutenant: There's the voice. That's the voice that came over our ford at night when I was fourteen, in those colors, and did this.
+poacher: Then you know what it is. You know what it is and you are doing it.
+hound_lieutenant: I know what it is. They did it to us first, and nobody answered for it.
+poacher: My brother wore that badge. He died in it. Take it off.
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch02_boss_half
+@right hound_lieutenant angry
+hound_lieutenant: Still up. What are you all looking at? Back to the houses, every one of you, I'll hold here. Go!
+@end
+
+# Said to whoever is nearest. He hands the party "the captain", then
+# worries about the boy in the river.
+
+@scene ch02_death_hound_lieutenant
+@right hound_lieutenant sad
+hound_lieutenant: The captain. Tell the captain a year's pay is owed, and my mother gets it. He knows the house. He's eaten at it.
+hound_lieutenant: ...Is the boy still in the river? It's cold. Get him out. Will one of you get him out of the water.
+@end
+
+# Maud ends her move at a house: her arc, strangers under fire. The @if
+# goes when 0848 wires it.
+
+@scene ch02_house_keeper
+@if keeper
+@left keeper surprised
+keeper: Let me see. Let me see it, don't-- I'm a keeper, give me your arm. Don't look at it. Look at me, look at my face, that's it. Someone's coming to carry him. They are.
+@left clear
+@endif
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch02_death_lead
+@left lead sad
+> {lead} is down in the water at the ford. Across the river the tower's bell goes on, and nobody comes.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from Chapter 1's. They can fire
+# in any order, so none names another companion. The @if blocks go when
+# 0848 wires each one.
+
+@scene ch02_death_retainer
+@if retainer
+@left retainer sad
+retainer: Your left. Kid, your left, it's open, it's always-- turn that coat. Turn it inside out before they see you. Do as you're told, for once.
+@left clear
+@endif
+@end
+
+@scene ch02_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: Knee. No, I'm not getting up. Hold the road without me, I'll catch up.
+@left clear
+@endif
+@end
+
+@scene ch02_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Your Former Grace. ...No. {lead}. There. Four years and I never once said it. Should have, once.
+@left clear
+@endif
+@end
+
+@scene ch02_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: Down. I'm down, she isn't, catch her, one of you, before she goes in the river-- I'm fine! I'm walking. Go.
+@left clear
+@endif
+@end
+
+@scene ch02_death_poacher
+@if poacher
+@left poacher sad
+poacher: I was right about the boots. Tell the loud one. She will not take it from anybody else. ...My mor does not read. It will have to be said to her.
+@left clear
+@endif
+@end
+
+@scene ch02_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: I cannot draw. ...Do not say anything. I know. I will find you after.
+@left clear
+@endif
+@end
+
+@scene ch02_death_keeper
+@if keeper
+@left keeper sad
+keeper: Don't let them come out yet. The ones in the houses, they'll come out when it goes quiet and it isn't quiet, tell them to stay-- ...Oh, I did want to see the bridge. I've never been over one that big.
+@left clear
+@endif
+@end
+
+@scene ch02_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: I've-- oh, that's deep. I'll sit here. I'll sit and do my own, I've done my own before. Go on. Go on, I'll be upset if you fuss.
+@left clear
+@endif
+@end
+
+@scene ch02_death_heretic
+@if heretic
+@left heretic sad
+heretic: Heir. ...Walk in front yourself now. There's nobody watching you.
+@left clear
+@endif
+@end
+
+@scene ch02_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: I'm empty. Nothing comes. I'll be in the house with the rest of them. Go.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The ford, late morning. The garrison comes over the bridge with a
+# herald, who reads to the village and not to the lead; Joss comes up out
+# of the river with the one thing he knows.
+
+@scene ch02_victory
+@caption {N:place.kells_ford}, late morning
+@music scene_tragic
+> Smoke where the fire was. At the far end of the bridge the garrison has come down from its tower at last.
+> A herald in crown colors walks out onto the bridge with a paper. The soldiers behind him stop where the bridge stops.
+@left lead neutral
+@right herald neutral
+herald: Hear the word of the crown. At {n:place.kells_ford} this day {n:place.brennmark} has broken {n:event.ash_peace} with fire and the sword, and {n:faction.crown} will answer it.
+herald: The exile {n:family.veyne}, seen riding with the raiders, is proclaimed outlaw in every county of the realm, and so is anyone who shelters, feeds or hides {them}.
+> He folds the paper and goes back over the bridge without once having looked at the coat with the hole in it. The soldiers go after him.
+@right clear
+@if sergeant
+@right sergeant angry
+sergeant: Riding with-- we were in that fight! You watched. You stood up there and watched it burn, and now-- come back here. Come back here and read it to my face.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Don't answer him. Nobody answer him. ...Kid. Over here, by me.
+@right clear
+@endif
+@right defector sad
+> A boy comes up out of the ford behind them, wet to the belt, with a torn place on his coat where a badge was.
+defector: That paper. I've seen it! It was in the lieutenant's bag a week ago, already written, all but one line, I carried the bag, I saw the crown's seal on it-- a week ago.
+defector: You're the one in it. The line they left. {n:family.veyne}. ...Your Grace. Sorry. I didn't know who it would be.
+@if heretic
+@right heretic neutral
+heretic: Why's he still wet? ...You. Why were you standing in the river? Did somebody tell you to, or did you think of it yourself?
+@right defector sad
+defector: Nobody. Nobody told me, I just-- it's cold, that's all, it's the river. I didn't burn anything. I didn't.
+@right clear
+@else
+@right clear
+@endif
+@if poacher
+@right poacher sad
+poacher: They will believe it. At home. They will say in the hill-holds that {n:faction.brennmark.adj} men burned a village over the border, and some of them will be glad. ...My mor will hear that we did this.
+@right clear
+@endif
+@if keeper
+@right keeper surprised
+keeper: I'm not finished! I'm not-- there's more in the next house, somebody bring me water, clean water, not from the river--
+@right clear
+@endif
+@if sergeant
+@right sergeant neutral
+sergeant: Well, Your Former Grace? That's a price on you by the end of the week. ...So. What do you want to do?
+@choice
+* earnest: Same as before. {N:place.veyne_hall}.
+  sergeant[happy]: Good. Because I wasn't stopping. ...I'll want to know the price, though. For the book.
+* wry: Was I ever not an outlaw?
+  sergeant[happy]: Ha! No. Not since I've known you. ...Fine. North, then.
+* blunt: We cross tonight. The ford, not the bridge.
+  sergeant[surprised]: The-- yes. The ford. ...Fine. Tonight.
+@endchoice
+@right clear
+@else
+> Outlaw. That is a word with a price under it, and the price will be in every town by the end of the week.
+@choice
+* earnest: Same as before. {N:place.veyne_hall}.
+  > Nobody argues.
+* wry: Was I ever not an outlaw?
+  > Nobody laughs. Nobody has to.
+* blunt: We cross tonight. The ford, not the bridge.
+  > Nobody says otherwise.
+@endchoice
+@endif
+@end
+
+# The far bank upstream of the tower, dusk. Joss with his boots off;
+# bread; the name; the badge; the captain; the tin of needles; the lead's
+# first words to him.
+
+@scene ch02_join
+@caption The far bank, dusk
+@music side_quest
+@if poacher
+> {n:poacher} took them back over the ford after dark, and nobody on the tower looked down. {n:defector.first} sits on a stone with his boots off, wringing out a sock.
+@else
+> They went back over the ford after dark, and nobody on the tower looked down. {n:defector.first} sits on a stone with his boots off, wringing out a sock.
+@endif
+@left lead neutral
+@right defector neutral
+@if retainer
+@right retainer neutral
+> {n:retainer.first} puts bread in the boy's hand without a word, and stands over him.
+@right defector neutral
+@endif
+@if sergeant
+@right sergeant happy
+sergeant: {N:defector.nickname}. He called you {n:defector.nickname}, the lieutenant, right across the ford, I heard it. What's that about?
+@right defector sad
+defector: I sew! My ma's a seamstress and I can do a buttonhole you can't even-- it's just because I sew. ...I'd rather you didn't. It was his.
+@endif
+@if poacher
+@right poacher angry
+poacher: You wore my brother's badge to burn farmers. Say that you did. I want to hear you say it before I eat with you.
+@right defector sad
+defector: I wore it. I did, I wore one, I carried the bundle up from the city and I wore one. I didn't burn anything. ...They came made. The badges. I just carried the bundle.
+@endif
+defector[sad]: The captain didn't know. Captain {n:rival}. About the village, about any of-- he wouldn't. He knew my name my first week. All of ours. He wouldn't have.
+@if retainer
+@right retainer neutral
+retainer: ...Eat.
+@right defector neutral
+@else
+> Nobody says anything to that.
+@endif
+> A flat tin comes out of the wet coat: needles, and a card of black thread. He has {lead}'s cuff between his fingers before anyone has agreed to anything.
+defector: Hold still, it's just the cuff, it's been hanging since the fort. My ma would skin me for that stitch, but it'll hold. I'm going to make a whole coat one day, you know. My own, from cloth I picked.
+@if heretic
+@right heretic neutral
+heretic: Your hands are shaking. Stop, you'll put that through {lead}'s wrist. ...Stop. I'll hold the cuff. You do the needle.
+@right defector surprised
+defector: They're not-- they are. They are a bit. It's the cold, that's all.
+@endif
+defector[sad]: ...Was it right? What I did. Standing in the river. I'd like someone to say. Anyone.
+@choice
+* earnest: You put the torch in the river.
+  defector[happy]: ...Yes. Thank you, Your Grace. I'll-- thank you.
+* wry: You're asking an outlaw?
+  defector[surprised]: I-- an outlaw's who I've got. ...Your Grace.
+* blunt: Boots on. We walk at dark.
+  defector[neutral]: Boots. Yes. Yes, Your Grace. Walking's good, I can walk.
+@endchoice
+@if sergeant
+@right sergeant happy
+sergeant: Your Grace! Oh, I'm keeping him. {N:defector.nickname}, you're staying, I don't care what anybody says.
+@right defector happy
+@endif
+@end
+
+# Veyne Hall, the guardroom at the gate, that night. Two reports; the
+# pay; the old sergeant sent somewhere quiet.
+
+@scene ch02_tbc
+@caption {N:place.veyne_hall}, the guardroom
+@music talk_antagonist
+> Night. The guardroom at the gate. {n:rival.first} at the table with two papers, read. In the door, {n:hound_sergeant}, an old sergeant in black with a blue scarf showing at his neck.
+@left rival neutral
+@right hound_sergeant neutral
+rival: {n:hound_lieutenant.last}'s pay. The year owed and this one, to his mother. I'll write where. I've eaten there. ...And {n:defector.last}. "Went into the river." Did anyone go in after him?
+hound_sergeant: Nobody of ours, my lord. The tower says he walked out of it himself and went north with the exile's people.
+rival[happy]: Of course he did. ...Of course {they} did.
+rival[neutral]: You're going to {n:place.greywater}. The prior wants a sergeant on his walls while he burns his records, and it's quiet, and you're old, {n:hound_sergeant.first}. Take a horse. Not the bay.
+hound_sergeant: Boy-- ...My lord.
+@end

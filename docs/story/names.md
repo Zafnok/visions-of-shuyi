@@ -191,6 +191,7 @@ just as it does a full name.
 | -- | ------------ | ---- |
 | `brother_tor` | Tor | Aske's older brother, burned at the Ashfields |
 | `messenger` | Messenger | A Vigil messenger with no name of his own: the name plate in Chapter 1's last scene |
+| `herald` | Herald | A crown herald with no name of his own: the name plate in Chapter 2's scene after the battle |
 | `place.coldwell` | Coldwell | The farm the Red Company burned last winter |
 | `place.aldwater` | Aldwater Toll Bridge | Chapter 4 fixed skirmish |
 | `place.millhaven_road` | Millhaven Road | Chapter 4 fixed skirmish |

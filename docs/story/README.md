@@ -13,12 +13,12 @@ real arcs → outline → per-chapter beat sheets → scripts in `assets/dialogu
 | [`names.md`](names.md) | Name registry: a stable id for every proper noun, so names can be renamed | 0701 | ✅ 2026-09-28 |
 | [`characters/<id>.md`](characters/) | One sheet per character: want/need/flaw/arc, voice, portrait brief, supports | 0701, 0743 | ✅ Chapter 1's cast, 2026-09-28 (0701) · Act 1's new cast (Joss, Gil, Hedda, Ragna, Oriel) and named bosses, 2026-10-28 (0743) |
 | [`outline.md`](outline.md) | Acts and chapters; which arcs each chapter advances; the twists | 0701 | ✅ gate 2 approved 2026-09-28 |
-| [`chapters/chNN.md`](chapters/) | Scene-by-scene beat sheet per chapter | 0701 (ch01), later tickets | ✅ ch01 · later chapters ⏳ |
-| [`ledger.md`](ledger.md) | Continuity: what each character knows/did as of each chapter | 0701, updated by each script ticket | ✅ start of Chapter 1 · after Chapter 1 (0707) |
+| [`chapters/chNN.md`](chapters/) | Scene-by-scene beat sheet per chapter | 0701 (ch01), 0744 (ch02), later tickets | ✅ ch01 · ch02 (0744) · later chapters ⏳ |
+| [`ledger.md`](ledger.md) | Continuity: what each character knows/did as of each chapter | 0701, updated by each script ticket | ✅ start of Chapter 1 · after Chapter 1 (0707, 0737) · after Chapter 2 (0744) |
 | [`craft.md`](craft.md) | Research on what makes fantasy game dialogue compelling: sources, what went wrong in Chapter 1, what each studied game does, scene lengths. The rules are the `story-writing` skill's *Craft* | 0736 | ✅ 2026-10-23 |
 
 Scripts themselves live in `assets/dialogue/*.dlg` (format: ticket 0702).
-Written so far: Chapter 1, `ch01.dlg` (0707; played straight by 0724, reworked scene by scene by 0728).
+Written so far: Chapter 1, `ch01.dlg` (0707; played straight by 0724, reworked scene by scene by 0728, written again from the outline by 0737); Chapter 2, `ch02.dlg` (0744).
 
 ## For a human writer
 

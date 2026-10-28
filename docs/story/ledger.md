@@ -354,3 +354,182 @@ What each death changes. Several can hold at once.
   came back every morning to be told so. She was buried facing north
   (his order: "See she faces north"). If Hollis was dead too, nothing was
   said over her.
+
+## After Chapter 2
+
+Written by 0744 from `assets/dialogue/ch02.dlg`. It describes a chapter
+everyone lived through; what a Chapter 1 death leaves unsaid here is in
+"If a companion died before Chapter 2", at the end. The battle itself
+(which houses stood, who fought the lieutenant) is the player's; the
+scenes don't depend on it.
+
+### What happened
+
+- The party walked from Harrowby all night and halted an hour above
+  Kell's Ford before dawn, with no fire, because Maud sat down (her
+  feet). Hollis kept her boot on; Tamsin said the mare would carry her
+  and looked at the river bottom in the dark (forty acres of it, she was
+  promised: said in front of everyone). Hollis's plan was the crown's
+  bridge at the change of the watch, with the lead's coat inside out or
+  off (the crest is gone, the hole isn't). **Aske knew when the watch
+  changes and what the men do first**, and said it too exactly; Tamsin
+  asked how she knew; "I hunt." Nobody followed it up. Rue gave the lead
+  half a loaf and said she had counted (the lead had eaten nothing since
+  the fort). Maud asked to be left behind; the lead answered (a reply,
+  not recorded) and she got up. Then the sky over the ford, and a bell.
+- At first light, the south end of Kell's Ford: thatch burning on both
+  banks, the garrison's tower across the water with its bell going, a
+  dead raider in the road in Brennish colors with a hayfork in him.
+  Tamsin called it Brennish and wanted the far bank. **Aske turned the
+  dead man over and read his boots: new, nailed, "Brennish cannot afford
+  boots like this", and a badge sewn on that week.** She didn't know who
+  they were; she knew they weren't from home. Hollis: the houses first,
+  the road second, nobody waits for the bridge; Maud to stay back. **Maud
+  said No**, in front of everyone, and went where the burned people
+  were; Hollis: then stay behind me. Rue said the raiders weren't
+  fighting anybody, only lighting roofs and walking to the next. Tamsin
+  said the tower was watching and could see them.
+- The party fought the raiders through the village and killed
+  Lieutenant Silas Hendry at the ford.
+- **In the battle** (what the triggers say, if they fired): Hendry told
+  "Needle" to light the big house by the water; Joss offered the barn,
+  then couldn't; Hendry shouted his name once and told him to stand by
+  him and they'd say he was in the smoke; **Joss walked into the ford
+  to his belt, let the torch go out, and stood there. Nobody went in
+  after him.** To anyone, Hendry said walk off, you're not on my list.
+  To the lead: he knew the coat, "Dace's exile", the captain tells
+  stories about the hall when he's drunk and the lead is in them;
+  he didn't want to have to tell the captain he'd killed them. To Aske:
+  hers was the voice that came over his ford when he was fourteen, in
+  those colors; "they did it to us first". Aske: her brother wore that
+  badge and died in it. Dying, Hendry said a year's pay is owed, his
+  mother gets it, **"tell the captain, he knows the house, he's eaten at
+  it"**, and asked whether the boy was still in the river and for
+  someone to get him out. Maud, at a house, took a stranger's arm and
+  made him look at her face.
+- **After:** the garrison came down from its tower at last, and a crown
+  herald read from the bridge, to the village and not to the lead: at
+  Kell's Ford this day Brennmark broke the Ash Peace, and the crown will
+  answer; **the exile Veyne, "seen riding with the raiders", is
+  proclaimed outlaw in every county, and so is anyone who shelters,
+  feeds or hides them.** He went back without looking at the coat. The
+  soldiers never crossed. Tamsin shouted at the tower that they were in
+  it and it watched. Hollis: don't answer him; he stood by the lead.
+- **Joss came up out of the ford**, wet to the belt, the badge torn off
+  his coat, and said the herald's paper was in the lieutenant's bag a
+  week ago, already written and sealed, **all but one line** (the one
+  that names the exile), he carried the bag. He knew the
+  lead from the paper and called them Your Grace. Rue asked why he was
+  still wet and who told him to stand in the river; nobody. Aske: at
+  home they will believe it, some will be glad, and her mor will hear
+  that "we did this". Tamsin: a price on the lead by the end of the
+  week, what do you want to do; the lead answered (a reply, not
+  recorded). Maud wasn't finished with the next house.
+- The party crossed by the ford after dark (Aske took them back over,
+  and nobody on the tower looked down), not by the bridge. On the far
+  bank Hollis put bread in Joss's hand without a word. Tamsin had the name Hendry
+  shouted, "Needle"; Joss: because he sews, and he'd rather she didn't,
+  it was Hendry's. Aske made him say he wore her brother's badge to burn
+  farmers; **Joss said he wore one, carried the bundle up from the city,
+  burned nothing, and "they came made": he only carried the bundle.**
+  (A lie: he sewed them, his sheet; Chapter 5.) **"The captain didn't know.
+Captain Dace Marr."** Dace knew his name his first week, all of theirs. Hollis
+  heard his own surname and said nothing to that, and then "Eat." Joss's tin of needles
+  came out and he mended the lead's cuff; one day he'll make a whole
+  coat of his own. Rue saw his hands shaking and held the cuff while he
+  sewed. He asked whether standing in the river was right; the lead
+  answered (a reply); he called the lead Your Grace and Tamsin is
+  keeping him. **Joss is with the party.**
+- That night at Veyne Hall, in the gate's guardroom, Dace read two
+  reports: Hendry dead at Kell's Ford; Pellam went into the river, and
+  the tower saw him walk out of it and go north with the exile's people.
+  Dace sends Hendry's pay, the year owed and this one, to Hendry's
+  mother (he's eaten at the house). "Of course they did." He sent
+  **Ned Tolley**, the old Veyne guardsman who is a Hound sergeant now,
+  to Greywater Abbey: the prior wants a sergeant on his walls while he
+  burns his records, it's quiet, and Ned is old. Take a horse, not the
+  bay. Ned started to say "Boy" and said "my lord".
+
+### Who knows what (changes since the end of Chapter 1)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| The raiders were not Brennish (new nailed boots, badges sewn on that week) | all six, from Aske, before the fight | — |
+| The raiders were Dace's company | the lead, if the lead fought Hendry ("Dace's exile"); everyone on the far bank, from Joss ("Captain Marr didn't know"). **Nobody has said the word "Hounds"; Hollis heard the name and said nothing** | the village |
+| The garrison watched the raid from its tower and did nothing, and the herald's proclamation was written and sealed a week before the raid, all but the line that names the exile | all six, and Joss (he carried the bag it was in) | who ordered it, and who added the line (the crown's hand is on the paper; Dace's part in it is unsaid) |
+| The crown has proclaimed Brennmark the breaker of the Ash Peace and the exile Veyne an outlaw "seen riding with the raiders", with a price to follow | the whole village and the party; Dace (the reports) | — |
+| Dace tells stories about the hall when drunk, and the lead is in them | the lead, if the lead fought Hendry | — |
+| Hendry's village was burned by Brennish raiders when he was fourteen, in those colors | Aske, if she fought him | — |
+| Hendry picked Joss, called him Needle, and died worrying whether the boy was out of the water | the party heard "Needle" across the ford (Tamsin says so), and his last words if they were near; Joss knows the name, not the last words | Joss |
+| Joss carried the badges "from the city" and says they came made | the party | that he sewed them (Chapter 5) |
+| Dace knew Joss's name his first week; Joss believes Captain Marr didn't know | the party heard it; Hollis heard his son named as the captain and said nothing | — |
+| Aske knows the Kell's Ford garrison's watch and habits | the party heard it; Tamsin asked and got "I hunt" | why she knows (Chapter 5) |
+| Dace knows the exile walked out of Kell's Ford alive and north with the Hound boy, and sent Hendry's pay to his mother | the player | the party |
+| Ned Tolley, once a Veyne guardsman, is sent to Greywater Abbey, where the prior is burning records | the player | the party (Chapter 3) |
+| Tamsin has never used the lead's first name in four years | said only in her death line (`ch02_death_sergeant`) | — |
+
+Unchanged and still secret: Dace and Vosse, Hollis's burned purse, Wren
+alive, the prince, the Door, Aske's news-selling (seeded only), Maud's
+report (Rue still doesn't know), Coldwell.
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| The lead ↔ Joss | Hero-worship transferred on the spot: "Your Grace", from the paper. He asked the lead whether standing in the river was right; the reply is the player's. He mended the lead's cuff uninvited. |
+| Hollis ↔ Joss | Bread without a word; "Eat." Hollis heard "Captain Marr didn't know" and said nothing. |
+| Tamsin ↔ Joss | "Needle", the day she heard it, and he'd rather she didn't; "I'm keeping him." |
+| Aske ↔ Joss | She made him say it to her face before she'd eat with him. Not forgiven. |
+| Rue ↔ Joss | She asked why he was wet and whether somebody told him to; she saw his hands shaking and held the cuff while he sewed. Watching. |
+| Maud ↔ Joss | Nothing yet (she was at the houses). |
+| Hollis ↔ Maud | She overruled him for the first time ("No") and he gave way: "Then stay behind me." He kept her boot on and said he'd carry her. |
+| Tamsin ↔ Aske | Tamsin called the raiders Brennish and was wrong, loudly; Aske was right about the boots. Tamsin asked how Aske knew the garrison's habits and let "I hunt" stand. |
+| The lead ↔ Rue | She fed the lead and said she'd counted; she walks in front. Unchanged otherwise. |
+| The lead ↔ Tamsin | "Your Former Grace" still; she asked the lead what they want to do, and the price goes in her ledger under the lead's name. |
+| The lead ↔ Aske | Standing on the same side of a lie: the proclamation blames her people for what the lead's old friend's company did. She hasn't said so. |
+| The lead ↔ Dace | Hendry's "Dace's exile" and the stories told drunk, if the lead fought him. Dace, alone with a report: "Of course they did." |
+| Dace ↔ Ned Tolley | Sent to Greywater, "you're old". Ned nearly called him "boy". The bay mare stays at the hall, unridden. |
+
+### Status
+
+- The lead is a **proclaimed outlaw** with a price coming, and the war
+  has started on a lie. The party (the lead, Hollis, Tamsin, Aske, Maud,
+  Rue, **Joss**) is on the north bank of the river at Kell's Ford, out
+  of the Thornmarch, heading for Veyne Hall. Kell's Ford stands in part;
+  its garrison is in its tower.
+- Silas Hendry is dead at the ford. The Houndmaster's Axe is the
+  player's (0848).
+- Dace is at Veyne Hall. Ned Tolley is on his way to Greywater Abbey.
+- Joss's badge is torn off; the gap is not yet stitched.
+- The lead's three replies (to Maud, to Tamsin, to Joss) are not
+  recorded: tones never change what happened.
+
+### If a companion died before Chapter 2 (Classic)
+
+Everything above describes the scenes with all five alive. A companion
+who died in Chapter 1 is not in them, and the scenes play around the
+gap. True on every path: the herald reads, Joss comes out of the river
+and says the paper was written a week ago, Joss joins, Dace reads the
+reports.
+
+- **Hollis dead:** nobody kept Maud's boot on; nobody named the plan
+  (the bridge) or ordered the coat turned; nobody gave the order about
+  the houses; Maud said she was going to the burned people with nobody
+  to overrule; nobody told the party not to answer the herald; nobody
+  fed Joss, and nobody answered "the captain didn't know".
+- **Tamsin dead:** nobody looked at the river bottom; nobody asked Aske
+  how she knew the watch; nobody called the raiders Brennish (Aske's
+  boots went unargued); nobody shouted at the tower; the price is told
+  by narration; nobody has "Needle" (Joss keeps the name to himself)
+  and nobody is "keeping him".
+- **Aske dead:** nobody knew the watch; **nobody read the boots**, so
+  the party went into the fight calling nobody anything, and learned
+  from Hendry and Joss alone whose men they were; nobody said what the
+  hill-holds will hear; she wasn't there to take them back over the ford; nobody made Joss say he wore the badge, so he never said "they
+  came made" (his lie is still untold).
+- **Maud dead:** nobody sat down on the road; the halt's choice was the
+  lead's alone, on the road; nobody said No to Hollis; nobody went to
+  the burned.
+- **Rue dead:** nobody fed the lead on the road; nobody said what the
+  raiders were doing; nobody asked Joss why he was wet; nobody saw his
+  hands shaking.
