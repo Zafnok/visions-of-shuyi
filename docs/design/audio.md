@@ -77,6 +77,16 @@ a player. **Version** is the file to import when the page has several.
 | `world_map` | The Act 1 world map, outside towns and battles; fades out, a quiet pause, fades back in (0025) | The World At Your Door (RPG Orchestral Essentials) (`The World At Your Door MP3.mp3` in `The World At Your Door MP3.zip`, 2:41) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/108343) | CC-BY 3.0 |
 | `world_map_war` | The Act 3 world map (home at war); played like `world_map` (0025) | The Tread of War (RPG Orchestral Essentials) (`The Tread of War - MP3.mp3` in `The Tread of War MP3_0.zip`, 3:39) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-tread-of-war-rpg-orchestral-essentials-military-music) | CC-BY 3.0 |
 | `world_map_somber` | **Reserved** for a world map in a somber stretch: after a catastrophe, "a lot of ppl died, and we're on a long quest", until "the pieces are put back together"; only if the story has one (0025) | World Map (`World Map_0.mp3`, 3:16) | Scott Elliott | [OGA](https://opengameart.org/node/91067) | CC-BY 4.0 |
+| `battle_desperate` | Kell's Ford (Chapter 2): a race to save a burning village (0071) | Determined Pursuit (`determined_pursuit_loop.wav`, 1:48, the file is the loop) | Emma_MA | [OGA](https://opengameart.org/content/determined-pursuit-epic-orchestra-loop) | CC0 |
+| `battle_rival` | Veyne Hall (Chapter 4): storming the lead's old home, Dace as boss (0071) | A Slave To No One (RPG Orchestral Essentials) (`A Slave To No One MP3.mp3` in `A Slave To No One MP3.zip`, 5:51) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/a-slave-to-no-one-rpg-orchestral-essentials-boss-music) | CC-BY 3.0 |
+| `battle_night_siege` | The Envoy's House (Chapter 5): holding a house at night (0071) | Battle Music (`Battle_1.ogg`, 1:36; the page gives the loop: at 1:28.6 jump back to 0:04.6) | Peter Eastman (peastman) | [OGA](https://opengameart.org/content/battle-music-0) | CC-BY 3.0 |
+| `battle_war` | The Ashfields (Chapter 6): between two armies (0071) | Laments of the War (the FLAC on the page; the MP3 preview is 3:48) | Cethiel | [OGA](https://opengameart.org/content/laments-of-the-war) | CC0 |
+| `battle_finale` | Saltmere Docks (Chapter 8), Act 1's last battle (0071) | Heroic Demise (updated) (`Heroic Demise (New)_0.mp3`, 5:02) | Matthew Pablo | [OGA](https://opengameart.org/content/heroic-demise-updated-version) | CC-BY 3.0 |
+| `scene_departure` | The ship sails at the end of Act 1, after Hollis dies (0071) | RPG - A Long Way From Home (`RPG - A Long Way From Home.ogg`, 4:06, loops) | Hitctrl | [OGA](https://opengameart.org/content/rpg-a-long-way-from-home) | CC-BY 3.0 |
+| `scene_confide` | A long-kept secret told at last: Hollis's confession (Chapter 5) (0071) | Soliloquy (`Soliloquy_1.mp3`, 3:44) | Matthew Pablo | [OGA](https://opengameart.org/content/soliloquy) | CC-BY 3.0 |
+| `scene_lamplight` | The king's closing scene at Varenhall (end of Act 1): tender, with a quiet unease (0071) | Snowfall (the looped version, `Snowfall (Looped ver.)_0.ogg`, 0:50) | Kistol | [OGA](https://opengameart.org/content/snowfall) | CC0 |
+| `holy_city` | A holy city's streets: sacred, quiet, the Vigil's Ossary (Chapter 7) (0071) | Wendale Abbey (`WendaleAbbey.ogg`, 1:28; plainsong under heavy reverb, made from MIDI and samples; on import, check by ear that the chant has no words) | Yubatake | [OGA](https://opengameart.org/content/wendale-abbey) | CC-BY 4.0 |
+| `scene_dread` | Something wrong found under a holy place: the Candles' empty dormitory (Chapter 7) (0071) | Solemn (Opening) (`Solemn (Opening)_0.mp3`, 1:39; it lists a voice, so on import check by ear that it sings no words) | İlker Yalçıner (onemansymphony) | [OGA](https://opengameart.org/content/solemn-opening) | CC-BY 4.0 |
 
 The `victory` pool's 13 versions are the same 3.8 s tune on different
 instruments: Bandoneon, Brass, Doot, Fantasia, Fretless, Grand Piano, Jazz
@@ -152,6 +162,53 @@ Heard over the places in playtest round 3 (2026-10-16): Veyne Hall
 "it's ok", after the fight "we can experiment". Those three get other
 candidates in ticket 0742, after the script rewrite (0737). The battle's
 own story scenes (Harl's lines, the death quotes) don't change the music.
+
+### Chapters 2–8's cues (ticket 0071, 2026-10-28)
+
+Nick picked by ear over three rounds of a listening page
+(https://claude.ai/artifact/PYL5bgcLWQx3C2CXnM5V3V). His words are in the
+[appendix](#appendix-nicks-words).
+
+| Chapter | Moment | Cue | Decided |
+| ------- | ------ | --- | ------- |
+| 2 | Kell's Ford (battle) | `battle_desperate` | Nick ("2A") |
+| 3 | Greywater (battle) | `battle_church_2` | Nick ("battle_church_2 is too good") |
+| 4 | Veyne Hall (battle) | `battle_rival` | Nick ("4C", over two rounds) |
+| 5 | The confession, the night before the battle | `scene_confide` | Nick ("C3") |
+| 5 | The Envoy's House (battle) | `battle_night_siege` | Nick ("5J") |
+| 6 | The Ashfields (battle) | `battle_war` | Nick ("A") |
+| 7 | Ossary, the city's scenes (the streets, the pilgrims, Maud's old master) | `holy_city` | Nick ("P1 streets") |
+| 7 | The Candles' empty dormitory, before Crane appears | `scene_dread` | Nick ("P6 dormitory") |
+| 7 | Crane's scenes | `talk_antagonist` | Nick ("Crane can probably use talk_antagonist") |
+| 7 | The Undercroft (battle) | `battle_church_3` | Nick |
+| 8 | Saltmere Docks (battle) | `battle_finale` | Nick ("8A heroic demise") |
+| 8 | Hollis dies | `scene_loss` | Nick ("D works") |
+| 8 | The ship sails | `scene_departure` | Nick ("maybe H") |
+| 8 | The king's closing scene (Varenhall) | `scene_lamplight` | Nick ("K3") |
+
+- **One theme per battle.** Every story battle in Act 1 has its own track,
+  except the Church's two: Greywater and the Undercroft use the two
+  Fantasy Choirs, the cues Nick set aside in 0020 for fighting the Church.
+  Act 1's act boss battle is Saltmere Docks, and it uses `battle_finale`,
+  not the epic tier (Nick picked Heroic Demise over Battle Theme A when
+  asked); `battle_epic_a` and `battle_epic_b` stay unused in Act 1.
+- **Hollis's death plays two cues:** `scene_loss` as he dies, then
+  `scene_departure` as the ship sails. If Hollis already fell in Classic
+  mode, the rewritten scene keeps the same two cues (*Claude's starting
+  rule*: the music follows the moment, not who speaks it).
+- **Every other scene** in Chapters 2–8 picks from the mood cues
+  (`talk_calm`, `dungeon_tense`, `scene_sad`, `scene_tragic`,
+  `talk_antagonist`, `side_quest` for a young companion's introduction
+  such as Joss's), chosen by each chapter's script ticket as *Claude's
+  pick*, the way Chapter 1's were, and heard in the Act 1 playtest.
+- **Kept for later** (Nick liked them, no moment yet):
+
+| Kept for | Track | Composer | Source | License |
+| -------- | ----- | -------- | ------ | ------- |
+| Another battle ("keep D for later"; heard for Kell's Ford) | Ringing of Steel (`ringing_of_steel.wav`, 1:37, loops) | Alexandr Zhelanov | [OGA](https://opengameart.org/content/ringing-of-steel) | CC-BY 4.0 |
+| "Another time" (heard for Greywater) | Dark Descent (`Dark Descent_0.mp3`, 1:23) | Matthew Pablo | [OGA](https://opengameart.org/content/dark-descent) | CC-BY 3.0 |
+
+- **Heard as not right for a battle:** Dark Quest (`graveyard_desert`) "doesn't fit as battle music more as exploration music".
 
 ## Sound effects
 
@@ -520,3 +577,79 @@ The quiet between rounds wasn't answered on the page. Told it was set at
 13 s, Nick said:
 
 > probably more like 30s pause or maybe longer
+
+**Story battles and scenes, round 1** (ticket 0071, 2026-10-28; listening
+page https://claude.ai/artifact/PYL5bgcLWQx3C2CXnM5V3V). Two to four new
+tracks per Chapter 2–8 battle, cues we already have, the finale's two
+moments and three scene moods (the confession, the king's closing scene,
+the Vigil):
+
+> for world map im confused why we're revisiting I thought we had it
+> settled already
+>
+> for ch2, A and D both sound alright
+>
+> for ch3, battle_church_2, though I do like dark descent here too but
+> battle_church_2 is too good. Keep Dark Descent around for another time
+> tho.
+>
+> for ch4, probably C, though none feel completely right, but C is best
+> from these 3.
+>
+> for ch5 I don't like any of them they are all too high bpm or in case of
+> A too low bpm (stealth oriented but this is a battle)
+>
+> for ch6 A, I do like the graveyard_desert but it doesn't fit as battle
+> music more as exploration music
+>
+> for ch7 battle_church_3
+>
+> for ch8 A sounds good
+>
+> for Hollis death yea D works
+>
+> for ship sailing away maybe H
+>
+> for confession probably C3
+>
+> for king closing K3
+>
+> for  Crane can probably use talk_antagonist
+
+(The world map wasn't asked again: the page's opening picture looked like
+a map. 2A: Determined Pursuit; 2D: Ringing of Steel. 4C: A Slave To No One.
+6A: Laments of the War. 8A: Heroic Demise. D: Bittersweet. H: A Long Way
+From Home. C3: Soliloquy. K3: Snowfall. Round 1's Envoy's House tracks
+were Midnight Creeping, Omens, Dark Lands and Tactical Pursuit.)
+
+**Story battles and scenes, round 2** (the same page). Five new tracks for
+Veyne Hall with a sadder, bitter melody, seven mid-tempo ones for the
+Envoy's House, and three checks (2A or 2D; which "A" for Chapter 8;
+Ossary's city scenes):
+
+> 2A and keep D for later
+> 8A heroic demise
+> 5J
+> 4C
+> not a fan of any of these for Ossary
+
+(5J: Battle Music by Peter Eastman. The Ossary tracks were Elegy Dm,
+Specters of the Enclave and Cathedral. Asked whether to reuse a mood for
+now or hear more, Nick chose "round 3 with new candidates + the moods we
+already have".)
+
+**Story battles and scenes, round 3** (the same page). Eight new tracks
+for Ossary's city scenes (chant, bells and drones, low strings, dark
+ambient) and four moods we already have. Nick first asked:
+
+> to be sure, Ossary is - the whole enemy's city? or just a city that
+> happens to have a conspiracy tied to it?
+
+(Answered from the bible: the Vigil's holy city, full of real pilgrims and
+keepers who believe in their work; the conspiracy is Crane's faction, and
+the wrongness is underneath. Suggested a split: something sacred for the
+streets, something colder for the empty dormitory.)
+
+> P1 streets, P6 dormitory
+
+(P1: Wendale Abbey by Yubatake. P6: Solemn (Opening) by İlker Yalçıner.)
