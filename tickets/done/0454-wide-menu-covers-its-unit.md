@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0454 — A menu too wide for either side of its unit covers the unit
@@ -67,9 +67,9 @@ it):
 
 ## Acceptance criteria
 
-- [ ] Unit tests of `menu_origin` for the five cases.
-- [ ] `archer_arts_menu_snapshot` shows the archer's `Ar` uncovered.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Unit tests of `menu_origin` for the five cases.
+- [x] `archer_arts_menu_snapshot` shows the archer's `Ar` uncovered.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,5 +78,4 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+`menu_origin_in` (`crates/ui/src/screens/battle/glyph.rs`) now tries right, then left (only if it fits without clamping), then below the tile's rows, then above, and keeps the old clamped place only when none fits. Unit test covers the five cases; five snapshots changed (archer arts, arts menu, left-handed arts menu, broken weapon lines, broken-weapon equip menu) and each now leaves its unit uncovered. The Playdate uses the same function and its tests still pass. Gates run: fmt, clippy, `trpg-ui` tests. No starting rules beyond the ticket's. Estimate ~15 lines, measured about that; no friction. Nick's Act 1 playtest checklist item: open the archer's `Arts` menu in Quick Battle, the archer stays visible.

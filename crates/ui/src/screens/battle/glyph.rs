@@ -155,7 +155,10 @@ fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
 /// Where a menu of `(w, h)` cells goes beside the tile covering the cells
 /// `tile`: one cell right of the tile (clear of the cursor's marks), or
 /// left of it if it would run past the map view; its first item level with
-/// the tile's top row, moved to fit the view.
+/// the tile's top row, moved to fit the view. A menu too wide for either
+/// side goes below the tile's rows (or above them), never over the tile;
+/// only a menu that fits nowhere keeps the clamped place beside it
+/// (ticket 0454).
 pub fn menu_origin(tile: Rect, size: (i32, i32)) -> (i32, i32) {
     menu_origin_in(MAP_VIEW, tile, size)
 }
@@ -164,13 +167,24 @@ pub fn menu_origin(tile: Rect, size: (i32, i32)) -> (i32, i32) {
 /// ticket 1038).
 pub fn menu_origin_in(area: Rect, tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
     let right = tile.x + tile.w + 1;
-    let mx = if right + w <= area.x + area.w {
-        right
-    } else {
-        (tile.x - 1 - w).max(area.x)
-    };
-    let my = (tile.y - 1).min(area.y + area.h - h).max(area.y);
-    (mx, my)
+    let (area_right, area_bottom) = (area.x + area.w, area.y + area.h);
+    let my = (tile.y - 1).min(area_bottom - h).max(area.y);
+    if right + w <= area_right {
+        return (right, my);
+    }
+    let left = tile.x - 1 - w;
+    if left >= area.x {
+        return (left, my);
+    }
+    let x = tile.x.min(area_right - w).max(area.x);
+    let below = tile.y + tile.h;
+    if below + h <= area_bottom {
+        return (x, below);
+    }
+    if tile.y - h >= area.y {
+        return (x, tile.y - h);
+    }
+    (left.max(area.x), my)
 }
 
 /// Paints the menu `m` beside where the map skin has `tile` of the scene,
