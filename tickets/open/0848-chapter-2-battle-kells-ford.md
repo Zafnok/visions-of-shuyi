@@ -91,6 +91,9 @@ before building.
 2. Map first (`ascii-art` skill for the layout), then units and the
    battle file, then the chapter file.
 3. Import the new art; wire the places and music into the script.
+   When importing `battle_desperate`, remove it from `RESERVED` in
+   `crates/content/src/audio.rs`'s tests (its "drop it from
+   RESERVED" assertion fails otherwise; 0252).
 4. Autobalance; playtest; fix what the bots show (softlocks, a band
    missed).
 5. `cargo shuyi frame-png` pictures of the map and one scene for the PR.
