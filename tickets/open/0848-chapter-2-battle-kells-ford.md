@@ -90,10 +90,21 @@ before building.
    design docs the extras touch, 0070's and 0071's answers.
 2. Map first (`ascii-art` skill for the layout), then units and the
    battle file, then the chapter file.
-3. Import the new art; wire the places and music into the script.
-   When importing `battle_desperate`, remove it from `RESERVED` in
-   `crates/content/src/audio.rs`'s tests (its "drop it from
-   RESERVED" assertion fails otherwise; 0252).
+3. Import the new art; wire the places into the script (the `@music`
+   lines are already 0744's picks). When importing `battle_desperate`,
+   remove it from `RESERVED` in `crates/content/src/audio.rs`'s tests
+   (its "drop it from RESERVED" assertion fails otherwise; 0252). 0744
+   wrote the script before this battle existed, so every companion line
+   in a battle-trigger scene of `ch02.dlg` sits in an `@if` block for
+   them; once a trigger names that companion (a death quote, a retreat
+   line, the boss against Aske, Maud at a house) the validator reports
+   the block as one that can only go one way: remove it. The `@if` in
+   `ch02_first_turn` stays (a turn-start scene after Chapter 1 can't
+   count on anyone). `defector`, `hound_lieutenant` and `hound_sergeant`
+   are in `characters.ron`'s `speakers` for now; move the first two into
+   `characters` here (the sergeant is 0849's). How Joss is on the map is
+   open: the `ch02_refusal` scene is a turn-start scene drawn over the
+   map, and the player never fights him (`docs/story/chapters/ch02.md`).
 4. Autobalance; playtest; fix what the bots show (softlocks, a band
    missed).
 5. `cargo shuyi frame-png` pictures of the map and one scene for the PR.
