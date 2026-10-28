@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0318 — Cinder Oath can't be used to counter
@@ -93,4 +93,23 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- Reused 0317's `no_counter` spell flag (it covers both cleanly: a spell
+  with it is never countered, and never counters). Cinder Oath already had
+  it in `assets/data/spells.ron`. The rule is `BattleState::uncounterable`
+  (`crates/core/src/battle.rs`), which now also checks the defender's
+  equipped spell; the plan, the forecast, the combat and the AI's
+  `plain_forecast` all go through it, so the forecast shows `no counter`
+  on Rue's side (the existing UI line for an empty defender side).
+- Tests: core `a_no_counter_spell_never_counters_when_attacked` (forecast,
+  combat, no use spent) and the property test
+  `a_no_counter_spell_is_never_a_counter`; 0317's tests still pass.
+- `docs/design/magic.md` updated.
+- Bot win rates (`cargo xtask playtest ch01`): not run here (heavy for
+  Nick's machine); CI and the Act 1 playtest cover it.
+- Engine friction: under 2x (about 10 production lines against 10 estimated).
+
+**Claude's starting rule (for 1064's checklist):** if Cinder Oath is Rue's
+equipped attack and an enemy attacks her, she doesn't switch to another
+weapon or spell to counter; she just doesn't counter, as with a broken
+weapon. Have an enemy attack Rue next to her while Cinder Oath is her
+equipped attack; the forecast shows she doesn't strike back.
