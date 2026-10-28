@@ -30,6 +30,11 @@
     "shieldbearer": "Hedda Ravn",
     "envoy": "Ragna Holt",
     "battlemage": "Oriel Mast",
+    // Act 1's named bosses and the Greywater prior (0743).
+    "hound_lieutenant": "Silas Hendry",
+    "hound_sergeant": "Ned Tolley",
+    "greywater_prior": "Edwin Sallow",
+    "undercroft_warden": "Constance Hobb",
     // Outside the story: the tutorial guide, the tip box's title (0731).
     "guide": "Vix",
 
@@ -60,6 +65,15 @@
     "envoy.last": "Holt",
     "battlemage.first": "Oriel",
     "battlemage.last": "Mast",
+    "defector.nickname": "Needle",
+    "hound_lieutenant.first": "Silas",
+    "hound_lieutenant.last": "Hendry",
+    "hound_sergeant.first": "Ned",
+    "hound_sergeant.last": "Tolley",
+    "greywater_prior.first": "Edwin",
+    "greywater_prior.last": "Sallow",
+    "undercroft_warden.first": "Constance",
+    "undercroft_warden.last": "Hobb",
     "family.marr": "Marr",
     "family.veyne": "Veyne",
     "faction.brennmark.adj": "Brennish",

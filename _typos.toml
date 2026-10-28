@@ -36,6 +36,8 @@ hask = "hask"
 aske = "aske"
 othe = "othe"
 mor = "mor"
+# Ned Tolley, the Chapter 3 boss (docs/story/names.md, ticket 0743).
+ned = "ned"
 
 [files]
 # Vendored third-party font data (hex bitmaps, codepoint names) and the atlas

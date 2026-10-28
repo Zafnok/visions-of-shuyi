@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
-status: todo
+status: done
 blocked_by: ["0736"]
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0743 — Character sheets for Act 1's new cast and named bosses
@@ -78,7 +78,7 @@ outline. New names are placeholders Nick may rename
 
 ## Acceptance criteria
 
-- [ ] A sheet for each of the five, with want, need, flaw, pressure,
+- [x] A sheet for each of the five, with want, need, flaw, pressure,
       arc, voice notes and three sample lines. The voice notes are the
       skill's voice card (0736: age and experience, temperature,
       openness, what they do when scared, care signature, a fault the
@@ -87,10 +87,10 @@ outline. New names are placeholders Nick may rename
       object seen in their hands. Sample lines show different situations
       (under fire, at camp, lying, grieving) and are never copied into a
       script.
-- [ ] Short sheets and registry entries for each named boss.
-- [ ] `cargo xtask check-script` and the content gates pass (the names
+- [x] Short sheets and registry entries for each named boss.
+- [x] `cargo xtask check-script` and the content gates pass (the names
       table).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -98,5 +98,67 @@ outline. New names are placeholders Nick may rename
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-28 (Opus 5.5).
+
+**Sheets** in `docs/story/characters/`, in the shape of `sergeant.md`:
+
+- The five: `defector.md` (Joss), `prizefighter.md` (Gil),
+  `shieldbearer.md` (Hedda), `envoy.md` (Ragna), `battlemage.md`
+  (Oriel). Each has want, need, flaw, secret or pressure, an arc across
+  Act 1's chapters, relationships with the whole cast, the 0736 voice
+  card, four sample lines (under fire, at camp, lying, grieving), a
+  *Planted for after* (a plan and an object in their hands), a portrait
+  brief and the support partners 1073 can pick from.
+- Short sheets for the named bosses: `hound_lieutenant.md` (Silas
+  Hendry, Chapter 2), `hound_sergeant.md` (Ned Tolley, Chapter 3),
+  `undercroft_warden.md` (Constance Hobb, Crane's champion, Chapter 7);
+  and one NPC, `greywater_prior.md` (Prior Edwin Sallow, Chapter 3).
+  Each: want, a grievance a player could share, who shares his or her
+  history (the 2–4 box exchange), voice, three lines, an object, a look.
+
+**Registry:** the four new names and their short forms in `names.md` and
+`assets/data/names.ron`, plus `defector.nickname` ("Needle", what Silas
+and then Tamsin call Joss). `Ned` is added to `_typos.toml` like the
+other invented names. The names test that counts two-word names
+(`every_two_word_name_has_short_forms`) now expects 16 people and 13
+surnames of their own, for the four new names.
+
+**Elsewhere:** `docs/story/README.md`'s row for the sheets; 0070's Context
+lists what each sheet says the new people look like (0070 hasn't run, so
+the looks are briefs from the outline, to be rewritten to the art it
+picks); a one-line note of the named boss in 0744, 0745, 0749, 0848,
+0849 and 0853.
+
+**Choices made inside the outline** (story detail, no beat changed; Nick
+may veto any in the Act 1 playtest, 1064):
+
+- **Chapter 3's boss is the Hound sergeant, not the prior.** The ticket
+  offered either. Maud breaks with the Vigil by taking the register, and
+  killing her own prior would make that a killing; so the prior is an NPC
+  who doesn't fight and lives, and the boss is an old Veyne guardsman
+  who served under Hollis and now holds the abbey for Dace.
+- Joss sewed the false Brennish badges himself (his secret, told in his
+  Chapter 5 testimony); Silas Hendry, his lieutenant, picked him and
+  called him "Needle".
+- Gil threw the seventh fair (Cairnford) for silver before the war; his
+  code is penance for the cousin who died paying the debt. He joins by
+  his own rule: a beaten man serves the one who beat him until a fair
+  rematch.
+- Hedda is Ragna's foster-sister, and openly raided the Thornmarch in
+  the war. Ragna wrote most of the Ash Peace and has a son of eight.
+- Oriel saw the prince's banner, sent to the king to hold the fire, and
+  was told to burn. He commanded the Candles' line, Rue and Wren on it;
+  he won't swear fire again (his Sorcerer class vow is force).
+- Constance Hobb kept the Candles' barracks under Ossary and believes,
+  because Crane told her, that death is a door and she'll see the burned
+  ones again. Written sad, not creepy.
+- The midpoint twist stays where the outline put it: no new clue was
+  added (Oriel knows only the order and the missing body).
+
+**Gameplay rules decided:** none (classes, stats, levels and whether
+Ragna is on the Chapter 5 map stay with the chapter tickets).
+
+**Follow-ups:** none new. 0070 picks the faces; 1073 picks the supports
+from each sheet's candidates; the scripts (0744–0750) use the sheets.
+
+Engine friction: none, no Rust code.

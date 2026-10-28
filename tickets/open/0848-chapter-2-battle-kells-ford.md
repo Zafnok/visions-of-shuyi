@@ -20,6 +20,7 @@ Act 1, Chapter 2, from `docs/story/outline.md`:
 - **Story battle:** Kell's Ford: a river village split by a ford, houses to save before the raiders burn them (0069's *save the village*: a minimum to save, extra rewards past it), the garrison's watchtower across the water, a Hound lieutenant as boss.
 - **Objective:** defeat the boss (the outline: "the chapter ticket decides"; a Defeat-unit objective exists) and save at least a minimum of the houses (`turn-structure.md`, *Save the village*; the minimum, the houses and the extra rewards are *Claude's starting values* for the bots to tune).
 - **Recruits:** Joss Pellam (`defector`, Swordsman), joins in the scene after the battle (0069: no recruiting by talking).
+- **Named boss (0743):** Lieutenant Silas Hendry (`hound_lieutenant`), who picked Joss for the company; sheet `docs/story/characters/hound_lieutenant.md`.
 - **New in this chapter:** Preparations (0443's shop tab) for the first time, save the village (0313), a recruit who joins in a scene (0069).
 
 0803 built Chapter 1 the same way (map, units, triggers, a winning

@@ -20,6 +20,7 @@ Act 1, Chapter 3, from `docs/story/outline.md`:
 - **Story battle:** Greywater Abbey: a causeway to an island abbey, wardens and Hounds on the walls, the scriptorium as the Seize point, chests in the reliquary.
 - **Objective:** Seize the scriptorium (the Seize objective exists).
 - **Recruits:** none.
+- **Named boss and NPC (0743):** the boss is Sergeant Ned Tolley (`hound_sergeant`), an old Veyne guardsman holding the abbey; the prior, Edwin Sallow (`greywater_prior`), is an NPC who doesn't fight and lives. Sheets in `docs/story/characters/`.
 - **New in this chapter:** a Seize objective and chests; after this chapter the Act 1 world map opens.
 
 0803 built Chapter 1 the same way (map, units, triggers, a winning

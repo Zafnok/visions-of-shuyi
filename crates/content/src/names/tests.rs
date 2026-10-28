@@ -81,7 +81,7 @@ fn every_two_word_name_has_short_forms() {
             lasts += usize::from(own.is_some());
         }
     }
-    assert_eq!((people, gods, lasts), (12, 5, 9));
+    assert_eq!((people, gods, lasts), (16, 5, 13));
     assert_eq!(names.get("family.marr"), Some("Marr"));
     assert_eq!(names.get("family.veyne"), Some("Veyne"));
     assert_eq!(names.get("red_captain.nickname"), Some("Red Harl"));
