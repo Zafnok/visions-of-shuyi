@@ -55,7 +55,15 @@ fn menus_go_right_of_the_tile_unless_they_would_leave_the_view() {
     assert_eq!(beside((57, 4), (10, 4)), (60, 3));
     // Too low or high: moved to fit; never off the left edge.
     assert_eq!(beside((10, 29), (10, 4)), (13, 26));
-    assert_eq!(beside((2, 0), (70, 4)), (0, 0));
+    // Too wide for either side: below the tile, or above it when there is
+    // no room below, never over it.
+    assert_eq!(beside((36, 15), (46, 4)), (24, 16));
+    assert_eq!(beside((2, 0), (70, 4)), (0, 1));
+    let area = MAP_VIEW;
+    let bottom = area.y + area.h - 1;
+    assert_eq!(beside((36, bottom), (46, 4)), (24, bottom - 4));
+    // Room neither below nor above: today's place.
+    assert_eq!(beside((2, 3), (70, area.h)), (0, 0));
     // A bigger tile (another skin's): right of all of it, level with
     // its top row.
     assert_eq!(menu_origin(Rect::new(10, 4, 4, 2), (10, 4)), (15, 3));
