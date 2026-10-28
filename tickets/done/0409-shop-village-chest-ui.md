@@ -94,6 +94,12 @@ Done (2026-10-28).
   none sends nothing and the action menu is back (unit not done). The
   screen previews each choice on a copy of the battle, so the gold and
   lists shown are what the core would do.
+- **Selling asks first** (Nick on the PR, 2026-10-28: "selling items
+  should have confirmation screen with a up/down slider for selling
+  multiple"; recorded in `weapons-and-items.md`, *Money and shops*).
+  Confirm on a Sell line opens a box: `Sell Potion?`, the count between
+  ▲ and ▼ (`2 / 3`), `For 300 gold`. Up and down set how many, Confirm
+  sells them, Cancel sells nothing.
 - **Messages**: `Got Potion.`, `Got 500 gold.`, `House saved.` on the
   message line after `Open` / `Evacuate` (`screens/battle/loot.rs`).
   Maps have no per-house lines, so none is shown.
@@ -111,14 +117,16 @@ Done (2026-10-28).
 
 Engine friction: estimate 550 production lines (the Guides screen's
 logic, view and skin, plus menu entries, messages and the panel line),
-measured 583 (1.06×), under 2×.
+measured 727 (1.32×) with the sale's confirmation, under 2×.
 
 ### Claude's starting rules (for the Act 1 playtest, 1064)
 
 - **Lines you can't afford stay selectable to read**, just dimmed;
   Confirm on one does nothing (the "can't" sound).
-- **Pack items are one Sell line per item** (`Potion ×3`), selling one per
-  Confirm.
+- **Pack items are one Sell line per item** (`Potion ×3`).
+- **The sell count starts at 1** and stops at 1 and at the number held
+  (no wrapping); a weapon or worn armor gets the same box with the count
+  fixed at 1. Buying and repairing don't ask.
 - **Leaving the shop after buying needs no "are you sure"**: closing it
   sends what you chose and ends the unit's action, as in Fire Emblem.
 - **Gold always shows in the side panel**, even at 0.

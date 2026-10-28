@@ -6,8 +6,8 @@
 
 use insta::assert_snapshot;
 use trpg_core::{
-    BattleSetup, BattleState, GameMode, HouseState, ItemId, LeadGender, LeadProfile, Objective,
-    UnitId,
+    BattlePack, BattleSetup, BattleState, GameMode, HouseState, ItemId, LeadGender, LeadProfile,
+    Objective, UnitId,
 };
 
 use super::*;
@@ -41,6 +41,11 @@ fn battle_at(at: Pos, gold: Gold) -> BattleState {
 /// [`battle_at`], the lord's first weapon with `left` durability left if
 /// given.
 fn worn_at(at: Pos, gold: Gold, left: Option<u32>) -> BattleState {
+    packed_at(at, gold, left, 0)
+}
+
+/// [`worn_at`], with `potions` Potions in the battle pack.
+fn packed_at(at: Pos, gold: Gold, left: Option<u32>, potions: usize) -> BattleState {
     let c = ctx();
     let (map, mut units) = quick_units(&c);
     units[0].pos = at;
@@ -55,8 +60,13 @@ fn worn_at(at: Pos, gold: Gold, left: Option<u32>) -> BattleState {
         }
     }
     let rout = Objective::Rout { turn_limit: None };
+    let pack = BattlePack {
+        items: vec![ItemId::new("potion"); potions],
+        cap: potions,
+    };
     BattleState::new(BattleSetup {
         gold,
+        pack,
         ..setup(&c, map, units, rout)
     })
     .0
@@ -232,6 +242,12 @@ fn the_sell_tab_pays_half_and_lists_the_pack_once_per_item() {
     assert_eq!(offers[0].gold, price(&c, &weapon.0) / 2);
     let potions = offers.iter().filter(|o| o.item.0 == "potion").count();
     assert!(potions <= 1, "{offers:?}");
+    // A weapon: asked about, one only.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let sale = s.shop().unwrap().selling();
+    assert_eq!(sale, Some(SellConfirm { line: 0, count: 1 }));
+    press(&mut s, &mut c, &[Action::CursorUp]);
+    assert_eq!(s.shop().unwrap().selling().unwrap().count, 1);
     press(&mut s, &mut c, &[Action::Confirm, Action::Cancel]);
     assert_eq!(s.state().gold(), price(&c, &weapon.0) / 2);
     assert!(lord(&s).loadout.weapon(0).is_none());
@@ -345,4 +361,78 @@ fn the_blacksmith_renders() {
     let mut s = menu_open(&mut c, worn_at(BLACKSMITH, 1250, Some(12)));
     choose(&mut s, &mut c, MenuEntry::Shop);
     assert_snapshot!("blacksmith_repair", render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// The Vendor's Sell tab with 3 Potions in the pack, the Potions'
+/// confirmation open.
+fn selling_potions(c: &mut Ctx) -> Stacked {
+    let mut s = menu_open(c, packed_at(VENDOR, 0, None, 3));
+    choose(&mut s, c, MenuEntry::Shop);
+    press(&mut s, c, &[Action::CursorRight]);
+    let offers = s.shop().unwrap().offers();
+    let line = offers.iter().position(|o| o.item.0 == "potion").unwrap();
+    assert_eq!(offers[line].count, 3);
+    for _ in 0..line {
+        press(&mut s, c, &[Action::CursorDown]);
+    }
+    press(&mut s, c, &[Action::Confirm]);
+    assert!(s.shop().unwrap().selling().is_some());
+    s
+}
+
+/// Nick (2026-10-28): selling asks first, with up and down for how many.
+#[test]
+fn up_and_down_set_how_many_to_sell_between_one_and_all() {
+    let mut c = ctx();
+    let mut s = selling_potions(&mut c);
+    let count = |s: &Stacked| s.shop().unwrap().selling().unwrap().count;
+    assert_eq!(count(&s), 1);
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(count(&s), 1);
+    press(
+        &mut s,
+        &mut c,
+        &[Action::CursorUp, Action::CursorUp, Action::CursorUp],
+    );
+    assert_eq!(count(&s), 3);
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(count(&s), 2);
+    let view = s.shop().unwrap().view(&c);
+    let sell = view.selling.unwrap();
+    assert_eq!(sell.question, "Sell Potion?");
+    assert_eq!((sell.count, sell.max), (2, 3));
+    let each = price(&c, "potion") / 2;
+    assert_eq!(sell.gold, format!("For {} gold", gold_text(2 * each)));
+    // Nothing is sold until Confirm.
+    assert_eq!(s.shop().unwrap().visit().txns, Vec::<ShopTxn>::new());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let shop = s.shop().unwrap();
+    assert_eq!(shop.selling(), None);
+    assert_eq!(shop.visit().txns.len(), 2);
+    assert_eq!(shop.gold(), 2 * each);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.state().pack().items, [ItemId::new("potion")]);
+    assert_eq!(s.state().gold(), 2 * each);
+    assert!(lord(&s).acted);
+}
+
+#[test]
+fn cancel_in_the_confirmation_sells_nothing() {
+    let mut c = ctx();
+    let mut s = selling_potions(&mut c);
+    press(&mut s, &mut c, &[Action::CursorUp, Action::Cancel]);
+    let shop = s.shop().expect("still in the shop");
+    assert_eq!(shop.selling(), None);
+    assert_eq!(shop.visit().txns, Vec::<ShopTxn>::new());
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.state().pack().items.len(), 3);
+    assert!(!lord(&s).acted);
+}
+
+#[test]
+fn the_sale_renders() {
+    let mut c = ctx();
+    let mut s = selling_potions(&mut c);
+    press(&mut s, &mut c, &[Action::CursorUp]);
+    assert_snapshot!("sell_confirm", render(&s, &c).to_snapshot(&c.palette));
 }

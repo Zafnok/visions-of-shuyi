@@ -1,0 +1,79 @@
+---
+source: crates/ui/src/screens/battle/shop/tests.rs
+assertion_line: 433
+expression: "render(&s, &c).to_snapshot(&c.palette)"
+---
+╔══ Vendor ══════════════════════════════════════════════════════════════════════════════ Gold 0 ══╗
+║                                                                                                  ║
+║  Test Lord                      Buy   Sell                                                       ║
+║                                                                                                  ║
+║  Iron Sword                  230   Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                             ║
+║  Steel Sword                 300   Mt 8  Hit 75  Crit 0  Rng 1  Wt 4                             ║
+║  Leather Vest                200 ╔════════════════════════════╗                                  ║
+║  Potion ×3                   150 ║                            ║                                  ║
+║                                  ║        Sell Potion?        ║                                  ║
+║                                  ║             ▲              ║                                  ║
+║                                  ║           2 / 3            ║                                  ║
+║                                  ║             ▼              ║                                  ║
+║                                  ║        For 300 gold        ║                                  ║
+║                                  ║                            ║                                  ║
+║                                  ╚════════════════════════════╝                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
+                                                                                                    
+ Up Down how many · f sell · d back                                                        F2 debug 
+--- colours ---
+aaabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbaaa
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+accbbbbbbbbbcccccccccccccccccccccdddddceeeeeecccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccffffffffffffffffffffffffffffffcccccccccccccccccccccccccccccccccca
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefccccccccccccccccccccccccccccfeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeca
+accccccccccccccccccccccccccccccccccfccccccccbbbbbbbbbbbbccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccffffffffffffffffffffffffffffffcccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+ghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
+--- legend ---
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:text_dim bg:panel_bg
+e = fg:panel_bg bg:panel_border_focus
+f = fg:panel_border_focus bg:panel_bg
+g = fg:text bg:black
+h = fg:text_dim bg:black

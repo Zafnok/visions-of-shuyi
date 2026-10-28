@@ -13,6 +13,11 @@
 //! choice is the battle with those transactions applied to a copy
 //! (`preview`); legality is the core's ([`BattleState::check`]).
 //!
+//! Selling asks first (Nick, 2026-10-28, `weapons-and-items.md`): Confirm
+//! on a Sell line opens a confirmation where up and down set how many to
+//! sell (1 up to the copies held), Confirm sells them and Cancel sells
+//! nothing ([`SellConfirm`]).
+//!
 //! [`ShopScreen::view`] says what it shows; the battle skin paints it
 //! (ADR-0054).
 
@@ -26,7 +31,7 @@ use trpg_core::{
 use super::glyph::shop as glyph;
 use super::info::{bonus_text, range_text};
 use super::items::effect_text;
-use super::view::{ShopLineView, ShopScreenView};
+use super::view::{SellConfirmView, ShopLineView, ShopScreenView};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
@@ -39,6 +44,9 @@ pub const HELP: &str = "battle.shop.help";
 
 /// Text key of the help line for a shop with one tab (a Blacksmith).
 pub const HELP_ONE_TAB: &str = "battle.shop.help_one";
+
+/// Text key of the help line while a sale is asked about.
+pub const HELP_SELL: &str = "battle.shop.help_sell";
 
 /// A tab of the shop screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -143,10 +151,23 @@ pub enum ShopEffect {
     Moved,
     /// A line was chosen.
     Chosen,
+    /// A Sell line was picked: its confirmation opened.
+    Asked,
+    /// The confirmation closed without selling.
+    Back,
     /// The highlighted line can't be chosen.
     Denied,
     /// Close the screen.
     Close,
+}
+
+/// A sale being asked about: which Sell line, and how many to sell.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SellConfirm {
+    /// The Sell line.
+    pub line: usize,
+    /// How many to sell, from 1 to the line's count.
+    pub count: usize,
 }
 
 /// The open shop screen.
@@ -160,6 +181,8 @@ pub struct ShopScreen {
     preview: BattleState,
     tab: usize,
     cursor: ListCursor,
+    /// The sale being asked about, if any.
+    selling: Option<SellConfirm>,
 }
 
 impl ShopScreen {
@@ -181,6 +204,7 @@ impl ShopScreen {
             preview: state.clone(),
             tab: 0,
             cursor: ListCursor::new(0),
+            selling: None,
         };
         screen.cursor = ListCursor::new(screen.offers().len());
         Some(screen)
@@ -199,6 +223,11 @@ impl ShopScreen {
     /// What was chosen so far.
     pub fn visit(&self) -> &ShopVisit {
         &self.visit
+    }
+
+    /// The sale being asked about, if any.
+    pub fn selling(&self) -> Option<SellConfirm> {
+        self.selling
     }
 
     /// The party's gold after what was chosen.
@@ -252,7 +281,7 @@ impl ShopScreen {
     }
 
     /// What the unit wears and carries, then the battle pack's items (a
-    /// line per item, sold one at a time). Seals are never listed: no
+    /// line per item, its copies counted). Seals are never listed: no
     /// shop buys them.
     fn sells(&self) -> Vec<Offer> {
         let items = self.preview.items();
@@ -309,8 +338,12 @@ impl ShopScreen {
     }
 
     /// Handles one action: up and down move the highlight (wrapping), left
-    /// and right the tab, Confirm chooses the line, Cancel closes.
+    /// and right the tab, Confirm chooses the line, Cancel closes. While a
+    /// sale is asked about, up and down set how many to sell instead.
     pub fn step(&mut self, action: Action) -> ShopEffect {
+        if let Some(sale) = self.selling {
+            return self.step_sell(sale, action);
+        }
         match action {
             Action::Cancel => ShopEffect::Close,
             Action::CursorDown | Action::CursorUp => {
@@ -339,28 +372,121 @@ impl ShopScreen {
         }
     }
 
-    /// Chooses the highlighted line, if the core takes it.
+    /// Chooses the highlighted line, if the core takes it: a Sell line
+    /// asks how many first.
     fn choose(&mut self) -> ShopEffect {
-        let Some(offer) = self.offers().into_iter().nth(self.cursor.focus()) else {
+        let line = self.cursor.focus();
+        let Some(offer) = self.offers().into_iter().nth(line) else {
             return ShopEffect::Denied;
         };
         if !offer.enabled {
             return ShopEffect::Denied;
         }
-        self.visit.txns.push(offer.txn);
+        if self.tab() == Tab::Sell {
+            self.selling = Some(SellConfirm { line, count: 1 });
+            return ShopEffect::Asked;
+        }
+        if !self.take(offer.txn) {
+            return ShopEffect::Denied;
+        }
+        // A line repaired may be gone.
+        self.cursor.set_len(self.offers().len());
+        ShopEffect::Chosen
+    }
+
+    /// The confirmation of `sale`: up and down change how many (1 to the
+    /// line's count, no wrapping), Confirm sells them, Cancel goes back
+    /// to the list.
+    fn step_sell(&mut self, sale: SellConfirm, action: Action) -> ShopEffect {
+        let Some(offer) = self.offers().into_iter().nth(sale.line) else {
+            self.selling = None;
+            return ShopEffect::Back;
+        };
+        let count = match action {
+            Action::CursorUp => sale.count + 1,
+            Action::CursorDown => sale.count.saturating_sub(1),
+            Action::Confirm => return self.sell(&offer, sale.count),
+            Action::Cancel => {
+                self.selling = None;
+                return ShopEffect::Back;
+            }
+            _ => return ShopEffect::None,
+        };
+        if count == 0 || count > offer.count {
+            return ShopEffect::None;
+        }
+        self.selling = Some(SellConfirm { count, ..sale });
+        ShopEffect::Moved
+    }
+
+    /// Sells `count` of `offer`'s item, one at a time: a pack item's
+    /// next copy is looked up again after each, its index having moved.
+    fn sell(&mut self, offer: &Offer, count: usize) -> ShopEffect {
+        self.selling = None;
+        let mut sold = 0;
+        let mut txn = offer.txn.clone();
+        while sold < count && self.take(txn.clone()) {
+            sold += 1;
+            let from_pack = matches!(
+                txn,
+                ShopTxn::Sell {
+                    from: SellFrom::Pack(_)
+                }
+            );
+            let next = self.offers().into_iter().find(|o| {
+                o.item == offer.item
+                    && from_pack
+                    && matches!(
+                        o.txn,
+                        ShopTxn::Sell {
+                            from: SellFrom::Pack(_)
+                        }
+                    )
+            });
+            match next {
+                Some(o) => txn = o.txn,
+                None => break,
+            }
+        }
+        // A line sold may be gone.
+        self.cursor.set_len(self.offers().len());
+        if sold == 0 {
+            ShopEffect::Denied
+        } else {
+            ShopEffect::Chosen
+        }
+    }
+
+    /// Adds `txn` to what was chosen, if the core takes it, and updates
+    /// the preview. Returns whether it was taken.
+    fn take(&mut self, txn: ShopTxn) -> bool {
+        self.visit.txns.push(txn);
         let mut preview = self.base.clone();
         if preview
             .apply(&self.command(self.visit.txns.clone()))
             .is_err()
         {
-            // `takes` said yes, so this doesn't happen; undo it if it does.
             self.visit.txns.pop();
-            return ShopEffect::Denied;
+            return false;
         }
         self.preview = preview;
-        // A line sold or repaired may be gone.
-        self.cursor.set_len(self.offers().len());
-        ShopEffect::Chosen
+        true
+    }
+
+    /// The confirmation of the sale being asked about, in `ctx`'s words.
+    fn sell_view(&self, ctx: &Ctx, offers: &[Offer]) -> Option<SellConfirmView> {
+        let sale = self.selling?;
+        let offer = offers.get(sale.line)?;
+        let item = ctx.words().item(&offer.item, self.preview.items());
+        let total = offer
+            .gold
+            .saturating_mul(Gold::try_from(sale.count).unwrap_or(Gold::MAX));
+        Some(SellConfirmView {
+            question: ctx.text_with("battle.shop.sell_question", &[("item", &item)]),
+            count: sale.count,
+            max: offer.count,
+            gold: ctx.text_with("battle.shop.sell_for", &[("gold", &gold_text(total))]),
+        })
     }
 
     /// The line `offer` shows, in `words`.
@@ -404,7 +530,15 @@ impl ShopScreen {
             lines: offers.iter().map(|o| self.line(words, o)).collect(),
             focus: self.cursor.focus(),
             empty: ctx.text("battle.shop.empty").to_owned(),
-            help: ctx.text_with(if tabs.len() > 1 { HELP } else { HELP_ONE_TAB }, &[]),
+            selling: self.sell_view(ctx, &offers),
+            help: ctx.text_with(
+                match (self.selling, tabs.len()) {
+                    (Some(_), _) => HELP_SELL,
+                    (None, 1) => HELP_ONE_TAB,
+                    (None, _) => HELP,
+                },
+                &[],
+            ),
             debug_hint: crate::screens::debug_hint(ctx),
         }
     }
@@ -459,7 +593,8 @@ impl Screen<Shuyi> for ShopScreen {
             match self.step(action) {
                 ShopEffect::None => {}
                 ShopEffect::Moved => ctx.audio.menu(MenuSound::Move),
-                ShopEffect::Chosen => ctx.audio.menu(MenuSound::Select),
+                ShopEffect::Chosen | ShopEffect::Asked => ctx.audio.menu(MenuSound::Select),
+                ShopEffect::Back => ctx.audio.menu(MenuSound::Cancel),
                 ShopEffect::Denied => ctx.audio.menu(MenuSound::Denied),
                 ShopEffect::Close => {
                     ctx.audio.menu(MenuSound::Cancel);

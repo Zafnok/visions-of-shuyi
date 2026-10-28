@@ -3,7 +3,9 @@
 //! left and the party's gold on the right; the unit and the tabs under it,
 //! the shown tab inverted; then a line per item (name, gold right-aligned,
 //! what it is), the highlighted one inverted and scrolled into view, the
-//! ones that can't be chosen dimmed. The help row under it, as on the
+//! ones that can't be chosen dimmed. A sale being asked about is a small
+//! double box over the list: the question, the count between ▲ and ▼ (an
+//! arrow dims at its end), and the gold. The help row under it, as on the
 //! battle screen.
 
 use super::{clear, paint_help};
@@ -12,7 +14,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
-use crate::screens::battle::view::ShopScreenView;
+use crate::screens::battle::view::{SellConfirmView, ShopScreenView};
 use crate::widgets::ListCursor;
 
 /// The box: the map view and the side panel together.
@@ -97,7 +99,47 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         buf.print(gold_x, y, &line.gold, fg, row_bg);
         buf.print(DETAIL_X, y, &line.detail, fg, row_bg);
     }
+    if let Some(sell) = &view.selling {
+        paint_sell(ctx, sell, buf);
+    }
     paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
+}
+
+/// Width of the sale's box, in cells.
+pub const SELL_W: i32 = 30;
+
+/// Height of the sale's box: the question, ▲, the count, ▼ and the gold,
+/// inside its border with a blank row above and below.
+pub const SELL_H: i32 = 9;
+
+/// The sale's box, in the middle of the list.
+pub const SELL_BOX: Rect = Rect::new(AREA.x + (AREA.w - SELL_W) / 2, TOP_ROW + 2, SELL_W, SELL_H);
+
+/// Paints the confirmation `sell` over the list.
+fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let text = c(UiColor::Text);
+    let dim = c(UiColor::TextDim);
+    buf.fill_rect(SELL_BOX, Cell::new(' ', text, bg));
+    buf.draw_box(SELL_BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    let centred = |buf: &mut GlyphBuffer, y: i32, line: &str, fg| {
+        let x = SELL_BOX.x + (SELL_BOX.w - cells(line)) / 2;
+        buf.print(x, y, line, fg, bg);
+    };
+    let top = SELL_BOX.y + 2;
+    centred(buf, top, &sell.question, c(UiColor::TextHighlight));
+    let up = if sell.count < sell.max { text } else { dim };
+    let down = if sell.count > 1 { text } else { dim };
+    centred(buf, top + 1, "▲", up);
+    centred(
+        buf,
+        top + 2,
+        &format!("{} / {}", sell.count, sell.max),
+        text,
+    );
+    centred(buf, top + 3, "▼", down);
+    centred(buf, top + 4, &sell.gold, text);
 }
 
 /// How many cells `text` takes.
@@ -114,6 +156,13 @@ fn first_shown(focus: usize, rows: i32) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_sale_box_sits_over_the_list() {
+        const { assert!(SELL_BOX.y >= TOP_ROW) };
+        const { assert!(SELL_BOX.y + SELL_BOX.h <= TOP_ROW + LIST_ROWS) };
+        assert_eq!(SELL_BOX.x + SELL_BOX.w / 2, AREA.x + AREA.w / 2);
+    }
 
     #[test]
     fn the_columns_fit_in_the_box() {

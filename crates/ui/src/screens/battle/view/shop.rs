@@ -24,10 +24,25 @@ pub struct ShopScreenView {
     pub focus: usize,
     /// What a tab with no lines says.
     pub empty: String,
+    /// The confirmation of a sale, while one is asked about.
+    pub selling: Option<SellConfirmView>,
     /// The help line: what the keys do.
     pub help: String,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
+}
+
+/// The confirmation of a sale: what, how many, for how much.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SellConfirmView {
+    /// What is asked (`Sell Potion?`).
+    pub question: String,
+    /// How many are to be sold.
+    pub count: usize,
+    /// How many there are.
+    pub max: usize,
+    /// What they bring (`For 300 gold`).
+    pub gold: String,
 }
 
 /// One line of a tab.
@@ -51,6 +66,9 @@ impl ShopScreenView {
         texts.extend(self.tabs.iter().cloned());
         for l in &self.lines {
             texts.extend([l.name.clone(), l.gold.clone(), l.detail.clone()]);
+        }
+        if let Some(sell) = &self.selling {
+            texts.extend([sell.question.clone(), sell.gold.clone()]);
         }
         texts.push(self.help.clone());
         texts

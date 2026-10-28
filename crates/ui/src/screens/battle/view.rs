@@ -32,7 +32,7 @@ pub use self::info::{
 };
 pub use self::progress::{ClassProgressView, ExpView, GainsView, ProgressView, StatGainView};
 pub use self::rewind::{RewindScreenView, RewindView};
-pub use self::shop::{ShopLineView, ShopScreenView};
+pub use self::shop::{SellConfirmView, ShopLineView, ShopScreenView};
 use super::HealPopup;
 use super::banner::BannerKind;
 use super::stage::view::StageView;
