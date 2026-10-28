@@ -6,6 +6,12 @@ name: Changes
 #
 # Docs-only paths: `*.md` anywhere, `docs/**`, `tickets/**`, `.claude/**`.
 # Any other event (push, schedule, workflow_dispatch) always counts as code.
+#
+# But a Markdown file the code reads (a test checks it against the data)
+# counts as code: PR #464 changed only `docs/design/audio.md`, skipped the
+# tests, and broke `main` (ticket 0252, ADR-0098). The list is on the
+# `read by code` line below; xtask's
+# `every_markdown_file_the_code_reads_counts_as_code` keeps it complete.
 
 on:
   workflow_call:
@@ -45,6 +51,7 @@ jobs:
           while IFS= read -r path; do
             [ -z "$path" ] && continue
             case "$path" in
+              THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md|docs/engine/pins.md|docs/story/names.md|docs/story/writers-guide.md|tickets/README.md) echo "code (read by code): $path"; code=true ;;
               *.md|docs/*|tickets/*|.claude/*) echo "docs: $path" ;;
               *) echo "code: $path"; code=true ;;
             esac

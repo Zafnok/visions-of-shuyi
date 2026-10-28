@@ -843,6 +843,68 @@ mod tests {
         assert!(serde_norway::from_str::<serde_norway::Value>(broken).is_err());
     }
 
+    /// The `.rs` files under `dir`, at any depth.
+    fn rs_files_under(dir: &Path, out: &mut Vec<PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                rs_files_under(&path, out);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                out.push(path);
+            }
+        }
+    }
+
+    /// The repository's Markdown files a crate names in a string literal
+    /// (`"../../docs/design/audio.md"`, `"dialogue/README.md"` in the
+    /// embedded assets), from the repository's root.
+    fn markdown_the_code_reads() -> std::collections::BTreeSet<String> {
+        let root = repo_root();
+        let mut files = Vec::new();
+        rs_files_under(&root.join("crates"), &mut files);
+        let mut read = std::collections::BTreeSet::new();
+        for file in files {
+            let text = std::fs::read_to_string(&file).unwrap();
+            // Every other piece between quotes is a literal.
+            for literal in text.split('"').skip(1).step_by(2) {
+                let markdown = Path::new(literal).extension().is_some_and(|e| e == "md");
+                if !markdown || !literal.contains('/') {
+                    continue;
+                }
+                let path = literal.trim_start_matches("../");
+                for base in ["", "assets/", "assets-test/"] {
+                    let path = format!("{base}{path}");
+                    if root.join(&path).is_file() {
+                        read.insert(path);
+                    }
+                }
+            }
+        }
+        read
+    }
+
+    /// CI skips its build and tests on a pull request that changes only
+    /// docs, Markdown among them (ADR-0014), so a Markdown file the code
+    /// reads is listed in `changes.yml` as code: PR #464 changed only
+    /// `docs/design/audio.md` and broke `main` (ticket 0252, ADR-0098).
+    #[test]
+    fn every_markdown_file_the_code_reads_counts_as_code() {
+        let changes =
+            std::fs::read_to_string(repo_root().join(".github/workflows/changes.yml")).unwrap();
+        let line = changes
+            .lines()
+            .find(|l| l.contains("\"code (read by code)"))
+            .and_then(|l| l.trim().split_once(')'))
+            .expect("changes.yml's `read by code` case");
+        let listed: std::collections::BTreeSet<String> =
+            line.0.split('|').map(str::to_string).collect();
+        let mut read = markdown_the_code_reads();
+        // A file name in playdate_images' test of a made-up bundle, not read.
+        assert!(read.remove("assets/battlers/README.md"));
+        assert!(read.contains("docs/design/audio.md"), "{read:?}");
+        assert_eq!(listed, read, "changes.yml's `read by code` list");
+    }
+
     /// Cargo links every file directly under a crate's `tests/` as its own
     /// program (about 100 MB each), so each crate keeps one: new integration
     /// tests are modules of `tests/it/main.rs` (ticket 0114).
