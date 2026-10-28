@@ -812,8 +812,8 @@ fn order_lists_heals_on_the_wounded_most_wounded_first() {
     };
     let heal_count = ordered.iter().filter(|c| wounded(c)).count();
     assert!(ordered[first..first + heal_count].iter().all(wounded));
-    // Unit 1 heals unit 2, then unit 3, from its own tile; units 2 and 3
-    // heal themselves (and each other, if they can reach).
+    // Unit 1 heals unit 2, then unit 3, from its own tile: the first in
+    // the legal order of the healers who needn't move.
     let of_1: Vec<UnitId> = heals
         .iter()
         .filter(|h| h.0 == UnitId(1))
@@ -833,6 +833,42 @@ fn order_lists_heals_on_the_wounded_most_wounded_first() {
         matches!(c, Command::Act { action: UnitAction::UseItem { target, .. }, .. } if *target == UnitId(1))
     });
     assert!(full.unwrap() > first + heal_count);
+}
+
+/// Ticket 0519: in Chapter 1 the heals of a wounded lord (the same Potion
+/// in three pack slots, by each of five units in reach) filled every
+/// place Hardcore tries, so no advance was ever weighed and ending the
+/// phase won, turn after turn, until the turn cap.
+#[test]
+fn order_lists_one_heal_per_wounded_unit_and_item() {
+    let mut hurt = player(2, 3);
+    hurt.hp -= 6;
+    let mut scratched = player(3, 5);
+    scratched.hp -= 1;
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 7);
+    // The pack holds two Potions (slots 0 and 2) and an Elixir.
+    let s = start(vec![player(1, 4), hurt, scratched, far]);
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    let heals: Vec<(UnitId, &str)> = ordered
+        .iter()
+        .filter_map(|c| match c {
+            Command::Act {
+                action: UnitAction::UseItem { pack_index, target },
+                ..
+            } if *target != UnitId(1) => Some((*target, s.pack().items[*pack_index].0.as_str())),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        heals,
+        [
+            (UnitId(2), "potion"),
+            (UnitId(2), "elixir"),
+            (UnitId(3), "potion"),
+            (UnitId(3), "elixir"),
+        ]
+    );
 }
 
 #[test]
@@ -1169,7 +1205,10 @@ fn a_heal_is_a_heal_spell_on_a_wounded_ally() {
         target: CastTarget::Unit(UnitId(target)),
         active: None,
     };
-    assert_eq!(heal_need(&s, UnitId(1), tile(4), &cast(2)), Some(6));
+    assert_eq!(
+        heal_need(&s, UnitId(1), tile(4), &cast(2)),
+        Some((6, Heal::Spell(UnitId(2), heal.clone())))
+    );
     // At an enemy, the spell heals nothing: no heal.
     assert_eq!(heal_need(&s, UnitId(1), tile(4), &cast(3)), None);
     assert_eq!(heal_need(&s, UnitId(1), tile(4), &UnitAction::Wait), None);

@@ -22,8 +22,9 @@ use shuyi_core::grid::Grid;
 use shuyi_core::path::flow_field;
 use shuyi_core::{Bot, Evaluate, Order, PlanSettings, TurnPlan};
 use trpg_core::{
-    AiBehavior, AiWeights, BattleState, CastTarget, Command, Faction, GameMode, Objective, Outcome,
-    Phase, Pos, SideForecast, Unit, UnitAction, UnitId, legal_commands, next_command, threat_area,
+    AiBehavior, AiWeights, BattleState, CastTarget, Command, Faction, GameMode, ItemId, Objective,
+    Outcome, Phase, Pos, SideForecast, SpellId, Unit, UnitAction, UnitId, legal_commands,
+    next_command, threat_area,
 };
 
 /// Points for each thing a playout changed, added up into its score
@@ -487,7 +488,10 @@ impl Order<BattleState> for PersonaOrder {
 ///    can always do what the enemy AI would, moves towards the enemy
 ///    included;
 /// 3. the heals (an item used on, or a heal cast at, a wounded unit), the
-///    most wounded first, each once, from the healer's own tile if it can;
+///    most wounded first, one for each wounded unit and remedy (the same
+///    Potion in two pack slots, or used by any unit in reach, is one heal),
+///    from a healer's own tile if one can: else a wounded lord's heals fill
+///    every place tried and no advance is ever weighed (0519);
 /// 4. each ready unit's escape, once, on an escape map (0517);
 /// 5. each ready unit's advance: waiting on the tile it can reach that is
 ///    nearest the objective's goals, walking (the engine's flow field), if that is
@@ -538,9 +542,9 @@ pub fn order(
                     let forecast = preview.forecast;
                     let taken = forecast.defender.as_ref().map_or(0, expected_damage);
                     attacks.push(((expected_damage(&forecast.attacker), -taken), command));
-                } else if let Some(missing) = heal_need(state, *unit, *dest, action) {
+                } else if let Some((missing, heal)) = heal_need(state, *unit, *dest, action) {
                     let moves = state.unit(*unit).is_some_and(|u| u.pos != *dest);
-                    heals.push(((missing, !moves), command));
+                    heals.push(((missing, !moves), heal, command));
                 } else if *action == UnitAction::Escape {
                     escapes.push(command);
                 } else {
@@ -558,6 +562,14 @@ pub fn order(
     }
     attacks.sort_by_key(|a| Reverse(a.0));
     heals.sort_by_key(|h| Reverse(h.0));
+    let mut healed: Vec<Heal> = Vec::new();
+    heals.retain(|(_, heal, _)| {
+        let first = !healed.contains(heal);
+        if first {
+            healed.push(heal.clone());
+        }
+        first
+    });
     let (mut out, others): (Vec<Command>, Vec<Command>) = {
         let mut struck: Vec<(UnitId, Option<UnitId>)> = Vec::new();
         once_per_action(attacks.into_iter().map(|(_, c)| c))
@@ -573,11 +585,7 @@ pub fn order(
     let pick = pick.filter(|pick| !out.contains(pick));
     let not_pick = |c: &Command| pick.as_ref() != Some(c);
     out.extend(pick.clone());
-    out.extend(
-        once_per_action(heals.into_iter().map(|(_, c)| c))
-            .into_iter()
-            .filter(not_pick),
-    );
+    out.extend(heals.into_iter().map(|(_, _, c)| c).filter(not_pick));
     out.extend(
         once_per_action(escapes.into_iter())
             .into_iter()
@@ -677,20 +685,39 @@ fn expected_damage(side: &SideForecast) -> i64 {
     all_hit(side) * i64::from(side.hit)
 }
 
-/// The HP its target is missing, if `action` is a heal: an item used on, or
-/// a heal spell cast at, a wounded unit.
-fn heal_need(state: &BattleState, unit: UnitId, dest: Pos, action: &UnitAction) -> Option<i64> {
-    let target = match action {
-        UnitAction::UseItem { target, .. } => *target,
+/// Who a heal is for and what it uses: the pack's item or the spell. Two
+/// heals alike but for the healer (or the pack slot) are one to a persona.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Heal {
+    Item(UnitId, ItemId),
+    Spell(UnitId, SpellId),
+}
+
+/// The HP its target is missing, and the [`Heal`], if `action` is a heal:
+/// an item used on, or a heal spell cast at, a wounded unit.
+fn heal_need(
+    state: &BattleState,
+    unit: UnitId,
+    dest: Pos,
+    action: &UnitAction,
+) -> Option<(i64, Heal)> {
+    let heal = match action {
+        UnitAction::UseItem { pack_index, target } => {
+            Heal::Item(*target, state.pack().items.get(*pack_index)?.clone())
+        }
         UnitAction::Cast {
+            spell,
             target: CastTarget::Unit(target),
             ..
-        } if state.preview_heal(unit, dest, action).is_some() => *target,
+        } if state.preview_heal(unit, dest, action).is_some() => {
+            Heal::Spell(*target, spell.clone())
+        }
         _ => return None,
     };
-    let target = state.unit(target)?;
+    let (Heal::Item(target, _) | Heal::Spell(target, _)) = &heal;
+    let target = state.unit(*target)?;
     let missing = i64::from(target.stats.hp - target.hp);
-    (missing > 0).then_some(missing)
+    (missing > 0).then_some((missing, heal))
 }
 
 /// `commands` with only the first `Act` of each unit and action kept.
