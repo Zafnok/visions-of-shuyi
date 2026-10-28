@@ -10,7 +10,7 @@ use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
 use shuyi_cli::contract::{bots, check, replay};
 use shuyi_cli::font_atlas::{ATLAS_RANGES, ONE_BIT_FILE, read_font};
-use shuyi_cli::frame_png::{self, Image, Options};
+use shuyi_cli::frame_png::{self, Options};
 use shuyi_cli::lang_status::{self, Part};
 
 use super::*;
@@ -186,7 +186,7 @@ fn the_scene_camera_frame_shows_the_map_in_its_window() {
     options.scale = Some(1);
     let printed = run(&dir, &options).unwrap();
     assert!(printed.contains("scene_camera"), "{printed}");
-    let frame = Image::decode(&fs::read(dir.join("camera.png")).unwrap()).unwrap();
+    let frame = frame_png::decode_image(&fs::read(dir.join("camera.png")).unwrap()).unwrap();
     // The middle of the window (cells 26..74 × 4..18) isn't the clear
     // colour: the map is there.
     let middle = frame.pixel(50 * 8, 11 * 16).unwrap();
