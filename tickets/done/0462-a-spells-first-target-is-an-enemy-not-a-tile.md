@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0462 — Aiming starts on an enemy, not a tile
@@ -70,11 +70,11 @@ it):
 
 ## Acceptance criteria
 
-- [ ] Fire with an enemy and a forest tile in reach opens on the enemy
+- [x] Fire with an enemy and a forest tile in reach opens on the enemy
       (test, where the forest comes first in reading order).
-- [ ] With a path aimed at an enemy, the spell opens on that enemy.
-- [ ] With no enemy in reach, it opens on a tile.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] With a path aimed at an enemy, the spell opens on that enemy.
+- [x] With no enemy in reach, it opens on a tile.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -82,4 +82,4 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+`CastTargeting::new` now starts on the enemy the path was aimed at, else the first unit in reading order, else the first tile (`magic.rs`). The target list's order is unchanged, so up/down still step through enemies and tiles. Heals are unchanged (their list holds only units, rotated to the pointed-at ally by 0451). No other list mixes units and tiles. Two older tests that expected a tile-first start were updated. Friction: estimate ~15 lines, measured ~20 production lines, under 2x. Nothing for the Act 1 playtest beyond the checklist item above. No Claude's starting rules beyond the ticket's.

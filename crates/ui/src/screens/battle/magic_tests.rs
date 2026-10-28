@@ -673,9 +673,8 @@ fn forecast_of_fire_on_a_weak_target_snapshot() {
 fn forecast_of_frost_on_an_absorbing_target_snapshot() {
     let mut c = ctx();
     let state = field(&c, 0);
-    let mut s = casting(&mut c, state, 1);
-    // Frost's targets start with its tiles: the elemental is the third.
-    step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);
+    let s = casting(&mut c, state, 1);
+    // Frost's targets list its tiles first, but aiming opens on the elemental.
     assert_eq!(targeting(&s).target(), on_unit(7));
     let t = targeting(&s).forecast().unwrap();
     let healed = t.preview.forecast.attacker.damage;
@@ -762,9 +761,13 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
 fn frost_names_the_ice_and_heal_changes_no_tile() {
     let mut c = ctx();
     let state = field(&c, 18);
-    let s = casting(&mut c, state.clone(), 1);
-    assert_eq!(targeting(&s).target(), on_tile(0, 2));
+    let mut s = casting(&mut c, state.clone(), 1);
+    // It opens on an enemy, where the forecast says it all: no line.
+    assert_eq!(targeting(&s).target(), on_unit(7));
     let preview = |s: &BattleScreen| targeting(s).preview(s.state(), Words::ENGLISH);
+    assert_eq!(preview(&s), None);
+    step(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
+    assert_eq!(targeting(&s).target(), on_tile(0, 2));
     assert_eq!(preview(&s).as_deref(), Some("Sea → Ice"));
     let ice = c.game.content.terrain.display.id_of("ice").unwrap();
     assert_eq!(
@@ -774,13 +777,8 @@ fn frost_names_the_ice_and_heal_changes_no_tile() {
     let scene = s.scene(&c);
     assert_eq!(looks(&c, &scene, 0, 2), "ice");
     assert_eq!(looks(&c, &scene, 1, 3), "ice");
-    let mut s = s;
     step(&mut s, &mut c, &[Action::CursorRight]);
     assert_eq!(preview(&s).as_deref(), Some("Water → Ice"));
-    // On an enemy the forecast says it all: no line.
-    step(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(targeting(&s).target(), on_unit(7));
-    assert_eq!(preview(&s), None);
     let heal = casting(&mut c, state, 2);
     assert_eq!(
         targeting(&heal).tile_changes(heal.state()),
@@ -1117,6 +1115,46 @@ fn the_menus_sound_like_the_others() {
     let mut none = choices[0].clone();
     none.targets.clear();
     assert_eq!(CastTargeting::new(&s, sel, menu, none), None);
+}
+
+#[test]
+fn aiming_a_spell_starts_on_an_enemy_not_a_tile() {
+    let c = ctx();
+    let s = field(&c, 18);
+    let sel = Selection::new(&s, MAGE).unwrap();
+    let choices = spell_choices(&s, MAGE, p(0, 4));
+    let menu = spell_menu(&s, Words::ENGLISH, MAGE, &choices);
+    let frost = choices
+        .iter()
+        .find(|c| c.spell == sid("frost") && c.active.is_none())
+        .unwrap()
+        .clone();
+    // Frost lists the sea and the water before the enemies.
+    assert_eq!(
+        frost.targets,
+        [on_tile(0, 2), on_tile(1, 3), on_unit(7), on_unit(4)]
+    );
+    let open = |sel: Selection, choice: SpellChoice| {
+        CastTargeting::new(&s, sel, menu.clone(), choice).unwrap()
+    };
+    // The first enemy in reading order, not the first tile.
+    let t = open(sel.clone(), frost.clone());
+    assert_eq!((t.index, t.target()), (2, on_unit(7)));
+    // The enemy the path was aimed at, if the spell reaches it.
+    let mut aimed = sel.clone();
+    aimed.target = Some(UnitId(4));
+    let t = open(aimed, frost.clone());
+    assert_eq!((t.index, t.target()), (3, on_unit(4)));
+    // Up/down still step through every target, tiles too.
+    let mut t = open(sel.clone(), frost.clone());
+    t.cycle(true, &s);
+    t.cycle(true, &s);
+    assert_eq!(t.target(), on_tile(0, 2));
+    // No enemy in reach: the first tile.
+    let mut tiles = frost;
+    tiles.targets.retain(|t| matches!(t, CastTarget::Tile(_)));
+    let t = open(sel, tiles);
+    assert_eq!((t.index, t.target()), (0, on_tile(0, 2)));
 }
 
 // ---- Equip and the info screen ---------------------------------------------------

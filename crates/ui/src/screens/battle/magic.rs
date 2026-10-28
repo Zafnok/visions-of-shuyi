@@ -331,8 +331,10 @@ pub struct CastTargeting {
 }
 
 impl CastTargeting {
-    /// Targeting for `chosen`, a line of `menu`, on its first target.
-    /// `None` if it has none.
+    /// Targeting for `chosen`, a line of `menu`, starting on a unit (0462):
+    /// the one `sel`'s path was aimed at if the spell reaches it, else the
+    /// first unit in reading order, else the first tile. `None` if it has
+    /// no target.
     pub fn new(
         state: &BattleState,
         sel: Selection,
@@ -340,7 +342,17 @@ impl CastTargeting {
         chosen: SpellChoice,
     ) -> Option<Self> {
         let choice = &chosen;
-        let first = *choice.targets.first()?;
+        let aimed = sel.target.map(CastTarget::Unit);
+        let start = choice
+            .targets
+            .iter()
+            .position(|t| Some(*t) == aimed)
+            .or_else(|| {
+                let unit = |t: &CastTarget| matches!(t, CastTarget::Unit(_));
+                choice.targets.iter().position(unit)
+            })
+            .unwrap_or(0);
+        let first = *choice.targets.get(start)?;
         let enemies: Vec<UnitId> = choice
             .targets
             .iter()
@@ -359,7 +371,7 @@ impl CastTargeting {
             sel,
             menu,
             chosen,
-            index: 0,
+            index: start,
             attack,
         })
     }
