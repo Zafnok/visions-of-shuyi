@@ -204,7 +204,7 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         WeaponKind::Gauntlet => ("brawler", "iron_gauntlets"),
     };
     let arts = &content().arts;
-    assert_eq!(arts.arts.len(), 10);
+    assert_eq!(arts.arts.len(), 19);
     for (id, art) in &arts.arts {
         let (class, iron) = weapon(art.kind);
         // Bows shoot from 2 tiles (Close Shot could from 1).
@@ -213,15 +213,19 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         } else {
             p(1, 0)
         };
+        // The unit has the rank that teaches the art.
+        let mut user = unit(
+            1,
+            class,
+            Faction::Player,
+            p(0, 0),
+            [30, 5, 0, 5, 5, 2, 2],
+            (iron, art.kind),
+        );
+        user.weapon_ranks
+            .insert(art.kind, art.rank.unwrap_or(WeaponRank::D));
         let mut s = battle(vec![
-            unit(
-                1,
-                class,
-                Faction::Player,
-                p(0, 0),
-                [30, 5, 0, 5, 5, 2, 2],
-                (iron, art.kind),
-            ),
+            user,
             unit(
                 3,
                 "swordsman",
@@ -245,4 +249,35 @@ fn every_art_can_be_used_with_its_iron_weapon() {
             id.0
         );
     }
+}
+
+/// Ticket 0325: a unit at rank C, B, A or S in a kind knows that rank's
+/// arts from the list (and the lower ranks' too).
+#[test]
+fn rank_arts_c_to_s_are_taught_by_their_rank() {
+    use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
+    use WeaponRank::{A, B, C, S};
+    let by_rank = |kind, rank| {
+        let mut names: Vec<_> = content()
+            .arts
+            .arts
+            .values()
+            .filter(|a| a.kind == kind && a.rank == Some(rank))
+            .map(|a| a.id.0.as_str())
+            .collect();
+        names.sort_unstable();
+        names
+    };
+    assert_eq!(by_rank(Sword, A), ["cascade"]);
+    assert_eq!(by_rank(Spear, C), ["long_thrust"]);
+    assert_eq!(by_rank(Spear, A), ["skypiercer"]);
+    assert_eq!(by_rank(Axe, B), ["hurl"]);
+    assert_eq!(by_rank(Axe, A), ["skull_splitter"]);
+    assert_eq!(by_rank(Axe, S), ["felling_blow"]);
+    assert_eq!(by_rank(Bow, C), ["rending_arrow"]);
+    assert_eq!(by_rank(Gauntlet, C), ["off_balance"]);
+    assert_eq!(by_rank(Gauntlet, S), ["vital_point"]);
+    // The data loads the old one-debuff form for the older arts.
+    let pin = &content().arts.arts[&ArtId("pinning_shot".into())];
+    assert_eq!(pin.effect.on_first_hit.len(), 1);
 }

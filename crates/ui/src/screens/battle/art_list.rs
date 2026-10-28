@@ -128,9 +128,43 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
     if let Some(n) = e.min_range {
         parts.push(words.text_with("battle.art.desc.min_range", &[("n", &n)]));
     }
-    parts.extend(e.notes().iter().map(|note| match note {
-        ArtNote::Pierces => words.text("battle.art.desc.pierces").to_owned(),
-        _ => note_text(words, note),
+    if let Some(n) = e.max_range {
+        parts.push(words.text_with("battle.art.desc.max_range", &[("n", &n)]));
+    }
+    if e.crit != 0 {
+        parts.push(words.text_with("battle.art.desc.crit", &[("n", &e.crit)]));
+    }
+    if let Some(n) = e.axe_min_damage_max_hp_div {
+        parts.push(words.text_with("battle.art.desc.axe_min_hp", &[("n", &n)]));
+    }
+    if e.cascade != 0 {
+        parts.push(words.text_with("battle.art.desc.cascade", &[("n", &e.cascade)]));
+    }
+    let notes = e.notes();
+    // Several debuffs of one size read as one (`lowers: Str, Def −4`).
+    let same = e
+        .on_first_hit
+        .windows(2)
+        .all(|w| w[0].amount == w[1].amount);
+    let grouped = e.on_first_hit.len() > 1 && same;
+    if grouped {
+        let stats: Vec<_> = e
+            .on_first_hit
+            .iter()
+            .map(|d| stat_name(words, d.stat))
+            .collect();
+        parts.push(words.text_with(
+            "battle.art.note.lowers",
+            &[
+                ("stat", &stats.join(", ")),
+                ("amount", &e.on_first_hit[0].amount),
+            ],
+        ));
+    }
+    parts.extend(notes.iter().filter_map(|note| match note {
+        ArtNote::Pierces => Some(words.text("battle.art.desc.pierces").to_owned()),
+        ArtNote::Debuff(_) if grouped => None,
+        _ => Some(note_text(words, note)),
     }));
     parts.join("; ")
 }
@@ -412,10 +446,14 @@ pub fn note_text(words: Words<'_>, note: &ArtNote) -> String {
             let key = match d.stat {
                 StatKind::Mov => "battle.art.note.pins",
                 StatKind::Spd => "battle.art.note.slows",
+                StatKind::Def => "battle.art.note.rends",
                 _ => "battle.art.note.lowers",
             };
             let stat = stat_name(words, d.stat);
             words.text_with(key, &[("stat", &stat), ("amount", &d.amount)])
+        }
+        ArtNote::AvoidDebuff(amount) => {
+            words.text_with("battle.art.note.off_balance", &[("amount", amount)])
         }
         ArtNote::Stance(mods) => words.text_with(
             "battle.art.note.stance",
@@ -475,12 +513,24 @@ mod tests {
             "slows: Spd −3"
         );
         let other = Debuff {
-            stat: StatKind::Def,
+            stat: StatKind::Res,
             ..pin
         };
         assert_eq!(
             note_text(Words::ENGLISH, &ArtNote::Debuff(other)),
-            "lowers: Def −3"
+            "lowers: Res −3"
+        );
+        let rend = Debuff {
+            stat: StatKind::Def,
+            amount: 5,
+        };
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Debuff(rend)),
+            "rends: Def −5"
+        );
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::AvoidDebuff(20)),
+            "off balance: avoid −20"
         );
         let stance = TimedMods {
             stats: vec![],
@@ -539,6 +589,13 @@ mod tests {
         assert_eq!(text("close_shot"), "-10 hit; min range 1");
         assert_eq!(text("line_pierce"), "then strikes the unit behind");
         assert_eq!(text("sidestep"), "stance: +20 avo");
+        assert_eq!(text("long_thrust"), "-10 hit; min range 1; reaches 2");
+        assert_eq!(text("skull_splitter"), "crit +30");
+        assert_eq!(text("felling_blow"), "min damage 1/3 of target max HP");
+        assert_eq!(text("cascade"), "each hit +3 more");
+        assert_eq!(text("rending_arrow"), "rends: Def −5");
+        assert_eq!(text("off_balance"), "off balance: avoid −20");
+        assert_eq!(text("vital_point"), "lowers: Str, Mag, Def, Res, Spd −4");
     }
 
     #[test]

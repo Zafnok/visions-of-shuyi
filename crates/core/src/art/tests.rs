@@ -185,7 +185,7 @@ fn stats() -> WeaponStats {
 #[test]
 fn the_default_effect_changes_nothing() {
     let (mut w, mut m) = (stats(), CombatMods::default());
-    ArtEffect::default().apply(&mut w, &mut m);
+    ArtEffect::default().apply(&mut w, &mut m, 30);
     assert_eq!((w, m), (stats(), CombatMods::default()));
     assert_eq!(ArtEffect::default().notes(), []);
 }
@@ -205,7 +205,7 @@ fn an_effect_changes_the_weapon_and_the_mods() {
         hit: 4,
         ..CombatMods::default()
     };
-    effect.apply(&mut w, &mut m);
+    effect.apply(&mut w, &mut m, 30);
     assert_eq!(
         m,
         CombatMods {
@@ -231,7 +231,7 @@ fn an_effect_without_a_follow_up_keeps_the_mods_one() {
         sword_followup: Some((1, 1)),
         ..CombatMods::default()
     };
-    ArtEffect::default().apply(&mut stats(), &mut m);
+    ArtEffect::default().apply(&mut stats(), &mut m, 30);
     assert_eq!(m.sword_followup, Some((1, 1)));
 }
 
@@ -252,7 +252,8 @@ fn notes_spell_out_the_effects_that_are_not_numbers() {
         hit: 10,
         no_counter: true,
         line_pierce: true,
-        on_first_hit: Some(slow),
+        on_first_hit: vec![slow],
+        on_first_hit_avoid: 20,
         stance: Some(stance.clone()),
         ..ArtEffect::default()
     };
@@ -262,6 +263,7 @@ fn notes_spell_out_the_effects_that_are_not_numbers() {
             ArtNote::NoCounter,
             ArtNote::Pierces,
             ArtNote::Debuff(slow),
+            ArtNote::AvoidDebuff(20),
             ArtNote::Stance(stance),
         ]
     );
@@ -280,6 +282,99 @@ fn a_debuff_is_a_negative_stat_bonus() {
             combat: CombatMods::default(),
         }
     );
+}
+
+fn applied(effect: &ArtEffect, target_max_hp: StatValue) -> (WeaponStats, CombatMods) {
+    let (mut w, mut m) = (stats(), CombatMods::default());
+    effect.apply(&mut w, &mut m, target_max_hp);
+    (w, m)
+}
+
+#[test]
+fn long_thrust_and_hurl_reach_two_at_minus_ten_hit() {
+    let effect = ArtEffect {
+        hit: -10,
+        min_range: Some(1),
+        max_range: Some(2),
+        ..ArtEffect::default()
+    };
+    let (w, m) = applied(&effect, 30);
+    assert_eq!((w.min_range, w.max_range, m.hit), (1, 2, -10));
+    assert!(w.in_range(1) && w.in_range(2) && !w.in_range(3));
+}
+
+#[test]
+fn skull_splitter_adds_crit_and_cascade_is_a_mod() {
+    let effect = ArtEffect {
+        crit: 30,
+        cascade: 3,
+        ..ArtEffect::default()
+    };
+    let (_, m) = applied(&effect, 30);
+    assert_eq!((m.crit, m.cascade), (30, 3));
+}
+
+#[test]
+fn felling_blow_takes_a_third_of_the_targets_max_hp_over_the_axe_minimum() {
+    let effect = ArtEffect {
+        axe_min_damage_max_hp_div: Some(3),
+        ..ArtEffect::default()
+    };
+    let min = |hp| applied(&effect, hp).0.trait_;
+    assert_eq!(min(60), WeaponTrait::AxeMinDamage(20));
+    assert_eq!(min(41), WeaponTrait::AxeMinDamage(13));
+    // A small target keeps the axe's own minimum.
+    assert_eq!(min(12), WeaponTrait::AxeMinDamage(5));
+}
+
+#[test]
+fn a_first_hit_debuff_lists_stats_and_avoid() {
+    let effect = ArtEffect {
+        on_first_hit: vec![
+            Debuff {
+                stat: StatKind::Def,
+                amount: 4,
+            },
+            Debuff {
+                stat: StatKind::Spd,
+                amount: 4,
+            },
+        ],
+        on_first_hit_avoid: 20,
+        ..ArtEffect::default()
+    };
+    assert_eq!(
+        effect.first_hit_mods(),
+        Some(TimedMods {
+            stats: vec![(StatKind::Def, -4), (StatKind::Spd, -4)],
+            combat: CombatMods {
+                avoid_debuff: 20,
+                ..CombatMods::default()
+            },
+        })
+    );
+    assert_eq!(ArtEffect::default().first_hit_mods(), None);
+}
+
+#[test]
+fn old_and_new_debuff_data_both_load() {
+    let load = |s: &str| ron::from_str::<ArtEffect>(s).map(|e| e.on_first_hit);
+    let mov = Debuff {
+        stat: StatKind::Mov,
+        amount: 3,
+    };
+    assert_eq!(
+        load("(on_first_hit: Some((stat: Mov, amount: 3)))"),
+        Ok(vec![mov])
+    );
+    assert_eq!(
+        load("(on_first_hit: [(stat: Mov, amount: 3)])"),
+        Ok(vec![mov])
+    );
+    assert_eq!(load("(on_first_hit: None)"), Ok(vec![]));
+    assert_eq!(load("()"), Ok(vec![]));
+    let error = load("(on_first_hit: 3)").unwrap_err().to_string();
+    assert!(error.contains("a debuff or a list of debuffs"), "{error}");
 }
 
 #[test]

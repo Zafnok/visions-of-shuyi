@@ -104,6 +104,7 @@ fn numbers(
         hit,
         crit,
         strikes,
+        cascade: 0,
         effective: false,
         broken: false,
         affinity: None,
@@ -1454,6 +1455,7 @@ fn combat_mods_add_up() {
         crit: 2,
         might: 3,
         avoid: 4,
+        avoid_debuff: 7,
         attack_speed: 5,
         extra_strikes: 1,
         single_strike: false,
@@ -1461,12 +1463,14 @@ fn combat_mods_add_up() {
         ignore_terrain: false,
         pierce: 6,
         sword_followup: Some((3, 2)),
+        cascade: 1,
     };
     m.add(&CombatMods {
         hit: 10,
         crit: 20,
         might: 30,
         avoid: 40,
+        avoid_debuff: 70,
         attack_speed: 50,
         extra_strikes: u8::MAX,
         single_strike: true,
@@ -1474,6 +1478,7 @@ fn combat_mods_add_up() {
         ignore_terrain: true,
         pierce: 60,
         sword_followup: None,
+        cascade: 10,
     });
     assert_eq!(
         m,
@@ -1482,6 +1487,7 @@ fn combat_mods_add_up() {
             crit: 22,
             might: 33,
             avoid: 44,
+            avoid_debuff: 77,
             attack_speed: 55,
             extra_strikes: u8::MAX,
             single_strike: true,
@@ -1489,6 +1495,7 @@ fn combat_mods_add_up() {
             ignore_terrain: true,
             pierce: 66,
             sword_followup: Some((3, 2)),
+            cascade: 11,
         }
     );
     // A later follow-up ratio replaces an earlier one.
@@ -1562,7 +1569,7 @@ fn with_art(
     effect: &crate::art::ArtEffect,
 ) -> CombatantInput<'static> {
     if let Some(w) = c.weapon.as_mut() {
-        effect.apply(w, &mut c.mods);
+        effect.apply(w, &mut c.mods, 0);
     }
     c
 }
@@ -1835,5 +1842,72 @@ proptest! {
             let kills = plan.strikes.iter().filter(|s| s.kills()).count();
             prop_assert_eq!(kills, usize::from(out.attacker_hp == 0 || out.defender_hp == 0));
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Cascade (ticket 0325): the n-th hit adds `cascade * (n - 1)`, after the
+// sword follow-up and before crit; misses don't count.
+
+fn cascading(strikes: u8, cascade: StatValue, crit: u8) -> Forecast {
+    Forecast {
+        attacker: SideForecast {
+            cascade,
+            ..numbers(10, 12, 50, crit, strikes)
+        },
+        defender: None,
+    }
+}
+
+#[test]
+fn cascade_counts_hits_not_strikes() {
+    let rules = rules();
+    // Hit, miss, hit, hit: +0, —, +3, +6 on the follow-up damage of 12.
+    let mut rng = ScriptedRng::new([0, 0, 99, 99, 99, 0, 0, 99, 0, 0, 99]);
+    let out = resolve(
+        &rules,
+        &cascading(4, 3, 0),
+        hp(30, 30),
+        hp(100, 100),
+        &mut rng,
+    );
+    let damages: Vec<_> = out.strikes.iter().map(|s| (s.hit, s.damage)).collect();
+    assert_eq!(damages, [(true, 10), (false, 0), (true, 15), (true, 18)]);
+}
+
+#[test]
+fn cascade_is_added_before_the_crit_multiplier() {
+    let rules = rules();
+    let mut rng = ScriptedRng::new([0, 0, 0, 0, 0, 0]);
+    let out = resolve(
+        &rules,
+        &cascading(2, 3, 100),
+        hp(30, 30),
+        hp(100, 100),
+        &mut rng,
+    );
+    let damages: Vec<_> = out.strikes.iter().map(|s| s.damage).collect();
+    assert_eq!(damages, [30, (12 + 3) * 3]);
+}
+
+#[test]
+fn cascade_is_in_the_plan_and_the_all_hit_total() {
+    let f = cascading(3, 3, 0);
+    let plan = if_all_hit(&f, hp(30, 30), hp(100, 100));
+    let damages: Vec<_> = plan.strikes.iter().map(|s| s.damage).collect();
+    assert_eq!(damages, [10, 15, 18]);
+    assert_eq!(f.attacker.all_hit(), 43);
+}
+
+proptest! {
+    #[test]
+    fn cascade_adds_nothing_with_one_strike(cascade in 0..20i32, damage in 0..40i32) {
+        let f = Forecast {
+            attacker: SideForecast { cascade, ..numbers(damage, damage, 100, 0, 1) },
+            defender: None,
+        };
+        prop_assert_eq!(f.attacker.all_hit(), damage);
+        let out = resolve(&rules(), &f, hp(30, 30), hp(1000, 1000), &mut all_hits(1));
+        prop_assert_eq!(out.strikes[0].damage, damage);
     }
 }

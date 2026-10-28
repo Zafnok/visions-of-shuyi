@@ -1,6 +1,6 @@
 //! What the forecast says. Where it is painted: `battle/glyph/forecast.rs`.
 
-use trpg_core::{Pos, UnitId};
+use trpg_core::{Debuff, Pos, StatKind, UnitId};
 
 use super::*;
 use crate::screen::tests::ctx;
@@ -167,6 +167,22 @@ fn notes_skip_no_counter() {
     let mut t = targeting(&state);
     t.preview.notes = vec![ArtNote::NoCounter, ArtNote::Pierces, ArtNote::Pierces];
     assert_eq!(shown(&state, &t).notes, ["pierces", "pierces"]);
+}
+
+#[test]
+fn debuff_notes_spell_out_the_stat_and_the_avoid() {
+    let c = ctx();
+    let state = skirmish(&c, 20);
+    let mut t = targeting(&state);
+    let rend = Debuff {
+        stat: StatKind::Def,
+        amount: 5,
+    };
+    t.preview.notes = vec![ArtNote::Debuff(rend), ArtNote::AvoidDebuff(20)];
+    assert_eq!(
+        shown(&state, &t).notes,
+        ["rends: Def −5", "off balance: avoid −20"]
+    );
 }
 
 #[test]

@@ -190,7 +190,7 @@ impl BattleState {
     /// Puts `art`'s debuff, if it has one, on `target` if it still stands,
     /// until the end of its side's next phase.
     pub(super) fn debuff(&mut self, target: UnitId, art: &ArtUse, events: &mut Vec<Event>) {
-        let Some(debuff) = art.effect.on_first_hit else {
+        let Some(mods) = art.effect.first_hit_mods() else {
             return;
         };
         let Some(unit) = self.unit_mut(target).filter(|u| u.hp > 0) else {
@@ -200,7 +200,7 @@ impl BattleState {
         let source = EffectSource::Art(art.art.clone());
         unit.add_effect(TimedEffect {
             source: source.clone(),
-            mods: debuff.mods(),
+            mods,
             until,
         });
         events.push(Event::EffectApplied {

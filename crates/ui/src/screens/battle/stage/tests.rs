@@ -33,6 +33,7 @@ fn side_numbers(damage: StatValue, hit: u8, crit: u8) -> SideForecast {
         hit,
         crit,
         strikes: 1,
+        cascade: 0,
         effective: false,
         broken: false,
         affinity: None,

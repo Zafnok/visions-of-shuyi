@@ -764,6 +764,7 @@ fn expected_damage_counts_every_strike_by_its_hit() {
         hit: 80,
         crit: 0,
         strikes: 1,
+        cascade: 0,
         effective: false,
         broken: false,
         affinity: None,

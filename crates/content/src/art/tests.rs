@@ -27,7 +27,7 @@ fn get(t: &ArtTable, id: &str) -> ArtDef {
 #[test]
 fn the_embedded_arts_match_the_design_table() {
     use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
-    use WeaponRank::{D, E};
+    use WeaponRank::{A, B, C, D, E, S};
     let rows = [
         ("flowing_cut", "Flowing Cut", Sword, E, 2),
         ("guard_break", "Guard Break", Sword, D, 4),
@@ -41,6 +41,19 @@ fn the_embedded_arts_match_the_design_table() {
         ("sidestep", "Sidestep", Gauntlet, D, 3),
     ];
     let t = embedded();
+    // The ranks C-S arts that change the numbers (`combat-arts.md`, ticket 0325).
+    let later = [
+        ("cascade", "Cascade", Sword, A, 6),
+        ("long_thrust", "Long Thrust", Spear, C, 3),
+        ("skypiercer", "Skypiercer", Spear, A, 5),
+        ("hurl", "Hurl", Axe, B, 4),
+        ("skull_splitter", "Skull Splitter", Axe, A, 5),
+        ("felling_blow", "Felling Blow", Axe, S, 8),
+        ("rending_arrow", "Rending Arrow", Bow, C, 4),
+        ("off_balance", "Off Balance", Gauntlet, C, 3),
+        ("vital_point", "Vital Point", Gauntlet, S, 8),
+    ];
+    let rows: Vec<_> = rows.into_iter().chain(later).collect();
     assert_eq!(t.arts.len(), rows.len());
     for (id, name, kind, rank, cost) in rows {
         let def = get(&t, id);
@@ -55,7 +68,7 @@ fn the_embedded_arts_match_the_design_table() {
 /// `combat-arts.md`, *Chapter 1 arts*: every art's effect.
 #[test]
 fn the_embedded_art_effects_match_the_design_table() {
-    let debuff = |stat, amount| Some(Debuff { stat, amount });
+    let debuff = |stat, amount| vec![Debuff { stat, amount }];
     let sidestep = TimedMods {
         stats: vec![],
         combat: CombatMods {
@@ -107,6 +120,64 @@ fn the_embedded_art_effects_match_the_design_table() {
             with(|e| e.on_first_hit = debuff(StatKind::Spd, 3)),
         ),
         ("sidestep", with(|e| e.stance = Some(sidestep))),
+    ];
+    let t = embedded();
+    for (id, effect) in rows {
+        assert_eq!(get(&t, id).effect, effect, "{id}");
+    }
+}
+
+/// `combat-arts.md`, *Ranks C-S* (ticket 0325): the effects that change the
+/// numbers or debuff the target.
+#[test]
+fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
+    let debuff = |stat, amount| vec![Debuff { stat, amount }];
+    let rows = [
+        ("cascade", with(|e| e.cascade = 3)),
+        (
+            "long_thrust",
+            with(|e| {
+                e.hit = -10;
+                e.min_range = Some(1);
+                e.max_range = Some(2);
+            }),
+        ),
+        (
+            "skypiercer",
+            with(|e| e.effective = vec![(UnitTag::Flying, 2)]),
+        ),
+        (
+            "hurl",
+            with(|e| {
+                e.hit = -10;
+                e.min_range = Some(1);
+                e.max_range = Some(2);
+            }),
+        ),
+        ("skull_splitter", with(|e| e.crit = 30)),
+        (
+            "felling_blow",
+            with(|e| e.axe_min_damage_max_hp_div = Some(3)),
+        ),
+        (
+            "rending_arrow",
+            with(|e| e.on_first_hit = debuff(StatKind::Def, 5)),
+        ),
+        ("off_balance", with(|e| e.on_first_hit_avoid = 20)),
+        (
+            "vital_point",
+            with(|e| {
+                e.on_first_hit = [
+                    StatKind::Str,
+                    StatKind::Mag,
+                    StatKind::Def,
+                    StatKind::Res,
+                    StatKind::Spd,
+                ]
+                .map(|stat| Debuff { stat, amount: 4 })
+                .to_vec();
+            }),
+        ),
     ];
     let t = embedded();
     for (id, effect) in rows {
@@ -179,6 +250,26 @@ fn every_rule_reports_its_error() {
         ),
         (
             r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (on_first_hit: Some((stat: Mov, amount: 0)))"#,
+            "a debuff's amount must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (max_range: Some(0))"#,
+            "max_range must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (cascade: 3)"#,
+            "cascade is for Sword arts only",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Sword, rank: None, cost: 1, effect: (axe_min_damage_max_hp_div: Some(3))"#,
+            "axe_min_damage_max_hp_div is for Axe arts only",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Axe, rank: None, cost: 1, effect: (axe_min_damage_max_hp_div: Some(0))"#,
+            "axe_min_damage_max_hp_div must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (on_first_hit: [(stat: Def, amount: 5), (stat: Mag, amount: 0)])"#,
             "a debuff's amount must be at least 1",
         ),
         (

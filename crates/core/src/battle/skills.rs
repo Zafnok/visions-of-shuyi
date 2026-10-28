@@ -222,7 +222,7 @@ impl BattleState {
                 a_bonus.add_timed(stance);
             }
             if let Some(w) = a.weapon.as_mut() {
-                art.effect.apply(w, &mut a_bonus.combat);
+                art.effect.apply(w, &mut a_bonus.combat, d.stats.hp);
             }
         }
         apply(&mut a, &a_bonus);
