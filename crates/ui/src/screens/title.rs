@@ -435,8 +435,9 @@ impl TitleScreen {
             } => {
                 *idle += dt;
                 *shown += share(dt, FADE_IN_SECS);
-                // The logo shot always has the menu on it.
-                if (*with_logo || *idle >= IDLE_SECS) && !on_logo {
+                // The logo shot always has the menu on it. With the intro
+                // off (Options, ticket 0844) the menu stays whatever the time.
+                if ctx.settings().game.intro && (*with_logo || *idle >= IDLE_SECS) && !on_logo {
                     self.phase = Phase::FadingOut { f: 0.0 };
                 }
             }

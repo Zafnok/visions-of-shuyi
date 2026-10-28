@@ -14,16 +14,16 @@ expression: h.snapshot()
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
-                    │   Colors                    Earthy painterly             │                    
-                    │   Music volu╔═════════════════════════════╗              │                    
-                    │   Sound volu║                             ║              │                    
-                    │             ║ Keep these changes?         ║              │                    
-                    │   Layout    ║  Keep     Discard     Back  ║              │                    
-                    │   Key bindin║                             ║              │                    
-                    │             ╚═════════════════════════════╝              │                    
+                    │   Intro                     On                           │                    
+                    │   Colors    ╔═════════════════════════════╗y             │                    
+                    │   Music volu║                             ║              │                    
+                    │   Sound volu║ Keep these changes?         ║              │                    
+                    │             ║  Keep     Discard     Back  ║              │                    
+                    │   Layout    ║                             ║              │                    
+                    │   Key bindin╚═════════════════════════════╝              │                    
+                    │                                                          │                    
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
-                    │                                                          │                    
                     └──────────────────────────────────────────────────────────┘                    
                                                                                                     
                                                                                                     

@@ -87,6 +87,7 @@
     (key: "options.row.cursor", source: "Cursor", text: "CURSOR"),
     (key: "options.row.map_look", source: "Map look", text: "MAP LOOK"),
     (key: "options.row.map_zoom", source: "Map zoom", text: "MAP ZOOM"),
+    (key: "options.row.intro", source: "Intro", text: "INTRO"),
     (key: "options.row.theme", source: "Colors", text: "COLORS"),
     (key: "options.row.music_volume", source: "Music volume", text: "MUSIC VOLUME"),
     (key: "options.row.sound_volume", source: "Sound volume", text: "SOUND VOLUME"),

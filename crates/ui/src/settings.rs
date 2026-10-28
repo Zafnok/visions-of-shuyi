@@ -204,6 +204,9 @@ pub struct ShuyiSettings {
     /// How big the battle map's pictures are drawn. The Zoom map key in
     /// battle flips it too.
     pub map_zoom: MapZoom,
+    /// Whether the title plays its intro cinematic when left alone (ticket
+    /// 0844); off, it stays on the logo and menu.
+    pub intro: bool,
 }
 
 impl Default for ShuyiSettings {
@@ -216,6 +219,7 @@ impl Default for ShuyiSettings {
             cursor_style: CursorStyle::default(),
             map_look: MapLook::default(),
             map_zoom: MapZoom::default(),
+            intro: true,
         }
     }
 }
@@ -260,6 +264,10 @@ struct SettingsFile {
     map_look: MapLook,
     /// [`MapZoom::factor`].
     map_zoom: i32,
+    /// `Some(false)` when the intro is off, otherwise left out, so a save
+    /// of the default is as it always was.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    intro: Option<bool>,
     theme: Theme,
     music_volume: u8,
     sound_volume: u8,
@@ -286,6 +294,7 @@ fn file(s: &Settings) -> SettingsFile {
         cursor_style: game.cursor_style,
         map_look: game.map_look,
         map_zoom: game.map_zoom.factor(),
+        intro: (!game.intro).then_some(false),
         theme: s.theme,
         music_volume: s.music_volume,
         sound_volume: s.sound_volume,
@@ -327,6 +336,7 @@ impl GameSettings for ShuyiSettings {
             cursor_style: file.cursor_style,
             map_look: file.map_look,
             map_zoom: MapZoom::from_factor(file.map_zoom).unwrap_or_default(),
+            intro: file.intro.unwrap_or(true),
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
             Some(layout) => s.with_layout(layout),
@@ -356,8 +366,29 @@ mod tests {
             cursor_style: CursorStyle::TileGlow,
             map_look: MapLook::Glyphs,
             map_zoom: MapZoom::X1,
+            // On, so the saved form below is the one before ticket 0844.
+            intro: true,
         };
         s
+    }
+
+    /// Ticket 0844: the intro is on by default, saved only when off, and an
+    /// older save without it loads with it on.
+    #[test]
+    fn the_intro_setting_defaults_on_and_round_trips() {
+        let s = Settings::default();
+        assert!(s.game.intro);
+        assert!(!s.to_ron().contains("intro"));
+        let mut off = Settings::default();
+        off.game.intro = false;
+        assert!(off.to_ron().contains("intro: Some(false),"));
+        assert_eq!(Settings::from_ron(&off.to_ron()), Ok(off));
+        assert!(
+            Settings::from_ron("Settings(version: 1)")
+                .unwrap()
+                .game
+                .intro
+        );
     }
 
     /// `text` (kept in the repository with LF) in this platform's line

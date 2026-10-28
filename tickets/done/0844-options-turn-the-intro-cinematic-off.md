@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0844 — Options: turn the intro cinematic off
@@ -96,4 +96,23 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done as scoped: an `intro` setting (`ShuyiSettings::intro`, default On),
+an **Intro** row after Map zoom, and the title (`screens/title.rs`, `play`)
+no longer fades out to the cinematic when it is Off. Estimate ~60
+production lines (a toggle row like Auto-end, plus one condition).
+
+- Saved form: `intro` is written only when Off (`skip_serializing_if`), so
+  every existing save, and the byte-for-byte fixtures from before ticket
+  1109, are unchanged; a save without it loads as On.
+- Tests: settings round trip, the row's keep/discard, the title with the
+  intro Off (stays on the menu through the 15 s idle, the fade and the
+  song's loop; On again fades out), and the Options snapshots (one more
+  row, so the integration tests' key counts moved by one).
+- **Deviation:** the Playdate has no title cinematic yet (1044 is open),
+  so the row is in `PC_ONLY` and the Playdate list is unchanged. Ticket
+  1044 should take `Row::Intro` out of `PC_ONLY` when it lands.
+- *Claude's starting rules* (from the ticket): the row sits after
+  Map zoom, shows in battle's Options too, and Off keeps the song looping.
+  Restore defaults puts it back On.
+- Left for the Act 1 playtest (1064): turn the intro off, wait on the
+  title, and say whether what the title does instead feels right.

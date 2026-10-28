@@ -201,6 +201,7 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Cursor, s.game.cursor_style != before.game.cursor_style),
             (Row::MapLook, s.game.map_look != before.game.map_look),
             (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
+            (Row::Intro, s.game.intro != before.game.intro),
             (Row::Theme, s.theme != before.theme),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
@@ -237,6 +238,7 @@ fn rows_show_their_values() {
             "Corners*",
             "Pictures*",
             "2×*",
+            "On*",
             "Earthy painterly*",
             "<80/100>",
             "<80/100>",
@@ -327,6 +329,38 @@ fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
     let keep = [Action::CursorLeft, Action::CursorLeft, Action::Confirm];
     assert_eq!(press(&mut s, &mut c, &keep), "Pop");
     assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::None));
+}
+
+/// Ticket 0844: the Intro row flips the setting, Keep saves it (it then
+/// survives a restart: it reads back from storage) and Discard puts it back.
+#[test]
+fn the_intro_row_is_kept_or_discarded_on_leaving() {
+    let mut c = ctx();
+    let mut s = on(Row::Intro);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert!(!c.settings().game.intro);
+    assert_eq!(value_text(&c), "Off");
+    // Discard (Back is the default; one left is Discard).
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert!(c.settings().game.intro);
+    // Keep.
+    let mut s = on(Row::Intro);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    let keep = [Action::CursorLeft, Action::CursorLeft, Action::Confirm];
+    assert_eq!(press(&mut s, &mut c, &keep), "Pop");
+    assert!(!c.settings().game.intro);
+    assert!(!saved(&c).game.intro);
+}
+
+/// What the Intro row shows.
+fn value_text(c: &Ctx) -> String {
+    match value(c, Row::Intro) {
+        ValueView::Text { text, .. } => text,
+        other => panic!("{other:?}"),
+    }
 }
 
 #[test]

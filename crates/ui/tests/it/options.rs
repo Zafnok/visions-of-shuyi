@@ -34,9 +34,9 @@ use trpg_ui::tips::TIPS_SEEN_KEY;
 const TO_AUTO_END: &str = "Down Down Down Down";
 const TO_FULLSCREEN: &str = "Down Down Down Down Down";
 const TO_CURSOR: &str = "Down Down Down Down Down Down";
-const TO_THEME: &str = "Down Down Down Down Down Down Down";
-const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down";
-const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down";
+const TO_THEME: &str = "Down Down Down Down Down Down Down Down";
+const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down Down";
+const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down Down";
 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).
@@ -871,7 +871,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     let (before, saved_before) = (settings(&h), stored(&h));
     // Text speed, fullscreen and the music volume.
     h.keys("Right").keys("Down Down Down Down Down Right");
-    h.keys("Down Down Down Left");
+    h.keys("Down Down Down Down Left");
     assert!(h.fullscreen());
     assert!((h.volumes().0 - 0.75).abs() < 1e-6, "{:?}", h.volumes());
     assert_eq!(stored(&h), saved_before, "nothing saved yet");

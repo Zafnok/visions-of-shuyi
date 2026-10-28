@@ -939,6 +939,26 @@ fn the_menu_fades_in_on_the_logo_and_out_at_the_loop() {
     assert_eq!(t.phase, Phase::FadingOut { f: 0.0 });
 }
 
+/// Ticket 0844: with the Intro option off the title never goes idle into
+/// the cinematic, however long it waits, and the song loops under the menu.
+#[test]
+fn with_the_intro_off_the_menu_stays() {
+    let mut c = ctx();
+    c.change_settings(|s| s.game.intro = false).unwrap();
+    let mut t = TitleScreen::new(&c);
+    song_tick(&mut t, &mut c, 0.0, 0.0);
+    for position in [15.0, 16.0, 60.0, 117.0, 133.0, 0.5, 20.0] {
+        song_tick(&mut t, &mut c, position, 30.0);
+        assert!(matches!(t.phase, Phase::Menu { .. }), "{position}");
+        assert_eq!(playing(&t, &c), None, "{position}");
+        assert_eq!(t.view(&c).menu_opacity, FULL, "{position}");
+    }
+    // On again: it goes idle into the cinematic as before.
+    c.change_settings(|s| s.game.intro = true).unwrap();
+    song_tick(&mut t, &mut c, 20.0, 1.0);
+    assert!(matches!(t.phase, Phase::FadingOut { .. }));
+}
+
 /// The press that skips the cinematic plays the skip sound, stops the
 /// song and does nothing else; the next one is the menu's.
 #[test]

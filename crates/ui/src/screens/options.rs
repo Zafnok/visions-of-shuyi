@@ -80,7 +80,15 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// screen is the device's, with no window. `Theme`: one bit has the
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
-pub const PC_ONLY: [Row; 4] = [Row::Fullscreen, Row::Theme, Row::MapLook, Row::MapZoom];
+/// `Intro`: it has no title cinematic yet (ticket 1044 adds it, and should
+/// take the row out of this list).
+pub const PC_ONLY: [Row; 5] = [
+    Row::Fullscreen,
+    Row::Theme,
+    Row::MapLook,
+    Row::MapZoom,
+    Row::Intro,
+];
 
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,6 +113,8 @@ pub enum Row {
     /// [`ShuyiSettings::map_zoom`](crate::ShuyiSettings::map_zoom) (only when
     /// the map can be zoomed).
     MapZoom,
+    /// [`ShuyiSettings::intro`](crate::ShuyiSettings::intro).
+    Intro,
     /// [`Settings::theme`].
     Theme,
     /// [`Settings::music_volume`].
@@ -127,7 +137,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 18] = [
+    pub const ALL: [Row; 19] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -137,6 +147,7 @@ impl Row {
         Row::Cursor,
         Row::MapLook,
         Row::MapZoom,
+        Row::Intro,
         Row::Theme,
         Row::MusicVolume,
         Row::SoundVolume,
@@ -161,6 +172,7 @@ impl Row {
             Row::Cursor => "options.row.cursor",
             Row::MapLook => "options.row.map_look",
             Row::MapZoom => "options.row.map_zoom",
+            Row::Intro => "options.row.intro",
             Row::Theme => "options.row.theme",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
@@ -212,6 +224,13 @@ impl Row {
                 RowValue::toggle(
                     |ctx| ctx.settings().game.auto_end_turn,
                     |ctx, on| ctx.preview_settings(|s| s.game.auto_end_turn = on),
+                ),
+            ),
+            Row::Intro => OptionRow::new(
+                self.key(),
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.intro,
+                    |ctx, on| ctx.preview_settings(|s| s.game.intro = on),
                 ),
             ),
             Row::Cursor => cursor_row(),

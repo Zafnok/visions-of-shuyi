@@ -14,6 +14,7 @@ expression: h.snapshot()
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
+                    │   Intro                     On                           │                    
                     │   Colors                  ◄ Earthy painterly ►           │                    
                     │   Music volume              ████████░░  80               │                    
                     │   Sound volume              ████████░░  80               │                    
@@ -23,7 +24,6 @@ expression: h.snapshot()
                     │                                                          │                    
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
-                    │                                                          │                    
                     └──────────────────────────────────────────────────────────┘                    
                                                                                                     
                                                                                                     
@@ -47,8 +47,8 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddeeeeeeeedddddddddddddddddfdccccccccccccccccdfdddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddeeeeeeeedddddddddddddddddfdccccccccccccccccdfdddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa

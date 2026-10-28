@@ -64,6 +64,18 @@ Nick's.
   to zoom (*Claude's starting rule*). `Restore defaults` puts it back to
   2×.
 
+### Intro
+
+- **Intro: On / Off** (ticket 0844; `title-screen.md`, *Intro cinematic*):
+  whether the title plays its cinematic when left alone. It starts **On**
+  (Nick, 2026-10-16: "Yes, an on/off setting"; not "only the first time").
+  Off, the title stays on the logo, backdrop, sparks and menu, and the
+  song keeps looping.
+- The row is under `Map zoom` (above `Colors`), on the title's Options
+  and in battle alike (it does nothing in battle) (*Claude's starting
+  rule*). The Playdate leaves it out until it has the cinematic (1044).
+  `Restore defaults` puts it back On.
+
 ### Volumes
 
 - Music and sound volume each go from **0 (silent) to 100**, starting at 80
@@ -142,7 +154,7 @@ On the pull request (PR #264), 2026-10-14:
 - **A player profile** holds that player's options and saves: every
   option on the Options screen (text, animation and enemy-phase speed,
   combat animations, auto end turn, fullscreen, cursor style, map look,
-  map zoom, color theme, music and sound volume, and later the language
+  map zoom, intro, color theme, music and sound volume, and later the language
   (0825) and voices (0826)), the hand layout and key bindings, the tips
   already seen, the 30 save slots and the suspend save.
 - **What stays with the campaign** (in its saves, not the profile): the

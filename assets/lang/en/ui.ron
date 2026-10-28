@@ -184,6 +184,7 @@
     "options.row.cursor": "Cursor",
     "options.row.map_look": "Map look",
     "options.row.map_zoom": "Map zoom",
+    "options.row.intro": "Intro",
     "options.row.theme": "Colors",
     "options.row.music_volume": "Music volume",
     "options.row.sound_volume": "Sound volume",
