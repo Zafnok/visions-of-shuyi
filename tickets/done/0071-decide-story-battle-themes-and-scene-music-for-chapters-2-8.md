@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-28
 ---
 
 # 0071 — Decide: story-battle themes and scene music for Chapters 2–8
@@ -75,10 +75,10 @@ own". Expect several rounds; group the questions by chapter.
 
 ## Acceptance criteria
 
-- [ ] Every Act 1 story battle (Chapters 2–8) has a theme recorded in
+- [x] Every Act 1 story battle (Chapters 2–8) has a theme recorded in
       `audio.md`, with Nick's words.
-- [ ] The scene moods the scripts will need have a cue (new or reused).
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] The scene moods the scripts will need have a cue (new or reused).
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -86,5 +86,34 @@ own". Expect several rounds; group the questions by chapter.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Three rounds on a listening page
+(https://claude.ai/artifact/PYL5bgcLWQx3C2CXnM5V3V): 34 new candidates in
+round 1, 11 more for Veyne Hall and the Envoy's House in round 2, 8 for
+Ossary in round 3, with the cues we already have beside them. Every
+licence was checked on its OpenGameArt page. Recorded in `audio.md`
+(*Music cues*, the new *Chapters 2–8's cues*, and Nick's words in the
+appendix).
+
+- Battles: Kell's Ford `battle_desperate` (Determined Pursuit), Greywater
+  `battle_church_2`, Veyne Hall `battle_rival` (A Slave To No One), the
+  Envoy's House `battle_night_siege` (Battle Music, Peter Eastman), the
+  Ashfields `battle_war` (Laments of the War), the Undercroft
+  `battle_church_3`, Saltmere Docks `battle_finale` (Heroic Demise). One
+  theme per battle; the epic tier stays unused in Act 1.
+- Scenes: the confession `scene_confide` (Soliloquy), Hollis dies
+  `scene_loss` then the ship sails `scene_departure` (A Long Way From
+  Home), the king's closing scene `scene_lamplight` (Snowfall), Ossary's
+  streets `holy_city` (Wendale Abbey), the empty dormitory `scene_dread`
+  (Solemn (Opening)), Crane `talk_antagonist`.
+- Kept for later: Ringing of Steel, Dark Descent.
+- Nine new cues to import; each chapter ticket (0848–0854) imports its
+  own, as the ticket's *Out* says. Two tracks list voices (Wendale Abbey,
+  Solemn (Opening)): `audio.md` asks for an ear check for words on import.
+
+*Claude's starting rules* (tunable, for Nick to veto):
+- If Hollis already fell in Classic mode, the rewritten farewell plays the
+  same two cues (`scene_loss`, then `scene_departure`).
+- Every other Chapter 2–8 scene picks from the existing mood cues in its
+  script ticket, as Chapter 1's did, and is heard in the Act 1 playtest.
+
+Gates: docs only; `ticket-lint` and `typos` run (no code changed).
