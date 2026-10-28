@@ -1,6 +1,7 @@
 ---
-source: crates/ui/src/screens/battle/mod.rs
-expression: buf.to_snapshot(&c.palette)
+source: crates/ui/src/screens/battle/tests.rs
+assertion_line: 502
+expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ┌────────────────────────────┐
                                                                       │ Plain                      │
@@ -30,7 +31,7 @@ expression: buf.to_snapshot(&c.palette)
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │                            │
+                                                                      │ Gold 0                     │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows move · f menu · s next unit · r rewind · d menu · Space end turn                   F2 debug 

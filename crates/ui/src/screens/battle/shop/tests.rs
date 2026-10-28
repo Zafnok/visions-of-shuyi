@@ -1,0 +1,348 @@
+//! Tests of the shop screen and the `Shop`, `Open` and `Evacuate` entries
+//! (ticket 0409), on the Quick Battle's map (`test_small`: an Armoury at
+//! (5, 3), a Vendor at (6, 3), a Blacksmith at (7, 3), a chest of 500
+//! gold at (8, 3) and one with an Elixir at (9, 3)) and the village test
+//! battle.
+
+use insta::assert_snapshot;
+use trpg_core::{
+    BattleSetup, BattleState, GameMode, HouseState, ItemId, LeadGender, LeadProfile, Objective,
+    UnitId,
+};
+
+use super::*;
+use crate::color::Rgb;
+use crate::console::{ConsoleSizes, ConsoleSpec};
+use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::screen::tests::ctx;
+use crate::screens::battle::mode::{MenuEntry, Mode};
+use crate::screens::battle::testing::{Stacked, Values as _, quick_units, setup};
+use crate::screens::battle::{BattleScreen, TOAST_S};
+use crate::words::Words;
+use trpg_content::battle_campaign;
+use trpg_core::lead::DEFAULT_NAME;
+
+const ARMOURY: Pos = Pos::new(5, 3);
+const VENDOR: Pos = Pos::new(6, 3);
+const BLACKSMITH: Pos = Pos::new(7, 3);
+const GOLD_CHEST: Pos = Pos::new(8, 3);
+const ELIXIR_CHEST: Pos = Pos::new(9, 3);
+
+/// The lord (unit 1).
+const LORD: UnitId = UnitId(1);
+
+/// The Quick Battle with the lord standing on `at` and the party holding
+/// `gold`; the brigand that stood on (8, 2), over the chests, moved off
+/// to (12, 6).
+fn battle_at(at: Pos, gold: Gold) -> BattleState {
+    worn_at(at, gold, None)
+}
+
+/// [`battle_at`], the lord's first weapon with `left` durability left if
+/// given.
+fn worn_at(at: Pos, gold: Gold, left: Option<u32>) -> BattleState {
+    let c = ctx();
+    let (map, mut units) = quick_units(&c);
+    units[0].pos = at;
+    if let Some(left) = left
+        && let Some(copy) = units[0].loadout.weapons[0].as_mut()
+    {
+        copy.durability_left = left;
+    }
+    for u in &mut units {
+        if u.pos == Pos::new(8, 2) {
+            u.pos = Pos::new(12, 6);
+        }
+    }
+    let rout = Objective::Rout { turn_limit: None };
+    BattleState::new(BattleSetup {
+        gold,
+        ..setup(&c, map, units, rout)
+    })
+    .0
+}
+
+fn press(s: &mut Stacked, c: &mut Ctx, actions: &[Action]) {
+    s.press(c, actions);
+}
+
+/// The battle `state` with the lord's action menu open where it stands.
+fn menu_open(c: &mut Ctx, state: BattleState) -> Stacked {
+    let mut s = Stacked::new(BattleScreen::new(state));
+    press(&mut s, c, &[]);
+    while s.shown_tip().is_some() {
+        press(&mut s, c, &[Action::Confirm]);
+    }
+    press(&mut s, c, &[Action::Confirm, Action::Confirm]);
+    s.frame(c, &[], 0.5);
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    s
+}
+
+/// The action menu's entries.
+fn entries(s: &Stacked) -> Vec<MenuEntry> {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    menu.values()
+}
+
+/// Moves the action menu's focus to `entry` and chooses it.
+fn choose(s: &mut Stacked, c: &mut Ctx, entry: MenuEntry) {
+    for _ in 0..entries(s).len() {
+        let Mode::ActionMenu { menu, .. } = s.mode() else {
+            panic!("{:?}", s.mode());
+        };
+        if menu.value(menu.focus()) == Some(&entry) {
+            press(s, c, &[Action::Confirm]);
+            return;
+        }
+        press(s, c, &[Action::CursorDown]);
+    }
+    panic!("no {entry:?} in {:?}", entries(s));
+}
+
+/// The lord's shop screen opened on `at`.
+fn shop_open(c: &mut Ctx, at: Pos, gold: Gold) -> Stacked {
+    let mut s = menu_open(c, battle_at(at, gold));
+    choose(&mut s, c, MenuEntry::Shop);
+    assert!(s.shop().is_some(), "{:?}", s.mode());
+    s
+}
+
+fn price(c: &Ctx, item: &str) -> Gold {
+    c.game
+        .content
+        .items
+        .get(&ItemId::new(item))
+        .unwrap()
+        .price()
+}
+
+fn lord(s: &Stacked) -> &trpg_core::Unit {
+    s.state().unit(LORD).unwrap()
+}
+
+#[test]
+fn gold_is_shown_with_its_thousands_apart() {
+    assert_eq!(gold_text(0), "0");
+    assert_eq!(gold_text(999), "999");
+    assert_eq!(gold_text(1250), "1 250");
+    assert_eq!(gold_text(1_000_000), "1 000 000");
+}
+
+#[test]
+fn the_menu_offers_shop_open_and_evacuate_only_where_they_apply() {
+    let mut c = ctx();
+    let s = menu_open(&mut c, battle_at(VENDOR, 0));
+    assert!(entries(&s).contains(&MenuEntry::Shop));
+    assert!(!entries(&s).contains(&MenuEntry::Open));
+    let s = menu_open(&mut c, battle_at(GOLD_CHEST, 0));
+    assert!(entries(&s).contains(&MenuEntry::Open));
+    assert!(!entries(&s).contains(&MenuEntry::Shop));
+    // On a plain tile: none of them.
+    let s = menu_open(&mut c, battle_at(Pos::new(4, 3), 0));
+    for e in [MenuEntry::Shop, MenuEntry::Open, MenuEntry::Evacuate] {
+        assert!(!entries(&s).contains(&e), "{e:?}");
+    }
+}
+
+/// Acceptance: a Potion bought on a Vendor tile costs its price, goes
+/// into the pack and ends the unit's action.
+#[test]
+fn buying_a_potion_pays_fills_the_pack_and_ends_the_action() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, VENDOR, 1000);
+    let pack = s.state().pack().items.len();
+    let shop = s.shop().unwrap();
+    assert_eq!(shop.tab(), Tab::Buy);
+    let view = shop.view(&c);
+    assert_eq!(view.shop, "Vendor");
+    assert_eq!(view.gold, "Gold 1 000");
+    assert_eq!(view.tabs, ["Buy", "Sell"]);
+    assert_eq!(view.lines[0].name, "Potion");
+    assert_eq!(view.lines[0].gold, gold_text(price(&c, "potion")));
+    assert!(view.lines[0].enabled);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    // Not sent yet: the screen shows the gold after it.
+    assert_eq!(s.state().gold(), 1000);
+    let left = 1000 - price(&c, "potion");
+    assert_eq!(s.shop().unwrap().gold(), left);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert!(s.shop().is_none());
+    assert_eq!(s.state().gold(), left);
+    assert_eq!(s.state().pack().items.len(), pack + 1);
+    assert!(lord(&s).acted);
+    assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
+}
+
+/// Acceptance: leaving without buying sends nothing; the unit hasn't
+/// acted and its action menu is back.
+#[test]
+fn leaving_with_nothing_chosen_sends_nothing() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, VENDOR, 1000);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert!(s.shop().is_none());
+    assert_eq!(s.state().gold(), 1000);
+    assert!(!lord(&s).acted);
+    assert_eq!(s.history().commands(), []);
+    assert!(entries(&s).contains(&MenuEntry::Shop));
+}
+
+#[test]
+fn what_the_party_cant_afford_is_dimmed_and_refused() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, ARMOURY, 0);
+    let view = s.shop().unwrap().view(&c);
+    assert_eq!(view.shop, "Armory");
+    assert!(view.lines.iter().all(|l| !l.enabled), "{:?}", view.lines);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shop().unwrap().visit().txns, Vec::<ShopTxn>::new());
+    // Each item's numbers or bonuses.
+    assert!(view.lines[0].detail.starts_with("Mt "), "{:?}", view.lines);
+}
+
+#[test]
+fn several_buys_go_in_one_shop_action() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, VENDOR, 1000);
+    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    let txns = s.shop().unwrap().visit().txns.clone();
+    assert_eq!(txns.len(), 2);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.history().commands().len(), 1);
+    assert_eq!(s.state().gold(), 1000 - 2 * price(&c, "potion"));
+}
+
+#[test]
+fn the_sell_tab_pays_half_and_lists_the_pack_once_per_item() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, VENDOR, 0);
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    let shop = s.shop().unwrap();
+    assert_eq!(shop.tab(), Tab::Sell);
+    let offers = shop.offers();
+    let weapon = lord(&s).loadout.weapon(0).unwrap().def.clone();
+    assert_eq!(offers[0].item, weapon);
+    assert_eq!(offers[0].gold, price(&c, &weapon.0) / 2);
+    let potions = offers.iter().filter(|o| o.item.0 == "potion").count();
+    assert!(potions <= 1, "{offers:?}");
+    press(&mut s, &mut c, &[Action::Confirm, Action::Cancel]);
+    assert_eq!(s.state().gold(), price(&c, &weapon.0) / 2);
+    assert!(lord(&s).loadout.weapon(0).is_none());
+}
+
+/// Acceptance: a worn weapon repaired at a Blacksmith.
+#[test]
+fn a_blacksmith_repairs_a_worn_weapon() {
+    let mut c = ctx();
+    let weapon = battle_at(BLACKSMITH, 0).units()[0].loadout.weapons[0].clone();
+    let weapon = weapon.unwrap().def;
+    let full = c.game.content.items.weapon(&weapon).unwrap().durability;
+    let mut s = menu_open(&mut c, worn_at(BLACKSMITH, 1000, Some(full - 5)));
+    choose(&mut s, &mut c, MenuEntry::Shop);
+    let shop = s.shop().unwrap();
+    assert_eq!(shop.tab(), Tab::Repair);
+    let view = shop.view(&c);
+    assert_eq!(view.tabs, ["Repair"]);
+    let line = &view.lines[0];
+    assert_eq!(line.detail, format!("{}/{full} → {full}/{full}", full - 5));
+    let cost: Gold = line.gold.replace(' ', "").parse().unwrap();
+    assert!(cost > 0);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    // Repaired: the line is gone.
+    assert_eq!(s.shop().unwrap().offers(), Vec::<Offer>::new());
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.state().gold(), 1000 - cost);
+    assert_eq!(lord(&s).loadout.weapon(0).unwrap().durability_left, full);
+    assert!(lord(&s).acted);
+}
+
+/// Acceptance: a chest opened says what it gave.
+#[test]
+fn opening_a_chest_says_what_was_inside() {
+    let mut c = ctx();
+    let mut s = menu_open(&mut c, battle_at(GOLD_CHEST, 100));
+    choose(&mut s, &mut c, MenuEntry::Open);
+    assert_eq!(s.state().gold(), 600);
+    assert_eq!(s.toast(), Some("Got 500 gold."));
+    assert!(lord(&s).acted);
+    let mut s = menu_open(&mut c, battle_at(ELIXIR_CHEST, 0));
+    let pack = s.state().pack().items.len();
+    choose(&mut s, &mut c, MenuEntry::Open);
+    assert_eq!(s.toast(), Some("Got Elixir."));
+    assert_eq!(s.state().pack().items.len(), pack + 1);
+    // It fades.
+    s.frame(&mut c, &[], TOAST_S + 0.1);
+    assert_eq!(s.toast(), None);
+}
+
+/// Acceptance: a house evacuated says so, and the objective page counts
+/// it.
+#[test]
+fn evacuating_a_house_saves_it() {
+    let mut c = ctx();
+    let content = &c.game.content.clone();
+    let def = &content.battles["test_village"];
+    let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
+    let campaign = battle_campaign(content, def, GameMode::Classic, lead);
+    let mut setup = campaign.battle_setup(def, &content.tables());
+    let village = setup.village.clone().unwrap();
+    let house = village.houses[0];
+    let lead = setup.units.iter_mut().find(|u| u.is_lord).unwrap();
+    lead.pos = house;
+    let (state, _) = BattleState::new(setup);
+    let id = state.units().iter().find(|u| u.is_lord).unwrap().id;
+    let mut s = menu_open(&mut c, state);
+    let line = |s: &Stacked| super::super::loot::village_text(s.state(), Words::ENGLISH);
+    let total = village.houses.len();
+    let before = format!(
+        "Save at least {} of {total} houses (0 saved, 0 lost)",
+        village.minimum
+    );
+    assert_eq!(line(&s).as_deref(), Some(before.as_str()));
+    choose(&mut s, &mut c, MenuEntry::Evacuate);
+    assert_eq!(s.toast(), Some("House saved."));
+    let saved = s.state().village().unwrap().house(house);
+    assert_eq!(saved, Some(HouseState::Saved));
+    assert!(s.state().unit(id).unwrap().acted);
+    let after = format!(
+        "Save at least {} of {total} houses (1 saved, 0 lost)",
+        village.minimum
+    );
+    assert_eq!(line(&s).as_deref(), Some(after.as_str()));
+}
+
+#[test]
+fn the_side_panel_shows_the_partys_gold() {
+    let mut c = ctx();
+    let s = menu_open(&mut c, battle_at(VENDOR, 1250));
+    assert!(s.view(&c).shows("Gold 1 250"));
+}
+
+fn render(s: &Stacked, c: &Ctx) -> GlyphBuffer {
+    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+    s.paint(c, &mut buf);
+    buf
+}
+
+#[test]
+fn the_shop_renders() {
+    let mut c = ctx();
+    let s = shop_open(&mut c, ARMOURY, 1250);
+    assert_snapshot!("armoury_buy", render(&s, &c).to_snapshot(&c.palette));
+}
+
+#[test]
+fn the_blacksmith_renders() {
+    let mut c = ctx();
+    let mut s = menu_open(&mut c, worn_at(BLACKSMITH, 1250, Some(12)));
+    choose(&mut s, &mut c, MenuEntry::Shop);
+    assert_snapshot!("blacksmith_repair", render(&s, &c).to_snapshot(&c.palette));
+}

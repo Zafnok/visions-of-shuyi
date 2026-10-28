@@ -61,6 +61,9 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
             let mut lines = vec![o.objective.clone(), o.turn.clone()];
+            if let Some(village) = &o.village {
+                lines.insert(1, village.clone());
+            }
             if let Some(notes) = &o.notes {
                 lines.push(String::new());
                 lines.push(notes.title.clone());

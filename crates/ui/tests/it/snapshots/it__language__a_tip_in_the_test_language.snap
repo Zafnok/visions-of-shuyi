@@ -1,6 +1,6 @@
 ---
 source: crates/ui/tests/it/language.rs
-assertion_line: 229
+assertion_line: 230
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +31,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │                            │
+                                                                      │ GOLD 0                     │
                                                                       └────────────────────────────┘
                                                      w DANGER ZONE: OFF · Shift+Space AUTO-END: OFF 
  f CLOSE                                                                                   F2 debug 

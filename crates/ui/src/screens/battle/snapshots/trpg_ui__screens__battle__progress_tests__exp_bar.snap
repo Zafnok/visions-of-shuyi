@@ -1,5 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/progress_tests.rs
+assertion_line: 125
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -30,7 +31,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │                            │
+                                                                      │ Gold 0                     │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f skip · hold f fast                                                                      F2 debug 

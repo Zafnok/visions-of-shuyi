@@ -31,7 +31,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
                                                      o danger zone: OFF · Shift+Space auto-end: OFF 
  wasd choose · j confirm · k back                                                          F2 debug 

@@ -167,6 +167,12 @@ pub enum MenuEntry {
     Seize,
     /// Leave the map through the exit area, when legal there (0319).
     Escape,
+    /// Open the shop screen, on a shop tile (0409).
+    Shop,
+    /// Open the chest there, when it is unopened (0409).
+    Open,
+    /// Evacuate the house there, when it still stands (0409).
+    Evacuate,
     /// Talk to an adjacent unit, when a talk trigger allows it (0705).
     Talk,
     /// Use a non-combat active skill (0412): shown when the unit knows one.
@@ -189,6 +195,9 @@ impl MenuEntry {
             MenuEntry::Magic => "battle.menu.magic",
             MenuEntry::Seize => "battle.menu.seize",
             MenuEntry::Escape => "battle.menu.escape",
+            MenuEntry::Shop => "battle.menu.shop",
+            MenuEntry::Open => "battle.menu.open",
+            MenuEntry::Evacuate => "battle.menu.evacuate",
             MenuEntry::Talk => "battle.menu.talk",
             MenuEntry::Skill => "battle.menu.skill",
             MenuEntry::Item => "battle.menu.item",
@@ -204,7 +213,13 @@ impl MenuEntry {
     fn enabled(self, sel: &Selection, weapons: &[WeaponChoice], state: &BattleState) -> bool {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
-            MenuEntry::Seize | MenuEntry::Escape | MenuEntry::Talk | MenuEntry::Wait => true,
+            MenuEntry::Seize
+            | MenuEntry::Escape
+            | MenuEntry::Shop
+            | MenuEntry::Open
+            | MenuEntry::Evacuate
+            | MenuEntry::Talk
+            | MenuEntry::Wait => true,
             list => ListKind::of(list, sel, state).is_some_and(|kind| kind.can_choose()),
         }
     }
@@ -312,7 +327,8 @@ pub fn list_entry(menu: &Menu<Line>) -> MenuEntry {
 /// some weapon can attack someone there), `Arts` if it has a Combat Art or a
 /// combat active for a weapon it carries, `Magic` if the unit knows a spell
 /// (enabled if one has a target there), `Seize` and `Escape` if legal
-/// there, `Talk` if it has someone next to it to talk to, `Skill` if the
+/// there, `Shop` on a shop, `Open` on an unopened chest and `Evacuate` on
+/// a standing house (player units only), `Talk` if it has someone next to it to talk to, `Skill` if the
 /// unit knows a non-combat active, `Item` and `Equip` (enabled when
 /// they can do something), `Wait`.
 pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
@@ -328,6 +344,23 @@ pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     }
     if state.can_escape(sel.unit, sel.dest()) {
         entries.push(MenuEntry::Escape);
+    }
+    let player = state
+        .unit(sel.unit)
+        .is_some_and(|u| u.faction == Faction::Player);
+    if player && state.map().shop(sel.dest()).is_some() {
+        entries.push(MenuEntry::Shop);
+    }
+    let open = Command::Act {
+        unit: sel.unit,
+        dest: sel.dest(),
+        action: UnitAction::Open,
+    };
+    if state.check(&open).is_ok() {
+        entries.push(MenuEntry::Open);
+    }
+    if state.can_evacuate(sel.unit, sel.dest()) {
+        entries.push(MenuEntry::Evacuate);
     }
     if !state.talk_targets(sel.unit, sel.dest()).is_empty() {
         entries.push(MenuEntry::Talk);
@@ -480,6 +513,14 @@ pub enum Effect {
     /// Do what this action's key does, as if it were pressed now: a
     /// shortcut chosen in the map menu (ticket 1035), which has closed.
     Press(Action),
+    /// Open the shop screen (0409) for the unit at its path's end; the
+    /// action menu stays open under it.
+    Shop {
+        /// The unit.
+        unit: UnitId,
+        /// The shop's tile.
+        dest: Pos,
+    },
 }
 
 impl Mode {
@@ -1041,6 +1082,13 @@ fn step_action_menu(
                 MenuEntry::Wait => UnitAction::Wait,
                 MenuEntry::Seize => UnitAction::Seize,
                 MenuEntry::Escape => UnitAction::Escape,
+                MenuEntry::Open => UnitAction::Open,
+                MenuEntry::Evacuate => UnitAction::Evacuate,
+                MenuEntry::Shop => {
+                    let (unit, dest) = (sel.unit, sel.dest());
+                    let mode = Mode::ActionMenu { sel, menu, weapons };
+                    return (mode, Effect::Shop { unit, dest });
+                }
                 MenuEntry::Talk => return choose_talk(sel, state),
                 MenuEntry::Attack => return choose_attack(sel, &weapons, state),
                 list => return open_list(list, sel, (state, words)),

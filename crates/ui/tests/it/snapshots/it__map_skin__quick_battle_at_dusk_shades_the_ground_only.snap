@@ -1,5 +1,6 @@
 ---
 source: crates/ui/tests/it/map_skin.rs
+assertion_line: 197
 expression: lit
 ---
                                                                       ╔════════════════════════════╗
@@ -30,7 +31,7 @@ expression: lit
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
                                         q zoom: 1× · w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows move · f move here · d cancel                                                      F2 debug 

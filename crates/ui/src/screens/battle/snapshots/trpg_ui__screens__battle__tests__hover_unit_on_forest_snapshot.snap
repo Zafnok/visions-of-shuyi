@@ -1,5 +1,6 @@
 ---
-source: crates/ui/src/screens/battle/mod.rs
+source: crates/ui/src/screens/battle/tests.rs
+assertion_line: 490
 expression: "render(&knight_in_forest(), &c).to_snapshot(&c.palette)"
 ---
                                                                       ┌────────────────────────────┐
@@ -30,7 +31,7 @@ expression: "render(&knight_in_forest(), &c).to_snapshot(&c.palette)"
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │                            │
+                                                                      │ Gold 0                     │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 

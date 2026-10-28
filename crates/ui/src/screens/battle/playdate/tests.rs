@@ -277,6 +277,7 @@ fn the_objective_page_wraps_its_notes_to_the_screen_under_its_title() {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "Objective".into(),
             objective: "Rout the enemy".into(),
+            village: None,
             turn: "Turn 1".into(),
             notes: Some(NotesView {
                 title: "Notes".into(),

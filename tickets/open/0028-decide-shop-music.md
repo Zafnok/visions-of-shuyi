@@ -67,7 +67,7 @@ picks one, or asks for another round.
   words in the appendix, and remove the moment from *Open sub-questions*.
 
 **Out (do not do):**
-- Importing or playing the file. Ticket 0409 does that (import with
+- Importing or playing the file. Ticket 0473 does that (import with
   `assets-src/audio/import.py`, then `assets/audio/audio.ron`,
   `THIRD_PARTY_ASSETS.md` and the credits).
 - Level-up or EXP sounds (Nick's own work).

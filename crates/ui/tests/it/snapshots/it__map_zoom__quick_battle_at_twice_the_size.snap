@@ -1,5 +1,6 @@
 ---
 source: crates/ui/tests/it/map_zoom.rs
+assertion_line: 268
 expression: h.snapshot()
 ---
                                                                       ╔════════════════════════════╗
@@ -30,7 +31,7 @@ expression: h.snapshot()
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
                                         q zoom: 2× · w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows move · f move here · d cancel                                                      F2 debug 

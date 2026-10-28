@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
-blocked_by: ["0308", "0403", "0028"]
+status: done
+blocked_by: ["0308", "0403"]
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0409 — Shop screen, Evacuate, Open
@@ -66,10 +66,10 @@ If 0028 recorded "no music here", skip this.
 
 ## Acceptance criteria
 
-- [ ] Harness: buy a Potion on a Vendor tile → gold drops by its price, pack grows, unit done; leaving without buying → unit not done.
-- [ ] Harness: repair a damaged weapon at a Blacksmith; evacuate a house; open a chest.
-- [ ] Snapshots below.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Harness: buy a Potion on a Vendor tile → gold drops by its price, pack grows, unit done; leaving without buying → unit not done.
+- [x] Harness: repair a damaged weapon at a Blacksmith; evacuate a house; open a chest.
+- [x] Snapshots below.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,3 +78,48 @@ If 0028 recorded "no music here", skip this.
 
 ## Completion notes
 
+Done (2026-10-28).
+
+- **Action menu** (`crates/ui/src/screens/battle/mode.rs`): `Shop` on a
+  shop tile, `Open` on an unopened chest, `Evacuate` on a standing house
+  (player units only; legality asked of the core), after `Seize`/`Escape`.
+- **Shop screen** (`screens/battle/shop.rs`, view `view/shop.rs`, skin
+  `glyph/shop.rs`, ADR-0054): pushed over the battle like the Guides
+  list. Header: the shop's name and `Gold 1 250`. Armory/Vendor have Buy
+  and Sell tabs (Left/Right), a Blacksmith has Repair. Buy lines show the
+  price and the item's numbers (weapon stats, armor/accessory bonuses,
+  what a consumable does); Sell lines half price; Repair lines the cost
+  and `12/20 → 20/20`. What can't be chosen is dimmed. Choices collect
+  into one `UnitAction::Shop`, sent when the screen closes; closing with
+  none sends nothing and the action menu is back (unit not done). The
+  screen previews each choice on a copy of the battle, so the gold and
+  lists shown are what the core would do.
+- **Messages**: `Got Potion.`, `Got 500 gold.`, `House saved.` on the
+  message line after `Open` / `Evacuate` (`screens/battle/loot.rs`).
+  Maps have no per-house lines, so none is shown.
+- **Side panel** shows the party's gold on its last row, always.
+- **Objective page**: the village line from `turn-structure.md`,
+  `Save at least 3 of 5 houses (1 saved, 1 lost)`, in a battle with a
+  village (both skins).
+- Every battle snapshot gained the panel's gold row (checked: each diff
+  is that one row only). The `test` language pack has the new keys.
+- **Not done here: the shop music.** 0028 (which track) was still open,
+  so the cue can't be imported. Follow-up **0473** plays it once 0028 is
+  answered; `0028` moved from this ticket's `blocked_by` to 0473's.
+- The Playdate's own shop look is 1066's (the PC skin is drawn for now,
+  as for the Guides list); Chapter 1 has no shops.
+
+Engine friction: estimate 550 production lines (the Guides screen's
+logic, view and skin, plus menu entries, messages and the panel line),
+measured 583 (1.06×), under 2×.
+
+### Claude's starting rules (for the Act 1 playtest, 1064)
+
+- **Lines you can't afford stay selectable to read**, just dimmed;
+  Confirm on one does nothing (the "can't" sound).
+- **Pack items are one Sell line per item** (`Potion ×3`), selling one per
+  Confirm.
+- **Leaving the shop after buying needs no "are you sure"**: closing it
+  sends what you chose and ends the unit's action, as in Fire Emblem.
+- **Gold always shows in the side panel**, even at 0.
+- The chest/house message stays up 1.5 s, like the other short messages.

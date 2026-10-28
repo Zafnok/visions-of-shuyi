@@ -1,5 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/item_tests.rs
+assertion_line: 378
 expression: buf.to_snapshot(&c.palette)
 ---
                                                                       ╔════════════════════════════╗
@@ -30,7 +31,7 @@ expression: buf.to_snapshot(&c.palette)
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
  Potion on Test Knight: HP 8 → 18                    w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows next target · f use · d back                                                       F2 debug 
