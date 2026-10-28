@@ -5,10 +5,10 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0321"]
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0855 — Chapter 1 back in its playtest bands after the four armour weights
@@ -86,13 +86,13 @@ right) goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask playtest ch01 --bot all`: Casual, Normal and Hardcore
+- [x] `cargo xtask playtest ch01 --bot all`: Casual, Normal and Hardcore
       all ✓ on seeds 1–100 and on seeds 101–200; numbers in the
       Completion notes.
-- [ ] The lead is no longer Hardcore's most-fallen unit, or the notes
+- [x] The lead is no longer Hardcore's most-fallen unit, or the notes
       say why it should be.
-- [ ] No armour number, class number or band changed.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No armour number, class number or band changed.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,5 +102,37 @@ right) goes on the Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Worked on Nick's request (2026-10-28, after 0519): "make ch1 slightly
+harder then. we want hardcore in band". Stacked on 0519, whose fix to
+the bots' heal order is what moved the numbers.
+
+- **Where it stood.** By the time this ticket was picked up, the bots had
+  changed (0516–0519) and the chapter was no longer too hard: after 0519,
+  seeds 1–100, Casual 41 ✓, Normal 62 ✓, Hardcore **76 ⚠ too easy**
+  (the lead its most-fallen, 14×, all on turns 6–8 at the toll-fort).
+- **The change, one line:** the fort's Archer (21, 3) carries a Steel Bow
+  (Mt 9, Hit 70) instead of its class's Iron Bow (Mt 6, Hit 85). Hardcore's
+  lead fell storming the fort, so the fort is where a small push belongs.
+- **Tried and dropped** (Hardcore, seeds 1–100): the fort's Raider at
+  level 2 (77, no change); the road bridge's Raider at level 3 (79, and
+  Casual 58 ⚠); every unnamed enemy a level up (76, Casual 58 ⚠). A higher
+  enemy level makes Chapter 1 *easier*: it pays the cast more experience,
+  and they level up in the battle.
+- **Results** (`cargo xtask playtest ch01 --bot all --runs 100`):
+
+  | Persona | Band | Seeds 1–100 | Seeds 101–200 |
+  | ------- | ---- | ----------- | ------------- |
+  | Casual | 30–55% | 44 ✓ | 52 ✓ |
+  | Normal | 50–75% | 66 ✓ | 58 ✓ |
+  | Hardcore | 50–75% | 72 ✓ | 73 ✓ |
+  | Hardcore turns (vs Normal) | lower | 8 vs 9 ✓ | 8 vs 9 ✓ |
+
+  Hardcore wins 93 and 94 of 100; its most-fallen is now Tamsin Rook (12×
+  and 10×), not the lead.
+- No armour, class or band number changed; Chapter 1's map and the
+  cast are untouched.
+- `ch01_winnable` still wins with nobody lost (the recorded playthrough
+  needed no re-record); no snapshot moved.
+- Left for the Act 1 playtest (1064): whether a Steel Bow on a fort
+  archer feels right in Chapter 1.
+- No gameplay rule decided. Engine friction: none, no Rust code.
