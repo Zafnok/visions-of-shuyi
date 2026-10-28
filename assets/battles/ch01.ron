@@ -39,7 +39,10 @@
         // The toll-fort.
         (template: "red_brigand", level: Some(1), pos: (20, 5), ai: Guard),
         (template: "red_raider", level: Some(1), pos: (19, 3), ai: Guard),
-        (template: "red_archer", level: Some(1), pos: (21, 3), ai: Guard),
+        // A Steel Bow (Mt 9, Hit 70, not the Iron Bow's 6 and 85): the fort's
+        // last stand hurts, so a player who storms it with the lead in front
+        // pays for it (0855: Hardcore won the fort too easily, 76/100).
+        (template: "red_archer", level: Some(1), pos: (21, 3), ai: Guard, loadout: Some((weapons: ["steel_bow"]))),
         (character: "red_captain", pos: (20, 2), ai: Stationary, boss: true),
     ],
     preparations: false,
