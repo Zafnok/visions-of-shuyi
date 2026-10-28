@@ -251,7 +251,7 @@ B a map made just for the cinematic):
 > 3A but make sure to clearly document in 1010 that it updates the
 > cinematic or make a new ticket dependent on both this and 1010
 
-A setting in Options to turn the cinematic off (yes / no / later): "Later".
+A setting in Options to turn the cinematic off (yes / no / later): "Later", then "Yes, an on/off setting" (see *Open sub-questions*, ticket 0844): Options has **Intro: On / Off**, On by default. Off, the title never goes idle into the cinematic: it keeps the logo, the backdrop, the sparks and the menu, and the song loops under them. The Playdate has no row until it has the cinematic (1044).
 
 ### The title song
 
@@ -404,6 +404,6 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 
 - **A setting to turn the cinematic off** (a still title for players who
   dislike motion). Nick: "Later", then in playtest round 3 (2026-10-16),
-  having seen it: "Yes, an on/off setting". Built by ticket 0844.
+  having seen it: "Yes, an on/off setting". Built by ticket 0844 (Options, *Intro*).
 - **Which sword-clash sound** plays on a skip: ticket 0041.
 - **Where the overworld shot goes** and what it replaces: ticket 1010.
