@@ -112,3 +112,5 @@ Ticket 0909 (from #139): the web build's `NOTICES.txt` lists none of the game's 
 | #157 | 2568 | A game's start options checked once, on every tool path | not for the game: the tools at the pin check the options `Trpg` declares before its `start` runs; no game code or ticket changes |
 
 Nothing for the game: 6 PRs (#151, #153, #154, #156, #158, #159). The skill pack's `shuyi-debug-replay` gains stamped records, and `shuyi-dialogue` the `Named` hooks.
+
+Ticket 1195 (from #152): the game's tools give no `made` stamp yet, so its bots' play records replay unchecked against the build and content that made them; 1195 stamps them and passes the stamp on in `replay`.
