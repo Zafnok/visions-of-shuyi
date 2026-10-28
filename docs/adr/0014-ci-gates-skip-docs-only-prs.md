@@ -41,6 +41,7 @@ private, remove CodeQL.
   merge commit is the base branch tip). `--no-renames` makes a move such as
   `crates/x.rs → docs/x.md` list both paths, so it counts as code.
 - **Docs-only paths:** `*.md` anywhere, `docs/**`, `tickets/**`, `.claude/**`.
+  A Markdown file the code reads runs its crates' tests (ADR-0098).
   `.claude/**` counts as docs: it holds agent skills (Markdown) and local agent
   settings, and no CI job reads it. Anything else (including `.github/**`,
   `Cargo.*`, `deny.toml`, `_typos.toml`) is code.

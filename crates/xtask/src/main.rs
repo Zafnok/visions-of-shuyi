@@ -720,6 +720,7 @@ fn repo_root() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::{BTreeMap, BTreeSet};
 
     fn args(items: &[&str]) -> Vec<String> {
         items.iter().map(|s| (*s).to_string()).collect()
@@ -841,6 +842,97 @@ mod tests {
   - run: cargo test private_assets::
 ";
         assert!(serde_norway::from_str::<serde_norway::Value>(broken).is_err());
+    }
+
+    /// The `.rs` files under `dir`, at any depth.
+    fn rs_files_under(dir: &Path, out: &mut Vec<PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                rs_files_under(&path, out);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                out.push(path);
+            }
+        }
+    }
+
+    /// Which crates read each Markdown file of the repository, from the
+    /// string literals that name it (`"../../docs/design/audio.md"`,
+    /// `"dialogue/README.md"` in the embedded assets): the file's path
+    /// from the root, to the packages whose sources name it.
+    fn markdown_the_code_reads() -> BTreeMap<String, BTreeSet<String>> {
+        let root = repo_root();
+        let mut read: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for krate in std::fs::read_dir(root.join("crates")).unwrap() {
+            let krate = krate.unwrap().path();
+            let manifest = std::fs::read_to_string(krate.join("Cargo.toml")).unwrap();
+            let package = manifest
+                .lines()
+                .find_map(|l| l.strip_prefix("name = \""))
+                .and_then(|n| n.strip_suffix('"'))
+                .expect("a package name")
+                .to_string();
+            let mut files = Vec::new();
+            rs_files_under(&krate, &mut files);
+            for file in files {
+                let text = std::fs::read_to_string(&file).unwrap();
+                // Every other piece between quotes is a literal; a comment
+                // names a file without reading it.
+                let code = text.lines().filter(|l| !l.trim_start().starts_with("//"));
+                for literal in code.flat_map(|l| l.split('"').skip(1).step_by(2)) {
+                    let markdown = Path::new(literal).extension().is_some_and(|e| e == "md");
+                    if !markdown || !literal.contains('/') {
+                        continue;
+                    }
+                    let path = literal.trim_start_matches("../");
+                    for base in ["", "assets/", "assets-test/"] {
+                        let path = format!("{base}{path}");
+                        if root.join(&path).is_file() {
+                            read.entry(path).or_default().insert(package.clone());
+                        }
+                    }
+                }
+            }
+        }
+        read
+    }
+
+    /// CI skips its build and tests on a pull request that changes only
+    /// docs, Markdown among them (ADR-0014), so PR #464 changed only
+    /// `docs/design/audio.md`, merged green and broke `main`. Each Markdown
+    /// file the code reads has a `read by` line in `changes.yml` naming the
+    /// crates that read it, whose tests CI's `doc-tests` job runs (ticket
+    /// 0252, ADR-0098).
+    #[test]
+    fn every_markdown_file_the_code_reads_is_tested() {
+        let changes =
+            std::fs::read_to_string(repo_root().join(".github/workflows/changes.yml")).unwrap();
+        let mut listed: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for line in changes.lines().filter(|l| l.contains("echo \"read by ")) {
+            let (paths, rest) = line.trim().split_once(')').unwrap();
+            let crates = rest
+                .split_once("read by ")
+                .unwrap()
+                .1
+                .split_once(':')
+                .unwrap()
+                .0;
+            assert!(
+                rest.contains(&format!("doc_crates=\"$doc_crates {crates}\"")),
+                "{line}"
+            );
+            let crates: BTreeSet<String> = crates.split(' ').map(str::to_string).collect();
+            for path in paths.split('|') {
+                assert!(
+                    listed.insert(path.to_string(), crates.clone()).is_none(),
+                    "{path}"
+                );
+            }
+        }
+        let mut read = markdown_the_code_reads();
+        // A file name in playdate_images' test of a made-up bundle, not read.
+        assert!(read.remove("assets/battlers/README.md").is_some());
+        assert_eq!(listed, read, "changes.yml's `read by` lines");
     }
 
     /// Cargo links every file directly under a crate's `tests/` as its own

@@ -69,6 +69,30 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo test --workspace --locked
 
+  # A docs-only PR that changes a Markdown file the code reads runs the
+  # tests of the crates that read it, and nothing else (ADR-0098). A PR
+  # with code runs the whole `test` job instead.
+  doc-tests:
+    name: doc-tests
+    needs: changes
+    if: needs.changes.outputs.code != 'true' && needs.changes.outputs.doc_crates != ''
+    runs-on: ubuntu-latest
+    env:
+      DOC_CRATES: ${{ needs.changes.outputs.doc_crates }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install macroquad system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - name: Test the crates that read the changed docs
+        run: |
+          args=()
+          for krate in $DOC_CRATES; do args+=(-p "$krate"); done
+          cargo test --locked "${args[@]}"
+
   wasm:
     name: wasm
     needs: changes
@@ -260,7 +284,7 @@ jobs:
   ci-result:
     name: ci-result
     if: always()
-    needs: [changes, fmt, clippy, test, wasm, no-std, playdate, docs, coverage, tickets]
+    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled
