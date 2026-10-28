@@ -373,6 +373,8 @@ fn old_and_new_debuff_data_both_load() {
     );
     assert_eq!(load("(on_first_hit: None)"), Ok(vec![]));
     assert_eq!(load("()"), Ok(vec![]));
+    let error = load("(on_first_hit: 3)").unwrap_err().to_string();
+    assert!(error.contains("a debuff or a list of debuffs"), "{error}");
 }
 
 #[test]
