@@ -134,17 +134,18 @@ plain and brave, and the rules stay in his pocket.
 
 ## Portrait brief
 
-Written from the outline; 0070 picks the bought art, and this is
-rewritten to fit what it picks.
+0070 picked the art (`docs/design/look-and-feel.md`, *Act 1's new
+cast*); this brief matches it. Generator faces are built by Nick from a
+parts list the chapter ticket gives him. His face is generator face B; his combat picture is
+Sagak Art's "8-Bit Heroes 2: Fighter" (Nick buys it).
 
-- **Silhouette:** huge and round-shouldered, bare forearms, wrapped
-  fists, a fairground fighter's sash with the ribbons on it.
-- **Hair:** dark, cropped close; a short square beard he keeps very
-  neat.
-- **Face:** 34, a nose broken more than once, cauliflower ear, a grave,
-  dignified expression that is funnier than a grin.
-- **Clothing:** a sleeveless coat, wide trousers, the sash.
-- **Colors:** fairground red and gold (faded), brown, skin.
+- **Silhouette:** big and bare-chested, gold-wrapped fists, a red
+  fairground sash (the ribbons are on it, told rather than drawn).
+- **Hair:** black, slicked back; a neat goatee.
+- **Face:** 34, a scar over one eye, a grave, dignified expression that
+  is funnier than a grin.
+- **Clothing:** bare chest, wide trousers, the red sash, gold fist wraps.
+- **Colors:** red and gold, black hair, skin.
 - **Expressions:** `neutral`, `happy` (a solemn, satisfied nod), `angry`,
   `sad`, `surprised`, plus `proud` (chin up, announcing).
 

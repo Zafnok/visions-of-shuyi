@@ -28,33 +28,7 @@ and a map sprite:
 | Oriel Mast | `battlemage` | Sorcerer, tier 2 | Chapter 6 (joins) |
 | Dace Marr, in person | `rival` | boss | Chapter 4, 8 (0735 picks his map picture for Chapter 1's opening) |
 | Keeper Absalom Crane | `vowmaster` | NPC | Chapter 7 |
-| The bosses | `hound_lieutenant`, `hound_sergeant`, `undercroft_warden` (0743) | per chapter | Chapters 2, 3, 7 (Crane's champion) |
-| Prior Edwin Sallow | `greywater_prior` | NPC | Chapter 3 |
-
-0743 wrote the sheets before this ticket ran, so their looks are briefs
-from the outline, to be rewritten to fit whatever is picked here
-(`docs/story/characters/<id>.md`, *Portrait brief* or *Look*):
-
-- **Joss** (`defector`): 18, tall and gangly, unruly brown hair, a
-  Hound's black coat a size too big with the badge cut off; a plain
-  sword.
-- **Gil** (`prizefighter`): 34, huge, broken nose, cropped dark hair and
-  a neat square beard, bare forearms and wrapped fists, a fairground
-  sash with six ribbons; grave rather than grinning.
-- **Hedda** (`shieldbearer`): 44, tall and broad, ash-blond braids going
-  gray, Brennish mail and sheepskin, round shield and axe.
-- **Ragna** (`envoy`): 38, slim, severe dark-blond hair, a long dark
-  northern coat and an envoy's chain; tired eyes.
-- **Oriel** (`battlemage`): 41, thin and stooped, graying black hair,
-  unshaven, a crown battle-mage's coat with the insignia torn off.
-- **The bosses:** Silas Hendry (`hound_lieutenant`, Chapter 2): a
-  fair-haired Hound officer in Brennish colors with an axe. Ned Tolley
-  (`hound_sergeant`, Chapter 3): an old soldier in Hound leathers with a
-  blue scarf, sword and shield. Constance Hobb (`undercroft_warden`,
-  Chapter 7): a tall, heavy woman in a warden's gray mail and hood, keys
-  at her belt. And one NPC who doesn't fight: Prior Edwin Sallow
-  (`greywater_prior`, Chapter 3), a small old keeper in a gray habit
-  (a face at most).
+| The bosses | named by 0743 | per chapter | Chapters 2, 3, 7 (Crane's champion), and any 0743 names |
 
 Nick bought Mega Tiles' whole bundle (`look-and-feel.md`, *Portraits
 and battle art (bought)*): heroes with faces, busts, still battle

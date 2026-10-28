@@ -2,19 +2,18 @@
 
 Id: `hound_sergeant` · [Name registry](../names.md)
 
-A short boss sheet (0743): want, voice, three lines.
+A short sheet (0743): want, voice, three lines. A named enemy, not the
+boss.
 
 ## Role
 
-- **The Chapter 3 boss** at Greywater Abbey: the Hound sergeant who holds
-  the abbey for the prior while the records burn, at the scriptorium
-  (the Seize point). He dies there.
-- **Why him, not the prior:** the ticket offered either. The prior
-  ([`greywater_prior`](greywater_prior.md)) is the person Maud has to
-  face, and she breaks with the Vigil by taking the register, not by
-  killing her own prior; so the prior lives, and the man with the sword
-  is the boss.
-- **Class, level and stats:** 0849.
+- **A named Hound in Chapter 3** at Greywater Abbey: the sergeant
+  commanding the Hounds on the walls while the prior burns the records.
+  The boss is the prior ([`greywater_prior`](greywater_prior.md); Nick,
+  2026-10-28: "the sergeant can still be named").
+- **On the map:** a named enemy with his own lines; whether he is an
+  optional sub-boss, and his class, level and stats, are 0849's. If he
+  falls, he dies.
 - **Age:** 47.
 
 ## Who he is
@@ -42,8 +41,8 @@ sent to Greywater because it is a quiet post for an old man.
 
 **Sample lines** (never copied into a script)
 
-- *Engage (anyone):* "Go back over the causeway and I never saw you. I
-  mean that. I'm too old for this, and so's the prior."
+- *First sighting (anyone):* "Go back over the causeway and I never saw
+  you. I mean that. I'm too old for this, and so's the prior."
 - *With Hollis:* "Captain. ...You got old. Fifteen years I stood your
   gate. Don't ask me to stand aside from this one."
 - *Defeat:* "Your bay mare. At the hall. Nobody rides her, Captain, they
@@ -55,7 +54,8 @@ sent to Greywater because it is a quiet post for an old man.
 
 ## Look
 
-Written from the outline; 0070 picks the bought art.
+Written from the outline. 0070 left his picture to 0849: a Hound
+soldier's picture will do.
 
 - An old soldier, heavy in the middle, gray stubble, Hound leathers with
   a faded blue scarf showing at the neck, a sword and a battered shield.

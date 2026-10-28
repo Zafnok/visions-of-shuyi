@@ -120,8 +120,9 @@ are illustrations of a situation, never lines for a script.
 
 ## Portrait brief
 
-Written from the outline; 0070 picks the bought art, and this is
-rewritten to fit what it picks.
+Her face and combat picture are open (ticket 0076). Nick wants her
+between bare and fully armored: mail or leather with fur, face visible.
+This brief stays loose until 0076 picks.
 
 - **Silhouette:** tall and broad, a round shield on her back and an axe
   at her hip.

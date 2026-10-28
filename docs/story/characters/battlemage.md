@@ -125,16 +125,18 @@ are illustrations of a situation, never lines for a script.
 
 ## Portrait brief
 
-Written from the outline; 0070 picks the bought art, and this is
-rewritten to fit what it picks.
+0070 picked the art (`docs/design/look-and-feel.md`, *Act 1's new
+cast*); this brief matches it. Generator faces are built by Nick from a
+parts list the chapter ticket gives him. His face is a generator face; his combat picture is
+Shironejiya's court mage, casting with an arm out, hair recolored gray.
 
-- **Silhouette:** thin and stooped, a crown battle-mage's long coat
-  hanging off him, a sword he doesn't draw.
-- **Hair:** black going gray at the temples, too long, unkempt.
-- **Face:** 41, lined, unshaven, kind dark eyes with no sleep in them.
-- **Clothing:** the crown's battle-mage coat with its insignia torn off,
-  burn marks on the cuffs.
-- **Colors:** crown crimson faded to brick, soot gray, ash.
+- **Silhouette:** thin and tired in a long court robe, one arm out when
+  he casts.
+- **Hair:** graying, too long, unkempt.
+- **Face:** 41, lined, stubbled, kind eyes with no sleep in them.
+- **Clothing:** the crown's gray-and-gold battle-mage robe, the insignia
+  torn off (told, not drawn), burn marks on the cuffs.
+- **Colors:** gray and gold, ash.
 - **Expressions:** `neutral`, `happy` (a small, surprised smile),
   `angry`, `sad`, `surprised`, plus `weary`.
 

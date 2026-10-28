@@ -54,8 +54,10 @@ she chose to believe that too. She still airs the blankets.
 
 ## Look
 
-Written from the outline; 0070 picks the bought art.
+0070 picked her combat picture (`look-and-feel.md`, *Act 1's new
+cast*): Shironejiya's blue-armored knight with sword and shield. A face
+only if she speaks outside the fight.
 
-- A tall, heavy woman in a Vigil warden's gray mail and a plain hood,
-  graying hair pinned up, a mace or staff, the keys at her belt.
+- A tall, strong woman in a Vigil warden's blue armor, sword and
+  shield, graying hair, the keys at her belt (told, not drawn).
   Expressions: `neutral`, `happy` (a nurse's smile), `sad`, `surprised`.

@@ -140,16 +140,20 @@ The skill's *Grief and death*: said once, early, in a quiet scene.
 
 ## Portrait brief
 
-Written from the outline; 0070 picks the bought art, and this is
-rewritten to fit what it picks.
+0070 picked the art (`docs/design/look-and-feel.md`, *Act 1's new
+cast*); this brief matches it. Generator faces are built by Nick from a
+parts list the chapter ticket gives him. His face is the Thief hero's (with its map sprite);
+his combat picture is Shironejiya's sword-and-shield hero, recolored to
+the Thief's hair and Hound black.
 
-- **Silhouette:** tall and gangly, not grown into his shoulders. A Hound's
-  black coat a size too big, with the badge cut off and the gap stitched
-  neatly shut. A plain sword.
-- **Hair:** brown, unruly, too long for the Hounds' rules.
+- **Silhouette:** young and lean, a sword and a round shield. Hound
+  black cloth, the badge cut off and the gap stitched neatly shut (told,
+  not drawn).
+- **Hair:** brown and spiky under a dark headband, too long for the
+  Hounds' rules.
 - **Face:** 18, sunburned, open, worried eyebrows, a quick embarrassed
   smile.
-- **Clothing:** the black Hound coat over a farm shirt; boots that are
+- **Clothing:** a vest over a shirt, in Hound black; boots that are
   the best thing he owns.
 - **Colors:** Hound black, silver studs, faded brown, one bright patch of
   thread somewhere.

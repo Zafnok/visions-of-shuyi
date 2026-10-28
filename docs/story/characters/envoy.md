@@ -120,15 +120,16 @@ case she is, a plan and an object:
 
 ## Portrait brief
 
-Written from the outline; 0070 picks the bought art, and this is
-rewritten to fit what it picks.
+0070 picked the art (`docs/design/look-and-feel.md`, *Act 1's new
+cast*); this brief matches it. Generator faces are built by Nick from a
+parts list the chapter ticket gives him. Her face is a generator face; she has no combat
+picture (she never fights).
 
-- **Silhouette:** slim and upright, a long dark coat cut for a northern
-  winter and worn open in the southern heat.
-- **Hair:** dark blond, pinned up severely; strands coming loose.
+- **Silhouette:** slim and upright in a traveler's coat cut for a
+  northern winter, worn open in the southern heat.
+- **Hair:** dark blond, in a severe bun; strands coming loose.
 - **Face:** 38, sharp, pale, shadows under the eyes.
-- **Clothing:** a Brennish envoy's chain of office over a plain dark
-  coat; ink on one cuff.
+- **Clothing:** the traveler's coat; ink on one cuff (told, not drawn).
 - **Colors:** charcoal, Brennish gray-green, silver.
 - **Expressions:** `neutral`, `happy` (rare, tired), `angry`, `sad`,
   `surprised`, plus `cold` (the negotiator's face).

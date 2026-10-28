@@ -112,11 +112,12 @@ Done 2026-10-28 (Opus 5.5).
   *Planted for after* (a plan and an object in their hands), a portrait
   brief and the support partners 1073 can pick from.
 - Short sheets for the named bosses: `hound_lieutenant.md` (Silas
-  Hendry, Chapter 2), `hound_sergeant.md` (Ned Tolley, Chapter 3),
-  `undercroft_warden.md` (Constance Hobb, Crane's champion, Chapter 7);
-  and one NPC, `greywater_prior.md` (Prior Edwin Sallow, Chapter 3).
-  Each: want, a grievance a player could share, who shares his or her
-  history (the 2–4 box exchange), voice, three lines, an object, a look.
+  Hendry, Chapter 2), `greywater_prior.md` (Prior Edwin Sallow, Chapter
+  3), `undercroft_warden.md` (Constance Hobb, Crane's champion, Chapter
+  7); and `hound_sergeant.md` (Sergeant Ned Tolley, Chapter 3), a named
+  Hound guarding the prior who isn't the boss. Each: want, a grievance a
+  player could share, who shares his or her history (the 2–4 box
+  exchange), voice, three lines, an object, a look.
 
 **Registry:** the four new names and their short forms in `names.md` and
 `assets/data/names.ron`, plus `defector.nickname` ("Needle", what Silas
@@ -125,20 +126,23 @@ other invented names. The names test that counts two-word names
 (`every_two_word_name_has_short_forms`) now expects 16 people and 13
 surnames of their own, for the four new names.
 
-**Elsewhere:** `docs/story/README.md`'s row for the sheets; 0070's Context
-lists what each sheet says the new people look like (0070 hasn't run, so
-the looks are briefs from the outline, to be rewritten to the art it
-picks); a one-line note of the named boss in 0744, 0745, 0749, 0848,
-0849 and 0853.
+**Looks:** 0070 merged while this PR was open, so the sheets' looks
+were rewritten to its picks (`look-and-feel.md`, *Act 1's new cast*):
+Joss, Gil, Oriel, Ragna, the prior and the champion. Hedda's and the
+lieutenant's stay loose for 0076.
+
+**Elsewhere:** `docs/story/README.md`'s row for the sheets; a one-line
+note of the named boss in 0744, 0745, 0749, 0848, 0849 and 0853.
 
 **Choices made inside the outline** (story detail, no beat changed; Nick
 may veto any in the Act 1 playtest, 1064):
 
-- **Chapter 3's boss is the Hound sergeant, not the prior.** The ticket
-  offered either. Maud breaks with the Vigil by taking the register, and
-  killing her own prior would make that a killing; so the prior is an NPC
-  who doesn't fight and lives, and the boss is an old Veyne guardsman
-  who served under Hollis and now holds the abbey for Dace.
+- **Chapter 3's boss is the prior** (0070, and Nick on this PR,
+  2026-10-28: "I'm making the ch3 boss the prior"). When beaten he dies
+  or surrenders ("can say dies or surrenders"): the sheet gives a line
+  for each, and 0745/0849 pick. The Hound sergeant guarding him stays
+  named ("the sergeant can still be named"): an old Veyne guardsman who
+  served under Hollis, with an exchange with him.
 - Joss sewed the false Brennish badges himself (his secret, told in his
   Chapter 5 testimony); Silas Hendry, his lieutenant, picked him and
   called him "Needle".

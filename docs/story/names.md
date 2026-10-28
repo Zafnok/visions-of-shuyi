@@ -59,13 +59,13 @@ Later Act 1 recruits (named in `outline.md`; sheets by 0743):
 | `envoy` | Ragna Holt | Brennish envoy in Saltmere (NPC) |
 | `battlemage` | Oriel Mast | Crown battle-mage who gave the order at the Ashfields |
 
-Act 1's named bosses, and the prior one of them guards (sheets by 0743):
+Act 1's named bosses, and the sergeant guarding one of them (sheets by 0743):
 
 | Id | Current name | Who |
 | -- | ------------ | --- |
 | `hound_lieutenant` | Silas Hendry | Hound lieutenant at Kell's Ford; Chapter 2 boss |
-| `hound_sergeant` | Ned Tolley | Hound sergeant holding Greywater Abbey, once a Veyne guardsman; Chapter 3 boss |
-| `greywater_prior` | Edwin Sallow | Prior of Greywater Abbey (Chapter 3, NPC) |
+| `hound_sergeant` | Ned Tolley | Hound sergeant guarding Greywater Abbey's prior, once a Veyne guardsman (Chapter 3, a named enemy) |
+| `greywater_prior` | Edwin Sallow | Prior of Greywater Abbey; Chapter 3 boss |
 | `undercroft_warden` | Constance Hobb | Warden of the Candles' barracks under Ossary; Crane's champion, Chapter 7 boss |
 
 Outside the story (talks only to the player):

@@ -60,7 +60,8 @@ called him "Needle".
 
 ## Look
 
-Written from the outline; 0070 picks the bought art.
+His combat picture is open (ticket 0076); a face only if he speaks
+outside the fight. Loose until 0076 picks.
 
 - A Hound officer in Brennish colors over black Hound leathers, a
   lieutenant's silver at the collar, the axe. Short fair hair, a soldier's
