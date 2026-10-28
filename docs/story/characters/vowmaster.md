@@ -79,7 +79,11 @@ witness of the night at the mill silenced.
 - **Silhouette:** thin and slightly stooped, with a tall stiff Vigil hood
   **up**. It's the same hood as Maud's, worn formally, making a narrow
   spire shape.
-- **Hair:** white and thin, hidden under the hood. Clean-shaven.
+- **Hair:** long and white, with a full white beard (decided 2026-10-28,
+  ticket 0070: his combat picture, Shironejiya's old hooded man, has the
+  beard; Nick: "make him bearded, better to have bearded sheet than
+  de-bearding a sprite" ... "I picture him with hair"). The hood is up
+  in combat and down in his dialogue face (the generator has no hoods).
 - **Face:** 67, long and pale, with half-moon spectacles and a mild, attentive
   smile. Fine lines; heavier shading is fine.
 - **Clothing:** charcoal Vigil robes with a black stole embroidered in silver

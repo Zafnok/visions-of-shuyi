@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-28
 ---
 
 # 0070 — Decide: faces and combat pictures for Act 1's new cast
@@ -105,5 +105,48 @@ For each person in the table:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done.** Six rounds of mockups with Nick (scratchpad only):
+each candidate's bust cut as the dialogue frame shows it, and the combat
+picture at the game's size facing Harl or the lead. Three searches beyond
+the bundle (itch.io, BOOTH, GameDev Market, CraftPix, Japanese free-art
+sites, RPG Maker resources with open terms). The picks are recorded in
+`look-and-feel.md`, *Act 1's new cast*, with Nick's words:
+
+- **Joss:** the Thief hero's face, bust and map sprite; Shironejiya's
+  `m_s_hero07` at 1.25×, recoloured.
+- **Gil:** generator face B; Sagak Art's "8-Bit Heroes 2: Fighter" at
+  1.75× (Nick buys it, $3).
+- **Ragna:** generator face, bun and traveller's coat (Claude's pick of
+  Nick's two, "whichever fits her sheet better"; her sheet isn't written).
+- **Oriel:** generator face, greying with stubble; Shironejiya's court
+  mage `m_s_mage_middle_m01` at 1.25×, hair greyed.
+- **Crane:** generator face with long white hair and a full beard;
+  `vowmaster.md` changed from clean-shaven to bearded (Nick's call).
+- **Dace:** unchanged (0706, 0040).
+- **Bosses:** a face only if they speak. Greywater's boss is **the
+  prior** (Shironejiya `m_s_mage_dark_m01`), not the Hound captain;
+  **Crane's champion is a woman** (Shironejiya `m_s_val`).
+
+**Deviations.**
+- **Hedda and the Hound lieutenant are not decided.** Nothing Nick saw
+  was right, and three searches found nothing in the style; Nick chose a
+  follow-up ticket, **0076**, added to 0848's, 0851's, 1069's and
+  1064's `blocked_by`.
+- Mockups were pasted together with a script, not rendered with
+  `cargo shuyi frame-png` (the faces and the art from outside the bundle
+  aren't in the game yet), as 0021 and 0706 did.
+- Generator faces were rough mockups from the generator's part images.
+  Nick: "your simulated generator does not work as well as you think it
+  does", so each chapter ticket gives Nick a parts list and he builds the
+  face himself (recorded in `look-and-feel.md` and every chapter ticket).
+- Two story details were decided here because the art needed them, and
+  0743 was told: the prior is Greywater's boss, and the champion is a
+  woman.
+
+**Follow-up tickets:** 0076 (Hedda's and the Hound lieutenant's faces and
+combat pictures).
+
+**Gameplay rules decided by Claude:** none.
+
+**For Nick:** Gil's picture is a $3 itch.io pack you'd buy when Chapter 4
+is built; nothing was bought here.
