@@ -20,6 +20,7 @@ Act 1, Chapter 7 (world map), from `docs/story/outline.md`:
 - **Story battle:** "The Undercroft": wardens in catacombs and narrow stairs; the boss is Crane's champion; Crane himself leaves.
 - **Turn:** The Candles' dormitory is empty; Crane is waiting, calls death "a door", tells Maud her report was "admirably thorough"; the Door was opened once before, in the East, and the Jade Reach sealed it; Crane escapes.
 - **Recruits:** none (the runaway Candle of *The Other Cart* is 1072's to decide).
+- **Named boss (0743):** Crane's champion is Warden Constance Hobb (`undercroft_warden`), who kept the Candles' barracks; sheet `docs/story/characters/undercroft_warden.md`.
 - **Arcs advanced:** Maud (faces Crane), Rue (the children), Dace (seen briefly, shaken by Crane).
 - **New in this chapter:** nothing new.
 

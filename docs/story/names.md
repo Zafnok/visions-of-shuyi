@@ -17,8 +17,8 @@ any time.**
   `ledger.md`) use the display names so they stay readable. To rename: change
   the name in this file, then replace the old name across `docs/story/` in the
   same commit. Every name below is unique, so a whole-word find-and-replace is
-  safe (check `Rue`, `Wren`, `Crane`, `Rook`, `Holt` and `Mast`, which
-  are also ordinary English words, by eye).
+  safe (check `Rue`, `Wren`, `Crane`, `Rook`, `Holt`, `Mast`, `Sallow`
+  and `Needle`, which are also ordinary English words, by eye).
 - **A name's short forms are separate rows** (the "Short forms" table below:
   first names, surnames, family names, a god's name and title on their own), because
   people mostly say "Hollis", not "Hollis Marr". **Renaming a character means
@@ -49,7 +49,7 @@ any time.**
 | `prince` | Aurel | King Emeric's son, died at the Ashfields |
 | `vosse` | Harrick Vosse | The king's man in the Thornmarch, killed four years ago |
 
-Later Act 1 recruits (named in `outline.md`, sheets written by later tickets):
+Later Act 1 recruits (named in `outline.md`; sheets by 0743):
 
 | Id | Current name | Who |
 | -- | ------------ | --- |
@@ -58,6 +58,15 @@ Later Act 1 recruits (named in `outline.md`, sheets written by later tickets):
 | `shieldbearer` | Hedda Ravn | The Brennish envoy's bodyguard |
 | `envoy` | Ragna Holt | Brennish envoy in Saltmere (NPC) |
 | `battlemage` | Oriel Mast | Crown battle-mage who gave the order at the Ashfields |
+
+Act 1's named bosses, and the sergeant guarding one of them (sheets by 0743):
+
+| Id | Current name | Who |
+| -- | ------------ | --- |
+| `hound_lieutenant` | Silas Hendry | Hound lieutenant at Kell's Ford; Chapter 2 boss |
+| `hound_sergeant` | Ned Tolley | Hound sergeant guarding Greywater Abbey's prior, once a Veyne guardsman (Chapter 3, a named enemy) |
+| `greywater_prior` | Edwin Sallow | Prior of Greywater Abbey; Chapter 3 boss |
+| `undercroft_warden` | Constance Hobb | Warden of the Candles' barracks under Ossary; Crane's champion, Chapter 7 boss |
 
 Outside the story (talks only to the player):
 
@@ -96,6 +105,15 @@ just as it does a full name.
 | `envoy.last` | Holt | `envoy` (Ragna Holt) |
 | `battlemage.first` | Oriel | `battlemage` (Oriel Mast) |
 | `battlemage.last` | Mast | `battlemage` (Oriel Mast) |
+| `defector.nickname` | Needle | `defector`: what his lieutenant called him (he sews), and Tamsin after |
+| `hound_lieutenant.first` | Silas | `hound_lieutenant` (Silas Hendry) |
+| `hound_lieutenant.last` | Hendry | `hound_lieutenant` (Silas Hendry) |
+| `hound_sergeant.first` | Ned | `hound_sergeant` (Ned Tolley) |
+| `hound_sergeant.last` | Tolley | `hound_sergeant` (Ned Tolley) |
+| `greywater_prior.first` | Edwin | `greywater_prior` (Edwin Sallow) |
+| `greywater_prior.last` | Sallow | `greywater_prior` (Edwin Sallow): "Prior Sallow" |
+| `undercroft_warden.first` | Constance | `undercroft_warden` (Constance Hobb) |
+| `undercroft_warden.last` | Hobb | `undercroft_warden` (Constance Hobb): "Warden Hobb" |
 | `family.marr` | Marr | The family name of `retainer`, `rival` and `sister` |
 | `family.veyne` | Veyne | The lead's family name (also in `house.veyne` and `place.veyne_hall`) |
 | `faction.brennmark.adj` | Brennish | `faction.brennmark` without its article: the adjective ("a Brennish bow"), and what Tamsin calls Aske |

@@ -20,6 +20,7 @@ Act 1, Chapter 3 (linear), from `docs/story/outline.md`:
 - **Story battle:** Greywater Abbey: a causeway to an island abbey, wardens and Hounds on the walls, the scriptorium as the Seize point, chests in the reliquary.
 - **Turn:** The register: Rue's name twice, Wren's name ("Ashfields: lost"), Vosse's pay-book ("D. Marr, informer: eleven children"); Rue tells the lead about the mill, Maud confesses to Rue, Hollis says nothing.
 - **Recruits:** none.
+- **Named boss (0743):** Prior Edwin Sallow (`greywater_prior`), who dies or surrenders when beaten (Nick, 2026-10-28: "can say dies or surrenders"; this ticket picks). Sergeant Ned Tolley (`hound_sergeant`), an old Veyne guardsman, commands the Hounds guarding him: a named enemy, not the boss. Sheets in `docs/story/characters/`.
 - **Arcs advanced:** Maud (breaks with the Vigil), Rue (tells), Hollis (his silence starts to show), the lead and Dace.
 - **New in this chapter:** a Seize objective and chests; after this chapter the Act 1 world map opens.
 
