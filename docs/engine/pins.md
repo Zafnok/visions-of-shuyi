@@ -114,3 +114,5 @@ Ticket 0909 (from #139): the web build's `NOTICES.txt` lists none of the game's 
 Nothing for the game: 6 PRs (#151, #153, #154, #156, #158, #159). The skill pack's `shuyi-debug-replay` gains stamped records, and `shuyi-dialogue` the `Named` hooks.
 
 Ticket 1195 (from #152): the game's tools give no `made` stamp yet, so its bots' play records replay unchecked against the build and content that made them; 1195 stamps them and passes the stamp on in `replay`.
+
+Ticket 1196 (from #153, listed under nothing for the game by its `api: none` label): the engine's storage now runs a power-cut suite, and the Playdate's own `FileStorage` doesn't. Its write unlinks the old save before moving the new one in when the file system won't rename onto a file, so a power cut between the two loses the save. 1196 runs the suite on it and fixes what fails. Ticket 1197 widens this review after an audit of every section above: a breaking PR's features, and `api: none` PRs that change behavior, get decisions too.

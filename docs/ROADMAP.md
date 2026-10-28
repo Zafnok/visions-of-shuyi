@@ -355,7 +355,7 @@ Candle joins outside battle.
   looks of their own · **1077** one-bit skins wrap their own notes and
   scroll by the engine's rule (after 1039).
 - **E. Playdate, Act 1:** **1068** one chapter's assets at a time
-  (ready; measure first) · **1066** world map, towns and shop (after
+  (ready; measure first) · **1196** saves survive a power cut (ready) · **1066** world map, towns and shop (after
   1007, 1008, 0409, 1038) · **1067** camp, supports, promotion and the
   Preparations shop (after 1003, 0606, 0443, 1046) · **1069** one-bit
   faces and pictures of the new cast (after 0070, 1042, 1041).
