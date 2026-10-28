@@ -2554,7 +2554,8 @@ impl BattleState {
         let distance = Pos::manhattan(dest, defender.pos);
         let mut forecast = forecast(&self.tables.items.combat_rules(), &a, &d, distance)
             .ok_or(CommandError::OutOfRange { target, distance })?;
-        if art.as_ref().is_some_and(|a| a.effect.no_counter) || self.uncounterable(&with) {
+        if art.as_ref().is_some_and(|a| a.effect.no_counter) || self.uncounterable(&with, defender)
+        {
             forecast.defender = None;
         }
         let pierce = match &art {
@@ -2621,19 +2622,19 @@ impl BattleState {
         let (a, d, _) = self.fighters(unit, target, fight).ok()?;
         let distance = Pos::manhattan(fight.dest, target.pos);
         let mut forecast = forecast(&self.tables.items.combat_rules(), &a, &d, distance)?;
-        if self.uncounterable(fight.with) {
+        if self.uncounterable(fight.with, target) {
             forecast.defender = None;
         }
         Some(forecast)
     }
 
-    /// Whether attacking with `with` leaves the defender no counter: it is
-    /// a spell with [`no_counter`](SpellDef::no_counter) (`crate::spell`).
-    fn uncounterable(&self, with: &Equipped) -> bool {
-        match with {
-            Equipped::Spell(spell) => self.tables.spells.get(spell).is_some_and(|s| s.no_counter),
-            Equipped::Weapon(_) => false,
-        }
+    /// Whether attacking `defender` with `with` leaves it no counter: `with`
+    /// is a spell with [`no_counter`](SpellDef::no_counter), or the
+    /// defender's equipped attack is one (it doesn't switch to another).
+    fn uncounterable(&self, with: &Equipped, defender: &Unit) -> bool {
+        let barred = |spell: &SpellId| self.tables.spells.get(spell).is_some_and(|s| s.no_counter);
+        matches!(with, Equipped::Spell(spell) if barred(spell))
+            || defender.loadout.equipped_spell().is_some_and(barred)
     }
 
     /// The forecast of `unit` walking `path` (its tile first) to `dest` and

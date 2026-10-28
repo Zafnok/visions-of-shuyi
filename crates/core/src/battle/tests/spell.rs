@@ -261,17 +261,61 @@ fn a_no_counter_spell_leaves_the_defender_no_counter() {
 }
 
 #[test]
-fn a_no_counter_spell_still_counters_when_attacked() {
+fn a_no_counter_spell_never_counters_when_attacked() {
     let mut units = cast();
     units[1] = knowing(units[1].clone(), &["oath"]);
     units[1].loadout.equipped = Some(Equipped::Spell(sid("oath")));
     units[3].pos = p(1, 2);
     let mut s = start(setup(units));
     end(&mut s);
+    // The forecast of the enemy's attack shows no counter for the mage...
+    let preview = s
+        .preview_attack(UnitId(4), p(1, 2), &attack(2))
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(preview.forecast.defender, None);
+    // ...and the combat has none: no strike by the defender, no use spent.
     let events = act(&mut s, 4, p(1, 2), attack(2));
-    let forecast = combat(&events);
-    assert_eq!(forecast.defender.map(|d| d.damage), Some(3));
-    assert!(events.contains(&spell_used(2, "oath", 1)));
+    assert_eq!(combat(&events).defender, None);
+    assert!(
+        !events
+            .iter()
+            .any(|e| matches!(e, Event::SpellUsesChanged { .. }))
+    );
+    let outcome = events.iter().find_map(|e| match e {
+        Event::CombatResolved { outcome, .. } => Some(outcome),
+        _ => None,
+    });
+    assert!(
+        outcome
+            .unwrap()
+            .strikes
+            .iter()
+            .all(|st| st.by == Side::Attacker)
+    );
+}
+
+proptest! {
+    // However hurt the mage is, an enemy attacking her never gets answered
+    // by her no-counter spell.
+    #[test]
+    fn a_no_counter_spell_is_never_a_counter(hp in 1..40_i32) {
+        let mut units = cast();
+        units[1] = knowing(units[1].clone(), &["oath"]);
+        units[1].loadout.equipped = Some(Equipped::Spell(sid("oath")));
+        units[1].hp = hp.min(units[1].stats.hp);
+        units[3].pos = p(1, 2);
+        let mut s = start(setup(units));
+        end(&mut s);
+        let events = act(&mut s, 4, p(1, 2), attack(2));
+        prop_assert_eq!(combat(&events).defender, None);
+        let countered = events.iter().any(|e| match e {
+            Event::CombatResolved { outcome, .. } => {
+                outcome.strikes.iter().any(|st| st.by == Side::Defender)
+            }
+            _ => false,
+        });
+        prop_assert!(!countered);
+    }
 }
 
 #[test]

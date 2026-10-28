@@ -447,10 +447,10 @@ the game after some personal arc or a support level increase".
   burns a forest tile).
 - **She can't counter with it either** (Nick, playtest round 3,
   2026-10-16, replacing 0317's starting rule that she could): "She
-  shouldn't counter with it either". Built by ticket 0318. Until then she
-  still counters with it.
-- Until the engine has the rule (ticket 0317), the spell plays as before:
-  range 1 and the enemy counters.
+  shouldn't counter with it either". Built by ticket 0318: when an enemy
+  attacks her with Cinder Oath equipped, the forecast shows she doesn't
+  strike back. *Claude's starting rule:* she doesn't switch to another
+  attack to counter; she just doesn't counter, as with a broken weapon.
 - **It gets upgraded later in the game**, after a personal arc or a support
   level (Nick). The upgrade is her Kept Promise (range 1–3, lower hit, her
   sheet). *Open:* what triggers it (a story beat, a support level, or
