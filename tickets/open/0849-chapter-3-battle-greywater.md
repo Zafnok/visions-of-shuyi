@@ -31,6 +31,7 @@ the number scale first. It also needs 0037's building tiles (decided: `gate` and
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
+0070 made **the prior** Greywater's boss (not the Hound captain): Shironejiya's dark-robed priest `m_s_mage_dark_m01` at 1.25×, and a face only if he speaks outside the fight. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 

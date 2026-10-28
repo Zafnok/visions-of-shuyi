@@ -34,6 +34,7 @@ the enemies are gone. As a world-map chapter it needs the world map (1007) and i
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
+0070 picked **Oriel**: a generator face with greying hair and stubble, and Shironejiya's court mage `m_s_mage_middle_m01` at 1.25× with his hair recoloured grey. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 

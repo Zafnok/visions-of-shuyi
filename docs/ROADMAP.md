@@ -290,7 +290,8 @@ tickets in brackets):
    1003) · **0071** story-battle themes and scene music for Chapters
    2–8 (0848–0854)
 6. **0070** faces and combat pictures for the new cast (0848–0854,
-   1069)
+   1069); **0076** the two it left open, Hedda and the Hound lieutenant
+   (0848, 0851, 1069)
 7. **0606**'s question, where to promote and reclass (asked inside 0606
    before it is built)
 8. **0013** the number scale, decided before Act 1 is balanced
@@ -434,7 +435,7 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
-6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
+6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** Hedda's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
