@@ -100,3 +100,19 @@ Nothing for the game: 3 PRs (#123, #136, #137). The skill pack's `shuyi-perf` ga
 Nothing for the game: 7 PRs (#140, #141, #142, #143, #145, #146, #147). The skill pack's `shuyi-ship` gains the web build's `NOTICES.txt`, and `shuyi-new-game` the Linux setup script.
 
 Ticket 0909 (from #139): the web build's `NOTICES.txt` lists none of the game's own works yet; 0909 names the font, the music and their license texts in `shuyi.ron`'s `notices`. 0901 waits on it.
+
+## 2026-10-28: 1d284a18 → c9fb84c9 (11 engine PRs), #465
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #149 | 2207 | Bundle layers from outside the binary; `bundle::Files` is `#[non_exhaustive]` with an `Owned` variant | fixed: nothing to change (the game matches no `Files` and builds its layers with `Layer::dir`, `Layer::table` and the builders) |
+| #150 | 2332 | The raster: frame-png's `Painter` moved into `shuyi-ui`; `Image::decode` became `frame_png::decode_image` | fixed: `frame_png::decode_image` in `crates/xtask`'s `game_tools/tests.rs` |
+| #152 | 2111 | Stamped records and saves: `pack::VERSION` 3 with `PackInfo::content`, `Layer::stands_for`, `ReplayRun::made` | fixed: nothing to change (the game bakes no packs and builds no `PackInfo`, `Layer` or `ReplayRun` literal) |
+| #155 | 2240 | `dialogue::Named`: the hooks of a game whose only tokens are names | not for the game: its `Hooks` (`crates/ui/src/dialogue.rs`) also fill the lead's name and pronouns and play `@place` and `@opening` lines, so they stay its own `DialogueHooks` (they already fill names with `Names::substitute`) |
+| #157 | 2568 | A game's start options checked once, on every tool path | not for the game: the tools at the pin check the options `Trpg` declares before its `start` runs; no game code or ticket changes |
+
+Nothing for the game: 6 PRs (#151, #153, #154, #156, #158, #159). The skill pack's `shuyi-debug-replay` gains stamped records, and `shuyi-dialogue` the `Named` hooks.
+
+Ticket 1195 (from #152): the game's tools give no `made` stamp yet, so its bots' play records replay unchecked against the build and content that made them; 1195 stamps them and passes the stamp on in `replay`.
+
+Ticket 1196 (from #153, listed under nothing for the game by its `api: none` label): the engine's storage now runs a power-cut suite, and the Playdate's own `FileStorage` doesn't. Its write unlinks the old save before moving the new one in when the file system won't rename onto a file, so a power cut between the two loses the save. 1196 runs the suite on it and fixes what fails. Ticket 1197 widens this review after an audit of every section above: a breaking PR's features, and `api: none` PRs that change behavior, get decisions too.
