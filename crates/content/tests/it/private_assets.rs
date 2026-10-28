@@ -115,6 +115,44 @@ fn the_bought_tiles_paint_every_look_a_map_can_name() {
     }
 }
 
+/// The road keeps its width onto a bridge (ticket 0461): the road's corner
+/// layer counts a bridge as road, so the four tiles round a point on the
+/// seam, some road and some bridge, are all in the layer and pick the
+/// inside mix (`####`, which needs no edge picture), never an edge that
+/// narrows the road.
+#[test]
+fn the_road_runs_full_width_onto_a_bridge() {
+    use trpg_content::tileset::{Layer, mix};
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let display = &content.terrain.display;
+    let road = display.id_of("road").expect("no road");
+    let bridge = display.id_of("bridge").expect("no bridge");
+    let terrain = content.tilesets["tiny_tales"]
+        .terrain
+        .as_ref()
+        .expect("no terrain tiles");
+    for (name, look) in &terrain.looks {
+        // The road's own layer is the one whose tiles include a bridge.
+        let layer = look.layers.iter().find_map(|layer| match layer {
+            Layer::Corners(c) if c.of.contains(&road) && c.of.contains(&bridge) => Some(c),
+            _ => None,
+        });
+        let layer = layer.unwrap_or_else(|| panic!("look {name}: the road doesn't join a bridge"));
+        // Road on one side of a bridge, bridge on the other.
+        for tiles in [[road, bridge, road, bridge], [road, road, bridge, bridge]] {
+            let picked = mix(tiles.map(|t| layer.of.contains(&t)));
+            assert_eq!(
+                picked, 15,
+                "look {name}: a road beside a bridge is not whole"
+            );
+        }
+    }
+}
+
 /// Every bought file in the build has a credit (ADR-0051), and the credits
 /// screen's list has the bought art's.
 #[test]

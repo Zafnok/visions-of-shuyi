@@ -79,7 +79,7 @@
             sheet: "world-map/Set_A_Standard_Fields1", terrain: "Snow 2", full: false,
         ),
         "road": Corners(
-            of: ["road", "well", "rack"],
+            of: ["road", "well", "rack", "bridge"],
             sheet: "world-map/Set_A_Standard_Fields1", terrain: "Terrains2", full: false,
         ),
         // The floor's slabs end in a rim of the wall's bricks.
