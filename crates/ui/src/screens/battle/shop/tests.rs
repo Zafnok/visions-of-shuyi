@@ -523,3 +523,53 @@ fn confirming_a_sale_sells_and_cancel_goes_back() {
     // Back on the Sell list: Confirm asks again.
     assert_eq!(shop.step(Action::Confirm), ShopEffect::Asked);
 }
+
+#[test]
+fn a_buy_is_chosen_and_one_the_party_cant_pay_is_denied() {
+    let mut c = ctx();
+    let s = shop_open(&mut c, VENDOR, 1000);
+    let mut shop = s.shop().unwrap().clone();
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Chosen);
+    assert_eq!(shop.visit().txns.len(), 1);
+    let s = shop_open(&mut c, VENDOR, 0);
+    let mut broke = s.shop().unwrap().clone();
+    assert_eq!(broke.step(Action::Confirm), ShopEffect::Denied);
+    assert_eq!(broke.visit().txns, Vec::<ShopTxn>::new());
+}
+
+/// Selling two of the second item in the pack takes those two, never
+/// the first item's copy.
+#[test]
+fn selling_several_takes_only_that_items_copies() {
+    let mut c = ctx();
+    let units = battle_at(VENDOR, 0).units().to_vec();
+    let (map, _) = quick_units(&c);
+    let rout = Objective::Rout { turn_limit: None };
+    let pack = BattlePack {
+        items: ["elixir", "potion", "potion", "potion"]
+            .map(ItemId::new)
+            .to_vec(),
+        cap: 4,
+    };
+    let state = BattleState::new(BattleSetup {
+        pack,
+        ..setup(&c, map, units, rout)
+    })
+    .0;
+    let mut s = menu_open(&mut c, state);
+    choose(&mut s, &mut c, MenuEntry::Shop);
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    let offers = s.shop().unwrap().offers();
+    let line = offers.iter().position(|o| o.item.0 == "potion").unwrap();
+    for _ in 0..line {
+        press(&mut s, &mut c, &[Action::CursorDown]);
+    }
+    press(
+        &mut s,
+        &mut c,
+        &[Action::Confirm, Action::CursorUp, Action::Confirm],
+    );
+    press(&mut s, &mut c, &[Action::Cancel]);
+    let left = ["elixir", "potion"].map(ItemId::new);
+    assert_eq!(s.state().pack().items, left);
+}

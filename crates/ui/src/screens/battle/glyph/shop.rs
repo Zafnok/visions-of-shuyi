@@ -34,8 +34,8 @@ pub const TAB_ROW: i32 = AREA.y + 2;
 /// Column of the first tab.
 pub const TABS_X: i32 = LIST_X + 30;
 
-/// Row of the first line.
-pub const TOP_ROW: i32 = TAB_ROW + 2;
+/// Row of the first line: a blank row under the tabs.
+pub const TOP_ROW: i32 = AREA.y + 4;
 
 /// Widest item name, its count included, in cells.
 pub const NAME_W: i32 = 24;
@@ -45,6 +45,10 @@ pub const GOLD_W: i32 = 7;
 
 /// First column of what the item is.
 pub const DETAIL_X: i32 = LIST_X + NAME_W + GOLD_W + 3;
+
+/// Width of a line's highlight: from a cell left of the text to two
+/// cells inside the right border.
+pub const ROW_W: i32 = AREA.x + AREA.w - 1 - LIST_X;
 
 /// Rows the list has, above the bottom border and a blank row.
 pub const LIST_ROWS: i32 = AREA.y + AREA.h - 2 - TOP_ROW;
@@ -91,7 +95,7 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         } else {
             (fg, bg)
         };
-        let row = Rect::new(LIST_X - 1, y, AREA.w - 2 * (LIST_X - AREA.x) + 2, 1);
+        let row = Rect::new(LIST_X - 1, y, ROW_W, 1);
         buf.fill_rect(row, Cell::new(' ', fg, row_bg));
         // check-text: not a data name (the view's own)
         buf.print(LIST_X, y, &line.name, fg, row_bg);
@@ -204,7 +208,7 @@ mod tests {
     fn the_tabs_lines_and_gold_go_in_their_columns() {
         let buf = painted(&view(3, 2));
         assert_eq!(text(&buf, TABS_X, TAB_ROW, 12), " Buy   Sell ");
-        assert_eq!(TOP_ROW, TAB_ROW + 2);
+        assert_eq!((TAB_ROW, TOP_ROW, ROW_W), (2, 4, 96));
         assert_eq!(text(&buf, LIST_X, TOP_ROW, 2), "l0");
         // The gold right-aligned, then the detail.
         let gold_end = LIST_X + NAME_W + GOLD_W;
@@ -237,7 +241,11 @@ mod tests {
         let rows = usize::try_from(LIST_ROWS).unwrap();
         let buf = painted(&view(40, 39));
         let last = TOP_ROW + LIST_ROWS - 1;
+        assert_eq!(last, 27);
         assert_eq!(text(&buf, LIST_X, last, 3), "l39");
+        // Nothing under it: a blank row, then the border.
+        assert_eq!(text(&buf, LIST_X, last + 1, 3), "   ");
+        assert_eq!(text(&buf, LIST_X, last + 2, 3), "═══");
         let first = 40 - rows;
         assert_eq!(text(&buf, LIST_X, TOP_ROW, 3), format!("l{first}"));
         assert_eq!(first_shown(0, 5), 0);
