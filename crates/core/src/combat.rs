@@ -263,6 +263,8 @@ pub struct CombatMods {
     pub might: StatValue,
     /// Added to this side's avoid.
     pub avoid: StatValue,
+    /// Taken off this side's avoid, but not below 0 (Off Balance).
+    pub avoid_debuff: StatValue,
     /// Added to attack speed.
     pub attack_speed: StatValue,
     /// Strikes added after the attack-speed count (never above the maximum).
@@ -277,6 +279,9 @@ pub struct CombatMods {
     pub pierce: StatValue,
     /// Replaces the sword follow-up ratio (Flowing Cut, `combat-arts.md`).
     pub sword_followup: Option<(StatValue, StatValue)>,
+    /// Each hit deals this much more than the side's hit before it (Cascade:
+    /// the n-th hit adds `cascade * (n - 1)`).
+    pub cascade: StatValue,
 }
 
 impl CombatMods {
@@ -287,6 +292,7 @@ impl CombatMods {
         self.crit += other.crit;
         self.might += other.might;
         self.avoid += other.avoid;
+        self.avoid_debuff += other.avoid_debuff;
         self.attack_speed += other.attack_speed;
         self.extra_strikes = self.extra_strikes.saturating_add(other.extra_strikes);
         self.single_strike |= other.single_strike;
@@ -294,6 +300,7 @@ impl CombatMods {
         self.ignore_terrain |= other.ignore_terrain;
         self.pierce += other.pierce;
         self.sword_followup = other.sword_followup.or(self.sword_followup);
+        self.cascade += other.cascade;
     }
 }
 
@@ -355,7 +362,9 @@ impl CombatantInput<'_> {
             Some(WeaponTrait::GauntletAvoid(v)) => v,
             _ => 0,
         };
-        self.stats.spd * rules.avoid_per_spd + terrain + gauntlet + self.mods.avoid
+        let avoid = self.stats.spd * rules.avoid_per_spd + terrain + gauntlet + self.mods.avoid;
+        // A debuff stops at 0, and never lowers an avoid already below it.
+        (avoid - self.mods.avoid_debuff).max(avoid.min(0))
     }
 }
 
@@ -372,6 +381,8 @@ pub struct SideForecast {
     pub crit: u8,
     /// Number of strikes, `1..=max_strikes`.
     pub strikes: u8,
+    /// What each hit adds to the next one (Cascade); 0 without it.
+    pub cascade: StatValue,
     /// Whether an effectiveness multiplier (tag or Weak) applies.
     pub effective: bool,
     /// Whether the weapon is broken.
@@ -384,7 +395,10 @@ impl SideForecast {
     /// The damage of its strikes if every one hits (no crit).
     pub fn all_hit(&self) -> StatValue {
         let followups = StatValue::from(self.strikes.saturating_sub(1));
-        self.damage + followups * self.followup_damage
+        // Cascade: the n-th hit adds `cascade * (n - 1)`, 0 + 1 + … + followups.
+        self.damage
+            + followups * self.followup_damage
+            + self.cascade * followups * (followups + 1) / 2
     }
 }
 
@@ -510,6 +524,7 @@ fn side(
         hit: percent(hit),
         crit: percent(crit),
         strikes,
+        cascade: a.mods.cascade,
         effective: eff_mult > 1,
         broken: weapon.broken,
         affinity,
@@ -607,13 +622,15 @@ fn striker(forecast: &Forecast, by: Side) -> Option<(usize, usize, SideForecast)
 }
 
 /// A strike's damage before a crit: the first strike's, or the follow-up
-/// damage from a side's second strike on.
-fn base_damage(numbers: &SideForecast, nth: u8) -> StatValue {
-    if nth > 1 {
+/// damage from a side's second strike on, plus Cascade's bonus for the
+/// `hits` the side has landed so far.
+fn base_damage(numbers: &SideForecast, nth: u8, hits: u8) -> StatValue {
+    let base = if nth > 1 {
         numbers.followup_damage
     } else {
         numbers.damage
-    }
+    };
+    base + numbers.cascade * StatValue::from(hits)
 }
 
 /// `target` after taking (or, for Absorb, being healed by) `damage`.
@@ -637,6 +654,7 @@ pub fn resolve(
     let order = strike_order(forecast);
     let mut hp = [attacker, defender];
     let mut struck = [0u8; 2];
+    let mut landed = [0u8; 2];
     let mut strikes = Vec::with_capacity(order.len());
     for by in order {
         if hp[0].current <= 0 || hp[1].current <= 0 {
@@ -646,9 +664,10 @@ pub fn resolve(
             break;
         };
         struck[me] += 1;
-        let base = base_damage(&numbers, struck[me]);
+        let base = base_damage(&numbers, struck[me], landed[me]);
         let healed = numbers.affinity == Some(Affinity::Absorb);
         let hit = roll_hit(rng, numbers.hit);
+        landed[me] += u8::from(hit);
         let crit = hit && rng.roll_percent() < numbers.crit;
         let damage = match (hit, crit) {
             (false, _) => 0,
@@ -720,7 +739,7 @@ pub fn if_all_hit(forecast: &Forecast, attacker: CombatHp, defender: CombatHp) -
             continue;
         };
         struck[me] = struck[me].saturating_add(1);
-        let damage = base_damage(&numbers, struck[me]);
+        let damage = base_damage(&numbers, struck[me], struck[me] - 1);
         let healed = numbers.affinity == Some(Affinity::Absorb);
         let after_a_fall = hp[0].current <= 0 || hp[1].current <= 0;
         if !after_a_fall {

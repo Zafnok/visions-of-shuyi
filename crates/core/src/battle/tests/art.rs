@@ -1210,3 +1210,98 @@ fn a_spell_active_shows_no_durability() {
 fn with_skill_class(u: Unit, skill: &str) -> Unit {
     in_class(u, &skill_class(skill).0)
 }
+
+// ---- Ranks C-S that change the numbers (ticket 0325) --------------------------
+
+#[test]
+fn long_thrust_reaches_two_and_is_countered_only_by_a_weapon_that_reaches() {
+    let s = battle(vec![
+        artist(1, p(0, 0), "pike"),
+        with(unit(3, Faction::Enemy, p(2, 0)), "blade"),
+    ]);
+    refused_act(
+        &mut battle(vec![
+            artist(1, p(0, 0), "pike"),
+            with(unit(3, Faction::Enemy, p(2, 0)), "blade"),
+        ]),
+        1,
+        p(0, 0),
+        attack(3),
+        CommandError::OutOfRange {
+            target: UnitId(3),
+            distance: 2,
+        },
+    );
+    let thrust = preview(&s, 1, p(0, 0), &art_attack(3, "long_thrust")).forecast;
+    assert_eq!((thrust.attacker.hit, thrust.defender), (90, None));
+    // A long pike counters at 2, and an adjacent sword counters at 1.
+    let s = battle(vec![
+        artist(1, p(0, 0), "pike"),
+        with(unit(3, Faction::Enemy, p(2, 0)), "long_pike"),
+    ]);
+    let far = preview(&s, 1, p(0, 0), &art_attack(3, "long_thrust")).forecast;
+    assert!(far.defender.is_some());
+    let s = battle(vec![
+        artist(1, p(0, 0), "pike"),
+        with(unit(3, Faction::Enemy, p(1, 0)), "blade"),
+    ]);
+    let near = preview(&s, 1, p(0, 0), &art_attack(3, "long_thrust")).forecast;
+    assert!(near.defender.is_some());
+}
+
+#[test]
+fn felling_blow_is_a_third_of_the_targets_max_hp_at_least_the_axe_minimum() {
+    let target = |hp| stats(unit(3, Faction::Enemy, p(1, 0)), [hp, 0, 0, 0, 0, 0, 0]);
+    let damage = |hp, art: Option<&str>| {
+        let s = battle(vec![artist(1, p(0, 0), "heavy_axe"), target(hp)]);
+        let action = art.map_or_else(|| attack(3), |a| art_attack(3, a));
+        preview(&s, 1, p(0, 0), &action).forecast.attacker.damage
+    };
+    assert_eq!(damage(60, None), 5);
+    assert_eq!(damage(60, Some("felling_blow")), 20);
+    assert_eq!(damage(41, Some("felling_blow")), 13);
+    // A small target keeps the axe's 5.
+    assert_eq!(damage(12, Some("felling_blow")), 5);
+}
+
+#[test]
+fn off_balance_lowers_avoid_for_the_next_attacker() {
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [10, 0, 0, 20, 0, 0, 0]),
+        artist(2, p(1, 1), "knuckles"),
+        stats(unit(3, Faction::Enemy, p(1, 0)), [10, 0, 0, 0, 10, 0, 0]),
+    ]);
+    let hit = |s: &BattleState| preview(s, 2, p(1, 1), &attack(3)).forecast.attacker.hit;
+    assert_eq!(hit(&s), 80);
+    let shown = preview(&s, 1, p(0, 0), &art_attack(3, "off_balance"));
+    assert_eq!(shown.notes, [ArtNote::AvoidDebuff(20)]);
+    act(&mut s, 1, p(0, 0), art_attack(3, "off_balance"));
+    assert_eq!(hit(&s), 100);
+}
+
+#[test]
+fn a_debuff_list_never_takes_a_stat_below_zero() {
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [10, 0, 0, 20, 0, 0, 0]),
+        stats(unit(3, Faction::Enemy, p(1, 0)), [10, 3, 0, 0, 5, 2, 0]),
+    ]);
+    act(&mut s, 1, p(0, 0), art_attack(3, "vital_point"));
+    let target = s.unit(UnitId(3)).unwrap();
+    let now = crate::skill::effect_bonuses(&target.effects).apply(target.stats);
+    assert_eq!((now.str, now.def, now.spd), (0, 0, 1));
+}
+
+#[test]
+fn an_avoid_debuff_stops_at_zero() {
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [10, 0, 0, 20, 0, 0, 0]),
+        artist(2, p(1, 1), "knuckles"),
+        stats(unit(3, Faction::Enemy, p(1, 0)), [10, 0, 0, 0, 5, 0, 0]),
+    ]);
+    // Avoid 10 − 20 is 0, not −10: the hit stays 100.
+    act(&mut s, 1, p(0, 0), art_attack(3, "off_balance"));
+    assert_eq!(
+        preview(&s, 2, p(1, 1), &attack(3)).forecast.attacker.hit,
+        100
+    );
+}

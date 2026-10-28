@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0018"]
 nick_input: none
-completed:
+completed: 2026-10-28
 ---
 
 # 0325 — Arts C–S, part 1: the arts that change the combat's numbers
@@ -73,15 +73,15 @@ goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] A unit at rank C/B/A/S of a kind knows that rank's arts from this
+- [x] A unit at rank C/B/A/S of a kind knows that rank's arts from this
       list (content test over `arts.ron`).
-- [ ] Unit tests in `core` for each new effect, with the design doc's
+- [x] Unit tests in `core` for each new effect, with the design doc's
       numbers (Cascade's order: base → ×6/5 → +3(n−1) → crit, with hit, miss,
       hit, hit giving +0, —, +3, +6; Felling
       Blow's `max(5, max_hp / 3)`; Long Thrust/Hurl at distance 2 and the
       defender's counter only if it reaches 2).
-- [ ] Old `arts.ron` entries load unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Old `arts.ron` entries load unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -92,4 +92,28 @@ goes on the Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+The nine arts are in `assets/data/arts.ron` with the design doc's ranks,
+costs and numbers; the forecast spells out the new notes.
+
+- `ArtEffect` gained `crit`, `max_range`, `cascade`,
+  `axe_min_damage_max_hp_div` and `on_first_hit_avoid`; `on_first_hit` is now
+  a list. A custom reader still loads the old `Some((stat: .., amount: ..))`
+  and `None` (Pinning Shot and Pressure Point stay as written). Avoid isn't a
+  `Stat`, so Off Balance is its own field and a new `CombatMods.avoid_debuff`
+  (floored at 0 like a stat debuff, without touching skills' negative avoid).
+- Cascade is `CombatMods.cascade` + `SideForecast.cascade`; `resolve` and
+  `if_all_hit` count landed hits, so misses don't count. Added after the
+  sword follow-up, before crit; `SideForecast::all_hit` includes it.
+- `ArtEffect::apply` takes the target's max HP (Felling Blow). Felling Blow
+  takes the larger of the axe's current minimum and max HP / 3.
+- `legal_commands` now counts an art's range in the unit's reach (Long Thrust
+  would otherwise be left out of the bots' and the AI's options).
+- UI: `rends: Def −5` and `off balance: avoid −20` notes; the arts menu line
+  groups equal debuffs (`lowers: Str, Mag, Def, Res, Spd −4`).
+- Friction: estimate ~150 production lines (written after the code, not
+  before), measured 149: 1×.
+
+Claude's starting rules (none beyond the design doc): Long Thrust/Hurl keep
+min range 1; the avoid debuff stops at 0. Left to judge by playing: the
+numbers (1064). Not done, as scoped: stances, area strikes, Disarm/Marked
+Shot/Unbroken Stride, special weapons (0326–0329).

@@ -22,7 +22,7 @@
 //!   cost (it then breaks after the combat; [`check_cost`]).
 //! - **Effects** ([`ArtEffect`]) are data: bonuses and changes to the
 //!   attacker's numbers for the whole combat ([`ArtEffect::apply`], so the
-//!   forecast shows them), a debuff on the target's first hit, a stance on
+//!   forecast shows them), debuffs on the target's first hit, a stance on
 //!   the user, and Line Pierce's extra strike. The battle applies them.
 
 use crate::prelude::*;
@@ -71,6 +71,39 @@ impl Debuff {
     }
 }
 
+/// Reads a list of debuffs, or the single `Some((stat: .., amount: ..))` /
+/// `None` older `arts.ron` entries wrote.
+fn debuffs<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Debuff>, D::Error> {
+    use serde::de::{self, MapAccess, SeqAccess, Visitor};
+    struct Debuffs;
+    impl<'de> Visitor<'de> for Debuffs {
+        type Value = Vec<Debuff>;
+        fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+            f.write_str("a debuff or a list of debuffs")
+        }
+        fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {
+            Ok(Vec::new())
+        }
+        fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
+            Ok(Vec::new())
+        }
+        fn visit_some<D2: serde::Deserializer<'de>>(self, d: D2) -> Result<Self::Value, D2::Error> {
+            d.deserialize_any(self)
+        }
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some(debuff) = seq.next_element()? {
+                out.push(debuff);
+            }
+            Ok(out)
+        }
+        fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
+            Debuff::deserialize(de::value::MapAccessDeserializer::new(map)).map(|d| vec![d])
+        }
+    }
+    d.deserialize_any(Debuffs)
+}
+
 /// What an art does. Every field is optional in data; the default does
 /// nothing. Written in `arts.ron` as e.g. `(hit: 10, no_counter: true)`.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
@@ -78,6 +111,8 @@ impl Debuff {
 pub struct ArtEffect {
     /// Added to the attacker's hit.
     pub hit: StatValue,
+    /// Added to the attacker's crit (Skull Splitter).
+    pub crit: StatValue,
     /// Replaces the sword follow-up ratio `(numerator, denominator)`
     /// (Flowing Cut: `(3, 2)`). Sword arts only.
     pub sword_followup: Option<(StatValue, StatValue)>,
@@ -88,10 +123,23 @@ pub struct ArtEffect {
     pub effective: Vec<(UnitTag, u8)>,
     /// Replaces the axe minimum damage. Axe arts only.
     pub axe_min_damage: Option<StatValue>,
+    /// The axe minimum damage is at least a this-th of the target's max HP
+    /// (Felling Blow: 3). Axe arts only.
+    pub axe_min_damage_max_hp_div: Option<StatValue>,
     /// Replaces the weapon's minimum range (Close Shot: 1).
     pub min_range: Option<u32>,
-    /// A debuff put on the target by the attacker's first strike that hits.
-    pub on_first_hit: Option<Debuff>,
+    /// Replaces the weapon's maximum range (Long Thrust, Hurl: 2).
+    pub max_range: Option<u32>,
+    /// Each hit deals this much more than the one before it (Cascade).
+    /// Sword arts only.
+    pub cascade: StatValue,
+    /// Debuffs put on the target by the attacker's first strike that hits.
+    /// One `Some((stat: .., amount: ..))` loads as a list of one.
+    #[serde(deserialize_with = "debuffs")]
+    pub on_first_hit: Vec<Debuff>,
+    /// The first hit also lowers the target's avoid by this much (Off
+    /// Balance); avoid isn't a stat, so it isn't a [`Debuff`].
+    pub on_first_hit_avoid: StatValue,
     /// A stance on the user, from this combat (it counts in it) until the
     /// start of the user's next phase (Sidestep).
     pub stance: Option<TimedMods>,
@@ -111,6 +159,9 @@ pub enum ArtNote {
     /// The target's first hit puts this debuff on it (`pins: Mov −3`,
     /// `slows: Spd −3`).
     Debuff(Debuff),
+    /// The target's first hit lowers its avoid by this much (`off balance:
+    /// avoid −20`).
+    AvoidDebuff(StatValue),
     /// The user takes this stance.
     Stance(TimedMods),
 }
@@ -120,8 +171,10 @@ impl ArtEffect {
     /// this art. The formulas stay in [`crate::combat`]; only their inputs
     /// change. [`no_counter`](Self::no_counter) isn't an input: the battle
     /// drops the defender's side of the forecast.
-    pub fn apply(&self, weapon: &mut WeaponStats, mods: &mut CombatMods) {
+    pub fn apply(&self, weapon: &mut WeaponStats, mods: &mut CombatMods, target_max_hp: StatValue) {
         mods.hit += self.hit;
+        mods.crit += self.crit;
+        mods.cascade += self.cascade;
         if self.sword_followup.is_some() {
             mods.sword_followup = self.sword_followup;
         }
@@ -129,9 +182,36 @@ impl ArtEffect {
         if let Some(min) = self.axe_min_damage {
             weapon.trait_ = WeaponTrait::AxeMinDamage(min);
         }
+        if let Some(div) = self.axe_min_damage_max_hp_div
+            && let WeaponTrait::AxeMinDamage(min) = weapon.trait_
+        {
+            weapon.trait_ = WeaponTrait::AxeMinDamage(min.max(target_max_hp / div.max(1)));
+        }
         if let Some(min) = self.min_range {
             weapon.min_range = min;
         }
+        if let Some(max) = self.max_range {
+            weapon.max_range = max;
+        }
+    }
+
+    /// What the first hit puts on the target, to last until the end of its
+    /// next phase; `None` if the art has no debuff.
+    pub fn first_hit_mods(&self) -> Option<TimedMods> {
+        if self.on_first_hit.is_empty() && self.on_first_hit_avoid == 0 {
+            return None;
+        }
+        Some(TimedMods {
+            stats: self
+                .on_first_hit
+                .iter()
+                .map(|d| (d.stat, -d.amount))
+                .collect(),
+            combat: CombatMods {
+                avoid_debuff: self.on_first_hit_avoid,
+                ..CombatMods::default()
+            },
+        })
     }
 
     /// The effects the forecast's numbers don't show, in a fixed order.
@@ -143,8 +223,9 @@ impl ArtEffect {
         if self.line_pierce {
             out.push(ArtNote::Pierces);
         }
-        if let Some(debuff) = self.on_first_hit {
-            out.push(ArtNote::Debuff(debuff));
+        out.extend(self.on_first_hit.iter().map(|&d| ArtNote::Debuff(d)));
+        if self.on_first_hit_avoid > 0 {
+            out.push(ArtNote::AvoidDebuff(self.on_first_hit_avoid));
         }
         if let Some(stance) = &self.stance {
             out.push(ArtNote::Stance(stance.clone()));

@@ -111,7 +111,19 @@ fn problems(kind: WeaponKind, effect: &ArtEffect) -> Vec<String> {
     if effect.min_range == Some(0) {
         out.push("min_range must be at least 1".into());
     }
-    if effect.on_first_hit.is_some_and(|d| d.amount < 1) {
+    if effect.max_range == Some(0) {
+        out.push("max_range must be at least 1".into());
+    }
+    if effect.cascade != 0 && kind != WeaponKind::Sword {
+        out.push("cascade is for Sword arts only".into());
+    }
+    if effect.axe_min_damage_max_hp_div.is_some() && kind != WeaponKind::Axe {
+        out.push("axe_min_damage_max_hp_div is for Axe arts only".into());
+    }
+    if effect.axe_min_damage_max_hp_div == Some(0) {
+        out.push("axe_min_damage_max_hp_div must be at least 1".into());
+    }
+    if effect.on_first_hit.iter().any(|d| d.amount < 1) {
         out.push("a debuff's amount must be at least 1".into());
     }
     if effect.effective.iter().any(|&(_, mult)| mult < 1) {

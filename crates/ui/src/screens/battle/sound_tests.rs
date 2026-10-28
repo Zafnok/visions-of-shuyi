@@ -62,6 +62,7 @@ fn numbers() -> SideForecast {
         hit: 90,
         crit: 3,
         strikes: 1,
+        cascade: 0,
         effective: false,
         broken: false,
         affinity: None,

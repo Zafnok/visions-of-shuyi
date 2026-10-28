@@ -1,8 +1,11 @@
 // Every Combat Art. Source: docs/design/combat-arts.md (0014), "Chapter 1
 // arts": two per weapon kind, at ranks E and D (list approved by Nick).
-// Every number is TUNABLE (FE-sized until ticket 0013). Arts for ranks C-S
-// and special weapons' own arts come with ticket 0018. Loaded by
-// trpg_content::art; the rules are in trpg_core::art and trpg_core::battle.
+// Every number is TUNABLE (FE-sized until ticket 0013). Ranks C-S (ticket
+// 0018's list, "Ranks C-S" in the design doc) arrive in parts: the arts that
+// change one combat's numbers or put a debuff on the target are here (0325);
+// stances, area strikes and special weapons' own arts come with 0326-0329.
+// Loaded by trpg_content::art; the rules are in trpg_core::art and
+// trpg_core::battle.
 //
 // id: unique. kind: the weapon kind it is used with (Sword, Spear, Axe, Bow,
 //   Gauntlet). rank: Some(E..S) teaches it at that weapon rank; None makes
@@ -16,12 +19,19 @@
 //   no_counter: true             the defender can't counter
 //   effective: [(Tag, mult)]     added effectiveness; the largest matching
 //                                multiplier wins
+//   crit: n                      added to crit
 //   axe_min_damage: n            axe minimum damage instead of 5 (Axe arts)
-//   min_range: n                 the weapon's minimum range for this attack
-//   on_first_hit: Some((stat: Mov, amount: n))
-//                                the first hit lowers the target's stat by
+//   axe_min_damage_max_hp_div: n the axe minimum is at least a n-th of the
+//                                target's max HP (Axe arts)
+//   min_range: n, max_range: n   the weapon's range for this attack
+//   cascade: n                   each hit deals n more than the hit before
+//                                (Sword arts)
+//   on_first_hit: [(stat: Def, amount: n), ...]
+//                                the first hit lowers the target's stats by
 //                                n (not below 0) until the end of its next
-//                                phase
+//                                phase (one `Some((stat: .., amount: ..))`
+//                                still loads)
+//   on_first_hit_avoid: n        and lowers its avoid by n (not below 0)
 //   stance: Some((stats: [...], combat: (avoid: n, ...)))
 //                                on the user from this combat until the
 //                                start of its next phase
@@ -38,10 +48,22 @@
             id: "guard_break", name: "Guard Break", kind: Sword, rank: Some(D), cost: 4,
             effect: (hit: 10, no_counter: true),
         ),
+        (
+            id: "cascade", name: "Cascade", kind: Sword, rank: Some(A), cost: 6,
+            effect: (cascade: 3),
+        ),
         // Spear
         (
             id: "unhorse", name: "Unhorse", kind: Spear, rank: Some(E), cost: 2,
             effect: (hit: 10, effective: [(Mounted, 3)]),
+        ),
+        (
+            id: "long_thrust", name: "Long Thrust", kind: Spear, rank: Some(C), cost: 3,
+            effect: (hit: -10, min_range: Some(1), max_range: Some(2)),
+        ),
+        (
+            id: "skypiercer", name: "Skypiercer", kind: Spear, rank: Some(A), cost: 5,
+            effect: (effective: [(Flying, 2)]),
         ),
         (
             id: "line_pierce", name: "Line Pierce", kind: Spear, rank: Some(D), cost: 4,
@@ -56,6 +78,18 @@
             id: "armor_cleave", name: "Armor Cleave", kind: Axe, rank: Some(D), cost: 4,
             effect: (effective: [(Armored, 2)]),
         ),
+        (
+            id: "hurl", name: "Hurl", kind: Axe, rank: Some(B), cost: 4,
+            effect: (hit: -10, min_range: Some(1), max_range: Some(2)),
+        ),
+        (
+            id: "skull_splitter", name: "Skull Splitter", kind: Axe, rank: Some(A), cost: 5,
+            effect: (crit: 30),
+        ),
+        (
+            id: "felling_blow", name: "Felling Blow", kind: Axe, rank: Some(S), cost: 8,
+            effect: (axe_min_damage_max_hp_div: Some(3)),
+        ),
         // Bow
         (
             id: "close_shot", name: "Close Shot", kind: Bow, rank: Some(E), cost: 2,
@@ -65,14 +99,29 @@
             id: "pinning_shot", name: "Pinning Shot", kind: Bow, rank: Some(D), cost: 3,
             effect: (on_first_hit: Some((stat: Mov, amount: 3))),
         ),
+        (
+            id: "rending_arrow", name: "Rending Arrow", kind: Bow, rank: Some(C), cost: 4,
+            effect: (on_first_hit: [(stat: Def, amount: 5)]),
+        ),
         // Gauntlet
         (
             id: "pressure_point", name: "Pressure Point", kind: Gauntlet, rank: Some(E), cost: 2,
             effect: (on_first_hit: Some((stat: Spd, amount: 3))),
         ),
         (
+            id: "off_balance", name: "Off Balance", kind: Gauntlet, rank: Some(C), cost: 3,
+            effect: (on_first_hit_avoid: 20),
+        ),
+        (
             id: "sidestep", name: "Sidestep", kind: Gauntlet, rank: Some(D), cost: 3,
             effect: (stance: Some((combat: (avoid: 20)))),
+        ),
+        (
+            id: "vital_point", name: "Vital Point", kind: Gauntlet, rank: Some(S), cost: 8,
+            effect: (on_first_hit: [
+                (stat: Str, amount: 4), (stat: Mag, amount: 4), (stat: Def, amount: 4),
+                (stat: Res, amount: 4), (stat: Spd, amount: 4),
+            ]),
         ),
     ],
 )

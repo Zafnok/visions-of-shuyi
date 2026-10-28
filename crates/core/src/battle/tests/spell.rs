@@ -640,6 +640,7 @@ fn example_m1_through_apply() {
         hit,
         crit,
         strikes: 1,
+        cascade: 0,
         effective,
         broken: false,
         affinity: None,

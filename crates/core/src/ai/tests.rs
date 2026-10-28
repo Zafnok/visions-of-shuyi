@@ -1527,6 +1527,7 @@ fn side(damage: StatValue, followup: StatValue, hit: u8, strikes: u8) -> SideFor
         hit,
         crit: 0,
         strikes,
+        cascade: 0,
         effective: false,
         broken: false,
         affinity: None,

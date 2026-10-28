@@ -230,6 +230,28 @@ fn test_melee_arts() -> Vec<ArtDef> {
                 ..e()
             },
         ),
+        art(
+            "long_thrust",
+            Spear,
+            e_rank,
+            3,
+            ArtEffect {
+                hit: -10,
+                min_range: Some(1),
+                max_range: Some(2),
+                ..e()
+            },
+        ),
+        art(
+            "felling_blow",
+            Axe,
+            e_rank,
+            8,
+            ArtEffect {
+                axe_min_damage_max_hp_div: Some(3),
+                ..e()
+            },
+        ),
     ]
 }
 
@@ -248,6 +270,28 @@ fn test_other_arts() -> Vec<ArtDef> {
     let (e_rank, d_rank) = (Some(WeaponRank::E), Some(WeaponRank::D));
     vec![
         art(
+            "off_balance",
+            Gauntlet,
+            e_rank,
+            3,
+            ArtEffect {
+                on_first_hit_avoid: 20,
+                ..e()
+            },
+        ),
+        art(
+            "vital_point",
+            Gauntlet,
+            e_rank,
+            8,
+            ArtEffect {
+                on_first_hit: [StatKind::Str, StatKind::Def, StatKind::Spd]
+                    .map(|stat| Debuff { stat, amount: 4 })
+                    .to_vec(),
+                ..e()
+            },
+        ),
+        art(
             "close_shot",
             Bow,
             e_rank,
@@ -264,10 +308,10 @@ fn test_other_arts() -> Vec<ArtDef> {
             d_rank,
             3,
             ArtEffect {
-                on_first_hit: Some(Debuff {
+                on_first_hit: vec![Debuff {
                     stat: StatKind::Mov,
                     amount: 3,
-                }),
+                }],
                 ..e()
             },
         ),
@@ -277,10 +321,10 @@ fn test_other_arts() -> Vec<ArtDef> {
             e_rank,
             2,
             ArtEffect {
-                on_first_hit: Some(Debuff {
+                on_first_hit: vec![Debuff {
                     stat: StatKind::Spd,
                     amount: 3,
-                }),
+                }],
                 ..e()
             },
         ),

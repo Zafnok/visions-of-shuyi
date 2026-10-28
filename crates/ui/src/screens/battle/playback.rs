@@ -715,6 +715,7 @@ mod tests {
             hit: 90,
             crit: 3,
             strikes: 2,
+            cascade: 0,
             effective: false,
             broken: false,
             affinity: None,

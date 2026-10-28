@@ -54,7 +54,7 @@
 //! # Cost
 //!
 //! Attacks and casts at a unit are only tried on units within the acting
-//! unit's attack reach of the tile (its farthest-reaching weapon or spell
+//! unit's attack reach of the tile (its farthest-reaching weapon, spell or art
 //! plus its largest combat-active range bonus): every one farther away is
 //! out of range, so this only saves work. Each unit's moves are worked out
 //! once.
@@ -263,8 +263,8 @@ impl Options {
 
 /// How far (Manhattan) from its tile `unit` can attack, cast or heal a
 /// unit: its farthest-reaching weapon or learned spell, plus its largest
-/// combat-active range bonus. Arts never add range (they can only lower
-/// the minimum, like Close Shot). 0 if it has neither.
+/// combat-active range bonus, or the largest range an art gives (Long
+/// Thrust reaches 2 with any spear). 0 if it has neither.
 fn attack_reach(state: &BattleState, unit: &Unit) -> u32 {
     let weapons = unit
         .loadout
@@ -290,8 +290,14 @@ fn attack_reach(state: &BattleState, unit: &Unit) -> u32 {
         })
         .max()
         .unwrap_or(0);
+    let arts = (0..WEAPON_SLOTS).flat_map(|slot| {
+        unit.arts_for(slot, state.classes(), state.items(), state.arts())
+            .into_iter()
+            .filter_map(|a| a.effect.max_range)
+    });
     weapons
         .chain(spells)
+        .chain(arts)
         .max()
         .unwrap_or(0)
         .saturating_add(bonus)
