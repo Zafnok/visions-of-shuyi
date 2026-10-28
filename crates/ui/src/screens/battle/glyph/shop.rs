@@ -246,6 +246,11 @@ mod tests {
         // Nothing under it: a blank row, then the border.
         assert_eq!(text(&buf, LIST_X, last + 1, 3), "   ");
         assert_eq!(text(&buf, LIST_X, last + 2, 3), "═══");
+        // At the top of the list, the lines past the box stay unshown.
+        let top = painted(&view(40, 0));
+        assert_eq!(text(&top, LIST_X, last, 3), format!("l{}", rows - 1));
+        assert_eq!(text(&top, LIST_X, last + 1, 3), "   ");
+        assert_eq!(text(&top, LIST_X, last + 2, 3), "═══");
         let first = 40 - rows;
         assert_eq!(text(&buf, LIST_X, TOP_ROW, 3), format!("l{first}"));
         assert_eq!(first_shown(0, 5), 0);
