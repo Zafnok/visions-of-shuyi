@@ -8,10 +8,11 @@ name: Changes
 # Any other event (push, schedule, workflow_dispatch) always counts as code.
 #
 # But a Markdown file the code reads (a test checks it against the data)
-# counts as code: PR #464 changed only `docs/design/audio.md`, skipped the
-# tests, and broke `main` (ticket 0252, ADR-0098). The list is on the
-# `read by code` line below; xtask's
-# `every_markdown_file_the_code_reads_counts_as_code` keeps it complete.
+# isn't skipped: PR #464 changed only `docs/design/audio.md`, skipped the
+# tests, and broke `main` (ticket 0252, ADR-0098). Its `read by` line below
+# names the crates that read it; they go in `doc_crates`, and CI's
+# `doc-tests` job runs only their tests. xtask's
+# `every_markdown_file_the_code_reads_is_tested` keeps those lines complete.
 
 on:
   workflow_call:
@@ -19,6 +20,9 @@ on:
       code:
         description: "'true' unless the event is a pull request that only changes docs-only paths"
         value: ${{ jobs.detect.outputs.code }}
+      doc_crates:
+        description: "The crates that read a Markdown file the pull request changes, space-separated (ADR-0098)"
+        value: ${{ jobs.detect.outputs.doc_crates }}
 
 permissions:
   contents: read
@@ -29,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.classify.outputs.code }}
+      doc_crates: ${{ steps.classify.outputs.doc_crates }}
     steps:
       # On pull_request, HEAD is the PR merge commit; HEAD^1 is the base tip.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,13 +53,19 @@ jobs:
             exit 0
           fi
           code=false
+          doc_crates=""
           while IFS= read -r path; do
             [ -z "$path" ] && continue
             case "$path" in
-              THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md|docs/engine/pins.md|docs/story/names.md|docs/story/writers-guide.md|tickets/README.md) echo "code (read by code): $path"; code=true ;;
+              THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md|docs/story/names.md) echo "read by trpg-content: $path"; doc_crates="$doc_crates trpg-content" ;;
+              docs/engine/pins.md) echo "read by trpg-engine-watch: $path"; doc_crates="$doc_crates trpg-engine-watch" ;;
+              docs/story/writers-guide.md|tickets/README.md) echo "read by xtask: $path"; doc_crates="$doc_crates xtask" ;;
               *.md|docs/*|tickets/*|.claude/*) echo "docs: $path" ;;
               *) echo "code: $path"; code=true ;;
             esac
           done < <(git diff --name-only --no-renames HEAD^1 HEAD)
           echo "code=$code"
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          doc_crates=$(echo $doc_crates | xargs -n1 | sort -u | xargs)
+          echo "doc_crates=$doc_crates"
+          echo "doc_crates=$doc_crates" >> "$GITHUB_OUTPUT"

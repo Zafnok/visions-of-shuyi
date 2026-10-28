@@ -38,8 +38,8 @@ ticket to drop its cue from it; this ticket does the same.
 Why the PR didn't catch it: under ADR-0014, CI skips its build and tests
 on a pull request that changes only docs (`*.md`, `docs/**`, …), and #464
 changed only `audio.md`. A push to `main` runs everything. Nick asked for
-that loophole to be closed in this ticket too: a Markdown file the code
-reads must count as code (ADR-0098).
+that loophole to be closed in this ticket too, running only the tests
+that read the changed file, not the whole CI (ADR-0098).
 
 ## Nick input
 
@@ -57,9 +57,10 @@ None.
   `battle_night_siege`; 0852 `battle_war`; 0853 `holy_city`,
   `scene_dread`; 0854 `battle_finale`, `scene_departure`,
   `scene_lamplight`.
-- In `.github/workflows/changes.yml`, list the Markdown files the code
-  reads as code, and add an xtask test that keeps the list exact
-  (ADR-0098, extending ADR-0014).
+- In `.github/workflows/changes.yml`, map each Markdown file the code
+  reads to the crates that read it; a CI job `doc-tests` runs only those
+  crates' tests on a docs-only PR that changes one; an xtask test keeps
+  the map exact (ADR-0098, extending ADR-0014).
 
 **Out (do not do):**
 - Importing any track, its credits or `THIRD_PARTY_ASSETS.md` lines (the
@@ -73,27 +74,31 @@ None.
    order, and extend its doc comment.
 2. Add the sentence above to step 3 of 0848, 0850, 0851, 0852, 0853 and
    0854.
-3. In `changes.yml`'s `case`, before the docs-only patterns, a
-   `code (read by code)` branch for every Markdown file the code reads.
-4. In `crates/xtask/src/main.rs`'s tests,
-   `every_markdown_file_the_code_reads_counts_as_code`: the `.md` paths in
-   `crates/`'s string literals that name a real file equal that list.
-5. ADR-0098, its row in `docs/adr/README.md`, a pointer in ADR-0014.
+3. In `changes.yml`'s `case`, before the docs-only patterns, one
+   `read by <crates>` branch per set of crates, adding them to a new
+   output `doc_crates`.
+4. In `ci.yml`, a `doc-tests` job (Ubuntu, `cargo test -p` each of
+   `doc_crates`) when `code` is false and `doc_crates` isn't empty;
+   `ci-result` needs it.
+5. In `crates/xtask/src/main.rs`'s tests,
+   `every_markdown_file_the_code_reads_is_tested`: the `.md` paths in each
+   crate's string literals that name a real file equal those branches.
+6. ADR-0098, its row in `docs/adr/README.md`, a pointer in ADR-0014.
 
 ## Acceptance criteria
 
 - [x] `cargo test -p trpg-content --lib audio::tests::every_design_cue_is_in_the_manifest` passes.
 - [x] 0848, 0850–0854 say to drop their cues from `RESERVED` on import.
-- [x] A PR that changes `docs/design/audio.md` runs CI's tests
-      (`changes.yml` classifies it as code).
-- [x] `every_markdown_file_the_code_reads_counts_as_code` passes, and fails
-      when a file is missing from the list or stale on it.
+- [x] A docs-only PR that changes `docs/design/audio.md` runs
+      `trpg-content`'s tests and no other build (`doc_crates`, `doc-tests`).
+- [x] `every_markdown_file_the_code_reads_is_tested` passes, and fails
+      when a file is missing, stale or mapped to the wrong crate.
 - [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: the existing `every_design_cue_is_in_the_manifest`, unchanged;
-  `every_markdown_file_the_code_reads_counts_as_code` (xtask).
+  `every_markdown_file_the_code_reads_is_tested` (xtask).
 
 ## Completion notes
 
@@ -104,17 +109,22 @@ uses `battle_church_2`, already in the manifest). The test itself is
 unchanged. No gameplay rules decided; nothing for the Act 1 playtest.
 
 Then, at Nick's request, the CI loophole that let #464 merge green:
-`changes.yml` counts eight Markdown files as code (`THIRD_PARTY_ASSETS.md`,
+`changes.yml` maps eight Markdown files to the crates that read them (`THIRD_PARTY_ASSETS.md`,
 `assets/dialogue/README.md`, `assets/maps/README.md`, `docs/design/audio.md`,
 `docs/engine/pins.md`, `docs/story/names.md`,
-`docs/story/writers-guide.md`, `tickets/README.md`), and xtask's new test
-keeps that list equal to what the crates name. The scan found
+`docs/story/writers-guide.md`, `tickets/README.md`). A docs-only PR that
+changes one runs only those crates' tests, on Ubuntu (`doc-tests`), not the
+whole CI (Nick: "it should just run the CI that is required"). xtask's new
+test keeps the map equal to what each crate names, skipping comments. The scan found
 `assets/maps/README.md`, which I had missed (a content test needs it to
 exist). `assets/battlers/README.md` is a made-up file name in a test and
 is excluded in the test. ADR-0098 records it.
 
-Gates run locally: fmt, clippy and the lib tests of `trpg-content` (566
-pass), xtask's new test and `every_workflow_file_parses`, `ticket-lint`,
-`typos`. The change is a test-only constant in one
-crate plus one CI file and one test, so the rest (workspace tests, the WASM and Playdate builds) is left
-to CI.
+Gates run locally: fmt; clippy for `xtask` and `trpg-content`; the tests
+of both crates (the guard was also seen failing on a missing file and on a
+file mapped to the wrong crate); `ticket-lint`; `typos`. The classify
+script was run on a scratch repository (`audio.md`, `names.md` and the
+writer's guide gave `doc_crates=trpg-content xtask`, `code=false`). The
+rest (workspace tests, the WASM and Playdate builds) is left to CI; the
+`doc-tests` job itself first runs on the next docs-only PR that changes one
+of the files.
