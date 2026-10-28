@@ -533,3 +533,231 @@ reports.
 - **Rue dead:** nobody fed the lead on the road; nobody said what the
   raiders were doing; nobody asked Joss why he was wet; nobody saw his
   hands shaking.
+
+## After Chapter 3
+
+Written by 0745 from `assets/dialogue/ch03.dlg`. It describes a chapter
+everyone lived through; what an earlier death leaves unsaid here is in
+"If a companion died before Chapter 3", at the end. The battle itself
+(who killed Ned Tolley, whether the chests were opened) is the player's;
+the scenes don't depend on it, except that the prior is dead on every
+path.
+
+### What happened
+
+- Two days north of Kell's Ford the party left the road to Veyne Hall
+  for the lake shore, because Maud said the register was at Greywater
+  Abbey, and spent the night before in a boathouse with a fire. Across
+  the water the scriptorium's chimney smoked all night. **Rue hogged the
+  fire and burned the porridge; Aske took the pot from her and did her
+  letters in the ash**, and Rue told her her R was a tent. **Maud said
+  what the register is**: every gifted child the march ever had, who
+  tested them and where they were sent, in the long room over the gate;
+  she has written in it once herself. Nobody burns at night, so the
+  prior is burning the books, and she brought them here. Rue wanted to
+  row over at once; Hollis said nobody rows in the dark, his girl is in
+  that book too, and asked the lead what they want out of it (the reply
+  isn't recorded; to "Dace's name" he put a stick on the fire and said
+  "Eat something"). Tamsin's plan was to walk up polite in the morning
+  behind the Keeper's hood: priests open to a keeper; and somebody
+  sleep. Joss mended Maud's cuff and brought her in off the door. **Aske
+  counted the men on the wall: black, not gray hoods, and they don't
+  fidget. Joss: Hound black, and the Hounds hang deserters; he wanted
+  somebody to know.** (The first time anyone in the party has said the
+  word "Hounds" aloud: Chapter 2 never did.)
+- At dawn at the causeway's foot Maud was three steps out in her hood,
+  sure nobody looses at a keeper's hood; Hollis: those aren't keepers,
+  you stood in a village with them; she knew, and came back. Joss did
+  the Hound drill under his breath (two on the walk, one at the bell,
+  the bar goes down when we're close enough to count) and put his hood
+  up because his face is known in every post. Tamsin hates a causeway
+  (nowhere to turn the mare) and told Maud, gray in the face, to get up
+  behind her. Aske: they aren't loosing, they're letting us come closer.
+  Hollis: then closer, the kid behind him to the gate. The bar went
+  down.
+- The party fought up the causeway, through the gate and onto the walls
+  of Greywater Abbey, took the scriptorium, and **Prior Edwin Sallow is
+  dead**, killed at his desk still telling the novices how to burn
+  ledgers ("don't stack them"). Dying, he asked whether the novices'
+  boat got over the water.
+- **In the battle** (what the triggers say, if they fired): Ned Tolley
+  told anyone who came at him to go back over the stone and he'd never
+  have seen them, he's forty-seven and would like to go to bed. To
+  Hollis: Captain; you've gone gray; fifteen years on your gate and the
+  morning you went after the heir you never looked up; who kept us on
+  after? **the boy fed us**; he asks after you every winter; go on back
+  down. Hollis: "Guard up, Ned. I'm not going back down." Dying, Ned said
+  Hollis's bay mare is still at the hall, nobody's had her out in four
+  years, **he** wouldn't let anyone, and she's gotten fat. The prior, to
+  anyone: not one step nearer the hearth; there's a mother for every
+  name in that book, would you have it read out in a tavern? To Maud:
+  child, go home, say the gate was shut and he'll write the Vigil the
+  same; Maud: you taught me that hand, "every name is a child, write it
+  as if the mother will read it", and you're putting them in a fire; he:
+  because somebody with a sword will read it otherwise, "you, child,
+  you've brought swords up my causeway"; he read every one of her
+  letters, hers were the only ones that asked after anybody; Maud: then
+  you know what you're burning; she isn't going home, she doesn't have
+  one, she's sorry, she's coming in anyway. **Nobody said in the battle
+  that Maud's letter was about Rue.** Whoever reached the scriptorium
+  first heard Maud shout not water, the ink runs, smother it with a
+  coat (or Rue: get it out, never mind your hands).
+- **After, in the scriptorium:** the hearth choked with half-burned red
+  ledgers; the register open on the desk; the prior covered. Tamsin had
+  pulled ledgers out of the hearth with her sleeves over her hands, and
+  Maud did her hands first. **Maud shut the register and took it off the
+  desk**: a keeper carrying the register out of her own abbey, she knows
+  what that makes her; she couldn't look, Rue looked. **Rue read her own
+  name twice**: a charcoal-burner's girl of the Thornmarch taken to the
+  cart, a mark meaning she got away; and again, caught a year after,
+  sworn to fire, the year, a word she wouldn't read out, the Ashfields,
+  "deserted". **Aske read the word herself, the one Maud had taught her:
+  Candle**, the word for the ones who burned the plain; "You were one of
+  them." "Yes." Aske took her finger off the page, went out and down the
+  stair, and didn't come back up. **Hollis: "Keeper. Find my girl. You
+  wrote her in, you'll know the page."** Maud found Wren's line; the
+  first words are in her own hand (the keeper who tests a child writes
+  the child in); the rest isn't: sworn to fire, the year, "the
+  Ashfields: lost". Hollis: "They told us dead. ...Lost." **Tamsin found
+  the second book in the drawer**: columns, a paymaster's book, "Harrick
+  Vosse" on the cover; Hollis: "The mill. That's the man from the mill."
+  Tamsin read, slowly: "D. Marr. Informer." Eleven. "Children. It says
+  children." Joss: there's hundreds of Marrs, every third farm in the
+  valley, his ma's cousin married one, **it's another Marr**. Hollis
+  went to the window and stood with his back to the room. Rue stopped
+  looking at the book and looked at him. The lead didn't move from the
+  door. **The register and the pay-book are the party's.**
+- **That night, at the shore end of the causeway**, Rue sat with her
+  feet over the water and gave the lead half her bread without a word.
+  Hollis walked the wall above the whole time. **Rue told the lead what
+  she saw at the mill**: she was fifteen; the cart came through her
+  woods at night with a lantern, a man with a book and a boy to do the
+  lifting; the boy was crying and lifted her in by her belt like a sack
+  of coal anyway; the man with the book called him Marr; the cart's
+  papers had blue wax, the lead's house's wax, "that he has now"; at the
+  mill the boy came back with two more and one already in the cart was
+  his sister; he killed the lantern man, with his hands mostly; the door
+  was open and they ran, and she didn't look back, and the others didn't
+  all get out. She had kept the lead where she could see them the whole
+  way from the toll-fort because she thought the lead knew. The lead
+  answered (a reply, not recorded) and **Rue saw that the lead didn't
+  know**; whichever reply, she said so, and took bread back. Then: "That
+  book's wrong about one thing. ...No. Not tonight. I've said enough for
+  one night." (Wren; she said no more.) Then: his boy's name came off that page and he
+  said nothing, not one word, him; she watched him; "Did you?"
+- **Later, in the abbey kitchen**, Rue had eaten the novices' pot. Maud
+  came in with the salve she puts on Rue's hands and said it before the
+  hands: the paper on the chapel door said "the girl with the burned
+  hands" because those were Maud's words, written to the Abbey in the
+  autumn the way a keeper has to, asking them to be gentle with her; "I
+  asked them to be gentle. And they sent Red Harl." She wasn't asking
+  Rue for anything; she had to say it. Rue: "..."; "Give me the salve."
+  Then, to the lead in the door: "You heard her. Well?" The lead
+  answered (a reply, not recorded; one reply was to take the jar and do
+  Rue's hands, and Rue let them). Rue: she isn't going anywhere, where
+  would she go; stop looking at me, both of you. **Maud sat down on the
+  hearth step and didn't go anywhere either.** Nobody forgave anybody.
+- **Two nights later at Veyne Hall**, in the yard, Dace read a rider's
+  report twice: the causeway taken in daylight, the prior dead, the
+  register gone and "the rest of his papers" with it; whoever wrote
+  that didn't know what the rest of his papers were. He ordered a post
+  on every road to the hall by the next night, whatever it costs, and
+  that nobody touches the exile: they come to him. Alone: "Veyne. You've
+  read it by now"; the lead always read everything; "Come and ask me,
+  then. ...I'm here."
+
+### Who knows what (changes since the end of Chapter 2)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| Rue was in Vosse's cart at fifteen and got away; was caught a year later, sworn to fire, a Candle; deserted at the Ashfields | **everyone in the party**, from the register (Rue read it aloud; Aske read "Candle") | that she swore her own vow there (nobody has asked what "deserted" cost) |
+| Wren Marr's line in the register reads "the Ashfields: lost", not dead, and the first line of it is in Maud's hand | the party (Hollis asked; Maud read it; he said she'd know the page) | what "lost" means. Hollis heard the word and no more; Rue knows Wren walked out alive and said only that the book is wrong about one thing |
+| Vosse kept a pay-book, and "D. Marr, informer" took pay for eleven children | **everyone in the party**, from the book (Tamsin read it; Hollis placed Vosse: "the man from the mill") | the party has not said "Dace" over it. Joss says it's another Marr; Hollis said nothing; Rue told the lead that night who it was |
+| Dace lifted children into Vosse's cart, was named "Marr" by Vosse, the cart's passes bore the Veyne wax, and he killed Vosse at the mill after finding Wren in the cart | **the lead**, from Rue, at the causeway at night; Hollis (knew); Rue | the other five: Rue told the lead alone. Nobody has told Hollis anything, and he has said nothing |
+| The lead did not know about the year of selling: Dace said only "he took Wren" | **Rue** (she watched the lead's face), and the lead | — |
+| Maud's autumn letter is why the Red Company came for "the girl with the burned hands" | **Rue**, from Maud, in the kitchen; the lead (in the door); Maud | the other four. The prior read Maud's letters and is dead |
+| Maud has taken the Vigil's register out of its abbey: an apostate in the Vigil's eyes | the party (she said what it makes her without saying the word) | the Vigil, until word reaches Ossary (Dace's report says the book is gone) |
+| Hollis said nothing over his son's name on the pay-book and went to the window | Rue (said so to the lead); the lead | that he has known for years (Chapter 4) |
+| Ned Tolley was a Veyne guardsman under Hollis; Dace kept the old guard on and made them Hounds; Dace asks after Hollis every winter; Hollis's bay mare is kept unridden at the hall | Hollis, if he fought Ned (`ch03_sergeant_engage_retainer`); whoever heard Ned die (the bay) | — |
+| The prior read Maud's letters and sent them on; the Vigil ordered the records burned | Maud (if she fought him); the party saw the burning | who in Ossary (Crane is not named) |
+| Greywater is taken, the prior dead, the register and pay-book gone north with the exile's people; the roads to Veyne Hall are being garrisoned; nobody is to touch the exile | the player; Dace | the party |
+
+Unchanged and still secret: Hollis's burned purse, Wren alive (Rue
+alone, in the party), the prince, the Door, Aske's news-selling,
+Coldwell, Joss's badges.
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| The lead ↔ Rue | **The suspicion is over.** She told the lead the mill and watched the lead's face, and saw they didn't know; "I've hated you four days for nothing" (one reply). Nothing has replaced it yet; she gave bread without counting and took some back. She said "heir" once in the kitchen. She has one more thing to tell, not tonight. |
+| Maud ↔ Rue | **Cracked.** Maud confessed the letter before doing Rue's hands; Rue took the salve and didn't open it, and told her to stop looking at her. Maud sat down on the hearth step and stayed. Nobody forgave anybody; nobody left. |
+| Aske ↔ Rue | **Aske has stopped speaking to her.** She read "Candle" by Rue's name herself, said "You were one of them", got "Yes", and went out. The night before she had taken the pot from Rue and argued over an R. |
+| Hollis ↔ Maud | **Thawed by one line.** He asked her, "Keeper. Find my girl. You wrote her in, you'll know the page," and she found the line and said the first words were in her hand, and read on. In the boathouse he had said "My girl's in that book too" in front of her. |
+| Hollis ↔ the lead | He asked the lead what they want out of the book and got an answer (to "Dace's name", a stick on the fire and "Eat something"). Over the pay-book he went to the window; Rue made the lead look at that. |
+| Hollis ↔ Dace | Hollis heard from Ned (if he fought him) that the boy fed the old guard and asks after him every winter, and said he isn't going back down. His son's initial on a paymaster's page, read aloud by Tamsin, and he said nothing. |
+| Hollis ↔ Ned Tolley | Captain and sergeant, fifteen years, ended on the wall (if Hollis fought him): "Go on back down, Captain." / "Guard up, Ned." Ned died telling him his bay mare has gotten fat. |
+| Maud ↔ the prior | Her prior for six years, kind to her, who taught her the hand she writes in; she told him she isn't going home and came in anyway; he died at his desk. She covered him. |
+| Tamsin ↔ Maud | Maud did Tamsin's burned hands first thing ("This will sting, I'm sorry, hold still"). Tamsin told Maud, gray in the face, to ride behind her. |
+| Joss ↔ Maud | He mended her cuff and brought her in off the door, the first thing between them. |
+| Joss ↔ Dace | He defended the captain over the pay-book without being asked: "It's another Marr. It is." |
+| Dace ↔ the lead | Dace knows the lead has read the pay-book. "Come and ask me, then. I'm here." |
+
+### Status
+
+- **Greywater Abbey is taken**; the prior is dead; the novices got away
+  by boat (the prior's last worry; nothing says otherwise). Ned Tolley
+  is dead if the player killed him. **The register and Vosse's pay-book
+  are the party's** (Maud carries the register).
+- The party (the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss) is at
+  Greywater, on the lake, two days north of Kell's Ford, off the road to
+  Veyne Hall. Maud is an apostate in all but the Vigil's word for it.
+- Dace is at Veyne Hall, garrisoning every road to it, with orders that
+  the exile is brought to him untouched (Chapter 4's roads).
+- **After this chapter the Act 1 world map opens** (`world-structure.md`).
+- The lead's three replies (to Hollis, to Rue, in the kitchen) are not
+  recorded: tones never change what happened.
+
+### If a companion died before Chapter 3 (Classic)
+
+Everything above describes the scenes with all six alive. A companion
+who died in Chapter 1 or 2 is not in them, and the scenes play around
+the gap. True on every path: the register is read (Rue's two lines,
+Wren's "lost", the pay-book's "D. Marr, informer: eleven children"),
+the prior dies, the lead has the books, Dace reads the report.
+
+- **Hollis dead:** nobody said "my girl's in that book"; the lead's
+  want from the book was said to the fire, not to him; nobody told Maud
+  the men on the wall aren't keepers (she corrected herself alone, or
+  not at all); nobody ordered the kid behind him; **the lead turned to
+  the M's unasked** and read Wren's line (narration); nobody placed
+  Vosse as "the man from the mill" (narration does); nobody went to the
+  window, so Rue had nothing to point at that night; Ned's exchange
+  can't play.
+- **Tamsin dead:** no plan to knock; nobody told Maud to ride; nobody
+  pulled ledgers from the hearth; **Joss found the pay-book** and read
+  "D. Marr" himself (or narration did, without Joss).
+- **Aske dead:** nobody took the pot from Rue or did letters in the ash;
+  nobody counted the men on the wall (Joss alone named the black);
+  nobody said they aren't loosing; **nobody read "Candle"**: Rue read
+  her second line, skipped the word, and nobody left the room over it.
+- **Maud dead:** **Rue said what the register is** ("they make you watch
+  them write you in"), or narration did without her; nobody said the
+  prior is burning the books; nobody went first in a hood; nobody said
+  "quickly, please" on turn 1; the prior's exchange can't play; nobody
+  did Tamsin's hands; **Rue took the register** (or the lead, without
+  her); Rue read Wren's line for Hollis (or the lead found it); Joss
+  mended nobody's cuff; **the confession can't happen**: Rue never
+  learns who wrote the letter unless Maud's death line reached her
+  ("tell the girl with the burned hands it was me").
+- **Rue dead:** nobody burned the porridge; nobody wanted to row over;
+  **the register's two lines were read by narration**, under the R's,
+  and Aske had nobody to leave the room over; Wren's line was read by
+  Maud or found by the lead; **the telling can't happen**: what Dace did
+  at the cart reaches the lead only as "D. Marr, informer: eleven
+  children", and nobody says the book is wrong about one thing; **the
+  confession can't happen**: Maud carries the letter alone. Nobody
+  watched Hollis at the window for the lead.
+- **Joss dead:** nobody named the black as Hound black (Aske alone
+  said not priests); nobody did the Hound drill; nobody mended Maud's
+  cuff; **nobody said it's another Marr.**
