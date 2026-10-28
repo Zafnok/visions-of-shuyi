@@ -436,3 +436,90 @@ fn the_sale_renders() {
     press(&mut s, &mut c, &[Action::CursorUp]);
     assert_snapshot!("sell_confirm", render(&s, &c).to_snapshot(&c.palette));
 }
+
+#[test]
+fn up_and_down_move_through_the_lines_and_wrap() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, ARMOURY, 0);
+    let focus = |s: &Stacked| s.shop().unwrap().focus();
+    assert_eq!(focus(&s), 0);
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(focus(&s), 1);
+    press(&mut s, &mut c, &[Action::CursorUp, Action::CursorUp]);
+    assert_eq!(focus(&s), 2);
+    assert_eq!(s.shop().unwrap().view(&c).focus, 2);
+}
+
+#[test]
+fn left_and_right_switch_tabs_and_a_blacksmith_has_one() {
+    let mut c = ctx();
+    let mut s = shop_open(&mut c, VENDOR, 0);
+    let mut shop = s.shop().unwrap().clone();
+    assert_eq!(shop.step(Action::CursorLeft), ShopEffect::Moved);
+    assert_eq!(shop.tab(), Tab::Sell);
+    assert_eq!(shop.step(Action::CursorRight), ShopEffect::Moved);
+    assert_eq!(shop.tab(), Tab::Buy);
+    assert_eq!(shop.step(Action::CursorRight), ShopEffect::Moved);
+    assert_eq!(shop.tab(), Tab::Sell);
+    let mut s2 = menu_open(&mut c, worn_at(BLACKSMITH, 0, Some(3)));
+    choose(&mut s2, &mut c, MenuEntry::Shop);
+    let mut smith = s2.shop().unwrap().clone();
+    assert_eq!(smith.step(Action::CursorLeft), ShopEffect::None);
+    assert_eq!(smith.step(Action::CursorRight), ShopEffect::None);
+    assert_eq!(smith.tab(), Tab::Repair);
+    press(&mut s, &mut c, &[Action::Cancel]);
+}
+
+#[test]
+fn a_line_names_how_many_only_past_one_and_seals_are_never_listed() {
+    let mut c = ctx();
+    // A seal in the pack: no shop buys it.
+    let units = battle_at(VENDOR, 0).units().to_vec();
+    let (map, _) = quick_units(&c);
+    let rout = Objective::Rout { turn_limit: None };
+    let pack = BattlePack {
+        items: ["potion", "tier_2_seal", "potion"]
+            .map(ItemId::new)
+            .to_vec(),
+        cap: 3,
+    };
+    let state = BattleState::new(BattleSetup {
+        pack,
+        ..setup(&c, map, units, rout)
+    })
+    .0;
+    let mut s = menu_open(&mut c, state);
+    choose(&mut s, &mut c, MenuEntry::Shop);
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    let view = s.shop().unwrap().view(&c);
+    let names: Vec<&str> = view.lines.iter().map(|l| l.name.as_str()).collect();
+    assert!(names.contains(&"Potion ×2"), "{names:?}");
+    assert!(!names.iter().any(|n| n.contains("Seal")), "{names:?}");
+    // A single item has no count.
+    assert!(!names[0].contains('×'), "{names:?}");
+}
+
+#[test]
+fn the_screen_is_named_shop() {
+    let mut c = ctx();
+    let s = shop_open(&mut c, VENDOR, 0);
+    let shop = s.shop().unwrap();
+    assert_eq!(crate::screen::Screen::name(shop), "shop");
+}
+
+#[test]
+fn confirming_a_sale_sells_and_cancel_goes_back() {
+    let mut c = ctx();
+    let s = selling_potions(&mut c);
+    let mut shop = s.shop().unwrap().clone();
+    assert_eq!(shop.step(Action::CursorDown), ShopEffect::None);
+    assert_eq!(shop.step(Action::CursorUp), ShopEffect::Moved);
+    assert_eq!(shop.step(Action::CursorLeft), ShopEffect::None);
+    let mut back = shop.clone();
+    assert_eq!(back.step(Action::Cancel), ShopEffect::Back);
+    assert_eq!(back.selling(), None);
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Chosen);
+    assert_eq!(shop.visit().txns.len(), 2);
+    // Back on the Sell list: Confirm asks again.
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Asked);
+}

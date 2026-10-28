@@ -36,7 +36,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::ListCursor;
+use crate::widgets::{ListCursor, wrap_step};
 use crate::words::Words;
 
 /// Text key of the help line while it is open, for a shop with tabs.
@@ -359,11 +359,8 @@ impl ShopScreen {
                 if tabs < 2 {
                     return ShopEffect::None;
                 }
-                self.tab = if action == Action::CursorRight {
-                    (self.tab + 1) % tabs
-                } else {
-                    (self.tab + tabs - 1) % tabs
-                };
+                let forward = matches!(action, Action::CursorRight);
+                self.tab = wrap_step(self.tab, tabs, forward);
                 self.cursor = ListCursor::new(self.offers().len());
                 ShopEffect::Moved
             }
