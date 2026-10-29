@@ -1,7 +1,8 @@
 //! Tests of the shop rules. Test items: `sword` (weapon, 1000 gold, 40
 //! durability), `bow` (weapon, 480 gold, 45 durability), `free_knife`
-//! (weapon, 0 gold), `vest` (armour, 300), `ring` (accessory, 999),
-//! `potion` (consumable, 300).
+//! (weapon, 0 gold), `vest` (leather armour, 300), `robe` (cloth armour,
+//! 120), `plate` (plate armour, 800), `ring` (accessory, 999), `potion`
+//! (consumable, 300).
 
 use proptest::prelude::*;
 
@@ -32,8 +33,20 @@ fn weapon(price: u32, durability: u32) -> ItemDef {
     })
 }
 
+fn armour(weight_class: ArmourWeight, price: u32) -> ItemDef {
+    ItemDef::Armour(ArmourDef {
+        name: "a".into(),
+        weight_class,
+        bonus: Stats::default(),
+        weight: 0,
+        price,
+    })
+}
+
 fn items() -> ItemTable {
     let entries = [
+        ("robe", armour(ArmourWeight::Cloth, 120)),
+        ("plate", armour(ArmourWeight::Plate, 800)),
         ("sword", weapon(1000, 40)),
         ("bow", weapon(480, 45)),
         ("free_knife", weapon(0, 10)),
@@ -152,7 +165,7 @@ fn repair_cost_never_overflows() {
 #[test]
 fn sell_price_is_half_rounded_down() {
     let t = items();
-    let price = |s: &str| sell_price(t.get(&id(s)).unwrap());
+    let price = |s: &str| sell_price(ShopKind::Vendor, t.get(&id(s)).unwrap());
     assert_eq!(price("sword"), 500);
     assert_eq!(price("ring"), 499);
     assert_eq!(price("vest"), 150);
@@ -340,6 +353,7 @@ fn errors_display() {
         (ShopError::NotAWeapon(id("x")), "\"x\" is not a weapon"),
         (ShopError::NotBought(id("x")), "no shop buys \"x\""),
         (ShopError::UnknownItem(id("x")), "unknown item \"x\""),
+        (ShopError::NotTaken(id("x")), "this store doesn't buy \"x\""),
     ];
     for (e, text) in cases {
         assert_eq!(e.to_string(), text);
@@ -437,7 +451,9 @@ proptest! {
     #[test]
     fn random_shopping_conserves_gold_and_items(
         start in 0u32..5000,
-        kind in prop::sample::select(vec![ShopKind::Armoury, ShopKind::Vendor, ShopKind::Blacksmith]),
+        kind in prop::sample::select(vec![
+            ShopKind::Armoury, ShopKind::Vendor, ShopKind::Blacksmith, ShopKind::Alchemist, ShopKind::Tailor,
+        ]),
         worn in prop::collection::vec(0u32..=40, 0..3),
         ops in prop::collection::vec(arb_op(), 0..40),
     ) {
@@ -545,10 +561,139 @@ fn special_weapons_are_never_stocked_but_sell_and_repair() {
     ] {
         assert!(!kind.stocks(&special), "{kind:?}");
     }
-    assert_eq!(sell_price(&special), 1500);
+    assert_eq!(sell_price(ShopKind::Armoury, &special), 1500);
     let copy = WeaponInstance {
         def: id("moonblade"),
         durability_left: 15,
     };
     assert_eq!(repair_cost(&def, &copy), 750);
+}
+
+// ---- Specialty stores (ticket 0320) -----------------------------------------
+
+fn alchemist() -> Shop {
+    shop(ShopKind::Alchemist, &["potion"])
+}
+
+fn tailor() -> Shop {
+    shop(ShopKind::Tailor, &["robe", "vest"])
+}
+
+#[test]
+fn an_alchemist_pays_full_for_a_potion_and_refuses_a_sword() {
+    let t = items();
+    let mut gold = 0;
+    assert_eq!(sell(&alchemist(), &t, &mut gold, &id("potion")), Ok(300));
+    assert_eq!(
+        sell(&alchemist(), &t, &mut gold, &id("sword")),
+        Err(ShopError::NotTaken(id("sword")))
+    );
+    assert_eq!(gold, 300);
+    // A vendor pays half for the same potion.
+    assert_eq!(sell(&vendor(), &t, &mut gold, &id("potion")), Ok(150));
+}
+
+#[test]
+fn a_tailor_pays_full_for_cloth_and_leather_and_refuses_plate() {
+    let t = items();
+    let mut gold = 0;
+    assert_eq!(sell(&tailor(), &t, &mut gold, &id("robe")), Ok(120));
+    assert_eq!(sell(&tailor(), &t, &mut gold, &id("vest")), Ok(300));
+    for refused in ["plate", "potion", "ring", "sword"] {
+        assert_eq!(
+            sell(&tailor(), &t, &mut gold, &id(refused)),
+            Err(ShopError::NotTaken(id(refused))),
+            "{refused}"
+        );
+    }
+    // A seal is still refused as no shop buys it.
+    assert_eq!(
+        sell(&tailor(), &t, &mut gold, &id("seal")),
+        Err(ShopError::NotBought(id("seal")))
+    );
+    assert_eq!(gold, 420);
+}
+
+#[test]
+fn specialty_stores_sell_and_take_only_their_goods() {
+    let t = items();
+    let def = |s: &str| t.get(&id(s)).unwrap();
+    for (item, alchemist, tailor) in [
+        ("potion", true, false),
+        ("robe", false, true),
+        ("vest", false, true),
+        ("plate", false, false),
+        ("sword", false, false),
+        ("ring", false, false),
+        ("seal", false, false),
+    ] {
+        for (kind, goods) in [(ShopKind::Alchemist, alchemist), (ShopKind::Tailor, tailor)] {
+            assert_eq!(kind.stocks(def(item)), goods, "{kind:?} stocks {item}");
+            assert_eq!(kind.takes(def(item)), goods, "{kind:?} takes {item}");
+        }
+    }
+    for kind in [ShopKind::Alchemist, ShopKind::Tailor] {
+        assert!(
+            kind.is_specialty() && kind.buys() && !kind.repairs(),
+            "{kind:?}"
+        );
+    }
+    // The other kinds take anything but a seal; a blacksmith nothing.
+    for kind in [ShopKind::Armoury, ShopKind::Vendor, ShopKind::Basic] {
+        assert!(!kind.is_specialty());
+        assert!(
+            kind.takes(def("plate")) && !kind.takes(def("seal")),
+            "{kind:?}"
+        );
+    }
+    assert!(!ShopKind::Blacksmith.takes(def("sword")));
+}
+
+#[test]
+fn a_tailor_session_refuses_what_it_wont_take() {
+    let (t, shop) = (items(), tailor());
+    let mut gold = 0;
+    let mut stock = Stock::default();
+    stock.add(id("plate"));
+    stock.add(id("robe"));
+    stock.weapons.push(copy("sword", 40));
+    let mut s = ShopSession::new(&shop, &t, &mut gold, &mut stock);
+    assert_eq!(
+        s.sell_item(&id("plate")),
+        Err(ShopError::NotTaken(id("plate")))
+    );
+    assert_eq!(s.sell_weapon(0), Err(ShopError::NotTaken(id("sword"))));
+    assert_eq!(s.sell_item(&id("robe")), Ok(120));
+    assert_eq!(
+        s.buy(&id("vest")),
+        Err(ShopError::NotEnoughGold {
+            cost: 300,
+            gold: 120
+        })
+    );
+    assert_eq!(gold, 120);
+    assert_eq!((stock.count(&id("plate")), stock.weapons.len()), (1, 1));
+}
+
+proptest! {
+    #[test]
+    fn no_shop_pays_more_than_the_price(
+        price in 0u32..=u32::MAX,
+        kind in prop::sample::select(vec![
+            ShopKind::Armoury, ShopKind::Vendor, ShopKind::Blacksmith, ShopKind::Basic,
+            ShopKind::Alchemist, ShopKind::Tailor,
+        ]),
+        weight in prop::sample::select(vec![
+            ArmourWeight::Cloth, ArmourWeight::Leather, ArmourWeight::Chain, ArmourWeight::Plate,
+        ]),
+    ) {
+        let potion = ItemDef::Consumable(ConsumableDef {
+            name: "p".into(),
+            effect: ConsumableEffect::Heal(1),
+            price,
+        });
+        for item in [weapon(price, 1), armour(weight, price), potion] {
+            prop_assert!(sell_price(kind, &item) <= item.price());
+        }
+    }
 }
