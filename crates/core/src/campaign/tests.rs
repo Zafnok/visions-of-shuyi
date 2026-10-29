@@ -803,7 +803,11 @@ fn a_scene_death_removes_a_character_for_good_in_every_mode() {
 #[test]
 fn a_scene_join_adds_a_character_to_the_army_once() {
     let mut game = campaign(GameMode::Classic);
-    let cal = named(unit(93, Faction::Enemy, p(3, 3)), "cal");
+    // An enemy boss's unit becomes a regular player unit.
+    let cal = Unit {
+        role: Role::Boss,
+        ..named(unit(93, Faction::Enemy, p(3, 3)), "cal")
+    };
     assert!(game.joins_in_scene(cal.clone()));
     let names: Vec<_> = game.roster.iter().map(|u| u.name.as_str()).collect();
     assert_eq!(names, ["lord", "ann", "ben", "cal"]);
