@@ -356,16 +356,32 @@ fn the_picture_look_draws_the_maps_picture_dotted_roads_and_no_flag() {
     use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::glyph_buffer::{Cell, Layer};
     let mut ctx = ctx();
-    let def = ctx.game.content.worldmaps.get_mut("test_world").expect("a map");
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("a map");
     def.picture = Some("images/test_card.png".into());
     let view = screen(&ctx).view(&ctx);
     let black = crate::color::Rgb::new(0, 0, 0);
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
     picture::paint(&ctx, &view, "images/test_card.png", &mut buf);
     let sprites = buf.sprites();
-    let card = ctx.game.content.images.id("images/test_card.png").expect("the card");
-    let ground = sprites.iter().find(|s| s.image == card).expect("the picture");
-    assert_eq!((ground.dest.x, ground.dest.y, ground.dest.w, ground.dest.h), (0, 0, 560, 480));
+    let card = ctx
+        .game
+        .content
+        .images
+        .id("images/test_card.png")
+        .expect("the card");
+    let ground = sprites
+        .iter()
+        .find(|s| s.image == card)
+        .expect("the picture");
+    assert_eq!(
+        (ground.dest.x, ground.dest.y, ground.dest.w, ground.dest.h),
+        (0, 0, 560, 480)
+    );
     assert_eq!(ground.layer, Layer::Under);
     // Dots: 4 × 4 squares in the path colour.
     let path = ctx.palette.get(UiColor::Path);
@@ -377,7 +393,11 @@ fn the_picture_look_draws_the_maps_picture_dotted_roads_and_no_flag() {
     assert!(dots > 20, "{dots} dots");
     // Stone Mill's plate, and no flag over the army.
     let story = ctx.palette.lookup("text_highlight").expect("a color");
-    assert!(buf.overlays().iter().any(|o| o.color == story && o.rect.w == 16));
+    assert!(
+        buf.overlays()
+            .iter()
+            .any(|o| o.color == story && o.rect.w == 16)
+    );
     assert_eq!(buf.get(34, 13).map(|c| c.glyph), Some('‼'));
     assert_ne!(buf.get(14, 19).map(|c| c.glyph), Some('▼'));
 }
@@ -397,7 +417,12 @@ fn pictures_need_the_look_and_a_picture() {
     };
     ctx.preview_settings(|s| s.game.map_look = MapLook::Pictures);
     assert_eq!(painted(&ctx), 0, "no picture: glyphs");
-    let def = ctx.game.content.worldmaps.get_mut("test_world").expect("a map");
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("a map");
     def.picture = Some("images/test_card.png".into());
     assert!(painted(&ctx) > 0);
     ctx.preview_settings(|s| s.game.map_look = MapLook::Glyphs);
