@@ -31,7 +31,7 @@ the number scale first. As a world-map chapter it needs the world map (1007) and
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
-0070 picked **Ragna**'s face: a generator face with dark-blonde hair in a bun and a traveller's coat (she never fights). **Hedda**'s face and picture are 0076's. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
+0070 picked **Ragna**'s face: a generator face with dark-blonde hair in a bun and a traveller's coat (she never fights). **Hedda**'s combat picture is 0076's pick: elie automata's **Battle Axemaiden** (<https://elie-automata.itch.io/battle-axemaiden-animated-character-story-art>, free; AI-assisted, so the Steam page discloses it, 0903; the licence asks for the credit "elie automata"), in her three-quarter pose. Her face is a generator face to match it (long red ponytail, about 32, weathered; Nick chose it over the pack's own painted portraits), and she is now 32, not 44 (`shieldbearer.md`). Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 

@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-28
 ---
 
 # 0076 — Decide: Hedda's and the Hound lieutenant's faces and combat pictures
@@ -96,12 +96,12 @@ pick"). Three to five candidates each, with the pack and file name, plus
 
 ## Acceptance criteria
 
-- [ ] Hedda has a recorded face and combat picture, and the lieutenant a
+- [x] Hedda has a recorded face and combat picture, and the lieutenant a
       recorded combat picture (and a face if he speaks), with Nick's words
       in `look-and-feel.md`.
-- [ ] 0848 and 0851 name the picks in their Context.
-- [ ] No bought file or mockup made from one is committed.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] 0848 and 0851 name the picks in their Context.
+- [x] No bought file or mockup made from one is committed.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -109,5 +109,42 @@ pick"). Three to five candidates each, with the pack and file name, plus
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done.** A new search (Mega Tiles, Sagak Art and Shironejiya
+had nothing new; GameDev Market searched by hand in the browser pane),
+then, when Nick asked for "ANY candidates", three wider searches by
+subagents (Western stores; BOOTH, DLsite and the Japanese free-art sites;
+men with axes) and one more for Silas in the Axemaiden's style. Every
+candidate shown was checked by eye on its store preview. Picks, recorded
+in `look-and-feel.md` (*Act 1's new cast*) with Nick's words:
+
+- **Hedda:** elie automata's **Battle Axemaiden** (free, credit "elie
+  automata", AI-assisted), three-quarter pose; a **generator face** with a
+  long red ponytail. Nick also made her **32** (was 44): `shieldbearer.md`
+  now has her as Ragna's younger foster-sister, at war from nineteen, and
+  her look follows the picture (red hair, dark plate, red cloak).
+- **Silas Hendry (the Hound lieutenant):** Stupid Creations' **TTMini:
+  Bandit Brigand** ($2.99, AI-assisted), three-quarter pose; he speaks in
+  Chapter 2, so a **generator face** with shaggy red hair and a red beard.
+  `hound_lieutenant.md`'s look follows the picture.
+- 0848 and 0851 name the picks in their Context.
+
+**Deviations.**
+- Out of scope, but asked for by Nick: Hedda's age changed (44 to 32) and
+  both characters' written looks were rewritten to fit their art (the
+  0706 rule). Changing her class or weapon stayed out.
+- Both picks are AI-assisted. Nick accepted them for these two; the Steam
+  page's disclosure (0903) covers them.
+- The parts lists for the two generator faces are left to the chapter
+  tickets (0848, 0851), as for every other generator face (0070).
+- Mockups were pasted together in the scratchpad, never committed. The
+  first round cut figures out of store previews and recoloured them; Nick
+  found the artifacts bad ("your recolor looks like shit"), so later
+  rounds showed the store pictures as sold, only cropped.
+
+**Follow-up tickets:** none.
+
+**Gameplay rules decided by Claude:** none.
+
+**For Nick:** the Axemaiden is free; the Bandit Brigand is $2.99 to buy
+when Chapter 2 is built. Already judged as a fallback for an axe boss:
+cogabushi's Captain ($28.80), "ok" as sold.

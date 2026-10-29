@@ -60,9 +60,12 @@ called him "Needle".
 
 ## Look
 
-His combat picture is open (ticket 0076); a face only if he speaks
-outside the fight. Loose until 0076 picks.
+His combat picture is Stupid Creations' TTMini Bandit Brigand (ticket
+0076, `look-and-feel.md`, *Act 1's new cast*), and this look was
+rewritten to fit it. He speaks in Chapter 2's scenes, so he has a
+generator face built to match.
 
-- A Hound officer in Brennish colors over black Hound leathers, a
-  lieutenant's silver at the collar, the axe. Short fair hair, a soldier's
-  tan, an easy smile. Expressions: `neutral`, `happy`, `angry`, `sad`.
+- Stocky, in leather and mail with a red cloak, the Brennish badges
+  Joss sewed on for the disguise, a round shield, and the axe. Shaggy red hair, a
+  full red beard, an easy smile. Expressions: `neutral`, `happy`, `angry`,
+  `sad`.
