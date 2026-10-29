@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-28
 ---
 
 # 0027 — Decide: the camp music
@@ -87,11 +87,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `camp` row with a source URL and a licence that
+- [x] `audio.md` has a `camp` row with a source URL and a licence that
       ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,4 +99,20 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+One round of a listening page
+(https://claude.ai/artifact/TkCSYxm6jv26PQNct8uRv7): six new tracks (A–F),
+five kept from 0026 (G, L, N, O, Q) and `village_home` (V). Nick picked
+three, B (The Old Tower Inn), C (Woodland Fantasy) and G (The Bard's Tale),
+and asked for them to **rotate** with a fade out, a pause and a fade in,
+instead of one track picked at random like a skirmish. Recorded in
+`docs/design/audio.md` as the `camp` pool (a cue row, a *Camp* section, a
+starting value and the appendix); camp is gone from *Open sub-questions*.
+1003's step now says to import all three and rotate them.
+
+*Claude's starting rules* (in audio.md's *Starting values*, tunable):
+
+- Between camp tracks: 3 s fade out, 5 s of quiet, 3 s fade in.
+- The first track is picked at random each time camp opens, then the order
+  goes round the pool, so no track plays twice in a row.
+- The full versions are imported, not the loop files, since each track
+  plays to its end and fades.

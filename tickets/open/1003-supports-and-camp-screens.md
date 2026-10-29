@@ -57,10 +57,13 @@ it):
 - The unit info screen lists the unit's support partners and ranks.
 - One placeholder support conversation and one placeholder camp event in the
   data, so the screens can be tested.
-- The Camp screen plays the `camp` music cue chosen in 0027
-  (`docs/design/audio.md`): import it (`assets-src/audio/import.py`), add it to
-  `assets/audio/audio.ron`, `THIRD_PARTY_ASSETS.md` and the credits. If 0027
-  chose to reuse an existing cue or no music, follow that.
+- The Camp screen plays the `camp` pool chosen in 0027
+  (`docs/design/audio.md`): three tracks (The Old Tower Inn, Woodland
+  Fantasy, The Bard's Tale) that **rotate** while camp is open: one plays
+  to its end, fades out, a short quiet, the next fades in (the timings and
+  order are in audio.md's *Starting values*). Import them
+  (`assets-src/audio/import.py`), add them to `assets/audio/audio.ron`,
+  `THIRD_PARTY_ASSETS.md` and the credits.
 
 **Out (do not do):**
 - Writing real support or camp conversations (story pipeline tickets).
