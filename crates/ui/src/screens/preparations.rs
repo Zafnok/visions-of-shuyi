@@ -9,7 +9,7 @@
 //!
 //! Controls, by [`Focus`]:
 //!
-//! - **Tabs** (`Loadouts`, `Pack`, `Fight!`): Left and Right pick one,
+//! - **Tabs** (`Loadouts`, `Pack`, `Shop`, `Options`, `Fight!`): Left and Right pick one,
 //!   Confirm (or Down) opens it; on `Fight!` Confirm starts the battle.
 //!   Cancel does nothing unless the caller allows leaving; then it asks
 //!   [`LEAVE_QUESTION`].
@@ -23,12 +23,17 @@
 //! - **Pack**: the stock's consumables on the left, the pack on the right;
 //!   Left and Right switch sides, Confirm moves one item across. A full
 //!   pack takes no more and says so.
+//! - **Shop** (ticket 0443, [`shop`]): the battle's basic shop, its Buy,
+//!   Sell and Repair tabs picked with Left and Right; Confirm buys into the
+//!   stock or repairs at once, and asks how many to sell first, with the
+//!   setup's gold. A battle of no numbered chapter has no shop.
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screen
 //! shows and does, and says it as a [`PreparationsView`]; [`glyph`] paints
 //! it.
 
 pub mod glyph;
+pub mod shop;
 pub mod view;
 
 use crate::prelude::*;
@@ -70,6 +75,8 @@ pub enum Tab {
     Loadouts,
     /// The shared consumables.
     Pack,
+    /// The basic shop (0443).
+    Shop,
     /// Opens the Options screen (0805): the one place a Classic campaign
     /// can switch to Casual (`death-and-difficulty.md`).
     Options,
@@ -79,13 +86,20 @@ pub enum Tab {
 
 impl Tab {
     /// Every tab, left to right.
-    pub const ALL: [Tab; 4] = [Tab::Loadouts, Tab::Pack, Tab::Options, Tab::Fight];
+    pub const ALL: [Tab; 5] = [
+        Tab::Loadouts,
+        Tab::Pack,
+        Tab::Shop,
+        Tab::Options,
+        Tab::Fight,
+    ];
 
     /// The text key of the tab's name.
     pub const fn key(self) -> &'static str {
         match self {
             Tab::Loadouts => "prep.tab.loadouts",
             Tab::Pack => "prep.tab.pack",
+            Tab::Shop => "prep.tab.shop",
             Tab::Options => "prep.tab.options",
             Tab::Fight => "prep.tab.fight",
         }
@@ -107,6 +121,8 @@ pub enum Focus {
     Spare,
     /// Pack: the pack.
     Pack,
+    /// Shop: the shop's lines.
+    Shop,
 }
 
 /// Where a row of the stock list takes its item from.
@@ -183,6 +199,12 @@ pub struct PreparationsScreen {
     spare: usize,
     /// The row of the pack.
     pack: usize,
+    /// The shop's tab, among [`shop`]'s.
+    shop_tab: usize,
+    /// The highlighted line of the shop.
+    deal: usize,
+    /// The sale being asked about, if any.
+    selling: Option<crate::screens::battle::shop::SellConfirm>,
     /// Why the last Confirm did nothing.
     message: Option<String>,
     /// [`LEAVE_QUESTION`], while it is open.
@@ -208,6 +230,9 @@ impl PreparationsScreen {
             stock: 0,
             spare: 0,
             pack: 0,
+            shop_tab: 0,
+            deal: 0,
+            selling: None,
             message: None,
             leaving: None,
             open_options: false,
@@ -568,6 +593,8 @@ impl PreparationsScreen {
             (_, Focus::Stock, ..) => "prep.help.stock",
             (_, Focus::Spare, ..) => "prep.help.spare",
             (_, Focus::Pack, ..) => "prep.help.pack",
+            (_, Focus::Shop, ..) if self.selling.is_some() => shop::HELP_SELL,
+            (_, Focus::Shop, ..) => shop::HELP,
         };
         ctx.text_with(key, &[])
     }
@@ -579,6 +606,10 @@ impl PreparationsScreen {
             Tab::Loadouts => (!self.units().is_empty()).then_some(Focus::Units),
             Tab::Pack if !self.spare().is_empty() => Some(Focus::Spare),
             Tab::Pack => (!self.packed().is_empty()).then_some(Focus::Pack),
+            Tab::Shop => {
+                self.open_shop(ctx);
+                return None;
+            }
             Tab::Options => {
                 ctx.audio.menu(MenuSound::Select);
                 self.open_options = true;
@@ -713,6 +744,10 @@ impl PreparationsScreen {
             self.message = None;
         }
         let down = action == CursorDown;
+        if self.focus == Focus::Shop {
+            self.handle_shop(action, ctx);
+            return None;
+        }
         match (self.focus, action) {
             (Focus::Tabs, CursorLeft | CursorRight) => {
                 let n = Tab::ALL.len();
@@ -789,6 +824,7 @@ impl PreparationsScreen {
         let body = match self.tab {
             Tab::Loadouts => PrepBody::Loadouts(self.loadouts_view(ctx)),
             Tab::Pack => PrepBody::Pack(self.pack_view(ctx)),
+            Tab::Shop => PrepBody::Shop(self.shop_view(ctx)),
             Tab::Options => PrepBody::Options,
             Tab::Fight => {
                 let units = self.prep.setup.player_units().count();

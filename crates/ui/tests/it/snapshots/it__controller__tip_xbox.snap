@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/controller.rs
-assertion_line: 340
 expression: xbox.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: xbox.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                             X danger zone: OFF · Back auto-end: OFF 
  A close                                                                                   F2 debug 

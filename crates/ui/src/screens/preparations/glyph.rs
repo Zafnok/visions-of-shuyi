@@ -14,6 +14,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
+use crate::screens::battle::glyph::shop as shop_glyph;
 use crate::screens::print_centred;
 use crate::widgets::ListCursor;
 
@@ -34,6 +35,8 @@ const STOCK_BOX: Rect = Rect::new(52, 3, 48, 25);
 const SPARE_BOX: Rect = Rect::new(8, 3, 40, 25);
 /// The pack (Pack tab).
 const PACK_BOX: Rect = Rect::new(52, 3, 40, 25);
+/// The shop (Shop tab).
+pub const SHOP_BOX: Rect = Rect::new(0, 3, 100, 25);
 /// Row of what the battle starts with (Fight tab).
 const READY_ROW: i32 = 14;
 /// Row of the message.
@@ -54,6 +57,7 @@ pub fn paint(ctx: &Ctx, view: &PreparationsView, buf: &mut GlyphBuffer) {
     match &view.body {
         PrepBody::Loadouts(loadouts) => paint_loadouts(ctx, loadouts, buf),
         PrepBody::Pack(pack) => paint_pack(ctx, pack, buf),
+        PrepBody::Shop(shop) => shop_glyph::paint_box(ctx, shop, SHOP_BOX, buf),
         PrepBody::Options => {}
         PrepBody::Fight(ready) => {
             print_centred(buf, READY_ROW, ready, c(UiColor::Text), black);

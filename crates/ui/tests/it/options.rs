@@ -74,10 +74,10 @@ fn options_in_battle() -> Harness {
 }
 
 /// The Quick Battle's Preparations, then Options from its tabs (Loadouts,
-/// Pack, Options).
+/// Pack, Shop, Options).
 fn options_at_preparations() -> Harness {
     let mut h = title();
-    h.keys("Down f Right Right f");
+    h.keys("Down f Right Right Right f");
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "preparations", "options"]
@@ -440,10 +440,10 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     h.keys("d");
     assert_eq!(mode(&h), Some(GameMode::Classic));
     // The map menu is still open on Options: Restart Battle is two down,
-    // and goes back to Preparations. Its Options tab is two to the right.
+    // and goes back to Preparations. Its Options tab is three to the right.
     h.keys("Down Down f f");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
-    h.keys("Right Right f Up Up Up Up");
+    h.keys("Right Right Right f Up Up Up Up");
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "preparations", "options"]
@@ -525,7 +525,7 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
 #[test]
 fn the_tutorial_set_to_none_at_preparations_stops_the_tips() {
     let mut h = title();
-    h.with_tips().keys("Down f Right Right f");
+    h.with_tips().keys("Down f Right Right Right f");
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "preparations", "options"]

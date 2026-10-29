@@ -166,7 +166,11 @@ fn gear_and_consumables_match_the_design() {
     }
     assert_eq!(
         t.consumable(&id("potion")).map(|c| (c.effect, c.price)),
-        Some((ConsumableEffect::Heal(10), 300))
+        Some((ConsumableEffect::Heal(20), 300))
+    );
+    assert_eq!(
+        t.consumable(&id("hi_potion")).map(|c| (c.effect, c.price)),
+        Some((ConsumableEffect::Heal(40), 900))
     );
     assert_eq!(
         t.consumable(&id("elixir")).map(|c| (c.effect, c.price)),
@@ -181,7 +185,7 @@ fn gear_and_consumables_match_the_design() {
         let s = t.seal(&id(key));
         assert_eq!(s.map(|s| (s.name.as_str(), s.kind)), Some((name, kind)));
     }
-    assert_eq!(t.items.len(), 10 + 4 + 3 + 2 + 3);
+    assert_eq!(t.items.len(), 10 + 4 + 3 + 3 + 3);
     assert_eq!(
         t.get(&id("linen_robe")).map(ItemDef::name),
         Some("Linen Robe")

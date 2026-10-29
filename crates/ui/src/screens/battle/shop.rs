@@ -65,11 +65,12 @@ impl Tab {
         match kind {
             ShopKind::Armoury | ShopKind::Vendor => &[Tab::Buy, Tab::Sell],
             ShopKind::Blacksmith => &[Tab::Repair],
+            ShopKind::Basic => &[Tab::Buy, Tab::Sell, Tab::Repair],
         }
     }
 
     /// The key of its name.
-    fn key(self) -> &'static str {
+    pub fn key(self) -> &'static str {
         match self {
             Tab::Buy => "battle.shop.buy",
             Tab::Sell => "battle.shop.sell",
@@ -84,6 +85,7 @@ pub fn kind_key(kind: ShopKind) -> &'static str {
         ShopKind::Armoury => "battle.shop.armoury",
         ShopKind::Vendor => "battle.shop.vendor",
         ShopKind::Blacksmith => "battle.shop.blacksmith",
+        ShopKind::Basic => "battle.shop.basic",
     }
 }
 

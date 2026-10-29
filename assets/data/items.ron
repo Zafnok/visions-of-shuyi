@@ -71,7 +71,8 @@
         (id: "focus_charm", name: "Focus Charm", bonus: (dex: 2), price: 1500),
     ],
     consumables: [
-        (id: "potion", name: "Potion", effect: Heal(10), price: 300),
+        (id: "potion", name: "Potion", effect: Heal(20), price: 300),
+        (id: "hi_potion", name: "Hi-Potion", effect: Heal(40), price: 900),
         (id: "elixir", name: "Elixir", effect: HealFull, price: 3000),
     ],
     seals: [

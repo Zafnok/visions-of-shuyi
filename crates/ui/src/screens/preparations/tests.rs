@@ -2,12 +2,13 @@
 //! (`assets-test/battles/quick.ron`): the test lord (swords), knight (spears,
 //! armour up to plate), archer and mage, the test scout left out of the
 //! battle with a Steel Bow, a stock of three weapons, three armours, three
-//! accessories, six Potions and two Elixirs, and a pack cap of 6.
+//! accessories, six Potions and two Elixirs, 3 000 gold, a pack cap of 6, and
+//! Chapter 5's basic shop.
 
 use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
 use trpg_content::battle_campaign;
-use trpg_core::{GameMode, WeaponRank};
+use trpg_core::{GameMode, WeaponAt, WeaponRank};
 
 use super::*;
 use crate::audio::AudioRequest;
@@ -18,13 +19,16 @@ use crate::screens::popped_with;
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
-/// The Quick Battle's setup and bench, before Preparations.
+/// The Quick Battle's setup, bench and shop, before Preparations.
 pub(super) fn setup(c: &Ctx) -> Preparations {
-    let def = &c.game.content.battles[QUICK_BATTLE];
-    let campaign = battle_campaign(&c.game.content, def, GameMode::Classic, c.game.lead.clone());
+    let content = &c.game.content;
+    let def = &content.battles[QUICK_BATTLE];
+    let campaign = battle_campaign(content, def, GameMode::Classic, c.game.lead.clone());
+    let number = content.chapters["quick"].number;
     Preparations {
-        setup: campaign.battle_setup(def, &c.game.content.tables()),
+        setup: campaign.battle_setup(def, &content.tables()),
         bench: campaign.bench(def),
+        shop: number.map(|n| content.basic_shop.shop(n)),
     }
 }
 
@@ -98,7 +102,7 @@ fn opens_on_the_loadouts_tab_with_an_empty_pack() {
     );
     assert_eq!(
         Tab::ALL.map(|t| c.text(t.key())),
-        ["Loadouts", "Pack", "Options", "Fight!"]
+        ["Loadouts", "Pack", "Shop", "Options", "Fight!"]
     );
 }
 
@@ -108,6 +112,8 @@ fn left_and_right_pick_a_tab_and_fight_starts_the_battle() {
     let mut s = screen(&c);
     assert_eq!(sounds(&mut s, &mut c, &[CursorRight]), ["menu_move"]);
     assert_eq!(s.tab(), Tab::Pack);
+    update(&mut s, &mut c, &[CursorRight]);
+    assert_eq!(s.tab(), Tab::Shop);
     // Options (0805): Down doesn't open it; Confirm opens the Options
     // screen over this one, once.
     update(&mut s, &mut c, &[CursorRight]);
@@ -443,7 +449,14 @@ fn help_names_the_players_keys() {
     assert_eq!(s.help(&c), "arrows choose · f put back · d back");
     update(&mut s, &mut c, &[Cancel, CursorRight]);
     assert_eq!(s.help(&c), "arrows choose · f open · d leave");
-    update(&mut s, &mut c, &[CursorRight]);
+    update(&mut s, &mut c, &[Confirm, CursorRight]);
+    assert_eq!(
+        s.help(&c),
+        "Up Down choose · Left Right buy, sell, repair · f confirm · d back"
+    );
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(s.help(&c), "Up Down how many · f sell · d back");
+    update(&mut s, &mut c, &[Cancel, Cancel, CursorRight, CursorRight]);
     assert_eq!(s.help(&c), "arrows choose · f start the battle · d leave");
     update(&mut s, &mut c, &[Cancel]);
     assert_eq!(s.help(&c), "f yes / d no");
@@ -679,6 +692,7 @@ fn the_view_on_the_first_frame_is_the_loadouts_tab_with_the_cursor_on_the_tabs()
         [
             (Tab::Loadouts, "Loadouts", true),
             (Tab::Pack, "Pack", false),
+            (Tab::Shop, "Shop", false),
             (Tab::Options, "Options", false),
             (Tab::Fight, "Fight!", false),
         ]
@@ -859,7 +873,7 @@ fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
         tab.spare.rows,
         [
             row("Elixir", 2, "Restore all HP"),
-            row("Potion", 6, "Restore 10 HP")
+            row("Potion", 6, "Restore 20 HP")
         ]
     );
     assert_eq!(tab.spare.state, ListState::Idle);
@@ -884,7 +898,7 @@ fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
         tab.spare.rows,
         [
             row("Elixir", 1, "Restore all HP"),
-            row("Potion", 1, "Restore 10 HP")
+            row("Potion", 1, "Restore 20 HP")
         ]
     );
     assert_eq!((tab.spare.cursor, tab.spare.state), (1, ListState::Focused));
@@ -893,7 +907,7 @@ fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
         tab.pack.rows,
         [
             row("Elixir", 1, "Restore all HP"),
-            row("Potion", 5, "Restore 10 HP")
+            row("Potion", 5, "Restore 20 HP")
         ]
     );
     assert_eq!(tab.pack.state, ListState::Idle);
@@ -916,12 +930,12 @@ fn the_view_of_the_options_and_fight_tabs_and_the_leave_question() {
     update(&mut s, &mut c, &[CursorLeft, CursorLeft]);
     let view = s.view(&c);
     assert_eq!(view.body, PrepBody::Options);
-    assert!(view.tabs[2].shown);
+    assert!(view.tabs[3].shown);
 
     update(&mut s, &mut c, &[CursorRight]);
     let view = s.view(&c);
     assert_eq!(view.body, PrepBody::Fight("Units 4 · Pack 0/6".to_owned()));
-    assert!(view.tabs[3].shown && view.on_tabs);
+    assert!(view.tabs[4].shown && view.on_tabs);
     assert_eq!(view.leave_question, None);
     assert_eq!(view.help, "arrows choose · f start the battle · d leave");
 
@@ -977,4 +991,239 @@ fn the_screen_opts_into_being_found_by_type() {
         .as_any()
         .and_then(|any| any.downcast_ref::<PreparationsScreen>());
     assert_eq!(found.map(PreparationsScreen::tab), Some(Tab::Loadouts));
+}
+
+/// The screen on its Shop tab's lists, on shop tab `tab` (0 Buy, 1 Sell,
+/// 2 Repair).
+fn in_shop(c: &mut Ctx, s: &mut PreparationsScreen, tab: usize) {
+    update(s, c, &[CursorRight, CursorRight, Confirm]);
+    assert_eq!((s.tab(), s.focus()), (Tab::Shop, Focus::Shop));
+    for _ in 0..tab {
+        update(s, c, &[CursorRight]);
+    }
+}
+
+fn shop_of(view: &PreparationsView) -> &crate::screens::battle::view::ShopScreenView {
+    match &view.body {
+        PrepBody::Shop(shop) => shop,
+        other => panic!("not the Shop tab: {other:?}"),
+    }
+}
+
+/// Each line as its name, gold and whether it can be chosen.
+fn shop_lines(s: &PreparationsScreen, c: &Ctx) -> Vec<(String, String, bool)> {
+    let view = s.view(c);
+    let lines = shop_of(&view).lines.iter();
+    lines
+        .map(|l| (l.name.clone(), l.gold.clone(), l.enabled))
+        .collect()
+}
+
+#[test]
+fn the_shop_sells_chapter_fives_basics_and_shows_the_gold() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    in_shop(&mut c, &mut s, 0);
+    let view = s.view(&c);
+    let shop = shop_of(&view);
+    assert_eq!((&*shop.shop, &*shop.gold), ("Shop", "Gold 3 000"));
+    assert_eq!(shop.tabs, ["Buy", "Sell", "Repair"]);
+    let names: Vec<_> = shop.lines.iter().map(|l| l.name.as_str()).collect();
+    // Iron and Steel, the Potion, the four armours; no Hi-Potion yet.
+    assert_eq!(names.len(), 15);
+    assert!(names.contains(&"Steel Bow") && names.contains(&"Iron Plate"));
+    assert!(!names.contains(&"Hi-Potion"));
+    assert_eq!(shop.lines[0].name, "Potion");
+    assert_eq!(shop.lines[0].gold, "300");
+    assert_eq!(shop.lines[0].detail, "Restore 20 HP");
+    assert_eq!(
+        view.help,
+        "Up Down choose · Left Right buy, sell, repair · f confirm · d back"
+    );
+    // Cancel goes back to the tabs.
+    update(&mut s, &mut c, &[Cancel]);
+    assert_eq!(s.focus(), Focus::Tabs);
+}
+
+#[test]
+fn buying_takes_the_gold_and_the_item_goes_to_the_pack_tabs_stock() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    in_shop(&mut c, &mut s, 0);
+    assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
+    assert_eq!(s.setup().gold, 2700);
+    assert_eq!(s.setup().stock.count(&potion()), 7);
+    let gold = |s: &PreparationsScreen| shop_of(&s.view(&c)).gold.clone();
+    assert_eq!(gold(&s), "Gold 2 700");
+    // On the Pack tab's stock list.
+    update(&mut s, &mut c, &[Cancel, CursorLeft]);
+    assert_eq!(s.spare(), [(ItemId::new("elixir"), 2), (potion(), 7)]);
+}
+
+#[test]
+fn what_the_party_cannot_afford_is_dimmed_and_refused() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    s.prep.setup.gold = 400;
+    in_shop(&mut c, &mut s, 0);
+    let lines = shop_lines(&s, &c);
+    let line = |name: &str| lines.iter().find(|l| l.0 == name).cloned();
+    assert_eq!(line("Potion").map(|l| l.2), Some(true));
+    assert_eq!(line("Leather Vest").map(|l| l.2), Some(true));
+    assert_eq!(
+        line("Iron Sword").map(|l| (l.1, l.2)),
+        Some(("460".into(), false))
+    );
+    // Down to the Iron Sword: refused, nothing changes.
+    let at = lines.iter().position(|l| l.0 == "Iron Sword").unwrap();
+    let before = s.prep.clone();
+    for _ in 0..at {
+        update(&mut s, &mut c, &[CursorDown]);
+    }
+    assert_eq!(s.deal_focus(), at);
+    assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_cancel"]);
+    assert_eq!(s.prep, before);
+}
+
+#[test]
+fn selling_asks_how_many_then_pays_half_price() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    in_shop(&mut c, &mut s, 1);
+    assert_eq!(s.shop_tab(), crate::screens::battle::shop::Tab::Sell);
+    let lines = shop_lines(&s, &c);
+    // The stock's weapons first, each copy a line, then its items counted.
+    assert_eq!(lines[0].0, "Steel Spear");
+    let at = lines.iter().position(|l| l.0 == "Potion ×6").unwrap();
+    assert_eq!(lines[at].1, "150");
+    for _ in 0..at {
+        update(&mut s, &mut c, &[CursorDown]);
+    }
+    update(&mut s, &mut c, &[Confirm, CursorUp, CursorUp]);
+    let view = s.view(&c);
+    let selling = shop_of(&view).selling.clone().unwrap();
+    assert_eq!((selling.count, selling.max), (3, 6));
+    assert_eq!(selling.gold, "For 450 gold");
+    assert_eq!(view.help, "Up Down how many · f sell · d back");
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(s.selling(), None);
+    assert_eq!(s.setup().gold, 3450);
+    assert_eq!(s.setup().stock.count(&potion()), 3);
+    // Cancel on the question sells nothing.
+    update(&mut s, &mut c, &[Confirm, Cancel]);
+    assert_eq!((s.selling(), s.setup().gold), (None, 3450));
+    // A weapon copy sells alone: the first line, asked about once.
+    let weapons = s.setup().stock.weapons.len();
+    while s.deal_focus() > 0 {
+        update(&mut s, &mut c, &[CursorUp]);
+    }
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    assert_eq!(s.selling().map(|sale| sale.count), Some(1));
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(s.setup().stock.weapons.len(), weapons - 1);
+}
+
+#[test]
+fn repairing_a_worn_weapon_costs_its_repair_and_fills_it() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The lord's first weapon and the stock's first, worn.
+    let lord = s.prep.setup.units[0].id;
+    let worn = s.prep.setup.units[0].loadout.weapons[0].as_mut().unwrap();
+    worn.durability_left = 5;
+    let worn = worn.clone();
+    s.prep.setup.stock.weapons[0].durability_left = 1;
+    let items = s.prep.setup.items.clone();
+    let def = items.weapon(&worn.def).unwrap().clone();
+    let cost = trpg_core::repair_cost(&def, &worn);
+    in_shop(&mut c, &mut s, 2);
+    let view = s.view(&c);
+    let lines = &shop_of(&view).lines;
+    assert_eq!(lines.len(), 2);
+    assert_eq!(lines[0].name, "Steel Spear");
+    assert!(lines[0].detail.ends_with("Stock"), "{}", lines[0].detail);
+    let max = def.durability;
+    assert_eq!(lines[1].detail, format!("5/{max} → {max}/{max}  Test Lord"));
+    assert_eq!(lines[1].gold, cost.to_string());
+    update(&mut s, &mut c, &[CursorDown, Confirm]);
+    let held = s.prep.weapon(WeaponAt::Held(PrepUnit::Deployed(lord), 0));
+    assert_eq!(held.map(|w| w.durability_left), Some(max));
+    assert_eq!(s.setup().gold, 3000 - cost);
+    // It is off the list; the highlight stays on a line.
+    assert_eq!((shop_lines(&s, &c).len(), s.deal_focus()), (1, 0));
+}
+
+#[test]
+fn a_battle_with_no_shop_says_so_and_does_not_open_it() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    s.prep.shop = None;
+    update(&mut s, &mut c, &[CursorRight, CursorRight]);
+    let view = s.view(&c);
+    let shop = shop_of(&view);
+    assert_eq!(shop.lines.len(), 0);
+    assert_eq!(shop.empty, "No shop before this battle.");
+    assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_cancel"]);
+    assert_eq!(s.focus(), Focus::Tabs);
+}
+
+#[test]
+fn shop_tab_snapshot() {
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |c| {
+        // Little gold, so the dearer gear is dimmed.
+        let quick = c.game.content.battles.get_mut(QUICK_BATTLE);
+        quick.expect("the Quick Battle").solo_gold = 450;
+    });
+    h.keys("Down f");
+    h.keys("Right Right f Down Down");
+    assert_snapshot!(h.snapshot());
+}
+
+/// Ticket 0443's harness flow: a Potion bought on the Quick Battle's
+/// Preparations is packed and fought with, and a win leaves the campaign
+/// the gold left after it.
+#[test]
+fn a_potion_bought_on_preparations_is_in_the_battle_and_its_price_off_the_gold() {
+    // The Quick Battle without its enemies: won once a unit acts.
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |c| {
+        let quick = c.game.content.battles.get_mut(QUICK_BATTLE);
+        let quick = quick.expect("the Quick Battle");
+        quick.enemies.clear();
+        quick.reinforcements.clear();
+    });
+    h.keys("Down f");
+    // Shop, Buy: the Potion is the first line.
+    h.keys("Right Right f f");
+    let prep = h
+        .game()
+        .screen::<PreparationsScreen>()
+        .expect("Preparations");
+    assert_eq!(prep.setup().gold, 2700);
+    assert_eq!(prep.setup().stock.count(&potion()), 7);
+    // Pack it (the Pack tab's second row), then Fight!.
+    h.keys("d Left f Down f d Left Left f");
+    let battle = h.battle().expect("the battle");
+    assert_eq!(battle.state().pack().items, [potion()]);
+    assert_eq!(battle.state().gold(), 2700);
+    let lord = &battle.state().units()[0];
+    let wait = trpg_core::Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: trpg_core::UnitAction::Wait,
+    };
+    h.battle_mut().expect("the battle").send(&wait);
+    let state = h.battle().expect("the battle").state().clone();
+    assert_eq!(state.outcome(), Some(trpg_core::Outcome::Victory));
+    // The campaign as the win leaves it: the battle's gold, plus the
+    // clear gold.
+    let campaign = h.flow().and_then(|f| f.campaign().cloned());
+    let def = h.game().ctx().game.content.battles[QUICK_BATTLE].clone();
+    let mut campaign = campaign.expect("a campaign");
+    assert!(campaign.apply_result(&def, &state, 0).is_ok());
+    assert_eq!(campaign.gold, 2700 + def.clear_gold);
+    assert_eq!(
+        campaign.stock.count(&potion()),
+        7,
+        "the packed one came back"
+    );
 }

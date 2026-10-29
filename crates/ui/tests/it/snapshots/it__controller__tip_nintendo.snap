@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/controller.rs
-assertion_line: 342
 expression: "tip(Some(PadKind::Nintendo)).snapshot()"
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: "tip(Some(PadKind::Nintendo)).snapshot()"
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                                Y danger zone: OFF · − auto-end: OFF 
  A close                                                                                   F2 debug 

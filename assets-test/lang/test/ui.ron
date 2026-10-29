@@ -279,6 +279,7 @@
     (key: "prep.heading", source: "Preparations", text: "PREPARATIONS"),
     (key: "prep.tab.loadouts", source: "Loadouts", text: "LOADOUTS"),
     (key: "prep.tab.pack", source: "Pack", text: "PACK"),
+    (key: "prep.tab.shop", source: "Shop", text: "SHOP"),
     (key: "prep.tab.fight", source: "Fight!", text: "FIGHT!"),
     (key: "prep.units", source: "Units", text: "UNITS"),
     (key: "prep.slot.weapon", source: "Weapon", text: "WEAPON"),
@@ -382,6 +383,16 @@
         key: "prep.help.pack",
         source: "{Cursor} choose · {Confirm} put back · {Cancel} back",
         text: "{Cursor} CHOOSE · {Confirm} PUT BACK · {Cancel} BACK",
+    ),
+    (
+        key: "prep.help.shop",
+        source: "{CursorUp} {CursorDown} choose · {CursorLeft} {CursorRight} buy, sell, repair · {Confirm} confirm · {Cancel} back",
+        text: "{CursorUp} {CursorDown} CHOOSE · {CursorLeft} {CursorRight} BUY, SELL, REPAIR · {Confirm} CONFIRM · {Cancel} BACK",
+    ),
+    (
+        key: "prep.shop.none",
+        source: "No shop before this battle.",
+        text: "NO SHOP BEFORE THIS BATTLE.",
     ),
     (
         key: "prep.help.leaving",
@@ -930,6 +941,7 @@
     (key: "battle.objective.village", source: "Save at least {minimum} of {total} houses ({saved} saved, {lost} lost)", text: "SAVE AT LEAST {minimum} OF {total} HOUSES ({saved} SAVED, {lost} LOST)"),
     (key: "battle.shop.armoury", source: "Armory", text: "ARMORY"),
     (key: "battle.shop.blacksmith", source: "Blacksmith", text: "BLACKSMITH"),
+    (key: "battle.shop.basic", source: "Shop", text: "SHOP"),
     (key: "battle.shop.buy", source: "Buy", text: "BUY"),
     (key: "battle.shop.empty", source: "Nothing here.", text: "NOTHING HERE."),
     (key: "battle.shop.gold", source: "Gold {gold}", text: "GOLD {gold}"),

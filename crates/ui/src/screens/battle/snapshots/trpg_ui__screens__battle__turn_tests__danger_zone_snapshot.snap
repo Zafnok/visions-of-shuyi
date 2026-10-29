@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/turn_tests.rs
-assertion_line: 213
 expression: buf.to_snapshot(&c.palette)
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: buf.to_snapshot(&c.palette)
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                       w danger zone: ON · Shift+Space auto-end: OFF 
  f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 

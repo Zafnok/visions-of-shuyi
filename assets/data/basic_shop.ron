@@ -1,0 +1,33 @@
+// The basic shop on the Preparations screen (ticket 0443): what it sells
+// and from when. Source: docs/design/weapons-and-items.md, "The
+// Preparations shop" (0044, the armour from 0073). Loaded by
+// trpg_content::basic_shop.
+//
+// items: in menu order, each with its unlock:
+//   Chapter(n): sold from chapter n's Preparations on.
+//   (A special unlock, e.g. a support rank, will be another kind.)
+// Lower tiers stay on sale. Only weapons, armour and consumables: never an
+// accessory or a seal. Each item at most once. The shop also repairs and
+// buys anything at half price (no row for that).
+// Not yet: the Steel armour (0074) from Chapter 5; the Elixir (Act 2 or 3,
+// its chapter set when those acts are outlined).
+(
+    items: [
+        (item: "potion", unlock: Chapter(2)),
+        (item: "hi_potion", unlock: Chapter(8)),
+        (item: "iron_sword", unlock: Chapter(2)),
+        (item: "steel_sword", unlock: Chapter(5)),
+        (item: "iron_spear", unlock: Chapter(2)),
+        (item: "steel_spear", unlock: Chapter(5)),
+        (item: "iron_axe", unlock: Chapter(2)),
+        (item: "steel_axe", unlock: Chapter(5)),
+        (item: "iron_bow", unlock: Chapter(2)),
+        (item: "steel_bow", unlock: Chapter(5)),
+        (item: "iron_gauntlets", unlock: Chapter(2)),
+        (item: "steel_gauntlets", unlock: Chapter(5)),
+        (item: "linen_robe", unlock: Chapter(2)),
+        (item: "leather_vest", unlock: Chapter(2)),
+        (item: "chain_mail", unlock: Chapter(2)),
+        (item: "iron_plate", unlock: Chapter(2)),
+    ],
+)
