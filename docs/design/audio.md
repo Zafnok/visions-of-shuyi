@@ -86,6 +86,7 @@ a player. **Version** is the file to import when the page has several.
 | `scene_confide` | A long-kept secret told at last: Hollis's confession (Chapter 5) (0071) | Soliloquy (`Soliloquy_1.mp3`, 3:44) | Matthew Pablo | [OGA](https://opengameart.org/content/soliloquy) | CC-BY 3.0 |
 | `scene_lamplight` | The king's closing scene at Varenhall (end of Act 1): tender, with a quiet unease (0071) | Snowfall (the looped version, `Snowfall (Looped ver.)_0.ogg`, 0:50) | Kistol | [OGA](https://opengameart.org/content/snowfall) | CC0 |
 | `holy_city` | A holy city's streets: sacred, quiet, the Vigil's Ossary (Chapter 7) (0071) | Wendale Abbey (`WendaleAbbey.ogg`, 1:28; plainsong under heavy reverb, made from MIDI and samples; on import, check by ear that the chant has no words) | Yubatake | [OGA](https://opengameart.org/content/wendale-abbey) | CC-BY 4.0 |
+| `capital` | The army is in a capital, any realm's: one track for every capital. The first visit to a big city plays `city_first_visit` instead (0026) | Adventures in Adventureland (`Adventures in Adventureland.mp3`, 4:21) | Kevin MacLeod | [incompetech](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029) | CC-BY 4.0 |
 | `scene_dread` | Something wrong found under a holy place: the Candles' empty dormitory (Chapter 7) (0071) | Solemn (Opening) (`Solemn (Opening)_0.mp3`, 1:39; it lists a voice, so on import check by ear that it sings no words) | İlker Yalçıner (onemansymphony) | [OGA](https://opengameart.org/content/solemn-opening) | CC-BY 4.0 |
 
 The `victory` pool's 13 versions are the same 3.8 s tune on different
@@ -131,7 +132,7 @@ Nick picked over two rounds of a listening page
 | Very sad scenes | Leap into Eternity (the mix, `leapintoeternitymix.ogg`, 1:53) | Matthew Pablo; Of Far Different Nature (mixed by glitchart) | [OGA](https://opengameart.org/content/leap-into-eternity-matthew-pablo-of-far-different-nature) | CC-BY 4.0 |
 | Very sad scenes | Wipe Away Those Tears (RPG Orchestral Essentials) (`Wipe Away Those Tears - MP3.mp3`, 3:24) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/wipe-away-those-tears-rpg-orchestral-essentials-sad-happy-music) | CC-BY 3.0 |
 | A small map section, e.g. a beginner area (not a whole world); same fade and quiet as above | RPG - Overworld - Melodies of the Future (the loop `.wav`, 1:13) | jocolloman (Joseph Collard) | [OGA](https://opengameart.org/node/129152) | CC-BY 4.0 |
-| Capital city music or a royal march (a candidate for 0026) | Adventure Map (`Adventure Map.mp3`, 3:23) | controllerhead | [OGA](https://opengameart.org/node/53699) | CC-BY 3.0 |
+| A royal march (heard again for 0026: "more like a royal march than a city") | Adventure Map (`Adventure Map.mp3`, 3:23) | controllerhead | [OGA](https://opengameart.org/node/53699) | CC-BY 3.0 |
 | Travel scenes, an airship, or riding a mount ("chocobo music") | Beyond The Clouds (Orchestral Theme) (2:21) | Matthew Pablo | [OGA](https://opengameart.org/content/beyond-the-clouds-orchestral-theme) | CC-BY 3.0 |
 
 Not used: Orchestra Loop by Brandon Morris (no comment) and Exploration by
@@ -210,6 +211,44 @@ Nick picked by ear over three rounds of a listening page
 
 - **Heard as not right for a battle:** Dark Quest (`graveyard_desert`) "doesn't fit as battle music more as exploration music".
 
+### The capital city (ticket 0026, 2026-10-28)
+
+Nick picked over four rounds of a listening page
+(https://claude.ai/artifact/EBQJyYJ43taXowUeU8cyYh). His words are in the
+[appendix](#appendix-nicks-words).
+
+- **One track for every capital** (not one per realm): `capital`, Adventures
+  in Adventureland, Nick's "general theme". Varenhall, Brennmark's capital
+  and the Jade Reach's all play it.
+- **A capital should sound bustling and grand** (like FF12's Rabanastre) or
+  like **busy medieval streets** (like the Witcher 3's Novigrad). Nick picked
+  both when asked. Village tracks, a festival, a march and an intro piece
+  were all heard as "not for a capital".
+- `city_first_visit` stays the first visit's track: Nick hears it as "an
+  intro cutscene to the city".
+- **Kept for other places and moments** ("Keep them in our backpocket for
+  other music selection tickets"; camp and shops are 0027 and 0028). None
+  of these has a cue yet:
+
+| Kept for | Track | Composer | Source | License |
+| -------- | ----- | -------- | ------ | ------- |
+| A tavern, or a capital's bustling streets | Minstrel Guild (`Minstrel Guild.mp3`, 3:06) | Kevin MacLeod | [incompetech](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1200098) | CC-BY 4.0 |
+| A capital's upper court | Court of the Queen (`Court of the Queen.mp3`, 3:20) | Kevin MacLeod | [incompetech](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100728) | CC-BY 4.0 |
+| A small village by the sea, or a port: "very port inspired or sea inspired" | Market on the Sea (RPG Orchestral Essentials) (`Market on the Sea - MP3.mp3` in `market_on_the_sea_mp3.zip`, 2:26) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/115435) | CC-BY 3.0 |
+| "A city on a feast day, like a celebration" | Enchanted Festival (`Enchanted Festival.mp3` in `Enchanted Festival.zip`, 2:06; the zip also has a loop `.wav`) | Matthew Pablo | [OGA](https://opengameart.org/node/21241) | CC-BY 3.0 |
+| "An adventure on a road or something", "Witcher 3 type beat" | Medieval: The Bard's Tale (`The_Bards_Tale.mp3`, 2:38; also `Loop_The_Bards_Tale.wav`) | RandomMind | [OGA](https://opengameart.org/node/80558) | CC0 |
+| Another music ticket (liked, "not for a capital city") | Medieval: Market Day (`Loop_Market_Day.mp3`, the loop, 1:04) | RandomMind | [OGA](https://opengameart.org/content/medieval-market-day) | CC0 |
+| Another music ticket (liked, "not for a capital city") | Town Theme (`TownThemeSingleFileLoopable.ogg`, 1:48, loops) | Wolfgang_ | [OGA](https://opengameart.org/content/town-theme-0) | CC-BY 3.0 |
+| Another music ticket (liked, "not for a capital city") | Town Theme 3 (`Town Theme 3.wav`, 1:57, loops) | LarsG | [OGA](https://opengameart.org/content/town-theme-3) | CC-BY 4.0 |
+
+Adventure Map (kept from 0025) is now kept as a royal march only.
+
+Not used: Throne Room (Of Far Different Nature), Royal Strings (jukeri12),
+Shakkar (zesona), Town and Castle (Alexandr Zhelanov), Peaceful Place
+(Alexandr Zhelanov), medieval town and a triumphant theme (syncopika),
+Bustling City (Bryan Wysopal), and Kevin MacLeod's Heavy Interlude and Our
+Story Begins.
+
 ## Sound effects
 
 | Cue | When it plays | Sound | Author | Source | License |
@@ -284,9 +323,8 @@ sign-off: "it should sound like a heal").
 - **The wuxia continent** (a later act, `setting-and-tone.md`) "would probably
   have more eastern themes". It needs its own round, which also picks
   Act 2's world map track (0025).
-- **Places and moments without a cue yet:** capital city, camp, shops.
-  Nick hasn't been asked about these (tickets 0026–0028). Level up is
-  Nick's own work.
+- **Places and moments without a cue yet:** camp, shops. Nick hasn't been
+  asked about these (tickets 0027–0028). Level up is Nick's own work.
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -653,3 +691,54 @@ streets, something colder for the empty dormitory.)
 > P1 streets, P6 dormitory
 
 (P1: Wendale Abbey by Yubatake. P6: Solemn (Opening) by İlker Yalçıner.)
+
+**The capital city, round 1** (ticket 0026, 2026-10-28; listening page
+https://claude.ai/artifact/EBQJyYJ43taXowUeU8cyYh). Five candidates (A–E),
+`city_first_visit` as R1, and a second question: one track for every
+capital, or one per realm:
+
+> I really like C and D but not for a capital. C more for a small village,
+> it does sound very port inspired or sea inspired. D sounds yea, like a
+> city on a feast day, like a celebration. R1 really only sounds like an
+> intro cutscene to the city like how fortunes weave introduces Dagda. A
+> sounds yea more like a royal march than a city. Rest I don't like much
+
+> One for every capital
+
+(A: Adventure Map by controllerhead. B: Throne Room by Of Far Different
+Nature. C: Market on the Sea by Jonathan Shaw. D: Enchanted Festival by
+Matthew Pablo. E: Royal Strings by jukeri12. R1: New Sunrise V2.)
+
+**The capital city, round 2** (the same page). Six town, city and castle
+tracks (F–K):
+
+> G sounds like an adventure on a road or something idk like witcher 3 type
+> beat. Rest not really a fan of. esp not for a capital city.
+
+(F: Shakkar by zesona. G: Medieval: The Bard's Tale by RandomMind. H: Town
+and I: Castle by Alexandr Zhelanov. J: Peaceful Place by Alexandr Zhelanov.
+K: medieval town by syncopika.) Asked which sound a capital should have,
+Nick picked two of four: "Bustling and grand" (like FF12's Rabanastre) and
+"Busy medieval streets" (like the Witcher 3's Novigrad). Not picked:
+"Stately and elegant" (FF9's Alexandria), "Proud, with unease".
+
+**The capital city, round 3** (the same page). Five busy or grand tracks
+(L–P):
+
+> I like L, N, and O, but not for a capital city. Keep them in our
+> backpocket for other music selection tickets but not for this. Another
+> round
+
+(L: Medieval: Market Day by RandomMind. M: Bustling City by Bryan Wysopal.
+N: Town Theme by Wolfgang_. O: Town Theme 3 by LarsG. P: a triumphant theme
+by syncopika.)
+
+**The capital city, round 4** (the same page). Five tracks by Kevin MacLeod
+(Q–U):
+
+> Q can work for a tavern or bustling streets, S for upper court, and T as
+> a general theme
+
+(Q: Minstrel Guild. S: Court of the Queen. T: Adventures in Adventureland.
+Recorded as: `capital` is T, the one track for every capital; Q and S are
+kept. R: Heavy Interlude and U: Our Story Begins weren't mentioned.)

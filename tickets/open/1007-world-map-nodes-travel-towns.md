@@ -73,7 +73,9 @@ integration tests below play the same).
   others, so the cue is data on the map, not fixed in code). The map's
   track never loops back to back: it fades out, the map is quiet for a
   while (30 s, Nick: "or maybe longer", *tunable*), then it fades back in (`audio.md`,
-  *The world map*). Capitals play `capital` (decided in 0026); import both
+  *The world map*). Capitals play `capital` (decided in 0026: one track
+  for every capital; a big city's first visit still plays
+  `city_first_visit`, *The capital city*); import both
   (`assets-src/audio/import.py`) and add them to `assets/audio/audio.ron`,
   `THIRD_PARTY_ASSETS.md` and the credits.
 - World map menu: `Save` (0802 slots, any time no battle is running), `Camp`
@@ -113,7 +115,7 @@ integration tests below play the same).
 7. Wire it into `ui::flow`: linear chapters → world map → battle → back to
    the map → next act.
 8. Add the test world map and tests.
-9. When importing `world_map`, remove it from `RESERVED` in
+9. When importing `world_map` and `capital` (0026), remove them from `RESERVED` in
    `crates/content/src/audio.rs`'s tests (0251); its "drop it from
    RESERVED" assertion fails otherwise.
 
