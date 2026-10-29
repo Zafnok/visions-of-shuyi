@@ -195,6 +195,8 @@ just as it does a full name.
 | `herald` | Herald | A crown herald with no name of his own: the name plate in Chapter 2's scene after the battle |
 | `hound_officer` | Officer | The Hound sergeant who leads the attack on the envoy's house, with no name of his own: the Chapter 5 boss's name plate |
 | `magistrate` | Magistrate | The Saltmere League magistrate who sold the envoy's house, with no name of his own: the name plate in Chapter 5's scene after the battle |
+| `brennish_commander` | Commander | The Brennish commander at the Ashfields, who believes the envoy's proof, with no name of his own: the name plate in Chapter 6's scene after the battle |
+| `crown_knight` | Knight | A knight of the king's vanguard at the Ashfields, with no name of his own: the Chapter 6 boss's name plate |
 | `place.coldwell` | Coldwell | The farm the Red Company burned last winter |
 | `place.aldwater` | Aldwater Toll Bridge | Chapter 4 fixed skirmish |
 | `place.aldwater.river` | the Aldwater | The river the toll bridge crosses: a short form of `place.aldwater` (Chapter 4) |

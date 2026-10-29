@@ -1,0 +1,36 @@
+(
+    // The far bank of Kell's Ford, upstream of the watchtower, at dusk
+    // (ticket 0848, docs/story/chapters/ch02.md, "The boy from the
+    // river"): the river along the bottom, the ford's stones crossing it
+    // at x 6 that the party came over after dark, the stony bank where
+    // Joss sits on a stone at (12, 8), alders behind, and at the far right
+    // the tower's walls. A place behind a conversation, never a battle's
+    // map.
+    name: "Kell's Ford",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '^': "mountain",
+        '~': "water",
+        '#': "wall",
+    },
+    look: (light: "dusk"),
+)
+---
+TTTTTTT:TTTTTTTTTTT..####
+TTTTTT:TTTTTTTTTTT...####
+TTTTT:..TTTTTTTTTT...####
+TTTT:.....TTTTTTT....####
+TTT:.......TTTTT......##.
+TT:..........TT..........
+T.:......................
+..:.........^............
+..:.......^^.^...........
+..:....^.................
+~~~~~~:~~~~~~~~~~~~~~~~~~
+~~~~~~:~~~~~~~~~~~~~~~~~~
+~~~~~~:~~~~~~~~~~~~~~~~~~
+......:..................
+....TT:..........TTT.....
+...TTT:.........TTTTT....

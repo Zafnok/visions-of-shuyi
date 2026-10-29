@@ -1,0 +1,43 @@
+(
+    // Chapter 2 (ticket 0848, docs/story/chapters/ch02.md): Kell's Ford, a
+    // village on both banks of a river at the Thornmarch's edge. The ford
+    // is the road across the water at x 9; the crown's bridge is
+    // downstream at x 19, and the garrison's watchtower stands on the north
+    // bank by it (walled, nobody comes down from it). Five houses: three on
+    // the south bank, where the party comes in by the road at the bottom,
+    // and two on the north bank, the big one by the water at (12, 6). The
+    // burnt ground is two houses the raiders burned before dawn (not
+    // houses to save).
+    name: "Kell's Ford",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '^': "mountain",
+        'A': "peak",
+        '~': "water",
+        '#': "wall",
+        'F': "fort",
+        '=': "bridge",
+        'H': "house",
+        ',': "burnt",
+    },
+    look: (light: "dawn"),
+)
+---
+TT.......:......TT..^^AA
+TTT......:.......T..###A
+TT.H.....:..,.......#F#^
+.T.......:::::::::::###^
+.........:..TT.....:...T
+..TT.....:.........:..TT
+.........:..H......:....
+~~~~~~~~~:~~~~~~~~~=~~~~
+~~~~~~~~~:~~~~~~~~~=~~~~
+.........:.........:...T
+....T....:.H.......:..TT
+..TTH....::::::::::::...
+..TT.....:......,.......
+.........:.......H...TT.
+...^^....:..........TTT.
+..^^^....:..........TT..

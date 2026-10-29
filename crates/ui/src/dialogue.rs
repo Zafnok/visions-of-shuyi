@@ -62,8 +62,9 @@ impl DialogueHooks for Hooks {
                 stage.opening = Some(id.clone());
                 stage.opening_due = Some(id.clone());
             }
-            // The flow carries the death out as the scene starts.
-            Stage::Dies(_) => {}
+            // The flow carries the death or the join out as the scene
+            // starts.
+            Stage::Dies(_) | Stage::Joins(_) => {}
         }
     }
 }

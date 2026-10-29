@@ -859,6 +859,38 @@ fn a_scene_played_from_several_places_keeps_who_all_of_them_have() {
     assert_eq!(cast.certain["test_talk"], ids(&[]));
 }
 
+/// A scene's recruit (`@joins`, 0848): the army can lose them, but not in
+/// the chapter that recruits them, whose scenes (and its battle's) need no
+/// block for them.
+#[test]
+fn a_scene_recruit_may_be_gone_after_the_chapter_that_recruits_them() {
+    let mut content = embedded();
+    let mut second = content.chapters["test"].clone();
+    second.intro_scenes = vec!["second_intro".into()];
+    second.victory_scenes = vec!["second_victory".into()];
+    content.chapters.insert("second".into(), second);
+    content.battles.get_mut("test").unwrap().triggers = vec![Trigger {
+        when: TriggerWhen::TurnStart {
+            turn: 2,
+            phase: Phase::Enemy,
+        },
+        scene: "test_turn_2".into(),
+        once: true,
+    }];
+    let joins = [("test_victory".to_owned(), vec![id("test_mage")])].into();
+    let cast = cast_of(&content).with_joins(&joins, &content.battles, &content.chapters);
+    assert!(cast.may_be_absent.contains(&id("test_mage")));
+    let certain = |scene: &str| cast.certain.get(scene).cloned().unwrap_or_default();
+    // The chapter that recruits: its scenes and its battle's triggers.
+    for scene in ["test_intro", "test_victory", "test_turn_2"] {
+        assert!(certain(scene).contains(&id("test_mage")), "{scene}");
+    }
+    // Another chapter's scenes, or another battle's, can't count on them.
+    for scene in ["second_intro", "second_victory", "test_engage"] {
+        assert!(!certain(scene).contains(&id("test_mage")), "{scene}");
+    }
+}
+
 // --- Properties -----------------------------------------------------------------
 
 const CAST: [&str; 3] = ["a", "b", "c"];

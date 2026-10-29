@@ -1332,3 +1332,297 @@ paper, and Dace is ordered there.
   knee"; Ragna's son's first cod was never promised aloud. Her later
   beats (Chapter 6's walk back from her own lines, Chapter 8's ship)
   can't play.
+
+## After Chapter 6
+
+Written by 0748 from `assets/dialogue/ch06.dlg`. It describes a chapter
+everyone lived through, with Gil in the party, Hedda with it since the
+quay, and Oriel alive at the far side; what an earlier death leaves
+unsaid here, and what changes if Gil was missed, Hedda never joined or
+Oriel fell in the crossing, is in "If a companion died before Chapter
+6", at the end. The battles themselves (whether the outriders were
+fought, who faced the knight) are the player's; the scenes don't depend
+on them, except that the party reaches the Brennish lines on every
+path.
+
+### What happened
+
+- **The north road.** Ten days north out of Saltmere, first frost, the
+  border hills ahead. **Aske smelled the ash before anyone saw it**:
+  "The plain. Two days." Hedda had her cloak pinned around Maud, who
+  was blue and arguing ("I'm a little cold"); Hedda doesn't feel the
+  cold, "it's the herring, my mother always said". **Hollis walked
+  beside the lead again**, his knee loud in the cold; Tamsin offered
+  the mare and was refused, and told to give the mare the heel of the
+  bread. **Gil announced rule eleven**: a champion doesn't enter a fair
+  town without a purse to lay down; he'd wait on the road outside
+  Cairnford while the others bought what they needed. Tamsin: since
+  when is there an eleven; Gil: it's a very old rule, from the fairs.
+  Nobody pushed. Hollis: walk, we're not sleeping in this wind.
+- **The Burnt Mill** (guards the path). A roofless mill on the last
+  water before the plain, and in the millrace a fire with nobody
+  holding it. **Rue named it: an echo**, somebody's fire vow still going
+  after they died; it drinks fire; "I've got fire. That's all I've got."
+  Tamsin: so how do you kill a fire, Sparks; Rue: you don't stand in it,
+  start there. Hollis: spears, hit it and step back, Veyne on the dry
+  side. Hedda had seen them from a ridge, never this close. They put it
+  out ("like a lamp"); the millrace steamed. Rue stood with her hands
+  out to the warm place ("I'm cold and it's warm"); **Aske watched her
+  and looked away**. Hollis: eat.
+- **Brennish Outriders** (optional). The army's scouts on the hill road
+  saw a blue coat, Hound black and a hill girl walking between them.
+  **Hedda shouted her name and the Holt hall**; they didn't believe a
+  Ravn walks with southerners and a Hound. **One of them said, in Aske's
+  own tongue, the word for a hill girl who walks with Ardevali, twice**;
+  Aske: her brother was Tor, he stood on that plain with the hill
+  companies and didn't come off it; say it again and she'd put an arrow
+  in his eye. Hedda: "They're frightened. ...So am I." After the fight
+  Hedda sent the one who yielded back to the commander with her name
+  and "paper"; **Aske told him to say she wasn't with these, that she
+  was going home**, counted her arrows out of the frost, and fell in
+  behind the others.
+- **The edge of the plain, dusk.** Ash to the sky, frost on it, warm
+  patches underfoot, two lines of fires far apart and lights that move
+  between. Tamsin counted the fires out loud and lost count ("Somebody
+  say something"). **Hedda: "Those are ours. On the right."** Hollis
+  stood looking at the middle, where there are no fires, and said
+  nothing; **Maud stood a step behind him, then took the step, and he
+  let her**. Hedda asked Aske what she was looking at past all that:
+  "Nothing. Hills." Rue sat with her back to it and ate ("What? I've
+  seen it."). Hollis: those lights walk at night; first light, and not
+  before.
+- **The night. Oriel Mast walked in out of the dark** on the king's
+  side with his hands open and the badge torn off his robe (Hedda:
+  "Easy. Stop there, you."). He gave his name: three years ago he
+  commanded the Candles' line on this plain. **Rue knew him: "Mast."
+  He knew her: "Rue. Third line, fourth from the left. You had the
+  cough all that winter."** Aske asked which of his lines burned the
+  hill companies; **all of them; the third was the center, and the hill
+  companies stood against the center; the order was his, "not passed
+  down. Mine."** Aske: her brother was Tor; against the center, then;
+  three years she had wanted to meet the one who gave it; he was
+  smaller than she thought; she was going to sit somewhere else. To
+  Rue: **"Yes. I was on that line. What, you want me to say it twice?"**
+  Why he came: nineteen children in the king's camp with the flame on
+  their collars, and in the morning he was to walk them onto the ash
+  and give the order; he came away instead. **The first time: the
+  prince's banner rode into the field, fifteen and wanting a charge; he
+  sent a rider to the king's tent to ask him to hold the fire; the
+  answer came back "burn"; so he gave it.** The lead answered (a reply,
+  not recorded; one asked him what he wants to do now, which nobody has
+  asked him in three years; one told him to sit, he was shaking). Nobody
+  said he could stay and nobody said he couldn't. Gil sat down next to
+  him and said nothing. When the fire sank **Oriel lit it with a flint,
+  not a vow**, swearing at it until it caught. **He is with the party.**
+- **First light.** Horns from the king's side and riders coming out
+  along the plain's edge; **Joss knew the call: not the recall, the
+  advance, the captain's**, coming to get between them and the far
+  side. Oriel, quietly: the black ground is still warm and wakes when
+  the sun gets on it; go around it; don't run, the ash is deep. **Rue,
+  to him: "Don't give anybody orders. Not anybody. Not today."** Hedda:
+  the paper's in her coat; if she goes down somebody takes the coat;
+  outlaw, behind her till the black ground. Hollis: the mage in the
+  middle where he can see him; Veyne with him.
+- **The party crossed the Ashfields to the Brennish lines** (Escape:
+  everyone out, one by one), through the echoes on the black ground and
+  the Hounds and the king's vanguard coming out in waves.
+- **In the battle** (what the triggers say, if they fired): Oriel on
+  turn 1, off the black ground, it's warm for a reason (or Hedda: nobody
+  runs on this). On the black ground, Rue: don't throw fire at it, go
+  around, she's not saying it again (or Maud). At the Hounds' wave,
+  Joss: the captain's horn, they're coming across, "We don't run" (or
+  Tamsin). **The knight**, to anyone: he stood on this ground the day
+  it ended; his brother's company was on the left of it ten years and
+  Brennish steel had all of them but him; now they burn his tenants'
+  farms and the party walks to them with paper; a Veyne in a coat with
+  the crest cut off; go home, child, he'll speak for you; no? then stand
+  still. **To Oriel:** he stood behind his line and cheered when it went
+  up, the whole army did; "You lit it. Stand with the men who thanked
+  you for it"; Oriel: he remembers the cheering, he'd forgotten that he
+  remembered it; the knight: the children are lined up again this
+  morning and the man who knew their names has walked off; what happens
+  to them now is his; **Oriel: "Mine. It was always going to be mine.
+  ...I'm sorry. I'm not going back."** At half strength the knight
+  shouted his men through the black ground, not around it; beaten, he
+  begged to be dragged to the grass, the fire comes back at night.
+  Death quotes, if they fired: Hollis (leave him; get the paper over;
+  "My girl's in this somewhere. ...Walk, kid. Walk."), Tamsin (the mare
+  off the black ground; lead her, don't ride her), Aske (she can see the
+  hills; tell her mor she got this far, that it is two days; "No. Do not
+  tell her that."), Maud (when it's over, somebody go to the children
+  over there), Rue (she's cold, on this of all places; keep the others
+  off the black ground, they don't listen to her), Joss ("The captain--
+  no. ...My ma. The paper got there, and I carried it. Say I carried it.
+  I didn't. Say it anyway."), Gil ("Well struck"; the ribbons to whoever
+  mends things; no rule about it), Hedda (the paper, inside pocket, left
+  side, walk it over; Ragna doesn't hear about this, not from any of
+  them), Oriel ("Third line, fourth from-- no."; the flint's in his
+  pocket, it's a good one, don't leave it in the ash).
+- **The Brennish lines.** Spears leveled until Hedda said "Ravn. Holt
+  hall." The commander: the rider had said she was coming, "he said it
+  like a lie"; spears up. **Hedda handed him the paper, dry: the
+  envoy's own hand and three copies. He read it twice, standing in the
+  ash, slower the second time; Joss stood very straight the whole
+  time. "I believe it. A year I've written to her for this. I believe
+  it. ...It changes nothing about where my wall stands this morning."**
+  Then **horns from the far side, and along the king's front a row of
+  small fires lighting one after another: the Candles' line. "They've
+  seen the paper come over, and they're coming anyway."** The paper
+  went inside his coat. He asked the deserter whether this is for the
+  king's son who burned here; **Oriel: yes; and they never found him,
+  the prince; two days he walked the ash with the search parties, and
+  they looked; they found the horse; "the fire does that, sometimes."**
+  The commander: a king who'd burn his own boy; second rank, close up;
+  get these people off his ground before it reaches them. **Joss:
+  "Three times. I said it three times, and she wrote it down, and it's
+  in his coat. ...That was for nothing, then. Wasn't it."** Nobody
+  answered him. The commander to Hedda: you're home, Ravn, stand in,
+  there's a place in the second rank. **Hedda: "I'm lent. ...Outlaw,
+  which way are you going? That way, then."** To Aske: "You could walk
+  home from here, hill girl." Aske: "I know where it is." She picked up
+  her pack. **Hedda looked once at the fires that are hers and walked
+  back to where the party stands.**
+- **The dead ground, that night**, behind the Brennish camp, the ridge
+  lit red from the plain. Hollis sat facing it. **Rue sat down across
+  from him, which she has never done, and told him: the book at the
+  abbey was wrong about one thing; Wren walked out. After. She was on
+  Rue's line, next to her. When it was over two keepers in gray, not
+  brown like Maud's, took her by the arms and walked her off, on her
+  own feet; she looked back once. Rue didn't go after her; she ran the
+  other way; she should have said that bit at the abbey and couldn't.
+  Hollis: "...Which way." "Toward the king's side. Walking." Hollis:
+  "She snored. Twelve years old and you could hear her through two
+  walls. You'll have heard it." Rue: everybody heard it; the whole
+  barracks; she said it was the boy next to her.** He looked at the
+  lead and didn't ask for anything; the lead answered (a reply, not
+  recorded; to "Eat something" he said "Don't you start"; one was to sit
+  down next to him, and he moved his bad knee over). "Go to sleep, the
+  pair of you. I'm watching it." He meant the plain.
+- **The king's camp, the same night**, the plain burning behind the
+  tents. Dace, his arm out of its binding, heard the report: the exile's
+  people reached the far lines, all that were standing, and **Mast went
+  over to them in the night**. Dace: **"Mast. ...He had the children. He
+  had my sister on his line, the strongest of them; he wrote to say so.
+  Once. A kind letter, in a good hand. I kept it."** And he walks across
+  the plain to Veyne; "Of course he does. Everybody does." The Hounds
+  stay off the plain tonight; let the king's knights have it.
+
+### Who knows what (changes since the end of Chapter 5)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| Oriel Mast commanded the Candles' line at the Ashfields and gave the order; the hill companies stood against the third line, the center | **the whole party**, from him, at the fire | — |
+| Rue stood on Oriel's third line, fourth from the left | **the whole party** (he named her place); **Aske** heard it and asked which line burned the hill companies | — |
+| The prince rode into the field; Oriel sent a rider to the king's tent to ask him to hold the fire; the answer came back "burn"; Oriel gave the order (**the king's own order killed his son**) | **the whole party**, from Oriel at the fire; the Brennish commander heard "yes" to "is that what this is for" | that the body matters beyond a war mystery; nobody says "Door" |
+| The prince's body was never found; two days of search parties found the horse | **the party and the Brennish commander**, from Oriel at the lines (a clue for the midpoint twist; Oriel calls it the fire's doing) | — |
+| Nineteen new Candles are in the king's camp; their fire line was lit along the king's front as the attack began | the party, Oriel; the Brennish, who saw the fires | — |
+| The envoy's proof reached the Brennish commander, who believes it, and the king's army attacked anyway: **the war is on** | the party, Hedda, the commander; **Dace** (the exile's people reached the far lines) | Ragna (offstage) |
+| Wren walked out of the fire alive, on her own feet, and two keepers in gray led her toward the king's side; she looked back once; Rue ran the other way | **Hollis and the lead**, from Rue on the dead ground | the rest of the party; **Dace** (Chapter 8); where she is now (the later twist) |
+| Wren was on Oriel's line, "the strongest of them", and Oriel once wrote to Dace to say so | **the player**, from Dace's cut; Dace, Oriel | Hollis (Oriel does not know whose daughter she is; nobody has said "Marr" to him) |
+| Dace knew Oriel by name and kept his letter | the player | the party |
+| Aske's hold is two days past the Brennish lines, and she could have walked home from them | the party (Hedda said it in front of everyone); Aske | — |
+| Hedda chose: she stood at her own army's lines with a place offered, and walked back | the party, the commander | Ragna |
+| Gil won't go into Cairnford ("rule eleven") | the party | why (his secret: the seventh fair, lost there) |
+| Hollis has walked across the plain where his daughter "was lost" and now knows she walked off it | Hollis, the lead, Rue | — |
+
+Unchanged and still secret: Dace being gifted, the prince come back,
+the Door and the Door Vow, Wren's place in the palace, Coldwell, Gil's
+seventh fair. Nobody in the party has heard the word "Door". Oriel does
+not know Wren is Hollis's daughter, and Hollis has not heard that Wren
+was on Oriel's line.
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| Rue ↔ Hollis | **Told.** She sat down across from him for the first time and told him Wren walked out, and that she ran the other way. He asked "which way" and told her Wren snored. He did not thank her; he told her to go to sleep. |
+| The lead ↔ Hollis | He looked at the lead after and asked for nothing; the lead's reply is the player's (one sat down in the ash beside him and he made room). |
+| Aske ↔ Rue | **"Yes. I was on that line."** Aske now knows Rue stood on the line that burned Tor's company, and has heard the man who gave the order say so. She went to sit somewhere else. They are not speaking. The bread of the quay is not undone, and nothing is added to it. |
+| Aske ↔ Oriel | "You are smaller than I thought." She asked him her one question and got a plain answer; she wanted it said plainly once, and it was. She has not spoken to him since. |
+| Rue ↔ Oriel | She said his name, "Yes", and "Don't give anybody orders"; nothing else. He said her place on the line and apologized for saying it. She has not given him what he wants (to be burned). |
+| The lead ↔ Oriel | The lead's reply at the fire is the player's; in one of them the lead asked what he wants to do now, which he says nobody has asked in three years. He crossed with them and is with the party. |
+| Gil ↔ Oriel | Gil sat down next to him at the fire and said nothing. |
+| Maud ↔ Hollis | A step nearer, at the edge of the plain, and he let her. Nothing said. |
+| Hedda ↔ the lead | "I'm lent", said at her own army's lines with a place offered; she asked which way the outlaw was going and went that way. "Keep that blue where I can find it." |
+| Hedda ↔ Aske | "You could walk home from here, hill girl." "I know where it is." |
+| Hedda ↔ Maud | Her cloak, pinned on Maud against the frost. |
+| Hedda ↔ Hollis | Both at the plain's edge, one looking at her own fires, one at the middle. Nothing said between them this chapter. |
+| Tamsin ↔ Hollis | She offered the mare for his knee and was told to give the mare the bread instead. |
+| Joss ↔ the party | He said the proof was for nothing and nobody answered (the answer is 1073's). |
+| Aske ↔ Brennmark | Her own army's scouts called her the word for a hill girl who walks with Ardevali. She told them she was going home, and walked on with the party. |
+| Dace ↔ Oriel | Dace kept Oriel's letter about Wren. Oriel is now with the lead. |
+
+### Status
+
+- **The party is behind the Brennish lines** at the Ashfields, with the
+  war begun: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss, **Gil if
+  he joined**, **Hedda if she lived through the hold**, and **Oriel**,
+  who deserted to them the night before the crossing and crossed with
+  them. The proof is in the Brennish commander's coat, believed and
+  useless.
+- The king's army attacked across the plain with the new Candles' fire
+  line lit; the Hounds were kept off the plain that night by Dace's
+  order. The knight of the vanguard is dead if the player killed him.
+- The Burnt Mill is cleared; the outriders are beaten if the player
+  fought them. Cairnford is behind them.
+- Hollis knows Wren walked out of the fire alive. He has not told Dace
+  (Chapter 8). Oriel believes Wren burned and does not know she is a
+  Marr.
+- Rue's side quest, *The Other Cart*, unlocks after this battle (1072),
+  while she is alive. No new side quests this chapter.
+- The lead's two replies (to Oriel at the fire, to Hollis on the dead
+  ground) are not recorded: tones never change what happened.
+
+### If a companion died before Chapter 6 (Classic), Gil was missed, Hedda never joined, or Oriel fell
+
+Everything above describes the scenes with all seven alive, Gil in the
+party, Hedda with it and Oriel alive at the far side. True on every
+path: the ash on the wind, the first echo at the mill, Oriel walks in
+and tells the king's order, the party crosses, the commander believes
+the paper and the king's army attacks anyway, and Dace hears that Mast
+went over.
+
+- **Hollis dead:** nobody refused the mare; nobody said "Walk"; nobody
+  stood looking at the middle of the plain for Maud to step toward;
+  nobody stood in front of the lead when Oriel walked in (Hedda does, or
+  narration); nobody put the mage in the middle; **nobody is told about
+  Wren**: Rue tells the lead instead, in two boxes ("he's not here, so";
+  "Somebody should know. Now somebody does."), and the second reply is
+  gone. Chapter 8's line then can't be Hollis's (0750).
+- **Tamsin dead:** nobody offered the mare, asked how to kill a fire,
+  counted the fires at dusk, or pushed Gil about rule eleven (narration
+  says nobody has heard of it); the Hounds' wave falls to Joss alone.
+- **Aske dead:** nobody smelled the ash (narration: it settles on the
+  lead's sleeve); nobody was called the word on the hill road or told
+  the rider she was going home; nobody watched Rue at the warm place;
+  **nobody asked Oriel which line burned the hill companies**: he says
+  only what he commanded and why he came, and Rue's "Yes" is unsaid;
+  nobody said "Nothing. Hills." or "I know where it is."
+- **Maud dead:** nobody argued about Hedda's cloak; nobody stepped
+  toward Hollis at the edge; the mill's warning without Rue falls to
+  narration; the black-ground line without Rue is unsaid.
+- **Rue dead:** the mill's warning falls to Maud, or to narration; **Oriel
+  recognizes nobody at the fire** and nobody says "Yes. I was on that
+  line" (Aske still asks her question of him); nobody tells him not to
+  give orders; **nobody tells Hollis about Wren** (he sits facing the
+  plain all night and nobody says anything about it); the second reply
+  is gone; Chapter 8's line then can't be "Rue saw her" (0750).
+- **Joss dead:** nobody knew the horn at first light or at the Hounds'
+  wave (Tamsin says riders); nobody stood very straight while the paper
+  was read; nobody said "three times".
+- **Gil missed or dead:** no rule eleven; nobody sat down next to Oriel
+  at the fire (the flint narration stands alone); his battle lines can't
+  play.
+- **Hedda never joined (fell in the hold):** nobody pinned a cloak on
+  Maud, shouted her name on the hill road or sent the rider back;
+  nobody said "Those are ours"; Hollis or narration meets Oriel at the
+  fire; **the lead hands the paper over at the lines**, and the spears
+  stay level a long time before anyone takes it; the commander offers
+  nobody a place; nobody says "You could walk home from here" to Aske
+  (her pack goes unmentioned). Her walk back can't play.
+- **Oriel fell in the crossing (Classic):** the lines play without the
+  deserter: **the body never found is unsaid** on this path (the
+  midpoint reveal does not depend on it), and the commander hears only
+  the paper and the horns; Dace's report says Mast went over and died on
+  the plain, and Dace says "Good", and then that he's to be burned
+  properly. His later beats (Ossary's barracks, the docks) can't play.

@@ -86,7 +86,9 @@ use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::any::Any;
 
-use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, new_campaign};
+use trpg_content::{
+    ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, joins, new_campaign, roster_units,
+};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile, NodeKind,
     Preparations, SaveFile, SavePoint, Shop, TutorialLevel,
@@ -577,6 +579,8 @@ impl FlowScreen {
     /// deaths (`@dies`, Hollis, 0319) happen as it starts, in every mode,
     /// in the version for those there, played or not, so skipping the
     /// scene can't skip them; the scenes after it are played without them.
+    /// Its recruits (`@joins`, Joss, 0848) join the same way, fresh from
+    /// the character data.
     fn play(&mut self, scene: &Scene, ctx: &Ctx) -> bool {
         let lead = self
             .campaign
@@ -587,8 +591,12 @@ impl FlowScreen {
         });
         if let Some(campaign) = &mut self.campaign {
             let supports = &ctx.game.content.supports;
-            for character in deaths(&scene.resolved(&present)) {
+            let resolved = scene.resolved(&present);
+            for character in deaths(&resolved) {
                 campaign.dies_in_scene(&character, supports);
+            }
+            for unit in roster_units(&ctx.game.content, &joins(&resolved)) {
+                campaign.joins_in_scene(unit);
             }
         }
         let mut screen = DialogueScreen::told(ctx, scene, lead, &present);

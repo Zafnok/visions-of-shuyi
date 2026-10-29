@@ -1,0 +1,13 @@
+// Chapter 2: Kell's Ford (ticket 0848). Beat sheet:
+// docs/story/chapters/ch02.md; script: dialogue/ch02.dlg. Joss joins in
+// ch02_join (`@joins`). `next` becomes Some("ch03") with Chapter 3's
+// battle (ticket 0849): a chapter that doesn't exist yet can't be named.
+(
+    id: "ch02",
+    title: "Chapter 2: Kell's Ford",
+    number: Some(2),
+    intro_scenes: ["ch02_intro", "ch02_prebattle"],
+    battle: "ch02",
+    victory_scenes: ["ch02_victory", "ch02_join", "ch02_tbc"],
+    next: None,
+)

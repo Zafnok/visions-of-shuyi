@@ -1,0 +1,25 @@
+// A winning playthrough of Chapter 2 (ticket 0848): the player's commands,
+// phase by phase, with the army Chapter 1's playthrough leaves. Played back by
+// ch02_winnable.rs, which says how to record a new one. Units 1-6: the lead,
+// Hollis, Tamsin, Aske, Maud, Rue.
+[
+    // Turn 1
+    Act(unit:(2),dest:(x:13,y:13),action:Attack(target:(10),slot:1,active:None,art:Some(("unhorse")))),
+    Act(unit:(6),dest:(x:11,y:12),action:Cast(spell:("fire"),target:Unit((10)),active:None)),
+    Act(unit:(4),dest:(x:7,y:11),action:Attack(target:(8),slot:0,active:None,art:Some(("pinning_shot")))),
+    Act(unit:(1),dest:(x:11,y:10),action:Evacuate),
+    Act(unit:(3),dest:(x:4,y:11),action:Evacuate),
+    Equip(unit:(5),equipped:Weapon(0)),
+    EndPhase,
+    // Turn 2
+    Act(unit:(6),dest:(x:10,y:9),action:Wait),
+    Act(unit:(1),dest:(x:14,y:10),action:Attack(target:(11),slot:0,active:None,art:Some(("guard_break")))),
+    Act(unit:(4),dest:(x:11,y:10),action:Attack(target:(11),slot:0,active:None,art:None)),
+    Act(unit:(2),dest:(x:17,y:13),action:Evacuate),
+    Act(unit:(5),dest:(x:9,y:12),action:Wait),
+    Act(unit:(3),dest:(x:4,y:10),action:Wait),
+    EndPhase,
+    // Turn 3
+    Act(unit:(6),dest:(x:8,y:6),action:Cast(spell:("fire"),target:Unit((12)),active:Some(("overcast")))),
+    // Some(Victory) on turn 3; lost: []; houses saved: 5 of 5
+]

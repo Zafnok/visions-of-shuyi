@@ -1,6 +1,6 @@
 //! Chapter 1 against the Playdate's bundle (ticket 1036): the front end
 //! starts the game as on the device (`crate::card`, `crate::start`), and
-//! the game plays from New Game to "To be continued", with this thread
+//! the game plays from New Game into Chapter 2, with this thread
 //! reading the bundle the Playdate embeds (`trpg_content::bundle::
 //! playdate_layers`). Every file the game reads must be in that bundle,
 //! and every file in it must be read: the bundle holds what the Playdate
@@ -67,8 +67,8 @@ fn send(h: &mut Harness, command: &Command) {
     battle.unwrap_or_else(|| panic!("no battle")).send(command);
 }
 
-/// The front end's start, then Chapter 1 from New Game to the title;
-/// returns the music cues it started and those its scenes name.
+/// The front end's start, then Chapter 1 from New Game into Chapter 2;
+/// returns the music cues Chapter 1 started and those its scenes name.
 fn play_chapter_1() -> Vec<String> {
     // The card's font comes first, as on the device.
     card::font().unwrap_or_else(|e| panic!("{e}"));
@@ -114,7 +114,7 @@ fn play_chapter_1() -> Vec<String> {
     }
     assert_eq!(battle(&h).outcome(), Some(Outcome::Victory));
     // Harl's last words, the banner, the results, the victory scenes,
-    // "Save your progress?" (No), "To be continued", the title.
+    // "Save your progress?".
     for _ in 0..40 {
         match h.top_screen() {
             "dialogue" => skip_scenes(&mut h),
@@ -130,10 +130,6 @@ fn play_chapter_1() -> Vec<String> {
         "{}",
         h.snapshot()
     );
-    h.pad("DpadDown South");
-    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
-    h.pad("South");
-    assert_eq!(h.screens(), ["title"]);
     // What it started, and what the scenes it skipped would have: every
     // `@music` of Chapter 1's own scenes (its intro and victory scenes
     // and its battle's triggers), not of every scene in the bundle: a
@@ -161,7 +157,14 @@ fn play_chapter_1() -> Vec<String> {
             Step::Music(MusicLine::Cue(cue)) => Some(cue.clone()),
             _ => None,
         });
-    started.chain(in_scenes).collect()
+    let tracks = started.chain(in_scenes).collect();
+    // "Save your progress?" (No): Chapter 2 starts (0848), with its first
+    // scene.
+    h.pad("DpadDown South");
+    let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
+    assert_eq!(chapter.as_deref(), Some("ch02"));
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
+    tracks
 }
 
 /// The only test here that sets the bundle's watcher: it is process-wide.
