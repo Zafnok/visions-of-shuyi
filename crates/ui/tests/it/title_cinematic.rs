@@ -130,7 +130,7 @@ fn music(h: &Harness) -> Vec<String> {
     let requests = h.audio_requests().into_iter();
     requests
         .filter_map(|r| match r {
-            AudioRequest::PlayMusic { cue } => Some(cue),
+            AudioRequest::PlayMusic { cue, .. } => Some(cue),
             _ => None,
         })
         .collect()
@@ -314,9 +314,10 @@ fn a_press_during_the_cinematic_skips_to_the_logo_and_the_silence() {
         assert!(h.audio_requests().is_empty(), "{:?}", h.audio_requests());
         h.wait(0.3);
         assert_eq!(music(&h), ["title"]);
-        assert!(h.music_commands().contains(&MusicCommand::Start {
-            cue: "title".into()
-        }));
+        assert!(
+            h.music_commands()
+                .contains(&MusicCommand::start("title", 1.0))
+        );
         // Left alone, the menu fades and the cinematic plays from its
         // start, with the song.
         h.wait(2.0);

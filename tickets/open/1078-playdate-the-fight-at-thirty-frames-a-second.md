@@ -51,9 +51,9 @@ minute reports.
 ## Scope
 
 **In:**
-- Move the engine pin past engine#3056 (`cargo xtask engine-pin`, the
+- ~~Move the engine pin past engine#3056 (`cargo xtask engine-pin`, the
   `engine-change` skill's step 7), with whatever small fixes the game
-  needs to build on it.
+  needs to build on it.~~ (done by the pin move of 2026-10-29, `c9fb84c9` → `50ae33db`)
 - **Measure on the device** with the bench build (`cargo xtask playdate
   --release --bench --private-assets`, `crates/playdate/src/pd/bench.rs`):
   the render's phases during fights (its `under items` phase is the
@@ -78,7 +78,7 @@ minute reports.
 
 1. Read 1041's completion notes, engine#3056's, ADR-0077 and
    `crates/playdate/README.md` (*What it measures*).
-2. Move the pin; run the gates.
+2. ~~Move the pin;~~ (done by the pin move of 2026-10-29, `c9fb84c9` → `50ae33db`) run the gates.
 3. Build the bench build and the normal one; ask Nick for the console
    (one Nick turn for both).
 4. If needed, the cuts in the Scope's order, each measured on the PC

@@ -32,7 +32,7 @@ use trpg_ui::screens::BattleScreen;
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
 /// The game's `frame-png` options.
-const OPTIONS: [GameOption; 8] = [
+const OPTIONS: [GameOption; 7] = [
     GameOption::new("--layout", "the key layout picked before (default right)")
         .with_value(Some("right|left")),
     GameOption::new(
@@ -65,15 +65,8 @@ const OPTIONS: [GameOption; 8] = [
     .with_value(Some("NAME")),
     // engine-friction: engine#2540
     GameOption::new(
-        "--crank",
-        "after the steps, wind the Playdate's crank that far in a frame\n\
-               (backwards is negative), as its front end reports it",
-    )
-    .with_value(Some("DEGREES")),
-    GameOption::new(
         "--then-pad",
-        "after the steps (and a --crank given before it), press and\n\
-               release each button in turn, as --pad",
+        "after the steps, press and release each button in turn, as --pad",
     )
     .with_value(Some("BUTTONS")),
 ];
@@ -115,10 +108,10 @@ struct Start {
     /// Show the guide's one-time tips and checklist lessons, as `app`
     /// does.
     tips: bool,
-    /// What is done after the script's steps, in turn (`--crank`,
-    /// `--then-pad`). The engine's script has no crank step (ticket 1039
-    /// needed one for the rewind screen, which only the crank opens on
-    /// the Playdate).
+    /// What is done after the script's steps, in turn (`--then-pad`).
+    /// Ticket 1039 added it beside a `--crank` of the game's own, before
+    /// the engine's script had a crank step; the engine's `--crank` now
+    /// takes that flag, and 1182 deletes this.
     // engine-friction: engine#2540
     after: Vec<After>,
 }
@@ -126,8 +119,6 @@ struct Start {
 /// A step played after the script's.
 #[derive(Debug, Clone, PartialEq)]
 enum After {
-    /// The crank wound this many degrees in one frame.
-    Crank(f32),
     /// Each button pressed and released in turn.
     Pad(String),
 }
@@ -159,12 +150,6 @@ impl Start {
                 "--prompt" => start.prompt = true,
                 "--tips" => start.tips = true,
                 "--light" => start.light = Some(value),
-                "--crank" => {
-                    let degrees = value
-                        .parse()
-                        .map_err(|_| format!("--crank: not a number of degrees: {value}"))?;
-                    start.after.push(After::Crank(degrees));
-                }
                 "--then-pad" => start.after.push(After::Pad(value)),
                 other => return Err(format!("unknown option: {other}")),
             }
@@ -254,7 +239,6 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
     // engine-friction: engine#2540
     for step in &start.after {
         match step {
-            After::Crank(degrees) => h.crank(*degrees),
             After::Pad(buttons) => h.pad(buttons),
         };
     }

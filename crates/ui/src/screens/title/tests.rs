@@ -905,9 +905,7 @@ fn left_alone_the_menu_fades_out_over_the_cinematic() {
     // Nothing was asked of the audio but the song, once.
     assert_eq!(
         c.audio.take(),
-        [AudioRequest::PlayMusic {
-            cue: TITLE_MUSIC.to_owned()
-        }]
+        [AudioRequest::play_music(TITLE_MUSIC.to_owned(), None)]
     );
 }
 
@@ -1016,9 +1014,7 @@ fn the_song_starts_again_after_the_skips_silence() {
     t.update(&mut c, &tick(0.05));
     assert_eq!(
         c.audio.take(),
-        [AudioRequest::PlayMusic {
-            cue: TITLE_MUSIC.to_owned()
-        }]
+        [AudioRequest::play_music(TITLE_MUSIC.to_owned(), None)]
     );
     assert!(t.cinematic_time().abs() < f32::EPSILON);
     assert_eq!(t.phase, Phase::FadingOut { f: 0.0 });
