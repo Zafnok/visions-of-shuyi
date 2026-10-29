@@ -132,20 +132,20 @@ fn paint_left(pen: &mut Pen<'_>, view: &InfoView) {
     if view.supports.is_empty() {
         return;
     }
-    // The list stops where the box does.
-    let last = INFO.y + INFO.h - 2;
-    y += 2;
-    if y > last {
+    // The heading and the list stop where the box does.
+    let mut rows = (y + 2)..(INFO.y + INFO.h - 1);
+    let Some(heading) = rows.next() else {
         return;
-    }
-    pen.text(LEFT_X, y, &view.supports_title, UiColor::TextHighlight);
-    for (partner, rank) in &view.supports {
-        y += 1;
-        if y > last {
-            return;
-        }
-        pen.cut(LEFT_X, y, partner, SUPPORT_NAME_W, UiColor::Text);
-        pen.text(LEFT_X + SUPPORT_RANK_X, y, rank, UiColor::Text);
+    };
+    pen.text(
+        LEFT_X,
+        heading,
+        &view.supports_title,
+        UiColor::TextHighlight,
+    );
+    for (row, (partner, rank)) in rows.zip(&view.supports) {
+        pen.cut(LEFT_X, row, partner, SUPPORT_NAME_W, UiColor::Text);
+        pen.text(LEFT_X + SUPPORT_RANK_X, row, rank, UiColor::Text);
     }
 }
 

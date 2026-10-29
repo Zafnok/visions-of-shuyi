@@ -17,7 +17,7 @@ const HEADING_ROW: i32 = 2;
 /// Where the sections' menu box starts.
 const SECTIONS: (i32, i32) = (4, 6);
 /// The list's panel.
-const PANEL: Rect = Rect::new(28, 5, 68, 24);
+pub(super) const PANEL: Rect = Rect::new(28, 5, 68, 24);
 
 /// Paints `view` over the whole of `buf`.
 pub fn paint(ctx: &Ctx, view: &CampView, buf: &mut GlyphBuffer) {

@@ -531,10 +531,6 @@ impl Screen<Shuyi> for CampScreen {
         Some(self)
     }
 
-    fn as_any_mut(&mut self) -> Option<&mut dyn core::any::Any> {
-        Some(self)
-    }
-
     /// Back from a conversation: the lists again (what was new isn't), and
     /// camp's track again if the conversation played music of its own.
     fn uncovered(&mut self, ctx: &mut Ctx, _result: Option<ScreenResult>) -> Transition {

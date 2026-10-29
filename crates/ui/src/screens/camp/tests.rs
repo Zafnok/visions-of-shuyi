@@ -148,6 +148,21 @@ fn a_departed_partners_seen_conversations_stay() {
     assert_eq!(rows, [(SupportRank::C, false)]);
 }
 
+/// An unlocked conversation needs both of the pair in the army to be
+/// watched: with the partner gone (but the support not ended), it isn't
+/// listed.
+#[test]
+fn an_unlocked_conversation_needs_both_in_the_army() {
+    let ctx = ctx();
+    let mut game = bonded(&ctx);
+    game.roster
+        .retain(|u| u.character != Some(c("test_knight")));
+    let s = CampScreen::new(&ctx, game);
+    let lord = s.list_rows_of(&ctx, Focus::Talks(c("test_lord")));
+    let knight = |r: &Row| matches!(r, Row::Talk(t) if t.partner == c("test_knight"));
+    assert!(!lord.iter().any(knight), "{lord:?}");
+}
+
 /// Camp events: only the available ones, NEW until watched; watching one
 /// marks it seen in the campaign.
 #[test]
@@ -197,6 +212,30 @@ fn an_empty_list_keeps_the_focus_in_the_sections() {
     assert_eq!(view.empty, ctx.text("camp.empty.events"));
 }
 
+/// What is said instead of an empty list, in the panel under its title.
+#[test]
+fn an_empty_list_says_so_in_the_panel() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::{Cell, GlyphBuffer};
+    let ctx = ctx();
+    let s = CampScreen::new(&ctx, army(&ctx));
+    let blank = Cell::new(
+        ' ',
+        ctx.palette.get(crate::color::UiColor::Text),
+        ctx.palette.get(crate::color::UiColor::Black),
+    );
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+    glyph::paint(&ctx, &s.view(&ctx), &mut buf);
+    let empty = ctx.text("camp.empty.supports");
+    let row = |y: i32| -> String {
+        (0..i32::from(buf.width()))
+            .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+            .collect()
+    };
+    let at = (0..i32::from(buf.height())).find(|&y| row(y).contains(empty));
+    assert_eq!(at, Some(glyph::PANEL.y + 2));
+}
+
 /// Camp plays a track of the `camp` pool as it opens, and the next one
 /// after the first ends, fades and a quiet passes.
 #[test]
@@ -212,7 +251,10 @@ fn camp_plays_the_camp_pool_in_turn() {
     };
     let at = pool.iter().position(|c| *c == first).unwrap();
     let length = f64::from(ctx.game.content.audio.music[&first].length_ms) / 1000.0;
-    ctx.clock_s += length;
+    ctx.clock_s += length - 1.0;
+    update(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.audio.take(), [], "the track still plays");
+    ctx.clock_s += 1.0;
     update(&mut s, &mut ctx, &[]);
     assert_eq!(ctx.audio.take(), [AudioRequest::StopMusic]);
     ctx.clock_s += music::QUIET_S + 1.0;
