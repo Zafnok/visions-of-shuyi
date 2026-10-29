@@ -1,0 +1,13 @@
+// TEST FILE: a world-map chapter of the test world map (ticket 1007): its
+// story battle is the place of test_world naming it, and its intro scenes play
+// when the army arrives there. Not story content.
+(
+    id: "test_wm1",
+    title: "Test World I",
+    number: Some(4),
+    intro_scenes: ["test_wm_intro"],
+    battle: "test",
+    victory_scenes: ["test_wm_victory"],
+    next: Some("test_wm2"),
+    world_map: Some("test_world"),
+)

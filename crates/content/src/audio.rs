@@ -271,14 +271,13 @@ mod tests {
 
     /// Cues `audio.md` reserves for a moment the story doesn't have yet
     /// (0022, 0023, 0025, 0026, 0027): each is imported by the ticket that
-    /// first plays it (`world_map` and `capital` by 1007, `camp` by 1003;
+    /// first plays it (`camp` by 1003;
     /// Chapters 2-8's cues from 0071 by their chapter battle tickets,
     /// 0848–0854).
-    const RESERVED: [&str; 18] = [
+    const RESERVED: [&str; 16] = [
         "victory_grand",
         "ceremony_intro",
         "scene_loss",
-        "world_map",
         "world_map_war",
         "world_map_somber",
         "battle_desperate",
@@ -291,7 +290,6 @@ mod tests {
         "scene_lamplight",
         "holy_city",
         "scene_dread",
-        "capital",
         "camp",
     ];
 

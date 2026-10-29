@@ -1,0 +1,15 @@
+// TEST FILE: the test world map's second act (ticket 1007): where the army
+// goes once Old Bridge is won on test_world. Two places and no ground.
+(
+    act: 2,
+    levels: (7, 9),
+    music: "world_map",
+    start: "port",
+    final_node: "keep",
+    size: (40, 12),
+    nodes: [
+        (id: "port", name: "Grey Harbor", pos: (6, 6), kind: Empty),
+        (id: "keep", name: "Salt Keep", pos: (30, 6), kind: StoryBattle("test_wm3")),
+    ],
+    roads: [(from: "port", to: "keep")],
+)

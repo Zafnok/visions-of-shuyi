@@ -51,6 +51,11 @@ pub struct ChapterDef {
     /// The chapter after this one, if any ("To be continued" otherwise).
     #[serde(default)]
     pub next: Option<String>,
+    /// The world map this chapter plays on (1007), by id: its story battle
+    /// is the map's place naming this chapter, and its intro scenes play
+    /// when the army arrives there. `None`: a linear chapter.
+    #[serde(default)]
+    pub world_map: Option<String>,
 }
 
 /// How a new game starts.

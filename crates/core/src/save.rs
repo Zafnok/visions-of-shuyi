@@ -25,7 +25,9 @@
 //!   purpose: it is left out of a save at its default and a save without
 //!   it reads as that default, so every version 2 save still reads and
 //!   writes back the same. [`Campaign::lessons_done`] (0456) likewise:
-//!   left out while empty.
+//!   left out while empty, and so is [`Campaign::world`] (1007) while
+//!   `None`. [`SavePoint::WorldMap`] is a new variant: no older save holds
+//!   it, so every version 2 save still reads and writes back the same.
 
 use crate::prelude::*;
 
@@ -62,6 +64,8 @@ pub enum SavePoint {
     ChapterCleared,
     /// In the campaign's chapter's battle (the suspend save).
     Battle(Box<BattleHistory>),
+    /// On the world map, where [`Campaign::world`] says.
+    WorldMap,
 }
 
 /// Just a save's version: parses any save, whatever the rest of it holds.
@@ -80,6 +84,15 @@ impl SaveFile {
             version: SAVE_VERSION,
             campaign,
             point: SavePoint::ChapterCleared,
+        }
+    }
+
+    /// A world-map save of `campaign`.
+    pub fn world_map(campaign: Campaign) -> Self {
+        Self {
+            version: SAVE_VERSION,
+            campaign,
+            point: SavePoint::WorldMap,
         }
     }
 

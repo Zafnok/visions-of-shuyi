@@ -75,7 +75,7 @@ pub use shuyi_ui::screens::key_bindings::{CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT}
 /// group, in the order the screen lists them (Nick's pick, ticket 0815):
 /// the required actions, then the optional ones, as in `controls.md`'s
 /// *Required and optional* table, then the dialogue log's own key group.
-pub const KEY_ROWS: [KeyRow; 18] = [
+pub const KEY_ROWS: [KeyRow; 20] = [
     (Action::CursorUp, "key_bindings.action.cursor_up", Required),
     (
         Action::CursorDown,
@@ -122,6 +122,16 @@ pub const KEY_ROWS: [KeyRow; 18] = [
         "key_bindings.action.dialogue_log",
         RowGroup::Shared(DIALOGUE_LOG_HEADING),
     ),
+    (
+        Action::WorldArmy,
+        "key_bindings.action.world_army",
+        RowGroup::Shared(WORLD_MAP_HEADING),
+    ),
+    (
+        Action::WorldFind,
+        "key_bindings.action.world_find",
+        RowGroup::Shared(WORLD_MAP_HEADING),
+    ),
 ];
 
 /// The rebindable actions the PC's Key bindings screen doesn't list: only
@@ -136,7 +146,7 @@ pub const NOT_ON_THE_PLAYDATE: [Action; 1] = [Action::ZoomMap];
 /// The rows of the Key bindings screen on the Playdate (no keyboard,
 /// ticket 1045): [`KEY_ROWS`] with the crank's two after Rewind, less
 /// [`NOT_ON_THE_PLAYDATE`].
-pub const PLAYDATE_KEY_ROWS: [KeyRow; 19] = [
+pub const PLAYDATE_KEY_ROWS: [KeyRow; 21] = [
     KEY_ROWS[0],
     KEY_ROWS[1],
     KEY_ROWS[2],
@@ -164,11 +174,17 @@ pub const PLAYDATE_KEY_ROWS: [KeyRow; 19] = [
     ),
     KEY_ROWS[16],
     KEY_ROWS[17],
+    KEY_ROWS[18],
+    KEY_ROWS[19],
 ];
 
 /// Text key of the heading over the actions of the dialogue log's
 /// [`KeyGroup`], which may share keys with the rest.
 pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
+
+/// Text key of the heading over the world map's actions (ticket 1007),
+/// another [`KeyGroup`] that may share keys with the rest.
+pub const WORLD_MAP_HEADING: &str = "key_bindings.world_map";
 
 /// The help line of a text box: `Enter done · Backspace delete · Escape
 /// cancel`, in `ctx`'s language.

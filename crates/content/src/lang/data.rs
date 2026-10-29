@@ -21,6 +21,7 @@ use crate::dialogue::DialogueTable;
 use crate::lesson::{self, Lesson, LessonTable};
 use crate::names::Names;
 use crate::terrain::TerrainDef;
+use crate::worldmap::WorldMapDef;
 use crate::tip::{MAX_LINE_CHARS, MAX_TEXT_LINES, MAX_TITLE_CHARS, Tip, TipTable};
 
 /// Today's English for everything `data.ron` and `dialogue/*.ron` can
@@ -59,6 +60,8 @@ pub struct Tables<'a> {
     pub dialogue: &'a DialogueTable,
     /// Camp events.
     pub camp: &'a [CampEvent],
+    /// World maps by id.
+    pub worldmaps: &'a BTreeMap<String, WorldMapDef>,
 }
 
 /// The key of the `name` of `id` in data file `file` (`items.potion.name`).
@@ -98,6 +101,11 @@ fn lesson_item_key(id: &str, index: usize) -> String {
 /// The key of chapter `id`'s title.
 fn chapter_key(id: &str) -> String {
     format!("chapters.{id}.title")
+}
+
+/// The key of the name of place `place` of world map `map`.
+fn place_key(map: &str, place: &str) -> String {
+    format!("worldmaps.{map}.{place}.name")
 }
 
 /// The key of camp event `id`'s title.
@@ -216,6 +224,11 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
     for event in tables.camp {
         data.insert(camp_key(&event.id), event.title.clone());
     }
+    for (map, def) in tables.worldmaps {
+        for (place, name) in &def.names {
+            data.insert(place_key(map, place), name.clone());
+        }
+    }
     for (id, battle) in tables.battles {
         for (i, note) in battle.battle_notes.iter().enumerate() {
             data.insert(note_key(id, i), note.text.clone());
@@ -312,6 +325,12 @@ impl Lang {
     pub fn chapter_title<'a>(&'a self, code: &LangCode, chapter: &'a ChapterDef) -> &'a str {
         self.0
             .data_text(code, || chapter_key(&chapter.id), &chapter.title)
+    }
+
+    /// The name of place `place` of world map `map` in language `code`.
+    pub fn place_name<'a>(&'a self, code: &LangCode, map: &'a WorldMapDef, place: &'a str) -> &'a str {
+        self.0
+            .data_text(code, || place_key(&map.map.id, place), map.name(place))
     }
 
     /// The title of camp event `event` in language `code`.

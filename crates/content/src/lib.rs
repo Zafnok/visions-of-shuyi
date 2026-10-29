@@ -56,6 +56,7 @@ pub mod tip;
 pub mod title;
 pub mod trigger;
 pub mod voice;
+pub mod worldmap;
 
 use alloc::collections::BTreeMap;
 
@@ -108,6 +109,7 @@ pub use tip::{Tip, TipTable, TipTrigger};
 pub use title::TitleArt;
 pub use trigger::check_triggers;
 pub use voice::{Playable, Variant, VoiceManifest};
+pub use worldmap::WorldMapDef;
 
 /// All validated game content.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -182,6 +184,8 @@ pub struct Content {
     pub title: TitleArt,
     /// Cinematics by id (file stem), ADR-0060.
     pub cinematics: BTreeMap<String, CinematicDef>,
+    /// World maps by id (file stem), one an act (ticket 1007, ADR-0099).
+    pub worldmaps: BTreeMap<String, WorldMapDef>,
     /// The openings a conversation's script may ask for, by id (file
     /// stem): ticket 0734, ADR-0076.
     pub openings: BTreeMap<String, OpeningDef>,
@@ -317,6 +321,13 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let places = (maps.as_ref().ok(), openings.as_ref().ok());
     let away = (supports.as_ref().ok(), camp.as_ref().ok());
     let dialogue = check_dialogue(scripts, places, story, away);
+    let worldmaps = load_worldmaps(
+        fields,
+        chapters.as_ref().ok(),
+        dialogue.as_ref().ok(),
+        cast,
+        (items.as_ref().ok(), cues),
+    );
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -354,6 +365,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         title: title_art,
         cinematics,
         openings,
+        worldmaps,
     };
     units.lang = lang::load(data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok()));
     let themes = palette::load_themes(palette.as_ref().ok());
@@ -367,6 +379,31 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     // The combat shots' fights need everything else (ADR-0062).
     with_themes(content.and_then(cinematic::check_fights), themes)
+}
+
+/// The world maps, checked against the `battles`, `chapters`, `scenes`,
+/// `characters`, items and music cues that loaded; none when one of them
+/// failed (its errors are reported already).
+fn load_worldmaps(
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    chapters: Option<&BTreeMap<String, ChapterDef>>,
+    scenes: Option<&DialogueTable>,
+    characters: Option<&CharacterTable>,
+    (items, audio): (Option<&ItemTable>, Option<&AudioManifest>),
+) -> Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>> {
+    let (Some(battles), Some(chapters), Some(dialogue), Some(characters), Some(items), Some(audio)) =
+        (battles, chapters, scenes, characters, items, audio)
+    else {
+        return Ok(BTreeMap::new());
+    };
+    worldmap::load_all(worldmap::WorldRefs {
+        battles,
+        chapters,
+        dialogue,
+        characters,
+        items,
+        audio,
+    })
 }
 
 /// The supports and the camp events, each loaded or its errors.
@@ -455,6 +492,7 @@ fn data_text(
         battles: units.battles.as_ref().ok()?,
         dialogue: units.dialogue.as_ref().ok()?,
         camp: units.camp.as_ref().ok()?,
+        worldmaps: units.worldmaps.as_ref().ok()?,
     }))
 }
 
@@ -891,6 +929,7 @@ struct Loaded {
     title: Result<TitleArt, Vec<ContentError>>,
     cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
     openings: Result<BTreeMap<String, OpeningDef>, Vec<ContentError>>,
+    worldmaps: Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -949,6 +988,7 @@ fn assemble(
         openings: take(units.openings, &mut errors),
         basic_shop: take(units.basic_shop, &mut errors),
         camp: take(units.camp, &mut errors),
+        worldmaps: take(units.worldmaps, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -1216,6 +1256,7 @@ mod tests {
             title: ok_title(),
             cinematics: ok_cinematics(),
             openings: ok_openings(),
+            worldmaps: Ok(BTreeMap::new()),
             camp: ok_camp(),
         }
     }
@@ -1318,9 +1359,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 34] = [
+    const NAMES: [&str; 35] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "S", "Q",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "S", "Q", "W",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1376,6 +1417,7 @@ mod tests {
                     cinematics: Err(e("C")),
                     openings: Err(e("O")),
                     camp: Err(e("Q")),
+                    worldmaps: Err(e("W")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -1442,6 +1484,7 @@ mod tests {
                     openings: pick(i == 31, "O", ok_openings()),
                     basic_shop: pick(i == 32, "S", basic_shop::load(None)),
                     camp: pick(i == 33, "Q", ok_camp()),
+                    worldmaps: pick(i == 34, "W", Ok(BTreeMap::new())),
                 },
             )
         };

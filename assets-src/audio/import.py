@@ -76,6 +76,11 @@ DOWNLOADS = [
     ("The_Old_Tower_Inn.mp3", OGA + "The_Old_Tower_Inn.mp3", "3fe4070015b880b591c79a7fca31156a0083a8768d88a39da39ab6c54f2f014d"),
     ("Woodland Fantasy_0.mp3", OGA + "Woodland%20Fantasy_0.mp3", "87f9a9d04fdd0b924db98b90e86c2906330f4931cb8734f7b431706e2869aacd"),
     ("The_Bards_Tale.mp3", OGA + "The_Bards_Tale.mp3", "6e93e8e8215bea17a209c321c182111058e024c53e3ad775ce1481ca1d1fcfc2"),
+    # Ticket 1007: the Act 1 world map's track (0025) and every capital's (0026).
+    ("The World At Your Door MP3.zip", OGA + "The%20World%20At%20Your%20Door%20MP3.zip", "8d31cb763e8b70fcbc5a77e94a5a8ed8f2edd24b2559935d79346a0a51d86d06"),
+    ("Adventures in Adventureland.mp3",
+     "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Adventures%20in%20Adventureland.mp3",
+     "13cf2a3bed4996331e8dcd8263cbb3a780475f0157889fb16b8e47220f453a2d"),
     # Free Music Archive's download button needs a login; this is the
     # public file its player streams (320 kbps MP3).
     ("hesitation_orchestral.mp3",
@@ -132,6 +137,8 @@ MUSIC = [
     ("old_tower_inn.ogg", "The_Old_Tower_Inn.mp3", None),
     ("woodland_fantasy.ogg", "Woodland Fantasy_0.mp3", None),
     ("bards_tale.ogg", "The_Bards_Tale.mp3", None),
+    ("the_world_at_your_door.ogg", "The World At Your Door MP3.zip", "The World At Your Door MP3.mp3"),
+    ("adventures_in_adventureland.ogg", "Adventures in Adventureland.mp3", None),
 ] + [
     # The victory pool: 13 of the Win Jingle's 17 versions (Nick cut Saw,
     # Square, Banjo and Harpsichord; audio.md).

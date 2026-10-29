@@ -88,9 +88,16 @@ mod tests {
         let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
         assert_eq!(
             headings,
-            ["Must have a key", "Optional", "In the dialogue log"]
+            [
+                "Must have a key",
+                "Optional",
+                "In the dialogue log",
+                "On the world map"
+            ]
         );
         assert_eq!(view.groups[2].rows[0].label, "Open the log");
+        let world: Vec<_> = view.groups[3].rows.iter().map(|r| r.label.as_str()).collect();
+        assert_eq!(world, ["Your army", "Find"]);
     }
 
     /// The Playdate's rows (ticket 1045): every rebindable action once,

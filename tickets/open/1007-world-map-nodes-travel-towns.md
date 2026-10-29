@@ -5,7 +5,7 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["0801", "0802", "0409", "0805", "1003", "0025", "0026"]
 nick_input: decision
 completed:
@@ -141,5 +141,12 @@ integration tests below play the same).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Estimate (ADR-0092), written before the code:** about **2,400**
+production lines with a good engine. Core world-map rules and campaign
+state ~500 (graph, unlocks, travel, commands and events), content loader
+and checks ~350, the world-map screen's logic and view ~550, its glyph and
+picture skins ~500, the Find list and map menu ~200, the town shop ~250,
+the flow ~200, music ~60. Judged against the camp screen (1003: screen,
+view, skin and music ≈ 800) and the game flow (0801, 750), and against
+Fire Emblem: The Sacred Stones' world map, which is the same job: nodes,
+roads, an army marker, a menu and shops.

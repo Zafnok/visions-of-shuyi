@@ -37,6 +37,7 @@ pub mod support;
 pub mod terrain;
 pub mod unit;
 pub mod weapon;
+pub mod worldmap;
 
 // The engine's grid and RNG, under the names the game's code uses
 // (ADR-0063 §6).
@@ -111,3 +112,7 @@ pub use unit::{
     UnitError, UnitId, default_map_label, is_valid_map_label,
 };
 pub use weapon::{WeaponKind, WeaponRank};
+pub use worldmap::{
+    NodeCondition, NodeKind, SideQuest, TownTrade, WorldCommand, WorldError, WorldEvent, WorldMap,
+    WorldNode, WorldState,
+};
