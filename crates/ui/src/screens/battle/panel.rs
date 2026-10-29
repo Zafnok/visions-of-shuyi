@@ -7,6 +7,7 @@ use crate::prelude::*;
 use trpg_core::{BattleState, Faction, Pos, StatKind, Unit};
 
 use super::info::{class_level, stat_name};
+use super::shop::gold_text;
 use super::view::{PanelUnitView, PanelView, TerrainView};
 use crate::words::Words;
 
@@ -51,6 +52,7 @@ pub fn view(
         selected,
         terrain,
         unit: unit.map(|u| unit_view((state, words), u)),
+        gold: words.text_with("battle.shop.gold", &[("gold", &gold_text(state.gold()))]),
     }
 }
 

@@ -16,6 +16,7 @@ mod guides;
 mod info;
 mod progress;
 mod rewind;
+mod shop;
 
 use crate::prelude::*;
 
@@ -31,6 +32,7 @@ pub use self::info::{
 };
 pub use self::progress::{ClassProgressView, ExpView, GainsView, ProgressView, StatGainView};
 pub use self::rewind::{RewindScreenView, RewindView};
+pub use self::shop::{SellConfirmView, ShopLineView, ShopScreenView};
 use super::HealPopup;
 use super::banner::BannerKind;
 use super::stage::view::StageView;
@@ -151,6 +153,8 @@ pub struct PanelView {
     pub terrain: Option<TerrainView>,
     /// The unit drawn under the cursor.
     pub unit: Option<PanelUnitView>,
+    /// The party's gold (`Gold 1 250`, 0409).
+    pub gold: String,
 }
 
 /// A tile's terrain in the side panel.
@@ -199,6 +203,9 @@ pub struct ObjectiveView {
     pub title: String,
     /// What wins the battle.
     pub objective: String,
+    /// The village's houses to save, with how many are saved and lost
+    /// (0409), in a battle with a village.
+    pub village: Option<String>,
     /// The turn, with the limit if there is one.
     pub turn: String,
     /// The battle notes under a heading, if the battle has any.
@@ -290,10 +297,12 @@ impl BattleView {
             if let Some(u) = &p.unit {
                 texts.extend([u.name.as_str(), &u.class_level, &u.faction_name]);
             }
+            texts.push(&p.gold);
         }
         match &self.dialog {
             Some(DialogView::Objective(o)) => {
                 texts.extend([o.title.as_str(), &o.objective, &o.turn]);
+                texts.extend(o.village.as_deref());
                 if let Some(n) = &o.notes {
                     texts.extend(note_texts(n));
                 }

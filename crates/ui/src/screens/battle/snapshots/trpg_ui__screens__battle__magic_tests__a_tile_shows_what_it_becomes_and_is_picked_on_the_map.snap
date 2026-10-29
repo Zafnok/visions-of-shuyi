@@ -1,5 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/magic_tests.rs
+assertion_line: 757
 expression: buf.to_snapshot(&c.palette)
 ---
                                                                       ╔════════════════════════════╗
@@ -30,7 +31,7 @@ expression: buf.to_snapshot(&c.palette)
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
  Forest → Burning (1 round)                          w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows next target · f cast · d back                                                      F2 debug 

@@ -1,6 +1,6 @@
 ---
-source: crates/ui/tests/flow.rs
-assertion_line: 224
+source: crates/ui/tests/it/flow.rs
+assertion_line: 465
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +31,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │                            │
+                                                                      │ Gold 0                     │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f restart · d back                                                                        F2 debug 

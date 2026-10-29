@@ -566,6 +566,17 @@ yet, nor any ring.
   Buying, selling or repairing **ends that unit's action**; leaving without
   doing anything doesn't (FE rule). Bought weapons/gear go to the buyer's
   free loadout slot, else the stock.
+- **Selling asks first** (Nick, 2026-10-28, on PR #468: "selling items
+  should have confirmation screen with a up/down slider for selling
+  multiple"). Picking an item to sell opens a confirmation showing how
+  many and the gold they bring; up and down change how many (1 up to
+  the copies there are), Confirm sells them, Cancel sells nothing.
+  Example: the pack holds 3 Potions; the player picks Potion, presses up
+  once (2 of 3, +300 gold) and confirms: two are sold. *Claude's
+  starting rules:* the count starts at 1 and stops at 1 and at the
+  number held (no wrapping); a single item (a weapon, the worn armor)
+  gets the same confirmation with the count fixed at 1. Buying and
+  repairing don't ask.
 - **Between chapters**, the same shop screen is available. From the world
   map on, shops are in **town nodes** (0008, `world-structure.md`).
 - **Specialty stores** (Nick, PR #385): a town can have stores that trade

@@ -14,6 +14,7 @@ pub mod guides;
 pub mod info;
 pub mod progress;
 pub mod rewind;
+pub mod shop;
 
 use crate::prelude::*;
 use trpg_core::Phase;
@@ -53,6 +54,9 @@ pub const TERRAIN_ROW: i32 = SIDE_PANEL.y + 1;
 /// Row of the unit's name in the side panel; the rest of the unit block
 /// follows.
 pub const UNIT_ROW: i32 = SIDE_PANEL.y + 5;
+
+/// Side panel row of the party's gold: the last inside the border.
+pub const GOLD_ROW: i32 = SIDE_PANEL.y + SIDE_PANEL.h - 2;
 
 /// Column of the side panel's HP bar, after `HP 999/999 `.
 pub const HP_BAR_X: i32 = TEXT_X + 11;
@@ -297,6 +301,13 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     if let Some(unit) = &panel.unit {
         paint_panel_unit(ctx, unit, buf);
     }
+    print_clipped(
+        buf,
+        (TEXT_X, GOLD_ROW),
+        TEXT_W,
+        &panel.gold,
+        c(UiColor::Text),
+    );
 }
 
 /// The unit block: name (faction colour), class and level, HP with a bar,
@@ -348,6 +359,9 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
                 (o.objective.clone(), UiColor::Text),
                 (o.turn.clone(), UiColor::Text),
             ];
+            if let Some(village) = &o.village {
+                lines.insert(1, (village.clone(), UiColor::Text));
+            }
             if let Some(notes) = &o.notes {
                 lines.push((String::new(), UiColor::Text));
                 lines.push((notes.title.clone(), UiColor::TextDim));

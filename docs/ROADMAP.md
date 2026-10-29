@@ -281,7 +281,7 @@ tickets in brackets):
 2. **0044** the Preparations shop's basics and tiers (0443, 1070) →
    **0073** four armour weights (0321, 0320, Chapter 1's loadouts) →
    **0074** the Steel armour sold from Chapter 5 (its data ticket)
-3. **0028** shop music (0409)
+3. **0028** shop music (0473)
 4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
    a boss who can't die, Hollis's death and its Classic fallback, the
    kinds of side-quest reward, what each early chapter introduces
@@ -315,7 +315,7 @@ Candle joins outside battle.
 - **A. World map:** **0322** the house, gate and throne tiles (after
   0037) → **0313** save the village · **0471** a tileset for poor
   houses and a throne (after 0322; Nick buys) · **0409** the shop
-  screen (after 0028) → **0443** the Preparations shop tab (after
+  screen → **0473** its music (after 0028) · **0443** the Preparations shop tab (after
   0044) · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
   0026; mockup first) → **1008** skirmishes → **1065** the act ends

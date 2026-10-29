@@ -42,6 +42,7 @@ pub mod info;
 pub mod items;
 pub mod layout;
 pub mod lessons;
+pub mod loot;
 pub mod magic;
 pub mod map_menu;
 pub mod mode;
@@ -52,6 +53,7 @@ pub mod playback;
 pub mod playdate;
 pub mod progress;
 pub mod rewind;
+pub mod shop;
 pub mod skills;
 mod sounds;
 pub mod split_keys;
@@ -90,6 +92,7 @@ use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{MapFrame, RewindEffect, RewindScreen};
+use self::shop::{ShopScreen, ShopVisit};
 use self::tips::TipState;
 use self::view::{
     BattleMenuView, BattleView, DialogView, InfoView, MapInfoView, MenuHeader, MenuPlace,
@@ -318,6 +321,9 @@ enum Opened {
     Guides,
     /// The rewind screen (0307).
     Rewind,
+    /// The shop screen for this unit on this shop tile (0409), from its
+    /// action menu.
+    Shop(UnitId, Pos),
 }
 
 /// The battle screen: the player browses the map with the cursor, selects
@@ -1491,6 +1497,9 @@ impl BattleScreen {
         if let Some(events) = &events {
             self.history.push(cmd.clone());
             self.note_level_ups(events);
+            if let Some(line) = loot::line(&self.state, self.language.words(), events) {
+                self.toast = Some((line, TOAST_S));
+            }
             if was_player {
                 self.notice_events(cmd, events);
             }
@@ -1764,6 +1773,7 @@ impl BattleScreen {
             Effect::Options => return Some(Opened::Options),
             Effect::Guides => return Some(Opened::Guides),
             Effect::Press(action) => self.pressed = Some(action),
+            Effect::Shop { unit, dest } => return Some(Opened::Shop(unit, dest)),
         }
         None
     }
@@ -1823,6 +1833,10 @@ impl BattleScreen {
             Opened::Options => Box::new(crate::screens::options::screen()),
             Opened::Guides => Box::new(GuidesScreen::new(&ctx.game.content)),
             Opened::Rewind => Box::new(self.rewind_screen(ctx)),
+            Opened::Shop(unit, dest) => match ShopScreen::new(&self.state, unit, dest) {
+                Some(shop) => Box::new(shop),
+                None => return Transition::None,
+            },
         })
     }
 
@@ -2454,6 +2468,7 @@ impl BattleScreen {
                         self.exit_name.as_deref(),
                         words,
                     ),
+                    village: loot::village_text(&self.state, words),
                     turn: map_menu::turn_text(&self.state, words),
                     notes: under,
                 }))
@@ -2748,6 +2763,16 @@ impl Screen<Shuyi> for BattleScreen {
             Ok(effect) => return self.rewound(ctx, effect),
             Err(other) => other,
         };
+        let result = match result.downcast::<ShopVisit>() {
+            Ok(visit) => {
+                // Nothing chosen: the unit hasn't acted, its menu is back.
+                if let Some(cmd) = visit.command() {
+                    self.apply(&cmd);
+                }
+                return Transition::None;
+            }
+            Err(other) => other,
+        };
         match result.take::<GameOverChoice>() {
             Some(GameOverChoice::Rewind) => self.rewind_from_defeat(ctx),
             Some(GameOverChoice::Retry) => Transition::pop_with(BattleEnd::Restart),
@@ -2934,6 +2959,11 @@ pub(crate) mod testing {
 
         /// The Guides list, while it is open.
         pub fn guides(&self) -> Option<&GuidesScreen> {
+            self.0.find()
+        }
+
+        /// The shop screen, while it is open.
+        pub fn shop(&self) -> Option<&super::shop::ShopScreen> {
             self.0.find()
         }
 

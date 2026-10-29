@@ -171,6 +171,7 @@ fn the_panel_cuts_long_lines_and_names_an_enemy_in_its_colour() {
             max: 20,
             faction_name: "Enemy".to_owned(),
         }),
+        gold: "Gold 0".to_owned(),
     };
     paint_panel(&c, &panel, &mut buf);
     assert_eq!(panel_row(&buf, TERRAIN_ROW), "A".repeat(TEXT_W));
@@ -272,6 +273,7 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "OBJECTIVE".to_owned(),
             objective: "Rout the enemy".to_owned(),
+            village: None,
             turn: "Turn 1".to_owned(),
             notes: Some(NotesView {
                 title: "Notes".to_owned(),
