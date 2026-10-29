@@ -28,8 +28,8 @@ use crate::error::ContentError;
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Cast {
     /// The characters the army can lose, so that a scene may play without
-    /// them: the starting roster but the lead, and everyone a battle can
-    /// recruit.
+    /// them: the starting roster but the lead, and everyone a battle or a
+    /// scene (`@joins`, [`Cast::with_joins`]) can recruit.
     pub may_be_absent: BTreeSet<CharacterId>,
     /// By scene id, the characters who are there whenever the scene plays:
     ///
@@ -40,7 +40,9 @@ pub struct Cast {
     /// - the characters its camp event needs ([`Cast::with_camp`]);
     /// - before anyone can have fallen, the starting roster: in the first
     ///   chapter's intro scenes, and (those of them the battle places) in
-    ///   the scenes its battle plays as turn 1's player phase starts.
+    ///   the scenes its battle plays as turn 1's player phase starts;
+    /// - a scene's recruit, in every scene of the chapter that recruits
+    ///   them ([`Cast::with_joins`]): the army can't have lost them yet.
     ///
     /// A scene played from several places keeps only those every one of
     /// them has; any other scene a chapter plays keeps nobody.
@@ -116,6 +118,42 @@ impl Cast {
     pub fn with_camp(mut self, camp: &[CampEvent]) -> Self {
         for event in camp {
             self.played(&event.scene, event.units.iter().cloned().collect());
+        }
+        self
+    }
+
+    /// The same, with the scenes' recruits: `joins` has, by scene id, the
+    /// characters each scene's `@joins` lines add to the army (0848). The
+    /// army can lose them once they are in it, but not in the chapter that
+    /// recruits them: before the join they aren't in the army (a script
+    /// that names them there, as Joss on the far bank, says lines that
+    /// play anyway), and after it no battle comes before the next chapter.
+    #[must_use]
+    pub fn with_joins(
+        mut self,
+        joins: &BTreeMap<String, Vec<CharacterId>>,
+        battles: &BTreeMap<String, BattleDef>,
+        chapters: &BTreeMap<String, ChapterDef>,
+    ) -> Self {
+        for chapter in chapters.values() {
+            let scenes = chapter.intro_scenes.iter().chain(&chapter.victory_scenes);
+            let joiners: BTreeSet<CharacterId> = scenes
+                .clone()
+                .filter_map(|scene| joins.get(scene))
+                .flatten()
+                .cloned()
+                .collect();
+            if joiners.is_empty() {
+                continue;
+            }
+            self.may_be_absent.extend(joiners.iter().cloned());
+            let battle = battles.get(&chapter.battle).into_iter();
+            let triggers = battle.flat_map(|b| &b.triggers).map(|t| &t.scene);
+            for scene in scenes.chain(triggers) {
+                if let Some(certain) = self.certain.get_mut(scene) {
+                    certain.extend(joiners.iter().cloned());
+                }
+            }
         }
         self
     }

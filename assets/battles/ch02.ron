@@ -1,0 +1,106 @@
+// Chapter 2's battle (ticket 0848; beat sheet docs/story/chapters/ch02.md):
+// defeat Silas Hendry, the Hound lieutenant, and save at least 3 of Kell's
+// Ford's 5 houses (turn-structure.md, *Save the village*). The rest of the
+// Hounds run when he falls. Preparations for the first time. Every number
+// here is a *Claude's starting value*, set by the bots
+// (`cargo shuyi autobalance --stage ch02`) and judged in the Act 1
+// playtest (1064).
+//
+// The race (with the raiders as authored): the two raiders on the south
+// bank burn the west house and the house by the ford on the Hounds' first
+// turn unless they are evacuated (or the raider killed); the one on the
+// bridge road reaches the south-east house on their second; the one
+// coming from the north-east reaches the big house by the water on their
+// third, then walks on to the north-west one. Hendry holds the ford's north end with a
+// guard either side, so his Pack Hunt hits whoever comes up out of the
+// water; killing him wins the battle, and every house still standing then
+// counts as saved.
+//
+// Joss is not on the map: his refusal is a scene over it as the Hounds'
+// first turn starts, and he joins in the scene after the battle (`@joins`).
+(
+    id: "ch02",
+    map: "ch02",
+    // The south end of the village, by the ford road.
+    player_slots: [
+        (character: "lead", pos: (9, 13)),
+        (character: "retainer", pos: (10, 14)),
+        (character: "sergeant", pos: (8, 14)),
+        (character: "poacher", pos: (7, 13)),
+        (character: "keeper", pos: (9, 15)),
+        (character: "heretic", pos: (10, 15)),
+    ],
+    enemies: [
+        // South bank: raiders at the houses, and one to meet the party.
+        (template: "hound_raider", pos: (1, 12), raider: true, level: Some(1)),
+        (template: "hound_raider", pos: (7, 9), raider: true, level: Some(1)),
+        (template: "hound_raider", pos: (22, 10), raider: true, level: Some(1)),
+        (template: "hound_swordsman", pos: (13, 12), level: Some(1)),
+        // The bridge road.
+        (template: "hound_archer", pos: (18, 10), ai: Guard, level: Some(1)),
+        // The ford's north end: Hendry and his guards.
+        (character: "hound_lieutenant", pos: (9, 5), ai: Stationary, boss: true),
+        (template: "hound_guard", pos: (8, 6), ai: Guard, level: Some(1)),
+        (template: "hound_guard", pos: (10, 6), ai: Guard, level: Some(1)),
+        (template: "hound_archer", pos: (11, 5), ai: Guard, level: Some(1)),
+        // North bank: the rest of the raid. One raider comes from the
+        // north-east for the big house by the water, then the north-west
+        // one; the others hold.
+        (template: "hound_raider", pos: (23, 4), raider: true, level: Some(1)),
+        (template: "hound_raider", pos: (23, 5), ai: Guard, level: Some(1)),
+        (template: "hound_rider", pos: (16, 5), ai: Guard, level: Some(1)),
+        (template: "hound_swordsman", pos: (5, 3), ai: Guard, level: Some(1)),
+        (template: "hound_swordsman", pos: (1, 4), ai: Guard, level: Some(1)),
+    ],
+    preparations: true,
+    pack_cap: 4,
+    // The debug Quick Battle and the bots: what Chapter 1 leaves (its 3
+    // Potions back in the stock, 1000 gold).
+    solo_stock: ["potion", "potion", "potion"],
+    solo_gold: 1000,
+    clear_gold: 1200,
+    // The Houndmaster's Axe, Hendry's, is the player's when he is beaten.
+    clear_items: ["houndmasters_axe"],
+    objective: DefeatUnit(unit: "hound_lieutenant", leftovers: Flee),
+    // The first house past the minimum gives the Fordwarden's Spear, the
+    // second an Elixir (one of Act 1's handful, weapons-and-items.md).
+    village: (minimum: 3, rewards: [Item("fordwardens_spear"), Item("elixir")]),
+    // Scene ids and what each is written for: the top of dialogue/ch02.dlg.
+    triggers: [
+        (when: TurnStart(turn: 1, phase: Player), scene: "ch02_first_turn", once: true),
+        (when: TurnStart(turn: 1, phase: Enemy), scene: "ch02_refusal", once: true),
+        (
+            when: CombatStart(unit: "hound_lieutenant", against: Some("lead")),
+            scene: "ch02_boss_engage_lead",
+            once: true,
+        ),
+        (
+            when: CombatStart(unit: "hound_lieutenant", against: Some("poacher")),
+            scene: "ch02_boss_engage_poacher",
+            once: true,
+        ),
+        (when: CombatStart(unit: "hound_lieutenant"), scene: "ch02_boss_engage", once: true),
+        (when: HalfHp(unit: "hound_lieutenant"), scene: "ch02_boss_half", once: true),
+        (when: UnitFell(unit: "hound_lieutenant"), scene: "ch02_death_hound_lieutenant", once: true),
+        // Maud at the house by the ford.
+        (
+            when: UnitEntersArea(who: Character("keeper"), area: (x: 11, y: 10, w: 1, h: 1)),
+            scene: "ch02_house_keeper",
+            once: true,
+        ),
+        (when: UnitFell(unit: "lead"), scene: "ch02_death_lead", once: true),
+        (when: UnitFell(unit: "retainer", mode: Some(Classic)), scene: "ch02_death_retainer", once: true),
+        (when: UnitFell(unit: "retainer", mode: Some(Casual)), scene: "ch02_retreat_retainer", once: true),
+        (when: UnitFell(unit: "sergeant", mode: Some(Classic)), scene: "ch02_death_sergeant", once: true),
+        (when: UnitFell(unit: "sergeant", mode: Some(Casual)), scene: "ch02_retreat_sergeant", once: true),
+        (when: UnitFell(unit: "poacher", mode: Some(Classic)), scene: "ch02_death_poacher", once: true),
+        (when: UnitFell(unit: "poacher", mode: Some(Casual)), scene: "ch02_retreat_poacher", once: true),
+        (when: UnitFell(unit: "keeper", mode: Some(Classic)), scene: "ch02_death_keeper", once: true),
+        (when: UnitFell(unit: "keeper", mode: Some(Casual)), scene: "ch02_retreat_keeper", once: true),
+        (when: UnitFell(unit: "heretic", mode: Some(Classic)), scene: "ch02_death_heretic", once: true),
+        (when: UnitFell(unit: "heretic", mode: Some(Casual)), scene: "ch02_retreat_heretic", once: true),
+    ],
+    difficulty: Normal,
+    music: Cue("battle_desperate"),
+    seed: 848,
+)

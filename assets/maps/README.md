@@ -91,6 +91,9 @@ changes.
 | ---- | ----- |
 | `harrowby_yard.map` | Chapter 1, the letter (`ch01_intro`): the yard behind the lead's rented house at Harrowby, at dawn |
 | `veyne_study.map` | Chapter 1, to be continued (`ch01_tbc`): the old lord's study at Veyne Hall, at night |
+| `kells_road.map` | Chapter 2, a halt in the dark (`ch02_intro`): the road above Kell's Ford, before dawn |
+| `kells_far_bank.map` | Chapter 2, the boy from the river (`ch02_join`): the far bank of the ford, at dusk |
+| `veyne_guardroom.map` | Chapter 2, to be continued (`ch02_tbc`): the guardroom at Veyne Hall's gate, at night |
 
 ## Rules checked by the loader
 

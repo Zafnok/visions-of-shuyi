@@ -70,7 +70,7 @@ pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
 pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
 pub use bundle::layers;
-pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
+pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign, roster_units};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use cinematic::{
     Act, ActionDef, CastMember, CinematicDef, CombatShot, Fight, Heading, OpeningDef, Shot,
@@ -79,7 +79,7 @@ pub use cinematic::{
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
     ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage, Step,
-    deaths,
+    deaths, joins,
 };
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
@@ -528,7 +528,14 @@ fn check_presence(
     else {
         return Ok(scripts.table);
     };
-    let cast = dialogue::Cast::new(new_game, battles, chapters, supports).with_camp(camp);
+    let joins = scripts
+        .parsed
+        .iter()
+        .map(|scene| (scene.scene.id.clone(), dialogue::joined(scene)))
+        .collect();
+    let cast = dialogue::Cast::new(new_game, battles, chapters, supports)
+        .with_camp(camp)
+        .with_joins(&joins, battles, chapters);
     let errors: Vec<ContentError> = scripts
         .parsed
         .iter()

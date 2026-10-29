@@ -7,5 +7,5 @@
     intro_scenes: ["ch01_intro", "ch01_prebattle"],
     battle: "ch01",
     victory_scenes: ["ch01_victory", "ch01_tbc"],
-    next: None,
+    next: Some("ch02"),
 )
