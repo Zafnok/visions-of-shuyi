@@ -1,0 +1,608 @@
+# Chapter 3: Greywater. Written on a blank page from the beat sheet's
+# cards by ticket 0745 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch03.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# Scene ids, for chapters/ch03.ron and battles/ch03.ron to wire (0849):
+#
+#   Before the battle (intro_scenes, in this order)
+#     ch03_intro                    the boathouse on the shore, the night before
+#     ch03_prebattle                the foot of the causeway at dawn
+#
+#   In the battle (triggers, each once)
+#     ch03_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch03_sergeant_engage          CombatStart(unit: "hound_sergeant"): anyone else
+#     ch03_sergeant_engage_retainer CombatStart(unit: "hound_sergeant", against: Some("retainer"))
+#     ch03_death_hound_sergeant     UnitFell(unit: "hound_sergeant")
+#     ch03_boss_engage              CombatStart(unit: "greywater_prior"): anyone else
+#     ch03_boss_engage_keeper       CombatStart(unit: "greywater_prior", against: Some("keeper"))
+#     ch03_boss_half                HalfHp(unit: "greywater_prior")
+#     ch03_death_greywater_prior    UnitFell(unit: "greywater_prior")
+#     ch03_scriptorium              UnitEntersArea(who: Faction(Player), the scriptorium)
+#     ch03_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch03_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch03_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector
+#
+#   After the battle (victory_scenes, in this order)
+#     ch03_register                 the scriptorium: the register, the pay-book
+#     ch03_telling                  the causeway at night: Rue tells the lead
+#     ch03_confession               the kitchen: Maud tells Rue
+#     ch03_tbc                      Veyne Hall: Dace and the report
+#
+# Until 0849 wires the triggers, the validator can't know which scene
+# plays for whom, so every companion line in a battle scene below sits
+# in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, the boss against Maud, Ned
+# against Hollis), that "@if" can only go one way and the validator
+# reports it: 0849 removes those blocks as it wires each trigger. The
+# "@if" in ch03_first_turn and ch03_scriptorium stay: a turn-start scene
+# and an area anyone can enter can't count on anyone.
+#
+# No @place directives yet: the maps are 0849's. The @music lines are
+# this ticket's picks from the mood cues (0071); the battle's own cue,
+# battle_church_2, is Nick's and goes in the battle file.
+#
+# The six companions may have died in Chapter 1 or 2 (Classic), so
+# outside the battle every line of theirs is in an "@if" block, and each
+# scene reads through with any of them gone. The two scenes that are one
+# person's to have (Rue's telling, Maud's confession) are skipped
+# without them: the register itself says what they would have.
+#
+# The prior dies (the beat sheet says why). Nobody says "Dace" over the
+# pay-book: it says "D. Marr", and that is what is read. The player has
+# never heard Vosse's name before this chapter, so Hollis places it.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the shore, the causeway and everything
+# after the fight are played straight; the warmth is a pot, a sleeve, a
+# pair of burned hands, half a loaf. Punctuation is the voice acting:
+# Maud breaks off and runs on; Rue asks; Joss corrects himself and asks
+# whether that was right; Aske and Hollis end flat, and Hollis trails off
+# twice in the chapter, both times about his children.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised); the prior and Ned have no happy.
+
+# ---------------------------------------------------------------------------
+# Before the battle
+# ---------------------------------------------------------------------------
+
+# A boathouse on the lake shore, the night before. A fire that shouldn't
+# be there. The island across the water with one chimney going.
+
+@scene ch03_intro
+@caption The lake shore, the night before
+@music talk_calm
+> Two days north of the ford. A boathouse on the lake shore with a fire in it that shouldn't be there, and across the water the island, with one chimney smoking against the dark.
+@if heretic
+@if poacher
+@left heretic neutral
+@right poacher neutral
+> {n:heretic} has the fire and the pot. {n:poacher} takes the pot from her and sits down where she was.
+poacher: Burned. Again. Move your knees. I am doing my letters and I cannot do them in the dark.
+heretic: Do them over there, then. What is that? That's not an R. That's a tent. Give me that stick.
+poacher: It is an R. The Keeper said it was an R. Do not put your hand in my ash.
+@left clear
+@right clear
+@else
+@left heretic neutral
+> {n:heretic} has the fire and the pot, and the pot is burning, and nobody says anything about it.
+@left clear
+@endif
+@endif
+@if keeper
+@right keeper sad
+keeper: Nobody burns anything at night. That room's never had a fire, we weren't allowed, because of the books-- that's the books. The prior's burning the books. I brought us here, and he's burning them.
+keeper: Every gifted child this march ever had is in that book. Who tested them, where they were sent. I've written in it once myself. It's in the long room over the gate. With the chimney.
+@right clear
+@else
+@if heretic
+@right heretic neutral
+heretic: There's a book in there with every one of us in it. Every kid they ever took out of this march, and where they put us. They make you watch them write you in. It's the long room over the gate.
+@right clear
+@else
+> The book is in there, in the long room over the gate: every gifted child of the march, and where each one was sent. That much everyone knows. It is why they came.
+@endif
+@endif
+@if heretic
+@right heretic angry
+heretic: Then why are we sitting in a boathouse? It's in there and he's burning it. There's boats. I can see three boats from here.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Nobody's rowing anywhere in the dark. My girl's in that book too. What is it you want out of it, kid? Say.
+@choice
+* earnest: Why they'd write a child down at all.
+  retainer: No good reason to write that. None. Sit nearer the fire. You're shaking.
+* blunt: {n:rival.first}'s name.
+  > {n:retainer.first} looks at the fire for a while. Then he puts another stick on it.
+  retainer: Eat something.
+* wry: Something to read. It's been a long road.
+  retainer: Hm. Pass that pot along, then. Everybody eats, I don't care who burned it.
+@endchoice
+@right clear
+@else
+> Nobody is rowing anywhere in the dark. Nobody has asked {lead} what {they} wants out of that book, either, and it is a thing {they} could say now, to the fire.
+@choice
+* earnest: Why they'd write a child down at all.
+  > Nobody answers that. Nobody good wants it written.
+* blunt: {n:rival.first}'s name.
+  > Nobody says anything to that for a while.
+* wry: Something to read. It's been a long road.
+  > Nobody laughs, but somebody passes the pot.
+@endchoice
+@endif
+@if sergeant
+@right sergeant neutral
+sergeant: Morning, then, and we do it polite. Keeper in front, hood up, me behind her on the mare, and we knock, they're priests, they'll open to a keeper. Who's sleeping? Nobody? Somebody sleep!
+@right clear
+@endif
+@if defector
+@if keeper
+@right defector neutral
+defector: Keeper? Your sleeve-- the cuff's worn through, it's been flapping at me all day and I can't-- can I mend it? Come in off the door, you can see the chimney from the fire. Hold it out? There.
+@right clear
+@endif
+@endif
+@if poacher
+@right poacher neutral
+poacher: Those are not priests on the wall. Hoods are gray. Those are black, and they do not fidget. I counted them at dusk.
+@right clear
+@endif
+@if defector
+@right defector sad
+defector: Black's ours. Hound black, I'd know it anywhere, I've sewn enough of it. Why would {n:faction.hounds} be on a church wall? They hang deserters. I wanted somebody to know that. That's all.
+@right clear
+@endif
+@end
+
+# The foot of the causeway at dawn. Maud three steps out with her hood
+# up; the ones on the wall; one way in.
+
+@scene ch03_prebattle
+@caption The causeway, dawn
+@music dungeon_tense
+> First light. The causeway runs out over flat gray water to a gate, and the gate is shut. The chimney is still going.
+@left lead neutral
+@if keeper
+@right keeper neutral
+> {n:keeper} is already three steps out on the stone with her hood up.
+keeper: I'll go first. They won't loose at a keeper's hood, they wouldn't, they-- let me go first and all of you walk behind me. Please.
+@if retainer
+@right retainer angry
+retainer: Keeper. Those aren't keepers on that wall. You know what they are. You stood in a village with them.
+@right keeper sad
+keeper: ...I know. I know what they are. I thought if I said it fast enough it would-- no. You're right. I'll come back.
+@endif
+@right clear
+@endif
+@if defector
+@right defector sad
+defector: They've seen us since the shore. Two on the walk, one at the bell, and they bar the gate when we're close enough to count. That's the rule. ...My face is known in every post. Hood up.
+@right clear
+@endif
+@if sergeant
+@right sergeant angry
+sergeant: One way on, one way off, and nowhere to turn her around. I hate it, and I'm doing it, and nobody talk to me till the gate. Keeper! Up behind me, you're gray in the face. Up. I'm not asking.
+@right clear
+@endif
+@if poacher
+@right poacher neutral
+poacher: They are not loosing. They could, from there. They are letting us come closer.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Then we go closer. Kid, behind me to the gate. Behind. Don't argue it.
+@right clear
+@endif
+> Across the water, the gate is barred.
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene in a chapter after the first can't count on
+# anyone: the block stays.
+
+@scene ch03_first_turn
+@if keeper
+@left keeper sad
+keeper: He's still burning them. I can smell it from here, that's paper, that's-- whatever we're doing, do it quickly. Please.
+@left clear
+@endif
+@end
+
+# Ned Tolley, to anyone but his old captain.
+
+@scene ch03_sergeant_engage
+@right hound_sergeant neutral
+hound_sergeant: You're the exile's people. I was told you might be. Turn around and go back over the stone, and I never saw you, and the prior never hears it. I'm forty-seven. I'd like to go to bed tonight.
+@end
+
+# Ned and Hollis: the man who stood his gate for fifteen years. The @if
+# goes when 0849 wires this as Ned against Hollis.
+
+@scene ch03_sergeant_engage_retainer
+@if retainer
+@left retainer neutral
+@right hound_sergeant surprised
+hound_sergeant: ...Captain.
+retainer: {n:hound_sergeant.first}.
+hound_sergeant[sad]: Look at you. You've gone gray. I stood your gate fifteen years, and the morning you went after the heir you never looked up at it once. Who kept us on, after? Your boy. Your boy fed us.
+hound_sergeant: He asks after you. Every winter, is the old man still-- every winter, Captain. Go back down. Go on back down, Captain.
+retainer: ...Guard up, {n:hound_sergeant.first}. I'm not going back down.
+@left clear
+@right clear
+@endif
+@end
+
+# Said to whoever is nearest.
+
+@scene ch03_death_hound_sergeant
+@right hound_sergeant sad
+hound_sergeant: Captain... the bay. Your bay, at the hall. Nobody's had her out in four years, he wouldn't let anyone. She's gotten fat, Captain. She wants riding.
+@end
+
+# The prior, to anyone but Maud.
+
+@scene ch03_boss_engage
+@right greywater_prior angry
+greywater_prior: Not one step nearer that hearth! Whatever you came for, it's ash, it's ash or it will be by morning-- there's a mother for every name in that book. Would you have it read out in a tavern? Would you?
+@end
+
+# The prior and the keeper he was prior to for six years. The @if goes
+# when 0849 wires this as the prior against Maud.
+
+@scene ch03_boss_engage_keeper
+@if keeper
+@left keeper sad
+@right greywater_prior surprised
+greywater_prior: {n:keeper}? Child, what are you doing on my causeway? Go home. Say you found the gate shut, I'll write {n:faction.vigil} the same, and neither of us need lie about it, come morning.
+keeper: You taught me that hand. "Every name is a child. Write it as if the mother will read it." You taught me that, and you're-- you're putting them in a fire.
+greywater_prior: Because somebody with a sword will read it otherwise. You, child. You brought swords up my causeway. ...I read every letter you sent. I needn't have. Yours were the only ones that asked after anyone.
+keeper: Then you know what you're burning. I'm not going home, Prior. I don't have one. I'm sorry. I'm coming in anyway.
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch03_boss_half
+@right greywater_prior angry
+greywater_prior: Faster! Don't stack them, child, they don't catch stacked. One at a time, and leave the covers, the covers never burn. Go on, go on.
+@end
+
+# Dying, scared, about the living.
+
+@scene ch03_death_greywater_prior
+@right greywater_prior sad
+greywater_prior: The boys-- the novices, did the boys get over the water? Did the boat go? Whoever you are, you came up past the water, you must have seen. Did it go?
+@end
+
+# Somebody reaches the scriptorium with the hearth still going.
+
+@scene ch03_scriptorium
+@if keeper
+@left keeper surprised
+keeper: Not water, the ink runs! Your coat-- oh, I'm sorry, your coat, smother it with your coat, I don't care about the coat, smother it.
+@left clear
+@else
+@if heretic
+@left heretic angry
+heretic: Get it out. Get it out of the fire, never mind your hands, I'll do your hands after. Out!
+@left clear
+@endif
+@endif
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch03_death_lead
+@left lead sad
+> {lead} is down on the causeway stone, and the water is very close on both sides.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. The @if blocks
+# go when 0849 wires each one.
+
+@scene ch03_death_retainer
+@if retainer
+@left retainer sad
+retainer: Knee's gone. ...Did you eat this morning? You didn't. There's bread in my left pocket, it's squashed, it's still bread. Kid. Eat it.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: That's the knee. The other one, this time. I'll keep the spear. Mind the gate.
+@left clear
+@endif
+@end
+
+@scene ch03_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Twelve. With me it's twelve, and I can't write myself in, can I. ...Put me under the right column. Whoever does it. The right one.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: They got the shoulder. Hold her head, one of you, she doesn't like the stone. I'll walk her back myself, I'm not baggage.
+@left clear
+@endif
+@end
+
+@scene ch03_death_poacher
+@if poacher
+@left poacher sad
+poacher: My pack. There are two letters in it, not sent. To my mor. One of you who can write, finish them. She cannot read. Someone will have to sit with her and read them.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: I am out of arrows. Not hurt. Out. Do not look at me like that. I counted them. I counted wrong.
+@left clear
+@endif
+@end
+
+@scene ch03_death_keeper
+@if keeper
+@left keeper sad
+keeper: Tell her-- the girl with the burned hands, tell her it was me. My letter. I asked them to be gentle with her, and-- tell her I asked. ...{N:god.mother.name} keep you. Tell her.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: Oh. Oh, that's-- no, I can see it, I know what it is, I know exactly what to do about it. Leave me the salve and go, I'm all right, I'm-- go.
+@left clear
+@endif
+@end
+
+@scene ch03_death_heretic
+@if heretic
+@left heretic sad
+heretic: {N:god.pyre.name}'s teeth. In a church. ...The others are in that book, and I never got to read them all. Somebody read them. Out loud, every one.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: Empty. Nothing comes. Fine. I'll be at the gate, and I'm not happy about it.
+@left clear
+@endif
+@end
+
+@scene ch03_death_defector
+@if defector
+@left defector sad
+defector: That was right, wasn't it? The river, and this. Don't answer. I've decided it was. Your Grace, I've decided.
+@left clear
+@endif
+@end
+
+@scene ch03_retreat_defector
+@if defector
+@left defector surprised
+defector: It's the leg. Only the leg, I can-- no, I can't. Your Grace, go on, I'll keep the stair. I'll keep the stair, I'm good at stairs.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The scriptorium, right after. The hearth, the register, the pay-book.
+# The lead doesn't speak here and isn't shown: the companions take both
+# sides, and the lead is in the door.
+
+@scene ch03_register
+@caption The scriptorium
+@music scene_tragic
+> The long room over the gate. The hearth is choked with red ledgers, half of them burned through. On the desk the big book lies open where he left it, a pen across the page. Someone has covered him.
+@if sergeant
+@if keeper
+@left sergeant neutral
+@right keeper angry
+keeper: Hands. Show me your hands, {n:sergeant.first}, your sleeves are black to the elbow, you went into that hearth with your-- hold them out. Hold still. This will sting, I'm sorry, hold still.
+@left clear
+@right clear
+@else
+@left sergeant neutral
+> {n:sergeant.first} has pulled what she could out of the hearth with her sleeves over her hands. She looks at her palms, and then doesn't.
+@left clear
+@endif
+@endif
+@if keeper
+@left keeper sad
+keeper: There. I've taken it. That's a keeper carrying the register out of her own abbey. I know what that makes me. Open it. I can't look. You look.
+@left clear
+@else
+@if heretic
+@left heretic neutral
+> {n:heretic} shuts the big book and takes it off the desk, and nobody stops her.
+@left clear
+@else
+> {lead} shuts the big book and takes it off the desk. Nobody else is going to.
+@endif
+@endif
+@if heretic
+@left heretic neutral
+heretic: Here. "{n:heretic}." Just the one name, they didn't have the rest. "A charcoal-burner's girl, {n:place.thornmarch}. Taken to the cart." Then a mark. The mark means I got away.
+heretic: And again. Lower down. Same name. They caught me a year after, that's this one. "Sworn to fire." The year. Then a word I'm not reading out. Then {n:place.ashfields}. "Deserted."
+@if poacher
+@right poacher neutral
+poacher: I can read that one. The Keeper taught me that one. {N:group.candles.one}. That is the word for the ones who burned the plain. You were one of them.
+heretic: Yes.
+> {n:poacher} takes her finger off the page. She goes out. She doesn't come back up.
+@right clear
+@endif
+@left clear
+@else
+> The book goes flat on the long table and falls open where it was opened most. Under the R's, one name, twice: a charcoal-burner's girl taken to the cart, and got away; sworn to fire, and deserted.
+@endif
+@if retainer
+@left retainer neutral
+retainer: Keeper. Find my girl. You wrote her in, you'll know the page.
+@if keeper
+@right keeper sad
+keeper: Here. This first line's mine, my hand, you have to, the keeper who tests a child writes the child in-- the rest isn't mine. "Sworn to fire." The year. "{N:place.ashfields}: lost."
+retainer: They told us dead. ...Lost.
+@right clear
+@else
+@if heretic
+@right heretic neutral
+> {n:heretic} finds the page for him, and reads it the way she read her own.
+heretic: "{n:sister}. {N:place.harrowby}. Tested." That's a keeper's hand. "Sworn to fire." The year. "{N:place.ashfields}: lost."
+retainer: They told us dead. ...Lost.
+@right clear
+@else
+> {lead} finds the page for him. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, and then {n:place.ashfields}, and one word: lost.
+retainer: They told us dead. ...Lost.
+@endif
+@endif
+@left clear
+@else
+> {lead} turns to the M's without anyone asking. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, {n:place.ashfields}, and one word: lost. Her family was told dead.
+@endif
+@if sergeant
+@left sergeant neutral
+sergeant: Another one, in the drawer. Not a priest's book. Columns. Name, what they gave, what they got. A paymaster's book. I've stood in front of enough of those with my hand out. "{n:vosse}."
+@if retainer
+@right retainer neutral
+retainer: The mill. That's the man from the mill.
+@right clear
+@endif
+sergeant[sad]: "D. {n:family.marr}. Informer." Then the column with the number. That's eleven. ...Children. It says children.
+@left clear
+@else
+@if defector
+@left defector neutral
+> {n:defector.first} finds the second book in the drawer, a small one with a dead man's name on the cover, and reads where it falls open.
+defector: "D. {n:family.marr}. Informer." Eleven... children. ...That's--
+@left clear
+@else
+> A second book in the drawer, small, "{n:vosse}" on the cover: the king's man from the mill, four years dead. Columns, and a line: "D. {n:family.marr}, informer: eleven children".
+@endif
+@endif
+@if defector
+@right defector surprised
+defector: There's hundreds of {n:family.marr}s. Every third farm in the valley's a {n:family.marr}, my ma's cousin married one. It's another {n:family.marr}. It is.
+@right clear
+@endif
+@if retainer
+@if heretic
+> {n:retainer.first} has gone to the window and stands with his back to the room. {n:heretic} isn't looking at the book anymore. She is looking at him. {lead} hasn't moved.
+@else
+> {n:retainer.first} has gone to the window and stands with his back to the room. {lead} hasn't moved from the door.
+@endif
+@else
+> {lead} hasn't moved from the door.
+@endif
+@end
+
+# The end of the causeway, that night. Rue with her feet over the water
+# and half a loaf. All of it is hers: without her it isn't played.
+
+@scene ch03_telling
+@caption The causeway, night
+@music scene_sad
+@if heretic
+> Night. The shore end of the causeway. {n:heretic} sits on the edge with her feet over the black water and half a loaf in her lap.
+@left lead neutral
+@right heretic neutral
+> She holds the other half up without looking around, and keeps holding it up until it's taken.
+@if retainer
+> Up on the wall a shape walks the length of it and back. It has done that since dark.
+@endif
+heretic: Are you going to sit down? You're standing over me like a-- sit. I'm only saying this once, so sit where you can hear it.
+heretic: I was fifteen. The cart came through our woods at night. A lantern, a man with a book, and a boy to do the lifting. The boy was crying, and he lifted me in by my belt like a sack of coal anyway.
+heretic: The man with the book called him {n:family.marr}. The cart's papers had blue wax. Your house's wax, that he has now. At the mill he fetched two more, and his sister was already in the cart.
+heretic: He killed the man with the book. With his hands, mostly. And the door was open, so we ran. I ran. I didn't look back. ...The others didn't all get out.
+heretic: I thought you knew. The whole way from the toll-fort I've had you where I could see you, because I thought you knew, and I thought you were going to-- I don't know. Something.
+@choice
+* earnest: I didn't know. Not any of it.
+  heretic[surprised]: No. No, you didn't. I can see you didn't. {N:god.pyre.name}'s teeth, I've hated you four days for nothing. Give me some of that back. I gave you too much.
+* blunt: {n:rival.first} said "he took {n:sister.first}."
+  heretic[angry]: That's all? ...That's all. True, though, wasn't it? Somebody did take her. He just never said the rest. Give me that back if you're not eating it.
+* act: ...
+  heretic[sad]: Say something. ...No? Fine. You didn't know. I'd know by now if you knew, I've been looking at your face for four days. Eat that or give it back.
+@endchoice
+heretic[neutral]: That book's wrong about one thing. ...No. Not tonight. I've said enough for one night.
+@if retainer
+heretic: And him. Up there. His boy's name was on that page and he said nothing about it. Not one word. Him. I watched him. Did you?
+@endif
+@left clear
+@right clear
+@endif
+@end
+
+# The abbey kitchen, later. Maud, the salve, and the thing she has to say
+# before the hands. Both of theirs: without either it isn't played.
+
+@scene ch03_confession
+@caption The abbey kitchen, later
+@if keeper
+@if heretic
+> The kitchen, and a hearth that works. The novices' pot is empty; {n:heretic} has eaten what was in it and is sitting with the pot in her lap.
+@left heretic neutral
+@right keeper sad
+> {n:keeper} comes in with the little jar of salve from {n:place.harrowby}, and stops inside the door with it.
+keeper: Your hands. Give me your-- no. No, I'm going to say it first, because if I do your hands first I won't say it.
+keeper: The paper on the chapel door. "The girl with the burned hands." ...Those were my words. To the Abbey, in the autumn, the way you have to. A gifted girl at my chapel. Be gentle with her.
+heretic: ...
+keeper: I asked them to be gentle. And they sent {n:red_captain.nickname}. I didn't know, I swear by {n:god.mother.name} I didn't know what they'd-- I'm not asking you anything. I had to say it. That's all.
+heretic: Give me the salve.
+> {n:keeper} gives it to her. {n:heretic} doesn't open it. She looks past her, at {lead} in the door.
+heretic: You heard her. Well?
+@choice
+* earnest: She came and said it to your face.
+  heretic[angry]: She did. Yes. She came and said it, and I'm sitting here, and I don't know what I'm meant to do now, heir. Do you?
+  keeper: Don't-- please don't make it more than it is on my account. Please.
+* blunt: Her hands have kept us all alive.
+  heretic[neutral]: ...Yes. I know what her hands are worth. I've had them on mine every night. That's the-- that's what makes it-- ...Yes.
+* act: Give me that. I'll do them.
+  > {lead} takes the jar out of {n:heretic}'s fingers. She lets {them}.
+  heretic[surprised]: You'll get it in the scars, you don't know where they-- fine. The left first. It's worse.
+@endchoice
+heretic[neutral]: I'm not going anywhere, if that's what you're both standing there for. Where would I go? Stop looking at me. Both of you.
+> {n:keeper} sits down on the hearth step, where she is, and doesn't go anywhere either.
+@left clear
+@right clear
+@endif
+@endif
+@end
+
+# Veyne Hall, the yard, two nights later. A rider's report; the roads;
+# the lead who isn't there.
+
+@scene ch03_tbc
+@caption {N:place.veyne_hall}, the yard
+@music talk_antagonist
+> Night, the yard at {n:place.veyne_hall}. A lantern on the mounting block, a rider's horse still blowing, and {n:rival.first} reading the rider's paper a second time.
+@left rival neutral
+rival: The causeway. In daylight. And the prior's dead, and the book's gone, and "the rest of his papers." The rest of his papers. Did whoever wrote this know what the rest of-- no. They wouldn't.
+rival[angry]: Every road to this hall. Every one, a post on it by tomorrow night, I don't care what it costs. And the exile isn't touched. Nobody touches {n:family.veyne}. They come here. To me. Say it back.
+> The rider says it back, and goes.
+rival[neutral]: {N:family.veyne}. You've read it by now. You read everything, you always did, you'd have read it standing up in the smoke before anyone could stop you.
+rival[sad]: Come and ask me, then. ...I'm here.
+@end

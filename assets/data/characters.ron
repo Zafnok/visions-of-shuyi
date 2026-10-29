@@ -117,5 +117,7 @@
     // Chapter 2 (ticket 0744): Joss, the Hound lieutenant and the Hound
     // sergeant speak before they are units; 0848 and 0849 move them into
     // characters when they build the battles. The herald only ever speaks.
-    speakers: ["rival", "vowmaster", "messenger", "defector", "hound_lieutenant", "hound_sergeant", "herald"],
+    // Chapter 3 (ticket 0745): the prior of Greywater speaks before 0849
+    // makes him a unit.
+    speakers: ["rival", "vowmaster", "messenger", "defector", "hound_lieutenant", "hound_sergeant", "herald", "greywater_prior"],
 )

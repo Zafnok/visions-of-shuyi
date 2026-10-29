@@ -117,6 +117,7 @@ just as it does a full name.
 | `family.marr` | Marr | The family name of `retainer`, `rival` and `sister` |
 | `family.veyne` | Veyne | The lead's family name (also in `house.veyne` and `place.veyne_hall`) |
 | `faction.brennmark.adj` | Brennish | `faction.brennmark` without its article: the adjective ("a Brennish bow"), and what Tamsin calls Aske |
+| `group.candles.one` | Candle | `group.candles`: one of them, the register's word beside a name (Chapter 3) |
 | `god.mother.name` | Ama | `god.mother` (Ama, the Mother) |
 | `god.mother.title` | the Mother | `god.mother` |
 | `god.pyre.name` | Vael | `god.pyre` (Vael, the Pyre) |
