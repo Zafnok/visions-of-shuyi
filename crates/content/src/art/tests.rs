@@ -53,16 +53,54 @@ fn the_embedded_arts_match_the_design_table() {
         ("off_balance", "Off Balance", Gauntlet, C, 3),
         ("vital_point", "Vital Point", Gauntlet, S, 8),
     ];
-    let rows: Vec<_> = rows.into_iter().chain(later).collect();
-    assert_eq!(t.arts.len(), rows.len());
-    for (id, name, kind, rank, cost) in rows {
+    let rows: Vec<_> = rows
+        .into_iter()
+        .chain(later)
+        .map(|(id, name, kind, rank, cost)| (id, name, kind, Some(rank), cost))
+        .collect();
+    // The special weapons' own arts (`combat-arts.md`, *Special weapons*).
+    let weapon_arts = [
+        ("pack_hunt", "Pack Hunt", Axe, None, 3),
+        ("hold_the_ford", "Hold the Ford", Spear, None, 3),
+        ("moonwave", "Moonwave", Sword, None, 4),
+    ];
+    assert_eq!(t.arts.len(), rows.len() + weapon_arts.len());
+    for (id, name, kind, rank, cost) in rows.into_iter().chain(weapon_arts) {
         let def = get(&t, id);
         assert_eq!(
             (def.name.as_str(), def.kind, def.rank, def.cost),
-            (name, kind, Some(rank), cost),
+            (name, kind, rank, cost),
             "{id}"
         );
     }
+}
+
+/// `combat-arts.md`, *Special weapons*: the weapon arts' effects.
+#[test]
+fn the_embedded_weapon_art_effects_match_the_design() {
+    use trpg_core::{MitigationStat, PowerStat};
+    let t = embedded();
+    assert_eq!(
+        get(&t, "pack_hunt").effect,
+        with(|e| e.pack_might = Some((2, 6)))
+    );
+    assert_eq!(
+        get(&t, "hold_the_ford").effect,
+        with(|e| {
+            e.stance = Some(TimedMods {
+                stops_enemies: true,
+                ..TimedMods::default()
+            });
+        })
+    );
+    assert_eq!(
+        get(&t, "moonwave").effect,
+        with(|e| {
+            e.max_range = Some(2);
+            e.power = Some(PowerStat::Higher);
+            e.mitigation = Some(MitigationStat::Res);
+        })
+    );
 }
 
 /// `combat-arts.md`, *Chapter 1 arts*: every art's effect.
@@ -75,6 +113,7 @@ fn the_embedded_art_effects_match_the_design_table() {
             avoid: 20,
             ..CombatMods::default()
         },
+        stops_enemies: false,
     };
     let rows = [
         ("flowing_cut", with(|e| e.sword_followup = Some((3, 2)))),
@@ -185,14 +224,14 @@ fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
     }
 }
 
-/// No Chapter 1 weapon has arts of its own (`combat-arts.md`: no special
-/// weapons in Chapter 1), and the embedded items pass the checks.
+/// Only special weapons have arts of their own (`combat-arts.md`), and the
+/// embedded items pass the checks.
 #[test]
-fn chapter_1_weapons_have_no_arts() {
+fn only_special_weapons_have_arts() {
     let items = crate::item::load().unwrap_or_else(|e| panic!("{e:?}"));
     for (id, item) in &items.items {
         if let ItemDef::Weapon(w) = item {
-            assert!(w.arts.is_empty(), "{}", id.0);
+            assert!(w.arts.is_empty() || w.is_special(), "{}", id.0);
         }
     }
     assert_eq!(check_references(&embedded(), &items), []);
@@ -336,6 +375,12 @@ fn weapon_arts_must_exist_be_weapon_arts_and_match_the_kind() {
     )
     .unwrap_or_else(|e| panic!("{e:?}"));
     let mut items = crate::item::load().unwrap_or_else(|e| panic!("{e:?}"));
+    // Only the arts given below are checked.
+    for item in items.items.values_mut() {
+        if let ItemDef::Weapon(w) = item {
+            w.arts.clear();
+        }
+    }
     let give = |items: &mut ItemTable, art: &str| {
         if let Some(ItemDef::Weapon(w)) = items.items.get_mut(&trpg_core::ItemId::new("iron_sword"))
         {

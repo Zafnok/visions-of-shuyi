@@ -92,11 +92,18 @@ pub fn stats_text(words: Words<'_>, stats: &[(StatKind, StatValue)]) -> String {
         .join(" ")
 }
 
-/// A timed effect's bonuses as text: its stats, then its combat numbers.
+/// A timed effect's bonuses as text: its stats, then its combat numbers,
+/// then whether it stops enemies.
 pub fn timed_text(words: Words<'_>, mods: &TimedMods) -> String {
+    let stops = if mods.stops_enemies {
+        words.text("battle.stance.stops_enemies").to_owned()
+    } else {
+        String::new()
+    };
     [
         stats_text(words, &mods.stats),
         mods_text(words, &mods.combat),
+        stops,
     ]
     .into_iter()
     .filter(|t| !t.is_empty())

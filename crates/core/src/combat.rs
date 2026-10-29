@@ -53,7 +53,13 @@
 //! AS         += A.attack_speed
 //! strikes     = A.single_strike ? 1 : min(strikes + A.extra_strikes, max)
 //! follow-up   = Sword ? damage * A.sword_followup (else 6/5) : damage
+//! power stat  = A.power (Str, Mag or the higher), else the damage type's
+//! mitigation  uses A.mitigation (Def or Res), else the damage type's
 //! ```
+//!
+//! A weapon's passive (the Moonblade's Moonlit: Res) is in its wielder's
+//! mods for every strike it makes, attacks and counters
+//! ([`Unit::combat_input`](crate::unit::Unit::combat_input)).
 //!
 //! Combat Arts ([`crate::art`]) change these mods and the attacker's
 //! [`WeaponStats`] (effectiveness, axe minimum, minimum range) the same way.
@@ -80,6 +86,28 @@ pub enum DamageType {
     Physical,
     /// Mag + might against Res.
     Magical,
+}
+
+/// The stat a strike's power uses, in place of its damage type's
+/// (Moonwave: the higher of Str and Mag, `combat-arts.md`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum PowerStat {
+    /// Str.
+    Str,
+    /// Mag.
+    Mag,
+    /// Whichever of Str and Mag is higher.
+    Higher,
+}
+
+/// The stat a strike is mitigated by, in place of its damage type's
+/// (the Moonblade's Moonlit: Res).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum MitigationStat {
+    /// Def.
+    Def,
+    /// Res.
+    Res,
 }
 
 /// A weapon type's special rule (`weapons-and-items.md`). Build one with
@@ -282,11 +310,17 @@ pub struct CombatMods {
     /// Each hit deals this much more than the side's hit before it (Cascade:
     /// the n-th hit adds `cascade * (n - 1)`).
     pub cascade: StatValue,
+    /// Replaces the power stat of the damage type (Moonwave).
+    pub power: Option<PowerStat>,
+    /// Replaces the stat that mitigates this side's strikes (Moonlit,
+    /// Moonwave: Res).
+    pub mitigation: Option<MitigationStat>,
 }
 
 impl CombatMods {
     /// Adds `other` to these: numbers add, flags combine with "or", and
-    /// `other`'s follow-up ratio, if any, replaces this one.
+    /// `other`'s follow-up ratio, power and mitigation stats, if any,
+    /// replace these.
     pub fn add(&mut self, other: &CombatMods) {
         self.hit += other.hit;
         self.crit += other.crit;
@@ -301,6 +335,8 @@ impl CombatMods {
         self.pierce += other.pierce;
         self.sword_followup = other.sword_followup.or(self.sword_followup);
         self.cascade += other.cascade;
+        self.power = other.power.or(self.power);
+        self.mitigation = other.mitigation.or(self.mitigation);
     }
 }
 
@@ -473,9 +509,18 @@ fn side(
     } else {
         might
     };
-    let (power_stat, mitigation_stat) = match weapon.damage_type {
-        DamageType::Physical => (a.stats.str, b.stats.def),
-        DamageType::Magical => (a.stats.mag, b.stats.res),
+    let (power, mitigation) = match weapon.damage_type {
+        DamageType::Physical => (PowerStat::Str, MitigationStat::Def),
+        DamageType::Magical => (PowerStat::Mag, MitigationStat::Res),
+    };
+    let power_stat = match a.mods.power.unwrap_or(power) {
+        PowerStat::Str => a.stats.str,
+        PowerStat::Mag => a.stats.mag,
+        PowerStat::Higher => a.stats.str.max(a.stats.mag),
+    };
+    let mitigation_stat = match a.mods.mitigation.unwrap_or(mitigation) {
+        MitigationStat::Def => b.stats.def,
+        MitigationStat::Res => b.stats.res,
     };
     let power = power_stat + might * StatValue::from(eff_mult);
     let pierced = mitigation_stat - a.mods.pierce.clamp(0, mitigation_stat.max(0));

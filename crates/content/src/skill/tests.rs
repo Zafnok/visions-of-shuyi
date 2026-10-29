@@ -188,6 +188,7 @@ fn the_embedded_actives_match_the_design_tables() {
                     mods: TimedMods {
                         stats: vec![(StatKind::Def, 8), (StatKind::Res, 8)],
                         combat: m(),
+                        stops_enemies: false,
                     },
                 },
             ),

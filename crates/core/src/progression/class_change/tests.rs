@@ -218,6 +218,7 @@ fn items() -> ItemTable {
             effective: vec![],
             arts: vec![],
             price: 400,
+            special: None,
         })
     };
     let armour = |name: &str, weight_class| {

@@ -13,6 +13,9 @@
 //!
 //!   Armouries and vendors **buy** any item the party has, for half its
 //!   price rounded down ([`sell_price`]). Blacksmiths don't buy.
+//!   No shop ever stocks a **special weapon** (`combat-arts.md`), so a
+//!   sold one is gone; the UI asks before selling one. It repairs by the
+//!   usual formula.
 //!   **Seals** (`progression.md`) are neither sold nor bought by any shop
 //!   yet: where they come from is chapter and shop data (0009 and later).
 //! - **Repair** ([`repair_cost`]) brings a weapon back to full durability
@@ -45,13 +48,15 @@ pub enum ShopKind {
 }
 
 impl ShopKind {
-    /// Whether this kind of shop may have `item` on its list.
+    /// Whether this kind of shop may have `item` on its list. No shop
+    /// stocks a special weapon.
     pub fn stocks(self, item: &ItemDef) -> bool {
         match self {
-            ShopKind::Armoury => matches!(
-                item,
-                ItemDef::Weapon(_) | ItemDef::Armour(_) | ItemDef::Accessory(_)
-            ),
+            ShopKind::Armoury => match item {
+                ItemDef::Weapon(w) => !w.is_special(),
+                ItemDef::Armour(_) | ItemDef::Accessory(_) => true,
+                _ => false,
+            },
             ShopKind::Vendor => matches!(item, ItemDef::Consumable(_)),
             ShopKind::Blacksmith => false,
         }

@@ -31,6 +31,7 @@ fn weapon(kind: WeaponKind, rank: WeaponRank, range: (u32, u32)) -> ItemDef {
         effective: vec![],
         arts: vec![],
         price: 100,
+        special: None,
     })
 }
 
@@ -1062,4 +1063,91 @@ proptest! {
             prop_assert!(u.validate_loadout(&cs, &items()).is_ok());
         }
     }
+}
+
+// ---- Special weapons (0329) ----------------------------------------------------
+
+/// [`items`] with a Moonblade (a special sword whose passive hits Res) and
+/// Ana's own sword (a personal weapon).
+fn special_items() -> ItemTable {
+    let mut t = items();
+    let sword = |special| {
+        let Some(ItemDef::Weapon(mut w)) = t.get(&id("sword")).cloned() else {
+            unreachable!("items() has a sword");
+        };
+        w.special = Some(special);
+        ItemDef::Weapon(w)
+    };
+    let moonlit = WeaponPassive {
+        name: "Moonlit".into(),
+        mitigation: Some(MitigationStat::Res),
+    };
+    let moonblade = sword(SpecialWeapon {
+        wielder: None,
+        passive: Some(moonlit),
+    });
+    let personal = sword(SpecialWeapon {
+        wielder: Some(CharacterId("ana".into())),
+        passive: None,
+    });
+    t.items.insert(id("moonblade"), moonblade);
+    t.items.insert(id("anas_sword"), personal);
+    t
+}
+
+#[test]
+fn a_personal_weapon_is_wielded_by_its_character_only() {
+    let t = special_items();
+    let c = class();
+    let mut u = unit();
+    let def = |k: &str| t.weapon(&id(k)).unwrap();
+    assert!(def("anas_sword").is_special());
+    assert!(!u.can_wield(def("anas_sword"), &c), "a generic unit");
+    u.character = Some(CharacterId("bo".into()));
+    assert!(!u.can_wield(def("anas_sword"), &c), "another character");
+    u.character = Some(CharacterId("ana".into()));
+    assert!(u.can_wield(def("anas_sword"), &c));
+    // A special weapon with no wielder is anyone's.
+    u.character = None;
+    assert!(u.can_wield(def("moonblade"), &c));
+    // Equipping it is refused like any weapon the unit can't wield.
+    let mut held = unit()
+        .with_loadout(&loadout(&["anas_sword"], None, None), &classes(), &t)
+        .unwrap();
+    assert_eq!(held.default_equip(&c, &t, &SpellTable::default()), None);
+    held.character = Some(CharacterId("ana".into()));
+    assert_eq!(
+        held.default_equip(&c, &t, &SpellTable::default()),
+        Some(Equipped::Weapon(0))
+    );
+}
+
+#[test]
+fn a_weapon_passive_is_in_its_wielders_combat_mods() {
+    let terrain = TerrainRules {
+        name: "Plain".into(),
+        move_cost: vec![Some(1)],
+        defense: 0,
+        avoid: 0,
+        heal_percent: 0,
+    };
+    let t = special_items();
+    let (c, cs) = (class(), classes());
+    let u = unit()
+        .with_loadout(&loadout(&["moonblade", "sword"], None, None), &cs, &t)
+        .unwrap();
+    let input = |slot| {
+        let with = Equipped::Weapon(slot);
+        u.combat_input(&c, &cs, &t, &SpellTable::default(), Some(&with), &terrain)
+    };
+    assert_eq!(input(0).mods.mitigation, Some(MitigationStat::Res));
+    assert_eq!(input(1).mods, CombatMods::default());
+    assert_eq!(
+        t.weapon(&id("moonblade"))
+            .and_then(WeaponDef::passive)
+            .map(|p| p.name.as_str()),
+        Some("Moonlit")
+    );
+    assert_eq!(t.weapon(&id("sword")).and_then(WeaponDef::passive), None);
+    assert!(!t.weapon(&id("sword")).unwrap().is_special());
 }

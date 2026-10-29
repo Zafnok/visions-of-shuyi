@@ -224,6 +224,15 @@ impl BattleState {
             if let Some(w) = a.weapon.as_mut() {
                 art.effect.apply(w, &mut a_bonus.combat, d.stats.hp);
             }
+            // Pack Hunt: the user's side next to the target, the user aside.
+            let allies = self
+                .units
+                .iter()
+                .filter(|u| u.id != attacker.id && u.hp > 0)
+                .filter(|u| u.faction.is_allied_to(attacker.faction))
+                .filter(|u| Pos::manhattan(u.pos, defender.pos) == 1)
+                .count();
+            a_bonus.combat.might += art.effect.pack_might(allies);
         }
         apply(&mut a, &a_bonus);
         a.mods.add(&self.support_mods(attacker, fight.dest));

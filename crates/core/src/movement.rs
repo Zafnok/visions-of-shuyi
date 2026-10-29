@@ -20,9 +20,17 @@
 //! - **Blocked tiles.** A tile of the map's
 //!   [`blocked`](BattleMap::blocked) set (a downed unit lies there) can't
 //!   be entered by anyone, as if impassable.
-//! - **No Canto, split movement, zones of control or flying over units**
-//!   (`docs/design/turn-structure.md`: FE standard only). Movement skills are
-//!   separate, later rules.
+//! - **Stopping tiles** (Hold the Ford, `combat-arts.md`): a tile next to
+//!   a unit hostile to the mover that holds a stance which
+//!   [stops enemies](crate::skill::TimedMods::stops_enemies) ends the move
+//!   of a mover stepping onto it: it can stop there (if the tile is empty)
+//!   but goes no further. Fliers are stopped too. A mover that starts on
+//!   such a tile may move away freely (only stepping *onto* one stops it).
+//!   An occupied stopping tile isn't passable: the mover could neither stop
+//!   there nor go on.
+//! - **No Canto, split movement, other zones of control or flying over
+//!   units** (`docs/design/turn-structure.md`: FE standard only). Movement
+//!   skills are separate, later rules.
 //! - **Determinism.** The engine's Dijkstra ([`shuyi_core::path`]), with the
 //!   priority key `(cost, y, x)`; neighbours are visited in
 //!   [`Dir::ALL`](crate::Dir::ALL) order and a tile's recorded predecessor
@@ -53,7 +61,7 @@ use shuyi_core::path;
 
 use crate::ai::AiBehavior;
 use crate::class::{ClassId, ClassTable};
-use crate::geom::Pos;
+use crate::geom::{Dir, Pos};
 use crate::map::BattleMap;
 use crate::terrain::{MovementTypeId, TerrainTable};
 use crate::unit::{Faction, Unit, UnitId};
@@ -112,6 +120,11 @@ pub enum PathError {
         /// Index of the tile stepped to.
         index: usize,
     },
+    /// A step leaves a stopping tile the path entered (Hold the Ford).
+    Stopped {
+        /// Index of the stopping tile.
+        index: usize,
+    },
     /// The path costs more than the mover's Mov.
     OverBudget {
         /// Total cost of the path.
@@ -138,6 +151,7 @@ impl fmt::Display for PathError {
             }
             PathError::Impassable { index } => write!(f, "step {index} is impassable"),
             PathError::Hostile { index } => write!(f, "step {index} enters an enemy's tile"),
+            PathError::Stopped { index } => write!(f, "the move must stop at step {index}"),
             PathError::OverBudget { cost, budget } => {
                 write!(f, "the path costs {cost} but the unit has {budget} move")
             }
@@ -150,8 +164,11 @@ impl core::error::Error for PathError {}
 /// Where one unit can move this turn. See the module docs for the rules.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reach {
-    /// The passable tiles, with their costs and paths.
+    /// The passable tiles a move can go on from, with their costs and paths.
     walk: path::Reach,
+    /// The stopping tiles reached: each with its cost and the tile of
+    /// `walk` it is entered from, in tile order.
+    stops: Vec<(Pos, u32, Pos)>,
     stoppable: TileSet,
 }
 
@@ -166,14 +183,25 @@ impl Reach {
         self.walk.budget()
     }
 
+    /// The stopping tile `pos`, if one is reached: its cost and the tile
+    /// it is entered from.
+    fn stop(&self, pos: Pos) -> Option<(u32, Pos)> {
+        self.stops
+            .iter()
+            .find(|&&(at, ..)| at == pos)
+            .map(|&(_, cost, from)| (cost, from))
+    }
+
     /// The cheapest cost to reach `pos`, or `None` if it is not passable.
     pub fn cost(&self, pos: Pos) -> Option<u32> {
-        self.walk.cost(pos)
+        self.walk
+            .cost(pos)
+            .or_else(|| self.stop(pos).map(|(cost, _)| cost))
     }
 
     /// Whether the unit can reach `pos` (possibly without stopping there).
     pub fn is_passable(&self, pos: Pos) -> bool {
-        self.walk.contains(pos)
+        self.walk.contains(pos) || self.stop(pos).is_some()
     }
 
     /// Whether the unit can end its move on `pos`.
@@ -183,7 +211,11 @@ impl Reach {
 
     /// Every passable tile.
     pub fn passable(&self) -> TileSet {
-        self.walk.tiles()
+        let mut tiles = self.walk.tiles();
+        for &(pos, ..) in &self.stops {
+            tiles.insert(pos);
+        }
+        tiles
     }
 
     /// Every tile the unit can end its move on (always includes the origin).
@@ -194,6 +226,11 @@ impl Reach {
     /// The cheapest path from the origin to `dest`, both included, or `None`
     /// if `dest` is not passable. Deterministic (see the module docs).
     pub fn path_to(&self, dest: Pos) -> Option<Vec<Pos>> {
+        if let Some((_, from)) = self.stop(dest) {
+            let mut path = self.walk.path_to(from)?;
+            path.push(dest);
+            return Some(path);
+        }
         self.walk.path_to(dest)
     }
 }
@@ -226,8 +263,23 @@ fn hostile_at(units: &[Unit], faction: Faction, pos: Pos) -> bool {
         .any(|u| u.pos == pos && u.faction.is_hostile_to(faction))
 }
 
+/// The stopping tiles for a unit of `faction` (see the module docs): every
+/// tile next to a hostile unit holding a stance that stops enemies.
+fn stopping_tiles(units: &[Unit], faction: Faction, width: u16, height: u16) -> TileSet {
+    let mut stops = TileSet::new(width, height);
+    let holders = units.iter().filter(|u| {
+        u.faction.is_hostile_to(faction) && u.effects.iter().any(|e| e.mods.stops_enemies)
+    });
+    for holder in holders {
+        for dir in Dir::ALL {
+            stops.insert(holder.pos.step(dir));
+        }
+    }
+    stops
+}
+
 /// Where unit `mover` can move: Dijkstra from its tile with its Mov as
-/// budget.
+/// budget, the stopping tiles entered but never left.
 pub fn reachable(
     map: &BattleMap,
     terrain: &TerrainTable,
@@ -250,8 +302,7 @@ pub fn reachable(
     for &pos in &map.blocked {
         closed.insert(pos);
     }
-
-    let walk = path::reachable(width, height, unit.pos, budget, |pos| {
+    let step_cost = |pos: Pos| {
         if closed.contains(pos) {
             return None;
         }
@@ -259,7 +310,38 @@ pub fn reachable(
             .get(pos)
             .and_then(|&t| terrain.move_cost(t, movement_type))?;
         Some(u32::from(step))
+    };
+    let stopping = stopping_tiles(units, unit.faction, width, height);
+
+    // The walk goes on from every tile but the stopping ones; each of
+    // those is then entered from its cheapest neighbour of the walk (the
+    // first in `Dir::ALL` order on a tie), and ends the move.
+    let walk = path::reachable(width, height, unit.pos, budget, |pos| {
+        if stopping.contains(pos) {
+            return None;
+        }
+        step_cost(pos)
     });
+    let mut stops = Vec::new();
+    for pos in stopping.iter() {
+        if pos == unit.pos || occupied.contains(pos) {
+            continue;
+        }
+        let Some(step) = step_cost(pos) else {
+            continue;
+        };
+        let entry = Dir::ALL
+            .into_iter()
+            .filter_map(|dir| {
+                let from = pos.step(dir);
+                Some((walk.cost(from)?.checked_add(step)?, from))
+            })
+            .filter(|&(cost, _)| cost <= budget)
+            .min_by_key(|&(cost, _)| cost);
+        if let Some((cost, from)) = entry {
+            stops.push((pos, cost, from));
+        }
+    }
 
     let mut stoppable = TileSet::new(width, height);
     for pos in walk.tiles().iter() {
@@ -267,12 +349,20 @@ pub fn reachable(
             stoppable.insert(pos);
         }
     }
-    Ok(Reach { walk, stoppable })
+    for &(pos, ..) in &stops {
+        stoppable.insert(pos);
+    }
+    Ok(Reach {
+        walk,
+        stops,
+        stoppable,
+    })
 }
 
 /// The cost of moving unit `mover` along `path` (its own tile first), or why
 /// the path is illegal: every step must be to a 4-way neighbour the mover can
-/// enter, not holding a hostile unit, and the total must be within its Mov.
+/// enter, not holding a hostile unit, never leaving a stopping tile it
+/// entered (see the module docs), and the total must be within its Mov.
 /// Where the path ends is not checked (the UI's arrow may point at any
 /// passable tile). The UI's "arrow follows the cursor" path uses this.
 pub fn path_cost(
@@ -290,10 +380,14 @@ pub fn path_cost(
     if first != unit.pos {
         return Err(PathError::WrongStart);
     }
+    let stopping = stopping_tiles(units, unit.faction, map.tiles.width(), map.tiles.height());
     let mut total: u32 = 0;
     for (i, pair) in path.windows(2).enumerate() {
         let (from, to) = (pair[0], pair[1]);
         let index = i + 1;
+        if i > 0 && stopping.contains(from) {
+            return Err(PathError::Stopped { index: i });
+        }
         if Pos::manhattan(from, to) != 1 {
             return Err(PathError::NotAdjacent { index });
         }

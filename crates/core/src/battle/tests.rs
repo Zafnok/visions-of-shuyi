@@ -340,6 +340,7 @@ fn test_other_arts() -> Vec<ArtDef> {
                         avoid: 20,
                         ..CombatMods::default()
                     },
+                    stops_enemies: false,
                 }),
                 ..e()
             },
@@ -396,7 +397,11 @@ fn test_actives() -> Vec<SkillDef> {
 fn test_combat_actives() -> Vec<SkillDef> {
     let dur = SkillCost::Durability;
     let m = CombatMods::default;
-    let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods { stats, combat };
+    let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods {
+        stats,
+        combat,
+        stops_enemies: false,
+    };
     let bow = |range| {
         test_strike_with(
             test_strike(dur(3), WeaponReq::Kind(WeaponKind::Bow), m()),
@@ -488,7 +493,11 @@ fn test_other_actives() -> Vec<SkillDef> {
     let uses = SkillCost::Uses;
     let m = CombatMods::default;
     let active = |cost, effect| SkillKind::Active { cost, effect };
-    let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods { stats, combat };
+    let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods {
+        stats,
+        combat,
+        stops_enemies: false,
+    };
     let buff = |cost, area, mods| active(cost, ActiveEffect::Buff { area, mods });
     let heal = |n, radius| active(uses(n), ActiveEffect::Heal { radius, power: 5 });
     let brace = |cost| {
@@ -767,6 +776,7 @@ fn sword(name: &str) -> WeaponDef {
         effective: vec![],
         arts: vec![],
         price: 0,
+        special: None,
     }
 }
 

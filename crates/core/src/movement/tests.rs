@@ -1011,3 +1011,134 @@ proptest! {
         prop_assert_eq!(listed, Ok(expected));
     }
 }
+
+// ------------------------------------------------- Hold the Ford (0329)
+
+/// Gives unit `id` of `s` Hold the Ford's stance: hostile units stepping
+/// next to it stop.
+fn hold(s: &mut Scene, id: u32) {
+    let unit = s.units.iter_mut().find(|u| u.id == UnitId(id)).unwrap();
+    unit.add_effect(crate::skill::TimedEffect {
+        source: crate::skill::EffectSource::Art(crate::art::ArtId::new("hold_the_ford")),
+        mods: crate::skill::TimedMods {
+            stops_enemies: true,
+            ..crate::skill::TimedMods::default()
+        },
+        until: crate::battle::Phase::Player,
+    });
+}
+
+/// A corridor past an enemy (unit 1) in a wall: the tile next to it is
+/// (2, 1).
+const FORD: [&str; 3] = ["#####", "@....", "##e##"];
+
+#[test]
+fn a_path_past_a_hold_the_ford_user_stops_next_to_it() {
+    let mut s = scene(&FORD, "foot", 4);
+    assert_eq!(
+        s.render(&s.reach(MOVER).unwrap()),
+        ["#####", "01234", "##e##"]
+    );
+    hold(&mut s, 1);
+    let reach = s.reach(MOVER).unwrap();
+    assert_eq!(s.render(&reach), ["#####", "012..", "##e##"]);
+    assert_eq!(
+        reach.path_to(p(2, 1)),
+        Some(vec![p(0, 1), p(1, 1), p(2, 1)])
+    );
+    // Fliers are stopped too.
+    let mut s = scene(&FORD, "flying", 4);
+    hold(&mut s, 1);
+    assert_eq!(
+        s.render(&s.reach(MOVER).unwrap()),
+        ["#####", "012..", "##e##"]
+    );
+}
+
+#[test]
+fn a_unit_starting_next_to_a_hold_the_ford_user_moves_away_freely() {
+    let mut s = scene(&["#####", "..@..", "##e##"], "foot", 4);
+    hold(&mut s, 1);
+    assert_eq!(
+        s.render(&s.reach(MOVER).unwrap()),
+        ["#####", "21012", "##e##"]
+    );
+}
+
+#[test]
+fn hold_the_ford_stops_only_hostile_units() {
+    // The holder is a player unit: the player mover walks on.
+    let mut s = scene(&["#####", "@....", "##p##"], "foot", 4);
+    hold(&mut s, 1);
+    assert_eq!(
+        s.render(&s.reach(MOVER).unwrap()),
+        ["#####", "01234", "##+##"]
+    );
+}
+
+#[test]
+fn an_occupied_stopping_tile_cant_be_passed() {
+    let mut s = scene(&["#####", "@.p..", "##e##"], "foot", 4);
+    hold(&mut s, 2);
+    assert_eq!(
+        s.render(&s.reach(MOVER).unwrap()),
+        ["#####", "01p..", "##e##"]
+    );
+}
+
+#[test]
+fn a_drawn_path_must_stop_on_a_stopping_tile() {
+    let mut s = scene(&FORD, "foot", 4);
+    hold(&mut s, 1);
+    let to = |x| (0..=x).map(|x| p(x, 1)).collect::<Vec<_>>();
+    assert_eq!(s.path_cost(&to(2)), Ok(2));
+    assert_eq!(s.path_cost(&to(3)), Err(PathError::Stopped { index: 2 }));
+}
+
+#[test]
+fn the_threat_of_an_enemy_stops_at_a_hold_the_ford_user() {
+    // The enemy mover can't walk past the player holding the ford.
+    let mut s = scene_as(&["#####", "@....", "##p##"], "foot", 4, Faction::Enemy);
+    hold(&mut s, 1);
+    let threat = s.threat(MOVER, &[(1, 1)]).unwrap();
+    assert_eq!(s.draw(&threat), ["***##", "****.", "***##"]);
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(500))]
+
+    /// Hold the Ford: no move goes on from a tile next to a hostile unit
+    /// holding the stance, except from the mover's own tile; every tile
+    /// reached still costs what its path costs.
+    #[test]
+    fn no_path_goes_past_a_hold_the_ford_user(
+        s in arb_scene(),
+        holders in prop::collection::vec(any::<bool>(), 8),
+    ) {
+        let mut s = s;
+        let ids: Vec<u32> = s.units[1..].iter().map(|u| u.id.0).collect();
+        for (id, _) in ids.into_iter().zip(&holders).filter(|(_, h)| **h) {
+            hold(&mut s, id);
+        }
+        let faction = s.mover().faction;
+        let stopping = |pos: Pos| {
+            s.units.iter().any(|u| {
+                u.faction.is_hostile_to(faction)
+                    && u.effects.iter().any(|e| e.mods.stops_enemies)
+                    && Pos::manhattan(u.pos, pos) == 1
+            })
+        };
+        let reach = s.reach(MOVER).unwrap();
+        for t in reach.passable().iter() {
+            let path = reach.path_to(t).unwrap();
+            let between = path.len().saturating_sub(2);
+            for &pos in path.iter().skip(1).take(between) {
+                prop_assert!(!stopping(pos), "{:?} on the way to {:?}", pos, t);
+            }
+            prop_assert_eq!(s.path_cost(&path), Ok(reach.cost(t).unwrap()));
+            if stopping(t) && t != s.mover().pos {
+                prop_assert!(reach.is_stoppable(t), "{:?}", t);
+            }
+        }
+    }
+}

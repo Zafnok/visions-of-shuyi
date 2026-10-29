@@ -23,7 +23,9 @@
 //! - **Effects** ([`ArtEffect`]) are data: bonuses and changes to the
 //!   attacker's numbers for the whole combat ([`ArtEffect::apply`], so the
 //!   forecast shows them), debuffs on the target's first hit, a stance on
-//!   the user, and Line Pierce's extra strike. The battle applies them.
+//!   the user (Hold the Ford's stops enemies next to it), Line Pierce's
+//!   extra strike, Pack Hunt's might per ally next to the target, and
+//!   Moonwave's power and mitigation stats. The battle applies them.
 
 use crate::prelude::*;
 
@@ -32,7 +34,7 @@ use alloc::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::class::{ClassTable, UnitTag};
-use crate::combat::{CombatMods, WeaponStats, WeaponTrait};
+use crate::combat::{CombatMods, MitigationStat, PowerStat, WeaponStats, WeaponTrait};
 use crate::item::ItemTable;
 use crate::skill::{CostSource, SkillCost, TimedMods, check_cost};
 use crate::stats::{StatKind, StatValue};
@@ -67,6 +69,7 @@ impl Debuff {
         TimedMods {
             stats: vec![(self.stat, -self.amount)],
             combat: CombatMods::default(),
+            stops_enemies: false,
         }
     }
 }
@@ -146,6 +149,14 @@ pub struct ArtEffect {
     /// After the combat, one strike at the unit directly behind the target
     /// (Line Pierce; see [`crate::battle`]).
     pub line_pierce: bool,
+    /// `(per, max)`: might `+per` for each other unit of the user's side
+    /// next to the target, up to `+max` (Pack Hunt: `(2, 6)`). The battle
+    /// counts them ([`crate::battle`]).
+    pub pack_might: Option<(StatValue, StatValue)>,
+    /// Replaces the power stat (Moonwave: the higher of Str and Mag).
+    pub power: Option<PowerStat>,
+    /// Replaces the stat that mitigates the user's strikes (Moonwave: Res).
+    pub mitigation: Option<MitigationStat>,
 }
 
 /// An effect of an art that isn't a number of the forecast, for the UI to
@@ -193,6 +204,17 @@ impl ArtEffect {
         if let Some(max) = self.max_range {
             weapon.max_range = max;
         }
+        mods.power = self.power.or(mods.power);
+        mods.mitigation = self.mitigation.or(mods.mitigation);
+    }
+
+    /// Pack Hunt's might for `allies` other units of the user's side next
+    /// to the target; 0 without it.
+    pub fn pack_might(&self, allies: usize) -> StatValue {
+        self.pack_might.map_or(0, |(per, max)| {
+            let allies = StatValue::try_from(allies).unwrap_or(StatValue::MAX);
+            per.saturating_mul(allies).min(max)
+        })
     }
 
     /// What the first hit puts on the target, to last until the end of its
@@ -211,6 +233,7 @@ impl ArtEffect {
                 avoid_debuff: self.on_first_hit_avoid,
                 ..CombatMods::default()
             },
+            stops_enemies: false,
         })
     }
 

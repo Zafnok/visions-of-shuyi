@@ -8,8 +8,8 @@ use std::sync::{Arc, OnceLock};
 use trpg_content::Content;
 use trpg_core::{
     ArtId, BattleMap, BattlePack, BattleSetup, BattleState, ClassId, Command, Event, Faction, Grid,
-    ItemId, LoadoutDef, Objective, Pos, Stats, Stock, Unit, UnitAction, UnitId, WeaponKind,
-    WeaponRank,
+    ItemDef, ItemId, LoadoutDef, Objective, Pos, Stats, Stock, Unit, UnitAction, UnitId,
+    WeaponKind, WeaponRank,
 };
 
 fn content() -> &'static Content {
@@ -192,8 +192,9 @@ fn the_worked_example_w1_with_each_sword_art() {
 }
 
 /// Each art, used by a rank-D unit of a class that wields its kind with
-/// that kind's iron weapon, on an enemy in range: the attack is accepted,
-/// announced and paid.
+/// that kind's iron weapon (a weapon art: with the special weapon that
+/// carries it, at that weapon's rank), on an enemy in range: the attack is
+/// accepted, announced and paid.
 #[test]
 fn every_art_can_be_used_with_its_iron_weapon() {
     let weapon = |kind| match kind {
@@ -203,10 +204,18 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         WeaponKind::Bow => ("archer", "iron_bow"),
         WeaponKind::Gauntlet => ("brawler", "iron_gauntlets"),
     };
-    let arts = &content().arts;
-    assert_eq!(arts.arts.len(), 19);
+    let (arts, items) = (&content().arts, &content().items);
+    assert_eq!(arts.arts.len(), 22);
     for (id, art) in &arts.arts {
         let (class, iron) = weapon(art.kind);
+        let own = items.items.iter().find_map(|(item, def)| match def {
+            ItemDef::Weapon(w) if w.arts.contains(id) => Some((item.0.as_str(), w)),
+            _ => None,
+        });
+        assert_eq!(own.is_some(), art.rank.is_none(), "{}", id.0);
+        let (iron, rank, durability) = own.map_or((iron, art.rank, 20), |(item, w)| {
+            (item, Some(w.rank.max(WeaponRank::D)), w.durability)
+        });
         // Bows shoot from 2 tiles (Close Shot could from 1).
         let at = if art.kind == WeaponKind::Bow {
             p(2, 0)
@@ -223,7 +232,7 @@ fn every_art_can_be_used_with_its_iron_weapon() {
             (iron, art.kind),
         );
         user.weapon_ranks
-            .insert(art.kind, art.rank.unwrap_or(WeaponRank::D));
+            .insert(art.kind, rank.unwrap_or(WeaponRank::D));
         let mut s = battle(vec![
             user,
             unit(
@@ -242,8 +251,8 @@ fn every_art_can_be_used_with_its_iron_weapon() {
                 unit: UnitId(1),
                 art: id.clone(),
                 weapon: ItemId::new(iron),
-                durability_before: 20,
-                durability_after: 20 - art.cost,
+                durability_before: durability,
+                durability_after: durability - art.cost,
             }),
             "{}",
             id.0

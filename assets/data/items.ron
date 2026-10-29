@@ -14,6 +14,12 @@
 //   SwordFollowUp | Effective(tag, multiplier) | AxeMinDamage(n) | GauntletAvoid(n) | None
 // weapons: range is (min, max) in tiles; damage_type defaults to Physical;
 //   effective: extra (tag, multiplier) pairs beyond the kind's trait.
+//   arts: the weapon's own arts (weapon arts in arts.ron, rank: None).
+//   special: true makes it a special weapon (combat-arts.md, Special
+//     weapons): no shop stocks it, and selling it asks first. Only a special
+//     weapon may have a wielder: Some("character") (a personal weapon, which
+//     only that character can wield) or a passive: Some((name: "..",
+//     mitigation: Some(Res))) (built in, on every strike made with it, free).
 // armour: weight_class Cloth | Leather | Chain | Plate (lightest first; a
 //   class wears its max_armour and every lighter one, classes.ron); bonus
 //   lists only the stats it changes, e.g. (def: 3); a negative one is a
@@ -57,6 +63,11 @@
         (id: "steel_bow", name: "Steel Bow", kind: Bow, rank: D, might: 9, hit: 70, crit: 0, weight: 5, range: (2, 2), durability: 25, price: 720),
         (id: "iron_gauntlets", name: "Iron Gauntlets", kind: Gauntlet, rank: E, might: 3, hit: 95, crit: 5, weight: 1, range: (1, 1), durability: 20, price: 400),
         (id: "steel_gauntlets", name: "Steel Gauntlets", kind: Gauntlet, rank: D, might: 5, hit: 85, crit: 5, weight: 2, range: (1, 1), durability: 25, price: 560),
+        // Special weapons (combat-arts.md, ticket 0018). Placed in battles by
+        // 0848 (the first two) and 0075 (the Moonblade, a working name).
+        (id: "houndmasters_axe", name: "Houndmaster's Axe", kind: Axe, rank: D, might: 10, hit: 70, crit: 5, weight: 7, range: (1, 1), durability: 25, price: 900, arts: ["pack_hunt"], special: true),
+        (id: "fordwardens_spear", name: "Fordwarden's Spear", kind: Spear, rank: E, might: 6, hit: 80, crit: 0, weight: 5, range: (1, 2), durability: 20, price: 800, arts: ["hold_the_ford"], special: true),
+        (id: "moonblade", name: "Moonblade", kind: Sword, rank: C, might: 10, hit: 85, crit: 0, weight: 4, range: (1, 1), durability: 30, price: 3000, arts: ["moonwave"], special: true, passive: Some((name: "Moonlit", mitigation: Some(Res)))),
     ],
     armour: [
         // The starter piece of each weight (weapons-and-items.md, Armour, 0073).

@@ -386,6 +386,7 @@ mod tests {
             effective: vec![],
             arts: vec![],
             price: 100,
+            special: None,
         };
         items
             .items

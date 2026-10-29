@@ -5,8 +5,9 @@
 //! what it is), the highlighted one inverted and scrolled into view, the
 //! ones that can't be chosen dimmed. A sale being asked about is a small
 //! double box over the list: the question, the count between ▲ and ▼ (an
-//! arrow dims at its end), and the gold. The help row under it, as on the
-//! battle screen.
+//! arrow dims at its end), and the gold. The question before selling a
+//! special weapon is the engine's question box in the middle. The help row
+//! under it, as on the battle screen.
 
 use super::{clear, paint_help};
 use crate::color::UiColor;
@@ -16,6 +17,7 @@ use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::{SellConfirmView, ShopScreenView};
 use crate::widgets::ListCursor;
+use crate::widgets::ask::glyph as ask_glyph;
 
 /// The box: the map view and the side panel together.
 pub const AREA: Rect = Rect::new(
@@ -106,6 +108,9 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
     if let Some(sell) = &view.selling {
         paint_sell(ctx, sell, buf);
     }
+    if let Some(ask) = &view.special {
+        ask_glyph::paint(&ctx.palette, ask, buf);
+    }
     paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
 }
 
@@ -184,6 +189,7 @@ mod tests {
             focus,
             empty: "Nothing here.".into(),
             selling: None,
+            special: None,
             help: "help".into(),
             debug_hint: None,
         }

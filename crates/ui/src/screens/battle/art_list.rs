@@ -10,8 +10,8 @@
 use crate::prelude::*;
 use trpg_core::{
     ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CommandError, CostError, Equipped,
-    Event, Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag,
-    WEAPON_SLOTS,
+    Event, Faction, MitigationStat, Pos, PowerStat, SkillCost, SkillId, StatKind, Unit, UnitAction,
+    UnitId, UnitTag, WEAPON_SLOTS,
 };
 
 use super::attack::{spell_uses, weapon_durability};
@@ -140,6 +140,15 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
     if e.cascade != 0 {
         parts.push(words.text_with("battle.art.desc.cascade", &[("n", &e.cascade)]));
     }
+    if let Some((per, max)) = e.pack_might {
+        parts.push(words.text_with("battle.art.desc.pack", &[("per", &per), ("max", &max)]));
+    }
+    if let Some(power) = e.power {
+        parts.push(power_text(words, power));
+    }
+    if let Some(stat) = e.mitigation {
+        parts.push(hits_text(words, stat));
+    }
     let notes = e.notes();
     // Several debuffs of one size read as one (`lowers: Str, Def −4`).
     let same = e
@@ -167,6 +176,30 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
         _ => Some(note_text(words, note)),
     }));
     parts.join("; ")
+}
+
+/// `uses Str`, or `higher of Str/Mag`: the stat the power uses.
+fn power_text(words: Words<'_>, power: PowerStat) -> String {
+    let (str, mag) = (
+        stat_name(words, StatKind::Str),
+        stat_name(words, StatKind::Mag),
+    );
+    match power {
+        PowerStat::Str => words.text_with("battle.art.desc.power", &[("stat", &str)]),
+        PowerStat::Mag => words.text_with("battle.art.desc.power", &[("stat", &mag)]),
+        PowerStat::Higher => {
+            words.text_with("battle.art.desc.power_higher", &[("a", &str), ("b", &mag)])
+        }
+    }
+}
+
+/// `hits Res`: the stat that mitigates the strikes.
+pub fn hits_text(words: Words<'_>, stat: MitigationStat) -> String {
+    let stat = match stat {
+        MitigationStat::Def => StatKind::Def,
+        MitigationStat::Res => StatKind::Res,
+    };
+    words.text_with("battle.art.desc.hits", &[("stat", &stat_name(words, stat))])
 }
 
 /// The name of art `id` (its id if the table lacks it).
@@ -538,6 +571,7 @@ mod tests {
                 avoid: 20,
                 ..CombatMods::default()
             },
+            stops_enemies: false,
         };
         assert_eq!(
             note_text(Words::ENGLISH, &ArtNote::Stance(stance)),
@@ -580,6 +614,12 @@ mod tests {
         }
         let text = |id: &str| art_effect_text(Words::ENGLISH, arts.get(&ArtId::new(id)).unwrap());
         assert_eq!(text("guard_break"), "+10 hit; no counter");
+        assert_eq!(text("pack_hunt"), "+2 might per ally beside target, max +6");
+        assert_eq!(
+            text("hold_the_ford"),
+            "stance: enemies stepping next to it stop"
+        );
+        assert_eq!(text("moonwave"), "reaches 2; higher of Str/Mag; hits Res");
         assert_eq!(text("unhorse"), "+10 hit; ×3 vs Mounted");
         assert_eq!(text("armor_cleave"), "×2 vs Armored");
         assert_eq!(text("pinning_shot"), "pins: Mov −3");
