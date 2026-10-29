@@ -27,17 +27,37 @@ pub const AREA: Rect = Rect::new(
     MAP_VIEW.h,
 );
 
+/// First column of the text in a box at `area`.
+pub const fn list_x(area: Rect) -> i32 {
+    area.x + 3
+}
+
 /// First column of the text.
-pub const LIST_X: i32 = AREA.x + 3;
+pub const LIST_X: i32 = list_x(AREA);
+
+/// Row of the unit and the tabs in a box at `area`.
+pub const fn tab_row(area: Rect) -> i32 {
+    area.y + 2
+}
 
 /// Row of the unit and the tabs.
-pub const TAB_ROW: i32 = AREA.y + 2;
+pub const TAB_ROW: i32 = tab_row(AREA);
+
+/// Column of the first tab, from the text's first column `list_x`.
+pub const fn tabs_x(list_x: i32) -> i32 {
+    list_x + 30
+}
 
 /// Column of the first tab.
-pub const TABS_X: i32 = LIST_X + 30;
+pub const TABS_X: i32 = tabs_x(LIST_X);
 
-/// Row of the first line: a blank row under the tabs.
-pub const TOP_ROW: i32 = AREA.y + 4;
+/// Row of the first line in a box at `area`: a blank row under the tabs.
+pub const fn top_row(area: Rect) -> i32 {
+    area.y + 4
+}
+
+/// Row of the first line.
+pub const TOP_ROW: i32 = top_row(AREA);
 
 /// Widest item name, its count included, in cells.
 pub const NAME_W: i32 = 24;
@@ -45,32 +65,56 @@ pub const NAME_W: i32 = 24;
 /// Widest gold, in cells (`99 999`).
 pub const GOLD_W: i32 = 7;
 
+/// First column of what the item is, from the text's first column.
+pub const fn detail_x(list_x: i32) -> i32 {
+    list_x + NAME_W + GOLD_W + 3
+}
+
 /// First column of what the item is.
-pub const DETAIL_X: i32 = LIST_X + NAME_W + GOLD_W + 3;
+pub const DETAIL_X: i32 = detail_x(LIST_X);
 
-/// Width of a line's highlight: from a cell left of the text to two
-/// cells inside the right border.
-pub const ROW_W: i32 = AREA.x + AREA.w - 1 - LIST_X;
+/// Width of a line's highlight in a box at `area`: from a cell left of
+/// the text to two cells inside the right border.
+pub const fn row_w(area: Rect) -> i32 {
+    area.x + area.w - 1 - list_x(area)
+}
 
-/// Rows the list has, above the bottom border and a blank row.
-pub const LIST_ROWS: i32 = AREA.y + AREA.h - 2 - TOP_ROW;
+/// Width of a line's highlight.
+pub const ROW_W: i32 = row_w(AREA);
+
+/// Rows the list has in a box at `area`, above the bottom border and a
+/// blank row.
+pub const fn list_rows(area: Rect) -> i32 {
+    area.y + area.h - 2 - top_row(area)
+}
+
+/// Rows the list has.
+pub const LIST_ROWS: i32 = list_rows(AREA);
 
 /// Paints the whole shop screen `view`: the box and the help row.
 pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
     clear(ctx, buf);
+    paint_box(ctx, view, AREA, buf);
+    paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
+}
+
+/// Paints `view`'s box at `area`: everything but the help row (the
+/// Preparations screen's Shop tab paints it in its own place, 0443).
+pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let text = c(UiColor::Text);
     let lit = c(UiColor::TextHighlight);
     let focus_bg = c(UiColor::PanelBorderFocus);
-    buf.fill_rect(AREA, Cell::new(' ', text, bg));
-    buf.draw_box(AREA, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    buf.print(LIST_X, AREA.y, &format!(" {} ", view.shop), lit, bg);
+    let (list_x, top_row, rows) = (list_x(area), top_row(area), list_rows(area));
+    buf.fill_rect(area, Cell::new(' ', text, bg));
+    buf.draw_box(area, BoxStyle::Double, c(UiColor::PanelBorder), bg);
+    buf.print(list_x, area.y, &format!(" {} ", view.shop), lit, bg);
     let gold = format!(" {} ", view.gold);
-    let gold_x = AREA.x + AREA.w - 3 - cells(&gold);
-    buf.print(gold_x, AREA.y, &gold, lit, bg);
-    buf.print(LIST_X, TAB_ROW, &view.unit, lit, bg);
-    let mut x = TABS_X;
+    let gold_x = area.x + area.w - 3 - cells(&gold);
+    buf.print(gold_x, area.y, &gold, lit, bg);
+    buf.print(list_x, tab_row(area), &view.unit, lit, bg);
+    let mut x = tabs_x(list_x);
     for (i, tab) in view.tabs.iter().enumerate() {
         let label = format!(" {tab} ");
         let (fg, tab_bg) = if i == view.tab {
@@ -78,15 +122,15 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         } else {
             (c(UiColor::TextDim), bg)
         };
-        buf.print(x, TAB_ROW, &label, fg, tab_bg);
+        buf.print(x, tab_row(area), &label, fg, tab_bg);
         x += cells(&label) + 1;
     }
     if view.lines.is_empty() {
-        buf.print(LIST_X, TOP_ROW, &view.empty, c(UiColor::TextDim), bg);
+        buf.print(list_x, top_row, &view.empty, c(UiColor::TextDim), bg);
     }
-    let first = first_shown(view.focus, LIST_ROWS);
+    let first = first_shown(view.focus, rows);
     let shown = view.lines.iter().enumerate().skip(first);
-    for ((i, line), y) in shown.zip(TOP_ROW..TOP_ROW + LIST_ROWS) {
+    for ((i, line), y) in shown.zip(top_row..top_row + rows) {
         let fg = if line.enabled {
             text
         } else {
@@ -97,21 +141,20 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         } else {
             (fg, bg)
         };
-        let row = Rect::new(LIST_X - 1, y, ROW_W, 1);
+        let row = Rect::new(list_x - 1, y, row_w(area), 1);
         buf.fill_rect(row, Cell::new(' ', fg, row_bg));
         // check-text: not a data name (the view's own)
-        buf.print(LIST_X, y, &line.name, fg, row_bg);
-        let gold_x = LIST_X + NAME_W + GOLD_W - cells(&line.gold);
+        buf.print(list_x, y, &line.name, fg, row_bg);
+        let gold_x = list_x + NAME_W + GOLD_W - cells(&line.gold);
         buf.print(gold_x, y, &line.gold, fg, row_bg);
-        buf.print(DETAIL_X, y, &line.detail, fg, row_bg);
+        buf.print(detail_x(list_x), y, &line.detail, fg, row_bg);
     }
     if let Some(sell) = &view.selling {
-        paint_sell(ctx, sell, buf);
+        paint_sell(ctx, sell, sell_box(area), buf);
     }
     if let Some(ask) = &view.special {
         ask_glyph::paint(&ctx.palette, ask, buf);
     }
-    paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
 }
 
 /// Width of the sale's box, in cells.
@@ -121,22 +164,32 @@ pub const SELL_W: i32 = 30;
 /// inside its border with a blank row above and below.
 pub const SELL_H: i32 = 9;
 
-/// The sale's box, in the middle of the list.
-pub const SELL_BOX: Rect = Rect::new(AREA.x + (AREA.w - SELL_W) / 2, TOP_ROW + 2, SELL_W, SELL_H);
+/// The sale's box in the middle of the list of a box at `area`.
+pub const fn sell_box(area: Rect) -> Rect {
+    Rect::new(
+        area.x + (area.w - SELL_W) / 2,
+        top_row(area) + 2,
+        SELL_W,
+        SELL_H,
+    )
+}
 
-/// Paints the confirmation `sell` over the list.
-fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, buf: &mut GlyphBuffer) {
+/// The sale's box, in the middle of the list.
+pub const SELL_BOX: Rect = sell_box(AREA);
+
+/// Paints the confirmation `sell` over the list, in `sell_box`.
+fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let text = c(UiColor::Text);
     let dim = c(UiColor::TextDim);
-    buf.fill_rect(SELL_BOX, Cell::new(' ', text, bg));
-    buf.draw_box(SELL_BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    buf.fill_rect(sell_box, Cell::new(' ', text, bg));
+    buf.draw_box(sell_box, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
     let centred = |buf: &mut GlyphBuffer, y: i32, line: &str, fg| {
-        let x = SELL_BOX.x + (SELL_BOX.w - cells(line)) / 2;
+        let x = sell_box.x + (sell_box.w - cells(line)) / 2;
         buf.print(x, y, line, fg, bg);
     };
-    let top = SELL_BOX.y + 2;
+    let top = sell_box.y + 2;
     centred(buf, top, &sell.question, c(UiColor::TextHighlight));
     let up = if sell.count < sell.max { text } else { dim };
     let down = if sell.count > 1 { text } else { dim };

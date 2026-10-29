@@ -34,6 +34,12 @@
 //! - **Attack speed** ([`BattleSetup::attack_speed`]): the combat formula
 //!   (`Spd + rank speed − burden`, gear-adjusted) for the weapon in a slot,
 //!   without skill bonuses.
+//! - **Shop** (ticket 0443; [`Preparations::buy`], [`Preparations::sell`],
+//!   [`Preparations::repair`]): the battle's basic shop
+//!   ([`crate::shop::BasicStock`]) sells into the stock and buys from it
+//!   with the setup's gold, by the rules of [`crate::shop`]. It repairs
+//!   any weapon of the stock or of a unit's loadout, the bench's too. What
+//!   is packed or worn is sold after it is put back in the stock.
 
 use crate::prelude::*;
 
@@ -43,6 +49,7 @@ use core::fmt;
 use crate::battle::{BattleSetup, BattleState};
 use crate::class::{ArmourWeight, ClassDef, ClassTable};
 use crate::item::{Equipped, ItemDef, ItemId, ItemTable, Stock, WEAPON_SLOTS, WeaponInstance};
+use crate::shop::{self, Gold, Shop, ShopError, ShopSession};
 use crate::spell::SpellTable;
 use crate::stats::StatValue;
 use crate::terrain::TerrainRules;
@@ -377,7 +384,7 @@ impl BattleSetup {
 
     /// Makes this setup the one battle `start` began with, as Preparations
     /// left it: every player unit takes the loadout of `start`'s unit with
-    /// its id, and the stock and the pack are `start`'s. For continuing a
+    /// its id, and the stock, the pack and the gold are `start`'s. For continuing a
     /// suspended battle, whose first state is all that is saved of its
     /// Preparations.
     pub fn prepared_as(&mut self, start: &BattleState) {
@@ -389,6 +396,7 @@ impl BattleSetup {
         }
         self.stock = start.stock().clone();
         self.pack = start.pack().clone();
+        self.gold = start.gold();
     }
 
     /// Moves one consumable `item` from the stock into the pack.
@@ -415,6 +423,21 @@ impl BattleSetup {
         Ok(())
     }
 
+    /// Buys one `item` from `shop` into the stock with the setup's gold.
+    /// Returns the price paid.
+    pub fn buy(&mut self, shop: &Shop, item: &ItemId) -> Result<Gold, ShopError> {
+        ShopSession::new(shop, &self.items, &mut self.gold, &mut self.stock).buy(item)
+    }
+
+    /// Sells one `item` of the stock to `shop`. Returns the gold got.
+    pub fn sell(&mut self, shop: &Shop, item: &StockItem) -> Result<Gold, ShopError> {
+        let mut session = ShopSession::new(shop, &self.items, &mut self.gold, &mut self.stock);
+        match item {
+            StockItem::Weapon(i) => session.sell_weapon(*i),
+            StockItem::Item(id) => session.sell_item(id),
+        }
+    }
+
     /// Player unit `unit`'s attack speed with the weapon in `slot` in hand
     /// (`None`: what it has equipped). An empty slot, or a weapon it can't
     /// wield, counts as no weapon. `None` if there is no such unit.
@@ -438,14 +461,27 @@ pub enum PrepUnit {
     Benched(usize),
 }
 
-/// A battle being prepared: its setup, and the army's units left out of
-/// it, whose gear can be traded all the same (see the module docs).
+/// A weapon the shop could repair.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum WeaponAt {
+    /// The copy at this index of the stock's weapons.
+    Stock(usize),
+    /// This weapon slot of this unit.
+    Held(PrepUnit, usize),
+}
+
+/// A battle being prepared: its setup, the army's units left out of it,
+/// whose gear can be traded all the same, and its shop (see the module
+/// docs).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Preparations {
     /// The battle, with the deployed units, the stock and the pack.
     pub setup: BattleSetup,
     /// The roster's units that aren't in the battle, in roster order.
     pub bench: Vec<Unit>,
+    /// The basic shop of the battle's chapter; `None` for a battle of no
+    /// numbered chapter.
+    pub shop: Option<Shop>,
 }
 
 impl Preparations {
@@ -597,6 +633,48 @@ impl Preparations {
                 to_stock(unit, &mut self.setup.stock, slot, t)
             }
         }
+    }
+
+    /// Buys one `item` from the shop into the stock
+    /// ([`BattleSetup::buy`]).
+    pub fn buy(&mut self, item: &ItemId) -> Result<Gold, ShopError> {
+        let shop = self
+            .shop
+            .as_ref()
+            .ok_or_else(|| ShopError::NotSoldHere(item.clone()))?;
+        self.setup.buy(shop, item)
+    }
+
+    /// Sells one `item` of the stock to the shop ([`BattleSetup::sell`]).
+    pub fn sell(&mut self, item: &StockItem) -> Result<Gold, ShopError> {
+        let shop = self.shop.as_ref().ok_or(ShopError::DoesNotBuy)?;
+        self.setup.sell(shop, item)
+    }
+
+    /// The weapon `at` is.
+    pub fn weapon(&self, at: WeaponAt) -> Option<&WeaponInstance> {
+        match at {
+            WeaponAt::Stock(i) => self.setup.stock.weapons.get(i),
+            WeaponAt::Held(who, slot) => self.unit(who)?.loadout.weapon(slot),
+        }
+    }
+
+    /// Repairs the weapon `at` to full durability at the shop, with the
+    /// setup's gold. Returns the cost.
+    pub fn repair(&mut self, at: WeaponAt) -> Result<Gold, ShopError> {
+        let shop = self.shop.clone().ok_or(ShopError::DoesNotRepair)?;
+        let items = Arc::clone(&self.setup.items);
+        let mut gold = self.setup.gold;
+        let copy = match at {
+            WeaponAt::Stock(i) => self.setup.stock.weapons.get_mut(i),
+            WeaponAt::Held(who, slot) => self
+                .unit_mut(who)
+                .and_then(|u| u.loadout.weapons.get_mut(slot))
+                .and_then(Option::as_mut),
+        };
+        let cost = shop::repair(&shop, &items, &mut gold, copy.ok_or(ShopError::NoItem)?)?;
+        self.setup.gold = gold;
+        Ok(cost)
     }
 
     /// `who`'s attack speed with the weapon in `slot` in hand

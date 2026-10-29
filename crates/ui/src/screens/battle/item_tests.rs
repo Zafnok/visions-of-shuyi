@@ -142,7 +142,7 @@ fn the_pack_groups_by_item_and_targets_are_self_then_adjacent_allies_in_order() 
 #[test]
 fn select_move_item_potion_ally_heals_the_ally_and_ends_the_action() {
     let mut c = ctx();
-    let state = hurt_pair(&c, 0, 15, &["potion", "potion", "potion"]);
+    let state = hurt_pair(&c, 0, 25, &["potion", "potion", "potion"]);
     let max = state.unit(UnitId(2)).unwrap().stats.hp;
     let mut s = lord_menu(&mut c, state);
     step(&mut s, &mut c, &ITEM);
@@ -173,7 +173,7 @@ fn select_move_item_potion_ally_heals_the_ally_and_ends_the_action() {
         s.popups(),
         [HealPopup {
             pos: p(4, 5),
-            amount: 10,
+            amount: 20,
             kind: PopupKind::Heal,
             t: 0.0
         }]
@@ -214,7 +214,7 @@ fn an_item_can_be_used_on_oneself_and_targets_cycle_both_ways() {
 #[test]
 fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
     let c = ctx();
-    let state = hurt_pair(&c, 4, 15, &["potion", "elixir"]);
+    let state = hurt_pair(&c, 4, 25, &["potion", "elixir"]);
     let (lord, knight) = (
         state.unit(UnitId(1)).unwrap(),
         state.unit(UnitId(2)).unwrap(),
@@ -242,7 +242,7 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
             "Potion on {}: HP {} → {}",
             knight.name,
             knight.hp,
-            knight.hp + 10
+            knight.hp + 20
         )
     );
     // The elixir restores all.
@@ -515,7 +515,7 @@ fn a_heal_of_nothing_shows_no_popup_and_popups_last_their_time() {
 #[test]
 fn the_popup_is_drawn_on_the_row_above_the_healed_unit() {
     let c = ctx();
-    let mut s = BattleScreen::new(placed(&c, p(3, 5), p(4, 5), 15));
+    let mut s = BattleScreen::new(placed(&c, p(3, 5), p(4, 5), 25));
     s.apply(&trpg_core::Command::Act {
         unit: UnitId(1),
         dest: p(3, 5),
@@ -526,7 +526,7 @@ fn the_popup_is_drawn_on_the_row_above_the_healed_unit() {
     });
     let (x, y) = super::testing::tile_cell(&s, &c, p(4, 5)).expect("in view");
     let buf = render(&s, &c);
-    assert_eq!(text(&buf, x, y - 1, 3), "+10");
+    assert_eq!(text(&buf, x, y - 1, 3), "+20");
     assert_eq!(
         buf.get(x, y - 1).unwrap().fg,
         c.palette.get(UiColor::HpHigh)

@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/controller.rs
-assertion_line: 339
 expression: keys.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: keys.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f close                                                                                   F2 debug 

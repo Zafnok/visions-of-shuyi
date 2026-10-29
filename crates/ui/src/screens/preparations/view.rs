@@ -5,6 +5,7 @@
 
 use super::Tab;
 use crate::prelude::*;
+use crate::screens::battle::view::ShopScreenView;
 use crate::widgets::AskView;
 
 /// The whole screen, as it is this frame.
@@ -46,6 +47,9 @@ pub enum PrepBody {
     Loadouts(LoadoutsView),
     /// The stock's consumables and the pack.
     Pack(PackView),
+    /// The basic shop, as the on-map shop screen's view (0443); its help
+    /// row is the screen's.
+    Shop(ShopScreenView),
     /// Nothing: Confirm opens the Options screen over this one.
     Options,
     /// What the battle starts with, e.g. `4 units · Pack 3/6`.

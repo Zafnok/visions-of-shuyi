@@ -112,6 +112,7 @@ fn autobalance_brings_the_too_hard_battle_into_its_bands() {
         stdout.starts_with("test_too_hard · Normal tier · FixedSkirmish\n"),
         "{stdout}"
     );
-    assert!(stdout.contains("every unnamed enemy -8 levels"), "{stdout}");
+    // Its pack's Potion heals 20 (0443), so -5 levels is enough.
+    assert!(stdout.contains("every unnamed enemy -5 levels"), "{stdout}");
     assert!(stdout.contains("\nafter: 20 tries"), "{stdout}");
 }

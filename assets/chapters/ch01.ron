@@ -3,6 +3,7 @@
 (
     id: "ch01",
     title: "Chapter 1: The Letter",
+    number: Some(1),
     intro_scenes: ["ch01_intro", "ch01_prebattle"],
     battle: "ch01",
     victory_scenes: ["ch01_victory", "ch01_tbc"],

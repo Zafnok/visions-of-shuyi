@@ -86,6 +86,8 @@ struct RawBattle {
     #[serde(default)]
     solo_stock: Vec<String>,
     #[serde(default)]
+    solo_gold: u32,
+    #[serde(default)]
     solo_bench: Vec<String>,
     #[serde(default)]
     clear_gold: u32,
@@ -420,6 +422,7 @@ pub fn from_source(
         pack_cap,
         default_pack,
         solo_stock,
+        solo_gold: raw.solo_gold,
         solo_bench,
         clear_gold: raw.clear_gold,
         objective: objective.unwrap_or(Objective::Rout { turn_limit: None }),

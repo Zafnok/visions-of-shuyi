@@ -18,6 +18,7 @@ use prelude::*;
 pub mod ai;
 pub mod art;
 pub mod audio;
+pub mod basic_shop;
 pub mod battle;
 pub mod battler;
 pub mod bundle;
@@ -60,8 +61,8 @@ use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 
 use trpg_core::{
-    AiWeights, ArtTable, BattleDef, BattleMap, ClassTable, GameTables, ItemTable, SkillTable,
-    SpellTable, SupportTable,
+    AiWeights, ArtTable, BasicStock, BattleDef, BattleMap, ClassTable, GameTables, ItemTable,
+    SkillTable, SpellTable, SupportTable,
 };
 
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
@@ -130,6 +131,8 @@ pub struct Content {
     pub classes: ClassTable,
     /// Items and item rules.
     pub items: ItemTable,
+    /// What the Preparations shop sells, and from when (ticket 0443).
+    pub basic_shop: BasicStock,
     /// Spells.
     pub spells: SpellTable,
     /// Class skills.
@@ -266,7 +269,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let maps = load_maps(terrain.as_ref().ok());
     let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
     let classes = class::load(movement);
-    let items = check_seals(item::load(), classes.as_ref().ok());
+    let (items, basic_shop) = load_items(classes.as_ref().ok());
     let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
     let (lighting, names) = (lighting::load(), names::load());
     let lit = lighting.as_ref().ok();
@@ -323,6 +326,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let mut units = Loaded {
         classes,
         items,
+        basic_shop,
         spells,
         skills,
         arts,
@@ -350,8 +354,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         cinematics,
         openings,
     };
-    let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
-    units.lang = lang::load(data);
+    units.lang = lang::load(data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok()));
     let themes = palette::load_themes(palette.as_ref().ok());
     let content = assemble(
         palette,
@@ -506,6 +509,19 @@ fn check_presence(
     } else {
         Err(errors)
     }
+}
+
+/// The items, their seals checked against `classes`, and the basic shop,
+/// checked against the items.
+fn load_items(
+    classes: Option<&ClassTable>,
+) -> (
+    Result<ItemTable, Vec<ContentError>>,
+    Result<BasicStock, Vec<ContentError>>,
+) {
+    let items = check_seals(item::load(), classes);
+    let basic_shop = basic_shop::load(items.as_ref().ok());
+    (items, basic_shop)
 }
 
 /// Adds the seal checks ([`item::check_seals`]: a seal for every tier a
@@ -818,6 +834,7 @@ type People<'a> = (
 struct Loaded {
     classes: Result<ClassTable, Vec<ContentError>>,
     items: Result<ItemTable, Vec<ContentError>>,
+    basic_shop: Result<BasicStock, Vec<ContentError>>,
     spells: Result<SpellTable, Vec<ContentError>>,
     skills: Result<SkillTable, Vec<ContentError>>,
     arts: Result<ArtTable, Vec<ContentError>>,
@@ -899,6 +916,7 @@ fn assemble(
         cinematics: take(units.cinematics, &mut errors),
         lessons: take(units.lessons, &mut errors),
         openings: take(units.openings, &mut errors),
+        basic_shop: take(units.basic_shop, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -1131,6 +1149,7 @@ mod tests {
         Loaded {
             classes: ok_classes(),
             items: item::load(),
+            basic_shop: basic_shop::load(None),
             spells: ok_spells(),
             skills: ok_skills(),
             arts: art::load(),
@@ -1257,9 +1276,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 32] = [
+    const NAMES: [&str; 33] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "S",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1288,6 +1307,7 @@ mod tests {
                 Loaded {
                     classes: Err(e("c")),
                     items: Err(e("i")),
+                    basic_shop: Err(e("S")),
                     spells: Err(e("s")),
                     skills: Err(e("x")),
                     arts: Err(e("a")),
@@ -1377,6 +1397,7 @@ mod tests {
                     cinematics: pick(i == 29, "C", ok_cinematics()),
                     lessons: pick(i == 30, "E", ok_lessons()),
                     openings: pick(i == 31, "O", ok_openings()),
+                    basic_shop: pick(i == 32, "S", basic_shop::load(None)),
                 },
             )
         };

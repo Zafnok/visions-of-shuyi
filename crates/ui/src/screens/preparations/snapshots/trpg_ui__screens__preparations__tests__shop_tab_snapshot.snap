@@ -1,0 +1,78 @@
+---
+source: crates/ui/src/screens/preparations/tests.rs
+expression: h.snapshot()
+---
+                                                                                                    
+  Preparations                 Loadouts      Pack      Shop      Options      Fight!                
+                                                                                                    
+╔══ Shop ══════════════════════════════════════════════════════════════════════════════ Gold 450 ══╗
+║                                                                                                  ║
+║                                 Buy   Sell   Repair                                              ║
+║                                                                                                  ║
+║  Potion                      300   Restore 20 HP                                                 ║
+║  Iron Sword                  460   Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                             ║
+║  Steel Sword                 600   Mt 8  Hit 75  Crit 0  Rng 1  Wt 4                             ║
+║  Iron Spear                  360   Mt 7  Hit 80  Crit 0  Rng 1  Wt 4                             ║
+║  Steel Spear                 480   Mt 10  Hit 70  Crit 0  Rng 1  Wt 6                            ║
+║  Iron Axe                    270   Mt 8  Hit 75  Crit 0  Rng 1  Wt 6                             ║
+║  Steel Axe                   360   Mt 11  Hit 65  Crit 0  Rng 1  Wt 8                            ║
+║  Iron Bow                    540   Mt 6  Hit 85  Crit 0  Rng 2  Wt 3                             ║
+║  Steel Bow                   720   Mt 9  Hit 70  Crit 0  Rng 2  Wt 5                             ║
+║  Iron Gauntlets              400   Mt 3  Hit 95  Crit 5  Rng 1  Wt 1                             ║
+║  Steel Gauntlets             560   Mt 5  Hit 85  Crit 5  Rng 1  Wt 2                             ║
+║  Linen Robe                  300   Res +4                                                        ║
+║  Leather Vest                400   Def +2  Res +2                                                ║
+║  Chain Mail                  800   Def +4  Res +1                                                ║
+║  Iron Plate                1 500   Def +8  Res +-3                                               ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+║                                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                 Up Down choose · Left Right buy, sell, repair · f confirm · d back                 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aabbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+cccddddddccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccddddddddddccc
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefffffeggggggeggggggggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:text_highlight bg:black
+c = fg:panel_border bg:panel_bg
+d = fg:text_highlight bg:panel_bg
+e = fg:text bg:panel_bg
+f = fg:panel_bg bg:panel_border_focus
+g = fg:text_dim bg:panel_bg
+h = fg:text_dim bg:black

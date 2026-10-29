@@ -36,6 +36,10 @@ pub struct ChapterDef {
     pub id: String,
     /// Its title, e.g. `Chapter 1: …`.
     pub title: String,
+    /// Its number in the story, from 1: what the Preparations shop sells
+    /// (ticket 0443). `None` for a chapter of no number (a test's).
+    #[serde(default)]
+    pub number: Option<u32>,
     /// Scenes before the battle, in order.
     #[serde(default)]
     pub intro_scenes: Vec<String>,
@@ -125,7 +129,8 @@ pub fn load_all(
 }
 
 /// Every problem with chapter `def` from `file`: an id that isn't the file
-/// name `stem`, a scene not in `dialogue`, a battle not in `battles`.
+/// name `stem`, a number of 0, a scene not in `dialogue`, a battle not in
+/// `battles`.
 pub fn check_chapter(
     file: &str,
     stem: &str,
@@ -140,6 +145,9 @@ pub fn check_chapter(
             "id \"{}\" must match the file name \"{stem}\"",
             def.id
         ));
+    }
+    if def.number == Some(0) {
+        err("chapter numbers start at 1".to_owned());
     }
     if !battles.contains_key(&def.battle) {
         err(format!("no battle \"{}\"", def.battle));
@@ -277,8 +285,8 @@ pub fn new_campaign(content: &Content, mode: GameMode, lead: LeadProfile) -> Cam
 
 /// A throwaway campaign for playing battle `battle` on its own (the debug
 /// Quick Battle): the characters of its player slots, then its
-/// `solo_bench`, fresh from the character data, no gold, and the battle's
-/// `solo_stock`.
+/// `solo_bench`, fresh from the character data, and the battle's
+/// `solo_gold` and `solo_stock`.
 pub fn battle_campaign(
     content: &Content,
     battle: &BattleDef,
@@ -296,7 +304,7 @@ pub fn battle_campaign(
         lead,
         String::new(),
         roster_units(content, &characters),
-        0,
+        battle.solo_gold,
         stock_of(content, &battle.solo_stock),
     )
 }

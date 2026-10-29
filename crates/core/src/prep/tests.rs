@@ -390,6 +390,7 @@ fn army() -> Preparations {
     Preparations {
         setup: prep(&["sword"], &["vest"]),
         bench: vec![ben],
+        shop: None,
     }
 }
 
@@ -701,4 +702,112 @@ fn a_swap_is_between_the_two_units_named() {
     assert_eq!(a.bench[0].loadout.weapon(2), Some(&copy("sword", 11)));
     assert_eq!(a.setup.units[1].loadout.weapon(0), None);
     assert_eq!(a.setup.units[0].loadout, crate::item::Loadout::default());
+}
+
+/// The army with a basic shop selling swords and potions, and 1 000 gold.
+fn shopping() -> Preparations {
+    let mut a = army();
+    a.setup.gold = 1000;
+    a.shop = Some(Shop {
+        kind: shop::ShopKind::Basic,
+        stock: vec![id("sword"), id("potion")],
+    });
+    a
+}
+
+#[test]
+fn buying_takes_the_gold_and_puts_the_item_in_the_stock() {
+    let mut a = shopping();
+    assert_eq!(a.buy(&id("potion")), Ok(300));
+    assert_eq!((a.setup.gold, a.setup.stock.count(&id("potion"))), (700, 1));
+    // A weapon comes as a new copy at full durability, after the others.
+    assert_eq!(a.buy(&id("sword")), Ok(100));
+    assert_eq!(a.setup.stock.weapons.last(), Some(&copy("sword", 20)));
+    assert_eq!(a.setup.gold, 600);
+    // Not on its list, or not affordable: nothing changes.
+    let before = a.clone();
+    assert_eq!(a.buy(&id("vest")), Err(ShopError::NotSoldHere(id("vest"))));
+    a.setup.gold = 299;
+    let poor = a.clone();
+    assert_eq!(
+        a.buy(&id("potion")),
+        Err(ShopError::NotEnoughGold {
+            cost: 300,
+            gold: 299
+        })
+    );
+    assert_eq!(a, poor);
+    // Without a shop nothing is sold.
+    let mut none = before;
+    none.shop = None;
+    assert_eq!(
+        none.buy(&id("potion")),
+        Err(ShopError::NotSoldHere(id("potion")))
+    );
+}
+
+#[test]
+fn selling_takes_the_item_from_the_stock_for_half_its_price() {
+    let mut a = shopping();
+    assert_eq!(a.sell(&StockItem::Item(id("vest"))), Ok(150));
+    assert_eq!((a.setup.gold, a.setup.stock.count(&id("vest"))), (1150, 0));
+    assert_eq!(a.sell(&StockItem::Weapon(0)), Ok(50));
+    assert_eq!(a.setup.stock.weapons, []);
+    assert_eq!(a.setup.gold, 1200);
+    // What the stock doesn't hold can't be sold.
+    assert_eq!(a.sell(&StockItem::Weapon(0)), Err(ShopError::NoItem));
+    assert_eq!(a.sell(&StockItem::Item(id("vest"))), Err(ShopError::NoItem));
+    a.shop = None;
+    a.setup.stock.add(id("vest"));
+    assert_eq!(
+        a.sell(&StockItem::Item(id("vest"))),
+        Err(ShopError::DoesNotBuy)
+    );
+}
+
+#[test]
+fn repairing_fills_a_weapon_of_the_stock_or_of_any_unit() {
+    let mut a = shopping();
+    a.setup.stock.weapons[0].durability_left = 5;
+    // ceil(100 / 2 × 15 / 20) = 38.
+    assert_eq!(a.repair(WeaponAt::Stock(0)), Ok(38));
+    assert_eq!(a.weapon(WeaponAt::Stock(0)), Some(&copy("sword", 20)));
+    assert_eq!(a.setup.gold, 962);
+    // The bench's javelin, at 9/20: ceil(50 × 11 / 20) = 28.
+    let held = WeaponAt::Held(BEN, 0);
+    assert_eq!(a.repair(held), Ok(28));
+    assert_eq!(a.weapon(held), Some(&copy("javelin", 20)));
+    assert_eq!(a.setup.gold, 934);
+    // A deployed unit's weapon.
+    a.setup.units[0].loadout.weapons[1] = Some(copy("sword", 19));
+    assert_eq!(a.repair(WeaponAt::Held(FENCER, 1)), Ok(3));
+    // Full, empty, too dear or no shop: nothing changes.
+    let before = a.clone();
+    assert_eq!(
+        a.repair(held),
+        Err(ShopError::NothingToRepair(id("javelin")))
+    );
+    assert_eq!(a.repair(WeaponAt::Held(FENCER, 2)), Err(ShopError::NoItem));
+    assert_eq!(a.repair(WeaponAt::Stock(5)), Err(ShopError::NoItem));
+    a.setup.units[0].loadout.weapons[1] = Some(copy("sword", 0));
+    a.setup.gold = 49;
+    let poor = a.clone();
+    assert_eq!(
+        a.repair(WeaponAt::Held(FENCER, 1)),
+        Err(ShopError::NotEnoughGold { cost: 50, gold: 49 })
+    );
+    assert_eq!(a, poor);
+    let mut none = before;
+    none.shop = None;
+    assert_eq!(none.repair(held), Err(ShopError::DoesNotRepair));
+}
+
+#[test]
+fn a_continued_battle_keeps_the_gold_preparations_left() {
+    let mut a = shopping();
+    assert_eq!(a.buy(&id("potion")), Ok(300));
+    let (start, _) = BattleState::new(a.setup.clone());
+    let mut again = shopping().setup;
+    again.prepared_as(&start);
+    assert_eq!(again.gold, 700);
 }

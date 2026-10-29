@@ -78,7 +78,7 @@ pub use movement::{
     AttackRange, MoveError, PathError, Reach, TileSet, attack_tiles, danger_zone, path_cost,
     reachable, threat_area, threats_at,
 };
-pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable};
+pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable, WeaponAt};
 pub use progression::{
     ChangeTables, ClassChangeError, CombatResult, StatGains, apply_gains, exp_for_combat,
     grant_class_points, grant_exp, growth, has_mastered, level_up, paced_exp, promote,
@@ -86,7 +86,9 @@ pub use progression::{
 };
 pub use rng::{RandomSource, ScriptedRng, SimRng};
 pub use save::{SAVE_VERSION, SaveFile, SaveHeader, SavePoint};
-pub use shop::{Gold, Loot, Shop, ShopError, ShopKind, ShopSession, repair_cost, sell_price};
+pub use shop::{
+    BasicStock, Gold, Loot, Shop, ShopError, ShopKind, ShopSession, Unlock, repair_cost, sell_price,
+};
 pub use skill::{
     ActiveEffect, Area, Bonuses, Condition, CostError, CostSource, EffectSource, Paid,
     PassiveEffect, SkillContext, SkillCost, SkillDef, SkillId, SkillKind, SkillTable, SkillUses,

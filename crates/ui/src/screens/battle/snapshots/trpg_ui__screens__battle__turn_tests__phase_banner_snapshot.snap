@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/turn_tests.rs
-assertion_line: 773
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f skip                                                                                    F2 debug 

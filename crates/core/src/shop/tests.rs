@@ -475,6 +475,59 @@ proptest! {
     }
 }
 
+#[test]
+fn the_basic_shop_sells_what_the_chapter_unlocked() {
+    let basic = BasicStock {
+        items: vec![
+            (ItemId("potion".into()), Unlock::Chapter(2)),
+            (ItemId("sword".into()), Unlock::Chapter(2)),
+            (ItemId("bow".into()), Unlock::Chapter(5)),
+            (ItemId("vest".into()), Unlock::Chapter(8)),
+        ],
+    };
+    let ids = |chapter| -> Vec<String> {
+        let shop = basic.shop(chapter);
+        assert_eq!(shop.kind, ShopKind::Basic);
+        shop.stock.into_iter().map(|i| i.0).collect()
+    };
+    assert_eq!(ids(1), [] as [String; 0]);
+    assert_eq!(ids(2), ["potion", "sword"]);
+    assert_eq!(ids(4), ["potion", "sword"]);
+    assert_eq!(ids(5), ["potion", "sword", "bow"]);
+    assert_eq!(ids(8), ["potion", "sword", "bow", "vest"]);
+    assert!(Unlock::Chapter(3).reached(3) && !Unlock::Chapter(3).reached(2));
+}
+
+#[test]
+fn the_basic_shop_sells_gear_and_consumables_buys_and_repairs() {
+    let items = items();
+    let def = |i: &str| items.get(&ItemId(i.into())).cloned().unwrap();
+    let basic = ShopKind::Basic;
+    for (item, sold) in [
+        ("sword", true),
+        ("vest", true),
+        ("potion", true),
+        ("ring", false),
+    ] {
+        assert_eq!(basic.stocks(&def(item)), sold, "{item}");
+    }
+    assert!(basic.buys() && basic.repairs());
+    assert!(ShopKind::Blacksmith.repairs());
+    assert!(!ShopKind::Armoury.repairs() && !ShopKind::Vendor.repairs());
+    let shop = Shop {
+        kind: basic,
+        stock: vec![],
+    };
+    let mut gold = 300;
+    let mut copy = WeaponInstance {
+        def: ItemId("sword".into()),
+        durability_left: 20,
+    };
+    // ceil(1000 / 2 × 20 / 40) = 250.
+    assert_eq!(repair(&shop, &items, &mut gold, &mut copy), Ok(250));
+    assert_eq!((gold, copy.durability_left), (50, 40));
+}
+
 /// Ticket 0329: no shop stocks a special weapon; it sells for half its
 /// price and repairs by the usual formula, like any weapon.
 #[test]
@@ -484,7 +537,12 @@ fn special_weapons_are_never_stocked_but_sell_and_repair() {
     };
     def.special = Some(crate::item::SpecialWeapon::default());
     let special = ItemDef::Weapon(def.clone());
-    for kind in [ShopKind::Armoury, ShopKind::Vendor, ShopKind::Blacksmith] {
+    for kind in [
+        ShopKind::Armoury,
+        ShopKind::Vendor,
+        ShopKind::Blacksmith,
+        ShopKind::Basic,
+    ] {
         assert!(!kind.stocks(&special), "{kind:?}");
     }
     assert_eq!(sell_price(&special), 1500);

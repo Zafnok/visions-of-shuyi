@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/item_tests.rs
-assertion_line: 362
 expression: buf.to_snapshot(&c.palette)
 ---
                                                                       ╔════════════════════════════╗
@@ -19,7 +18,7 @@ expression: buf.to_snapshot(&c.palette)
                     ≈≈≈≈≈≈====······Br..♣♣♣♣....                      ║                            ║
                     ..≈≈≈≈..··..............╦╦..                      ║                            ║
                     ....Ar···┌─ Pack 4/6 ────────────────┐            ║                            ║
-                    ..♣♣··LoK│ Potion ×3  Restore 10 HP  │            ║                            ║
+                    ..♣♣··LoK│ Potion ×3  Restore 20 HP  │            ║                            ║
                     ♣♣♣♣··Ma.│ Elixir ×1  Restore all HP │            ║                            ║
                     ♣♣♠♠··...└───────────────────────────┘            ║                            ║
                                                                       ║                            ║

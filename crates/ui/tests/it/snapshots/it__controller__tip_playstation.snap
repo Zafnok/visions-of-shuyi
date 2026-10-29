@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/controller.rs
-assertion_line: 341
 expression: sony.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: sony.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                           □ danger zone: OFF · Create auto-end: OFF 
  ✕ close                                                                                   F2 debug 

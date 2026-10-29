@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/map_skin.rs
-assertion_line: 227
 expression: h.snapshot()
 ---
                                                                       ╔════════════════════════════╗
@@ -31,7 +30,7 @@ expression: h.snapshot()
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║ Gold 0                     ║
+                                                                      ║ Gold 3 000                 ║
                                                                       ╚════════════════════════════╝
                                         q zoom: 1× · w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows move · f move here · d cancel                                                      F2 debug 

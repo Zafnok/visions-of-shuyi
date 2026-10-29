@@ -124,11 +124,11 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
     assert!(stack.find::<BattleScreen>().is_none());
     // Pack an Elixir, then Fight!.
     update(&mut stack, &mut c, &[CursorRight, Confirm, Confirm]);
-    // Past the Options tab.
+    // Past the Shop and Options tabs.
     update(
         &mut stack,
         &mut c,
-        &[Cancel, CursorRight, CursorRight, Confirm],
+        &[Cancel, CursorRight, CursorRight, CursorRight, Confirm],
     );
     assert_eq!(stack.names(), ["game_flow", "battle"]);
     let elixir = [trpg_core::ItemId::new("elixir")];

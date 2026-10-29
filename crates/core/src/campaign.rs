@@ -207,6 +207,9 @@ pub struct BattleDef {
     /// The stock when the battle is played on its own (the debug Quick
     /// Battle), one entry per item. The story uses the campaign's stock.
     pub solo_stock: Vec<ItemId>,
+    /// The gold when the battle is played on its own (the Quick Battle's,
+    /// to try the Preparations shop with). The story uses the campaign's.
+    pub solo_gold: Gold,
     /// Characters in the army but not in the battle when it is played on
     /// its own (the Quick Battle's bench, to try trading gear with).
     pub solo_bench: Vec<CharacterId>,

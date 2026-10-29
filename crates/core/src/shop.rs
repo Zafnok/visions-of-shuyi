@@ -9,9 +9,12 @@
 //! - **Shops** ([`Shop`]) have a kind and a stock list:
 //!   - an **Armoury** sells the weapons, armour and accessories on its list;
 //!   - a **Vendor** sells the consumables on its list;
-//!   - a **Blacksmith** repairs weapons (its list is empty).
+//!   - a **Blacksmith** repairs weapons (its list is empty);
+//!   - the **Basic** shop of Preparations (ticket 0443) sells the
+//!     weapons, armour and consumables on its list and repairs. Its list
+//!     is the [`BasicStock`] reached by the chapter.
 //!
-//!   Armouries and vendors **buy** any item the party has, for half its
+//!   Armouries, vendors and the basic shop **buy** any item the party has, for half its
 //!   price rounded down ([`sell_price`]). Blacksmiths don't buy.
 //!   No shop ever stocks a **special weapon** (`combat-arts.md`), so a
 //!   sold one is gone; the UI asks before selling one. It repairs by the
@@ -45,6 +48,9 @@ pub enum ShopKind {
     Vendor,
     /// Repairs weapons.
     Blacksmith,
+    /// The Preparations shop: sells weapons, armour and consumables, buys
+    /// anything and repairs. Never on a map.
+    Basic,
 }
 
 impl ShopKind {
@@ -59,7 +65,17 @@ impl ShopKind {
             },
             ShopKind::Vendor => matches!(item, ItemDef::Consumable(_)),
             ShopKind::Blacksmith => false,
+            ShopKind::Basic => match item {
+                ItemDef::Weapon(w) => !w.is_special(),
+                ItemDef::Armour(_) | ItemDef::Consumable(_) => true,
+                _ => false,
+            },
         }
+    }
+
+    /// Whether this kind of shop repairs weapons.
+    pub fn repairs(self) -> bool {
+        matches!(self, ShopKind::Blacksmith | ShopKind::Basic)
     }
 
     /// Whether this kind of shop buys items from the party.
@@ -75,6 +91,44 @@ pub struct Shop {
     pub kind: ShopKind,
     /// What it sells, in menu order.
     pub stock: Vec<ItemId>,
+}
+
+/// What makes the basic shop sell an item (`weapons-and-items.md`, *The
+/// Preparations shop*). Only the chapter for now; a special unlock (a
+/// support rank, 0044) will be another variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub enum Unlock {
+    /// From this chapter's Preparations on.
+    Chapter(u32),
+}
+
+impl Unlock {
+    /// Whether it is reached in chapter `chapter`.
+    pub fn reached(self, chapter: u32) -> bool {
+        match self {
+            Unlock::Chapter(from) => chapter >= from,
+        }
+    }
+}
+
+/// Everything the basic shop can sell, each with what unlocks it, in menu
+/// order (`assets/data/basic_shop.ron`).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BasicStock {
+    /// Each item and its unlock.
+    pub items: Vec<(ItemId, Unlock)>,
+}
+
+impl BasicStock {
+    /// The basic shop of chapter `chapter`: every item unlocked by then.
+    /// Lower tiers stay on sale.
+    pub fn shop(&self, chapter: u32) -> Shop {
+        let reached = self.items.iter().filter(|(_, u)| u.reached(chapter));
+        Shop {
+            kind: ShopKind::Basic,
+            stock: reached.map(|(item, _)| item.clone()).collect(),
+        }
+    }
 }
 
 /// What a chest holds (or, later, a village gives).
@@ -100,7 +154,7 @@ pub enum ShopError {
     NotSoldHere(ItemId),
     /// This shop doesn't buy items (a blacksmith).
     DoesNotBuy,
-    /// This shop doesn't repair (not a blacksmith).
+    /// This shop doesn't repair (not a blacksmith or the basic shop).
     DoesNotRepair,
     /// The weapon is at full durability.
     NothingToRepair(ItemId),
@@ -210,7 +264,7 @@ pub fn repair(
     gold: &mut Gold,
     copy: &mut WeaponInstance,
 ) -> Result<Gold, ShopError> {
-    if shop.kind != ShopKind::Blacksmith {
+    if !shop.kind.repairs() {
         return Err(ShopError::DoesNotRepair);
     }
     let def = match items.get(&copy.def) {
