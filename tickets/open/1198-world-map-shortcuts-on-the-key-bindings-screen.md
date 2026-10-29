@@ -23,7 +23,7 @@ army) and `WorldFind` (the Find list), in a key group of their own
 engine's glyph skin drew every row with no scrolling, and the panel was
 full, so their rows ran over its border and pushed Restore defaults off.
 
-Engine ticket 2395 (`Zafnok/shuyi-engine#178`) makes that skin scroll.
+Engine ticket 2395 (`Zafnok/shuyi-engine#180`) makes that skin scroll.
 Until the game's pin is past it, 1007 leaves the two rows off the screen:
 `crates/ui/src/input.rs` keeps them in `WORLD_MAP_ROWS` and
 `NOT_LISTED_YET`, marked `// engine-friction: engine#2395`. Their keys

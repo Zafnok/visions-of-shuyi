@@ -213,7 +213,7 @@ all the same, a workaround for an engine assumption (below): row in
 
 - **The Key bindings screen** couldn't take the two new rows: the
   engine's glyph skin doesn't scroll and the PC panel was full. Engine
-  PR `Zafnok/shuyi-engine#178` (engine#2395) adds the scroll; an open
+  PR `Zafnok/shuyi-engine#180` (engine#2395) adds the scroll; an open
   `engine-pin` PR (#482) moves the pin to the engine's `main` separately,
   so this PR doesn't move it. Until the pin is past engine#2395 the rows
   are left off the PC screen (`NOT_LISTED_YET`, marked
