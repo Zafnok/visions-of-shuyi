@@ -13,6 +13,7 @@
     (key: "spells.fire.name", source: "Fire", text: "FIRE"),
     (key: "skills.keen_edge.name", source: "Keen Edge", text: "KEEN EDGE"),
     (key: "arts.guard_break.name", source: "Guard Break", text: "GUARD BREAK"),
+    (key: "passives.moonblade.name", source: "Moonlit", text: "MOONLIT"),
     (key: "terrain.forest.name", source: "Forest", text: "FOREST"),
     (key: "names.test_knight", source: "Test Knight", text: "TEST KNIGHT"),
     (key: "names.test_archer", source: "Test Archer", text: "TEST ARCHER"),

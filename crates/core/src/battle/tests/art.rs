@@ -1417,6 +1417,16 @@ fn pack_hunt_counts_the_users_side_next_to_the_target() {
 }
 
 #[test]
+fn pack_hunt_counts_no_fallen_unit() {
+    let attacker = stats(artist(1, p(0, 1), "hound_axe"), [30, 10, 0, 0, 0, 0, 0]);
+    let mut fallen = unit(2, Faction::Player, p(2, 1));
+    fallen.hp = 0;
+    let s = special_battle(vec![attacker, unit(3, Faction::Enemy, p(1, 1)), fallen]);
+    let art = preview(&s, 1, p(0, 1), &art_attack(3, "pack_hunt"));
+    assert_eq!(art.forecast.attacker.damage, 13);
+}
+
+#[test]
 fn pack_hunt_stops_at_plus_6() {
     let attacker = stats(artist(1, p(0, 1), "hound_axe"), [30, 10, 0, 0, 0, 0, 0]);
     let s = special_battle(vec![

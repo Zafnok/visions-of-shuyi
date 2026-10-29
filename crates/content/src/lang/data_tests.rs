@@ -459,6 +459,10 @@ fn the_test_pack_translates_a_little_of_every_kind() {
         lang.item_name(&test, &ItemId::new("potion"), "Potion"),
         "POTION"
     );
+    // A weapon's passive (0329).
+    let moonblade = ItemId::new("moonblade");
+    assert_eq!(lang.passive_name(&test, &moonblade, "Moonlit"), "MOONLIT");
+    assert_eq!(lang.passive_name(&en, &moonblade, "Moonlit"), "Moonlit");
     assert_eq!(lang.terrain_name(&test, "Forest"), "FOREST");
     assert_eq!(lang.terrain_name(&test, "Plain"), "Plain");
     let tip = content
