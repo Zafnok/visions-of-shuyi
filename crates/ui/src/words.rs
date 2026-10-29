@@ -118,6 +118,15 @@ impl<'a> Words<'a> {
         }
     }
 
+    /// The name of the passive of weapon `id` of `items`, if it has one.
+    pub fn passive(self, id: &'a ItemId, items: &'a ItemTable) -> Option<&'a str> {
+        let english = items.weapon(id)?.passive()?.name.as_str();
+        Some(match self.pack {
+            Some((lang, code)) => lang.passive_name(code, id, english),
+            None => english,
+        })
+    }
+
     /// The name of `spell`.
     pub fn spell(self, spell: &'a SpellDef) -> &'a str {
         match self.pack {

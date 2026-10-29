@@ -3,7 +3,8 @@
 // Every number is TUNABLE (FE-sized until ticket 0013). Ranks C-S (ticket
 // 0018's list, "Ranks C-S" in the design doc) arrive in parts: the arts that
 // change one combat's numbers or put a debuff on the target are here (0325);
-// stances, area strikes and special weapons' own arts come with 0326-0329.
+// stances, area strikes and special weapons' own arts come with 0326-0329;
+// the special weapons' arts (0329) are at the end.
 // Loaded by trpg_content::art; the rules are in trpg_core::art and
 // trpg_core::battle.
 //
@@ -37,6 +38,14 @@
 //                                start of its next phase
 //   line_pierce: true            after the combat, one strike at the unit
 //                                directly behind the target
+//   pack_might: (per, max)       might +per for each other unit of the
+//                                user's side next to the target, up to +max
+//   power: Some(Str | Mag | Higher)
+//                                the stat the attack's power uses (Higher:
+//                                the larger of Str and Mag)
+//   mitigation: Some(Def | Res)  the target's stat that mitigates it
+// A stance may also have stops_enemies: true: a hostile unit stepping onto
+//   a tile next to the user must stop there (Hold the Ford).
 (
     arts: [
         // Sword
@@ -122,6 +131,19 @@
                 (stat: Str, amount: 4), (stat: Mag, amount: 4), (stat: Def, amount: 4),
                 (stat: Res, amount: 4), (stat: Spd, amount: 4),
             ]),
+        ),
+        // Special weapons' own arts (combat-arts.md, Special weapons; 0329)
+        (
+            id: "pack_hunt", name: "Pack Hunt", kind: Axe, rank: None, cost: 3,
+            effect: (pack_might: Some((2, 6))),
+        ),
+        (
+            id: "hold_the_ford", name: "Hold the Ford", kind: Spear, rank: None, cost: 3,
+            effect: (stance: Some((stops_enemies: true))),
+        ),
+        (
+            id: "moonwave", name: "Moonwave", kind: Sword, rank: None, cost: 4,
+            effect: (max_range: Some(2), power: Some(Higher), mitigation: Some(Res)),
         ),
     ],
 )

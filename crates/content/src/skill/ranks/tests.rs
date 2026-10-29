@@ -66,6 +66,7 @@ fn timed(stats: &[(StatKind, StatValue)], combat: CombatMods) -> TimedMods {
     TimedMods {
         stats: stats.to_vec(),
         combat,
+        stops_enemies: false,
     }
 }
 

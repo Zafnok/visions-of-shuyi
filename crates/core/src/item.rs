@@ -21,7 +21,12 @@
 //!   stock. A 0-slot class (tier-3+ magic) carries no weapons at all.
 //! - **Wielding**: the class can use the weapon's kind, and the unit's rank in
 //!   that kind is at least the weapon's rank. A unit with no rank recorded in
-//!   a kind counts as rank E.
+//!   a kind counts as rank E. A personal weapon ([`SpecialWeapon::wielder`])
+//!   is wielded by its character only.
+//! - **Special weapons** ([`SpecialWeapon`], `combat-arts.md`): no shop
+//!   stocks one (the content check refuses it) and selling one asks first.
+//!   A passive ([`WeaponPassive`]) is in its wielder's combat mods for every
+//!   strike made with it ([`Unit::combat_input`]).
 //! - **Gear-adjusted stats** ([`Unit::effective_stats`]): permanent stats plus
 //!   the armour and accessory bonuses. Gear may push a stat up but never above
 //!   the hard ceiling (a stat already above the ceiling
@@ -59,7 +64,7 @@ use crate::art::ArtId;
 use crate::battle::Event;
 use crate::class::{ArmourWeight, ClassDef, ClassTable, Tier, UnitTag};
 use crate::combat::{
-    CombatMods, CombatRules, CombatantInput, DamageType, WeaponStats, WeaponTrait,
+    CombatMods, CombatRules, CombatantInput, DamageType, MitigationStat, WeaponStats, WeaponTrait,
 };
 use crate::magic::Element;
 use crate::movement::AttackRange;
@@ -67,7 +72,7 @@ use crate::skill::{SkillTable, SkillUses};
 use crate::spell::{SpellDef, SpellId, SpellState, SpellTable};
 use crate::stats::{StatKind, StatValue, Stats};
 use crate::terrain::TerrainRules;
-use crate::unit::Unit;
+use crate::unit::{CharacterId, Unit};
 use crate::weapon::{WeaponKind, WeaponRank};
 
 /// String id of an item, e.g. `"iron_sword"`.
@@ -116,6 +121,51 @@ pub struct WeaponDef {
     pub arts: Vec<ArtId>,
     /// Buy price in gold.
     pub price: u32,
+    /// What makes it a special weapon; `None` for an ordinary one.
+    pub special: Option<SpecialWeapon>,
+}
+
+/// What makes a weapon special (`combat-arts.md`, *Special weapons*): no
+/// shop stocks it and selling it asks first. Its own art is in
+/// [`WeaponDef::arts`].
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct SpecialWeapon {
+    /// A personal weapon: only this character can wield it.
+    pub wielder: Option<CharacterId>,
+    /// Its passive, built in, on every strike made with it.
+    pub passive: Option<WeaponPassive>,
+}
+
+/// A weapon's passive: costs nothing and applies to every strike made with
+/// the weapon, attacks and counters.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WeaponPassive {
+    /// Display name (`Moonlit`).
+    pub name: String,
+    /// Its strikes are mitigated by this stat instead (Moonlit: Res).
+    pub mitigation: Option<MitigationStat>,
+}
+
+impl WeaponPassive {
+    /// Its effect as combat mods.
+    pub fn mods(&self) -> CombatMods {
+        CombatMods {
+            mitigation: self.mitigation,
+            ..CombatMods::default()
+        }
+    }
+}
+
+impl WeaponDef {
+    /// Whether it is a special weapon.
+    pub fn is_special(&self) -> bool {
+        self.special.is_some()
+    }
+
+    /// Its passive, if it has one.
+    pub fn passive(&self) -> Option<&WeaponPassive> {
+        self.special.as_ref()?.passive.as_ref()
+    }
 }
 
 /// An armour's data.
@@ -644,7 +694,10 @@ impl Unit {
 
     /// Whether the unit, in `class`, can wield `weapon`.
     pub fn can_wield(&self, weapon: &WeaponDef, class: &ClassDef) -> bool {
-        class.weapon(weapon.kind).is_some() && self.rank(weapon.kind) >= weapon.rank
+        let personal = weapon.special.as_ref().and_then(|s| s.wielder.as_ref());
+        class.weapon(weapon.kind).is_some()
+            && self.rank(weapon.kind) >= weapon.rank
+            && personal.is_none_or(|c| self.character.as_ref() == Some(c))
     }
 
     /// The weapon in `slot` if the unit can wield it.
@@ -738,9 +791,15 @@ impl Unit {
         with: Option<&Equipped>,
         terrain: &'a TerrainRules,
     ) -> CombatantInput<'a> {
+        let mut mods = CombatMods::default();
         let (weapon, weapon_rank) = match with.or(self.loadout.equipped.as_ref()) {
             Some(Equipped::Weapon(slot)) => match self.usable_weapon(*slot, class, items) {
-                Some((copy, def)) => (items.weapon_stats(copy), self.rank(def.kind)),
+                Some((copy, def)) => {
+                    if let Some(passive) = def.passive() {
+                        mods = passive.mods();
+                    }
+                    (items.weapon_stats(copy), self.rank(def.kind))
+                }
                 None => (None, WeaponRank::E),
             },
             Some(Equipped::Spell(spell)) => (
@@ -758,7 +817,7 @@ impl Unit {
             weapon_rank,
             armour_weight: self.armour_weight(items),
             terrain,
-            mods: CombatMods::default(),
+            mods,
         }
     }
 

@@ -15,7 +15,7 @@ use trpg_core::{
     StatKind, StatValue, Unit,
 };
 
-use super::art_list::{art_name, note_text};
+use super::art_list::{art_name, hits_text, note_text};
 use super::attack::{Targeting, spell_uses, weapon_durability};
 use super::info::stat_name;
 use super::skills::skill_name;
@@ -90,6 +90,12 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         .defender
         .is_none()
         .then(|| words.text("battle.forecast.no_counter").to_owned());
+    let mut notes = notes(words, p);
+    notes.extend(passive_note((state, words), attacker, Some(&t.with)));
+    if p.forecast.defender.is_some() {
+        let with = target.loadout.equipped.as_ref();
+        notes.extend(passive_note((state, words), target, with));
+    }
     Some(ForecastView {
         title: words.text("battle.forecast.title").to_owned(),
         skill: skill_line((state, words), p),
@@ -103,7 +109,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         strikes: strikes(words, p),
         no_counter,
         total_name: words.text("battle.forecast.total").to_owned(),
-        notes: notes(words, p),
+        notes,
         tiles: [t.sel.dest(), target.pos],
     })
 }
@@ -117,6 +123,26 @@ fn notes(words: Words<'_>, p: &AttackPreview) -> Vec<String> {
         .filter(|n| **n != ArtNote::NoCounter)
         .map(|n| note_text(words, n))
         .collect()
+}
+
+/// The passive of the weapon `unit` strikes with (`with`), if it has
+/// one: `moonlit: hits Res`.
+fn passive_note(
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+    with: Option<&Equipped>,
+) -> Option<String> {
+    let Some(Equipped::Weapon(slot)) = with else {
+        return None;
+    };
+    let id = &unit.loadout.weapon(*slot)?.def;
+    let passive = state.items().weapon(id)?.passive()?;
+    let name = words.passive(id, state.items())?.to_lowercase();
+    let effect = hits_text(words, passive.mitigation?);
+    Some(words.text_with(
+        "battle.forecast.passive",
+        &[("name", &name), ("effect", &effect)],
+    ))
 }
 
 /// The chosen art's or combat active's line: its name and the weapon's

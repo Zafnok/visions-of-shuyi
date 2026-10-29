@@ -41,10 +41,56 @@ fn row(
         effective: vec![],
         arts: vec![],
         price,
+        special: None,
     }
 }
 
-/// Every starter weapon, exactly as in the design's table.
+/// The special weapons of `combat-arts.md` (*Special weapons*, 0018).
+fn special_weapons() -> [(&'static str, WeaponDef); 3] {
+    use WeaponKind::{Axe, Spear, Sword};
+    use WeaponRank::{C, D, E};
+    let special = |mut w: WeaponDef, art: &str, passive: Option<WeaponPassive>| {
+        w.arts = vec![ArtId(art.into())];
+        w.special = Some(SpecialWeapon {
+            wielder: None,
+            passive,
+        });
+        w
+    };
+    let mut spear = row(
+        "Fordwarden's Spear",
+        (Spear, E),
+        [6, 80, 0, 5],
+        (1, 20, 800),
+    );
+    spear.max_range = 2;
+    let moonlit = WeaponPassive {
+        name: "Moonlit".into(),
+        mitigation: Some(MitigationStat::Res),
+    };
+    [
+        (
+            "houndmasters_axe",
+            special(
+                row("Houndmaster's Axe", (Axe, D), [10, 70, 5, 7], (1, 25, 900)),
+                "pack_hunt",
+                None,
+            ),
+        ),
+        ("fordwardens_spear", special(spear, "hold_the_ford", None)),
+        (
+            "moonblade",
+            special(
+                row("Moonblade", (Sword, C), [10, 85, 0, 4], (1, 30, 3000)),
+                "moonwave",
+                Some(moonlit),
+            ),
+        ),
+    ]
+}
+
+/// Every starter weapon and special weapon, exactly as in the design's
+/// tables.
 #[test]
 fn weapons_match_the_design() {
     use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
@@ -96,6 +142,7 @@ fn weapons_match_the_design() {
             ),
         ),
     ];
+    let table: Vec<_> = table.into_iter().chain(special_weapons()).collect();
     let t = items();
     for (key, expected) in &table {
         assert_eq!(t.weapon(&id(key)), Some(expected), "{key}");
@@ -181,7 +228,7 @@ fn gear_and_consumables_match_the_design() {
         let s = t.seal(&id(key));
         assert_eq!(s.map(|s| (s.name.as_str(), s.kind)), Some((name, kind)));
     }
-    assert_eq!(t.items.len(), 10 + 4 + 3 + 2 + 3);
+    assert_eq!(t.items.len(), 10 + 3 + 4 + 3 + 2 + 3);
     assert_eq!(
         t.get(&id("linen_robe")).map(ItemDef::name),
         Some("Linen Robe")
@@ -270,6 +317,8 @@ fn weapon_errors() {
         weapon("c", "").replace("durability: 20", "durability: 0"),
         weapon("d", "").replace("might: 5", "might: -1"),
         weapon("a", ""),
+        weapon("e", ", passive: Some((name: \"P\"))"),
+        weapon("f", ", special: true, wielder: Some(\"ana\")"),
     ]
     .concat();
     let src = file(RULES, KINDS, &weapons, REST);
@@ -281,6 +330,7 @@ fn weapon_errors() {
             "it.ron:7: weapon \"c\": durability must be at least 1",
             "it.ron:8: weapon \"d\": might, hit, crit and weight can't be negative",
             "it.ron:5: duplicate item id \"a\"",
+            "it.ron:10: weapon \"e\": only a special weapon has a wielder or a passive",
         ]
     );
 }

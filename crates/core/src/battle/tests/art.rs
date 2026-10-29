@@ -806,6 +806,7 @@ fn a_stance_counts_once_when_already_on_the_user() {
                     avoid: 20,
                     ..CombatMods::default()
                 },
+                stops_enemies: false,
             },
             until: Phase::Player,
         });
@@ -1304,4 +1305,210 @@ fn an_avoid_debuff_stops_at_zero() {
         preview(&s, 2, p(1, 1), &attack(3)).forecast.attacker.hit,
         100
     );
+}
+
+// ---- Special weapons (0329) --------------------------------------------------
+
+/// [`art_setup`] plus the special weapons of `combat-arts.md` on the test
+/// weapons: `hound_axe` (axe 3, Pack Hunt), `ford_spear` (spear 3, range
+/// 1–2, Hold the Ford) and `moon_sword` (sword 3, Moonwave, Moonlit).
+fn special_battle(units: Vec<Unit>) -> BattleState {
+    use crate::combat::{MitigationStat, PowerStat};
+    use crate::item::{SpecialWeapon, WeaponPassive};
+    use crate::skill::TimedMods;
+    use WeaponKind::{Axe, Spear, Sword};
+    let mut setup = art_setup(units);
+    let mut arts = (*setup.arts).clone();
+    let art = |id: &str, kind, cost, effect| ArtDef {
+        id: aid(id),
+        name: id.into(),
+        kind,
+        rank: None,
+        cost,
+        effect,
+    };
+    let e = ArtEffect::default;
+    for a in [
+        art(
+            "pack_hunt",
+            Axe,
+            3,
+            ArtEffect {
+                pack_might: Some((2, 6)),
+                ..e()
+            },
+        ),
+        art(
+            "hold_the_ford",
+            Spear,
+            3,
+            ArtEffect {
+                stance: Some(TimedMods {
+                    stops_enemies: true,
+                    ..TimedMods::default()
+                }),
+                ..e()
+            },
+        ),
+        art(
+            "moonwave",
+            Sword,
+            4,
+            ArtEffect {
+                max_range: Some(2),
+                power: Some(PowerStat::Higher),
+                mitigation: Some(MitigationStat::Res),
+                ..e()
+            },
+        ),
+    ] {
+        arts.arts.insert(a.id.clone(), a);
+    }
+    setup.arts = Arc::new(arts);
+    let mut items = (*setup.items).clone();
+    let special = |w: WeaponDef, art: &str, passive| WeaponDef {
+        arts: vec![aid(art)],
+        special: Some(SpecialWeapon {
+            wielder: None,
+            passive,
+        }),
+        ..w
+    };
+    let moonlit = WeaponPassive {
+        name: "Moonlit".into(),
+        mitigation: Some(MitigationStat::Res),
+    };
+    for (id, def) in [
+        ("hound_axe", special(typed(Axe, 1, 1, 3), "pack_hunt", None)),
+        (
+            "ford_spear",
+            special(typed(Spear, 1, 2, 3), "hold_the_ford", None),
+        ),
+        (
+            "moon_sword",
+            special(typed(Sword, 1, 1, 3), "moonwave", Some(moonlit)),
+        ),
+    ] {
+        items.items.insert(item(id), ItemDef::Weapon(def));
+    }
+    setup.items = Arc::new(items);
+    start(setup)
+}
+
+#[test]
+fn pack_hunt_counts_the_users_side_next_to_the_target() {
+    let attacker = stats(artist(1, p(0, 1), "hound_axe"), [30, 10, 0, 0, 0, 0, 0]);
+    let s = special_battle(vec![
+        attacker,
+        unit(3, Faction::Enemy, p(1, 1)),
+        // Next to the target: a player unit and a green unit count…
+        unit(2, Faction::Player, p(2, 1)),
+        unit(4, Faction::Ally, p(1, 2)),
+        // …an enemy doesn't, nor a player unit further off.
+        unit(5, Faction::Enemy, p(1, 0)),
+        unit(6, Faction::Player, p(3, 1)),
+    ]);
+    // Str 10 + might 3 against Def 0.
+    let plain = preview(&s, 1, p(0, 1), &attack(3)).forecast.attacker;
+    let art = preview(&s, 1, p(0, 1), &art_attack(3, "pack_hunt"));
+    assert_eq!(plain.damage, 13);
+    assert_eq!(art.forecast.attacker.damage, 13 + 4);
+    assert_eq!(art.durability, Some((20, 17)));
+}
+
+#[test]
+fn pack_hunt_stops_at_plus_6() {
+    let attacker = stats(artist(1, p(0, 1), "hound_axe"), [30, 10, 0, 0, 0, 0, 0]);
+    let s = special_battle(vec![
+        attacker,
+        unit(3, Faction::Enemy, p(1, 1)),
+        unit(2, Faction::Player, p(2, 1)),
+        unit(4, Faction::Player, p(1, 2)),
+        unit(5, Faction::Player, p(1, 0)),
+    ]);
+    let art = preview(&s, 1, p(0, 1), &art_attack(3, "pack_hunt"));
+    assert_eq!(art.forecast.attacker.damage, 13 + 6);
+}
+
+#[test]
+fn moonlit_hits_res_on_every_strike_attacks_and_counters() {
+    // Str 5, Mag 8; the enemy has Def 6, Res 2.
+    let holder = stats(artist(1, p(0, 0), "moon_sword"), [30, 5, 8, 0, 0, 0, 0]);
+    let enemy = stats(
+        with(unit(3, Faction::Enemy, p(1, 0)), "blade"),
+        [30, 0, 0, 0, 0, 6, 2],
+    );
+    let mut s = special_battle(vec![holder, enemy]);
+    // Str 5 + might 3 against Res 2, not Def 6.
+    let f = preview(&s, 1, p(0, 0), &attack(3)).forecast;
+    assert_eq!(f.attacker.damage, 6);
+    // Its counter too, on the enemy's phase.
+    end(&mut s);
+    let f = preview(&s, 3, p(1, 0), &attack(1)).forecast;
+    assert_eq!(f.defender.map(|d| d.damage), Some(6));
+}
+
+#[test]
+fn moonwave_reaches_2_with_the_higher_of_str_and_mag_against_res() {
+    let holder = stats(artist(1, p(0, 0), "moon_sword"), [30, 5, 8, 0, 0, 0, 0]);
+    let enemy = stats(
+        with(unit(3, Faction::Enemy, p(2, 0)), "blade"),
+        [30, 0, 0, 0, 0, 6, 2],
+    );
+    let s = special_battle(vec![holder, enemy]);
+    // A plain attack doesn't reach 2.
+    assert!(s.preview_attack(UnitId(1), p(0, 0), &attack(3)).is_err());
+    let art = preview(&s, 1, p(0, 0), &art_attack(3, "moonwave"));
+    // Mag 8 + might 3 against Res 2; the blade can't strike back at 2.
+    assert_eq!(art.forecast.attacker.damage, 9);
+    assert_eq!(art.forecast.defender, None);
+    assert_eq!(art.durability, Some((20, 16)));
+    // With Str higher, Str is used.
+    let strong = stats(artist(1, p(0, 0), "moon_sword"), [30, 9, 8, 0, 0, 0, 0]);
+    let enemy = stats(
+        with(unit(3, Faction::Enemy, p(2, 0)), "blade"),
+        [30, 0, 0, 0, 0, 6, 2],
+    );
+    let s = special_battle(vec![strong, enemy]);
+    let art = preview(&s, 1, p(0, 0), &art_attack(3, "moonwave"));
+    assert_eq!(art.forecast.attacker.damage, 10);
+}
+
+#[test]
+fn hold_the_ford_stops_enemies_next_to_the_user_until_its_next_phase() {
+    let mut s = special_battle(vec![
+        artist(1, p(0, 0), "ford_spear"),
+        unit(3, Faction::Enemy, p(1, 0)),
+        unit(4, Faction::Enemy, p(0, 2)),
+    ]);
+    let enemy_reach = |s: &BattleState| {
+        crate::movement::reachable(
+            &s.map,
+            &s.tables.terrain,
+            &s.tables.classes,
+            &s.units,
+            UnitId(4),
+        )
+        .unwrap()
+    };
+    // The enemy can pass its friend at (1, 0) until the ford is held.
+    assert!(enemy_reach(&s).is_passable(p(1, 0)));
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "hold_the_ford"));
+    assert_eq!(events[2], art_applied(1, "hold_the_ford", Phase::Player));
+    let reach = enemy_reach(&s);
+    // (1, 0) is next to the user and taken: it can't be stopped on, so
+    // it can't be passed; (0, 1) ends the move.
+    assert!(!reach.is_passable(p(1, 0)));
+    assert!(reach.is_stoppable(p(0, 1)));
+    assert_eq!(reach.path_to(p(0, 1)), Some(vec![p(0, 2), p(0, 1)]));
+    // It ends at the start of the user's next phase.
+    end(&mut s);
+    assert!(
+        !enemy_reach(&s).is_passable(p(1, 0)),
+        "on the enemy's phase"
+    );
+    while s.phase() != Phase::Player {
+        end(&mut s);
+    }
+    assert!(enemy_reach(&s).is_passable(p(1, 0)));
 }

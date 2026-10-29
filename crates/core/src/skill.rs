@@ -223,6 +223,9 @@ pub struct TimedMods {
     pub stats: Vec<(StatKind, StatValue)>,
     /// Combat bonuses.
     pub combat: CombatMods,
+    /// A hostile unit that steps onto a tile next to this one must stop
+    /// there (Hold the Ford's stance; [`crate::movement`]).
+    pub stops_enemies: bool,
 }
 
 /// A combat active's stance rider (Nick: "some might only apply for the

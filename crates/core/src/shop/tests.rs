@@ -28,6 +28,7 @@ fn weapon(price: u32, durability: u32) -> ItemDef {
         effective: vec![],
         arts: vec![],
         price,
+        special: None,
     })
 }
 
@@ -472,4 +473,24 @@ proptest! {
             prop_assert_eq!(held(s.stock()) + sold, initial + bought);
         }
     }
+}
+
+/// Ticket 0329: no shop stocks a special weapon; it sells for half its
+/// price and repairs by the usual formula, like any weapon.
+#[test]
+fn special_weapons_are_never_stocked_but_sell_and_repair() {
+    let ItemDef::Weapon(mut def) = weapon(3000, 30) else {
+        unreachable!("weapon() is a weapon");
+    };
+    def.special = Some(crate::item::SpecialWeapon::default());
+    let special = ItemDef::Weapon(def.clone());
+    for kind in [ShopKind::Armoury, ShopKind::Vendor, ShopKind::Blacksmith] {
+        assert!(!kind.stocks(&special), "{kind:?}");
+    }
+    assert_eq!(sell_price(&special), 1500);
+    let copy = WeaponInstance {
+        def: id("moonblade"),
+        durability_left: 15,
+    };
+    assert_eq!(repair_cost(&def, &copy), 750);
 }

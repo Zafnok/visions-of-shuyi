@@ -111,6 +111,7 @@ fn weapon(name: &str, might: StatValue, hit: StatValue, (min, max): (u32, u32)) 
         effective: vec![],
         arts: vec![],
         price: 0,
+        special: None,
     }
 }
 
@@ -294,6 +295,7 @@ fn skills() -> SkillTable {
                 mods: TimedMods {
                     stats: vec![(StatKind::Def, 3)],
                     combat: CombatMods::default(),
+                    stops_enemies: false,
                 },
             },
         },

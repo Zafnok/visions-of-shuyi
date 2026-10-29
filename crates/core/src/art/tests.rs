@@ -61,6 +61,7 @@ fn weapon(kind: WeaponKind, rank: WeaponRank, arts: &[&str]) -> ItemDef {
         effective: vec![],
         arts: arts.iter().map(|a| aid(a)).collect(),
         price: 0,
+        special: None,
     })
 }
 
@@ -247,6 +248,7 @@ fn notes_spell_out_the_effects_that_are_not_numbers() {
             avoid: 20,
             ..CombatMods::default()
         },
+        stops_enemies: false,
     };
     let effect = ArtEffect {
         hit: 10,
@@ -280,6 +282,7 @@ fn a_debuff_is_a_negative_stat_bonus() {
         TimedMods {
             stats: vec![(StatKind::Mov, -3)],
             combat: CombatMods::default(),
+            stops_enemies: false,
         }
     );
 }
@@ -351,6 +354,7 @@ fn a_first_hit_debuff_lists_stats_and_avoid() {
                 avoid_debuff: 20,
                 ..CombatMods::default()
             },
+            stops_enemies: false,
         })
     );
     assert_eq!(ArtEffect::default().first_hit_mods(), None);
@@ -473,4 +477,41 @@ fn the_table_finds_arts_by_id() {
     let t = arts();
     assert_eq!(t.get(&aid("cut")).map(|a| a.cost), Some(2));
     assert_eq!(t.get(&aid("nope")), None);
+}
+
+/// Pack Hunt (0329): might per ally next to the target, up to the cap.
+#[test]
+fn pack_might_is_per_ally_up_to_the_cap() {
+    let pack = ArtEffect {
+        pack_might: Some((2, 6)),
+        ..ArtEffect::default()
+    };
+    let might: Vec<_> = (0..5).map(|n| pack.pack_might(n)).collect();
+    assert_eq!(might, [0, 2, 4, 6, 6]);
+    assert_eq!(ArtEffect::default().pack_might(3), 0);
+}
+
+/// Moonwave (0329): the power and mitigation stats go in the mods; an art
+/// without them keeps a passive's.
+#[test]
+fn an_effect_sets_the_power_and_mitigation_stats() {
+    use crate::combat::{MitigationStat, PowerStat};
+    let wave = ArtEffect {
+        power: Some(PowerStat::Higher),
+        mitigation: Some(MitigationStat::Res),
+        ..ArtEffect::default()
+    };
+    let mut w = stats();
+    let mut m = CombatMods::default();
+    wave.apply(&mut w, &mut m, 30);
+    assert_eq!(
+        (m.power, m.mitigation),
+        (Some(PowerStat::Higher), Some(MitigationStat::Res))
+    );
+    let mut moonlit = CombatMods {
+        mitigation: Some(MitigationStat::Res),
+        ..CombatMods::default()
+    };
+    ArtEffect::default().apply(&mut w, &mut moonlit, 30);
+    assert_eq!(moonlit.mitigation, Some(MitigationStat::Res));
 }

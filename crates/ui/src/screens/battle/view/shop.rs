@@ -4,6 +4,7 @@
 //! [`ShopScreen::view`](super::super::shop::ShopScreen::view).
 
 use crate::prelude::*;
+use crate::widgets::AskView;
 
 /// The whole shop screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +27,8 @@ pub struct ShopScreenView {
     pub empty: String,
     /// The confirmation of a sale, while one is asked about.
     pub selling: Option<SellConfirmView>,
+    /// The question before selling a special weapon, while it is asked.
+    pub special: Option<AskView<bool>>,
     /// The help line: what the keys do.
     pub help: String,
     /// The debug tools' key, when they are on.
@@ -69,6 +72,10 @@ impl ShopScreenView {
         }
         if let Some(sell) = &self.selling {
             texts.extend([sell.question.clone(), sell.gold.clone()]);
+        }
+        if let Some(ask) = &self.special {
+            texts.push(ask.text.clone());
+            texts.extend(ask.answers.iter().map(|a| a.label.clone()));
         }
         texts.push(self.help.clone());
         texts

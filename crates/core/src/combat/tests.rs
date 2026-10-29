@@ -1464,6 +1464,8 @@ fn combat_mods_add_up() {
         pierce: 6,
         sword_followup: Some((3, 2)),
         cascade: 1,
+        power: Some(PowerStat::Higher),
+        mitigation: None,
     };
     m.add(&CombatMods {
         hit: 10,
@@ -1479,6 +1481,8 @@ fn combat_mods_add_up() {
         pierce: 60,
         sword_followup: None,
         cascade: 10,
+        power: None,
+        mitigation: Some(MitigationStat::Res),
     });
     assert_eq!(
         m,
@@ -1496,6 +1500,8 @@ fn combat_mods_add_up() {
             pierce: 66,
             sword_followup: Some((3, 2)),
             cascade: 11,
+            power: Some(PowerStat::Higher),
+            mitigation: Some(MitigationStat::Res),
         }
     );
     // A later follow-up ratio replaces an earlier one.
@@ -1910,4 +1916,74 @@ proptest! {
         let out = resolve(&rules(), &f, hp(30, 30), hp(1000, 1000), &mut all_hits(1));
         prop_assert_eq!(out.strikes[0].damage, damage);
     }
+}
+
+/// Moonlit (ticket 0329): Str + might against Res, not Def; Moonwave: the
+/// higher of Str and Mag + might against Res.
+#[test]
+fn mods_change_the_power_and_mitigation_stats() {
+    let rules = rules();
+    // W1: Str 8 + might 5 = 13 against Def 4 (9) or Res 1 (12).
+    let (a, d) = w1();
+    assert_eq!(fc(&rules, &a, &d, 1).attacker.damage, 9);
+    let res = CombatMods {
+        mitigation: Some(MitigationStat::Res),
+        ..CombatMods::default()
+    };
+    assert_eq!(
+        fc(&rules, &modded(a.clone(), res), &d, 1).attacker.damage,
+        12
+    );
+    // Def named outright is the physical default.
+    let def = CombatMods {
+        mitigation: Some(MitigationStat::Def),
+        ..CombatMods::default()
+    };
+    assert_eq!(
+        fc(&rules, &modded(a.clone(), def), &d, 1).attacker.damage,
+        9
+    );
+    // Mag 10 is higher than Str 8: 10 + 5 against Res 1.
+    let mut mage = a.clone();
+    mage.stats.mag = 10;
+    let wave = CombatMods {
+        power: Some(PowerStat::Higher),
+        ..res
+    };
+    assert_eq!(
+        fc(&rules, &modded(mage.clone(), wave), &d, 1)
+            .attacker
+            .damage,
+        14
+    );
+    // Mag 6 is lower: Str 8 is used.
+    mage.stats.mag = 6;
+    assert_eq!(
+        fc(&rules, &modded(mage.clone(), wave), &d, 1)
+            .attacker
+            .damage,
+        12
+    );
+    let by_mag = CombatMods {
+        power: Some(PowerStat::Mag),
+        ..res
+    };
+    assert_eq!(fc(&rules, &modded(mage, by_mag), &d, 1).attacker.damage, 10);
+    // Magic against Def.
+    let def_spell = CombatMods {
+        mitigation: Some(MitigationStat::Def),
+        ..CombatMods::default()
+    };
+    let plain = fc(&rules, &ex2_attacker(), &ex2_defender(), 1);
+    let f = fc(
+        &rules,
+        &modded(ex2_attacker(), def_spell),
+        &ex2_defender(),
+        1,
+    );
+    let (def, res) = (ex2_defender().stats.def, ex2_defender().stats.res);
+    assert_eq!(
+        f.attacker.damage,
+        (plain.attacker.damage + res - def).max(0)
+    );
 }

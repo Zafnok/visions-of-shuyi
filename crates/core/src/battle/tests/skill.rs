@@ -505,6 +505,7 @@ fn a_stance_rider_is_not_applied_if_the_user_falls_and_counts_once() {
         mods: TimedMods {
             stats: vec![(StatKind::Def, 3)],
             combat: CombatMods::default(),
+            stops_enemies: false,
         },
         until: Phase::Enemy,
     };
