@@ -153,5 +153,7 @@
     // makes him a unit.
     // Chapter 5 (ticket 0747): the envoy, Hedda, the Hound officer and the
     // magistrate speak before 0851 makes units of those that fight.
-    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate"],
+    // Chapter 6 (ticket 0748): Oriel, the Brennish commander and the
+    // king's knight speak before 0852 makes units of those that fight.
+    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight"],
 )

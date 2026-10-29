@@ -1,0 +1,783 @@
+# Chapter 6: The Ashfields. Written on a blank page from the beat
+# sheet's cards by ticket 0748 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch06.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# A world-map chapter (world-structure.md): it plays out over the Act 1
+# map's nodes and ends with the story battle on the Ashfields, the first
+# Escape objective, with the first echoes and the first battle notes.
+# Scene ids, for 0852 (the story battle and the chapter file) and 1071
+# (the two fixed skirmishes) to wire:
+#
+#   When the chapter opens (the world map appears)
+#     ch06_intro                    the north road: ash on the wind
+#
+#   The Burnt Mill (fixed skirmish, guards the path; 1071)
+#     ch06_burnt_mill_intro         before the fight: the first echo
+#     ch06_burnt_mill_victory       after it
+#
+#   Brennish Outriders (fixed skirmish, optional; 1071)
+#     ch06_outriders_intro          before the fight: the army's scouts
+#     ch06_outriders_victory        after it: one sent back with Hedda's name
+#
+#   Before the story battle (intro_scenes, in this order)
+#     ch06_edge                     the edge of the plain, dusk
+#     ch06_eve                      the night: Oriel walks in; he joins here
+#     ch06_prebattle                first light: the horns; the crossing
+#
+#   In the battle (triggers, each once)
+#     ch06_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch06_ash                      UnitEntersArea(who: Faction(Player), the black ground)
+#     ch06_hounds                   TurnStart(the turn the Hounds' first wave appears, phase: Enemy)
+#     ch06_boss_engage              CombatStart(unit: "crown_knight"): anyone else
+#     ch06_boss_engage_battlemage   CombatStart(unit: "crown_knight", against: Some("battlemage"))
+#     ch06_boss_half                HalfHp(unit: "crown_knight")
+#     ch06_boss_fell                UnitFell(unit: "crown_knight"): optional in an Escape
+#     ch06_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch06_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch06_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector,
+#                  prizefighter, shieldbearer, battlemage
+#
+#   After the battle (victory_scenes, in this order)
+#     ch06_victory                  the Brennish lines: believed; the horns; the body
+#     ch06_after                    the dead ground, night: Rue tells Hollis
+#     ch06_tbc                      the king's camp: Dace
+#
+# Until 0852 and 1071 wire the triggers, the validator can't know which
+# scene plays for whom, so every companion line in a battle scene below
+# sits in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, the knight against Oriel),
+# that "@if" can only go one way and the validator reports it: 0852
+# removes those blocks as it wires each trigger. The "@if" in
+# ch06_first_turn, ch06_ash and ch06_hounds stay: a turn-start scene and
+# an area anyone can enter can't count on anyone.
+#
+# Oriel (battlemage), the Brennish commander and the king's knight are
+# speakers in characters.ron until 0852 makes units of the ones that
+# fight. Oriel walks in during ch06_eve and is with the party from there
+# (a join in a scene, battle-scenes-and-recruitment.md way 2; 0852: a
+# player unit for the crossing, so his lines below can fire). If he fell
+# in the crossing (Classic) he is dead, so every line of his after the
+# battle is in an "@if battlemage" block, and the lines read through
+# without him.
+#
+# No @place directives yet: the maps are 0852's and 1071's. The @music
+# lines are this ticket's picks from the mood cues (0071 picked no scene
+# cue for this chapter; graveyard_desert is audio.md's dark-place
+# exploration cue, used here for the plain itself). The story battle's
+# own cue, battle_war, is Nick's and goes in the battle file; the
+# skirmishes use the skirmish pool (1008).
+#
+# The seven companions, Gil and Hedda may have died in Chapters 1-5
+# (Classic), Gil may never have been beaten and Hedda may have fallen in
+# the hold, so outside the battles every line of theirs is in an "@if"
+# block, and each scene reads through with any of them gone. The dead
+# ground is Rue's and Hollis's: without Rue nobody tells him; without
+# Hollis she tells the lead.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the plain's edge, the night, the crossing
+# and the lines are played straight; the warmth is a cloak pinned on
+# somebody blue, bread shoved into a hand, a flint that takes too long.
+# The road is downtime. Punctuation is the voice acting: Oriel ends on
+# periods and trails off, asks permission, and never exclaims; Aske ends
+# flat and uses no contractions, and exclaims once, in anger; Rue asks,
+# and goes flat about the Candles; Hollis ends flat and trails off once;
+# Tamsin fires questions and exclaims at her peaks; Maud can't finish a
+# sentence; Hedda's periods are warm and slow; Joss corrects himself.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised).
+
+# ---------------------------------------------------------------------------
+# When the chapter opens
+# ---------------------------------------------------------------------------
+
+# Ten days north out of Saltmere. Ash on the wind.
+
+@scene ch06_intro
+@caption The north road, first frost
+@music talk_calm
+> Ten days north out of {n:place.saltmere}. The road climbs toward the border hills with frost in the ruts, and the wind has turned, and there is something gray in it.
+@if poacher
+@left poacher neutral
+> {n:poacher} has stopped in the road with her face up to the wind.
+poacher: Ash. That is ash. ...The plain. Two days, if the wind is from there. It is from there.
+@left clear
+@else
+> Something gray settles on {lead}'s sleeve and doesn't melt. Ash, from somewhere north.
+@endif
+@if shieldbearer
+@if keeper
+@left shieldbearer neutral
+@right keeper neutral
+keeper: I can't take your cloak, you'll-- it's a very good cloak and you'll freeze in that plate, and I'd never-- I'm not cold. I'm a little cold.
+shieldbearer: I know you are. Your lips are blue, Keeper. I don't feel the cold; it's the herring, my mother always said. Hold still, the pin's stiff.
+@left clear
+@right clear
+@endif
+@endif
+@if retainer
+@if sergeant
+@left sergeant neutral
+@right retainer neutral
+sergeant: That knee's talking louder than you are, Captain. You want the mare? She's carried worse than you. She's carried me.
+retainer: No. It's the cold. ...Give her the heel of the bread, she's earned it. Watch the road.
+sergeant: It's the cold. Right. ...Watching it.
+@left clear
+@right clear
+@endif
+@endif
+@if prizefighter
+@left prizefighter neutral
+prizefighter: Champion. A word on the town ahead. Rule eleven: a champion does not enter a fair town without a purse to lay down. I'll wait on the road while you buy what you need.
+@if sergeant
+@right sergeant surprised
+sergeant: Rule eleven? Since when is there an eleven! There was a nine last week and that was new.
+prizefighter: It's a very old rule. From the fairs. ...The road's fine. It's a good road.
+@right clear
+@else
+> There is no rule eleven, and the others let it go.
+@endif
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Walk. All of you. We're not sleeping in this wind.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# The Burnt Mill (fixed skirmish; guards the path to the plain)
+# ---------------------------------------------------------------------------
+
+# The last water before the plain, and the first echo.
+
+@scene ch06_burnt_mill_intro
+@caption {N:place.burnt_mill}
+@music dungeon_tense
+> A mill burned in the war, roofless, on the last water before the plain. In the millrace something is moving that is a fire, with no one holding it.
+@if heretic
+@left heretic angry
+heretic: Don't. Nobody throw anything. That's an echo. Somebody swore fire here and died with it still going. It drinks fire. ...I've got fire. That's all I've got. {N:god.pyre.name}'s teeth.
+@if sergeant
+@right sergeant neutral
+sergeant: So how do you kill a fire, Sparks? You listening? How do we kill it?
+heretic: How would I know? Mine's the one thing that doesn't work on it. You don't stand in it. Start there.
+@right clear
+@endif
+@left clear
+@else
+@if keeper
+@left keeper surprised
+keeper: That's-- oh. That's an echo, a vow with no one left in it-- don't throw fire at it, it drinks fire, that's the one thing I remember. {N:god.mother.name} keep-- no. Don't throw fire.
+@left clear
+@else
+> It walks like a man and burns like a haystack, and it is coming up the millrace toward the road.
+@endif
+@endif
+@if retainer
+@left retainer neutral
+retainer: Spears. Hit it and step back. {n:family.veyne}, the dry side.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: I've seen those from a ridge, in the war. Never this close.
+@left clear
+@endif
+@end
+
+# After. It went out like a lamp.
+
+@scene ch06_burnt_mill_victory
+@caption {N:place.burnt_mill}, after
+@music talk_calm
+> It went out like a lamp. The millrace steams, and the frost is gone off the stones in a ring.
+@if heretic
+@left heretic neutral
+heretic: It's warm. That's all. I'm cold and it's warm. ...What?
+@if poacher
+@right poacher neutral
+> {n:poacher} watches her stand there with her hands out to it, and looks away.
+@right clear
+@endif
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Eat something, all of you. Standing around in ash. Eat.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Brennish Outriders (fixed skirmish; optional)
+# ---------------------------------------------------------------------------
+
+# The army's scouts, on the hill road above the plain.
+
+@scene ch06_outriders_intro
+@caption The hill road
+> Riders on the hill road above the plain: {n:faction.brennmark.adj} scouts, with the army's gray-green on their shields. They have seen a blue coat, a Hound's black, and a hill girl between the two.
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Hold! {N:shieldbearer}, of the {n:envoy.last} hall, with paper for the commander. Stand your horses!
+> They don't stand. A {n:shieldbearer.last} of the {n:envoy.last} hall doesn't walk with southerners and a Hound, and they say so.
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+> One of them looks at her and says a word in her own tongue. It is the word for a hill girl who walks with {n:place.ardeval}'s people. He says it twice.
+poacher: My brother was {n:brother_tor}. He stood on that plain with the hill companies, and he did not come off it. Say it again and I will put this in your eye.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Easy. They're frightened. ...So am I. Get behind something, they're coming down.
+@left clear
+@else
+> They come down the hill road at a trot, and then faster.
+@endif
+@end
+
+# After. One sent back with Hedda's name.
+
+@scene ch06_outriders_victory
+@caption The hill road, after
+@music talk_calm
+> One rider is on the ground with his hands up and his horse gone. The rest are dust on the hill road.
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Get up. Go back the way you came, and tell the commander {n:shieldbearer.last} is coming with paper, and she's not pleased. Go on. Run.
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: Tell them I am not with these. Tell them I am going home.
+> She picks her arrows up out of the frost one at a time, and counts them, and falls in behind the others.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Before the story battle
+# ---------------------------------------------------------------------------
+
+# The edge of the plain at dusk. Two lines of fires, and lights between.
+
+@scene ch06_edge
+@caption The edge of {n:place.ashfields}, dusk
+@music graveyard_desert
+> Where the grass stops. Ash to the edge of the sky, frost on it near their feet and warm patches under it, and far apart, left and right, two lines of fires. Between them, lights that move.
+@if sergeant
+@left sergeant neutral
+sergeant: Forty on the left. Forty-- no. Right-hand side, that's thirty, thirty-two, that one's two-- I've lost it. Somebody else count. Somebody say something.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Those are ours. On the right. ...I'd know that camp in the dark.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+> {n:retainer.first} stands looking at the middle of it, where there are no fires, and says nothing.
+@if keeper
+@right keeper sad
+> {n:keeper} stands behind him, a step back. Then she takes the step. He lets her.
+@right clear
+@endif
+@left clear
+@endif
+@if poacher
+@if shieldbearer
+@left shieldbearer neutral
+@right poacher neutral
+shieldbearer: What are you looking at, hill girl? Past all that.
+poacher: Nothing. Hills.
+@left clear
+@right clear
+@endif
+@endif
+@if heretic
+@left heretic neutral
+@right lead neutral
+heretic: What are you looking at me for, heir? I've seen it. I'm eating.
+@left clear
+@right clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Those lights walk at night. First light, and not before. Nobody goes out there in the dark.
+@left clear
+@else
+> The lights in the middle move, slowly, the way a man walks. The party camps where the grass stops.
+@endif
+@end
+
+# The night. A man walks in out of the dark with his hands open.
+
+@scene ch06_eve
+@caption The edge of {n:place.ashfields}, night
+@music scene_sad
+@if shieldbearer
+@left shieldbearer angry
+shieldbearer: Easy. Stop there, you. Hands open. ...That's a mage's robe with the badge torn off it. Outlaw, up. Somebody's walked in off the king's side, and he wants you.
+@left clear
+@else
+@if retainer
+@left retainer angry
+retainer: Stop there. Hands where I can see them. ...That's a crown robe with the badge torn off. {n:family.veyne}. Up, and stay behind me.
+@left clear
+@else
+> A man walks in out of the dark on the king's side with his hands open, and stops at the edge of the light. The badge has been torn off his robe. The stitching is still there.
+@endif
+@endif
+@right battlemage neutral
+battlemage: Thank you. I'll stay here. I'm {n:battlemage}. Three years ago I commanded {n:group.candles}' line on this plain. May I speak to whoever leads you?
+@if heretic
+@left heretic surprised
+heretic: {N:battlemage.last}.
+battlemage[sad]: ...{N:heretic}. Third line, fourth from the left. You had the cough all that winter. ...I'm sorry. You didn't ask me to say that.
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: Which of your lines burned the hill companies?
+battlemage: All of them. The third was the center, and the hill companies stood against the center. ...The order was mine. Not passed down. Mine.
+poacher: My brother was {n:brother_tor}. Against the center, then. Three years I have wanted to meet the one who gave it. You are smaller than I thought. I am going to sit somewhere else.
+@if heretic
+@left heretic neutral
+heretic: Yes. I was on that line. You knew that. You've known since the abbey.
+@left clear
+@else
+> She goes around the fire and sits down with her back to all of them.
+@left clear
+@endif
+@endif
+@left lead neutral
+battlemage: You'll want to know why I'm here. There are nineteen children in that camp with the flame on their collars, and in the morning I'm to walk them onto the ash and give the order. I came away instead.
+battlemage: Three years ago the prince's banner rode into the field. Fifteen, and he wanted a charge. I sent a rider to the king's tent to ask him to hold the fire. The answer came back: burn. ...So I gave it.
+@choice
+* earnest: What do you want to do now?
+  battlemage[surprised]: Do. ...Nobody's asked me that. Not in three years. ...Cross with you, and be some use. After that-- I've thought about a dog. We were never allowed one. That's as far as I've got.
+* blunt: You cross with us. Then we'll see.
+  battlemage: Yes. That's fair. That's more than fair. ...I know the ground. I'll earn the crossing, and then you'll see.
+* act: Sit. You're shaking.
+  battlemage: Am I? ...So I am. I've been walking the edge since dark and I didn't-- yes. Thank you. May I sit here?
+  > He sits, and holds his hands out to the fire, and then pulls them back a little.
+@endchoice
+@right battlemage neutral
+@if prizefighter
+> {n:prizefighter.first} walks around the fire, sits down next to him and says nothing. When the fire sinks the mage lights it the slow way, flint and steel, no vow, swearing till it catches.
+@else
+> No one tells him to go. When the fire sinks the mage lights it the slow way, with flint and steel and no vow, swearing at it quietly until it catches.
+@endif
+@end
+
+# First light. The horns, and the crossing.
+
+@scene ch06_prebattle
+@caption The edge of {n:place.ashfields}, first light
+@music dungeon_tense
+> First light, and the frost on the ash gone pink. Horns from the king's side, and along the plain's left edge, dust: riders coming out.
+@if defector
+@left defector neutral
+defector: That's not the recall. Two long and a short, that's the advance. That's ours. The captain's. They're coming out to get between us and the far side, that's what two long and a short is for.
+@left clear
+@endif
+@right battlemage neutral
+battlemage: Then we go now. Listen, please. The black ground is black because it's still warm, and when the sun gets on it the echoes wake. Go around it. Don't run; the ash is deep, you'll go in to the knee.
+@if heretic
+@left heretic angry
+heretic: Don't give anybody orders. Not anybody. Not today.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: The paper's in my coat. If I go down, somebody takes the coat. Outlaw, stay where I can see that blue. Behind me till the black ground, then we'll see.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Mage, the middle, where I can see you. {n:family.veyne} with me.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene can't count on anyone: the blocks stay.
+
+@scene ch06_first_turn
+@if battlemage
+@right battlemage neutral
+battlemage: ...I'm counting you. I'll count again at the other side. Go.
+@right clear
+@else
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: No running on this. Eyes on the far fires. One foot, then the other.
+@left clear
+@endif
+@endif
+@end
+
+# Somebody has stepped onto the black ground. An area anyone can enter:
+# the blocks stay.
+
+@scene ch06_ash
+@if heretic
+@left heretic angry
+heretic: Don't throw fire at it! I mean it, whoever's nearest, you'll only make it-- go around. Go around it, I'm not saying it again.
+@left clear
+@else
+@if keeper
+@left keeper surprised
+keeper: That's one of them, that's-- go around it, please, go around, {N:god.mother.name} keep-- I'm behind you. I'm right behind you. Go on.
+@left clear
+@endif
+@endif
+@end
+
+# The Hounds' first wave. A turn-start scene: the blocks stay.
+
+@scene ch06_hounds
+@if defector
+@left defector neutral
+defector: Riders. Left side, on the edge-- that's the captain's horn, I know it, that's-- they're coming across. Do we run? ...We don't run.
+@left clear
+@else
+@if sergeant
+@left sergeant angry
+sergeant: Riders on the left! The king's men. Don't look at them and don't stop, I've got your flank!
+@left clear
+@endif
+@endif
+@end
+
+# The knight, to anyone but Oriel.
+
+@scene ch06_boss_engage
+@right crown_knight neutral
+crown_knight: I stood on this ground three years ago, the day it ended. Ten years of this war before that fire, and my brother dead in the ninth of them, to a {n:faction.brennmark.adj} spear.
+crown_knight: And now they burn my tenants' farms, and you walk over to them with paper. A {n:family.veyne}, in a coat with the crest cut off. Go home, child. I'll speak for you. ...No? Then stand still.
+@end
+
+# The knight and the man whose fire he cheered. The @if goes when 0852
+# wires this as the knight against Oriel.
+
+@scene ch06_boss_engage_battlemage
+@if battlemage
+@left battlemage neutral
+@right crown_knight neutral
+crown_knight: {N:battlemage.last}. I stood behind your line and cheered when it went up. The whole army did. And you walk away from it. You lit it. Stand with the men who thanked you for it.
+battlemage: ...You cheered. I remember the cheering.
+crown_knight[angry]: They're lined up again this morning, your children, and the man who knew their names has walked off. What happens to them now is on you.
+battlemage: ...Yes. I know. ...I'm sorry. I'm not going back.
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch06_boss_half
+@right crown_knight angry
+crown_knight: Close up! Close up on me, we are not going around the black ground, we go through-- through, I said!
+@end
+
+# The knight at 0 HP. Optional in an Escape: the crossing goes on.
+
+@scene ch06_boss_fell
+@right crown_knight sad
+crown_knight: Not here. Not on the warm ground, it comes back at night, the fire-- the grass. Get me to the grass. ...I can pay. I can pay.
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch06_death_lead
+@left lead sad
+> {lead} is down in the ash, and the ash is already on the blue coat.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. The @if blocks
+# go when 0852 wires each one.
+
+@scene ch06_death_retainer
+@if retainer
+@left retainer sad
+retainer: Leave me. Get the paper over, that's the-- leave me here. My girl's in this somewhere. ...Walk, kid. Walk.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: Knee. Ash in the-- it's the knee. I'm going back to the grass. Don't you dare stop for me, {n:family.veyne}.
+@left clear
+@endif
+@end
+
+@scene ch06_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Get the mare off the black ground, somebody, she doesn't know, she'll stand in it-- lead her off. Don't ride her, lead her. ...Good.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: She's lame! She's gone lame on the hot ground, I'm walking her off, I'm not leaving her on it-- go on without us! Go on!
+@left clear
+@endif
+@end
+
+@scene ch06_death_poacher
+@if poacher
+@left poacher sad
+poacher: I can see the hills from here. ...Tell my {n:word.mother} I got this far. That it is two days. ...No. Do not tell her that.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: The string is burned through, and I have nothing to shoot with. A girl with a stick. ...I will find the edge.
+@left clear
+@endif
+@end
+
+@scene ch06_death_keeper
+@if keeper
+@left keeper sad
+keeper: When it's over, somebody go to the children. The ones over there, with the-- somebody go to them. That's all. Somebody go.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: The ash, it's in my eyes, I can't tell which way is-- would somebody take my hand? Please. Just as far as the edge.
+@left clear
+@endif
+@end
+
+@scene ch06_death_heretic
+@if heretic
+@left heretic sad
+heretic: I'm cold. On this, of all-- I'm cold. ...The others. Keep them off the black ground. They don't listen to me.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: It's too hot. I've done this once, I'm not-- I'm going back. Don't look at me like that.
+@left clear
+@endif
+@end
+
+@scene ch06_death_defector
+@if defector
+@left defector sad
+defector: The captain-- ...My ma. Say the paper got there and I was the one carrying it. I wasn't. Say it anyway.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_defector
+@if defector
+@left defector surprised
+defector: I can't breathe in it. The smoke-- I'm going to the edge, Your Grace, I'll hold the edge. That's a job, isn't it? Holding the edge? It's a job.
+@left clear
+@endif
+@end
+
+@scene ch06_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Well struck. ...Was it a fair blow? It was. Good. ...Fold my coat. Fold it properly, like church clothes.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_prizefighter
+@if prizefighter
+@left prizefighter neutral
+prizefighter: The ash has my feet. I can't keep them under me. I have been down in better rings than this one, Champion. ...Watch your left.
+@left clear
+@endif
+@end
+
+@scene ch06_death_shieldbearer
+@if shieldbearer
+@left shieldbearer sad
+shieldbearer: The paper. Inside pocket, left side, it's dry. Walk it over. ...{N:envoy.first} doesn't hear about this. Not from any of you.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_shieldbearer
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: The plate's too hot to wear. Easy, I'm all right. I'll come around by the grass. Keep that blue where I can find it.
+@left clear
+@endif
+@end
+
+@scene ch06_death_battlemage
+@if battlemage
+@left battlemage sad
+battlemage: Third line, fourth from-- no. That was years ago. ...I'd have liked the dog. Something small, that sleeps a lot.
+@left clear
+@endif
+@end
+
+@scene ch06_retreat_battlemage
+@if battlemage
+@left battlemage surprised
+battlemage: I've lost the line. I've lost all of you-- no. It's the smoke. I'm going to stand still until it clears. Go past me.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The Brennish lines. Believed, and then the horns.
+
+@scene ch06_victory
+@caption The {n:faction.brennmark.adj} lines
+@music talk_calm
+> Shield men, and spears leveled, and hill banners. Ash to everyone's knees. Somebody is being sick.
+@right brennish_commander neutral
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: {N:shieldbearer.last}. {N:envoy.last} hall. Put those down, I'm {n:faction.brennmark.adj}, look at me.
+brennish_commander: The rider said you were coming, {n:shieldbearer.last}. He said it like he didn't believe it himself. ...Up. Spears up, I said. Let's have it, then, whatever it is.
+shieldbearer: Here. It's dry. The envoy's own hand, and three copies.
+@left lead neutral
+@else
+@left lead neutral
+> The spears stay level while {lead} takes the paper out of {their} coat and holds it out. A long time passes before anyone takes it.
+@endif
+@if defector
+> He reads it twice, standing in the ash. The second time he reads it slower. {n:defector.first} stands very straight the whole time.
+@else
+> He reads it twice, standing in the ash. The second time he reads it slower.
+@endif
+brennish_commander: ...I believe it. A year I've written to the envoy for this. I believe it. ...It changes nothing about where my wall stands this morning. You know that.
+@music scene_tragic
+> Horns, from the far side. And along the king's front, left to right, a row of small fires lighting, one after another.
+brennish_commander[sad]: That's their fire line. They've seen the paper come over, and they're coming anyway. ...It goes in my coat. I'll want it after.
+@if battlemage
+@left battlemage neutral
+brennish_commander: You. With the badge off your robe. You're theirs. Their king's son burned here, they say, and that's what this is. Is it?
+battlemage: Yes. ...They never found him, you know. The prince. Two days I walked the ash with the search parties, and we looked. We found the horse. The fire does that, sometimes.
+brennish_commander: Then it's his boy he wants paying for, not the raids. ...Second rank, close up. Get these people off my ground before it reaches us.
+@left lead neutral
+@endif
+@if defector
+@left defector sad
+defector: Three times. I said it three times, and she wrote it down, and it's in his coat. ...That was for nothing, then. Wasn't it.
+@left lead neutral
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+brennish_commander: You're home, {n:shieldbearer.last}. Stand in. There's a place in the second rank, and not a word said about the company you kept.
+shieldbearer: I'm lent. ...Outlaw, which way are you going? That way, then.
+@if poacher
+@right poacher neutral
+shieldbearer: You could walk home from here, hill girl.
+poacher: I know where it is.
+> She picks up her pack.
+@right brennish_commander neutral
+@endif
+> {n:shieldbearer.first} looks once at the fires that are hers, and walks back to where the party stands.
+@left lead neutral
+@endif
+@end
+
+# The dead ground. Rue tells Hollis.
+
+@scene ch06_after
+@caption Behind the {n:faction.brennmark.adj} camp, night
+@music scene_sad
+> Behind the camp, out of the way of it. The ridge between them and the plain is lit red from the other side. No one can keep still.
+@if retainer
+@if heretic
+> Except {n:retainer.first}, who sits facing it. {n:heretic} sits down across from him, which she has never done.
+@left heretic neutral
+@right retainer neutral
+heretic: That book at the abbey was wrong about one thing. I said I'd say. ...I'm saying.
+heretic: {n:sister.first} walked out. After. She was on my line, next to me. When it was over two keepers in gray, not {n:faction.vigil}'s brown, took her by the arms and walked her off.
+heretic: On her own feet. She looked back once. ...I didn't go after her. I ran the other way. ...I should've said that part at the abbey. I couldn't.
+retainer: ...Which way.
+heretic: Toward the king's side. Walking.
+retainer: She snored. Twelve years old and you could hear her through two walls. You heard it, I'd bet.
+heretic: Everybody heard it. The whole barracks. She said it was the boy next to her.
+@left lead neutral
+> {n:retainer.first} looks at {lead}.
+@choice
+* earnest: We'll find her.
+  retainer: Don't say that to me tonight. ...Say it tomorrow. Tonight just sit down.
+* act: Eat something.
+  retainer[surprised]: ...Don't you start. ...Well, hand it over, then.
+* silent: ...
+  > {lead} sits down in the ash next to him. He moves his bad knee over to make room, and that's all.
+@endchoice
+@right retainer neutral
+retainer: Go to sleep, both of you. I'm watching it.
+@left clear
+@right clear
+@else
+> Except {n:retainer.first}, who sits facing it all night. The others leave him to it.
+@endif
+@else
+@if heretic
+@left heretic neutral
+@right lead neutral
+heretic: That book at the abbey was wrong about one thing. I said I'd say, and he's not here, so. {n:sister.first} walked out. After. Two keepers in gray walked her off toward the king's side.
+heretic: I didn't go after her. I ran the other way. ...That's all of it. Go to sleep, heir.
+@left clear
+@right clear
+@else
+> The ridge stays red all night.
+@endif
+@endif
+@end
+
+# The king's camp. Dace, and the name of the man who had his sister.
+
+@scene ch06_tbc
+@caption The king's camp, night
+@music talk_antagonist
+> The plain burning behind the tents. {n:rival.first}, his arm out of its binding, and a Hound at the tent flap with the report: the exile's people reached the far lines, all that were standing.
+@if battlemage
+> And {n:battlemage.last} went over to them in the night.
+@else
+> And {n:battlemage.last} went over to them in the night, and died on the plain.
+@endif
+@left rival neutral
+rival: {N:battlemage.last}. ...He had the children. He had my sister on his line, the strongest of them; he wrote to say so. Once. A kind letter, in a good hand. I kept it.
+rival: And he walks across the plain to {n:family.veyne}. ...Of course he does. ...Did he ask after me? No. No, why would he.
+@if battlemage
+rival: {N:faction.hounds} stay off the plain tonight. Let the king's knights have it. Go.
+@else
+rival: ...Good. ...No. Burn him properly. Whatever's left, find it and burn it right, he'd want-- he'd want it done right. Then {n:faction.hounds} stay off the plain tonight. Go.
+@endif
+@end
