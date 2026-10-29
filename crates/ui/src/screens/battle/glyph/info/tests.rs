@@ -135,6 +135,43 @@ fn the_left_column_lists_mov_tags_ranks_and_affinities() {
     assert_eq!(text(&buf, LEFT_X, y + 6, 10), "          ");
 }
 
+/// 1003: the supports under the affinities (or the ranks), cut at the
+/// box's bottom; none, no heading.
+#[test]
+fn the_left_column_lists_the_supports_last() {
+    let y = PORTRAIT.y + PORTRAIT.h + 1;
+    let buf = painted(|v| {
+        v.ranks = vec![("Sword".into(), "D".into())];
+        v.affinities.clear();
+        v.supports_title = "Supports".into();
+        v.supports = vec![("Mira".into(), "B".into())];
+    });
+    assert_eq!(text(&buf, LEFT_X, y + 6, 8), "Supports");
+    assert_eq!(text(&buf, LEFT_X, y + 7, 21), "Mira                B");
+    let many = painted(|v| {
+        v.supports_title = "Supports".into();
+        v.supports = vec![("Mira".into(), "B".into()); 40];
+    });
+    let bottom = INFO.y + INFO.h - 1;
+    assert_eq!(text(&many, LEFT_X, bottom, 4), "════");
+    assert_eq!(text(&many, LEFT_X, bottom - 1, 4), "Mira");
+    // Ranks to the box's last row: no room for the heading.
+    let full = painted(|v| {
+        v.affinities.clear();
+        v.ranks = vec![("Sword".into(), "D".into()); 11];
+        v.supports_title = "Supports".into();
+        v.supports = vec![("Mira".into(), "B".into())];
+    });
+    assert_eq!(text(&full, LEFT_X, bottom, 4), "════");
+    assert_eq!(text(&full, LEFT_X, bottom - 1, 5), "Sword");
+    let none = painted(|v| {
+        v.ranks = vec![("Sword".into(), "D".into())];
+        v.affinities.clear();
+        v.supports.clear();
+    });
+    assert_eq!(text(&none, LEFT_X, y + 6, 8), "        ");
+}
+
 #[test]
 fn the_right_column_lists_weapons_gear_and_spells() {
     let c = ctx();

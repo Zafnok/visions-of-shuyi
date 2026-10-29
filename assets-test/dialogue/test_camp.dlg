@@ -1,0 +1,9 @@
+# PLACEHOLDER camp event for data/camp.ron (ticket 1003). Not story: real
+# camp events are written by the story pipeline.
+
+@scene test_camp_campfire
+@left  test_lord neutral
+@right test_knight neutral
+test_knight: Placeholder. A camp event's scene goes here.
+test_lord: Then we talk by the fire a while.
+@end

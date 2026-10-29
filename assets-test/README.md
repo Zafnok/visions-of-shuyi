@@ -11,6 +11,7 @@ that ships has none of them.**
 | `data/characters.ron` | The test characters (`test_lord`, `test_knight`, `test_archer`, `test_scout`, `test_rogue`, `test_mage`) and generic templates (`test_brigand`, `test_raider`, `test_frost_elemental`) |
 | `data/names.ron` | The test characters' names |
 | `data/supports.ron` | The two test support pairs |
+| `data/camp.ron`, `dialogue/test_camp.dlg` | The test camp event (`test_campfire`, ticket 1003): listed at camp once the test chapter's battle is won, with the lord and the knight in the army |
 | `data/lessons.ron` | The test lesson (`test_cursor`): the cursor's four directions on the first turn of the test chapter and the Quick Battle (ticket 0456) |
 | `chapters/test.ron`, `battles/test.ron` | The test chapter: the tests of the game flow start a new game there (`NewGameDef::test_chapter`) |
 | `chapters/quick.ron`, `battles/quick.ron` | The debug Quick Battle (title screen, where the debug tools are on) |
@@ -36,7 +37,7 @@ Each kind's format is described in the README of its directory under
 - **No story file may refer to a test file** (a test character, scene,
   map…): the story's files must load without this directory, and a test
   fails if they don't.
-- **No path may be in both `assets/` and here**, apart from the four data
+- **No path may be in both `assets/` and here**, apart from the five data
   tables in `data/`. Those hold only the test entries, which are added to
   the story's table by id. An id (or, for names, a name) that the story's
   file has too is an error.

@@ -49,7 +49,10 @@
 //!      points every battle gives, story battle or skirmish). In
 //!      **Classic**, every support of a dead character ends
 //!      ([`SupportBook::end_for`]); a **Casual** retreat keeps them.
-//!   6. Every roster unit is made ready for the next battle: full HP, not
+//!   6. The battle is added to the battles won
+//!      ([`Campaign::battles_won`]), which camp events wait for
+//!      ([`crate::camp`]).
+//!   7. Every roster unit is made ready for the next battle: full HP, not
 //!      acted, no timed effects (*Claude's starting rule* for standing
 //!      units, as in Fire Emblem; the design says it for Casual retreats).
 //!
@@ -64,6 +67,8 @@
 //!   between battles, [`Campaign::view_support`] views a pair's unlocked
 //!   conversation, which is what raises its rank. Both characters must be
 //!   in the army, so a dead character's conversations can't be viewed.
+//! - **Camp events** ([`crate::camp`], 1003): [`Campaign::see_camp_event`]
+//!   marks one seen ([`Campaign::camp_seen`]), so it is no longer new.
 //! - **Mode.** Classic → Casual only ([`Campaign::downgrade_mode`]).
 //! - **Tutorial level** ([`TutorialLevel`], `docs/design/tutorial.md`):
 //!   picked at New Game after the mode (0835); [`Campaign::new_game`] starts
@@ -330,6 +335,15 @@ pub struct Campaign {
     pub gold: Gold,
     /// Story flags set by chapters.
     pub flags: BTreeMap<String, bool>,
+    /// The battles won, by id (1003: camp events wait for them). Left out
+    /// of the save while empty, and a save without it has none, so saves
+    /// of `SAVE_VERSION` 2 made before it still load (as `tutorial`).
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub battles_won: BTreeSet<String>,
+    /// The camp events viewed, by id (1003): no longer new. Saved as
+    /// `battles_won` is.
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub camp_seen: BTreeSet<String>,
     /// Every pair's support so far.
     pub supports: SupportBook,
     /// Seconds played.
@@ -413,6 +427,8 @@ impl Campaign {
             stock,
             gold,
             flags: BTreeMap::new(),
+            battles_won: BTreeSet::new(),
+            camp_seen: BTreeSet::new(),
             supports: SupportBook::default(),
             playtime_s: 0,
         }
@@ -481,6 +497,7 @@ impl Campaign {
             ..BattleRewards::default()
         };
         let mut stock = state.stock().clone();
+        self.battles_won.insert(def.id.clone());
         self.supports = state.supports().clone();
         let is_player = |u: &&Unit| u.faction == Faction::Player && u.character.is_some();
         let standing = state
@@ -567,6 +584,12 @@ impl Campaign {
         }
         let pair = SupportPair::new(a.clone(), b.clone());
         self.supports.view(&pair, table)
+    }
+
+    /// Marks camp event `id` seen (`crate::camp`). Returns whether it was
+    /// new.
+    pub fn see_camp_event(&mut self, id: &str) -> bool {
+        self.camp_seen.insert(id.to_owned())
     }
 
     /// The roster's units that battle `def` leaves out (no slot of its

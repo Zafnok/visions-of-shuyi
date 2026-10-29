@@ -1,0 +1,16 @@
+// PLACEHOLDER camp event of the test characters, so the Camp screen can be
+// tried before the story has real events. Its scene is in
+// dialogue/test_camp.dlg. Added after assets/data/camp.ron's events in a
+// build that has the test files (ADR-0057). Not in the Quick Battle's
+// camp: it waits for the test chapter's battle.
+(
+    events: [
+        (
+            id: "test_campfire",
+            title: "Around the campfire",
+            scene: "test_camp_campfire",
+            battles: ["test"],
+            units: ["test_lord", "test_knight"],
+        ),
+    ],
+)

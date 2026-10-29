@@ -15,6 +15,7 @@ mod prelude {
 pub mod ai;
 pub mod art;
 pub mod battle;
+pub mod camp;
 pub mod campaign;
 pub mod class;
 pub mod combat;
@@ -50,6 +51,7 @@ pub use battle::{
     PendingMove, Phase, Reinforcement, SellFrom, ShopTxn, TileRect, Trigger, TriggerWhen, Turn,
     UnitAction, Village, VillageGoal, Who,
 };
+pub use camp::CampEvent;
 pub use campaign::{
     ApplyError, BattleDef, BattleKind, BattleMusic, BattleRewards, Campaign, Difficulty,
     GameTables, PlayerSlot, TutorialLevel, UNUSED_CHARGE_PERCENT,

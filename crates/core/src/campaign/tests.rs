@@ -486,6 +486,20 @@ fn mode_goes_from_classic_to_casual_only() {
     assert_eq!(game.mode, GameMode::Casual);
 }
 
+/// Camp events can wait for a battle (1003): a victory records it, a
+/// battle not won doesn't.
+#[test]
+fn a_won_battle_is_recorded() {
+    let mut game = campaign(GameMode::Classic);
+    let def = def();
+    let (lost, _) = BattleState::new(game.battle_setup(&def, &tables()));
+    assert!(game.apply_result(&def, &lost, 0).is_err());
+    assert!(game.battles_won.is_empty());
+    let s = won(&game, &def);
+    game.apply_result(&def, &s, 0).unwrap();
+    assert!(game.battles_won.contains("test"));
+}
+
 #[test]
 fn campaign_round_trips_through_ron() {
     let mut game = campaign(GameMode::Casual);

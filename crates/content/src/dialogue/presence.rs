@@ -16,7 +16,9 @@ use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
 
-use trpg_core::{BattleDef, CharacterId, LEAD_ID, Phase, SupportTable, TriggerWhen, Who};
+use trpg_core::{
+    BattleDef, CampEvent, CharacterId, LEAD_ID, Phase, SupportTable, TriggerWhen, Who,
+};
 
 use super::{Lines, ParsedScene, Step};
 use crate::chapter::{ChapterDef, NewGameDef};
@@ -35,6 +37,7 @@ pub struct Cast {
     ///   is hurt, talks or falls: a falling unit hears its own last
     ///   words);
     /// - the pair of its support conversation;
+    /// - the characters its camp event needs ([`Cast::with_camp`]);
     /// - before anyone can have fallen, the starting roster: in the first
     ///   chapter's intro scenes, and (those of them the battle places) in
     ///   the scenes its battle plays as turn 1's player phase starts.
@@ -105,6 +108,16 @@ impl Cast {
             }
         }
         cast
+    }
+
+    /// The same, with the camp events in `camp`: each one's scene is
+    /// played with the characters it needs (1003).
+    #[must_use]
+    pub fn with_camp(mut self, camp: &[CampEvent]) -> Self {
+        for event in camp {
+            self.played(&event.scene, event.units.iter().cloned().collect());
+        }
+        self
     }
 
     /// Records that `scene` is played somewhere `there` are certain to be.

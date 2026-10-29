@@ -3,8 +3,9 @@
 //! 0703), then the unit's name, level, EXP, HP and stats as plain numbers
 //! (`Str 7`; no class caps, ticket 0423), and its loadout, spells and
 //! skills. Under the weapon ranks, the class's elemental affinities
-//! (`Fire  Weak`, ticket 0410). [`view`] says what it shows; the battle
-//! skin paints it (ADR-0054).
+//! (`Fire  Weak`, ticket 0410), then its support partners and ranks
+//! (`Mira  B`, ticket 1003: only the pairs with a rank gained).
+//! [`view`] says what it shows; the battle skin paints it (ADR-0054).
 
 use crate::prelude::*;
 use trpg_core::skill::effect_bonuses;
@@ -23,6 +24,7 @@ use super::view::{
 };
 use crate::input::Action;
 use crate::words::Words;
+use trpg_content::Names;
 
 /// The stat's short name, as the design docs write it.
 pub fn stat_name(words: Words<'_>, kind: StatKind) -> &str {
@@ -167,6 +169,8 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
                 (element, affinity_name(words, affinity).to_owned())
             })
             .collect(),
+        supports_title: text("battle.info.supports"),
+        supports: Vec::new(),
         weapons_title: text("battle.info.weapons"),
         equipped_mark: text("battle.info.mark.equipped"),
         weapons: weapons(state, words, unit),
@@ -190,6 +194,34 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
         spells: spells(state, words, unit),
         page: 0,
     }
+}
+
+/// The support partners of `unit` with a rank gained, and that rank
+/// (`B`), in the support table's order: a partner on the map by its
+/// unit's name, else by `names` (benched, or fallen).
+pub fn supports(
+    (state, words): (&BattleState, Words<'_>),
+    names: &Names,
+    unit: &Unit,
+) -> Vec<(String, String)> {
+    let Some(me) = &unit.character else {
+        return Vec::new();
+    };
+    let table = state.support_table();
+    let pairs = table.pairs().filter(|d| d.pair.has(me));
+    pairs
+        .filter_map(|def| {
+            let rank = state.supports().rank(&def.pair)?;
+            let [a, b] = def.pair.members();
+            let partner = if a == me { b } else { a };
+            let on_map = state
+                .units()
+                .iter()
+                .find(|u| u.character.as_ref() == Some(partner));
+            let name = on_map.map_or_else(|| words.name(names, &partner.0), |u| words.unit(u));
+            Some((name.to_owned(), format!("{rank:?}")))
+        })
+        .collect()
 }
 
 /// The info screen's page after `action` on page `page` of `pages`: Left
