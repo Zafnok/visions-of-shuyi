@@ -641,7 +641,9 @@ fn camp_opens_before_preparations_and_the_battle_takes_what_it_changed() {
         trpg_core::CharacterId("test_lord".into()),
         trpg_core::CharacterId("test_knight".into()),
     );
-    let prep = stack.find::<PreparationsScreen>().map(|p| p.setup().clone());
+    let prep = stack
+        .find::<PreparationsScreen>()
+        .map(|p| p.setup().clone());
     let rank = prep.and_then(|s| s.bonds.rank(&pair));
     assert_eq!(rank, Some(trpg_core::SupportRank::C));
     let campaign = stack.find::<FlowScreen>().and_then(FlowScreen::campaign);

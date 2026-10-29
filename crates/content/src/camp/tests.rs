@@ -79,6 +79,6 @@ fn the_game_has_the_test_event_in_a_build_with_the_test_files() {
     if bundle::test_part(CAMP_PATH).is_some() {
         assert_eq!(ids, ["test_campfire"]);
     } else {
-        assert!(ids.is_empty());
+        assert_eq!(ids, [] as [&str; 0]);
     }
 }

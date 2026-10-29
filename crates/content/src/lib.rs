@@ -312,17 +312,8 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let (fields, rules) = (battles.as_ref().ok(), (&classes, &terrain));
     let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
     let openings = load_openings(maps.as_ref().ok(), cast, rules);
-    let supports = support::load(characters.as_ref().ok(), scenes);
-    let camp = camp::load(camp::CampRefs {
-        characters: characters.as_ref().ok(),
-        dialogue: scenes,
-        battles: battles.as_ref().ok(),
-    });
-    let story = (
-        battles.as_ref().ok(),
-        chapters.as_ref().ok(),
-        new_game.as_ref().ok(),
-    );
+    let (supports, camp) = load_camp_talks(cast, scenes, fields);
+    let story = (fields, chapters.as_ref().ok(), new_game.as_ref().ok());
     let places = (maps.as_ref().ok(), openings.as_ref().ok());
     let away = (supports.as_ref().ok(), camp.as_ref().ok());
     let dialogue = check_dialogue(scripts, places, story, away);
@@ -376,6 +367,28 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     // The combat shots' fights need everything else (ADR-0062).
     with_themes(content.and_then(cinematic::check_fights), themes)
+}
+
+/// The supports and the camp events, each loaded or its errors.
+type CampTalks = (
+    Result<SupportTable, Vec<ContentError>>,
+    Result<Vec<CampEvent>, Vec<ContentError>>,
+);
+
+/// What camp plays: the supports and the camp events, checked against
+/// the `characters`, the dialogue `scenes` and the `battles` that loaded.
+fn load_camp_talks(
+    characters: Option<&CharacterTable>,
+    scenes: Option<&DialogueTable>,
+    battles: Option<&BTreeMap<String, BattleDef>>,
+) -> CampTalks {
+    let supports = support::load(characters, scenes);
+    let camp = camp::load(camp::CampRefs {
+        characters,
+        dialogue: scenes,
+        battles,
+    });
+    (supports, camp)
 }
 
 /// The portraits in `images`; none if the images failed to load.

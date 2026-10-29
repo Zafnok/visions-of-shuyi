@@ -113,7 +113,10 @@ pub fn from_sources<F: AsRef<str>>(
             }
             let units: Vec<CharacterId> = e.units.into_iter().map(CharacterId).collect();
             if let Some(characters) = refs.characters {
-                for u in units.iter().filter(|u| !characters.characters.contains_key(*u)) {
+                for u in units
+                    .iter()
+                    .filter(|u| !characters.characters.contains_key(*u))
+                {
                     at(format!("unknown character \"{}\"", u.0));
                 }
             }

@@ -1,12 +1,12 @@
 //! Tests of the camp events' conditions and seen state.
 
 use super::*;
+use crate::battle::GameMode;
 use crate::battle::tests::{p, unit};
 use crate::campaign::Campaign;
 use crate::item::Stock;
 use crate::lead::{LeadGender, LeadProfile};
 use crate::unit::{Faction, Unit};
-use crate::battle::GameMode;
 
 fn c(id: &str) -> CharacterId {
     CharacterId(id.into())

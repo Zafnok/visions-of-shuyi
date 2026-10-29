@@ -261,7 +261,9 @@ fn bonded_quick(c: &Ctx) -> BattleScreen {
     let table = &content.supports;
     let pair = |b: &str| SupportPair::new(CharacterId("test_lord".into()), CharacterId(b.into()));
     for (partner, points) in [("test_knight", 20), ("test_mage", 80)] {
-        campaign.supports.gain(&pair(partner), points.min(20), table);
+        campaign
+            .supports
+            .gain(&pair(partner), points.min(20), table);
         campaign.supports.view(&pair(partner), table).unwrap();
         if points > 20 {
             campaign.supports.gain(&pair(partner), points, table);
@@ -285,12 +287,23 @@ fn the_info_screen_lists_the_units_supports_and_ranks() {
     assert_eq!(info.supports_title, "Supports");
     let supports = [("Test Knight", "C"), ("Test Mage", "B")].map(|(n, r)| (n.into(), r.into()));
     assert_eq!(info.supports, supports);
-    let knight = s.state().units().iter().find(|u| u.name == "Test Knight").unwrap();
+    let knight = s
+        .state()
+        .units()
+        .iter()
+        .find(|u| u.name == "Test Knight")
+        .unwrap();
     let words = c.words();
     let of_knight = info::supports((s.state(), words), &c.game.content.names, knight);
     assert_eq!(of_knight, [("Test Lord".to_owned(), "C".to_owned())]);
-    let enemy = s.state().units().iter().find(|u| u.character.is_none()).unwrap();
-    assert!(info::supports((s.state(), words), &c.game.content.names, enemy).is_empty());
+    let enemy = s
+        .state()
+        .units()
+        .iter()
+        .find(|u| u.character.is_none())
+        .unwrap();
+    let none = info::supports((s.state(), words), &c.game.content.names, enemy);
+    assert_eq!(none, []);
 }
 
 /// The info screen with its supports section, under the weapon ranks.

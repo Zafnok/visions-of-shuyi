@@ -162,7 +162,10 @@ impl CampScreen {
     /// The section focused.
     pub fn section(&self) -> Section {
         let focus = self.sections.focus();
-        self.sections.value(focus).copied().unwrap_or(Section::Leave)
+        self.sections
+            .value(focus)
+            .copied()
+            .unwrap_or(Section::Leave)
     }
 
     /// Rebuilds the sections (their `NEW` marks) and the list from the
@@ -190,7 +193,11 @@ impl CampScreen {
         let content = &ctx.game.content;
         match section {
             Section::Supports => {
-                let units = self.campaign.roster.iter().filter_map(|u| u.character.as_ref());
+                let units = self
+                    .campaign
+                    .roster
+                    .iter()
+                    .filter_map(|u| u.character.as_ref());
                 let mut talks = units.flat_map(|c| talks(&self.campaign, &content.supports, c));
                 talks.any(|t| t.new)
             }
@@ -221,7 +228,11 @@ impl CampScreen {
         let table = &content.supports;
         match shown {
             Focus::Units | Focus::Sections => {
-                let units = self.campaign.roster.iter().filter_map(|u| u.character.clone());
+                let units = self
+                    .campaign
+                    .roster
+                    .iter()
+                    .filter_map(|u| u.character.clone());
                 let with = units.filter(|c| talks(&self.campaign, table, c).next().is_some());
                 with.map(Row::Unit).collect()
             }
@@ -241,7 +252,10 @@ impl CampScreen {
                 let mut list = talks(&self.campaign, &content.supports, c);
                 (self.name(ctx, c), list.any(|t| t.new))
             }
-            Row::Talk(t) => (format!("{:?}  {}", t.rank, self.name(ctx, &t.partner)), t.new),
+            Row::Talk(t) => (
+                format!("{:?}  {}", t.rank, self.name(ctx, &t.partner)),
+                t.new,
+            ),
             Row::Event(i) => {
                 let event = &content.camp[*i];
                 let title = ctx.words().camp_title(event).to_owned();
@@ -285,7 +299,10 @@ impl CampScreen {
                 ctx.text_with("camp.list.talks", &[("name", &self.name(ctx, unit))]),
                 "camp.empty.supports",
             ),
-            (_, Section::Supports) => (ctx.text("camp.list.supports").to_owned(), "camp.empty.supports"),
+            (_, Section::Supports) => (
+                ctx.text("camp.list.supports").to_owned(),
+                "camp.empty.supports",
+            ),
             (_, Section::Events) => (ctx.text("camp.list.events").to_owned(), "camp.empty.events"),
             (_, Section::Leave) => (String::new(), "camp.leave_line"),
         };
@@ -327,7 +344,9 @@ impl CampScreen {
             .collect();
         let fade_s = f64::from(manifest.music_fade_ms) / 1000.0;
         let first = ctx.pick_music(POOL);
-        let first = tracks.iter().position(|(cue, _)| Some(cue) == first.as_ref());
+        let first = tracks
+            .iter()
+            .position(|(cue, _)| Some(cue) == first.as_ref());
         let started = CampMusic::start(tracks, first.unwrap_or(0), fade_s, ctx.clock_s);
         if let Some((music, cue)) = started {
             self.music = Some(music);
@@ -458,7 +477,10 @@ fn talks<'a>(
     pairs.flat_map(move |def| {
         let [a, b] = def.pair.members();
         let partner = if a == unit { b } else { a };
-        let state = campaign.supports.state(&def.pair, table).unwrap_or_default();
+        let state = campaign
+            .supports
+            .state(&def.pair, table)
+            .unwrap_or_default();
         let talk = move |rank, new| Talk {
             unit: unit.clone(),
             partner: partner.clone(),

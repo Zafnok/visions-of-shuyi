@@ -31,7 +31,8 @@ fn army(ctx: &Ctx) -> Campaign {
 fn bonded(ctx: &Ctx) -> Campaign {
     let table = &ctx.game.content.supports;
     let mut game = army(ctx);
-    game.supports.gain(&pair("test_lord", "test_knight"), 20, table);
+    game.supports
+        .gain(&pair("test_lord", "test_knight"), 20, table);
     let mage = pair("test_lord", "test_mage");
     game.supports.gain(&mage, 20, table);
     game.supports.view(&mage, table).unwrap();
@@ -85,7 +86,10 @@ fn the_supports_list_shows_ranks_and_what_is_new() {
         labels(&list),
         ["Test Lord NEW", "Test Knight NEW", "Test Mage NEW"]
     );
-    assert!(list.items.iter().all(|i| !i.focused), "focus in the sections");
+    assert!(
+        list.items.iter().all(|i| !i.focused),
+        "focus in the sections"
+    );
     update(&mut s, &mut ctx, &[Action::Confirm, Action::Confirm]);
     let view = s.view(&ctx);
     assert_eq!(view.list_title, "Test Lord's supports");
@@ -105,7 +109,11 @@ fn watching_a_new_conversation_raises_the_rank() {
     let mut ctx = ctx();
     let mut s = CampScreen::new(&ctx, bonded(&ctx));
     let knight = pair("test_lord", "test_knight");
-    let t = update(&mut s, &mut ctx, &[Action::Confirm, Action::Confirm, Action::Confirm]);
+    let t = update(
+        &mut s,
+        &mut ctx,
+        &[Action::Confirm, Action::Confirm, Action::Confirm],
+    );
     assert!(matches!(t, Transition::Push(_)));
     assert_eq!(s.campaign().supports.rank(&knight), Some(SupportRank::C));
     // The seen C of the mage plays again; the rank stays.
@@ -113,7 +121,10 @@ fn watching_a_new_conversation_raises_the_rank() {
     let t = update(&mut s, &mut ctx, &[Action::CursorDown, Action::Confirm]);
     assert!(matches!(t, Transition::Push(_)));
     assert_eq!(s.campaign().supports.rank(&mage), Some(SupportRank::C));
-    let state = s.campaign().supports.state(&mage, &ctx.game.content.supports);
+    let state = s
+        .campaign()
+        .supports
+        .state(&mage, &ctx.game.content.supports);
     assert_eq!(state.unwrap().unlocked(), Some(SupportRank::B));
 }
 
@@ -144,7 +155,7 @@ fn camp_events_show_when_available_and_are_remembered() {
     let mut ctx = ctx();
     let mut game = army(&ctx);
     let s = CampScreen::new(&ctx, game.clone());
-    assert!(s.list_rows_of(&ctx, Focus::Events).is_empty());
+    assert_eq!(s.list_rows_of(&ctx, Focus::Events), []);
     game.battles_won.insert("test".into());
     let mut s = CampScreen::new(&ctx, game);
     update(&mut s, &mut ctx, &[Action::CursorDown]);
@@ -164,7 +175,10 @@ fn camp_events_show_when_available_and_are_remembered() {
 fn break_camp_pops_with_the_campaign() {
     let mut ctx = ctx();
     let mut s = CampScreen::new(&ctx, bonded(&ctx));
-    assert!(matches!(update(&mut s, &mut ctx, &[Action::Cancel]), Transition::None));
+    assert!(matches!(
+        update(&mut s, &mut ctx, &[Action::Cancel]),
+        Transition::None
+    ));
     assert_eq!(s.section(), Section::Leave);
     assert_eq!(s.view(&ctx).empty, ctx.text("camp.leave_line"));
     let left = popped_with::<Campaign>(update(&mut s, &mut ctx, &[Action::Confirm]));

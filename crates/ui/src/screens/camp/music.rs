@@ -123,8 +123,8 @@ mod tests {
         vec![("a".into(), 100.0), ("b".into(), 60.0), ("c".into(), 30.0)]
     }
 
-    fn play(cue: &str) -> Option<MusicCue> {
-        Some(MusicCue::Play(cue.into()))
+    fn play(cue: &str) -> MusicCue {
+        MusicCue::Play(cue.into())
     }
 
     #[test]
@@ -150,9 +150,9 @@ mod tests {
         assert!(!music.is_playing());
         assert_eq!(music.track(), "c");
         assert_eq!(music.tick(64.9), None);
-        assert_eq!(music.tick(65.0), play("c"));
+        assert_eq!(music.tick(65.0), Some(play("c")));
         assert_eq!(music.tick(94.5), Some(MusicCue::Stop));
-        assert_eq!(music.tick(100.0), play("a"));
+        assert_eq!(music.tick(100.0), Some(play("a")));
         assert_eq!(music.track(), "a");
     }
 
@@ -162,14 +162,14 @@ mod tests {
     fn a_late_tick_moves_on_one_step() {
         let (mut music, _) = CampMusic::start(pool(), 2, 0.5, 0.0).unwrap();
         assert_eq!(music.tick(500.0), Some(MusicCue::Stop));
-        assert_eq!(music.tick(500.0), play("a"));
+        assert_eq!(music.tick(500.0), Some(play("a")));
         assert_eq!(music.tick(500.0), None);
     }
 
     #[test]
     fn resuming_restarts_the_track_but_not_the_quiet() {
         let (mut music, _) = CampMusic::start(pool(), 0, 0.5, 0.0).unwrap();
-        assert_eq!(music.resume(50.0), play("a"));
+        assert_eq!(music.resume(50.0), Some(play("a")));
         assert_eq!(music.tick(149.0), None, "the track's whole length again");
         assert_eq!(music.tick(149.5), Some(MusicCue::Stop));
         assert_eq!(music.resume(150.0), None);

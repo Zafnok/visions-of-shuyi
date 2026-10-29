@@ -214,7 +214,10 @@ pub fn supports(
             let rank = state.supports().rank(&def.pair)?;
             let [a, b] = def.pair.members();
             let partner = if a == me { b } else { a };
-            let on_map = state.units().iter().find(|u| u.character.as_ref() == Some(partner));
+            let on_map = state
+                .units()
+                .iter()
+                .find(|u| u.character.as_ref() == Some(partner));
             let name = on_map.map_or_else(|| words.name(names, &partner.0), |u| words.unit(u));
             Some((name.to_owned(), format!("{rank:?}")))
         })
