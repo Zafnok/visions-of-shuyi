@@ -214,17 +214,15 @@ fn the_playdate_frame_is_400_by_240_in_black_and_white() {
     fs::remove_dir_all(&dir).unwrap();
 }
 
-/// Ticket 1039: `--crank` winds the Playdate's crank after the steps and
-/// `--then-pad` presses buttons after it, in turn: wound back on the
-/// Quick Battle's map, the rewind screen; A asks there.
+/// Ticket 1039: the engine's `--crank` step winds the Playdate's crank
+/// (the game's own until engine#2540) and `--then-pad` presses buttons
+/// after the steps, in turn: wound back on the Quick Battle's map, the
+/// rewind screen; A asks there.
 #[test]
 fn the_crank_and_buttons_after_the_steps_open_the_rewind_screen() {
     let given = parse(&["r.png", "--crank", "-30", "--then-pad", "South"]).unwrap();
     let after = Start::of(&given.game).unwrap().after;
-    assert_eq!(after, [After::Crank(-30.0), After::Pad("South".into())]);
-    let bad = parse(&["r.png", "--crank", "far"]).unwrap();
-    let error = Start::of(&bad.game).unwrap_err();
-    assert_eq!(error, "--crank: not a number of degrees: far");
+    assert_eq!(after, [After::Pad("South".into())]);
     let dir = temp_dir("crank");
     let quick = [
         "r.png",

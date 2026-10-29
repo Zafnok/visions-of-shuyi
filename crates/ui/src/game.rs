@@ -860,7 +860,7 @@ mod tests {
     }
 
     fn begin(cue: String) -> MusicCommand {
-        MusicCommand::Start { cue }
+        MusicCommand::start(cue, 1.0)
     }
 
     fn stop(cue: String) -> MusicCommand {
@@ -872,9 +872,7 @@ mod tests {
         let mut game = noisy();
         // A request made before the first frame goes out with it.
         let out = game.frame(&[], 0.0);
-        let title = AudioRequest::PlayMusic {
-            cue: "title".into(),
-        };
+        let title = AudioRequest::play_music("title", None);
         assert_eq!(out.audio, [title]);
         assert_eq!(out.music, [music("title", load), music("title", begin)]);
         let out = game.frame(&[down(Key::F)], 0.0);
@@ -970,9 +968,7 @@ mod tests {
         let c = ctx();
         // The run's first pick from the pool.
         let sting = crate::audio::pick_from_pool(&c.game.content.audio, "victory", c.music_seed);
-        let sting = AudioRequest::PlayMusic {
-            cue: sting.unwrap().to_owned(),
-        };
+        let sting = AudioRequest::play_music(sting.unwrap().to_owned(), None);
         let quick = quick_battle(&c.game.content).unwrap();
         // The lord next to a brigand on 1 HP, which one hit routs.
         let mut units = quick.units().to_vec();
@@ -1004,9 +1000,7 @@ mod tests {
         // Past the VICTORY banner, back at the title.
         assert_eq!(game.frame(&[down(Key::F)], 0.0).audio, []);
         assert_eq!(game.screens(), ["title"]);
-        let title = AudioRequest::PlayMusic {
-            cue: "title".into(),
-        };
+        let title = AudioRequest::play_music("title", None);
         assert_eq!(game.frame(&[RawInputEvent::Up(Key::F)], 0.0).audio, [title]);
         assert_eq!(game.frame(&[], 0.1).audio, []);
     }

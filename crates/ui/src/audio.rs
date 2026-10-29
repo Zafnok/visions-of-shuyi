@@ -16,7 +16,7 @@
 //! let mut audio = AudioQueue::new(AUDIO);
 //! audio.menu(MenuSound::Move);
 //! audio.play_music("title");
-//! assert_eq!(audio.pending()[1], AudioRequest::PlayMusic { cue: "title".into() });
+//! assert_eq!(audio.pending()[1], AudioRequest::play_music("title", None));
 //! ```
 
 use trpg_content::Variant;

@@ -116,3 +116,13 @@ Nothing for the game: 6 PRs (#151, #153, #154, #156, #158, #159). The skill pack
 Ticket 1195 (from #152): the game's tools give no `made` stamp yet, so its bots' play records replay unchecked against the build and content that made them; 1195 stamps them and passes the stamp on in `replay`.
 
 Ticket 1196 (from #153, listed under nothing for the game by its `api: none` label): the engine's storage now runs a power-cut suite, and the Playdate's own `FileStorage` doesn't. Its write unlinks the old save before moving the new one in when the file system won't rename onto a file, so a power cut between the two loses the save. 1196 runs the suite on it and fixes what fails. Ticket 1197 widens this review after an audit of every section above: a breaking PR's features, and `api: none` PRs that change behavior, get decisions too.
+
+## 2026-10-29: c9fb84c9 → 50ae33db (13 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #162 | 2540 | frame-png scripts wind the crank: a `--crank DEGREES` step; `frame_png::Step` gains `Crank` and is `#[non_exhaustive]` | fixed: the game's own `--crank` option deleted from `crates/xtask/src/game_tools.rs` (the engine's parser now takes the flag first, so the game's could no longer be reached; the rewind picture of 1039's test comes from the engine's step); unblocks 1182, which deletes the rest (`--then-pad`) |
+| #168 | 3056 | One-bit sprites drawn fast | unblocks 1078 |
+| #174 | 2341 | Music crossfades and fade-ins: `AudioRequest::PlayMusic` gains `switch`, `MusicCommand::Start` gains `gain`, `AudioManifest` gains `music_fade_in_ms` and `music_overlap`, `pack::VERSION` 4 | fixed: `AudioRequest::play_music(cue, None)`, `MusicCommand::start(cue, 1.0)` and `{ cue, .. }` patterns in `crates/ui` and `crates/playdate`; the Playdate's backend starts a track at `Start`'s gain (always 1 with the default switch, so nothing sounds different); nothing else (the game builds no `AudioManifest` literal, bakes no packs and keeps no golden row of its manifest); unblocks 1080 |
+
+Nothing for the game: 10 PRs (#161, #163, #164, #165, #166, #167, #169, #171, #172, #173). The skill pack is unchanged.

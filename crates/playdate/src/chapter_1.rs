@@ -139,7 +139,7 @@ fn play_chapter_1() -> Vec<String> {
         .music_commands()
         .iter()
         .filter_map(|command| match command {
-            MusicCommand::Start { cue } => Some(cue.clone()),
+            MusicCommand::Start { cue, .. } => Some(cue.clone()),
             _ => None,
         });
     let content = &h.game().ctx().game.content;

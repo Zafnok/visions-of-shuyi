@@ -632,9 +632,7 @@ mod tests {
         h.wait(3.0);
         assert_eq!(h.music_clock(), None);
         // The game asked for its music all the same.
-        let start = crate::audio::MusicCommand::Start {
-            cue: "title".into(),
-        };
+        let start = crate::audio::MusicCommand::start("title", 1.0);
         assert!(h.music_commands().contains(&start));
     }
 

@@ -469,7 +469,7 @@ fn game_over_rewinds_a_lost_battle() {
     // 0809: `defeat` was asked for once, at the banner.
     let music = |c: &mut Ctx| -> Vec<String> {
         let cue = |r: AudioRequest| match r {
-            AudioRequest::PlayMusic { cue } => Some(cue),
+            AudioRequest::PlayMusic { cue, .. } => Some(cue),
             AudioRequest::StopMusic => Some("-".to_owned()),
             _ => None,
         };

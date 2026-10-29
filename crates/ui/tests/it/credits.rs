@@ -222,11 +222,6 @@ fn sounds_and_music() {
         .into_iter()
         .filter(|r| !matches!(r, AudioRequest::PlaySound { .. }))
         .collect();
-    assert_eq!(
-        music,
-        [AudioRequest::PlayMusic {
-            cue: "title".into()
-        }]
-    );
+    assert_eq!(music, [AudioRequest::play_music("title", None)]);
     assert!(h.music_commands().is_empty(), "{:?}", h.music_commands());
 }

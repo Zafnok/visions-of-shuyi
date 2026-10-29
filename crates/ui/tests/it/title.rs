@@ -155,7 +155,7 @@ fn music(h: &Harness) -> Vec<String> {
     h.audio_requests()
         .into_iter()
         .filter_map(|r| match r {
-            AudioRequest::PlayMusic { cue } => Some(cue),
+            AudioRequest::PlayMusic { cue, .. } => Some(cue),
             _ => None,
         })
         .collect()
@@ -167,9 +167,7 @@ fn the_title_asks_for_its_music_once() {
     h.wait(0.1);
     assert_eq!(
         h.audio_requests(),
-        [AudioRequest::PlayMusic {
-            cue: "title".into()
-        }]
+        [AudioRequest::play_music("title", None)]
     );
     // Moving around the menu doesn't ask again.
     h.keys("Down Up");

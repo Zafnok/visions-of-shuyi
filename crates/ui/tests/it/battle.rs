@@ -711,7 +711,7 @@ fn music(h: &Harness) -> Vec<String> {
     h.audio_requests()
         .into_iter()
         .filter_map(|r| match r {
-            AudioRequest::PlayMusic { cue } => Some(cue),
+            AudioRequest::PlayMusic { cue, .. } => Some(cue),
             _ => None,
         })
         .collect()
@@ -762,7 +762,7 @@ fn a_battle_keeps_the_cue_its_file_names() {
     assert_eq!(music(&h), ["title", "battle_bright"]);
     // The track started once and was never stopped or started again.
     let starts = h.music_commands().iter().filter(
-        |c| matches!(c, trpg_ui::audio::MusicCommand::Start { cue } if cue == "battle_bright"),
+        |c| matches!(c, trpg_ui::audio::MusicCommand::Start { cue, .. } if cue == "battle_bright"),
     );
     assert_eq!(starts.count(), 1, "{:?}", h.music_commands());
 }

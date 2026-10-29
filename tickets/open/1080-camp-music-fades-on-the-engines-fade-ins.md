@@ -34,7 +34,8 @@ None. The timings are already decided (audio.md, *Starting values*).
 ## Scope
 
 **In:**
-- Move the engine pin past engine#2341 (`engine-change` skill, step 7).
+- ~~Move the engine pin past engine#2341 (`engine-change` skill, step 7).~~
+  (done by the pin move of 2026-10-29, `c9fb84c9` → `50ae33db`)
 - Camp's switches use 2341's per-request fades: 3 s out, 3 s in, the
   5 s quiet between them.
 - Delete the workaround and its `engine-friction` marker.
@@ -44,7 +45,10 @@ None. The timings are already decided (audio.md, *Starting values*).
 
 ## Implementation steps
 
-1. Move the pin; read 2341's API.
+1. ~~Move the pin;~~ (done by the pin move of 2026-10-29, `c9fb84c9` →
+   `50ae33db`) read 2341's API (`AudioRequest::play_music(cue, Some(switch))`
+   and `MusicSwitch`; the backends already start a track at
+   `MusicCommand::Start`'s `gain`).
 2. Change `CampMusic` to ask for the fades; update its tests.
 
 ## Acceptance criteria
