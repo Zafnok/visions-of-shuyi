@@ -749,3 +749,29 @@ fn the_tailor_sell_list_renders() {
     let s = tailor_sell(&mut c);
     assert_snapshot!("tailor_sell", render(&s, &c).to_snapshot(&c.palette));
 }
+
+/// Each specialty store names its goods when it refuses an item; the
+/// other shops give no reason.
+#[test]
+fn each_specialty_store_says_what_it_buys() {
+    let c = ctx();
+    let reason = |kind| wont_take_key(kind).map(|k| c.text(k).to_owned());
+    assert_eq!(
+        reason(ShopKind::Alchemist).as_deref(),
+        Some("The Alchemist buys only consumables.")
+    );
+    assert_eq!(
+        reason(ShopKind::Tailor).as_deref(),
+        Some("The Tailor buys only cloth and leather armor.")
+    );
+    for kind in [
+        ShopKind::Armoury,
+        ShopKind::Vendor,
+        ShopKind::Blacksmith,
+        ShopKind::Basic,
+    ] {
+        assert_eq!(reason(kind), None, "{kind:?}");
+    }
+    assert_eq!(c.text(kind_key(ShopKind::Alchemist)), "Alchemist");
+    assert_eq!(Tab::of(ShopKind::Alchemist), [Tab::Buy, Tab::Sell]);
+}
