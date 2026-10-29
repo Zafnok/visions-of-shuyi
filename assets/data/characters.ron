@@ -119,5 +119,7 @@
     // characters when they build the battles. The herald only ever speaks.
     // Chapter 3 (ticket 0745): the prior of Greywater speaks before 0849
     // makes him a unit.
-    speakers: ["rival", "vowmaster", "messenger", "defector", "hound_lieutenant", "hound_sergeant", "herald", "greywater_prior", "prizefighter"],
+    // Chapter 5 (ticket 0747): the envoy, Hedda, the Hound officer and the
+    // magistrate speak before 0851 makes units of those that fight.
+    speakers: ["rival", "vowmaster", "messenger", "defector", "hound_lieutenant", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate"],
 )

@@ -1027,3 +1027,308 @@ and lies to Ossary about the old man.
   he walked toward the town bell and is gone for good; no bow, no
   "Champion", no ribbons; nobody sat windward of the lead on the rise or
   stood in the gateway; his battle lines can't play.
+
+## After Chapter 5
+
+Written by 0747 from `assets/dialogue/ch05.dlg`. It describes a chapter
+everyone lived through, with Gil in the party and Hedda alive at the end
+of the hold; what an earlier death leaves unsaid here, and what changes
+if Gil was missed or Hedda fell, is in "If a companion died before
+Chapter 5", at the end. The battles themselves (whether the cove was
+taken, who fought the Hound officer) are the player's; the scenes don't
+depend on them, except that the house holds until light on every path.
+
+### What happened
+
+- **The road south.** A night's walking out of Veyne Hall, the road
+  bending south toward the salt country. **Hollis walked at the back**,
+  for the first time anyone could remember; Tamsin asked why, loud, and
+  got "Since my knee. Walk." **Joss said it first**: somebody who can
+  stop it has to be told by somebody who was there, and he'd say it to
+  anyone who'd write it down. **Aske named who would**: the woman who
+  signed the peace, Ragna Holt, whose name her hold spits at, who sits
+  in Saltmere writing letters; and she did not want to go to Saltmere
+  ("they sell to anyone there"; it wasn't why). Tamsin: Saltmere, then,
+  two days over the downs. Maud, with the register under her robe,
+  asked whether the sea is cold. Rue put bread in the lead's hand
+  without looking at them; Gil took the ditch side of the road. Hollis,
+  from the back, to the lead: "Shoulder, Veyne. It's dropped since the
+  hall." Nothing else between them until Saltmere.
+- **The Salt Road** (guards the path). A Hound post at the march stone
+  where Ardeval ends and the League's country begins, salt carts turned
+  back on the verge. Joss knew how a post stands and knew nobody out
+  here; Tamsin: past the stone they're the League's problem, and the
+  Hounds know it. Aske stood very still looking south over the ridge and
+  said nothing. Hollis: Veyne in the middle, nobody runs for the stone.
+  They fought and won. **Over the ridge, the sea. Hollis stopped
+  walking: "That's it, then. That's the sea. Huh. ...It's a lot of
+  water."** The lead looked at his face and not at the sea; nobody
+  spoke, not even Tamsin. Maud had thought "a lake".
+- **Smugglers' Cove** (optional). Boats, casks under tarred cloth, men
+  with knives. Tamsin: a year's pay and nobody's crest. Rue asked
+  whether any of it was food. **Aske knew the path down the cliff** and
+  said she could see it from here; Tamsin let the lie stand and sent her
+  down first. Hollis: smugglers run, don't chase them to the boats. After:
+  salt herring, oil, and casks with hill-hold marks burned into the lids;
+  **Aske read one she knew, put the lid back and said it was herring.**
+  Nobody asked. Gil found he had no rule for a man who ran and carried
+  the casks.
+- **The envoy's house**, on Saltmere's harbor front. **Hedda** opened the
+  door with an axe before anyone knocked: which of you is the outlaw;
+  you're smaller than the paper says; wipe your feet, I washed that
+  floor. **Ragna**, behind an open writing case with ink on her cuff,
+  had counted the party's two weeks from Kell's Ford and had three
+  letters about them. **Joss gave his account** (the lieutenant, the
+  colors, the houses, the herald's paper sealed a week early) in the
+  drill voice without stopping; Ragna: that holds; again tomorrow and the
+  day after, then it's in three hands; eat, you've gone gray. **Maud told
+  Ragna she hasn't slept; Hedda lied for her ("She sleeps fine"); Ragna:
+  a month, thereabouts.** Last, Ragna to Aske: the archer sits where she
+  can see her; "We'll talk, you and I. Later."
+- **The sea steps, that night. Hollis told the lead all of it.** He sat
+  on the third step with his knee out and his hands empty: the sea is
+  loud, he thought it would be quiet, the way the boy wrote it. The
+  winter after the exile he went back to the hall for the lead's things
+  and into the boy's room; in the chest, **a purse of the mill man's
+  silver, a list of names in the boy's hand with some crossed out, and a
+  blank road pass with the lead's father's wax on it.** He sat with the
+  three all night in the guardroom, put them in the fire before the house
+  was up, and told the lead there was nothing in the room worth keeping.
+  Why: he thought the lead couldn't carry it, having given the boy
+  everything; he was wrong about the lead; he was the one who couldn't. **"You were mine.
+  From the night we walked out that gate you were mine, more than he
+  ever let himself be, and I let you walk four years beside a lie
+  because I'm a coward about you. ...That's all of it."** The lead
+  answered (a reply, not recorded; one was to sit down beside him, and
+  he moved his knee over and fixed the lead's twisted strap). Then boots
+  off, he has the watch, **"Shoulder up tomorrow, kid"**: the lead's in
+  the door and he's behind, same as the yard. He looked at the water a
+  long time.
+- **Past midnight the house was attacked.** Boots on the quay from the
+  water side, a tile off the roof next door. **Ragna: the magistrate
+  dined at her table the day before and asked which room Pellam slept
+  in, and she answered him.** Tamsin from the roof hatch: black on three
+  roofs, and "You told him?" Ragna: she thought a magistrate was a
+  magistrate; Pellam stays up here where she can see him. Joss did the
+  roof drill under his breath and asked to be put in a door anyway; Maud
+  couldn't get the shutter bar across and asked for someone taller.
+  Hollis: "Kid. The street door. I'm behind you."
+  **Ragna sent Hedda from outside her own room down to the street door**:
+  hold it; she'd be behind the table with a knife, as always. Hedda
+  refused in one breath and gave in in the next: "Down, then. Outlaw.
+  You stand next to me." **Hedda fought the hold on the party's side.**
+- **The party held the envoy's house until first light** against Hounds
+  from the docks and the roofs (Survive).
+- **In the battle** (what the triggers say, if they fired): Hedda on turn
+  1: the door is theirs, nobody onto the quay (or Hollis: not till it's
+  light). On the roofs, Tamsin: a hatch on every house, shut it behind
+  you (or Joss: the top of the stairs is drill). The Hound officer, to anyone:
+  walk off, you're not on his paper, he's here for a boy, a Brennish
+  woman and a house that's paid for, and the League's halberds come out
+  at first light. **To Joss:** he knew the face from every post wall and
+  before; Hendry had him a week before anyone; **Hendry is dead at the
+  ford and the captain paid his mother the year's pay out of his own
+  purse**; he said "Needle", and Joss told him he doesn't get to say that
+  one, and asked whether Hendry had made him sew anything; "No. He gave
+  that to you." At half strength he shouted for the roofs and the stair;
+  beaten, he wanted his men off the quay before the halberds came. Death
+  quotes, if they fired: Hollis (somebody in the door; "I saw it, kid. I
+  did see it"), Tamsin (three on the stairs and she got two; don't let
+  them take her boots, she paid for them herself), Aske (twelve on the
+  quay, she counted, and there are not twelve now; tell her mor she sent
+  it all, every coin), Maud (a prayer she stops: she knows the words,
+  she'll do her own; is anyone else hurt), Rue (she never learned to
+  cook; she burned every pot she was given, didn't she), Joss (did she write it down, both times;
+  keep the paper dry; his ma can't read, so tell her the good bit), Gil
+  ("Rule-- ...there isn't one"; stay in), Hedda (whoever's nearest, go
+  and stand outside Ragna's room and don't tell her).
+- **The morning.** Washing on a line across the way, as if nothing.
+  **The magistrate**, with League halberds on the stair and not coming
+  in, read the expulsion: the League is neutral and keeps no quarrel of
+  any crown's inside its walls; the envoy of Brennmark and every party to
+  the night's disturbance outside the walls by the evening tide. Ragna:
+  you dined at this table and asked which room the boy slept in. He:
+  the League is neutral, madam; I'm sorry; the evening tide. He went. Rue:
+  he didn't even come in; who sells a house and doesn't come in. **Ragna:
+  "Pellam. Again. The last time."** He got to the bag,
+  his hands went to his tin, which wasn't there, and **he said it: he
+  sewed the badges, forty, by lamplight; he was told it was a ruse
+  against the hill bands and believed it one night; he knew by the
+  second and finished them anyway; he was proud of the stitching.** Ragna
+  wrote it: "That was the one I needed." He asked the lead to say
+  something, anything; the lead answered (a reply, not recorded; one was
+  to put his needle tin, found under the table, in his hand). **Hedda:
+  show her those stitches sometime, little one; she wore the real ones
+  ten years and never saw a badge sewn straight.**
+- **The quay, the evening tide. Aske's secret, from Ragna's mouth, in
+  front of everyone:** Ragna bought the march's news for a year from a
+  man with a boat in the cove, who sold to the hill bands too (real, and
+  hungry): fords, patrols, who was armed; his list of sources had a hill
+  girl in the Thornmarch on it, by name. **Aske: yes; for silver, for her
+  mor so she doesn't beg at the hall door; every coin sent; she would do
+  it again; she is not sorry; don't ask her to be.** Tamsin: the fords,
+  she rode those-- then, fast: no, the girl is seventeen, forget it;
+  **"I've done worse for money, and I'll tell you when, and it's not
+  now."** Hollis: she drilled every morning on the green, worse than any
+  recruit he ever had, and came back every morning to be told so; leave
+  the girl be. (Ragna, of the hill bands: those raids are real; they raid
+  for bread.) Aske to the lead: "Well? Noble. Say it." The
+  lead answered (a reply, not recorded; in each she stood by the word;
+  one was to take her blue hands, which she let the lead hold for a count
+  of three). **Rue put half the last bread in Aske's hand without a word
+  and went back to the packs; Aske ate it.** Then Ragna paid what she owes
+  a source: the name, said by her once and never again to anyone; and **the refugee
+  boat that sailed from Saltmere a week ago with the hill people's
+  letters and silver was taken off the point by League privateers**, and
+  is held somewhere the League won't say; she will find out and send
+  word. **Aske's letters and silver were on it.** Ragna asked whether her
+  mother writes back (she can't write; someone at the hold reads them to
+  her); "...My son's eight. He writes back. Badly."
+- **The boat.** Ragna, the writing case shut under her arm: her letters
+  say **both armies are on the road to the Ashfields**, the king's with
+  new Candles and theirs because theirs believe the raids; ten days by
+  her count. The paper goes north with the party, to the Brennish
+  commander, in her hand and three others. **"If you want to stop this
+  war, you stop it there, or it's the Ashfields again."** Hedda: she said
+  war; three years of "this trouble" and she just said war. Ragna: "I
+  said it. Now you." **Ragna lent Hedda to the lead "to make sure they
+  get there."** Hedda refused once (who stands outside your room) and was
+  overruled (nobody, for ten days, and Ragna lives; "keep this one order
+  for me, just the one"). Hedda to Hollis: he stood that street door all
+  night on that knee, she watched; come here, let her see it; "Leave the
+  knee." Ragna, about her son: he'll be taller, they always write
+  taller. **Hedda: she promised him the first
+  cod, the big one, off the point, when this is done; he's eight and has
+  never been in a boat** (her half-carved wooden boat is for him). Ragna:
+  come back and do it, then, she'll hold him still. The boat pulled off
+  and Hedda didn't watch it. **"Walk, then. Outlaw. I'm not yours. I'm
+  lent. Which way is north." Hedda is with the party.**
+- **Days later, at a Hound post on the north road**, Dace, his arm still
+  bound, read a report twice: the house held until first light; the
+  League has put the Brennish woman outside its walls; the Hound Pellam
+  gave her his account in writing, three times over ("He always was
+  thorough. I taught him that"); **both armies to the Ashfields, and the
+  captain of the Hounds to attend with every man.** Alone, to the lead
+  who wasn't there: **"You took him to the sea, Veyne. Forty years he
+  wanted it, and you walked him to it. Did he look at it? ...He said it's
+  a lot of water. I know he did."**
+
+### Who knows what (changes since the end of Chapter 4)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| What Hollis found in Dace's room the winter after the exile (a purse of Vosse's silver, a list of names in Dace's hand with some crossed out, a blank road pass with the Veyne wax) and that he burned all three in the guardroom fire | **the lead**, from Hollis, on the sea steps; Hollis | the rest of the party: told to the lead alone. Dace doesn't know his father found them |
+| Why Hollis kept it four years: he thought the lead couldn't carry it, and it was him that couldn't; "I'm a coward about you" | the lead | — |
+| Aske sold the Thornmarch's march news (fords, patrols, who was armed) to a Brennish smuggler for silver sent home; the same man sold to the hill bands, which are real and hungry, and to Ragna | **everyone on the quay** (the whole party), from Ragna; Hedda (from Ragna's papers, before) | what the hill bands did with it; the smuggler's name (never said) |
+| Joss sewed the forty Brennish badges himself, by lamplight, knew by the second night what they were for and finished them | **everyone in the house that morning** (the whole party), and Ragna, in writing | his mother |
+| Hendry's old company knows Joss's face; the captain paid Hendry's mother the year's pay from his own purse | Joss, if he fought the officer | — |
+| The herald's paper, the lieutenant, the colors and the badges are now a written account in Ragna's hand and three others, on its way to the Brennish commander at the Ashfields | the party, Ragna, Hedda; **Dace** (the report: "three times over") | the Brennish commander (Chapter 6) |
+| The League sold the envoy's house to the Hounds: the magistrate asked which room Joss slept in, and Ragna told him | the party, Ragna, Hedda | — |
+| Both armies are marching to the Ashfields; the king's has new Candles | **the party**, from Ragna; Dace (ordered there with every Hound) | — |
+| The refugee boat with the hill people's letters and silver (Aske's among them) was taken by League privateers and is held somewhere the League won't say | Aske and the party, from Ragna | where (1072, *Letters Home*) |
+| Ragna has a son of eight at home who writes back badly; Hedda has promised him his first cod | the party heard it on the quay | — |
+| Ragna has not slept a night through in a month | Maud said it; the party heard; Hedda lied about it | — |
+| Hollis has seen the sea | the party (the ridge); **Dace**, who guessed his words | — |
+| Dace is ordered to the Ashfields with every Hound | the player | the party |
+
+Unchanged and still secret: Dace being gifted, Wren alive (Rue alone, in
+the party), the prince, the Door, Coldwell (Tamsin said only "I've done
+worse for money, and I'll tell you when"), Gil's seventh fair. Nobody in
+the party has heard the word "Door", or anything of the king beyond "the
+king's army".
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| The lead ↔ Hollis | **Told, and mended enough.** He walked at the back from the hall to the sea and gave one order about the lead's shoulder. On the sea steps he told all of it and said the lead was his, once; the lead's reply is the player's. He said "kid" again, took the watch, and put the lead in the door with himself behind. On the quay he spoke for Aske. |
+| The lead ↔ Aske | Her secret is out and the lead's answer is the player's; whichever it was, she stood by the word and stayed. She called the lead "Noble" to demand it. |
+| Aske ↔ Ragna | Ragna said her name once, in front of everyone, and paid for it with the boat and a question about her mother. Aske answered the question. |
+| Aske ↔ Tamsin | Tamsin went hot over the fords and took it back in the same breath: "you're seventeen"; "I've done worse for money, and I'll tell you when." Coldwell is a day closer to being told. |
+| Aske ↔ Hollis | He said what he knows about her: she drilled, badly, and came back every morning. |
+| Aske ↔ Rue | **Bread, without a word, and Aske ate it.** The first thing between them since the scriptorium; neither has spoken to the other yet. |
+| The lead ↔ Joss | He said the worst thing he did out loud, in front of everyone, and asked the lead to say something; the reply is the player's (one put his needle tin in his hand). "Your Grace" still. |
+| Joss ↔ Ragna | Three tellings; she thanked him once: "That was the one I needed." He is still afraid of her. |
+| Joss ↔ Hedda | "Show me those stitches sometime, little one." The real colors and the fake ones, started. |
+| Joss ↔ Dace | Dace read that the boy testified against the Hounds three times over, and said "I taught him that." Joss doesn't know. |
+| Hedda ↔ Ragna | Sent from her door for the first time in three years, in one order, and she went: "the last order I give you until I see you again." The carved boat for Ragna's son went north with Hedda. |
+| Hedda ↔ the lead | "Outlaw." Sour and polite: not theirs, lent. She stood next to the lead all night, and asked for the way north. |
+| Hedda ↔ Hollis | "You stood that street door all night on that knee, I watched you. Come here, let me see it." "Leave the knee." Two retainers, started. |
+| Maud ↔ Ragna | Maud saw the month without sleep in her eyes and said so; Ragna called her Keeper and told her to sit. |
+| Maud ↔ Hedda | Hedda lied to Maud's face for Ragna's sake, badly. |
+| The lead ↔ Dace | Dace knows the lead took his father to the sea, and guessed what he said there. |
+| Hollis ↔ Dace | Hollis said "the boy" twice on the steps, once of the sea ("the way the boy wrote it"), and told the lead what he found in the boy's room. Dace, alone, said his father's words for him. |
+
+### Status
+
+- **The party is expelled from Saltmere** with the Brennish envoy, by
+  the evening tide, and is on the road north to the Ashfields with
+  Ragna's written account for the Brennish commander: the lead, Hollis,
+  Tamsin, Aske, Maud, Rue, Joss, **Gil if he joined**, and **Hedda**,
+  lent. Ragna has gone by ship's boat to a Brennish ship in the roads;
+  where she goes is Chapter 8's (her ship waits at Saltmere then).
+- The envoy's house is lost to her. The Hound officer is dead if the
+  player killed him.
+- The Salt Road is cleared; the cove's loot is the party's if taken.
+  **Aske's side quest, *Letters Home*, is unlocked** from here (1072),
+  while she is alive: the boat is held by League privateers somewhere
+  Ragna is finding out.
+- Both armies are marching to the Ashfields, ten days out by Ragna's
+  count; Dace is ordered there with every Hound (Chapter 6).
+- Hollis has told the lead everything he knows about Dace. He still
+  believes Wren died at the Ashfields (Chapter 6).
+- The lead's three replies (to Hollis on the steps, to Joss in the
+  morning, to Aske on the quay) are not recorded: tones never change what
+  happened.
+
+### If a companion died before Chapter 5 (Classic), Gil was missed, or Hedda fell
+
+Everything above describes the scenes with all seven alive, Gil in the
+party and Hedda alive at the end of the hold. True on every path: the
+party reaches Saltmere, Ragna gets a written account (Joss's or the
+party's), the house holds until light, the League expels them, both
+armies are marching to the Ashfields and the party goes north with the
+paper, and Dace is ordered there.
+
+- **Hollis dead:** nobody walked at the back; **the confession can't
+  happen**: the lead sat on the sea steps alone (Rue, if alive, brought
+  bread and said she wasn't asking), and what Hollis found and burned
+  dies with him (as the Chapter 1 note says); nobody saw the sea for the
+  first time on the ridge (Maud alone marvels, if alive); nobody said
+  "Kid. The door"; nobody spoke for Aske on the quay; Hedda had nobody
+  to say "that knee" to; **Dace never says "you took him to the sea"**:
+  alone, he says instead that the lead held a street door all night in
+  that city for a Brennish woman's paper, "of course you did".
+- **Tamsin dead:** nobody asked why Hollis was at the back; nobody named
+  Saltmere's two days or the price of a bed; nobody said whose problem
+  the march stone is; nobody said "a year's pay" at the cove or sent Aske
+  down first; nobody shouted from the roof hatch (the roof line falls to
+  Joss); nobody went hot over the fords on the quay.
+- **Aske dead:** nobody named Ragna on the road south (narration says
+  there is a Brennish envoy in Saltmere); nobody stood still at the
+  march stone, knew the cliff path or read the casks' marks; Ragna said
+  nothing about an archer in the house; **the quay has no secret and no
+  boat**: Ragna stands with the case shut and says nothing about archers
+  or boats; the lead's third reply is gone; *Letters Home* can't unlock.
+- **Maud dead:** nobody asked whether the sea is cold or thought it a
+  lake; nobody told Ragna she hasn't slept, so Hedda never lied.
+- **Rue dead:** no bread in the lead's hand on the road; nobody asked
+  whether the casks were food; nobody sat on the sea steps if Hollis was
+  dead too; no bread for Aske on the quay.
+- **Joss dead:** nobody said "somebody who was there" on the road (Aske,
+  if alive, still names Ragna); nobody knew how a post stands; **Ragna
+  took the party's account instead** of a Hound's, in the house and again
+  in the morning, and said plainly it holds less well; no third telling,
+  no badges confessed, no second reply, nothing for Hedda to say about
+  stitches; the officer's exchange can't play; Dace's report says "the
+  exile's people" gave her an account, three times over ("of course it
+  was three"), not the Hound Pellam.
+- **Gil missed or dead:** nobody took the ditch side of the road; nobody
+  carried the casks; his battle lines can't play.
+- **Hedda fell in the hold (Classic):** she never joins. Nobody said
+  "little one" to Joss in the morning; on the quay Ragna held the
+  half-carved boat herself and didn't look at it, had nobody to send, and
+  the paper went north alone with the party; nobody said "Aye" to "that
+  knee"; Ragna's son's first cod was never promised aloud. Her later
+  beats (Chapter 6's walk back from her own lines, Chapter 8's ship)
+  can't play.
