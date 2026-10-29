@@ -420,7 +420,7 @@ impl CampScreen {
             }
             None => {}
         }
-        if self.sections.focus() != before || self.focus != Focus::Sections {
+        if self.sections.focus() != before {
             self.refresh(ctx, 0);
         }
         // An empty list can't take the focus.

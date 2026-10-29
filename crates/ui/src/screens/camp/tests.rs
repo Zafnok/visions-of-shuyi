@@ -212,6 +212,29 @@ fn an_empty_list_keeps_the_focus_in_the_sections() {
     assert_eq!(view.empty, ctx.text("camp.empty.events"));
 }
 
+/// Back from a conversation that played its own music, camp's track
+/// starts again; back from one that left camp's playing, nothing changes.
+#[test]
+fn camp_takes_its_track_back_after_a_conversations_music() {
+    use crate::audio::MusicClock;
+    let mut ctx = ctx();
+    let mut s = CampScreen::new(&ctx, bonded(&ctx));
+    update(&mut s, &mut ctx, &[]);
+    let track = s.music.as_ref().map(|m| m.track().to_owned()).unwrap();
+    ctx.audio.take();
+    let clock = |cue: &str| MusicClock {
+        cue: cue.into(),
+        position: 1.0,
+        length: 60.0,
+    };
+    ctx.music_clock = Some(clock(&track));
+    s.uncovered(&mut ctx, None);
+    assert_eq!(ctx.audio.take(), []);
+    ctx.music_clock = Some(clock("talk_calm"));
+    s.uncovered(&mut ctx, None);
+    assert_eq!(ctx.audio.take(), [AudioRequest::PlayMusic { cue: track }]);
+}
+
 /// What is said instead of an empty list, in the panel under its title.
 #[test]
 fn an_empty_list_says_so_in_the_panel() {
@@ -250,6 +273,11 @@ fn camp_plays_the_camp_pool_in_turn() {
         other => panic!("{other:?}"),
     };
     let at = pool.iter().position(|c| *c == first).unwrap();
+    // The pick a fresh context makes (the same seed, no picks yet).
+    assert_eq!(
+        Some(first.clone()),
+        crate::screen::tests::ctx().pick_music(POOL)
+    );
     let length = f64::from(ctx.game.content.audio.music[&first].length_ms) / 1000.0;
     ctx.clock_s += length - 1.0;
     update(&mut s, &mut ctx, &[]);
