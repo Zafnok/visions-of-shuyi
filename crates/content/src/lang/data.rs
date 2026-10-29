@@ -21,8 +21,8 @@ use crate::dialogue::DialogueTable;
 use crate::lesson::{self, Lesson, LessonTable};
 use crate::names::Names;
 use crate::terrain::TerrainDef;
-use crate::worldmap::WorldMapDef;
 use crate::tip::{MAX_LINE_CHARS, MAX_TEXT_LINES, MAX_TITLE_CHARS, Tip, TipTable};
+use crate::worldmap::WorldMapDef;
 
 /// Today's English for everything `data.ron` and `dialogue/*.ron` can
 /// translate, by key: data text by key (`<file>.<id>.<field>`,
@@ -328,7 +328,12 @@ impl Lang {
     }
 
     /// The name of place `place` of world map `map` in language `code`.
-    pub fn place_name<'a>(&'a self, code: &LangCode, map: &'a WorldMapDef, place: &'a str) -> &'a str {
+    pub fn place_name<'a>(
+        &'a self,
+        code: &LangCode,
+        map: &'a WorldMapDef,
+        place: &'a str,
+    ) -> &'a str {
         self.0
             .data_text(code, || place_key(&map.map.id, place), map.name(place))
     }

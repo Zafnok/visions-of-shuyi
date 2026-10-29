@@ -40,7 +40,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
-use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, MapZoom, Settings};
+use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, MapZoom, Settings, TownsOpen};
 use crate::tips::reset_tips;
 
 /// The Options screen for this game
@@ -81,13 +81,15 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
 /// `Intro`: it has no title cinematic yet (ticket 1044 adds it, and should
-/// take the row out of this list).
-pub const PC_ONLY: [Row; 5] = [
+/// take the row out of this list). `Open towns on arrival`: it has no world
+/// map yet (1007; the row comes with it).
+pub const PC_ONLY: [Row; 6] = [
     Row::Fullscreen,
     Row::Theme,
     Row::MapLook,
     Row::MapZoom,
     Row::Intro,
+    Row::Towns,
 ];
 
 /// One row of the screen.
@@ -115,6 +117,8 @@ pub enum Row {
     MapZoom,
     /// [`ShuyiSettings::intro`](crate::ShuyiSettings::intro).
     Intro,
+    /// [`ShuyiSettings::towns`](crate::ShuyiSettings::towns): on arrival or not.
+    Towns,
     /// [`Settings::theme`].
     Theme,
     /// [`Settings::music_volume`].
@@ -137,7 +141,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 19] = [
+    pub const ALL: [Row; 20] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -148,6 +152,7 @@ impl Row {
         Row::MapLook,
         Row::MapZoom,
         Row::Intro,
+        Row::Towns,
         Row::Theme,
         Row::MusicVolume,
         Row::SoundVolume,
@@ -173,6 +178,7 @@ impl Row {
             Row::MapLook => "options.row.map_look",
             Row::MapZoom => "options.row.map_zoom",
             Row::Intro => "options.row.intro",
+            Row::Towns => "options.row.towns",
             Row::Theme => "options.row.theme",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
@@ -231,6 +237,20 @@ impl Row {
                 RowValue::toggle(
                     |ctx| ctx.settings().game.intro,
                     |ctx, on| ctx.preview_settings(|s| s.game.intro = on),
+                ),
+            ),
+            Row::Towns => OptionRow::new(
+                self.key(),
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.towns == TownsOpen::OnArrival,
+                    |ctx, on| {
+                        let towns = if on {
+                            TownsOpen::OnArrival
+                        } else {
+                            TownsOpen::OnConfirm
+                        };
+                        ctx.preview_settings(|s| s.game.towns = towns)
+                    },
                 ),
             ),
             Row::Cursor => cursor_row(),

@@ -15,17 +15,17 @@ expression: h.snapshot()
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
                     │   Intro                     Off                          │                    
-                    │   Colors╔══════════════════════════════════════╗         │                    
-                    │   Music ║                                      ║         │                    
-                    │   Sound ║ Restore every option to its default? ║         │                    
-                    │         ║ f yes / d no                         ║         │                    
-                    │   Layout║                                      ║         │                    
-                    │   Key bi╚══════════════════════════════════════╝         │                    
+                    │   Open t╔══════════════════════════════════════╗         │                    
+                    │   Colors║                                      ║         │                    
+                    │   Music ║ Restore every option to its default? ║         │                    
+                    │   Sound ║ f yes / d no                         ║         │                    
+                    │         ║                                      ║         │                    
+                    │   Layout╚══════════════════════════════════════╝         │                    
+                    │   Key bindings                                           │                    
                     │                                                          │                    
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
                     └──────────────────────────────────────────────────────────┘                    
-                                                                                                    
                                                                                                     
                                                                                                     
                                                                                                     
@@ -56,9 +56,9 @@ aaaaaaaaaaaaaaaaaaaabdddddddddeddddddddddddddddddddddddddddddddddddddedddddddddb
 aaaaaaaaaaaaaaaaaaaabdddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddggggggggggggggggggddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

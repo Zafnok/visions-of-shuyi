@@ -78,6 +78,41 @@ needed). Key choices are Nick's; the defaults below are his.
   layout *previous* unit is the right-most key (`;`) and *next* is `L`. If
   that feels backwards, swap them.
 
+### World map
+
+Decided 2026-10-29, ticket 1007. Nick asked, after the road mockups,
+for "shortcut (remappable, optional) to jump to character. also should
+have another (remappable, optional) shortcut to open up POI filter to
+quickly find where is something on world map (i.e. towns, cycle quickly
+between them)"; then picked "Yes, as shown" for how they work and
+"Bound by default". For the buttons: "battle is a different context than
+world map... I thought I already said, different contexts can reuse
+buttons. It just can't reuse in same context."
+
+| Action | Right-handed | Left-handed | Controller | Notes |
+| ------ | ------------ | ----------- | ---------- | ----- |
+| Your army (the cursor to the army) | `C` | `,` | North | Optional; its own key group |
+| Find | `X` | `.` | West | Optional; its own key group |
+
+- They are in a **key group of their own** (World map), so they may share
+  a key or button with the battle's actions (North is Unit info, West is
+  Danger zone in battle): the world map is never on screen with a battle.
+- **On the world map**, the battle's keys mean: the cursor's keys jump to
+  the nearest open place that way; Confirm sends the army to the place
+  under the cursor, or enters the army's own (a town); Previous / Next
+  ready unit go through the places in the map's order; Cancel opens the
+  menu (Save, Camp, Options).
+- **Find** lists Your army, Towns, Story battles and Side quests. The
+  highlighted row's nearest place (to the army) gets the cursor; Previous
+  / Next ready unit go through that kind's places until Find is closed
+  (Confirm or Cancel; Find again closes it too).
+- The left-handed keys are the finger mirrors of `C` and `X`.
+- **On the Key bindings screen** they will be under "On the world map":
+  the screen had no room until the engine's list scrolls (1198,
+  engine#2394). Until then their keys work but can't be changed.
+- The Playdate has no world map yet: no buttons there, and its Key
+  bindings screen leaves them out.
+
 ### Zoom map
 
 Playtest round 3 (2026-10-16): starting at 2× stays ("Otherwise 2x is ok

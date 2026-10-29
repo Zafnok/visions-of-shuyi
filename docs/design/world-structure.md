@@ -179,6 +179,46 @@ still follows `weapons-and-items.md` / 0408.
 - Each act's map has its own enemy-level range, which is what the
   random-skirmish cap is measured against.
 
+## The world map screen (ticket 1007)
+
+What Nick decided while it was built (the look: `look-and-feel.md`, *The
+world map*; the keys: `controls.md`, *World map*):
+
+- **Battles are forced** (Nick: "battles forced"): when the army arrives
+  at a battle not yet won, it starts (its chapter's intro scenes, then
+  camp and Preparations as usual).
+- **Towns open on arrival** (Nick: "towns open on arrival with option in
+  options menu to only open when you explicitly click confirm first"):
+  Options has `Open towns on arrival` (On by default); off, a town opens
+  only on Confirm on the army's own place.
+- **No "Save your progress?" after a world-map battle** (Nick: "Straight
+  to the map"): the victory scenes end and the map is back with what the
+  battle opened; save from the map's menu.
+
+*Claude's starting rules* (for the Act 1 playtest, 1064):
+
+- **Places you can't reach yet aren't shown at all**, and neither are
+  their roads: a place appears when it opens (the design's "discovered").
+  Example: Wolf Pass appears on the map once Stone Mill is won.
+- **The army walks around a battle it hasn't won** when another road
+  leads there; if the only road passes through one, it stops there and
+  the battle starts. Example: sent past Old Bridge to a place behind it,
+  the army stops at the bridge and fights.
+- **The army walks one place every 0.2 s** (*tunable*); Confirm finishes
+  the walk at once.
+- **A town with several shops lists them first** (as Sacred Stones'
+  towns list their Armory and Vendor); a town with one opens it.
+- **A town's shop trades with the convoy** (the stock): it sells only
+  what is in the stock, not what the army holds; its Blacksmith also
+  mends the weapons the army holds.
+- **The cursor's keys jump to the nearest place in that direction**
+  (within about 60° of it); nothing that way, the cursor stays.
+- **Find's nearest place** is the nearest to the army, so Towns starts on
+  the town the army is in, if it is in one.
+- **A place's own music plays while the army stands there** (a town's
+  `village`, a capital's `capital`); the map's track while it walks and
+  elsewhere.
+
 ## Saving and camp
 
 - **World map: save anywhere** (Nick, Q5 A). The world map menu has `Save`

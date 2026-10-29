@@ -199,7 +199,10 @@ fn music_size_ground_and_places_are_checked() {
         r#"(from: "a", to: "edge", via: [(2, 0)])"#,
     )
     .replace(r#"music: "world_map""#, r#"music: "nope""#)
-    .replace("size: (20, 10)", r#"size: (20, 2), ground: ["~~~~~~~~~~~~~~~~~~~~", "~~x"]"#)
+    .replace(
+        "size: (20, 10)",
+        r#"size: (20, 2), ground: ["~~~~~~~~~~~~~~~~~~~~", "~~x"]"#,
+    )
     .replace("levels: (1, 5)", "levels: (6, 5)");
     assert_eq!(
         problems(&bad),
@@ -215,12 +218,18 @@ fn music_size_ground_and_places_are_checked() {
         ]
     );
     let big = text("", "").replace("size: (20, 10)", "size: (71, 10)");
-    assert_eq!(problems(&big), ["size (71, 10) must be from (1, 1) to (70, 30)"]);
+    assert_eq!(
+        problems(&big),
+        ["size (71, 10) must be from (1, 1) to (70, 30)"]
+    );
 }
 
 #[test]
 fn a_place_listed_twice_is_an_error() {
-    let twice = text(r#"(id: "a", name: "A again", pos: (5, 2), kind: Empty),"#, "");
+    let twice = text(
+        r#"(id: "a", name: "A again", pos: (5, 2), kind: Empty),"#,
+        "",
+    );
     assert!(problems(&twice).contains(&"place \"a\" is listed twice".to_owned()));
 }
 

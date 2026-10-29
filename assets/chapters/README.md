@@ -15,6 +15,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
     battle: "ch01",                     // assets/battles/ch01.ron
     victory_scenes: ["ch01_victory", "ch01_tbc"],
     next: Some("ch02"),                 // or None: "To be continued"
+    world_map: None,                    // or Some("act1"): see below
 )
 ```
 
@@ -27,9 +28,22 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
 | `battle` | The battle's id (`assets/battles/`). |
 | `victory_scenes` | Scenes played in order after a victory. Default: none. They play for the army as the battle left it: a companion who died in Classic is gone, and their lines must be in `@if` blocks (`assets/dialogue/README.md`, "Who is still there"). |
 | `next` | The next chapter's id, or `None`: the game shows "To be continued" and returns to the title. |
+| `world_map` | The world map this chapter plays on (`assets/worldmaps/`, 1007), or `None` (the default): a linear chapter. |
 
-A chapter is one battle for now; chapters with several battles come with
-the world map (1007, 1008).
+### World-map chapters (1007)
+
+A chapter with `world_map: Some("<map>")` lives on that world map: its
+story battle is the map's place whose kind is `StoryBattle("<this
+chapter>")` (each such chapter has exactly one, and the map names no
+chapter that doesn't point back). When the chapter begins, the army is put
+on the map (at its `start`, the first time on that map) and the map shows;
+the chapter's `intro_scenes` play when the army **arrives** at its story
+battle's place, then its battle; after a victory, its `victory_scenes`,
+then the place is cleared and `next` begins. No "Save your progress?":
+the player saves from the map's menu. A `next` that is a linear chapter
+starts as linear chapters do; `None` after the act's last battle shows
+"To be continued". The places a chapter opens are the map's business
+(their `opens_when`, `assets/worldmaps/README.md`).
 
 Battle notes (0411) are written with the chapter's content, but live in
 the battle file (`battle_notes`, `assets/battles/README.md`): they name

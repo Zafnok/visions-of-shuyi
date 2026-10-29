@@ -320,7 +320,10 @@ Candle joins outside battle.
   screens (after 0027) → **1007** the world map (after 0409, 0025,
   0026; mockup first) → **1008** skirmishes → **1065** the act ends
   (closing scene, "Act 1 ends", the army carried over) · **1074** a
-  discovered side quest shows when it closes (after 1007).
+  discovered side quest shows when it closes (after 1007) · **1081** Vix
+  explains the world map (after 1007, 1070) · **1082** icons for the
+  world map's picture look (after 1007) · **1198** the world map's
+  shortcuts on the Key bindings screen (after 1007, engine#2394).
 - **B. Battle rules:** **0319** escape, a boss who retreats, a boss
   who can't die, a scripted death (after 0069) → **0324** the escape
   objective names its exit · **0511** bosses use their

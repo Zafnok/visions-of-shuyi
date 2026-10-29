@@ -1,11 +1,14 @@
 ---
-source: crates/ui/tests/credits.rs
+source: crates/ui/tests/it/credits.rs
 expression: h.snapshot()
 ---
                                                                                                     
   ┌─ Credits ────────────────────────────────────────────────────────────────────────────────────┐  
   │                                                                                              │  
   │ Music                                                                                        │  
+  │                                                                                              │  
+  │   "Adventures in Adventureland" by Kevin MacLeod                                             │  
+  │     CC-BY-4.0 · https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029      │  
   │                                                                                              │  
   │   "Aria" by Kistol                                                                           │  
   │     CC0-1.0 · https://opengameart.org/content/aria                                           │  
@@ -26,10 +29,7 @@ expression: h.snapshot()
   │     CC-BY-4.0 · https://opengameart.org/content/classical-murder                             │  
   │                                                                                              │  
   │   "Dark Forest Theme" by cynicmusic                                                          │  
-  │     CC0-1.0 · https://opengameart.org/content/dark-forest-theme                              │  
-  │                                                                                              │  
-  │   "Dark Quest" by Alexandr Zhelanov                                                          │  
-  │     CC-BY-4.0 · https://opengameart.org/content/dark-quest                                 ▼ │  
+  │     CC0-1.0 · https://opengameart.org/content/dark-forest-theme                            ▼ │  
   │                                                                                              │  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
                                                                                                     
@@ -39,6 +39,9 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdeeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddddddddddddddddbaa
@@ -59,10 +62,7 @@ aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 aabdddddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabdddddffffffffffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddddddfdbaa
+aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddfdbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

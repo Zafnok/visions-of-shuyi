@@ -321,13 +321,6 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let places = (maps.as_ref().ok(), openings.as_ref().ok());
     let away = (supports.as_ref().ok(), camp.as_ref().ok());
     let dialogue = check_dialogue(scripts, places, story, away);
-    let worldmaps = load_worldmaps(
-        fields,
-        chapters.as_ref().ok(),
-        dialogue.as_ref().ok(),
-        cast,
-        (items.as_ref().ok(), cues),
-    );
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -365,9 +358,9 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         title: title_art,
         cinematics,
         openings,
-        worldmaps,
+        worldmaps: Ok(BTreeMap::new()),
     };
-    units.lang = lang::load(data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok()));
+    load_worldmaps_and_lang(&mut units, terrain.as_ref().ok(), maps.as_ref().ok());
     let themes = palette::load_themes(palette.as_ref().ok());
     let content = assemble(
         palette,
@@ -381,18 +374,27 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     with_themes(content.and_then(cinematic::check_fights), themes)
 }
 
-/// The world maps, checked against the `battles`, `chapters`, `scenes`,
-/// `characters`, items and music cues that loaded; none when one of them
-/// failed (its errors are reported already).
-fn load_worldmaps(
-    battles: Option<&BTreeMap<String, BattleDef>>,
-    chapters: Option<&BTreeMap<String, ChapterDef>>,
-    scenes: Option<&DialogueTable>,
-    characters: Option<&CharacterTable>,
-    (items, audio): (Option<&ItemTable>, Option<&AudioManifest>),
-) -> Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>> {
-    let (Some(battles), Some(chapters), Some(dialogue), Some(characters), Some(items), Some(audio)) =
-        (battles, chapters, scenes, characters, items, audio)
+/// Loads the world maps into `units` (checked against its battles,
+/// chapters, scenes, characters, items and music cues), then the
+/// languages, whose data text names the maps' places.
+fn load_worldmaps_and_lang(
+    units: &mut Loaded,
+    terrain: Option<&TerrainDef>,
+    maps: Option<&BTreeMap<String, MapDef>>,
+) {
+    units.worldmaps = load_worldmaps(units);
+    units.lang = lang::load(data_text(units, terrain, maps));
+}
+
+/// The world maps, checked against what `units` loaded; none when one of
+/// the files they need failed (its errors are reported already).
+fn load_worldmaps(units: &Loaded) -> Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>> {
+    let (Ok(battles), Ok(chapters), Ok(dialogue)) =
+        (&units.battles, &units.chapters, &units.dialogue)
+    else {
+        return Ok(BTreeMap::new());
+    };
+    let (Ok(characters), Ok(items), Ok(audio)) = (&units.characters, &units.items, &units.audio)
     else {
         return Ok(BTreeMap::new());
     };

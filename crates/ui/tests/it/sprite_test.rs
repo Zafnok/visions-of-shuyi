@@ -15,7 +15,7 @@ use trpg_ui::input::RIGHT_HANDED;
 /// and the map skin come after it).
 fn opened() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("F2 Up Up Up Up Up Up Up f");
+    h.keys("F2 Up Up Up Up Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "sprite_test"]);
     h
 }

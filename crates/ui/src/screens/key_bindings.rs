@@ -64,7 +64,7 @@ fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::input::{CRANK_ACTIONS, NOT_ON_THE_PLAYDATE};
+    use crate::input::{CRANK_ACTIONS, NOT_LISTED_YET, NOT_ON_THE_PLAYDATE};
     use crate::screen::tests::ctx;
 
     /// This game's rows: every rebindable action once but the crank's,
@@ -79,6 +79,8 @@ mod tests {
         let mut rebindable: Vec<Action> = Action::ALL
             .into_iter()
             .filter(|a| a.is_rebindable() && !CRANK_ACTIONS.contains(a))
+            // engine-friction: engine#2394
+            .filter(|a| !NOT_LISTED_YET.contains(a))
             .collect();
         rebindable.sort();
         assert_eq!(listed, rebindable);
@@ -88,16 +90,19 @@ mod tests {
         let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
         assert_eq!(
             headings,
-            [
-                "Must have a key",
-                "Optional",
-                "In the dialogue log",
-                "On the world map"
-            ]
+            ["Must have a key", "Optional", "In the dialogue log"]
         );
         assert_eq!(view.groups[2].rows[0].label, "Open the log");
-        let world: Vec<_> = view.groups[3].rows.iter().map(|r| r.label.as_str()).collect();
-        assert_eq!(world, ["Your army", "Find"]);
+        // The world map's rows, once listed (engine#2394).
+        let c = ctx();
+        assert_eq!(
+            label(&c, &crate::input::WORLD_MAP_ROWS, Action::WorldArmy),
+            "Your army"
+        );
+        assert_eq!(
+            label(&c, &crate::input::WORLD_MAP_ROWS, Action::WorldFind),
+            "Find"
+        );
     }
 
     /// The Playdate's rows (ticket 1045): every rebindable action once,

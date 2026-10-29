@@ -18,6 +18,8 @@ pub mod profile;
 pub mod results;
 pub mod save;
 pub mod title;
+pub mod town;
+pub mod world_map;
 
 use crate::prelude::*;
 pub use battle::BattleScreen;
@@ -37,6 +39,8 @@ pub use profile::ProfileScreen;
 pub use results::ResultsScreen;
 pub use save::{SavePromptScreen, SlotPickerScreen};
 pub use title::TitleScreen;
+pub use town::TownScreen;
+pub use world_map::{WorldBattle, WorldMapScreen};
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, SkinSet, Transition};

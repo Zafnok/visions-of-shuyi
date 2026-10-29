@@ -9,8 +9,14 @@
 //!     │            → (Camp →) next chapter, or "To be continued" → title
 //!     ├─ defeat  → Game Over → Retry (the battle again) | Title
 //!     └─ Suspend → the suspend save → title]
-//! Load Game → slot picker → (Camp →) the chapter after the one the save cleared
+//! Load Game → slot picker → (Camp →) the chapter after the one the save cleared,
+//!             or the world map where a world-map save was made
 //! Continue  → the suspended battle, where it was (the save is deleted)
+//!
+//! A world-map chapter (1007): → the world map
+//!     → travel → arrive at a battle (its intro scenes → (Camp → Preparations) → battle
+//!         → victory → results → victory scenes → the place cleared)
+//!     → the world map again (the next act's, after the act's final battle)
 //! ```
 //!
 //! [`FlowScreen`] is one screen on the stack that owns the campaign and
@@ -39,6 +45,19 @@
 //! rules*). It works on a copy of the campaign, which the flow takes back
 //! when camp breaks. Restarting a battle, `Retry` and `Continue` don't
 //! open it. (The world map's `Camp`, 1007, opens the same screen.)
+//!
+//! **The world map** (1007, `world-structure.md`): a chapter with a
+//! `world_map` puts the army on that map ([`Campaign::enter_world`]) and
+//! shows it ([`WorldMapScreen`]). The map pops when the army arrives at a
+//! battle not yet won (a [`WorldBattle`]): a story battle plays its
+//! chapter's intro scenes and battle as a linear chapter does; a side
+//! quest its own, with the chapter's shop. After the victory scenes the
+//! place is cleared ([`Campaign::clear_node`]; a story battle's chapter
+//! gives way to the next) and the map is back with no save prompt (Nick:
+//! save from its menu); the act's final story battle moves on to the
+//! next act's map, or, with no chapter after it, "To be continued". A
+//! chapter after a story battle that isn't on a world map starts as a
+//! linear chapter does.
 //!
 //! **Saves** (`death-and-difficulty.md`, ADR-0039). A chapter save holds
 //! the campaign once its chapter is won, so its
@@ -69,7 +88,7 @@ use core::any::Any;
 
 use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, new_campaign};
 use trpg_core::{
-    BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile,
+    BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile, NodeKind,
     Preparations, SaveFile, SavePoint, Shop, TutorialLevel,
 };
 
@@ -85,7 +104,7 @@ use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::mode_select::ModeSelectScreen;
 use crate::screens::preparations::PreparationsScreen;
 use crate::screens::save::{SavePromptScreen, SlotOutcome, SlotPickerScreen};
-use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen};
+use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen, WorldBattle, WorldMapScreen};
 use crate::storage::Storage;
 
 /// The Preparations shop of `chapter`'s battle (ticket 0443): what its
@@ -110,8 +129,43 @@ fn play_battle_music(ctx: &mut Ctx, def: &BattleDef) -> Option<String> {
     cue
 }
 
+/// The battle at the army's place on the world map, if it isn't won yet:
+/// its place, and the chapter that plays it (a story battle's chapter; for
+/// a side quest, one made of the quest's battle and scenes, with the
+/// campaign's chapter's number for its shop).
+fn world_fight(ctx: &Ctx, campaign: &Campaign) -> Option<(String, ChapterDef)> {
+    let content = &ctx.game.content;
+    let world = campaign.world.as_ref()?;
+    let map = &content.worldmaps.get(&world.map)?.map;
+    if !map.is_unwon_battle(&world.at, campaign) {
+        return None;
+    }
+    let chapter = match &map.node(&world.at)?.kind {
+        NodeKind::StoryBattle(chapter) => content.chapters.get(chapter)?.clone(),
+        NodeKind::SideQuest(quest) => {
+            let current = content.chapters.get(&campaign.chapter);
+            ChapterDef {
+                id: world.at.clone(),
+                title: current.map(|c| c.title.clone()).unwrap_or_default(),
+                number: current.and_then(|c| c.number),
+                intro_scenes: quest.intro_scenes.clone(),
+                battle: quest.battle.clone(),
+                victory_scenes: quest.victory_scenes.clone(),
+                next: None,
+                world_map: Some(world.map.clone()),
+            }
+        }
+        _ => return None,
+    };
+    Some((world.at.clone(), chapter))
+}
+
 /// The chapter the debug Quick Battle plays (`assets-test/chapters/quick.ron`).
 pub const QUICK_CHAPTER: &str = "quick";
+
+/// The first chapter of the test world map (`assets-test/worldmaps/`,
+/// 1007), which the debug menu's "Test world map" starts.
+pub const TEST_WORLD_CHAPTER: &str = "test_wm1";
 
 /// The screen the flow has open over it, with what the flow needs to know
 /// to read what it pops with.
@@ -141,6 +195,8 @@ enum Stage {
     Slots(bool),
     /// After the last chapter.
     ToBeContinued,
+    /// The world map (1007).
+    WorldMap,
 }
 
 /// What comes after the scenes being played.
@@ -188,6 +244,8 @@ pub struct FlowScreen {
     /// The chapter to start once camp breaks; `None`: the chapter's
     /// battle.
     after_camp: Option<String>,
+    /// The world map's place whose battle is being played (1007).
+    world_node: Option<String>,
 }
 
 impl FlowScreen {
@@ -211,6 +269,7 @@ impl FlowScreen {
             music: None,
             camped: false,
             after_camp: None,
+            world_node: None,
         }
     }
 
@@ -242,8 +301,14 @@ impl FlowScreen {
             return Err(SaveError::Corrupt);
         };
         // A chapter or battle the game no longer has can't be continued.
-        let chapter = ctx.game.content.chapters.get(&campaign.chapter);
-        let chapter = chapter.cloned().ok_or(SaveError::Corrupt)?;
+        // On the world map, the battle is the army's place's (a side
+        // quest's is its own).
+        let fight = world_fight(ctx, &campaign);
+        let chapter = match &fight {
+            Some((_, chapter)) => Some(chapter.clone()),
+            None => ctx.game.content.chapters.get(&campaign.chapter).cloned(),
+        };
+        let chapter = chapter.ok_or(SaveError::Corrupt)?;
         let def = ctx.game.content.battles.get(&chapter.battle);
         let def = def.cloned().ok_or(SaveError::Corrupt)?;
         let tables = ctx.game.content.tables();
@@ -262,6 +327,7 @@ impl FlowScreen {
         let music = play_battle_music(ctx, &def);
         let mut flow = Self::empty();
         flow.music.clone_from(&music);
+        flow.world_node = fight.map(|(node, _)| node);
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
         let look = ctx.game.content.battle_look(&def);
@@ -289,6 +355,23 @@ impl FlowScreen {
         QUICK_CHAPTER.clone_into(&mut campaign.chapter);
         let mut flow = Self::empty();
         flow.can_leave = true;
+        flow.begin(ctx, campaign);
+        Some(flow)
+    }
+
+    /// The test world map (1007, the debug menu's "Test world map"): its
+    /// first chapter ([`TEST_WORLD_CHAPTER`]) with the test battle's army
+    /// and 2 000 gold to shop with, in Classic. `None` if the content lacks
+    /// it.
+    pub fn test_world_map(ctx: &mut Ctx) -> Option<Self> {
+        let content = &ctx.game.content;
+        content.chapters.get(TEST_WORLD_CHAPTER)?;
+        let def = content.battles.get("test")?;
+        let lead = ctx.game.lead.clone();
+        let mut campaign = battle_campaign(content, def, GameMode::Classic, lead);
+        campaign.gold = 2000;
+        TEST_WORLD_CHAPTER.clone_into(&mut campaign.chapter);
+        let mut flow = Self::empty();
         flow.begin(ctx, campaign);
         Some(flow)
     }
@@ -365,14 +448,96 @@ impl FlowScreen {
         self.next_chapter(ctx);
     }
 
-    /// Starts chapter `id` with its intro scenes. A chapter missing from
-    /// the content (validation rules it out) ends the flow at "To be
-    /// continued".
+    /// Goes on with the loaded world-map save `campaign`: its map, where
+    /// the army was.
+    fn begin_world(&mut self, ctx: &mut Ctx, campaign: Campaign) {
+        self.chapter = ctx.game.content.chapters.get(&campaign.chapter).cloned();
+        self.adopt(ctx, campaign);
+        self.world_map();
+    }
+
+    /// Shows the world map, the campaign's army on it.
+    fn world_map(&mut self) {
+        let Some(campaign) = &self.campaign else {
+            return;
+        };
+        self.world_node = None;
+        let screen = WorldMapScreen::new(campaign.clone(), self.started_at);
+        self.show(Stage::WorldMap, Box::new(screen));
+    }
+
+    /// The army arrived at `node`'s battle on the world map: its chapter's
+    /// intro scenes, then the battle.
+    fn arrived(&mut self, ctx: &mut Ctx, node: &str) {
+        let Some((_, chapter)) = self.campaign.as_ref().and_then(|c| world_fight(ctx, c)) else {
+            self.world_map();
+            return;
+        };
+        self.world_node = Some(node.to_owned());
+        self.scenes = chapter.intro_scenes.iter().cloned().collect();
+        self.then = Then::Battle;
+        self.chapter = Some(chapter);
+        self.next_scene(ctx);
+    }
+
+    /// After a world-map battle's victory scenes: its place is cleared,
+    /// then the map again (the next act's after its final battle), or, after
+    /// a story battle whose next chapter isn't on a world map, that
+    /// chapter; "To be continued" when none follows the act's last.
+    fn world_won(&mut self, ctx: &mut Ctx, node: &str) {
+        let content = &ctx.game.content;
+        let story = self
+            .chapter
+            .as_ref()
+            .filter(|c| content.chapters.contains_key(&c.id) && c.id != node);
+        let is_story = story.is_some();
+        let next = story.and_then(|c| c.next.clone());
+        let Some(campaign) = &mut self.campaign else {
+            return;
+        };
+        let Some(def) = campaign
+            .world
+            .as_ref()
+            .and_then(|w| content.worldmaps.get(&w.map))
+        else {
+            return;
+        };
+        let after = def.map.next.as_ref().and_then(|n| content.worldmaps.get(n));
+        campaign.clear_node(&def.map, node, next.as_deref(), after.map(|d| &d.map));
+        if !is_story {
+            self.world_map();
+            return;
+        }
+        let next_chapter = next.as_ref().and_then(|n| content.chapters.get(n)).cloned();
+        match next_chapter {
+            None => self.the_end(ctx),
+            Some(c) if c.world_map.is_none() => self.start_chapter(ctx, &c.id),
+            Some(c) => {
+                self.chapter = Some(c);
+                self.world_map();
+            }
+        }
+    }
+
+    /// Starts chapter `id` with its intro scenes; a world-map chapter on
+    /// its map instead (its scenes play when the army arrives). A chapter
+    /// missing from the content (validation rules it out) ends the flow at
+    /// "To be continued".
     fn start_chapter(&mut self, ctx: &mut Ctx, id: &str) {
         let Some(chapter) = ctx.game.content.chapters.get(id).cloned() else {
             self.the_end(ctx);
             return;
         };
+        let map = chapter.world_map.as_ref();
+        if let Some(map) = map.and_then(|m| ctx.game.content.worldmaps.get(m)) {
+            if let Some(campaign) = &mut self.campaign {
+                id.clone_into(&mut campaign.chapter);
+                campaign.enter_world(&map.map);
+            }
+            self.chapter = Some(chapter);
+            self.world_map();
+            return;
+        }
         self.scenes = chapter.intro_scenes.iter().cloned().collect();
         self.then = Then::Battle;
         self.chapter = Some(chapter);
@@ -393,6 +558,11 @@ impl FlowScreen {
         }
         match self.then {
             Then::Battle => self.start_battle(ctx),
+            // A world-map battle: its place is cleared, and the map again.
+            Then::NextChapter if self.world_node.is_some() => {
+                let node = self.world_node.take().unwrap_or_default();
+                self.world_won(ctx, &node);
+            }
             // The chapter is over: the save prompt, then the next one.
             Then::NextChapter => {
                 self.show(Stage::SavePrompt, Box::new(SavePromptScreen::new(ctx)));
@@ -646,6 +816,9 @@ impl FlowScreen {
             },
             Stage::Slots(saving) => match result.and_then(ScreenResult::take) {
                 Some(SlotOutcome::Saved(_)) => self.next_chapter(ctx),
+                Some(SlotOutcome::Loaded(_, file)) if file.point == SavePoint::WorldMap => {
+                    self.begin_world(ctx, file.campaign);
+                }
                 Some(SlotOutcome::Loaded(_, file)) => self.begin_loaded(ctx, file.campaign),
                 // Back from saving: the question again. Back from
                 // loading: the title.
@@ -655,6 +828,14 @@ impl FlowScreen {
                 None => {}
             },
             Stage::ToBeContinued => {}
+            Stage::WorldMap => {
+                let battle = result.and_then(ScreenResult::take::<WorldBattle>);
+                if let Some(WorldBattle { mut campaign, node }) = battle {
+                    Self::take_in(&mut campaign, ctx, self.started_at);
+                    self.campaign = Some(campaign);
+                    self.arrived(ctx, &node);
+                }
+            }
         }
     }
 
@@ -665,7 +846,7 @@ impl FlowScreen {
     /// ([`Ctx::campaign_lessons`], which only grows from the campaign's
     /// own, 0456); its playtime. Its saves keep them. Returns whether it
     /// switched to Casual.
-    fn take_in(campaign: &mut Campaign, ctx: &Ctx, started_at: f64) -> bool {
+    pub(crate) fn take_in(campaign: &mut Campaign, ctx: &Ctx, started_at: f64) -> bool {
         let casual = ctx.game.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode();
         if let Some(level) = ctx.game.campaign_tutorial {
             campaign.tutorial = level;

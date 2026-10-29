@@ -11,9 +11,9 @@ use proptest::prelude::*;
 use super::*;
 use crate::battle::GameMode;
 use crate::battle::tests::{items_for, lord, p, unit};
-use crate::shop::{ShopError, ShopKind};
 use crate::item::Stock;
 use crate::lead::{LeadGender, LeadProfile};
+use crate::shop::{ShopError, ShopKind};
 use crate::unit::{Faction, Unit};
 
 fn node(id: &str, kind: NodeKind, opens_when: Vec<NodeCondition>) -> WorldNode {
@@ -63,7 +63,10 @@ fn map() -> WorldMap {
                     battle: "quest".into(),
                     ..SideQuest::default()
                 }),
-                vec![cleared("ch1"), NodeCondition::Alive(CharacterId("ann".into()))],
+                vec![
+                    cleared("ch1"),
+                    NodeCondition::Alive(CharacterId("ann".into())),
+                ],
             ),
         ],
         roads: vec![
@@ -243,14 +246,20 @@ fn a_won_battle_is_passed_through() {
     let mut c = campaign();
     c.clear_node(&map(), "ch1", Some("ch02"), None);
     travel(&mut c, "quest").expect("open");
-    assert_eq!(travel(&mut c, "camp"), Ok(vec![route(&["quest", "ch1", "town", "camp"])]));
+    assert_eq!(
+        travel(&mut c, "camp"),
+        Ok(vec![route(&["quest", "ch1", "town", "camp"])])
+    );
 }
 
 #[test]
 fn entering_a_town_opens_it_and_an_empty_place_has_nothing() {
     let mut c = campaign();
     let enter = WorldCommand::Enter;
-    assert_eq!(c.world_command(&map(), &enter), Err(WorldError::NothingHere));
+    assert_eq!(
+        c.world_command(&map(), &enter),
+        Err(WorldError::NothingHere)
+    );
     travel(&mut c, "town").expect("open");
     assert_eq!(
         c.world_command(&map(), &enter),
@@ -268,7 +277,10 @@ fn entering_an_unwon_battle_starts_it_and_a_won_one_has_nothing() {
         Ok(vec![WorldEvent::BattleAhead("ch1".into())])
     );
     c.clear_node(&map(), "ch1", Some("ch02"), None);
-    assert_eq!(c.world_command(&map(), &enter), Err(WorldError::NothingHere));
+    assert_eq!(
+        c.world_command(&map(), &enter),
+        Err(WorldError::NothingHere)
+    );
 }
 
 #[test]
@@ -356,7 +368,7 @@ fn clearing_off_the_map_does_nothing() {
     let mut c = campaign();
     c.world = None;
     let before = c.clone();
-    assert!(c.clear_node(&map(), "ch1", Some("ch02"), None).is_empty());
+    assert_eq!(c.clear_node(&map(), "ch1", Some("ch02"), None), []);
     assert_eq!(c, before);
 }
 
@@ -406,14 +418,20 @@ fn a_towns_shop_buys_into_the_stock_and_sells_from_it() {
         kind: ShopKind::Armoury,
         stock: vec![weapon.clone()],
     };
-    assert_eq!(c.trade(&armoury, &items, &TownTrade::Buy(weapon.clone())), Ok(0));
+    assert_eq!(
+        c.trade(&armoury, &items, &TownTrade::Buy(weapon.clone())),
+        Ok(0)
+    );
     assert_eq!(c.stock.weapons.len(), 1);
     let sell = TownTrade::Sell(StockItem::Weapon(0));
     assert_eq!(c.trade(&armoury, &items, &sell), Ok(0));
-    assert!(c.stock.weapons.is_empty());
+    assert_eq!(c.stock.weapons.len(), 0);
     // A Blacksmith neither sells nor buys.
     assert!(c.trade(&smith(), &items, &TownTrade::Buy(weapon)).is_err());
-    assert!(c.trade(&smith(), &items, &TownTrade::RepairStock(0)).is_err());
+    assert!(
+        c.trade(&smith(), &items, &TownTrade::RepairStock(0))
+            .is_err()
+    );
 }
 
 /// Whether `to` can be reached from the map's start along open roads.

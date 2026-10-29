@@ -203,7 +203,12 @@ fn battle_of<'a>(kind: &'a RawKind, chapters: &'a BTreeMap<String, ChapterDef>) 
 }
 
 /// Builds world map `id` from `raw`, with every problem of it (`err`).
-fn build(id: &str, raw: RawWorldMap, refs: WorldRefs<'_>, err: &mut dyn FnMut(String)) -> WorldMapDef {
+fn build(
+    id: &str,
+    raw: RawWorldMap,
+    refs: WorldRefs<'_>,
+    err: &mut dyn FnMut(String),
+) -> WorldMapDef {
     let mut def = WorldMapDef {
         music: raw.music,
         size: raw.size,
@@ -240,7 +245,11 @@ fn build(id: &str, raw: RawWorldMap, refs: WorldRefs<'_>, err: &mut dyn FnMut(St
                 RawCondition::Alive(who) => NodeCondition::Alive(CharacterId(who)),
             })
             .collect();
-        if def.places.insert(node.id.clone(), Pos::new(node.pos.0, node.pos.1)).is_some() {
+        if def
+            .places
+            .insert(node.id.clone(), Pos::new(node.pos.0, node.pos.1))
+            .is_some()
+        {
             err(format!("place \"{}\" is listed twice", node.id));
         }
         def.names.insert(node.id.clone(), node.name);
@@ -290,7 +299,10 @@ fn check(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(String)) {
     match map.node(&map.start) {
         None => err(format!("start: no place \"{}\"", map.start)),
         Some(n) if !n.opens_when.is_empty() || n.kind.is_battle() => {
-            err(format!("start \"{}\" must be open from the start and not a battle", n.id));
+            err(format!(
+                "start \"{}\" must be open from the start and not a battle",
+                n.id
+            ));
         }
         Some(_) => {}
     }
@@ -302,7 +314,10 @@ fn check(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(String)) {
         )),
     }
     if map.levels.0 > map.levels.1 {
-        err(format!("levels {:?}: the lowest is above the highest", map.levels));
+        err(format!(
+            "levels {:?}: the lowest is above the highest",
+            map.levels
+        ));
     }
     if !refs.audio.music.contains_key(&def.music) {
         err(format!("music: no music cue \"{}\"", def.music));
@@ -313,7 +328,9 @@ fn check(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(String)) {
         }
     }
     for id in unreachable(map) {
-        err(format!("place \"{id}\" can't be reached from the start by any road"));
+        err(format!(
+            "place \"{id}\" can't be reached from the start by any road"
+        ));
     }
 }
 
@@ -349,22 +366,24 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
         for condition in &node.opens_when {
             match condition {
                 NodeCondition::Cleared(other) if !ids.contains(other.as_str()) => {
-                    err(format!("place \"{id}\": Cleared(\"{other}\") names no place"));
+                    err(format!(
+                        "place \"{id}\": Cleared(\"{other}\") names no place"
+                    ));
                 }
                 NodeCondition::Alive(who) if !refs.characters.characters.contains_key(who) => {
-                    err(format!("place \"{id}\": Alive(\"{}\") names no character", who.0));
+                    err(format!(
+                        "place \"{id}\": Alive(\"{}\") names no character",
+                        who.0
+                    ));
                 }
                 _ => {}
             }
         }
     }
-    let stories = map
-        .nodes
-        .iter()
-        .filter_map(|n| match &n.kind {
-            NodeKind::StoryBattle(c) => Some(c),
-            _ => None,
-        });
+    let stories = map.nodes.iter().filter_map(|n| match &n.kind {
+        NodeKind::StoryBattle(c) => Some(c),
+        _ => None,
+    });
     let mut seen = BTreeSet::new();
     for chapter in stories {
         if !seen.insert(chapter) {
@@ -381,14 +400,17 @@ fn check_town(id: &str, shops: &[Shop], items: &ItemTable, err: &mut dyn FnMut(S
     for shop in shops {
         match (shop.kind, shop.stock.is_empty()) {
             (ShopKind::Basic, _) => {
-                err(format!("town \"{id}\": the basic shop is only on Preparations"));
+                err(format!(
+                    "town \"{id}\": the basic shop is only on Preparations"
+                ));
             }
             (ShopKind::Blacksmith, false) => {
-                err(format!("town \"{id}\": a Blacksmith repairs, it sells nothing"));
+                err(format!(
+                    "town \"{id}\": a Blacksmith repairs, it sells nothing"
+                ));
             }
-            (ShopKind::Blacksmith, true) => {}
+            (ShopKind::Blacksmith, true) | (_, false) => {}
             (_, true) => err(format!("town \"{id}\": a {:?} sells nothing", shop.kind)),
-            (_, false) => {}
         }
         for problem in check_shop(shop, items) {
             err(format!("town \"{id}\": {problem}"));
@@ -401,7 +423,10 @@ fn check_town(id: &str, shops: &[Shop], items: &ItemTable, err: &mut dyn FnMut(S
 fn check_look(def: &WorldMapDef, err: &mut dyn FnMut(String)) {
     let (w, h) = def.size;
     if w < 1 || h < 1 || w > MAX_SIZE.0 || h > MAX_SIZE.1 {
-        err(format!("size {:?} must be from (1, 1) to {MAX_SIZE:?}", def.size));
+        err(format!(
+            "size {:?} must be from (1, 1) to {MAX_SIZE:?}",
+            def.size
+        ));
     }
     if !def.ground.is_empty() && def.ground.len() != usize::try_from(h).unwrap_or(0) {
         err(format!("ground has {} rows, not {h}", def.ground.len()));
@@ -418,11 +443,15 @@ fn check_look(def: &WorldMapDef, err: &mut dyn FnMut(String)) {
     // above it.
     for (id, pos) in &def.places {
         if pos.x < 1 || pos.x > w - 2 || pos.y < 1 || pos.y >= h {
-            err(format!("place \"{id}\" at {pos:?} is too near the map's edge"));
+            err(format!(
+                "place \"{id}\" at {pos:?} is too near the map's edge"
+            ));
         }
     }
     for (cells, (from, to)) in def.roads.iter().zip(&def.map.roads) {
-        let bent = cells.windows(2).any(|p| p[0].x != p[1].x && p[0].y != p[1].y);
+        let bent = cells
+            .windows(2)
+            .any(|p| p[0].x != p[1].x && p[0].y != p[1].y);
         if bent {
             err(format!(
                 "the road from \"{from}\" to \"{to}\" must run straight across or down between its turns"
@@ -468,7 +497,11 @@ pub fn load_all(refs: WorldRefs<'_>) -> Result<BTreeMap<String, WorldMapDef>, Ve
                 let mut problems = Vec::new();
                 let def = build(file.stem, raw, refs, &mut |m| problems.push(m));
                 check(&def, refs, &mut |m| problems.push(m));
-                errors.extend(problems.into_iter().map(|m| ContentError::new(file.path, m)));
+                errors.extend(
+                    problems
+                        .into_iter()
+                        .map(|m| ContentError::new(file.path, m)),
+                );
                 Some(def)
             }
             Err(e) => {
@@ -499,7 +532,10 @@ fn check_links(
             && !maps.contains_key(next)
         {
             let file = format!("{WORLDMAPS_DIR}/{id}.ron");
-            errors.push(ContentError::new(file, format!("next: no world map \"{next}\"")));
+            errors.push(ContentError::new(
+                file,
+                format!("next: no world map \"{next}\""),
+            ));
         }
     }
     for chapter in chapters.values() {

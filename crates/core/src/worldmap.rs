@@ -284,7 +284,11 @@ impl WorldMap {
     }
 
     /// The places next to `id` along open roads.
-    fn neighbours<'a>(&'a self, id: &'a str, campaign: &'a Campaign) -> impl Iterator<Item = &'a str> {
+    fn neighbours<'a>(
+        &'a self,
+        id: &'a str,
+        campaign: &'a Campaign,
+    ) -> impl Iterator<Item = &'a str> {
         self.open_roads(campaign).filter_map(move |(a, b)| {
             if a == id {
                 Some(b.as_str())
