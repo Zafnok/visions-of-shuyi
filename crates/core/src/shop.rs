@@ -12,10 +12,14 @@
 //!   - a **Blacksmith** repairs weapons (its list is empty);
 //!   - the **Basic** shop of Preparations (ticket 0443) sells the
 //!     weapons, armour and consumables on its list and repairs. Its list
-//!     is the [`BasicStock`] reached by the chapter.
+//!     is the [`BasicStock`] reached by the chapter;
+//!   - the **specialty stores** of towns (ticket 0320) trade only their
+//!     own goods, selling and buying: an **Alchemist** consumables, a
+//!     **Tailor** cloth and leather armour.
 //!
 //!   Armouries, vendors and the basic shop **buy** any item the party has, for half its
-//!   price rounded down ([`sell_price`]). Blacksmiths don't buy.
+//!   price rounded down ([`sell_price`]). A specialty store buys only its
+//!   own goods ([`ShopKind::takes`]), at their full price. Blacksmiths don't buy.
 //!   No shop ever stocks a **special weapon** (`combat-arts.md`), so a
 //!   sold one is gone; the UI asks before selling one. It repairs by the
 //!   usual formula.
@@ -34,6 +38,7 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
+use crate::class::ArmourWeight;
 use crate::item::{ItemDef, ItemId, ItemTable, Stock, WeaponDef, WeaponInstance};
 
 /// Party gold.
@@ -51,6 +56,12 @@ pub enum ShopKind {
     /// The Preparations shop: sells weapons, armour and consumables, buys
     /// anything and repairs. Never on a map.
     Basic,
+    /// A town's specialty store: sells and buys consumables only, buying
+    /// at full price.
+    Alchemist,
+    /// A town's specialty store: sells and buys cloth and leather armour
+    /// only, buying at full price.
+    Tailor,
 }
 
 impl ShopKind {
@@ -70,6 +81,7 @@ impl ShopKind {
                 ItemDef::Armour(_) | ItemDef::Consumable(_) => true,
                 _ => false,
             },
+            ShopKind::Alchemist | ShopKind::Tailor => self.specialty_goods(item),
         }
     }
 
@@ -81,6 +93,33 @@ impl ShopKind {
     /// Whether this kind of shop buys items from the party.
     pub fn buys(self) -> bool {
         self != ShopKind::Blacksmith
+    }
+
+    /// Whether this kind of shop buys `item` from the party: a specialty
+    /// store only its own goods, the others anything but a seal.
+    pub fn takes(self, item: &ItemDef) -> bool {
+        match self {
+            ShopKind::Blacksmith => false,
+            ShopKind::Alchemist | ShopKind::Tailor => self.specialty_goods(item),
+            _ => !matches!(item, ItemDef::Seal(_)),
+        }
+    }
+
+    /// Whether this is a specialty store, buying its goods at full price.
+    pub fn is_specialty(self) -> bool {
+        matches!(self, ShopKind::Alchemist | ShopKind::Tailor)
+    }
+
+    /// A specialty store's goods: an Alchemist's consumables, a Tailor's
+    /// cloth and leather armour. Nothing for the other kinds.
+    fn specialty_goods(self, item: &ItemDef) -> bool {
+        match (self, item) {
+            (ShopKind::Alchemist, ItemDef::Consumable(_)) => true,
+            (ShopKind::Tailor, ItemDef::Armour(a)) => {
+                matches!(a.weight_class, ArmourWeight::Cloth | ArmourWeight::Leather)
+            }
+            _ => false,
+        }
     }
 }
 
@@ -166,6 +205,8 @@ pub enum ShopError {
     UnknownItem(ItemId),
     /// No shop buys this item (a seal).
     NotBought(ItemId),
+    /// This specialty store doesn't buy the item: not its goods.
+    NotTaken(ItemId),
 }
 
 impl fmt::Display for ShopError {
@@ -182,16 +223,21 @@ impl fmt::Display for ShopError {
             ShopError::NotAWeapon(i) => write!(f, "\"{}\" is not a weapon", i.0),
             ShopError::UnknownItem(i) => write!(f, "unknown item \"{}\"", i.0),
             ShopError::NotBought(i) => write!(f, "no shop buys \"{}\"", i.0),
+            ShopError::NotTaken(i) => write!(f, "this store doesn't buy \"{}\"", i.0),
         }
     }
 }
 
 impl core::error::Error for ShopError {}
 
-/// The price at which a shop buys an item from the party: half its price,
-/// rounded down.
-pub fn sell_price(item: &ItemDef) -> Gold {
-    item.price() / 2
+/// The price at which a shop of `kind` buys an item from the party: its
+/// full price at a specialty store, half rounded down anywhere else.
+pub fn sell_price(kind: ShopKind, item: &ItemDef) -> Gold {
+    if kind.is_specialty() {
+        item.price()
+    } else {
+        item.price() / 2
+    }
 }
 
 /// The gold to bring `copy` of `weapon` back to full durability:
@@ -251,7 +297,10 @@ pub fn sell(
     if matches!(def, ItemDef::Seal(_)) {
         return Err(ShopError::NotBought(item.clone()));
     }
-    let price = sell_price(def);
+    if !shop.kind.takes(def) {
+        return Err(ShopError::NotTaken(item.clone()));
+    }
+    let price = sell_price(shop.kind, def);
     *gold = gold.saturating_add(price);
     Ok(price)
 }

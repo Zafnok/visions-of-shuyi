@@ -2,8 +2,10 @@
 //! *Money and shops*): a player unit on an on-map Armoury, Vendor or
 //! Blacksmith picks `Shop` in its action menu and this screen opens over
 //! the battle. An Armoury or a Vendor has a Buy and a Sell tab, a
-//! Blacksmith a Repair tab. Each line shows its gold; a line the party
-//! can't afford (or the core would refuse) is dimmed. The header shows the
+//! Blacksmith a Repair tab; so does a town's Alchemist or Tailor (0320).
+//! Each line shows its gold (on the Sell tab, what this shop pays); a line
+//! the party can't afford (or the core would refuse) is dimmed. An item a
+//! specialty store won't take says why in place of what it is. The header shows the
 //! shop and the party's gold as it would be after what was chosen so far.
 //!
 //! Nothing changes until the screen closes: every choice is collected
@@ -76,7 +78,9 @@ impl Tab {
     /// The tabs a shop of `kind` has.
     pub fn of(kind: ShopKind) -> &'static [Tab] {
         match kind {
-            ShopKind::Armoury | ShopKind::Vendor => &[Tab::Buy, Tab::Sell],
+            ShopKind::Armoury | ShopKind::Vendor | ShopKind::Alchemist | ShopKind::Tailor => {
+                &[Tab::Buy, Tab::Sell]
+            }
             ShopKind::Blacksmith => &[Tab::Repair],
             ShopKind::Basic => &[Tab::Buy, Tab::Sell, Tab::Repair],
         }
@@ -99,6 +103,18 @@ pub fn kind_key(kind: ShopKind) -> &'static str {
         ShopKind::Vendor => "battle.shop.vendor",
         ShopKind::Blacksmith => "battle.shop.blacksmith",
         ShopKind::Basic => "battle.shop.basic",
+        ShopKind::Alchemist => "battle.shop.alchemist",
+        ShopKind::Tailor => "battle.shop.tailor",
+    }
+}
+
+/// The key of why a shop of `kind` won't take an item, for a specialty
+/// store; `None` for the others.
+pub fn wont_take_key(kind: ShopKind) -> Option<&'static str> {
+    match kind {
+        ShopKind::Alchemist => Some("battle.shop.wont_take.alchemist"),
+        ShopKind::Tailor => Some("battle.shop.wont_take.tailor"),
+        _ => None,
     }
 }
 
@@ -326,7 +342,11 @@ impl ShopScreen {
         let mut out: Vec<Offer> = vec![];
         for (from, item) in weapons.chain(worn) {
             if let Some(def) = items.get(&item).filter(|d| !is_seal(d)) {
-                out.push(offer(ShopTxn::Sell { from }, &item, sell_price(def)));
+                out.push(offer(
+                    ShopTxn::Sell { from },
+                    &item,
+                    sell_price(self.shop.kind, def),
+                ));
             }
         }
         let first = out.len();
@@ -338,7 +358,11 @@ impl ShopScreen {
                 o.count += 1;
             } else {
                 let from = SellFrom::Pack(index);
-                out.push(offer(ShopTxn::Sell { from }, item, sell_price(def)));
+                out.push(offer(
+                    ShopTxn::Sell { from },
+                    item,
+                    sell_price(self.shop.kind, def),
+                ));
             }
         }
         out
@@ -565,12 +589,22 @@ impl ShopScreen {
         if offer.count > 1 {
             name = format!("{name} ×{}", offer.count);
         }
+        let def = items.get(&offer.item);
+        // A specialty store's refusal: no price, and why in place of what
+        // the item is.
+        let refused = matches!(offer.txn, ShopTxn::Sell { .. })
+            && def.is_some_and(|d| !self.shop.kind.takes(d));
+        if let Some(key) = wont_take_key(self.shop.kind).filter(|_| refused) {
+            return ShopLineView {
+                name,
+                gold: String::new(),
+                detail: words.text(key).to_owned(),
+                enabled: false,
+            };
+        }
         let detail = match offer.durability {
             Some((left, max)) => format!("{left}/{max} → {max}/{max}"),
-            None => items
-                .get(&offer.item)
-                .map(|def| stat_line(words, def))
-                .unwrap_or_default(),
+            None => def.map(|def| stat_line(words, def)).unwrap_or_default(),
         };
         ShopLineView {
             name,

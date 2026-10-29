@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0073", "0321"]
 nick_input: none
-completed:
+completed: 2026-10-29
 ---
 
 # 0320 — Specialty stores
@@ -72,10 +72,10 @@ None. Verified by tests. Which towns have which store is the towns' data
 
 ## Acceptance criteria
 
-- [ ] Unit: an Alchemist pays 300 for a Potion (price 300), refuses a sword; a Vendor pays 150 for the same Potion; a Tailor pays full for cloth and leather, refuses plate.
-- [ ] Content: a Tailor listing a Steel Sword fails to load, with the reason.
-- [ ] Snapshot of a Tailor's sell list with a refused item dimmed.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Unit: an Alchemist pays 300 for a Potion (price 300), refuses a sword; a Vendor pays 150 for the same Potion; a Tailor pays full for cloth and leather, refuses plate.
+- [x] Content: a Tailor listing a Steel Sword fails to load, with the reason.
+- [x] Snapshot of a Tailor's sell list with a refused item dimmed.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -85,5 +85,36 @@ None. Verified by tests. Which towns have which store is the towns' data
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `core/src/shop.rs`: `ShopKind::Alchemist` (consumables) and
+  `ShopKind::Tailor` (Cloth and Leather armour), each stocking and buying
+  only its goods; `ShopKind::takes` and `is_specialty`;
+  `sell_price(kind, item)` pays full at a specialty store, half elsewhere;
+  `sell` (so the battle's `Shop` action and `ShopSession` alike) refuses an
+  item outside the store's goods with `ShopError::NotTaken`. Tests: the
+  acceptance prices, every kind's goods, a Tailor session, and a property
+  that no shop pays more than an item's price.
+- `content/src/map.rs`: `check_shop(shop, items)`, the list check every
+  place that writes shops will use (maps today, towns with 1007), saying a
+  specialty store's goods ("a Tailor trades only cloth and leather armor,
+  not \"steel_sword\""). A map refuses the two kinds outright ("a
+  specialty store is only in towns, not on a map").
+- `ui`: the shop screen has the two kinds (Buy and Sell tabs, their
+  names); the Sell tab shows what this shop pays; an item a specialty
+  store won't take is dimmed, with no price and the reason in place of its
+  numbers ("The Tailor buys only cloth and leather armor."). Snapshot
+  `tailor_sell`.
+
+**Deviations.** Towns (1007) aren't built yet, so there is no town data to
+parse the kinds from. The ticket allows this; the content acceptance test
+runs `check_shop` on a Tailor listing a Steel Sword (from the real item
+table) rather than loading a town file. 1007 / 1070 should call
+`check_shop` for each town shop. The screen test puts a Tailor on the
+Vendor's tile of the Quick Battle map, since that is the only shop screen
+until towns come.
+
+**Claude's starting rules** (for the Act 1 playtest, 1064):
+- A refused item at a specialty store shows no price (rather than a price
+  it would never pay).
+- A Tailor and an Alchemist repair nothing (the design lists only trading).
+
+Engine friction: estimate 90, measured 96 (1.1×), under 2×.
