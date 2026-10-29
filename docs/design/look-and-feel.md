@@ -1028,8 +1028,8 @@ busts, so they aren't.
 | Ragna Holt (`envoy`) | A **generator** face, no combat picture (she never fights): dark-blonde hair in a bun, a traveller's coat | none | Claude's pick of Nick's two (below) |
 | Dace (`rival`) in person | Unchanged (0706): his generator face | Unchanged (0040): the dark knight | Already decided; his map picture is 0735's |
 | Gil Parrow (`prizefighter`) | Generator face **B**: slicked-back black hair, a scar over one eye, a goatee | Sagak Art's **"8-Bit Heroes 2: Fighter"** (<https://sagak-art-pururu.itch.io/8bitheroes-fighter>, $3, not bought yet): bare-chested, gold fist wraps, red sash, about 45 pixels tall, drawn at **1.75×** | Decided |
-| Hedda Ravn (`shieldbearer`) | *Open* (both mockups were "ok") | *Open* | Left to ticket **0076** (Nick: "Follow-up ticket") |
-| The Hound lieutenant (Chapter 2 boss, axe) | Only if he speaks | *Open* | Left to ticket **0076** |
+| Hedda Ravn (`shieldbearer`) | A **generator** face to match the picture: long red hair in a ponytail, about 32, weathered; not the pack's own painted portraits (0076) | elie automata's **Battle Axemaiden** (<https://elie-automata.itch.io/battle-axemaiden-animated-character-story-art>, free with credit, AI-assisted): red ponytail, dark plate with a red cape, a long axe; her three-quarter pose | Decided (0076: "the axemaiden seems fine for hedda") |
+| The Hound lieutenant, Silas Hendry (Chapter 2 boss, axe) | He speaks (Chapter 2's scenes), so a **generator** face to match the picture: shaggy red hair and a full red beard | Stupid Creations' **TTMini: Bandit Brigand** (<https://stupidcreations.itch.io/ttmini-bandit-brigand>, $2.99, not bought yet, AI-assisted): red beard, leather and mail, red cloak, hand axe and round shield; his three-quarter pose | Decided (0076: "Bandit Brigand") |
 | Greywater's boss: **the prior** (Chapter 3) | Only if he speaks | Shironejiya's **dark-robed priest** (`m_s_mage_dark_m01`) at 1.25× | Decided: the prior is the boss, not the Hound captain |
 | Crane's champion (Chapter 7 boss) | Only if she speaks | Shironejiya's **blue-armoured knight** with sword and shield (`m_s_val`) at 1.25×; the champion is a woman | Decided |
 
@@ -1097,6 +1097,51 @@ busts, so they aren't.
   long white hair (Nick's call; it matches his combat picture).
 - **Lesson for these questions:** say who a character is in the story
   before asking Nick to pick their look.
+
+**Hedda and the Hound lieutenant** (decided 2026-10-28, ticket 0076).
+New searches (Mega Tiles, Sagak Art and Shironejiya had nothing new;
+itch.io, GameDev Market by hand, CraftPix, OpenGameArt, Unity, BOOTH,
+DLsite and the Japanese free-art sites) were opened to any style once
+Nick said so; candidates were shown as the stores show them, since
+Claude's cut-outs of store previews left artifacts. Both picks are
+AI-assisted, which Nick accepted for these two, so the Steam page
+discloses them (0903); both are shown in their three-quarter pose, which
+faces the other fighter and still shows the face (a pure side pose hides
+it behind the weapon).
+
+> [Round 1, our own art recoloured:] "Hedda still looks bad. I don't
+> care about "style" just find ANY candidates at all." [Lieutenant,
+> cogabushi's Captain:] "C looks ok but your recolor looks like shit
+> ... just present without recolor"; "the pack seems ok..... I might get
+> it, wanna see other alternatives since it is a style clash but if we
+> have no other candidates then we can use it"
+>
+> [Hedda:] "stop suggesting to park her ... You need to either - adjust
+> her to find something that actually fits (character sheet) OR work
+> harder"
+>
+> [Round 3:] "battle axemaiden looks good enough to me from elie
+> automata. If she has a good one for fitting Silas as well it would be
+> good to check" [elie automata's pack characters:] "do you have their
+> side portraits? since that's what we'd use for the battles right";
+> "the axemaiden seems fine for hedda but im not convinced by the pack
+> chars for silas"
+>
+> [Hedda's face:] "generator, but I wonder how much her being 44 is
+> integral to the story, or if her being younger matters much, since the
+> battler still looks young." [Her age:] "About 32" [Silas, after one
+> more search:] "Bandit Brigand"
+
+- **Hedda** is 32 now, Ragna's younger foster-sister, and her sheet's
+  look follows the Axemaiden (`shieldbearer.md`). Her face is a generator
+  face, not the pack's painted portraits (they clash with the pixel busts
+  and look about 25).
+- **Silas** speaks in Chapter 2's scenes, so he gets a generator face;
+  his sheet's look follows the Brigand (`hound_lieutenant.md`).
+- **Fallback already judged** for an axe boss: cogabushi's red-armoured
+  Captain from *Pixel art-like style Enemies Pack 300+*
+  (<https://cogabushi.itch.io/pixel-art-like-style-enemies-pack-300>,
+  $28.80), "ok" as sold, not recoloured.
 
 ### Title screen
 

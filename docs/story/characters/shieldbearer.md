@@ -6,16 +6,18 @@ Id: `shieldbearer` · [Name registry](../names.md)
 
 - **Role:** playable companion from Chapter 5. Ragna's bodyguard, "lent"
   to the lead to make sure they get to the Ashfields. The second
-  Brennish voice in the party, and the oldest after Hollis.
+  Brennish voice in the party.
 - **Class:** **Raider** (outline; axes). Level, stats and talent: 0851.
-- **Age:** 44.
+- **Age:** 32 (Nick, 0076: made younger to fit her combat picture; she
+  was 44).
 - **Joins:** in Chapter 5, loaned by Ragna "to make sure you get there".
 
 ## At a glance
 
 A fisherman's daughter from a Brennish fjord. Her mother nursed Ragna
-Holt, and Hedda grew up in the Holts' hall as Ragna's foster-sister, six
-years older and twice as big. She fought the whole Border War in a
+Holt and stayed on in the Holts' hall, where Hedda was born six years
+later and grew up as Ragna's foster-sister: the younger one, and twice as
+big. She went to war at nineteen and fought the whole Border War in a
 Brennish shield company, including the early years of raiding across the
 Thornmarch fords, and has been Ragna's bodyguard since the Ash Peace.
 She has never been more than a room away from Ragna in three years, and
@@ -73,8 +75,8 @@ Ragna has just sent her across a country at war with strangers.
 Written by 0743 (the `story-writing` skill, *Voices*). The sample lines
 are illustrations of a situation, never lines for a script.
 
-- **Age and experience:** forty-four; a fishing boat, a hall, twenty
-  years of war and guard duty. She knows boats, weather, ice, axes,
+- **Age and experience:** thirty-two; a fishing boat, a hall, ten
+  years of war and three of guard duty. She knows boats, weather, ice, axes,
   shields, how to stand at a door all night, and how to make a big room
   calm. Unhurried. She has seen everything once and is surprised by
   southerners anyway.
@@ -120,17 +122,19 @@ are illustrations of a situation, never lines for a script.
 
 ## Portrait brief
 
-Her face and combat picture are open (ticket 0076). Nick wants her
-between bare and fully armored: mail or leather with fur, face visible.
-This brief stays loose until 0076 picks.
+Her combat picture is elie automata's Battle Axemaiden (ticket 0076,
+`look-and-feel.md`, *Act 1's new cast*), and this brief was rewritten to
+fit it (the art isn't changed to fit the writing, 0706), and she was
+made younger to match it (44 to 32, Nick's call). Her dialogue face is a
+generator face built to match, not the pack's own portraits.
 
-- **Silhouette:** tall and broad, a round shield on her back and an axe
-  at her hip.
-- **Hair:** ash blond going gray, in two thick braids.
-- **Face:** 44, weathered by sea wind, crow's feet, a calm half smile.
-- **Clothing:** a Brennish mail shirt under a sheepskin vest, a heavy
-  cloak she is always taking off for someone.
-- **Colors:** Brennish gray-green, sheepskin cream, iron, ash blond.
+- **Silhouette:** sturdy and broad in plate, a long axe held upright
+  beside her.
+- **Hair:** red, in a long ponytail.
+- **Face:** 32, weathered by sea wind, a calm half smile.
+- **Clothing:** dark plate with worn gilt trim, from her shield-company
+  years, and a heavy red cloak she is always taking off for someone.
+- **Colors:** dark iron, old gold, cloak red, red hair.
 - **Expressions:** `neutral`, `happy` (a big laugh), `angry`, `sad`,
   `surprised`, plus `fond` (soft eyes, the half smile).
 
