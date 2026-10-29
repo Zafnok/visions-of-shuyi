@@ -154,6 +154,10 @@ it):
   glyph painter now paints at any box (`paint_box`), the on-map screen
   unchanged. Help line through the player's keys.
 
+- After merging 0329 (special weapons): the basic shop never stocks a
+  special weapon (its data refuses one), and selling one from the
+  Preparations Sell tab asks first, as on a map.
+
 **Deviations.**
 - The ticket says "between `Pack` and `Fight!`"; `Options` sits there now,
   so `Shop` is right after `Pack`.
