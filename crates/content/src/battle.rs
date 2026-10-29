@@ -91,6 +91,8 @@ struct RawBattle {
     solo_bench: Vec<String>,
     #[serde(default)]
     clear_gold: u32,
+    #[serde(default)]
+    clear_items: Vec<String>,
     objective: RawObjective,
     #[serde(default)]
     triggers: Vec<Trigger>,
@@ -397,6 +399,7 @@ pub fn from_source(
     let pack_cap = raw.pack_cap.unwrap_or(refs.items.rules.default_pack_cap);
     let default_pack = v.pack(&raw.default_pack, pack_cap, raw.preparations);
     let (solo_stock, solo_bench) = v.solo(&raw.solo_stock, &raw.solo_bench);
+    let clear_items = v.items("clear_items", &raw.clear_items);
     v.music(&raw.music);
     v.errors.extend(check_map_labels(file, &everyone));
     v.errors.extend(check_triggers(
@@ -425,6 +428,7 @@ pub fn from_source(
         solo_gold: raw.solo_gold,
         solo_bench,
         clear_gold: raw.clear_gold,
+        clear_items,
         objective: objective.unwrap_or(Objective::Rout { turn_limit: None }),
         triggers: raw.triggers,
         battle_notes,
@@ -989,9 +993,14 @@ impl<'a, 'r> Checker<'a, 'r> {
 
     /// The solo stock's items: any known items.
     fn solo_stock(&mut self, items: &[String]) -> Vec<ItemId> {
+        self.items("solo_stock", items)
+    }
+
+    /// The items of the list `field`: any known items.
+    fn items(&mut self, field: &str, items: &[String]) -> Vec<ItemId> {
         for item in items {
             if self.refs.items.get(&ItemId::new(item)).is_none() {
-                self.err(format!("solo_stock: no item \"{item}\""));
+                self.err(format!("{field}: no item \"{item}\""));
             }
         }
         items.iter().map(|i| ItemId::new(i)).collect()
