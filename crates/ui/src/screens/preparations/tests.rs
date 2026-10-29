@@ -1092,20 +1092,27 @@ fn selling_asks_how_many_then_pays_half_price() {
     in_shop(&mut c, &mut s, 1);
     assert_eq!(s.shop_tab(), crate::screens::battle::shop::Tab::Sell);
     let lines = shop_lines(&s, &c);
-    // The stock's weapons first, each copy a line, then its items counted.
+    // The stock's weapons first, each copy a line with its durability,
+    // then its items counted.
     assert_eq!(lines[0].0, "Steel Spear");
+    let view = s.view(&c);
+    let first = &shop_of(&view).lines[0].detail;
+    assert!(first.starts_with("25/25  Mt 10"), "{first}");
     let at = lines.iter().position(|l| l.0 == "Potion ×6").unwrap();
     assert_eq!(lines[at].1, "150");
     for _ in 0..at {
         update(&mut s, &mut c, &[CursorDown]);
     }
-    update(&mut s, &mut c, &[Confirm, CursorUp, CursorUp]);
+    // Up to 4, back down to 3.
+    update(&mut s, &mut c, &[Confirm, CursorUp, CursorUp, CursorUp]);
+    assert_eq!(s.selling().map(|sale| sale.count), Some(4));
+    assert_eq!(sounds(&mut s, &mut c, &[CursorDown]), ["menu_move"]);
     let view = s.view(&c);
     let selling = shop_of(&view).selling.clone().unwrap();
     assert_eq!((selling.count, selling.max), (3, 6));
     assert_eq!(selling.gold, "For 450 gold");
     assert_eq!(view.help, "Up Down how many · f sell · d back");
-    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     assert_eq!(s.selling(), None);
     assert_eq!(s.setup().gold, 3450);
     assert_eq!(s.setup().stock.count(&potion()), 3);

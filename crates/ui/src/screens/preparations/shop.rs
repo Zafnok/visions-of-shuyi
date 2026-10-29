@@ -12,8 +12,7 @@
 use crate::prelude::*;
 
 use trpg_core::{
-    Gold, ItemDef, ItemId, PrepUnit, ShopError, StockItem, WEAPON_SLOTS, WeaponAt, repair_cost,
-    sell_price,
+    Gold, ItemDef, ItemId, PrepUnit, StockItem, WEAPON_SLOTS, WeaponAt, repair_cost, sell_price,
 };
 
 use super::{Focus, PreparationsScreen};
@@ -223,8 +222,9 @@ impl PreparationsScreen {
         }
     }
 
-    /// Confirm on the highlighted line: buys or repairs at once; a Sell
-    /// line asks how many first.
+    /// Confirm on the highlighted line: buys or repairs at once (the core
+    /// refuses what the party can't pay for); a Sell line asks how many
+    /// first.
     fn make_deal(&mut self, ctx: &mut Ctx) {
         let line = self.deal;
         let Some(deal) = self.deals().into_iter().nth(line) else {
@@ -232,7 +232,6 @@ impl PreparationsScreen {
             return;
         };
         let done = match &deal.trade {
-            _ if !deal.enabled => Err(ShopError::NoItem),
             Trade::Sell(_) => {
                 self.selling = Some(SellConfirm { line, count: 1 });
                 ctx.audio.menu(MenuSound::Select);
@@ -260,13 +259,8 @@ impl PreparationsScreen {
                     return;
                 };
                 // A weapon copy is one line; a counted item sells `count`.
-                let mut sold = 0;
-                for _ in 0..sale.count {
-                    if self.prep.sell(item).is_ok() {
-                        sold += 1;
-                    }
-                }
-                self.after_deal(sold > 0, ctx);
+                let sold = (0..sale.count).try_for_each(|_| self.prep.sell(item).map(drop));
+                self.after_deal(sold.is_ok(), ctx);
                 return;
             }
             Action::Cancel => {
