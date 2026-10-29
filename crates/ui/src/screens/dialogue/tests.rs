@@ -711,7 +711,7 @@ fn music_requests(c: &mut Ctx) -> Vec<AudioRequest> {
 }
 
 fn play_music(cue: &str) -> AudioRequest {
-    AudioRequest::PlayMusic { cue: cue.into() }
+    AudioRequest::play_music(cue, None)
 }
 
 /// `@music` asks for the music when the scene reaches its line: the one

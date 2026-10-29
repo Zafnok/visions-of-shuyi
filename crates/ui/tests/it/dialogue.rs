@@ -345,7 +345,7 @@ fn music_requests(h: &Harness) -> Vec<AudioRequest> {
 }
 
 fn play_music(cue: &str) -> AudioRequest {
-    AudioRequest::PlayMusic { cue: cue.into() }
+    AudioRequest::play_music(cue, None)
 }
 
 /// `@music` mid-scene asks for the music when the scene reaches that line,

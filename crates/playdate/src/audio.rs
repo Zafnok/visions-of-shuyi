@@ -230,15 +230,16 @@ impl<S: Speaker> Audio<S> {
                 };
                 self.tracks.insert(cue.clone(), track);
             }
-            MusicCommand::Start { cue } => {
+            MusicCommand::Start { cue, gain, .. } => {
                 let Some(track) = self.tracks.get_mut(cue) else {
                     return;
                 };
-                track.gain = 1.0;
+                track.gain = *gain;
                 let Some(file) = &mut track.file else {
                     return;
                 };
-                if speaker.start_track(file, track.volume * self.music_volume, track.looped) {
+                let volume = track.volume * track.gain * self.music_volume;
+                if speaker.start_track(file, volume, track.looped) {
                     self.starts += 1;
                     track.started = Some(self.starts);
                     if self.paused {
@@ -498,7 +499,7 @@ mod tests {
     }
 
     fn start(cue: &str) -> MusicCommand {
-        MusicCommand::Start { cue: cue.into() }
+        MusicCommand::start(cue, 1.0)
     }
 
     fn stop(cue: &str) -> MusicCommand {
@@ -660,6 +661,21 @@ mod tests {
         // Played once and ended: silence.
         speaker.positions.insert("music/jingle".into(), None);
         assert_eq!(audio.music_playing(&mut speaker), None);
+    }
+
+    /// engine#2341: a track that fades in starts at the gain it is asked
+    /// to, times its volume.
+    #[test]
+    fn a_track_starts_at_the_gain_asked() {
+        let (mut speaker, mut audio) = loaded();
+        let start = MusicCommand::start("theme", 0.25);
+        assert_eq!(
+            frame(&mut speaker, &mut audio, &[], &[load("theme"), start]),
+            [
+                Call::Open("music/theme".into()),
+                Call::Start("music/theme".into(), 0.2, true)
+            ]
+        );
     }
 
     #[test]

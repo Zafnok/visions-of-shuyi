@@ -232,7 +232,7 @@ fn camp_takes_its_track_back_after_a_conversations_music() {
     assert_eq!(ctx.audio.take(), []);
     ctx.music_clock = Some(clock("talk_calm"));
     s.uncovered(&mut ctx, None);
-    assert_eq!(ctx.audio.take(), [AudioRequest::PlayMusic { cue: track }]);
+    assert_eq!(ctx.audio.take(), [AudioRequest::play_music(track, None)]);
 }
 
 /// What is said instead of an empty list, in the panel under its title.
@@ -269,7 +269,7 @@ fn camp_plays_the_camp_pool_in_turn() {
     update(&mut s, &mut ctx, &[]);
     let asked: Vec<AudioRequest> = ctx.audio.take();
     let first = match asked.as_slice() {
-        [AudioRequest::PlayMusic { cue }] => cue.clone(),
+        [AudioRequest::PlayMusic { cue, .. }] => cue.clone(),
         other => panic!("{other:?}"),
     };
     let at = pool.iter().position(|c| *c == first).unwrap();
@@ -287,9 +287,7 @@ fn camp_plays_the_camp_pool_in_turn() {
     assert_eq!(ctx.audio.take(), [AudioRequest::StopMusic]);
     ctx.clock_s += music::QUIET_S + 1.0;
     update(&mut s, &mut ctx, &[]);
-    let next = AudioRequest::PlayMusic {
-        cue: pool[(at + 1) % pool.len()].clone(),
-    };
+    let next = AudioRequest::play_music(pool[(at + 1) % pool.len()].clone(), None);
     assert_eq!(ctx.audio.take(), [next]);
 }
 
