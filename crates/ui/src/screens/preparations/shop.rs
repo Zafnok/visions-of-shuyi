@@ -13,7 +13,8 @@
 use crate::prelude::*;
 
 use trpg_core::{
-    Gold, ItemDef, ItemId, PrepUnit, StockItem, WEAPON_SLOTS, WeaponAt, repair_cost, sell_price,
+    Gold, ItemDef, ItemId, PrepUnit, ShopKind, StockItem, WEAPON_SLOTS, WeaponAt, repair_cost,
+    sell_price,
 };
 
 use super::{Focus, PreparationsScreen};
@@ -81,7 +82,7 @@ impl Deal {
 impl PreparationsScreen {
     /// The shop's tabs (Buy, Sell, Repair).
     fn shop_tabs() -> &'static [ShopTab] {
-        ShopTab::of(trpg_core::ShopKind::Basic)
+        ShopTab::of(ShopKind::Basic)
     }
 
     /// The shop tab shown.
@@ -145,7 +146,7 @@ impl PreparationsScreen {
         let mut deals: Vec<Deal> = weapons
             .filter_map(|(i, copy)| {
                 let def = items.weapon(&copy.def)?;
-                let gold = sell_price(items.get(&copy.def)?);
+                let gold = sell_price(ShopKind::Basic, items.get(&copy.def)?);
                 Some(Deal {
                     durability: Some((copy.durability_left, def.durability)),
                     ..Deal::new(Trade::Sell(StockItem::Weapon(i)), &copy.def, gold)
@@ -161,7 +162,7 @@ impl PreparationsScreen {
                 ..Deal::new(
                     Trade::Sell(StockItem::Item(id.clone())),
                     id,
-                    sell_price(def),
+                    sell_price(ShopKind::Basic, def),
                 )
             });
         }

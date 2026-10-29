@@ -41,7 +41,15 @@ fn embedded_chapters_and_new_game_load() {
     assert_eq!(ch01.battle, "ch01");
     assert_eq!(ch01.intro_scenes, ["ch01_intro", "ch01_prebattle"]);
     assert_eq!(ch01.victory_scenes, ["ch01_victory", "ch01_tbc"]);
-    assert_eq!(ch01.next, None);
+    assert_eq!(ch01.next.as_deref(), Some("ch02"));
+    // Chapter 2 (0848): the herald, Joss's join, Veyne Hall.
+    let ch02 = &c.chapters["ch02"];
+    assert_eq!((ch02.battle.as_str(), ch02.number), ("ch02", Some(2)));
+    assert_eq!(ch02.intro_scenes, ["ch02_intro", "ch02_prebattle"]);
+    assert_eq!(
+        ch02.victory_scenes,
+        ["ch02_victory", "ch02_join", "ch02_tbc"]
+    );
     assert_eq!(c.new_game.first_chapter, "ch01");
     assert_eq!(c.new_game.roster.len(), 6);
     assert_eq!(c.new_game.roster[0].0, LEAD_ID);

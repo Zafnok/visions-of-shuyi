@@ -60,6 +60,7 @@ Every line is one of these. Directives start at the very first column.
 | `@place none` | Back to black behind the talk. |
 | `@opening <opening>` | Before the next text box, plays that opening of `assets/openings/` (its file name without `.ron`) on the place: its characters move, then the place darkens and the talk comes up. See "Places". |
 | `@dies <character>` | A death in the scene (Hollis, `death-and-difficulty.md`): when the scene plays, the character leaves the army for good, in Classic and Casual alike; their gear goes to the stock and their supports end. Usually inside an `@if` block for them. See "Rules". |
+| `@joins <character>` | A recruit on a story beat (Joss, `battle-scenes-and-recruitment.md`): when the scene plays, the character joins the army, fresh from `characters.ron`. The army can lose them from the next chapter on, so later scenes show them only in `@if` blocks; the scenes of the chapter that recruits them need none. See "Rules". |
 | `<character>: <text>` | The character speaks. They must be on screen (`@left`/`@right` first). |
 | `<character>[<expression>]: <text>` | The character changes expression, then speaks. The new expression stays. |
 | `> <text>` | Narration: a text box with no speaker. |
@@ -105,6 +106,9 @@ The validator reports every broken rule, with the file and line:
   `battle`, not `none`). It is written at the scene's top level (not in a
   reply or an `@if` block), and a speech or narration line follows it
   before the next `@opening` and before `@end`.
+- **Joins**: `@joins` follows the rules of `@dies` below (a named
+  character, never the lead, never in a reply's reaction); the join
+  happens as the scene starts.
 - **Deaths**: `@dies` names a character of `characters.ron`, never the
   lead. It goes at the scene's top level or in an `@if` block, never in a
   reply's reaction (a death doesn't hang on what the lead answers). The

@@ -1,0 +1,36 @@
+(
+    // The guardroom at Veyne Hall's gate, at night (ticket 0848,
+    // docs/story/chapters/ch02.md, "To be continued"; not the study, where
+    // Chapter 1 ended): a bare stone room, the weapon racks along the far
+    // wall, the table with two reports on it at (12, 7), and the door to
+    // the gate at (12, 14), where the old sergeant stands. A place behind
+    // a conversation, never a battle's map.
+    name: "Veyne Hall",
+    legend: {
+        '_': "floor",
+        '#': "wall",
+        '+': "door",
+        'B': "banner",
+        '|': "rack",
+        'd': "desk",
+        'p': "papers",
+    },
+    look: (tiles: "indoor", light: "night"),
+)
+---
+#########################
+#########################
+#######|||_____|||#######
+#######___________#######
+#######___________#######
+#######___________#######
+#######___ddddd___#######
+#######___ddpdd___#######
+#######___________#######
+#######___________#######
+#######___________#######
+#######B_________B#######
+#######___________#######
+#######___________#######
+############+############
+#########################

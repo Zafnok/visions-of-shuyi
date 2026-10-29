@@ -658,3 +658,120 @@ fn the_special_sale_renders() {
     let s = selling_the_moonblade(&mut c);
     assert_snapshot!("sell_special", render(&s, &c).to_snapshot(&c.palette));
 }
+
+// ---- Specialty stores (0320) -------------------------------------------------
+
+/// The lord on a Tailor (put on the Vendor's tile for the test: towns,
+/// where Tailors stand, come with 1007), wearing a Leather Vest, with two
+/// Potions in the pack, its Sell tab open.
+fn tailor_sell(c: &mut Ctx) -> Stacked {
+    let (mut map, mut units) = quick_units(c);
+    let stock = ["linen_robe", "leather_vest"].map(ItemId::new).to_vec();
+    let tailor = trpg_core::TileFeature::Shop(Shop {
+        kind: ShopKind::Tailor,
+        stock,
+    });
+    map.features.insert(VENDOR, tailor);
+    units[0].pos = VENDOR;
+    units[0].loadout.armour = Some(ItemId::new("leather_vest"));
+    for u in &mut units {
+        if u.pos == Pos::new(8, 2) {
+            u.pos = Pos::new(12, 6);
+        }
+    }
+    let rout = Objective::Rout { turn_limit: None };
+    let pack = BattlePack {
+        items: vec![ItemId::new("potion"); 2],
+        cap: 2,
+    };
+    let state = BattleState::new(BattleSetup {
+        pack,
+        ..setup(c, map, units, rout)
+    })
+    .0;
+    let mut s = menu_open(c, state);
+    choose(&mut s, c, MenuEntry::Shop);
+    press(&mut s, c, &[Action::CursorRight]);
+    assert_eq!(s.shop().unwrap().tab(), Tab::Sell);
+    s
+}
+
+/// Acceptance: a Tailor's sell list shows what it pays (full price for
+/// its goods) and dims what it won't take, saying why.
+#[test]
+fn a_tailor_pays_full_for_its_goods_and_dims_the_rest_with_the_reason() {
+    let mut c = ctx();
+    let s = tailor_sell(&mut c);
+    let view = s.shop().unwrap().view(&c);
+    assert_eq!(view.shop, "Tailor");
+    assert_eq!(view.tabs, ["Buy", "Sell"]);
+    let line = |name: &str| view.lines.iter().find(|l| l.name == name).unwrap();
+    let vest = line("Leather Vest");
+    assert!(vest.enabled);
+    assert_eq!(vest.gold, gold_text(price(&c, "leather_vest")));
+    let why = "The Tailor buys only cloth and leather armor.";
+    let potions = line("Potion ×2");
+    assert!(!potions.enabled);
+    assert_eq!((potions.gold.as_str(), potions.detail.as_str()), ("", why));
+    let weapon = &view.lines[0];
+    assert!(!weapon.enabled && weapon.detail == why, "{weapon:?}");
+    // A refused line can't be chosen.
+    let mut shop = s.shop().unwrap().clone();
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Denied);
+}
+
+/// A Vendor pays half for the same Leather Vest, and its lines say what
+/// the items are.
+#[test]
+fn a_vendor_pays_half_and_gives_no_reason() {
+    let mut c = ctx();
+    let (map, mut units) = quick_units(&c);
+    units[0].pos = VENDOR;
+    units[0].loadout.armour = Some(ItemId::new("leather_vest"));
+    let rout = Objective::Rout { turn_limit: None };
+    let state = BattleState::new(setup(&c, map, units, rout)).0;
+    let mut s = menu_open(&mut c, state);
+    choose(&mut s, &mut c, MenuEntry::Shop);
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    let view = s.shop().unwrap().view(&c);
+    let vest = view
+        .lines
+        .iter()
+        .find(|l| l.name == "Leather Vest")
+        .unwrap();
+    assert_eq!(vest.gold, gold_text(price(&c, "leather_vest") / 2));
+    assert!(!vest.detail.contains("buys only"), "{vest:?}");
+}
+
+#[test]
+fn the_tailor_sell_list_renders() {
+    let mut c = ctx();
+    let s = tailor_sell(&mut c);
+    assert_snapshot!("tailor_sell", render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// Each specialty store names its goods when it refuses an item; the
+/// other shops give no reason.
+#[test]
+fn each_specialty_store_says_what_it_buys() {
+    let c = ctx();
+    let reason = |kind| wont_take_key(kind).map(|k| c.text(k).to_owned());
+    assert_eq!(
+        reason(ShopKind::Alchemist).as_deref(),
+        Some("The Alchemist buys only consumables.")
+    );
+    assert_eq!(
+        reason(ShopKind::Tailor).as_deref(),
+        Some("The Tailor buys only cloth and leather armor.")
+    );
+    for kind in [
+        ShopKind::Armoury,
+        ShopKind::Vendor,
+        ShopKind::Blacksmith,
+        ShopKind::Basic,
+    ] {
+        assert_eq!(reason(kind), None, "{kind:?}");
+    }
+    assert_eq!(c.text(kind_key(ShopKind::Alchemist)), "Alchemist");
+    assert_eq!(Tab::of(ShopKind::Alchemist), [Tab::Buy, Tab::Sell]);
+}

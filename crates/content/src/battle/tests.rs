@@ -43,6 +43,7 @@ const OK: &str = r#"(
     pack_cap: 3,
     default_pack: ["potion", "elixir"],
     clear_gold: 700,
+    clear_items: ["steel_axe"],
     objective: DefeatUnit(unit: "test_rogue", turn_limit: Some(9)),
     triggers: [(when: TurnStart(turn: 1, phase: Player), scene: "test", once: true)],
     difficulty: Hard,
@@ -111,6 +112,7 @@ fn a_valid_battle_loads() {
         [ItemId::new("potion"), ItemId::new("elixir")]
     );
     assert_eq!(def.clear_gold, 700);
+    assert_eq!(def.clear_items, [ItemId::new("steel_axe")]);
     assert_eq!(
         def.objective,
         Objective::DefeatUnit {
@@ -148,6 +150,7 @@ fn defaults_fill_what_a_battle_leaves_out() {
     assert_eq!(def.pack_cap, c.items.rules.default_pack_cap);
     assert_eq!(def.default_pack, [] as [trpg_core::ItemId; 0]);
     assert_eq!(def.clear_gold, 0);
+    assert_eq!(def.clear_items, [] as [trpg_core::ItemId; 0]);
     assert_eq!(def.triggers, [] as [trpg_core::Trigger; 0]);
     assert_eq!(def.battle_notes, [] as [trpg_core::BattleNote; 0]);
     assert_eq!(

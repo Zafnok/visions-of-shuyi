@@ -11,13 +11,13 @@
 #
 #   In the battle (triggers, each once)
 #     ch02_first_turn              TurnStart(turn: 1, phase: Player)
-#     ch02_refusal                 TurnStart, early (0848 picks the turn): Hendry and Joss
+#     ch02_refusal                 TurnStart(turn: 1, phase: Enemy): Hendry and Joss
 #     ch02_boss_engage_lead        CombatStart(unit: "hound_lieutenant", against: Some("lead"))
 #     ch02_boss_engage_poacher     CombatStart(unit: "hound_lieutenant", against: Some("poacher"))
 #     ch02_boss_engage             CombatStart(unit: "hound_lieutenant"): anyone else
 #     ch02_boss_half               HalfHp(unit: "hound_lieutenant")
 #     ch02_death_hound_lieutenant  UnitFell(unit: "hound_lieutenant")
-#     ch02_house_keeper            UnitEntersArea(who: Character("keeper"), a house)
+#     ch02_house_keeper            UnitEntersArea(who: Character("keeper"), the house by the ford)
 #     ch02_death_lead              UnitFell(unit: "lead"): game over in both modes
 #     ch02_death_<id>              UnitFell(unit: "<id>", mode: Some(Classic))
 #     ch02_retreat_<id>            UnitFell(unit: "<id>", mode: Some(Casual))
@@ -28,18 +28,18 @@
 #     ch02_join                    the far bank; Joss joins
 #     ch02_tbc                     Veyne Hall: Dace and the old sergeant
 #
-# Until 0848 wires the triggers, the validator can't know which scene
-# plays for whom, so every companion line in a battle scene below sits
-# in an "@if" block for them (ADR-0055). Once a trigger names the
-# companion (a death quote, a retreat line, the boss against Aske, Maud
-# at a house), that "@if" can only go one way and the validator reports
-# it: 0848 removes those blocks as it wires each trigger. The "@if" in
+# A battle scene whose trigger names a companion (a death quote, a
+# retreat line, the boss against Aske, Maud at a house) can count on
+# them, so it has no "@if" for them (ADR-0055). The "@if" in
 # ch02_first_turn stays: a turn-start scene in a chapter after the first
-# can't count on anyone.
+# can't count on anyone. Joss joins in ch02_join (@joins defector); the
+# scenes of this chapter need no "@if" for him.
 #
-# No @place directives yet: the maps are 0848's. The @music lines are
-# this ticket's picks from the mood cues (0071); the battle's own cue,
-# battle_desperate, is Nick's and goes in the battle file.
+# Places (0848): the road above the ford (kells_road), the battle's map
+# for the ford's edge and the herald, the far bank (kells_far_bank) and
+# the guardroom at Veyne Hall (veyne_guardroom). The @music lines are
+# 0744's picks from the mood cues (0071); the battle's own cue,
+# battle_desperate, is Nick's and is in the battle file.
 #
 # The five companions may have died in Chapter 1 (Classic), so outside
 # the battle every line of theirs is in an "@if" block, and each scene
@@ -66,6 +66,7 @@
 @scene ch02_intro
 @caption The road above {n:place.kells_ford}, before dawn
 @music talk_calm
+@place kells_road 12,8
 > No fire. A stand of alders by the road, and the river loud under it. The whole party has stopped.
 @left lead neutral
 @if keeper
@@ -150,6 +151,7 @@ retainer: That's the ford. ...Up. Everybody up, now.
 @scene ch02_prebattle
 @caption {N:place.kells_ford}, first light
 @music dungeon_tense
+@place battle 9,12
 > The south end of the village. Thatch burning on both banks, and across the water the garrison's tower. A dead man in the road in {n:faction.brennmark.adj} colors, a hayfork in him.
 @left lead neutral
 @if sergeant
@@ -218,8 +220,8 @@ sergeant: I'm fastest, so I'm going for the houses, and I'm not arguing about it
 @end
 
 # Hendry and the one who shares his history: the boy he picked, with a
-# torch. Drawn over the map at a turn start early in the battle (0848
-# picks the turn, and whether Joss is a unit who leaves the map after it).
+# torch. Drawn over the map as the Hounds' first turn starts. Joss is no
+# unit on the map (0848): the player never fights him.
 
 @scene ch02_refusal
 @left defector sad
@@ -243,10 +245,7 @@ hound_lieutenant: Put that down and walk off the road. Nobody's paying me for yo
 hound_lieutenant: I know that coat. The hole where the crest was. {n:rival.first}'s exile. He tells stories about the hall when he's drunk, and you're in them. ...Walk off. I don't want to tell him I killed you.
 @end
 
-# The @if goes when 0848 wires this as the boss against Aske.
-
 @scene ch02_boss_engage_poacher
-@if poacher
 @left poacher angry
 @right hound_lieutenant neutral
 poacher: You. Take that badge off.
@@ -254,9 +253,6 @@ hound_lieutenant: There's the voice. That's the voice that came over our ford at
 poacher: Then you know what it is. You know what it is and you are doing it.
 hound_lieutenant: I know what it is. They did it to us first, and nobody answered for it.
 poacher: My brother wore that badge. He died in it. Take it off.
-@left clear
-@right clear
-@endif
 @end
 
 @scene ch02_boss_half
@@ -273,15 +269,12 @@ hound_lieutenant: The captain. Tell the captain a year's pay is owed, and my mot
 hound_lieutenant: ...Is the boy still in the river? It's cold. Get him out. Will one of you get him out of the water.
 @end
 
-# Maud ends her move at a house: her arc, strangers under fire. The @if
-# goes when 0848 wires it.
+# Maud ends her move at the house by the ford: her arc, strangers under
+# fire.
 
 @scene ch02_house_keeper
-@if keeper
 @left keeper surprised
 keeper: Let me see. Let me see it, don't-- I'm a keeper, give me your arm. Don't look at it. Look at me, look at my face, that's it. Someone's coming to carry him. They are.
-@left clear
-@endif
 @end
 
 # The lead's fall is game over in both modes.
@@ -294,87 +287,56 @@ keeper: Let me see. Let me see it, don't-- I'm a keeper, give me your arm. Don't
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). Last words are about the living;
 # the shapes differ from each other and from Chapter 1's. They can fire
-# in any order, so none names another companion. The @if blocks go when
-# 0848 wires each one.
+# in any order, so none names another companion.
 
 @scene ch02_death_retainer
-@if retainer
 @left retainer sad
 retainer: Your left. Kid, your left, it's open, it's always-- turn that coat. Turn it inside out before they see you. Do as you're told, for once.
-@left clear
-@endif
 @end
 
 @scene ch02_retreat_retainer
-@if retainer
 @left retainer angry
 retainer: Knee. No, I'm not getting up. Hold the road without me, I'll catch up.
-@left clear
-@endif
 @end
 
 @scene ch02_death_sergeant
-@if sergeant
 @left sergeant sad
 sergeant: Your Former Grace. ...No. {lead}. There. Four years and I never once said it. Should have, once.
-@left clear
-@endif
 @end
 
 @scene ch02_retreat_sergeant
-@if sergeant
 @left sergeant angry
 sergeant: Down. I'm down, she isn't, catch her, one of you, before she goes in the river-- I'm fine! I'm walking. Go.
-@left clear
-@endif
 @end
 
 @scene ch02_death_poacher
-@if poacher
 @left poacher sad
 poacher: I was right about the boots. Tell the loud one. She will not take it from anybody else. ...My mor does not read. It will have to be said to her.
-@left clear
-@endif
 @end
 
 @scene ch02_retreat_poacher
-@if poacher
 @left poacher angry
 poacher: I cannot draw. ...Do not say anything. I know. I will find you after.
-@left clear
-@endif
 @end
 
 @scene ch02_death_keeper
-@if keeper
 @left keeper sad
 keeper: Don't let them come out yet. The ones in the houses, they'll come out when it goes quiet and it isn't quiet, tell them to stay-- ...Oh, I did want to see the bridge. I've never been over one that big.
-@left clear
-@endif
 @end
 
 @scene ch02_retreat_keeper
-@if keeper
 @left keeper surprised
 keeper: I've-- oh, that's deep. I'll sit here. I'll sit and do my own, I've done my own before. Go on. Go on, I'll be upset if you fuss.
-@left clear
-@endif
 @end
 
 @scene ch02_death_heretic
-@if heretic
 @left heretic sad
 heretic: Heir. ...Walk in front yourself now. There's nobody watching you.
-@left clear
-@endif
 @end
 
 @scene ch02_retreat_heretic
-@if heretic
 @left heretic angry
 heretic: I'm empty. Nothing comes. I'll be in the house with the rest of them. Go.
-@left clear
-@endif
 @end
 
 # ---------------------------------------------------------------------------
@@ -388,6 +350,7 @@ heretic: I'm empty. Nothing comes. I'll be in the house with the rest of them. G
 @scene ch02_victory
 @caption {N:place.kells_ford}, late morning
 @music scene_tragic
+@place battle 14,8
 > Smoke where the fire was. At the far end of the bridge the garrison has come down from its tower at last.
 > A herald in crown colors walks out onto the bridge with a paper. The soldiers behind him stop where the bridge stops.
 @left lead neutral
@@ -461,6 +424,8 @@ sergeant: Well, Your Former Grace? That's a price on you by the end of the week.
 @scene ch02_join
 @caption The far bank, dusk
 @music side_quest
+@place kells_far_bank 12,8
+@joins defector
 @if poacher
 > {n:poacher} took them back over the ford after dark, and nobody on the tower looked down. {n:defector.first} sits on a stone with his boots off, wringing out a sock.
 @else
@@ -523,6 +488,7 @@ sergeant: Your Grace! Oh, I'm keeping him. {N:defector.nickname}, you're staying
 @scene ch02_tbc
 @caption {N:place.veyne_hall}, the guardroom
 @music talk_antagonist
+@place veyne_guardroom 12,7
 > Night. The guardroom at the gate. {n:rival.first} at the table with two papers, read. In the door, {n:hound_sergeant}, an old sergeant in black with a blue scarf showing at his neck.
 @left rival neutral
 @right hound_sergeant neutral

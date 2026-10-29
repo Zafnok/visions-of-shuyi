@@ -43,8 +43,8 @@
 //!   3. The battle's recruits ([`BattleState::recruited`]) join the roster,
 //!      as player units.
 //!   4. The stock becomes the battle's (with what was bought or found),
-//!      plus the pack's unused items; gold becomes the battle's plus the
-//!      battle's `clear_gold`.
+//!      plus the pack's unused items and the battle's `clear_items`; gold
+//!      becomes the battle's plus the battle's `clear_gold`.
 //!   5. The supports become the battle's ([`BattleState::supports`]: the
 //!      points every battle gives, story battle or skirmish). In
 //!      **Classic**, every support of a dead character ends
@@ -63,6 +63,10 @@
 //!   ([`Campaign::dies_in_scene`], the dialogue's `@dies`): it leaves the
 //!   roster, its loadout goes to the stock and its supports end, as for a
 //!   Classic death. A lord (the lead) never does.
+//! - **A scripted join** (`battle-scenes-and-recruitment.md`, *In a scene,
+//!   on a story beat*, Joss, 0069): a scene can add a named character to
+//!   the army ([`Campaign::joins_in_scene`], the dialogue's `@joins`), as
+//!   a player unit at the end of the roster, unless it is already in it.
 //! - **Supports** (`docs/design/supports.md`, rules in [`crate::support`]):
 //!   between battles, [`Campaign::view_support`] views a pair's unlocked
 //!   conversation, which is what raises its rank. Both characters must be
@@ -99,7 +103,7 @@ use crate::item::{BattlePack, ItemId, ItemTable, Stock};
 use crate::lead::{LEAD_ID, LeadProfile};
 use crate::map::BattleMap;
 use crate::progression::{EXP_PER_LEVEL, grant_exp};
-use crate::shop::Gold;
+use crate::shop::{self, Gold};
 use crate::skill::SkillTable;
 use crate::spell::SpellTable;
 use crate::support::{SupportBook, SupportError, SupportPair, SupportTable, SupportViewed};
@@ -220,6 +224,9 @@ pub struct BattleDef {
     pub solo_bench: Vec<CharacterId>,
     /// Gold for winning.
     pub clear_gold: Gold,
+    /// Items for winning, into the stock (the Hound lieutenant's axe,
+    /// Chapter 2: `combat-arts.md`, *Special weapons*).
+    pub clear_items: Vec<ItemId>,
     /// How to win.
     pub objective: Objective,
     /// The battle's story moments (0705).
@@ -545,6 +552,9 @@ impl Campaign {
             }
         }
         stock.unpack(state.pack().clone());
+        for item in &def.clear_items {
+            let _ = shop::add_to_stock(&mut stock, state.items(), item);
+        }
         self.stock = stock;
         self.gold = state.gold().saturating_add(def.clear_gold);
         for u in &mut self.roster {
@@ -565,6 +575,25 @@ impl Campaign {
         self.lose(&unit, &mut stock);
         self.stock = stock;
         self.supports.end_for(character, table);
+        true
+    }
+
+    /// Adds `unit` (a named character's, fresh from the character data) to
+    /// the army: a scene's recruit (see the module docs). Returns whether
+    /// it joined (nothing changes for a unit with no character, or one
+    /// already in the army).
+    pub fn joins_in_scene(&mut self, unit: Unit) -> bool {
+        let Some(character) = &unit.character else {
+            return false;
+        };
+        if self.member(character).is_some() {
+            return false;
+        }
+        self.roster.push(Unit {
+            faction: Faction::Player,
+            role: Role::Regular,
+            ..unit
+        });
         true
     }
 

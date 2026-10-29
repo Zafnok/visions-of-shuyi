@@ -99,7 +99,8 @@ impl FeatureDef {
 impl MapFeature for FeatureDef {
     /// Problems visible without the item table: a shop's list must be empty
     /// for a blacksmith and not empty otherwise; the basic shop is
-    /// Preparations', never on a map; a chest can't hold 0 gold.
+    /// Preparations' and the specialty stores are towns', never on a map;
+    /// a chest can't hold 0 gold.
     fn problem(&self) -> Option<String> {
         let problem = match self {
             FeatureDef::Shop { kind, stock } => match (kind, stock.is_empty()) {
@@ -108,6 +109,9 @@ impl MapFeature for FeatureDef {
                 }
                 (ShopKind::Armoury | ShopKind::Vendor, true) => "the shop sells nothing",
                 (ShopKind::Basic, _) => "the basic shop is only on Preparations, not on a map",
+                (ShopKind::Alchemist | ShopKind::Tailor, _) => {
+                    "a specialty store is only in towns, not on a map"
+                }
                 _ => return None,
             },
             FeatureDef::Chest(LootDef::Gold(0)) => "the chest holds 0 gold",
@@ -254,23 +258,35 @@ pub fn check_features(
             if !passable {
                 error("the tile can't be entered".to_owned());
             }
-            let ids: Vec<&ItemId> = match feature {
-                TileFeature::Shop(shop) => shop.stock.iter().collect(),
-                TileFeature::Chest(Loot::Item(i)) => vec![i],
-                TileFeature::Chest(Loot::Gold(_)) => vec![],
-            };
-            for id in ids {
-                match (items.get(id), feature) {
-                    (None, _) => error(format!("unknown item \"{}\"", id.0)),
-                    (Some(item), TileFeature::Shop(shop)) if !shop.kind.stocks(item) => {
-                        error(format!("{:?} shop can't sell \"{}\"", shop.kind, id.0));
-                    }
-                    _ => {}
+            match feature {
+                TileFeature::Shop(shop) => check_shop(shop, items).into_iter().for_each(error),
+                TileFeature::Chest(Loot::Item(id)) if items.get(id).is_none() => {
+                    error(format!("unknown item \"{}\"", id.0));
                 }
+                TileFeature::Chest(_) => {}
             }
         }
     }
     errors
+}
+
+/// What is wrong with `shop`'s list: an item missing from `items`, or one
+/// its kind may not sell ([`ShopKind::stocks`]); a specialty store says
+/// what its goods are. Empty when nothing is wrong. Shared by every place
+/// shops are written (maps today, towns with 1007).
+pub fn check_shop(shop: &Shop, items: &ItemTable) -> Vec<String> {
+    let goods = match shop.kind {
+        ShopKind::Alchemist => Some("an Alchemist trades only consumables"),
+        ShopKind::Tailor => Some("a Tailor trades only cloth and leather armor"),
+        _ => None,
+    };
+    let problem = |id: &ItemId| match (items.get(id), goods) {
+        (None, _) => Some(format!("unknown item \"{}\"", id.0)),
+        (Some(item), _) if shop.kind.stocks(item) => None,
+        (Some(_), Some(goods)) => Some(format!("{goods}, not \"{}\"", id.0)),
+        (Some(_), None) => Some(format!("{:?} shop can't sell \"{}\"", shop.kind, id.0)),
+    };
+    shop.stock.iter().filter_map(problem).collect()
 }
 
 #[cfg(test)]
@@ -520,6 +536,43 @@ mod tests {
         assert_eq!(
             errors(&vendor),
             ["m.map: feature at (0, 0): the shop sells nothing"]
+        );
+        for kind in ["Alchemist", "Tailor"] {
+            assert_eq!(
+                errors(&FEATURES.replace("Armoury", kind)),
+                ["m.map: feature at (0, 0): a specialty store is only in towns, not on a map"],
+                "{kind}"
+            );
+        }
+    }
+
+    /// Ticket 0320: a specialty store listing an item outside its goods
+    /// is an error that says what its goods are.
+    #[test]
+    fn a_specialty_store_lists_only_its_goods() {
+        let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e:?}"));
+        let shop = |kind, stock: &[&str]| Shop {
+            kind,
+            stock: stock.iter().map(|i| ItemId::new(i)).collect(),
+        };
+        let tailor = shop(
+            ShopKind::Tailor,
+            &["linen_robe", "leather_vest", "steel_sword", "iron_plate"],
+        );
+        assert_eq!(
+            check_shop(&tailor, &content.items),
+            [
+                "a Tailor trades only cloth and leather armor, not \"steel_sword\"",
+                "a Tailor trades only cloth and leather armor, not \"iron_plate\"",
+            ]
+        );
+        let alchemist = shop(ShopKind::Alchemist, &["potion", "leather_vest", "ghost"]);
+        assert_eq!(
+            check_shop(&alchemist, &content.items),
+            [
+                "an Alchemist trades only consumables, not \"leather_vest\"",
+                "unknown item \"ghost\"",
+            ]
         );
     }
 

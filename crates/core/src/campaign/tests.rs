@@ -122,6 +122,7 @@ fn def() -> BattleDef {
         solo_gold: 0,
         solo_bench: vec![],
         clear_gold: 500,
+        clear_items: vec![],
         objective: Objective::Rout { turn_limit: None },
         triggers: vec![Trigger {
             when: TriggerWhen::UnitFell {
@@ -407,6 +408,33 @@ fn no_unused_charges_give_gold_and_no_exp() {
             .all(|u| rewards.exp_gained(u.id) == 0)
     );
     assert_eq!(game.gold, s.gold() + 500);
+}
+
+/// A battle's `clear_items` go to the stock when it is won (the Hound
+/// lieutenant's axe, 0848), a weapon as a fresh copy.
+#[test]
+fn clear_items_go_to_the_stock_on_a_win() {
+    let mut game = campaign(GameMode::Classic);
+    let axe = roster()[0].loadout.weapons[0].clone().unwrap().def;
+    let plain = def();
+    let rewarded = BattleDef {
+        clear_items: vec![axe.clone(), item("tonic")],
+        ..plain.clone()
+    };
+    let s = won(&game, &rewarded);
+    // The same win without them.
+    let mut without = game.clone();
+    without.apply_result(&plain, &s, 0).unwrap();
+    let before = without.stock;
+    game.apply_result(&rewarded, &s, 0).unwrap();
+    assert_eq!(game.stock.weapons.len(), before.weapons.len() + 1);
+    let new = game.stock.weapons.last().unwrap();
+    assert_eq!(new.def, axe);
+    assert!(new.durability_left > 0, "a fresh copy");
+    assert_eq!(
+        game.stock.count(&item("tonic")),
+        before.count(&item("tonic")) + 1
+    );
 }
 
 /// A unit at the level cap gets nothing from the bonus.
@@ -768,4 +796,28 @@ fn a_scene_death_removes_a_character_for_good_in_every_mode() {
         assert!(!game.dies_in_scene(&c("lord"), &table));
         assert!(game.member(&c("lord")).is_some());
     }
+}
+
+/// A scene's recruit (Joss, 0848): joins at the end of the roster as a
+/// player unit, once, and only a named character.
+#[test]
+fn a_scene_join_adds_a_character_to_the_army_once() {
+    let mut game = campaign(GameMode::Classic);
+    // An enemy boss's unit becomes a regular player unit.
+    let cal = Unit {
+        role: Role::Boss,
+        ..named(unit(93, Faction::Enemy, p(3, 3)), "cal")
+    };
+    assert!(game.joins_in_scene(cal.clone()));
+    let names: Vec<_> = game.roster.iter().map(|u| u.name.as_str()).collect();
+    assert_eq!(names, ["lord", "ann", "ben", "cal"]);
+    let joined = game.member(&c("cal")).unwrap();
+    assert_eq!(
+        (joined.faction, joined.role),
+        (Faction::Player, Role::Regular)
+    );
+    // Only once; never a unit with no character.
+    assert!(!game.joins_in_scene(cal));
+    assert!(!game.joins_in_scene(unit(94, Faction::Player, p(0, 0))));
+    assert_eq!(game.roster.len(), 4);
 }

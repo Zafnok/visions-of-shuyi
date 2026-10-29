@@ -1,5 +1,6 @@
 // The Chapter 1 cast (ticket 0803; sheets in docs/story/characters/) and the
-// Red Company's generic soldiers. Every stat, level and loadout is a
+// Red Company's generic soldiers; Chapter 2's recruit, boss and Hounds
+// (ticket 0848). Every stat, level and loadout is a
 // *tunable* starting value, judged in the Chapter 1 playtest (0804). Loaded
 // by trpg_content::character. The test characters and templates (ids
 // starting `test_`) are in assets-test/data/characters.ron (ADR-0057).
@@ -63,7 +64,7 @@
         ),
         // Aske.
         (
-            id: "poacher", class: "archer", level: 1,
+            id: "poacher", class: "archer", level: 2,
             talent: Dex,
             base: (17, 5, 0, 8, 6, 3, 1),
             weapon_ranks: [(Bow, D)],
@@ -98,6 +99,27 @@
             weapon_ranks: [(Axe, D)],
             loadout: (weapons: ["steel_axe", "iron_axe"], armour: Some("leather_vest")),
         ),
+        // Joss Pellam (defector.md, ticket 0848): joins in the scene after
+        // Kell's Ford (`@joins`), a level behind where the party will be.
+        // A seamstress's son: his talent is Dex.
+        (
+            id: "defector", class: "swordsman", level: 3,
+            talent: Dex,
+            base: (21, 6, 0, 9, 9, 4, 2),
+            weapon_ranks: [(Sword, D)],
+            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
+        ),
+        // Silas Hendry, the Chapter 2 boss (hound_lieutenant.md): an axe
+        // user with the Houndmaster's Axe, Dace's gift, and its art Pack
+        // Hunt (combat-arts.md, Special weapons). The axe is the player's
+        // when the battle is won (battles/ch02.ron, clear_items).
+        (
+            id: "hound_lieutenant", class: "raider", level: 6,
+            talent: Str,
+            base: (30, 10, 0, 6, 6, 7, 1),
+            weapon_ranks: [(Axe, D)],
+            loadout: (weapons: ["houndmasters_axe"], armour: Some("chain_mail")),
+        ),
     ],
     generics: [
         // The Red Company (Chapter 1's enemies).
@@ -109,19 +131,29 @@
             id: "red_guard", class: "guard", level: 1,
             loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
         ),
+        // The Hounds in Brennish colors (Chapter 2's enemies, ticket
+        // 0848). Levels are set in the battle files.
+        (id: "hound_raider", class: "raider", level: 2, loadout: (weapons: ["iron_axe"])),
+        (id: "hound_swordsman", class: "swordsman", level: 2, loadout: (weapons: ["iron_sword"])),
+        (id: "hound_archer", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
+        (id: "hound_rider", class: "rider", level: 2, loadout: (weapons: ["iron_spear"])),
+        (
+            id: "hound_guard", class: "guard", level: 2,
+            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
+        ),
     ],
     // speakers: ids that may speak in dialogue (.dlg) but aren't units
     // (yet). Each needs a name in names.ron. The rival and the Master of
     // Vows don't fight in Chapter 1; the messenger (ticket 0707) only
     // ever speaks.
-    // Chapter 2 (ticket 0744): Joss, the Hound lieutenant and the Hound
-    // sergeant speak before they are units; 0848 and 0849 move them into
-    // characters when they build the battles. The herald only ever speaks.
+    // Chapter 2 (ticket 0744): the Hound sergeant speaks before 0849 makes
+    // him a unit (Joss and the Hound lieutenant became characters in 0848).
+    // The herald only ever speaks.
     // Chapter 3 (ticket 0745): the prior of Greywater speaks before 0849
     // makes him a unit.
     // Chapter 5 (ticket 0747): the envoy, Hedda, the Hound officer and the
     // magistrate speak before 0851 makes units of those that fight.
     // Chapter 6 (ticket 0748): Oriel, the Brennish commander and the
     // king's knight speak before 0852 makes units of those that fight.
-    speakers: ["rival", "vowmaster", "messenger", "defector", "hound_lieutenant", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight"],
+    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight"],
 )

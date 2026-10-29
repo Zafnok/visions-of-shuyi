@@ -63,6 +63,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `solo_stock` | The stock when the battle is played on its own (the debug Quick Battle): item ids, one entry per item. Ignored in the story, where the stock is the campaign's. Default: empty. |
 | `solo_gold` | The party's gold when the battle is played on its own (the debug Quick Battle), to try the Preparations shop with. Ignored in the story, where the gold is the campaign's. Default 0. |
 | `clear_gold` | Gold for winning. Default 0. |
+| `clear_items` | Items for winning, into the stock, one entry per item (`clear_items: ["houndmasters_axe"]`: the Hound lieutenant's axe, Chapter 2); a weapon comes as a fresh copy. Default: none. |
 | `objective` | `Rout()`, `DefeatUnit(unit: "garth")` (a character among the enemies or reinforcements), `Seize(pos: (x, y), by_lord: true)`, `Survive(turns: 8)`, `Escape(area: (x: 13, y: 2, w: 1, h: 6))` (every player unit still standing leaves through the exit area, one by one, with the `Escape` action; no turn limit: `turn-structure.md`, *Escape*). The first three take an optional `turn_limit: Some(n)`. `DefeatUnit` also takes `leftovers` (ticket 0845): `Stay`, the default, or `Flee` (`DefeatUnit(unit: "red_captain", leftovers: Flee)`, Chapter 1): when the unit is defeated, the battle is won and the enemies still on the map run, walking toward the nearest map edge as they fade, before the victory banner; they give no EXP and drop nothing. |
 | `exit_name` | Optional, written bare (`exit_name: "the Brennish lines"`), only with `Escape`: the place the exit leads to, named on the objective line (`Get everyone to the Brennish lines (2/6 out)`), one line, translated by its English (`battles.<id>.exit`, `assets/lang/README.md`). Default: `Get everyone to the exit`. |
 | `village` | Optional, written bare (ticket 0313, `turn-structure.md` *Save the village*): `village: (minimum: 3, rewards: [Gold(300), Item("elixir")])`. The houses are **every `house` tile** of the map; `minimum` is how many must be saved (1 to their number), and `rewards` gives one reward per house past the minimum (exactly that many; the first extra house standing at the win gives the first, …), each `Gold(n)` or `Item("id")` as a chest's loot. A player unit on a standing house saves it with the `Evacuate` action; a `raider` (below) that ends its action on or next to one burns it (its tile becomes `burnt` terrain, which gives no bonus); the battle is lost the moment the minimum can't be met, and on a win the houses still standing count as saved. Default: none. |
@@ -81,7 +82,7 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 
 - the id doesn't match the file name; an unknown map;
 - a `light` that isn't a light of `assets/data/lighting.ron` (with its line and column);
-- `preparations: true` with a `default_pack`; an unknown `solo_stock` item; a `solo_bench` character that is unknown, in the battle or listed twice;
+- `preparations: true` with a `default_pack`; an unknown `solo_stock` or `clear_items` item; a `solo_bench` character that is unknown, in the battle or listed twice;
 - an unknown character or template; an enemy with both or neither;
 - a level outside `1..=level_cap`, or a level given for a character;
 - a loadout the unit can't carry;
@@ -111,7 +112,7 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
   more than 5 notes; a note unit that is neither an `id` nor a character in
   the battle, or that is listed twice.
 
-`ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle),
+`ch01.ron` and `ch02.ron` are Chapters 1 and 2's battles. `test.ron` (the test chapter's battle),
 `quick.ron` (the debug Quick Battle) and `test_escape.ron`,
 `test_retreat.ron` and `test_hold.ron` (one of Act 1's battle rules each,
 0319) and `test_village.ron` (save the village, 0313) are test files, never part of the story: they are in `assets-test/battles/`, which a build that ships doesn't
