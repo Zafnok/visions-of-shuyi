@@ -70,7 +70,7 @@ Chapters 1–3 stay linear and must play exactly as before.
 - The map shows whole, at most 70 × 30 cells: a larger act needs
   scrolling (a ticket when one does).
 - The PC Key bindings screen had no room for the shortcuts' rows: the
-  engine's skin now scrolls (engine#2394), and 1198 lists them once the
+  engine's skin now scrolls (engine#2395), and 1198 lists them once the
   pin is past it.
 - The Playdate has no world map skin or buttons yet; its Options and Key
   bindings screens leave the world map's rows out.

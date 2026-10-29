@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["1007", "engine#2394"]
+blocked_by: ["1007", "engine#2395"]
 nick_input: none
 completed:
 ---
@@ -23,10 +23,10 @@ army) and `WorldFind` (the Find list), in a key group of their own
 engine's glyph skin drew every row with no scrolling, and the panel was
 full, so their rows ran over its border and pushed Restore defaults off.
 
-Engine ticket 2394 (`Zafnok/shuyi-engine#178`) makes that skin scroll.
+Engine ticket 2395 (`Zafnok/shuyi-engine#178`) makes that skin scroll.
 Until the game's pin is past it, 1007 leaves the two rows off the screen:
 `crates/ui/src/input.rs` keeps them in `WORLD_MAP_ROWS` and
-`NOT_LISTED_YET`, marked `// engine-friction: engine#2394`. Their keys
+`NOT_LISTED_YET`, marked `// engine-friction: engine#2395`. Their keys
 work; only rebinding waits.
 
 ## Nick input
@@ -37,7 +37,7 @@ bindings screen scrolled to its bottom in the PR.
 ## Scope
 
 **In:**
-- The pin at or past engine#2394's merge: the open `engine-pin` PR, or
+- The pin at or past engine#2395's merge: the open `engine-pin` PR, or
   the first step here moves it (`engine-change` §7).
 - `WORLD_MAP_ROWS` joins `KEY_ROWS` (after the dialogue log's row, under
   `WORLD_MAP_HEADING`, "On the world map"); `NOT_LISTED_YET` and the
@@ -51,7 +51,7 @@ bindings screen scrolled to its bottom in the PR.
 
 ## Implementation steps
 
-1. Check engine#2394 is merged and the pin is past it
+1. Check engine#2395 is merged and the pin is past it
    (`work-ticket` §1). If not, move the pin (`engine-change` §7, with the
    `engine-pin` skill's review), or wait for the open `engine-pin` PR.
 2. `crates/ui/src/input.rs`: append `WORLD_MAP_ROWS` to `KEY_ROWS`
@@ -64,18 +64,18 @@ bindings screen scrolled to its bottom in the PR.
    it__key_bindings_screen__*`, `it__rebind_buttons__*`): the list now
    scrolls; check `Restore defaults` is reachable (a test that presses
    Up from the top lands on it and sees it drawn).
-5. `grep -rn "engine#2394" crates` finds nothing left.
+5. `grep -rn "engine#2395" crates` finds nothing left.
 
 Expected size: about 10 production lines (the rows move into the table).
 
 ## Acceptance criteria
 
-- [ ] The pin is at or past engine#2394.
+- [ ] The pin is at or past engine#2395.
 - [ ] The PC Key bindings screen lists `Your army` and `Find` under "On
       the world map"; rebinding `Find` to `v` makes `v` open Find on the
       world map (a Harness test).
 - [ ] `Restore defaults` is drawn when focused (the screen scrolls).
-- [ ] No `engine-friction: engine#2394` comment is left.
+- [ ] No `engine-friction: engine#2395` comment is left.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

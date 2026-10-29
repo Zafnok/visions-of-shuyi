@@ -124,10 +124,10 @@ pub const KEY_ROWS: [KeyRow; 18] = [
     ),
 ];
 
-// engine-friction: engine#2394 (the Key bindings screen's glyph skin
+// engine-friction: engine#2395 (the Key bindings screen's glyph skin
 // draws every row with no scrolling, and the PC's panel is full: rows for
 // these would run over its border). Their keys work (`keymap.ron`); the
-// rows below join `KEY_ROWS` once the pin is past engine#2394 (game
+// rows below join `KEY_ROWS` once the pin is past engine#2395 (game
 // follow-up ticket 1198).
 /// The world map's actions (1007), not on the Key bindings screen yet.
 pub const NOT_LISTED_YET: [Action; 2] = [Action::WorldArmy, Action::WorldFind];

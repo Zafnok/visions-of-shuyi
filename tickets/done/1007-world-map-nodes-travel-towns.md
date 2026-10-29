@@ -213,11 +213,11 @@ all the same, a workaround for an engine assumption (below): row in
 
 - **The Key bindings screen** couldn't take the two new rows: the
   engine's glyph skin doesn't scroll and the PC panel was full. Engine
-  PR `Zafnok/shuyi-engine#178` (engine#2394) adds the scroll; an open
+  PR `Zafnok/shuyi-engine#178` (engine#2395) adds the scroll; an open
   `engine-pin` PR (#482) moves the pin to the engine's `main` separately,
-  so this PR doesn't move it. Until the pin is past engine#2394 the rows
+  so this PR doesn't move it. Until the pin is past engine#2395 the rows
   are left off the PC screen (`NOT_LISTED_YET`, marked
-  `// engine-friction: engine#2394`); their keys work. Follow-up **1198**.
+  `// engine-friction: engine#2395`); their keys work. Follow-up **1198**.
 - **The Playdate** has no world map yet: its Options leave `Open towns on
   arrival` out and its Key bindings the two shortcuts.
 - **Unit / Items** on the map's menu: not built (they don't exist outside
@@ -225,7 +225,7 @@ all the same, a workaround for an engine assumption (below): row in
 - **The picture look** is built and tested, but no map has a picture yet:
   Act 1's comes with 1070 (its text now says so).
 
-**Follow-up tickets**: 1198 (the shortcuts' rows, after engine#2394),
+**Follow-up tickets**: 1198 (the shortcuts' rows, after engine#2395),
 1081 (Vix explains the world map, Nick's request), 1082 (an icon set for
 the picture look's plates, Nick's request). 1070 and 1008 updated with
 what this ticket decided.

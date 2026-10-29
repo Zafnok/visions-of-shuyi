@@ -79,7 +79,7 @@ mod tests {
         let mut rebindable: Vec<Action> = Action::ALL
             .into_iter()
             .filter(|a| a.is_rebindable() && !CRANK_ACTIONS.contains(a))
-            // engine-friction: engine#2394
+            // engine-friction: engine#2395
             .filter(|a| !NOT_LISTED_YET.contains(a))
             .collect();
         rebindable.sort();
@@ -93,7 +93,7 @@ mod tests {
             ["Must have a key", "Optional", "In the dialogue log"]
         );
         assert_eq!(view.groups[2].rows[0].label, "Open the log");
-        // The world map's rows, once listed (engine#2394).
+        // The world map's rows, once listed (engine#2395).
         let c = ctx();
         assert_eq!(
             label(&c, &crate::input::WORLD_MAP_ROWS, Action::WorldArmy),
