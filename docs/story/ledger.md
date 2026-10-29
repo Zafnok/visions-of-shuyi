@@ -761,3 +761,269 @@ the prior dies, the lead has the books, Dace reads the report.
 - **Joss dead:** nobody named the black as Hound black (Aske alone
   said not priests); nobody did the Hound drill; nobody mended Maud's
   cuff; **nobody said it's another Marr.**
+
+## After Chapter 4
+
+Written by 0746 from `assets/dialogue/ch04.dlg`. It describes a chapter
+everyone lived through, with Gil beaten on Millhaven Road; what an
+earlier death leaves unsaid here, and what changes if Gil was missed, is
+in "If a companion died before Chapter 4", at the end. The battles
+themselves (who fought Dace, whether the optional road was taken) are
+the player's; the scenes don't depend on them, except that Dace retreats
+alive on every path.
+
+### What happened
+
+- **The world map opened.** A week south of the lake the party came out
+  of the forest above the heartland: fields, orchards, stone farms and a
+  black pennant at the crossroads. Aske: one of those fields would feed
+  her whole hold; she is not saying it is a good country, the dirt is
+  good. **Joss pointed out his mother's farm**, two valleys over, by a
+  ford with a willow, where the twins would see them from the lane, and
+  said he knows he can't go; Hollis: then don't stop saying it, and eat.
+  **Tamsin read the proclamation off the pennant post**: the exile, seen
+  riding with the raiders, every county, and a price under it, which she
+  would not say aloud ("it's not enough"); it went in the book under the
+  lead's name. Maud has the register wrapped in her spare robe inside
+  the oilcloth and worried about rain on the ink. **Rue told Aske the pot
+  wasn't burned, that she'd done it slow like Aske told her; Aske looked
+  at the fields and didn't answer.** Hollis read the posts: not one had
+  moved as the whole party walked past in daylight; "the boy's not
+  stopping us, kid. He's letting us come."
+- **Aldwater Toll Bridge** (guards the path). A Hound bar across the
+  crown's bridge over the Aldwater, carters paying a toll. The Hound at
+  the bar shouted the terms: the exile passes untouched by the captain's
+  order; the rest hand over their steel and the two books from the
+  abbey and walk behind. Tamsin: a Hound bar on a king's bridge, and
+  that chest never sees Varenhall. **Joss knew the man at the bar** (he
+  taught Joss the bar drill his first week) and said he'd be
+  recognized. Hollis: nobody hands over steel; the books stay in the
+  middle. They fought and won. **After, Tamsin opened the toll-chest:**
+  coin, a tally of every cart, and a mark at the bottom she knew from
+  three years of pay-notes that came back "no funds": **the crown
+  paymaster's, whose office is in Millhaven**; four thousand two hundred
+  and twelve crowns he never found, and his mark on a Hound toll-bar.
+  Aske: give the carters their toll back. Tamsin: "...Half." Half, and
+  the tally is hers; Aske handed it out. (The hook for *The Company
+  Ledger*, 1072.)
+- **Millhaven Road** (optional). A tipped pie cart, a Hound patrol, and
+  **Gil Parrow, "Champion of Six Fairs"**, bare to the waist in a red
+  sash, announcing a wager to the road: his last purse against every
+  man on it before the noon bell, because rule four doesn't permit him
+  to walk past a kicked-over cart; the party, arriving, counted ("You
+  count, ma'am. I'm sorry for it," to Tamsin on the mare). Hollis: let
+  him come to the spears. In the fight he announced rule one (announce
+  yourself) and, beaten, said "Well struck" and rule two: the beaten man
+  serves the one who beat him until a fair rematch. **After, he bowed
+  to the lead, the whole way down, and called them "Champion"**: the
+  lead's people beat him, which is the lead beating him; he is theirs
+  until a fair rematch on a fitting day before a crowd, "then I'll ask,
+  not before". The lead's reply isn't recorded (one was to hand him the
+  one pie that landed clean; he took it in both hands and said it was
+  the first thing the lead had given him). Tamsin: he bowed to the mare
+  first, and she let him. Maud sat him on the cart for his bleeding ear
+  ("It's an ear, ma'am. I've got the other one"). Rue counted three pies
+  into him. He bowed to Aske; "Make him stop." **Joss counted six fair
+  ribbons on his sash and asked about the bare place after them; Gil
+  put his thumb on it: there is no seventh.** His plan for after, said
+  once: a fair of his own, a ring and a pie stand, and one rule over the
+  gate, no betting. **Gil is with the party.** (If he was not beaten, he
+  settled with the pie-seller and walked toward the town bell; he is
+  never seen again.)
+- **The rise above the hall, the night before.** Dusk, no fire, the
+  hall below as lights. Hollis named them for the lead: the kitchen at
+  the end (the cook always kept it late), nothing in the study, "the
+  boy's not in the study". Aske: the lead grew up in that; her whole
+  hold would fit in the yard, goats and all; "...Noble." **Maud took the
+  lead's blue hands and put them in her sleeves.** Hollis: not the gate;
+  the laundry door behind the long wall, down the river meadow, which
+  never locked and only looked locked; the lead and the boy got out
+  through it to the mill pond at nine and he caught them coming back
+  with their boots full; that's the way in. Joss: the captain's in
+  there, walking the wall, he checks the men's boots, "he wouldn't--";
+  **Tamsin put the mare's head in his hands** while she did the girth.
+  Gil sat on the lead's windward side without a word. **Hollis: "Kid.
+  Tomorrow, whatever he says to you in there--" and stopped**; the lead's
+  reply isn't recorded; each way he gave an order about sleep and did
+  something with his hands. Rue, to the lead: you saw that, him not
+  saying it; she said all she's saying at the lake; eat, she isn't
+  carrying anybody tomorrow.
+- **The gate at dawn opened from inside before anybody knocked.** Dace
+  in the gateway, bare-headed, Hounds behind him: the lead's coat with
+  the hole where the crest was, four years and nobody's sewn it; nobody
+  has slept; the kitchen lit since four, come in; "What's that in your
+  hand? No. I know what that is." The lead put the pay-book to him (a
+  reply, not recorded; whichever, he didn't deny it). **Dace: Vosse had
+  something on him, enough to hang; point, or go in the cart yourself;
+  so he pointed, and took the silver, and would again. "I did what fed
+  us. You had a house. I had a sister." They ate better in the Vigil's
+  school, some of them.** Then, past the lead, to his father: **"And you.
+  Behind them. You knew. You always knew."** He never asked where the
+  boots came from, not one thing. **Hollis: "...Aye."** Joss: "Captain?"
+  and nothing after it. Dace: give me the register and the pay-book and
+  go south today, and he'll write to Ossary that they burned with the
+  prior; take the old man with you. The lead: "No." Dace, cold: "Then
+  take it, Veyne. I'll be in the hall." The gate shut.
+- **The party took Veyne Hall** by the laundry door and the servants'
+  passage, and **Dace retreated at the killing blow**, by the laundry
+  door, which he knows too ("not in this house"). The Hounds who didn't
+  follow him are in the cellar.
+- **In the battle** (what the triggers say, if they fired): Hollis, turn
+  1: the laundry door, don't look at the gate, I'm right behind you. In
+  the passage: watch the third step, the one that gave way under the
+  lead at nine and broke their arm, and **the boy carried the lead up
+  the rest on his back** (or Rue: it smells like soap, who has a door
+  just for washing). Dace, to anyone: put it down, he doesn't want their
+  name on a report, go sit in the guardroom. To the lead: the yard, the
+  wooden swords, "my father on the step shouting left" and the lead
+  always went right; "Stand still." "No. ...You'd go right anyway." To
+  Hollis: don't, go stand somewhere else, I'm asking; **"Guard up,
+  boy"**; twenty years of hearing that across this yard; "Guard up.
+  You're dropping it." To Rue: he lifted her in by her belt, crying, and
+  did it anyway; **he doesn't know her** ("there were other carts"); she
+  was in the cart at the mill when he found his sister in it, and ran;
+  "Then run. Run, then, I won't--". To Joss: "Pellam. Hood down in my
+  yard. Good." Then Hendry's words from the ford: stand by me, you were
+  in the smoke, that's what we'll say; Joss asked which of them said
+  them first; Dace: company words, everybody says them, **"I don't know
+  which of us said them first."** At half strength he shouted for the
+  stair. Death quotes, if they fired: Hollis (shoulder up; the bay in
+  the end stall), Tamsin (cross the lead's name out of the book, the
+  owed column, "you don't owe me"), Aske (two on the wall; she is not
+  cold; no cloak), Maud (give the names back to the mothers; the book
+  in her pack, keep it dry), Rue (did anybody eat; eat something, all of
+  you, she means it), Joss (was it right; his ma will hear it was the
+  captain's house, "could it just be the war?"), Gil ("Well struck.
+  Whoever that was").
+- **After, in the yard:** Maud sat everyone on the mounting block in
+  order of bleeding, the lead first. **Joss: he isn't going to say
+  anything about him; don't ask, he'll say something.** Aske: it is a
+  good house, the stone is good; she went to find where they keep the
+  arrows. Tamsin: a day before the riders come back with every man
+  in the county; one day in your own house, Your Former Grace; eat. Rue
+  had been through the kitchen already; there were eggs. **Rue sent the
+  lead to the stable:** the old man went in before anybody sat down and
+  hasn't come out; "I'm not doing it for you this time, heir."
+- **The stable.** The bay mare, fat as a barrel, in the end stall, and
+  Hollis brushing her with his back to the door. **"Aye. I knew. Not
+  all of it, but enough." He will tell the lead all of it, what he found
+  and what he did with it: not today, and not in his stable.** The
+  lead's reply isn't recorded (to "Four years." he said to say it as
+  often as they like; one reply was to take the brush, and they did the
+  mare one each side). Then: nobody has ridden her since he left; **the
+  boy wouldn't let them; he kept her fed and shod.** The lead: "We leave
+  tonight." Hollis: watch her off side, she kicks, she always did.
+- **That night, at a Hound post on the Millhaven road**, Dace, his arm
+  bound to his chest, dictated to a rider: the exile holds Veyne Hall;
+  the register and the pay-book are with the exile; "I am alive". The
+  letter from Ossary had asked after the old man. **"Write: The old man
+  was not there."** Alone, to the lead who wasn't there: you stood there
+  and let me say it with the whole yard listening; **"you should have
+  hit me, Veyne. I'd have known what to do with that."**
+
+### Who knows what (changes since the end of Chapter 3)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| Dace pointed out children to Vosse for a year under a threat ("something on me, enough to hang"), took the silver, and says he'd do it again | **everyone at the gate** (the whole party), from his own mouth; the lead asked him | what Vosse had on him (that he is gifted); nobody has asked |
+| Hollis knew, and kept it four years | **everyone at the gate**: Dace said "You knew. You always knew," and Hollis said "Aye." The lead heard it from Dace first | what he found and what he did with it: he told the lead he will tell "all of it", not today (Chapter 5) |
+| Dace answers to Ossary (he offered to write there that the party burned with the prior) | the party heard it | Crane's name, or what Ossary is to Dace |
+| The crown paymaster's mark is on a Hound toll at Aldwater, and his office is in Millhaven | **Tamsin** (she knew the mark from three years of refused pay-notes); the party heard her | who he is (1072) |
+| The laundry door and the servants' passage into the hall never locked; Dace knows them too and left by them | the lead, Hollis (always); the party now; Dace | — |
+| Dace keeps Hollis's bay mare fed and shod and lets nobody ride her | Hollis and the lead (the stable); whoever heard Ned die (Chapter 3) | — |
+| Dace doesn't remember Rue from the cart | Rue, if she fought him | — |
+| Dace used Hendry's exact words to Joss, and doesn't know which of them said them first | Joss, if he fought him | — |
+| Ossary asked Dace after "the old man" by name; Dace reported he wasn't at the gate | the player | the party; Hollis |
+| Dace is alive, wounded in the arm, on the Millhaven road with a Hound post | the player | the party knows only that he left by the laundry door |
+| Gil Parrow should have been Champion of Seven, and there is a bare place on his sash | the party saw the bare place (Joss asked; "There is not"); Gil alone knows why | everyone (his sheet: Acts 2–3) |
+| Joss's mother and sisters live two valleys from the Aldwater, by a ford with a willow | the party | the Hounds, as far as anyone knows |
+| The price on the lead's head | Tamsin read it and wrote it in the book; she wouldn't say it | the number is never said |
+
+Unchanged and still secret: Hollis's burned purse, list and pass (he has
+promised to tell), Dace being gifted, Wren alive (Rue alone, in the
+party), the prince, the Door, Aske's news-selling, Coldwell, Joss's
+badges.
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| The lead ↔ Hollis | **Cracked, and a promise.** He nearly told the lead on the rise and couldn't; Dace said it for him at the gate and he said "Aye" to the yard. In the stable he said he knew "not all of it, but enough", and will tell all of it where he can look at the lead, not in his son's stable. The lead's reply is the player's. He is still giving orders about the lead's shoulder. |
+| The lead ↔ Dace | **Enemies by his word.** He asked if they'd slept, noticed the hole in the coat, offered breakfast, confessed without being made to, offered the lead their life for the books, and when refused: "Then take it. I'll be in the hall." He retreated from the lead's house rather than die in it. Alone: "you should have hit me." |
+| Hollis ↔ Dace | "You knew. You always knew." / "...Aye." In the battle (if they met): "Guard up, boy," and "You're dropping it." Dace kept his father's mare four years. Dace lied to Ossary that the old man wasn't there. Neither has said the other's name. |
+| Joss ↔ Dace | **Broken.** His captain said his name, denied nothing, and (if they fought) used Hendry's words. Joss: "I'm not going to say anything about him. Don't ask me, I'll say something." He hasn't said a word against him yet. |
+| Rue ↔ Dace | She said the belt and the crying to his face (if they fought); he didn't know her. |
+| The lead ↔ Rue | She fed the lead on the rise and said she isn't carrying anybody; she made the lead watch Hollis not speak, and sent them to the stable: "I'm not doing it for you this time, heir." |
+| Aske ↔ Rue | **Still not speaking.** Rue offered an unburned pot, done slow the way Aske said; Aske looked at the fields. |
+| The lead ↔ Gil | "Champion." His by rule two until a fair rematch; he bowed the whole way down. What the lead said back is the player's (one reply gave him a pie, "the first thing you've given me"). |
+| Gil ↔ the others | Tamsin: he bowed to the mare before the lead. Maud: his ear, on the cart. Rue: three pies, where does it go. Aske: he bowed to her and she wanted him stopped. Joss: the six ribbons and the bare place; Gil told him about the fair with no betting. |
+| Tamsin ↔ Joss | "Needle. Hey." She put the mare's head in his hands when he couldn't stop talking about the captain. |
+| Maud ↔ the lead | She warmed the lead's hands in her sleeves on the rise and sat them down first in the yard. |
+| Tamsin ↔ the paymaster | A mark she knows on a Hound toll. The tally is hers. Her side quest's door (1072). |
+| Tamsin ↔ Aske | "Give it back." / "...Half." Aske handed out the carters' half. |
+| Joss ↔ Hollis | Hollis told him not to stop talking about home, and to eat while he did. |
+
+### Status
+
+- **Veyne Hall is the party's for one night.** Dace is alive, wounded,
+  at a Hound post on the Millhaven road; his Hounds who stayed are in
+  the hall's cellar; the county's men are a day away. The party (the
+  lead, Hollis, Tamsin, Aske, Maud, Rue, Joss, **Gil if he was beaten**)
+  leaves tonight; where is Chapter 5's. The register and the pay-book
+  are still theirs.
+- Aldwater Toll Bridge is cleared; **Tamsin's side quest, *The Company
+  Ledger*, is unlocked** from here (1072), while she is alive.
+  Millhaven's shop is open.
+- Ossary has asked Dace after Hollis by name and been told he wasn't
+  there.
+- Hollis owes the lead the whole telling (Chapter 5, the night before
+  Saltmere).
+- The lead's three replies (to Hollis on the rise, to Dace at the gate,
+  to Hollis in the stable), and the fourth to Gil's oath if he joined,
+  are not recorded: tones never change what happened.
+
+### If a companion died before Chapter 4 (Classic), or Gil was missed
+
+Everything above describes the scenes with all seven alive and Gil
+beaten. True on every path: the roads are open on purpose, the toll
+bridge is cleared, Dace confesses at the gate and doesn't deny the
+pay-book, refuses to kill the lead, loses the hall and retreats alive,
+and lies to Ossary about the old man.
+
+- **Hollis dead:** nobody read the posts (narration: not one moves);
+  nobody named the lights or the laundry door (narration: the lead
+  knows it); nobody nearly told the lead anything on the rise, and the
+  rise has no reply choice; **Dace never says "You knew"**: he looks
+  past the lead at the empty road and back, and the outline's second
+  blow doesn't land in this chapter; he says "take your people" instead
+  of "the old man"; Rue sends nobody to the stable; the lead finds the
+  bay mare alone, fed and shod by somebody, and nobody says "Aye";
+  Dace's "The old man was not there" is simply true. Dace's exchange
+  with Hollis and his death line can't play. Hollis's confession
+  (Chapter 5) can't happen.
+- **Tamsin dead:** nobody read the price off the post; **nobody knew
+  the paymaster's mark** (narration: nobody here knows it), so the hook
+  for *The Company Ledger* isn't spoken and the quest can't unlock
+  anyway; nobody asked Gil whether a woman on a horse counts; nobody
+  stopped Joss on the rise (he stopped himself); nobody said how long
+  till the county comes; nobody saw Gil bow to the mare.
+- **Aske dead:** nobody said the dirt is good or asked about the goats;
+  nobody said give it back (Tamsin counted out half anyway); Rue's pot
+  was offered to nobody; nobody said the stone is good; nobody was
+  bowed to who wanted it stopped.
+- **Maud dead:** nobody worried about rain on the register (whoever
+  carries it, Chapter 3's "every path"); nobody warmed the lead's hands;
+  nobody sat Gil down for his ear or the party on the mounting block.
+- **Rue dead:** no pot; nobody told the lead they saw Hollis not saying
+  it; nobody said the cart to Dace's face; nobody said there were eggs;
+  nobody sent the lead to the stable (the lead goes); the passage has
+  no "smells like soap".
+- **Joss dead:** nobody pointed out a farm two valleys over; nobody knew
+  the man at the toll bar; nobody said "Captain?" at the gate; the
+  captain's exchange can't play; nobody asked Gil about the ribbons, so
+  **Gil's bare seventh place and his fair with no betting are unsaid**
+  (a support or camp scene, 1073, is where they'd go).
+- **Gil missed** (Millhaven Road skipped, or won without beating him):
+  he walked toward the town bell and is gone for good; no bow, no
+  "Champion", no ribbons; nobody sat windward of the lead on the rise or
+  stood in the gateway; his battle lines can't play.

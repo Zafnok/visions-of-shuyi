@@ -1,0 +1,747 @@
+# Chapter 4: The Hound's Country. Written on a blank page from the beat
+# sheet's cards by ticket 0746 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch04.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# The first world-map chapter (world-structure.md): the chapter plays out
+# over the Act 1 map's nodes and ends with the story battle at Veyne Hall.
+# Scene ids, for 0850 (the story battle and the chapter file) and 1071
+# (the two fixed skirmishes) to wire:
+#
+#   When the chapter opens (the world map appears)
+#     ch04_intro                    the valley road: the heartland from the hill
+#
+#   Aldwater Toll Bridge (fixed skirmish, guards the path; 1071)
+#     ch04_aldwater_intro           before the fight
+#     ch04_aldwater_victory         after it: the toll-chest (the hook for 1072)
+#
+#   Millhaven Road (fixed skirmish, optional; 1071)
+#     ch04_millhaven_road_intro     before the fight: the pie cart
+#     ch04_prizefighter_engage      CombatStart(unit: "prizefighter"): anyone
+#     ch04_prizefighter_fell        UnitFell(unit: "prizefighter", recruit: true)
+#     ch04_millhaven_road_victory   after it: Gil joins (@if prizefighter) or is missed
+#
+#   Before the story battle (intro_scenes, in this order)
+#     ch04_eve                      the rise above the hall, the night before
+#     ch04_gate                     the gate at dawn: Dace
+#
+#   In the battle (triggers, each once)
+#     ch04_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch04_passage                  UnitEntersArea(who: Faction(Player), the servants' passage)
+#     ch04_boss_engage              CombatStart(unit: "rival"): anyone else
+#     ch04_boss_engage_lead         CombatStart(unit: "rival", against: Some("lead"))
+#     ch04_boss_engage_retainer     CombatStart(unit: "rival", against: Some("retainer"))
+#     ch04_boss_engage_heretic      CombatStart(unit: "rival", against: Some("heretic"))
+#     ch04_boss_engage_defector     CombatStart(unit: "rival", against: Some("defector"))
+#     ch04_boss_half                HalfHp(unit: "rival")
+#     ch04_boss_retreat             UnitFell(unit: "rival"): he retreats instead of falling
+#                                   (turn-structure.md, "A boss who retreats"); the battle is won
+#     ch04_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch04_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch04_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector, prizefighter
+#
+#   After the battle (victory_scenes, in this order)
+#     ch04_victory                  the yard, then the stable: Hollis
+#     ch04_tbc                      a Hound post on the Millhaven road: Dace
+#
+# Until 0850 and 1071 wire the triggers, the validator can't know which
+# scene plays for whom, so every companion line in a battle scene below
+# sits in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, Dace against Hollis), that
+# "@if" can only go one way and the validator reports it: 0850 removes
+# those blocks as it wires each trigger. The "@if" in ch04_first_turn and
+# ch04_passage stay: a turn-start scene and an area anyone can enter
+# can't count on anyone.
+#
+# Gil (prizefighter) is a speaker in characters.ron until 1071 makes him a
+# unit. He joins only if beaten on Millhaven Road, so outside his own
+# battle lines every line of his is in an "@if prizefighter" block, and
+# the chapter reads through without him.
+#
+# No @place directives yet: the maps are 0850's and 1071's. The @music
+# lines are this ticket's picks from the mood cues (0071); the story
+# battle's own cue, battle_rival, is Nick's and goes in the battle file;
+# the skirmishes use the skirmish pool (1008).
+#
+# The seven companions may have died in Chapters 1-3 (Classic), so
+# outside the battles every line of theirs is in an "@if" block, and each
+# scene reads through with any of them gone. The stable is Hollis's:
+# without him the lead finds the mare alone.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the gate, the battle and the stable are
+# played straight; the warmth is a pair of cold hands in a keeper's
+# sleeves, a kitchen window kept late, a fat mare nobody rode. The road,
+# the pie cart and Gil's oath are downtime, and Gil is where the chapter
+# is funny: the joke is how seriously he takes it. Punctuation is the
+# voice acting: Dace asks and trails off while he's working on someone
+# and ends flat once he's done; Hollis says "Aye" once and trails off
+# once, at the gate; Joss corrects himself; Aske ends flat; Tamsin fires
+# questions; Gil's periods are formal, and he exclaims nowhere.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised).
+
+# ---------------------------------------------------------------------------
+# When the chapter opens
+# ---------------------------------------------------------------------------
+
+# The forest road comes out above the heartland. A week south of the lake.
+
+@scene ch04_intro
+@caption The valley road, morning
+@music talk_calm
+> A week south of the lake. The forest road comes out on a hill's shoulder and the valley opens under it: stubble, bare orchards, stone farms, a crossroads with a black pennant on a post.
+@if poacher
+@left poacher neutral
+poacher: Look at that. One of those fields would feed my whole hold for a year. One field. I am not saying it is a good country. I am saying the dirt is good. That is all I am saying.
+@left clear
+@endif
+@if defector
+@right defector neutral
+defector: That's {n:place.aldwater.river}, the brown one, and past it, two valleys over, you can't see it from here, there's a ford with a willow, and that's us. My ma's. The twins would see us from the lane.
+defector[sad]: I know I can't. I know. They'd have it all around the lane by noon, who was walking with who, and somebody's at the Hound post by dark. I know that. I'm sorry, I keep saying it. I'll stop.
+@if retainer
+@left retainer neutral
+retainer: Then don't stop. Nobody minds. Eat while you talk, {n:defector.last}, you've been talking since the fire went out.
+@left clear
+@endif
+@right clear
+@endif
+@if sergeant
+@left sergeant neutral
+sergeant: Hold up-- no, keep walking, don't stop for it. There's a paper on the post. That's you, Your Former Grace. Seen riding with the raiders, every county, and a number under it.
+sergeant[happy]: No, I'm not telling you what it is. It's not enough, is what it is. It's going in the book under your name, and when they pay out I want my cut.
+@left clear
+@endif
+@if keeper
+@right keeper neutral
+keeper: Is that rain, over the hills? It looks like rain. I've got the register wrapped in my spare robe and the robe in the oilcloth and it's still-- I keep thinking of the ink. All those names in the rain.
+@right clear
+@endif
+@if heretic
+@if poacher
+@left heretic neutral
+@right poacher neutral
+heretic: There's a pot in the pack that's not burned. For once. I did it slow, like you told me at the lake. Well? Nothing? Fine.
+> {n:poacher} doesn't answer. She looks at the fields.
+@left clear
+@right clear
+@else
+@left heretic neutral
+> {n:heretic} eats walking and says nothing to anybody.
+@left clear
+@endif
+@endif
+@if retainer
+@right retainer neutral
+retainer: Posts at every crossroads. Aye. And not one of them has moved. Every one of us walking past in daylight, and nobody's so much as stood up.
+retainer: The boy's letting us come, kid. He wants us at the hall. Walk the hill, it's steep.
+@right clear
+@else
+> Not one post moves as they come down the hill.
+@endif
+> They go down into it.
+@end
+
+# ---------------------------------------------------------------------------
+# Aldwater Toll Bridge (fixed skirmish; guards the path)
+# ---------------------------------------------------------------------------
+
+# The crown's bridge, with a Hound bar across it and the carters paying.
+
+@scene ch04_aldwater_intro
+@caption {N:place.aldwater}
+> The crown's bridge over {n:place.aldwater.river}, a bar across it and black at both ends. Carts wait on the near bank, oxen steaming, carters with their purses out, a chest at the bar's foot.
+> The Hound at the bar shouts it across the water: the exile passes, untouched, by the captain's order. The rest hand over their steel, and the two books they took out of the abbey, and walk behind.
+@if sergeant
+@left sergeant angry
+sergeant: That's a Hound bar on the king's bridge, and the farmers are paying it. I'll bet the mare that chest never sees {n:place.capital}.
+@left clear
+@endif
+@if defector
+@right defector neutral
+defector: I know him. The one at the bar, with the-- he taught me the bar drill, my first week, he was-- he's going to look up and see me. He'll know my face, Your Grace. He'll know it.
+@right clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Nobody hands over steel. Not to them, not on a bridge. Kid, the books stay in the middle of us.
+@left clear
+@else
+> Nobody moves to hand anything over. The books stay in the middle of them.
+@endif
+> The bar comes down, and the men on the near bank spread out across the road.
+@end
+
+# After. The toll-chest, and a mark Tamsin knows.
+
+@scene ch04_aldwater_victory
+@caption {N:place.aldwater}, after
+@if sergeant
+@left sergeant neutral
+sergeant: Toll-chest. Under the bar, where he left it. Coin, and a tally, every cart written down, and a mark at the bottom for whose it is. ...I know that mark.
+sergeant[angry]: Three years of pay-notes came back to me with that mark and "no funds" under it. The crown paymaster's. His office is in {n:place.millhaven}.
+sergeant: Four thousand two hundred and twelve crowns he never found, and his mark's on a Hound toll-bar taking pennies off farmers.
+@if poacher
+@right poacher neutral
+poacher: Give it back. The toll. They paid it, and they are standing right there.
+sergeant: ...Half. Half, and the tally's mine. You hand it out, they'll take it better from you than from me.
+@right clear
+@else
+> The carters are still standing there. {n:sergeant.first} looks at them, and at the chest, and counts out half.
+@endif
+@left clear
+@else
+> The toll-chest is under the bar: coin, and a tally with a mark at the bottom for whose it is, and under the mark an office, in {n:place.millhaven}. Nobody here knows the mark.
+@if poacher
+@left poacher neutral
+poacher: Give it back. The toll. They paid it, and they are standing right there.
+@left clear
+@endif
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Millhaven Road (fixed skirmish; optional; Gil)
+# ---------------------------------------------------------------------------
+
+# A pie cart on its side, a Hound patrol, and a man addressing them like
+# a crowd.
+
+@scene ch04_millhaven_road_intro
+@caption {N:place.millhaven_road}
+> A pie cart on its side across the road into the town, pies in the dust, and a Hound patrol in a ring around one man, bare to the waist in a red sash, who is talking to them like a crowd.
+@right prizefighter neutral
+prizefighter: Gentlemen. And-- ah. More of you. Good morning. {N:prizefighter}, Champion of Six Fairs. There is a wager on this road, and I regret that you have walked into it.
+prizefighter: The terms. My purse, my last, against this road: every man on it, beaten, before the town bell rings noon. You are on it. I am sorry. Rule four does not permit me to walk past a kicked-over cart.
+@if sergeant
+@left sergeant happy
+sergeant: Every man? I'm on a horse and I'm not a man. Do I count, or do I ride around you?
+prizefighter: You count, ma'am. I'm sorry for it.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Look at how he stands. Feet first, then the hands. He's done this a thousand times. Kid, you don't go near him. Let him come to the spears.
+@left clear
+@endif
+@right clear
+@end
+
+# Gil, to anyone who comes at him.
+
+@scene ch04_prizefighter_engage
+@right prizefighter neutral
+prizefighter: Rule one: you announce yourself before you fight. I have. You need not; I will take it as said. Hands up, friend. Here I come.
+@end
+
+# Beaten. He leaves the map, and he joins (1071 marks him "joins you if
+# defeated").
+
+@scene ch04_prizefighter_fell
+@right prizefighter sad
+prizefighter: Well struck. That was-- ...Rule two. The beaten man serves the one who beat him, until a fair rematch. I will wait at the end of the road.
+@end
+
+# After. If he was beaten he is waiting; if not, he is gone for good.
+
+@scene ch04_millhaven_road_victory
+@caption {N:place.millhaven_road}, after
+@if prizefighter
+@music talk_calm
+> The patrol is done with. The pie-seller is righting his cart, and the big man is helping him one-handed, bleeding from one ear and talking.
+@left lead neutral
+@right prizefighter neutral
+prizefighter: Champion. That is you, now. Your people beat me, which is you beating me, and I am yours until a fair rematch, on a fitting day, before a crowd. Then I will ask. Not before.
+> He bows. It is a very good bow, the whole way down, and he holds it.
+@choice
+* earnest: Stand up. You don't owe me anything.
+  prizefighter[surprised]: Owe? No. No, Champion, it isn't owing, it's-- I will stand. I will stand, but I am coming. That is the rule, and it is not up to you.
+* wry: Do I have to feed you?
+  prizefighter[happy]: I eat a great deal, Champion. I'll say that now, so it's said. I carry things, too. Pots. Anything with a handle.
+* act: Here. Eat that one, it's not dirty.
+  > {lead} hands him the one pie that landed on the sack. He takes it in both hands like a prize.
+  prizefighter[happy]: Thank you, Champion. That's the first thing you've given me, and I'll remember it. Rule-- no. No rule. Thank you.
+@endchoice
+@right prizefighter neutral
+@left clear
+@if sergeant
+@left sergeant angry
+sergeant: He bowed to the mare. Did anybody see that? Before he bowed to you, Your Former Grace. He bowed to the mare, and she let him.
+@left clear
+@endif
+@if keeper
+@left keeper neutral
+keeper: Your ear. You're bleeding from the ear, don't touch it, sit down, you're too tall. Sit on the cart. Please. There. Hold still.
+prizefighter: It is an ear, ma'am. It will stop.
+@left clear
+@endif
+@if heretic
+@left heretic neutral
+heretic: That's three. Three pies, I counted, while he was bowing. Where's it going? Where does it all go?
+@left clear
+@endif
+@if poacher
+@left poacher surprised
+> He bows to {n:poacher} as well, the whole way down. She looks at {lead}, and at him, and takes a step back.
+poacher: What is he doing. Why is he doing that. Make him stop.
+@left clear
+@endif
+@if defector
+@left defector neutral
+defector: Those are fair ribbons! On your sash-- six, there's six, my ma took us to the {n:place.millhaven} fair once and the ring had-- there's a space. After the six. Is there a seventh?
+> He puts his thumb on the bare place on the sash, and takes it off again.
+prizefighter: There is not. ...I intend to put on a fair of my own, one day, when there are fairs again. A ring and a pie stand, and one rule over the gate: no betting.
+@left clear
+@endif
+@right clear
+@else
+> The patrol is done with. The big man in the red sash stands in the road a while, then settles something with the pie-seller, coin or no coin, and walks toward the town bell with his thumb on his belt.
+> Nobody stops him.
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Before the story battle
+# ---------------------------------------------------------------------------
+
+# The rise above the hall, dusk into dark, the night before. No fire.
+
+@scene ch04_eve
+@caption The rise above {n:place.veyne_hall}, dusk
+@music scene_sad
+> Dusk, and no fire. From the rise the valley is already dark, and all that shows of the hall is its lights.
+@left lead neutral
+@if retainer
+@right retainer neutral
+retainer: That's the kitchen, the one at the end. The cook always kept it late. The study's dark. The boy's not in it.
+@right clear
+@endif
+@if poacher
+@right poacher surprised
+poacher: You grew up in that. That is one house. My whole hold would fit in the yard of it, goats and all. ...Noble.
+@right clear
+@endif
+@if keeper
+@right keeper neutral
+keeper: Give me your hands. Both. You've been standing there with them blue for an hour and not one of us-- here. In my sleeves. They're warm, I've had mine up there all day.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Not the gate. There's a door behind the long wall, down the river meadow. The laundry door. It never locked, it only looked locked, and everybody in the house believed it but two children.
+retainer: These two, at nine. Out to the mill pond and back with their boots full, {lead} and the boy, and I caught them. That's the way in.
+@right clear
+@else
+> There's a door behind the long wall, down the river meadow: the laundry door, which never locked, only looked it. {lead} knows it.
+> Two children got out through it to the mill pond once, at nine, and came back with their boots full.
+@endif
+@if defector
+@right defector neutral
+defector: The captain's in there. Walking the wall, probably, he doesn't sleep much, the lieutenant said he-- he checks the men's boots at night. He does that. He won't have-- he wouldn't--
+@if sergeant
+@right sergeant neutral
+sergeant: {N:defector.nickname}. Hey. Hold her head while I do the girth, both hands, she bites-- there. Keep holding it.
+@right defector sad
+defector: ...Yes. Yes, sorry. I'm holding it.
+@else
+> Nobody stops him. He stops himself, and sits down.
+@endif
+@right clear
+@endif
+@if prizefighter
+> The big man has moved, without a word about it, to the side of {lead} the wind comes from. He sits there and watches the lights.
+@endif
+@if retainer
+@right retainer sad
+retainer: Kid. Tomorrow, whatever he says to you in there--
+@choice
+* earnest: Say it now, {n:retainer.first}.
+  > He opens his mouth and shuts it again, and pulls {their} shoulder-strap a notch tighter than it needs to be.
+  retainer: Tomorrow. Shut your eyes, kid. I've got the watch.
+* blunt: Tomorrow, then.
+  retainer: Aye. Tomorrow. Shoulder up when you go through that door, it's low. You've grown.
+* silent: ...
+  > {lead} waits. {n:retainer.first} looks at the lights a long time.
+  retainer: Nothing. Lie down. Boots off first, you won't sleep in wet boots.
+@endchoice
+@right retainer neutral
+@right clear
+@else
+> The lights go on burning down there. Nobody says anything about tomorrow.
+@endif
+@if heretic
+@right heretic neutral
+@if retainer
+heretic: You saw that. ...I'm not saying anything, I said it all at the lake. Eat that. You didn't eat, and I'm not carrying you tomorrow.
+@else
+heretic: Eat that. You didn't eat, and I'm not carrying you tomorrow. Stop looking at the house. It'll be there in the morning, won't it?
+@endif
+@right clear
+@endif
+@end
+
+# The gate at dawn. It opens from inside before anybody knocks.
+
+@scene ch04_gate
+@caption {N:place.veyne_hall}, the gate, dawn
+@music talk_antagonist
+> Gray light. The gate {lead} went out of four years ago opens from inside before anybody has reached it. In the gateway, bare-headed, the yard full of black behind him: {n:rival.first}.
+@left lead neutral
+@right rival happy
+rival: {N:family.veyne}. {N:family.veyne}, look at you. You've still got that coat, with the hole in it where the-- four years and nobody's sewn it. Have you slept? No. None of you have.
+rival: Come in. All of you, I've had the kitchen lit since four. ...What's that in your hand? No. I know what that is.
+@choice
+* earnest: Tell me it isn't you in this book.
+  rival[sad]: ...I can't do that one. Ask me another. Ask me anything else, {n:family.veyne}. Anything.
+* blunt: Eleven children. Your name.
+  rival[neutral]: Eleven. The book's right. It usually was, {n:vosse.last} was careful about his columns. Well. There it is.
+* wry: I read your book. The columns need work.
+  rival[happy]: Ha. You read it standing up, didn't you, in the smoke. Don't. Don't do that voice at me, I taught you that voice.
+@endchoice
+@right rival neutral
+rival: {N:vosse.last} had something on me. Enough to hang. He said point, or go in the cart yourself. So I pointed. And I took his silver, yes, and I'd take it again.
+rival: I did what fed us. You had a house. I had a sister. ...They ate better than we did, in {n:faction.vigil}'s school. Some of them did.
+@if retainer
+@left retainer neutral
+rival[angry]: And you. Behind {them}. You knew. You always knew. You never asked me where it came from, the boots, the-- you never asked me one thing. Not one. You knew.
+retainer: ...Aye.
+@left lead neutral
+@else
+> He looks past {lead}, at the empty road, and back.
+@endif
+@if defector
+@left defector surprised
+defector: Captain?
+@left lead neutral
+@endif
+@if retainer
+rival[neutral]: Give me the register and the pay-book and go south, today, and I'll write to {n:place.ossary} that you burned with the prior. Take the old man with you. Nobody has to--
+@else
+rival[neutral]: Give me the register and the pay-book and go south, today, and I'll write to {n:place.ossary} that you burned with the prior. Take your people. Nobody has to--
+@endif
+lead: No.
+rival[angry]: Then take it, {n:family.veyne}. I'll be in the hall.
+> The gate shuts.
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene can't count on anyone: the block stays.
+
+@scene ch04_first_turn
+@if retainer
+@left retainer neutral
+retainer: The laundry door, kid. Down the meadow and behind the long wall, and don't look at the gate. I'm behind you. I'm right behind you.
+@left clear
+@endif
+@end
+
+# Somebody is in the servants' passage. An area anyone can enter: the
+# blocks stay.
+
+@scene ch04_passage
+@if retainer
+@left retainer neutral
+retainer: Third step. Watch the third step, it's the one that gave way under you. You broke your arm, and the boy carried you up the rest of them on his back.
+@left clear
+@else
+@if heretic
+@left heretic neutral
+heretic: It smells like soap in here. The walls smell like soap. Who lives like this? Who has a door just for washing?
+@left clear
+@endif
+@endif
+@end
+
+# Dace, to anyone but the four who share his history.
+
+@scene ch04_boss_engage
+@right rival neutral
+rival: Put it down. I don't want your name on a report, I've written enough of them this month. Go sit in the guardroom and let me forget I saw you.
+@end
+
+# Dace and the lead: the yard they learned in.
+
+@scene ch04_boss_engage_lead
+@left lead neutral
+@right rival neutral
+rival: The yard. Us two, and the wooden swords, and my father on the step shouting left, left, your left. And you went right. Every time. You never once went left.
+lead: Stand still.
+rival[angry]: No. ...You'd go right anyway. You always did.
+@end
+
+# Dace and his father. The @if goes when 0850 wires this as Dace against
+# Hollis.
+
+@scene ch04_boss_engage_retainer
+@if retainer
+@left retainer neutral
+@right rival sad
+rival: Don't. Go stand somewhere else, I'm asking you. Anywhere else. There's a whole yard.
+retainer: Guard up, boy.
+rival[angry]: Twenty years. Twenty years of you shouting that at me across this yard, and I did, every time, and look where--
+retainer: Guard up. You're dropping it.
+@left clear
+@right clear
+@endif
+@end
+
+# Dace and the girl from the cart. The @if goes when 0850 wires it.
+
+@scene ch04_boss_engage_heretic
+@if heretic
+@left heretic angry
+@right rival neutral
+heretic: You lifted me in. By my belt, like a sack of coal, and you were crying, and you did it anyway. You don't even know me. Look at me.
+rival[surprised]: ...I don't. I'm-- there were other carts. There were a lot of--
+heretic: I was in the cart at the mill when you found your sister in it. I ran. The others didn't all--
+rival[angry]: Then run. Run, then, I won't--
+@left clear
+@right clear
+@endif
+@end
+
+# Dace and the boy he knew by name. The @if goes when 0850 wires it.
+
+@scene ch04_boss_engage_defector
+@if defector
+@left defector sad
+@right rival neutral
+rival: {N:defector.last}. Hood down in my yard. Good. Come here. Stand by me. You were in the smoke. That's what we'll say.
+defector: That's what the lieutenant said. At the ford. Those words, Captain, the same-- did he get them from you? Or did you get them from him?
+rival[angry]: Company words. Everybody says them. I don't know. I don't know which of us said them first.
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch04_boss_half
+@right rival angry
+rival: The stair! They're inside, hold the stair-- nobody comes up it. Nobody.
+@end
+
+# Dace at 0 HP: he leaves the map alive, and the battle is won. Scared,
+# not tidy.
+
+@scene ch04_boss_retreat
+@right rival sad
+rival: No. No, not in this house, I'm not-- the laundry door. I know the laundry door too, {n:family.veyne}, you weren't the only one who-- ...Not in this house.
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch04_death_lead
+@left lead sad
+> {lead} is down in the yard. The gate is shut behind {them}.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. The @if blocks
+# go when 0850 wires each one.
+
+@scene ch04_death_retainer
+@if retainer
+@left retainer sad
+retainer: Shoulder up, kid. Shoulder. ...The bay's in the end stall. She'll be fat, nobody will have had her out. Shoulder up.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: Don't look at me, kid, look at your guard. It's the hip. I'm walking out the laundry door. Hold the yard.
+@left clear
+@endif
+@end
+
+@scene ch04_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Cross it out. Your name, in my book, under what's owed me-- cross it out, Your Former Grace. You don't owe me anything.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: Somebody catch my horse! She's bolting, she'll be in the river-- never mind me, I'm walking, catch the horse!
+@left clear
+@endif
+@end
+
+@scene ch04_death_poacher
+@if poacher
+@left poacher sad
+poacher: Two more on the wall, behind the-- two. I counted. ...I am not cold. Do not put a cloak on me, I will know.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: The string went. I have no spare. I am no use to you now, and I do not want to talk about it.
+@left clear
+@endif
+@end
+
+@scene ch04_death_keeper
+@if keeper
+@left keeper sad
+keeper: Give them back. The names, to the mothers. The book's in my pack, in my robe, keep it dry-- give them back. Please.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: Oh. Oh, that's a lot of-- it's all right. It's all right, I know what this is, I've done it to all of you. Leave me the bag and go.
+@left clear
+@endif
+@end
+
+@scene ch04_death_heretic
+@if heretic
+@left heretic sad
+heretic: Did anybody eat? Nobody ate this morning, I watched, not one of you. ...Eat something. All of you. I mean it.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: {N:god.pyre.name}'s teeth. My hands. I can't close them, I can't-- somebody else throw. I'm not watching. Somebody else.
+@left clear
+@endif
+@end
+
+@scene ch04_death_defector
+@if defector
+@left defector sad
+defector: Your Grace-- was it right? No, don't, I know. ...My ma's two valleys over. She'll hear it was the captain's house. Could it be the war instead? Could it just be the war?
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_defector
+@if defector
+@left defector surprised
+defector: Arm. Not the sword arm, the-- no, it is the sword arm. Sorry. Sorry, Your Grace, I'll-- sorry.
+@left clear
+@endif
+@end
+
+@scene ch04_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Champion. Don't-- stay where you are, it's done. ...Well struck. Whoever that was. Well struck.
+@left clear
+@endif
+@end
+
+@scene ch04_retreat_prizefighter
+@if prizefighter
+@left prizefighter angry
+prizefighter: That's the count on me. ...Go on, Champion. I have been down before. It is nothing.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The yard, late morning, then the stable. The stable is Hollis's.
+
+@scene ch04_victory
+@caption {N:place.veyne_hall}, the yard
+@music scene_tragic
+> Late morning, and the yard is quiet. {N:faction.hounds} who didn't go out the laundry door after him are in the cellar with the door barred. The kitchen door stands open.
+@if keeper
+@left keeper neutral
+keeper: Oh-- sit. Everyone sit, on the mounting block, I don't care whose house it is, I'm taking you in order of who's bleeding most, and that's-- yes. You. You first. Sit.
+@left clear
+@endif
+@if defector
+@left defector sad
+defector: I'm not going to say anything about him. Not-- I'm just not. Don't ask me, Your Grace, I'll say something.
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: It is a good house. The stone is good. ...I am going to go find where they keep the arrows.
+@left clear
+@endif
+@if sergeant
+@left sergeant neutral
+sergeant: A day till his riders come back with every man in the county. One day in your own house, Your Former Grace. So eat. The kitchen's full, I looked--
+@if heretic
+@left heretic neutral
+heretic: Was full. I've been through it. There were eggs. What? Nobody else was eating them.
+@left sergeant surprised
+@endif
+@left clear
+@endif
+@if heretic
+@if retainer
+@left heretic neutral
+heretic: He's in the stable. The old man. He went in there before anybody had sat down, and he hasn't come out. Go on. I'm not doing it for you this time, heir. Go.
+@left clear
+@endif
+@endif
+@caption The stable
+@if retainer
+> The end stall. A bay mare, fat as a barrel, and {n:retainer.first} with a brush, brushing her flank the way he did every morning for twenty years. He doesn't turn around.
+@left lead neutral
+@right retainer neutral
+retainer: Aye. I knew. Not all of it, but enough.
+retainer: I'll tell you. All of it, what I found and what I did with it. Not today, and not in his stable.
+@choice
+* blunt: Four years.
+  retainer[sad]: Four years. Say it again if you like, kid. I won't argue it.
+* earnest: Tell me now. All of it.
+  retainer[sad]: No. I'll say it where I can look at you. I can't, in here. Pass me the other brush.
+* act: Give me the brush.
+  > He holds it out behind him without turning around, and {lead} takes it, and they brush the mare, one each side.
+  retainer: Not so hard, kid. She's old, she'll lean on you.
+@endchoice
+@right retainer neutral
+retainer: Nobody's ridden her since I left, look at her. He wouldn't let them. He kept her fed and shod himself.
+@left clear
+@right clear
+@else
+> The end stall holds a bay mare, fat as a barrel, that nobody has ridden in four years. Somebody has kept her fed. Somebody has kept her shod. {lead} stands with her a while.
+@endif
+@left lead neutral
+lead: We leave tonight.
+@if retainer
+@right retainer neutral
+retainer: Watch her off side when you go past. She kicks. She always did.
+@right clear
+@endif
+@end
+
+# A Hound post on the Millhaven road, that night. A rider, a report, and
+# a lie for his father.
+
+@scene ch04_tbc
+@caption A Hound post, {n:place.millhaven_road}, night
+@music talk_antagonist
+> A post on the road, a lantern, a rider waiting with the paper on his knee. {n:rival.first} has his arm bound against his chest, and is on his feet.
+@left rival neutral
+rival: Write it as I say it. "The exile holds {n:place.veyne_hall}. The register and the pay-book are with the exile. I am alive." Stop there. Read it back.
+> The rider reads it back, and asks about the other letter.
+rival[angry]: ...What? Which letter. The one from {n:place.ossary}. Yes, I read it, I know what it asked after. Write: "The old man was not there." That's what {n:place.ossary} gets. Go.
+rival[sad]: ...You just stood there. You stood there and let me say it, with the whole yard listening, and you didn't even-- you should have hit me, {n:family.veyne}. I'd have known what to do with that.
+@end
