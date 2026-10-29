@@ -7,16 +7,16 @@ expression: h.snapshot()
  ≈        ..       ♣♣♣          .   .       .. ^▲    ^^  ^▲    ▲^   ▲ ║                            ║
    ≈           ♣♣ ♣♣  ♣♣ ♠.       .  .    .   .▲^ ^ ^    ▲ ^ ^▲^^^ ▲^^║ Town                       ║
     ≈≈≈      ♣♣♣♠♣♣♠♣♠♣♣♣♣♠           Millbrook ^  ^    ^ ^  ▲ ^  ▲   ║ Armory                     ║
-  ≈   ≈    , ♣ ♣♣♣♣♣♣♣♣ ♣♣♣♣  ,   , ┌────────┐   ^      ^^     ^   ^  ║ Vendor                     ║
- ≈   ≈≈ ,   ♣♣♣♠♣ ♠♣♣ ♣ ♣ ♣ ♠      .│ Armory │      ^^ ^^^^   ^^^   ^^║ Your army is here          ║
-  ≈   ≈     .♣♣♣♣♣♠♠♣♣♣ ♣♠♠      .  │ Vendor │   .  ^  ^ ^^  ^  ^ ^^^^║                            ║
+  ≈   ≈    , ♣ ♣♣♣♣♣♣♣♣ ♣♣♣♣  ♥     ┌────────┐   ^      ^^     ^   ^  ║ Vendor                     ║
+ ≈   ≈≈ ,   ♣♣♣♠♣ ♠♣♣ ♣ ♣ ♣ ♠       │ Armory │      ^^ ^^^^   ^^^   ^^║ Your army is here          ║
+  ≈   ≈     .♣♣♣♣♣♠♠♣♣♣ ♣♠♠         │ Vendor │   .  ^  ^ ^^  ^  ^ ^^^^║                            ║
 ≈      .,    ♣ ♣♣♣♣♣ ♣♣ ♠♣♣♣        └────────┘  ,          ^^ ^  ^ ^^^║                            ║
 ≈≈   ≈     ,   ♠♠♠♣♣ ♠♠♣♣♣    ,            ..  ,≈≈   .              . ║                            ║
-   ≈      . ,.  .  ♣♣  .           .          . ≈≈        ,  .  .     ║                            ║
-≈          ,..    ●           .    ,         .  ,≈≈.            ,    .║                            ║
+   ≈      . ,.  .  ♣♣  .                      . ≈≈        ,  .  .     ║                            ║
+≈          ,..    ●           .              .  ,≈≈.            ,    .║                            ║
       ..   ,     .  ,     .    , Lv1  .          ≈≈ , .         .   . ║                            ║
- ≈≈    ..      . .                ‼ ..           ≈≈.       .  .   .,  ║                            ║
- ≈≈  ,  ●        .        .        ,           ♣ ≈≈♣♠♣   ♣     .      ║                            ║
+ ≈≈    ..      . .                ‼              ≈≈.       .  .   .,  ║                            ║
+ ≈≈  ,  ●        .        .        ,           ‼ ≈≈♣♠♣   ♣     .      ║                            ║
               .                    .         ♠♣♠≈≈♣  ♣♣♣  ♣♣.  .   , .║                            ║
 ≈           ,           ●     .. ,  ..      ♣♣ ♣≈≈♣♣ ♣ ♠♠♣♣♣♣  ,     .║                            ║
     ≈ .         ..   ,. .    ,             ♣ ♠ ≈≈♣♣♣♣♣♠♠ ♣ ♣♣       , ║                            ║
@@ -40,33 +40,33 @@ aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccdccccdccccdccccdccccdeghhhhhhhh
 aaaaaaabbbbbbbbbbbbiiibbbbbbbbbbbbbbbbbbbbbbbbccdccccdccccdccccdccccdcegggggggggggggggggggggggggggge
 aaaaaaaabbbbbbbiiiiiiiiiijbbbbbbbbbbbbbbbbbbbbbdccccdccccdccccdccccdccegffffggggggggggggggggggggggge
 aaaaaaaabbbbbiiijiijijiiiijibbbbbbbbbfffffffffffcccdccccdccccdccccdcccegggggggggggggggggggggggggggge
-aaaaaaaabbbbbiiiiiiiiiiiiiiibbbbbbbbkkkkkkkkkkbbbcccccccccccccccccccccegggggggggggggggggggggggggggge
-aaaaaaaabbbbiiijiijiiiiiiiiijbbbbbbbkllllllllkbbbbccccccccccccccccccccegggggggggggggggggggggggggggge
-aaaaaaaabbbbbiiiiijjiiiiijjibbbbbbbbkggggggggkbbbbbcccccccccccccccccccegggggggggggggggggggggggggggge
-aaaaaaabbbbbbiiiiiiiiiiijiiibbbbbbbbkkkkkkkkkkbbbbbbccccccccccccccccccegggggggggggggggggggggggggggge
-aaaaaabbbbbbbbbjjjiiijjiiibbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaaaabbbbbbbbbbbbbiiibbbbbbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaaabbbbbbbbbbbbbnbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbooobbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbpbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaabbbbnbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiimmijiiiiibbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbjijmmiiiiiiiiiibbbbbbbbbbegggggggggggggggggggggggggggge
-aaaabbbbbbbbbbbbbbbbbbbbnbbbbbbbbbbbbbbbbbbbiiiimmiiiiijjiiiibbbbbbbbbegggggggggggggggggggggggggggge
-aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiijimmiiiiijjiiiiiibbbbbbbbegggggggggggggggggggggggggggge
-aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiiijmmjjiiiiiiiiijibbbbbbbbegggggggggggggggggggggggggggge
-aaaaaabbbbbbbbqbbbbbbbbbbbbbijiiibbbbbbbbbbjjjiimmiijjiiiiijiibbbbbbbbegggggggggggggggggggggggggggge
-aaaaaaabbbbbbbppbbbbbbbbbiiiiiiiiiiibbbbbbbbiiiijmmijiiiijjijbbbbbbbbbegggggggggggggggggggggggggggge
-aaaaaaabbbbbbbbbbbbbbbbbiiiiiiiiiijiibbbbbbbbjiimmijiijijjiibbbbbbbbbbegggggggggggggggggggggggggggge
-aaaaaaaabbbbbbbbbbbbbbbbiiiiiijijjiijbbbbbbbbbbiimmiijiiijbbbbbbbbbbbbegggggggggggggggggggggggggggge
-aaaaaaaaaabbbbbbbbbbbbbbjiiiiiiiijiiibbbbbbbbbbbbmmbbbbbaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaabbbbbiiiiiiiiiiiiiiibbkbbbbbllllllllllbbbcccccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaaabbbbiiijiijiiiiiiiiijbbbbbbblmmmmmmmmlbbbbccccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaaabbbbbiiiiijjiiiiijjibbbbbbbblgggggggglbbbbbcccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaabbbbbbiiiiiiiiiiijiiibbbbbbbbllllllllllbbbbbbccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbjjjiiijjiiibbbbbbbbbbbbbbbbbbbbbbnnbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbbbbbiiibbbbbbbbbbbbbbbbbbbbbbbbbbnnbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaabbbbbbbbbbbbbobbbbbbbbbbbbbbbbbbbbbbbbbbbbbbnnbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbpppbbbbbbbbbbbbbnnbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbkbbbbbbbbbbbbbbnnbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbobbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbqinnijiiiiibbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbjijnniiiiiiiiiibbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbobbbbbbbbbbbbbbbbbbbiiiinniiiiijjiiiibbbbbbbbbegggggggggggggggggggggggggggge
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiijinniiiiijjiiiiiibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiiijnnjjiiiiiiiiijibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbrbbbbbbbbbbbbbijiiibbbbbbbbbbjjjiinniijjiiiiijiibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaabbbbbbbkkbbbbbbbbbiiiiiiiiiiibbbbbbbbiiiijnnijiiiijjijbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaabbbbbbbbbbbbbbbbbiiiiiiiiiijiibbbbbbbbjiinnijiijijjiibbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaaabbbbbbbbbbbbbbbbiiiiiijijjiijbbbbbbbbbbiinniijiiijbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaaaaabbbbbbbbbbbbbbjiiiiiiiijiiibbbbbbbbbbbbnnbbbbbaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaabbbbbbbbbbbbbijjijiijjiibbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaabbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
-aaaaaaaaaaaaaaaaaaaaaaaaaraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaaaaaaaaaaaaasaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
+tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
 --- legend ---
 a = fg:water bg:sea
 b = fg:grass bg:grass_bg
@@ -78,16 +78,25 @@ g = fg:text bg:panel_bg
 h = fg:text_dim bg:panel_bg
 i = fg:forest bg:forest_bg
 j = fg:thicket bg:thicket_bg
-k = fg:panel_border bg:panel_bg
-l = fg:panel_bg bg:panel_border_focus
-m = fg:water bg:water_bg
-n = fg:path bg:grass_bg
-o = fg:text_highlight bg:grass_bg
-p = fg:panel_bg bg:grass_bg
-q = fg:player bg:grass_bg
-r = fg:panel_bg bg:sea
-s = fg:text bg:black
+k = fg:panel_bg bg:grass_bg
+l = fg:panel_border bg:panel_bg
+m = fg:panel_bg bg:panel_border_focus
+n = fg:water bg:water_bg
+o = fg:path bg:grass_bg
+p = fg:text_highlight bg:grass_bg
+q = fg:panel_bg bg:forest_bg
+r = fg:player bg:grass_bg
+s = fg:panel_bg bg:sea
+t = fg:text bg:black
 --- overlays ---
+under 269,81 14x142  text_dim
+under 237,81 46x14  text_dim
+under 269,209 118x14  text_dim
+under 373,209 14x30  text_dim
+under 270,82 12x140  road_bg
+under 238,82 44x12  road_bg
+under 270,210 116x12  road_bg
+under 374,210 12x28  road_bg
 under 109,257 14x78  path
 under 109,257 94x14  path
 under 189,177 14x94  path
@@ -109,6 +118,8 @@ under 110,418 100x12  #4e422b
 under 62,322 60x12  #4e422b
 under 62,226 12x108  #4e422b
 under 268,208 16x16  text_highlight
+under 236,80 16x16  text_dim
+under 372,224 16x16  text_dim
 under 196,416 16x16  fort
 under 108,320 24x16  player
 over  107,320 3x1  #c7b684

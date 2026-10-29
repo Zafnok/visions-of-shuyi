@@ -129,6 +129,8 @@ struct RawNode {
     music: Option<String>,
     #[serde(default)]
     opens_when: Vec<RawCondition>,
+    #[serde(default)]
+    hidden: bool,
 }
 
 /// A road as written.
@@ -261,6 +263,7 @@ fn build(
             kind,
             level,
             opens_when,
+            hidden: node.hidden,
         });
     }
     let mut roads = Vec::new();

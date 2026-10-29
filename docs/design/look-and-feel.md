@@ -1498,6 +1498,10 @@ tiles, kept local). Nick's words:
 - **The level marker** `Lv7` sits on the row above a battle not yet won,
   centred, in its kind's colour (gold, green for a side quest). A won
   battle has none.
+- **A place not open yet**, one road from an open one (`world-structure.md`,
+  *The world map screen*): its plate in `text_dim` grey with its kind's
+  symbol, no level marker; its road a band of the ground's road colour
+  with a `text_dim` edge (*Claude's look, tunable*).
 - **Roads** are a shaded band 12 px wide (*tunable*), the same width
   across and down, outlined by 1 px lines in `path` colour; roads that
   meet join. The ground's glyphs give way to the band. A road runs
@@ -1521,7 +1525,8 @@ player's map look is pictures:
 - The map's own picture under everything (made from the bought World Map
   tiles, ticket 1070). Towns and castles are the art's own pictures.
 - **Roads are dotted:** pale `path` dots with a dark edge, one every
-  8 px.
+  8 px; a road to a place not open yet in `text_dim` dots, the place's
+  plate grey.
 - **The same plates and level markers** as the glyph look, with a dark
   edge (1082 may swap the plates for an icon set).
 - **The army is the lead's map sprite** (its first frame, facing down,

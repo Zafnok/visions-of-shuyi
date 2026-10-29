@@ -22,8 +22,9 @@
         (id: "pass", name: "Wolf Pass", pos: (30, 5),
          kind: SideQuest((battle: "test", intro_scenes: ["test_wm_intro"])),
          opens_when: [Cleared("ford"), Alive("test_knight")]),
+        // A secret: out of sight until Stone Mill is won.
         (id: "chapel", name: "Ruined Chapel", pos: (40, 22), kind: Empty,
-         opens_when: [Cleared("ford")]),
+         opens_when: [Cleared("ford")], hidden: true),
         (id: "bridge", name: "Old Bridge", pos: (47, 14), kind: StoryBattle("test_wm2")),
         (id: "city", name: "Kingsgate", pos: (25, 26), music: Some("capital"),
          kind: Town(shops: [(kind: Tailor, stock: ["leather_vest"]), (kind: Blacksmith)], capital: true)),

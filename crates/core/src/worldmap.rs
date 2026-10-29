@@ -15,14 +15,20 @@
 //!   whose chapter lives on this map), a **side quest** (a battle with its
 //!   own scenes), a **town** (its shops) and an **empty** place to pass
 //!   through. Skirmishes, fixed and random, come with ticket 1008.
-//! - **Open places** ([`WorldMap::is_open`]): a place is shown and can be
-//!   reached once every one of its conditions ([`NodeCondition`]) holds; a
-//!   story battle also waits for its chapter to be the campaign's
-//!   [`chapter`](Campaign::chapter). A cleared place stays open. A place
-//!   that isn't open isn't shown at all (`world-structure.md`: a side quest
-//!   is "discovered" when it is shown). A side quest whose character died
-//!   before it was played closes again: missed for good.
-//! - **Open roads**: a road is open when both its places are.
+//! - **Open places** ([`WorldMap::is_open`]): a place can be reached once
+//!   every one of its conditions ([`NodeCondition`]) holds; a story battle
+//!   also waits for its chapter to be the campaign's
+//!   [`chapter`](Campaign::chapter). A cleared place stays open. A side
+//!   quest whose character died before it was played closes again: missed
+//!   for good.
+//! - **Shown places** ([`WorldMap::is_shown`], Nick, 1007): the open places,
+//!   and the places not open yet one road away from an open one, which
+//!   show what they are but can't be travelled to, unless the map marks
+//!   them [`hidden`](WorldNode::hidden): those stay out of sight until they
+//!   open (`world-structure.md`: a side quest is "discovered" when it is
+//!   shown).
+//! - **Open roads**: a road is open when both its places are; a road from an
+//!   open place to a shown one that isn't open yet is shown, not open.
 //! - **Travel** ([`WorldCommand::TravelTo`]): the army goes to an open
 //!   place along open roads, the fewest roads first. It never passes
 //!   *through* a battle not yet won: on the way, an unwon battle stops the
@@ -124,6 +130,10 @@ pub struct WorldNode {
     /// When it opens; empty: open from the start.
     #[serde(default)]
     pub opens_when: Vec<NodeCondition>,
+    /// Whether it stays out of sight until it opens, even one road from
+    /// an open place (a secret).
+    #[serde(default)]
+    pub hidden: bool,
 }
 
 /// One act's world map: its places and roads (see the module docs).
@@ -265,6 +275,42 @@ impl WorldMap {
     /// The open places, in the map's order.
     pub fn open_nodes<'a>(&'a self, campaign: &'a Campaign) -> impl Iterator<Item = &'a WorldNode> {
         self.nodes.iter().filter(|n| self.is_open(&n.id, campaign))
+    }
+
+    /// Whether place `id` is shown (see the module docs): open, or one
+    /// road from an open place and not [`hidden`](WorldNode::hidden).
+    pub fn is_shown(&self, id: &str, campaign: &Campaign) -> bool {
+        if self.is_open(id, campaign) {
+            return true;
+        }
+        let Some(node) = self.node(id).filter(|n| !n.hidden) else {
+            return false;
+        };
+        self.roads.iter().any(|(a, b)| {
+            (a == &node.id && self.is_open(b, campaign))
+                || (b == &node.id && self.is_open(a, campaign))
+        })
+    }
+
+    /// The shown places, in the map's order.
+    pub fn shown_nodes<'a>(
+        &'a self,
+        campaign: &'a Campaign,
+    ) -> impl Iterator<Item = &'a WorldNode> {
+        self.nodes.iter().filter(|n| self.is_shown(&n.id, campaign))
+    }
+
+    /// The roads shown but not open: from an open place to a shown one that
+    /// isn't open yet, in the map's order.
+    pub fn locked_roads<'a>(
+        &'a self,
+        campaign: &'a Campaign,
+    ) -> impl Iterator<Item = &'a (String, String)> {
+        self.roads.iter().filter(|(a, b)| {
+            let (open_a, open_b) = (self.is_open(a, campaign), self.is_open(b, campaign));
+            (open_a && !open_b && self.is_shown(b, campaign))
+                || (open_b && !open_a && self.is_shown(a, campaign))
+        })
     }
 
     /// The open roads, in the map's order.

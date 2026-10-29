@@ -61,7 +61,8 @@ debug menu's "Test world map" starts.
 | `pos` | Its cell. At least one cell from the left and right edges (its plate is three cells wide) and one row from the top (its level marker). |
 | `kind` | `StoryBattle("<chapter>")`: that chapter's battle (the chapter says `world_map: Some("<this map>")`). `SideQuest((battle, intro_scenes, victory_scenes))`: a battle of its own. `Town(shops: [...], capital: false)`: shops as on battle maps (`kind`, `stock`), checked as they are (a Tailor sells cloth and leather only, a Blacksmith sells nothing, no Basic shop). `Empty`: a place to pass through. Fixed and random skirmishes come with 1008. |
 | `music` | A cue played while the army stands there (a town's `village`, a capital's `capital`). |
-| `opens_when` | Every condition must hold for the place to show: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army). A story battle also waits for its chapter to begin. A cleared place stays open. |
+| `opens_when` | Every condition must hold for the place to open: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army). A story battle also waits for its chapter to begin. A cleared place stays open. Until it opens, a place one road from an open one shows what it is, greyed, with its road dimmed, and can't be travelled to (Nick, 1007). |
+| `hidden` | `true`: a secret, out of sight (its road too) until it opens. Default `false`. |
 
 A battle's **level marker** is worked out from its battle file: the
 average level of its enemies, rounded.

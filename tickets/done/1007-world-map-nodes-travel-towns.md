@@ -232,8 +232,6 @@ what this ticket decided.
 
 **Claude's starting rules** (for the Act 1 playtest, 1064):
 
-- **Places you can't reach yet aren't shown**, nor their roads: Wolf Pass
-  appears once Stone Mill is won.
 - **The army goes around a battle it hasn't won** when another road
   leads there; if the only road passes through one, it stops there and
   the battle starts.
@@ -246,9 +244,13 @@ what this ticket decided.
   60°); nothing that way, it stays.
 - **Find starts on the army**, and a kind's nearest place is the nearest
   to the army.
-- **A town's own music plays while the army stands there**, the map's
-  track elsewhere and while walking.
 - **`Open towns on arrival`** sits under `Intro` on the Options screen.
+
+**Changed after Nick read the PR** (2026-10-29): places one road from
+an open place now show greyed with their kind and name, unless the map
+marks them `hidden` (`WorldNode::hidden`, `WorldMap::is_shown`); a town's
+music plays only while the town is open. Walking inside special towns
+went to `world-structure.md`'s *Not in this system (deferred)*.
 
 **To judge by playing** (1064's checklist): the walk's speed, the 30 s
 quiet between rounds of the map's track, whether the plates read at a

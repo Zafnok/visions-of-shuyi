@@ -22,6 +22,7 @@ fn node(id: &str, kind: NodeKind, opens_when: Vec<NodeCondition>) -> WorldNode {
         level: kind.is_battle().then_some(5),
         kind,
         opens_when,
+        hidden: false,
     }
 }
 
@@ -144,6 +145,32 @@ fn the_army_starts_at_the_start_with_only_the_open_places_shown() {
     assert_eq!(open(&c, &map()), ["camp", "town", "ch1"]);
     let roads: Vec<_> = map().open_roads(&c).cloned().collect();
     assert_eq!(roads, [road("camp", "town"), road("town", "ch1")]);
+}
+
+/// Places one road from an open one show what they are, not open; a
+/// hidden one stays out of sight until it opens (Nick, 1007).
+#[test]
+fn places_one_road_from_an_open_one_show_unless_hidden() {
+    let c = campaign();
+    let shown: Vec<String> = map().shown_nodes(&c).map(|n| n.id.clone()).collect();
+    assert_eq!(shown, ["camp", "town", "ch1", "ch2", "quest"]);
+    assert!(!map().is_open("ch2", &c));
+    let locked: Vec<_> = map().locked_roads(&c).cloned().collect();
+    assert_eq!(locked, [road("ch1", "ch2"), road("ch1", "quest")]);
+    let mut m = map();
+    m.nodes[4].hidden = true;
+    assert!(!m.is_shown("quest", &c));
+    assert_eq!(m.locked_roads(&c).count(), 1);
+    // Two roads away: not shown.
+    m.nodes
+        .push(node("far", NodeKind::Empty, vec![cleared("ch2")]));
+    m.roads.push(road("ch2", "far"));
+    assert!(!m.is_shown("far", &c));
+    // Once open, a hidden place shows.
+    let mut c = c;
+    m.nodes[4].hidden = true;
+    c.clear_node(&m, "ch1", Some("ch02"), None);
+    assert!(m.is_shown("quest", &c));
 }
 
 #[test]

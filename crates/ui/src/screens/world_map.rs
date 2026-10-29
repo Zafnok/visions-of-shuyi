@@ -3,7 +3,8 @@
 //! open roads, the army, a cursor that jumps from place to place, the
 //! place under it in the panel, and the map's menu.
 //!
-//! - **The cursor** is always on an open place. The cursor's keys jump to
+//! - **The cursor** is always on a shown place ([`WorldMap::is_shown`]:
+//!   open, or one road from an open one, greyed). The cursor's keys jump to
 //!   the nearest place that way; Previous and Next unit go through the
 //!   places in the map's order; Your army jumps to the army.
 //! - **Travel**: Confirm on another place sends the army there along open
@@ -24,7 +25,8 @@
 //!   on a copy of the campaign, taken back when they close.
 //! - **Music** (`audio.md`, *The world map*): the map's cue plays to its
 //!   end, fades out, the map is quiet [`QUIET_S`], then it starts again. A
-//!   place's own cue (a town's) plays while the army is there.
+//!   town's own cue plays while the town is open (its list of shops or its
+//!   shop, Nick: "while interacting with a town").
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screen
 //! shows and does, and says it as a [`WorldMapView`]; [`glyph::paint`]
@@ -238,9 +240,9 @@ impl WorldMapScreen {
         self.campaign.world.as_ref().map_or("", |w| w.at.as_str())
     }
 
-    /// The open places of `map`, in its order.
+    /// The shown places of `map`, in its order.
     fn open_places<'a>(&'a self, map: &'a WorldMap) -> Vec<&'a str> {
-        map.open_nodes(&self.campaign)
+        map.shown_nodes(&self.campaign)
             .map(|n| n.id.as_str())
             .collect()
     }
@@ -289,7 +291,7 @@ impl WorldMapScreen {
             return Vec::new();
         };
         def.map
-            .open_nodes(&self.campaign)
+            .shown_nodes(&self.campaign)
             .filter(|n| kind.is_none_or(|k| k.holds(&n.kind)))
             .map(|n| n.id.clone())
             .collect()
@@ -401,6 +403,7 @@ impl WorldMapScreen {
         let name = ctx.words().place_name(def, town).to_owned();
         ctx.audio.menu(MenuSound::Select);
         if let [shop] = shops.as_slice() {
+            self.town_music(ctx, town);
             let screen = TownScreen::new(self.campaign.clone(), shop.clone(), name);
             return Transition::Push(Box::new(screen));
         }
@@ -522,6 +525,7 @@ impl WorldMapScreen {
         let town = town.clone();
         match menu.handle_with_sound(action, &mut ctx.audio) {
             Some(MenuEvent::Chosen(i)) => {
+                self.town_music(ctx, &town);
                 let Some(def) = self.def(ctx) else {
                     return Transition::None;
                 };
@@ -580,25 +584,33 @@ impl WorldMapScreen {
         Some(Transition::None)
     }
 
-    /// The music: the army's place's own cue while it is there, else the
-    /// map's track, rotating with its quiet.
+    /// Town `town`'s own music, if it has one, while it is open; the map's
+    /// track starts again when it closes.
+    fn town_music(&mut self, ctx: &mut Ctx, town: &str) {
+        let cue = self.def(ctx).and_then(|d| d.place_music.get(town)).cloned();
+        if let Some(cue) = cue
+            && self.place_cue.as_ref() != Some(&cue)
+        {
+            ctx.audio.play_music(&cue);
+            self.place_cue = Some(cue);
+            self.music = None;
+        }
+    }
+
+    /// The music: an open town's own cue, else the map's track, rotating
+    /// with its quiet.
     fn tick_music(&mut self, ctx: &mut Ctx) {
+        if let Open::Town(town, _) = &self.open {
+            let town = town.clone();
+            self.town_music(ctx, &town);
+            if self.place_cue.is_some() {
+                return;
+            }
+        }
         let Some(def) = self.def(ctx) else {
             return;
         };
-        let here = (self.walk.is_none())
-            .then(|| def.place_music.get(self.army_at()))
-            .flatten()
-            .cloned();
         let map_cue = def.music.clone();
-        if let Some(cue) = here {
-            if self.place_cue.as_ref() != Some(&cue) {
-                ctx.audio.play_music(&cue);
-                self.place_cue = Some(cue);
-                self.music = None;
-            }
-            return;
-        }
         self.place_cue = None;
         if let Some(cue) = self.music.as_mut().and_then(|m| m.tick(ctx.clock_s)) {
             ask(ctx, &cue);
@@ -639,6 +651,9 @@ impl WorldMapScreen {
             _ => "world_map.kind.empty",
         };
         let mut lines = Vec::new();
+        if !map.is_open(id, &self.campaign) {
+            lines.push(ctx.text("world_map.not_open").to_owned());
+        }
         if let Some(n) = node {
             match &n.kind {
                 k if k.is_battle() && cleared => lines.push(ctx.text("world_map.won").to_owned()),
@@ -677,6 +692,60 @@ impl WorldMapScreen {
         ctx.text_with(key, &[])
     }
 
+    /// The shown places but the army's, as the view has them.
+    fn places(&self, ctx: &Ctx, def: &WorldMapDef) -> Vec<PlaceView> {
+        let map = &def.map;
+        let at = |id: &str| def.places.get(id).copied().unwrap_or_default();
+        map.shown_nodes(&self.campaign)
+            .filter(|n| n.id != self.army_at())
+            .map(|n| {
+                let cleared = map.is_cleared(&n.id, &self.campaign);
+                let open = map.is_open(&n.id, &self.campaign);
+                let mark = match &n.kind {
+                    _ if n.kind.is_battle() && cleared => PlaceMark::Cleared,
+                    NodeKind::StoryBattle(_) => PlaceMark::StoryBattle,
+                    NodeKind::SideQuest(_) => PlaceMark::SideQuest,
+                    NodeKind::Town { capital: true, .. } => PlaceMark::Capital,
+                    NodeKind::Town { .. } => PlaceMark::Town,
+                    NodeKind::Empty => PlaceMark::Empty,
+                };
+                let level = n.level.filter(|_| open && n.kind.is_battle() && !cleared);
+                let level = level.map(|l| {
+                    let l = l.to_string();
+                    ctx.text_with("world_map.level", &[("level", &l)])
+                });
+                PlaceView {
+                    pos: at(&n.id),
+                    mark,
+                    level,
+                    locked: !open,
+                }
+            })
+            .collect()
+    }
+
+    /// The open roads and the roads shown but not open, as the view has
+    /// them.
+    fn roads(&self, def: &WorldMapDef) -> (Vec<Vec<Pos>>, Vec<Vec<Pos>>) {
+        let map = &def.map;
+        let roads = def
+            .roads
+            .iter()
+            .zip(&map.roads)
+            .filter(|(_, (a, b))| map.is_open(a, &self.campaign) && map.is_open(b, &self.campaign))
+            .map(|(cells, _)| cells.clone())
+            .collect();
+        let locked: Vec<&(String, String)> = map.locked_roads(&self.campaign).collect();
+        let locked_roads = def
+            .roads
+            .iter()
+            .zip(&map.roads)
+            .filter(|(_, road)| locked.contains(road))
+            .map(|(cells, _)| cells.clone())
+            .collect();
+        (roads, locked_roads)
+    }
+
     /// The screen as it is now, as plain data for a skin to paint.
     pub fn view(&self, ctx: &Ctx) -> WorldMapView {
         let Some(def) = self.def(ctx) else {
@@ -684,6 +753,7 @@ impl WorldMapScreen {
                 map: String::new(),
                 places: Vec::new(),
                 roads: Vec::new(),
+                locked_roads: Vec::new(),
                 army: Pos::default(),
                 army_label: String::new(),
                 cursor: Pos::default(),
@@ -701,37 +771,8 @@ impl WorldMapScreen {
         };
         let map = &def.map;
         let at = |id: &str| def.places.get(id).copied().unwrap_or_default();
-        let places = map
-            .open_nodes(&self.campaign)
-            .filter(|n| n.id != self.army_at())
-            .map(|n| {
-                let cleared = map.is_cleared(&n.id, &self.campaign);
-                let mark = match &n.kind {
-                    _ if n.kind.is_battle() && cleared => PlaceMark::Cleared,
-                    NodeKind::StoryBattle(_) => PlaceMark::StoryBattle,
-                    NodeKind::SideQuest(_) => PlaceMark::SideQuest,
-                    NodeKind::Town { capital: true, .. } => PlaceMark::Capital,
-                    NodeKind::Town { .. } => PlaceMark::Town,
-                    NodeKind::Empty => PlaceMark::Empty,
-                };
-                let level = n.level.filter(|_| n.kind.is_battle() && !cleared).map(|l| {
-                    let l = l.to_string();
-                    ctx.text_with("world_map.level", &[("level", &l)])
-                });
-                PlaceView {
-                    pos: at(&n.id),
-                    mark,
-                    level,
-                }
-            })
-            .collect();
-        let roads = def
-            .roads
-            .iter()
-            .zip(&map.roads)
-            .filter(|(_, (a, b))| map.is_open(a, &self.campaign) && map.is_open(b, &self.campaign))
-            .map(|(cells, _)| cells.clone())
-            .collect();
+        let places = self.places(ctx, def);
+        let (roads, locked_roads) = self.roads(def);
         let lead = self
             .campaign
             .roster
@@ -758,6 +799,7 @@ impl WorldMapScreen {
             map: map.id.clone(),
             places,
             roads,
+            locked_roads,
             army: at(self.army_at()),
             army_label: lead.map_or_else(String::new, |u| u.map_label.clone()),
             cursor: at(&self.cursor),

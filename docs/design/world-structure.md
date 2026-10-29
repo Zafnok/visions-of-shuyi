@@ -194,12 +194,22 @@ world map*; the keys: `controls.md`, *World map*):
 - **No "Save your progress?" after a world-map battle** (Nick: "Straight
   to the map"): the victory scenes end and the map is back with what the
   battle opened; save from the map's menu.
+- **Places one road away show** (Nick, on the PR: "some hidden places are
+  ok, but not all places you can't reach should be hidden. We can have
+  their roads exposed when 1 tile away"; then "I don't see any reason to
+  hide the kind of place it is unless it's specially marked hidden"): a
+  place not open yet that is one road from an open place shows greyed,
+  with its kind's symbol and name, and its road dimmed; the panel says
+  `Not open yet`; the army can't go there. A place the map file marks
+  `hidden` (a secret) stays out of sight, road and all, until it opens.
+  Example: once the army reaches Stone Mill, Wolf Pass and Old Bridge show
+  greyed beyond it; the hidden chapel doesn't.
+- **A town's music plays while you are in the town** (Nick: "should be
+  while interacting with a town"): while its list of shops or a shop is
+  open, not while the army only stands there; the map's track otherwise.
 
 *Claude's starting rules* (for the Act 1 playtest, 1064):
 
-- **Places you can't reach yet aren't shown at all**, and neither are
-  their roads: a place appears when it opens (the design's "discovered").
-  Example: Wolf Pass appears on the map once Stone Mill is won.
 - **The army walks around a battle it hasn't won** when another road
   leads there; if the only road passes through one, it stops there and
   the battle starts. Example: sent past Old Bridge to a place behind it,
@@ -215,9 +225,6 @@ world map*; the keys: `controls.md`, *World map*):
   (within about 60° of it); nothing that way, the cursor stays.
 - **Find's nearest place** is the nearest to the army, so Towns starts on
   the town the army is in, if it is in one.
-- **A place's own music plays while the army stands there** (a town's
-  `village`, a capital's `capital`); the map's track while it walks and
-  elsewhere.
 
 ## Saving and camp
 
@@ -254,6 +261,10 @@ world map*; the keys: `controls.md`, *World map*):
   decision ticket.
 - **Recruitable wanderers:** not as open-world nodes. They might appear
   **inside towns** later. Decide with the story (0701 or later chapters).
+- **Walking inside a town** (Nick, on 1007's PR: "probably eventually we
+  will literally allow movement inside a town (special towns)"): some
+  special towns might be places the army walks around in, not only shop
+  menus. Not designed yet; it needs a decision ticket when it's wanted.
 - **Grinding tower / dungeon (E):** "something for later for sure". It could
   go right before an act's final battle, before the finale, or post-game /
   NG+. It needs a decision ticket when it's wanted.

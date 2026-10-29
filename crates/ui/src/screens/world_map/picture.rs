@@ -9,9 +9,9 @@
 
 use trpg_core::{CharacterId, ClassId, Pos};
 
-use super::glyph::{CELL, LIST, PLATE_PX, level_ink, origin, paint_panel, plate, plate_px};
+use super::glyph::{CELL, LIST, LOCKED, PLATE_PX, level_ink, origin, paint_panel, plate, plate_px};
 use super::view::{PlaceMark, WorldMapView};
-use crate::color::UiColor;
+use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Overlay, PxRect, Sprite};
 use crate::map_view::GAME_TILESET;
 use crate::prelude::*;
@@ -48,6 +48,7 @@ pub fn paint(ctx: &Ctx, view: &WorldMapView, picture: &str, buf: &mut GlyphBuffe
     for place in &view.places {
         let p = on_screen(place.pos);
         let (color, symbol) = plate(place.mark);
+        let color = if place.locked { LOCKED } else { color };
         let fg = if place.mark == PlaceMark::Empty {
             named(color)
         } else {
@@ -68,28 +69,16 @@ pub fn paint(ctx: &Ctx, view: &WorldMapView, picture: &str, buf: &mut GlyphBuffe
         let dest = PxRect::new(ox * cw, oy * ch, def.size.0 * cw, def.size.1 * ch);
         buf.add_sprite(Sprite::new(id, src, dest, Layer::Under));
     }
-    // A dot every DOT_STEP pixels along each run, from turn to turn.
-    let road = c(UiColor::Path);
-    for cells in &view.roads {
-        for pair in cells.windows(2) {
-            let centre = |p: Pos| {
-                let p = on_screen(p);
-                (p.x * cw + cw / 2, p.y * ch + ch / 2)
-            };
-            let ((ax, ay), (bx, by)) = (centre(pair[0]), centre(pair[1]));
-            let (dx, dy) = ((bx - ax).signum(), (by - ay).signum());
-            let len = (bx - ax).abs() + (by - ay).abs();
-            for t in (0..=len).step_by(usize::try_from(DOT_STEP).unwrap_or(1)) {
-                let (x, y) = (ax + dx * t, ay + dy * t);
-                let edge = PxRect::new(x - DOT / 2 - 1, y - DOT / 2 - 1, DOT + 2, DOT + 2);
-                buf.add_overlay(Overlay::new(edge, dark, Layer::Under));
-                let fill = PxRect::new(x - DOT / 2, y - DOT / 2, DOT, DOT);
-                buf.add_overlay(Overlay::new(fill, road, Layer::Under));
-            }
-        }
-    }
+    // Roads not open yet in dim dots, then the open ones.
+    let centre = |p: Pos| {
+        let p = on_screen(p);
+        (p.x * cw + cw / 2, p.y * ch + ch / 2)
+    };
+    paint_dots(buf, &view.locked_roads, &centre, named(LOCKED), dark);
+    paint_dots(buf, &view.roads, &centre, c(UiColor::Path), dark);
     for place in view.places.iter().filter(|p| p.mark != PlaceMark::Empty) {
         let (color, _) = plate(place.mark);
+        let color = if place.locked { LOCKED } else { color };
         let rect = plate_px(on_screen(place.pos), PLATE_PX.0);
         let edge = PxRect::new(rect.x - 1, rect.y - 1, rect.w + 2, rect.h + 2);
         buf.add_overlay(Overlay::new(edge, dark, Layer::Under));
@@ -118,6 +107,30 @@ pub fn paint(ctx: &Ctx, view: &WorldMapView, picture: &str, buf: &mut GlyphBuffe
     }
     let bottom = i32::from(buf.height()) - 1;
     buf.print(1, bottom, &view.help, c(UiColor::Text), black);
+}
+
+/// A dot every [`DOT_STEP`] pixels along each of `roads`, from turn to
+/// turn (`centre` gives a cell's middle in pixels), in `color` with a
+/// `dark` edge.
+fn paint_dots(
+    buf: &mut GlyphBuffer,
+    roads: &[Vec<Pos>],
+    centre: &dyn Fn(Pos) -> (i32, i32),
+    color: Rgb,
+    dark: Rgb,
+) {
+    for pair in roads.iter().flat_map(|r| r.windows(2)) {
+        let ((ax, ay), (bx, by)) = (centre(pair[0]), centre(pair[1]));
+        let (dx, dy) = ((bx - ax).signum(), (by - ay).signum());
+        let len = (bx - ax).abs() + (by - ay).abs();
+        for t in (0..=len).step_by(usize::try_from(DOT_STEP).unwrap_or(1)) {
+            let (x, y) = (ax + dx * t, ay + dy * t);
+            let edge = PxRect::new(x - DOT / 2 - 1, y - DOT / 2 - 1, DOT + 2, DOT + 2);
+            buf.add_overlay(Overlay::new(edge, dark, Layer::Under));
+            let fill = PxRect::new(x - DOT / 2, y - DOT / 2, DOT, DOT);
+            buf.add_overlay(Overlay::new(fill, color, Layer::Under));
+        }
+    }
 }
 
 /// The army: the lead's map sprite standing on its place's plate (its

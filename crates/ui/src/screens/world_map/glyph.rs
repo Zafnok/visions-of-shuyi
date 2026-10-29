@@ -4,7 +4,7 @@
 //! lines (the same width across and down), each place a symbol plate of
 //! its kind's colour with its level marker above, the army the lead's two
 //! letters on a blue plate under a `▼` flag, the cursor's corner marks round
-//! the plate under it; the panel on the right, a list open over the map,
+//! the plate under it; a place not open yet greyed, its road dimmed; the panel on the right, a list open over the map,
 //! the help line at the bottom. Everything about the look lives here;
 //! nothing here decides what the screen shows (ADR-0054).
 
@@ -85,6 +85,11 @@ pub(super) fn plate(mark: PlaceMark) -> (&'static str, char) {
         PlaceMark::Empty => ("path", '●'),
     }
 }
+
+// check-text: not player text (palette colour names)
+// check-text: not player text (a palette colour name)
+/// The colour name of a place not open yet, and of its road's edge.
+pub(super) const LOCKED: &str = "text_dim";
 
 // check-text: not player text (palette colour names)
 /// The level marker's color name of a place's mark.
@@ -174,13 +179,7 @@ fn paint_map(
 ) {
     let (ox, oy) = origin(def);
     let on_screen = |p: Pos| Pos::new(p.x + ox, p.y + oy);
-    let (w, h) = def.size;
-    for y in 0..h {
-        for x in 0..w {
-            let (ch, fg, bg) = ground(def.ground_at(Pos::new(x, y)), x, y);
-            buf.set(ox + x, oy + y, Cell::new(ch, named(fg), named(bg)));
-        }
-    }
+    paint_ground(def, (ox, oy), buf, named);
     let blank = |buf: &mut GlyphBuffer, p: Pos| {
         if let Some(cell) = buf.get(p.x, p.y).copied() {
             buf.set(p.x, p.y, Cell { glyph: ' ', ..cell });
@@ -188,7 +187,7 @@ fn paint_map(
     };
     // The ground's glyphs give way to the roads (a run down is wider
     // than its cell, so its neighbours' too).
-    for road in &view.roads {
+    for road in view.roads.iter().chain(&view.locked_roads) {
         let cells = road_cells(road);
         for (i, &p) in cells.iter().enumerate() {
             let p = on_screen(p);
@@ -208,6 +207,7 @@ fn paint_map(
             blank(buf, Pos::new(p.x + dx, p.y));
         }
         let (color, symbol) = plate(place.mark);
+        let color = if place.locked { LOCKED } else { color };
         // An empty place is a dot on the road, with no plate.
         let fg = if place.mark == PlaceMark::Empty {
             named(color)
@@ -240,21 +240,28 @@ fn paint_map(
     buf.set(army.x, army.y - 1, Cell::new('▼', player, bg));
     // The pictures in pixels, under the glyphs: every road's outline
     // first, then its band (so roads that meet join), then the plates.
-    let runs: Vec<(Pos, Pos)> = view
-        .roads
-        .iter()
-        .flat_map(|r| r.windows(2).map(|p| (on_screen(p[0]), on_screen(p[1]))))
-        .collect();
-    let edge = ctx.palette.get(UiColor::Path);
-    let band = named("road_bg").lerp(named("road"), ROAD_SHADE);
-    for &(a, b) in &runs {
-        buf.add_overlay(Overlay::new(run_px(a, b, 1), edge, Layer::Under));
-    }
-    for &(a, b) in &runs {
-        buf.add_overlay(Overlay::new(run_px(a, b, 0), band, Layer::Under));
-    }
+    // The roads not open yet first, dimmed, so open roads that meet them
+    // are drawn over them.
+    let runs = |roads: &[Vec<Pos>]| -> Vec<(Pos, Pos)> {
+        let pairs = roads.iter().flat_map(|r| r.windows(2));
+        pairs.map(|p| (on_screen(p[0]), on_screen(p[1]))).collect()
+    };
+    let shade = named("road_bg").lerp(named("road"), ROAD_SHADE);
+    paint_bands(
+        buf,
+        &runs(&view.locked_roads),
+        named(LOCKED),
+        named("road_bg"),
+    );
+    paint_bands(
+        buf,
+        &runs(&view.roads),
+        ctx.palette.get(UiColor::Path),
+        shade,
+    );
     for place in view.places.iter().filter(|p| p.mark != PlaceMark::Empty) {
         let (color, _) = plate(place.mark);
+        let color = if place.locked { LOCKED } else { color };
         let rect = plate_px(on_screen(place.pos), PLATE_PX.0);
         buf.add_overlay(Overlay::new(rect, named(color), Layer::Under));
     }
@@ -284,6 +291,33 @@ fn paint_cursor(ctx: &Ctx, rect: PxRect, brightness: f32, buf: &mut GlyphBuffer)
         .lerp(dark, 1.0 - brightness);
     for arm in corner_arms(rect) {
         buf.add_overlay(Overlay::new(arm, color, Layer::Over));
+    }
+}
+
+/// The map's ground in its cells, cell `(0, 0)` at `(ox, oy)`.
+fn paint_ground(
+    def: &WorldMapDef,
+    (ox, oy): (i32, i32),
+    buf: &mut GlyphBuffer,
+    named: &dyn Fn(&str) -> Rgb,
+) {
+    let (w, h) = def.size;
+    for y in 0..h {
+        for x in 0..w {
+            let (ch, fg, bg) = ground(def.ground_at(Pos::new(x, y)), x, y);
+            buf.set(ox + x, oy + y, Cell::new(ch, named(fg), named(bg)));
+        }
+    }
+}
+
+/// Road bands along `runs`: every run's outline in `edge` first, then
+/// every band in `band`, so roads that meet join.
+fn paint_bands(buf: &mut GlyphBuffer, runs: &[(Pos, Pos)], edge: Rgb, band: Rgb) {
+    for &(a, b) in runs {
+        buf.add_overlay(Overlay::new(run_px(a, b, 1), edge, Layer::Under));
+    }
+    for &(a, b) in runs {
+        buf.add_overlay(Overlay::new(run_px(a, b, 0), band, Layer::Under));
     }
 }
 

@@ -34,8 +34,11 @@ pub struct PlaceView {
     pub pos: Pos,
     /// Its mark.
     pub mark: PlaceMark,
-    /// Its level marker (`Lv7`), for a battle not yet won.
+    /// Its level marker (`Lv7`), for an open battle not yet won.
     pub level: Option<String>,
+    /// Whether it isn't open yet (one road from an open place): greyed,
+    /// and it can't be travelled to.
+    pub locked: bool,
 }
 
 /// The panel beside the map: the place under the cursor.
@@ -66,10 +69,12 @@ pub struct WorldMapView {
     /// The world map, by id (its ground, size and picture are the map
     /// file's look).
     pub map: String,
-    /// The open places.
+    /// The shown places: open, or one road from an open one.
     pub places: Vec<PlaceView>,
     /// The open roads: each one's cells where it turns, end to end.
     pub roads: Vec<Vec<Pos>>,
+    /// The roads shown but not open, to a place not open yet: dimmed.
+    pub locked_roads: Vec<Vec<Pos>>,
     /// Where the army is drawn, in cells of the map.
     pub army: Pos,
     /// The army's label: the lead's two letters.

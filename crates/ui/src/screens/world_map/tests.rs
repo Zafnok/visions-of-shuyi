@@ -64,6 +64,7 @@ fn only_the_open_places_show_battles_with_their_level() {
     let marks: Vec<(PlaceMark, Option<&str>)> = view
         .places
         .iter()
+        .filter(|p| !p.locked)
         .map(|p| (p.mark, p.level.as_deref()))
         .collect();
     assert_eq!(
@@ -76,14 +77,63 @@ fn only_the_open_places_show_battles_with_their_level() {
             (PlaceMark::Capital, None),
         ]
     );
+    // One road from Stone Mill: Wolf Pass and Old Bridge, greyed; the
+    // chapel is hidden.
+    assert_eq!(view.places.iter().filter(|p| p.locked).count(), 2);
     assert_eq!(view.army, Pos::new(14, 20));
     assert_eq!(view.army_label, "Ma");
-    // The roads between open places only: none yet to Wolf Pass, the
-    // chapel or Old Bridge.
+    // The roads between open places: none yet to Wolf Pass, the chapel or
+    // Old Bridge; those to the first and last are shown dimmed.
     assert_eq!(view.roads.len(), 5);
+    assert_eq!(view.locked_roads.len(), 2);
     assert_eq!(view.panel.title, "Millbrook");
     assert_eq!(view.panel.kind, "Town");
     assert_eq!(view.panel.lines, ["Armory", "Vendor", "Your army is here"]);
+}
+
+/// Once Stone Mill is the army's, the places one road from it show, greyed
+/// (not the hidden chapel), with their roads dimmed: the cursor goes there,
+/// the panel says what each is, but the army can't travel there.
+#[test]
+fn places_one_road_away_show_greyed_and_cant_be_reached() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    press(
+        &mut s,
+        &mut ctx,
+        &[Action::CursorRight, Action::CursorRight, Action::Confirm],
+    );
+    let t = arrive(&mut s, &mut ctx);
+    let battle: WorldBattle = popped_with(t).expect("Stone Mill's battle");
+    let mut s = WorldMapScreen::new(battle.campaign, 0.0);
+    let view = s.view(&ctx);
+    let locked: Vec<(Pos, PlaceMark)> = view
+        .places
+        .iter()
+        .filter(|p| p.locked)
+        .map(|p| (p.pos, p.mark))
+        .collect();
+    assert_eq!(
+        locked,
+        [
+            (Pos::new(30, 5), PlaceMark::SideQuest),
+            (Pos::new(47, 14), PlaceMark::StoryBattle)
+        ]
+    );
+    assert!(
+        view.places
+            .iter()
+            .filter(|p| p.locked)
+            .all(|p| p.level.is_none())
+    );
+    assert_eq!(view.locked_roads.len(), 2);
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    let view = s.view(&ctx);
+    assert_eq!(view.panel.title, "Old Bridge");
+    assert_eq!(view.panel.lines, ["Not open yet", "Enemy level 1"]);
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    assert!(!s.walking());
+    assert_eq!(at(&s), "ford");
 }
 
 /// The cursor's keys jump to the nearest place that way.
@@ -102,12 +152,14 @@ fn the_cursor_jumps_to_the_nearest_place_that_way() {
         press(&mut s, &mut ctx, &[action]);
         assert_eq!(s.cursor(), to, "{action:?}");
     }
-    // Nothing further right: it stays.
-    press(&mut s, &mut ctx, &[Action::CursorRight]);
-    assert_eq!(s.cursor(), "ford");
     let view = s.view(&ctx);
     assert_eq!(view.panel.title, "Stone Mill");
     assert_eq!(view.panel.lines, ["Enemy level 1"]);
+    // Old Bridge, not open yet, then nothing further right: it stays.
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert_eq!(s.cursor(), "bridge");
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert_eq!(s.cursor(), "bridge");
 }
 
 /// Previous and Next unit go through the places in the map's order; Your
@@ -264,26 +316,26 @@ fn the_menu_saves_camps_and_opens_options() {
     assert!(matches!(t, Transition::Push(ref o) if o.name() == "options"));
 }
 
-/// Music: the town's own cue while the army is there; the map's track
-/// once it leaves; and the map's track comes back after a screen over it.
+/// Music: the map's track on the map, a town's own cue while it is open
+/// (Nick: "while interacting with a town"), the map's again once it
+/// closes, and after a screen over the map.
 #[test]
-fn a_places_music_then_the_maps() {
+fn a_towns_music_while_it_is_open_then_the_maps() {
     let mut ctx = ctx();
     let mut s = screen(&ctx);
     press(&mut s, &mut ctx, &[]);
-    let village = AudioRequest::PlayMusic {
-        cue: "village".into(),
-    };
-    assert_eq!(ctx.audio.take(), [village]);
-    press(&mut s, &mut ctx, &[Action::CursorUp, Action::Confirm]);
-    ctx.audio.take();
-    frame(&mut s, &mut ctx, &[], 0.01);
-    let map = AudioRequest::PlayMusic {
-        cue: "world_map".into(),
-    };
+    let map = AudioRequest::play_music("world_map", None);
     assert_eq!(ctx.audio.take(), std::slice::from_ref(&map));
-    arrive(&mut s, &mut ctx);
+    // Confirm on Millbrook, where the army stands: its shops and its cue.
+    press(&mut s, &mut ctx, &[Action::Confirm]);
     ctx.audio.take();
+    press(&mut s, &mut ctx, &[]);
+    let village = AudioRequest::play_music("village", None);
+    assert_eq!(ctx.audio.take(), [village]);
+    press(&mut s, &mut ctx, &[Action::Cancel]);
+    ctx.audio.take();
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.audio.take(), std::slice::from_ref(&map));
     s.uncovered(&mut ctx, None);
     frame(&mut s, &mut ctx, &[], 0.01);
     assert_eq!(ctx.audio.take(), [map]);
@@ -306,9 +358,7 @@ fn the_maps_track_rests_between_rounds() {
     frame(&mut s, &mut ctx, &[], fade + QUIET_S - 1.0);
     assert_eq!(ctx.audio.take(), []);
     frame(&mut s, &mut ctx, &[], 1.0);
-    let again = AudioRequest::PlayMusic {
-        cue: "world_map".into(),
-    };
+    let again = AudioRequest::play_music("world_map", None);
     assert_eq!(ctx.audio.take(), [again]);
 }
 

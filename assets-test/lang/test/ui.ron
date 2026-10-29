@@ -1405,4 +1405,5 @@
     (key: "world_map.menu.save", source: "Save", text: "SAVE"),
     (key: "world_map.menu.title", source: "Menu", text: "MENU"),
     (key: "world_map.won", source: "Won", text: "WON"),
+    (key: "world_map.not_open", source: "Not open yet", text: "NOT OPEN YET"),
 ]
