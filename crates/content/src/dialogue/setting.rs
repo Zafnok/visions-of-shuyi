@@ -7,7 +7,7 @@ use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
 
-use trpg_core::{BattleDef, BattleMap, Pos, SupportTable};
+use trpg_core::{BattleDef, BattleMap, CampEvent, Pos, SupportTable};
 
 use super::{Lines, ParsedScene};
 use super::{PlaceLine, Stage, Step};
@@ -27,7 +27,7 @@ pub struct PlaceRefs<'a> {
     /// known: `@place battle` isn't checked then.
     pub battles: Option<BTreeMap<String, Vec<(&'a str, &'a BattleMap)>>>,
     /// The scenes also played away from any battle: support
-    /// conversations.
+    /// conversations and camp events.
     pub elsewhere: BTreeSet<String>,
     /// The map each opening of `assets/openings/` plays on, by opening id.
     /// `None` when the openings aren't known: `@opening` isn't checked
@@ -89,6 +89,15 @@ impl<'a> PlaceRefs<'a> {
             elsewhere,
             openings: None,
         }
+    }
+
+    /// The same, with the camp events in `camp` (`None` if they failed to
+    /// load) played away from any battle too.
+    #[must_use]
+    pub fn with_camp(mut self, camp: Option<&Vec<CampEvent>>) -> Self {
+        let scenes = camp.into_iter().flatten().map(|e| e.scene.clone());
+        self.elsewhere.extend(scenes);
+        self
     }
 
     /// The same, with the `openings` an `@opening` line may name (`None`
@@ -223,7 +232,7 @@ fn battle_problem(refs: &PlaceRefs, scene: &str, at: Pos) -> Option<String> {
     };
     if refs.elsewhere.contains(scene) {
         return Some(format!(
-            "{only}; \"{scene}\" is also a support conversation, played away from a battle"
+            "{only}; \"{scene}\" is also played at camp, away from a battle"
         ));
     }
     of.iter().find_map(|(battle, map)| {

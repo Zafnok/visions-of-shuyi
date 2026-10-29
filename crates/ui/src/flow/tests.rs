@@ -593,3 +593,83 @@ fn a_closing_scene_kills_the_knight_in_every_mode_or_plays_without_them() {
     );
     assert_eq!(after.roster.len(), 1);
 }
+
+/// The Quick Battle's army with the lord and the knight's C conversation
+/// unlocked, at chapter `chapter`.
+fn bonded_army(c: &Ctx, chapter: &str) -> Campaign {
+    let content = &c.game.content;
+    let def = &content.battles["quick"];
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let mut campaign = battle_campaign(content, def, GameMode::Classic, lead);
+    campaign.chapter = chapter.into();
+    let pair = trpg_core::SupportPair::new(
+        trpg_core::CharacterId("test_lord".into()),
+        trpg_core::CharacterId("test_knight".into()),
+    );
+    campaign.supports.gain(&pair, 20, &content.supports);
+    campaign
+}
+
+/// 1003: with something to list, camp opens before a battle's
+/// Preparations; what was viewed there goes into the battle's setup and
+/// the campaign. With nothing to list, it is skipped (the Quick Battle
+/// test above goes straight to Preparations).
+#[test]
+fn camp_opens_before_preparations_and_the_battle_takes_what_it_changed() {
+    use crate::input::Action::Confirm;
+    let mut c = ctx();
+    let campaign = bonded_army(&c, QUICK_CHAPTER);
+    let mut flow = FlowScreen::new_game(&c);
+    flow.begin(&mut c, campaign);
+    let mut stack = stacked(&mut c, flow);
+    assert_eq!(stack.names(), ["game_flow", "camp"]);
+    // Watch the lord and the knight's NEW conversation, then break camp.
+    update(&mut stack, &mut c, &[Confirm, Confirm, Confirm]);
+    assert_eq!(top(&stack), "dialogue");
+    for _ in 0..20 {
+        if top(&stack) != "dialogue" {
+            break;
+        }
+        update(&mut stack, &mut c, &[Confirm]);
+    }
+    assert_eq!(top(&stack), "camp");
+    // Back to the units, to the sections, then to Break camp.
+    update(&mut stack, &mut c, &[Cancel, Cancel, Cancel]);
+    update(&mut stack, &mut c, &[Confirm]);
+    assert_eq!(stack.names(), ["game_flow", "preparations"]);
+    let pair = trpg_core::SupportPair::new(
+        trpg_core::CharacterId("test_lord".into()),
+        trpg_core::CharacterId("test_knight".into()),
+    );
+    let prep = stack.find::<PreparationsScreen>().map(|p| p.setup().clone());
+    let rank = prep.and_then(|s| s.bonds.rank(&pair));
+    assert_eq!(rank, Some(trpg_core::SupportRank::C));
+    let campaign = stack.find::<FlowScreen>().and_then(FlowScreen::campaign);
+    let rank = campaign.and_then(|c| c.supports.rank(&pair));
+    assert_eq!(rank, Some(trpg_core::SupportRank::C));
+}
+
+/// 1003: camp opens between two chapters, before the next one's scenes,
+/// and only once between two battles: the next battle's Preparations
+/// come straight after its chapter's scenes.
+#[test]
+fn camp_opens_between_chapters_once() {
+    use crate::input::Action::Confirm;
+    let mut c = ctx();
+    if let Some(test) = c.game.content.chapters.get_mut("test") {
+        test.next = Some(QUICK_CHAPTER.into());
+    }
+    let campaign = bonded_army(&c, "test");
+    let mut flow = FlowScreen::new_game(&c);
+    flow.adopt(&mut c, campaign);
+    flow.chapter = c.game.content.chapters.get("test").cloned();
+    flow.next_chapter(&mut c);
+    let mut stack = stacked(&mut c, flow);
+    assert_eq!(stack.names(), ["game_flow", "camp"]);
+    update(&mut stack, &mut c, &[Cancel]);
+    update(&mut stack, &mut c, &[Confirm]);
+    // The Quick Battle's chapter has no scenes: its Preparations.
+    assert_eq!(stack.names(), ["game_flow", "preparations"]);
+    let campaign = stack.find::<FlowScreen>().and_then(FlowScreen::campaign);
+    assert_eq!(campaign.map(|c| c.chapter.as_str()), Some(QUICK_CHAPTER));
+}

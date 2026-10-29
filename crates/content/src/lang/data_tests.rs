@@ -501,6 +501,9 @@ fn the_test_pack_translates_a_little_of_every_kind() {
         lang.chapter_title(&test, &content.chapters["quick"]),
         "Quick Battle"
     );
+    let campfire = &content.camp[0];
+    assert_eq!(lang.camp_title(&test, campfire), "AROUND THE CAMPFIRE");
+    assert_eq!(lang.camp_title(&en, campfire), "Around the campfire");
     let notes = &content.battles["test"].battle_notes;
     assert!(
         lang.battle_note(&test, &notes[0])

@@ -342,6 +342,24 @@
     "prep.weapon_detail": "Mt{might} Hit{hit} Wt{weight} Rng{range}",
     "prep.armour_detail": "{bonus}  Wt {weight}",
 
+    // Camp, between battles (ticket 1003): the support conversations and
+    // the camp events.
+    "camp.heading": "Camp",
+    "camp.section.supports": "Supports",
+    "camp.section.events": "Camp events",
+    "camp.section.leave": "Break camp",
+    "camp.new": "NEW",
+    "camp.list.supports": "Supports",
+    "camp.list.talks": "{name}'s supports",
+    "camp.list.events": "Camp events",
+    "camp.empty.supports": "No support conversations yet.",
+    "camp.empty.events": "No camp events right now.",
+    "camp.leave_line": "Break camp and move on.",
+    "camp.help.sections": "{Cursor} choose · {Confirm} open",
+    "camp.help.leave": "{Cursor} choose · {Confirm} break camp",
+    "camp.help.units": "{Cursor} choose · {Confirm} open · {Cancel} back",
+    "camp.help.watch": "{Cursor} choose · {Confirm} watch · {Cancel} back",
+
     // The words inside a key's name: an action with no key, the four
     // arrow keys together, and what joins two buttons pressed together
     // (A+B).
@@ -611,6 +629,7 @@
     // The battle: the unit info screen.
     "battle.info.weapon_ranks": "Weapon ranks",
     "battle.info.affinities": "Affinities",
+    "battle.info.supports": "Supports",
     "battle.info.stats": "Stats",
     "battle.info.effects": "Effects",
     "battle.info.skills": "Skills",

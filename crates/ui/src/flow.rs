@@ -2,14 +2,14 @@
 //! scenes and battle to the result; and saving and loading it (0802).
 //!
 //! ```text
-//! New Game → mode → familiarity → lead → [chapter: intro scenes → (Preparations) → battle
+//! New Game → mode → familiarity → lead → [chapter: intro scenes → (Camp → Preparations) → battle
 //!     ├─ victory → apply the result → the results (0810: gold, rewind
 //!     │            bonus, level ups) → victory scenes
 //!     │            → "Save your progress?" (→ slot picker)
-//!     │            → next chapter, or "To be continued" → title
+//!     │            → (Camp →) next chapter, or "To be continued" → title
 //!     ├─ defeat  → Game Over → Retry (the battle again) | Title
 //!     └─ Suspend → the suspend save → title]
-//! Load Game → slot picker → the chapter after the one the save cleared
+//! Load Game → slot picker → (Camp →) the chapter after the one the save cleared
 //! Continue  → the suspended battle, where it was (the save is deleted)
 //! ```
 //!
@@ -29,6 +29,16 @@
 //! it. Both restarts go back to Preparations, as the player
 //! left it (Nick, 0408), so they can change their gear before trying again.
 //! Only the Quick Battle may leave Preparations (back to the title).
+//!
+//! **Camp** (1003, `supports.md`, `world-structure.md`): the Camp screen
+//! opens between two chapters, before the next one's scenes, and before
+//! the Preparations of a battle that has them; but once between two
+//! battles: a battle whose chapter just came from camp goes straight to
+//! Preparations. Camp with nothing to list (no support conversation
+//! unlocked or seen, no camp event) is skipped (*Claude's starting
+//! rules*). It works on a copy of the campaign, which the flow takes back
+//! when camp breaks. Restarting a battle, `Retry` and `Continue` don't
+//! open it. (The world map's `Camp`, 1007, opens the same screen.)
 //!
 //! **Saves** (`death-and-difficulty.md`, ADR-0039). A chapter save holds
 //! the campaign once its chapter is won, so its
@@ -67,6 +77,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::Place;
 use crate::save::{self, SUSPEND_KEY, SaveError};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, ScreenResult, Shuyi, Transition};
+use crate::screens::CampScreen;
 use crate::screens::battle::BattleEnd;
 use crate::screens::familiarity::FamiliarityScreen;
 use crate::screens::game_over::ToBeContinuedScreen;
@@ -108,6 +119,8 @@ enum Stage {
     Lead(GameMode, TutorialLevel),
     /// A chapter's scene.
     Scene,
+    /// Camp: the supports and camp events, between battles (1003).
+    Camp,
     /// Loadouts and the pack, before a battle that has Preparations.
     Preparations,
     /// The chapter's battle (and its Game Over).
@@ -163,6 +176,11 @@ pub struct FlowScreen {
     can_leave: bool,
     /// The battle's music cue, as asked for when it last started.
     music: Option<String>,
+    /// Whether camp was offered since the last battle (once between two).
+    camped: bool,
+    /// The chapter to start once camp breaks; `None`: the chapter's
+    /// battle.
+    after_camp: Option<String>,
 }
 
 impl FlowScreen {
@@ -184,6 +202,8 @@ impl FlowScreen {
             started_at: 0.0,
             can_leave: false,
             music: None,
+            camped: false,
+            after_camp: None,
         }
     }
 
@@ -406,14 +426,38 @@ impl FlowScreen {
         plays
     }
 
-    /// Starts the chapter's battle with the campaign's army.
+    /// Opens camp, if it wasn't offered since the last battle and has
+    /// anything to list, to go on with `then` (the chapter to start, or
+    /// the chapter's battle) once it breaks. Returns whether it opened.
+    fn camp(&mut self, ctx: &Ctx, then: Option<String>) -> bool {
+        let Some(campaign) = &self.campaign else {
+            return false;
+        };
+        if self.camped || !CampScreen::has_anything(ctx, campaign) {
+            return false;
+        }
+        self.camped = true;
+        self.after_camp = then;
+        let screen = CampScreen::new(ctx, campaign.clone());
+        self.show(Stage::Camp, Box::new(screen));
+        true
+    }
+
+    /// Starts the chapter's battle with the campaign's army: camp first,
+    /// before a battle with Preparations ([`camp`](Self::camp)).
     fn start_battle(&mut self, ctx: &mut Ctx) {
         let def = self
             .chapter
             .as_ref()
             .and_then(|c| ctx.game.content.battles.get(&c.battle));
-        let (Some(def), Some(campaign)) = (def, &self.campaign) else {
+        let (Some(def), Some(_)) = (def, &self.campaign) else {
             self.the_end(ctx);
+            return;
+        };
+        if def.preparations && self.camp(ctx, None) {
+            return;
+        }
+        let Some(campaign) = &self.campaign else {
             return;
         };
         let prep = Preparations {
@@ -497,6 +541,7 @@ impl FlowScreen {
     /// the campaign, then its results and the victory scenes (Nick, 0810:
     /// the results come first).
     fn won(&mut self, ctx: &mut Ctx, state: &BattleState, unused: u8) {
+        self.camped = false;
         let mut results = None;
         if let (Some(campaign), Some(fight)) = (&mut self.campaign, &self.fight) {
             self.rewards = campaign.apply_result(&fight.def, state, unused).ok();
@@ -526,7 +571,9 @@ impl FlowScreen {
                 if let Some(campaign) = &mut self.campaign {
                     campaign.chapter.clone_from(&id);
                 }
-                self.start_chapter(ctx, &id);
+                if !self.camp(ctx, Some(id.clone())) {
+                    self.start_chapter(ctx, &id);
+                }
             }
             None => self.the_end(ctx),
         }
@@ -559,6 +606,16 @@ impl FlowScreen {
                 }
             }
             Stage::Scene | Stage::Results => self.next_scene(ctx),
+            Stage::Camp => {
+                if let Some(mut campaign) = result.and_then(ScreenResult::take::<Campaign>) {
+                    Self::take_in(&mut campaign, ctx, self.started_at);
+                    self.campaign = Some(campaign);
+                }
+                match self.after_camp.take() {
+                    Some(chapter) => self.start_chapter(ctx, &chapter),
+                    None => self.start_battle(ctx),
+                }
+            }
             // Fight! (leaving pops with nothing: the flow is over).
             Stage::Preparations => {
                 if let Some(prep) = result.and_then(ScreenResult::take) {

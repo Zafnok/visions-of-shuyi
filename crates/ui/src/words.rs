@@ -1,6 +1,6 @@
 //! Data text in the player's language (ADR-0045, ticket 0235): the names
 //! of classes, items, spells, skills, arts, terrain, units and people,
-//! tips, chapter titles, battle notes and dialogue. The data and `core`
+//! tips, chapter titles, camp event titles, battle notes and dialogue. The data and `core`
 //! hold English; a screen shows any of it through [`Words`]
 //! ([`Ctx::words`](crate::Ctx::words)), never by reading a `name` field
 //! itself (`cargo shuyi check-text` fails on one).
@@ -12,8 +12,8 @@ use core::fmt::Display;
 use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip};
 use trpg_core::lead::LEAD_ID;
 use trpg_core::{
-    ArtDef, BattleNote, ClassDef, ClassId, ClassTable, ItemDef, ItemId, ItemTable, LeadGender,
-    SkillDef, SpellDef, TerrainRules, Unit,
+    ArtDef, BattleNote, CampEvent, ClassDef, ClassId, ClassTable, ItemDef, ItemId, ItemTable,
+    LeadGender, SkillDef, SpellDef, TerrainRules, Unit,
 };
 
 /// The data's text in one language. Cheap to copy: pass it to whatever
@@ -241,6 +241,14 @@ impl<'a> Words<'a> {
         match self.pack {
             Some((lang, code)) => lang.chapter_title(code, chapter),
             None => &chapter.title,
+        }
+    }
+
+    /// The title of camp event `event`.
+    pub fn camp_title(self, event: &'a CampEvent) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.camp_title(code, event),
+            None => &event.title,
         }
     }
 

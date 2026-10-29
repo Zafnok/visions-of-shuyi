@@ -235,8 +235,7 @@ fn the_battle_is_only_for_a_battles_scenes() {
             "t.dlg:4: tile 7,2 is off the map of battle \"b1\" (5 by 5 tiles, from 0,0 to 4,4)"
                 .to_owned(),
             format!(
-                "t.dlg:8: {only}; \"talk\" is also a support conversation, played away from a \
-                 battle"
+                "t.dlg:8: {only}; \"talk\" is also played at camp, away from a battle"
             ),
             format!("t.dlg:14: {only}; no battle plays \"alone\""),
         ]

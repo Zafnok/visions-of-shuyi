@@ -21,6 +21,7 @@ pub mod audio;
 pub mod battle;
 pub mod battler;
 pub mod bundle;
+pub mod camp;
 pub mod chapter;
 pub mod character;
 pub mod cinematic;
@@ -60,8 +61,8 @@ use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 
 use trpg_core::{
-    AiWeights, ArtTable, BattleDef, BattleMap, ClassTable, GameTables, ItemTable, SkillTable,
-    SpellTable, SupportTable,
+    AiWeights, ArtTable, BattleDef, BattleMap, CampEvent, ClassTable, GameTables, ItemTable,
+    SkillTable, SpellTable, SupportTable,
 };
 
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
@@ -162,6 +163,8 @@ pub struct Content {
     pub new_game: NewGameDef,
     /// Support rules and pairs (ticket 1002).
     pub supports: SupportTable,
+    /// Camp events, in the order camp lists them (ticket 1003).
+    pub camp: Vec<CampEvent>,
     /// English screen text and the language packs (ADR-0045).
     pub lang: Arc<Lang>,
     /// Combat pictures and the backdrops behind them (ADR-0056).
@@ -307,13 +310,19 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
     let openings = load_openings(maps.as_ref().ok(), cast, rules);
     let supports = support::load(characters.as_ref().ok(), scenes);
+    let camp = camp::load(camp::CampRefs {
+        characters: characters.as_ref().ok(),
+        dialogue: scenes,
+        battles: battles.as_ref().ok(),
+    });
     let story = (
         battles.as_ref().ok(),
         chapters.as_ref().ok(),
         new_game.as_ref().ok(),
     );
     let places = (maps.as_ref().ok(), openings.as_ref().ok());
-    let dialogue = check_dialogue(scripts, places, story, supports.as_ref().ok());
+    let away = (supports.as_ref().ok(), camp.as_ref().ok());
+    let dialogue = check_dialogue(scripts, places, story, away);
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -342,6 +351,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         chapters,
         new_game,
         supports,
+        camp,
         lang: Ok(Lang::default()),
         battlers: stage_art,
         lighting,
@@ -428,6 +438,7 @@ fn data_text(
         chapters: units.chapters.as_ref().ok()?,
         battles: units.battles.as_ref().ok()?,
         dialogue: units.dialogue.as_ref().ok()?,
+        camp: units.camp.as_ref().ok()?,
     }))
 }
 
@@ -451,12 +462,17 @@ fn check_dialogue(
     scripts: Result<dialogue::Scripts, Vec<ContentError>>,
     (maps, openings): PlaceFiles,
     (battles, chapters, new_game): StoryRefs,
-    supports: Option<&SupportTable>,
+    (supports, camp): AwayRefs,
 ) -> Result<DialogueTable, Vec<ContentError>> {
     let places = dialogue::PlaceRefs::new(maps, battles, chapters, supports);
-    let scripts = check_places(scripts, &places.with_openings(openings));
-    check_presence(scripts, battles, chapters, new_game, supports)
+    let places = places.with_openings(openings).with_camp(camp);
+    let scripts = check_places(scripts, &places);
+    check_presence(scripts, battles, chapters, new_game, (supports, camp))
 }
+
+/// The supports and the camp events, each if it loaded: the scenes played
+/// at camp, away from any battle.
+type AwayRefs<'a> = (Option<&'a SupportTable>, Option<&'a Vec<CampEvent>>);
 
 /// Adds the place checks ([`dialogue::check_places`]: every `@place` line's
 /// map and tile are there, `@place battle` only in a battle's scenes) to
@@ -481,21 +497,22 @@ fn check_places(
 /// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
 /// be gone is shown outside an `@if` block for them, ADR-0055) to the
 /// dialogue's result. Skipped when the dialogue, the battles, the
-/// chapters, the New Game file or the supports failed to load.
+/// chapters, the New Game file, the supports or the camp events failed to
+/// load.
 fn check_presence(
     scripts: Result<dialogue::Scripts, Vec<ContentError>>,
     battles: Option<&BTreeMap<String, BattleDef>>,
     chapters: Option<&BTreeMap<String, ChapterDef>>,
     new_game: Option<&NewGameDef>,
-    supports: Option<&SupportTable>,
+    (supports, camp): AwayRefs,
 ) -> Result<DialogueTable, Vec<ContentError>> {
     let scripts = scripts?;
-    let (Some(battles), Some(chapters), Some(new_game), Some(supports)) =
-        (battles, chapters, new_game, supports)
+    let (Some(battles), Some(chapters), Some(new_game), Some(supports), Some(camp)) =
+        (battles, chapters, new_game, supports, camp)
     else {
         return Ok(scripts.table);
     };
-    let cast = dialogue::Cast::new(new_game, battles, chapters, supports);
+    let cast = dialogue::Cast::new(new_game, battles, chapters, supports).with_camp(camp);
     let errors: Vec<ContentError> = scripts
         .parsed
         .iter()
@@ -836,6 +853,7 @@ struct Loaded {
     chapters: Result<BTreeMap<String, ChapterDef>, Vec<ContentError>>,
     new_game: Result<NewGameDef, Vec<ContentError>>,
     supports: Result<SupportTable, Vec<ContentError>>,
+    camp: Result<Vec<CampEvent>, Vec<ContentError>>,
     lang: Result<Lang, Vec<ContentError>>,
     battlers: Result<BattlerTable, Vec<ContentError>>,
     lighting: Result<Lighting, Vec<ContentError>>,
@@ -899,6 +917,7 @@ fn assemble(
         cinematics: take(units.cinematics, &mut errors),
         lessons: take(units.lessons, &mut errors),
         openings: take(units.openings, &mut errors),
+        camp: take(units.camp, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -1117,6 +1136,15 @@ mod tests {
         support::load(ok_characters().ok().as_ref(), ok_dialogue().ok().as_ref())
     }
 
+    fn ok_camp() -> Result<Vec<CampEvent>, Vec<ContentError>> {
+        let (battles, ..) = ok_story();
+        camp::load(camp::CampRefs {
+            characters: ok_characters().ok().as_ref(),
+            dialogue: ok_dialogue().ok().as_ref(),
+            battles: battles.ok().as_ref(),
+        })
+    }
+
     fn ok_tilesets() -> Result<BTreeMap<String, Tileset>, Vec<ContentError>> {
         load_tilesets(
             crate::image::load().ok().as_ref(),
@@ -1156,6 +1184,7 @@ mod tests {
             title: ok_title(),
             cinematics: ok_cinematics(),
             openings: ok_openings(),
+            camp: ok_camp(),
         }
     }
 
@@ -1257,9 +1286,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 32] = [
+    const NAMES: [&str; 33] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "Q",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1313,6 +1342,7 @@ mod tests {
                     title: Err(e("T")),
                     cinematics: Err(e("C")),
                     openings: Err(e("O")),
+                    camp: Err(e("Q")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -1377,6 +1407,7 @@ mod tests {
                     cinematics: pick(i == 29, "C", ok_cinematics()),
                     lessons: pick(i == 30, "E", ok_lessons()),
                     openings: pick(i == 31, "O", ok_openings()),
+                    camp: pick(i == 32, "Q", ok_camp()),
                 },
             )
         };
@@ -1653,13 +1684,14 @@ mod tests {
         };
         let (battles, chapters, new_game) = ok_story();
         let (battles, chapters, supports) = (battles.ok(), chapters.ok(), ok_supports().ok());
+        let camp = ok_camp().ok();
         let check = |new_game: Option<&NewGameDef>| {
             check_presence(
                 scripts(),
                 battles.as_ref(),
                 chapters.as_ref(),
                 new_game,
-                supports.as_ref(),
+                (supports.as_ref(), camp.as_ref()),
             )
         };
         let mut new_game = new_game.unwrap_or_default();
@@ -1697,7 +1729,7 @@ mod tests {
             battles.as_ref(),
             chapters.as_ref(),
             Some(&new_game),
-            supports.as_ref(),
+            (supports.as_ref(), camp.as_ref()),
         );
         assert_eq!(checked, Err(vec![ContentError::new("d", "bad")]));
     }

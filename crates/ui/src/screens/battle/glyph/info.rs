@@ -1,6 +1,6 @@
 //! The glyph look of the unit info screen: a double box over the map and
 //! side panel, a 24 × 12 portrait area on the left (a placeholder box), Mov,
-//! tags, weapon ranks and affinities under it; name, class, EXP, HP with a
+//! tags, weapon ranks, affinities and supports under it; name, class, EXP, HP with a
 //! bar, stats, timed effects and skills in the middle; weapons, armour,
 //! accessory and spells on the right. Lists stop where the box does.
 
@@ -120,17 +120,40 @@ fn paint_left(pen: &mut Pen<'_>, view: &InfoView) {
         let x = pen.text(LEFT_X, y, kind, UiColor::Text);
         pen.text(x.max(LEFT_X + 10), y, rank, UiColor::Text);
     }
-    if view.affinities.is_empty() {
+    if !view.affinities.is_empty() {
+        y += 2;
+        pen.text(LEFT_X, y, &view.affinities_title, UiColor::TextHighlight);
+        for (element, affinity) in &view.affinities {
+            y += 1;
+            let x = pen.text(LEFT_X, y, element, UiColor::Text);
+            pen.text(x.max(LEFT_X + 10), y, affinity, UiColor::Text);
+        }
+    }
+    if view.supports.is_empty() {
         return;
     }
+    // The list stops where the box does.
+    let last = INFO.y + INFO.h - 2;
     y += 2;
-    pen.text(LEFT_X, y, &view.affinities_title, UiColor::TextHighlight);
-    for (element, affinity) in &view.affinities {
+    if y > last {
+        return;
+    }
+    pen.text(LEFT_X, y, &view.supports_title, UiColor::TextHighlight);
+    for (partner, rank) in &view.supports {
         y += 1;
-        let x = pen.text(LEFT_X, y, element, UiColor::Text);
-        pen.text(x.max(LEFT_X + 10), y, affinity, UiColor::Text);
+        if y > last {
+            return;
+        }
+        pen.cut(LEFT_X, y, partner, SUPPORT_NAME_W, UiColor::Text);
+        pen.text(LEFT_X + SUPPORT_RANK_X, y, rank, UiColor::Text);
     }
 }
+
+/// Widest partner name in the supports list.
+const SUPPORT_NAME_W: usize = 18;
+
+/// Column of a partner's rank, from the left column.
+const SUPPORT_RANK_X: i32 = 20;
 
 /// Name, class and level, EXP, HP with a bar, stats, effects, skills.
 fn paint_middle(pen: &mut Pen<'_>, view: &InfoView) {

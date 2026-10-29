@@ -81,6 +81,11 @@
         // From the DEFEAT banner through the Game Over screen (0023). It
         // loops (0024); the file ends with a pause (import.py, TUNABLE).
         (id: "defeat", file: "the_fallen.ogg", volume: 100, length_ms: 89140, credit: Credit("the_fallen")),
+        // The camp pool's tracks (pools below): they rotate while camp is
+        // open, each played once to its end (0027, ticket 1003).
+        (id: "camp_old_tower_inn", file: "old_tower_inn.ogg", volume: 100, looped: false, length_ms: 105482, credit: Credit("old_tower_inn")),
+        (id: "camp_woodland_fantasy", file: "woodland_fantasy.ogg", volume: 100, looped: false, length_ms: 150048, credit: Credit("woodland_fantasy")),
+        (id: "camp_bards_tale", file: "bards_tale.ogg", volume: 100, looped: false, length_ms: 158589, credit: Credit("bards_tale")),
     ],
     pools: [
         // Skirmishes pick one at random per battle (audio.md rule 8; 0807).
@@ -91,6 +96,9 @@
                                 "victory_fretless", "victory_grand_piano", "victory_jazz_guitar", "victory_muted_guitar",
                                 "victory_nylon", "victory_pizzicato", "victory_steel_drums", "victory_strings",
                                 "victory_vibraphone"]),
+        // Camp plays them in turn, in this order, from a random first one
+        // (audio.md "Starting values"; 0027, 1003).
+        (id: "camp", music: ["camp_old_tower_inn", "camp_woodland_fantasy", "camp_bards_tale"]),
     ],
     credits: [
         // Music (one entry per work; the note names the file or version).
@@ -185,6 +193,18 @@
          license: "CC-BY-3.0",
          tags: ["music", "defeat", "game over", "sad", "orchestral", "loop"],
          note: "The Fallen MP3.mp3 from The Fallen MP3_0.zip (RPG Orchestral Essentials), whole, with 12 s of silence added at the end"),
+        (id: "old_tower_inn", title: "Medieval: The Old Tower Inn", author: "RandomMind",
+         source: "https://opengameart.org/content/medieval-the-old-tower-inn", license: "CC0-1.0",
+         tags: ["music", "camp", "calm", "tavern", "medieval"],
+         note: "The_Old_Tower_Inn.mp3 (the full version, not the loop)"),
+        (id: "woodland_fantasy", title: "Woodland Fantasy", author: "Matthew Pablo",
+         source: "https://opengameart.org/content/woodland-fantasy", license: "CC-BY-3.0",
+         tags: ["music", "camp", "calm", "forest", "fantasy"],
+         note: "Woodland Fantasy_0.mp3; www.matthewpablo.com"),
+        (id: "bards_tale", title: "Medieval: The Bard's Tale", author: "RandomMind",
+         source: "https://opengameart.org/node/80558", license: "CC0-1.0",
+         tags: ["music", "camp", "adventurous", "road", "medieval"],
+         note: "The_Bards_Tale.mp3 (the full version, not the loop)"),
 
         // Sounds (freesound: the public HQ OGG preview of each sound).
         (id: "sword_sound_1", title: "Sword sound 1", author: "Merrick079",

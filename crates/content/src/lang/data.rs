@@ -11,8 +11,8 @@ use alloc::collections::BTreeMap;
 
 use shuyi_assets::lang::SourceText;
 use trpg_core::{
-    ArtDef, ArtTable, BattleDef, BattleNote, ClassId, ClassTable, ItemId, ItemTable, SkillDef,
-    SkillTable, SpellDef, SpellTable, WeaponDef,
+    ArtDef, ArtTable, BattleDef, BattleNote, CampEvent, ClassId, ClassTable, ItemId, ItemTable,
+    SkillDef, SkillTable, SpellDef, SpellTable, WeaponDef,
 };
 
 use super::{Lang, LangCode, text_width};
@@ -57,6 +57,8 @@ pub struct Tables<'a> {
     pub battles: &'a BTreeMap<String, BattleDef>,
     /// Dialogue scenes.
     pub dialogue: &'a DialogueTable,
+    /// Camp events.
+    pub camp: &'a [CampEvent],
 }
 
 /// The key of the `name` of `id` in data file `file` (`items.potion.name`).
@@ -96,6 +98,11 @@ fn lesson_item_key(id: &str, index: usize) -> String {
 /// The key of chapter `id`'s title.
 fn chapter_key(id: &str) -> String {
     format!("chapters.{id}.title")
+}
+
+/// The key of camp event `id`'s title.
+fn camp_key(id: &str) -> String {
+    format!("camp.{id}.title")
 }
 
 /// What every key of a terrain's name starts with.
@@ -206,6 +213,9 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
     for chapter in tables.chapters.values() {
         data.insert(chapter_key(&chapter.id), chapter.title.clone());
     }
+    for event in tables.camp {
+        data.insert(camp_key(&event.id), event.title.clone());
+    }
     for (id, battle) in tables.battles {
         for (i, note) in battle.battle_notes.iter().enumerate() {
             data.insert(note_key(id, i), note.text.clone());
@@ -302,6 +312,11 @@ impl Lang {
     pub fn chapter_title<'a>(&'a self, code: &LangCode, chapter: &'a ChapterDef) -> &'a str {
         self.0
             .data_text(code, || chapter_key(&chapter.id), &chapter.title)
+    }
+
+    /// The title of camp event `event` in language `code`.
+    pub fn camp_title<'a>(&'a self, code: &LangCode, event: &'a CampEvent) -> &'a str {
+        self.0.data_text(code, || camp_key(&event.id), &event.title)
     }
 
     /// The text of battle note `note` in language `code`. A battle in play

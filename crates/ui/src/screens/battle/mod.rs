@@ -2344,6 +2344,7 @@ impl BattleScreen {
         let info = match self.mode {
             Mode::Info { unit } => self.state.unit(unit).map(|u| InfoView {
                 page: self.info_page,
+                supports: info::supports(told, &ctx.game.content.names, u),
                 ..info::view(told, u)
             }),
             _ => None,

@@ -72,6 +72,10 @@ DOWNLOADS = [
     # Ticket 0809: the victory pool (0022) and the defeat piece (0023).
     ("winjingle.zip", OGA + "winjingle.zip", "fef26adc010e7e7d6f2ab586f400188831152530f8f3adcd179f26435d69ce6b"),
     ("The Fallen MP3_0.zip", OGA + "The%20Fallen%20MP3_0.zip", "4804ec96b9442aee01b58f2355ae5d14cf1a85db8f0c130938657df12f5e9a9a"),
+    # Ticket 1003: the camp pool (0027), the full versions (they rotate).
+    ("The_Old_Tower_Inn.mp3", OGA + "The_Old_Tower_Inn.mp3", "3fe4070015b880b591c79a7fca31156a0083a8768d88a39da39ab6c54f2f014d"),
+    ("Woodland Fantasy_0.mp3", OGA + "Woodland%20Fantasy_0.mp3", "87f9a9d04fdd0b924db98b90e86c2906330f4931cb8734f7b431706e2869aacd"),
+    ("The_Bards_Tale.mp3", OGA + "The_Bards_Tale.mp3", "6e93e8e8215bea17a209c321c182111058e024c53e3ad775ce1481ca1d1fcfc2"),
     # Free Music Archive's download button needs a login; this is the
     # public file its player streams (320 kbps MP3).
     ("hesitation_orchestral.mp3",
@@ -125,6 +129,9 @@ MUSIC = [
     ("zhelanov_battle_theme_5.ogg", "Battle Themes.zip", "Battle Theme 5.mp3"),
     ("rpg_battle_theme.ogg", "battle_theme_2.wav", None),
     ("the_fallen.ogg", "The Fallen MP3_0.zip", "The Fallen MP3.mp3"),
+    ("old_tower_inn.ogg", "The_Old_Tower_Inn.mp3", None),
+    ("woodland_fantasy.ogg", "Woodland Fantasy_0.mp3", None),
+    ("bards_tale.ogg", "The_Bards_Tale.mp3", None),
 ] + [
     # The victory pool: 13 of the Win Jingle's 17 versions (Nick cut Saw,
     # Square, Banjo and Harpsichord; audio.md).

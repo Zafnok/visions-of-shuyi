@@ -57,6 +57,11 @@ pub struct InfoView {
     /// What its class makes of each element (`Fire`, `Weak`); empty if
     /// nothing.
     pub affinities: Vec<(String, String)>,
+    /// The heading over the supports.
+    pub supports_title: String,
+    /// Each partner it has a support rank with, and the rank (`Mira`,
+    /// `B`), in the support table's order; empty if none (1003).
+    pub supports: Vec<(String, String)>,
     /// The heading over the weapons.
     pub weapons_title: String,
     /// The mark on what is equipped (`E`).

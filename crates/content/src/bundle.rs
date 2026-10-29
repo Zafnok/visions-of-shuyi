@@ -453,7 +453,8 @@ mod tests {
 
     /// The data tables a build with the test files adds entries to: the
     /// only paths the story's files and the test files may share.
-    const TABLES: [&str; 4] = [
+    const TABLES: [&str; 5] = [
+        "data/camp.ron",
         "data/characters.ron",
         "data/lessons.ron",
         "data/names.ron",

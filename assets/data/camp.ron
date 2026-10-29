@@ -1,0 +1,20 @@
+// Camp events (ticket 1003, docs/design/supports.md "Rules: camp events"):
+// short, optional, scripted scenes listed at camp once the story reaches
+// their point. They give nothing (no points, stats or items). Loaded by
+// trpg_content::camp; the rules are in trpg_core::camp.
+//
+// events: in the order camp lists them.
+//   id        unique among camp events; the campaign remembers it once seen
+//   title     the list's name for it (English; language packs translate it
+//             under camp.<id>.title)
+//   scene     the dialogue scene it plays
+//   flags     optional: story flags that must all be set
+//   battles   optional: battles (ids) that must all have been won
+//   units     optional: characters (ids) who must all be in the army,
+//             alive and recruited
+// Which events exist and when is the story pipeline's decision
+// (story-writing skill). The test files' event is in
+// assets-test/data/camp.ron (ADR-0057).
+(
+    events: [],
+)

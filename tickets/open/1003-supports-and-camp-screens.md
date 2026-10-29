@@ -5,7 +5,7 @@ type: feature
 milestone: Post–Chapter 1
 model: sonnet-5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["1002", "0008", "0408", "0704", "0801", "0027"]
 nick_input: none
 completed:

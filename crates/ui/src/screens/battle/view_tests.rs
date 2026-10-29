@@ -250,6 +250,58 @@ fn the_info_screen_is_the_units_and_closes() {
     assert!(s.view(&c).info.is_none());
 }
 
+/// The Quick Battle with the lord at C with the knight and at B with the
+/// mage (viewed at camp), and the mage benched, as a battle screen.
+fn bonded_quick(c: &Ctx) -> BattleScreen {
+    use trpg_core::{CharacterId, SupportPair};
+    let content = &c.game.content;
+    let def = &content.battles["quick"];
+    let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
+    let mut campaign = battle_campaign(content, def, GameMode::Classic, lead);
+    let table = &content.supports;
+    let pair = |b: &str| SupportPair::new(CharacterId("test_lord".into()), CharacterId(b.into()));
+    for (partner, points) in [("test_knight", 20), ("test_mage", 80)] {
+        campaign.supports.gain(&pair(partner), points.min(20), table);
+        campaign.supports.view(&pair(partner), table).unwrap();
+        if points > 20 {
+            campaign.supports.gain(&pair(partner), points, table);
+            campaign.supports.view(&pair(partner), table).unwrap();
+        }
+    }
+    let mut setup = campaign.battle_setup(def, &content.tables());
+    let mage = Some(CharacterId("test_mage".into()));
+    setup.units.retain(|u| u.character != mage);
+    BattleScreen::new(trpg_core::BattleState::new(setup).0)
+}
+
+/// 1003: the info screen lists the unit's support partners with a rank,
+/// a benched one by name; a unit with none lists nothing.
+#[test]
+fn the_info_screen_lists_the_units_supports_and_ranks() {
+    let mut c = ctx();
+    let mut s = bonded_quick(&c);
+    step(&mut s, &mut c, &[Action::Info]);
+    let info = s.view(&c).info.expect("the info screen");
+    assert_eq!(info.supports_title, "Supports");
+    let supports = [("Test Knight", "C"), ("Test Mage", "B")].map(|(n, r)| (n.into(), r.into()));
+    assert_eq!(info.supports, supports);
+    let knight = s.state().units().iter().find(|u| u.name == "Test Knight").unwrap();
+    let words = c.words();
+    let of_knight = info::supports((s.state(), words), &c.game.content.names, knight);
+    assert_eq!(of_knight, [("Test Lord".to_owned(), "C".to_owned())]);
+    let enemy = s.state().units().iter().find(|u| u.character.is_none()).unwrap();
+    assert!(info::supports((s.state(), words), &c.game.content.names, enemy).is_empty());
+}
+
+/// The info screen with its supports section, under the weapon ranks.
+#[test]
+fn info_supports_snapshot() {
+    let c = ctx();
+    let mut h = Harness::with_screen(Box::new(bonded_quick(&c)));
+    h.keys("e");
+    insta::assert_snapshot!(h.snapshot());
+}
+
 #[test]
 fn the_forecast_takes_the_panels_place_while_an_attack_is_aimed() {
     let state = super::testing::skirmish(&ctx(), 20);

@@ -1,6 +1,7 @@
 //! The game's screens. Debug-only screens live in [`crate::debug`].
 
 pub mod battle;
+pub mod camp;
 pub mod class_change;
 pub mod credits;
 pub mod dialogue;
@@ -20,6 +21,7 @@ pub mod title;
 
 use crate::prelude::*;
 pub use battle::BattleScreen;
+pub use camp::CampScreen;
 pub use class_change::{ChangeKind, ClassChangeScreen};
 pub use credits::CreditsScreen;
 pub use dialogue::DialogueScreen;
