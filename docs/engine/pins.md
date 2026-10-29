@@ -117,7 +117,7 @@ Ticket 1195 (from #152): the game's tools give no `made` stamp yet, so its bots'
 
 Ticket 1196 (from #153, listed under nothing for the game by its `api: none` label): the engine's storage now runs a power-cut suite, and the Playdate's own `FileStorage` doesn't. Its write unlinks the old save before moving the new one in when the file system won't rename onto a file, so a power cut between the two loses the save. 1196 runs the suite on it and fixes what fails. Ticket 1197 widens this review after an audit of every section above: a breaking PR's features, and `api: none` PRs that change behavior, get decisions too.
 
-## 2026-10-29: c9fb84c9 → 50ae33db (13 engine PRs), #PRNUM
+## 2026-10-29: c9fb84c9 → 50ae33db (13 engine PRs), #482
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
