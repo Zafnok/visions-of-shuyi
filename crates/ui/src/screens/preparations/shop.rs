@@ -7,7 +7,8 @@
 //! first), Repair fills any weapon of the stock or of the army's loadouts;
 //! all with the setup's gold, through [`trpg_core::Preparations`]. Unlike
 //! the on-map shop, each choice is made at once: Preparations has no
-//! battle to send it to.
+//! battle to send it to. Selling a special weapon asks first, as on a map
+//! (0329): no shop sells it back.
 
 use crate::prelude::*;
 
@@ -19,9 +20,11 @@ use super::{Focus, PreparationsScreen};
 use crate::audio::MenuSound;
 use crate::input::Action;
 use crate::screen::Ctx;
-use crate::screens::battle::shop::{SellConfirm, Tab as ShopTab, gold_text, kind_key, stat_line};
+use crate::screens::battle::shop::{
+    SELL_SPECIAL, SellConfirm, Tab as ShopTab, gold_text, kind_key, stat_line,
+};
 use crate::screens::battle::view::{SellConfirmView, ShopLineView, ShopScreenView};
-use crate::widgets::wrap_step;
+use crate::widgets::{Ask, AskView, wrap_step};
 use crate::words::Words;
 
 /// Text key of the help line in the shop's lists.
@@ -94,6 +97,12 @@ impl PreparationsScreen {
     /// The sale being asked about, if any.
     pub fn selling(&self) -> Option<SellConfirm> {
         self.selling
+    }
+
+    /// The Sell line of the special weapon whose sale is asked about, if
+    /// any.
+    pub fn selling_special(&self) -> Option<usize> {
+        self.special.as_ref().map(|(line, _)| *line)
     }
 
     /// The lines of the shop tab shown, for the army as it is now; none
@@ -205,6 +214,10 @@ impl PreparationsScreen {
             self.step_sell(sale, action, ctx);
             return;
         }
+        if self.special.is_some() {
+            self.step_special(action, ctx);
+            return;
+        }
         match action {
             Action::CursorUp | Action::CursorDown => {
                 let down = action == Action::CursorDown;
@@ -233,7 +246,16 @@ impl PreparationsScreen {
         };
         let done = match &deal.trade {
             Trade::Sell(_) => {
-                self.selling = Some(SellConfirm { line, count: 1 });
+                let weapon = self.prep.setup.items.weapon(&deal.item);
+                if weapon.is_some_and(trpg_core::WeaponDef::is_special) {
+                    let ask = Ask::new(
+                        SELL_SPECIAL,
+                        [(false, "battle.shop.no"), (true, "battle.shop.yes")],
+                    );
+                    self.special = Some((line, ask.cancelled_by(false)));
+                } else {
+                    self.selling = Some(SellConfirm { line, count: 1 });
+                }
                 ctx.audio.menu(MenuSound::Select);
                 return;
             }
@@ -274,6 +296,37 @@ impl PreparationsScreen {
             self.selling = Some(SellConfirm { count, ..sale });
             ctx.audio.menu(MenuSound::Move);
         }
+    }
+
+    /// The question before selling a special weapon: the cursor's keys
+    /// move between No and Yes, Yes sells it, No and Cancel go back.
+    fn step_special(&mut self, action: Action, ctx: &mut Ctx) {
+        let Some((line, ask)) = self.special.as_mut() else {
+            return;
+        };
+        let line = *line;
+        let Some(answer) = ask.handle(action, &mut ctx.audio) else {
+            return;
+        };
+        self.special = None;
+        let deal = self.deals().into_iter().nth(line);
+        match (answer, deal.map(|d| d.trade)) {
+            (true, Some(Trade::Sell(item))) => {
+                let sold = self.prep.sell(&item);
+                self.after_deal(sold.is_ok(), ctx);
+            }
+            _ => ctx.audio.menu(MenuSound::Cancel),
+        }
+    }
+
+    /// The question before selling the special weapon asked about.
+    fn special_view(&self, ctx: &Ctx, deals: &[Deal]) -> Option<AskView<bool>> {
+        let (line, ask) = self.special.as_ref()?;
+        let deal = deals.get(*line)?;
+        let item = ctx.words().item(&deal.item, &self.prep.setup.items);
+        let gold = gold_text(deal.gold);
+        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 
     /// The sound of a deal made or refused; the highlight stays on a line
@@ -358,6 +411,7 @@ impl PreparationsScreen {
             focus: self.deal,
             empty: ctx.text(empty).to_owned(),
             selling: self.sell_view(ctx, &deals),
+            special: self.special_view(ctx, &deals),
             help: String::new(),
             debug_hint: None,
         }

@@ -6,9 +6,10 @@ use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{
-    AccessoryDef, ArmourDef, ArtId, ClassTable, ConsumableDef, ConsumableEffect, DamageType,
-    ItemDef, ItemId, ItemTable, SealDef, SealKind, StatValue, Stats, Tier, UnitTag, WeaponDef,
-    WeaponKind, WeaponRank, WeaponRules, WeaponTrait,
+    AccessoryDef, ArmourDef, ArtId, CharacterId, ClassTable, ConsumableDef, ConsumableEffect,
+    DamageType, ItemDef, ItemId, ItemTable, MitigationStat, SealDef, SealKind, SpecialWeapon,
+    StatValue, Stats, Tier, UnitTag, WeaponDef, WeaponKind, WeaponPassive, WeaponRank, WeaponRules,
+    WeaponTrait,
 };
 
 use crate::bundle;
@@ -86,6 +87,25 @@ struct RawWeapon {
     #[serde(default)]
     arts: Vec<String>,
     price: u32,
+    /// A special weapon (`combat-arts.md`): no shop stocks it, selling it
+    /// asks first.
+    #[serde(default)]
+    special: bool,
+    /// A personal weapon's character; special weapons only.
+    #[serde(default)]
+    wielder: Option<String>,
+    /// Its passive; special weapons only.
+    #[serde(default)]
+    passive: Option<RawPassive>,
+}
+
+/// A weapon's passive, e.g. `(name: "Moonlit", mitigation: Some(Res))`.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawPassive {
+    name: String,
+    #[serde(default)]
+    mitigation: Option<MitigationStat>,
 }
 
 fn physical() -> DamageType {
@@ -311,6 +331,22 @@ impl Validator<'_> {
                 ),
             );
         }
+        if !w.special && (w.wielder.is_some() || w.passive.is_some()) {
+            self.err_at_item(
+                &w.id,
+                format!(
+                    "weapon \"{}\": only a special weapon has a wielder or a passive",
+                    w.id
+                ),
+            );
+        }
+        let special = w.special.then(|| SpecialWeapon {
+            wielder: w.wielder.map(CharacterId),
+            passive: w.passive.map(|p| WeaponPassive {
+                name: p.name,
+                mitigation: p.mitigation,
+            }),
+        });
         let def = WeaponDef {
             name: w.name,
             kind: w.kind,
@@ -326,6 +362,7 @@ impl Validator<'_> {
             effective: w.effective,
             arts: w.arts.into_iter().map(ArtId).collect(),
             price: w.price,
+            special,
         };
         self.add(&w.id, ItemDef::Weapon(def));
     }

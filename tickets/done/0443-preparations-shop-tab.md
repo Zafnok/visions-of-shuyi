@@ -57,7 +57,10 @@ it):
   heals **20** (was 10), and a new **Hi-Potion** (`hi_potion`, heals 40,
   price 900).
 - Gold shown on the screen; buying puts the item in the stock and takes the
-  gold; selling as in `weapons-and-items.md` (half price).
+  gold; selling as in `weapons-and-items.md` (half price). Selling a
+  special weapon asks first, as the battle shop does since 0329
+  (`ShopScreen`'s `battle.shop.sell_special` question, No / Yes, cursor
+  on No); `ShopKind::stocks` already refuses special weapons.
 - **Repairs** (0044: the basic shop repairs), at the Blacksmith's price
   (`shop::repair_cost`), for any weapon in the stock or in a unit's
   loadout.

@@ -60,15 +60,15 @@ pub use class::{
 };
 pub use combat::{
     CombatHp, CombatMods, CombatOutcome, CombatRules, CombatantInput, DamageType, Forecast,
-    PlannedStrike, Side, SideForecast, Strike, StrikePlan, WeaponStats, WeaponTrait, forecast,
-    if_all_hit, resolve, roll_hit, strike_order,
+    MitigationStat, PlannedStrike, PowerStat, Side, SideForecast, Strike, StrikePlan, WeaponStats,
+    WeaponTrait, forecast, if_all_hit, resolve, roll_hit, strike_order,
 };
 pub use geom::{Dir, Grid, GridSizeError, Pos};
 pub use history::{BattleHistory, Replayed, RewindError};
 pub use item::{
     AccessoryDef, ArmourDef, BattlePack, ConsumableDef, ConsumableEffect, Equipped, ItemDef,
-    ItemId, ItemTable, Loadout, LoadoutDef, LoadoutError, SealDef, SealKind, Stock, WEAPON_SLOTS,
-    WeaponDef, WeaponInstance, WeaponRules,
+    ItemId, ItemTable, Loadout, LoadoutDef, LoadoutError, SealDef, SealKind, SpecialWeapon, Stock,
+    WEAPON_SLOTS, WeaponDef, WeaponInstance, WeaponPassive, WeaponRules,
 };
 pub use lead::{LEAD_ID, LeadGender, LeadProfile, Pronouns};
 pub use legal::legal_commands;

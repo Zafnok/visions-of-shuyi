@@ -205,6 +205,9 @@ pub struct PreparationsScreen {
     deal: usize,
     /// The sale being asked about, if any.
     selling: Option<crate::screens::battle::shop::SellConfirm>,
+    /// The sale of a special weapon being asked about: its Sell line and
+    /// the question.
+    special: Option<(usize, crate::widgets::Ask<bool>)>,
     /// Why the last Confirm did nothing.
     message: Option<String>,
     /// [`LEAVE_QUESTION`], while it is open.
@@ -233,6 +236,7 @@ impl PreparationsScreen {
             shop_tab: 0,
             deal: 0,
             selling: None,
+            special: None,
             message: None,
             leaving: None,
             open_options: false,
@@ -594,6 +598,9 @@ impl PreparationsScreen {
             (_, Focus::Spare, ..) => "prep.help.spare",
             (_, Focus::Pack, ..) => "prep.help.pack",
             (_, Focus::Shop, ..) if self.selling.is_some() => shop::HELP_SELL,
+            (_, Focus::Shop, ..) if self.special.is_some() => {
+                crate::screens::battle::shop::HELP_SPECIAL
+            }
             (_, Focus::Shop, ..) => shop::HELP,
         };
         ctx.text_with(key, &[])

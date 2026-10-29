@@ -18,6 +18,11 @@
 //! sell (1 up to the copies held), Confirm sells them and Cancel sells
 //! nothing ([`SellConfirm`]).
 //!
+//! A special weapon (`combat-arts.md`, *Special weapons*) asks instead
+//! whether to sell it at all, for no shop sells it: `Sell Moonblade for
+//! 1500? No shop sells it, so it can't be bought back.`, with No and Yes,
+//! the cursor on No. Only Yes sells it; No and Cancel go back to the list.
+//!
 //! [`ShopScreen::view`] says what it shows; the battle skin paints it
 //! (ADR-0054).
 
@@ -25,18 +30,19 @@ use crate::prelude::*;
 
 use trpg_core::{
     BattleState, Command, Gold, ItemDef, ItemId, Pos, SellFrom, Shop, ShopKind, ShopTxn,
-    UnitAction, UnitId, WEAPON_SLOTS, repair_cost, sell_price,
+    UnitAction, UnitId, WEAPON_SLOTS, WeaponDef, repair_cost, sell_price,
 };
 
 use super::glyph::shop as glyph;
 use super::info::{bonus_text, range_text};
 use super::items::effect_text;
 use super::view::{SellConfirmView, ShopLineView, ShopScreenView};
-use crate::audio::MenuSound;
+use crate::audio::{AUDIO, AudioQueue, MenuSound};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::{ListCursor, wrap_step};
+use crate::widgets::AskView;
+use crate::widgets::{Ask, ListCursor, wrap_step};
 use crate::words::Words;
 
 /// Text key of the help line while it is open, for a shop with tabs.
@@ -47,6 +53,13 @@ pub const HELP_ONE_TAB: &str = "battle.shop.help_one";
 
 /// Text key of the help line while a sale is asked about.
 pub const HELP_SELL: &str = "battle.shop.help_sell";
+
+/// Text key of the help line while the sale of a special weapon is asked
+/// about.
+pub const HELP_SPECIAL: &str = "battle.shop.help_special";
+
+/// Text key of the question before selling a special weapon.
+pub const SELL_SPECIAL: &str = "battle.shop.sell_special";
 
 /// A tab of the shop screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -185,6 +198,9 @@ pub struct ShopScreen {
     cursor: ListCursor,
     /// The sale being asked about, if any.
     selling: Option<SellConfirm>,
+    /// The sale of a special weapon being asked about: its Sell line and
+    /// the question.
+    special: Option<(usize, Ask<bool>)>,
 }
 
 impl ShopScreen {
@@ -207,6 +223,7 @@ impl ShopScreen {
             tab: 0,
             cursor: ListCursor::new(0),
             selling: None,
+            special: None,
         };
         screen.cursor = ListCursor::new(screen.offers().len());
         Some(screen)
@@ -230,6 +247,12 @@ impl ShopScreen {
     /// The sale being asked about, if any.
     pub fn selling(&self) -> Option<SellConfirm> {
         self.selling
+    }
+
+    /// The Sell line of the special weapon whose sale is asked about, if
+    /// any.
+    pub fn selling_special(&self) -> Option<usize> {
+        self.special.as_ref().map(|(line, _)| *line)
     }
 
     /// The party's gold after what was chosen.
@@ -346,6 +369,9 @@ impl ShopScreen {
         if let Some(sale) = self.selling {
             return self.step_sell(sale, action);
         }
+        if self.special.is_some() {
+            return self.step_special(action);
+        }
         match action {
             Action::Cancel => ShopEffect::Close,
             Action::CursorDown | Action::CursorUp => {
@@ -382,7 +408,16 @@ impl ShopScreen {
             return ShopEffect::Denied;
         }
         if self.tab() == Tab::Sell {
-            self.selling = Some(SellConfirm { line, count: 1 });
+            let special = self.preview.items().weapon(&offer.item);
+            if special.is_some_and(WeaponDef::is_special) {
+                let ask = Ask::new(
+                    SELL_SPECIAL,
+                    [(false, "battle.shop.no"), (true, "battle.shop.yes")],
+                );
+                self.special = Some((line, ask.cancelled_by(false)));
+            } else {
+                self.selling = Some(SellConfirm { line, count: 1 });
+            }
             return ShopEffect::Asked;
         }
         if !self.take(offer.txn) {
@@ -416,6 +451,41 @@ impl ShopScreen {
         }
         self.selling = Some(SellConfirm { count, ..sale });
         ShopEffect::Moved
+    }
+
+    /// The question before selling a special weapon: the cursor's keys
+    /// move between No and Yes, Yes sells it, No and Cancel go back to the
+    /// list. Its move sound is the screen's ([`ShopEffect::Moved`]).
+    fn step_special(&mut self, action: Action) -> ShopEffect {
+        let Some((line, ask)) = self.special.as_mut() else {
+            return ShopEffect::None;
+        };
+        let (line, before) = (*line, ask.focus());
+        let answer = ask.handle(action, &mut AudioQueue::new(AUDIO));
+        if answer.is_none() {
+            let moved = self.special.as_ref().and_then(|(_, a)| a.focus()) != before;
+            return if moved {
+                ShopEffect::Moved
+            } else {
+                ShopEffect::None
+            };
+        }
+        self.special = None;
+        match (answer, self.offers().into_iter().nth(line)) {
+            (Some(true), Some(offer)) => self.sell(&offer, 1),
+            _ => ShopEffect::Back,
+        }
+    }
+
+    /// The question before selling the special weapon asked about, in
+    /// `ctx`'s words.
+    fn special_view(&self, ctx: &Ctx, offers: &[Offer]) -> Option<AskView<bool>> {
+        let (line, ask) = self.special.as_ref()?;
+        let offer = offers.get(*line)?;
+        let item = ctx.words().item(&offer.item, self.preview.items());
+        let gold = gold_text(offer.gold);
+        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 
     /// Sells `count` of `offer`'s item, one at a time: a pack item's
@@ -530,11 +600,13 @@ impl ShopScreen {
             focus: self.cursor.focus(),
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &offers),
+            special: self.special_view(ctx, &offers),
             help: ctx.text_with(
-                match (self.selling, tabs.len()) {
-                    (Some(_), _) => HELP_SELL,
-                    (None, 1) => HELP_ONE_TAB,
-                    (None, _) => HELP,
+                match (self.selling, &self.special, tabs.len()) {
+                    (Some(_), ..) => HELP_SELL,
+                    (None, Some(_), _) => HELP_SPECIAL,
+                    (None, None, 1) => HELP_ONE_TAB,
+                    (None, None, _) => HELP,
                 },
                 &[],
             ),

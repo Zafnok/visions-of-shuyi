@@ -395,3 +395,29 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
     h.keys("d d");
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
 }
+
+/// Ticket 0329: the lord with the Moonblade (Moonlit: it hits Res) on the
+/// brigand; the forecast says so.
+#[test]
+fn moonblade_forecast_snapshot() {
+    let c = ctx();
+    let quick = super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
+    let mut units = quick.units().to_vec();
+    units[0].pos = Pos::new(6, 2);
+    units[0]
+        .weapon_ranks
+        .insert(trpg_core::WeaponKind::Sword, trpg_core::WeaponRank::C);
+    units[0].loadout.weapons[0] = Some(trpg_core::WeaponInstance {
+        def: trpg_core::ItemId::new("moonblade"),
+        durability_left: 30,
+    });
+    units[2].pos = Pos::new(8, 4);
+    let rout = trpg_core::Objective::Rout { turn_limit: None };
+    let state = super::testing::battle_charged(&c, quick.map().clone(), units, rout, 0);
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
+    h.keys("f Right f").wait(0.5);
+    h.keys("f Down");
+    assert_eq!(weapons(&h), "Moonblade | Iron Axe");
+    assert_eq!(shown_forecast(&h).notes, ["moonlit: hits Res"]);
+    assert_snapshot!(h.snapshot());
+}

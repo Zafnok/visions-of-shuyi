@@ -101,6 +101,7 @@ fn blade(might: i32) -> ItemDef {
         effective: vec![],
         arts: vec![],
         price: 0,
+        special: None,
     })
 }
 
@@ -188,6 +189,7 @@ pub(super) fn skills() -> Arc<SkillTable> {
                     mods: TimedMods {
                         stats: vec![(StatKind::Def, 2)],
                         combat: CombatMods::default(),
+                        stops_enemies: false,
                     },
                     this_combat: true,
                 }),

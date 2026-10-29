@@ -84,7 +84,7 @@ impl TunedBattle {
     }
 
     /// The weapon `step` tiers from `id` in its kind (by rank, then might),
-    /// if there is one.
+    /// if there is one. Special weapons are no tier: no shop sells them.
     fn tier(&self, id: &ItemId, step: i32) -> Option<ItemId> {
         let items = &self.content.items;
         let kind = items.weapon(id)?.kind;
@@ -92,7 +92,7 @@ impl TunedBattle {
             .items
             .iter()
             .filter_map(|(id, item)| match item {
-                ItemDef::Weapon(w) if w.kind == kind => Some((id, w)),
+                ItemDef::Weapon(w) if w.kind == kind && !w.is_special() => Some((id, w)),
                 _ => None,
             })
             .collect();

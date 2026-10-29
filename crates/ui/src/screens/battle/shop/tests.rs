@@ -573,3 +573,88 @@ fn selling_several_takes_only_that_items_copies() {
     let left = ["elixir", "potion"].map(ItemId::new);
     assert_eq!(s.state().pack().items, left);
 }
+
+// ---- Special weapons (0329) --------------------------------------------------
+
+/// The Vendor's Sell tab with the lord also carrying the Moonblade (its
+/// second weapon, the second line), the Moonblade's question open.
+fn selling_the_moonblade(c: &mut Ctx) -> Stacked {
+    let (map, mut units) = quick_units(c);
+    units[0].pos = VENDOR;
+    units[0].loadout.weapons[1] = Some(trpg_core::WeaponInstance {
+        def: ItemId::new("moonblade"),
+        durability_left: 30,
+    });
+    for u in &mut units {
+        if u.pos == Pos::new(8, 2) {
+            u.pos = Pos::new(12, 6);
+        }
+    }
+    let rout = Objective::Rout { turn_limit: None };
+    let state = BattleState::new(setup(c, map, units, rout)).0;
+    let mut s = menu_open(c, state);
+    choose(&mut s, c, MenuEntry::Shop);
+    press(&mut s, c, &[Action::CursorRight]);
+    let offers = s.shop().unwrap().offers();
+    assert_eq!(offers[1].item, ItemId::new("moonblade"));
+    press(&mut s, c, &[Action::CursorDown, Action::Confirm]);
+    s
+}
+
+/// `combat-arts.md`, *Special weapons*: selling one asks first, with No
+/// and Yes, the cursor on No.
+#[test]
+fn selling_a_special_weapon_asks_first_on_no() {
+    let mut c = ctx();
+    let s = selling_the_moonblade(&mut c);
+    let shop = s.shop().unwrap();
+    assert_eq!(shop.selling_special(), Some(1));
+    assert_eq!(shop.selling(), None);
+    let view = shop.view(&c);
+    let ask = view.special.unwrap();
+    assert_eq!(
+        ask.text,
+        "Sell Moonblade for 1 500? No shop sells it, so it can't be bought back."
+    );
+    let answers: Vec<_> = ask.answers.iter().map(|a| a.label.as_str()).collect();
+    assert_eq!(answers, ["No", "Yes"]);
+    assert_eq!(ask.focused(), Some(false));
+    assert_eq!(view.help, ctx_help(&c));
+}
+
+fn ctx_help(c: &Ctx) -> String {
+    c.text_with(HELP_SPECIAL, &[])
+}
+
+#[test]
+fn only_yes_sells_a_special_weapon() {
+    let mut c = ctx();
+    let s = selling_the_moonblade(&mut c);
+    let base = s.shop().unwrap().clone();
+    // Confirm on No, and Cancel, sell nothing.
+    for action in [Action::Confirm, Action::Cancel] {
+        let mut shop = base.clone();
+        assert_eq!(shop.step(action), ShopEffect::Back, "{action:?}");
+        assert_eq!(shop.selling_special(), None);
+        assert_eq!(shop.visit().txns, Vec::<ShopTxn>::new());
+    }
+    // To Yes and back to No.
+    let mut shop = base.clone();
+    assert_eq!(shop.step(Action::CursorRight), ShopEffect::Moved);
+    assert_eq!(shop.step(Action::CursorLeft), ShopEffect::Moved);
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Back);
+    // Yes sells it, for half its price.
+    let mut shop = base;
+    assert_eq!(shop.step(Action::CursorRight), ShopEffect::Moved);
+    assert_eq!(shop.step(Action::Confirm), ShopEffect::Chosen);
+    assert_eq!(shop.visit().txns.len(), 1);
+    assert_eq!(shop.gold(), 1500);
+    assert!(shop.offers().iter().all(|o| o.item.0 != "moonblade"));
+}
+
+#[test]
+fn the_special_sale_renders() {
+    let mut c = ctx();
+    let s = selling_the_moonblade(&mut c);
+    assert_snapshot!("sell_special", render(&s, &c).to_snapshot(&c.palette));
+}

@@ -12,7 +12,7 @@ use alloc::collections::BTreeMap;
 use shuyi_assets::lang::SourceText;
 use trpg_core::{
     ArtDef, ArtTable, BattleDef, BattleNote, ClassId, ClassTable, ItemId, ItemTable, SkillDef,
-    SkillTable, SpellDef, SpellTable,
+    SkillTable, SpellDef, SpellTable, WeaponDef,
 };
 
 use super::{Lang, LangCode, text_width};
@@ -175,6 +175,9 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
     }
     for (id, item) in &tables.items.items {
         name("items", &id.0, item.name());
+        if let Some(passive) = tables.items.weapon(id).and_then(WeaponDef::passive) {
+            name("passives", &id.0, &passive.name);
+        }
     }
     for spell in tables.spells.spells.values() {
         name("spells", &spell.id.0, &spell.name);
@@ -228,6 +231,13 @@ impl Lang {
     /// the items file.
     pub fn item_name<'a>(&'a self, code: &LangCode, id: &ItemId, english: &'a str) -> &'a str {
         self.0.data_text(code, || name_key("items", &id.0), english)
+    }
+
+    /// The name of weapon `id`'s passive in language `code`; `english` is
+    /// its name in the items file.
+    pub fn passive_name<'a>(&'a self, code: &LangCode, id: &ItemId, english: &'a str) -> &'a str {
+        self.0
+            .data_text(code, || name_key("passives", &id.0), english)
     }
 
     /// The name of `spell` in language `code`.

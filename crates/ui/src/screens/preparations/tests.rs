@@ -1234,3 +1234,41 @@ fn a_potion_bought_on_preparations_is_in_the_battle_and_its_price_off_the_gold()
         "the packed one came back"
     );
 }
+
+/// Ticket 0329's rule on the Preparations shop too: selling a special
+/// weapon asks first, No (or Cancel) keeps it, Yes sells it for half.
+#[test]
+fn selling_a_special_weapon_asks_first() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    let moonblade = ItemId::new("moonblade");
+    let copy = s.prep.setup.items.new_weapon(&moonblade);
+    s.prep.setup.stock.weapons.extend(copy);
+    in_shop(&mut c, &mut s, 1);
+    let at = shop_lines(&s, &c)
+        .iter()
+        .position(|l| l.0 == "Moonblade")
+        .unwrap();
+    for _ in 0..at {
+        update(&mut s, &mut c, &[CursorDown]);
+    }
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!((s.selling_special(), s.selling()), (Some(at), None));
+    let view = s.view(&c);
+    let ask = shop_of(&view).special.clone().expect("the question");
+    assert!(
+        ask.text.starts_with("Sell Moonblade for 1 500?"),
+        "{}",
+        ask.text
+    );
+    assert_eq!(view.help, "Left Right choose · f answer · d back");
+    // Cancel keeps it.
+    assert_eq!(sounds(&mut s, &mut c, &[Cancel]), ["menu_cancel"]);
+    assert_eq!((s.selling_special(), s.setup().gold), (None, 3000));
+    // Yes sells it.
+    update(&mut s, &mut c, &[Confirm, CursorRight]);
+    assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
+    assert_eq!(s.setup().gold, 4500);
+    let left = s.setup().stock.weapons.iter().any(|w| w.def == moonblade);
+    assert!(!left, "sold");
+}

@@ -81,11 +81,13 @@ pub fn from_source(file: &str, source: &str) -> Result<BasicStock, Vec<ContentEr
 }
 
 /// What is wrong with `stock`'s items in `items`: one it doesn't have, or
-/// one the basic shop never sells (an accessory or a seal).
+/// one the basic shop never sells (an accessory, a special weapon or a
+/// seal).
 pub fn check(file: &str, stock: &BasicStock, items: &ItemTable) -> Vec<ContentError> {
     let problem = |id: &ItemId| match items.get(id) {
         None => Some("no such item"),
         Some(ItemDef::Accessory(_)) => Some("accessories are never basics"),
+        Some(ItemDef::Weapon(w)) if w.is_special() => Some("no shop sells special weapons"),
         Some(ItemDef::Seal(_)) => Some("no shop sells seals"),
         Some(_) => None,
     };
@@ -167,6 +169,7 @@ mod tests {
             (item: "iron_sword", unlock: Chapter(0)),
             (item: "nope", unlock: Chapter(2)),
             (item: "speed_ring", unlock: Chapter(2)),
+            (item: "moonblade", unlock: Chapter(2)),
             (item: "tier_2_seal", unlock: Chapter(2)),
         ])"#;
         assert_eq!(
@@ -186,6 +189,7 @@ mod tests {
             [
                 "item \"nope\": no such item",
                 "item \"speed_ring\": accessories are never basics",
+                "item \"moonblade\": no shop sells special weapons",
                 "item \"tier_2_seal\": no shop sells seals",
             ]
         );
