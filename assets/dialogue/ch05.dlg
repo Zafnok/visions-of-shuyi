@@ -1,0 +1,770 @@
+# Chapter 5: Salt and Silver. Written on a blank page from the beat
+# sheet's cards by ticket 0747 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch05.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# A world-map chapter (world-structure.md): it plays out over the Act 1
+# map's nodes and ends with the story battle at the envoy's house in
+# Saltmere, the first Survive objective. Scene ids, for 0851 (the story
+# battle and the chapter file) and 1071 (the two fixed skirmishes) to
+# wire:
+#
+#   When the chapter opens (the world map appears)
+#     ch05_intro                    the road south out of Veyne Hall
+#
+#   The Salt Road (fixed skirmish, guards the path; 1071)
+#     ch05_salt_road_intro          before the fight: the march stone
+#     ch05_salt_road_victory        after it: the ridge, and the sea
+#
+#   Smugglers' Cove (fixed skirmish, optional; 1071)
+#     ch05_cove_intro               before the fight
+#     ch05_cove_victory             after it: the casks
+#
+#   Before the story battle (intro_scenes, in this order)
+#     ch05_envoy                    the envoy's house: Ragna, Hedda, the first telling
+#     ch05_eve                      the sea steps, night: Hollis tells it
+#     ch05_prebattle                the attack: Hedda is sent down to the street door
+#
+#   In the battle (triggers, each once)
+#     ch05_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch05_roof                     UnitEntersArea(who: Faction(Player), the roofs)
+#     ch05_boss_engage              CombatStart(unit: "hound_officer"): anyone else
+#     ch05_boss_engage_defector     CombatStart(unit: "hound_officer", against: Some("defector"))
+#     ch05_boss_half                HalfHp(unit: "hound_officer")
+#     ch05_boss_fell                UnitFell(unit: "hound_officer"): optional in a Survive
+#     ch05_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch05_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch05_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector,
+#                  prizefighter, shieldbearer
+#
+#   After the battle (victory_scenes, in this order)
+#     ch05_victory                  the morning: the magistrate; Joss's third telling
+#     ch05_quay                     the quay: Aske's name, and her boat
+#     ch05_tide                     the boat: the Ashfields; Hedda is lent
+#     ch05_tbc                      a Hound post on the north road: Dace
+#
+# Until 0851 and 1071 wire the triggers, the validator can't know which
+# scene plays for whom, so every companion line in a battle scene below
+# sits in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, the officer against Joss),
+# that "@if" can only go one way and the validator reports it: 0851
+# removes those blocks as it wires each trigger. The "@if" in
+# ch05_first_turn and ch05_roof stay: a turn-start scene and an area
+# anyone can enter can't count on anyone.
+#
+# Ragna (envoy), Hedda (shieldbearer), the Hound officer and the
+# magistrate are speakers in characters.ron until 0851 makes units of the
+# ones that fight. Hedda is sent down to the street door in
+# ch05_prebattle and fights the hold on the player's side (0851: a player
+# unit, so her lines below can fire); Ragna lends her on the quay, which
+# is when she joins the army. If she fell in the hold (Classic) she never
+# joins, so every line of hers after the battle is in an "@if
+# shieldbearer" block, and the quay reads through without her.
+#
+# No @place directives yet: the maps are 0851's and 1071's. The @music
+# lines are this ticket's picks from the mood cues (0071), except the sea
+# steps: Nick picked scene_confide for the confession (0071), which 0851
+# imports; until then scene_sad stands in there (marked below). The story
+# battle's own cue, battle_night_siege, is Nick's and goes in the battle
+# file; the skirmishes use the skirmish pool (1008).
+#
+# The seven companions and Gil may have died in Chapters 1-4 (Classic),
+# and Gil may never have been beaten, so outside the battles every line
+# of theirs is in an "@if" block, and each scene reads through with any
+# of them gone. The sea steps are Hollis's: without him the lead sits
+# there alone.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the house, the steps, the hold and the
+# morning are played straight; the warmth is a washed floor, a hand over
+# a lamp, a half-carved boat for a boy of eight. The road and the cove
+# are downtime. Punctuation is the voice acting: Ragna ends flat, asks
+# straight and speaks in conditions, and trails off once, about her son;
+# Hedda's periods are warm and slow and she exclaims once, laughing;
+# Hollis trails off once, where it costs him; Joss corrects himself and
+# asks if it was right; Aske ends flat and uses no contractions; Tamsin
+# fires questions and exclaims at her peaks; Maud can't finish a
+# sentence.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised).
+
+# ---------------------------------------------------------------------------
+# When the chapter opens
+# ---------------------------------------------------------------------------
+
+# A night's walking out of Veyne Hall. The road bends south.
+
+@scene ch05_intro
+@caption The road south, first light
+@music talk_calm
+> A night's walking out of {n:place.veyne_hall}. The valley is behind them in the dark, and the road bends south toward the salt country. Wet grass, and everyone's breath showing.
+@if sergeant
+@if retainer
+@left sergeant surprised
+@right retainer neutral
+sergeant: Captain! You're at the back. Since when are you at the back? I have never once seen you at the back of anything.
+retainer: Since my knee. Walk.
+@left sergeant neutral
+@right clear
+@else
+@left sergeant neutral
+@endif
+sergeant: Fine. Then one of you say where we're walking to, or I'm picking, and I'm picking wherever has a bed in it.
+@left clear
+@endif
+@if defector
+@right defector neutral
+defector: I had a thought. No, it's stupid-- it isn't stupid. Somebody who can stop the war has to hear it from somebody who was at the ford, and I was at the ford. I'd say it to anyone who'd write it down.
+@if poacher
+@left poacher neutral
+poacher: I know who would write it down. The woman who signed the peace. {N:envoy}. My hold spits when they say her name. She sits in {n:place.saltmere} writing letters. Everyone knows where.
+poacher: I do not want to go to {n:place.saltmere}. They sell to anyone there. Everybody says so.
+@left clear
+@else
+> There is a {n:faction.brennmark.adj} envoy in {n:place.saltmere}; everyone knows it. {N:faction.league} sells to both sides, and lets both keep a house.
+@endif
+@right clear
+@else
+> Nobody has said where they are going. The road goes south, and {n:place.saltmere} is south, and {n:faction.league} sells to both sides.
+@endif
+@if sergeant
+@left sergeant neutral
+@if poacher
+sergeant: She tells us who to go to and then she doesn't want to go. Hear that? {N:place.saltmere}, then. Two days over the hills, and a bed there costs what a horse costs, so no ideas about beds.
+@else
+sergeant: {N:place.saltmere}, then. Two days over the hills, and a bed there costs what a horse costs, so nobody start getting ideas about beds.
+@endif
+@left clear
+@endif
+@if keeper
+@right keeper neutral
+keeper: Is the sea cold? I've never-- I've read about it, obviously, the school had a book with a-- it's only that the register's under my robe, and they say the air's wet by the sea, and ink runs--
+@right clear
+@endif
+@if heretic
+> {n:heretic} eats walking, and puts a piece of bread in {lead}'s hand without looking at {them}.
+@endif
+@if prizefighter
+> {n:prizefighter.first} has moved to the ditch side of the road, between {lead} and the hedge, and says nothing about it.
+@endif
+@if retainer
+@right retainer neutral
+retainer: Shoulder up, {n:family.veyne}. It's dropped since the hall.
+@right clear
+@endif
+> They walk.
+@end
+
+# ---------------------------------------------------------------------------
+# The Salt Road (fixed skirmish; guards the path)
+# ---------------------------------------------------------------------------
+
+# The hills, the march stone, and a Hound post sitting on it.
+
+@scene ch05_salt_road_intro
+@caption {N:place.salt_road}
+> The road climbs the hills toward a march stone. Salt carts stand turned back at the roadside, their drivers sitting on the loads. At the stone, men in Hound black, and a hut behind with smoke.
+@if defector
+@left defector neutral
+defector: Two at the stone and the rest in the hut, that's how a post stands, they come out when you're-- when you're close enough to count. Six, maybe. I don't know this one. I don't know anybody out here.
+@left clear
+@endif
+@if sergeant
+@right sergeant neutral
+sergeant: Past that stone we're {n:faction.league}'s problem and not the crown's, and they know it. That's why they're sitting on it.
+@right clear
+@endif
+@if poacher
+> {n:poacher} has stopped. She stands very still, looking south past the stone to where the ridge cuts the sky, and says nothing to anyone.
+@endif
+@if retainer
+@left retainer neutral
+retainer: {N:family.veyne} in the middle. Nobody runs for the stone, I don't care what's past it. We walk up, and they come to us.
+@left clear
+@else
+> Nobody runs for the stone. They walk up, and the men at it come out to meet them.
+@endif
+@end
+
+# After. Over the ridge, the sea.
+
+@scene ch05_salt_road_victory
+@caption {N:place.salt_road}, the ridge
+@music talk_calm
+> Past the stone the road tops the ridge and drops away, and below it, all the way out to the sky, is the sea.
+@if retainer
+@left lead neutral
+@right retainer surprised
+retainer: That's it, then. That's the sea. Huh. ...It's a lot of water.
+@if sergeant
+> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead} looks at his face, not at the sea. Behind them nobody speaks, not even {n:sergeant.first}.
+@else
+> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead} looks at his face, not at the sea.
+@endif
+@right clear
+@left clear
+@endif
+@if keeper
+@left keeper surprised
+keeper: Oh. Oh, it's-- they told us, at the school, they said big, and I thought, well, a lake. A big lake. That isn't a lake. Is it cold? It looks cold.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Smugglers' Cove (fixed skirmish; optional; loot)
+# ---------------------------------------------------------------------------
+
+# A cove under the cliffs, boats, casks, and men who are nobody's soldiers.
+
+@scene ch05_cove_intro
+@caption {N:place.smugglers_cove}
+> A cove under the cliffs, out of sight of the road. Boats pulled up above the tide line, casks under tarred cloth, and men with knives who are nobody's soldiers and don't look away.
+@if sergeant
+@left sergeant neutral
+sergeant: That's a year's pay under that cloth. Nobody's crest on any of it, nobody's toll paid. Look at them. They're deciding whether we're worth the knives.
+@left clear
+@endif
+@if heretic
+@right heretic neutral
+heretic: Is any of it food? I'm asking now, before. Nobody ever asks before.
+@right clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: There is a path. Down the cliff, on the left, where the gorse is. I can see it from here.
+@if sergeant
+@right sergeant neutral
+sergeant: Can you. From here. ...Fine. Left, where the gorse is. Go on, then, {n:faction.brennmark.adj}, you first.
+@right clear
+@endif
+@left clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Smugglers run before they fight. Don't chase them to the boats, you'll be in the water with a knife in you. Let them go and keep the casks.
+@right clear
+@endif
+@end
+
+# After. Herring, and a mark Aske knows.
+
+@scene ch05_cove_victory
+@caption {N:place.smugglers_cove}, after
+> The boats are gone off the beach, and the casks are not. Under the cloth: salt herring, oil, and casks with marks burned into the lids that aren't {n:faction.league}'s.
+@if poacher
+@left poacher neutral
+> {n:poacher} runs her thumb over one of the marks, and knows it. She puts the lid back on.
+poacher: Herring. It is herring. Leave that one, it is not worth the carrying.
+@left clear
+@endif
+@if prizefighter
+@right prizefighter neutral
+prizefighter: Rule six. You take nothing from a man you have beaten but what he wagered. ...He ran, Champion. I have no rule for a man who ran. I am going to carry the casks.
+@right clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Before the story battle
+# ---------------------------------------------------------------------------
+
+# The envoy's house on the harbor front. The first of the battle's intro
+# scenes (0851 wires it).
+
+@scene ch05_envoy
+@caption The envoy's house, {n:place.saltmere}
+@music talk_calm
+> A tall narrow house on the harbor front, its shutters half shut against the heat. The door opens before anyone has knocked, and the woman in it fills it, with an axe.
+@left lead neutral
+@right shieldbearer neutral
+shieldbearer: Which of you is the outlaw. ...You. You're smaller than the paper says. Come in, all of you, and wipe your feet, I washed that floor.
+@right envoy neutral
+> Inside, a writing case lies open on the table, and behind it a woman with ink on her cuff who doesn't get up.
+envoy: Two weeks from {n:place.kells_ford} to my door. I counted. The exile, a Hound boy who stood in a river, and the rest. Three letters about you. Sit. Which of you is {n:defector.last}.
+@if defector
+@left defector neutral
+defector: Me. Ma'am. {n:defector}, of the-- of the company that was at the ford. I'll say it. All of it. I've been saying it in my head since the river, I know it like drill.
+> He says it. The lieutenant, the colors, the houses, the herald's paper sealed in the bag a week before any of it. He says it in the drill voice, well, and doesn't stop once.
+envoy: Good. That holds. Tomorrow you say it again, and the day after, and then I have it in three hands and it holds in front of anyone. Eat something, you've gone gray.
+@left lead neutral
+@else
+envoy: Then I have no Hound, and I'll take what the rest of you saw at the ford, one at a time, in three hands. It holds less well. It will have to.
+@endif
+@if keeper
+@left keeper neutral
+keeper: You haven't slept. I'm sorry, I-- it's the eyes, I can't not see it, it's what I do. When did you last sleep the night through?
+@right shieldbearer neutral
+shieldbearer: She sleeps fine. She's always slept fine.
+@right envoy neutral
+@if poacher
+envoy: {N:shieldbearer.first}. A month, Keeper. Thereabouts. Sit down, you're sweating through that robe. And the archer sits where I can see her. We'll talk, you and I. Later.
+@else
+envoy: {N:shieldbearer.first}. A month, Keeper. Thereabouts. Sit down, you're sweating through that robe.
+@endif
+@left lead neutral
+@else
+@if poacher
+envoy: The archer sits where I can see her. We'll talk, you and I. Later.
+@endif
+@endif
+@left clear
+@right clear
+@end
+
+# The sea steps, night. Hollis tells it.
+# Music: Nick picked scene_confide for this scene (0071). 0851 imports it
+# and changes the line below; scene_sad stands in until then.
+
+@scene ch05_eve
+@caption The sea steps, night
+@music scene_sad
+@if retainer
+> Stairs down from the quay to the water, and the tide coming in loud over the stones. {n:retainer.first} sits on the third step with his knee out straight and his hands empty.
+@left lead neutral
+@right retainer neutral
+retainer: It's loud. I thought it'd be quiet, the way the boy wrote it. Sit down, you're in the light.
+retainer: The winter after I went back to the hall, and into the boy's room, I don't know why. His chest. The mill man's silver in a purse. Names in his hand, some crossed out. A pass with your father's wax.
+retainer: I sat with the three of them all night in the guardroom. Then the fire, before the house was up. And I came back and told you there was nothing in his room worth keeping.
+retainer[sad]: I thought you couldn't carry it. You'd given him everything you had, and I wasn't going to be the one who told you what it bought. I was wrong about you. I was the one who couldn't.
+retainer: You were mine. From the night we walked out that gate you were mine, more than he ever let himself be, and I let you walk four years beside a lie because I'm a coward about you. ...That's all of it.
+@choice
+* earnest: You should have told me. I'd have carried it with you.
+  retainer[sad]: Aye. You would have. That's what I was afraid of.
+* blunt: Four years, and a fire.
+  retainer: Four years and a fire. Say it as often as you like. I'm not arguing it tonight, or any other night.
+* act: Move over.
+  > {lead} sits down on the step beside him. He moves the knee over, slowly, and for a while neither of them says anything, and the tide comes in.
+  retainer: You're cold. Give me that strap, it's twisted.
+@endchoice
+@right retainer neutral
+retainer: Boots off, you won't sleep in wet boots, I've told you since you were six. I've got the watch. Shoulder up tomorrow, kid. You're in the door and I'm behind you, same as the yard.
+> He looks at the water then, for a long time.
+@left clear
+@right clear
+@else
+> Stairs down from the quay to the water, and the tide coming in loud over the stones. {lead} sits on the third step alone.
+@if heretic
+@left heretic neutral
+heretic: Here. Bread. I'm not asking what you're doing down here. I'm sitting, is all. It's a step, isn't it?
+@left clear
+@endif
+@endif
+@end
+
+# Past midnight. The house is sold.
+
+@scene ch05_prebattle
+@caption The envoy's house, past midnight
+@music dungeon_tense
+> Past midnight. A hand goes over the lamp. Boots on the quay, a lot of them, and a roof tile slides off the house next door and breaks in the street.
+@left envoy neutral
+@right shieldbearer neutral
+shieldbearer: Easy. Easy, everybody, that's boots, that's a lot of boots on the quay, and that was a tile. {N:envoy.first}, behind the table. Now, please.
+envoy: Shutters, all of them. Back door's barred? Barred. {N:defector.last} stays up here with me. The magistrate asked which room he slept in. I told him. I thought a magistrate was a magistrate.
+@if sergeant
+@left sergeant angry
+sergeant: You told him? You told the-- the roof hatch! Black on three roofs, three I can count, and they're not up there for the view!
+@left envoy neutral
+@endif
+@if defector
+@left defector surprised
+defector: Four on the roof-- three, four, they come down the top of the stairs when the street door's held, that's drill, I know this drill, I-- Up here? Ma'am, I can stand in a door, I can, I've stood in--
+@left envoy neutral
+@endif
+@if keeper
+@left keeper surprised
+keeper: The bar won't-- it won't go across, the shutter bar, it's too-- someone taller. Please. Someone taller than me, I'm sorry, I can't reach the--
+@left envoy neutral
+@endif
+@if retainer
+@left retainer neutral
+retainer: Kid. The street door. I'm behind you.
+@left envoy neutral
+@endif
+envoy: {N:shieldbearer.first}. Go down to the street door with them, and hold it. I'll be behind this table with a knife, as I always am. Go.
+shieldbearer[surprised]: No. I stand outside your room, I've stood outside it three-- ...Down, then. Outlaw. You stand next to me. Right next to me.
+@left clear
+@right clear
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene can't count on anyone: the blocks stay.
+
+@scene ch05_first_turn
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Easy. They want the door, and the door's ours. Outlaw, that's your side, there, where I can reach you. Nobody goes out onto the quay. Nobody.
+@left clear
+@else
+@if retainer
+@left retainer neutral
+retainer: The door. Nobody goes out onto that quay, whatever they shout up at you. Not till it's light.
+@left clear
+@endif
+@endif
+@end
+
+# Somebody is up on the roofs. An area anyone can enter: the blocks stay.
+
+@scene ch05_roof
+@if sergeant
+@left sergeant neutral
+sergeant: Tiles! Loose tiles, watch your-- there's a hatch on every house up here, that's how they're getting across. Shut the hatch behind you!
+@left clear
+@else
+@if defector
+@left defector neutral
+defector: The top of the stairs. They come down the stairs when the door's held, it's drill, so if we're up here first-- we're up here first. Good. That's good, isn't it?
+@left clear
+@endif
+@endif
+@end
+
+# The Hound officer, to anyone but Joss.
+
+@scene ch05_boss_engage
+@right hound_officer neutral
+hound_officer: Walk off. You're not on my paper. I'm here for a boy, a {n:faction.brennmark.adj} woman and a house somebody sold me, and the League's halberds come out at first light, so I'm in a hurry. Walk off.
+@end
+
+# The officer and the boy from the river. The @if goes when 0851 wires
+# this as the officer against Joss.
+
+@scene ch05_boss_engage_defector
+@if defector
+@left defector neutral
+@right hound_officer neutral
+hound_officer: {N:defector.last}. I know that face. It's on the wall of every post from here to the river, and I knew it before that. {n:hound_lieutenant.first} had you a week before anyone else got a look at you.
+hound_officer[angry]: He's dead at the ford, and the captain sent his mother the year's pay out of his own purse. Did you know that? And you stood in the river. {N:defector.nickname}. Come out of the door.
+defector[angry]: Don't. You don't-- that was his. You don't get to say that one. ...Did he make you sew anything? For the ford. Did he make you sew?
+hound_officer: ...No. He gave that to you.
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch05_boss_half
+@right hound_officer angry
+hound_officer: Roofs! Get them off the roofs and down the stairs, the door's no good to us, they're holding the door-- the stairs!
+@end
+
+# The officer at 0 HP. Optional in a Survive: the hold goes on without him.
+
+@scene ch05_boss_fell
+@right hound_officer sad
+hound_officer: Off the quay. Get them off the quay before the halberds-- somebody get them off the quay, the League won't bury them.
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch05_death_lead
+@left lead sad
+> {lead} is down in the doorway. The door stands open behind {them}.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. The @if blocks
+# go when 0851 wires each one.
+
+@scene ch05_death_retainer
+@if retainer
+@left retainer sad
+retainer: The door. Somebody in the door, now, I don't care who. ...I saw it, kid. I did see it.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: Knee. Of all the nights. ...No, leave me, I'm sat, I'm not going anywhere. Watch the door, not me.
+@left clear
+@endif
+@end
+
+@scene ch05_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Three on the stairs and I got two. ...Don't let them take my boots. They're good boots, I paid for them myself. That's all I want.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: Hate a house. Hate a house! No horse, no room to-- fine. I'm on the step. Somebody owes me a horse for this.
+@left clear
+@endif
+@end
+
+@scene ch05_death_poacher
+@if poacher
+@left poacher sad
+poacher: Twelve on the quay, I counted, and there are not twelve now. ...My mor. Tell her I sent it all. Every coin.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: The bow is cracked. Hear it? It is cracked. Then I am no use, and I know it, and you do not have to say it.
+@left clear
+@endif
+@end
+
+@scene ch05_death_keeper
+@if keeper
+@left keeper sad
+keeper: {N:god.mother.name} keep-- no. No, I know the words, I'll do my own. ...Is anyone else hurt? Is anyone else-- all right. All right, then.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: Oh-- no, it's fine, it's the kind that looks worse than-- it isn't. It isn't fine. Someone else will have to do the hands.
+@left clear
+@endif
+@end
+
+@scene ch05_death_heretic
+@if heretic
+@left heretic sad
+heretic: I never learned to cook. Nineteen, and I never-- I burned every pot you gave me, didn't I? ...Didn't I.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: {N:god.pyre.name} take it-- no. It's the smoke. I can't see who's who, and I'm not throwing fire blind. Don't you dare carry me.
+@left clear
+@endif
+@end
+
+@scene ch05_death_defector
+@if defector
+@left defector sad
+defector: Did she write it down? All of it, both times? Your Grace, make her keep the paper, don't let it get wet. My ma can't read, so. So somebody tell her the good bit.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_defector
+@if defector
+@left defector surprised
+defector: Sorry-- it's the arm again, the same one, I'm-- is that bad? Is it bad that it's the same one? Your Grace, don't answer that.
+@left clear
+@endif
+@end
+
+@scene ch05_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Rule-- ...there isn't one. Champion. Stand behind the door and don't come out for me, there's no rule says you-- there's no rule. Stay in.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_prizefighter
+@if prizefighter
+@left prizefighter angry
+prizefighter: Down. I am down, Champion, and I know it, and I have been down in better rings than this one. Watch your left.
+@left clear
+@endif
+@end
+
+@scene ch05_death_shieldbearer
+@if shieldbearer
+@left shieldbearer sad
+shieldbearer: Her door. Whoever's nearest, go and stand outside her room. Don't tell her I'm down, just stand there. ...It's nothing. Easy. It's nothing.
+@left clear
+@endif
+@end
+
+@scene ch05_retreat_shieldbearer
+@if shieldbearer
+@left shieldbearer angry
+shieldbearer: One axe did that? ...Outlaw, your hands are shaking. Stop it. I'm the one bleeding, you stop shaking.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The house at first light. The magistrate, then the third telling.
+
+@scene ch05_victory
+@caption The envoy's house, first light
+@music scene_sad
+> First light through the open shutters. Across the way somebody has put washing out, as if nothing had happened. Halberds on the stairs, and a man in a magistrate's chain in the door, not coming in.
+@left envoy neutral
+@right magistrate neutral
+magistrate: By the council of {n:faction.league}. The League is neutral, and keeps no quarrel of any crown's inside its walls.
+magistrate: The envoy of {n:place.brennmark}, and every party to the night's disturbance, to be outside the walls by the evening tide.
+envoy: You dined at this table. You asked which room the boy slept in, and I told you.
+magistrate: ...The League is neutral, madam. I'm sorry. The evening tide.
+@right clear
+> He goes. The halberds go with him.
+@if heretic
+@right heretic angry
+heretic: He didn't even come in. Who sells a house and doesn't come in?
+@right clear
+@endif
+@if defector
+@right defector neutral
+envoy: {N:defector.last}. Again. The last time.
+> He says it. The ford, the lieutenant, the houses. He gets to the bag and stops, and his hands go to his tin, which isn't there.
+defector[sad]: I sewed them. The badges. Forty, by lamplight. He said it was a ruse against the hill bands, and I believed it one night. I knew by the second. I finished them anyway. ...I was proud of the stitching.
+envoy: I've written it. Thank you, {n:defector.last}. That was the one I needed. Sit down.
+@left lead neutral
+defector: Your Grace? Say something. Please, just-- anything.
+@choice
+* earnest: That took more than the river did.
+  defector[surprised]: It-- did it? It didn't feel-- ...All right. All right. I'm going to sit down now.
+* blunt: Now it's said. Sit down.
+  defector: Yes, Your Grace. ...It's said. It is said, isn't it. Yes.
+* act: Here. Your tin. It was under the table.
+  > {lead} puts the flat tin of needles in his hand. He holds it in both of them and doesn't open it.
+  defector[sad]: Thank you. I didn't know I'd-- thank you.
+@endchoice
+@right defector neutral
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Show me those stitches sometime, little one. I wore the real colors ten years, in the war, and never saw a badge sewn that straight.
+@left lead neutral
+@endif
+@left clear
+@right clear
+@else
+envoy: Then I have the rest of you. The boots, the herald, the lieutenant's words at the ford, in three hands. It holds less well than a Hound's. It will have to.
+@left clear
+@endif
+@end
+
+# The quay, the evening tide. Aske's name, and her boat.
+
+@scene ch05_quay
+@caption The quay, evening tide
+@music scene_sad
+> The evening tide. A ship's boat waits at the steps for the envoy, the party's packs are on the stones, and the gulls have found the bread crock.
+@left envoy neutral
+@if poacher
+@right poacher neutral
+envoy: The archer. You've known since my door, so I'll say it once. I bought the march's news for a year from a man with a boat in the cove. He sold to the hill bands too. Those raids are real. For bread.
+envoy: Fords, patrols, who was armed and who wasn't. He kept a list of who he bought it from, and there was a hill girl in {n:place.thornmarch} on it, by name.
+poacher[angry]: Yes. For silver. For my mor, so she does not beg at the hall door, and I sent every coin, and I would do it again. I am not sorry. Do not ask me to be.
+@if sergeant
+@left sergeant angry
+sergeant: The fords. You sold the fords, {n:faction.brennmark.adj}, I rode those-- ...No. You're seventeen, I'm not-- forget it. I've done worse for money, and I'll tell you when, and it's not now.
+@left envoy neutral
+@endif
+@if retainer
+@left retainer neutral
+retainer: She drilled. Every morning on the green, worse than any recruit I ever had, and she came back every morning to be told so. Leave the girl be.
+@left envoy neutral
+@endif
+@left lead neutral
+poacher: Well? Noble. Say it.
+@choice
+* earnest: You've fed us four years. I know who the silver was for.
+  poacher[surprised]: That is not what I-- ...Yes. I did. Do not be kind about it, I cannot stand here if you are kind about it.
+* blunt: Then don't do it again.
+  poacher: I cannot now. The man is gone and the boat is gone. ...That is not what you asked. No. I will not.
+* act: Give me your hands. They're blue.
+  > {lead} takes her hands and holds them. She lets {them}, for a count of three, and takes them back.
+  poacher: They are not blue. It is the light.
+@endchoice
+@right poacher neutral
+@if heretic
+> {n:heretic} comes over with the last of the bread and puts half of it in {n:poacher}'s hand without a word, and goes back to the packs. {n:poacher} eats it.
+@endif
+@left envoy neutral
+envoy: There. Your name's said, and I said it, and I won't say it again to anyone. There's a second thing, and you'll like it less.
+envoy: The refugee boat that sailed a week ago with the hill people's letters and silver. League privateers took it off the point.
+poacher[surprised]: My letters were on that boat. My silver. All of it. Where. Where have they taken it.
+envoy: Somewhere the League won't tell me. I'll find out, and I'll send word. Does your mother write back?
+poacher: She cannot write. Someone at the hold reads them to her, and she tells them what to put.
+envoy: ...My son's eight. He writes back. Badly.
+@right clear
+@else
+> {n:envoy.first} stands with the writing case shut under her arm and says nothing to anyone about archers or boats.
+@endif
+@left clear
+@end
+
+# The boat. The Ashfields, and Hedda is lent.
+
+@scene ch05_tide
+@caption The quay, the boat
+> The boat's crew have their oars up. {n:envoy.first} has the writing case shut under her arm, for the first time since the party came through her door.
+@left envoy neutral
+@if shieldbearer
+@right shieldbearer neutral
+> {n:shieldbearer.first} has a half-carved wooden boat in one hand and the knife in the other, and has stopped carving.
+@right clear
+@endif
+envoy: If my letters are right, both armies are on the road to {n:place.ashfields}. The king's, with new {n:group.candles.one}s. Ours, because ours believe the raids.
+envoy: Ten days, by my count, and they're looking at each other across that plain. This goes north with you, to our commander, in my hand and three others.
+envoy: If you want to stop this war, you stop it there, or it's {n:place.ashfields} again.
+@if shieldbearer
+@right shieldbearer neutral
+shieldbearer[surprised]: You said war. Three years of "this trouble", three years, you wrote "this trouble" to the League, and you just said war.
+envoy: I said it. Now you. You go with them, to make sure they get there.
+shieldbearer[angry]: No. Who stands outside your room? Nobody's stood there but me since the peace, not one night, I've--
+envoy: Then for ten days nobody does, and I live. Keep this one order for me. Just the one.
+@right shieldbearer neutral
+@if retainer
+@left retainer neutral
+shieldbearer: You. Old one. You stood that street door all night on that knee, I watched you. Come here, let me see it.
+retainer: Leave the knee.
+@left envoy neutral
+@endif
+envoy: My boy. He'll be taller, they tell me. They always write taller.
+shieldbearer: He'll be taller. ...I promised him the first cod. The big one, off the point, when this is done. He's never been in a boat, {n:envoy.first}. Eight years old and never once in a boat.
+envoy: Come back and do it, then. I'll hold him still.
+> The boat pulls off. {n:shieldbearer.first} doesn't watch it go.
+shieldbearer: Walk, then. Outlaw. I'm not yours. I'm lent. Which way is north.
+@right clear
+@else
+> There is a half-carved wooden boat in {n:envoy.first}'s other hand. She holds it and doesn't look at it.
+envoy: I've nobody to send with you. The paper goes alone, then, and so do you. Get there.
+> The boat pulls off.
+@endif
+@left clear
+@end
+
+# A Hound post on the north road, days later. Dace, and the sea.
+
+@scene ch05_tbc
+@caption A Hound post, the north road, dusk
+@music talk_antagonist
+> A post on the north road, days later. {n:rival.first} with his arm still bound to his chest and a report on his knee, reading it twice by a bad lamp.
+@left rival neutral
+rival: "The house held until first light. The League has put the {n:faction.brennmark.adj} woman outside its walls."
+@if defector
+rival: "The Hound {n:defector.last} gave her his account, in writing, three times over." Three. He always was thorough. I taught him that.
+@else
+rival: "The exile's people gave her an account of {n:place.kells_ford}, in writing, three times over." Three. Of course it was three.
+@endif
+rival: "Both armies to {n:place.ashfields}. The captain of {n:faction.hounds} to attend, with every man." Every man. Fine. Fine, we'll all go and look at the plain again.
+@if retainer
+rival[sad]: You took him to the sea, {n:family.veyne}. Forty years he wanted it, and you walked him to it. Did he look at it? ...He said it's a lot of water. I know he did. Stood there and said it.
+@else
+rival[sad]: You held a street door all night in that city, {n:family.veyne}, for a {n:faction.brennmark.adj} woman's paper. ...Of course you did.
+@endif
+@end
