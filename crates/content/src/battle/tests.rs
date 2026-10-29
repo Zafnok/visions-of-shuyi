@@ -217,11 +217,12 @@ fn file_level_errors() {
     );
     let prepared = OK.replacen(
         "default_pack: [\"potion\", \"elixir\"],",
-        "preparations: true, solo_stock: [\"potion\", \"iron_sword\"],",
+        "preparations: true, solo_stock: [\"potion\", \"iron_sword\"], solo_gold: 750,",
         1,
     );
     let def = load(&c, &prepared).unwrap_or_else(|e| panic!("{e:?}"));
     assert!(def.preparations && def.default_pack.is_empty());
+    assert_eq!(def.solo_gold, 750);
     assert_eq!(
         def.solo_stock,
         [ItemId::new("potion"), ItemId::new("iron_sword")]

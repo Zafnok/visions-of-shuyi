@@ -32,6 +32,8 @@
     // Steel Bow the archer could use.
     preparations: true,
     solo_bench: ["test_scout"],
+    // Gold to try the Preparations shop with (Chapter 5's, chapters/quick.ron).
+    solo_gold: 3000,
     solo_stock: [
         "steel_spear", "iron_axe", "iron_sword",
         "iron_plate", "linen_robe", "chain_mail",

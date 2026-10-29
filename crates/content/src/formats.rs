@@ -57,6 +57,7 @@ pub fn register(formats: &mut Formats) -> Result<(), RegisterError> {
     cinematic::register(formats)?;
     formats.register(TableRon::<trpg_core::AiWeights>::default())?;
     formats.register(TableRon::<trpg_core::ArtTable>::default())?;
+    formats.register(TableRon::<trpg_core::BasicStock>::default())?;
     formats.register(TableRon::<trpg_core::ItemTable>::default())?;
     formats.register(TableRon::<trpg_core::SkillTable>::default())?;
     Ok(())

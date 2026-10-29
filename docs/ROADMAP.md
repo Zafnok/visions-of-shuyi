@@ -316,7 +316,7 @@ Candle joins outside battle.
   0037) → **0313** save the village · **0471** a tileset for poor
   houses and a throne (after 0322; Nick buys) · **0409** the shop
   screen → **0473** its music (after 0028) · **0443** the Preparations shop tab (after
-  0044) · **0606** promote and reclass · **1003** supports and camp
+  0044) → **0474** a negative bonus reads `Res -3` · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
   0026; mockup first) → **1008** skirmishes → **1065** the act ends
   (closing scene, "Act 1 ends", the army carried over) · **1074** a

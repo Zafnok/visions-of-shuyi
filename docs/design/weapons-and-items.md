@@ -539,6 +539,14 @@ Decided 2026-10-21, ticket 0044. Built in ticket 0443.
 
 - Accessories (rings, charms) are **never** basics: they stay in town
   shops and rewards (*Claude's starting rule*, from "basic").
+- **On the Preparations screen** (ticket 0443; *Claude's starting rules*):
+  the `Shop` tab sits after `Pack`, with Buy, Sell and Repair as on a map
+  shop. Each purchase, sale or repair happens at once (no basket). Sell
+  lists only what is in the stock: to sell something a unit wears or the
+  pack holds, put it back in the stock first. Repair lists every worn
+  weapon of the stock and of the whole army, those left out of the battle
+  too. Example: the lord's Iron Sword at 5/20 shows as
+  `Iron Sword  173  5/20 → 20/20  Test Lord`.
 - Weapons added by later tiers (Silver and so on, if they come to exist)
   get a row here when they are designed.
 - **Special unlocks** (Nick, "sometimes"): now and then an event other

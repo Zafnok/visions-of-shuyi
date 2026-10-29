@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/lesson_tests.rs
-assertion_line: 573
 expression: h.snapshot()
 ---
          ╔═ Vix ═══════════════════════════════════════════╗          ┌────────────────────────────┐
@@ -31,7 +30,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
-                                                                      │ Gold 0                     │
+                                                                      │ Gold 3 000                 │
                                                                       └────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 

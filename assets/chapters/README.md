@@ -10,6 +10,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
 (
     id: "ch01",
     title: "Chapter 1: …",
+    number: Some(1),
     intro_scenes: ["ch01_intro", "ch01_prebattle"],
     battle: "ch01",                     // assets/battles/ch01.ron
     victory_scenes: ["ch01_victory", "ch01_tbc"],
@@ -21,6 +22,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
 | ----- | ------- |
 | `id` | Must match the file name. |
 | `title` | The chapter's title (for the title card, 0812, and the save slots: a save shows the title of the chapter it goes on with). |
+| `number` | The chapter's number in the story, from 1: the Preparations shop sells what this chapter unlocked (`assets/data/basic_shop.ron`, 0443). Default: `None`, no shop (test chapters). |
 | `intro_scenes` | Scene ids (`assets/dialogue/`) played in order before the battle. Default: none. |
 | `battle` | The battle's id (`assets/battles/`). |
 | `victory_scenes` | Scenes played in order after a victory. Default: none. They play for the army as the battle left it: a companion who died in Classic is gone, and their lines must be in `@if` blocks (`assets/dialogue/README.md`, "Who is still there"). |

@@ -3,5 +3,7 @@
 (
     id: "quick",
     title: "Quick Battle",
+    // Chapter 5's Preparations shop, to show the Iron and Steel gear.
+    number: Some(5),
     battle: "quick",
 )

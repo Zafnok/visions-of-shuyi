@@ -30,6 +30,7 @@ fn the_registry_lists_its_kinds_and_their_formats() {
         r#"("cinematic", ["cinematic"])"#,
         r#"("AI weights", ["ron"])"#,
         r#"("art table", ["ron"])"#,
+        r#"("basic shop", ["ron"])"#,
         r#"("item table", ["ron"])"#,
         r#"("skill table", ["ron"])"#,
     ];

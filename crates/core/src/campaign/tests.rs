@@ -119,6 +119,7 @@ fn def() -> BattleDef {
         pack_cap: 3,
         default_pack: vec![item("potion"), item("potion")],
         solo_stock: vec![],
+        solo_gold: 0,
         solo_bench: vec![],
         clear_gold: 500,
         objective: Objective::Rout { turn_limit: None },

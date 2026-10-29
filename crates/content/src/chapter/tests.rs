@@ -12,6 +12,7 @@ fn chapter(id: &str) -> ChapterDef {
     ChapterDef {
         id: id.into(),
         title: "T".into(),
+        number: None,
         intro_scenes: vec!["test".into()],
         battle: "test".into(),
         victory_scenes: vec!["test_victory".into()],
@@ -67,11 +68,13 @@ fn chapter_errors() {
         battle: "nope".into(),
         intro_scenes: vec!["a".into()],
         victory_scenes: vec!["b".into()],
+        number: Some(0),
         ..chapter("t")
     };
     assert_eq!(
         check(&bad),
         [
+            "chapter numbers start at 1",
             "no battle \"nope\"",
             "no dialogue scene \"a\"",
             "no dialogue scene \"b\""
@@ -176,7 +179,8 @@ fn a_battle_campaign_has_the_battles_characters() {
             "Test Scout"
         ]
     );
-    assert_eq!(game.gold, 0);
+    // Its own gold and stock, to try Preparations and its shop with.
+    assert_eq!(game.gold, 3000);
     // The Quick Battle's own stock, to try Preparations with.
     assert_eq!(game.stock, stock_of(&c, &quick.solo_stock));
     assert_eq!(game.stock.count(&ItemId::new("potion")), 6);
@@ -185,7 +189,7 @@ fn a_battle_campaign_has_the_battles_characters() {
     let test = &c.battles["test"];
     let lead = LeadProfile::new("Ellery", LeadGender::Male);
     let game = battle_campaign(&c, test, GameMode::Classic, lead);
-    assert_eq!(game.stock, Stock::default());
+    assert_eq!((game.gold, game.stock), (0, Stock::default()));
 }
 
 #[test]

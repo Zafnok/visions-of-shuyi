@@ -98,7 +98,8 @@ impl FeatureDef {
 
 impl MapFeature for FeatureDef {
     /// Problems visible without the item table: a shop's list must be empty
-    /// for a blacksmith and not empty otherwise; a chest can't hold 0 gold.
+    /// for a blacksmith and not empty otherwise; the basic shop is
+    /// Preparations', never on a map; a chest can't hold 0 gold.
     fn problem(&self) -> Option<String> {
         let problem = match self {
             FeatureDef::Shop { kind, stock } => match (kind, stock.is_empty()) {
@@ -106,6 +107,7 @@ impl MapFeature for FeatureDef {
                     "a blacksmith sells nothing; its stock must be empty"
                 }
                 (ShopKind::Armoury | ShopKind::Vendor, true) => "the shop sells nothing",
+                (ShopKind::Basic, _) => "the basic shop is only on Preparations, not on a map",
                 _ => return None,
             },
             FeatureDef::Chest(LootDef::Gold(0)) => "the chest holds 0 gold",
@@ -503,6 +505,11 @@ mod tests {
                 "m.map: feature at (1, 0): a blacksmith sells nothing; its stock must be empty",
                 "m.map: feature at (5, 0): outside the map",
             ]
+        );
+        let basic = FEATURES.replace("Blacksmith", "Basic");
+        assert_eq!(
+            errors(&basic),
+            ["m.map: feature at (1, 0): the basic shop is only on Preparations, not on a map"]
         );
         let empty = FEATURES.replace("[\"sword\", \"vest\"]", "[]");
         assert_eq!(

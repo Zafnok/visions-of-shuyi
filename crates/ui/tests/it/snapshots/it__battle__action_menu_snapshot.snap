@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/battle.rs
-assertion_line: 407
 expression: h.snapshot()
 ---
                                                                       ╔════════════════════════════╗
@@ -31,7 +30,7 @@ expression: h.snapshot()
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ║ Gold 0                     ║
+                                                                      ║ Gold 3 000                 ║
                                                                       ╚════════════════════════════╝
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows choose · f confirm · d back                                                        F2 debug 

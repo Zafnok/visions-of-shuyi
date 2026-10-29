@@ -70,7 +70,7 @@ use core::any::Any;
 use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile,
-    Preparations, SaveFile, SavePoint, TutorialLevel,
+    Preparations, SaveFile, SavePoint, Shop, TutorialLevel,
 };
 
 use crate::glyph_buffer::GlyphBuffer;
@@ -87,6 +87,13 @@ use crate::screens::preparations::PreparationsScreen;
 use crate::screens::save::{SavePromptScreen, SlotOutcome, SlotPickerScreen};
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen};
 use crate::storage::Storage;
+
+/// The Preparations shop of `chapter`'s battle (ticket 0443): what its
+/// number unlocked; `None` for a chapter of no number.
+fn basic_shop(ctx: &Ctx, chapter: &ChapterDef) -> Option<Shop> {
+    let number = chapter.number?;
+    Some(ctx.game.content.basic_shop.shop(number))
+}
 
 /// Asks for battle `def`'s music: its cue, or a track picked from its
 /// pool. The pick is the UI's, not the battle's RNG (ADR-0019): a rewind or
@@ -246,6 +253,7 @@ impl FlowScreen {
         let prep = Preparations {
             setup,
             bench: campaign.bench(&def),
+            shop: basic_shop(ctx, &chapter),
         };
         history.restore_tables(&tables);
         // If deleting fails the battle still continues.
@@ -450,19 +458,20 @@ impl FlowScreen {
             .chapter
             .as_ref()
             .and_then(|c| ctx.game.content.battles.get(&c.battle));
-        let (Some(def), Some(_)) = (def, &self.campaign) else {
+        let (Some(def), Some(_), Some(_)) = (def, &self.campaign, &self.chapter) else {
             self.the_end(ctx);
             return;
         };
         if def.preparations && self.camp(ctx, None) {
             return;
         }
-        let Some(campaign) = &self.campaign else {
+        let (Some(campaign), Some(chapter)) = (&self.campaign, &self.chapter) else {
             return;
         };
         let prep = Preparations {
             setup: campaign.battle_setup(def, &ctx.game.content.tables()),
             bench: campaign.bench(def),
+            shop: basic_shop(ctx, chapter),
         };
         self.fight = Some(Fight {
             def: def.clone(),
