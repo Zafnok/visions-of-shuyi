@@ -60,6 +60,10 @@ picks one, or asks for another round.
 **In:**
 - Find candidates (OpenGameArt, freesound, itch.io free assets, and the
   libraries vetted in 0020). Check each licence on its source page.
+- Offer the tracks 0026 kept "in our backpocket for other music selection
+  tickets" (`audio.md`, *The capital city*). For more, Kevin MacLeod's
+  catalogue (incompetech, CC-BY 4.0) landed in 0026 after three rounds
+  of OpenGameArt tracks didn't.
 - A listening page (an Artifact, like 0020's) with players for every
   candidate and the question above. Use the `ask-nick` skill.
 - Record the answer in `docs/design/audio.md`: a row in *Music cues* (cue,

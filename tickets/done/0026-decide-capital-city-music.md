@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-28
 ---
 
 # 0026 — Decide: the capital city music
@@ -87,11 +87,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `capital` row with a source URL and a licence that
+- [x] `audio.md` has a `capital` row with a source URL and a licence that
       ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,4 +99,29 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Nick picked over four rounds of a listening page
+(https://claude.ai/artifact/EBQJyYJ43taXowUeU8cyYh), 21 candidates in all:
+
+- `capital` is **Adventures in Adventureland** by Kevin MacLeod (CC-BY 4.0,
+  4:21), Nick's "general theme".
+- **One track for every capital**, not one per realm.
+- Rounds 1–3 (OpenGameArt) found nothing that sounded like a capital. After
+  round 2 Nick said a capital should be "bustling and grand" (FF12's
+  Rabanastre) or "busy medieval streets" (the Witcher 3's Novigrad); round 4,
+  from Kevin MacLeod's catalogue, landed.
+- Kept for other tickets, at Nick's request: Minstrel Guild (a tavern or
+  bustling streets), Court of the Queen (an upper court), Market on the Sea
+  (a seaside village), Enchanted Festival (a feast day), The Bard's Tale (a
+  road), Market Day, Town Theme and Town Theme 3. Listed in `audio.md`,
+  *The capital city*; 0027 and 0028 now point at them.
+- Adventure Map, kept by 0025 as a capital candidate, is now kept as a royal
+  march only.
+- 1007's music step now says one track for every capital, with
+  `city_first_visit` still on the first visit.
+
+- `capital` is added to `RESERVED` in `crates/content/src/audio.rs` (the
+  test that every `audio.md` cue is in the manifest), as 0071 did for its
+  cues: 1007 imports it and drops it from that list.
+
+Recorded as stated, for Nick to veto: "T as a general theme" is read as
+T being `capital` itself.
