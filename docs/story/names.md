@@ -195,6 +195,7 @@ just as it does a full name.
 | `herald` | Herald | A crown herald with no name of his own: the name plate in Chapter 2's scene after the battle |
 | `place.coldwell` | Coldwell | The farm the Red Company burned last winter |
 | `place.aldwater` | Aldwater Toll Bridge | Chapter 4 fixed skirmish |
+| `place.aldwater.river` | the Aldwater | The river the toll bridge crosses: a short form of `place.aldwater` (Chapter 4) |
 | `place.millhaven_road` | Millhaven Road | Chapter 4 fixed skirmish |
 | `place.salt_road` | the Salt Road | Chapter 5 fixed skirmish |
 | `place.smugglers_cove` | Smugglers' Cove | Chapter 5 fixed skirmish |
