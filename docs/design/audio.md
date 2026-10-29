@@ -87,6 +87,7 @@ a player. **Version** is the file to import when the page has several.
 | `scene_lamplight` | The king's closing scene at Varenhall (end of Act 1): tender, with a quiet unease (0071) | Snowfall (the looped version, `Snowfall (Looped ver.)_0.ogg`, 0:50) | Kistol | [OGA](https://opengameart.org/content/snowfall) | CC0 |
 | `holy_city` | A holy city's streets: sacred, quiet, the Vigil's Ossary (Chapter 7) (0071) | Wendale Abbey (`WendaleAbbey.ogg`, 1:28; plainsong under heavy reverb, made from MIDI and samples; on import, check by ear that the chant has no words) | Yubatake | [OGA](https://opengameart.org/content/wendale-abbey) | CC-BY 4.0 |
 | `capital` | The army is in a capital, any realm's: one track for every capital. The first visit to a big city plays `city_first_visit` instead (0026) | Adventures in Adventureland (`Adventures in Adventureland.mp3`, 4:21) | Kevin MacLeod | [incompetech](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029) | CC-BY 4.0 |
+| `camp` pool | The Camp screen is open (supports and camp events). **Rotates**: one track plays, fades out, a short quiet, the next fades in (0027) | Medieval: The Old Tower Inn (`The_Old_Tower_Inn.mp3`, 1:45); Woodland Fantasy (`Woodland Fantasy_0.mp3`, 2:30); Medieval: The Bard's Tale (`The_Bards_Tale.mp3`, 2:38) | RandomMind; Matthew Pablo; RandomMind | [Old Tower Inn](https://opengameart.org/content/medieval-the-old-tower-inn), [Woodland Fantasy](https://opengameart.org/content/woodland-fantasy), [Bard's Tale](https://opengameart.org/node/80558) | CC0; CC-BY 3.0; CC0 |
 | `scene_dread` | Something wrong found under a holy place: the Candles' empty dormitory (Chapter 7) (0071) | Solemn (Opening) (`Solemn (Opening)_0.mp3`, 1:39; it lists a voice, so on import check by ear that it sings no words) | İlker Yalçıner (onemansymphony) | [OGA](https://opengameart.org/content/solemn-opening) | CC-BY 4.0 |
 
 The `victory` pool's 13 versions are the same 3.8 s tune on different
@@ -236,7 +237,7 @@ Nick picked over four rounds of a listening page
 | A capital's upper court | Court of the Queen (`Court of the Queen.mp3`, 3:20) | Kevin MacLeod | [incompetech](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100728) | CC-BY 4.0 |
 | A small village by the sea, or a port: "very port inspired or sea inspired" | Market on the Sea (RPG Orchestral Essentials) (`Market on the Sea - MP3.mp3` in `market_on_the_sea_mp3.zip`, 2:26) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/node/115435) | CC-BY 3.0 |
 | "A city on a feast day, like a celebration" | Enchanted Festival (`Enchanted Festival.mp3` in `Enchanted Festival.zip`, 2:06; the zip also has a loop `.wav`) | Matthew Pablo | [OGA](https://opengameart.org/node/21241) | CC-BY 3.0 |
-| "An adventure on a road or something", "Witcher 3 type beat" | Medieval: The Bard's Tale (`The_Bards_Tale.mp3`, 2:38; also `Loop_The_Bards_Tale.wav`) | RandomMind | [OGA](https://opengameart.org/node/80558) | CC0 |
+| "An adventure on a road or something", "Witcher 3 type beat"; now also in the `camp` pool (0027) | Medieval: The Bard's Tale (`The_Bards_Tale.mp3`, 2:38; also `Loop_The_Bards_Tale.wav`) | RandomMind | [OGA](https://opengameart.org/node/80558) | CC0 |
 | Another music ticket (liked, "not for a capital city") | Medieval: Market Day (`Loop_Market_Day.mp3`, the loop, 1:04) | RandomMind | [OGA](https://opengameart.org/content/medieval-market-day) | CC0 |
 | Another music ticket (liked, "not for a capital city") | Town Theme (`TownThemeSingleFileLoopable.ogg`, 1:48, loops) | Wolfgang_ | [OGA](https://opengameart.org/content/town-theme-0) | CC-BY 3.0 |
 | Another music ticket (liked, "not for a capital city") | Town Theme 3 (`Town Theme 3.wav`, 1:57, loops) | LarsG | [OGA](https://opengameart.org/content/town-theme-3) | CC-BY 4.0 |
@@ -248,6 +249,27 @@ Shakkar (zesona), Town and Castle (Alexandr Zhelanov), Peaceful Place
 (Alexandr Zhelanov), medieval town and a triumphant theme (syncopika),
 Bustling City (Bryan Wysopal), and Kevin MacLeod's Heavy Interlude and Our
 Story Begins.
+
+### Camp (ticket 0027, 2026-10-28)
+
+Nick picked in one round of a listening page
+(https://claude.ai/artifact/TkCSYxm6jv26PQNct8uRv7). His words are in the
+[appendix](#appendix-nicks-words).
+
+- **Camp has three tracks, not one** (`camp` pool): Medieval: The Old Tower
+  Inn, Woodland Fantasy and Medieval: The Bard's Tale (kept from 0026).
+- **They rotate.** Unlike a skirmish, which picks one track at random and
+  keeps it for the whole battle, camp plays one track, fades it out,
+  stays quiet a moment, then fades the next one in. Nick: "rotate between
+  them with a brief fade out, pause, fade in between them."
+- Because each track plays to its end and fades, the **full versions** are
+  imported, not the loop files (rule 9's loop preference is for a track
+  that repeats back to back).
+- Heard and not picked: A Small Fire Will Do (Cal McEachern), Fantasy
+  Music – Night Town (Angus Macnaughton), Solo Guitar – Celtic #32
+  (Tri-Tachyon), Suonatore di Liuto (Kevin MacLeod); the other tracks kept
+  from 0026 (Market Day, Town Theme, Town Theme 3, Minstrel Guild) and
+  `village_home` stay as they were.
 
 ## Sound effects
 
@@ -299,6 +321,12 @@ sign-off: "it should sound like a heal").
   starts again with a 3 s fade in. Nick set the quiet at "probably more
   like 30s pause or maybe longer" (0025): try longer after playing. The
   3 s fades are Claude's.
+- The `camp` pool (0027): a track fades out over 3 s at its end, camp is
+  quiet for 5 s, then the next track fades in over 3 s. Nick asked for "a
+  brief fade out, pause, fade in"; the numbers are Claude's. The first
+  track is picked at random each time camp opens, then the order goes
+  round the pool (Old Tower Inn → Woodland Fantasy → Bard's Tale → …), so
+  no track plays twice in a row. Leaving camp fades out as any switch does.
 - The pause between two rounds of `defeat` is 13.8 s: the piece's own quiet
   ending (1.8 s) and 12 s of silence added to the file. Nick asked for
   10–15 s (ticket 0809).
@@ -323,8 +351,8 @@ sign-off: "it should sound like a heal").
 - **The wuxia continent** (a later act, `setting-and-tone.md`) "would probably
   have more eastern themes". It needs its own round, which also picks
   Act 2's world map track (0025).
-- **Places and moments without a cue yet:** camp, shops. Nick hasn't been
-  asked about these (tickets 0027–0028). Level up is Nick's own work.
+- **Places and moments without a cue yet:** shops. Nick hasn't been
+  asked about it (ticket 0028). Level up is Nick's own work.
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -742,3 +770,19 @@ by syncopika.)
 (Q: Minstrel Guild. S: Court of the Queen. T: Adventures in Adventureland.
 Recorded as: `capital` is T, the one track for every capital; Q and S are
 kept. R: Heavy Interlude and U: Our Story Begins weren't mentioned.)
+
+**Camp, round 1** (ticket 0027,
+https://claude.ai/artifact/TkCSYxm6jv26PQNct8uRv7). Six new tracks for a
+camp at night (A–F), five kept from 0026 (G, L, N, O, Q) and
+`village_home` (V):
+
+> B, C, and G work. Probably we can use all 3. I'm thinking rather than our
+> approach for skirmish where we keep the same one, chosen randomly at the
+> start, we can rotate between them with a brief fade out, pause, fade in
+> between them.
+
+(A: A Small Fire Will Do by Cal McEachern. B: Medieval: The Old Tower Inn
+by RandomMind. C: Woodland Fantasy by Matthew Pablo. D: Fantasy Music –
+Night Town by Angus Macnaughton. E: Solo Guitar – Celtic #32 by
+Tri-Tachyon. F: Suonatore di Liuto by Kevin MacLeod. G: Medieval: The
+Bard's Tale. Recorded as: the `camp` pool is B, C and G, rotating.)
