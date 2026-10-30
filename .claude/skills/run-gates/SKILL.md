@@ -82,9 +82,9 @@ environment.
 
 ## Mutation testing (CI only)
 
-CI's `mutants (diff)` check (`.github/workflows/mutants.yml`, ADR-0073)
-runs `cargo mutants` on every PR's diff, split over up to 8 `mutants
-(diff, shard N)` jobs; the `MISSED` lines are in the log of each red
+CI's `mutants (diff)` check (`.github/workflows/mutants.yml`, ADR-0073,
+ADR-0100) runs `cargo mutants` on every PR's diff, split over up to 20
+`mutants (diff, shard N)` jobs of at most about 60 mutants each; the `MISSED` lines are in the log of each red
 shard. `mutants (diff, baseline)` runs the tests once on the unmutated
 tree; when it is red, the tests fail under nextest without any mutant.
 CI runs the tests with `cargo-nextest`, which does not run doc tests: a

@@ -1,6 +1,6 @@
 # ADR-0073: Mutation shards build incrementally, run the slow tests last, and share one baseline
 
-- **Status:** Accepted
+- **Status:** Accepted; its shard rule (§1) and the shards' time limit (§3) superseded by ADR-0100
 - **Date:** 2026-10-15
 - **Related tickets:** 0127, 0128, 0119
 - **Related ADRs:** supersedes ADR-0047; ADR-0007 (layer 7), ADR-0008, ADR-0014
