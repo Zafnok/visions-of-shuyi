@@ -126,3 +126,21 @@ Ticket 1196 (from #153, listed under nothing for the game by its `api: none` lab
 | #174 | 2341 | Music crossfades and fade-ins: `AudioRequest::PlayMusic` gains `switch`, `MusicCommand::Start` gains `gain`, `AudioManifest` gains `music_fade_in_ms` and `music_overlap`, `pack::VERSION` 4 | fixed: `AudioRequest::play_music(cue, None)`, `MusicCommand::start(cue, 1.0)` and `{ cue, .. }` patterns in `crates/ui` and `crates/playdate`; the Playdate's backend starts a track at `Start`'s gain (always 1 with the default switch, so nothing sounds different); nothing else (the game builds no `AudioManifest` literal, bakes no packs and keeps no golden row of its manifest); unblocks 1080 |
 
 Nothing for the game: 10 PRs (#161, #163, #164, #165, #166, #167, #169, #171, #172, #173). The skill pack is unchanged.
+
+## 2026-10-30: 50ae33db → 1eaa1fa0 (13 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #179 | 2344 | Looped sounds with handles; `AudioRequest` and `SoundRequest` gain variants and are `#[non_exhaustive]`, `pack::VERSION` 5 | fixed: nothing to change (the game's matches on them have wildcards or are `if let`, it bakes no packs and keeps no golden row of its manifest); not for the game: `docs/design/audio.md` has no looping sound, only music, so a loop waits on a design decision |
+| #180 | 2395 | The Key bindings screen's glyph skin scrolls rows that don't fit | unblocks 1198 |
+| #181 | 2394 | Sounds paused under a pause menu, audio held on suspend; `Audio` gains `suspend` and `resume` | fixed: nothing to change (the game has no `Audio` backend: the Playdate's handles requests itself); not for the game: pausing needs a looped sound (#179). `shuyi-app` now mutes the music and the voice on `Suspend`, with no game code |
+| #182 | 2229 | Import settings beside a file (`.meta`); `RegisterError` gains variants | fixed: nothing to change (the game matches no `RegisterError`); not for the game: it bakes no packs, and its one setting per picture is `crates/content/src/playdate_images.rs`'s `Style` (see #190) |
+| #183 | 3004 | `shuyi export <target>`; `contract::Op` gains `Export` | fixed: nothing to change (the game matches no `Op`); adopt → 0910 (after engine#3075) |
+| #186 | 3048 | A game's identity in `shuyi.ron` and `AppInfo`; `BasicGame::new` takes it, `Config` and `TargetCheck` are `#[non_exhaustive]` | fixed: nothing to change (the game doesn't use `BasicGame` and builds no `Config` literal); adopt → 1199 |
+| #187 | 3053 | Platform facts at run time; `Ctx::keyboard` is `ctx.platform.keyboard` | fixed: `ctx.platform.keyboard` in `crates/ui`, `crates/playdate` and `crates/xtask`, and their tests; adopt → 1200 |
+| #190 | 3007 | One-bit sprites at bake time, per-target layers; `BakedFile`, `BakeInput` and `PackMade` are `#[non_exhaustive]` | fixed: the new `one-bit picture` kind in the registry listing of `crates/content/src/formats/tests.rs` (the game bakes no packs and registers no `onebit` section); not for the game: Nick decided its pictures are stretched then dithered in a 4 × 4 Bayer (`docs/design/playdate.md`), which `crates/content/src/playdate_images.rs` does with the engine's `bitmap::convert`; the new ditherers are Atkinson and an 8 × 8 Bayer, and the bought art can't be in a layer of this repository (ADR-0040) |
+| #193 | 2115 | Timers in steps or turns: `Countdown` and `Every` in `shuyi_core::timer` | not for the game: `crates/core` keeps no countdown in turns or steps today, and the screens' motion is drawn from the time alone. A rule that needs one later (a status that wears off) can use it |
+
+Nothing for the game: 4 PRs (#184, #189, #191, #195). The skill pack's `shuyi-new-game`, `shuyi-ship`, `shuyi-stage-field` and `shuyi-stage-grid` gain identity, export, one-bit bakes and timers.
+
+Also passed, unsorted by the report because its commit names no PR on the engine's side: engine #188 (3072), the game's icon in `shuyi.ron` and the window's icon from `AppInfo`: adopted with #186, in 1199.

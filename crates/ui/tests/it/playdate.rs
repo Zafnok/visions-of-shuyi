@@ -38,7 +38,7 @@ use trpg_ui::{
 /// are turned on below), with the Playdate's own buttons (ticket 1034).
 fn playdate(ctx: &mut Ctx) {
     ctx.console = ConsoleSpec::PLAYDATE;
-    ctx.keyboard = Keyboard::Absent;
+    ctx.platform.keyboard = Keyboard::Absent;
     ctx.device = Device::Pad(PadKind::Playdate);
     ctx.use_playdate_buttons();
     ctx.key_prompt = KeyPrompt::Waiting;

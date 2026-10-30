@@ -37,8 +37,9 @@ bindings screen scrolled to its bottom in the PR.
 ## Scope
 
 **In:**
-- The pin at or past engine#2395's merge: the open `engine-pin` PR, or
-  the first step here moves it (`engine-change` §7).
+- ~~The pin at or past engine#2395's merge: the open `engine-pin` PR, or
+  the first step here moves it (`engine-change` §7).~~ (done by the pin move
+  of 2026-10-30, `50ae33db` → `1eaa1fa0`)
 - `WORLD_MAP_ROWS` joins `KEY_ROWS` (after the dialogue log's row, under
   `WORLD_MAP_HEADING`, "On the world map"); `NOT_LISTED_YET` and the
   workaround comments go.
@@ -51,9 +52,10 @@ bindings screen scrolled to its bottom in the PR.
 
 ## Implementation steps
 
-1. Check engine#2395 is merged and the pin is past it
+1. ~~Check engine#2395 is merged and the pin is past it
    (`work-ticket` §1). If not, move the pin (`engine-change` §7, with the
-   `engine-pin` skill's review), or wait for the open `engine-pin` PR.
+   `engine-pin` skill's review), or wait for the open `engine-pin` PR.~~
+   (done by the pin move of 2026-10-30, `50ae33db` → `1eaa1fa0`)
 2. `crates/ui/src/input.rs`: append `WORLD_MAP_ROWS` to `KEY_ROWS`
    (`KeyRow; 20`), delete `NOT_LISTED_YET` and its comment;
    `PLAYDATE_KEY_ROWS` stays as it is.

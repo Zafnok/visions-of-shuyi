@@ -13,6 +13,7 @@ fn the_registry_lists_its_kinds_and_their_formats() {
     let listing = format!("{:?}", install()).replace(r#"("image pixels", ["png"]), "#, "");
     let kinds = [
         r#"("image", ["png", "one-bit"])"#,
+        r#"("one-bit picture", ["one-bit", "dithered"])"#,
         r#"("sound", ["wav", "ogg-vorbis"])"#,
         r#"("music track", ["ogg-vorbis"])"#,
         r#"("audio manifest", ["audio-manifest"])"#,

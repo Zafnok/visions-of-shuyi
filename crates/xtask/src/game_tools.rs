@@ -293,7 +293,7 @@ fn harness(start: &Start) -> Result<Harness, String> {
             // As `crates/playdate/src/start.rs` starts the game.
             ctx.console = ConsoleSpec::PLAYDATE;
             ctx.palette = palette;
-            ctx.keyboard = Keyboard::Absent;
+            ctx.platform.keyboard = Keyboard::Absent;
             ctx.device = Device::Pad(PadKind::Playdate);
             ctx.use_playdate_buttons();
             ctx.use_playdate_skins();

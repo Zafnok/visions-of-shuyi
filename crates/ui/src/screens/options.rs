@@ -414,7 +414,7 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
     let tutorial = ctx.game.campaign_tutorial.is_some();
     let pictures = has_pictures(&ctx.game.content);
     let zooms = pictures || ctx.game.map_skin.zoom().is_some();
-    let keyboard = ctx.keyboard == Keyboard::Present;
+    let keyboard = ctx.platform.keyboard == Keyboard::Present;
     let pc = ctx.game.skin_set == SkinSet::Glyph;
     Row::ALL
         .into_iter()

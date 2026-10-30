@@ -107,7 +107,7 @@ pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<G
     let playing = preview.play(&ctx);
     let mut stack = ScreenStack::new(Box::new(preview));
     stack.push(Box::new(playing));
-    if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
+    if ctx.layout().is_none() && ctx.platform.keyboard == Keyboard::Present {
         stack.push(Box::new(layout_picker::first(&ctx)));
     }
     Ok(Game::with_stack(ctx, stack, hooks()))
@@ -192,7 +192,7 @@ mod tests {
         use crate::input::Device;
         let playdate = Device::Pad(PadKind::Playdate);
         let mut ctx = first_launch();
-        ctx.keyboard = Keyboard::Absent;
+        ctx.platform.keyboard = Keyboard::Absent;
         ctx.device = playdate;
         let mut game = start(ctx);
         game.frame(&[], 0.0);
@@ -211,7 +211,7 @@ mod tests {
     #[test]
     fn a_scene_preview_without_a_keyboard_opens_no_picker() {
         let mut ctx = first_launch();
-        ctx.keyboard = Keyboard::Absent;
+        ctx.platform.keyboard = Keyboard::Absent;
         let scene = ctx
             .game
             .content

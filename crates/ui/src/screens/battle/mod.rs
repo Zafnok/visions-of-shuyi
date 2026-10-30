@@ -1740,7 +1740,7 @@ impl BattleScreen {
         }
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
-        let shortcuts = map_menu::shortcuts(ctx.keyboard, &ctx.keymap);
+        let shortcuts = map_menu::shortcuts(ctx.platform.keyboard, &ctx.keymap);
         let here = (&self.state, ctx.words());
         let (mode, effect) = mode::step_with(mode, action, self.cursor.pos, here, &shortcuts);
         if self.lessons.holds_turn() && ends_turn(&before, &mode, &effect) {

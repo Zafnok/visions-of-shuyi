@@ -24,7 +24,7 @@ pub fn context(storage: Box<dyn Storage>, seed: u64) -> Result<Ctx, String> {
 pub fn data(seed: u64) -> Result<Ctx, String> {
     let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
     ctx.console = ConsoleSpec::PLAYDATE;
-    ctx.keyboard = Keyboard::Absent;
+    ctx.platform.keyboard = Keyboard::Absent;
     ctx.device = Device::Pad(PadKind::Playdate);
     // Its own buttons (A + B and the B chords), before the player's are
     // loaded with the storage.
@@ -77,7 +77,7 @@ mod tests {
     fn the_context_is_the_playdates() {
         let ctx = context(Box::new(MemoryStorage::new()), 7).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(ctx.console, ConsoleSpec::PLAYDATE);
-        assert_eq!(ctx.keyboard, Keyboard::Absent);
+        assert_eq!(ctx.platform.keyboard, Keyboard::Absent);
         assert_eq!(ctx.device, Device::Pad(PadKind::Playdate));
         assert!(!ctx.debug_tools);
         assert!(ctx.game.tips_enabled);
