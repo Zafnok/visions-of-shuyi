@@ -127,7 +127,7 @@ Ticket 1196 (from #153, listed under nothing for the game by its `api: none` lab
 
 Nothing for the game: 10 PRs (#161, #163, #164, #165, #166, #167, #169, #171, #172, #173). The skill pack is unchanged.
 
-## 2026-10-30: 50ae33db → 1eaa1fa0 (13 engine PRs), #PRNUM
+## 2026-10-30: 50ae33db → 1eaa1fa0 (13 engine PRs), #490
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ Nothing for the game: 10 PRs (#161, #163, #164, #165, #166, #167, #169, #171, #1
 | #183 | 3004 | `shuyi export <target>`; `contract::Op` gains `Export` | fixed: nothing to change (the game matches no `Op`); adopt → 0910 (after engine#3075) |
 | #186 | 3048 | A game's identity in `shuyi.ron` and `AppInfo`; `BasicGame::new` takes it, `Config` and `TargetCheck` are `#[non_exhaustive]` | fixed: nothing to change (the game doesn't use `BasicGame` and builds no `Config` literal); adopt → 1199 |
 | #187 | 3053 | Platform facts at run time; `Ctx::keyboard` is `ctx.platform.keyboard` | fixed: `ctx.platform.keyboard` in `crates/ui`, `crates/playdate` and `crates/xtask`, and their tests; adopt → 1200 |
-| #190 | 3007 | One-bit sprites at bake time, per-target layers; `BakedFile`, `BakeInput` and `PackMade` are `#[non_exhaustive]` | fixed: the new `one-bit picture` kind in the registry listing of `crates/content/src/formats/tests.rs` (the game bakes no packs and registers no `onebit` section); not for the game: Nick decided its pictures are stretched then dithered in a 4 × 4 Bayer (`docs/design/playdate.md`), which `crates/content/src/playdate_images.rs` does with the engine's `bitmap::convert`; the new ditherers are Atkinson and an 8 × 8 Bayer, and the bought art can't be in a layer of this repository (ADR-0040) |
+| #190 | 3007 | One-bit sprites at bake time, per-target layers; `BakedFile`, `BakeInput` and `PackMade` are `#[non_exhaustive]` | fixed: the new `one-bit picture` kind and `onebit` section in the registry listing of `crates/content/src/formats/tests.rs` (the game bakes no packs and registers no `onebit` section); not for the game: Nick decided its pictures are stretched then dithered in a 4 × 4 Bayer (`docs/design/playdate.md`), which `crates/content/src/playdate_images.rs` does with the engine's `bitmap::convert`; the new ditherers are Atkinson and an 8 × 8 Bayer, and the bought art can't be in a layer of this repository (ADR-0040) |
 | #193 | 2115 | Timers in steps or turns: `Countdown` and `Every` in `shuyi_core::timer` | not for the game: `crates/core` keeps no countdown in turns or steps today, and the screens' motion is drawn from the time alone. A rule that needs one later (a status that wears off) can use it |
 
 Nothing for the game: 4 PRs (#184, #189, #191, #195). The skill pack's `shuyi-new-game`, `shuyi-ship`, `shuyi-stage-field` and `shuyi-stage-grid` gain identity, export, one-bit bakes and timers.
