@@ -326,10 +326,8 @@ impl WorldMapScreen {
             return;
         };
         let from = def.places.get(&army).copied().unwrap_or_default();
-        let distance = |id: &String| {
-            let to = def.places.get(id).copied().unwrap_or_default();
-            ((to.x - from.x) * 8).abs() + ((to.y - from.y) * 16).abs()
-        };
+        let distance =
+            |id: &String| distance(from, def.places.get(id).copied().unwrap_or_default());
         if let Some(id) = self.cycle(ctx, Some(kind)).into_iter().min_by_key(distance) {
             self.point(ctx, &id);
         }
@@ -812,6 +810,12 @@ impl WorldMapScreen {
     }
 }
 
+/// How far apart cells `a` and `b` are on screen, across plus down, in
+/// pixels (a cell is 8 wide and 16 tall).
+fn distance(a: Pos, b: Pos) -> i32 {
+    ((b.x - a.x) * 8).abs() + ((b.y - a.y) * 16).abs()
+}
+
 /// The cursor's brightness `t` seconds into its pulse: full, down to half
 /// halfway through a second, back up (as the battle map's cursor).
 fn pulse(t: f32) -> f32 {
@@ -870,10 +874,6 @@ impl Screen<Shuyi> for WorldMapScreen {
     }
 
     fn as_any(&self) -> Option<&dyn Any> {
-        Some(self)
-    }
-
-    fn as_any_mut(&mut self) -> Option<&mut dyn Any> {
         Some(self)
     }
 

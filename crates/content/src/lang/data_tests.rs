@@ -503,6 +503,10 @@ fn the_test_pack_translates_a_little_of_every_kind() {
     );
     let campfire = &content.camp[0];
     assert_eq!(lang.camp_title(&test, campfire), "AROUND THE CAMPFIRE");
+    let map = &content.worldmaps["test_world"];
+    assert_eq!(lang.place_name(&test, map, "home"), "MILLBROOK");
+    assert_eq!(lang.place_name(&en, map, "home"), "Millbrook");
+    assert_eq!(lang.place_name(&test, map, "cross"), "Crossroads");
     assert_eq!(lang.camp_title(&en, campfire), "Around the campfire");
     let notes = &content.battles["test"].battle_notes;
     assert!(

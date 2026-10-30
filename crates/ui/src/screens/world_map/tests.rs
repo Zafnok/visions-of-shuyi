@@ -244,6 +244,125 @@ fn the_cursor_pulses_from_full_to_half_and_back() {
     assert!((pulse(10.5) - 0.5).abs() < 1e-3);
 }
 
+/// The help line: `enter` with the cursor on the army, `travel` elsewhere.
+#[test]
+fn the_help_says_enter_on_the_army_and_travel_elsewhere() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    assert!(
+        s.view(&ctx).help.contains("f enter"),
+        "{}",
+        s.view(&ctx).help
+    );
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert!(
+        s.view(&ctx).help.contains("f travel"),
+        "{}",
+        s.view(&ctx).help
+    );
+}
+
+/// The Find key again closes Find.
+#[test]
+fn the_find_key_again_closes_it() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[Action::WorldFind]);
+    assert!(s.view(&ctx).list.is_some());
+    press(&mut s, &mut ctx, &[Action::WorldFind]);
+    assert!(s.view(&ctx).list.is_none());
+}
+
+/// A side quest not open yet says what it is in the panel.
+#[test]
+fn a_side_quest_says_so_in_the_panel() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    // The places in the map's order: home, camp, cross, farm, ford, pass.
+    for _ in 0..5 {
+        press(&mut s, &mut ctx, &[Action::NextUnit]);
+    }
+    assert_eq!(s.cursor(), "pass");
+    let panel = s.view(&ctx).panel;
+    assert_eq!(panel.kind, "Side quest");
+    assert_eq!(panel.lines, ["Not open yet", "Enemy level 1"]);
+}
+
+/// The army walks one place every `STEP_S`: halfway, it is at the
+/// crossroads, not yet at the farm.
+#[test]
+fn the_army_walks_one_place_a_step() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    press(
+        &mut s,
+        &mut ctx,
+        &[Action::NextUnit, Action::NextUnit, Action::NextUnit],
+    );
+    assert_eq!(s.cursor(), "farm");
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    frame(&mut s, &mut ctx, &[], STEP_S * 1.1);
+    assert!(s.walking());
+    assert_eq!(s.view(&ctx).army, Pos::new(24, 16));
+    frame(&mut s, &mut ctx, &[], STEP_S);
+    assert!(!s.walking());
+    assert_eq!(s.view(&ctx).army, Pos::new(18, 11));
+}
+
+#[test]
+fn distance_counts_a_cell_down_as_twice_one_across() {
+    assert_eq!(distance(Pos::new(0, 0), Pos::new(1, 2)), 8 + 32);
+    assert_eq!(distance(Pos::new(3, 4), Pos::new(1, 1)), 16 + 48);
+}
+
+/// A map smaller than the screen's map area is drawn centred: the second
+/// test act (40 × 12) starts at cell (15, 9).
+#[test]
+fn a_small_map_is_drawn_where_it_is_centred() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let ctx = ctx();
+    let mut c = army(&ctx);
+    c.chapter = "test_wm3".into();
+    c.world = None;
+    c.enter_world(&ctx.game.content.worldmaps["test_world_2"].map);
+    let view = WorldMapScreen::new(c, 0.0).view(&ctx);
+    let black = crate::color::Rgb::new(0, 0, 0);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+    glyph::paint(&ctx, &view, &mut buf);
+    // Salt Keep at (30, 6), the army at Grey Harbor (6, 6), its flag above.
+    assert_eq!(buf.get(45, 15).map(|c| c.glyph), Some('‼'));
+    assert_eq!(buf.get(21, 15).map(|c| c.glyph), Some('M'));
+    assert_eq!(buf.get(21, 14).map(|c| c.glyph), Some('▼'));
+}
+
+/// A road running down is wider than its cell: the ground's glyphs beside
+/// it give way (a look test).
+#[test]
+fn the_ground_gives_way_beside_a_road_running_down() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let ctx = ctx();
+    let view = screen(&ctx).view(&ctx);
+    let black = crate::color::Rgb::new(0, 0, 0);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+    glyph::paint(&ctx, &view, &mut buf);
+    let mut checked = 0;
+    for pair in view.roads.iter().flat_map(|r| r.windows(2)) {
+        let (a, b) = (pair[0], pair[1]);
+        if a.x != b.x {
+            continue;
+        }
+        for y in a.y.min(b.y) + 1..a.y.max(b.y) {
+            for x in [a.x - 1, a.x + 1] {
+                assert_eq!(buf.get(x, y).map(|c| c.glyph), Some(' '), "({x}, {y})");
+                checked += 1;
+            }
+        }
+    }
+    assert!(checked > 20, "{checked}");
+}
+
 /// Confirm on another place sends the army there, one place at a time;
 /// the campaign has it there at once.
 #[test]

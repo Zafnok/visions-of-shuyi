@@ -180,21 +180,15 @@ fn paint_map(
     let (ox, oy) = origin(def);
     let on_screen = |p: Pos| Pos::new(p.x + ox, p.y + oy);
     paint_ground(def, (ox, oy), buf, named);
-    let blank = |buf: &mut GlyphBuffer, p: Pos| {
-        if let Some(cell) = buf.get(p.x, p.y).copied() {
-            buf.set(p.x, p.y, Cell { glyph: ' ', ..cell });
-        }
-    };
+    let blank = |buf: &mut GlyphBuffer, p: Pos| put(buf, p, ' ', None);
     // The ground's glyphs give way to the roads (a run down is wider
     // than its cell, so its neighbours' too).
-    for road in view.roads.iter().chain(&view.locked_roads) {
-        let cells = road_cells(road);
-        for (i, &p) in cells.iter().enumerate() {
-            let p = on_screen(p);
+    let roads = view.roads.iter().chain(&view.locked_roads);
+    for pair in roads.flat_map(|r| r.windows(2)) {
+        let (a, b) = (on_screen(pair[0]), on_screen(pair[1]));
+        for p in road_cells(&[a, b]) {
             blank(buf, p);
-            let down = cells.get(i + 1).is_some_and(|n| n.x == cells[i].x)
-                || (i > 0 && cells[i - 1].x == cells[i].x);
-            if down {
+            if a.x == b.x {
                 blank(buf, Pos::new(p.x - 1, p.y));
                 blank(buf, Pos::new(p.x + 1, p.y));
             }
@@ -214,15 +208,13 @@ fn paint_map(
         } else {
             ink
         };
-        let bg = buf.get(p.x, p.y).map_or(ink, |cell| cell.bg);
-        buf.set(p.x, p.y, Cell::new(symbol, fg, bg));
+        put(buf, p, symbol, Some(fg));
         if let Some(level) = &place.level {
             let len = i32::try_from(level.chars().count()).unwrap_or(0);
             let x = p.x - (len - 1) / 2;
             for (i, ch) in level.chars().enumerate() {
                 let at = Pos::new(x + i32::try_from(i).unwrap_or(0), p.y - 1);
-                let bg = buf.get(at.x, at.y).map_or(ink, |cell| cell.bg);
-                buf.set(at.x, at.y, Cell::new(ch, named(level_ink(place.mark)), bg));
+                put(buf, at, ch, Some(named(level_ink(place.mark))));
             }
         }
     }
@@ -230,14 +222,12 @@ fn paint_map(
     let player = ctx.palette.get(UiColor::Player);
     for (i, ch) in view.army_label.chars().take(2).enumerate() {
         let x = army.x + i32::try_from(i).unwrap_or(0);
-        let bg = buf.get(x, army.y).map_or(ink, |cell| cell.bg);
-        buf.set(x, army.y, Cell::new(ch, ink, bg));
+        put(buf, Pos::new(x, army.y), ch, Some(ink));
     }
     for dx in [-1, 2] {
         blank(buf, Pos::new(army.x + dx, army.y));
     }
-    let bg = buf.get(army.x, army.y - 1).map_or(ink, |cell| cell.bg);
-    buf.set(army.x, army.y - 1, Cell::new('▼', player, bg));
+    put(buf, Pos::new(army.x, army.y - 1), '▼', Some(player));
     // The pictures in pixels, under the glyphs: every road's outline
     // first, then its band (so roads that meet join), then the plates.
     // The roads not open yet first, dimmed, so open roads that meet them
@@ -291,6 +281,15 @@ fn paint_cursor(ctx: &Ctx, rect: PxRect, brightness: f32, buf: &mut GlyphBuffer)
         .lerp(dark, 1.0 - brightness);
     for arm in corner_arms(rect) {
         buf.add_overlay(Overlay::new(arm, color, Layer::Over));
+    }
+}
+
+/// Writes `glyph` into the cell at `p`, in `fg` (or the cell's own
+/// colour), keeping the cell's background; nothing off the buffer.
+fn put(buf: &mut GlyphBuffer, p: Pos, glyph: char, fg: Option<Rgb>) {
+    if let Some(cell) = buf.get(p.x, p.y).copied() {
+        let fg = fg.unwrap_or(cell.fg);
+        buf.set(p.x, p.y, Cell { glyph, fg, ..cell });
     }
 }
 
@@ -390,6 +389,33 @@ mod tests {
         assert_eq!(origin(&maps["test_world"]), (0, 0));
         // 40 × 12 in 70 × 30.
         assert_eq!(origin(&maps["test_world_2"]), (15, 9));
+    }
+
+    /// Each sparse ground shows its glyph below its threshold and not at
+    /// it (the share of cells that show one).
+    #[test]
+    fn each_ground_shows_its_glyph_below_its_threshold() {
+        let cell_with = |s: u32| {
+            (0..200)
+                .flat_map(|x| (0..200).map(move |y| (x, y)))
+                .find(|&(x, y)| speckle(x, y) == s)
+                .expect("a cell")
+        };
+        for (name, threshold, below, at) in [
+            ("forest", 75, '♣', ' '),
+            ("mountain", 35, '^', ' '),
+            ("peak", 60, '▲', '^'),
+            ("sea", 25, '≈', ' '),
+            ("plain", 12, '.', ','),
+            ("plain", 18, ',', ' '),
+        ] {
+            let (x, y) = cell_with(threshold - 1);
+            assert_eq!(ground(name, x, y).0, below, "{name} at {}", threshold - 1);
+            let (x, y) = cell_with(threshold);
+            assert_eq!(ground(name, x, y).0, at, "{name} at {threshold}");
+        }
+        assert_eq!(ground("thicket", 0, 0).0, '♠');
+        assert_eq!(ground("water", 0, 0).0, '≈');
     }
 
     #[test]

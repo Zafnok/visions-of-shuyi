@@ -78,6 +78,9 @@ fn selling_asks_how_many_first() {
     press(&mut s, &mut ctx, &[Action::Confirm, Action::CursorUp]);
     let selling = s.view(&ctx).selling.expect("asked");
     assert_eq!((selling.count, selling.max), (2, 2));
+    press(&mut s, &mut ctx, &[Action::CursorDown]);
+    assert_eq!(s.view(&ctx).selling.map(|v| v.count), Some(1));
+    press(&mut s, &mut ctx, &[Action::CursorUp]);
     press(&mut s, &mut ctx, &[Action::Confirm]);
     assert_eq!(s.campaign().stock.count(&ItemId::new("potion")), 0);
     assert_eq!(s.campaign().gold, 2300);
@@ -195,6 +198,100 @@ fn a_blacksmith_repairs_what_the_army_holds() {
     assert_eq!(held.durability_left, full.durability);
     assert!(s.campaign().gold < 2000);
     assert_eq!(s.view(&ctx).lines.len(), 0);
+}
+
+/// Up from the first line wraps to the last (three lines to sell).
+#[test]
+fn up_from_the_first_line_wraps_to_the_last() {
+    let mut ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let mut c = army(&ctx);
+    c.stock.add(ItemId::new("leather_vest"));
+    let sword = ctx
+        .game
+        .content
+        .items
+        .new_weapon(&ItemId::new("iron_sword"));
+    c.stock.weapons.extend(sword);
+    let mut s = TownScreen::new(c, armory, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert_eq!(s.view(&ctx).lines.len(), 3);
+    press(&mut s, &mut ctx, &[Action::CursorUp]);
+    assert_eq!(s.view(&ctx).focus, 2);
+    press(&mut s, &mut ctx, &[Action::CursorDown]);
+    assert_eq!(s.view(&ctx).focus, 0);
+}
+
+/// A Blacksmith has one tab: left and right leave it there.
+#[test]
+fn a_one_tab_shop_stays_on_its_tab() {
+    let mut ctx = ctx();
+    let smith = shop(&ctx, "city", ShopKind::Blacksmith);
+    let mut s = TownScreen::new(army(&ctx), smith, "Kingsgate".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight, Action::CursorLeft]);
+    assert_eq!(s.tab(), Tab::Repair);
+    assert_eq!(s.view(&ctx).tab, 0);
+}
+
+/// The sounds `actions` play on `s`.
+fn sounds(s: &mut TownScreen, ctx: &mut Ctx, actions: &[Action]) -> Vec<String> {
+    ctx.audio.take();
+    press(s, ctx, actions);
+    ctx.audio
+        .take()
+        .iter()
+        .filter(|r| matches!(r, crate::audio::AudioRequest::PlaySound { .. }))
+        .filter_map(|r| r.cue().map(str::to_owned))
+        .collect()
+}
+
+/// A deal made plays the select sound; one refused, the denied sound.
+#[test]
+fn a_deal_sounds_made_or_refused() {
+    let mut ctx = ctx();
+    let vendor = shop(&ctx, "home", ShopKind::Vendor);
+    let mut s = TownScreen::new(army(&ctx), vendor.clone(), "Millbrook".into());
+    assert_eq!(
+        sounds(&mut s, &mut ctx, &[Action::Confirm]),
+        ["menu_select"]
+    );
+    let mut poor = army(&ctx);
+    poor.gold = 0;
+    let mut s = TownScreen::new(poor, vendor, "Millbrook".into());
+    assert_eq!(
+        sounds(&mut s, &mut ctx, &[Action::Confirm]),
+        ["menu_cancel"]
+    );
+}
+
+/// A special weapon asks before it is sold, on No: only Yes sells it.
+#[test]
+fn a_special_weapon_asks_before_it_is_sold() {
+    let mut ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let mut c = army(&ctx);
+    let axe = ctx
+        .game
+        .content
+        .items
+        .new_weapon(&ItemId::new("houndmasters_axe"));
+    c.stock.weapons.extend(axe);
+    let mut s = TownScreen::new(c, armory, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight, Action::Confirm]);
+    let ask = s.view(&ctx).special.expect("asked");
+    let answers: Vec<_> = ask.answers.iter().map(|a| a.label.as_str()).collect();
+    assert_eq!(answers, ["No", "Yes"]);
+    assert!(s.view(&ctx).selling.is_none());
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    assert!(s.view(&ctx).special.is_none());
+    assert_eq!(s.campaign().stock.weapons.len(), 1, "No sells nothing");
+    press(
+        &mut s,
+        &mut ctx,
+        &[Action::Confirm, Action::CursorRight, Action::Confirm],
+    );
+    assert_eq!(s.campaign().stock.weapons.len(), 0);
+    assert_eq!(s.campaign().gold, 2000 + 450);
 }
 
 /// Cancel leaves with the campaign as the shop left it.

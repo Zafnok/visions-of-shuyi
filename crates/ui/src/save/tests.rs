@@ -188,6 +188,23 @@ fn a_slot_shows_the_chapter_it_goes_on_with() {
     );
 }
 
+/// A world-map save's slot shows the chapter being played (1007).
+#[test]
+fn a_world_map_slot_shows_the_chapter_being_played() {
+    let mut c = ctx();
+    let mut game = campaign(&c);
+    game.chapter = "test_wm1".into();
+    let file = SaveFile::world_map(game);
+    write(&mut c.storage, &slot_key(1), &file).unwrap();
+    let Slot::Saved(summary) = slot(&c.storage, &c.game.content, Words::ENGLISH, 1) else {
+        panic!("slot 1 holds the save");
+    };
+    assert_eq!(
+        (summary.chapter.as_str(), summary.cleared),
+        ("Test World I", false)
+    );
+}
+
 /// A slot's chapter title is in the player's language (ticket 0235).
 #[test]
 fn a_slots_chapter_is_titled_in_the_players_language() {

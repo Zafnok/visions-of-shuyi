@@ -317,9 +317,8 @@ impl TownScreen {
             Action::CursorLeft | Action::CursorRight => {
                 // A town's shop has one tab or two (never the Basic shop's
                 // three, `check_town`): left and right both switch.
-                let tabs = Tab::of(self.shop.kind).len();
-                if tabs > 1 {
-                    self.tab = (self.tab + 1) % tabs;
+                if Tab::of(self.shop.kind).len() == 2 {
+                    self.tab = 1 - self.tab;
                     self.cursor = ListCursor::new(self.deals(ctx).len());
                     ctx.audio.menu(MenuSound::Move);
                 }

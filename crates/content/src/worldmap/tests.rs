@@ -259,6 +259,21 @@ fn music_size_ground_and_places_are_checked() {
         r#"(from: "b", to: "e")"#,
     );
     assert_eq!(problems(&edge), Vec::<String>::new());
+    let low = text("", "").replace("size: (20, 10)", "size: (20, 1)");
+    assert!(!problems(&low).iter().any(|p| p.starts_with("size")));
+    // A place one cell from the left edge or the top is fine; at the left
+    // edge it isn't.
+    let near = text(
+        r#"(id: "l", name: "L", pos: (1, 5), kind: Empty),
+           (id: "t", name: "T", pos: (5, 1), kind: Empty),
+           (id: "z", name: "Z", pos: (0, 5), kind: Empty),"#,
+        r#"(from: "a", to: "l", via: [(1, 2)]), (from: "a", to: "t", via: [(5, 2)]),
+           (from: "l", to: "z")"#,
+    );
+    assert_eq!(
+        problems(&near),
+        ["place \"z\" at Pos { x: 0, y: 5 } is too near the map's edge"]
+    );
     let big = text("", "").replace("size: (20, 10)", "size: (71, 10)");
     assert_eq!(
         problems(&big),

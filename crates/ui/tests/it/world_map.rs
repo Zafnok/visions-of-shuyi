@@ -21,6 +21,11 @@ const FORT: Pos = Pos::new(5, 5);
 /// Game starts the test world map's first chapter with the lead, the test
 /// knight and 2 000 gold.
 fn launch(storage: Box<dyn Storage>) -> Harness {
+    launch_with(storage, |_| {})
+}
+
+/// [`launch`], with `edit` made to the game's context first.
+fn launch_with(storage: Box<dyn Storage>, edit: impl FnOnce(&mut Ctx)) -> Harness {
     let mut storage = storage;
     if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
         panic!("saving the layout: {e}");
@@ -37,6 +42,7 @@ fn launch(storage: Box<dyn Storage>) -> Harness {
         gold: 2000,
         stock: Vec::new(),
     };
+    edit(&mut ctx);
     Harness::from_game(trpg_ui::game::start(ctx))
 }
 
@@ -198,4 +204,22 @@ fn win_a_story_battle_then_the_acts_final_one() {
         ("test_world_2", "port")
     );
     assert!(world.cleared.is_empty());
+}
+
+/// A story battle whose next chapter has no world map: winning it starts
+/// that chapter, its intro scene first, instead of going back to the map.
+#[test]
+fn a_win_whose_next_chapter_has_no_map_starts_it() {
+    let mut h = launch_with(Box::new(MemoryStorage::new()), |ctx| {
+        let chapter = ctx.game.content.chapters.get_mut("test_wm1");
+        chapter.unwrap_or_else(|| panic!("no test_wm1")).next = Some("test".into());
+    });
+    new_game(&mut h);
+    h.keys("x Down Down f f");
+    walk(&mut h);
+    skip_scene(&mut h);
+    win(&mut h);
+    assert_eq!(h.top_screen(), "dialogue");
+    let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
+    assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
 }
