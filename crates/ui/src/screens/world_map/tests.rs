@@ -350,6 +350,36 @@ fn the_ground_gives_way_beside_a_plate() {
     );
 }
 
+/// A level marker is centred over its place, a longer one too: "Lv12"
+/// over Stone Mill (34, 13) starts a cell to its left (a look test).
+#[test]
+fn the_glyph_looks_level_marker_is_centred() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let mut ctx = ctx();
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("a map");
+    let ford = def
+        .map
+        .nodes
+        .iter_mut()
+        .find(|n| n.id == "ford")
+        .expect("the ford");
+    ford.level = Some(12);
+    let view = screen(&ctx).view(&ctx);
+    let black = crate::color::Rgb::new(0, 0, 0);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+    glyph::paint(&ctx, &view, &mut buf);
+    let label: String = (33..37)
+        .filter_map(|x| buf.get(x, 12).map(|c| c.glyph))
+        .collect();
+    assert_eq!(label, "Lv12");
+}
+
 /// A picture-look buffer of the screen's view on map `map` at `chapter`,
 /// with the map's picture missing (so only the look's own items).
 fn paint_pictures(ctx: &Ctx, s: &WorldMapScreen) -> GlyphBuffer {
