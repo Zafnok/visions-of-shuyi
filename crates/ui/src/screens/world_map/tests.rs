@@ -460,6 +460,17 @@ fn the_picture_look_puts_a_small_maps_places_where_it_is_centred() {
     c.world = None;
     c.enter_world(&ctx.game.content.worldmaps["test_world_2"].map);
     let s = WorldMapScreen::new(c, 0.0);
+    // The map's picture stretched over the map where it is centred:
+    // 40 × 12 cells from cell (15, 9).
+    {
+        use crate::console::{ConsoleSizes, ConsoleSpec};
+        use crate::glyph_buffer::Cell;
+        let black = crate::color::Rgb::new(0, 0, 0);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+        picture::paint(&ctx, &s.view(&ctx), "images/test_card.png", &mut buf);
+        let ground = buf.sprites().into_iter().next().expect("the picture");
+        assert_eq!(ground.dest, PxRect::new(120, 144, 320, 192));
+    }
     let buf = paint_pictures(&ctx, &s);
     // Salt Keep at (30, 6): cell (45, 15), its plate 16 × 16 at
     // (356, 240), "Lv12" from cell 44 above it.
@@ -562,6 +573,15 @@ fn the_picture_looks_cursor_has_two_arms_at_each_corner() {
         .filter(|&(ox, oy, _, _)| (x - 2..x + 18).contains(&ox) && (y - 2..y + 18).contains(&oy))
         .collect();
     assert_eq!(got, want);
+    // At full brightness the arms are the cursor's own colour.
+    assert!((s.view(&ctx).cursor_brightness - 1.0).abs() < 1e-4);
+    let cursor = ctx.palette.get(UiColor::Cursor);
+    let arm = PxRect::new(x - 1, y - 1, 4, 2);
+    assert!(
+        buf.overlays()
+            .iter()
+            .any(|o| o.rect == arm && o.color == cursor)
+    );
 }
 
 /// The picture look with unit pictures: the lead's map sprite, twice its
