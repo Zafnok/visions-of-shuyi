@@ -9,7 +9,7 @@ use trpg_core::{Campaign, CharacterId, Command, ItemId, LEAD_ID, Pos, UnitAction
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
-use trpg_ui::screens::WorldMapScreen;
+use trpg_ui::screens::{TownScreen, WorldMapScreen};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 /// The lead's unit in the test battle (its first slot), and the fort it
@@ -115,7 +115,11 @@ fn shop_in_a_town_then_save_on_the_map_and_load_it_again() {
     assert_snapshot!("world_map_town_list", h.snapshot());
     h.keys("Down f");
     assert_eq!(h.top_screen(), "town_shop");
-    h.keys("f d");
+    h.keys("f");
+    let shop = h.game().screen::<TownScreen>();
+    let shop = shop.unwrap_or_else(|| panic!("no town shop"));
+    assert_eq!(shop.campaign().gold, 1700, "the potion bought");
+    h.keys("d");
     assert_eq!(h.top_screen(), "world_map");
     let potion = ItemId::new("potion");
     assert_eq!(campaign(&h).gold, 1700);
