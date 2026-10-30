@@ -1,19 +1,25 @@
 ---
 id: "1072"
-title: "Act 1's five side quests: Tamsin, Aske, Hollis, Rue and Maud"
+title: "Act 1's side quests, part 1: Tamsin and Aske"
 type: content
 milestone: Post–Chapter 1
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["1070", "0018", "0069", "0746", "0747", "0749", "0509", "0013", "0323", "0608", "0329"]
-nick_input: decision
+blocked_by: ["1070", "0018", "0069", "0746", "0747", "0509", "0013", "0323", "0608", "0329"]
+nick_input: none
 completed:
 ---
 
-# 1072 — Act 1's five side quests
+# 1072 — Act 1's side quests, part 1: Tamsin and Aske
 
 ## Context
+
+**Split by ticket 0135** (five quests are about 4,000 changed lines, past
+the limit of about 3,000 for one PR; ADR-0101). This ticket builds Tamsin's
+and Aske's quests; 1083 builds Hollis's and Rue's, 1084 Maud's. The table
+keeps all five for the whole picture, and the rest of this ticket is what
+1083 and 1084 read for how a quest is built.
 
 Side quests (paralogues) are "optional, handcrafted battles tied to one
 character's story, with story scenes and a unique reward", unlocked by
@@ -36,22 +42,15 @@ locked; this ticket writes and builds them and fills in the nodes.
 
 ## Nick input
 
-**Decision**, one story question asked first (`ask-nick`): the outline
-says the runaway Candle of *The Other Cart* is a recruit "or" not,
-"decided by that side quest's ticket". Offer: she joins (with what she
-adds to the army), she stays at the hideout (a camp event later), or
-describe your own. If she joins and the join happens outside battle,
-that is 1009's question (quest recruitment): answer 1009 first, add it
-to `blocked_by`, and stop until it is done.
-
-Nothing else is asked; no check after merge (Nick, 2026-10-21). Which
-reward each quest gives is picked here, inside 0069's kinds, and listed
-in the Completion notes for 1064's checklist.
+None; no check after merge (Nick, 2026-10-21). Which reward each quest gives
+is picked here, inside 0069's kinds, and listed in the Completion notes for
+1064's checklist. The question about the runaway Candle of *The Other Cart*
+moved to 1083 with Rue's quest.
 
 ## Scope
 
 **In:**
-- For each quest: a short beat sheet (in `docs/story/chapters/`, e.g.
+- For Tamsin's and Aske's quests: a short beat sheet (in `docs/story/chapters/`, e.g.
   `side-tamsin.md`), its scenes (`assets/dialogue/side_*.dlg`, by the
   `story-writing` skill with 0736's craft rules and the critique pass),
   its map and battle (as 0848–0854 do: map, units, triggers, place
@@ -64,17 +63,19 @@ in the Completion notes for 1064's checklist.
 - `cargo shuyi autobalance` and `playtest --bot all` per battle.
 
 **Out (do not do):**
+- Hollis's and Rue's quests (1083); Maud's (1084).
 - Supports and camp events (1073); fixed skirmishes (1071).
 - Changing what the main story says happened.
 
 ## Implementation steps
 
-1. Read the `story-writing` skill, the outline, the ledger, the sheets
-   of the five, 0746/0747/0749's scripts, 0069's and 0018's answers.
-2. Ask the Candle question; record the answer in the outline.
-3. Per quest: beat sheet, script, critique pass, map, battle, reward,
+1. Read the `story-writing` skill, the outline, the ledger, Tamsin's and
+   Aske's sheets, 0746 and 0747's scripts, 0069's and 0018's answers.
+2. Per quest: beat sheet, script, critique pass, map, battle, reward,
    node.
-4. Bots; `frame-png` pictures; ledger.
+3. Bots; `frame-png` pictures; ledger.
+
+Expected size: about 1,700 changed lines (0135; `cargo xtask pr-size`).
 
 ## Acceptance criteria
 

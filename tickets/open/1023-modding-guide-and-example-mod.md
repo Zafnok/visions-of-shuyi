@@ -35,7 +35,7 @@ None.
   class, a new map and battle); what the rules forbid (0054's policy and
   `LICENSE` section 4, quoted, not paraphrased); never ship copies of the
   game's art.
-- Sections for scripting (1017, 1018), the map editor (1019, 1020),
+- Sections for scripting (1017, 1018), the map editor (1019, 1020, 1085),
   `playtest` (1021) and campaigns (1022), each written when its ticket is
   done; a ticket that lands after this one adds its own section (add that
   line to each of those tickets' acceptance criteria when you finish this

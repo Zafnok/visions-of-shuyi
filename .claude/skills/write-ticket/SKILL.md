@@ -53,8 +53,17 @@ without asking questions.
      that as an `engine-pin` issue (ADR-0096). A ticket that needs a
      newer engine says that its first step moves the pin
      (`engine-change` §7), or that it waits for the open `engine-pin` PR.
-5. Keep it small: one PR's worth of work (roughly ≤ 600 changed lines excluding
-   snapshots/data). Split otherwise.
+5. Keep it small: one PR's worth of work, **planned at about 2,000 changed
+   lines or fewer**, so that it stays under the limit of about 3,000 when it
+   runs over (ADR-0101). What counts is what `cargo xtask pr-size` counts:
+   code, tests, docs, the ticket's own file (250–400 lines when it moves to
+   `done/`) and hand-written data like `.dlg` scripts, `.ron` and maps. Not
+   snapshots, generated or binary files. Judge it by a done ticket of the
+   same kind (a chapter's script is about 1,300–1,900; a chapter's battle
+   about 2,250). Split a bigger one now, by a part that works alone: the
+   first piece keeps the number, so the chains that name it still hold, and
+   the next pieces are `blocked_by` it. The other tickets that need a later
+   piece name it too (step 6).
 6. **Check the chain** (see below) before you finish.
 
 ## Check the dependency chain

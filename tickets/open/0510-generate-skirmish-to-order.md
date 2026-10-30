@@ -64,6 +64,10 @@ it):
 
 ## Implementation steps
 
+**Size (0135, ADR-0101):** about 2,600-3,400 changed lines. The natural cut, if it runs over: the army,
+the enemies, the CLI and the writer here; the map generator and the
+autobalance knobs in a new ticket blocked by this one.
+
 1. **Reference army** (`crates/bots/src/army.rs`): from the story data, the
    player units recruited by the requested chapter (earliest if several);
    each at level N using its class's average growths, promoted where the

@@ -24,6 +24,7 @@ mod playdate_audio;
 mod playdate_images;
 mod playtest;
 mod portrait_import;
+mod pr_size;
 mod sfx;
 mod skill_pack;
 mod test_auto;
@@ -51,6 +52,8 @@ engine-pin --report                the engine PRs past the pin, sorted, and whet
 skill-pack [--check]               copy the pinned engine's skill pack into .claude/skills/, or check the copy (ADR-0097)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
+pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
+the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
@@ -91,6 +94,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("skill-pack") => skill_pack(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
+        Some("pr-size") => pr_size(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -648,6 +652,58 @@ fn code_lines(args: &[String]) -> u8 {
     }
 }
 
+/// `pr-size`'s arguments: the base, the branch (if given), and `--hook`.
+fn parse_pr_size_args(args: &[String]) -> Result<(String, Option<String>, bool), String> {
+    let (mut base, mut branch, mut hook) = ("origin/main".to_owned(), None, false);
+    let mut iter = args.iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--base" => base.clone_from(iter.next().ok_or("--base requires a value")?),
+            "--branch" => branch = Some(iter.next().ok_or("--branch requires a value")?.clone()),
+            "--hook" => hook = true,
+            other => return Err(format!("unknown argument to pr-size: {other}")),
+        }
+    }
+    Ok((base, branch, hook))
+}
+
+fn pr_size(args: &[String]) -> u8 {
+    if args.iter().any(|a| a == "--help") {
+        println!("{}", pr_size::USAGE);
+        return 0;
+    }
+    let (base, branch, hook) = match parse_pr_size_args(args) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            eprintln!("pr-size: {e}\n{}", pr_size::USAGE);
+            return 2;
+        }
+    };
+    let root = repo_root();
+    let measured = pr_size::changed_files(&root, &base).and_then(|(files, from)| {
+        let branch = branch.map_or_else(|| pr_size::current_branch(&root), Ok)?;
+        Ok((files, from, branch))
+    });
+    let (files, from, branch) = match measured {
+        Ok(measured) => measured,
+        Err(e) => {
+            eprintln!("pr-size: {e}");
+            return 1;
+        }
+    };
+    print!(
+        "{}",
+        pr_size::output(
+            &files,
+            &branch,
+            &format!("{base} (from {from})"),
+            hook,
+            env::var("GITHUB_ACTIONS").ok().as_deref(),
+        )
+    );
+    0
+}
+
 fn lines(args: &[String]) -> u8 {
     if args.iter().any(|a| a == "--help") {
         println!("{}", lines::USAGE);
@@ -1054,6 +1110,31 @@ mod tests {
         assert_eq!(code_lines(&args(&["--help"])), 0);
         assert_eq!(code_lines(&args(&["--base"])), 2);
         assert_eq!(code_lines(&args(&["--base", "no-such-ref-1151"])), 1);
+    }
+
+    #[test]
+    fn pr_size_reports_hooks_and_rejects_bad_arguments() {
+        assert_eq!(
+            dispatch(args(&["pr-size", "--base", "HEAD"]).into_iter()),
+            0
+        );
+        assert_eq!(
+            pr_size(&args(&["--base", "HEAD", "--branch", "sonar/x", "--hook"])),
+            0
+        );
+        assert_eq!(pr_size(&args(&["--help"])), 0);
+        assert_eq!(pr_size(&args(&["--base"])), 2);
+        assert_eq!(pr_size(&args(&["--branch"])), 2);
+        assert_eq!(pr_size(&args(&["--size"])), 2);
+        assert_eq!(pr_size(&args(&["--base", "no-such-ref-0135"])), 1);
+        assert_eq!(
+            parse_pr_size_args(&args(&["--hook", "--branch", "t1-a", "--base", "HEAD^1"])),
+            Ok(("HEAD^1".to_owned(), Some("t1-a".to_owned()), true))
+        );
+        assert_eq!(
+            parse_pr_size_args(&[]),
+            Ok(("origin/main".to_owned(), None, false))
+        );
     }
 
     #[test]

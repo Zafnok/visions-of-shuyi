@@ -59,6 +59,13 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    skill (engine feature, engine ergonomics, game-side structure, or
    accept); the engine never names a game concept, and the game never
    waits on the engine.
+10. **A PR stays under about 3,000 changed lines** (ADR-0101): past that a
+    session runs out of context. Plan a ticket at about 2,000 or fewer and
+    split it with `write-ticket` *before* coding if it won't fit. `cargo
+    xtask pr-size` counts code, tests, docs, tickets and hand-written data,
+    not snapshots or generated or binary files. It warns and never fails
+    (a hook while you work, CI on the PR): when it does, ask whether the
+    work can split cleanly. `engine-pin` and `sonar` PRs are exempt.
 
 ## Map of the repo
 

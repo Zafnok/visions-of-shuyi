@@ -22,7 +22,7 @@ camp) and 1008 the skirmishes (fixed ones, and random groups from a pool
 of authored maps at a capped level); both ship only test maps. This
 ticket writes Act 1's real map from the outline:
 
-| Chapter | Story battle | Fixed skirmishes (1071) | Town | Side quests (1072) |
+| Chapter | Story battle | Fixed skirmishes (1071) | Town | Side quests (1072, 1083, 1084) |
 | --- | --- | --- | --- | --- |
 | 4 | Veyne Hall | *Aldwater Toll Bridge* (guards), *Millhaven Road* | Millhaven | *The Company Ledger* (Tamsin) |
 | 5 | The Envoy's House | *The Salt Road* (guards), *Smugglers' Cove* | Saltmere | *Letters Home* (Aske), *The Captain's Oath* (Hollis) |
@@ -59,7 +59,7 @@ in the Completion notes.
   1007's format can't hold a node without its battle, add the smallest
   field that can (an optional battle) here.
 - **Fixed-skirmish and side-quest nodes**, placed and locked the same
-  way: 1071 and 1072 fill them in.
+  way: 1071, 1072, 1083 and 1084 fill them in.
 - **The four towns' stock** (Millhaven, Saltmere, Cairnford, Ossary), by
   chapter, within 0044's tiers; Saltmere's last stock for Chapter 8.
 - **The act's enemy-level range** and the random-skirmish pool: a few

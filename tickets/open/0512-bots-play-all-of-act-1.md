@@ -6,7 +6,7 @@ milestone: M4 Enemy AI
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0506", "0509", "0319", "1051", "1065", "0743", "0744", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "1072", "1073", "1066", "1067", "1068", "1069"]
+blocked_by: ["0506", "0509", "0319", "1051", "1065", "0743", "0744", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "1072", "1083", "1084", "1073", "1066", "1067", "1068", "1069"]
 nick_input: setup
 completed:
 ---
@@ -78,6 +78,10 @@ new for a campaign.
   play (0508).
 
 ## Implementation steps
+
+**Size (0135, ADR-0101):** about 2,000-3,000 changed lines. The natural cut, if it runs over: the
+campaign runner, its report and the save check here; the Playdate run in a
+new ticket blocked by this one.
 
 1. Read 0505/0506/0509's runner and reports, `playtest-bots.md`, 1007's
    campaign state, 0802's save format, 1068's measurements.

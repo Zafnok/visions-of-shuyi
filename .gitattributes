@@ -10,3 +10,17 @@
 *.ogg  binary
 *.wav  binary
 *.bin  binary
+
+# Generated text: GitHub folds these in a PR's diff, and `cargo xtask
+# pr-size` leaves them out of a PR's size (ADR-0101). A new generated file
+# (one a command writes, "Do not edit") gets a line here.
+*.snap                                  linguist-generated
+Cargo.lock                              linguist-generated
+assets/fonts/atlas.ron                  linguist-generated
+assets-test/tilesets/test.ron           linguist-generated
+assets-test/tilesets/test_auto.ron      linguist-generated
+assets-test/tilesets/test_units.ron     linguist-generated
+# Font sources, inputs to `cargo shuyi font-atlas` (one is 31,000 lines).
+assets-src/fonts/*.bdf                  linguist-generated
+# The engine's skill pack, copied at the pin (ADR-0097).
+.claude/skills/shuyi-*/**               linguist-generated

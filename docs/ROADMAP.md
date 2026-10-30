@@ -285,7 +285,7 @@ tickets in brackets):
 4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
    a boss who can't die, Hollis's death and its Classic fallback, the
    kinds of side-quest reward, what each early chapter introduces
-   (0319, 0848, 0849, 0750, 1072)
+   (0319, 0848, 0849, 0750, 1072, 1083, 1084)
 5. **0025** world map, **0026** capital and **0027** camp music (1007,
    1003) · **0071** story-battle themes and scene music for Chapters
    2–8 (0848–0854)
@@ -295,10 +295,10 @@ tickets in brackets):
 7. **0606**'s question, where to promote and reclass (asked inside 0606
    before it is built)
 8. **0013** the number scale, decided before Act 1 is balanced
-   (0848–0854, 1070–1072; done 2026-10-22: FE-sized, built by 0323
+   (0848–0854, 1070–1072, 1083, 1084; done 2026-10-22: FE-sized, built by 0323
    and 0608)
 9. ~~**0018** higher-rank arts and special weapons~~ ✅ decided
-   2026-10-26 (0325–0329, then 0848 and 1072)
+   2026-10-26 (0325–0329, then 0848, 1072, 1083 and 1084)
 10. **1007**'s world-map glyph mockup (asked inside 1007 before it is
     built)
 
@@ -307,7 +307,7 @@ transitions, **0067** the bought tiles and sprites on the Playdate's
 map, **0063**–**0065** (the intro's shots, a story role for Vix, naming
 Vix and the lead). Asked when their ticket is picked up: the questions
 inside Lane G's tickets (0250, 0449, 0463, 0739, 0741, 0742, 0846,
-0847) and 1062's; **1009** (quest recruitment) only if 1072's runaway
+0847) and 1062's; **1009** (quest recruitment) only if 1083's runaway
 Candle joins outside battle.
 
 **Phase 2: systems**, in lanes that run side by side:
@@ -404,12 +404,12 @@ and **0520** the bots play a chapter with the army the chapters before
 it leave → **0849** Chapter 3 (also 0037, 0069), **0850**–**0854**
 Chapters 4–8 (also 1007, 1008, 0319, 1070). The world map's content: **1070** nodes,
 towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
-eight fixed skirmishes, with Gil (after 0746–0749) and **1072** the five
+eight fixed skirmishes, with Gil (after 0746–0749) and **1072**, **1083** and **1084** the five
 side quests (after 0018, 0329, 0069 and their chapters' scripts). The
 arts for ranks C–S and the special weapons (0018 decided them): **0325**
 the arts that change numbers → **0326** stances that react, **0327**
 strikes at several units, **0328** Disarm, Marked Shot and Unbroken
-Stride, **0329** special weapons (0848, 1072); **0075** decides the
+Stride, **0329** special weapons (0848, 1072, 1083, 1084); **0075** decides the
 Moonblade's questline (with Act 2's outline); **1073**
 supports and camp events (after 1003, 0743, 0750).
 
@@ -599,6 +599,6 @@ early so every later PR is checked by them.
   → 1015 Mods screen and modded saves, 1016 `vos-modkit check`/`new` →
   1017 scripted skill effects on the engine's script runtime (after
   engine#2101) → 1018
-  scripted events and objectives; 1019 → 1020 the map editor; 1021
+  scripted events and objectives; 1019 → 1020 → 1085 the map editor; 1021
   `vos-modkit playtest` (after 0506); 1022 mod campaigns; 1023 guide and
   example mod; 1024 Steam Workshop (after 0903).

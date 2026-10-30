@@ -70,7 +70,7 @@ needs it. Nick reads the chapter in the Act 1 playtest (1064).
 **Out (do not do):**
 - The battle file, map, units and triggers (0854).
 - Support conversations and camp events (1073); side quests' scenes
-  (1072).
+  (1072, 1083, 1084).
 - Changing a story beat without Nick.
 
 ## Implementation steps

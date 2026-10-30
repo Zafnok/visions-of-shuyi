@@ -290,7 +290,7 @@ fn untracked_diff(path: &str, source: &str) -> String {
 
 /// Runs `git` in `repo_root` with `args`; its stdout, or its stderr as the
 /// error.
-fn git(repo_root: &Path, args: &[&str]) -> Result<String, String> {
+pub(crate) fn git(repo_root: &Path, args: &[&str]) -> Result<String, String> {
     let output = Command::new("git")
         .arg("-C")
         .arg(repo_root)

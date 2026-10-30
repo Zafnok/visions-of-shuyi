@@ -248,11 +248,19 @@ jobs:
       HEAD_REF: ${{ github.head_ref }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
+      # Depth 2 for pr-size below: HEAD is the PR's merge commit, HEAD^1 the
+      # base's tip.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 2
       - run: rustup show
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # A warning on a PR past about 3,000 changed lines; never a failure,
+      # and only the number on an engine-pin/ or sonar/ PR (ADR-0101).
+      - name: Report the PR's size
+        if: github.event_name == 'pull_request'
+        run: cargo xtask pr-size --base HEAD^1 --branch "$HEAD_REF"
       - name: Run ticket lint
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then

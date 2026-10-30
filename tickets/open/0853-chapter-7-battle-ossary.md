@@ -19,7 +19,7 @@ Act 1, Chapter 7, from `docs/story/outline.md`:
 
 - **Story battle:** "The Undercroft": wardens in catacombs and narrow stairs; the boss is Crane's champion; Crane himself leaves.
 - **Objective:** defeat the boss (Crane's champion), unless the beat sheet makes another objective fit better (Seize, Rout); pick from the objectives `core` has.
-- **Recruits:** none (the runaway Candle of *The Other Cart* is 1072's to decide).
+- **Recruits:** none (the runaway Candle of *The Other Cart* is 1083's to decide).
 - **Named boss (0743):** Crane's champion is Warden Constance Hobb (`undercroft_warden`), who kept the Candles' barracks; sheet `docs/story/characters/undercroft_warden.md`.
 - **New in this chapter:** nothing new.
 
@@ -79,7 +79,7 @@ before building.
 
 **Out (do not do):**
 - The script's words (0749); fixed skirmishes and towns (1071, 1070);
-  side quests (1072); supports and camp events (1073).
+  side quests (1072, 1083, 1084); supports and camp events (1073).
 - New rules in `core` (file a ticket; 0319 has the Act 1 ones).
 - Changing earlier chapters' balance.
 
