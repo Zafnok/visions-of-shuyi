@@ -1,0 +1,777 @@
+# Chapter 8: The Last Watch. Written on a blank page from the beat sheet's
+# cards by ticket 0750 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch08.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# Act 1's last chapter (world-structure.md): it plays out over the Act 1
+# map's nodes and ends with the story battle on Saltmere's docks, a hold
+# while the ship loads, against Hounds from three streets, with Dace as
+# the boss who can't be killed (0319: at 0 HP he is down on his tile
+# until the closing scene). Hollis fights the battle and dies in the
+# scene after it, in every mode (death-and-difficulty.md); if he is
+# already gone in Classic, the lead tells Dace instead. Scene ids, for
+# 0854 (the story battle and the chapter file) and 1065 (the closing
+# scene, played after the victory scenes) to wire:
+#
+#   When the chapter opens (the world map appears)
+#     ch08_intro                    a crossroads: the king's bill; east
+#
+#   Before the story battle (intro_scenes, in this order)
+#     ch08_night                    the hill above Saltmere, the night before
+#     ch08_quay                     the docks at first light: Ragna's ship
+#     ch08_prebattle                three streets; Dace
+#
+#   In the battle (triggers, each once)
+#     ch08_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch08_second_street            TurnStart(turn: N, phase: Player): the second street opens (0854 picks N)
+#     ch08_last_turn                TurnStart(turn: last, phase: Player): the ship is loaded
+#     ch08_boss_engage              CombatStart(unit: "rival"): anyone else
+#     ch08_boss_engage_lead         CombatStart(unit: "rival", against: Some("lead"))
+#     ch08_boss_engage_retainer     CombatStart(unit: "rival", against: Some("retainer"))
+#     ch08_boss_engage_defector     CombatStart(unit: "rival", against: Some("defector"))
+#     ch08_boss_engage_heretic      CombatStart(unit: "rival", against: Some("heretic"))
+#     ch08_boss_half                HalfHp(unit: "rival")
+#     ch08_boss_down                UnitFell(unit: "rival"): his defeated line; he is down, not dead (0319)
+#     ch08_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch08_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch08_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector,
+#                  prizefighter, shieldbearer, battlemage
+#
+#   After the battle (victory_scenes, in this order)
+#     ch08_victory                  the gangway: Hollis falls there, or the lead tells Dace
+#     ch08_sail                     the deck, that evening: the goodbye (@dies retainer)
+#     ch08_dock                     the quay after dark: Dace alone
+#
+#   The closing scene (1065 plays it after the victory scenes)
+#     ch08_closing                  Varenhall: the king reads; Act 1 ends
+#
+# Until 0854 wires the triggers, the validator can't know which scene
+# plays for whom, so every companion line in a battle scene below sits in
+# an "@if" block for them (ADR-0055). Once a trigger names the companion
+# (a death quote, a retreat line, Dace against Hollis, Joss or Rue), that
+# "@if" can only go one way and the validator reports it: 0854 removes
+# those blocks as it wires each trigger. The "@if" in ch08_first_turn and
+# ch08_second_street stay: a turn-start scene can't count on anyone.
+#
+# Dace (rival) and Ragna (envoy) are speakers in characters.ron; 0854
+# makes a unit of Dace. The king (king) speaks for the first time in the
+# closing scene and is added to speakers by this ticket. Ragna is on the
+# ship through the battle and never a unit; she speaks once from the
+# deck (ch08_last_turn), which needs no block (the army can't lose her).
+#
+# Hollis's death is two scenes long, and the "@dies" is in the second.
+# In ch08_victory, "@if retainer" is the version where he holds the
+# gangway and is shot there; its "@else" is the version where he was
+# already gone and the lead tells Dace. He is still in the army through
+# that scene, so ch08_sail can tell the two apart: its "@if retainer"
+# holds "@dies retainer" and the grief of people who watched him die an
+# hour ago; its "@else" is the deck when he died chapters back. From
+# there on nobody is "there" for him in any mode, so ch08_dock and
+# ch08_closing never mention him and read the same on every path.
+#
+# No @place directives yet: the maps are 0854's. Music: 0071 picked this
+# chapter's cues (battle_finale for the battle, which is the battle
+# file's; scene_loss as Hollis dies; scene_departure as the ship sails;
+# scene_lamplight for the king). None of the four is imported yet, so the
+# scenes that take them carry a comment where the @music line goes, for
+# 0854 to fill in when it imports the cues; the rest are this ticket's
+# picks from the existing mood cues.
+#
+# The seven companions, Gil, Hedda and Oriel may have died in Chapters
+# 1-7 (Classic), Gil may never have been beaten, Hedda may have fallen in
+# the hold and Oriel in the crossing, so outside the battle every line of
+# theirs is in an "@if" block, and each scene reads through with any of
+# them gone.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the crossroads is the road, so it has the
+# chapter's two light lines; the night before is quiet and warm; the
+# quay, the streets, the battle, the gangway and the deck are played
+# straight, and the warmth is a sword done on a stone, a cloak somebody
+# asked about, bread put in a hand, a coat with a hole in it. Punctuation
+# is the voice acting: Hollis ends flat and trails off only where it
+# costs him; Dace works in questions and "..." and goes to short periods
+# when he's done; Ragna counts in flat periods; Hedda's periods are warm
+# and she trails off once, about home; Maud qualifies herself and can't
+# finish a sentence; Rue asks; Tamsin fires questions and exclaims at her
+# peaks; Aske ends flat and uses no contractions; Joss corrects himself;
+# Gil is formal, and plain in danger; Oriel trails off; the king is
+# measured and gentle. American English throughout (setting-and-tone.md,
+# Language); "Aye" and "Go and get her" are kept words (Nick's, and the
+# outline's).
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised).
+
+# ---------------------------------------------------------------------------
+# When the chapter opens
+# ---------------------------------------------------------------------------
+
+# A crossroads south of Ossary. The king's bill, and east.
+
+@scene ch08_intro
+@caption A crossroads south of {n:place.ossary}, winter
+@music talk_calm
+> Winter, now. The road south meets the salt road at a post, and on the post a new bill with the king's seal on it, the wax still shiny. Whoever read it last has gone on.
+@if poacher
+@left poacher neutral
+@if keeper
+@right keeper neutral
+poacher: The ex... exile. {N:family.veyne}. T, r, a-- I know what it says. I am reading it. Do not help.
+keeper: I wasn't. ...Traitor. "To be delivered to the crown alive, with all who go armed in-- in their company." That's us, then. All of us. And there's a price under it.
+@right clear
+@else
+poacher: The ex... exile. {N:family.veyne}. T, r, a-- traitor. ...And all who go armed in their company. That is us. There is a price under it. A big one.
+@endif
+@left clear
+@else
+@if keeper
+@left keeper neutral
+keeper: "The exile {n:family.veyne}, traitor, to be delivered to the crown alive, with all who go armed in their company." ...That's us. All of us. And there's a price under it.
+@left clear
+@else
+> The bill names the exile {n:family.veyne} a traitor, to be delivered to the crown alive, with all who go armed in their company, and puts a price under it.
+@endif
+@endif
+@if sergeant
+@left sergeant happy
+sergeant: Look at the number. ...That's four years of {n:faction.red_company}'s back pay, with change. Your Former Grace, you're the most expensive thing I've ever stood next to, and I've stood next to a prior.
+@left clear
+@endif
+@if defector
+@left defector surprised
+defector: There's a name at the bottom, who it goes to. ...That's the captain's hand, Your Grace. I've seen it on the pay lists a hundred times.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: {N:envoy.first}'s lying off {n:place.saltmere} till the ice. She said till the ice, so she's there.
+@left clear
+@endif
+@if heretic
+@left heretic neutral
+heretic: East, then. The old man in the hood said the East shut it, so east. Is there food on a ship? Anybody? Has anybody here been on one?
+@if shieldbearer
+@right shieldbearer neutral
+shieldbearer: Herring.
+@right clear
+@endif
+@left clear
+@endif
+@if poacher
+@left poacher angry
+poacher: East is the wrong way for me. I know that. I am going anyway.
+@left clear
+@endif
+@if battlemage
+@left battlemage sad
+@right lead neutral
+battlemage: The nineteen are on the plain still. I had thought I might-- no. ...May I come? I'm asking. I'd rather be told yes than take it.
+lead: Yes.
+@left clear
+@right clear
+@endif
+@if prizefighter
+@left prizefighter neutral
+prizefighter: Rule fourteen: a champion does not leave the circuit before the season's out. It's winter. The season's out. I checked.
+@if sergeant
+@right sergeant neutral
+sergeant: Fourteen? It was eleven at the border. Where do you keep finding them?
+@right clear
+@endif
+@left clear
+@endif
+@left lead neutral
+lead: East.
+@left clear
+@if retainer
+@left retainer neutral
+retainer: Three days to the sea, then. Walk, all of you. It's going to snow.
+@left clear
+@else
+> Three days south to the sea, and it is going to snow.
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Before the story battle
+# ---------------------------------------------------------------------------
+
+# The hill above Saltmere, the night before. The sword and the stone.
+
+@scene ch08_night
+@caption The hill above {n:place.saltmere}, the night before
+@music talk_calm
+@if retainer
+> The hill above the harbor, late. The town's lights below, and one lantern out on the water where the ships lie.
+> {n:retainer.first} sits with {lead}'s sword across his knees and the stone, doing the edge.
+@left retainer neutral
+@right lead neutral
+retainer: Sit. You're in my light. Have you ever been on a boat? Don't say the mill pond. The pond's got a bottom.
+retainer: I was sick on a cart once. The hall to the capital, nine hours. Your father laughed till the gate, then he was sick too, and we never spoke of it. That's a lot of water, down there, to be sick on.
+retainer: Boots off tonight, and dry them. You won't go on the water in wet boots. And that coat. You'll freeze in that coat; the Hound boy's wanted to do the hole since the river, let him.
+> He turns the sword over and starts on the other edge. For a while that is the only sound on the hill.
+retainer[sad]: My girl's on this side of the water. ...And the boy's wherever the boy is. I'm not saying anything. I'm saying where they are.
+@choice
+* earnest: We'll come back for her.
+  retainer: Aye. We will. ...Don't say it like that, kid. You sound like the boy.
+* wry: You'll be sick the whole way, you know.
+  retainer[happy]: I know. It'll happen and I'll live. Pass me the oil, and don't tell the sergeant, she'll have it in the book.
+* act: Give me the knee.
+  retainer: Leave the-- go on, then. Not hard. Harder than that, I've had worse from a horse. There. Better.
+@endchoice
+@left retainer neutral
+retainer: Eat something, then sleep. I'm watching the lights. Shoulder up tomorrow, kid. I'm behind you, same as always.
+@if keeper
+@right keeper neutral
+keeper: For the knee. It's the good salve, the one I-- I think, possibly, you should let me, this once. Don't say no. Please.
+retainer: Give it here, Keeper. And sit down, you're letting the cold in.
+@right clear
+@else
+@right clear
+@endif
+@left clear
+@else
+> The hill above the harbor, late. The town's lights below, and one lantern out on the water where the ships lie. {lead} sits with {their} sword across {their} knees and does the edge {themself}.
+@if keeper
+@left keeper neutral
+@right lead neutral
+keeper: Let me see your hands before you-- they're fine. I knew they were fine. ...Sleep, {lead}. Please. Someone ought to say it to you, so I am.
+@left clear
+@right clear
+@endif
+@endif
+@end
+
+# The docks at first light. Ragna's ship.
+
+@scene ch08_quay
+@caption {N:place.saltmere}, the docks, first light
+@music dungeon_tense
+> The quay at first light, and a {n:faction.brennmark.adj} ship being hauled in to it on a line. Crates stacked where the dock men left them when they all went home at once.
+> {n:envoy.first} on the quay with her writing case shut under her arm, for once, and not one League halberd anywhere.
+@left envoy neutral
+@right lead neutral
+envoy: Nine days from {n:place.ossary}. I had a man on the road; I count. ...All of you, then. Good. And a horse.
+@if sergeant
+@right sergeant angry
+sergeant: The mare goes or I don't. She's the width of two men. Plan for it.
+envoy: Horses go in the hold. I've shipped horses. She'll hate it. Horses do. Blindfold her for the plank.
+@right lead neutral
+@endif
+envoy: An hour on this tide, if the dock men stay paid for. There's been Hound black on the fish steps since it got light. ...I would like my hour.
+@if shieldbearer
+@right shieldbearer neutral
+envoy: {N:shieldbearer.first}. The ship puts me off at the fjord on her way. You're coming off with me.
+shieldbearer: No. I'm going on east with them. Nobody lent me this time.
+envoy: ...The gray cloak's in the boat. The big one. It's colder where you're going than it is at home; I asked.
+shieldbearer[sad]: ...You asked.
+@right lead neutral
+@endif
+@if defector
+@right defector surprised
+defector: That's the company on the steps, Your Grace. Ours. ...The captain's. I know how they stand when they're waiting, I stood like that for a year. They're waiting for him.
+@right lead neutral
+@endif
+@if retainer
+@left retainer neutral
+retainer: Two spears to each street. Nobody onto the plank till the {n:faction.brennmark.adj} woman says so. {N:family.veyne}, you stand where I can see you.
+@left envoy neutral
+@endif
+envoy: I'll have every one of you on her, exile. Now go stand somewhere. You're in the way of my crates.
+@left clear
+@right clear
+@end
+
+# Three streets. Dace.
+
+@scene ch08_prebattle
+@caption {N:place.saltmere}, the docks
+> Hound black comes out of all three streets at once and stops at the quay's edge, as if the stones were a line. Out in front of it, {n:rival.first}, hands empty, looking only at {lead}.
+@left lead neutral
+@right rival neutral
+rival: {N:family.veyne}. The ship can go. I don't care about a cog. Come up the steps with me, and I'll stand at the top and watch it sail with all your people on it.
+rival: Nothing? ...All right. Then we do it on the quay.
+@if retainer
+@left retainer neutral
+retainer: Guard up, kid. Spears down. Stay with me.
+@left lead neutral
+@else
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Easy. Two to a street mouth, and nobody onto the plank till she calls. Stay in reach of me, outlaw.
+@left lead neutral
+@else
+> Nobody answers him. The spears come down to the level, two to each street.
+@endif
+@endif
+@left clear
+@right clear
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene can't count on anyone: the blocks stay.
+
+@scene ch08_first_turn
+@if battlemage
+@left battlemage neutral
+battlemage: Not fire. There's tar on every rope and the ship's full of it. Force only, from me. ...Good. I'm glad there's a reason.
+@left clear
+@else
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Shields up, there's bows on that long roof. Hold what's yours and don't go into the street after them. Not one step.
+@left clear
+@endif
+@endif
+@end
+
+# The second street opens (0854 picks the turn). The blocks stay.
+
+@scene ch08_second_street
+@if poacher
+@left poacher angry
+poacher: More. The fish steps and the long street, both at once. Who has the middle? ...Eleven arrows. Do not make me count them again.
+@left clear
+@else
+@if sergeant
+@left sergeant angry
+sergeant: Second street's open! Who's got the middle? I can't be in two places, I've only got the one horse.
+@left clear
+@endif
+@endif
+@end
+
+# The last turn: the ship is loaded. Ragna, from the deck.
+
+@scene ch08_last_turn
+@right envoy neutral
+envoy: She's loaded! The tide's turning under her. Everybody who's coming, come now. I'm counting you up the plank.
+@end
+
+# Dace, to anyone but the lead, Hollis, Joss and Rue.
+
+@scene ch08_boss_engage
+@right rival neutral
+rival: Put it down and get on your boat. I have no orders about you. Only about one person on this quay, and you're standing in front of {them}.
+@end
+
+# Dace and the lead.
+
+@scene ch08_boss_engage_lead
+@left lead neutral
+@right rival neutral
+rival: {N:family.veyne}. Look at me. ...You've slept, for once. Good. Come up the steps. I can get you a trial. A room with a window, I think; I have the king's ear for as long as-- come up the steps.
+lead: No.
+rival[angry]: Then don't look at the roofs.
+@end
+
+# Dace and his father. The @if goes when 0854 wires this as Dace against
+# Hollis.
+
+@scene ch08_boss_engage_retainer
+@if retainer
+@left retainer neutral
+@right rival neutral
+rival: Sit down, old man. Go sit on a crate. No one on this quay has orders about you, and I'm not going to-- sit down.
+retainer: Guard up. You're dropping it.
+rival[angry]: I'm not nine!
+retainer: Boy. ...Your left. It's always your left.
+@left clear
+@right clear
+@endif
+@end
+
+# Dace and the boy he fed. The @if goes when 0854 wires this as Dace
+# against Joss.
+
+@scene ch08_boss_engage_defector
+@if defector
+@left defector neutral
+@right rival neutral
+rival: {N:defector.nickname}. You've done the cuff. Good. Come and stand by me, and we'll say-- no. No, we won't, will we.
+defector: No, Captain. ...I'm sorry. I'm not. I'm not-- I'm staying here.
+@left clear
+@right clear
+@endif
+@end
+
+# Dace and the girl from the cart. The @if goes when 0854 wires this as
+# Dace against Rue.
+
+@scene ch08_boss_engage_heretic
+@if heretic
+@left heretic angry
+@right rival neutral
+rival: I remember you. I said I didn't, at the hall. I do.
+heretic: You lifted me in by the belt. I was fifteen. Do you want to see what they made of me? Come here, then.
+@left clear
+@right clear
+@endif
+@end
+
+# Dace at half strength. The order that kills his father.
+
+@scene ch08_boss_half
+@right rival angry
+rival: Archers to the long roof. The plank. Anyone on it. ...Anyone, I said. Go.
+@end
+
+# Dace at 0 HP. He is down, not dead; he gets up for the closing scene.
+
+@scene ch08_boss_down
+@right rival sad
+rival: I'm-- it's fine. Don't stop. The streets! Hold the streets. ...{N:family.veyne}. Don't look at me.
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch08_death_lead
+@left lead sad
+> {lead} goes down on the wet stones of the quay, a plank's length from the ship.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. Hollis's death
+# quote hands the lead the gangway's words (ch08_victory's @else). The @if
+# blocks go when 0854 wires each one.
+
+@scene ch08_death_retainer
+@if retainer
+@left retainer sad
+retainer: Boy! ...{N:family.veyne}. You tell him. You tell him what the girl saw on the plain. Up the plank, kid. Up.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: It's the knee. Gone for good this time. I'll sit on this crate, and if one of them comes near me he'll be sorry he did.
+@left clear
+@endif
+@end
+
+@scene ch08_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Get the mare on that boat. Talk to her the whole way up, she goes for anybody who talks. Not you, Your Former-- not you. You've got no patience.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: That's it for me. Who's got the street? Anybody? Say yes, one of you.
+@left clear
+@endif
+@end
+
+@scene ch08_death_poacher
+@if poacher
+@left poacher sad
+poacher: There are letters in my pack. For my mor. Send them from the first place that can. She will know the hand. I wrote them myself.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: I am out of arrows. All of them. ...I want them back, after.
+@left clear
+@endif
+@end
+
+@scene ch08_death_keeper
+@if keeper
+@left keeper sad
+keeper: Not me. Whoever's next, go to them, I'm-- {n:god.mother.name} keep-- no. No. Go to them. I'm a keeper. I've sat with this.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: I'm hit and I-- it's not deep, I'd know. Give me a moment. One moment, and I'll be up.
+@left clear
+@endif
+@end
+
+@scene ch08_death_heretic
+@if heretic
+@left heretic sad
+heretic: Heir. I'd have come east, you know. ...{N:god.pyre.name}'s teeth, it's cold.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: It won't come. The fire won't-- it's the damp, everything's wet here! ...Fine.
+@left clear
+@endif
+@end
+
+@scene ch08_death_defector
+@if defector
+@left defector sad
+defector: I didn't do the coat. Your Grace, I kept meaning to-- it's only a hole, it doesn't matter. Tell the captain I stood where I was put.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_defector
+@if defector
+@left defector surprised
+defector: I'm hit, Lieutenant-- Your Grace. Sorry. Your Grace. Where do I-- is the plank where I go? That's right, isn't it?
+@left clear
+@endif
+@end
+
+@scene ch08_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Champion. Stand up straight when they announce you. Like I showed you. ...Well struck.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_prizefighter
+@if prizefighter
+@left prizefighter neutral
+prizefighter: I'm done, Champion. Watch your left; they come at the left.
+@left clear
+@endif
+@end
+
+@scene ch08_death_shieldbearer
+@if shieldbearer
+@left shieldbearer sad
+shieldbearer: Don't tell {n:envoy.first} on the quay. Wait till she's sitting down. She never sits down. Make her.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_shieldbearer
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: I'm all right. It bleeds more than it is. Shield higher, little one. There.
+@left clear
+@endif
+@end
+
+@scene ch08_death_battlemage
+@if battlemage
+@left battlemage sad
+battlemage: The roll's in my coat. The names. ...No. Leave it in there with me.
+@left clear
+@endif
+@end
+
+@scene ch08_retreat_battlemage
+@if battlemage
+@left battlemage surprised
+battlemage: My shoulder's out. I did that tripping, not fighting. I'll keep out of the way.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The gangway. With Hollis, he holds it and is shot there; without him,
+# the lead tells Dace. He is still in the army through this scene (the
+# @dies is ch08_sail's). 0071: both versions play scene_loss, then
+# scene_departure as the ship sails (0854 adds the lines).
+
+@scene ch08_victory
+@caption {N:place.saltmere}, the docks
+@if retainer
+> The ship is loaded and the last line is off. The party goes up the plank one at a time, and {n:retainer.first} is last, backing up it with the spear level.
+@left retainer neutral
+@right lead neutral
+retainer: Up. All of you, up. Kid. Up the plank. Watch your feet, not me.
+lead: You first.
+retainer: I've got the knee. I'm slow. If I go last, nobody's stuck behind me. Up. That's it. Go on.
+@right rival angry
+rival: Archers-- hold! Hold, that's-- hold!
+> The volley is already in the air. {n:retainer.first} goes down at the foot of the plank, to his knees and then onto his side, with the spear across the boards.
+# @music scene_loss: 0071's pick for the moment Hollis dies; 0854 imports the cue and adds the line here.
+> {N:rival.first}'s hand is up, and {n:faction.hounds} hold where they are. He comes down the quay alone. {lead} is back down the plank before anyone can stop {them}.
+@if keeper
+@right keeper surprised
+keeper: Let me through! Let me-- I can see him, I've got it in my hand, let me get to him.
+@right rival neutral
+@endif
+retainer[sad]: Boy. Come here. ...Your sister's alive.
+retainer: {N:heretic} saw her. Walking off the field, after, with two keepers in gray. ...Go and get her, boy.
+> He looks at {lead}'s shoulder. It's up. Then at his son. His hand comes off the spear.
+rival: ...
+@left clear
+rival[sad]: Nobody shoots. Let it go, the ship. ...Get on your boat, {n:family.veyne}. There are no orders.
+@if sergeant
+@left sergeant angry
+sergeant: Up! Your Former Grace, up, now, I've got you-- {their} other arm, one of you, take it--
+@left clear
+@else
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Up, outlaw. Easy. I've got you. Up.
+@left clear
+@else
+> Hands take {lead} by the collar and haul {them} up the plank.
+@endif
+@endif
+# @music scene_departure: 0071's pick for the ship sailing; 0854 imports the cue and adds the line here.
+> The plank is pulled in, and the water opens between them. On the quay {n:rival.first} is on one knee, with his father.
+@right clear
+@else
+> The ship is loaded and the last line is off. Hound black fills the three streets. {lead} is last up the plank, and the archers on the long roof have their bows drawn on {them}.
+@left lead neutral
+@right rival angry
+rival: Hold. ...Nobody looses. I'll hang the man who does.
+> He comes down the quay alone, to the foot of the plank. {N:faction.hounds} don't follow him.
+rival[neutral]: {N:family.veyne}. I'm to bring you to {n:place.capital}. In a cart, in irons; there's a paper, I've read it twice. I can read you the paper, if you like. ...Say something.
+rival: Where's my father. He'd have been last off, he's always-- he'd be standing where you are. ...He's not, is he.
+# @music scene_loss: 0071's pick for the moment Hollis dies; the version without him keeps the cue (0071's starting rule); 0854 adds the line here.
+rival[sad]: ...
+rival: Let it go. The ship. ...Nobody shoots.
+lead: Your sister's alive.
+lead: She walked out of the fire.
+@if heretic
+@left heretic neutral
+heretic: I saw her. After. Two keepers in gray walked her off, on her own feet, and she looked back once. I was on her left for a year. I'd know her.
+@left lead neutral
+@else
+lead: Two keepers in gray took her.
+@endif
+lead: Go and get her.
+# @music scene_departure: 0071's pick for the ship sailing; 0854 imports the cue and adds the line here.
+> The plank is pulled in, and the water opens. {n:rival.first} stands at the edge of the quay with his hand still up, and gives no order.
+@left clear
+@right clear
+@endif
+@end
+
+# The deck, that evening. The goodbye. Hollis leaves the army here, in
+# every mode: this is the only scene that can still tell whether he died
+# on the quay an hour ago or chapters back.
+
+@scene ch08_sail
+@caption At sea, that evening
+# scene_departure (0071's cue for the ship sailing) carries on from the quay; no change here.
+> The deck, and the coast a line behind the ship, and then not even that. {lead} stands at the rail.
+@left lead neutral
+@if retainer
+@dies retainer
+@if sergeant
+@right sergeant sad
+sergeant: I haven't opened the book. I'm not going to. ...He cheated at dice, did you know that? One trick, the same one every time, and I let him, and he thought I didn't know.
+@right clear
+@endif
+@if keeper
+@right keeper sad
+keeper: I had it in my hand. The salve. I had it out, I was three steps from him.
+@right clear
+@endif
+@if heretic
+@right heretic neutral
+> {n:heretic} puts bread into {lead}'s hand without a word, and sits down on the deck with her back against the rail.
+heretic: Did he eat? Today, before. Did anybody see him eat anything? ...Anybody?
+@right clear
+@endif
+@else
+@if shieldbearer
+@right shieldbearer neutral
+shieldbearer: I've never been east of the fjord. {N:envoy.first} has, once. She says there's no herring there.
+@right clear
+@else
+> The coast is gone, and nobody says anything about it.
+@endif
+@endif
+@choice
+* act: I'll take the watch.
+  @if shieldbearer
+  @right shieldbearer neutral
+  shieldbearer: No-- all right. Wake me at the bell, outlaw.
+  > Her cloak goes around {lead}'s shoulders on the way past.
+  @right clear
+  @else
+  > No one argues. A cloak goes around {lead}'s shoulders on the way past.
+  @endif
+* blunt: Go below. All of you.
+  @if keeper
+  @right keeper neutral
+  keeper: Yes. Of course. ...I'll be below. If anyone wants-- below.
+  @right clear
+  @else
+  > They go, slowly, and not all of them.
+  @endif
+* silent: ...
+  @if heretic
+  @right heretic neutral
+  heretic: ...Fine. I'll sit here. Nobody has to talk.
+  @right clear
+  @else
+  > No one says anything for a while. The ship creaks.
+  @endif
+@endchoice
+@if defector
+@right defector sad
+defector: Give me the coat, Your Grace. The hole. I can do it now, while there's light. I'd like to, please.
+@right clear
+@endif
+@if prizefighter
+@right prizefighter neutral
+prizefighter: Rule fourteen is struck, Champion. I struck it on the quay. ...I was coming whatever the season said. I'd like that known.
+@right clear
+@endif
+@if poacher
+@right poacher neutral
+poacher: {N:family.veyne}. You are wet. Sit down.
+> {lead} sits.
+@right clear
+@else
+> {lead} sits down, after a while, where {they} stood.
+@endif
+@left clear
+@end
+
+# The quay after dark. Dace alone.
+
+@scene ch08_dock
+@caption {N:place.saltmere}, the docks, after dark
+@music scene_sad
+> The quay after dark. The ship's lantern is out past the point, and then it isn't. {N:faction.hounds} stand at the mouths of the streets, and nobody has gone home.
+@right rival sad
+rival: She walked off a field, {n:family.veyne}. And {n:vowmaster.title} told me she'd come back through a door. ...She never went through anything. She's walking about somewhere.
+rival[angry]: Which of you was at {n:place.ashfields}. None of you. No. Then find me somebody who was. Every keeper in gray between this coast and {n:place.capital}. I want their names by morning.
+@end
+
+# ---------------------------------------------------------------------------
+# The closing scene (1065)
+# ---------------------------------------------------------------------------
+
+# Varenhall. The king reads. Act 1 ends.
+
+@scene ch08_closing
+@caption {N:place.capital}, the king's rooms, that night
+# @music scene_lamplight: 0071's pick for the king's closing scene; 0854 imports the cue and adds the line here.
+> A small room high in the palace, the shutters closed and one lamp lit, and the fire let go low. The king sits with a book open on his knee, a boy's book with a fox in it.
+@right king neutral
+king: "...and the fox said, 'I will show you the way out of the wood, but you must carry me, for my paw is hurt,' and the boy picked him up, though he was very heavy for a fox."
+king[happy]: There. That was always the part you wanted twice. ...Shall I go on? No. No, that's enough for tonight. It's late, and you have been very patient with me.
+> He closes the book on his finger to keep the place, and reaches out of the lamplight.
+king[happy]: Your hands are warm tonight.
+@end

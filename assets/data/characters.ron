@@ -157,5 +157,7 @@
     // king's knight speak before 0852 makes units of those that fight.
     // Chapter 7 (ticket 0749): the warden of the Candles' barracks speaks
     // before 0853 makes a unit of her.
-    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden"],
+    // Chapter 8 (ticket 0750): the king speaks in the closing scene and
+    // never fights in Act 1.
+    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king"],
 )

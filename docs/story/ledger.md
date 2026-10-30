@@ -1936,3 +1936,314 @@ Hounds leaving with a carriage, and the cut to Crane and Dace.
   line is Hedda's; his exchange with the warden can't play; nobody says
   "nineteen" in the yard, so Rue's "then we go back for them", Hollis's
   "no" and "she's not with them" are unsaid.
+
+## After Chapter 8 (Act 1 ends)
+
+Written by 0750 from `assets/dialogue/ch08.dlg`. It describes a chapter
+everyone lived through, with Gil in the party, Hedda with it and Oriel
+alive, and **Hollis alive going into it**; what an earlier death leaves
+unsaid here, and what changes if Hollis was already gone (the lead tells
+Dace), Gil was missed, Hedda never joined or Oriel fell, is in "If a
+companion died before Chapter 8", at the end. The battle itself (how
+long the quay was held, who met Dace, whether he was brought down) is
+the player's; the scenes don't depend on it, except that **Hollis dies on
+every path** where he was alive to start the chapter, and the ship sails
+on every path.
+
+### What happened
+
+- **The crossroads.** Winter proper, on the road south out of Ossary: a
+  new bill on the post with the king's seal, the wax still shiny. **Aske
+  read it out, slowly, and would not be helped** ("I am reading it. Do
+  not help."); Maud read the rest: the exile Veyne, traitor, to be
+  delivered to the crown alive, "with all who go armed in their
+  company", and a price under it. Tamsin: the price is four years of the
+  Red Company's back pay with change; the lead is the most expensive
+  thing she has stood next to, and she has stood next to a prior. **Joss
+  knew the hand at the bottom: the captain's.** Hedda: Ragna is lying off
+  Saltmere till the ice; she said till the ice, so she's there. Rue:
+  east, then, the old man in the hood said the East shut it; is there
+  food on a ship, has anybody been on one; Hedda: "Herring." **Aske: east
+  is the wrong way for her; she knows that; she is going anyway; that is
+  all she has to say about it.** Oriel: the nineteen are on the plain
+  still; he'd thought he might-- no; may he come, he'd rather be told yes
+  than take it; the lead: yes. Gil: rule fourteen, a champion doesn't
+  leave the circuit before the season's out; it's winter, so the season's
+  out, he checked; Tamsin: it was eleven at the border, where does he keep
+  finding them. **The lead: "East."** Hollis: three days to the sea, then;
+  walk, it's going to snow.
+- **The hill above Saltmere, the night before.** The harbor lights, one
+  lantern out on the water. **Hollis with the lead's sword across his
+  knees and the stone, doing the edge the way he has the night before
+  every fight the lead has ever been in.** Has the lead ever been on a
+  boat; don't say the mill pond, the pond's got a bottom. **He was sick on
+  a cart once, the hall to the capital, nine hours; Lord Veyne laughed
+  till the gate and then was sick too, and they never spoke of it**;
+  that's a lot of water down there to be sick on. Boots off and dried;
+  that coat, the lead will freeze in it, the Hound boy has wanted to do
+  the hole since the river, let him. He turned the sword and did the
+  other edge. **Then, once: "My girl's on this side of the water. ...And
+  the boy's wherever the boy is. I'm not saying anything. I'm saying
+  where they are."** The lead answered (a reply, not recorded: to "we'll
+  come back for her" he said aye, they will, and don't say it like that,
+  you sound like the boy; to the joke about being sick the whole way he
+  said he knows, it'll happen and he'll live, pass the oil and don't tell
+  the sergeant; to "give me the knee" he said leave the-- go on, then,
+  not hard, harder than that, he's not made of glass, there, better).
+  Eat something, then sleep; he's watching the lights; **"Shoulder up
+  tomorrow, kid. I'm behind you, same as always."** Maud came with the
+  good salve for the knee and asked him not to say no; **he took it, and
+  told her to sit down, she was letting the cold in.**
+- **The quay at first light.** A Brennish ship hauled in on a line, crates
+  where the dock men dropped them when they all went home at once, **Ragna
+  with her writing case shut under her arm** and not one League halberd
+  anywhere. Nine days from Ossary, she had a man on the road, she counts;
+  all of them, then, and a horse. **Tamsin: the mare goes or she doesn't;
+  plan the hold around her**; Ragna: horses go in the hold, she has
+  shipped horses, the mare will hate it and live, blindfold her for the
+  plank. An hour on this tide if the dock men stay paid for; Hound black
+  on the fish steps since it got light; she would like her hour. **To
+  Hedda: the ship puts Ragna off at the fjord on its way, and Hedda with
+  her. Hedda: no; she's going on east with them; nobody lent her this
+  time; she's going. Ragna: the gray cloak's in the boat, the big one;
+  it's colder where Hedda's going than at home; she asked. Hedda: "...You
+  asked."** Joss: that's the company on the steps, ours, the captain's; he
+  knows how they stand when they're waiting; they're waiting for him.
+  Hollis: two spears to each street; nobody onto the plank till the
+  Brennish woman says so; Veyne where he can see them. Ragna: she'll have
+  every one of them on her, exile; go stand somewhere, they're in the way
+  of her crates.
+- **Three streets.** Hound black out of all three at once, stopping at
+  the quay's edge; **Dace in front of it with empty hands, looking only at
+  the lead.** The ship can go, he doesn't care about a cog; come up the
+  steps with him and he'll stand there and watch it sail with all the
+  lead's people on it. Nothing. "...All right. Then we do it on the
+  quay." Hollis: guard up, kid; spears down; stay with him.
+- **The party held the quay for the ship's hour** against Hounds from
+  the fish steps, the salt street and the warehouse lane, with Dace at
+  their head.
+- **In the battle** (what the triggers say, if they fired): Oriel on turn
+  1, not fire, there's tar on every rope and the ship's full of it, force
+  only from him; "Good. I'm glad there's a reason." (or Hedda: shields up,
+  there's bows on the long roof, don't go into the street after them).
+  When the second street opened, Aske: who has the middle; eleven arrows,
+  don't make her count them again (or Tamsin: who's got the middle, she
+  can't be in two places with one horse). On the last turn, **Ragna from
+  the deck: she's loaded, the tide's turning, everybody who's coming come
+  now, she's counting them up the plank.** **Dace, to anyone:** put it
+  down and get on your boat; he has no orders about them; he has orders
+  about one person on this quay, and they're standing in front of {them}.
+  **To the lead:** look at him; the lead has slept, for once; come up the
+  steps; a trial, a room with a window, he thinks; he has the king's ear
+  for as long as--; the lead: "No."; Dace: "Then don't look at the
+  roofs." **To Hollis:** sit down, old man, go sit on a crate, no one on
+  this quay has orders about him; Hollis: "Guard up. You're dropping it.";
+  Dace: "I'm not nine!"; **Hollis: "...Boy. ...Your left. It's always your
+  left."** **To Joss:** Needle; he's done the cuff; good; come and stand by
+  him and they'll say-- no, they won't, will they; Joss: no, Captain; he's
+  sorry; he's not; he's staying here. **To Rue:** he remembers her; he
+  said he didn't, at the hall; he does. Rue: he lifted her in by the belt;
+  she was fifteen; does he want to see what they made of her; come here,
+  then. **At half strength, to his Hounds: archers to the long roof; the
+  plank; anyone on it; anyone, he said.** Down at 0 HP: it's fine, he's
+  down, don't stop for him, hold the streets; "Veyne. Don't look at me."
+  Death quotes, if they fired: Hollis ("Boy!"; then Veyne, you tell him,
+  you tell him what the girl saw on the plain; up the plank, kid), Tamsin
+  (get the mare on the boat, talk to her the whole way up, she goes for
+  anybody who talks, so not you, Your Former--, you've got no patience),
+  Aske (letters in her pack for her mor, send them from the first place
+  that can, she will know the hand, Aske wrote them herself), Maud (not
+  her, whoever's next, go to them; Ama keep-- no; she's a keeper, she's
+  sat with this), Rue (heir; she'd have come east, you know; Vael's
+  teeth, it's cold), Joss (he didn't do the coat, it's only a hole, it
+  doesn't matter; tell the captain he stood where he was put), Gil
+  (Champion, stand up straight when they announce you, like he showed;
+  well struck), Hedda (don't tell Ragna on the quay, wait till she's
+  sitting down, she never sits down, make her), Oriel (the roll's in his
+  coat, the names; no, leave it in there with him).
+- **The gangway.** The ship loaded, her lines off but the plank, Hound
+  black in all three streets, the party up the plank one at a time and
+  **Hollis last, backing up it with the spear level.** Up, all of them;
+  kid, up the plank, watch your feet, not him. **The lead: "You first."**
+  He's got the knee, he's slow, if he goes last nobody's stuck behind
+  him; up; that's it; go on. **Dace came down the
+  salt street already shouting at the roof, "Archers-- hold! Hold,
+  that's-- hold!", and the volley was already in the air. Hollis went down
+  at the foot of the plank, to his knees and then onto his side, the
+  spear across the boards.** Dace's hand up; the Hounds held; he came down
+  the quay alone; the lead was back down the plank before anyone could
+  stop them; Maud: let her through, she's got it in her hand, let her get
+  to him. **Hollis: "Boy. Come here. ...Your sister's alive. Rue saw her.
+  Walking off the field, after, with two keepers in gray. ...Go and get
+  her, boy." He looked at the lead's shoulder (it was up), then at his
+  son, and his hand came off the spear.** Dace said nothing. Then: **nobody
+  shoots; let it go, the ship; get on your boat, Veyne; there are no
+  orders.** Tamsin hauled the lead up the plank by the arms
+  ("Your Former Grace, up, now, I've got you"). The plank pulled in, the
+  water opening between them, **Dace on one knee on the quay with his
+  father.**
+- **The deck, that evening.** The coast a line, then not even that; the
+  lead at the rail. **Tamsin hasn't opened the book and isn't going to;
+  he cheated at dice, one trick, the same one, forty years, and she let
+  him, and he thought she didn't know.** Maud had the salve in her hand,
+  she had it out, she was three steps from him. **Rue put bread in the
+  lead's hand without a word and sat down against the rail: did he eat
+  today, before, did anybody see him eat; anybody.** The lead answered (a reply, not recorded:
+  to "I'll take the watch", Hedda said no-- all right, wake her at the
+  bell, outlaw, and her cloak went around the lead's shoulders on the way
+  past; to "go below, all of you", Maud said yes, of course, she'll be
+  below; to silence, Rue said fine, she'll sit here, nobody has to
+  talk). **Joss: give him the coat, Your Grace, the hole, he can do it
+  now while there's light, he'd like to, please.** Gil: rule fourteen is
+  struck, he struck it on the quay; he was coming whatever the season
+  said; he'd like that known. **Aske: "Veyne. You are wet. Sit down."** The lead sat. **Hollis left the army here, in every mode, his
+  loadout to the stock.**
+- **The quay after dark.** The ship's lantern out past the point, then
+  gone; the Hounds at the street mouths with no order and nobody gone
+  home. **Dace, to the lead who isn't there: she walked off a field; and
+  the Master of Vows told him she'd come back through a door; she never
+  went through anything; she's walking about somewhere.** Then: which of them was at the Ashfields; none; then
+  find him somebody who was; **every keeper in gray between this coast
+  and Varenhall; he wants their names by morning.**
+- **Varenhall, the king's rooms, that night** (the closing scene, 1065's).
+  Shutters closed, one lamp, the fire let go low; **the king reading a
+  boy's book aloud (a fox with a hurt paw that a boy has to carry out of
+  the wood) to someone the lamp doesn't show.** That
+  was always the part they wanted twice; shall he go on; no, that's enough
+  for tonight; it's late, and they have been very patient with him. He
+  closed the book on his finger and reached out of the lamplight. **"Your
+  hands are warm tonight."** *Act 1 ends.*
+
+### Who knows what (changes since the end of Chapter 7)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| The king has named the exile Veyne a traitor, to be delivered alive, with a price, and everyone armed in their company with them; the warrant goes to Captain Marr | **the whole party**, from the bill | — |
+| Ragna's ship lay off Saltmere "till the ice"; it took the party east, and Ragna with it as far as the Brennish coast | the party, Ragna, Hedda; **Dace** (he saw it sail) | where it lands (Act 2) |
+| **Hollis is dead**, shot by Dace's archers on the Saltmere quay under Dace's own standing order ("anyone on the plank"), which Dace tried to call back too late | **the whole party**; **Dace** and his Hounds | — |
+| **Wren walked out of the Ashfields fire alive, after; two keepers in gray had her** | **Dace**, from Hollis dying (or from the lead, if Hollis was already gone; Rue added what she saw if she was there) | where she is now (the later twist); that she is the bearer; that the king has her |
+| Dace let the ship go: "nobody shoots", "there are no orders" | the party, the Hounds | — |
+| Dace has stopped believing Crane's door ("she's walking about somewhere") and is hunting for keepers in gray | **the player** | the party (they saw him kneel and give no order; nothing more) |
+| Hedda chose east, unlent; Ragna asked about the East's cold and bought her a cloak | the party, Ragna | — |
+| Gil struck rule fourteen and would have come without it | the party | — |
+| Lord Veyne was once sick on a cart beside Hollis and laughed first | the lead | — |
+| Hollis's girl was "on this side of the water" and he was leaving her to go with the lead, and meant to come back | the lead | — |
+| The king reads a boy's book every night to someone unseen whose hands are warm tonight | **the player** | the party; who it is (the midpoint twist) |
+
+Unchanged and still secret: Dace being gifted, the prince come back,
+Wren's place in the palace, the Door Vow by name, Coldwell, Gil's
+seventh fair, Aske's letters' contents. Nobody has heard "Door Vow" or
+"Unfinished". Nobody in the party knows what Dace did after the ship
+sailed.
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| Hollis ↔ the lead | **Ended.** The sword and the stone the night before; "Shoulder up tomorrow, kid. I'm behind you, same as always."; "You first." on the plank; he looked at the lead's guard last. He said "my girl" and "the boy" to them in one breath and called it saying nothing. |
+| Hollis ↔ Dace | **"Go and get her, boy."** The one thing Hollis never said (his flaw, silence) said with the last of him; "Guard up. You're dropping it." and "Your left" before it, as always. Dace shot his father by an order he gave an hour earlier and tried to call back. |
+| Hollis ↔ Maud | **One notch, the last.** She asked him not to say no to the salve; he took it and told her to sit, she was letting the cold in. Not forgiveness; an order about the cold, which is how he is warm. |
+| Dace ↔ the lead | "Come up the steps." / "No." / "Then don't look at the roofs."; on the quay, "Get on your boat, Veyne. There are no orders." Alone, he still talks to the lead; he says nothing of his father there (the scene can't know where the body is). He has not said "I'm sorry" (Act 3). |
+| Dace ↔ Crane | **Doubt.** "The Master of Vows told me she'd come back through a door. ...She never went through anything." Dace has an order out for keepers in gray by morning. |
+| Dace ↔ Joss | "Needle. You've done the cuff. Good." / "No, Captain. ...I'm staying here." Joss said no in his own words. |
+| Dace ↔ Rue | "I remember you. I said I didn't, at the hall. I do." / "You lifted me in by the belt. I was fifteen." |
+| Hedda ↔ Ragna | **Chosen.** "Nobody lent me this time." / "It's colder where you're going than it is at home; I asked." / "...You asked." Ragna sails as far as the fjord; Hedda goes on. |
+| Aske ↔ the lead | **"Veyne."** Said for the first time, on the deck, with Hollis's kind of order after it ("You are wet. Sit down."). Nobody remarked on it. |
+| Joss ↔ the lead | The coat is his now: "I can do it now, while there's light-- I'd like to do it now. Please." |
+| Gil ↔ the lead | Rule fourteen struck; "I was coming whatever the season said. I'd like that known." |
+| Tamsin ↔ Hollis | The book stays shut. "He cheated at dice... and I let him, and he thought I didn't know." |
+| Rue ↔ Hollis | "Did he eat? Today, before. ...Anybody?" Bread in the lead's hand without a word. |
+| Maud ↔ Hollis | "I had it in my hand. The salve. I had it out, I was three steps from him." |
+| Oriel ↔ the party | "May I come?" / "Yes." Force only on the quay; "I'm glad there's a reason." |
+| Ragna ↔ the party | Her hour, held; she counted them up the plank. |
+| The lead ↔ Hollis (replies) | One reply, the player's, the night before: come back for her / sick the whole way / give me the knee. Each moved him. |
+| The lead ↔ the party (replies) | One reply, the player's, on the deck: the watch / go below / silence. Hedda, Maud or Rue filled it. |
+
+### Status
+
+- **Act 1 is over. The party is at sea, going east** to the Jade Reach, on
+  a Brennish ship with Ragna aboard as far as the Brennish coast: the
+  lead, Tamsin, Aske, Maud, Rue, Joss, **Gil if he joined**, **Hedda if she
+  lived through the hold**, **Oriel if he lived through the crossing**.
+  **Hollis is dead** (every mode; his loadout is in the stock). The army,
+  stock, gold and supports carry over to Act 2 (1065).
+- The lead is a traitor under the king's seal, with a price; so is
+  everyone armed in their company.
+- **Dace is on Saltmere's quay** with his Hounds and his father's body
+  (if Hollis died there), knowing Wren walked off the Ashfields alive and
+  that two keepers in gray had her; he has stopped believing Crane's door
+  and has ordered every keeper in gray between the coast and Varenhall
+  found by morning. Act 2: he hunts the party east and hunts for Wren
+  (the outline). He has been told nothing of where she is.
+- The nineteen Candles are with the king's army; Wren is in the palace
+  (the later twist); nobody is going back for anyone yet (Acts 2–3).
+- Act 1's side quests close when the ship sails (1072, 1074).
+- The king is at Varenhall reading to someone the player hasn't seen,
+  whose hands are warm tonight (the midpoint clue).
+- The lead's two replies (to Hollis on the hill, on the deck) are not
+  recorded: tones never change what happened.
+
+### If a companion died before Chapter 8 (Classic), Gil was missed, Hedda never joined, or Oriel fell
+
+Everything above describes the scenes with Hollis alive into the
+chapter, all seven alive, Gil in the party, Hedda with it and Oriel
+alive. True on every path: the bill, the decision east, the quay held
+for an hour, Dace's offer refused by silence, the ship sailing, Dace
+hearing that Wren walked out of the fire, Dace letting the ship go, Dace
+alone on the quay doubting the door, and the king's reading.
+
+- **Hollis already dead (Classic):** the night before is Maud's and the
+  lead's (she checks hands that are fine and tells the lead to sleep) or
+  narration alone; nobody places the spears on the quay or says "guard
+  up"; **the gangway is the lead's**: Dace holds the roof (his orders about
+  the exile are "alive"), comes down alone, says the paper and the cart,
+  asks where his father is and reads the answer off the plank himself
+  ("...He's not, is he."; the lead says nothing); Dace lets the ship go
+  ("Let it go. The ship. ...Nobody shoots."); then **the lead tells him:
+  "Your sister's alive." "She walked out of the fire." Rue, if there: she
+  saw her, two keepers in gray walked her off on her own feet, she looked
+  back once, Rue was on her left for a year (without Rue, the lead: "Two
+  keepers in gray took her."); the lead: "Go and get her."** Dace stands
+  at the quay's edge with his hand still up and gives no order. On the
+  deck nobody grieves him today: Hedda says she's never been east of the
+  fjord and Ragna says there's no herring there (or narration: the coast
+  is gone and nobody says anything about it); the rest of the deck is the
+  same. Dace's words alone on the quay are the same. The music is the same
+  (0071's starting rule).
+- **Hollis fell in this battle (Classic):** his death quote ("you tell him
+  what the girl saw on the plain") fired, and the gangway and the deck are
+  the versions above. **In Casual** a retreat here changes nothing: he
+  holds the gangway and dies there (Nick, 0069).
+- **Tamsin dead:** nobody prices the lead at the crossroads or answers
+  Gil's rule; nobody argues the mare onto the ship (Ragna says "and a
+  horse" to nobody); the second-street line without Aske is unsaid; Hedda
+  (else narration) hauls the lead up the plank; nobody says "he cheated
+  at dice".
+- **Aske dead:** Maud reads the whole bill (or narration does); nobody
+  says east is the wrong way; the second-street line falls to Tamsin;
+  **nobody says "Veyne" on the deck**, and the lead sits down after a
+  while where they stood.
+- **Maud dead:** Aske reads the bill alone; nobody brings salve to the
+  knee the night before; nobody shouts "let me through" on the quay
+  (narration carries the lead back down the plank alone); nobody says "I
+  had it in my hand"; the "go below" reply is answered by narration.
+- **Rue dead:** nobody asks about food at the crossroads, so Hedda's
+  "Herring." is unsaid; Dace's exchange with her can't play; **on the
+  gangway without Hollis, the lead says "Two keepers in gray took her."
+  instead of Rue's account**; no bread on the deck; the silent reply is
+  answered by narration.
+- **Joss dead:** nobody knows the hand on the bill; nobody names the
+  company on the fish steps; Dace's exchange with him can't play; nobody
+  asks for the coat on the deck.
+- **Gil missed or dead:** no rule fourteen, at the crossroads or on the
+  deck; his battle lines can't play.
+- **Hedda never joined (fell in the hold):** nobody says where Ragna is
+  lying (the party goes to Saltmere on the barn's word from Chapter 7
+  anyway); nobody says "Herring."; Ragna's offer to put her off at the
+  fjord is unsaid, and so is the cloak; the first-turn line without Oriel
+  is unsaid; the prebattle placing without Hollis falls to narration; the
+  lead is hauled up the plank by hands (narration) if Tamsin is also
+  gone; the "watch" reply is answered by narration; **on the deck without
+  Hollis, the coast goes in narration.**
+- **Oriel fell in the crossing (Classic):** nobody asks to come; the
+  first-turn line is Hedda's; his battle lines can't play.
