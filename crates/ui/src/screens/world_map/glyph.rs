@@ -195,8 +195,8 @@ fn paint_map(
     let ink = named("panel_bg");
     for place in &view.places {
         let p = on_screen(place.pos);
-        for dx in -1..=1 {
-            blank(buf, Pos::new(p.x + dx, p.y));
+        for x in p.x - 1..=p.x + 1 {
+            blank(buf, Pos::new(x, p.y));
         }
         let (color, symbol) = plate(place.mark);
         let color = if place.locked { LOCKED } else { color };

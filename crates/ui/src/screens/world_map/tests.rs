@@ -488,6 +488,28 @@ fn the_picture_look_puts_a_small_maps_places_where_it_is_centred() {
     );
 }
 
+/// The picture look: Stone Mill's "Lv1" centred over it, the help line
+/// on the bottom row (a look test).
+#[test]
+fn the_picture_look_centres_a_short_level_and_ends_with_the_help() {
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let buf = paint_pictures(&ctx, &s);
+    let label: String = (33..36)
+        .filter_map(|x| buf.get(x, 12).map(|c| c.glyph))
+        .collect();
+    assert_eq!(label, "Lv1");
+    let bottom = i32::from(buf.height()) - 1;
+    let help: String = (1..40)
+        .filter_map(|x| buf.get(x, bottom).map(|c| c.glyph))
+        .collect();
+    let want = s.view(&ctx).help;
+    assert!(
+        want.starts_with(help.trim_end()) && !help.trim().is_empty(),
+        "{help:?}"
+    );
+}
+
 /// The picture look's symbol of an empty place is in its own colour.
 #[test]
 fn the_picture_looks_empty_place_is_a_dot_in_its_colour() {
@@ -895,6 +917,13 @@ fn the_picture_look_draws_the_maps_picture_dotted_roads_and_no_flag() {
         (ground.dest.x, ground.dest.y, ground.dest.w, ground.dest.h),
         (0, 0, 560, 480)
     );
+    let info = ctx.game.content.images.info(card).expect("its size");
+    let (w, h) = (i32::try_from(info.width), i32::try_from(info.height));
+    assert_eq!(
+        ground.src,
+        PxRect::new(0, 0, w.unwrap_or(0), h.unwrap_or(0))
+    );
+    assert!(ground.src.w > 1 && ground.src.h > 1);
     assert_eq!(ground.layer, Layer::Under);
     // Dots: 4 × 4 squares in the path colour.
     let path = ctx.palette.get(UiColor::Path);

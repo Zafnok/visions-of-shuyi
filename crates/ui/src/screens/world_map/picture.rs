@@ -182,8 +182,8 @@ fn paint_cursor(ctx: &Ctx, rect: PxRect, brightness: f32, buf: &mut GlyphBuffer)
         let arm = |len: i32, thick: i32, grow: i32, across: bool| {
             let (w, h) = if across { (len, thick) } else { (thick, len) };
             let (w, h) = (w + grow * 2, h + grow * 2);
-            let x0 = if sx > 0 { x - grow } else { x - w + grow };
-            let y0 = if sy > 0 { y - grow } else { y - h + grow };
+            let x0 = if sx == 1 { x - grow } else { x - w + grow };
+            let y0 = if sy == 1 { y - grow } else { y - h + grow };
             PxRect::new(x0, y0, w, h)
         };
         for across in [true, false] {
