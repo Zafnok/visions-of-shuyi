@@ -47,8 +47,10 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: git diff "origin/$BASE_REF...HEAD" -- '*.rs' > git.diff
-      # 1 shard up to 40 mutants, 4 up to 160, otherwise 8: every shard pays
-      # for its own setup and first full build, so a small diff gets one.
+      # 1 shard up to 40 mutants, 4 up to 160, 8 up to 480, then one shard
+      # per 60 mutants, at most 20 (ADR-0100): every shard pays for its own
+      # setup and first full build, so a small diff gets one, and a shard
+      # tests about one mutant a minute, so 60 fit its time limit.
       - name: Count mutants and pick shards
         id: count
         run: |
@@ -62,8 +64,13 @@ jobs:
             of=1
           elif [ "$mutants" -le 160 ]; then
             of=4
-          else
+          elif [ "$mutants" -le 480 ]; then
             of=8
+          else
+            of=$(( (mutants + 59) / 60 ))
+            if [ "$of" -gt 20 ]; then
+              of=20
+            fi
           fi
           shards=$(seq -s, 0 $((of - 1)))
           echo "$mutants mutants in the diff: $of shard(s)"
@@ -101,7 +108,8 @@ jobs:
     if: needs.plan.outputs.mutants != '0'
     name: mutants (diff, shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # About twice what 60 mutants take; a queued shard's wait doesn't count.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
