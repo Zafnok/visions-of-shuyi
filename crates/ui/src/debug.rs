@@ -60,7 +60,7 @@ pub const SCREENS: [&str; 7] = [
 
 /// The debug tools, in menu order, before "Map skin" ([`MAP_SKIN_TOOL`]),
 /// whose label names the skin in use.
-const TOOLS: [&str; 10] = [
+const TOOLS: [&str; 11] = [
     "Glyph sampler",
     "Portraits",
     "Play test scene",
@@ -69,6 +69,7 @@ const TOOLS: [&str; 10] = [
     "Class change: promote",
     "Class change: reclass",
     "Voice test",
+    "Test world map",
     "Play test cinematic",
     "Scene camera",
 ];
@@ -81,10 +82,12 @@ const PROMOTE_TOOL: usize = 5;
 const RECLASS_TOOL: usize = 6;
 /// Index of "Scene camera" in [`TOOLS`].
 #[cfg(test)]
-const SCENE_CAMERA_TOOL: usize = 9;
+const SCENE_CAMERA_TOOL: usize = 10;
 /// Index of "Play test cinematic" in [`TOOLS`].
 #[cfg(test)]
-const CINEMATIC_TOOL: usize = 8;
+const CINEMATIC_TOOL: usize = 9;
+/// Index of "Test world map" in [`TOOLS`] (1007).
+const WORLD_MAP_TOOL: usize = 8;
 /// Index of "Voice test" in [`TOOLS`].
 const VOICE_TEST_TOOL: usize = 7;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
@@ -121,7 +124,9 @@ fn tools() -> Vec<DebugEntry<Shuyi>> {
                 say_next_voice(ctx, &mut said);
                 Transition::None
             }
-            8 => Transition::Push(Box::new(CinematicScreen::new(ctx))),
+            WORLD_MAP_TOOL => crate::flow::FlowScreen::test_world_map(ctx)
+                .map_or(Transition::None, |f| Transition::Push(Box::new(f))),
+            9 => Transition::Push(Box::new(CinematicScreen::new(ctx))),
             _ => Transition::Push(Box::new(scene_camera(ctx))),
         })
     });
@@ -445,6 +450,11 @@ mod tests {
         );
         // "Voice test" stays on the menu.
         assert_eq!(outcome(&mut menu, &[CursorDown, Confirm]), "None");
+        // "Test world map" starts its flow (1007).
+        assert_eq!(
+            outcome(&mut menu, &[CursorDown, Confirm]),
+            "Push(world_map)"
+        );
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(cinematic)"

@@ -28,8 +28,16 @@ picked a **mix**:
 
 Nick: make sure they're "clearly delineated so that players know which ones
 are more important and which ones are just for grinding. Some symbol above
-them or a level marker or both." The design uses **both**. The glyphs are
-chosen in 1007.
+them or a level marker or both." The design uses **both**. 1007 chose
+them (`look-and-feel.md`, *The world map*): symbol plates with the level
+marker above, a fixed skirmish `!` on a brick red plate and a random one
+`?` on a grey plate, beside the story battle's gold `‼` and the side
+quest's green `♥`. Add the two marks to `PlaceMark` and both skins
+(`crates/ui/src/screens/world_map/`), and to the Find list
+(`FindKind`). Travel already goes around an unwon battle and stops at
+one in the way (`trpg_core::worldmap`): a guarding fixed skirmish needs
+nothing more than being a battle node. A random group must never spawn on
+the army's own place (it would be a battle the army is standing on).
 
 Skirmish battle files use the `music: Pool("skirmish")` field that 0807
 adds to battle files (added to `blocked_by` 2026-10-01).

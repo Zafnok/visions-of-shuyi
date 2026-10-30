@@ -102,8 +102,8 @@ impl Screen<Shuyi> for SavePromptScreen {
 /// What the slot picker is open for.
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Purpose {
-    /// Saving this campaign, whose chapter was just won.
-    Save(Box<Campaign>),
+    /// Saving this: a chapter save, or a world-map save (1007).
+    Save(Box<SaveFile>),
     /// Loading a chapter save.
     Load,
 }
@@ -142,9 +142,19 @@ impl SlotPickerScreen {
     /// the first empty slot (Nick, PR #141), so that Confirm never
     /// overwrites a save by reflex; the first slot if none is empty.
     pub fn save(ctx: &Ctx, campaign: Campaign) -> Self {
+        Self::saving(ctx, SaveFile::chapter_cleared(campaign))
+    }
+
+    /// The picker for saving `campaign` on the world map (1007), focused
+    /// as [`save`](Self::save) is.
+    pub fn save_world(ctx: &Ctx, campaign: Campaign) -> Self {
+        Self::saving(ctx, SaveFile::world_map(campaign))
+    }
+
+    fn saving(ctx: &Ctx, file: SaveFile) -> Self {
         let slots = save::slots(&ctx.storage, &ctx.game.content, ctx.words());
         let empty = slots.iter().position(|s| *s == Slot::Empty);
-        Self::new(Purpose::Save(Box::new(campaign)), slots, empty)
+        Self::new(Purpose::Save(Box::new(file)), slots, empty)
     }
 
     /// The picker for loading, focused on the first slot with a save.
@@ -228,12 +238,11 @@ impl SlotPickerScreen {
     /// [`SlotOutcome::Saved`] if it was saved; a failure shows as the
     /// message.
     fn write(&mut self, ctx: &mut Ctx) -> Option<Transition> {
-        let Purpose::Save(campaign) = &self.purpose else {
+        let Purpose::Save(file) = &self.purpose else {
             return None;
         };
-        let file = SaveFile::chapter_cleared(campaign.as_ref().clone());
         let slot = self.focused_slot();
-        match save::write(&mut ctx.storage, &slot_key(slot), &file) {
+        match save::write(&mut ctx.storage, &slot_key(slot), file) {
             Ok(()) => {
                 ctx.audio.menu(MenuSound::Select);
                 Some(Transition::pop_with(SlotOutcome::Saved(slot)))

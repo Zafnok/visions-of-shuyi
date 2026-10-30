@@ -1,0 +1,135 @@
+---
+source: crates/ui/tests/it/world_map.rs
+expression: h.snapshot()
+---
+≈   ≈  ,.  ,             ..  .  ,  ..  .     ^ ^  ▲^ ^^▲ ^  ▲^   ▲  ^^╔════════ Stone Mill ════════╗
+≈     .     .      .,  ,   .    ,        ..  ^   ▲ ^ ^^    ^^ ^ ▲^^^ ^║ Act 1 · Test World II      ║
+ ≈        ..       ♣♣♣          .   .       .. ^▲    ^^  ^▲    ▲^   ▲ ║                            ║
+   ≈           ♣♣ ♣♣  ♣♣ ♠.       .  .    .   .▲^ ^ ^    ▲ ^ ^▲^^^ ▲^^║ Story battle               ║
+    ≈≈≈      ♣♣♣♠♣♣♠♣♠♣♣♣♣♠  Lv1         .      ^  ^    ^ ^  ▲ ^  ▲   ║ Won                        ║
+  ≈   ≈    , ♣ ♣♣♣♣♣♣♣♣ ♣♣♣♣  ♥       ,   .      ^      ^^     ^   ^  ║ Your army is here          ║
+ ≈   ≈≈ ,   ♣♣♣♠♣ ♠♣♣ ♣ ♣ ♣ ♠              .        ^^ ^^^^   ^^^   ^^║                            ║
+  ≈   ≈     .♣♣♣♣♣♠♠♣♣♣ ♣♠♠                  .   .  ^  ^ ^^  ^  ^ ^^^^║                            ║
+≈      .,    ♣ ♣♣♣♣♣ ♣♣ ♠♣♣♣                    ,          ^^ ^  ^ ^^^║                            ║
+≈≈   ≈     ,   ♠♠♠♣♣ ♠♠♣♣♣    ,            ..  ,≈≈   .              . ║                            ║
+   ≈      . ,.  .  ♣♣  .                      . ≈≈        ,  .  .     ║                            ║
+≈          ,..    ●           .              .  ,≈≈.            ,    .║                            ║
+      ..   ,     .  ,     .    ,  ▼   .          ≈≈ , .         .   . ║                            ║
+ ≈≈    ..      . .                El          Lv1≈≈.       .  .   .,  ║                            ║
+ ≈≈  ,  ●        .        .        ,           ‼ ≈≈♣♠♣   ♣     .      ║                            ║
+              .                    .         ♠♣♠≈≈♣  ♣♣♣  ♣♣.  .   , .║                            ║
+≈           ,           ●     .. ,  ..      ♣♣ ♣≈≈♣♣ ♣ ♠♠♣♣♣♣  ,     .║                            ║
+    ≈ .         ..   ,. .    ,             ♣ ♠ ≈≈♣♣♣♣♣♠♠ ♣ ♣♣       , ║                            ║
+≈ ≈≈≈≈            . .        .     ,.       ♣ ♠≈≈♠♠♣♣ ♣ ♣♣♣♣♠♣   .    ║                            ║
+                    . .    ,♣♠ ♣♣ .        ♠♠♠♣♣≈≈♣♣♠♠ ♣♣ ♣♠♣♣    .   ║                            ║
+≈≈≈           ⌂           ♣♣ ♣♣♣♣♣♣       ..♣♣♣♣♠≈≈♣♠♣♣♣♣♠♠♣♠     ... ║                            ║
+                    .  ,♣♣♣♣♣♣♣♣♣♣♠♣♣        ♠♣♣≈≈♣♠♣♣♠ ♠♠♣  .        ║                            ║
+     ≈   ,       ,,    .♣♣  ♣♣♠♣♠♠♣♣♠   ●      ♣♣≈≈♣ ♠♣♣♣♠            ║                            ║
+       ≈ ≈.       .  .  ♠♣♣♣♣♣♣♣ ♠♣♣♣         .  ≈≈ .   ≈   ≈   ≈    ≈║                            ║
+    ≈      ≈         .   ♣♠♠ ♠♣♣♠♠♣  , ,..≈≈        ≈≈≈  ≈          ≈ ║                            ║
+ ≈  ≈ ≈ ≈        .        . ≈  ≈≈         ≈      ≈ ≈    ≈≈        ≈≈≈ ║                            ║
+    ≈                    ⌂     ≈      ≈  ≈    ≈ ≈   ≈  ≈   ≈ ≈        ║                            ║
+≈  ≈≈   ≈  ≈≈ ≈ ≈≈  ≈ ≈  ≈      ≈≈     ≈   ≈≈   ≈  ≈≈   ≈   ≈   ≈     ║                            ║
+≈ ≈     ≈  ≈           ≈≈    ≈  ≈        ≈ ≈     ≈≈    ≈≈  ≈≈≈  ≈   ≈ ║                            ║
+       ≈                   ≈  ≈≈    ≈    ≈    ≈   ≈≈ ≈ ≈            ≈ ╚════════════════════════════╝
+                                                                                                    
+ arrows choose · f enter · a s places · c army · x find · d menu                                    
+--- colours ---
+aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcdccccdccccdccccdccccdcccceeeeeeeeeffffffffffffeeeeeeeee
+aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccdccccdccccdccccdccccdeghhhhhhhhhhhhhhhhhhhhhgggggge
+aaaaaaabbbbbbbbbbbbiiibbbbbbbbbbbbbbbbbbbbbbbbccdccccdccccdccccdccccdcegggggggggggggggggggggggggggge
+aaaaaaaabbbbbbbiiiiiiiiiijbbbbbbbbbbbbbbbbbbbbbdccccdccccdccccdccccdccegffffffffffffggggggggggggggge
+aaaaaaaabbbbbiiijiijijiiiijibkkkbbbbbbbbbbbbbbbbcccdccccdccccdccccdcccegggggggggggggggggggggggggggge
+aaaaaaaabbbbbiiiiiiiiiiiiiiibblbbbbbbbbbbbbbbbbbbcccccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaaabbbbiiijiijiiiiiiiiijbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaaabbbbbiiiiijjiiiiijjibbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaaabbbbbbiiiiiiiiiiijiiibbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbjjjiiijjiiibbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbbbbbiiibbbbbbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaabbbbbbbbbbbbbnbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbobbbbbbbbbbbbbbmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbllbbbbbbbbbbpppmmbbbbbbbbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbnbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbqimmijiiiiibbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbjijmmiiiiiiiiiibbbbbbbbbbegggggggggggggggggggggggggggge
+aaaabbbbbbbbbbbbbbbbbbbbnbbbbbbbbbbbbbbbbbbbiiiimmiiiiijjiiiibbbbbbbbbegggggggggggggggggggggggggggge
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiijimmiiiiijjiiiiiibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbiiijmmjjiiiiiiiiijibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaabbbbbbbbbbbbbbbbbbbbbbijiiibbbbbbbbbbjjjiimmiijjiiiiijiibbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaabbbbbbblbbbbbbbbbbiiiiiiiiiiibbbbbbbbiiiijmmijiiiijjijbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaabbbbbbbbbbbbbbbbbiiiiiiiiiijiibbbbbbbbjiimmijiijijjiibbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaaabbbbbbbbbbbbbbbbiiiiiijijjiijbbbnbbbbbbiimmiijiiijbbbbbbbbbbbbegggggggggggggggggggggggggggge
+aaaaaaaaaabbbbbbbbbbbbbbjiiiiiiiijiiibbbbbbbbbbbbmmbbbbbaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaabbbbbbbbbbbbbijjijiijjiibbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaabbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaaaaaaaaaaaaaraaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+--- legend ---
+a = fg:water bg:sea
+b = fg:grass bg:grass_bg
+c = fg:mountain bg:mountain_bg
+d = fg:peak bg:peak_bg
+e = fg:panel_border_focus bg:panel_bg
+f = fg:text_highlight bg:panel_bg
+g = fg:text bg:panel_bg
+h = fg:text_dim bg:panel_bg
+i = fg:forest bg:forest_bg
+j = fg:thicket bg:thicket_bg
+k = fg:ally bg:grass_bg
+l = fg:panel_bg bg:grass_bg
+m = fg:water bg:water_bg
+n = fg:path bg:grass_bg
+o = fg:player bg:grass_bg
+p = fg:text_highlight bg:grass_bg
+q = fg:panel_bg bg:forest_bg
+r = fg:panel_bg bg:sea
+s = fg:text bg:black
+--- overlays ---
+under 109,257 14x78  path
+under 109,257 94x14  path
+under 189,177 14x94  path
+under 141,177 62x14  path
+under 189,209 14x62  path
+under 189,209 94x14  path
+under 269,81 14x142  path
+under 237,81 46x14  path
+under 269,209 62x14  path
+under 317,209 14x158  path
+under 269,209 118x14  path
+under 373,209 14x30  path
+under 109,321 14x110  path
+under 109,417 102x14  path
+under 61,321 62x14  path
+under 61,225 14x110  path
+under 110,258 12x76  #4e422b
+under 110,258 92x12  #4e422b
+under 190,178 12x92  #4e422b
+under 142,178 60x12  #4e422b
+under 190,210 12x60  #4e422b
+under 190,210 92x12  #4e422b
+under 270,82 12x140  #4e422b
+under 238,82 44x12  #4e422b
+under 270,210 60x12  #4e422b
+under 318,210 12x156  #4e422b
+under 270,210 116x12  #4e422b
+under 374,210 12x28  #4e422b
+under 110,322 12x108  #4e422b
+under 110,418 100x12  #4e422b
+under 62,322 60x12  #4e422b
+under 62,226 12x108  #4e422b
+under 108,320 16x16  wood
+under 236,80 16x16  ally
+under 372,224 16x16  text_highlight
+under 196,416 16x16  fort
+under 268,208 24x16  player
+over  267,208 3x1  #8c805d
+over  267,208 1x3  #8c805d
+over  290,208 3x1  #8c805d
+over  292,208 1x3  #8c805d
+over  267,223 3x1  #8c805d
+over  267,221 1x3  #8c805d
+over  290,223 3x1  #8c805d
+over  292,221 1x3  #8c805d

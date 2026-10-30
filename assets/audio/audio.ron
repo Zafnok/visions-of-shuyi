@@ -87,6 +87,12 @@
         (id: "camp_old_tower_inn", file: "old_tower_inn.ogg", volume: 100, looped: false, length_ms: 105482, credit: Credit("old_tower_inn")),
         (id: "camp_woodland_fantasy", file: "woodland_fantasy.ogg", volume: 100, looped: false, length_ms: 150048, credit: Credit("woodland_fantasy")),
         (id: "camp_bards_tale", file: "bards_tale.ogg", volume: 100, looped: false, length_ms: 158589, credit: Credit("bards_tale")),
+        // The Act 1 world map (0025, ticket 1007): played once to its end,
+        // then the map is quiet a while and it starts again (audio.md, The
+        // world map).
+        (id: "world_map", file: "the_world_at_your_door.ogg", volume: 100, looped: false, length_ms: 161698, credit: Credit("the_world_at_your_door")),
+        // Every capital (0026, ticket 1007).
+        (id: "capital", file: "adventures_in_adventureland.ogg", volume: 100, length_ms: 261251, credit: Credit("adventures_in_adventureland")),
     ],
     pools: [
         // Skirmishes pick one at random per battle (audio.md rule 8; 0807).
@@ -210,6 +216,14 @@
          source: "https://opengameart.org/node/80558", license: "CC0-1.0",
          tags: ["music", "camp", "adventurous", "road", "medieval"],
          note: "The_Bards_Tale.mp3 (the full version, not the loop)"),
+        (id: "the_world_at_your_door", title: "The World At Your Door (RPG Orchestral Essentials)", author: "Jonathan Shaw (InspectorJ)",
+         source: "https://opengameart.org/node/108343", license: "CC-BY-3.0",
+         tags: ["music", "world_map", "calm", "adventurous", "orchestral"],
+         note: "The World At Your Door MP3.mp3 from The World At Your Door MP3.zip"),
+        (id: "adventures_in_adventureland", title: "Adventures in Adventureland", author: "Kevin MacLeod",
+         source: "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029", license: "CC-BY-4.0",
+         tags: ["music", "capital", "bustling", "grand", "city"],
+         note: "Adventures in Adventureland.mp3"),
 
         // Sounds (freesound: the public HQ OGG preview of each sound).
         (id: "sword_sound_1", title: "Sword sound 1", author: "Merrick079",

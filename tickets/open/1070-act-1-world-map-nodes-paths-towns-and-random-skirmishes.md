@@ -67,7 +67,17 @@ in the Completion notes.
   terrain, played by the bots (`cargo xtask playtest <map> --bot all`)
   so none softlocks.
 - Chapter 3's `next` reaching the world map, if 1007's format wants it
-  set here (else 0850 does).
+  set here (else 0850 does). (1007: Chapter 3's `next` is Chapter 4, and
+  Chapter 4's file says `world_map: Some("act1")`.)
+- **The map's picture for the picture look** (Nick picked it in 1007,
+  `look-and-feel.md`, *The world map*): one image made from the bought
+  World Map tiles (`assets-private/library/tiny-tales/tilesets/world-map/`)
+  laid to match the glyph ground, in `assets-private/game/` (ADR-0040,
+  its credit's `private` list), named by the map file's `picture`; and the
+  glyph `ground` rows for the glyph look. A story battle's node can't
+  name a chapter that doesn't exist yet (1007's checks): put the nodes of
+  later chapters' battles in as each chapter ticket adds its chapter, or
+  as `Empty` places until then.
 
 **Out (do not do):**
 - The story battles (0850–0854), the fixed skirmishes (1071), the side

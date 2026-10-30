@@ -113,6 +113,13 @@ pub enum Action {
     /// platform's own menu sends it (the Playdate's system menu, ticket
     /// 1035), so it can't be rebound.
     Options,
+    /// Move the world map's cursor to the army (ticket 1007,
+    /// `docs/design/controls.md`, *World map*). Optional, in the
+    /// [`KeyGroup::WorldMap`].
+    WorldArmy,
+    /// Open the world map's Find list: jump to a kind of place and cycle
+    /// through them (ticket 1007). Optional, in the [`KeyGroup::WorldMap`].
+    WorldFind,
 }
 
 /// Which actions may share a key or button (`docs/design/controls.md`,
@@ -125,16 +132,20 @@ pub enum KeyGroup {
     General,
     /// The dialogue log, opened while a scene plays.
     DialogueLog,
+    /// The world map's own shortcuts (ticket 1007): the world map is
+    /// never on screen with a battle, so they may share the battle's keys
+    /// and buttons (Nick: "different contexts can reuse buttons").
+    WorldMap,
 }
 
 impl KeyGroup {
     /// Every group, in the order the Key bindings screen lists them.
-    pub const ALL: [KeyGroup; 2] = [Self::General, Self::DialogueLog];
+    pub const ALL: [KeyGroup; 3] = [Self::General, Self::DialogueLog, Self::WorldMap];
 }
 
 impl Action {
     /// Every action, in declaration order.
-    pub const ALL: [Action; 22] = [
+    pub const ALL: [Action; 24] = [
         Self::CursorLeft,
         Self::CursorDown,
         Self::CursorUp,
@@ -157,11 +168,13 @@ impl Action {
         Self::RewindBack,
         Self::RewindForward,
         Self::Options,
+        Self::WorldArmy,
+        Self::WorldFind,
     ];
 
     /// The name used in keymap files (the variant name).
     pub fn name(self) -> &'static str {
-        const NAMES: [&str; 22] = [
+        const NAMES: [&str; 24] = [
             "CursorLeft",
             "CursorDown",
             "CursorUp",
@@ -184,6 +197,8 @@ impl Action {
             "RewindBack",
             "RewindForward",
             "Options",
+            "WorldArmy",
+            "WorldFind",
         ];
         NAMES[self as usize]
     }
@@ -223,6 +238,7 @@ impl Action {
     pub fn group(self) -> KeyGroup {
         match self {
             Self::DialogueLog => KeyGroup::DialogueLog,
+            Self::WorldArmy | Self::WorldFind => KeyGroup::WorldMap,
             _ => KeyGroup::General,
         }
     }
@@ -289,7 +305,9 @@ impl ActionSet for Action {
             | Self::DialogueLog
             | Self::RewindBack
             | Self::RewindForward
-            | Self::Options => None,
+            | Self::Options
+            | Self::WorldArmy
+            | Self::WorldFind => None,
         }
     }
 
@@ -359,6 +377,9 @@ mod tests {
             (Action::ZoomMap, vec![RightTrigger]),
             // Another key group, so it shares Danger zone's button.
             (Action::DialogueLog, vec![West]),
+            // The world map's group: Unit info's and Danger zone's buttons.
+            (Action::WorldArmy, vec![North]),
+            (Action::WorldFind, vec![West]),
             // No button: the map menu, the optional split keys, Debug,
             // the Playdate's crank and system menu.
             (Action::Menu, vec![]),
@@ -498,6 +519,9 @@ mod tests {
         assert_eq!(get("q"), Some(Action::ZoomMap));
         let log = embedded_in(RIGHT_HANDED, KeyGroup::DialogueLog);
         assert_eq!(log("b"), Some(Action::DialogueLog));
+        let world = embedded_in(RIGHT_HANDED, KeyGroup::WorldMap);
+        assert_eq!(world("c"), Some(Action::WorldArmy));
+        assert_eq!(world("x"), Some(Action::WorldFind));
     }
 
     #[test]
@@ -522,6 +546,10 @@ mod tests {
         assert_eq!(get("p"), Some(Action::ZoomMap));
         let log = embedded_in(LEFT_HANDED, KeyGroup::DialogueLog);
         assert_eq!(log("n"), Some(Action::DialogueLog));
+        // Finger mirrors of c and x.
+        let world = embedded_in(LEFT_HANDED, KeyGroup::WorldMap);
+        assert_eq!(world(","), Some(Action::WorldArmy));
+        assert_eq!(world("."), Some(Action::WorldFind));
     }
 
     #[test]
@@ -533,7 +561,9 @@ mod tests {
             assert_eq!(general.map(|b| b.len()), Some(15), "{layout}");
             let log = k.bindings(layout, KeyGroup::DialogueLog);
             assert_eq!(log.map(|b| b.len()), Some(1), "{layout}");
-            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(22));
+            let world = k.bindings(layout, KeyGroup::WorldMap);
+            assert_eq!(world.map(|b| b.len()), Some(2), "{layout}");
+            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(24));
             // The crank's and the system menu's actions: no key (1035).
             for none in [Action::RewindBack, Action::RewindForward, Action::Options] {
                 assert_eq!(k.chords(layout, none), [], "{layout} {none}");

@@ -316,6 +316,9 @@ sign-off: "it should sound like a heal").
   0222). The map cursor tick is still 60 % of the menu move sound, so 24 %.
 - The menu select/confirm and cancel sounds play at 15 %: at 40 % Nick
   still found them "much too high" next to the rest (ticket 0223).
+- On the world map (1007), a town's own cue (`village`, `capital`, …)
+  plays while the town is open, its list of shops or a shop (Nick: "while
+  interacting with a town"); the map's track comes back when it closes.
 - The world map's track (any `world_map*` cue, and a small map's) fades
   out over 3 s at its end, the map is quiet for 30 s, then the track
   starts again with a 3 s fade in. Nick set the quiet at "probably more

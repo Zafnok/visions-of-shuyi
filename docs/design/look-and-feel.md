@@ -1462,6 +1462,78 @@ is in `controls.md`, *Dialogue log*.
 - While a scene plays, the text box shows the log's key next to the
   Confirm key (`b log   f ▼`). With no key, it shows nothing.
 
+### The world map
+
+Decided 2026-10-29, ticket 1007, over five rounds of rendered mockups
+(the real font and palette; the picture look over the bought world-map
+tiles, kept local). Nick's words:
+
+> Markers: "for glyph look, symbol plates look best. make sure we also
+> consider the tilemap / 2D sprite look tho. the game is not all glyph
+> based anymore, it's an option. also, on glyph look, the roads/connections
+> are hard to parse as-is"
+>
+> Army: "initials on node with flag"
+>
+> Roads (glyph): "mix of band + double lines, so it stands out most once
+> we get to playdate I think" → "looks ok but how about having lines
+> outlining the shaded road instead" → "the only problem is the roads are
+> narrow when vertical and wide when horizontal" → (the same width both
+> ways) "Yes, build it"
+>
+> Picture look: roads "Dotted"; "flag is prob unnecessary now, and pls
+> render the cursor as well" → "for pixel look, flag is unnecessary, and
+> it looks good"; the glyph look keeps its flag ("keep flag").
+
+**Glyph look** (`crates/ui/src/screens/world_map/glyph.rs`):
+
+- **Places are symbol plates:** a 16 × 16 pixel plate in the place's
+  colour, centred on its cell, with its symbol on it in the panel's dark
+  ink: story battle `‼` on `text_highlight` gold, side quest `♥` on
+  `ally` green, town `⌂` on `wood`, capital `⌂` on `fort` gold, a won
+  battle `·` on `panel_border`. A place to pass through is a plain `●` in
+  `path` colour, no plate. 1008's skirmishes take the mockup's marks:
+  fixed skirmish `!` on a brick red plate, random skirmish `?` on a grey
+  one (*colours tunable*).
+- **The level marker** `Lv7` sits on the row above a battle not yet won,
+  centred, in its kind's colour (gold, green for a side quest). A won
+  battle has none.
+- **A place not open yet**, one road from an open one (`world-structure.md`,
+  *The world map screen*): its plate in `text_dim` grey with its kind's
+  symbol, no level marker; its road a band of the ground's road colour
+  with a `text_dim` edge (*Claude's look, tunable*).
+- **Roads** are a shaded band 12 px wide (*tunable*), the same width
+  across and down, outlined by 1 px lines in `path` colour; roads that
+  meet join. The ground's glyphs give way to the band. A road runs
+  straight across or down between its turns (the map file gives them).
+- **The army** is the lead's two letters on a `player` blue plate where
+  it stands, with a small `▼` flag above it in `player` blue.
+- **The cursor** is the battle map's corner marks, pulsing the same way,
+  round the plate under it (round the army's when it is on the army).
+- **The ground** is terrain glyphs on each terrain's background tint,
+  sparser than a battle map's (forests mostly `♣`, mountains `^` here and
+  there, the sea `≈` now and then), from the map file's ground.
+- **Layout:** the map on the left (70 × 30 cells, centred if smaller),
+  the panel on the right with the place under the cursor (its name in the
+  title, the act and chapter, its kind, its level or `Won`, a town's
+  shops, `Your army is here`), a list over the map when one is open
+  (menu, Find, a town's shops), the help line at the bottom.
+
+**Picture look** (`picture.rs`), for a map with a picture when the
+player's map look is pictures:
+
+- The map's own picture under everything (made from the bought World Map
+  tiles, ticket 1070). Towns and castles are the art's own pictures.
+- **Roads are dotted:** pale `path` dots with a dark edge, one every
+  8 px; a road to a place not open yet in `text_dim` dots, the place's
+  plate grey.
+- **The same plates and level markers** as the glyph look, with a dark
+  edge (1082 may swap the plates for an icon set).
+- **The army is the lead's map sprite** (its first frame, facing down,
+  at twice its size) standing on its place, **no flag**.
+- **The cursor** is the battle map's picture cursor: thick marks with a
+  dark edge round the plate.
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side

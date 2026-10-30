@@ -179,6 +179,53 @@ still follows `weapons-and-items.md` / 0408.
 - Each act's map has its own enemy-level range, which is what the
   random-skirmish cap is measured against.
 
+## The world map screen (ticket 1007)
+
+What Nick decided while it was built (the look: `look-and-feel.md`, *The
+world map*; the keys: `controls.md`, *World map*):
+
+- **Battles are forced** (Nick: "battles forced"): when the army arrives
+  at a battle not yet won, it starts (its chapter's intro scenes, then
+  camp and Preparations as usual).
+- **Towns open on arrival** (Nick: "towns open on arrival with option in
+  options menu to only open when you explicitly click confirm first"):
+  Options has `Open towns on arrival` (On by default); off, a town opens
+  only on Confirm on the army's own place.
+- **No "Save your progress?" after a world-map battle** (Nick: "Straight
+  to the map"): the victory scenes end and the map is back with what the
+  battle opened; save from the map's menu.
+- **Places one road away show** (Nick, on the PR: "some hidden places are
+  ok, but not all places you can't reach should be hidden. We can have
+  their roads exposed when 1 tile away"; then "I don't see any reason to
+  hide the kind of place it is unless it's specially marked hidden"): a
+  place not open yet that is one road from an open place shows greyed,
+  with its kind's symbol and name, and its road dimmed; the panel says
+  `Not open yet`; the army can't go there. A place the map file marks
+  `hidden` (a secret) stays out of sight, road and all, until it opens.
+  Example: once the army reaches Stone Mill, Wolf Pass and Old Bridge show
+  greyed beyond it; the hidden chapel doesn't.
+- **A town's music plays while you are in the town** (Nick: "should be
+  while interacting with a town"): while its list of shops or a shop is
+  open, not while the army only stands there; the map's track otherwise.
+
+*Claude's starting rules* (for the Act 1 playtest, 1064):
+
+- **The army walks around a battle it hasn't won** when another road
+  leads there; if the only road passes through one, it stops there and
+  the battle starts. Example: sent past Old Bridge to a place behind it,
+  the army stops at the bridge and fights.
+- **The army walks one place every 0.2 s** (*tunable*); Confirm finishes
+  the walk at once.
+- **A town with several shops lists them first** (as Sacred Stones'
+  towns list their Armory and Vendor); a town with one opens it.
+- **A town's shop trades with the convoy** (the stock): it sells only
+  what is in the stock, not what the army holds; its Blacksmith also
+  mends the weapons the army holds.
+- **The cursor's keys jump to the nearest place in that direction**
+  (within about 60° of it); nothing that way, the cursor stays.
+- **Find's nearest place** is the nearest to the army, so Towns starts on
+  the town the army is in, if it is in one.
+
 ## Saving and camp
 
 - **World map: save anywhere** (Nick, Q5 A). The world map menu has `Save`
@@ -214,6 +261,10 @@ still follows `weapons-and-items.md` / 0408.
   decision ticket.
 - **Recruitable wanderers:** not as open-world nodes. They might appear
   **inside towns** later. Decide with the story (0701 or later chapters).
+- **Walking inside a town** (Nick, on 1007's PR: "probably eventually we
+  will literally allow movement inside a town (special towns)"): some
+  special towns might be places the army walks around in, not only shop
+  menus. Not designed yet; it needs a decision ticket when it's wanted.
 - **Grinding tower / dungeon (E):** "something for later for sure". It could
   go right before an act's final battle, before the finale, or post-game /
   NG+. It needs a decision ticket when it's wanted.

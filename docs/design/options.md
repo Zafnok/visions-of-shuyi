@@ -76,6 +76,17 @@ Nick's.
   rule*). The Playdate leaves it out until it has the cinematic (1044).
   `Restore defaults` puts it back On.
 
+### Open towns on arrival
+
+- **Open towns on arrival: On / Off** (ticket 1007, Nick: "towns open
+  on arrival with option in options menu to only open when you
+  explicitly click confirm first"): On (the default), a town on the world
+  map opens its shops when the army arrives there; Off, only Confirm on
+  the town the army is in opens it.
+- The row is under `Intro` (above `Colors`), on every Options screen
+  (*Claude's starting rule*). The Playdate leaves it out until it has the
+  world map. `Restore defaults` puts it back On.
+
 ### Volumes
 
 - Music and sound volume each go from **0 (silent) to 100**, starting at 80

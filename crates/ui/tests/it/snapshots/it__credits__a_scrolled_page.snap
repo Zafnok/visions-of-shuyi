@@ -1,11 +1,14 @@
 ---
-source: crates/ui/tests/credits.rs
+source: crates/ui/tests/it/credits.rs
 expression: h.snapshot()
 ---
                                                                                                     
   ┌─ Credits ────────────────────────────────────────────────────────────────────────────────────┐  
   │                                                                                              │  
-  │   "Battle Themes 1, 2, 3 and 5" by Alexandr Zhelanov                                       ▲ │  
+  │   "Battle Theme B for RPG" by cynicmusic                                                   ▲ │  
+  │     CC0-1.0 · https://opengameart.org/content/battle-theme-b-for-rpg                         │  
+  │                                                                                              │  
+  │   "Battle Themes 1, 2, 3 and 5" by Alexandr Zhelanov                                         │  
   │     CC-BY-4.0 · https://opengameart.org/content/battle-themes                                │  
   │                                                                                              │  
   │   "Classical Murder" by Alexandr Zhelanov                                                    │  
@@ -26,10 +29,7 @@ expression: h.snapshot()
   │   "Epic Endgame Cinematic" by cynicmusic                                                     │  
   │     CC0-1.0 · https://opengameart.org/content/epic-endgame-cinematic                         │  
   │                                                                                              │  
-  │   "Fantasy Choir 2 and 3" by César da Rocha                                                  │  
-  │     CC0-1.0 · https://opengameart.org/content/fantasy-choir-3-orchestral-pieces              │  
-  │                                                                                              │  
-  │   "Father's Scabbard" by SoManyWhales                                                      ▼ │  
+  │   "Fantasy Choir 2 and 3" by César da Rocha                                                ▼ │  
   │                                                                                              │  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
                                                                                                     
@@ -39,6 +39,9 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddedbaa
+aabdddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
@@ -58,9 +61,6 @@ aabdddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddd
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabdddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddedbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa

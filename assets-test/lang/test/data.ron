@@ -28,6 +28,7 @@
     (key: "lessons.test_cursor.item_1", source: "Move it up: {CursorUp}", text: "MOVE IT UP: {CursorUp}"),
     (key: "chapters.test.title", source: "Test Chapter", text: "TEST CHAPTER"),
     (key: "camp.test_campfire.title", source: "Around the campfire", text: "AROUND THE CAMPFIRE"),
+    (key: "worldmaps.test_world.home.name", source: "Millbrook", text: "MILLBROOK"),
     (
         key: "battles.test.note_2",
         source: "Seize the fort within 3 turns: send your lead straight there.",

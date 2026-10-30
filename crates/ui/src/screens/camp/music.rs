@@ -41,6 +41,8 @@ pub struct CampMusic {
     tracks: Vec<(String, f64)>,
     /// How long the music takes to fade out (s).
     fade_s: f64,
+    /// How long it is quiet between two tracks, after the fade (s).
+    quiet_s: f64,
     phase: Phase,
 }
 
@@ -63,10 +65,19 @@ impl CampMusic {
         let mut music = Self {
             tracks,
             fade_s: fade_s.max(0.0),
+            quiet_s: QUIET_S,
             phase: Phase::Quiet { index, until: now },
         };
         let cue = music.play(index, now);
         Some((music, cue))
+    }
+
+    /// The same rotation with `quiet_s` seconds of quiet between two
+    /// tracks instead of [`QUIET_S`] (the world map's 30 s, ticket 1007).
+    #[must_use]
+    pub fn with_quiet(mut self, quiet_s: f64) -> Self {
+        self.quiet_s = quiet_s.max(0.0);
+        self
     }
 
     /// The track playing or next to play.
@@ -95,7 +106,7 @@ impl CampMusic {
         match self.phase {
             Phase::Playing { index, until } if now >= until => {
                 let next = (index + 1) % self.tracks.len();
-                let until = until + self.fade_s + QUIET_S;
+                let until = until + self.fade_s + self.quiet_s;
                 self.phase = Phase::Quiet { index: next, until };
                 Some(MusicCue::Stop)
             }

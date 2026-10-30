@@ -9,7 +9,7 @@ use crate::prelude::*;
 use alloc::sync::Arc;
 use core::fmt::Display;
 
-use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip};
+use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip, WorldMapDef};
 use trpg_core::lead::LEAD_ID;
 use trpg_core::{
     ArtDef, BattleNote, CampEvent, ClassDef, ClassId, ClassTable, ItemDef, ItemId, ItemTable,
@@ -241,6 +241,14 @@ impl<'a> Words<'a> {
         match self.pack {
             Some((lang, code)) => lang.chapter_title(code, chapter),
             None => &chapter.title,
+        }
+    }
+
+    /// The name of place `place` of world map `map` (1007).
+    pub fn place_name(self, map: &'a WorldMapDef, place: &'a str) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.place_name(code, map, place),
+            None => map.name(place),
         }
     }
 

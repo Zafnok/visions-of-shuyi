@@ -17,6 +17,7 @@ fn chapter(id: &str) -> ChapterDef {
         battle: "test".into(),
         victory_scenes: vec!["test_victory".into()],
         next: None,
+        world_map: None,
     }
 }
 

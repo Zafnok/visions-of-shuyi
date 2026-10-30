@@ -1,0 +1,13 @@
+# TEST FILE: the scenes of the test world map's chapters and side quest
+# (ticket 1007), which the world map's tests play. Not story content.
+# Only the lead speaks, so they play for any army.
+
+@scene test_wm_intro
+@left  lead neutral
+> {lead} looks down the road. Something waits ahead.
+@end
+
+@scene test_wm_victory
+@left  lead happy
+> The way on is open.
+@end

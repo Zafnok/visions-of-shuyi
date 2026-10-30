@@ -198,13 +198,26 @@ pub fn next_chapter_title(
     }
 }
 
+/// The title of `campaign`'s chapter; its id if the content no longer has
+/// it.
+fn chapter_title(content: &Content, words: Words<'_>, campaign: &Campaign) -> String {
+    content.chapters.get(&campaign.chapter).map_or_else(
+        || campaign.chapter.clone(),
+        |c| words.chapter_title(c).to_owned(),
+    )
+}
+
 /// What save slot `slot` holds. A slot holding a battle save (never
 /// written there) is unreadable.
 pub fn slot(storage: &dyn Storage, content: &Content, words: Words<'_>, slot: usize) -> Slot {
     match read(storage, &slot_key(slot)) {
         Ok(None) => Slot::Empty,
-        Ok(Some(save)) if save.point == SavePoint::ChapterCleared => {
-            let (chapter, cleared) = next_chapter_title(content, words, &save.campaign);
+        Ok(Some(save)) if matches!(save.point, SavePoint::ChapterCleared | SavePoint::WorldMap) => {
+            let (chapter, cleared) = match save.point {
+                // On the world map, its chapter is the one being played.
+                SavePoint::WorldMap => (chapter_title(content, words, &save.campaign), false),
+                _ => next_chapter_title(content, words, &save.campaign),
+            };
             Slot::Saved(Box::new(SlotSummary {
                 chapter,
                 cleared,

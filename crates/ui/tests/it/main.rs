@@ -41,3 +41,4 @@ mod threat;
 mod title;
 mod title_cinematic;
 mod voice;
+mod world_map;

@@ -124,14 +124,39 @@ pub const KEY_ROWS: [KeyRow; 18] = [
     ),
 ];
 
+// engine-friction: engine#2395 (the Key bindings screen's glyph skin
+// draws every row with no scrolling, and the PC's panel is full: rows for
+// these would run over its border). Their keys work (`keymap.ron`); the
+// rows below join `KEY_ROWS` once the pin is past engine#2395 (game
+// follow-up ticket 1198).
+/// The world map's actions (1007), not on the Key bindings screen yet.
+pub const NOT_LISTED_YET: [Action; 2] = [Action::WorldArmy, Action::WorldFind];
+
+/// The rows the world map's actions will have on the Key bindings
+/// screen, under their own heading ([`NOT_LISTED_YET`]).
+pub const WORLD_MAP_ROWS: [KeyRow; 2] = [
+    (
+        Action::WorldArmy,
+        "key_bindings.action.world_army",
+        RowGroup::Shared(WORLD_MAP_HEADING),
+    ),
+    (
+        Action::WorldFind,
+        "key_bindings.action.world_find",
+        RowGroup::Shared(WORLD_MAP_HEADING),
+    ),
+];
+
 /// The rebindable actions the PC's Key bindings screen doesn't list: only
 /// the Playdate's crank binds them (ticket 1035), which no PC device has.
 /// The Playdate's lists them ([`PLAYDATE_KEY_ROWS`]).
 pub const CRANK_ACTIONS: [Action; 2] = [Action::RewindBack, Action::RewindForward];
 
-/// The rebindable action the Playdate's Key bindings screen doesn't list:
-/// its map has one skin, which doesn't zoom (ticket 1045).
-pub const NOT_ON_THE_PLAYDATE: [Action; 1] = [Action::ZoomMap];
+/// The rebindable actions the Playdate's Key bindings screen doesn't list:
+/// its map has one skin, which doesn't zoom (ticket 1045), and it has no
+/// world map yet (1007: its world-map shortcuts come with it).
+pub const NOT_ON_THE_PLAYDATE: [Action; 3] =
+    [Action::ZoomMap, Action::WorldArmy, Action::WorldFind];
 
 /// The rows of the Key bindings screen on the Playdate (no keyboard,
 /// ticket 1045): [`KEY_ROWS`] with the crank's two after Rewind, less
@@ -169,6 +194,10 @@ pub const PLAYDATE_KEY_ROWS: [KeyRow; 19] = [
 /// Text key of the heading over the actions of the dialogue log's
 /// [`KeyGroup`], which may share keys with the rest.
 pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
+
+/// Text key of the heading over the world map's actions (ticket 1007),
+/// another [`KeyGroup`] that may share keys with the rest.
+pub const WORLD_MAP_HEADING: &str = "key_bindings.world_map";
 
 /// The help line of a text box: `Enter done · Backspace delete · Escape
 /// cancel`, in `ctx`'s language.

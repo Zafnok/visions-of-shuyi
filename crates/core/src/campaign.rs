@@ -81,6 +81,9 @@
 //! - **Lessons done** ([`Campaign::lessons_done`], 0456): the ids of the
 //!   checklist lessons finished, so none shows twice in a campaign
 //!   (*Claude's starting rule*). A new game has none.
+//! - **World map** (1007, rules in [`crate::worldmap`]): from the first
+//!   world-map chapter of an act, [`Campaign::world`] says where the army
+//!   is on the act's map and which of its places are cleared.
 //! - **Lead.** [`Campaign::new_game`] gives the lead's unit (character
 //!   [`LEAD_ID`]) the player's name, and a map label of that name's first
 //!   two letters (*Claude's starting rule*).
@@ -109,6 +112,7 @@ use crate::spell::SpellTable;
 use crate::support::{SupportBook, SupportError, SupportPair, SupportTable, SupportViewed};
 use crate::terrain::TerrainTable;
 use crate::unit::{CharacterId, Faction, Role, Unit, UnitId, default_map_label};
+use crate::worldmap::WorldState;
 
 /// EXP bonus per unused rewind charge, in percent of one level's EXP
 /// (`death-and-difficulty.md`: 7% of a level, 7 EXP at 100 per level).
@@ -353,6 +357,12 @@ pub struct Campaign {
     pub camp_seen: BTreeSet<String>,
     /// Every pair's support so far.
     pub supports: SupportBook,
+    /// Where the army is on its act's world map (1007,
+    /// [`crate::worldmap`]); `None` in the linear chapters. Left out of the
+    /// save while `None`, and a save without it has none, so saves of
+    /// `SAVE_VERSION` 2 made before it still load (as `tutorial`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub world: Option<WorldState>,
     /// Seconds played.
     pub playtime_s: u64,
 }
@@ -437,6 +447,7 @@ impl Campaign {
             battles_won: BTreeSet::new(),
             camp_seen: BTreeSet::new(),
             supports: SupportBook::default(),
+            world: None,
             playtime_s: 0,
         }
     }

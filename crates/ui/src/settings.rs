@@ -207,6 +207,18 @@ pub struct ShuyiSettings {
     /// Whether the title plays its intro cinematic when left alone (ticket
     /// 0844); off, it stays on the logo and menu.
     pub intro: bool,
+    /// When a town on the world map opens its shops (Nick, ticket 1007).
+    pub towns: TownsOpen,
+}
+
+/// When a town on the world map opens its shops (Nick, ticket 1007).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TownsOpen {
+    /// When the army arrives there (the default).
+    #[default]
+    OnArrival,
+    /// Only on Confirm on the town where the army is.
+    OnConfirm,
 }
 
 impl Default for ShuyiSettings {
@@ -220,6 +232,7 @@ impl Default for ShuyiSettings {
             map_look: MapLook::default(),
             map_zoom: MapZoom::default(),
             intro: true,
+            towns: TownsOpen::OnArrival,
         }
     }
 }
@@ -268,6 +281,10 @@ struct SettingsFile {
     /// of the default is as it always was.
     #[serde(skip_serializing_if = "Option::is_none")]
     intro: Option<bool>,
+    /// `Some(false)` when towns open only on Confirm, otherwise left out,
+    /// as `intro` (ticket 1007).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    towns_on_arrival: Option<bool>,
     theme: Theme,
     music_volume: u8,
     sound_volume: u8,
@@ -295,6 +312,7 @@ fn file(s: &Settings) -> SettingsFile {
         map_look: game.map_look,
         map_zoom: game.map_zoom.factor(),
         intro: (!game.intro).then_some(false),
+        towns_on_arrival: (game.towns == TownsOpen::OnConfirm).then_some(false),
         theme: s.theme,
         music_volume: s.music_volume,
         sound_volume: s.sound_volume,
@@ -337,6 +355,11 @@ impl GameSettings for ShuyiSettings {
             map_look: file.map_look,
             map_zoom: MapZoom::from_factor(file.map_zoom).unwrap_or_default(),
             intro: file.intro.unwrap_or(true),
+            towns: if file.towns_on_arrival == Some(false) {
+                TownsOpen::OnConfirm
+            } else {
+                TownsOpen::OnArrival
+            },
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
             Some(layout) => s.with_layout(layout),
@@ -368,6 +391,8 @@ mod tests {
             map_zoom: MapZoom::X1,
             // On, so the saved form below is the one before ticket 0844.
             intro: true,
+            // On arrival too, as before ticket 1007.
+            towns: TownsOpen::OnArrival,
         };
         s
     }
@@ -389,6 +414,21 @@ mod tests {
                 .game
                 .intro
         );
+    }
+
+    /// Ticket 1007: towns open on arrival by default, saved only when off,
+    /// and an older save without it loads with it on.
+    #[test]
+    fn the_towns_setting_defaults_on_and_round_trips() {
+        let s = Settings::default();
+        assert_eq!(s.game.towns, TownsOpen::OnArrival);
+        assert!(!s.to_ron().contains("towns_on_arrival"));
+        let mut off = Settings::default();
+        off.game.towns = TownsOpen::OnConfirm;
+        assert!(off.to_ron().contains("towns_on_arrival: Some(false),"));
+        assert_eq!(Settings::from_ron(&off.to_ron()), Ok(off));
+        let old = Settings::from_ron("Settings(version: 1)").unwrap();
+        assert_eq!(old.game.towns, TownsOpen::OnArrival);
     }
 
     /// `text` (kept in the repository with LF) in this platform's line

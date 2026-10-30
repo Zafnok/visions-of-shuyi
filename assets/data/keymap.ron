@@ -75,6 +75,10 @@
                 // Opens Options where a menu has it. Never a key: only the
                 // Playdate's system menu sends it.
                 "Options": [],
+                // The world map's shortcuts (ticket 1007): the cursor to
+                // the army, and the Find list. Their own key group.
+                "WorldArmy": ["c"],
+                "WorldFind": ["x"],
             },
         ),
         // W A S D steer; the right hand acts from the J K L ; row, a finger
@@ -106,6 +110,8 @@
                 "RewindBack": [],
                 "RewindForward": [],
                 "Options": [],
+                "WorldArmy": [","],
+                "WorldFind": ["."],
             },
         ),
     ],
@@ -157,6 +163,10 @@
         "RewindBack": [],
         "RewindForward": [],
         "Options": [],
+        // The world map's group (ticket 1007): Unit info's and Danger
+        // zone's buttons, which the world map doesn't use.
+        "WorldArmy": ["North"],
+        "WorldFind": ["West"],
     },
     // The Playdate's buttons (docs/design/playdate.md, Buttons and the
     // crank), in place of `pad` on a Playdate: the D-pad, A (South) and B
@@ -189,6 +199,8 @@
         "RewindBack": ["CrankBack"],
         "RewindForward": ["CrankForward"],
         "Options": [],
+        "WorldArmy": [],
+        "WorldFind": [],
     },
     // Held cursor keys and buttons, in every layout and the layout picker:
     // first repeat after delay_ms, then every interval_ms.
