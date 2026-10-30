@@ -179,6 +179,23 @@ fn a_tailor_refuses_a_sword_and_says_why() {
     assert!(s.view(&ctx).selling.is_none());
 }
 
+/// What a Tailor takes sells as anywhere: leather, with its price.
+#[test]
+fn a_tailor_takes_leather() {
+    let mut ctx = ctx();
+    let tailor = shop(&ctx, "city", ShopKind::Tailor);
+    let mut c = army(&ctx);
+    c.stock = trpg_core::Stock::default();
+    c.stock.add(ItemId::new("leather_vest"));
+    let mut s = TownScreen::new(c, tailor, "Kingsgate".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    let view = s.view(&ctx);
+    let vest = &view.lines[0];
+    assert!(vest.name.starts_with("Leather Vest"), "{}", vest.name);
+    assert!(vest.enabled);
+    assert_ne!(vest.gold, "");
+}
+
 /// A Blacksmith mends the weapons the army holds, the holder's name
 /// beside each.
 #[test]

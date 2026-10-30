@@ -10,6 +10,7 @@ use trpg_core::{GameMode, LeadGender, LeadProfile};
 use super::*;
 use crate::audio::AudioRequest;
 use crate::color::UiColor;
+use crate::glyph_buffer::PxRect;
 use crate::screen::tests::ctx;
 use crate::screens::popped_with;
 
@@ -286,6 +287,261 @@ fn a_side_quest_says_so_in_the_panel() {
     let panel = s.view(&ctx).panel;
     assert_eq!(panel.kind, "Side quest");
     assert_eq!(panel.lines, ["Not open yet", "Enemy level 1"]);
+}
+
+/// A capital says so in the panel, a town not.
+#[test]
+fn a_capital_says_so_in_the_panel() {
+    let ctx = ctx();
+    let mut s = screen(&ctx);
+    s.cursor = "city".into();
+    assert_eq!(s.view(&ctx).panel.kind, "Capital");
+    s.cursor = "home".into();
+    assert_eq!(s.view(&ctx).panel.kind, "Town");
+}
+
+/// A battle won shows as won, whatever its kind.
+#[test]
+fn a_battle_won_shows_as_won() {
+    let ctx = ctx();
+    let mut c = army(&ctx);
+    c.world
+        .as_mut()
+        .expect("on the map")
+        .cleared
+        .insert("ford".into());
+    let view = WorldMapScreen::new(c, 0.0).view(&ctx);
+    let ford = view.places.iter().find(|p| p.pos == Pos::new(34, 13));
+    assert_eq!(ford.map(|p| p.mark), Some(PlaceMark::Cleared));
+    assert_eq!(ford.and_then(|p| p.level.clone()), None);
+}
+
+/// A place's neighbours on its row give way to its plate: a place put
+/// where the ground shows glyphs on both sides of it clears them (a look
+/// test).
+#[test]
+fn the_ground_gives_way_beside_a_plate() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let ctx = ctx();
+    let mut view = screen(&ctx).view(&ctx);
+    let black = crate::color::Rgb::new(0, 0, 0);
+    let paint = |view: &WorldMapView| {
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+        glyph::paint(&ctx, view, &mut buf);
+        buf
+    };
+    let before = paint(&view);
+    let glyph = |buf: &GlyphBuffer, x, y| buf.get(x, y).map_or(' ', |c| c.glyph);
+    let (x, y) = (1..29)
+        .flat_map(|y| (1..69).map(move |x| (x, y)))
+        .find(|&(x, y)| glyph(&before, x - 1, y) != ' ' && glyph(&before, x + 1, y) != ' ')
+        .expect("ground with glyphs");
+    view.places.push(PlaceView {
+        pos: Pos::new(x, y),
+        mark: PlaceMark::Town,
+        level: None,
+        locked: false,
+    });
+    let after = paint(&view);
+    assert_eq!(
+        (glyph(&after, x - 1, y), glyph(&after, x + 1, y)),
+        (' ', ' ')
+    );
+}
+
+/// A picture-look buffer of the screen's view on map `map` at `chapter`,
+/// with the map's picture missing (so only the look's own items).
+fn paint_pictures(ctx: &Ctx, s: &WorldMapScreen) -> GlyphBuffer {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let view = s.view(ctx);
+    let black = crate::color::Rgb::new(0, 0, 0);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+    picture::paint(ctx, &view, "images/none.png", &mut buf);
+    buf
+}
+
+/// The picture look's dots: one every 8 pixels from each turn of a road to
+/// the next, centred in the cells, 4 × 4 inside a dark edge (a look test).
+#[test]
+fn the_picture_looks_dots_run_from_turn_to_turn() {
+    use std::collections::BTreeSet;
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let view = s.view(&ctx);
+    let buf = paint_pictures(&ctx, &s);
+    let centre = |p: Pos| (p.x * 8 + 4, p.y * 16 + 8);
+    let mut want = BTreeSet::new();
+    for pair in view.roads.iter().flat_map(|r| r.windows(2)) {
+        let ((mut x, mut y), end) = (centre(pair[0]), centre(pair[1]));
+        loop {
+            want.insert((x, y));
+            if (x, y) == end {
+                break;
+            }
+            x += 8 * (end.0 - x).signum();
+            y += 8 * (end.1 - y).signum();
+        }
+    }
+    let path = ctx.palette.get(UiColor::Path);
+    let dark = ctx.palette.get(UiColor::Black);
+    let overlays = buf.overlays();
+    let got: BTreeSet<_> = overlays
+        .iter()
+        .filter(|o| o.color == path)
+        .map(|o| {
+            assert_eq!((o.rect.w, o.rect.h), (4, 4));
+            (o.rect.x + 2, o.rect.y + 2)
+        })
+        .collect();
+    assert_eq!(got, want);
+    for &(x, y) in &want {
+        let edge = PxRect::new(x - 3, y - 3, 6, 6);
+        assert!(
+            overlays.iter().any(|o| o.rect == edge && o.color == dark),
+            "({x}, {y})"
+        );
+    }
+}
+
+/// The picture look on a map smaller than the screen: its places where
+/// the map is centred (cell (15, 9)), each plate inside a dark edge, the
+/// symbol in the plate's ink (an empty place's in its own colour), the
+/// level marker centred above (a look test).
+#[test]
+fn the_picture_look_puts_a_small_maps_places_where_it_is_centred() {
+    let mut ctx = ctx();
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world_2")
+        .expect("a map");
+    let keep = def
+        .map
+        .nodes
+        .iter_mut()
+        .find(|n| n.id == "keep")
+        .expect("the keep");
+    keep.level = Some(12);
+    let mut c = army(&ctx);
+    c.chapter = "test_wm3".into();
+    c.world = None;
+    c.enter_world(&ctx.game.content.worldmaps["test_world_2"].map);
+    let s = WorldMapScreen::new(c, 0.0);
+    let buf = paint_pictures(&ctx, &s);
+    // Salt Keep at (30, 6): cell (45, 15), its plate 16 × 16 at
+    // (356, 240), "Lv12" from cell 44 above it.
+    let ink = ctx.palette.lookup("panel_bg").expect("a color");
+    let symbol = buf.get(45, 15).copied().expect("a cell");
+    assert_eq!((symbol.glyph, symbol.fg), ('‼', ink));
+    let label: String = (44..48)
+        .filter_map(|x| buf.get(x, 14).map(|c| c.glyph))
+        .collect();
+    assert_eq!(label, "Lv12");
+    let dark = ctx.palette.get(UiColor::Black);
+    let edge = PxRect::new(355, 239, 18, 18);
+    assert!(
+        buf.overlays()
+            .iter()
+            .any(|o| o.rect == edge && o.color == dark)
+    );
+    // The army at Grey Harbor (6, 6): cell (21, 15), on a blue plate when
+    // the game has no unit pictures.
+    let player = ctx.palette.get(UiColor::Player);
+    let army = PxRect::new(164, 240, 16, 16);
+    assert!(
+        buf.overlays()
+            .iter()
+            .any(|o| o.rect == army && o.color == player)
+    );
+}
+
+/// The picture look's symbol of an empty place is in its own colour.
+#[test]
+fn the_picture_looks_empty_place_is_a_dot_in_its_colour() {
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let buf = paint_pictures(&ctx, &s);
+    // The crossroads at (24, 16).
+    let cross = buf.get(24, 16).copied().expect("a cell");
+    let path = ctx.palette.lookup("path").expect("a color");
+    assert_eq!((cross.glyph, cross.fg), ('●', path));
+}
+
+/// The picture look's cursor: two arms at each corner of the plate, inside
+/// a dark edge (a look test).
+#[test]
+fn the_picture_looks_cursor_has_two_arms_at_each_corner() {
+    use crate::glyph_buffer::Layer;
+    use std::collections::BTreeSet;
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let buf = paint_pictures(&ctx, &s);
+    // Millbrook at (14, 20): the plate at (108, 320).
+    let (x, y) = (108, 320);
+    let rect = |dx, dy, w, h| (x + dx, y + dy, w, h);
+    let want: BTreeSet<_> = [
+        rect(-2, -2, 6, 4),
+        rect(-2, -2, 4, 6),
+        rect(12, -2, 6, 4),
+        rect(14, -2, 4, 6),
+        rect(-2, 14, 6, 4),
+        rect(-2, 12, 4, 6),
+        rect(12, 14, 6, 4),
+        rect(14, 12, 4, 6),
+        rect(-1, -1, 4, 2),
+        rect(-1, -1, 2, 4),
+        rect(13, -1, 4, 2),
+        rect(15, -1, 2, 4),
+        rect(-1, 15, 4, 2),
+        rect(-1, 13, 2, 4),
+        rect(13, 15, 4, 2),
+        rect(15, 13, 2, 4),
+    ]
+    .into_iter()
+    .collect();
+    let got: BTreeSet<_> = buf
+        .overlays()
+        .iter()
+        .filter(|o| o.layer == Layer::Over)
+        .map(|o| (o.rect.x, o.rect.y, o.rect.w, o.rect.h))
+        .filter(|&(ox, oy, _, _)| (x - 2..x + 18).contains(&ox) && (y - 2..y + 18).contains(&oy))
+        .collect();
+    assert_eq!(got, want);
+}
+
+/// The picture look with unit pictures: the lead's map sprite, twice its
+/// size, standing on the army's plate (a look test).
+#[test]
+fn the_picture_looks_army_is_the_leads_sprite_on_its_plate() {
+    let mut ctx = ctx();
+    let units = ctx.game.content.tilesets["test_units"].clone();
+    ctx.game
+        .content
+        .tilesets
+        .insert(crate::map_view::GAME_TILESET.into(), units);
+    let s = screen(&ctx);
+    let buf = paint_pictures(&ctx, &s);
+    let sprite = buf.sprites().into_iter().next().expect("the lead's sprite");
+    let (w, h) = (sprite.src.w * 2, sprite.src.h * 2);
+    assert!(w > 0 && h > 0);
+    // Millbrook's plate at (108, 320), 16 × 16.
+    assert_eq!(sprite.dest, PxRect::new(108 + 8 - w / 2, 336 - h, w, h));
+}
+
+/// The picture look's list: its title on a tab one cell into the list.
+#[test]
+fn the_picture_looks_list_title_sits_one_cell_in() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[Action::WorldFind]);
+    let title = s.view(&ctx).list.expect("Find").title;
+    let buf = paint_pictures(&ctx, &s);
+    let first = title.chars().next().expect("a title");
+    assert_eq!(buf.get(37, 4).map(|c| c.glyph), Some(' '));
+    assert_eq!(buf.get(38, 4).map(|c| c.glyph), Some(first));
 }
 
 /// The army walks one place every `STEP_S`: halfway, it is at the

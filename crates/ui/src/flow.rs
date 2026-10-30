@@ -508,14 +508,11 @@ impl FlowScreen {
             self.world_map();
             return;
         }
-        let next_chapter = next.as_ref().and_then(|n| content.chapters.get(n)).cloned();
-        match next_chapter {
+        // The next chapter: on its map (the one the army is on, or the
+        // next act's, `clear_node` moved it there), or its scenes first.
+        match next {
+            Some(id) => self.start_chapter(ctx, &id),
             None => self.the_end(ctx),
-            Some(c) if c.world_map.is_none() => self.start_chapter(ctx, &c.id),
-            Some(c) => {
-                self.chapter = Some(c);
-                self.world_map();
-            }
         }
     }
 

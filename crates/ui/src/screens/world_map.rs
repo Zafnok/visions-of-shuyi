@@ -558,9 +558,11 @@ impl WorldMapScreen {
         if input.actions.contains(&Action::Confirm) {
             walk.step = last;
         }
-        while walk.step < last && ctx.clock_s >= walk.next_at {
-            walk.step += 1;
-            walk.next_at += STEP_S;
+        for _ in walk.step..last {
+            if ctx.clock_s >= walk.next_at {
+                walk.step += 1;
+                walk.next_at += STEP_S;
+            }
         }
         if walk.step < last {
             return Some(Transition::None);
