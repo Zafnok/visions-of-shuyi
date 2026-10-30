@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
-status: todo
+status: done
 blocked_by: ["0736", "0743", "0748"]
 nick_input: none
-completed:
+completed: 2026-10-30
 ---
 
 # 0749 — Chapter 7 script: Ossary
@@ -80,12 +80,12 @@ needs it. Nick reads the chapter in the Act 1 playtest (1064).
 
 ## Acceptance criteria
 
-- [ ] `docs/story/chapters/ch07.md` and `assets/dialogue/ch07.dlg` exist and
+- [x] `docs/story/chapters/ch07.md` and `assets/dialogue/ch07.dlg` exist and
       cover every beat above.
-- [ ] The critique pass checklist is ticked in the PR body.
-- [ ] The ledger records what changed for each character.
-- [ ] `cargo xtask check-script` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The critique pass checklist is ticked in the PR body.
+- [x] The ledger records what changed for each character.
+- [x] `cargo xtask check-script` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -93,5 +93,59 @@ needs it. Nick reads the chapter in the Act 1 playtest (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-30.
+
+- **Written:** the beat sheet `docs/story/chapters/ch07.md` (in
+  `ch06.md`'s shape) and the script `assets/dialogue/ch07.dlg`, on a
+  blank page from scene cards: the pilgrim road; the two fixed
+  skirmishes' scenes (*Pilgrims' Road*, *The Ossuary Gate*); the
+  streets, the empty dormitory, Crane, the stair; the battle's lines
+  (turn 1, the bone walls, the warden to anyone, to Rue, to Oriel, at
+  half strength, dying; the lead's fall; nine death quotes and nine
+  retreat lines); the chapter-house yard, the pilgrims' barn and the
+  cut to Crane and Dace. Two reply choices (to Crane, to Maud). All
+  talk before the first move is 28 boxes on the longest path, the cap.
+- **The critique pass** ran twice: a fresh reader's cold read on the
+  player view (names shown, then names hidden) and the editor's list.
+  Round 1 found one house rhythm in every mouth (repeat the phrase,
+  "..." plus "--" in the same box, "somebody" in every dying wish),
+  templated retreat lines (everyone going "up"), Crane's door slogans
+  and his "I've read your paper" device three times, Rue's attack
+  happening off screen, the yard's "out, now!" contradicted by ten
+  boxes of standing still, a second roll-call scene in the streets, and
+  a dozen British words. All fixed in the second draft; round 2's
+  findings are in the PR.
+- **Where the Candles went** (the warden's sheet left it to this
+  ticket): carted to the king's army two weeks before the party
+  arrives, the nineteen whose fire line lit at the Ashfields (Chapter
+  6's ledger). Recorded in the sheet. Wren is not among them: Crane
+  says "catalogued, not lost" and no more; Dace is told nothing
+  (Chapter 8's line stays Hollis's).
+- **Names:** no new names. `undercroft_warden` added to
+  `characters.ron`'s `speakers` (she speaks before 0853 makes a unit of
+  her, as Oriel and the knight did for 0852). Her sheet's "love" and
+  "now then" were British (`setting-and-tone.md`, *Language*): the
+  script and the sheet now say "dear" and "there, now".
+- **Music:** 0071's picks are `holy_city` (the road and the streets),
+  `scene_dread` (the dormitory), `talk_antagonist` (Crane's scenes) and
+  `battle_church_3` (the battle file's). Only `talk_antagonist` is
+  imported, so the script carries it and marks the other two with a
+  comment where the `@music` line goes; **0853 imports `holy_city` and
+  `scene_dread` and adds those two lines** (its step 3 already says so).
+  The scenes 0071 left open use the existing mood cues as *Claude's
+  picks* (`dungeon_tense`, `talk_calm`, `scene_sad`).
+- **For 0853:** the scene ids and triggers are listed at the top of the
+  script; the warden speaks twice before the fight (`ch07_crane`,
+  `ch07_prebattle`), so she needs a dialogue face (her sheet allows it:
+  "a face only if she speaks outside the fight"); the `@if` blocks
+  around companion lines in battle scenes go as each trigger is wired.
+  No `@place` directives yet (0853's and 1071's maps).
+- **Deviations:** none from the outline. The chapter's "streets" scene
+  is three boxes (narration, Rue, Hollis): the cold read found a longer
+  one a second roll call, and the budget before the first move is at
+  its cap.
+- **For the Act 1 playtest (1064):** nothing to judge by playing beyond
+  the words. No starting rules were decided (no Rust, no numbers).
+- **Follow-ups:** none filed. Hollis hears Oriel say "Marr" in the
+  barracks and nothing is made of it here; 1073's Hollis–Oriel support
+  can spend it (Chapter 6's note stands).
