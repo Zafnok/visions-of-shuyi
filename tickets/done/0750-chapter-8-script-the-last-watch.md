@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
-status: todo
+status: done
 blocked_by: ["0736", "0743", "0749", "0069"]
 nick_input: none
-completed:
+completed: 2026-10-30
 ---
 
 # 0750 — Chapter 8 script: The Last Watch
@@ -99,5 +99,69 @@ needs it. Nick reads the chapter in the Act 1 playtest (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-30.
+
+- **Written:** the beat sheet `docs/story/chapters/ch08.md` (in
+  `ch07.md`'s shape) and the script `assets/dialogue/ch08.dlg`, on a
+  blank page from scene cards: the crossroads bill (the king's
+  declaration; east); the night before on the hill above Saltmere
+  (Hollis and the lead, the sword and the stone, "my girl's on this side
+  of the water"); the quay at first light (Ragna's ship; Hedda chooses
+  east; the mare); three streets (Dace's offer, refused by silence); the
+  battle's lines (turn 1, the second street, the last turn from the
+  deck, Dace to anyone, to the lead, to Hollis, to Joss, to Rue, at half
+  strength, down; the lead's fall; nine death quotes and nine retreat
+  lines); the gangway (Hollis holds it and is shot; the version where
+  the lead tells Dace); the deck (the goodbye); Dace alone on the quay;
+  the king's closing scene. Two reply choices (to Hollis the night
+  before; on the deck). All talk before the first move is 28 boxes on
+  the longest path, the cap.
+- **Both versions of Hollis's death** (0069, `death-and-difficulty.md`):
+  `ch08_victory`'s `@if retainer` is the gangway with him; its `@else`
+  has Dace read his father's death off the plank and the lead tell him
+  about Wren (Rue adds what she saw if she is there). **The `@dies
+  retainer` is in the next scene**, `ch08_sail`: Hollis is still in the
+  army through the gangway, so the deck's `@if retainer` can hold the
+  grief of people who watched him die an hour ago (and the `@dies`), and
+  its `@else` the deck when he died chapters back. After that nobody is
+  "there" for him on any path, so the dock and the king's scene never
+  mention him. 0715's blocks were enough; no new way to branch.
+- **The critique pass** ran three rounds: two fresh readers on the
+  player view (names shown; names hidden, asked who speaks each box),
+  then a third on the second draft and a fourth on the reworked scenes,
+  plus the editor's list each time. Round 1 found Hollis trailing off
+  twenty-two times in twenty boxes (his card allows about one), seven
+  speakers sharing "I'm not X, I'm Y", nine deaths all handing someone
+  an object and seven retreats on "I'll go to the plank", thirty-two
+  "somebody/nobody", Dace's British "I've no orders", and the deck
+  assuming Hollis died today on every path (the `@dies` move above).
+  Round 2 found Dace closing seven boxes by repeating his own order,
+  "the old man" meaning both Crane and Hollis, "last" shown three times
+  on the gangway, the book passage echoing the chapter (a storm and a
+  ship; then steps and a sleeping knight), and that Dace was at Veyne
+  Hall, so he may already know his father is dead (he now reads it off
+  the plank; the lead's "He's dead." is gone). Round 3 found three
+  retreats on "knee gone, I'll sit on a crate" and five one-word
+  openers. All fixed; what the last reader still flags is in the PR.
+- **Names:** no new names. `king` added to `characters.ron`'s
+  `speakers` (he speaks in the closing scene and never fights in Act 1).
+  The king has no face yet (0070 did not pick one); the script uses the
+  five expressions every character has.
+- **Music:** 0071's picks are `battle_finale` (the battle file's),
+  `scene_loss` (Hollis dies), `scene_departure` (the ship sails) and
+  `scene_lamplight` (the king). None is imported, so the script marks
+  each place with a comment; **0854 imports them and adds the `@music`
+  lines** (its step 3 already says so). The scenes 0071 left open use
+  the existing mood cues as *Claude's picks* (`talk_calm`,
+  `dungeon_tense`, `scene_sad`).
+- **For 0854:** the scene ids and triggers are listed at the top of the
+  script; the `@if` blocks around companion lines in battle scenes go as
+  each trigger is wired; Ragna speaks once mid-battle from the deck
+  without being a unit; the turn count is the scenes' "an hour". **For
+  1065:** the closing scene is `ch08_closing`, after the victory scenes.
+- **Deviations:** none from the outline. Hollis's last words to Dace and
+  the king's "Your hands are warm tonight" are the outline's words
+  (Nick approved the outline at gate 2); the rest is new.
+- **For the Act 1 playtest (1064):** nothing to judge by playing beyond
+  the words. No starting rules were decided (no Rust, no numbers).
+- **Follow-ups:** none filed.
