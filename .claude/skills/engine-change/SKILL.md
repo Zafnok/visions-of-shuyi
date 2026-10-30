@@ -46,7 +46,7 @@ You need that sentence for the engine ticket.
 ## 2. Now, or a ticket and a follow-up?
 
 **Do it now, in this session** when the engine change is one PR's worth
-or less (the engine's `write-ticket` says about 600 changed lines) and is
+or less (the engine's `write-ticket` states the number) and is
 no larger than the game ticket itself. Go to step 3.
 
 **Do it in a session of its own** (step 6) when the engine change is

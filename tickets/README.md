@@ -72,7 +72,9 @@ other can run in parallel sessions (use separate git worktrees).
 
 Use the **`work-ticket`** skill. Summary: branch `t<NNNN>-<slug>` → implement
 within scope → run gates → fill in Completion notes → `git mv` to `done/` →
-PR titled `[NNNN] Title`.
+PR titled `[NNNN] Title`. A PR stays under about 3,000 changed lines, so a
+ticket is planned at about 2,000 or fewer and split before coding if it won't
+fit ([ADR-0101](../docs/adr/0101-a-game-pr-stays-under-about-3000-changed-lines-by-estimate-and-warning.md)).
 
 **The two exceptions:** a GitHub issue labelled `sonar` or `engine-pin`
 is its own ticket, worked in one PR with no ticket file.

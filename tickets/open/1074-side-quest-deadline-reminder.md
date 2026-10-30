@@ -54,7 +54,7 @@ checklist (1064).
 - A quest whose character dies (Classic) closes at once, with the same event.
 
 **Out (do not do):**
-- The Act 1 side quests themselves (1072) and their node placement (1070).
+- The Act 1 side quests themselves (1072, 1083, 1084) and their node placement (1070).
 - Any new rule for missing a recruit (optional recruits like Gil have no
   reminder; Nick only asked for side quests).
 - Changing when side quests unlock.

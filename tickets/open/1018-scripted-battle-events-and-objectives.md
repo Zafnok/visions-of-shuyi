@@ -48,7 +48,7 @@ None.
 
 **Out (do not do):** new kinds of outcome that need new rules (each is its
 own ticket); scripts in the shipped game's battles; the map editor's UI
-for scripts (1020 only names them).
+for scripts (1085 only names them).
 
 ## Implementation steps
 

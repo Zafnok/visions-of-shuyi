@@ -90,6 +90,18 @@ Set `status: in-progress` in the ticket frontmatter.
   a similar piece of this repository). Start from the size the ticket
   states, if it states one. A ticket with no Rust code (docs, data, a
   decision) skips this.
+- **Estimate the PR's size too** (ADR-0101): all the changed lines `cargo
+  xtask pr-size` will count (code, tests, docs, the ticket file, hand-written
+  data), not only the production lines above. Judge it by a done ticket of
+  the same kind. **Past about 2,000, split the ticket first** with
+  `write-ticket`, then work the first piece: a session that plans 3,000 and
+  runs over runs out of context.
+- **While you work:** a hook runs `pr-size` before each commit, push and PR
+  and tells you when the branch passes 2,000 (note where it would split) or
+  3,000 (can it split cleanly?). Take it seriously: finish the part that
+  works alone, move the rest to a new ticket (`write-ticket`), and stack the
+  PRs if the second needs the first. If it can't split cleanly, ship it and
+  say why. The warning never blocks.
 - Follow the ticket's **Implementation steps** in order. If a step turns out to
   be wrong, deviate minimally and explain it in the Completion notes.
 - Respect crate boundaries (ADR-0004): no I/O, clock or macroquad outside `app`;
@@ -158,6 +170,8 @@ estimate:
   At 10× or more the fix comes first unless the review says why not.
 
 A finding never blocks the ticket: fix first, or ship and follow up.
+
+Run `cargo xtask pr-size` and compare it with your estimate (ADR-0101).
 Walk the ticket's **Acceptance criteria** and tick each box honestly. If one
 cannot be met, say so in the Completion notes and in the PR; don't hide it.
 
@@ -205,7 +219,8 @@ tickets anymore."
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
     tickets created, an `Engine friction:` line ("Engine friction:
     estimate N, measured M (R×), <outcome or 'under 2×'>"; "none: no Rust
-    code" when there is none), and `Nick input:` line (e.g. "None: verified by tests and the
+    code" when there is none), a `PR size:` line ("PR size: estimate N,
+    measured M", with the reason if M passes about 3,000), and `Nick input:` line (e.g. "None: verified by tests and the
     pictures above; starting rules listed for the Act 1 playtest
     (1064)"). Never ask Nick to check a gameplay ticket after merge
     (§5b).

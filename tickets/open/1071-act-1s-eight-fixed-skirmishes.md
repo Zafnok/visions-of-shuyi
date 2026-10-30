@@ -59,7 +59,7 @@ checklist.
   <id> --bot all` for each; the reports in the PR.
 
 **Out (do not do):**
-- Story battles (0850–0853), side quests (1072), random skirmishes
+- Story battles (0850–0853), side quests (1072, 1083, 1084), random skirmishes
   (1070's pool), new rules.
 - Stars on fixed skirmishes (0046's build tickets).
 

@@ -54,8 +54,8 @@ it):
 - New Actions only where no existing one fits, with defaults on both
   layouts and the controller (the `keyboard-input` skill).
 
-**Out (do not do):** units, reinforcements, objectives and triggers (1020);
-playing the map (1020); the web build.
+**Out (do not do):** units (1020), reinforcements, objectives and triggers
+(1085); playing the map (1020); the web build.
 
 ## Implementation steps
 

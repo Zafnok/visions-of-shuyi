@@ -56,6 +56,10 @@ them in the Act 1 playtest (1064).
 
 ## Implementation steps
 
+**Size (0135, ADR-0101):** about 2,300-3,200 changed lines at 12-16 pairs. Cap the plan at about 12
+pairs, or split: the lead's pairs here, the companions' pairs and the camp
+events in a new ticket blocked by this one.
+
 1. Read `supports.md`, the `story-writing` skill, every Act 1 sheet,
    the outline, the ledger and the scripts 0737, 0744–0750.
 2. Pick the pairs; outline each pair's C → B → A arc in a few lines.

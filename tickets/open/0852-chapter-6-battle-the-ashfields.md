@@ -81,7 +81,7 @@ before building.
 
 **Out (do not do):**
 - The script's words (0748); fixed skirmishes and towns (1071, 1070);
-  side quests (1072); supports and camp events (1073).
+  side quests (1072, 1083, 1084); supports and camp events (1073).
 - New rules in `core` (file a ticket; 0319 has the Act 1 ones).
 - Changing earlier chapters' balance.
 

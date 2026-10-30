@@ -91,6 +91,11 @@ it):
 
 ## Implementation steps
 
+**Size (0135, ADR-0101):** about 2,500-3,300 changed lines, a coin flip. Keep the tests lean. If it
+passes 2,500, stop and split: core, content and enemy building stay here
+(with the property and determinism tests); `PlaceMark`, both skins,
+`FindKind`, hover and the snapshot go to a new ticket blocked by this one.
+
 1. Read `world-structure.md`, `death-and-difficulty.md`, `supports.md`
    (*Gaining points*, pacing note), the 1007 world-map code and 0304's RNG.
 2. `core::worldmap`: add the skirmish node kinds, spawn rules and cleared

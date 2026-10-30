@@ -46,6 +46,7 @@ cargo xtask engine-pin --check           # the engine's pin agrees in shuyi-engi
 cargo xtask skill-pack --check           # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097)
 cargo shuyi check-skills .claude/skills   # every skill here keeps the engine's skill rules (ADR-0097)
 cargo xtask ticket-lint                   # tickets/ follows tickets/README.md
+cargo xtask pr-size                       # the PR against about 3,000 changed lines; warns, never fails (ADR-0101)
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown
 cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf  # Playdate, no std (ADR-0070), with the engine crates under it
