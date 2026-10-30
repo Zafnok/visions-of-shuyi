@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo fmt --all --check
 
   clippy:
@@ -44,7 +44,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -63,7 +63,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - name: Test the crates that read the changed docs
@@ -103,7 +103,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo shuyi web --release
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -125,7 +125,7 @@ jobs:
           persist-credentials: false
       - run: rustup show
       - run: rustup target add thumbv7em-none-eabihf
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
@@ -152,7 +152,7 @@ jobs:
           persist-credentials: false
       - run: rustup show
       - run: rustup target add thumbv7em-none-eabihf
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install the ARM compiler
         timeout-minutes: 8
         # No Recommends: they pull in the C++ standard library
@@ -202,7 +202,7 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo doc --workspace --no-deps --locked
@@ -221,10 +221,10 @@ jobs:
           fetch-depth: 0
       - run: rustup show
       - run: rustup component add llvm-tools-preview
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage report
@@ -255,7 +255,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 2
       - run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       # A warning on a PR past about 3,000 changed lines; never a failure,
       # and only the number on an engine-pin/ or sonar/ PR (ADR-0101).
       - name: Report the PR's size
