@@ -201,6 +201,49 @@ fn find_jumps_to_a_kind_and_cycles_through_it() {
     assert_eq!(s.cursor(), "ford");
 }
 
+/// Find's nearest place is the nearest to the army, across and down
+/// (here Kingsgate, moved beside Stone Mill, beats Millbrook); with three
+/// towns, Next and Previous go opposite ways round them.
+#[test]
+fn find_picks_the_nearest_and_cycles_both_ways() {
+    let mut ctx = ctx();
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("a map");
+    def.places.insert("city".into(), Pos::new(36, 20));
+    let farm = def
+        .map
+        .nodes
+        .iter_mut()
+        .find(|n| n.id == "farm")
+        .expect("the farm");
+    farm.kind = NodeKind::Town {
+        shops: Vec::new(),
+        capital: false,
+    };
+    let mut c = army(&ctx);
+    c.world.as_mut().expect("on the map").at = "ford".into();
+    let mut s = WorldMapScreen::new(c, 0.0);
+    press(&mut s, &mut ctx, &[Action::WorldFind, Action::CursorDown]);
+    assert_eq!(s.cursor(), "city");
+    // The towns in the map's order: Millbrook, the farm, Kingsgate.
+    press(&mut s, &mut ctx, &[Action::NextUnit]);
+    assert_eq!(s.cursor(), "home");
+    press(&mut s, &mut ctx, &[Action::PrevUnit, Action::PrevUnit]);
+    assert_eq!(s.cursor(), "farm");
+}
+
+#[test]
+fn the_cursor_pulses_from_full_to_half_and_back() {
+    assert!((pulse(0.0) - 1.0).abs() < 1e-4);
+    assert!((pulse(0.5) - 0.5).abs() < 1e-4);
+    assert!((pulse(1.0) - 1.0).abs() < 1e-4);
+    assert!((pulse(10.5) - 0.5).abs() < 1e-3);
+}
+
 /// Confirm on another place sends the army there, one place at a time;
 /// the campaign has it there at once.
 #[test]

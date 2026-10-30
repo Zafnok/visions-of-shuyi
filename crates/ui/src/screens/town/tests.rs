@@ -83,6 +83,43 @@ fn selling_asks_how_many_first() {
     assert_eq!(s.campaign().gold, 2300);
 }
 
+/// Up and down move between the lines: the second one is bought.
+#[test]
+fn down_then_confirm_buys_the_second_line() {
+    let mut ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let mut s = TownScreen::new(army(&ctx), armory, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(s.campaign().stock.count(&ItemId::new("leather_vest")), 1);
+    assert_eq!(s.campaign().stock.weapons.len(), 0);
+    press(&mut s, &mut ctx, &[Action::CursorUp, Action::Confirm]);
+    assert_eq!(s.campaign().stock.weapons.len(), 1);
+}
+
+/// Cancel while a sale is asked about sells nothing and goes back to the
+/// list.
+#[test]
+fn cancel_on_a_sale_sells_nothing() {
+    let mut ctx = ctx();
+    let vendor = shop(&ctx, "home", ShopKind::Vendor);
+    let mut s = TownScreen::new(army(&ctx), vendor, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    let line = s
+        .view(&ctx)
+        .lines
+        .iter()
+        .position(|l| l.name.starts_with("Potion"));
+    for _ in 0..line.expect("potions") {
+        press(&mut s, &mut ctx, &[Action::CursorDown]);
+    }
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    assert!(s.view(&ctx).selling.is_some());
+    let t = press(&mut s, &mut ctx, &[Action::Cancel]);
+    assert!(matches!(t, Transition::None), "the screen stays");
+    assert!(s.view(&ctx).selling.is_none());
+    assert_eq!(s.campaign().stock.count(&ItemId::new("potion")), 2);
+}
+
 /// A weapon of the stock sells with its durability before its numbers;
 /// left and right switch the two tabs.
 #[test]

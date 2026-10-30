@@ -815,10 +815,9 @@ impl WorldMapScreen {
 /// The cursor's brightness `t` seconds into its pulse: full, down to half
 /// halfway through a second, back up (as the battle map's cursor).
 fn pulse(t: f32) -> f32 {
-    use shuyi_ui::grid::cursor::{BLINK_MIN, BLINK_PERIOD, Cursor};
-    let mut cursor = Cursor::new(Pos::default());
-    cursor.tick(t % BLINK_PERIOD);
-    cursor.brightness().max(BLINK_MIN)
+    let mut cursor = shuyi_ui::grid::cursor::Cursor::new(Pos::default());
+    cursor.tick(t);
+    cursor.brightness()
 }
 
 /// Asks for `cue` on `ctx`'s audio.

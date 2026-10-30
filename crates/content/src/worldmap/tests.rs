@@ -76,6 +76,21 @@ fn the_test_world_map_loads_with_its_places_levels_and_roads() {
 }
 
 #[test]
+fn a_maps_picture_is_kept() {
+    let c = content();
+    let raw: RawWorldMap = parse_ron(
+        "t.ron",
+        &text("", "").replace(
+            "size: (20, 10)",
+            r#"size: (20, 10), picture: Some("images/map.png")"#,
+        ),
+    )
+    .unwrap_or_else(|e| panic!("{e:?}"));
+    let def = build("test_world", raw, refs(&c), &mut |_| {});
+    assert_eq!(def.picture.as_deref(), Some("images/map.png"));
+}
+
+#[test]
 fn the_average_enemy_level_rounds_to_the_nearest() {
     let c = content();
     let mut battle = c.battles["test"].clone();
@@ -235,6 +250,15 @@ fn music_size_ground_and_places_are_checked() {
             "place \"top\" at Pos { x: 5, y: 0 } is too near the map's edge",
         ]
     );
+    // The limits themselves are fine: one cell across, a place two cells
+    // from the right edge.
+    let narrow = text("", "").replace("size: (20, 10)", "size: (1, 10)");
+    assert!(!problems(&narrow).iter().any(|p| p.starts_with("size")));
+    let edge = text(
+        r#"(id: "e", name: "E", pos: (18, 2), kind: Empty),"#,
+        r#"(from: "b", to: "e")"#,
+    );
+    assert_eq!(problems(&edge), Vec::<String>::new());
     let big = text("", "").replace("size: (20, 10)", "size: (71, 10)");
     assert_eq!(
         problems(&big),
