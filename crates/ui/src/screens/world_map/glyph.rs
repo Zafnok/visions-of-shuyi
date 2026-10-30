@@ -117,12 +117,10 @@ pub(super) fn road_cells(cells: &[Pos]) -> Vec<Pos> {
     for pair in cells.windows(2) {
         let (a, b) = (pair[0], pair[1]);
         let (dx, dy) = ((b.x - a.x).signum(), (b.y - a.y).signum());
-        let mut at = a;
-        out.push(at);
-        while at != b && (dx != 0 || dy != 0) {
-            at = Pos::new(at.x + dx, at.y + dy);
-            out.push(at);
-        }
+        // A count of steps, not a walk until `b`: a step that misses `b`
+        // (a bent road, or a mutant in CI) can't run on forever.
+        let steps = (b.x - a.x).abs().max((b.y - a.y).abs());
+        out.extend((0..=steps).map(|t| Pos::new(a.x + dx * t, a.y + dy * t)));
     }
     out
 }
@@ -416,6 +414,27 @@ mod tests {
         }
         assert_eq!(ground("thicket", 0, 0).0, '♠');
         assert_eq!(ground("water", 0, 0).0, '≈');
+    }
+
+    /// A road's cells, turn to turn, each turn listed once at the end of
+    /// a run and again at the start of the next; a run of no length is
+    /// its one cell.
+    #[test]
+    fn a_roads_cells_run_from_turn_to_turn() {
+        let p = |x, y| Pos::new(x, y);
+        assert_eq!(
+            road_cells(&[p(5, 2), p(2, 2), p(2, 0), p(2, 0)]),
+            [
+                p(5, 2),
+                p(4, 2),
+                p(3, 2),
+                p(2, 2),
+                p(2, 2),
+                p(2, 1),
+                p(2, 0),
+                p(2, 0)
+            ]
+        );
     }
 
     #[test]
