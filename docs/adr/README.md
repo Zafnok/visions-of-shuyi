@@ -80,7 +80,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0070](0070-playdate-front-end.md) | The Playdate front end: stable Rust, the SDK's own C build, rules without `std` | Accepted (1026) |
 | [0071](0071-sonar-backlog-becomes-batched-github-issues.md) | SonarCloud's backlog becomes batched GitHub issues, filtered by a checked-in policy | Accepted (0126) |
 | [0072](0072-options-changes-previewed-then-kept-or-put-back.md) | Options changes are previewed, then kept or put back on leaving | Accepted (0839); amends ADR-0050 and ADR-0069 |
-| [0073](0073-mutation-shards-build-incrementally-and-run-slow-tests-last.md) | Mutation shards build incrementally, run the slow tests last, and share one baseline | Accepted |
+| [0073](0073-mutation-shards-build-incrementally-and-run-slow-tests-last.md) | Mutation shards build incrementally, run the slow tests last, and share one baseline | Accepted; its shard rule and shard time limit superseded by ADR-0100 |
 | [0074](0074-the-one-bit-frame.md) | The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer | Accepted (1032) |
 | [0075](0075-sprites-fade-by-brightness-not-opacity.md) | Sprites fade by brightness, not opacity | Accepted (0732); amends ADR-0060 §4 |
 | [0076](0076-conversation-openings-a-cast-on-a-place-and-the-cinematic-walks.md) | Conversation openings: a cast on a place, and the cinematic walks | Accepted (0734); extends ADR-0061 |
@@ -106,6 +106,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0096](0096-a-watcher-on-the-engines-main-moves-the-pin-when-its-public-api-changes.md) | A watcher on the engine's `main` (`engine-watch.yml`, started by the engine's dispatch and hourly) keeps one `engine-pin` issue when a move is due: a public API change (the engine's `api:` label or a `pub` line), an unblocked game ticket, or engine code 48 hours old. The issue is its own ticket, worked by the `engine-pin` skill; every move reviews the engine PRs it passes (adopt, or not for the game) in `docs/engine/pins.md`, which `engine-pin --check` checks | Accepted (1190); extends ADR-0063 §8 and ADR-0071 |
 | [0097](0097-the-engines-skill-pack-is-copied-into-the-game-at-the-pin.md) | The engine's skill pack is copied into `.claude/skills/shuyi-*` at the pin, not taken as the plugin (which follows the engine's `main`): `cargo xtask skill-pack` writes the pack the pinned `shuyi-cli` embeds, `--check` fails on a stale copy; `keyboard-input` and `run-gates` keep only the game's rules and link `shuyi-input` and `shuyi-gates` | Accepted (1192); extends ADR-0063 §8 |
 | [0098](0098-markdown-the-code-reads-runs-its-crates-tests.md) | A Markdown file the code reads runs the tests of the crates that read it: its `read by` line in `changes.yml` feeds CI's `doc-tests` job (one OS, those crates only); xtask's `every_markdown_file_the_code_reads_is_tested` keeps the lines exact | Accepted (0252); extends ADR-0014 |
+| [0100](0100-mutation-shards-of-at-most-sixty-mutants-with-a-150-minute-limit.md) | Mutation shards of at most about 60 mutants: 1 shard up to 40 mutants, 4 up to 160, 8 up to 480, then one per 60, at most 20; each shard may run 150 minutes | Accepted (0133); supersedes ADR-0073 §1's shard rule and §3's time limit |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
