@@ -155,5 +155,7 @@
     // magistrate speak before 0851 makes units of those that fight.
     // Chapter 6 (ticket 0748): Oriel, the Brennish commander and the
     // king's knight speak before 0852 makes units of those that fight.
-    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight"],
+    // Chapter 7 (ticket 0749): the warden of the Candles' barracks speaks
+    // before 0853 makes a unit of her.
+    speakers: ["rival", "vowmaster", "messenger", "hound_sergeant", "herald", "greywater_prior", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden"],
 )

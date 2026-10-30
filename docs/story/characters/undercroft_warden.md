@@ -18,9 +18,11 @@ Ossary. She woke them, fed them, dressed their burns, sat with the ones
 who cried, and locked the door at night. She walked them to the carts
 for the Ashfields. Crane told her death is only a door, and that she
 will see the ones who burned again. She believes him, because she can't
-bear not to. Now the dormitory has been emptied (where the children went is the
-Chapter 7 script's, 0749); Crane told her they were "going home", and
-she chose to believe that too. She still airs the blankets.
+bear not to. Now the dormitory has been emptied: its children were carted to the
+king's army a fortnight before the party arrives, the nineteen whose
+fire line lit along the king's front at the Ashfields (0749, from
+Chapter 6's ledger); Crane told her they were "going home", and she
+chose to believe that too. She still airs the blankets.
 
 - **Want:** her children back: to see the burned ones again, as Crane
   promised, and the others under her roof.
@@ -31,8 +33,9 @@ she chose to believe that too. She still airs the blankets.
 
 ## Voice
 
-- A big, gentle, tired nurse's voice: "love", "now then", and questions
-  about whether you've eaten. She is not cruel to anyone, and that is
+- A big, gentle, tired nurse's voice: "dear", "there, now", and
+  questions about whether you've eaten (0749 made the words American,
+  `setting-and-tone.md`, *Language*: no "love", no "now then"). She is not cruel to anyone, and that is
   what makes her hard to fight. Played sad, never creepy, in the spirit of
   the outline's rules for the prince: no horror staging.
 - **Won't say:** that they're dead. "Gone ahead." "Away."

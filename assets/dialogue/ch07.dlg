@@ -1,0 +1,825 @@
+# Chapter 7: Ossary. Written on a blank page from the beat sheet's cards
+# by ticket 0749 (the story-writing skill).
+# Beat sheet: docs/story/chapters/ch07.md. Continuity: docs/story/ledger.md.
+# Voice cards: docs/story/characters/*.md.
+#
+# A world-map chapter (world-structure.md): it plays out over the Act 1
+# map's nodes and ends with the story battle in the Undercroft, wardens
+# in catacombs and narrow stairs, with Crane's champion as the boss and
+# Crane gone before the first move. Scene ids, for 0853 (the story
+# battle and the chapter file) and 1071 (the two fixed skirmishes) to
+# wire:
+#
+#   When the chapter opens (the world map appears)
+#     ch07_intro                    the pilgrim road: bells, bones, a name
+#
+#   Pilgrims' Road (fixed skirmish, guards the path; 1071)
+#     ch07_pilgrims_road_intro      before the fight: hands held out
+#     ch07_pilgrims_road_victory    after it
+#
+#   The Ossuary Gate (fixed skirmish, optional; 1071)
+#     ch07_ossuary_gate_intro       before the fight: where the carts stood
+#     ch07_ossuary_gate_victory     after it
+#
+#   Before the story battle (intro_scenes, in this order)
+#     ch07_city                     the streets; the kitchen stair
+#     ch07_dormitory                the empty barracks (music: scene_dread, 0853)
+#     ch07_crane                    Crane is waiting; he leaves
+#     ch07_prebattle                the warden on the far stair
+#
+#   In the battle (triggers, each once)
+#     ch07_first_turn               TurnStart(turn: 1, phase: Player)
+#     ch07_bones                    UnitEntersArea(who: Faction(Player), the bone walls)
+#     ch07_boss_engage              CombatStart(unit: "undercroft_warden"): anyone else
+#     ch07_boss_engage_heretic      CombatStart(unit: "undercroft_warden", against: Some("heretic"))
+#     ch07_boss_engage_battlemage   CombatStart(unit: "undercroft_warden", against: Some("battlemage"))
+#     ch07_boss_half                HalfHp(unit: "undercroft_warden")
+#     ch07_boss_fell                UnitFell(unit: "undercroft_warden")
+#     ch07_death_lead               UnitFell(unit: "lead"): game over in both modes
+#     ch07_death_<id>               UnitFell(unit: "<id>", mode: Some(Classic))
+#     ch07_retreat_<id>             UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector,
+#                  prizefighter, shieldbearer, battlemage
+#
+#   After the battle (victory_scenes, in this order)
+#     ch07_victory                  the chapter-house yard: the keys; the banner
+#     ch07_after                    a pilgrims' barn, night: two and a half pages
+#     ch07_tbc                      the Vigil's gate: Crane and Dace
+#
+# Until 0853 and 1071 wire the triggers, the validator can't know which
+# scene plays for whom, so every companion line in a battle scene below
+# sits in an "@if" block for them (ADR-0055). Once a trigger names the
+# companion (a death quote, a retreat line, the warden against Rue or
+# Oriel), that "@if" can only go one way and the validator reports it:
+# 0853 removes those blocks as it wires each trigger. The "@if" in
+# ch07_first_turn and ch07_bones stay: a turn-start scene and an area
+# anyone can enter can't count on anyone.
+#
+# Crane (vowmaster) and the warden (undercroft_warden) are speakers in
+# characters.ron until 0853 makes a unit of the warden. The warden speaks
+# twice before the fight (ch07_crane, ch07_prebattle), so 0853 gives her
+# a dialogue face (her sheet: "a face only if she speaks outside the
+# fight"). Crane never fights here.
+#
+# No @place directives yet: the maps are 0853's and 1071's. Music: 0071
+# picked this chapter's scene cues (holy_city for the city's scenes,
+# scene_dread for the empty dormitory, talk_antagonist for Crane's
+# scenes; battle_church_3 for the battle, which is the battle file's).
+# holy_city and scene_dread aren't imported yet, so the scenes that take
+# them carry a comment where the @music line goes, for 0853 to fill in
+# when it imports the cues; the rest are this ticket's picks from the
+# existing mood cues. The skirmishes use the skirmish pool (1008).
+#
+# The seven companions, Gil, Hedda and Oriel may have died in Chapters
+# 1-6 (Classic), Gil may never have been beaten, Hedda may have fallen
+# in the hold and Oriel in the crossing, so outside the battles every
+# line of theirs is in an "@if" block, and each scene reads through with
+# any of them gone.
+#
+# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# story-writing skill, Craft): the road is downtime; the road post, the
+# gate, the streets, the barracks, Crane and the stair are played
+# straight, and the warmth is a hand on a blanket, bread torn in half,
+# a keeper saying the words over a man who'd have taken her friend.
+# Punctuation is the voice acting: Crane ends on periods and never
+# raises his voice; the warden asks soft questions and never exclaims;
+# Maud can't finish a sentence; Rue asks, and goes flat about the
+# Candles; Hollis ends flat and repeats an order instead of a reason;
+# Tamsin fires questions and exclaims at her peaks; Aske ends flat and
+# uses no contractions; Hedda's periods are warm; Oriel trails off; Joss
+# corrects himself; Gil is formal, and plain in the dark. American
+# English throughout (setting-and-tone.md, Language); the warden's
+# "dear" and "there, now" are her nurse's words.
+#
+# Expressions: only the five every character has (neutral, happy, angry,
+# sad, surprised).
+
+# ---------------------------------------------------------------------------
+# When the chapter opens
+# ---------------------------------------------------------------------------
+
+# The pilgrim road. Bells, bones, and a name.
+
+@scene ch07_intro
+@caption The pilgrim road, early winter
+# @music holy_city: 0071's pick for the city's scenes; 0853 imports the cue and adds the line here.
+> A week south of the plain the road climbs a ridge, with people on it: families with bundles, some barefoot, all walking one way. From the top, towers. And bells, more than a city needs, one cracked.
+@if shieldbearer
+@left shieldbearer surprised
+@right lead neutral
+shieldbearer: Is it always like that? The bells. We have one bell at home, and it's for fire. ...Outlaw. Do I bow in there, or do I pay somebody? Tell me now, not in the street.
+@left clear
+@right clear
+@endif
+@if keeper
+@left keeper neutral
+keeper: You don't do anything, you just walk. The cracked one's the little chapel. Under the ossuary. I was ordained under it, by {n:vowmaster.title} himself. {n:vowmaster}.
+keeper: He does the winter ordinations. He doesn't travel in winter, so he'll be there. I don't know why I'm telling you that. Yes I do.
+@if heretic
+@right heretic neutral
+> {n:heretic} has gone very still.
+@right clear
+@endif
+@left clear
+@endif
+@if sergeant
+@if keeper
+@left sergeant neutral
+@right keeper neutral
+sergeant: Half of those bundles are bones, Keeper. I've been looking! And they're selling them at the gate, I saw the boxes go by. Who buys a bone? What do you do with it when you get it home?
+keeper: People whose own are lost. Somewhere they can't dig. You buy one and bury it and say his name over it, and then it's him. It's not nothing. Don't make that face at them.
+@left clear
+@right clear
+@endif
+@endif
+@if prizefighter
+@left prizefighter neutral
+prizefighter: Champion. Rule six: no blows struck on holy ground. I have been turning it over since the first bell and I can't get around it.
+@if sergeant
+@right sergeant neutral
+sergeant: We're going down a cellar, {n:prizefighter.first}. A cellar's not a church, and if I hear rule six once more I'll leave you in the ossuary with the rest of the bones.
+prizefighter: A cellar under a church. That's the part.
+@right clear
+@else
+> Nobody has an answer for him. He walks on, turning it over.
+@endif
+@left clear
+@endif
+@if heretic
+@left heretic neutral
+heretic: Nobody's asked me, so. The door's around the back: a laundry yard behind the ossuary, and the kitchen stairs. They don't lock it in the day, the steam ruins the lock. The barracks are at the bottom.
+heretic: That's how you get in. ...That's all I'm saying about it.
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: Nine hoods on this road. I counted. That is too many hoods for one road, and they are counting us back.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: In and out. Nobody draws under a roof unless I say. {n:family.veyne}, with me.
+@left clear
+@else
+> They go down off the ridge with the pilgrims, toward the bells.
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Pilgrims' Road (fixed skirmish; guards the path into Ossary)
+# ---------------------------------------------------------------------------
+
+# A wayside shrine, and the pilgrims with their hands held out.
+
+@scene ch07_pilgrims_road_intro
+@caption {N:place.pilgrims_road}
+@music dungeon_tense
+> A wayside shrine where the road narrows between two walls, and a warden post at it. The pilgrims stand in a line with their hands held out, palms up, and a warden looks at each pair and waves them on.
+@if keeper
+@left keeper surprised
+keeper: They never did that. Hands. Why would they look at people's-- they bless you at the shrine, that's all it's ever been, they don't look at your-- oh, no.
+@left clear
+@endif
+@if heretic
+@left heretic angry
+heretic: Me. They're looking for me. Fine.
+> She is already going forward.
+@left clear
+@else
+> Whoever told the post what to look for told it about hands.
+@endif
+@if retainer
+@left retainer neutral
+retainer: Then it's now, before one of them runs for the gate. Spears out.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Easy. Pilgrims, in against the wall. All the way in, little ones, and stay there.
+@left clear
+@endif
+@end
+
+# After. The words over a warden.
+
+@scene ch07_pilgrims_road_victory
+@caption {N:place.pilgrims_road}, after
+@music talk_calm
+@if keeper
+@left keeper sad
+> The pilgrims watch from the ditch. {n:keeper} kneels by the warden in the road and says the words over him, quietly, all of them.
+@if heretic
+@right heretic angry
+heretic: You're saying words over him? Him?
+keeper: He was ours. Somebody has to, and there's nobody else here who-- yes. Over him. You can stand there and hate it, I don't mind. I'm nearly done.
+@right clear
+@endif
+@left clear
+@else
+> The pilgrims watch from the ditch and nobody comes out of it. Nobody says anything over the warden in the road.
+@endif
+@if retainer
+@left retainer neutral
+retainer: Word's at the gate by dark. So are we. Up.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# The Ossuary Gate (fixed skirmish; optional)
+# ---------------------------------------------------------------------------
+
+# Below the wall, where the dead go in and the carts stood.
+
+@scene ch07_ossuary_gate_intro
+@caption {N:place.ossuary_gate}
+@music dungeon_tense
+> Below the city wall, a low gate in the hillside where the dead go in, wide enough for a cart. Wardens at it. Ruts in the frozen mud, old ones.
+@if heretic
+@left heretic neutral
+heretic: This is it. This is where they put us in. Out here, around the back, so the pilgrims wouldn't have to look at us. ...Three carts. Mine was the last one.
+@left clear
+@endif
+@if battlemage
+@left battlemage sad
+battlemage: I know this gate. I stood just there.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: It's held, and we don't need it. Walk on.
+@if heretic
+@right heretic angry
+heretic: I need it.
+@right clear
+@endif
+@left clear
+@endif
+@if sergeant
+@left sergeant angry
+sergeant: Then we take it! Sparks-- Sparks, wait for the rest of us, for once in your life, wait for the--
+@left clear
+@endif
+@end
+
+# After. She doesn't go in.
+
+@scene ch07_ossuary_gate_victory
+@caption {N:place.ossuary_gate}, after
+@music scene_sad
+> The gate stands open, and inside it a stair goes down into the dark, with the smell of cold stone coming up it.
+@if heretic
+@left heretic neutral
+> {n:heretic} stands in the gate and doesn't go in.
+heretic: I'm not scared of a cellar.
+@if retainer
+@right retainer neutral
+retainer: I know. Not this way. Walk.
+@right clear
+@endif
+@left clear
+@else
+@if retainer
+@left retainer neutral
+retainer: Nobody goes down there. Not this way. Walk.
+@left clear
+@endif
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# Before the story battle
+# ---------------------------------------------------------------------------
+
+# The streets, and the kitchen stair.
+
+@scene ch07_city
+@caption {N:place.ossary}
+# @music holy_city: 0071's pick for the city's scenes; 0853 imports the cue and adds the line here.
+@if keeper
+> Inside the walls: finger-bones sold in little boxes, pilgrims kneeling where they stand. {n:keeper} walks ahead, hood down, and doesn't turn when somebody calls "Keeper" after her.
+@else
+> Inside the walls: finger-bones sold in little boxes, pilgrims kneeling where they stand, hoods everywhere, and the bells over all of it.
+@endif
+@if heretic
+> Behind the ossuary, a laundry yard, and at the bottom of some steps a door with steam coming out of it. {n:heretic} goes down first, and doesn't wait to be argued with.
+@else
+> Behind the ossuary, a laundry yard, and at the bottom of some steps a door with steam coming out of it.
+@endif
+@if retainer
+@left retainer neutral
+retainer: Hoods up, all of you. Nobody looks at anybody. Down.
+@left clear
+@endif
+@end
+
+# The barracks. Nobody.
+
+@scene ch07_dormitory
+@caption Under {n:place.ossary}
+# @music scene_dread: 0071's pick for the empty dormitory; 0853 imports the cue and adds the line here.
+> Down the kitchen stairs, warm from the ovens, and then not. A long low room, two rows of cots, a blanket folded at the foot of every one, aired this morning by the smell of it. Nobody.
+@if heretic
+@left heretic neutral
+> {n:heretic} walks down the row and stops at a cot like all the others.
+heretic: Mine. ...That one was hers. {n:sister.first}'s. She was always on my left. She said I was warm.
+@if retainer
+@right retainer neutral
+> {n:retainer.first} puts his hand on the folded blanket of that one. It is a child's size. He takes his hand off it.
+@right clear
+@endif
+@left clear
+@else
+@if retainer
+@left retainer neutral
+> {n:retainer.first} walks the row with his hand out, touching every folded blanket once, and gets to the end of it, and stands there.
+@left clear
+@endif
+@endif
+@if battlemage
+@left battlemage sad
+battlemage: I came down those stairs with the roll and read it out, and they stood up. All at once, like soldiers. ...I'd forgotten how low the ceiling is. I used to stoop without thinking. I just did it again.
+@left clear
+@endif
+@if poacher
+@if heretic
+@left poacher neutral
+@right heretic neutral
+poacher: ...How old.
+heretic: Twelve. The little ones, ten.
+poacher: My brother was twenty-two.
+@left clear
+@right clear
+@endif
+@endif
+@end
+
+# Crane is waiting. He leaves.
+
+@scene ch07_crane
+@caption Under {n:place.ossary}
+@music talk_antagonist
+> At the far end of the room, a lamp nobody saw lit, and on the last cot an old man in a tall hood with his hands folded on a stick, as if he had been there a while.
+@right vowmaster neutral
+@if battlemage
+vowmaster: You'll be looking for {n:group.candles}. They went to the war two weeks ago; nineteen. You saw their fires from the far side of the plain. They were to have been yours, {n:battlemage.last}.
+@else
+vowmaster: You'll be looking for {n:group.candles}. They went to the war two weeks ago; nineteen. You'll have seen their fires from the {n:faction.brennmark.adj} side, I think.
+@endif
+@if keeper
+@left keeper surprised
+vowmaster: Keeper {n:keeper}. Your autumn report was on my desk a long while; I read it more than once. Admirably thorough: the hands, the age, what she ate. I had only to send a man.
+keeper[sad]: Master-- I asked you to be gentle with her. It's on the second page. I asked in writing, Master, it's on the second page.
+@left clear
+@endif
+@if retainer
+@left retainer angry
+retainer: {N:family.marr}. {n:sister}. Three years back. Where.
+vowmaster: Captain {n:family.marr}. I don't keep them by name. I keep them catalogued, and nothing of mine is lost. The abbey's book was careless.
+@left clear
+@endif
+@if keeper
+@left keeper angry
+keeper: What are they for? The children. I've asked everyone, and nobody-- Master. What for?
+vowmaster: Death is a door, Keeper. You were taught that, in your second year.
+keeper: Don't. We were taught {n:god.door.name} kept {n:term.door}, and somebody opened it once, in the East, and {n:place.east} shut it, and the vow was buried. And there we stop reading.
+vowmaster: You stop. I didn't. The East opened it once and lost its nerve. A war buys a great many deaths, and {n:group.candles} who went ahead are on the far side of a door. A door opens.
+@left clear
+@else
+vowmaster: Death is a door. Those of you taught anything were taught that {n:god.door.name} kept {n:term.door}, that it was opened once, and that {n:place.east} shut it. I read further.
+vowmaster: The East opened it once and lost its nerve. A war buys a great many deaths, and {n:group.candles} who went ahead are on the far side of a door. A door opens.
+@endif
+@left lead neutral
+vowmaster: And the heir of {n:house.veyne}. I've read your confession as well: four pages, in a magistrate's copy. It was very well done. {n:rival.first} has put it to good use.
+@choice
+* earnest: Why children?
+  vowmaster: Because they were given to me, and because they burn. You wanted a kinder answer. I have looked for one, over the years, out of interest. There isn't one.
+* blunt: You sent {n:red_captain.first} to {n:place.harrowby}.
+  vowmaster: I sent a letter. {N:faction.red_company} were {n:rival.first}'s choice; I'd have sent wardens, and you'd be dead. Does it help, knowing which of us?
+* wry: Do you charge for the lesson?
+  vowmaster[happy]: The crown pays me, and well. Forgive me; one never quite stops teaching. It's late, and I have a long road.
+@endchoice
+@right vowmaster neutral
+@if heretic
+> {n:heretic}'s hands come up, and the fire with them. The old man doesn't move. Between her and him, out of the dark, a tall warden in blue, with a ring of keys at her belt.
+@left undercroft_warden neutral
+undercroft_warden: There, now. Not in here, dear. I did the blankets this morning.
+> {n:heretic}'s hands come down. The warden stays where she is, between. The old man goes out by the far door without hurrying, and takes the lamp.
+@left clear
+@else
+> He stands, slowly, on the stick. Between him and the room, out of the dark, a tall warden in blue, with a ring of keys at her belt.
+@left undercroft_warden neutral
+undercroft_warden: There, now. Nobody in here, sir. I have the room. Go on up.
+> The warden stands between him and the room and doesn't move. The old man goes out by the far door without hurrying, and takes the lamp.
+@left clear
+@endif
+@right clear
+@end
+
+# The warden on the far stair.
+
+@scene ch07_prebattle
+@caption Under {n:place.ossary}
+@music dungeon_tense
+> The far door shuts on the lamp and the dark comes back. On the kitchen stairs behind them, boots, and more boots.
+@right undercroft_warden neutral
+undercroft_warden: Go back up the way you came, dears. I won't say it twice. Go on, now.
+@if retainer
+@left retainer neutral
+retainer: Can't, Warden. They're on the stairs behind us. So it's through. Spears, two abreast where it's wide and one where it's not. {n:family.veyne}, behind me.
+@left clear
+@else
+> There is no back up. The only way out is past her.
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# In the battle
+# ---------------------------------------------------------------------------
+
+# Turn 1. A turn-start scene can't count on anyone: the blocks stay.
+
+@scene ch07_first_turn
+@if battlemage
+@left battlemage neutral
+battlemage: Keep to the wall. The steps are worn in the middle; the small ones took them two at a time. Watch your feet, please.
+@left clear
+@else
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: No room for a wall down here. One at a time, and nobody's a hero. Easy.
+@left clear
+@endif
+@endif
+@end
+
+# Somebody has reached the bone walls. An area anyone can enter: the
+# blocks stay.
+
+@scene ch07_bones
+@if keeper
+@left keeper surprised
+keeper: Don't lean on the-- those are people. The walls. Don't lean on them, please, they're-- just don't touch the walls.
+@left clear
+@else
+@if sergeant
+@left sergeant surprised
+sergeant: Are those-- don't answer that. Don't look at them. Eyes front and up. Come on.
+@left clear
+@endif
+@endif
+@end
+
+# The warden, to anyone but Rue and Oriel.
+
+@scene ch07_boss_engage
+@right undercroft_warden neutral
+undercroft_warden: You won't get past. I have the key to the door at the top, and it's the only one there is. Have you eaten today? None of you have. Go back up and eat something.
+@end
+
+# The warden and the girl who gave the little ones her bread. The @if
+# goes when 0853 wires this as the warden against Rue.
+
+@scene ch07_boss_engage_heretic
+@if heretic
+@left heretic neutral
+@right undercroft_warden neutral
+undercroft_warden: {N:heretic}. Let me see your hands. Oh, dear. Oh, your hands. Who did your hands? Come here to me.
+heretic: Don't. You locked the door. Every night. I heard the key.
+undercroft_warden[sad]: So nobody could get in. ...So you'd be safe. You gave the little ones your bread and went without; I saw, I never said. He said they'd come back, {n:heretic}. He stood there and said--
+heretic: They're not coming back. They're dead, Warden.
+undercroft_warden: Gone ahead, dear. ...That's all it is.
+@left clear
+@right clear
+@endif
+@end
+
+# The warden and the man who took them away. The @if goes when 0853
+# wires this as the warden against Oriel.
+
+@scene ch07_boss_engage_battlemage
+@if battlemage
+@left battlemage neutral
+@right undercroft_warden neutral
+undercroft_warden: Master {n:battlemage.last}. You stood in that doorway with the roll and said you'd bring them back when it was done. I had your word. I told them I had your word.
+battlemage: I remember saying it. ...I counted them onto the carts, {n:undercroft_warden.first}, and I never once counted them off. Not one year. I'm--
+@left clear
+@right clear
+@endif
+@end
+
+@scene ch07_boss_half
+@right undercroft_warden sad
+undercroft_warden: Watch the loose step, it's the third one, I've been meaning to-- hold the stairs. Hold them for him. He promised me.
+@end
+
+# The warden at 0 HP. She dies here.
+
+@scene ch07_boss_fell
+@right undercroft_warden sad
+undercroft_warden: The chest key's the little one. The brass. Air them out. They'll want them aired when they're-- when they come home. They're only small.
+@end
+
+# The lead's fall is game over in both modes.
+
+@scene ch07_death_lead
+@left lead sad
+> {lead} goes down on the worn stairs, and the lamp goes down them ahead of {them}.
+@end
+
+# The companions: a death quote in Classic, a retreat line in Casual
+# (docs/design/death-and-difficulty.md). Last words are about the living;
+# the shapes differ from each other and from the earlier chapters'. They
+# can fire in any order, so none names another companion. The @if blocks
+# go when 0853 wires each one.
+
+@scene ch07_death_retainer
+@if retainer
+@left retainer sad
+retainer: Tell the boy-- ...No. Tell him nothing. ...Get the kid up the stairs. Carry {them} if you have to. Go.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_retainer
+@if retainer
+@left retainer angry
+retainer: Steps. I can't do steps on this knee. Go on. I'll hold the bottom.
+@left clear
+@endif
+@end
+
+@scene ch07_death_sergeant
+@if sergeant
+@left sergeant sad
+sergeant: Go up and tell the mare. She'll wait. She'll stand in that yard all night with her ears up, waiting, somebody go up and--
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_sergeant
+@if sergeant
+@left sergeant angry
+sergeant: I'm no good in a tunnel! Somebody else have the front, I can't swing a thing.
+@left clear
+@endif
+@end
+
+@scene ch07_death_poacher
+@if poacher
+@left poacher sad
+poacher: Under their church. Do not let them write my name in a book. Not in theirs.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_poacher
+@if poacher
+@left poacher angry
+poacher: There is no room for the bow. I am going to the yard. Anything that comes out, I will shoot it.
+@left clear
+@endif
+@end
+
+@scene ch07_death_keeper
+@if keeper
+@left keeper sad
+keeper: The register's in the brown bag. Under the salve. The names-- give them back. To their mothers. It's the brown one.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_keeper
+@if keeper
+@left keeper surprised
+keeper: I dropped the lamp-- I can't see which way is-- I'm all right. Go on, I'll find the kitchen light.
+@left clear
+@endif
+@end
+
+@scene ch07_death_heretic
+@if heretic
+@left heretic sad
+heretic: She fed us. Whatever else. The little ones. When you find them, don't make them ask. For anything. They won't ask.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_heretic
+@if heretic
+@left heretic angry
+heretic: I know this cellar. ...No. Not down here.
+@left clear
+@endif
+@end
+
+@scene ch07_death_defector
+@if defector
+@left defector sad
+defector: Your Grace. The captain's up there, I saw the banner. Don't tell him it was me down here. Tell him it was anybody else.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_defector
+@if defector
+@left defector surprised
+defector: My sword's gone down in the bones. It's down there with the-- I'm not putting my hand in. I'm sorry.
+@left clear
+@endif
+@end
+
+@scene ch07_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Over me, Champion. Over, not around, there's no room around. Tell them Champion of Six. Never mind the seventh. Six was true.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_prizefighter
+@if prizefighter
+@left prizefighter neutral
+prizefighter: I can't get my shoulders under this ceiling, Champion. Watch your left.
+@left clear
+@endif
+@end
+
+@scene ch07_death_shieldbearer
+@if shieldbearer
+@left shieldbearer sad
+shieldbearer: There's a boat in my pack, half carved. It's for a boy; he's eight. Finish the sail for him. ...I never got to the sail.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_shieldbearer
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: No wall to stand in. Easy. I'll find a doorway and stand in that.
+@left clear
+@endif
+@end
+
+@scene ch07_death_battlemage
+@if battlemage
+@left battlemage sad
+battlemage: Nineteen. ...There was a story I used to tell them, about a goose. Somebody will have to learn it.
+@left clear
+@endif
+@end
+
+@scene ch07_retreat_battlemage
+@if battlemage
+@left battlemage surprised
+battlemage: I've lost count of you. I'll stand here by the wall and count you past.
+@left clear
+@endif
+@end
+
+# ---------------------------------------------------------------------------
+# After the battle
+# ---------------------------------------------------------------------------
+
+# The chapter-house yard. The keys, and the banner.
+
+@scene ch07_victory
+@caption {N:place.ossary}, the chapter-house yard
+@music scene_sad
+> Up the far stairs and out into a yard, and every bell in the city going at once. The gate is on the far side, and open. Nobody is in the yard yet but them.
+@if retainer
+@left retainer neutral
+@right lead neutral
+> {n:retainer.first} looks at {lead}'s guard before he looks at anything else.
+retainer: Shoulder up. ...Good. You're all right.
+@left clear
+@right clear
+@endif
+@if heretic
+@left heretic neutral
+heretic: Her keys. She kept them on her all the time. Slept with them. You'd hear her coming down the row and everybody'd shut their eyes.
+heretic: She couldn't count. Counted us every night, twice, got a different number both times, and did it again.
+@if keeper
+@right keeper sad
+keeper: I'll say the words. Not now, I know. But somebody should, and I-- I'll say them.
+heretic: You do that.
+@right clear
+@endif
+@left clear
+@endif
+@if defector
+@left defector surprised
+defector: Your Grace, the gate-- that's {n:faction.hounds}' banner. The captain's. Going out the far gate, with a carriage. ...He was right up here. He didn't even come down.
+@left clear
+@endif
+@if prizefighter
+@left prizefighter neutral
+prizefighter: Rule six is broken, Champion. I'll write it in: a cellar counts. I'd like to sit down somewhere, soon.
+@left clear
+@endif
+@if battlemage
+@left battlemage sad
+battlemage: They're on the plain still. I was to have had them. I'd have known every name by noon.
+@if heretic
+@right heretic angry
+heretic: Then we go back for them. Tonight, before they--
+@if retainer
+@left retainer neutral
+retainer: Not the few of us there are, into an army. ...She's not with them. He as good as said. ...No.
+@left battlemage sad
+@endif
+@right clear
+@endif
+@left clear
+@endif
+@left lead neutral
+lead: Not today. The gate.
+@left clear
+@if sergeant
+@left sergeant angry
+sergeant: Out, then. Before somebody thinks to shut it. Move!
+@left clear
+@endif
+@end
+
+# A pilgrims' barn. Two and a half pages.
+
+@scene ch07_after
+@caption A pilgrims' barn, that night
+@music scene_sad
+> A barn on the road south, lent to pilgrims, with the bells still going behind them, faint. Straw, and a lamp, and the cold.
+@if keeper
+@left keeper neutral
+@right lead neutral
+keeper: Let me see your hands-- no. Yours are fine, I looked on the stairs. Mine won't keep still. Look at them. I'm sorry.
+@right clear
+@if heretic
+@right heretic neutral
+> {n:heretic} sits down between {n:keeper} and {lead} with half a loaf, and tears it, and doesn't hand any of it over yet.
+heretic: He said thorough.
+keeper: Yes. Two and a half pages. I put in what you ate. I put in that you ate standing up, by the door, like you'd have to run. I thought if they knew that they'd be-- I thought it would make them kind.
+heretic: It was the hands. One line, "burned hands," and he'd have known. You could've written one line. ...I'm saying it wasn't the pages, Keeper.
+keeper[surprised]: ...Oh.
+> {n:heretic} puts half the bread in {n:keeper}'s lap and keeps the other half.
+@right clear
+@endif
+@choice
+* earnest: You said it to his face.
+  keeper: I said-- did I? I said the second page. On the road I had a whole thing, about the vows and who they're to, and I got there and I said the second page. I did say it to his face.
+* wry: Two and a half pages about her cooking?
+  keeper[angry]: Her cooking was one line. One line, and it was true, she can't-- you're laughing at me. Good.
+  @if heretic
+  @right heretic neutral
+  heretic: I can cook.
+  @right clear
+  @endif
+* act: Sit down. Give me your hands.
+  keeper: I-- yes. All right. They won't stop, I did say. You don't have to. ...All right. Thank you. I'll just sit.
+@endchoice
+@left keeper neutral
+keeper: He said the East shut it. Whoever they were, in {n:place.east}, they shut it once. Then somebody there knows how.
+@if shieldbearer
+@right shieldbearer neutral
+shieldbearer: Ships go east from {n:place.saltmere}. {N:envoy.first} could get us on one. I'm only saying where ships go, outlaw.
+@right clear
+@endif
+@if heretic
+@right heretic neutral
+heretic: Eat that first, Keeper. Then talk.
+keeper: I'm eating.
+@right clear
+@endif
+@left clear
+@else
+@if heretic
+@left heretic neutral
+heretic: The old man said the East shut it. So somebody over there knows how.
+@left clear
+@endif
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Ships go east from {n:place.saltmere}. {N:envoy.first} could get us on one. I'm only saying.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Nobody's going anywhere tonight. Sleep.
+@left clear
+@endif
+@endif
+@end
+
+# The Vigil's gate. Crane, and Dace holding the carriage door.
+
+@scene ch07_tbc
+@caption {N:faction.vigil}'s gate, the same hour
+@music talk_antagonist
+> A closed carriage at the gate, and {n:faction.hounds} mounted around it. {n:rival.first} holds the carriage door himself. The old man comes across the yard on his stick, in no hurry at all.
+@left rival neutral
+@right vowmaster neutral
+rival: And {n:undercroft_warden.last}?
+vowmaster: Holding the stairs; she'll hold them as long as she's asked. You've gone pale, Captain. It's a door. It is what you were promised.
+rival[angry]: I was promised my sister.
+vowmaster: And you shall have her, through it. ...The carts passed you on the road, Captain. Nineteen, and you didn't look in. Eleven was your count, for {n:vosse.last}.
+rival[angry]: ...Mount up. Now.
+@end

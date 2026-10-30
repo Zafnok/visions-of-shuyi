@@ -1626,3 +1626,313 @@ went over.
   the paper and the horns; Dace's report says Mast went over and died on
   the plain, and Dace says "Good", and then that he's to be burned
   properly. His later beats (Ossary's barracks, the docks) can't play.
+
+## After Chapter 7
+
+Written by 0749 from `assets/dialogue/ch07.dlg`. It describes a chapter
+everyone lived through, with Gil in the party, Hedda with it and Oriel
+alive; what an earlier death leaves unsaid here, and what changes if
+Gil was missed, Hedda never joined or Oriel fell in the crossing, is in
+"If a companion died before Chapter 7", at the end. The battles
+themselves (whether the ossuary gate was fought, who met the warden on
+the stair) are the player's; the scenes don't depend on them, except
+that the warden dies on every path.
+
+### What happened
+
+- **The pilgrim road.** A week south of the plain, early winter, on a
+  ridge road full of pilgrims walking to Ossary with bundles, some of
+  them bones. **Hedda had never heard so many bells** ("we have one bell
+  at home and it's for fire") and asked the lead what to do in a holy
+  city, whether to bow, whether to pay. **Maud named the cracked bell**:
+  the little chapel's, under the ossuary, where she was ordained "by
+  the Master of Vows himself. Absalom Crane", who does the winter
+  ordinations and doesn't travel in winter, "so he'll be there"; "I
+  don't know why I'm telling you that. Yes I do." **The party heard
+  Crane's name for the first time**; Rue went very still. Tamsin: who
+  gets up in the morning and buys a bone; Maud: people whose own are
+  lost somewhere they can't dig; you bury it and say his name over it
+  and then it's him; don't make that face at them. **Gil announced rule
+  six**, no blows struck on holy ground, and couldn't get around a
+  cellar under a church. **Rue said the way in, asked by nobody**: a
+  laundry yard behind the ossuary, a kitchen stair they don't lock in
+  the day because the steam ruins the lock, the barracks at the bottom.
+  Aske counted nine hoods on the road. Hollis: in and out, the keeper in
+  front with her hood down, nobody draws under a roof unless he says.
+- **Pilgrims' Road** (guards the path). A warden post at a wayside
+  shrine, and the pilgrims in a line **with their hands held out, palms
+  up**, a warden looking at each pair. Maud: they never did that, hands,
+  "oh, no." **Rue: "Me. They're looking for me."** and went forward
+  before anyone could stop her. Hollis: then it's now, before one runs
+  for the gate. Hedda put the pilgrims against the wall. After: **Maud
+  knelt by the dead warden in the road and said the words over him**,
+  all of them; Rue: you're saying words over him? Maud: he was ours,
+  somebody has to; "you can stand there and hate it, I don't mind."
+    Hollis: word's
+  at the gate by dark, so are they.
+- **The Ossuary Gate** (optional). The low gate below the wall where the
+  dead go in, wide enough for a cart, old ruts in the frozen mud. **Rue:
+  this is where they put us in, out here so the pilgrims wouldn't have
+  to look; three carts, hers the last.** Oriel: "I know this gate. I
+  stood just there." Hollis: it's held and they don't need it; Rue: "I
+  need it"; Tamsin: then they take it, and will Sparks wait for the rest
+  of them for once. After: the gate open on a stair going down; **Rue
+  stood in it and didn't go in** ("I'm not scared of a cellar"); Hollis:
+  "I know. Not this way." Her kitchen stair, in daylight, with the
+  keeper, the way she said. Walk.
+- **The streets.** Finger-bones sold in little boxes, pilgrims kneeling
+  where they stand; **Maud walked ahead with her hood down and didn't
+  turn when somebody called "Keeper" after her.** The laundry yard, the
+  steam door; Rue went down first; Hollis: hoods up, nobody looks at
+  anybody.
+- **The barracks, empty.** Down the kitchen stair, warm from the ovens
+  and then not: a long low room, two rows of cots, a blanket folded at
+  the foot of each, **aired that morning**. Nobody. **Rue walked the row
+  and stopped: "Mine. ...That one was hers. Wren's. She was always on my
+  left. She said I was warm."** Hollis put his hand on that blanket; it
+  was a child's size; he took his hand off it. **Oriel: he came down that
+  stair with the roll and read it out and they stood up, all at once;
+    he'd forgotten how low the ceiling is; he used to stoop without
+  thinking, and has just done it again.** Aske: "...How old." Rue: "Twelve. The little ones, ten." **Aske: "My brother was twenty-two."**
+- **Crane was waiting**, on the last cot under a lamp nobody saw lit, an
+  old man in a tall hood with his hands folded on a stick. **"You'll be
+  looking for the Candles. They went to the war two weeks ago;
+  nineteen."** The party saw their fires from the Brennish side; they
+  were to have been Oriel's that morning. **To Maud: her autumn report
+  was on his desk a long while and he read it more than once;
+  "admirably thorough: the hands, the age, what she ate. I had only to
+  send a man."** Maud: she asked him to be gentle with her; it's on the
+  second page; she asked in writing. He didn't answer that. **Hollis:
+  "Marr.   Wren Marr. Three years back. Where."** Crane: Captain Marr; he
+  doesn't keep them by name, he keeps them catalogued, and **nothing of
+  his is lost; "the abbey's book was careless."** Maud: what are they
+  for? **Crane: "Death is a door, Keeper. You were taught that, in your
+  second year."** Maud: don't; **they were taught Othe kept the Door,
+  and somebody opened it once, in the East, and the Jade Reach shut it,
+  and the vow was buried, "and there we stop reading."** Crane: "You
+  stop. I didn't." The East opened it once and lost its nerve; a war
+  buys a great many deaths, and the Candles who went ahead are on the
+  far side of a door; "a door opens." To the lead: he has read the confession
+  too, four pages in a magistrate's copy, very well done, and **Dace has
+  put it to good use**. The lead answered (a reply, not recorded: one
+  asked why children, and heard "because they were given to me, and
+  because they burn"; one said he sent Harl to Harrowby, and heard that
+    he sent a letter and the Red Company were Dace's choice, he'd have
+  sent wardens; one asked whether he charges for the lesson, and he said
+  the crown pays him, and well). **Rue's hands came up with fire; the
+  old man didn't move; Warden Hobb stepped out of the dark between them,
+  in blue, with keys at her belt: "There, now. Not in here, dear. I did
+  the blankets this morning."** Rue's hands came down. **Crane went out by
+  the far door without hurrying and took the lamp**; boots on the
+  kitchen stair behind them.
+- **The stair.** Hobb, from the far stair: go back up the way you came,
+  dears; she won't say it twice. Hollis: can't, they're on the stair
+  behind; so it's through; spears, two abreast where it's wide; Veyne
+  behind him.
+- **The party fought through the catacombs** (wardens on both stairs,
+  the bone walls, the warden on the far stair) and killed Warden
+  Constance Hobb.
+- **In the battle** (what the triggers say, if they fired): Oriel on turn
+  1, keep to the wall, the small ones took the worn steps two at a time
+  (or Hedda: no room for a wall, one at a time). At the bone walls,
+  Maud: don't lean on them, they're people (or Tamsin: don't look at
+  them). **Hobb, to anyone:** they won't get past, she has the only key
+  to the door at the top; have they eaten today; go back up and eat
+  something. **To Rue:** "Rue. ...Let me see your-- oh, dear. Oh, your
+  hands. Who did your hands?" Rue: don't; "you locked the door. Every
+  night. I heard the key." Hobb: so nobody could get in, so she'd be
+  safe; **Rue gave the little ones her bread and went without, and Hobb
+  saw and never said; he said they'd come back.** Rue: "They're not
+  coming back. They're dead, Warden." Hobb: "Gone ahead. ...Gone ahead,
+  dear. That's all it is." **To Oriel:** he stood in that doorway with
+  the roll and said he'd bring them back when it was done, and she told
+  them she had his word; Oriel: he said it; he counted them onto the
+  carts and never once counted them off. At half strength: watch the
+    loose step, hold the stairs for him, he promised me. **Dying: the
+    chest key is the little brass one; air them out, they'll want them
+  aired when they're-- when they come home; they're only small.** Death
+    quotes, if they fired: Hollis ("Tell the boy-- ...No. Tell him
+  nothing." Get the kid up the stairs), Tamsin (go up and tell the mare,
+  she'll stand in that yard all night waiting), Aske (under their
+  church; do not let them write her name in a book, not in theirs), Maud
+  (the register's in the brown bag under the salve; give the names back
+  to their mothers), Rue (she fed us, whatever else; when you find the
+  little ones, don't make them ask, for anything; they won't), Joss (the captain's up there; don't tell him it was Joss down here, tell him it was anybody else), Gil (over him, not around; tell them Champion of
+  Six; "six was true"), Hedda (a boat in her pack, half carved, for a boy of eight; finish the sail for him; she never got to the sail), Oriel (nineteen; there was a story he used to tell them, about a goose; somebody will have to learn it).
+- **The chapter-house yard**, every bell in the city going. Hollis looked at the lead's guard before anything else ("Shoulder up. ...Good."). **Rue had Hobb's
+  ring of keys: she kept them on her all the time, slept with them,
+  you'd hear her coming down the row and everybody'd shut their eyes;
+  she couldn't count, counted them every   night twice, got a different number both times, did it again.**
+  Maud: she'll say the
+  words, not now, but somebody should; **Rue: "You do that."** Joss, at
+  the gate: the captain's banner, going out the far gate with a
+    carriage; "He was right up here. He didn't even come down." Gil: rule
+  six is broken; he'll write it in, a cellar counts; he'd like to sit
+  down somewhere soon. Oriel: nineteen, still on the plain with the
+  army; he was to have had them; he'd have known every name by noon.
+  Rue: then they go back for them, tonight. **Hollis: not the few of them there are, into an army; "She's not with them. He as good as said. ...No."**
+  The lead: not today; the gate. Tamsin: out, then, before somebody
+  shuts it.
+- **A pilgrims' barn on the road south, that night.** Maud reached for
+    the lead's hands and stopped: theirs are fine, she looked on the
+  stairs; hers won't keep still, look at them. **Rue sat down between them with
+  half a loaf and tore it: "He said thorough." Maud: yes; two and a half
+  pages; she put in what Rue ate, that she ate standing up by the door
+  like she'd have to run; she thought it would make them kind. Rue: it
+    was the hands; one line, "burned hands," and he'd have known; "I'm
+  saying it wasn't the pages, Keeper."** Maud: "...Oh." Rue put half
+  the bread in her lap. The lead answered (a reply, not recorded: to
+  "you said it to his face" she said she'd had a whole thing ready about
+  the vows and who they're to and said the second page, and she did say
+  it to his face; to the joke about the cooking she said it was one line
+  and true, and Rue said she can cook; to "sit down, give me your hands"
+  she gave them, and said they won't stop, and sat). **Maud: he said the
+  East shut it; whoever they were, in the Jade Reach, they shut it once;
+  then somebody there knows how. Hedda: ships go east from Saltmere, and
+  Ragna could get them on one; "I'm only saying where ships go,
+  outlaw."** Rue: eat that first; Maud: "I'm eating."
+- **The Vigil's gate, the same hour.** A closed carriage, Hounds mounted
+  around it, **Dace holding the carriage door himself**; Crane across
+  the yard on his stick. Dace: and Hobb? Crane: holding the stair, as
+    long as she's asked; **"You've gone pale, Captain. It's a door. It is
+  what you were promised."** Dace: "I was promised my sister." Crane: and he shall have her, through it. **The carts passed him on the road; nineteen, and he didn't look in; "Eleven was your count, for Vosse."** Dace: mount up, now.
+
+### Who knows what (changes since the end of Chapter 6)
+
+| Fact | Now knows | Still doesn't know |
+| ---- | --------- | ------------------ |
+| The Master of Vows is Absalom Crane; he ordained Maud; he is Maud's "old master" | **the whole party**, from Maud on the road (his name) and in the barracks (his face) | that he gives Dace his orders (nobody has said so to the party; Joss saw the banner leave with a carriage, and Crane said "Dace" in front of everyone, which is as near as it gets) |
+| The Candles' barracks under Ossary is empty: its children were carted to the king's army two weeks before, and they are the nineteen whose fire line lit at the Ashfields | **the whole party**, from Crane; Oriel, who was to have had them | — |
+| Maud's autumn report was read by Crane himself, "more than once"; it was two and a half pages; she asked on the second page that they be gentle; it was "admirably thorough" and he "had only to send a man" | **the whole party** (Crane said it in front of everyone); Rue heard it and said it was the hands, not the pages | — |
+| Wren is "catalogued", "not lost"; "the abbey's book was careless" | **Hollis and the lead**, and everyone in the room, from Crane; Hollis took it as "not with the nineteen" | where she is (the later twist); that she is the bearer; **Dace** (he is told nothing; Chapter 8's line is Hollis's) |
+| The Door: Othe kept it; it was opened once in the East; the Jade Reach shut it; the Vigil buried the vow; **Crane means to open it**; "death is a door"; a war buys a great many deaths | **the whole party**, from Crane, with Maud saying what novices are taught | the Door Vow by name; the king's part; the prince; what "comes back" (nobody says the word) |
+| **Only the East knows how it was shut**; ships go east from Saltmere and Ragna could get them on one | the party, from Maud and Hedda in the barn | that this is what they'll do (Chapter 8 decides; nobody decided anything tonight) |
+| The lead's confession (four pages, a magistrate's copy) has been read by Crane, who calls it well done and says Dace has put it to good use | the lead, the party | — |
+| Crane sent "a letter"; the Red Company were Dace's choice ("I'd have sent wardens") | the lead and the party, if the blunt reply was picked (a reply, so the ledger doesn't count on it) | — |
+| The Vigil's wardens were checking pilgrims' hands on the road into Ossary: the Vigil is looking for Rue by her hands | the party | — |
+| The ossuary gate below the wall is where the Candles were loaded into carts, out of the pilgrims' sight; Rue's was the last of three; Oriel stood there | the party, if the gate was fought | — |
+| Warden Constance Hobb kept the barracks: she fed them, locked the door at night, aired the blankets, slept with the keys, couldn't count; Crane told her they'd come back; she is dead on the stair | **the whole party**; Rue said the small true things in the yard | — |
+| Rue gave the little ones her bread and went without; the warden saw and never said | the party (Hobb said it, if Rue met her); Rue | — |
+| Oriel counted the children onto the carts and told the warden he'd bring them back | the party (if he met her) | — |
+| Dace is in Ossary with the Hounds and left with Crane in a carriage; he never came down | the party, from Joss (the banner) | the party has not seen Dace; Dace has not seen them |
+| Crane holds Dace's count ("eleven, for Vosse") over him, and Dace has never before heard the promise called a door | the player | the party |
+| The Candles who died "went ahead" and will come back through the Door: what Crane told Hobb and tells Dace | the player; Hobb (dead); Dace | the party heard Crane say the Candles are "on the far side of a door", and no more |
+
+Unchanged and still secret: Dace being gifted, the prince come back,
+Wren's place in the palace, the Door Vow by name, Coldwell, Gil's
+seventh fair ("six was true" is said only if he dies). Dace does not
+know Wren is alive. Oriel still does not know Wren is Hollis's daughter
+(Hollis said "Marr. Wren Marr" to Crane in front of him; the script
+leaves what Oriel made of it to 1073's support). Nobody has heard
+"Door Vow" or "Unfinished".
+
+### Relationships (changes)
+
+| Pair | State |
+| ---- | ----- |
+| Maud ↔ Crane | **Faced.** She said "Master" and the second page; he called her report thorough and didn't answer the second page. He said "death is a door" and she said what they were taught and where it stops. She says she had a whole speech and said the second page; she did say it to his face. |
+| Maud ↔ Rue | **"It wasn't the pages."** Rue heard "thorough", asked, and told her it was the hands: one line would have done it. Half a loaf in Maud's lap; "Eat that first." Rue still says "Keeper". Not forgiveness; one notch. |
+| Rue ↔ Hobb | Rue would not burn her, in the barracks; the party killed her on the stair. Rue has her keys and said she couldn't count. "They're dead, Warden." / "Gone ahead, dear." |
+| Hollis ↔ Crane | "Marr. Wren Marr. Three years back. Where." / "catalogued; nothing of mine is lost." Hollis heard "not lost" from the man who has her, and said nothing after; in the yard: "She's not with them. He as good as said." |
+| Hollis ↔ Rue | "I'm not scared of a cellar." / "I know." At the gate, and again in the barracks: her cot, Wren's cot, his hand on the blanket. In the yard he told her no. |
+| Hollis ↔ the lead | "Shoulder. ...Up. Good. You're all right." in the yard, before anything else. His death line, if it fired, started a message to "the boy" and stopped. |
+| Aske ↔ Rue | **"...How old." "Twelve. The little ones, ten." "My brother was twenty-two."** Still not speaking; one exchange, and Aske's brother's age set against the cots. |
+| Rue ↔ Oriel | Nothing said between them this chapter. He knew her gate and her room. |
+| Oriel ↔ Hobb | "Master Mast. I had your word." / "I counted them onto the carts and never once counted them off." (If he met her.) |
+| Oriel ↔ the party | "I was to have had them. I'd have known every name by noon." Rue: then we go back for them; Hollis: no; the lead: not today. Open. |
+| Hedda ↔ the lead | "Do I bow?" on the road; "I'm only saying where ships go, outlaw" in the barn. She has said where the ship is before anyone asked. |
+| Joss ↔ Dace | Saw the captain's banner leave with a carriage; "He was right up here. He didn't even come down." His death line, if it fired: don't tell the captain it was him down here. |
+| The lead ↔ Crane | One reply, the player's: why children / you sent Harl / do you charge for the lesson. He answered each mildly and left. |
+| The lead ↔ Maud | One reply, the player's, in the barn: you said it to his face / the cooking joke / sit down, give me your hands. Each moved her. |
+| Dace ↔ Crane | **Shaken.** "It's a door. It is what you were promised." "I was promised my sister." "And you shall have her, through it." Then the count: nineteen; eleven, for Vosse. Dace: mount up. |
+| Gil ↔ the party | Rule six, a cellar under a church; broken, and written in. |
+
+### Status
+
+- **The party is on the road south out of Ossary**, the night after the
+  Undercroft: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss, **Gil if
+  he joined**, **Hedda if she lived through the hold**, **Oriel if he
+  lived through the crossing**. The barracks are empty; the warden is
+  dead; the Vigil's city has every bell ringing behind them.
+- **Crane has left Ossary** in a closed carriage with Dace and the
+  Hounds. The party knows his name and face, that he read Maud's report
+  and the lead's confession, that he means to open the Door, that the
+  East shut it once, and that Wren is "catalogued, not lost".
+- The nineteen Candles are with the king's army on the plain; nobody is
+  going back for them (Acts 2–3 bring them home).
+- Pilgrims' Road is cleared; the ossuary gate is cleared if the player
+  fought it.
+- Hollis has heard "not lost" and has still not told Dace anything
+  (Chapter 8). Dace has been told nothing of Wren by Crane.
+- Nobody has decided to go east. Hedda has said where ships go; Chapter
+  8 opens with the king's declaration and Ragna's ship.
+- Maud's side quest, *Unwritten*, unlocks once Ossary is reached (1072),
+  while she is alive; the script says nothing of it (her death line, if
+  it fired, says the names are to be given back). *The Other Cart*
+  (Rue's) stays open.
+- The lead's two replies (to Crane in the barracks, to Maud in the
+  barn) are not recorded: tones never change what happened.
+
+### If a companion died before Chapter 7 (Classic), Gil was missed, Hedda never joined, or Oriel fell
+
+Everything above describes the scenes with all seven alive, Gil in the
+party, Hedda with it and Oriel alive. True on every path: Crane's name
+on the road (if Maud lives) or his face in the barracks, the hands held
+out at the road post, the empty barracks with the blankets aired,
+Crane's lines (the Candles at the war; death is a door; the East shut
+it), the warden between him and the room, the fight, her death, the
+Hounds leaving with a carriage, and the cut to Crane and Dace.
+
+- **Hollis dead:** nobody said "in and out" on the road, "spears out" at
+  the post, "I know" at the gate, or "hoods up" in the street; nobody put
+  a hand on a blanket (if Rue is also gone, nobody walks the row);
+  **nobody asked Crane about Wren**, and "not lost" is unsaid; narration
+  says there is no back up; nobody checked the lead's shoulder in the
+  yard; nobody told Rue "no" about going back, or said "she's not with
+  them"; nobody said nobody is going anywhere tonight.
+- **Tamsin dead:** nobody asked who buys a bone; nobody argued rule six
+  (narration says nobody has an answer for Gil); nobody shouted "then we
+  take it" at the gate; the bone-walls line without Maud is unsaid;
+  nobody said "out, then" in the yard.
+- **Aske dead:** nobody counted hoods; **nobody asked "how old"**, and
+      "My brother was twenty-two" is unsaid.
+- **Maud dead:** nobody named the cracked bell or Crane on the road, so
+  **the party first hears his name in the barracks only if 0853's name
+  plate gives it** (the script's Crane never says his own name); nobody
+  answered Tamsin about the bones; nobody noticed the hands at the post
+  (narration says what the post was told); nobody said the words over
+  the warden (narration says nobody did); the street's narration has no
+  keeper walking ahead;   **nobody is called thorough**; nobody says what the
+  second year teaches, and Crane says it himself, shorter; nobody says "don't lean on the walls" (Tamsin does); nobody
+  offers to say the words in the yard (Rue's "you do that" is unsaid);
+  **the barn is Rue's and Hedda's and short**: Rue says the old man said
+  the East shut it, Hedda says where ships go, Hollis says nobody's going
+  anywhere tonight; no second reply.
+- **Rue dead:** nobody goes still at Crane's name; **the way in is
+  narration's** (the yard and the steam door); nobody says the wardens
+  are looking for her (narration: the post was told about hands); nobody
+  says "him?" over the warden; **the ossuary gate is nobody's** (Oriel
+  may still say he knows it; Hollis says nobody goes down there);
+  nobody walks the row (Hollis touches every blanket to the end); Aske's
+  question is unsaid; **no hands come up in the barracks**: the warden
+  steps between Crane and the room anyway and sends him up; the
+  warden's exchange on the stair can't play; nobody has the keys or says
+  she couldn't count, and Maud's "I'll say the words" is unsaid; nobody
+  says "then we go back for them", so Hollis's "no" is unsaid; **nobody
+  tells Maud it was the hands**, and the barn is Maud's reply and the
+  East alone; nobody watches her eat.
+- **Joss dead:** nobody saw the banner leave; the party doesn't know the
+  Hounds were in the city (the cut tells the player).
+- **Gil missed or dead:** no rule six, on the road or in the yard; his
+  battle lines can't play.
+- **Hedda never joined (fell in the hold):** nobody asked about the bells
+  or bowing; nobody put the pilgrims against the wall; the first-turn
+  line without Oriel is unsaid; **nobody says where ships go** (Maud's
+  "somebody there knows how" stands alone; Chapter 8's ship still comes
+  from Ragna).
+- **Oriel fell in the crossing (Classic):** nobody says "I know this
+  gate"; nobody says the roll and the ceiling in the barracks; Crane
+  says where the Candles went to nobody in particular; the first-turn
+  line is Hedda's; his exchange with the warden can't play; nobody says
+  "nineteen" in the yard, so Rue's "then we go back for them", Hollis's
+  "no" and "she's not with them" are unsaid.
