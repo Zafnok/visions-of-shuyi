@@ -35,7 +35,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::{Ask, AskView, ListCursor, wrap_step};
+use crate::widgets::{Ask, AskView, ListCursor};
 
 /// One line of a tab: the deal, its item and how much.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -315,9 +315,11 @@ impl TownScreen {
                 self.cursor = cursor;
             }
             Action::CursorLeft | Action::CursorRight => {
+                // A town's shop has one tab or two (never the Basic shop's
+                // three, `check_town`): left and right both switch.
                 let tabs = Tab::of(self.shop.kind).len();
                 if tabs > 1 {
-                    self.tab = wrap_step(self.tab, tabs, action == Action::CursorRight);
+                    self.tab = (self.tab + 1) % tabs;
                     self.cursor = ListCursor::new(self.deals(ctx).len());
                     ctx.audio.menu(MenuSound::Move);
                 }

@@ -217,6 +217,24 @@ fn music_size_ground_and_places_are_checked() {
             "place \"edge\": no music cue \"no_cue\"",
         ]
     );
+    // Equal levels are fine; a map with no rows isn't; a place too near
+    // one edge alone is.
+    let even = text("", "").replace("levels: (1, 5)", "levels: (5, 5)");
+    assert_eq!(problems(&even), Vec::<String>::new());
+    let flat = text("", "").replace("size: (20, 10)", "size: (20, 0)");
+    assert!(problems(&flat).contains(&"size (20, 0) must be from (1, 1) to (70, 30)".to_owned()));
+    let right = text(
+        r#"(id: "r", name: "R", pos: (19, 5), kind: Empty),
+           (id: "top", name: "T", pos: (5, 0), kind: Empty),"#,
+        r#"(from: "a", to: "r", via: [(19, 2)]), (from: "a", to: "top", via: [(5, 2)])"#,
+    );
+    assert_eq!(
+        problems(&right),
+        [
+            "place \"r\" at Pos { x: 19, y: 5 } is too near the map's edge",
+            "place \"top\" at Pos { x: 5, y: 0 } is too near the map's edge",
+        ]
+    );
     let big = text("", "").replace("size: (20, 10)", "size: (71, 10)");
     assert_eq!(
         problems(&big),

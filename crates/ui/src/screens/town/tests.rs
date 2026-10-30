@@ -83,6 +83,32 @@ fn selling_asks_how_many_first() {
     assert_eq!(s.campaign().gold, 2300);
 }
 
+/// A weapon of the stock sells with its durability before its numbers;
+/// left and right switch the two tabs.
+#[test]
+fn a_weapon_sells_with_its_durability() {
+    let mut ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let mut c = army(&ctx);
+    let sword = ctx
+        .game
+        .content
+        .items
+        .new_weapon(&ItemId::new("iron_sword"));
+    c.stock.weapons.extend(sword);
+    let mut s = TownScreen::new(c, armory, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorLeft]);
+    assert_eq!(s.tab(), Tab::Sell);
+    let view = s.view(&ctx);
+    assert!(
+        view.lines[0].detail.starts_with("20/20  Mt 5"),
+        "{}",
+        view.lines[0].detail
+    );
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert_eq!(s.tab(), Tab::Buy);
+}
+
 /// A Tailor won't take what isn't cloth or leather: the line says why,
 /// and Confirm on it does nothing.
 #[test]

@@ -160,6 +160,8 @@ fn the_cursor_jumps_to_the_nearest_place_that_way() {
     assert_eq!(s.cursor(), "bridge");
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert_eq!(s.cursor(), "bridge");
+    press(&mut s, &mut ctx, &[Action::CursorLeft]);
+    assert_eq!(s.cursor(), "ford");
 }
 
 /// Previous and Next unit go through the places in the map's order; Your
@@ -245,6 +247,19 @@ fn arriving_at_a_battle_pops_with_it() {
     assert_eq!(battle.node, "ford");
     let world = battle.campaign.world.expect("on the map");
     assert_eq!(world.at, "ford");
+}
+
+/// Confirm on a battle the army already stands at (a campaign loaded
+/// there) starts it.
+#[test]
+fn confirm_on_an_unwon_battle_the_army_is_at_starts_it() {
+    let mut ctx = ctx();
+    let mut c = army(&ctx);
+    c.world.as_mut().expect("on the map").at = "ford".into();
+    let mut s = WorldMapScreen::new(c, 0.0);
+    let t = press(&mut s, &mut ctx, &[Action::Confirm]);
+    let battle: WorldBattle = popped_with(t).expect("a battle");
+    assert_eq!(battle.node, "ford");
 }
 
 /// Arriving at a town opens it, with the setting on (the default); with

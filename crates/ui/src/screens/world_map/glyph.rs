@@ -382,6 +382,16 @@ mod tests {
         assert_eq!((across.h, down.w), (ROAD_PX, ROAD_PX));
     }
 
+    /// A map smaller than the screen's map area is centred in it.
+    #[test]
+    fn a_small_map_is_centred() {
+        let ctx = crate::screen::tests::ctx();
+        let maps = &ctx.game.content.worldmaps;
+        assert_eq!(origin(&maps["test_world"]), (0, 0));
+        // 40 × 12 in 70 × 30.
+        assert_eq!(origin(&maps["test_world_2"]), (15, 9));
+    }
+
     #[test]
     fn the_ground_speckle_is_a_percentage() {
         for x in 0..70 {

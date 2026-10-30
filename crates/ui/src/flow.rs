@@ -488,12 +488,6 @@ impl FlowScreen {
     /// chapter; "To be continued" when none follows the act's last.
     fn world_won(&mut self, ctx: &mut Ctx, node: &str) {
         let content = &ctx.game.content;
-        let story = self
-            .chapter
-            .as_ref()
-            .filter(|c| content.chapters.contains_key(&c.id) && c.id != node);
-        let is_story = story.is_some();
-        let next = story.and_then(|c| c.next.clone());
         let Some(campaign) = &mut self.campaign else {
             return;
         };
@@ -504,6 +498,10 @@ impl FlowScreen {
         else {
             return;
         };
+        let kind = def.map.node(node).map(|n| &n.kind);
+        let is_story = matches!(kind, Some(NodeKind::StoryBattle(_)));
+        let story = self.chapter.as_ref().filter(|_| is_story);
+        let next = story.and_then(|c| c.next.clone());
         let after = def.map.next.as_ref().and_then(|n| content.worldmaps.get(n));
         campaign.clear_node(&def.map, node, next.as_deref(), after.map(|d| &d.map));
         if !is_story {

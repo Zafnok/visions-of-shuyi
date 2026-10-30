@@ -163,6 +163,29 @@ fn win_a_story_battle_then_the_acts_final_one() {
         assert!(def.is_open(place, &won), "{place} opened");
     }
     assert_snapshot!("world_map_after_a_win", h.snapshot());
+    // Wolf Pass, the side quest: its scene, its battle; back on the map,
+    // cleared, the chapter unchanged.
+    h.keys("Up f");
+    walk(&mut h);
+    skip_scene(&mut h);
+    assert_eq!(h.top_screen(), "battle");
+    h.keys("f f");
+    let seize = Command::Act {
+        unit: LEAD,
+        dest: FORT,
+        action: UnitAction::Seize,
+    };
+    let battle = h.battle_mut().unwrap_or_else(|| panic!("no battle"));
+    battle.send(&seize);
+    h.keys("f f f");
+    assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
+    let quest = campaign(&h);
+    let world = quest
+        .world
+        .clone()
+        .unwrap_or_else(|| panic!("not on a map"));
+    assert!(world.cleared.contains("pass"));
+    assert_eq!(quest.chapter, "test_wm2");
     // On to Old Bridge, the act's final battle.
     h.keys("Right f");
     walk(&mut h);
