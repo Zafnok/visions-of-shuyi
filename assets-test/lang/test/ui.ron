@@ -2,6 +2,11 @@
 // Kept on purpose: `title.continue` is stale (its `source` is not
 // today's English) and `title.credits` is missing, so both show in English.
 [
+    (key: "world_map.find.random_skirmishes", source: "Random skirmishes", text: "RANDOM SKIRMISHES"),
+    (key: "world_map.find.fixed_skirmishes", source: "Fixed skirmishes", text: "FIXED SKIRMISHES"),
+    (key: "world_map.guards_path", source: "Blocks the path until won", text: "BLOCKS THE PATH UNTIL WON"),
+    (key: "world_map.kind.random_skirmish", source: "Random skirmish", text: "RANDOM SKIRMISH"),
+    (key: "world_map.kind.fixed_skirmish", source: "Fixed skirmish", text: "FIXED SKIRMISH"),
     (key: "title.press_any_key", source: "Press any key or button", text: "PRESS ANY KEY OR BUTTON"),
     (key: "title.continue", source: "Resume", text: "RESUME"),
     (key: "title.new_game", source: "New Game", text: "NEW GAME"),

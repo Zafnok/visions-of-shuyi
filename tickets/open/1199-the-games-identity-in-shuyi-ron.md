@@ -6,7 +6,7 @@ milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: []
+blocked_by: ["0138"]
 nick_input: none
 completed:
 ---
@@ -14,6 +14,8 @@ completed:
 # 1199 — The game's identity in shuyi.ron
 
 ## Context
+
+0138 declares the project target profiles first; this ticket uses them.
 
 Engine PRs #186 (ticket 3048) and #188 (3072), reached by the pin move of
 2026-10-30, give `shuyi.ron` an `app` part: the game's name, a reverse-DNS

@@ -74,7 +74,7 @@ fn only_the_open_places_show_battles_with_their_level() {
             (PlaceMark::Empty, None),
             (PlaceMark::Empty, None),
             (PlaceMark::Empty, None),
-            (PlaceMark::StoryBattle, Some("Lv1")),
+            (PlaceMark::StoryBattle, Some("Lv5")),
             (PlaceMark::Capital, None),
         ]
     );
@@ -155,7 +155,7 @@ fn the_cursor_jumps_to_the_nearest_place_that_way() {
     }
     let view = s.view(&ctx);
     assert_eq!(view.panel.title, "Stone Mill");
-    assert_eq!(view.panel.lines, ["Enemy level 1"]);
+    assert_eq!(view.panel.lines, ["Enemy level 5"]);
     // Old Bridge, not open yet, then nothing further right: it stays.
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert_eq!(s.cursor(), "bridge");
@@ -499,7 +499,7 @@ fn the_picture_look_puts_a_small_maps_places_where_it_is_centred() {
     );
 }
 
-/// The picture look: Stone Mill's "Lv1" centred over it, the help line
+/// The picture look: Stone Mill's "Lv5" centred over it, the help line
 /// on the bottom row (a look test).
 #[test]
 fn the_picture_look_centres_a_short_level_and_ends_with_the_help() {
@@ -509,7 +509,7 @@ fn the_picture_look_centres_a_short_level_and_ends_with_the_help() {
     let label: String = (33..36)
         .filter_map(|x| buf.get(x, 12).map(|c| c.glyph))
         .collect();
-    assert_eq!(label, "Lv1");
+    assert_eq!(label, "Lv5");
     let bottom = i32::from(buf.height()) - 1;
     let help: String = (1..40)
         .filter_map(|x| buf.get(x, bottom).map(|c| c.glyph))
@@ -989,4 +989,70 @@ fn pictures_need_the_look_and_a_picture() {
     assert!(painted(&ctx) > 0);
     ctx.preview_settings(|s| s.game.map_look = MapLook::Glyphs);
     assert_eq!(painted(&ctx), 0, "glyphs chosen");
+}
+
+#[test]
+fn skirmish_marks_levels_find_rows_and_hover_work_in_both_skins() {
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use trpg_core::RandomSkirmish;
+    let ctx = ctx();
+    let mut s = screen(&ctx);
+    s.campaign.flags.insert("test_skirmishes".into(), true);
+    let w = s.campaign.world.as_mut().expect("world");
+    w.cleared.insert("ford".into());
+    w.skirmishes.insert(
+        "ford".into(),
+        RandomSkirmish {
+            battle: "test_random_wood".into(),
+            level: 4,
+            size: 5,
+            seed: 12,
+            reward: None,
+        },
+    );
+    s.cursor = "guard".into();
+    let fixed = s.view(&ctx);
+    assert!(
+        fixed
+            .panel
+            .lines
+            .iter()
+            .any(|s| s == "Blocks the path until won")
+    );
+    s.cursor = "ford".into();
+    let random = s.view(&ctx);
+    assert_eq!(random.panel.kind, "Random skirmish");
+    assert_eq!(random.panel.lines, ["Enemy level 4"]);
+    assert_eq!(s.cycle(&ctx, Some(FindKind::RandomSkirmishes)), ["ford"]);
+    assert_eq!(
+        s.cycle(&ctx, Some(FindKind::FixedSkirmishes)),
+        ["guard", "training"]
+    );
+    assert!(
+        !s.cycle(&ctx, Some(FindKind::StoryBattles))
+            .contains(&"ford".into())
+    );
+    insta::assert_debug_snapshot!((fixed.places, fixed.panel, random.panel));
+    for pictures in [false, true] {
+        let view = s.view(&ctx);
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
+            crate::glyph_buffer::Cell::new(
+                ' ',
+                ctx.palette.get(UiColor::Text),
+                ctx.palette.get(UiColor::Black),
+            ),
+        );
+        if pictures {
+            picture::paint(&ctx, &view, "test_world.png", &mut buf);
+        } else {
+            glyph::paint(&ctx, &view, &mut buf);
+        }
+        assert_eq!(buf.get(54, 20).map(|c| c.glyph), Some('!'));
+        assert_eq!(buf.get(34, 13).map(|c| c.glyph), Some('?'));
+        assert_eq!(buf.get(53, 19).map(|c| c.glyph), Some('L'));
+        assert_eq!(buf.get(33, 12).map(|c| c.glyph), Some('L'));
+        assert_eq!(glyph::plate(PlaceMark::FixedSkirmish), ("enemy", '!'));
+        assert_eq!(glyph::plate(PlaceMark::RandomSkirmish), ("text_dim", '?'));
+    }
 }

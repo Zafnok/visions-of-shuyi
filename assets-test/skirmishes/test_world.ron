@@ -1,0 +1,6 @@
+// TEST FILE: tunable starting rules, not Act 1 content.
+(
+    spawn: (0, 2), maximum: 3, level_offset: 1, size: (4, 6),
+    pool: ["test_random_meadow", "test_random_wood"],
+    rewards: [None, None, Some(Gold(100)), Some(Item(("potion")))],
+)

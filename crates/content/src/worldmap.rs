@@ -109,6 +109,10 @@ struct RawShop {
 enum RawKind {
     StoryBattle(String),
     SideQuest(SideQuest),
+    FixedSkirmish {
+        battle: SideQuest,
+        guards_path: bool,
+    },
     Town {
         shops: Vec<RawShop>,
         #[serde(default)]
@@ -199,7 +203,9 @@ pub fn enemy_level(battle: &BattleDef) -> Option<u32> {
 fn battle_of<'a>(kind: &'a RawKind, chapters: &'a BTreeMap<String, ChapterDef>) -> Option<&'a str> {
     match kind {
         RawKind::StoryBattle(chapter) => chapters.get(chapter).map(|c| c.battle.as_str()),
-        RawKind::SideQuest(quest) => Some(&quest.battle),
+        RawKind::SideQuest(quest) | RawKind::FixedSkirmish { battle: quest, .. } => {
+            Some(&quest.battle)
+        }
         RawKind::Town { .. } | RawKind::Empty => None,
     }
 }
@@ -226,6 +232,13 @@ fn build(
         let kind = match node.kind {
             RawKind::StoryBattle(chapter) => NodeKind::StoryBattle(chapter),
             RawKind::SideQuest(quest) => NodeKind::SideQuest(quest),
+            RawKind::FixedSkirmish {
+                battle,
+                guards_path,
+            } => NodeKind::FixedSkirmish {
+                battle,
+                guards_path,
+            },
             RawKind::Town { shops, capital } => NodeKind::Town {
                 shops: shops
                     .into_iter()
@@ -285,6 +298,7 @@ fn build(
         id: id.to_owned(),
         act: raw.act,
         levels: raw.levels,
+        skirmishes: None,
         start: raw.start,
         final_node: raw.final_node,
         next: raw.next,
@@ -353,7 +367,17 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
                 )),
                 Some(_) => {}
             },
-            NodeKind::SideQuest(quest) => {
+            NodeKind::SideQuest(quest) | NodeKind::FixedSkirmish { battle: quest, .. } => {
+                if matches!(node.kind, NodeKind::FixedSkirmish { .. })
+                    && refs
+                        .battles
+                        .get(&quest.battle)
+                        .is_some_and(|b| b.music != trpg_core::BattleMusic::Pool("skirmish".into()))
+                {
+                    err(format!(
+                        "place {id}: fixed skirmish music must be Pool(\"skirmish\")"
+                    ));
+                }
                 if !refs.battles.contains_key(&quest.battle) {
                     err(format!("place \"{id}\": no battle \"{}\"", quest.battle));
                 }
@@ -513,7 +537,8 @@ pub fn load_all(refs: WorldRefs<'_>) -> Result<BTreeMap<String, WorldMapDef>, Ve
             }
         })
     });
-    let maps = bundle::parsed(loaded, &mut errors);
+    let mut maps = bundle::parsed(loaded, &mut errors);
+    super::skirmish::load(&mut maps, refs, &mut errors);
     errors.extend(check_links(&maps, refs.chapters));
     if errors.is_empty() {
         Ok(maps)

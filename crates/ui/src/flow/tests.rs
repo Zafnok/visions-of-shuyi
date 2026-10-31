@@ -675,3 +675,183 @@ fn camp_opens_between_chapters_once() {
     let campaign = stack.find::<FlowScreen>().and_then(FlowScreen::campaign);
     assert_eq!(campaign.map(|c| c.chapter.as_str()), Some(QUICK_CHAPTER));
 }
+
+/// Story victory -> deterministic group -> ordinary battle -> map, without
+/// advancing the story a second time. Includes suspend and restart rebuilding.
+#[test]
+fn a_story_win_spawns_a_group_which_returns_to_the_map_after_victory() {
+    use trpg_core::{Faction, Outcome, WorldCommand, WorldEvent};
+    let (mut c, mut flow, map) = story_won_with_training();
+    let mut campaign = flow.campaign.clone().expect("campaign");
+    assert_eq!(campaign.chapter, "test_wm2");
+    let group = map
+        .random_at("training", &campaign)
+        .expect("spawned")
+        .clone();
+    assert_eq!(group.level, 4);
+    let events = campaign
+        .world_command(&map, &WorldCommand::TravelTo("training".into()))
+        .expect("travel");
+    assert!(events.contains(&WorldEvent::BattleAhead("training".into())));
+    flow.campaign = Some(campaign);
+    flow.arrived(&mut c, "training");
+    let fight = flow.fight.as_ref().expect("random fight").clone();
+    assert_eq!(fight.def.enemies.len(), group.size as usize);
+    assert_eq!(fight.def.difficulty, trpg_core::Difficulty::Easy);
+    assert_eq!(fight.prep.setup.rewind_charges, 2);
+    assert!(fight.def.enemies.iter().all(|u| u.level == 4));
+    // Suspend through the real flow, then continue and check restart's def.
+    let mut stack = stacked(&mut c, flow);
+    update(
+        &mut stack,
+        &mut c,
+        &[
+            crate::input::Action::CursorLeft,
+            crate::input::Action::Confirm,
+        ],
+    );
+    let battle = stack.find::<BattleScreen>().expect("battle").clone();
+    stack.apply_in(
+        &mut c,
+        Transition::pop_with(BattleEnd::Suspend(Box::new(battle))),
+    );
+    let mut flow = FlowScreen::resume(&mut c).expect("resume random group");
+    assert_eq!(flow.fight.as_ref().expect("resumed").def, fight.def);
+    let rng = flow.campaign.as_ref().expect("campaign").rng.clone();
+    flow.restart(&mut c);
+    assert_eq!(flow.fight.as_ref().expect("retry").def, fight.def);
+    assert_eq!(flow.campaign.as_ref().expect("campaign").rng, rng);
+    let (mut state, _) = BattleState::new(fight.prep.setup.clone());
+    for _ in 0..100 {
+        if state.outcome().is_some() {
+            break;
+        }
+        let legal = trpg_core::legal_commands(&state);
+        let attack = legal.iter().find(|cmd| {
+            matches!(
+                cmd,
+                Command::Act {
+                    action: UnitAction::Attack { .. },
+                    ..
+                }
+            )
+        });
+        let advance = legal
+            .iter()
+            .filter_map(|cmd| {
+                let Command::Act {
+                    unit,
+                    dest,
+                    action: UnitAction::Wait,
+                } = cmd
+                else {
+                    return None;
+                };
+                let faction = state.unit(*unit)?.faction;
+                let distance = state
+                    .units()
+                    .iter()
+                    .filter(|u| (u.faction == Faction::Player) != (faction == Faction::Player))
+                    .map(|u| (u.pos.x - dest.x).abs() + (u.pos.y - dest.y).abs())
+                    .min()?;
+                Some((distance, cmd))
+            })
+            .min_by_key(|(d, _)| *d)
+            .map(|(_, cmd)| cmd);
+        let cmd = attack
+            .or(advance)
+            .or_else(|| legal.first())
+            .expect("legal")
+            .clone();
+        state.apply(&cmd).expect("legal command");
+    }
+    assert_eq!(state.outcome(), Some(Outcome::Victory));
+    flow.won(&mut c, &state, 2);
+    flow.next_scene(&mut c);
+    assert_eq!(flow.stage, Stage::WorldMap);
+    let campaign = flow.campaign.expect("campaign");
+    assert_eq!(
+        campaign.chapter, "test_wm2",
+        "training never advances the story"
+    );
+    assert!(map.is_cleared("training", &campaign));
+    assert!(map.random_at("training", &campaign).is_none());
+    assert_eq!(campaign.world.as_ref().expect("world").at, "training");
+}
+
+fn story_won_with_training() -> (Ctx, FlowScreen, trpg_core::WorldMap) {
+    use trpg_core::WorldCommand;
+    let mut c = ctx();
+    let lead = LeadProfile::new("Mara", trpg_core::LeadGender::Female);
+    let mut campaign = trpg_content::battle_campaign(
+        &c.game.content,
+        &c.game.content.battles["test"],
+        GameMode::Casual,
+        lead,
+    );
+    campaign.chapter = "test_wm1".into();
+    campaign.flags.insert("test_skirmishes".into(), true);
+    // This integration exercises the loop every run, with spawning forced
+    // through the same tunable data used by production.
+    let map = &mut c
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("map")
+        .map;
+    map.skirmishes.as_mut().expect("rules").spawn = (2, 2);
+    let map = map.clone();
+    campaign.enter_world(&map);
+    campaign.clear_node(&map, "training", None, None);
+    campaign
+        .world_command(&map, &WorldCommand::TravelTo("ford".into()))
+        .expect("travel");
+    // Strengthen the fixture army, so the test is about the flow, not balance.
+    for u in &mut campaign.roster {
+        u.stats.str = 100;
+        u.stats.dex = 100;
+        u.stats.def = 100;
+        u.stats.res = 100;
+    }
+    let mut flow = FlowScreen::empty();
+    flow.adopt(&mut c, campaign);
+    flow.arrived(&mut c, "ford");
+    flow.start_battle(&mut c);
+    let fight = flow.fight.as_ref().expect("story fight");
+    let (mut state, _) = BattleState::new(fight.prep.setup.clone());
+    state
+        .apply(&Command::Act {
+            unit: UnitId(1),
+            dest: Pos::new(5, 5),
+            action: UnitAction::Seize,
+        })
+        .expect("story win");
+    flow.won(&mut c, &state, 3);
+    assert_eq!(flow.stage, Stage::Results);
+    flow.world_won(&mut c, "ford");
+    (c, flow, map)
+}
+
+#[test]
+fn training_on_a_cleared_story_place_does_not_advance_the_story() {
+    let (mut c, mut flow, map) = story_won_with_training();
+    let campaign = flow.campaign.as_mut().expect("campaign");
+    let world = campaign.world.as_mut().expect("world");
+    let group = world.skirmishes.remove("training").expect("group");
+    world.at = "home".into();
+    world.skirmishes.insert("ford".into(), group.clone());
+    campaign
+        .world_command(&map, &trpg_core::WorldCommand::TravelTo("ford".into()))
+        .expect("arrive");
+    let rng = campaign.rng.clone();
+    flow.arrived(&mut c, "ford");
+    assert_eq!(flow.chapter.as_ref().expect("chapter").battle, group.battle);
+    flow.world_won(&mut c, "ford");
+    assert_eq!(flow.stage, Stage::WorldMap);
+    let campaign = flow.campaign.expect("campaign");
+    assert_eq!(campaign.chapter, "test_wm2");
+    assert_eq!(campaign.rng, rng);
+    assert!(map.random_at("ford", &campaign).is_none());
+    assert!(map.is_cleared("ford", &campaign));
+}

@@ -108,17 +108,23 @@ pub enum FindKind {
     Towns,
     /// Story battles.
     StoryBattles,
+    /// Fixed skirmishes.
+    FixedSkirmishes,
+    /// Random groups.
+    RandomSkirmishes,
     /// Side quests.
     SideQuests,
 }
 
 impl FindKind {
     /// Every row, in the list's order.
-    pub const ALL: [FindKind; 4] = [
+    pub const ALL: [FindKind; 6] = [
         FindKind::Army,
         FindKind::Towns,
         FindKind::StoryBattles,
         FindKind::SideQuests,
+        FindKind::FixedSkirmishes,
+        FindKind::RandomSkirmishes,
     ];
 
     /// Its label's text key.
@@ -128,6 +134,8 @@ impl FindKind {
             FindKind::Towns => "world_map.find.towns",
             FindKind::StoryBattles => "world_map.find.story_battles",
             FindKind::SideQuests => "world_map.find.side_quests",
+            FindKind::FixedSkirmishes => "world_map.find.fixed_skirmishes",
+            FindKind::RandomSkirmishes => "world_map.find.random_skirmishes",
         }
     }
 
@@ -138,6 +146,7 @@ impl FindKind {
             (FindKind::Towns, NodeKind::Town { .. })
                 | (FindKind::StoryBattles, NodeKind::StoryBattle(_))
                 | (FindKind::SideQuests, NodeKind::SideQuest(_))
+                | (FindKind::FixedSkirmishes, NodeKind::FixedSkirmish { .. })
         )
     }
 }
@@ -292,7 +301,16 @@ impl WorldMapScreen {
         };
         def.map
             .shown_nodes(&self.campaign)
-            .filter(|n| kind.is_none_or(|k| k.holds(&n.kind)))
+            .filter(|n| {
+                kind.is_none_or(|k| {
+                    let random = def.map.random_at(&n.id, &self.campaign).is_some();
+                    if random {
+                        k == FindKind::RandomSkirmishes
+                    } else {
+                        k.holds(&n.kind)
+                    }
+                })
+            })
             .map(|n| n.id.clone())
             .collect()
     }
@@ -643,7 +661,10 @@ impl WorldMapScreen {
         );
         let node = map.node(id);
         let cleared = map.is_cleared(id, &self.campaign);
+        let random = map.random_at(id, &self.campaign);
         let kind_key = match node.map(|n| &n.kind) {
+            _ if random.is_some() => "world_map.kind.random_skirmish",
+            Some(NodeKind::FixedSkirmish { .. }) => "world_map.kind.fixed_skirmish",
             Some(NodeKind::StoryBattle(_)) => "world_map.kind.story_battle",
             Some(NodeKind::SideQuest(_)) => "world_map.kind.side_quest",
             Some(NodeKind::Town { capital: true, .. }) => "world_map.kind.capital",
@@ -656,9 +677,11 @@ impl WorldMapScreen {
         }
         if let Some(n) = node {
             match &n.kind {
-                k if k.is_battle() && cleared => lines.push(ctx.text("world_map.won").to_owned()),
+                k if k.is_battle() && cleared && random.is_none() => {
+                    lines.push(ctx.text("world_map.won").to_owned());
+                }
                 k if k.is_battle() => {
-                    if let Some(level) = n.level {
+                    if let Some(level) = random.map(|g| g.level).or(n.level) {
                         let level = level.to_string();
                         lines.push(ctx.text_with("world_map.enemy_level", &[("level", &level)]));
                     }
@@ -669,6 +692,11 @@ impl WorldMapScreen {
                 }
                 _ => {}
             }
+        }
+        if map.blocks_path(id, &self.campaign)
+            && matches!(node.map(|n| &n.kind), Some(NodeKind::FixedSkirmish { .. }))
+        {
+            lines.push(ctx.text("world_map.guards_path").to_owned());
         }
         if id == self.army_at() {
             lines.push(ctx.text("world_map.army_here").to_owned());
@@ -701,15 +729,21 @@ impl WorldMapScreen {
             .map(|n| {
                 let cleared = map.is_cleared(&n.id, &self.campaign);
                 let open = map.is_open(&n.id, &self.campaign);
+                let random = map.random_at(&n.id, &self.campaign);
                 let mark = match &n.kind {
+                    _ if random.is_some() => PlaceMark::RandomSkirmish,
+                    NodeKind::FixedSkirmish { .. } if !cleared => PlaceMark::FixedSkirmish,
                     _ if n.kind.is_battle() && cleared => PlaceMark::Cleared,
                     NodeKind::StoryBattle(_) => PlaceMark::StoryBattle,
                     NodeKind::SideQuest(_) => PlaceMark::SideQuest,
                     NodeKind::Town { capital: true, .. } => PlaceMark::Capital,
                     NodeKind::Town { .. } => PlaceMark::Town,
-                    NodeKind::Empty => PlaceMark::Empty,
+                    NodeKind::Empty | NodeKind::FixedSkirmish { .. } => PlaceMark::Empty,
                 };
-                let level = n.level.filter(|_| open && n.kind.is_battle() && !cleared);
+                let level = random
+                    .map(|g| g.level)
+                    .or(n.level)
+                    .filter(|_| open && (random.is_some() || (n.kind.is_battle() && !cleared)));
                 let level = level.map(|l| {
                     let l = l.to_string();
                     ctx.text_with("world_map.level", &[("level", &l)])

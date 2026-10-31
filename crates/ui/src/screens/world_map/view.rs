@@ -10,11 +10,15 @@ use trpg_core::Pos;
 use crate::widgets::MenuView;
 
 /// What a place shows on the map: its kind's mark (the symbol plate, Nick,
-/// 1007). Fixed and random skirmishes come with ticket 1008.
+/// 1007). Includes fixed and random skirmishes (1008).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlaceMark {
     /// A story battle not yet won.
     StoryBattle,
+    /// A fixed skirmish not yet won.
+    FixedSkirmish,
+    /// A random training group.
+    RandomSkirmish,
     /// A side quest not yet won.
     SideQuest,
     /// A town.

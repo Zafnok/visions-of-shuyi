@@ -142,9 +142,18 @@ fn world_fight(ctx: &Ctx, campaign: &Campaign) -> Option<(String, ChapterDef)> {
     if !map.is_unwon_battle(&world.at, campaign) {
         return None;
     }
-    let chapter = match &map.node(&world.at)?.kind {
+    let kind = &map.node(&world.at)?.kind;
+    let random = map.random_at(&world.at, campaign);
+    let quest = random.map(|g| trpg_core::SideQuest {
+        battle: g.battle.clone(),
+        ..Default::default()
+    });
+    let kind = quest
+        .as_ref()
+        .map_or(kind.clone(), |q| NodeKind::SideQuest(q.clone()));
+    let chapter = match &kind {
         NodeKind::StoryBattle(chapter) => content.chapters.get(chapter)?.clone(),
-        NodeKind::SideQuest(quest) => {
+        NodeKind::SideQuest(quest) | NodeKind::FixedSkirmish { battle: quest, .. } => {
             let current = content.chapters.get(&campaign.chapter);
             ChapterDef {
                 id: world.at.clone(),
@@ -311,8 +320,8 @@ impl FlowScreen {
             None => ctx.game.content.chapters.get(&campaign.chapter).cloned(),
         };
         let chapter = chapter.ok_or(SaveError::Corrupt)?;
-        let def = ctx.game.content.battles.get(&chapter.battle);
-        let def = def.cloned().ok_or(SaveError::Corrupt)?;
+        let def = trpg_content::skirmish::battle(&ctx.game.content, &campaign, &chapter.battle)
+            .ok_or(SaveError::Corrupt)?;
         let tables = ctx.game.content.tables();
         // What Preparations set up is in the battle's first state.
         let mut setup = campaign.battle_setup(&def, &tables);
@@ -372,6 +381,7 @@ impl FlowScreen {
         let lead = ctx.game.lead.clone();
         let mut campaign = battle_campaign(content, def, GameMode::Classic, lead);
         campaign.gold = 2000;
+        campaign.flags.insert("test_skirmishes".into(), true);
         TEST_WORLD_CHAPTER.clone_into(&mut campaign.chapter);
         let mut flow = Self::empty();
         flow.begin(ctx, campaign);
@@ -499,7 +509,8 @@ impl FlowScreen {
             return;
         };
         let kind = def.map.node(node).map(|n| &n.kind);
-        let is_story = matches!(kind, Some(NodeKind::StoryBattle(_)));
+        let is_story = matches!(kind, Some(NodeKind::StoryBattle(_)))
+            && def.map.random_at(node, campaign).is_none();
         let story = self.chapter.as_ref().filter(|_| is_story);
         let next = story.and_then(|c| c.next.clone());
         let after = def.map.next.as_ref().and_then(|n| content.worldmaps.get(n));
@@ -627,10 +638,9 @@ impl FlowScreen {
     /// Starts the chapter's battle with the campaign's army: camp first,
     /// before a battle with Preparations ([`camp`](Self::camp)).
     fn start_battle(&mut self, ctx: &mut Ctx) {
-        let def = self
-            .chapter
-            .as_ref()
-            .and_then(|c| ctx.game.content.battles.get(&c.battle));
+        let def = self.chapter.as_ref().and_then(|c| {
+            trpg_content::skirmish::battle(&ctx.game.content, self.campaign.as_ref()?, &c.battle)
+        });
         let (Some(def), Some(_), Some(_)) = (def, &self.campaign, &self.chapter) else {
             self.the_end(ctx);
             return;
@@ -642,14 +652,14 @@ impl FlowScreen {
             return;
         };
         let prep = Preparations {
-            setup: campaign.battle_setup(def, &ctx.game.content.tables()),
-            bench: campaign.bench(def),
+            setup: campaign.battle_setup(&def, &ctx.game.content.tables()),
+            bench: campaign.bench(&def),
             shop: basic_shop(ctx, chapter),
         };
         self.fight = Some(Fight {
             def: def.clone(),
             prep,
-            look: ctx.game.content.battle_look(def),
+            look: ctx.game.content.battle_look(&def),
         });
         self.restart(ctx);
     }

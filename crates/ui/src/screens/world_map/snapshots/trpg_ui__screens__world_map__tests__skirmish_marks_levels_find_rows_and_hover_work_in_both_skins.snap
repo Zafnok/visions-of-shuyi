@@ -1,0 +1,124 @@
+---
+source: crates/ui/src/screens/world_map/tests.rs
+assertion_line: 1035
+expression: "(fixed.places, fixed.panel, random.panel)"
+---
+(
+    [
+        PlaceView {
+            pos: Pos {
+                x: 8,
+                y: 14,
+            },
+            mark: Empty,
+            level: None,
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 24,
+                y: 16,
+            },
+            mark: Empty,
+            level: None,
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 18,
+                y: 11,
+            },
+            mark: Empty,
+            level: None,
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 34,
+                y: 13,
+            },
+            mark: RandomSkirmish,
+            level: Some(
+                "Lv4",
+            ),
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 30,
+                y: 5,
+            },
+            mark: SideQuest,
+            level: Some(
+                "Lv1",
+            ),
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 40,
+                y: 22,
+            },
+            mark: Empty,
+            level: None,
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 47,
+                y: 14,
+            },
+            mark: StoryBattle,
+            level: None,
+            locked: true,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 54,
+                y: 20,
+            },
+            mark: FixedSkirmish,
+            level: Some(
+                "Lv3",
+            ),
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 57,
+                y: 7,
+            },
+            mark: FixedSkirmish,
+            level: Some(
+                "Lv3",
+            ),
+            locked: false,
+        },
+        PlaceView {
+            pos: Pos {
+                x: 25,
+                y: 26,
+            },
+            mark: Capital,
+            level: None,
+            locked: false,
+        },
+    ],
+    PanelView {
+        title: "Red Gate",
+        act: "Act 1 · Test World I",
+        kind: "Fixed skirmish",
+        lines: [
+            "Enemy level 3",
+            "Blocks the path until won",
+        ],
+    },
+    PanelView {
+        title: "Stone Mill",
+        act: "Act 1 · Test World I",
+        kind: "Random skirmish",
+        lines: [
+            "Enemy level 4",
+        ],
+    },
+)

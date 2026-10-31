@@ -6,7 +6,7 @@ milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
-blocked_by: ["0909", "engine#3075"]
+blocked_by: ["0909", "engine#3075", "0138"]
 nick_input: none
 completed:
 ---
@@ -14,6 +14,8 @@ completed:
 # 0910 — Release packages made by shuyi export
 
 ## Context
+
+0138 declares the project target profiles first; this ticket uses them.
 
 Engine PR #183 (ticket 3004), reached by the pin move of 2026-10-30, adds
 `shuyi export <target> --release`: it runs `check --target`, refuses on an

@@ -63,7 +63,7 @@ fn the_test_world_map_loads_with_its_places_levels_and_roads() {
     assert_eq!(def.music, "world_map");
     // A battle's level is its enemies' average.
     let ford = def.map.node("ford").expect("a place");
-    assert_eq!(ford.level, enemy_level(&c.battles["test"]));
+    assert_eq!(ford.level, enemy_level(&c.battles["test_world_story"]));
     assert!(ford.level.is_some());
     assert_eq!(def.map.node("home").and_then(|n| n.level), None);
     // A road is its places and its turns.
@@ -308,5 +308,31 @@ fn a_next_map_and_a_chapters_world_map_must_exist() {
             "next: no world map \"gone\"",
             "world_map: \"test_world\" is no world map with this chapter's story battle",
         ]
+    );
+}
+
+#[test]
+fn fixed_skirmishes_validate_battle_scenes_and_music_pool() {
+    let fixed = |battle: &str, scenes: &str| {
+        format!(
+            r#"(id: "fixed", name: "Fixed", pos: (3, 5), kind: FixedSkirmish(battle: (battle: "{battle}", intro_scenes: [{scenes}]), guards_path: true)),"#
+        )
+    };
+    assert_eq!(
+        problems(&text(
+            &fixed("test_fixed_guard", ""),
+            r#"(from: "a", to: "fixed", via: [(2, 5)]),"#
+        )),
+        Vec::<String>::new()
+    );
+    assert!(
+        problems(&text(&fixed("missing", r#""missing""#), ""))
+            .iter()
+            .any(|e| e.contains("no battle"))
+    );
+    assert!(
+        problems(&text(&fixed("ch01", ""), ""))
+            .iter()
+            .any(|e| e.contains("music must be"))
     );
 }

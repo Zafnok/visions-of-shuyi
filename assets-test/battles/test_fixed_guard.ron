@@ -1,0 +1,9 @@
+// TEST FILE: hand-placed skirmish, cleared once.
+(
+    id: "test_fixed_guard", map: "test_skirmish_meadow",
+    player_slots: [(character: "lead", pos: (3, 5)), (character: "test_knight", pos: (3, 6))],
+    enemies: [(template: "test_brigand", level: Some(3), pos: (7, 1))],
+    objective: Seize(pos: (5, 5), by_lord: true, turn_limit: Some(20)), difficulty: Normal,
+    kind: FixedSkirmish,
+    music: Pool("skirmish"), seed: 1,
+)

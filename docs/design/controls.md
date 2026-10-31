@@ -102,7 +102,8 @@ buttons. It just can't reuse in same context."
   under the cursor, or enters the army's own (a town); Previous / Next
   ready unit go through the places in the map's order; Cancel opens the
   menu (Save, Camp, Options).
-- **Find** lists Your army, Towns, Story battles and Side quests. The
+- **Find** lists Your army, Towns, Story battles, Side quests, Fixed skirmishes
+  and Random skirmishes (1008). The
   highlighted row's nearest place (to the army) gets the cursor; Previous
   / Next ready unit go through that kind's places until Find is closed
   (Confirm or Cancel; Find again closes it too).
