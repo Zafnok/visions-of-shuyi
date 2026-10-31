@@ -3,7 +3,7 @@ id: "0730"
 title: Give Maud softer eyes
 type: content
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -41,7 +41,7 @@ next to at least three versions with other eyes, at the game's size and
 - **A.** Another eye shape from the generator (rounder, larger pupils);
   Nick re-makes her in the generator with the chosen eyes, since he made
   her (give him the exact parts to pick).
-- **B.** Claude's small edit of today's eyes (wider pupils, a softer
+- **B.** the agent's small edit of today's eyes (wider pupils, a softer
   lid; the `ascii-art` skill allows small edits on bought portraits).
 - **C.** The eyes of another bought face that fits her.
 - **D.** "Describe your own."
@@ -86,7 +86,7 @@ Chapter 1 opening; does Maud still look like Maud, and not scary?
 
 ## Completion notes
 
-- **Nick picked B, Claude's small edit of her own eyes** (2026-10-15),
+- **Nick picked B, the agent's small edit of her own eyes** (2026-10-15),
   over two other generator eye shapes (A1 droopy, A2 angled) and the
   Dancer hero's eyes (C). He was shown all 8 expressions beside Hollis and
   Rue at the game's size and 2×, plus the real dialogue screen. Recorded

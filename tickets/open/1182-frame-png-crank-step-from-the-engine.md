@@ -3,7 +3,7 @@ id: "1182"
 title: "The game's frame-png winds the crank with the engine's `--crank` step: delete the game's own `--crank` and `--then-pad`"
 type: infra
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: ["engine#2540"]

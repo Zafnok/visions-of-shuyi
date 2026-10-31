@@ -3,7 +3,7 @@ id: "1110"
 title: "shuyi-app: the platform shell and run loop; trpg-app becomes a small binary that picks the game"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1109"]

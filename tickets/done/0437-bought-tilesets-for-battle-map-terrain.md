@@ -3,7 +3,7 @@ id: "0437"
 title: "Battle-map terrain drawn from the bought tilesets"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: xhigh
 status: done
 blocked_by: ["0433", "0110", "0436"]
@@ -42,7 +42,7 @@ naming a `<terrain>` or empty). 0433 left auto-tiling out; this ticket
 adds it.
 
 Our maps are one terrain id per tile (`assets/maps/*.map`), written by
-Claude as text and later by the skirmish generator (0510). So the tile
+The agent as text and later by the skirmish generator (0510). So the tile
 pictures must be **worked out from the terrain grid**, not hand-laid.
 
 Nick wants the bought-art map in before the Chapter 1 playtest
@@ -239,7 +239,7 @@ committed. Tell him plainly where a terrain has no good bought picture
   drawn in one colour, which `app` makes from a recoloured copy of the
   tileset's texture).
 
-**Claude's starting picks (looks, for Nick to veto; none is a gameplay
+**the agent's starting picks (looks, for Nick to veto; none is a gameplay
 rule).** The table is in `look-and-feel.md`.
 
 - Which bought tile each terrain is, inside the sets Nick chose: brown

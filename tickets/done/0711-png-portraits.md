@@ -3,7 +3,7 @@ id: "0711"
 title: PNG portraits drawn as sprite items (bought busts at 4×)
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0021", "0110", "0116", "0231", "0232"]
@@ -231,7 +231,7 @@ repo (0110); theme recolouring of portraits.
 - `README.md`'s screenshots (`docs/img/*.svg`) still show the placeholder
   faces, which is still what a public build shows.
 
-**Gameplay-affecting rules decided:** none. *(Claude's starting rule,
+**Gameplay-affecting rules decided:** none. *(the agent's starting rule,
 look only:)* the importer's sidecar maps `happy` → the pack's `smile`,
 `angry` → `stern`, `surprised` → `surprise`, and lists all 8 bought
 expressions under their own names too; 0706 corrects it per character.

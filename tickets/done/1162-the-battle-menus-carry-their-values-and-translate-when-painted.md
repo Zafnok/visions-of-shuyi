@@ -3,7 +3,7 @@ id: "1162"
 title: "The battle's menus carry their values and translate when painted: told(), IN_PLAY and the parallel lookup lists go"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["engine#2308", "1161"]

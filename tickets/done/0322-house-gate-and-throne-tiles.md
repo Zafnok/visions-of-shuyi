@@ -3,7 +3,7 @@ id: "0322"
 title: "House, gate and throne tiles: terrain data, our own glyphs, stand-in pictures"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0037"]
@@ -182,7 +182,7 @@ and no battle uses `test_buildings`), not committed.
 snapshots whose test-tileset tile positions moved (the regenerated test
 tilesets have three more terrains).
 
-**Claude's starting rules:** none. **For the Act 1 playtest (1064):** the
+**the agent's starting rules:** none. **For the Act 1 playtest (1064):** the
 three stand-in pictures, the gate's archway is a small dark opening on
 the grass.
 

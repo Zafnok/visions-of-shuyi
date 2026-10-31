@@ -3,7 +3,7 @@ id: "0044"
 title: "Decide: the Preparations shop's basic items and how its tiers unlock"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -109,7 +109,7 @@ and the `docs/design/README.md` row.
   the Elixir stays rare (a handful in Act 1, a few handfuls in Act 2).
 - **Green units** carry their own consumables, set per battle.
 
-*Claude's starting rules* (Nick may veto): the three basic armours at
+*the agent's starting rules* (Nick may veto): the three basic armours at
 Chapter 2 and Iron Plate with Steel; accessories never basics; the shop
 buys at half price like every shop; town shops don't sell the Elixir in
 Act 1 either; green units use items like player units (self or adjacent),

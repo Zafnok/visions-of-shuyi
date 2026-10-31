@@ -3,7 +3,7 @@ id: "0228"
 title: "Cinematic camera: show a large glyph scene through a panning, zooming window"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0036"]

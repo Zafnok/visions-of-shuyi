@@ -3,7 +3,7 @@ id: "0807"
 title: "Per-battle music from the battle file (cue or skirmish pool)"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0212", "0214", "0801", "0814"]
@@ -58,7 +58,7 @@ keeps playing across phases and combat.
   there (0803 is blocked by this ticket since 2026-10-01).
 - Scenes around the battle set their own music with `@music` (0710). If 0710
   isn't done yet, the battle's track keeps playing into the victory scenes.
-- *Claude's starting rules* (list them in the PR for Nick):
+- *the agent's starting rules* (list them in the PR for Nick):
   - The Preparations screen (0408) already plays the battle's track.
   - The Game Over and "To be continued" screens stop the music.
 
@@ -131,7 +131,7 @@ intro scenes keep the title music; the battle's track starts with the
 battle and carries on through the victory scenes; "To be continued" is
 silent; back on the title, the title music.
 
-**Claude's starting rules** (Nick: agree or veto)
+**the agent's starting rules** (Nick: agree or veto)
 
 1. The Preparations screen (0408, not built yet) will already play the
    battle's track. Nothing to hear yet: today the track starts when the

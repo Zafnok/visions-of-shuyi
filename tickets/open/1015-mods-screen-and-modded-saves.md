@@ -3,7 +3,7 @@ id: "1015"
 title: "Mods screen on the title menu, and saves that remember their mods"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1014", "0054"]

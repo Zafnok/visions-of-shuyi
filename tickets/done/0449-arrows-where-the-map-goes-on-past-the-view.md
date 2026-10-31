@@ -3,7 +3,7 @@ id: "0449"
 title: "Little arrows at the view's edges where the map goes on past it"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -232,7 +232,7 @@ render `docs/screenshots/0449-map-edge-arrows.png`.
 - **1178** Arrows at the map's edges on the Playdate (in 1064's
   `blocked_by` and the roadmap's lane D).
 
-**Claude's starting rules (Nick can veto):**
+**the agent's starting rules (Nick can veto):**
 
 - The arrow sits on the *middle* tile of its edge; with an even number of
   tiles, the first of the two middle ones.

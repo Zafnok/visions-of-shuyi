@@ -3,7 +3,7 @@ id: "0055"
 title: "Decide: showing which enemies can attack the tile you're moving to"
 type: design-decision
 milestone: Design decisions (Nick)
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -101,7 +101,7 @@ Asked 2026-10-12 with mockups drawn over a frame of the Chapter 1 battle
 Recorded in `docs/design/turn-structure.md` and `look-and-feel.md`
 (*Threat arrows* in both); 0448 updated.
 
-*Claude's starting rules* (Nick can veto; listed in the design docs):
+*the agent's starting rules* (Nick can veto; listed in the design docs):
 
 - "Can attack" is worked out like the danger zone, with the selected unit
   counted on the proposed tile.

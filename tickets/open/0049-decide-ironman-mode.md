@@ -3,7 +3,7 @@ id: "0049"
 title: "Decide: Ironman mode — what a defeat does, saving, switching mode"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1064"]
@@ -31,7 +31,7 @@ What a player can undo today: rewind (charges per map tier), Restart battle
 (map menu), Retry Battle (Game Over), the one-time Suspend (deleted on load),
 loading any of 30 save slots, and soon Replay after a win (0046).
 
-*Claude's reading of "hides everything", to confirm in question 1:* in
+*the agent's reading of "hides everything", to confirm in question 1:* in
 Ironman there is no rewind, no Replay, no Restart battle and no Retry
 Battle, and fallen units die as in Classic.
 
@@ -62,7 +62,7 @@ question, `death-and-difficulty.md`, *Difficulty*); Visions in Ironman
 
 1. Read `replayability.md`, `death-and-difficulty.md` and 0805.
 2. **Ask Nick**, in this order:
-   1. **Confirm the list** of what Ironman hides (Claude's reading above).
+   1. **Confirm the list** of what Ironman hides (the agent's reading above).
    2. **What a defeat does.** Options: the campaign is over and its save is
       deleted (roguelikes; XCOM's Ironman when the campaign is lost);
       Game Over, then the player may load their last chapter save (softer:

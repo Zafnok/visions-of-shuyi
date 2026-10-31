@@ -3,7 +3,7 @@ id: "0318"
 title: "Cinder Oath can't be used to counter, either"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -16,7 +16,7 @@ completed: 2026-10-28
 ## Context
 
 0056 decided that Rue's Cinder Oath stays range 1 and the enemy can't
-counter it; 0317 built that. 0317 also set a *Claude's starting rule*:
+counter it; 0317 built that. 0317 also set a *the agent's starting rule*:
 "no counter" covers only Rue's own attack, so when an enemy attacks Rue
 with Cinder Oath equipped, she still counters with it
 (`docs/design/magic.md`, *Personal signature spells*, Cinder Oath).
@@ -54,7 +54,7 @@ it):
   completion notes). Cinder Oath gets it in `assets/data` (its spell
   entry).
 - Counter rules (`crates/core`, where a defender's counter attack is
-  chosen): a spell with the flag never counters. *Claude's starting
+  chosen): a spell with the flag never counters. *the agent's starting
   rule:* if it's the defender's equipped attack and the defender has
   another attack that could counter (a weapon or another spell in
   range), she doesn't switch to it; the defender just doesn't counter,
@@ -108,7 +108,7 @@ it):
   Nick's machine); CI and the Act 1 playtest cover it.
 - Engine friction: under 2x (about 10 production lines against 10 estimated).
 
-**Claude's starting rule (for 1064's checklist):** if Cinder Oath is Rue's
+**the agent's starting rule (for 1064's checklist):** if Cinder Oath is Rue's
 equipped attack and an enemy attacks her, she doesn't switch to another
 weapon or spell to counter; she just doesn't counter, as with a broken
 weapon. Have an enemy attack Rue next to her while Cinder Oath is her

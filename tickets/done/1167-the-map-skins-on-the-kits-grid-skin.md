@@ -3,7 +3,7 @@ id: "1167"
 title: "The map skins on the kit's grid skin: the game's MapSkin trait and the one-bit skin's copied paint order go"
 type: feature
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["engine#2313"]

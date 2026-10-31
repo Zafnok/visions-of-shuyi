@@ -3,7 +3,7 @@ id: "0218"
 title: "Optional split keys: Select (cursor) vs Confirm, Confirm end turn vs End turn"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0217"]
@@ -133,7 +133,7 @@ None. (Nick signs off on the split behaviour when playing 0815.)
   `{Select}` and shipped-tip tests in `tips.rs`. No existing snapshot or
   test changed.
 
-*Claude's starting rules (reading of "on the map", already flagged in
+*the agent's starting rules (reading of "on the map", already flagged in
 controls.md):* the skill, item and talk target pickers count as picking on
 the map (Select), but the attack target picker counts as the forecast
 (Confirm), because it shows the forecast panel. The Select key does nothing

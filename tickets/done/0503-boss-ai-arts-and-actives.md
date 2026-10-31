@@ -3,7 +3,7 @@ id: "0503"
 title: "Boss and green AI: choosing Combat Arts and active skills"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0501", "0311", "0312"]
@@ -116,7 +116,7 @@ attack it considers.
 - The non-combat rule applies to every unit that may use arts (combat green
   units too), not only bosses, as the rest of the ticket does.
 
-**Claude's starting rules** (gameplay the design docs don't settle; all
+**the agent's starting rules** (gameplay the design docs don't settle; all
 *tunable*, judged in playtest 0804; also in `combat-arts.md` → *Enemies*):
 
 1. **An art or active must pay for itself.** Using one counts 5 points per

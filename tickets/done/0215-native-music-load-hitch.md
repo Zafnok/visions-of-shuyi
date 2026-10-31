@@ -3,7 +3,7 @@ id: "0215"
 title: Stop the game freezing when a music track loads (native)
 type: bug
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0214"]
@@ -165,6 +165,6 @@ native release exe ran without warnings; the web build (`cargo xtask web
 --release`) builds and starts in the browser. Its music code is unchanged
 apart from wrapping the macroquad `Sound` in `Clip::Shared`.
 
-**Gameplay rules decided by Claude:** none.
+**Gameplay rules decided by the agent:** none.
 
 **Follow-up tickets:** none.

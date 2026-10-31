@@ -3,7 +3,7 @@ id: "1077"
 title: "One-bit skins: each skin wraps the battle notes itself, lists scroll by the engine's rule, one menu text and the window box on the engine's panel"
 type: infra
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1039"]
@@ -34,7 +34,7 @@ both, and one look decision sits in the battle's view:
    as `focus - room / 2`; the engine's `Scroll::Centred` is `focus -
    (rows - 1) / 2`. With an even window (the Options and Key bindings
    skins show 12 rows) the two differ by a row. 1160 kept it because it
-   "rounds the other way", but the middle rule is a *Claude's starting
+   "rounds the other way", but the middle rule is a *the agent's starting
    rule* (`docs/design/playdate.md`, 1045's rules) that says nothing
    about rounding: nobody decided the difference. Its users: the
    battle's one-bit menus (`shown` in `screens/battle/playdate.rs`, when
@@ -55,7 +55,7 @@ game can tidy now.
 ## Nick input
 
 None. The one visible change (an even scrolled list's window one row
-off from today) is in a *Claude's starting rule*; list it in the
+off from today) is in a *the agent's starting rule*; list it in the
 Completion notes for the Act 1 playtest's checklist (1064). Verified by
 the snapshots.
 

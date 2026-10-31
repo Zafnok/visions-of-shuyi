@@ -3,7 +3,7 @@ id: "0130"
 title: "The playtest bots go engine first: 0506 and 0509 wait for the engine's rollout bot, runner and autobalance"
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

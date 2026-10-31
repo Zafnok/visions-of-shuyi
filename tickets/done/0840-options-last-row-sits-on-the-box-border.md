@@ -3,7 +3,7 @@ id: "0840"
 title: "Options: the last row sits on the box's bottom border"
 type: bug
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

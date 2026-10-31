@@ -3,7 +3,7 @@ id: "1060"
 title: "Playdate: Chapter 1's lessons can be finished when their action has no button"
 type: bug
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1035"]

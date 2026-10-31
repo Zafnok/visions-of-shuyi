@@ -3,7 +3,7 @@ id: "0048"
 title: "Decide: what stars and Visions pay (explore the options first)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0046", "0047"]

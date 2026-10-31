@@ -3,7 +3,7 @@ id: "1076"
 title: "Playdate: the exit area and a downed enemy get looks of their own, and the map's marks are checked to differ"
 type: bug
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []
@@ -44,7 +44,7 @@ the enemy tiles.
 
 ## Nick input
 
-None before building. The two new looks are *Claude's starting looks*:
+None before building. The two new looks are *the agent's starting looks*:
 write them into `playdate.md` as such, show them in `cargo shuyi
 frame-png --playdate` pictures in the PR, and list them in the
 Completion notes for the Act 1 playtest's checklist (1064), where Nick
@@ -71,7 +71,7 @@ sees them on his Playdate.
   `danger_zone`, `exit_area`), their inks (or tile/letters/outline
   triples, for units) are not the same. `heal_range` = `attack_range` is
   decided (1037) and stays allowed.
-- `playdate.md`: both looks under *Claude's starting rules from building
+- `playdate.md`: both looks under *the agent's starting rules from building
   the map*, with this ticket's number.
 - The snapshot changes, reviewed.
 
@@ -111,7 +111,7 @@ mark), plus the test.
 - [ ] A downed enemy and an acted player unit look different (a test on
       `look`).
 - [ ] Both pictures are in the PR.
-- [ ] `playdate.md` lists both looks as *Claude's starting rules*.
+- [ ] `playdate.md` lists both looks as *the agent's starting rules*.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

@@ -3,7 +3,7 @@ id: "1169"
 title: "Content loaders on the engine's folder loader, and the cinematic page check on the engine's word wrap"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["engine#2208", "engine#2209"]

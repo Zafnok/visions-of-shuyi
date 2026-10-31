@@ -3,7 +3,7 @@ id: "1152"
 title: "Two repositories: an engine-change skill, engine ticket ids in blocked_by, and the engine side's intake for game requests"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1131", "1151"]
@@ -28,7 +28,7 @@ That one line is not enough to keep two repositories sustainable. Nick,
 should develop some skills", and engine work must be easy to start in
 parallel, never a reason to wait. 1151's friction rule sends sessions to
 the engine often ("fix first", "ship and follow up"). This ticket makes
-that path a skill a Sonnet session can follow without guessing.
+that path a skill an implementation session can follow without guessing.
 
 What it needs to cover, from both sides:
 

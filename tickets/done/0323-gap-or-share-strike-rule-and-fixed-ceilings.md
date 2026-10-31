@@ -3,7 +3,7 @@ id: "0323"
 title: "Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -111,5 +111,5 @@ Done as planned. `CombatRules::strike_thresholds` became `strike_steps`
   at Def "ceiling - 1" (49 of 50); they now read 99 of 100. The content
   test for ceilings reads 200 / 100.
 - Engine friction: under 2x (about 40 estimated, about 45 measured).
-- No *Claude's starting rules*. Late-game strike counts go on the Act 1
+- No *the agent's starting rules*. Late-game strike counts go on the Act 1
   playtest checklist (1064).

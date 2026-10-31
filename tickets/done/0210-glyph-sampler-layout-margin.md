@@ -3,7 +3,7 @@ id: "0210"
 title: Give the glyph sampler layout margin instead of an exact fit
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

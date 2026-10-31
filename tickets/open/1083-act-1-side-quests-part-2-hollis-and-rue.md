@@ -3,7 +3,7 @@ id: "1083"
 title: "Act 1's side quests, part 2: Hollis and Rue"
 type: content
 milestone: Post–Chapter 1
-model: fable-5.1
+model: creative
 effort: high
 status: todo
 blocked_by: ["1072", "1070", "0018", "0069", "0746", "0748", "0509", "0013", "0323", "0608", "0329"]

@@ -3,7 +3,7 @@ id: "0752"
 title: "Voice-direction cues in .dlg scripts: how a line is said, for voice synthesis, not shown in game"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: []

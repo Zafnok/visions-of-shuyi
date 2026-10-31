@@ -3,7 +3,7 @@ id: "1044"
 title: "Playdate: the title screen and its intro cinematic in one bit"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1040", "1041"]
@@ -54,7 +54,7 @@ it):
   reads the console size since 1030), the logo, the title menu (New
   Game, Continue/Load, Options, …, as on the PC; the PC's Quit entry
   only if the Playdate allows quitting from a game, which it does
-  through the system menu, so *Claude's starting
+  through the system menu, so *the agent's starting
   rule (Nick can veto)*: no Quit entry on the Playdate).
 - Light effects the PC cinematic uses (`assets/data/lighting.ron`,
   times of day) become the different one-bit pictures (day, dusk,

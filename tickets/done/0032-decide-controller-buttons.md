@@ -3,7 +3,7 @@ id: "0032"
 title: "Decide: controller buttons, button names on screen, rebinding buttons"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -110,7 +110,7 @@ build, and that first press decides whether the picker shows; recorded in
 `title-screen.md` and `controls.md`. New ticket **0226** builds it (0220
 no longer handles the picker).
 
-Claude's six proposed small rules went to Nick in the PR round and are
+The agent's six proposed small rules went to Nick in the PR round and are
 now decided (`controls.md`, *Follow-up answers*): Switch pads swap only
 Confirm/Cancel (as in Fire Emblem), bind on release / hold to back out,
 `Clear` only with the pad, both sticks bindable (right stick too, Nick's

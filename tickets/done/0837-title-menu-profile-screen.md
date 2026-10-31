@@ -3,7 +3,7 @@ id: "0837"
 title: The title menu's Profile screen switches, adds, renames and deletes profiles
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0836", "0839"]
@@ -16,7 +16,7 @@ completed: 2026-10-15
 ## Context
 
 Ticket 0058 (`docs/design/options.md`, *Where options are kept*): a
-`Profile` item on the title menu (below `Options`, *Claude's starting
+`Profile` item on the title menu (below `Options`, *the agent's starting
 rule*) lists the profiles with the current one marked, and switches, adds,
 renames and deletes. 0836 builds the profiles underneath and the `Ctx`
 operations this screen calls.
@@ -47,7 +47,7 @@ in it, switch back to `Player 1` and see your own options and saves.
 - **Backing out asks first** (`options.md`, *Keeping changed options is
   the player's choice*): Cancel in a name box with a name typed and not
   kept asks keep / throw away / go back, cursor on go back.
-- Words in the language files (Claude writes them; American English;
+- Words in the language files (the agent writes them; American English;
   `test` pack too). Keys named through the keymap (`keyboard-input` skill).
 
 **Playdate:** if 1045 (the Playdate New Game and Options screens) is
@@ -111,7 +111,7 @@ done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
 - Title tests and snapshots updated for the extra menu row.
 - Playdate paint: 1045 isn't done, so 1045 does it (as the ticket says).
 
-**Claude's starting rules** (the design docs were silent):
+**the agent's starting rules** (the design docs were silent):
 
 - **Use this profile** goes straight back to the title, which then shows
   that profile's options and `Continue`.

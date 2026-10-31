@@ -3,7 +3,7 @@ id: "0423"
 title: Unit info screen shows stats as plain numbers (no class caps)
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []
@@ -16,7 +16,7 @@ completed: 2026-09-28
 ## Context
 
 The unit info screen (0405) listed stats as `value/class cap` (`HP 19/42`,
-`Str 6/22`). That layout was Claude's idea when writing 0405, not a design
+`Str 6/22`). That layout was the agent's idea when writing 0405, not a design
 decision. Nick (2026-09-28) read `HP 19/42` as "injured", and asked why a
 growth ceiling is shown in battle at all: "why is this info relevant during
 battle when you aren't gonna level up 50 times in one battle". Agreed: remove

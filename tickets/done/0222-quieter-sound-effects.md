@@ -3,7 +3,7 @@ id: "0222"
 title: Make every sound effect quieter by default
 type: tuning
 milestone: M2 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []
@@ -67,6 +67,6 @@ Set all 21 sound cues in `assets/audio/audio.ron` to 40 (`cursor_move` 24);
 the 25 music cues stay at 100. Header comment and `docs/design/audio.md`
 "Starting values" updated. No code changes; no deviations.
 
-*Claude's starting rule:* 40 % (about 8 dB quieter) is my pick for
+*the agent's starting rule:* 40 % (about 8 dB quieter) is my pick for
 "significantly quieter". Nick: if it's now too quiet or still too loud, say
 so and the number gets nudged. A player volume slider comes with 0805.

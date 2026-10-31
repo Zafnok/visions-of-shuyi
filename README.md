@@ -277,7 +277,7 @@ Playdate version possible.
 | [`docs/engine/`](docs/engine/README.md) | Shuyi Engine: the study, the plan for carving it out, and how the game works with it now |
 | [`docs/releasing.md`](docs/releasing.md) | How a release is cut |
 | [`crates/`](crates) | The code |
-| [`CLAUDE.md`](CLAUDE.md) + [`.claude/skills/`](.claude/skills) | Instructions for the AI sessions that build the game |
+| [`AGENTS.md`](AGENTS.md) + [shared skills](.claude/skills) + [Codex loaders](.agents/skills) | Instructions for the AI sessions that build the game |
 
 ## License
 

@@ -3,7 +3,7 @@ id: "1005"
 title: "Parked: support pair abilities (dual attack / dual guard)"
 type: research
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: blocked
 blocked_by: ["1002"]

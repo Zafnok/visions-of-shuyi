@@ -3,7 +3,7 @@ id: "0030"
 title: "Decide: key rebinding rules (slots, required keys, conflicts, per-layout keys)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -22,7 +22,7 @@ flagging the action that lost it (`! not mapped`). Some actions are required
 (cursor, confirm, cancel, end turn), others optional, including two new
 optional split keys (Select vs Confirm, End turn vs Confirm end turn).
 
-0805 already had a rebinding step, written by Claude before Nick was asked
+0805 already had a rebinding step, written by the agent before Nick was asked
 ("ask to swap" on conflicts); this ticket replaces it with Nick's rules.
 Asked with the `ask-nick` skill.
 
@@ -54,7 +54,7 @@ Asked with the `ask-nick` skill.
   `Delete` empties a slot and is never bindable; each layout keeps its own
   custom keys; new optional Select and Confirm-end-turn keys, unbound by
   default.
-- Claude's starting rules (listed in the design doc for Nick's veto):
+- The agent's starting rules (listed in the design doc for Nick's veto):
   `Esc` doesn't count as Cancel's required key; `Delete` may empty a
   required action's last key; blocked-leave message wording; a Restore
   defaults row; which presses count as Select "on the map".

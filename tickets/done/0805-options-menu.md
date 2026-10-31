@@ -3,7 +3,7 @@ id: "0805"
 title: "Options menu: speeds, animations, fullscreen, key rebinding"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815", "0440"]
@@ -147,7 +147,7 @@ in `docs/design/options.md` and `death-and-difficulty.md`):
 and AI actions are no longer sped up by scaling time, so the held walk
 stays the skin's and nothing stacks.
 
-**Claude's starting rules** (Nick may veto any of them):
+**the agent's starting rules** (Nick may veto any of them):
 
 1. **Text speed.** Normal is what it was. Slow is half as fast, Fast is
    twice as fast, Instant shows a whole text box at once.

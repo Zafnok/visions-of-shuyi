@@ -3,7 +3,7 @@ id: "0027"
 title: "Decide: the camp music"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -109,7 +109,7 @@ instead of one track picked at random like a skirmish. Recorded in
 starting value and the appendix); camp is gone from *Open sub-questions*.
 1003's step now says to import all three and rotate them.
 
-*Claude's starting rules* (in audio.md's *Starting values*, tunable):
+*the agent's starting rules* (in audio.md's *Starting values*, tunable):
 
 - Between camp tracks: 3 s fade out, 5 s of quiet, 3 s fade in.
 - The first track is picked at random each time camp opens, then the order

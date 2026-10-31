@@ -64,7 +64,7 @@ this order:
 1. **Write the engine ticket** in the engine's repository: the checkout
    (step 3's first two bullets) or any clone of it. Follow its
    `write-ticket` skill (`shuyi-engine/.claude/skills/write-ticket/SKILL.md`;
-   Claude Code loads skills only from the folder it was started in, so
+   a harness may not discover skills in another checkout automatically, so
    read the file). Its section "A request from the game" says what the
    ticket holds; `game#NNNN` names this game ticket. Commit it on a
    branch of its own and open a PR for it alone (title `Ticket NNNN: <title>`)
@@ -198,7 +198,7 @@ this order:
   (`gh pr edit <N> --repo Zafnok/shuyi-engine --body-file <file>`).
 - The engine ticket's Completion notes name the game PR that moves the
   pin (the engine's `work-ticket`).
-- **No bare `@word`** in either PR, commit or comment (`CLAUDE.md`): put
+- **No bare `@word`** in either PR, commit or comment (`AGENTS.md`): put
   it in backticks or drop the `@`.
 
 ## 6. Engine work in a session of its own

@@ -3,7 +3,7 @@ id: "0464"
 title: "A lesson opens only when it can be done that turn"
 type: bug
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -63,7 +63,7 @@ first); the Arts lesson doesn't open until a unit can use an art.
   an enemy (the same reach the danger zone and threat arrows use); Combat
   Arts, some unit left has an art usable from a tile it can reach; Spells
   that change tiles, some unit left could aim a tile spell; Moving and
-  Threat arrows, any unit left. *Claude's starting rule*; say so at
+  Threat arrows, any unit left. *the agent's starting rule*; say so at
   sign-off.
 - Lessons whose items need nothing of a unit (cursor, keys, next unit,
   ending the turn, rewind) are unchanged.
@@ -130,7 +130,7 @@ first); the Arts lesson doesn't open until a unit can use an art.
   by the time the lesson ahead closes, so checking them literally would
   drop every waiting lesson.
 
-**Claude's starting rules** (for Nick to agree or veto):
+**the agent's starting rules** (for Nick to agree or veto):
 - A lesson that asks a unit to do something opens only if some unit still
   to act this turn could do it; otherwise it waits until it starts again
   (that turn or a later one).

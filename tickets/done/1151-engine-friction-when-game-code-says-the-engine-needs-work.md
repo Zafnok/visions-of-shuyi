@@ -3,7 +3,7 @@ id: "1151"
 title: "Engine friction: an ADR, a skill and a log for when game code is far bigger than the job"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1118"]
@@ -125,7 +125,7 @@ None. Nick set the rule (quoted above); the rest is technical.
     The engine and the game are both ours: an engine ticket is normal
     work, picked up like any other, not a request to someone else.
 - **The skill** `.claude/skills/engine-friction/SKILL.md`: the steps of
-  a review, written for a Sonnet session.
+  a review, written for an implementation session.
   1. Write the estimate.
   2. Run `cargo xtask code-lines`.
   3. Check the signals.

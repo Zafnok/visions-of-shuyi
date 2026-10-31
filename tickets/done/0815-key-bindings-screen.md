@@ -3,7 +3,7 @@ id: "0815"
 title: "Key bindings screen: press a key to bind, taken keys move, ! not mapped"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0217", "0218"]
@@ -39,7 +39,7 @@ exists), and:
 - try to leave with Confirm unmapped: it's blocked with a message;
 - `Esc` while "Press a key…" backs out; `Delete` empties a slot;
 - give Select and Confirm end turn their own keys and play a turn;
-- check the Claude's starting rules listed in `controls.md` and below.
+- check the the agent's starting rules listed in `controls.md` and below.
 
 ## Scope
 
@@ -88,7 +88,7 @@ exists), and:
 3. **Navigation** uses the keymap the screen was **opened with** (a copy
    kept in the screen), not the one being edited, so the player can never
    lose the keys needed to move around this screen; edits apply to the game
-   when the screen closes. *(Claude's starting rule: note it for Nick's
+   when the screen closes. *(the agent's starting rule: note it for Nick's
    sign-off.)* Up/Down move between rows and wrap; Left/Right between the 3
    slots; the Restore defaults row has no slots.
 4. **Capture:** Confirm on a slot → the slot shows `Press a key…`. The next
@@ -184,7 +184,7 @@ of the plan restored at once.
   it (otherwise pressing it at `Press a key…` would open the debug menu
   instead of showing "That key can't be used").
 
-**Claude's starting rules** (Nick to veto at sign-off; also in
+**the agent's starting rules** (Nick to veto at sign-off; also in
 `controls.md`):
 - The screen is steered with the keys you had when you opened it; your
   changes count from the moment you leave. (Already listed in 0030.)

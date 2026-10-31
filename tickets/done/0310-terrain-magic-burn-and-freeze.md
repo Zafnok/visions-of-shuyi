@@ -3,7 +3,7 @@ id: "0310"
 title: "Terrain magic: burn forests and freeze water with tile casts"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0301", "0303", "0305", "0309"]
@@ -113,7 +113,7 @@ None.
   (`Event::BurnDamage`, before `TerrainChanged` and before reinforcements);
   and a tile cast **equips the spell**. The burn damage is data
   (`UntilCastersNextPhase(then, damage)` in `spells.ron`).
-- **Claude's starting rules** (gameplay, where the design docs were silent):
+- **the agent's starting rules** (gameplay, where the design docs were silent):
   1. A burning tile burns out when its caster's side's phase comes round
      **even if that phase is skipped** because the side has no units left
      (otherwise a fire lit by a wiped-out side would burn for ever).

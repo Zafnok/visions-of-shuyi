@@ -3,7 +3,7 @@ id: "0424"
 title: "Battle sounds: strikes, spells, heals and movement"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0212", "0213", "0214"]
@@ -57,7 +57,7 @@ each sound lands: timing, volume, and whether anything gets annoying.
   terrain burning out, death). Don't invent them. If one feels badly missing,
   write a `00xx` follow-up question.
 - An Absorb strike (the target heals from its own element) uses `hit_magic`
-  like any other landing spell. This is *Claude's starting rule*: list it in
+  like any other landing spell. This is *the agent's starting rule*: list it in
   the PR for Nick.
 
 ## Implementation steps

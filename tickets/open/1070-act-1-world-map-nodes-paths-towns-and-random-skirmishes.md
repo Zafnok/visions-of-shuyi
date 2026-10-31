@@ -3,7 +3,7 @@ id: "1070"
 title: "Act 1's world map: nodes, paths, the four towns' stock and the random-skirmish pool"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1007", "1008", "0044", "0013", "0506", "0320", "0323", "0608"]
@@ -42,7 +42,7 @@ level range, which waits on 0013's number scale.
 None. No check after merge (Nick, 2026-10-21): `cargo shuyi frame-png`
 pictures of the map in the PR, and how the map plays goes on 1064's
 checklist. The layout (where places sit) follows the outline; stock
-lists and the act's level range are *Claude's starting values*, listed
+lists and the act's level range are *the agent's starting values*, listed
 in the Completion notes.
 
 ## Scope

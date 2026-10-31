@@ -3,7 +3,7 @@ id: "0132"
 title: "The playdate CI job stops after a time limit and installs only the ARM compiler parts it uses"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

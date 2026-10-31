@@ -3,7 +3,7 @@ id: "0243"
 title: Move the battle screen's and the class change screen's text into the language file
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0402"
 title: Virtual cursor, camera follow, hover info panel, unit cycling
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0401"]
@@ -117,7 +117,7 @@ context help bar.
   (`cargo build -p trpg-app --target wasm32-unknown-unknown --release
   --features debug-tools`).
 
-*Claude's starting rules* (UI details the design docs don't settle; say if
+*the agent's starting rules* (UI details the design docs don't settle; say if
 any feel wrong):
 
 - Moving the cursor restarts its pulse at full brightness, so it's easy to

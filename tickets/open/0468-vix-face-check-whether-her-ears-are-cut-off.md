@@ -3,7 +3,7 @@ id: "0468"
 title: "Vix's face: check whether the tip box cuts off her ears"
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

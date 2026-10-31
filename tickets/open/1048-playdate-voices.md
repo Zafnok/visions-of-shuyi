@@ -3,7 +3,7 @@ id: "1048"
 title: "Playdate: Chapter 1's voices on the device"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1047", "1043", "0722"]

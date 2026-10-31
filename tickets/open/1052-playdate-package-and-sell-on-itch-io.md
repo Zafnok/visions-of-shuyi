@@ -3,7 +3,7 @@ id: "1052"
 title: "Playdate: package the builds and sell them on itch.io (one purchase, every language)"
 type: infra
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0901", "0062", "1064"]
@@ -32,7 +32,7 @@ into the Act 1 playtest; it now waits for 1064.
 
 ## Nick input
 
-**Setup:** Nick decides with Claude whether the Playdate build goes on
+**Setup:** Nick decides with the agent whether the Playdate build goes on
 the same itch.io page as the PC game (another download on the same
 purchase) or a page of its own, and the price if separate (a store
 choice, not a design rule; ask with the question pop-up). If the page is

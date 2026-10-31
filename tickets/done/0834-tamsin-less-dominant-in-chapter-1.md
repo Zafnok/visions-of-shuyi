@@ -3,7 +3,7 @@ id: "0834"
 title: Tamsin is less dominant in Chapter 1
 type: tuning
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -23,7 +23,7 @@ Tamsin (`sergeant`, `assets/data/characters.ron`): Rider, **level 2**,
 talent Spd, base `(21, 7, 0, 6, 7, 5, 1)` (HP, Str, Mag, Dex, Spd, Def,
 Res), Iron Spear and Iron Sword, Leather Vest; Spear rank D. The Rider
 class (`classes.ron`) has **Mov 7** (everyone else in the party 4–5), the
-`lance_rush` active and the `charge_1` passive. These are 0803's *Claude's
+`lance_rush` active and the `charge_1` passive. These are 0803's *the agent's
 starting values*, "tunable, judged in the playtest".
 
 Follow-ups (`docs/design/stats-and-combat.md`): a unit strikes twice when its
@@ -111,4 +111,4 @@ sim's numbers:
   (out of scope); say if you want a ticket for it.
 - The title cinematic's footbridge combat-scene snapshot changed: the
   Brigand's hit on Tamsin is 69 (was 65), as 2 less Spd is 4 less avoid.
-- No gameplay rules decided by Claude.
+- No gameplay rules decided by the agent.

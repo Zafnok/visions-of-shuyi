@@ -3,7 +3,7 @@ id: "0507"
 title: "Research: a trained AlphaZero-style bot (stack ADR + prototype)"
 type: research
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: xhigh
 status: todo
 blocked_by: ["0506"]

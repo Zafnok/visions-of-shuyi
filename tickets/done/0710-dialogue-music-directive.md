@@ -3,7 +3,7 @@ id: "0710"
 title: "Dialogue scripts choose the music: @music"
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0212", "0704"]
@@ -107,7 +107,7 @@ Done as planned.
 Deviation: step 1 says "line kind"; the scene model's kinds are `Step`s, so
 it is `Step::Music(MusicLine)`.
 
-**Claude's starting rules** (the ticket and `audio.md` were silent; Nick can
+**the agent's starting rules** (the ticket and `audio.md` were silent; Nick can
 veto):
 
 1. *Two `@music` lines with no text between them:* only the second is

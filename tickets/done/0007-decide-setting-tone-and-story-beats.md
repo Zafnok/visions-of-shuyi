@@ -3,7 +3,7 @@ id: "0007"
 title: "Decide: setting, tone, and Nick's story beats"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

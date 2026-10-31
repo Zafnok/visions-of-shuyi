@@ -3,7 +3,7 @@ id: "1050"
 title: "Nick plays Chapter 1 on his Playdate; feedback becomes tickets"
 type: playtest
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055", "1058", "1060", "1062", "0464", "0467", "0841"]
@@ -35,7 +35,7 @@ them first.
 
 **Sign-off / playtest:** Nick sideloads the English `.pdx` (Simulator:
 *Device → Upload Game to Device*) and plays Chapter 1 from the title to
-the end. He tells Claude, in plain words, anything that feels wrong:
+the end. He tells the agent, in plain words, anything that feels wrong:
 text he can't read, things he can't tell apart, buttons or the crank
 doing something unexpected, pauses that feel long, sounds.
 

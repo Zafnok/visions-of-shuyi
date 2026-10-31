@@ -3,7 +3,7 @@ id: "0131"
 title: "Ticket numbers checked against open PRs, and no ticket in done/ with an open blocker"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []

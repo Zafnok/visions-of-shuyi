@@ -3,7 +3,7 @@ id: "0435"
 title: "PLAYER PHASE banner at the start of a battle"
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

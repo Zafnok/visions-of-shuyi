@@ -3,7 +3,7 @@ id: "0443"
 title: "Preparations: a Shop tab with the basic shop"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0409", "0044"]
@@ -190,7 +190,7 @@ the full 100-try Normal and Hardcore runs weren't done here); read it
 as "no sign Chapter 1 got easier", not a measured drop. Worth a full
 `cargo xtask playtest ch01 --bot all` before the Act 1 playtest.
 
-**Claude's starting rules** (also in `weapons-and-items.md`):
+**the agent's starting rules** (also in `weapons-and-items.md`):
 - Each purchase, sale or repair happens at once; no basket to confirm.
 - Sell lists only the stock: to sell worn gear or a packed item, put it
   back in the stock first.

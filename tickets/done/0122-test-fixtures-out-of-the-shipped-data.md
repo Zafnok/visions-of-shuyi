@@ -3,7 +3,7 @@ id: "0122"
 title: Move the test characters, chapter and battles out of the shipped data
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []

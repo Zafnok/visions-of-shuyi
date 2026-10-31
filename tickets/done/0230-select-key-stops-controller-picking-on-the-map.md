@@ -3,7 +3,7 @@ id: "0230"
 title: "Bug: giving Select a key stops the controller picking on the map"
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0220"]
@@ -49,7 +49,7 @@ The same goes for Start pressed twice once Confirm end turn has a key.
 **Sign-off** on the rule below (it follows what Nick decided, but he
 hasn't seen it spelled out for controllers):
 
-> *Claude's starting rule:* the split is per device. Giving Select a
+> *the agent's starting rule:* the split is per device. Giving Select a
 > **key** changes only what the keyboard's Confirm does; the controller's
 > Confirm keeps picking on the map until Select has a **button** (0816).
 > Same for Confirm end turn and Start. Example: Mia binds Select to `g`.
@@ -89,7 +89,7 @@ hasn't seen it spelled out for controllers):
    reach the keymap's through `Deref`).
 4. Write the failing test first (below), then fix.
 5. `docs/design/controls.md`, *Optional split keys*: add the rule, marked
-   *Claude's starting rule (Nick to veto at sign-off of 0230)*.
+   *the agent's starting rule (Nick to veto at sign-off of 0230)*.
 
 ## Acceptance criteria
 
@@ -122,6 +122,6 @@ hasn't seen it spelled out for controllers):
   methods so help text and tips name the right action.
 - `an_action_with_no_button_shows_not_mapped_on_a_pad` now clears Rewind's
   button instead of using Select. New Harness tests in `controller.rs`.
-- *Claude's starting rule* (Nick to veto): the split is per device, as
+- *the agent's starting rule* (Nick to veto): the split is per device, as
   worded in the ticket; written into `docs/design/controls.md`.
 - No follow-up tickets.

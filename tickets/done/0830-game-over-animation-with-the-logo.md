@@ -3,7 +3,7 @@ id: "0830"
 title: "Game Over screen: an animation with the game's logo"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0811"]
@@ -59,7 +59,7 @@ w our logo"; everything else is open, so don't pick for him:
 **In:**
 - The animation Nick picks, on the Game Over screen, in time with nothing
   (the `defeat` music keeps playing as it does today).
-- A press skips to the finished screen with the menu *(Claude's starting
+- A press skips to the finished screen with the menu *(the agent's starting
   rule, unless Nick answers otherwise: nobody should wait to retry)*.
 - `docs/design/look-and-feel.md` records his answers.
 
@@ -135,7 +135,7 @@ logo better", then "A2"); black behind; two seconds; any press skips.
 - Tests that pressed keys the moment Game Over opened now press once more
   first (the skip), or wait two seconds.
 
-**Gameplay rules Claude decided (starting rules, Nick may veto):**
+**Gameplay rules the agent decided (starting rules, Nick may veto):**
 - Backing out of the rewind screen returns to Game Over as it was left:
   the animation doesn't play a second time.
 - The skip makes no sound.

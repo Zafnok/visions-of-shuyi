@@ -3,7 +3,7 @@ id: "0705"
 title: "Battle dialogue triggers: turn events, boss encounters, death quotes, Talk/recruit"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0704", "0405"]
@@ -139,7 +139,7 @@ recruitment, death quotes, boss-battle quotes.
   fight, half-HP and defeat lines (defeated, it joins after the battle). All the lines are placeholders (0707 writes the
   real ones).
 
-Gameplay rules Claude decided where the design was silent (veto any):
+Gameplay rules the agent decided where the design was silent (veto any):
 
 1. **Talking** gives no EXP.
 2. **Two fight lines at once:** if the lead has a general fight line and

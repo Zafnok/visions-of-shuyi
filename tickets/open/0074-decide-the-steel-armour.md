@@ -3,7 +3,7 @@ id: "0074"
 title: "Decide: the Steel armour sold from Chapter 5"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0073"]

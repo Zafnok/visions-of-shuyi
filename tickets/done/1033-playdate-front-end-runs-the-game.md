@@ -3,7 +3,7 @@ id: "1033"
 title: "Playdate: the front end runs the game (frame loop, one-bit frame on screen, D-pad, A and B, saves)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1031", "1032"]

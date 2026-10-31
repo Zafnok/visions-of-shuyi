@@ -3,7 +3,7 @@ id: "0221"
 title: Trim the silence before the title music's fade-in
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0214"]

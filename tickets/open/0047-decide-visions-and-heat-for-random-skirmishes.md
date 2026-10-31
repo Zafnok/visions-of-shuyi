@@ -3,7 +3,7 @@ id: "0047"
 title: "Decide: Visions (pick one of three, or skip) and heat for random skirmishes"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1064"]

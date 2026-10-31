@@ -3,7 +3,7 @@ id: "0514"
 title: "Playtest CI plays only when a balance lever changed"
 type: infra
 milestone: M4 Enemy AI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0506"]
@@ -87,7 +87,7 @@ Done 2026-10-22, stacked on 0506's PR.
   `personas.ron`, the pin, the script and the playtest command give
   `play=true`. 0506's own diff plays; `main`'s last five merges (design
   and docs PRs) would not have.
-- *Claude's starting rule:* `crates/content/src/` counts as a lever
+- *the agent's starting rule:* `crates/content/src/` counts as a lever
   (it builds each battle's army and setup); `crates/ui/` and
   `crates/app/` don't. The list is one file to edit if a lever is
   missing.

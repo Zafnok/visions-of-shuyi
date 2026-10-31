@@ -3,7 +3,7 @@ id: "0810"
 title: "Show what a won battle earned: clear gold and the unused-rewind EXP bonus"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0801", "0602"]
@@ -125,7 +125,7 @@ before, gained)>, level_ups }` became `deployed` + the existing `events` +
 `exp_gained`, because 0801 had already made the struct and the level-up
 pages are built from those events.
 
-**Claude's starting rules** (presentation, where the docs were silent;
+**the agent's starting rules** (presentation, where the docs were silent;
 Nick may veto any):
 
 - With no rewind charge left, the screen shows the gold and `0 of 3` and

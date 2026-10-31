@@ -314,6 +314,11 @@ called robots.
 
 ## Which model
 
+Current routing is the `creative` capability in `tickets/README.md`
+(optional examples: Fable / Astra). The dated findings below record the
+models and drafts actually tested; they do not require a provider switch
+or compare a model that was not tested.
+
 Nick asked whether a better model for writing exists. The finding: **no
 model is clearly better than Claude for human, emotional dialogue**, and
 within Claude the differences are small. Benchmarks as read on 2026-10-23

@@ -3,7 +3,7 @@ id: "0239"
 title: "Chinese glyphs: a wide font per language, wide punctuation, Chinese line breaking"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0045", "0236", "0237", "engine#2303"]

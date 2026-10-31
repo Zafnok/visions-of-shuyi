@@ -3,7 +3,7 @@ id: "0413"
 title: Combat scene with bought full-body art of both combatants
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0404", "0021", "0035", "0110", "0711", "0231"]
@@ -21,8 +21,8 @@ rendering of the 2 battling units", rather than portraits
 with names and HP bars. This ticket adds a scene with the two fighters drawn
 full-body while the strikes play out.
 
-**Changed 2026-09-30:** the art is **bought**, not drawn by Claude. Nick
-doesn't want Claude-drawn character art (0021). His words: "I guess we need
+**Changed 2026-09-30:** the art is **bought**, not drawn by the agent. Nick
+doesn't want agent-drawn character art (0021). His words: "I guess we need
 an itch artist who has a pack with portraits and battle sprites". 0110 keeps
 the bought files in the private assets repo, and 0711 draws bought PNG art
 as sprite items (0231, ADR-0038; changed 2026-10-01 from per-pixel
@@ -221,7 +221,7 @@ game; all recorded in `look-and-feel.md`, *Combat screen*):
 - The Shironejiya pictures may be downloaded; the Paladin isn't needed
   for the Chapter 1 playtest.
 
-**Claude's starting rules** (Nick can veto):
+**the agent's starting rules** (Nick can veto):
 
 - The player's fighter stands on the left; if neither or both are the
   player's, the attacker does.

@@ -3,7 +3,7 @@ id: "0319"
 title: "Core rules: an escape objective, a fleeing boss, a boss who can't die, and a scripted death"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0069"]
@@ -70,7 +70,7 @@ placeholders):
   "lead tells Dace" version plays; in Casual a retreat in this battle
   doesn't change it (0715's lines by who is in the army may already
   cover the branch: use them if so). While he is in the army he is
-  forced into Chapter 8's deployment (*Claude's starting rule*).
+  forced into Chapter 8's deployment (*the agent's starting rule*).
 - The AI respects them: a boss that retreats still fights by the boss AI;
   enemies never target a down unit; the enemy side never escapes.
 - The bots (0504's legal moves) and play records handle the new rules
@@ -213,7 +213,7 @@ estimate, nothing to record.
   fix who deploys and Preparations has no deploy choice, so a character
   with a slot who is in the army is always deployed.
 
-**Claude's starting rules** (Nick may veto):
+**the agent's starting rules** (Nick may veto):
 
 - A downed unit's passives and auras stop counting: it is out of the
   fight.

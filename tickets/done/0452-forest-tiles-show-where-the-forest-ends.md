@@ -3,7 +3,7 @@ id: "0452"
 title: Forest tiles on the picture map show where the forest starts and ends
 type: tuning
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -135,7 +135,7 @@ which tiles are forest?
   (`a_tile_layers_picture_goes_by_the_neighbours_it_looks_for`). The
   importer's tests cover the joining and the layer on a made-up sheet.
 - Forest, thicket, burnt and burning all use it (same art layout).
-- *Claude's starting rules* (also in `look-and-feel.md`): thicket, burnt
+- *the agent's starting rules* (also in `look-and-feel.md`): thicket, burnt
   and burning get the same treatment as forest; at an inward corner of a
   wood (forest above and beside a tile but not on the diagonal) the trees
   run on to the tile's corner, as the side mixes don't look at the

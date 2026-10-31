@@ -3,7 +3,7 @@ id: "0809"
 title: "Play the victory sting, defeat sting and Game Over music"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0022", "0023", "0024", "0214", "0801", "0807"]
@@ -65,7 +65,7 @@ whether the stings and the Game Over music fit and are timed right.
   `music_fade_ms`).
 - The Game Over screen emits `play_music("game_over")` when shown, replacing
   0807's `stop_music`.
-- *Claude's starting rules* (tunable; list them in the PR for Nick):
+- *the agent's starting rules* (tunable; list them in the PR for Nick):
   - After the victory sting ends, nothing plays until the next scene's
     `@music` (0710) or the next screen's cue. The sting is not cut short by
     the banner closing; a new cue fades it out as usual.
@@ -148,7 +148,7 @@ whether the stings and the Game Over music fit and are timed right.
   moment it was chosen. Now it starts once a rewind point is picked (see
   the rules below), and it is the same track, not a new pick.
 
-**Claude's starting rules** (*tunable*, also in `audio.md`):
+**the agent's starting rules** (*tunable*, also in `audio.md`):
 
 - The pause between two rounds of the defeat music is 13.8 s (the piece's
   own quiet ending, 1.8 s, and 12 s added).

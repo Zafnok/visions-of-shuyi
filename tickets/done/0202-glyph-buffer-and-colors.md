@@ -3,7 +3,7 @@ id: "0202"
 title: GlyphBuffer virtual console, colours, drawing primitives, snapshot format
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0201"]

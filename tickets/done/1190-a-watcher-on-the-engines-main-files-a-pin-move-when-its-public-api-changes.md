@@ -3,7 +3,7 @@ id: "1190"
 title: "A watcher on the engine's main files a pin move when its public API changes, with an adoption review of each engine PR and a ledger CI checks"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: []
@@ -190,7 +190,7 @@ passes; the watcher's next report then starts from its pin.
 
 None here. Nick asked for the change (2026-10-24), for the watcher
 instead of a weekly move, and for a token instead of polling
-(2026-10-25); how it works is Claude's call. The token is engine#2031's
+(2026-10-25); how it works is the agent's call. The token is engine#2031's
 one-time setup (its *Nick input*), not this ticket's. Nick sees an
 `engine-pin` issue on GitHub soon after the engine's API changes, and a
 PR that closes it.
@@ -232,7 +232,7 @@ PR that closes it.
 - Engine changes. The exact public API label is engine#2030 and the
   dispatch on push to `main` is engine#2031. Both land in either order
   (points 1 and 2), and their PRs are the engine's.
-- Working the issue automatically (a Claude session started by the
+- Working the issue automatically (a the agent session started by the
   issue). The issue is worked like a `sonar` issue, by a session someone
   starts; automating that is its own decision.
 
@@ -362,7 +362,7 @@ PR that closes it.
      with `Closes #<issue>`, the ledger section and the tickets written
      in its body.
 
-   Model `sonnet-5`, effort `medium`. A review that would need a design
+   Model `implementation`, effort `medium`. A review that would need a design
    call goes to a ticket, never decided in the pin PR. A game ticket
    that moves the pin itself (`engine-change` §3.6, §7) follows the
    skill's review and ledger steps for the PRs it passes. If two pin

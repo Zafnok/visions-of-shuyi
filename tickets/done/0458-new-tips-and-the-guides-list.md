@@ -3,7 +3,7 @@ id: "0458"
 title: New tips (skills, magic, terrain) and the Guides list in the battle menu
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0455", "0456"]
@@ -38,7 +38,7 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
   - **Terrain**: the first time the cursor rests on a tile with a
     movement cost or a bonus other than plain ground (the side panel
     already shows `DEF +0 AVO +0`).
-  Words by Claude, plain, ≤ 3 lines of 60 characters, `{Action}`
+  Words by the agent, plain, ≤ 3 lines of 60 characters, `{Action}`
   placeholders.
 - **Guides**: a `Guides` entry in the battle's map menu
   (`crates/ui/src/screens/battle/map_menu.rs`). It opens a list of every
@@ -46,7 +46,7 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
   the selected one's text beside it, the keys filled in from the keymap. A
   lesson's checklist is shown as plain lines, not boxes to tick. Back
   closes it. It works at every tutorial level, `None` included, and every
-  topic can be read whether seen or not (*Claude's starting rule*). The
+  topic can be read whether seen or not (*the agent's starting rule*). The
   look follows the 0057 mockup (a list on the left, the text on the
   right). ADR-0054: view + skin.
 - Text keys for the menu entry and the screen in the language files
@@ -101,7 +101,7 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
 - Rendered with `cargo xtask frame-png` and looked at.
 - Tests that walked the map menu by a count of Downs got one more Down.
 
-**Claude's starting rules** (Nick can veto):
+**the agent's starting rules** (Nick can veto):
 
 - The Skills tip shows when a unit with a skill is selected. Every player
   class has an active skill, so in practice it shows on the first
@@ -114,7 +114,7 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
 - Guides sits after Objective in the map menu; Confirm does nothing in it.
 - The shipped game has no lessons yet (0457), so its Guides starts with
   the tips; the test build shows the test lesson first.
-- Tip words (Claude's): Skills "This unit has skills. Passive ones work on
+- Tip words (the agent's): Skills "This unit has skills. Passive ones work on
   their own; an active one is used from Arts or Skill in the action
   menu. {Info} lists them all…"; Magic "…Pick Magic in the action menu to
   cast at an enemy or to heal an ally. Each spell has a few uses per

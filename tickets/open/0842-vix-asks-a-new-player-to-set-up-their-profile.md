@@ -3,7 +3,7 @@ id: "0842"
 title: "On a new profile, Vix suggests setting up the profile from the title"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []
@@ -52,7 +52,7 @@ it):
 
 **In:**
 - On the title, after the first press, a small box with Vix's face to
-  the right of the menu (*Claude's starting rule*: right of the menu, not
+  the right of the menu (*the agent's starting rule*: right of the menu, not
   covering the logo), one or two lines in her voice suggesting Title →
   Profile to name the profile.
 - It shows while the profile in use has **never been changed or saved
@@ -60,7 +60,7 @@ it):
   any of those happens, it's gone for that profile for good.
 - It doesn't take input or block the menu; it hides while the cinematic
   plays.
-- *Claude's starting rule:* it doesn't depend on the tutorial level
+- *the agent's starting rule:* it doesn't depend on the tutorial level
   (there's no campaign yet on the title). List it in the Completion notes (1064's checklist).
 - Profiles keep a "set up" flag (or derive it from the profile's data;
   say which).

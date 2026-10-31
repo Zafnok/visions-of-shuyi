@@ -3,7 +3,7 @@ id: "1177"
 title: "Move the engine pin to the engine's main (engine 2304, 2305 and 3006)"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

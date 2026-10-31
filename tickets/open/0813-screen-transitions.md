@@ -3,7 +3,7 @@ id: "0813"
 title: Transitions between screens (title, scenes, battle)
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0801"]

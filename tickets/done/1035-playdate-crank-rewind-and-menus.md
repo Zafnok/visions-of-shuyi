@@ -3,7 +3,7 @@ id: "1035"
 title: "Playdate: the crank rewinds, the system menu's three entries, and map menu entries for actions with no button"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1034"]
@@ -21,7 +21,7 @@ completed: 2026-10-17
   per notch; A keeps that point (one charge), B cancels.
 - **Map menu:** as on the PC, plus every shortcut the Playdate has no
   button for (Danger zone, Auto-end, Unit info, Dialogue log).
-- *Claude's starting rules (Nick can veto):* winding forwards steps back
+- *the agent's starting rules (Nick can veto):* winding forwards steps back
   towards the present while choosing; the notch size is tunable; the
   crank does nothing else on the map; the three system-menu entries are
   Danger zone, Dialogue log and Options.
@@ -190,7 +190,7 @@ accumulator lives in the engine (above).
 the shortcut entries already count as pressing their action, and there
 is no Dialogue log entry.
 
-**Claude's starting rules** (where the design is silent; Nick can veto):
+**the agent's starting rules** (where the design is silent; Nick can veto):
 - The map menu's extra entries sit after Objective: Danger Zone,
   Auto-End, Unit Info.
 - Danger Zone and Auto-End close the map menu and do what their keys do

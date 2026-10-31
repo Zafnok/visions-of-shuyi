@@ -3,7 +3,7 @@ id: "0835"
 title: New Game asks how familiar you are (the tutorial level)
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -41,16 +41,16 @@ remembered per computer (`tips_seen`).
 
 **In:**
 - A new screen right after `mode_select` and before `lead_select`
-  (*Claude's starting rule*): a heading and three choices, each with one
+  (*the agent's starting rule*): a heading and three choices, each with one
   line explaining it, like `mode_select`. The cursor starts on
   "Not familiar". Back returns to `mode_select`. Words in the language
-  files (Claude writes them; American English; `test` pack too).
+  files (the agent writes them; American English; `test` pack too).
   ADR-0054: the screen builds a view, a skin paints it (copy
   `mode_select`'s `view.rs` / `glyph.rs` split).
 - `TutorialLevel { Full, Short, None }` kept with the campaign, next to
   `mode` (`Campaign.tutorial`), saved and loaded with it. Saves made before
   this ticket load as `Full` (`#[serde(default)]`), as the game behaves
-  today. *Claude's starting rule.*
+  today. *the agent's starting rule.*
 - Tips show only at `Full` (and still only when `tips_enabled`). At
   `Short` and `None`, no tip shows. The Quick Battle and the test chapter
   use `Full`.
@@ -114,7 +114,7 @@ remembered per computer (`tips_seen`).
   the familiarity screen builds the same view type (`FamiliarityView` is
   `ModeSelectView`) and is painted by the mode screen's skin: the two
   screens have the same shape, so one skin keeps them looking alike.
-- Words (American English), *Claude's wording*: heading "How familiar are
+- Words (American English), *the agent's wording*: heading "How familiar are
   you?"; "Not familiar: learn the controls and how this game works as you
   play, with tips."; "Familiar with other strategy RPGs: learn only what
   this game does differently."; "Familiar with this game: no lessons and

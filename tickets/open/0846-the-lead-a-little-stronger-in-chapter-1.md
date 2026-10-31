@@ -3,7 +3,7 @@ id: "0846"
 title: "The lead a little stronger in Chapter 1"
 type: tuning
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0845"]
@@ -52,7 +52,7 @@ into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 (`cargo xtask playtest ch01`, 200 tries, same seeds), what it changes in
 fights (who the lead kills in one fight), and Fire Emblem references
 (e.g. a lord with a personal weapon: Lyn's Mani Katti, Eirika's Rapier;
-check before citing). Options, *Claude's proposals*:
+check before citing). Options, *the agent's proposals*:
 
 - A. **Str 7 → 8:** Iron Sword does 10 × 2 = 20, killing a fresh Brigand
   in one fight.

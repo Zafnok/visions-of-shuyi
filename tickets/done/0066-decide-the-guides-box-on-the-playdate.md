@@ -3,7 +3,7 @@ id: "0066"
 title: "Decide: how the guide's tip and lesson box fits the Playdate's screen"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -110,7 +110,7 @@ Questions:
 - Counted every Chapter 1 tip and lesson at 22 letters a line: all fit
   the window at once, given that long checklist items wrap and the blank
   row before the checklist goes when there's no room.
-- **Claude's starting rules** (Nick can veto): the window is 24 cells
+- **the agent's starting rules** (Nick can veto): the window is 24 cells
   wide and the screen's full height, on the right when the cursor is in
   the left half; double black frame, the guide's name in its top; the
   progress and the close hint in its bottom frame; text wrapped by words

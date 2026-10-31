@@ -3,7 +3,7 @@ id: "1031"
 title: "Playdate: the front-end crate, the game on its own stack, and `cargo xtask playdate` with a CI build"
 type: infra
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1029"]

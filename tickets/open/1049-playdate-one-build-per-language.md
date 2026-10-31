@@ -3,7 +3,7 @@ id: "1049"
 title: "Playdate: one build per language (English, Japanese, Chinese)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1036", "1045", "0719", "0726"]

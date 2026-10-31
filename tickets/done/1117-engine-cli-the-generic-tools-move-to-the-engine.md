@@ -3,7 +3,7 @@ id: "1117"
 title: "shuyi-cli: frame-png, font-atlas, check-keys, check-text, lang-status, web and private-assets move to the engine, configured by a file"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: ["1111", "1115"]

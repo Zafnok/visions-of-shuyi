@@ -3,7 +3,7 @@ id: "1045"
 title: "Playdate: New Game and Options screens in one bit (mode, familiarity, lead select, options, button bindings)"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: ["1037", "1035", "0247"]
@@ -170,7 +170,7 @@ no slot headings (`Button 2` would not fit its column). The engine's
 `two_buttons_down_together_make_a_chord` (a second button used to be
 ignored; it now makes a chord, on every pad).
 
-***Claude's starting rules*** (in `docs/design/playdate.md`, *New Game,
+***the agent's starting rules*** (in `docs/design/playdate.md`, *New Game,
 Options, Key bindings and Profile*; Nick can veto): the focus is a bar and
 what can't be chosen is grey dots; on the mode and familiarity screens
 only the focused choice's explaining line shows; the lead's faces are at

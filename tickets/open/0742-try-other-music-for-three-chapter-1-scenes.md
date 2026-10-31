@@ -3,7 +3,7 @@ id: "0742"
 title: "Try other music for three Chapter 1 scenes (the letter, the Red Company, after the fight)"
 type: content
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0737"]
@@ -16,7 +16,7 @@ completed:
 ## Context
 
 `docs/design/audio.md`, *Chapter 1's cues*: four scene tracks were
-Claude's picks (0803) that Nick wanted to hear with the scenes'
+The agent's picks (0803) that Nick wanted to hear with the scenes'
 backgrounds. Chapter 1 playtest round 3 (0804, 2026-10-16), with the
 places in (0732–0734):
 

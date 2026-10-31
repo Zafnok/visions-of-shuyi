@@ -3,7 +3,7 @@ id: "1068"
 title: "Playdate: load one chapter's assets at a time, so all eight chapters fit"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: []

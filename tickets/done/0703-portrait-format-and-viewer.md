@@ -3,7 +3,7 @@ id: "0703"
 title: ASCII portrait file format, loader, renderer and debug viewer
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0205", "0302"]

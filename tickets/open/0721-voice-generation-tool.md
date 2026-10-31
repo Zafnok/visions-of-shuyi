@@ -3,7 +3,7 @@ id: "0721"
 title: "`cargo xtask voice`: generate the missing and stale clips, and print recording scripts"
 type: infra
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0043", "0238"]

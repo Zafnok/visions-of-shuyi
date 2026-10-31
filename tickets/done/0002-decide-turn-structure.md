@@ -3,7 +3,7 @@ id: "0002"
 title: "Decide: turn structure"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -89,7 +89,7 @@ phase** for green Ally/Neutral units, and **optional per-map turn limits**.
 Recorded in `docs/design/turn-structure.md` with the exact sequence
 `Player → Enemy → Other → turn += 1`.
 
-- Claude's starting rules (Nick may veto): empty phases are skipped silently;
+- The agent's starting rules (Nick may veto): empty phases are skipped silently;
   reinforcements arrive at the start of their own side's phase already done,
   and wait a turn if their tile is occupied; Survive / turn limits resolve
   when turn N's last phase ends; toggle key `Shift+e`.

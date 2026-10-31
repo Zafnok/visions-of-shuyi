@@ -3,7 +3,7 @@ id: "1104"
 title: "shuyi-assets: images, fonts, named colors, lights, audio cues and credits"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["1103"]

@@ -3,7 +3,7 @@ id: "0519"
 title: "Find why Hardcore stalls in Chapter 1 until the turn cap"
 type: bug
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0518"]

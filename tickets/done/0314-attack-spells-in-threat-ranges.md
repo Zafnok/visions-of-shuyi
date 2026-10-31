@@ -3,7 +3,7 @@ id: "0314"
 title: Count attack spells in a unit's attack ranges (threat area, danger zone)
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0309"]

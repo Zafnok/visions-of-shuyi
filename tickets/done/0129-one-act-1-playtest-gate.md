@@ -3,7 +3,7 @@ id: "0129"
 title: "Move the backlog onto one Act 1 playtest"
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

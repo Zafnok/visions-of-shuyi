@@ -3,7 +3,7 @@ id: "0454"
 title: A menu too wide for either side of its unit covers the unit
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -47,7 +47,7 @@ it):
 **In:**
 - When the menu fits neither beside the tile, place it **below** the
   tile's row (first row of the menu one row under the tile), or **above**
-  it if it doesn't fit below, x clamped to the map view. *Claude's
+  it if it doesn't fit below, x clamped to the map view. *the agent's
   starting rule* (a placement detail, not a look decision): never cover
   the unit's own tile.
 - If it fits nowhere without covering the tile (a menu taller than the

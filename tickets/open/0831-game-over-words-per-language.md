@@ -3,7 +3,7 @@ id: "0831"
 title: "Game Over's words as a picture: a language can bring its own"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: ["0830"]

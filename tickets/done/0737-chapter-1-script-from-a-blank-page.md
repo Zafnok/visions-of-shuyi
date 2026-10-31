@@ -3,7 +3,7 @@ id: "0737"
 title: "Write the Chapter 1 script again from the beats, on a blank page"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736"]
@@ -46,13 +46,12 @@ story-writing skill, with the rule that a rewrite starts on a blank page.
 into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 `blocked_by` any more.
 
-The ticket's `model` follows ADR-0010 (creative writing → fable-5.1).
-Nick named Fable as the writer of 0728's rewrite; if he runs this one on
-another model, that's his call. **0736 tested it:** in blind tests with
-two judges, Fable 5.1 wrote warmer, more human scenes than Opus 5.5 every
-time (`docs/story/craft.md`, "Round 2's samples"), so the story-writing
-skill says to write scripts on Fable 5.1. If this ticket is started on
-Opus, say so to Nick before writing.
+The ticket recommends the `creative` capability (`tickets/README.md`),
+with Fable / Astra as optional examples. Use any model that can meet the
+story-writing skill's voice and warmth criteria. **Historical evidence:**
+0736's two blind judges preferred Fable 5.1 to Opus 5.5 on its samples
+(`docs/story/craft.md`, "Round 2's samples"). This does not require a
+provider switch or establish a comparison with untested models.
 
 ## Nick input
 
@@ -279,7 +278,7 @@ were written in pass 1 and stand. Pictures: `cargo shuyi frame-png` of
 the yard and the chapel scenes were checked (the picture files aren't
 committed).
 
-**Claude's starting rules:** none that touch play. For the Act 1
+**the agent's starting rules:** none that touch play. For the Act 1
 playtest (1064): does the chapter sound like a game Nick wants to play,
 and do the conversations still drag.
 

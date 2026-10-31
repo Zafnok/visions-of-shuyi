@@ -3,7 +3,7 @@ id: "0112"
 title: Make the README's diagrams readable
 type: bug
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0111"]

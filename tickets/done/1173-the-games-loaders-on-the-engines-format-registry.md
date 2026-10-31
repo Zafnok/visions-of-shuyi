@@ -3,7 +3,7 @@ id: "1173"
 title: "The game's loaders on the engine's format registry: its kinds and formats registered at start-up, the pin moved"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: ["engine#2201"]

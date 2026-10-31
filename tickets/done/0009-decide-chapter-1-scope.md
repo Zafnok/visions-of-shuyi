@@ -3,7 +3,7 @@ id: "0009"
 title: "Decide: Chapter 1 scope (objective, roster, map, tutorial)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0007"]
@@ -105,7 +105,7 @@ Nick answered Q1–Q5 on 2026-09-25; recorded in `docs/design/chapter-1.md`.
   1000 gold clear reward (tunable).
 - Map difficulty tier: Normal (3 rewind charges); Nick changed it from my Easy
   proposal.
-- Claude's choices (tunable): the enemy mix (mostly Brigand/Raider/Archer); a rough ASCII layout sketch for 0803.
+- The agent's choices (tunable): the enemy mix (mostly Brigand/Raider/Archer); a rough ASCII layout sketch for 0803.
 - Pointers in `magic.md` and `weapons-and-items.md` updated. Also updated the
   design README (with a 0016 row) and ROADMAP (Nick's queue).
 - No changes were needed in 0408/0409: Preparations and shops are still built

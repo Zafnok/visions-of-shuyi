@@ -3,7 +3,7 @@ id: "0706"
 title: Chapter 1 cast portraits (bought art, all expressions)
 type: content
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0701", "0703", "0011", "0021", "0035", "0110", "0711"]
@@ -18,7 +18,7 @@ completed: 2026-10-11
 Portraits for every character who speaks in Chapter 1, using the portrait
 briefs in `docs/story/characters/*.md` (0701).
 
-**Changed 2026-09-28 and 2026-09-30:** Nick doesn't want Claude-drawn
+**Changed 2026-09-28 and 2026-09-30:** Nick doesn't want agent-drawn
 portraits. In 0021 he chose **Mega Tiles' Tiny Tales packs** for both faces
 and combat art (`docs/design/look-and-feel.md`, *Portraits and battle art*;
 ADR-0032). This ticket **assigns bought faces** to the cast instead of
@@ -129,7 +129,7 @@ character's faces, battle picture and map sprite together. This replaces the pre
 **Gaps** (Nick, 0021: "probably A or D"): first the Character Generator EX
 once Nick has bought it (its licence was checked in 0021: commercial use is
 fine); in combat a generated character uses its class's still image;
-otherwise, or on top, Claude's small
+otherwise, or on top, the agent's small
 edits to a bought face. Nick also allows **rewriting a character's written
 look to fit the bought art** (his words: "we can rewrite Rue's physical
 description as needed once we buy the art"): update the character sheet's
@@ -140,11 +140,11 @@ No commissions (Nick vetoed them).
 uses it for both; everyone else uses their class's combat picture,
 recoloured to their colours (0413).
 
-**What Claude can and can't do to bought faces:** recolour hair, clothes and
+**What the agent can and can't do to bought faces:** recolour hair, clothes and
 eyes (a palette swap of a few exact colours), and small pixel edits (a scar,
 a missing `surprised` made from a neutral face, a spectacle rim). Not new
 hairstyles, removing beards, or new clothes: that's redrawing, and Nick
-doesn't want Claude's art.
+doesn't want the agent's art.
 
 **Added 2026-10-03 (ticket 0036):** the title cinematic shows the lead's
 face. With a save it uses that save's lead; with no save it needs a
@@ -154,7 +154,7 @@ one is the default for the cinematic and tell Nick in the PR.
 
 ## Nick input
 
-**Sign-off:** for each Chapter 1 speaker, Claude proposes two or three
+**Sign-off:** for each Chapter 1 speaker, the agent proposes two or three
 candidate faces from the bought packs (rendered in the dialogue screen,
 neutral plus one other expression), and Nick picks one or asks for others.
 Characters no pack fits are handled as in *Gaps* above.
@@ -268,7 +268,7 @@ dialogue; Hollis and Harl look younger than 56 and 46. The messenger and
 the soldier look alike in greyscale (same hair); a different hairstyle on
 the messenger would fix it if it bothers you.
 
-**Gameplay rules decided by Claude:** none.
+**Gameplay rules decided by the agent:** none.
 
 **Follow-up tickets:** none.
 

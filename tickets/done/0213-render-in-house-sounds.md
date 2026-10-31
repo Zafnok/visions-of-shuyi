@@ -3,7 +3,7 @@ id: "0213"
 title: "Render our own sounds with cargo xtask sfx"
 type: infra
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0212"]

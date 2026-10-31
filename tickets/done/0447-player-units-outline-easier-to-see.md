@@ -3,7 +3,7 @@ id: "0447"
 title: "Player units' blue outline: easier to see on the bought tiles"
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0907"
 title: "Say what is machine-made: credits, itch page, Steam's AI survey"
 type: feature
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0042", "0043", "0045"]
@@ -17,7 +17,7 @@ completed:
 
 By Nick's direction (`docs/design/voices-languages-and-script.md`) the
 game may ship AI-generated voices, machine-translated Japanese and Chinese options,
-and a script written by Claude, each to be replaced by paid people later.
+and a script written by the agent, each to be replaced by paid people later.
 Steam requires pre-generated AI content to be described in its content
 survey and shows that text on the store page; Japanese players judge
 unlabelled machine translation harshly; and Nick credits everyone

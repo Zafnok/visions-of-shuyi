@@ -3,7 +3,7 @@ id: "1047"
 title: "Playdate: sound effects and music in formats the device plays"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1033", "1036"]
@@ -145,7 +145,7 @@ music ([ADR-0084](../../docs/adr/0084-playdate-audio-formats.md)).
 - **CI:** the `playdate` job also checks that `pdc` packed a converted
   sound and track.
 
-No gameplay rules decided. *Claude's starting choices* (sound only, Nick
+No gameplay rules decided. *the agent's starting choices* (sound only, Nick
 can veto): music is mono (the speaker is mono; stereo doubles the size
 for headphones), and a sound at volume 0 is not played at all.
 

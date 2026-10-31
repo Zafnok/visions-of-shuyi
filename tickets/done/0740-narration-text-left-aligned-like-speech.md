@@ -3,7 +3,7 @@ id: "0740"
 title: "Narration boxes are left-aligned like speech"
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["1177"]
@@ -62,7 +62,7 @@ it):
   `shuyi-engine.rev` has it).
 - Narration lines start at `TEXT_X` like speech, from the box's first
   text row (no vertical centring), keeping their `TextDim` colour
-  (*Claude's starting rule*: the colour still tells narration apart):
+  (*the agent's starting rule*: the colour still tells narration apart):
   `Left` in the game's `BOX_PLACE`.
 - The same in the title cinematic's talk shots (they paint with the
   dialogue screen's skin, so `BOX_PLACE` covers them: check it).

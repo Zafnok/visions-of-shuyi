@@ -3,7 +3,7 @@ id: "0308"
 title: Gold, on-map shops, villages, chests and repair (core rules)
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0306"]
@@ -95,7 +95,7 @@ API reused between chapters.
   `UnitAction::Open`; events `Bought` (with where the item went), `Sold`,
   `Repaired`, `GoldChanged`, `ChestOpened`. All transactions are worked out on
   copies first, so one refused transaction applies none of them.
-- Rules I had to pick (Claude's starting rules, not in the design doc):
+- Rules I had to pick (the agent's starting rules, not in the design doc):
   - Armouries and vendors **buy anything**; blacksmiths only repair.
   - Shopping and chests are **player units only** (gold is the party's).
   - A unit can sell its loadout weapons, armour, accessory, or a battle-pack

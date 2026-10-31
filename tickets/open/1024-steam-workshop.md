@@ -3,7 +3,7 @@ id: "1024"
 title: "Steam Workshop: upload a mod from vos-modkit, subscribed mods appear in the game"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: blocked
 blocked_by: ["0903", "0054", "1015", "1016"]
@@ -57,7 +57,7 @@ does that); paid mods (`LICENSE` forbids them unless Nick changes it).
 - [ ] `vos-modkit publish --dry-run` prints the item it would create
       (test).
 - [ ] A build without the feature has no Steam code (`cargo tree`).
-- [ ] Nick (or Claude with his account's build user) uploads the example
+- [ ] Nick (or the agent with his account's build user) uploads the example
       mod once and subscribes to it from a second account, and it loads.
 - [ ] All gates in the `run-gates` skill pass.
 

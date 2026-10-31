@@ -3,7 +3,7 @@ id: "0822"
 title: "Game Over offers Rewind while charges are left"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -102,4 +102,4 @@ already allowed a rewind after a defeat, so core is unchanged.
   turn-limit loss, lose again at once. Not changed (out of scope).
 - Existing tests that pressed `Retry Battle` on Game Over now go down one
   item, because `Rewind` is first while charges are left.
-- *Claude's starting rule:* none.
+- *the agent's starting rule:* none.

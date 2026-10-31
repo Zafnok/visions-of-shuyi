@@ -3,7 +3,7 @@ id: "0121"
 title: "README: new screenshots, progress and planned features"
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: low
 status: done
 blocked_by: []

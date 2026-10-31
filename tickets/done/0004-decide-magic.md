@@ -3,7 +3,7 @@ id: "0004"
 title: "Decide: magic (whether, what kind, healing)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -108,7 +108,7 @@ Recorded in `docs/design/magic.md`.
 - **Flavour (Q3):** deferred to the story bible (0701).
 - **Learning:** spells come from the class list by level (kept after a class
   change), plus 1–2 personal signature spells per named character.
-- **Claude's starting rules Nick may veto:**
+- **the agent's starting rules Nick may veto:**
   - one use per combat, not per strike;
   - counters use the equipped weapon or spell, and there is no counter at 0
     uses;

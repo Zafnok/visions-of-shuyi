@@ -3,7 +3,7 @@ id: "1066"
 title: "Playdate: the world map, towns and the shop in one bit"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1007", "1008", "0409", "1038"]

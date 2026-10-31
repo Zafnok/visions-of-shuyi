@@ -3,7 +3,7 @@ id: "0708"
 title: "Dialogue: lead reply choices and lead name/pronoun tokens"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0702", "0704"]
@@ -178,8 +178,8 @@ None.
    (Nick picked option B from three mockups).
 5. The lead's default first name is **Ellery** (Nick turned down Rowan:
    "lame name, pick something better"; still renameable). Until New Game asks
-   the player (0801), the lead is Ellery, male (*Claude's starting rule*).
-6. Writers: `{They}` becomes He/She, so verbs agree with he/she. Claude
+   the player (0801), the lead is Ellery, male (*the agent's starting rule*).
+6. Writers: `{They}` becomes He/She, so verbs agree with he/she. The agent
    writes all scripts (Nick: "I'm not writing anything, that's all you").
 
 **Follow-ups:** none created.

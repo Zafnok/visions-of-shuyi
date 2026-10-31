@@ -3,7 +3,7 @@ id: "1018"
 title: "Scripted battle events and objectives for mods"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1017"]

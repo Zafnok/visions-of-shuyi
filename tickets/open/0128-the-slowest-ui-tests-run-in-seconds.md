@@ -3,7 +3,7 @@ id: "0128"
 title: The slowest ui tests run in seconds, checking just as much
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []

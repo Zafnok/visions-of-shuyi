@@ -3,7 +3,7 @@ id: "0248"
 title: "The battle's forecast, unit info, fight box, level-up and rewind screen: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0242"]

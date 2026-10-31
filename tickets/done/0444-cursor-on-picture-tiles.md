@@ -3,7 +3,7 @@ id: "0444"
 title: "The cursor on picture tiles: easier to see, if Nick wants it"
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0437"]
@@ -20,7 +20,7 @@ Ticket 0437 drew the battle map's terrain with the bought tiles
 marks just inside the tile, 3 pixels long (0433's placeholder; nothing has
 decided it). The glyph look's marks sit in the gaps the font leaves around
 letters, on a dark ground. Pictures have no such gaps and the ground is
-bright: on grass the marks are hard to see at 1×. Claude saw it in 0437's
+bright: on grass the marks are hard to see at 1×. The agent saw it in 0437's
 frames; **Nick hasn't said it bothers him.**
 
 (This ticket first also asked how strong range tints should be on picture
@@ -138,7 +138,7 @@ forest, road, water and the fort, at both zooms:
 - The Options row is outside this ticket's first scope; Nick asked for
   it here.
 
-**Claude's starting rule** (Nick to agree or veto):
+**the agent's starting rule** (Nick to agree or veto):
 
 - A player who picked `Tile glow` on glyphs and then switches the map to
   pictures sees the normal corner marks, and the `Cursor` row says

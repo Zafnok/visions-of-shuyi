@@ -3,7 +3,7 @@ id: "0069"
 title: "Decide: Act 1's battle rules (escape, a fleeing boss, a boss who can't die, Hollis's death, side-quest rewards, what each chapter introduces)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -36,7 +36,7 @@ the design docs don't settle any of them:
    random skirmishes "never unique items". What kinds of unique reward
    exist is not decided (0018 decides the special weapons themselves).
 6. **What each early chapter introduces.** The outline's table (*New
-   things each early chapter introduces*) is "*Claude's proposal; each
+   things each early chapter introduces*) is "*the agent's proposal; each
    chapter ticket confirms with Nick.*" Confirming it once here, for all
    of Act 1, keeps the chapter tickets free of design questions.
 
@@ -96,7 +96,7 @@ player situations with an example (Nick didn't follow abstract ones).
    locked; E) gold or a rare shop stock in a town; F) describe your own.
    Also: does losing the quest (or skipping it) lose the reward for
    good?
-6. **What each early chapter introduces** (the outline's table, Claude's
+6. **What each early chapter introduces** (the outline's table, the agent's
    proposal at gate 2): Chapter 2 Preparations, talk-to-recruit and
    villages; Chapter 3 a Seize objective and chests; Chapter 4 the world
    map, a town, fixed skirmishes and the first side quest; Chapter 6
@@ -115,7 +115,7 @@ player situations with an example (Nick didn't follow abstract ones).
   Hollis rule beside the Classic/Casual rules in
   `death-and-difficulty.md`, the reward kinds in `world-structure.md`
   (*Side quest*), the confirmed table in `docs/story/outline.md` (drop
-  "*Claude's proposal; each chapter ticket confirms with Nick*"), Nick's
+  "*the agent's proposal; each chapter ticket confirms with Nick*"), Nick's
   words verbatim in each.
 - Update 0319's *Scope* if an answer adds or removes a rule.
 
@@ -123,7 +123,7 @@ player situations with an example (Nick didn't follow abstract ones).
 - Implementing anything (0319).
 - Which reward each side quest gives (1072 picks, inside Nick's answer).
 - Chapter-specific numbers (turn counts, HP thresholds): the chapter
-  tickets set them as *Claude's starting values* and the bots tune them.
+  tickets set them as *the agent's starting values* and the bots tune them.
 
 ## Implementation steps
 
@@ -183,7 +183,7 @@ chapter tickets 0744, 0848–0854 and 1071 say how their recruits join.
 closes (Nick's "deadline" reminder); in 1064's `blocked_by` and the
 roadmap.
 
-**Claude's starting rules** (Nick may veto):
+**the agent's starting rules** (Nick may veto):
 - The lead may escape before the others; `Escape` gives no EXP; green
   units needn't escape; escaped units count as standing.
 - A raider burns a house by ending its turn on its door or one of the

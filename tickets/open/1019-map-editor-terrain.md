@@ -3,7 +3,7 @@ id: "1019"
 title: "Map editor, part 1: paint terrain and save a .map into a mod"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1014"]
@@ -17,7 +17,7 @@ completed:
 
 Maps are plain text today (`assets/maps/README.md`: a grid of legend
 characters, tile features, a `look` header). Writing one by hand is how the
-game's own maps are made, but modders (and Claude, for new chapters) work
+game's own maps are made, but modders (and the agent, for new chapters) work
 faster painting with the same cursor and keys as the battle map. Nick asked
 for "a bunch of dev tools" ([`docs/design/replayability.md`](../../docs/design/replayability.md)).
 

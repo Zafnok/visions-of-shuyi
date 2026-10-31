@@ -3,7 +3,7 @@ id: "0226"
 title: "\"Press any key or button\" on every build, and it decides whether to show Pick your layout"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0219", "0220"]
@@ -157,7 +157,7 @@ click (0224's page script resumes the sound on each of those until it
 runs). I had no controller and no Chrome or Firefox with sound blocked to
 confirm it: please listen for it at sign-off.
 
-**Claude's starting rules (Nick can veto; also in `title-screen.md` and
+**the agent's starting rules (Nick can veto; also in `title-screen.md` and
 `controls.md`):**
 - The pictures are dim like the line, don't blink, and keep a 5-cell gap
   from the words in every language.

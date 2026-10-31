@@ -3,7 +3,7 @@ id: "0441"
 title: "Glyph look: the map HP bar is 14 pixels wide"
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

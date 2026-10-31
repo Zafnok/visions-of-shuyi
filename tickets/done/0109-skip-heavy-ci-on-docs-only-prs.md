@@ -3,7 +3,7 @@ id: "0109"
 title: Skip heavy CI jobs on docs-only pull requests
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0102", "0103", "0104", "0105"]

@@ -3,7 +3,7 @@ id: "1108"
 title: "The frame (glyph buffer, sprites, backdrop, snapshots) moves to the engine, with a console size the game picks"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1107", "1030"]

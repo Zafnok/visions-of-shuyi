@@ -3,7 +3,7 @@ id: "0473"
 title: Play the shop music on the shop screen
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: ["0028"]

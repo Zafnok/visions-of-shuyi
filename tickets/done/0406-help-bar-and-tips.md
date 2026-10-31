@@ -3,7 +3,7 @@ id: "0406"
 title: One-time contextual tips (teaching approach from Chapter 1 scope)
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0009", "0405", "0207"]
@@ -82,7 +82,7 @@ Deviations and notes:
   over the phase banner, before the enemy moves, so it never runs during
   playback.
 
-*Claude's starting rules* (gameplay-affecting, Nick can veto):
+*the agent's starting rules* (gameplay-affecting, Nick can veto):
 
 - "Low HP" is a player unit at or below 50% of max HP (Nick: fine for a one-time tip).
 - `FirstEnemyInRange`: a selected unit could reach an enemy (move or

@@ -1,7 +1,7 @@
 # Tickets
 
 The backlog lives here as Markdown files. Full rationale:
-[ADR-0010](../docs/adr/0010-ticket-workflow-and-model-routing.md).
+[ADR-0010](../docs/adr/0010-ticket-workflow-and-model-routing.md), with portable routing in [ADR-0102](../docs/adr/0102-portable-agent-workflows.md).
 
 ```
 tickets/
@@ -34,6 +34,29 @@ tickets/
 New tickets (including bugs) take the next free number in their block. Numbers
 are never reused.
 
+## Model and effort guidance
+
+`model` describes a capability, not a provider or API model id:
+
+| Capability | Use for | Optional examples |
+| ---------- | ------- | ----------------- |
+| `mechanical` | Renames, file moves, small data edits | A fast model that can follow an exact procedure |
+| `implementation` | Specified changes, existing patterns, clear bug fixes | Sonnet / Terra |
+| `reasoning` | Architecture, tricky invariants, work across crates, design facilitation | Opus / Astra |
+| `creative` | Story, dialogue, character voice, art direction | Fable / Astra |
+
+The examples reflect the owner's routing preferences, not benchmark equivalence
+or guaranteed availability. Use any available model that meets the capability;
+no ticket requires switching providers. Keep actual model ids in the harness's
+settings. Escalate capability when repeated attempts cannot resolve the task.
+`effort` is relative reasoning effort; use the closest supported setting in
+the current harness. A creative task may also need high reasoning effort.
+
+The migration covers open, parked and done tickets. It changes recommendations
+and agent roles, not scope, blockers, status, completion dates or design decisions.
+Historical model comparisons, quotations, URLs and real harness configuration
+paths can still name a product; they do not impose an execution requirement.
+
 ## Frontmatter
 
 ```yaml
@@ -42,7 +65,7 @@ id: "0303"
 title: Movement range and pathfinding
 type: feature        # feature | infra | design-decision | content | bug | tuning | research | playtest
 milestone: M2 Core rules
-model: opus-5.5      # haiku-4.5 | sonnet-5 | opus-5.5 | fable-5.1
+model: reasoning     # mechanical | implementation | reasoning | creative
 effort: high         # low | medium | high | xhigh | max
 status: todo         # todo | in-progress | blocked | done
 blocked_by: ["0302"] # ticket ids that must be in done/ first; engine#NNNN for the engine's
@@ -112,7 +135,7 @@ tickets anymore."
 So a `feature`, `bug`, `tuning` or `content` ticket never asks Nick to
 look at or play its result. It is verified by tests, `cargo shuyi
 frame-png` pictures in the PR and the playtest bots (0506, 0509, and
-for all of Act 1, 0512). Its *Claude's starting rules* and anything
+for all of Act 1, 0512). Its *the agent's starting rules* and anything
 left to judge by playing go in its Completion notes, and the Act 1
 playtest (1064) collects them into its checklist.
 
@@ -121,5 +144,5 @@ What Nick still answers: design questions, which are `decision`
 building, with mockups when he judges pictures: a node-glyph mockup,
 a pick from bought art, a listening page), `answer-first` and
 `setup` (an account, a purchase, sideloading a build to measure it
-on his Playdate). Story: Claude writes every script; only story
+on his Playdate). Story: the agent writes every script; only story
 decisions (a beat, a new named character) go to him.

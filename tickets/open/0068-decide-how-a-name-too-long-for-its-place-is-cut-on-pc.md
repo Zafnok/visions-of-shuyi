@@ -3,7 +3,7 @@ id: "0068"
 title: "Decide how a name too long for its place is cut on the PC screens: cut short, or cut with a … mark"
 type: design-decision
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

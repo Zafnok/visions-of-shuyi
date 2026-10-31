@@ -3,7 +3,7 @@ id: "1036"
 title: "Playdate: load only the data the Playdate build uses, behind a loading card, and measure it on the device"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1033"]
@@ -53,7 +53,7 @@ None to decide. Nick sideloads one build to measure.
   screen is never blank or the SDK's default. The font must be
   available before the content loads (the 1-bit atlas is embedded on its
   own). Its look is a placeholder in the game's style; Nick sees it at the
-  1050 play-through. *Claude's starting rule (Nick can veto): the card
+  1050 play-through. *the agent's starting rule (Nick can veto): the card
   shows the game's name, centred.* Replace 1031's temporary
   "Loading…" text.
 - **Measure on the device:** load time before and after (1026: 3,708 ms),
@@ -154,7 +154,7 @@ slowest files, and the stack high-water mark.
   format follow-up. What was left out isn't parsed, so the load time
   barely changes: the device numbers decide the follow-up.
 
-**Claude's starting rule** (Nick can veto at 1050): the loading card is
+**the agent's starting rule** (Nick can veto at 1050): the loading card is
 the game's name, centred, black on the white ground, in the game's font.
 
 **Notes for Nick:** the card shows for as long as the data loads (about

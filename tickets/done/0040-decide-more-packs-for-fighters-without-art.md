@@ -3,7 +3,7 @@ id: "0040"
 title: "Decide: more bought packs for fighters with no fitting art"
 type: design-decision
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0038"]
@@ -25,10 +25,10 @@ non-battle units, I think the generator can work".
 So: **characters who never fight** get a face from the Character
 Generator EX (bought), and this ticket isn't about them. **Characters and
 classes that fight** need a still battle picture, a map sprite and, if
-they speak, a face, and where the bundle has none, Claude finds packs in
+they speak, a face, and where the bundle has none, the agent finds packs in
 a similar style and Nick decides each purchase (ADR-0032 rule 7: Nick
-buys; Claude rechecks price and licence first; no price ceiling is asked).
-No commissions, no Claude-drawn art (`look-and-feel.md`).
+buys; the agent rechecks price and licence first; no price ceiling is asked).
+No commissions, no agent-drawn art (`look-and-feel.md`).
 
 **The gaps** (what each needs: P = still battle picture, M = map sprite,
 F = face):
@@ -75,7 +75,7 @@ from the store previews.
   fighter.
 - Two sellers' licences forbid use in any project that also uses
   AI-generated code or writing (Mana Seed, Sleepless Seven). This game's
-  code is written by Claude, so both are out.
+  code is written by the agent, so both are out.
 - No ripped or edited Nintendo art was among the pages read.
 
 **Shortlist** (best first within each gap; all allow commercial use and
@@ -341,7 +341,7 @@ Nick. Every gap has an answer in `docs/design/look-and-feel.md`,
 (31,21), and lens colour (196, 222, 236) at (19,22) (20,22) (21,22)
 (25,22) (26,22) (27,22) (28,22). Nick saw it and raised no objection.
 
-**Claude's starting rules** (Nick can veto):
+**the agent's starting rules** (Nick can veto):
 
 - The keeper's new name is **Maud**, and her age is 27 (the Church Cleric
   looks younger than 34). Both are one-line changes.

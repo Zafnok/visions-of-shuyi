@@ -3,7 +3,7 @@ id: "1112"
 title: "Generic screens and widgets move to the engine: menus, help, key bindings, layout picker, options shell, debug menu, dialogue player, text"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1111"]

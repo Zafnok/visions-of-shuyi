@@ -3,7 +3,7 @@ id: "1163"
 title: "The game's yes/no questions on the engine's question widget"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["engine#2309"]

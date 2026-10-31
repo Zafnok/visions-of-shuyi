@@ -3,7 +3,7 @@ id: "0827"
 title: "Cinematic shots where units march and fight"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0817"]
@@ -168,7 +168,7 @@ sign-off.
   `action`; a named list no shot uses is an error (it would never be
   checked).
 
-**Look choices where the ticket was silent** (*Claude's starting
+**Look choices where the ticket was silent** (*the agent's starting
 choices*; nothing here is a game rule, all are tunable constants in
 `crates/ui/src/cinematic/action.rs`, to judge at 0820's sign-off):
 

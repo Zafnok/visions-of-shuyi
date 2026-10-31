@@ -3,7 +3,7 @@ id: "0833"
 title: "Title cinematic: shorter talk, units move like the game, a combat scene"
 type: content
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0832", "0728"]
@@ -163,7 +163,7 @@ game code.
 - Enemies that don't matter to the shots don't move in their phase (the
   second brigand south of the river, the guards), as in 0820.
 
-**Claude's starting rules** (Nick can veto): who moves where each turn,
+**the agent's starting rules** (Nick can veto): who moves where each turn,
 the order they move in, who fights whom, and the seed that makes the
 brigand fall to the lead's counter; Tamsin alone at the footbridge.
 

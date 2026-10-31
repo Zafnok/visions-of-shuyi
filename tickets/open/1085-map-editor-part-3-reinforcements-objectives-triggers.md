@@ -3,7 +3,7 @@ id: "1085"
 title: "Map editor, part 3: reinforcements, objectives, triggers and talk pairs"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1020"]

@@ -3,7 +3,7 @@ id: "1198"
 title: "World map shortcuts on the Key bindings screen"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["1007", "engine#2395"]

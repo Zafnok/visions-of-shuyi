@@ -3,7 +3,7 @@ id: "0462"
 title: "Aiming an attack or spell starts on an enemy, not a tile"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -61,7 +61,7 @@ it):
 - A spell's target list opens on: the enemy the path was aimed at, if
   it's a target; else the first enemy in reading order; else (no enemy in
   reach) the first tile. Up/down/left/right still move through all
-  targets (enemies and tiles) as today (*Claude's starting rule*: the
+  targets (enemies and tiles) as today (*the agent's starting rule*: the
   order of the list stays reading order; only the start changes).
 - Heals keep their start (0451: the ally pointed at).
 - Same rule anywhere else a list mixes units and tiles, if there is one.
@@ -82,4 +82,4 @@ it):
 
 ## Completion notes
 
-`CastTargeting::new` now starts on the enemy the path was aimed at, else the first unit in reading order, else the first tile (`magic.rs`). The target list's order is unchanged, so up/down still step through enemies and tiles. Heals are unchanged (their list holds only units, rotated to the pointed-at ally by 0451). No other list mixes units and tiles. Two older tests that expected a tile-first start were updated. Friction: estimate ~15 lines, measured ~20 production lines, under 2x. Nothing for the Act 1 playtest beyond the checklist item above. No Claude's starting rules beyond the ticket's.
+`CastTargeting::new` now starts on the enemy the path was aimed at, else the first unit in reading order, else the first tile (`magic.rs`). The target list's order is unchanged, so up/down still step through enemies and tiles. Heals are unchanged (their list holds only units, rotated to the pointed-at ally by 0451). No other list mixes units and tiles. Two older tests that expected a tile-first start were updated. Friction: estimate ~15 lines, measured ~20 production lines, under 2x. Nothing for the Act 1 playtest beyond the checklist item above. No the agent's starting rules beyond the ticket's.

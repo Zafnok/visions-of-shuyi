@@ -3,7 +3,7 @@ id: "0804"
 title: Nick playtests Chapter 1; feedback becomes tickets
 type: playtest
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0317", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839", "0732", "0733", "0734", "0250", "0318", "0446", "0449", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0841", "0842", "0843", "0844", "0845", "0846", "0847", "1118", "1050"]
@@ -192,7 +192,7 @@ The round 1 tickets left these for Nick to judge by playing; they go in
 the message:
 
 - 0727: does the text speed-up start soon enough when the key is held
-  (0.3 s, *Claude's starting rule*)?
+  (0.3 s, *the agent's starting rule*)?
 - 0447: one of his units that has acted has a darker rim than before.
 - 0055 / 0448: the threat arrows' starting rules (they stay while the
   action menu is open; units that have acted show them too; the glyph
@@ -244,7 +244,7 @@ start with `t0804`; this ticket stays open in that PR. After the merge: tag
 Instead of a short message, Nick asked for a checklist with answer
 choices (Nick, 2026-10-16: "make me a checklist, with options… this will
 be a LOT of questions"), published as a private claude.ai page that
-saves his answers for Claude to read back:
+saves his answers for the agent to read back:
 <https://claude.ai/artifact/8kz8qiMc245mNaBNrytYKh>. It has the
 links, the key cheat-sheet from `keymap.ron`, five things to watch,
 the known gaps (0735, 0453, 0454, 0450, 0041), and 70 questions in play

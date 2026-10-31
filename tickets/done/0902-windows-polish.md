@@ -3,7 +3,7 @@ id: "0902"
 title: "Windows polish: no console window, exe icon and metadata, window icon, fullscreen toggle"
 type: feature
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0107"]
@@ -62,4 +62,4 @@ standard keys.
 - Not verified here: the MSVC resource step and the web fullscreen toggle
   (no MSVC locally; the browser needs a click or key to allow fullscreen,
   which F11 is). CI's release build covers the exe.
-- *Claude's starting rules*: none about gameplay.
+- *the agent's starting rules*: none about gameplay.

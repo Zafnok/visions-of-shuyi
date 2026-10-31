@@ -3,7 +3,7 @@ id: "0035"
 title: "Decide Harl's combat picture (Chapter 1 boss)"
 type: design-decision
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -65,7 +65,7 @@ bundle (37 products) and all of it was checked for Harl:
 
 Nick also changed who searches: "I guess you need to help me locate some
 more itch bundles to fill in with a similar style for rest of cast".
-**Claude now searches** for Harl's picture together with the other gaps
+**the agent now searches** for Harl's picture together with the other gaps
 (ticket 0040, which holds the search results and the shortlist); Nick
 still decides each purchase. Take Harl's candidates from 0040's shortlist
 (*human axe fighter*), render them as below, and record Nick's pick here.
@@ -82,8 +82,8 @@ bust style.
 
 ## Nick input
 
-**Decision.** Claude brings candidate packs (0040's shortlist), and Nick
-may bring his own. For each, Claude checks and then renders:
+**Decision.** the agent brings candidate packs (0040's shortlist), and Nick
+may bring his own. For each, the agent checks and then renders:
 - **Licence** against ADR-0032: commercial game OK, modification OK, no
   royalties, not AI output without a human touch.
 - **Price:** Nick decides whether it's fine.
@@ -99,7 +99,7 @@ Nick picks one, or keeps a stand-in for now.
 ## Scope
 
 **In:** checking and mocking up the candidates Nick brings, and optionally
-a short search by Claude for human axe fighters in a style close to Tiny
+a short search by the agent for human axe fighters in a style close to Tiny
 Tales. Record the choice in `look-and-feel.md` (*Combat screen*), and in
 `red_captain.md` if his look or class changes.
 
@@ -146,7 +146,7 @@ implementing the combat scene (0413).
   "jacket"), so the script agrees with the picture.
 - 0706's note and the roadmap were brought up to date (0035 no longer
   blocks 0413 and 0706).
-- **Claude's starting rule (Nick may veto):** as drawn, Harl's headscarf
+- **the agent's starting rule (Nick may veto):** as drawn, Harl's headscarf
   is pale grey and his beard dark grey. The brief says both are
   recoloured red (a red headscarf, a rust-red beard going grey), by the
   existing rule that a named character's picture takes their own colours;

@@ -3,7 +3,7 @@ id: "0307"
 title: Turn rewind
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0006", "0305", "0404"]
@@ -94,7 +94,7 @@ a `Rewind` action + key binding (`r` in the right-handed layout, `u` in the left
   screen stack: it draws the battle map with another state and hands the
   chosen point back, which a stacked screen can't do.
 
-**Claude's starting rules** (design docs silent; Nick can veto):
+**the agent's starting rules** (design docs silent; Nick can veto):
 
 - Rewind opens only while browsing the map in the player phase (not while a
   unit is selected/moving/in a menu), and not once the battle has ended

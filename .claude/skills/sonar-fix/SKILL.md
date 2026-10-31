@@ -9,7 +9,7 @@ metadata:
 
 One `sonar`-labelled GitHub issue is one PR. The issue body **is** the
 ticket (goal, findings table, acceptance criteria): the one exception to
-"work one ticket at a time from `tickets/open/`" (`CLAUDE.md` hard rule 1,
+"work one ticket at a time from `tickets/open/`" (`AGENTS.md` hard rule 1,
 ADR-0071).
 There is no ticket file to write or move.
 
@@ -67,7 +67,7 @@ crate boundaries, gates, never weakening a gate, one PR, then stop.
 8. **PR:** title `[sonar #<n>] <issue title>`, body listing each acceptance
    criterion with what proves it, `Closes #<n>` (and the parent too, if this
    was its last open part), and any finding that no longer reproduced. No
-   bare `@word` anywhere (`CLAUDE.md`). Then stop: don't pick up the next
+   bare `@word` anywhere (`AGENTS.md`). Then stop: don't pick up the next
    batch, or a sibling part, in the same session.
 
 ## Rules that trip agents up here

@@ -3,7 +3,7 @@ id: "0117"
 title: PRs merge on green without being up to date with main
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

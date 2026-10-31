@@ -3,7 +3,7 @@ id: "0245"
 title: "Lead select, class change and Preparations: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: ["0241"]

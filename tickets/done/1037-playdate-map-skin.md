@@ -3,7 +3,7 @@ id: "1037"
 title: "Playdate: the one-bit map skin (yours black, foes grey, acted outlined, ranges as dots and lines), and choosing the Playdate skins"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1032", "1033"]
@@ -38,7 +38,7 @@ The battle map is a skin (ADR-0038): the battle screen builds a
   glyphs on a marked tile keep a white edge.
 - **Cursor:** the PC's corner marks, drawn by flipping the pixels they
   cover. Threat arrows and their `!` marks: black with a white edge.
-- *Claude's starting rules* in the design doc (allies and neutrals wait
+- *the agent's starting rules* in the design doc (allies and neutrals wait
   for a later chapter) stand.
 
 ## Nick input
@@ -150,7 +150,7 @@ written.
 flipped twice it would vanish, so the Playdate's gives it to one arm only.
 The glyph skin's `Layout` gained `fitted` (no pixel of the PC changes).
 
-***Claude's starting rules*** (in `docs/design/playdate.md`; Nick can
+***the agent's starting rules*** (in `docs/design/playdate.md`; Nick can
 veto): the map centred with a cell each side; ranges don't show on units'
 tiles; the heal range is the attack range's lines; timed effects (buffs,
 debuffs) have no mark on the Playdate map; allies and neutral units are

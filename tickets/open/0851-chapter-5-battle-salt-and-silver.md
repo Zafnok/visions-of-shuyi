@@ -3,7 +3,7 @@ id: "0851"
 title: "Chapter 5 battle: Salt and Silver, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0747", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608", "0076", "0520"]
@@ -18,7 +18,7 @@ completed:
 Act 1, Chapter 5, from `docs/story/outline.md`:
 
 - **Story battle:** "The Envoy's House": holding a harbour-front house at night against Hounds from the docks and the rooftops, for a number of turns.
-- **Objective:** Survive for a number of turns (the Survive objective exists; the count is a *Claude's starting value* the bots tune).
+- **Objective:** Survive for a number of turns (the Survive objective exists; the count is a *the agent's starting value* the bots tune).
 - **Recruits:** Hedda Ravn (`shieldbearer`, Raider), loaned by Ragna "to make sure you get there".
 - **New in this chapter:** nothing new.
 
@@ -31,14 +31,14 @@ the number scale first. As a world-map chapter it needs the world map (1007) and
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
-0070 picked **Ragna**'s face: a generator face with dark-blonde hair in a bun and a traveller's coat (she never fights). **Hedda**'s combat picture is 0076's pick: elie automata's **Battle Axemaiden** (<https://elie-automata.itch.io/battle-axemaiden-animated-character-story-art>, free; AI-assisted, so the Steam page discloses it, 0903; the licence asks for the credit "elie automata"), in her three-quarter pose. Her face is a generator face to match it (long red ponytail, about 32, weathered; Nick chose it over the pack's own painted portraits), and she is now 32, not 44 (`shieldbearer.md`). Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
+0070 picked **Ragna**'s face: a generator face with dark-blonde hair in a bun and a traveller's coat (she never fights). **Hedda**'s combat picture is 0076's pick: elie automata's **Battle Axemaiden** (<https://elie-automata.itch.io/battle-axemaiden-animated-character-story-art>, free; AI-assisted, so the Steam page discloses it, 0903; the licence asks for the credit "elie automata"), in her three-quarter pose. Her face is a generator face to match it (long red ponytail, about 32, weathered; Nick chose it over the pack's own painted portraits), and she is now 32, not 44 (`shieldbearer.md`). Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and
 the full Act 1 playtest, 1064). Verification is by tests, `cargo shuyi
 frame-png` pictures of the map in the PR and the bots' reports. Levels,
-enemy counts, map size and turn counts are *Claude's starting values*
+enemy counts, map size and turn counts are *the agent's starting values*
 ("for the chapter tickets", the outline), tuned by the bots; list them
 in the Completion notes for 1064's checklist. A design question the
 docs don't answer (a rule, not a number) goes to Nick with `ask-nick`

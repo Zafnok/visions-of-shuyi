@@ -3,7 +3,7 @@ id: "0509"
 title: "cargo shuyi autobalance: the battle's knobs and plan on the engine's search, until the persona bots land in their bands"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0506", "engine#2127", "engine#2541"]
@@ -96,8 +96,8 @@ it):
 - Terrain, positions and reinforcement knobs (0510 adds them for random
   skirmishes).
 - Changing persona settings or the bands (`docs/design/playtest-bots.md`).
-- Running autobalance in CI. It's a dev tool that Claude runs, and
-  Claude commits its result; CI only runs 0506's check.
+- Running autobalance in CI. It's a dev tool that the agent runs, and
+  The agent commits its result; CI only runs 0506's check.
 
 ## Implementation steps
 
@@ -270,7 +270,7 @@ property test that any setting loads, the plan and `--apply` into a temp
 folder with the same changes twice (`game_tools::balance::tests`), and
 `cargo shuyi autobalance` in `crates/xtask/tests/cli.rs`.
 
-**Claude's starting rules** (the design docs don't say; for the Act 1
+**the agent's starting rules** (the design docs don't say; for the Act 1
 playtest, 1064, to agree or veto):
 
 - An enemy with an `id` (named by a cinematic or a battle note) or a

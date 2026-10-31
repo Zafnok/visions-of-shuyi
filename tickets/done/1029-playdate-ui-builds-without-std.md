@@ -3,7 +3,7 @@ id: "1029"
 title: "Playdate: trpg-ui builds without std (libm floats, hashbrown)"
 type: infra
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["1028"]

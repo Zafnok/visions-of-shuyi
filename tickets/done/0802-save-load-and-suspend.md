@@ -3,7 +3,7 @@ id: "0802"
 title: Save/load between chapters and mid-battle suspend
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0006", "0207", "0801"]
@@ -113,7 +113,7 @@ and `Load Game`, post-chapter save prompt, map-menu `Suspend`.
   from the saved campaign and the battle file, so `Restart Battle` after a
   `Continue` still gives turn 1.
 
-**Claude's starting rules**, with Nick's answers on PR #141 (now in
+**the agent's starting rules**, with Nick's answers on PR #141 (now in
 `death-and-difficulty.md`): 1, 3, 4, 8, 9, 10 agreed; 2 and 6 changed; 5
 fine for now, to be looked at in play; 7 explained below.
 

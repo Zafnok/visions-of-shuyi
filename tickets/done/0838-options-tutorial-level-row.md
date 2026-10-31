@@ -3,7 +3,7 @@ id: "0838"
 title: Options can change the campaign's tutorial level
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0835", "0839"]
@@ -32,7 +32,7 @@ None, and see that tips stop.
 **In:**
 - A `Tutorial: Full / Short / None` row on the Options screen, shown only
   while a campaign is loaded (in a battle, at Preparations); not on the
-  title's Options. Its place on the screen is *Claude's starting rule*
+  title's Options. Its place on the screen is *the agent's starting rule*
   (next to the game mode row).
 - Like every Options row, the change shows at once and is kept only when
   the player picks Keep on leaving (0839; Discard puts the level back).
@@ -89,7 +89,7 @@ None, and see that tips stop.
   and the title has no row, and a level set in a battle is in the suspend
   save and still None after Continue in the next launch.
 
-**Claude's starting rules** (Nick can veto):
+**the agent's starting rules** (Nick can veto):
 - The row sits right under `Game mode`.
 - Left/right stop at Full and None; Confirm goes round
   (Full → Short → None → Full), as on the other value rows.

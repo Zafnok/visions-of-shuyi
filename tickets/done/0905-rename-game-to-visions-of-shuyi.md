@@ -3,7 +3,7 @@ id: "0905"
 title: "Rename the game to Visions of Shuyi: repo, binary, window, title screen, web page, release packages"
 type: infra
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -108,4 +108,4 @@ added to the scope at Nick's request.
 - The acceptance item "release packages are named `visions-of-shuyi-*`" was
   checked by reading the workflow. It will be run for real at the next
   release.
-- No Claude's starting rules: this ticket made no gameplay decisions.
+- No the agent's starting rules: this ticket made no gameplay decisions.

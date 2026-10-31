@@ -3,7 +3,7 @@ id: "0023"
 title: "Decide: the defeat sting"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -110,7 +110,7 @@ short ones and three longer orchestral pieces with a 9 s cut each.
 - This answers most of 0024. 0024 is rewritten to the one thing left: when
   the 77 s end on the Game Over screen, loop or silence. 0809 updated: the
   Game Over screen leaves the music alone.
-- *Claude's naming, not a rule:* the cue id `scene_loss`.
+- *the agent's naming, not a rule:* the cue id `scene_loss`.
 - Deviation: the clips were published with the page (private artifact) so
   the players work; nothing was added to the repository.
 - Gates: docs only. Ran `cargo xtask ticket-lint` and `typos`.

@@ -3,7 +3,7 @@ id: "1021"
 title: "vos-modkit playtest: the bots' balance report for a mod's battle"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1016", "0506"]
