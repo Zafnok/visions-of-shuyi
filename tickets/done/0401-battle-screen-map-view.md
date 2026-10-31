@@ -3,7 +3,7 @@ id: "0401"
 title: "Battle screen layout: map viewport, camera, terrain and unit drawing"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0205", "0301", "0302"]

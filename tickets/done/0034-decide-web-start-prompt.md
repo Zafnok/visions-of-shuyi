@@ -3,7 +3,7 @@ id: "0034"
 title: "Decide: how the web build starts its title music (press a key)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: low
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "1114"
 title: "Tactics kit in shuyi-core: a TurnRules trait, grid and pathfinding over a cost function, the RNG, replay and save versioning"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: xhigh
 status: done
 blocked_by: ["1102"]

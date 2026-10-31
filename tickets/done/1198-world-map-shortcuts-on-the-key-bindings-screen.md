@@ -3,7 +3,7 @@ id: "1198"
 title: "World map shortcuts on the Key bindings screen"
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["1007", "engine#2395"]

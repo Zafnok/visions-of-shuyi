@@ -3,7 +3,7 @@ id: "0039"
 title: "Decide: how sprite units show their side and \"acted\", the zoom key, and what the playtest waits for"
 type: design-decision
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0038"]

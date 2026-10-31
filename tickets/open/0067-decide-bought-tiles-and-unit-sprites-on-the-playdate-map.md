@@ -3,7 +3,7 @@ id: "0067"
 title: "Decide: the bought tiles and unit sprites on the Playdate's battle map, in one-bit"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

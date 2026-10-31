@@ -3,7 +3,7 @@ id: "0211"
 title: Open the debug menu with F2 and show a hint for it
 type: tuning
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

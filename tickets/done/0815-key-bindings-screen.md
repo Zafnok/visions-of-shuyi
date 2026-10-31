@@ -3,7 +3,7 @@ id: "0815"
 title: "Key bindings screen: press a key to bind, taken keys move, ! not mapped"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0217", "0218"]

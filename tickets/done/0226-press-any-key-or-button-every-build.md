@@ -3,7 +3,7 @@ id: "0226"
 title: "\"Press any key or button\" on every build, and it decides whether to show Pick your layout"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0219", "0220"]

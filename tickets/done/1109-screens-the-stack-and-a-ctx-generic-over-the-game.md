@@ -3,7 +3,7 @@ id: "1109"
 title: "Screens, the screen stack and the frame driver move to the engine, with a Ctx generic over the game"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: xhigh
 status: done
 blocked_by: ["1108"]

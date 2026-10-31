@@ -3,7 +3,7 @@ id: "1002"
 title: Support points, ranks and battle bonus (core rules + data)
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0010", "0304", "0305", "0306", "0307", "0309", "0311", "0801", "0802"]

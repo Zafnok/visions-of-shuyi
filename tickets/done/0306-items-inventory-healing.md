@@ -3,7 +3,7 @@ id: "0306"
 title: Items, loadouts, battle pack, equipping, weapon ranks and durability
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0003", "0004", "0305"]

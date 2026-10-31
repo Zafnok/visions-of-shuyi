@@ -3,7 +3,7 @@ id: "1013"
 title: "Mods add and replace data entries by id instead of replacing whole tables"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1012"]

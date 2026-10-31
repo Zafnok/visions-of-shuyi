@@ -3,7 +3,7 @@ id: "1190"
 title: "A watcher on the engine's main files a pin move when its public API changes, with an adoption review of each engine PR and a ledger CI checks"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: done
 blocked_by: []
@@ -362,7 +362,7 @@ PR that closes it.
      with `Closes #<issue>`, the ledger section and the tickets written
      in its body.
 
-   Model `implementation`, effort `medium`. A review that would need a design
+   Model `opus-5.5 / gpt-6.1-sol`, effort `medium`. A review that would need a design
    call goes to a ticket, never decided in the pin PR. A game ticket
    that moves the pin itself (`engine-change` §3.6, §7) follows the
    skill's review and ledger steps for the PRs it passes. If two pin

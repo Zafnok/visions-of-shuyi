@@ -3,7 +3,7 @@ id: "0467"
 title: "The Magic and Terrain tips never showed: a tip counts as seen only once it's shown"
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

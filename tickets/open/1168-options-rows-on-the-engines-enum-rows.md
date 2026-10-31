@@ -3,7 +3,7 @@ id: "1168"
 title: "The options rows on the engine's enum setting rows: the Named trait and the test-only row copies go"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: ["engine#2314"]

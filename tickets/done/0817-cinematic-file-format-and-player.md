@@ -3,7 +3,7 @@ id: "0817"
 title: "Cinematic file format and player: timed shots, map pans, the logo"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0036", "0227", "0228", "0801", "0811"]

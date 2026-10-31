@@ -3,7 +3,7 @@ id: "0509"
 title: "cargo shuyi autobalance: the battle's knobs and plan on the engine's search, until the persona bots land in their bands"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0506", "engine#2127", "engine#2541"]

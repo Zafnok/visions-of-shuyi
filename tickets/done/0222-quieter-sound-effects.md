@@ -3,7 +3,7 @@ id: "0222"
 title: Make every sound effect quieter by default
 type: tuning
 milestone: M2 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

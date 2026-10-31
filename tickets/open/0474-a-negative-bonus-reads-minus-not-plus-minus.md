@@ -3,7 +3,7 @@ id: "0474"
 title: "A negative stat bonus reads Res -3, not Res +-3"
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

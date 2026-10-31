@@ -3,7 +3,7 @@ id: "0064"
 title: "Decide: a small role for Vix in the story (map hints on unusual maps)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

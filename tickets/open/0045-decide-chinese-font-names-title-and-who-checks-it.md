@@ -3,7 +3,7 @@ id: "0045"
 title: "Decide: Chinese (Simplified) — the font, the title and the name Shuyi, names, naming the lead, who checks it"
 type: design-decision
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0042"]

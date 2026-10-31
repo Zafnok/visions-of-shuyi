@@ -3,7 +3,7 @@ id: "1012"
 title: "Content reads mod files: runtime layers in the asset bundle"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1011", "engine#2207"]

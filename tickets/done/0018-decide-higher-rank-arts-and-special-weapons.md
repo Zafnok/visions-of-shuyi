@@ -3,7 +3,7 @@ id: "0018"
 title: "Decide: Combat Arts for ranks C–S and the first special weapons"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0014"]

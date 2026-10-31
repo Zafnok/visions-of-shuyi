@@ -3,7 +3,7 @@ id: "0053"
 title: "Decide: multiplayer — which modes, how armies are set up, fairness, servers"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
 blocked_by: ["0903"]

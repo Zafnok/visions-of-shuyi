@@ -3,7 +3,7 @@ id: "1037"
 title: "Playdate: the one-bit map skin (yours black, foes grey, acted outlined, ranges as dots and lines), and choosing the Playdate skins"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1032", "1033"]

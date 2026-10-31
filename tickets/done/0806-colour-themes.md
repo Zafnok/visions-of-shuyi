@@ -3,7 +3,7 @@ id: "0806"
 title: Colour themes option (C, D, E, G palettes)
 type: feature
 milestone: M7 Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0805"]

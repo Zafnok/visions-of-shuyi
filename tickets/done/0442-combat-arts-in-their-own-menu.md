@@ -3,7 +3,7 @@ id: "0442"
 title: Combat Arts in their own menu, out of the forecast
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

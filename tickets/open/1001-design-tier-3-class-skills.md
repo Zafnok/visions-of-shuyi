@@ -3,7 +3,7 @@ id: "1001"
 title: Propose tier-3 class skills (and elemental enemy skills)
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0005", "0311"]

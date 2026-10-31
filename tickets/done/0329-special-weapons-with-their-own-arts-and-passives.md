@@ -3,7 +3,7 @@ id: "0329"
 title: "Special weapons: the first three, weapon passives, personal weapons, a warning before selling"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0018", "0325"]

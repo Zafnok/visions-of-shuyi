@@ -3,7 +3,7 @@ id: "1006"
 title: Explore custom 16×16 class icons for units on the map
 type: design-decision
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
 blocked_by: ["0401", "0021", "0110", "0711", "0433", "0039"]

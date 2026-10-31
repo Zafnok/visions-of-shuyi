@@ -3,7 +3,7 @@ id: "0062"
 title: "Decide: how the Playdate's one-bit pictures look (portraits, the combat picture, the launcher card and icon)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "1034"
 title: "Playdate: button chords (A + B ends the turn, hold B + left/right picks the previous/next unit)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1033"]

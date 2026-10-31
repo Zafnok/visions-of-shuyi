@@ -3,7 +3,7 @@ id: "0246"
 title: "Class change: say what it shows as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: done
 blocked_by: ["0245"]

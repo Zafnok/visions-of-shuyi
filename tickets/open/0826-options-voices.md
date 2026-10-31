@@ -3,7 +3,7 @@ id: "0826"
 title: "Options: voices on or off, voice volume, and what a new game asks"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0043", "0238", "0805"]

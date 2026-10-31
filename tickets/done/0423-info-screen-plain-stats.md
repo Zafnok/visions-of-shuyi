@@ -3,7 +3,7 @@ id: "0423"
 title: Unit info screen shows stats as plain numbers (no class caps)
 type: tuning
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

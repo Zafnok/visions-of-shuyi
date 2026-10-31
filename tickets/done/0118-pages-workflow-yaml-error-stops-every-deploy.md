@@ -3,7 +3,7 @@ id: "0118"
 title: Fix the Pages workflow YAML error that stops every deploy
 type: bug
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

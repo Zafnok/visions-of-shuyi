@@ -3,7 +3,7 @@ id: "0510"
 title: "cargo xtask skirmish: generate a balanced skirmish from a request (place, level, unit mix, chapters)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0509", "1007", "1008"]

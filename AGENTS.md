@@ -8,7 +8,9 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 
 `AGENTS.md` is the shared instruction source. `CLAUDE.md` imports it for
 Claude Code; Codex reads it directly. Use the same rules with any model.
-Ticket `model` values are capability recommendations (`tickets/README.md`).
+Each ticket names its Claude/OpenAI model pair on the `model` line
+(`tickets/README.md`). Choose the member for the current harness; effort
+is separate. Opus pairs with Sol; Fable pairs with Astra.
 
 The portable workflows and their resources live in `.claude/skills/` for
 compatibility with existing links and the pinned engine skill-pack updater.

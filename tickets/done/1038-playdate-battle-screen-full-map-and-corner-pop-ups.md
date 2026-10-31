@@ -3,7 +3,7 @@ id: "1038"
 title: "Playdate: the battle screen's skin (the map fills the screen, corner pop-ups, menus, questions, banners)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1037", "1035", "0242"]

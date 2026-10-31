@@ -3,7 +3,7 @@ id: "0740"
 title: "Narration boxes are left-aligned like speech"
 type: feature
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["1177"]

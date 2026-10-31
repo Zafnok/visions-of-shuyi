@@ -3,7 +3,7 @@ id: "0005"
 title: "Decide: level ups, class changes and the class tree"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0001"]

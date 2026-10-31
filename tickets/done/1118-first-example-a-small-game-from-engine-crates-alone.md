@@ -3,7 +3,7 @@ id: "1118"
 title: "The first example: a small game made from engine crates alone, tested in CI and built for the web"
 type: feature
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1112", "1116", "1117"]

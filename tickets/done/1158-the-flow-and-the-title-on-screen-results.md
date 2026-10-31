@@ -3,7 +3,7 @@ id: "1158"
 title: "The game flow, the title and the pick-one screens on the engine's screen results: no more hosting child screens by hand"
 type: feature
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["engine#2306"]

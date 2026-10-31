@@ -3,7 +3,7 @@ id: "0906"
 title: "Check the title for trademark conflicts before the Steam page goes up"
 type: research
 milestone: M8 Release
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

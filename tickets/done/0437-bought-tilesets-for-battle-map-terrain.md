@@ -3,7 +3,7 @@ id: "0437"
 title: "Battle-map terrain drawn from the bought tilesets"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: xhigh
 status: done
 blocked_by: ["0433", "0110", "0436"]

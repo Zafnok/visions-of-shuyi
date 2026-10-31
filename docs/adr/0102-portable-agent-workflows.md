@@ -1,6 +1,6 @@
 # ADR-0102: Portable agent workflows and capability routing
 
-- **Status:** Accepted
+- **Status:** Accepted; model routing amended by ADR-0103
 - **Date:** 2026-10-31
 - **Related tickets:** 0136
 - **Amends:** ADR-0010 model routing and instruction entry point; its other decisions still apply.

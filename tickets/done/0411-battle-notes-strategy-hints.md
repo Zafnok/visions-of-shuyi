@@ -3,7 +3,7 @@ id: "0411"
 title: "Battle notes: start-of-battle strategy hints for unique enemies"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0405", "0801"]

@@ -3,7 +3,7 @@ id: "1191"
 title: "The engine-pin issue lists each Breaking: line once"
 type: bug
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

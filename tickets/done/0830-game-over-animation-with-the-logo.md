@@ -3,7 +3,7 @@ id: "0830"
 title: "Game Over screen: an animation with the game's logo"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0811"]

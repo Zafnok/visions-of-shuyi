@@ -3,7 +3,7 @@ id: "0508"
 title: "Record human playthroughs and calibrate the persona bots against them"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0506", "0802", "1064"]

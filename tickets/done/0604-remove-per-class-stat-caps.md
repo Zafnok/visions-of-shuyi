@@ -3,7 +3,7 @@ id: "0604"
 title: Remove per-class stat caps (hard ceilings only)
 type: feature
 milestone: M5 Progression
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0019"]

@@ -3,7 +3,7 @@ id: "0231"
 title: "Images in the frame: sprite items drawn from asset files"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

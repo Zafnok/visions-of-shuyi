@@ -3,7 +3,7 @@ id: "0738"
 title: "Conversation places: longer openings, no outline on actors, a lighter study, units left standing at the toll-fort"
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

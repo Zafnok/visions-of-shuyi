@@ -3,7 +3,7 @@ id: "0403"
 title: "Select → move (range overlays, path arrow, walk animation) → action menu → Wait"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0402", "0305"]

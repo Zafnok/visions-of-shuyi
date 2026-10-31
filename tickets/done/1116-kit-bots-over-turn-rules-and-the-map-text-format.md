@@ -3,7 +3,7 @@ id: "1116"
 title: "Tactics kit: playtest bots over any TurnRules, and the .map text format"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["1114"]

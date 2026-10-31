@@ -3,7 +3,7 @@ id: "0809"
 title: "Play the victory sting, defeat sting and Game Over music"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0022", "0023", "0024", "0214", "0801", "0807"]

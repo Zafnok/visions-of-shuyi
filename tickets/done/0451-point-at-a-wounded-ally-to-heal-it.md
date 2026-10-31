@@ -3,7 +3,7 @@ id: "0451"
 title: Point at a wounded ally to heal it, like pointing at an enemy
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

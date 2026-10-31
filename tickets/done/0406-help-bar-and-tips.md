@@ -3,7 +3,7 @@ id: "0406"
 title: One-time contextual tips (teaching approach from Chapter 1 scope)
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0009", "0405", "0207"]

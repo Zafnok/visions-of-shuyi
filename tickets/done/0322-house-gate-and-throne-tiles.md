@@ -3,7 +3,7 @@ id: "0322"
 title: "House, gate and throne tiles: terrain data, our own glyphs, stand-in pictures"
 type: feature
 milestone: M2 Core rules
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0037"]

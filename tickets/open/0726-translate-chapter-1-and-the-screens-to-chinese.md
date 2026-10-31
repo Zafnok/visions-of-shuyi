@@ -3,7 +3,7 @@ id: "0726"
 title: Translate Chapter 1 and the screens to Chinese (Simplified)
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
 blocked_by: ["0234", "0239", "0243", "0716", "0725", "0825", "0728", "0737"]

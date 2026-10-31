@@ -3,7 +3,7 @@ id: "1200"
 title: "The title offers Quit only where the game can quit, from the platform's facts"
 type: bug
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

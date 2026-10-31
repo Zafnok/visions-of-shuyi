@@ -3,7 +3,7 @@ id: "1036"
 title: "Playdate: load only the data the Playdate build uses, behind a loading card, and measure it on the device"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1033"]

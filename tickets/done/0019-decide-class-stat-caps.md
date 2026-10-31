@@ -3,7 +3,7 @@ id: "0019"
 title: "Decide: should classes cap stats, and how does that fit a very high level cap?"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

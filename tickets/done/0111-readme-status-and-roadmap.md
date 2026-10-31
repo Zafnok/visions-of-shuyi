@@ -3,7 +3,7 @@ id: "0111"
 title: Refresh the README with current status and roadmap
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

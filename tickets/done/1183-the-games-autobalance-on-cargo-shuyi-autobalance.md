@@ -3,7 +3,7 @@ id: "1183"
 title: "The game's autobalance on cargo shuyi autobalance: the xtask wrapper goes, the game gives its plan"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0509", "engine#2541"]

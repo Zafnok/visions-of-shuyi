@@ -3,7 +3,7 @@ id: "1153"
 title: "The first engine-friction sweep: measure the game's biggest jobs against what they should take, and file the fixes"
 type: research
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1152", "1157"]

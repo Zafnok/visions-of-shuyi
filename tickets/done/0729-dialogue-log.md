@@ -3,7 +3,7 @@ id: "0729"
 title: A dialogue log to read back, see and replay earlier lines
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

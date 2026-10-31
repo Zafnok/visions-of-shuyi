@@ -3,7 +3,7 @@ id: "0418"
 title: Cancel skips a fight's playback; holding Confirm speeds it up
 type: tuning
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0404"]

@@ -3,7 +3,7 @@ id: "0905"
 title: "Rename the game to Visions of Shuyi: repo, binary, window, title screen, web page, release packages"
 type: infra
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

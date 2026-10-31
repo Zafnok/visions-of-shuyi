@@ -3,7 +3,7 @@ id: "0225"
 title: Fix the console errors the web build logs on load
 type: bug
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

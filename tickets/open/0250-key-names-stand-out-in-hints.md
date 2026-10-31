@@ -3,7 +3,7 @@ id: "0250"
 title: "Key names stand out from the words around them in every hint"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

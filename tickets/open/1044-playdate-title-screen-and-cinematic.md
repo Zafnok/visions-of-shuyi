@@ -3,7 +3,7 @@ id: "1044"
 title: "Playdate: the title screen and its intro cinematic in one bit"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1040", "1041"]

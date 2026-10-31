@@ -3,7 +3,7 @@ id: "0901"
 title: Publish releases to itch.io with butler
 type: infra
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: ["0107", "0821", "0909"]

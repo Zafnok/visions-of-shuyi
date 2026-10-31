@@ -3,7 +3,7 @@ id: "0603"
 title: Promotion / class change (logic and choice screen)
 type: feature
 milestone: M5 Progression
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0005", "0306", "0601", "0602"]

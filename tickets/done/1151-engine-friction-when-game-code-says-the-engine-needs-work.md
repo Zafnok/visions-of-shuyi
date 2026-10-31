@@ -3,7 +3,7 @@ id: "1151"
 title: "Engine friction: an ADR, a skill and a log for when game code is far bigger than the job"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1118"]

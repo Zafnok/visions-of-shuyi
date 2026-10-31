@@ -3,7 +3,7 @@ id: "0319"
 title: "Core rules: an escape objective, a fleeing boss, a boss who can't die, and a scripted death"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0069"]

@@ -3,7 +3,7 @@ id: "1152"
 title: "Two repositories: an engine-change skill, engine ticket ids in blocked_by, and the engine side's intake for game requests"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1131", "1151"]

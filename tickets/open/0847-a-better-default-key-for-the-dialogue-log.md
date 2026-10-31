@@ -3,7 +3,7 @@ id: "0847"
 title: "A better default keyboard key for the dialogue log"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: low
 status: todo
 blocked_by: []

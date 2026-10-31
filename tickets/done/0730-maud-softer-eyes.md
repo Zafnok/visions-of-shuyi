@@ -3,7 +3,7 @@ id: "0730"
 title: Give Maud softer eyes
 type: content
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

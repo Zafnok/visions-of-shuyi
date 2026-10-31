@@ -3,7 +3,7 @@ id: "0741"
 title: "The pre-battle talk's place reads as the green by the chapel"
 type: content
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

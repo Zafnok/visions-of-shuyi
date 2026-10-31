@@ -3,7 +3,7 @@ id: "1107"
 title: "Move input (keymaps, repeat, controllers, saved bindings, help keys) to the engine"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["1106"]

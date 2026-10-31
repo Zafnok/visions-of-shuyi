@@ -314,8 +314,8 @@ called robots.
 
 ## Which model
 
-Current routing is the `creative` capability in `tickets/README.md`
-(optional examples: Fable / Astra). The dated findings below record the
+Current recommendation is `fable-5.1 / gpt-6-astra`
+(`tickets/README.md`). The dated findings below record the
 models and drafts actually tested; they do not require a provider switch
 or compare a model that was not tested.
 

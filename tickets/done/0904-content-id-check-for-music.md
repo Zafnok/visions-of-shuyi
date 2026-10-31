@@ -3,7 +3,7 @@ id: "0904"
 title: "Check the chosen music against YouTube Content ID before release"
 type: research
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0214"]

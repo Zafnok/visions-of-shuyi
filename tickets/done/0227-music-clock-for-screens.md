@@ -3,7 +3,7 @@ id: "0227"
 title: "Music clock: tell screens how far into its track the music is"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0212", "0214", "0215"]

@@ -3,7 +3,7 @@ id: "0425"
 title: "Menu and map-cursor sounds"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0212", "0213"]

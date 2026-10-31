@@ -3,7 +3,7 @@ id: "0607"
 title: The lead's level-up and promotion pages show the lead's portrait
 type: bug
 milestone: M5 Progression
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

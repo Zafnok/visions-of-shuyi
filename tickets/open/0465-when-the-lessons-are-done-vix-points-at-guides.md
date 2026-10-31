@@ -3,7 +3,7 @@ id: "0465"
 title: "When the lessons are done, Vix points at Guides and offers a fresh start"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0464"]

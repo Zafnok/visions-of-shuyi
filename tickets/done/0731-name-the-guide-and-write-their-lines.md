@@ -3,7 +3,7 @@ id: "0731"
 title: Name the guide and write the tips and lessons in their voice
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: medium
 status: done
 blocked_by: ["0457", "0458"]

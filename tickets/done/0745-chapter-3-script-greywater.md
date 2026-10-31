@@ -3,7 +3,7 @@ id: "0745"
 title: "Chapter 3 script: Greywater, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0744"]

@@ -3,7 +3,7 @@ id: "0301"
 title: Battle map model, terrain table and the .map file format
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0001", "0201"]

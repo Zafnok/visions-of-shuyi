@@ -3,7 +3,7 @@ id: "1058"
 title: "Playdate: the guide's tip and lesson box fits the 50 × 15 screen"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0066", "1037"]

@@ -3,7 +3,7 @@ id: "0113"
 title: Smaller dev builds and cleanup of merged worktrees' build folders
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

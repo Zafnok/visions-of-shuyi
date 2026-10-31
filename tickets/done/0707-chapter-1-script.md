@@ -3,7 +3,7 @@ id: "0707"
 title: Chapter 1 script (all scenes as .dlg)
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0701", "0702", "0009", "0708", "0709", "0712", "0714"]

@@ -3,7 +3,7 @@ id: "1192"
 title: Take the engine's skill pack and fold keyboard-input and run-gates down to the game's own rules
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["1189"]

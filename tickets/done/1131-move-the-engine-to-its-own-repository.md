@@ -3,7 +3,7 @@ id: "1131"
 title: "Move the carved engine code to the Shuyi Engine repository with its history; the game pins it by revision"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1118"]

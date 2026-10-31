@@ -3,7 +3,7 @@ id: "1193"
 title: The MCP server's check, bots and replay on the game (GameTools for Trpg)
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

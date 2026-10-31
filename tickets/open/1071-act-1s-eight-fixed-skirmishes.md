@@ -3,7 +3,7 @@ id: "1071"
 title: "Act 1's eight fixed skirmishes, with Gil's recruitment"
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1008", "1070", "0746", "0747", "0748", "0749", "0509", "0013", "0070", "0323", "0608"]

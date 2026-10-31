@@ -3,7 +3,7 @@ id: "1154"
 title: "The map picture and the map pan over the grid kit move to the engine; the scene camera goes with them"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: done
 blocked_by: ["1115"]

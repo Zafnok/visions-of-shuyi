@@ -3,7 +3,7 @@ id: "1156"
 title: "The engine's help lines fit a narrow console: a line wider than the buffer is cut with … instead of losing both ends"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

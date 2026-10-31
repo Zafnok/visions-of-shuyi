@@ -3,7 +3,7 @@ id: "0455"
 title: The guide's face in the tip box (Fox Miko)
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

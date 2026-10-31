@@ -3,7 +3,7 @@ id: "1032"
 title: "Playdate: the one-bit frame (1-bit font, Playdate palette, a renderer from the glyph buffer to 400 × 240 pixels)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1029", "1030"]

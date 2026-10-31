@@ -3,7 +3,7 @@ id: "0720"
 title: The dialogue screen plays each line's voice
 type: feature
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0043", "0238"]

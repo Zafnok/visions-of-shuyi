@@ -3,7 +3,7 @@ id: "1017"
 title: "Scripting in core: a deterministic, sandboxed script runtime and script-backed skill effects"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1011", "1013", "engine#2101"]

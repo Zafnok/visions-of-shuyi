@@ -3,7 +3,7 @@ id: "1103"
 title: "shuyi-assets: the asset bundle as layers the game gives, plus file errors and RON loading"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1102"]

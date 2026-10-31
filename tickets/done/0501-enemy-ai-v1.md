@@ -3,7 +3,7 @@ id: "0501"
 title: "Enemy AI v1: behaviours, target scoring, deterministic planning"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0305", "0306", "0309"]

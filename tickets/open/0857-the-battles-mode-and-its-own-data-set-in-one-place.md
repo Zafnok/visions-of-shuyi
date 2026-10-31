@@ -3,7 +3,7 @@ id: "0857"
 title: "A switch to Casual reaches the battle from one place, and the battle screen's per-battle data is built once"
 type: infra
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

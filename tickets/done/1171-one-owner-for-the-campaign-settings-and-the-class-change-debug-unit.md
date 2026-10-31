@@ -3,7 +3,7 @@ id: "1171"
 title: "One owner for the campaign's mode, tutorial level and lessons, and the class change screen's debug unit moves to the debug tools"
 type: feature
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

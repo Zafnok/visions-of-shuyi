@@ -3,7 +3,7 @@ id: "1102"
 title: "The engine folder and a gate that keeps game code out of it"
 type: infra
 milestone: "Engine: boundary"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

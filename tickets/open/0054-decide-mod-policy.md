@@ -3,7 +3,7 @@ id: "0054"
 title: "Decide: the mod policy — what mods may change, modded saves, Workshop, the licence"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1064"]

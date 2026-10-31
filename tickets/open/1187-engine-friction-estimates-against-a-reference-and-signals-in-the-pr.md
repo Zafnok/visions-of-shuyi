@@ -3,7 +3,7 @@ id: "1187"
 title: "Engine friction: estimates against a reference, the signals as a checklist in the PR, the platformer test on every Out row of an engine ticket, and acceptance greps that match the habit"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

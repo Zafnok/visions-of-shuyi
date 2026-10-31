@@ -3,7 +3,7 @@ id: "0232"
 title: "cargo xtask frame-png: render a scripted frame to a PNG without a window"
 type: infra
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0231"]

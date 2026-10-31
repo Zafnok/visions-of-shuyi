@@ -3,7 +3,7 @@ id: "0464"
 title: "A lesson opens only when it can be done that turn"
 type: bug
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

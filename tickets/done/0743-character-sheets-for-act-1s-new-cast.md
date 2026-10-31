@@ -3,7 +3,7 @@ id: "0743"
 title: "Character sheets for Act 1's new cast and named bosses"
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0736"]

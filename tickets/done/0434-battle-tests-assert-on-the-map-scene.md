@@ -3,7 +3,7 @@ id: "0434"
 title: "Battle tests learn the state from the map scene, not from cells"
 type: infra
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0432"]

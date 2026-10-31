@@ -3,7 +3,7 @@ id: "1184"
 title: "The engine's one-bit look replaces the game's one-bit skins of the engine's screens and widgets"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
 blocked_by: ["engine#2371", "1077"]

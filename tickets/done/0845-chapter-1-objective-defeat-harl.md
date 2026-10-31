@@ -3,7 +3,7 @@ id: "0845"
 title: "Chapter 1's objective becomes defeating Red Harl; the rest of the Red Company runs"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0737"
 title: "Write the Chapter 1 script again from the beats, on a blank page"
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0736"]
@@ -46,8 +46,8 @@ story-writing skill, with the rule that a rewrite starts on a blank page.
 into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 `blocked_by` any more.
 
-The ticket recommends the `creative` capability (`tickets/README.md`),
-with Fable / Astra as optional examples. Use any model that can meet the
+The ticket recommends `fable-5.1 / gpt-6-astra` (`tickets/README.md`).
+Use any model that can meet the
 story-writing skill's voice and warmth criteria. **Historical evidence:**
 0736's two blind judges preferred Fable 5.1 to Opus 5.5 on its samples
 (`docs/story/craft.md`, "Round 2's samples"). This does not require a

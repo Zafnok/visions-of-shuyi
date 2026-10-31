@@ -3,7 +3,7 @@ id: "0449"
 title: "Little arrows at the view's edges where the map goes on past it"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

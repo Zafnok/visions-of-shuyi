@@ -3,7 +3,7 @@ id: "0313"
 title: "Save the village: houses, Evacuate, raiders who burn them (core rules)"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0308", "0037", "0322"]

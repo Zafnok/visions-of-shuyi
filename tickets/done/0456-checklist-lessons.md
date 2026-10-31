@@ -3,7 +3,7 @@ id: "0456"
 title: Checklist lessons from the guide; the turn waits until one is done
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0455", "0835"]

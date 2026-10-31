@@ -3,7 +3,7 @@ id: "0050"
 title: "Decide: the roguelike run mode (title menu, own save slots)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0047", "1064"]

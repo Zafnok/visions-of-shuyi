@@ -3,7 +3,7 @@ id: "1039"
 title: "Playdate: the forecast pop-up, unit info, the fight box, EXP and level-up, and the rewind screen"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1038", "1035", "0248"]

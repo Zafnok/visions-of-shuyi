@@ -3,7 +3,7 @@ id: "0120"
 title: "The private-assets fetch test fails now and then on macOS"
 type: bug
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

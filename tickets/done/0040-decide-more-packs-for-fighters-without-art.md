@@ -3,7 +3,7 @@ id: "0040"
 title: "Decide: more bought packs for fighters with no fitting art"
 type: design-decision
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0038"]

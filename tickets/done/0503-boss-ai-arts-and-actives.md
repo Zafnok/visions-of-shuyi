@@ -3,7 +3,7 @@ id: "0503"
 title: "Boss and green AI: choosing Combat Arts and active skills"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0501", "0311", "0312"]

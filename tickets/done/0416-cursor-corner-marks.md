@@ -3,7 +3,7 @@ id: "0416"
 title: Cursor as corner marks that never cover a neighbour's initials
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0402"]

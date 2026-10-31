@@ -3,7 +3,7 @@ id: "0308"
 title: Gold, on-map shops, villages, chests and repair (core rules)
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0306"]

@@ -3,7 +3,7 @@ id: "1056"
 title: "Playdate: the debug build's pdc step crashes (0xc0000005); make cargo xtask playdate pack again"
 type: bug
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

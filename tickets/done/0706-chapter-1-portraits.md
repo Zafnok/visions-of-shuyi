@@ -3,7 +3,7 @@ id: "0706"
 title: Chapter 1 cast portraits (bought art, all expressions)
 type: content
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0701", "0703", "0011", "0021", "0035", "0110", "0711"]

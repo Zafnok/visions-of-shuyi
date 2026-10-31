@@ -3,7 +3,7 @@ id: "0514"
 title: "Playtest CI plays only when a balance lever changed"
 type: infra
 milestone: M4 Enemy AI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0506"]

@@ -3,7 +3,7 @@ id: "0409"
 title: Shop screen and Evacuate/Open actions in battle
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0308", "0403"]

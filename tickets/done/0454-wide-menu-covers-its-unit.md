@@ -3,7 +3,7 @@ id: "0454"
 title: A menu too wide for either side of its unit covers the unit
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

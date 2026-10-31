@@ -3,7 +3,7 @@ id: "1004"
 title: "Parked: hub activities between chapters (Three Houses style)"
 type: research
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
 blocked_by: ["1003"]

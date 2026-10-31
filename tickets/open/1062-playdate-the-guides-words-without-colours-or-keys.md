@@ -3,7 +3,7 @@ id: "1062"
 title: "Playdate: the guide's tips and lessons don't talk about colours, a mouse or keys"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1060"]

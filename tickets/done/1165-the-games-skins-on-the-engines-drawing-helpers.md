@@ -3,7 +3,7 @@ id: "1165"
 title: "The game's glyph skins on the engine's drawing helpers: one meter, one titled box, one way to centre and cut text"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#2311"]

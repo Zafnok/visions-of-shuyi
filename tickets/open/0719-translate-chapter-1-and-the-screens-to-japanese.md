@@ -3,7 +3,7 @@ id: "0719"
 title: Translate Chapter 1 and the screens to Japanese
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
 blocked_by: ["0234", "0237", "0243", "0244", "0716", "0718", "0825", "0728", "0737"]

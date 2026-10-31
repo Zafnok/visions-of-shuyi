@@ -3,7 +3,7 @@ id: "1030"
 title: "Playdate: the console size is passed in (ConsoleSpec), so a 50 × 15 frame can exist"
 type: infra
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

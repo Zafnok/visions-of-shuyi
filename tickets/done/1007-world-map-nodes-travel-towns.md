@@ -3,7 +3,7 @@ id: "1007"
 title: "World map: nodes, travel, towns, save and camp"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0801", "0802", "0409", "0805", "1003", "0025", "0026"]

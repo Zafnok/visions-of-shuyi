@@ -3,7 +3,7 @@ id: "0452"
 title: Forest tiles on the picture map show where the forest starts and ends
 type: tuning
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

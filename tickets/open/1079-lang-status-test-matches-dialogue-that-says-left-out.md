@@ -3,7 +3,7 @@ id: "1079"
 title: "lang-status test fails on any dialogue line that says \"left out\""
 type: bug
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

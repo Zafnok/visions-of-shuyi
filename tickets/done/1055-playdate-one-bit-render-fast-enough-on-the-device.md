@@ -3,7 +3,7 @@ id: "1055"
 title: "Playdate: the one-bit render fast enough on the device (one frame's time, not 360 ms)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1033"]

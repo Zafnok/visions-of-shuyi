@@ -3,7 +3,7 @@ id: "1170"
 title: "The Playdate front end on the engine's Playdate backend: the game keeps its config, its start and its one-bit skins"
 type: feature
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["engine#3010", "engine#3028", "engine#3029", "1175"]

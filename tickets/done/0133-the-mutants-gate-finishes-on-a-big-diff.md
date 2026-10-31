@@ -3,7 +3,7 @@ id: "0133"
 title: The mutants gate finishes on a big diff
 type: infra
 milestone: M0 Foundation
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

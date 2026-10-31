@@ -3,7 +3,7 @@ id: "0428"
 title: Point at an enemy with a unit selected to attack it
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

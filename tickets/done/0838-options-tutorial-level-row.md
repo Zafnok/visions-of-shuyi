@@ -3,7 +3,7 @@ id: "0838"
 title: Options can change the campaign's tutorial level
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0835", "0839"]

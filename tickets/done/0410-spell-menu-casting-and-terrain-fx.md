@@ -3,7 +3,7 @@ id: "0410"
 title: "Spell menu, heal and tile targeting, affinity markers, terrain-change display"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0309", "0310", "0404", "0407"]

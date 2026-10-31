@@ -3,7 +3,7 @@ id: "1176"
 title: "The folder loaders on the engine's file-by-file registry read: the game's formats::load_in goes"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["engine#2219"]

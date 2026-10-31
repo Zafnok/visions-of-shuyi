@@ -3,7 +3,7 @@ id: "0412"
 title: Skill display, active-skill menus and forecast markers
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0311", "0404", "0405"]

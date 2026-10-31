@@ -3,7 +3,7 @@ id: "0002"
 title: "Decide: turn structure"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

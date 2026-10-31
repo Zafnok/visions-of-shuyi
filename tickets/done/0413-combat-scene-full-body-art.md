@@ -3,7 +3,7 @@ id: "0413"
 title: Combat scene with bought full-body art of both combatants
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0404", "0021", "0035", "0110", "0711", "0231"]

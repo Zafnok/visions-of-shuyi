@@ -15,7 +15,7 @@ like a `sonar` issue. There is no ticket file to write or move.
 `.github/workflows/engine-watch.yml` files the issue and keeps it up to
 date as the engine's `main` moves.
 
-**Capability:** `reasoning`, effort `medium` (portable form of Nick's recommendation; `tickets/README.md`).
+**Model:** `opus-5.5 / gpt-6.1-sol`, effort `medium` (`tickets/README.md`).
 
 `work-ticket` still governs everything this skill doesn't change: gates,
 never weakening a gate, one PR, then stop. The PR stays **mechanical**:

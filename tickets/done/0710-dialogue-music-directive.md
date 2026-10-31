@@ -3,7 +3,7 @@ id: "0710"
 title: "Dialogue scripts choose the music: @music"
 type: feature
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0212", "0704"]

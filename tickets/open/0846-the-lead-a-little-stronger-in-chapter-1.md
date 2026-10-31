@@ -3,7 +3,7 @@ id: "0846"
 title: "The lead a little stronger in Chapter 1"
 type: tuning
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0845"]

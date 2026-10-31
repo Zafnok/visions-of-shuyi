@@ -3,7 +3,7 @@ id: "0734"
 title: A short moving opening before a conversation, where the script asks
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0732", "0733"]

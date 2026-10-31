@@ -3,7 +3,7 @@ id: "0309"
 title: "Spells: spell data, spell lists, uses per battle, Cast action, healing"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0004", "0302", "0304", "0306"]

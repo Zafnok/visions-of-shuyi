@@ -3,7 +3,7 @@ id: "0835"
 title: New Game asks how familiar you are (the tutorial level)
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

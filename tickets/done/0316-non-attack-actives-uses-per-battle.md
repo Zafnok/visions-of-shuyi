@@ -3,7 +3,7 @@ id: "0316"
 title: "Non-attack actives cost uses per battle, not durability; Benediction replaces Sanctuary 2"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0311", "0412", "0503"]

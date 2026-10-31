@@ -3,7 +3,7 @@ id: "1019"
 title: "Map editor, part 1: paint terrain and save a .map into a mod"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1014"]

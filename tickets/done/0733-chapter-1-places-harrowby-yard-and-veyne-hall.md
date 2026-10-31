@@ -3,7 +3,7 @@ id: "0733"
 title: "Chapter 1's places: the yard at Harrowby and the study at Veyne Hall"
 type: content
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0732"]
