@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: implementation
 effort: low
-status: todo
+status: done
 blocked_by: ["1007", "engine#2395"]
 nick_input: none
-completed:
+completed: 2026-10-31
 ---
 
 # 1198 — World map shortcuts on the Key bindings screen
@@ -72,13 +72,13 @@ Expected size: about 10 production lines (the rows move into the table).
 
 ## Acceptance criteria
 
-- [ ] The pin is at or past engine#2395.
-- [ ] The PC Key bindings screen lists `Your army` and `Find` under "On
+- [x] The pin is at or past engine#2395.
+- [x] The PC Key bindings screen lists `Your army` and `Find` under "On
       the world map"; rebinding `Find` to `v` makes `v` open Find on the
       world map (a Harness test).
-- [ ] `Restore defaults` is drawn when focused (the screen scrolls).
-- [ ] No `engine-friction: engine#2395` comment is left.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `Restore defaults` is drawn when focused (the screen scrolls).
+- [x] No `engine-friction: engine#2395` comment is left.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,3 +86,13 @@ Expected size: about 10 production lines (the rows move into the table).
 - Integration (Harness): rebind `WorldFind`, then use it on the test
   world map (debug menu "Test world map").
 - Snapshot: the Key bindings screen, scrolled.
+
+## Completion notes
+
+- The two rows moved into `KEY_ROWS`; `NOT_LISTED_YET` and the workaround
+  comments are gone. `PLAYDATE_KEY_ROWS` indexes the first 18 rows, so the
+  Playdate's list is unchanged.
+- Beyond the ticket's steps: `docs/design/controls.md` no longer says the keys
+  can't be changed yet.
+- Picture: `docs/screenshots/1198-key-bindings-bottom.png`.
+- No starting rules; no follow-ups.
