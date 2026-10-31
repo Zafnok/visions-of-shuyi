@@ -11,7 +11,7 @@ use shuyi_ui::Screen;
 /// The Playdate's context: its skins and palette, no keyboard.
 fn playdate() -> Ctx {
     let mut c = pd_ctx();
-    c.keyboard = Keyboard::Absent;
+    c.platform.keyboard = Keyboard::Absent;
     c
 }
 

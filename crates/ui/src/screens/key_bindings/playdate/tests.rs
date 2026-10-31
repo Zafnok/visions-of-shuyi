@@ -14,7 +14,7 @@ use crate::screens::playdate::{MORE_ABOVE, MORE_BELOW};
 /// keyboard, its own buttons.
 fn playdate() -> Ctx {
     let mut c = pd_ctx();
-    c.keyboard = Keyboard::Absent;
+    c.platform.keyboard = Keyboard::Absent;
     c.device = Device::Pad(PadKind::Playdate);
     c.use_playdate_buttons();
     c

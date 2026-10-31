@@ -88,7 +88,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
     assert_eq!(shown_rows(&c), Row::ALL);
-    c.keyboard = Keyboard::Absent;
+    c.platform.keyboard = Keyboard::Absent;
     let no_layout: Vec<Row> = Row::ALL.into_iter().filter(|&r| r != Row::Layout).collect();
     assert_eq!(shown_rows(&c), no_layout);
     c.use_playdate_skins();
@@ -112,7 +112,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     let keys: Vec<_> = view.rows.iter().map(|r| r.key).collect();
     assert_eq!(keys, playdate.map(Row::key));
     // The Playdate's skins with a keyboard (a test's): its layout shows.
-    c.keyboard = Keyboard::Present;
+    c.platform.keyboard = Keyboard::Present;
     assert!(shown_rows(&c).contains(&Row::Layout));
     assert!(!shown_rows(&c).contains(&Row::Theme));
 }

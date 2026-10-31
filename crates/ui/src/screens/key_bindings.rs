@@ -43,7 +43,7 @@ pub fn screen(ctx: &Ctx) -> KeyBindingsScreen {
 
 /// The rows `ctx` lists.
 pub fn rows(ctx: &Ctx) -> &'static [KeyRow] {
-    match ctx.keyboard {
+    match ctx.platform.keyboard {
         Keyboard::Present => &KEY_ROWS,
         Keyboard::Absent => &PLAYDATE_KEY_ROWS,
     }
@@ -125,7 +125,7 @@ mod tests {
         assert_eq!(listed, rebindable);
         let mut c = ctx();
         assert_eq!(rows(&c), &KEY_ROWS);
-        c.keyboard = Keyboard::Absent;
+        c.platform.keyboard = Keyboard::Absent;
         assert_eq!(rows(&c), &PLAYDATE_KEY_ROWS);
         let view = screen(&c).view(&c);
         assert_eq!(view.switch, None);

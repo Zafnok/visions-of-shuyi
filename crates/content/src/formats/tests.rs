@@ -6,13 +6,17 @@ use crate::dialogue::Stage;
 use crate::{ai, art, item, skill};
 
 /// The registry's kinds, each with its formats in the order they are
-/// tried. The PNG pixels' kind is there only when a crate built with this
-/// one turns the engine's `png` feature on, so it is left out.
+/// tried. The PNG pixels' kind and the dithered one-bit format are there
+/// only when a crate built with this one turns the engine's `png` feature
+/// on, so they are left out.
 #[test]
 fn the_registry_lists_its_kinds_and_their_formats() {
-    let listing = format!("{:?}", install()).replace(r#"("image pixels", ["png"]), "#, "");
+    let listing = format!("{:?}", install())
+        .replace(r#"("image pixels", ["png"]), "#, "")
+        .replace(r#", "dithered""#, "");
     let kinds = [
         r#"("image", ["png", "one-bit"])"#,
+        r#"("one-bit picture", ["one-bit"])"#,
         r#"("sound", ["wav", "ogg-vorbis"])"#,
         r#"("music track", ["ogg-vorbis"])"#,
         r#"("audio manifest", ["audio-manifest"])"#,
@@ -35,7 +39,7 @@ fn the_registry_lists_its_kinds_and_their_formats() {
         r#"("skill table", ["ron"])"#,
     ];
     let want = format!(
-        "Formats {{ kinds: [{}], limits: Limits {{ max_bytes: {} }} }}",
+        "Formats {{ kinds: [{}], sections: [\"onebit\"], limits: Limits {{ max_bytes: {} }} }}",
         kinds.join(", "),
         usize::MAX
     );
