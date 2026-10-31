@@ -107,9 +107,7 @@ buttons. It just can't reuse in same context."
   / Next ready unit go through that kind's places until Find is closed
   (Confirm or Cancel; Find again closes it too).
 - The left-handed keys are the finger mirrors of `C` and `X`.
-- **On the Key bindings screen** they will be under "On the world map":
-  the screen had no room until the engine's list scrolls (1198,
-  engine#2395). Until then their keys work but can't be changed.
+- **On the Key bindings screen** they are under "On the world map".
 - The Playdate has no world map yet: no buttons there, and its Key
   bindings screen leaves them out.
 

@@ -112,6 +112,23 @@ fn the_list_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// The list is longer than the panel: `Up` from the first row goes round
+/// to the switch, then Restore defaults, then the world map's last row, and
+/// the panel scrolls to show each (ticket 1198).
+#[test]
+fn the_list_scrolls_to_its_bottom() {
+    let mut h = open(RIGHT_HANDED);
+    assert!(!h.snapshot().contains("Restore defaults"));
+    h.keys("Up Up");
+    assert!(h.snapshot().contains("Restore defaults"));
+    h.keys("Up");
+    let bottom = h.snapshot();
+    assert!(bottom.contains("On the world map"));
+    assert!(bottom.contains("Your army"));
+    assert!(bottom.contains("Find"));
+    assert_snapshot!(bottom);
+}
+
 #[test]
 fn the_left_handed_list_shows_that_layouts_keys() {
     let h = open(LEFT_HANDED);

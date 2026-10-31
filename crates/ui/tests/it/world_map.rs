@@ -102,6 +102,25 @@ fn win(h: &mut Harness) {
     skip_scene(h);
 }
 
+/// Find rebound on the Key bindings screen (ticket 1198): its row is three
+/// `Up`s from the first (past the switch and Restore defaults), and the new
+/// key in its second slot opens the list on the map.
+#[test]
+fn a_key_rebound_to_find_opens_it_on_the_map() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    h.keys("Down Down f Up Up Up f");
+    assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
+    h.keys("Up Up Up Right f v d d");
+    assert_eq!(h.screens(), ["title"]);
+    h.keys("Up Up");
+    new_game(&mut h);
+    assert!(map(&h).view(h.game().ctx()).list.is_none());
+    h.keys("v");
+    let title = h.game().ctx().text("world_map.find.title").to_owned();
+    let list = map(&h).view(h.game().ctx()).list;
+    assert_eq!(list.map(|l| l.title), Some(title));
+}
+
 /// Travel to a town, open its Vendor, buy a potion, leave; travel on and
 /// save on the map; the next launch loads the same place, gold and stock.
 #[test]
