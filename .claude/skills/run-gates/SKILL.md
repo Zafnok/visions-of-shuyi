@@ -7,6 +7,12 @@ metadata:
 
 # Run the local gates
 
+Verify shared skill discovery before the other gates:
+
+```powershell
+pwsh -File scripts/sync-agent-skills.ps1 -Check
+```
+
 **Read [`shuyi-gates`](../shuyi-gates/SKILL.md) first.** It holds what a
 game on Shuyi Engine's gates are and mean: the order (fast to slow, stop
 at the first failure), never weakening a gate, `lint`'s findings and
@@ -61,7 +67,8 @@ typos
 
 A change to the engine pin also runs `cargo xtask skill-pack` (after the
 pin has moved: it builds with the new pin) and commits what it writes in
-`.claude/skills/`; the `engine-pin` skill says when.
+`.claude/skills/`; then run `pwsh -File scripts/sync-agent-skills.ps1`
+and commit the Codex loaders too. The `engine-pin` skill says when.
 
 **The gates never read the bought art** (ADR-0040): run them exactly as
 above, without `--features private-assets`, whether or not

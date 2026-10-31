@@ -3,7 +3,7 @@ id: "0107"
 title: "Release workflow: tag → Windows/Linux/macOS/web builds → GitHub Release"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0102", "0206"]

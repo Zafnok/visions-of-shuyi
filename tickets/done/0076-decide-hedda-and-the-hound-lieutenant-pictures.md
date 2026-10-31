@@ -3,7 +3,7 @@ id: "0076"
 title: "Decide: Hedda's and the Hound lieutenant's faces and combat pictures"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -61,7 +61,7 @@ pick"). Three to five candidates each, with the pack and file name, plus
 ## Questions to ask
 
 1. Hedda's combat picture, and her face to match it (a bought hero face,
-   or a generator face Nick builds from a parts list Claude gives; Nick,
+   or a generator face Nick builds from a parts list the agent gives; Nick,
    0070: "your simulated generator does not work as well as you think it
    does").
 2. The lieutenant's combat picture. A face only if his script gives him
@@ -143,7 +143,7 @@ in `look-and-feel.md` (*Act 1's new cast*) with Nick's words:
 
 **Follow-up tickets:** none.
 
-**Gameplay rules decided by Claude:** none.
+**Gameplay rules decided by the agent:** none.
 
 **For Nick:** the Axemaiden is free; the Bandit Brigand is $2.99 to buy
 when Chapter 2 is built. Already judged as a fallback for an axe boss:

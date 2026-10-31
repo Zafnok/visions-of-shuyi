@@ -3,7 +3,7 @@ id: "0312"
 title: "Combat Arts: art data, learning by rank, costs and effects in forecast and resolution"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0014", "0304", "0305", "0306", "0311"]
@@ -156,7 +156,7 @@ None. Every rule and number is in `combat-arts.md`.
   - Unit EXP and class points (0601) don't exist yet: Line Pierce's strike
     is its own `CombatResolved` event, so 0601 can award it as a second
     combat.
-- **Claude's starting rules** (the design docs don't say; Nick may veto):
+- **the agent's starting rules** (the design docs don't say; Nick may veto):
   1. A debuff (Pinning Shot, Pressure Point) takes effect **after** the
      combat that applies it, so it doesn't change that combat's own
      strikes; it helps from the next attack on.

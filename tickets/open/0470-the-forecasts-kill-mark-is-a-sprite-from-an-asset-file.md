@@ -3,7 +3,7 @@ id: "0470"
 title: "The forecast's kill mark is a sprite from an asset file, not rectangles drawn pixel by pixel"
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

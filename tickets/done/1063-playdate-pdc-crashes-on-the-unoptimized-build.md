@@ -3,7 +3,7 @@ id: "1063"
 title: "Playdate: pdc crashes packing the unoptimized build's pdex.elf"
 type: bug
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

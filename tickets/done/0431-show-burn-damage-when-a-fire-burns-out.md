@@ -3,7 +3,7 @@ id: "0431"
 title: Show the burn damage when a fire burns out under a unit
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

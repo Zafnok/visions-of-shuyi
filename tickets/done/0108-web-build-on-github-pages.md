@@ -3,7 +3,7 @@ id: "0108"
 title: Deploy the web build to GitHub Pages on every push to main
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0206"]

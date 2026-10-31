@@ -3,7 +3,7 @@ id: "0216"
 title: Audit and remove hard-coded keys; guard test so none come back
 type: infra
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

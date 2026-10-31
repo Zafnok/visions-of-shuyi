@@ -3,7 +3,7 @@ id: "0750"
 title: "Chapter 8 script: The Last Watch, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0749", "0069"]
@@ -32,7 +32,7 @@ length budget) and 0743 (the new cast's character sheets). It waits for 0069 too
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -152,7 +152,7 @@ Done 2026-10-30.
   `scene_lamplight` (the king). None is imported, so the script marks
   each place with a comment; **0854 imports them and adds the `@music`
   lines** (its step 3 already says so). The scenes 0071 left open use
-  the existing mood cues as *Claude's picks* (`talk_calm`,
+  the existing mood cues as *the agent's picks* (`talk_calm`,
   `dungeon_tense`, `scene_sad`).
 - **For 0854:** the scene ids and triggers are listed at the top of the
   script; the `@if` blocks around companion lines in battle scenes go as

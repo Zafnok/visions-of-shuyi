@@ -3,7 +3,7 @@ id: "0502"
 title: "Enemy phase playback: camera pans, moves, attacks, fast-forward"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0501", "0405"]
@@ -89,7 +89,7 @@ Done. New `crates/ui/src/screens/battle/ai_phase.rs` (`Pacing`/`PACING`,
   music test now rewinds its turn-1 fight: the hurt lord would otherwise
   die in the enemy phase.
 
-*Claude's starting rules* (pacing is Nick's sign-off; these are defaults):
+*the agent's starting rules* (pacing is Nick's sign-off; these are defaults):
 
 1. Enemies walk as fast as the player's units (12 tiles/s).
 2. The camera only pans when the acting unit is out of view; while it

@@ -3,7 +3,7 @@ id: "0252"
 title: Reserve Chapters 2-8's music cues, and run CI on PRs that change Markdown the code reads
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

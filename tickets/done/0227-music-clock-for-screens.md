@@ -3,7 +3,7 @@ id: "0227"
 title: "Music clock: tell screens how far into its track the music is"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0212", "0214", "0215"]
@@ -180,7 +180,7 @@ None.
 
 **Follow-up tickets:** none.
 
-**Gameplay rules decided by Claude:** none. Nothing a player sees or hears
+**Gameplay rules decided by the agent:** none. Nothing a player sees or hears
 changes in this ticket.
 
 **For Nick:** nothing to try yet. This is the plumbing the title cinematic

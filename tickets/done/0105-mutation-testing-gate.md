@@ -3,7 +3,7 @@ id: "0105"
 title: "CI: mutation testing gate with cargo-mutants"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0102"]

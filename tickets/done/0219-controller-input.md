@@ -3,7 +3,7 @@ id: "0219"
 title: "Controller input on Windows, Linux, macOS and web: buttons and sticks become Actions"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0032"]
@@ -248,7 +248,7 @@ Linux a pad is read even when the game window isn't focused.
 `InputState::device()`), 0226 (the prompt already accepts a button). No new
 tickets.
 
-*Claude's starting rules* (the design docs didn't say; Nick can veto; also
+*the agent's starting rules* (the design docs didn't say; Nick can veto; also
 in `controls.md`):
 
 - **Diagonal stick pushes move one way only**, the way the stick is pushed

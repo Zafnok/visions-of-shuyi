@@ -3,7 +3,7 @@ id: "0436"
 title: "Units on the battle map drawn as the bought map sprites"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0433", "0110", "0116"]
@@ -74,7 +74,7 @@ the bought-art folder's `spike-renders/`):
   3×3 placeholder square. The up arrow **bounces** 1 pixel up and the
   down arrow 1 pixel down; a unit with both shows one at a time, **the
   two taking turns**. When another unit stands in the tile above, the
-  mark sits 4 pixels lower, inside its own tile (*Claude's starting
+  mark sits 4 pixels lower, inside its own tile (*the agent's starting
   rule*; say so in the PR).
 - **Sprites step on the spot and walk along their path.** That is ticket
   0440, after this one. Here sprites **stand still**, front-facing.
@@ -295,7 +295,7 @@ table. The corner mark was only ever in a throwaway build.
 - 0441 landed on `main` while this was in work: both looks share the
   bar's inset, height and fill (`hp_fill`).
 
-**Claude's starting rules (veto any):**
+**the agent's starting rules (veto any):**
 
 - An effect that lowers any number of the unit shows the **down arrow**;
   any other shows the **up arrow**. (The rules don't label effects.)

@@ -3,7 +3,7 @@ id: "0731"
 title: Name the guide and write the tips and lessons in their voice
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: medium
 status: done
 blocked_by: ["0457", "0458"]
@@ -24,7 +24,7 @@ Nick may tie it into the story much later ("think - Angel from borderlands
 Until now the box title says `Guide` (text key `guide.name`, 0455) and the
 tips (`assets/data/tips.ron`) and lessons (`assets/data/lessons.ron`, 0457)
 are written plainly. This ticket gives the guide a name and a voice, and
-rewrites every tip and lesson in it. Claude writes all the lines; Nick
+rewrites every tip and lesson in it. The agent writes all the lines; Nick
 picks the name (`ask-nick`).
 
 ## Nick input
@@ -84,7 +84,7 @@ Ask about the voice only if Nick wants a say ("describe your own").
   voice** (the dry insider, like Angel in *Borderlands 2*) but not the name
   ("sounds like a grandma"), and **Rin's face** (the calm `neutral`
   expression). Of a second round (Vix, Fen, Vesper, Kit) he said Vix, Fen
-  and Kit were all fine and left the pick to Claude: Vix.
+  and Kit were all fine and left the pick to the agent: Vix.
 - `guide` is in `docs/story/names.md` (a new "Outside the story" table) and
   `assets/data/names.ron`. The tip and lesson boxes read their title from
   the names table (through the language pack, so a translation can rename

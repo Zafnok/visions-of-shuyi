@@ -3,7 +3,7 @@ id: "0018"
 title: "Decide: Combat Arts for ranks C–S and the first special weapons"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0014"]
@@ -78,7 +78,7 @@ then one round of follow-ups. Recorded in `combat-arts.md` (*Ranks C–S*,
   line, might +4); Lance Rush stays might +5 (Nick: it must not double up
   with Charge); Heavy Blow stays.
 
-*Claude's starting rules* (Nick may veto): every "Exact rules" bullet of
+*the agent's starting rules* (Nick may veto): every "Exact rules" bullet of
 *Ranks C–S* not quoted from him (Riposte only when it can counter; Disarm
 cancels the rest of this combat's counters;
 Unbroken Stride is a full move and action; Comet Lance in rows and columns

@@ -3,7 +3,7 @@ id: "0104"
 title: "CI: coverage (cargo-llvm-cov) and SonarCloud quality gate"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0102"]

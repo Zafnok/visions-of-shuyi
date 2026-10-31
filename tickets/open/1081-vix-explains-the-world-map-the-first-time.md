@@ -3,7 +3,7 @@ id: "1081"
 title: "Vix explains the world map the first time the army reaches it"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1007", "1070"]

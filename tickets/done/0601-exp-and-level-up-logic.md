@@ -3,7 +3,7 @@ id: "0601"
 title: EXP gain and level-up rules
 type: feature
 milestone: M5 Progression
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0005", "0305", "0306"]
@@ -102,7 +102,7 @@ Level ups and class level ups only *add* spells instead of calling
 minimum gains as a number; a tier missing from a tier table uses the highest
 tier listed (content validation already requires every tier in use).
 
-**Claude's starting rules** (the design docs were silent; Nick may veto):
+**the agent's starting rules** (the design docs were silent; Nick may veto):
 - A defender that **can't counter** (out of range or unarmed) took no part in
   the combat and gets no EXP or CP (reading "attacked or countered"
   literally).

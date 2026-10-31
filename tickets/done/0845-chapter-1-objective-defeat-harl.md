@@ -3,7 +3,7 @@ id: "0845"
 title: "Chapter 1's objective becomes defeating Red Harl; the rest of the Red Company runs"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -56,7 +56,7 @@ it):
 - `ch01.ron`: `objective: DefeatUnit(unit: "red_captain")`. The
   objective page and the battle's opening objective line say so (text
   ids, ADR-0045).
-- **The rest run** (*Claude's starting rules*, listed in the Completion notes):
+- **The rest run** (*the agent's starting rules*, listed in the Completion notes):
   - when Harl falls, the battle is won at once; the enemies left on the
     map are shown leaving: each walks toward the nearest map edge at map
     speed and fades out, one short moment (≤ 2 s together; Confirm skips),
@@ -160,7 +160,7 @@ it has to be all of them." (`assets/dialogue/ch01.dlg`). Out of scope
 here; 0737 (the Chapter 1 script) writes any line about the company
 scattering and should change that one.
 
-**Claude's starting rules** (for the Act 1 playtest, 1064):
+**the agent's starting rules** (for the Act 1 playtest, 1064):
 
 1. When Harl falls, the battle is won at once, with no extra turn.
 2. The rest of the Red Company stands still while Harl's fall, his death

@@ -3,7 +3,7 @@ id: "0515"
 title: "Playtest CI on main plays every balance change: a push's run is never cancelled by the next push"
 type: infra
 milestone: M4 Enemy AI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

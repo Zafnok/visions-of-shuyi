@@ -3,7 +3,7 @@ id: "1016"
 title: "vos-modkit: check a mod and start a new one, outside the game"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1013", "1014"]

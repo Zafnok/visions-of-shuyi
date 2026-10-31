@@ -3,7 +3,7 @@ id: "0723"
 title: "A scriptwriter's kit: guide, script checker and scene preview for someone who doesn't program"
 type: infra
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0715", "0717"]
@@ -16,7 +16,7 @@ completed: 2026-10-04
 ## Context
 
 Nick, 2026-10-03 (`docs/design/voices-languages-and-script.md`): the
-script is written by Claude today; if the game finds interest he may hire
+script is written by the agent today; if the game finds interest he may hire
 a scriptwriter, and "since our scripts are human readable/writable (I
 hope) then it shouldn't be a huge hassle for them to also add cues for
 i.e. music, portrait transitions, etc."
@@ -53,7 +53,7 @@ ASCII quotes, 200-character lines), list it in the notes for Nick.
    reply choices and the lead's rules (`docs/design/setting-and-tone.md`);
    name tokens and why names are never typed out; where scenes are
    wired to battles and chapters (`assets/chapters/`, `assets/battles/`,
-   triggers per ADR-0030) and that Claude does that wiring on request;
+   triggers per ADR-0030) and that the agent does that wiring on request;
    what canon is fixed (`docs/story/beats.md`) and what may change.
    Link, don't copy, `assets/dialogue/README.md` for the full reference.
 2. Say in the guide what a rewrite costs downstream: a changed line

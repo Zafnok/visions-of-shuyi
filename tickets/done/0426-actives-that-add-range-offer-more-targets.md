@@ -3,7 +3,7 @@ id: "0426"
 title: Combat actives that add range offer their extra targets
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

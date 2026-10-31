@@ -3,7 +3,7 @@ id: "0225"
 title: Fix the console errors the web build logs on load
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

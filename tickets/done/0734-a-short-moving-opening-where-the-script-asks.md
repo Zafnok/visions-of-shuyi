@@ -3,7 +3,7 @@ id: "0734"
 title: A short moving opening before a conversation, where the script asks
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0732", "0733"]
@@ -165,7 +165,7 @@ behind the talk, how dark they are, the two openings and their length.
 Then the four scene music picks (`docs/design/audio.md`, *Chapter 1's
 cues*), which waited for this.
 
-*Claude's starting rules (Nick can veto):*
+*the agent's starting rules (Nick can veto):*
 
 - After an opening its characters stay on the place where they stopped,
   darkened with it behind the talk, until the scene changes place.

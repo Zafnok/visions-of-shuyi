@@ -13,7 +13,7 @@ discipline here is the whole quality system.
 
 ## 0. Orient (every session, ~2 minutes)
 
-1. Read `CLAUDE.md`.
+1. Read `AGENTS.md`.
 2. Read `tickets/README.md`.
 3. Read the ticket file fully, then every ADR and design doc it links.
 
@@ -58,7 +58,7 @@ implement → test → gates → push cycle. Before writing code:
    wield). Check new answers against the data the same way.
 2. Ask them all at once with the `ask-nick` skill, scoped to this ticket,
    before implementing. Only a rule too small to matter goes in as a
-   *Claude's starting rule*.
+   *the agent's starting rule*.
 3. When Nick's reply leaves a conflict or ambiguity, ask about it **before**
    making the rest of the changes, not after the gates have run.
 
@@ -180,7 +180,7 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
 1. Fill in the ticket's `## Completion notes`: what was done, deviations from the
    plan, follow-up tickets created, anything Nick should know when playing.
    List every **gameplay-affecting rule you had to decide** where the design
-   docs were silent (mark them *Claude's starting rule*), in plain words.
+   docs were silent (mark them *the agent's starting rule*), in plain words.
    Repeat that list in the PR body and in your final message to Nick, so he
    can agree or veto (Nick asked for this).
 2. Set `status: done` and `completed: YYYY-MM-DD` in frontmatter.

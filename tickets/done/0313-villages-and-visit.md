@@ -3,7 +3,7 @@ id: "0313"
 title: "Save the village: houses, Evacuate, raiders who burn them (core rules)"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0308", "0037", "0322"]
@@ -69,7 +69,7 @@ playtest's checklist (1064).
   opened chests), so the objective line (0409) can show
   `Save at least 3 of 5 houses (1 saved, 1 lost)`.
 - The AI: a raider walks toward the nearest unsaved house and prefers
-  burning it to attacking (*Claude's starting rule*, tuned by the bots).
+  burning it to attacking (*the agent's starting rule*, tuned by the bots).
 - The bots (0504's legal moves) and play records handle `Evacuate` and the
   burning events.
 - A test battle in `assets-test/` with houses and raiders.
@@ -168,7 +168,7 @@ Done (2026-10-26).
 Engine friction: estimate 380 production lines (judged against the chest
 and escape rules, 0308/0319), measured 404 (1.06×), under 2×.
 
-### Claude's starting rules (for the Act 1 playtest, 1064)
+### the agent's starting rules (for the Act 1 playtest, 1064)
 
 - **Raider AI:** while a house stands, a raider (whatever its AI setting)
   goes where it burns one if it can reach such a tile, and attacks from

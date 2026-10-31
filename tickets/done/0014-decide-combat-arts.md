@@ -3,7 +3,7 @@ id: "0014"
 title: "Decide: Combat Arts (weapon skills that spend durability)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0003"]
@@ -95,7 +95,7 @@ Nick answered every question on 2026-09-25. The result is in
   our own names (not Three Houses').
 - **Enemies:** only bosses use arts and actives.
 
-Claude's starting rules (Nick may veto them): one art or active per attack;
+The agent's starting rules (Nick may veto them): one art or active per attack;
 cost paid even on a miss; a weapon brought to 0 breaks after the combat;
 active costs of 3 (was 2/battle) and 5 (was 1/battle).
 

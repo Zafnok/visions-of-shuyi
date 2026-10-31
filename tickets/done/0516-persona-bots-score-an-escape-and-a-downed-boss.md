@@ -3,7 +3,7 @@ id: "0516"
 title: "The persona bots score an escape and a downed boss right, and play the rule battles in the tests"
 type: bug
 milestone: M4 Enemy AI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

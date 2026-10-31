@@ -3,7 +3,7 @@ id: "0057"
 title: "Decide: a basic tutorial, maybe with a guide character"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -35,7 +35,7 @@ moment for each option (the bought portraits; `ascii-art` skill):
 - **A. A guide character who speaks the tips** in a small box with a face:
   Navi in Ocarina of Time, Nell in Advance Wars' Field Training. Who: a party member (Hollis teaching the
   lead fits the story?), someone new, or a mascot. Story questions go
-  through `docs/story/` (Claude writes the lines; Nick decides who).
+  through `docs/story/` (the agent writes the lines; Nick decides who).
 - **B. Better tips, no character**: more triggers (arts, skills, magic,
   terrain, rewind, threat arrows), a *Tutorials* list to read them again
   (Fire Emblem Engage has one in its menu).
@@ -100,7 +100,7 @@ Nick's answers (verbatim in `docs/design/tutorial.md`):
 3. **Guides** as a menu option.
 4. Lessons as **checklists in any order**, **inside Chapter 1's battle**
    (2A), not a practice battle.
-5. What's different here: Claude's list (keyboard controls, rewind, threat
+5. What's different here: the agent's list (keyboard controls, rewind, threat
    arrows, Combat Arts, terrain magic), accepted.
 6. Tips switched off in Options: not separately; the level covers it.
 
@@ -116,7 +116,7 @@ Guides list (0455, 0456), **0731** the guide's name and lines (0457,
 0458). 0058 (options per save) now also asks whether the level can be
 changed later.
 
-*Claude's starting rules* (Nick can veto; marked in `tutorial.md`):
+*the agent's starting rules* (Nick can veto; marked in `tutorial.md`):
 
 - The familiarity question comes after Classic/Casual, before the lead.
 - The level belongs to the campaign; old saves load as Full.

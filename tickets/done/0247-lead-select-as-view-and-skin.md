@@ -3,7 +3,7 @@ id: "0247"
 title: "Lead select: say what it shows as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0245"]

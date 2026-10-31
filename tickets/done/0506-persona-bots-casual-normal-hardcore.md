@@ -3,7 +3,7 @@ id: "0506"
 title: "Persona bots: Casual, Normal and Hardcore players on the engine's rollout bot, checked against 0033's targets"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126", "engine#2128"]
@@ -375,7 +375,7 @@ xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
   checks Casual at 29% ✗, 30–55% ✓, 60% ⚠ instead of 59/70/90.
 - *Faster check:* both medians over the tries won with nobody dying (the
   engine's check takes one set of tries; with Hardcore's whole rule Normal
-  had no tries to compare). *Claude's reading*, in the design doc.
+  had no tries to compare). *the agent's reading*, in the design doc.
 - *"Three tables":* the engine prints one table with a line per bot, then
   the game adds two lines per bot.
 - `casual_accepts_retreats_normal_does_not` gives Casual a plan wide
@@ -388,7 +388,7 @@ xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
   (right, down, left, up), which shifted a few forecasts: the report
   below is from that final code.
 
-**Claude's starting rules** (tunable, for the Act 1 playtest, 1064):
+**the agent's starting rules** (tunable, for the Act 1 playtest, 1064):
 
 - Casual's bands are Nick's first bands minus 30 points.
 - Casual: a fall costs a tenth of a win; a unit left where it could fall

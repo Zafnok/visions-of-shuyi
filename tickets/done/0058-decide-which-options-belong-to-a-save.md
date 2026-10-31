@@ -3,7 +3,7 @@ id: "0058"
 title: "Decide: which options belong to a save file"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -130,7 +130,7 @@ Nick on the PR also said the controller's letter grid stays, but Steam
 dependency); 0049 says Ironman stays with the campaign; 0835 points at
 0838.
 
-*Claude's starting rules* (Nick may veto):
+*the agent's starting rules* (Nick may veto):
 - `Profile` sits below `Options` on the title menu.
 - A new profile starts from the default options and runs the hand-layout
   picker.

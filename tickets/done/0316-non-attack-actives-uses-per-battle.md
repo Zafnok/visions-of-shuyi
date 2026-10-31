@@ -3,7 +3,7 @@ id: "0316"
 title: "Non-attack actives cost uses per battle, not durability; Benediction replaces Sanctuary 2"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0311", "0412", "0503"]
@@ -183,7 +183,7 @@ battle; say if any number of uses feels wrong (they are *tunable*).
 - `ROADMAP.md` still lists 0316 on row 1: that table is redone at each
   dependency check, not per ticket.
 
-**Rules Claude had to decide** (*Claude's starting rules*; Nick may veto)
+**Rules the agent had to decide** (*the agent's starting rules*; Nick may veto)
 
 1. **A skill learned in the middle of a battle has no uses until the next
    battle** (like a spell learned in battle). Nothing in the game teaches an

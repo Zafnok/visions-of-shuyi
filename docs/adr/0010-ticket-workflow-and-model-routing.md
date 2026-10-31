@@ -1,6 +1,6 @@
 # ADR-0010: Ticket workflow and model routing
 
-- **Status:** Accepted
+- **Status:** Accepted; model routing and instruction entry point amended by ADR-0102
 - **Date:** 2026-09-25
 
 ## Context

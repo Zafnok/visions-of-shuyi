@@ -3,7 +3,7 @@ id: "1046"
 title: "Playdate: preparations, results, saving, game over and the end screens in one bit"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: high
 status: todo
 blocked_by: ["1037", "1035", "1040"]

@@ -308,12 +308,12 @@ The research found that the model's house character is a calm,
 competent consultant, and that it hides feelings far more than people do.
 Rules alone don't fix that (craft.md). What helps:
 
-- **Write scripts on Claude Fable 5.1.** In 0736's blind test (four
-  writers, the same three scenes, two judges who didn't know which was
-  which), both judges ranked Fable 5.1's draft first and above Opus 5.5's,
-  with or without the extra method below. Fable also scores a little
-  higher on the public fiction benchmarks. No outside model was clearly
-  better (craft.md, "Which model").
+- **Use a creative-capable model** (`tickets/README.md`; optional examples:
+  Fable / Astra). Judge its scenes against the voice and warmth criteria
+  here; no provider switch is required. In 0736's historical blind test,
+  both judges preferred Fable 5.1 to Opus 5.5 on the same three scenes
+  (craft.md, "Which model"). That evidence covers those tested drafts,
+  not an exclusive model requirement or a comparison with untested models.
 - **Optional tools, no proven gain in our test:** for the boxes that
   matter most (a fear line, a death line), draft five versions and keep a
   plain, less likely one; for a key scene, play the characters (one
@@ -326,7 +326,7 @@ Rules alone don't fix that (craft.md). What helps:
 
 ### Scene-length budget
 
-Claude's starting numbers (tunable; set by 0736 because Nick said Chapter
+The agent's starting numbers (tunable; set by 0736 because Nick said Chapter
 1 drags in the conversations). A box is one speech or narration line of
 up to 200 characters; a reply's reaction counts. Each scene's budget
 includes about two boxes for the people (a check-in, a tease, fussing).

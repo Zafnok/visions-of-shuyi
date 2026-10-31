@@ -3,7 +3,7 @@ id: "0042"
 title: "Decide: Japanese — the font, picking a language, the machine-translation label, naming the lead"
 type: design-decision
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

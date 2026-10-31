@@ -3,7 +3,7 @@ id: "0739"
 title: "Faces over a darkened place: how much the listener (and narration) dims them"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

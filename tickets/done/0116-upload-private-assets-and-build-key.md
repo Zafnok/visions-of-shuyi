@@ -3,7 +3,7 @@ id: "0116"
 title: Upload the private assets repo, add its build key, and check the builds use it
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0110"]
@@ -57,7 +57,7 @@ window (`cmd`), which is what Nick uses.
    `$HOME` and `rm`, and failed in Command Prompt before making anything.
    In Git Bash, put `$HOME/` for `%USERPROFILE%\` and `rm` for `del`.)
 
-Then tell Claude it is done.
+Then tell the agent it is done.
 
 ## Scope
 
@@ -66,7 +66,7 @@ Then tell Claude it is done.
   and the builds work as ADR-0040 says, and fixing what doesn't.
 
 **Out (do not do):**
-- Creating the repository, the deploy key or the secret for Nick. Claude
+- Creating the repository, the deploy key or the secret for Nick. The agent
   doesn't change access settings on his account.
 - Importing any art into `assets-private/game/` (0711, 0436, 0437, 0413).
 

@@ -3,7 +3,7 @@ id: "0513"
 title: "Green units carry their own consumables and use them"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -23,7 +23,7 @@ units use items (`UnitAction::UseItem { pack_index, target }` in
 the Other phase (`crates/core/src/ai.rs`, ticket 0501) never uses one.
 Enemies still carry none (Nick, 0501).
 
-The rules (0044; the *Claude's starting rules* are marked in the doc):
+The rules (0044; the *the agent's starting rules* are marked in the doc):
 the chapter data gives a green unit its items; it uses one like a player
 unit does (itself or an adjacent green or player unit, and its action
 ends); its items can't be traded or taken; unused ones are gone when the
@@ -32,7 +32,7 @@ battle ends. Non-combat green units may carry items too.
 ## Nick input
 
 None. Verified by tests and the bots. When a green unit uses an item is a
-*Claude's starting rule* (step 3) for the Act 1 playtest (1064) to judge.
+*the agent's starting rule* (step 3) for the Act 1 playtest (1064) to judge.
 
 ## Scope
 
@@ -63,7 +63,7 @@ None. Verified by tests and the bots. When a green unit uses an item is a
    same event as a pack item (with whose item it was) and ends the action.
    It never touches the pack or the stock; nothing carries over after the
    battle. Replays and saves include the list.
-3. `ai.rs`: *Claude's starting rule* (FE allied NPCs): a green unit
+3. `ai.rs`: *the agent's starting rule* (FE allied NPCs): a green unit
    that holds an item uses it on itself when below half its max HP and no
    attack it could make would kill a foe; otherwise it acts as today. It
    does not heal others with items. Write the rule in the module docs.
@@ -117,7 +117,7 @@ Done.
   (`a_green_units_items_survive_a_save`) plus the bots' replay of
   `test_green` (same commands, same events, same end).
 
-**Claude's starting rules** (for the Act 1 playtest, 1064):
+**the agent's starting rules** (for the Act 1 playtest, 1064):
 - A green unit drinks one of its items, on itself, where it stands
   (no move first), when it is **below half its max HP** and **no attack it
   could make this turn has any chance to kill** a foe; else it plays as

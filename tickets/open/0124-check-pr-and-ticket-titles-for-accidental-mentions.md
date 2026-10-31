@@ -3,7 +3,7 @@ id: "0124"
 title: Check PR and ticket titles for accidental mentions
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

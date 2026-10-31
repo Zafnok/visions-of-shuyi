@@ -3,7 +3,7 @@ id: "0848"
 title: "Chapter 2 battle: Kell's Ford, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608", "0329", "0076"]
@@ -18,7 +18,7 @@ completed: 2026-10-29
 Act 1, Chapter 2, from `docs/story/outline.md`:
 
 - **Story battle:** Kell's Ford: a river village split by a ford, houses to save before the raiders burn them (0069's *save the village*: a minimum to save, extra rewards past it), the garrison's watchtower across the water, a Hound lieutenant as boss.
-- **Objective:** defeat the boss (the outline: "the chapter ticket decides"; a Defeat-unit objective exists) and save at least a minimum of the houses (`turn-structure.md`, *Save the village*; the minimum, the houses and the extra rewards are *Claude's starting values* for the bots to tune).
+- **Objective:** defeat the boss (the outline: "the chapter ticket decides"; a Defeat-unit objective exists) and save at least a minimum of the houses (`turn-structure.md`, *Save the village*; the minimum, the houses and the extra rewards are *the agent's starting values* for the bots to tune).
 - **Recruits:** Joss Pellam (`defector`, Swordsman), joins in the scene after the battle (0069: no recruiting by talking).
 - **Named boss (0743):** Lieutenant Silas Hendry (`hound_lieutenant`), who picked Joss for the company; sheet `docs/story/characters/hound_lieutenant.md`.
 - **New in this chapter:** Preparations (0443's shop tab) for the first time, save the village (0313), a recruit who joins in a scene (0069).
@@ -32,14 +32,14 @@ the number scale first. It also needs the save-the-village rule (0313), the shop
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
-0070 picked **Joss**: the Thief hero's face, bust and map sprite, and Shironejiya's `m_s_hero07` at 1.25× recoloured (brown hair, dark headband, red cloth turned Hound black). The **Hound lieutenant** (Silas Hendry) is 0076's pick: Stupid Creations' **TTMini: Bandit Brigand** (<https://stupidcreations.itch.io/ttmini-bandit-brigand>, $2.99, Nick buys it; AI-assisted, so the Steam page discloses it, 0903) in his three-quarter pose, and a generator face to match (shaggy red hair, full red beard), since he speaks; his sheet was rewritten to fit (`hound_lieutenant.md`). Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
+0070 picked **Joss**: the Thief hero's face, bust and map sprite, and Shironejiya's `m_s_hero07` at 1.25× recoloured (brown hair, dark headband, red cloth turned Hound black). The **Hound lieutenant** (Silas Hendry) is 0076's pick: Stupid Creations' **TTMini: Bandit Brigand** (<https://stupidcreations.itch.io/ttmini-bandit-brigand>, $2.99, Nick buys it; AI-assisted, so the Steam page discloses it, 0903) in his three-quarter pose, and a generator face to match (shaggy red hair, full red beard), since he speaks; his sheet was rewritten to fit (`hound_lieutenant.md`). Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and
 the full Act 1 playtest, 1064). Verification is by tests, `cargo shuyi
 frame-png` pictures of the map in the PR and the bots' reports. Levels,
-enemy counts, map size and turn counts are *Claude's starting values*
+enemy counts, map size and turn counts are *the agent's starting values*
 ("for the chapter tickets", the outline), tuned by the bots; list them
 in the Completion notes for 1064's checklist. A design question the
 docs don't answer (a rule, not a number) goes to Nick with `ask-nick`
@@ -230,7 +230,7 @@ picture and builds his face first), 0520 (the bots play a chapter with
 the army the chapters before it leave; Chapter 2 re-tuned; 0849–0854
 now wait for it).
 
-**Claude's starting values and rules** (the docs left them open; all
+**the agent's starting values and rules** (the docs left them open; all
 *tunable*, for the Act 1 playtest, 1064):
 
 1. **Joss is no unit on the map.** His refusal plays over the map as

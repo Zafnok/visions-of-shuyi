@@ -3,7 +3,7 @@ id: "NNNN"
 title: Short imperative title
 type: feature
 milestone: MX Name
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []

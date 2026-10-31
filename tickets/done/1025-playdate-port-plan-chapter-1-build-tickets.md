@@ -3,7 +3,7 @@ id: "1025"
 title: "Playdate port: plan the build tickets for Chapter 1"
 type: research
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1026", "0061"]
@@ -223,7 +223,7 @@ Every ticket with device work names what is measured on Nick's Playdate.
   its device measurement says it is needed. The AI speed-up (1051) does
   exist, but 1050 closes it as not needed if Nick finds the pauses fine.
 
-**Claude's starting rules in the new tickets** (Nick can veto; the
+**the agent's starting rules in the new tickets** (Nick can veto; the
 build tickets mark them):
 - The loading card shows the game's name, centred (1036).
 - The Playdate's battle map has no help bar. The map menu and the

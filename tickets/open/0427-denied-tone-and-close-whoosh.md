@@ -3,7 +3,7 @@ id: "0427"
 title: "Render and play the \"can't do that\" tone and the close whoosh"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0031"]

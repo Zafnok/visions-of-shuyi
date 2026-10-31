@@ -3,7 +3,7 @@ id: "1115"
 title: "Tactics kit in shuyi-ui: a grid map scene generic over the game's pieces, skins, ground layers, cursor and tile camera"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: xhigh
 status: done
 blocked_by: ["1113", "1114"]

@@ -3,7 +3,7 @@ id: "0029"
 title: "Decide: backgrounds behind dialogue scenes"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0021"]
@@ -23,8 +23,8 @@ while listing Chapter 1 gaps (2026-09-29).
 
 Constraints:
 
-- Portraits are bought 48×48 Tiny Tales faces by Mega Tiles (0021, 0711). Nick disliked Claude-drawn
-  portraits, so Claude-drawn backgrounds may clash in the same way; say so
+- Portraits are bought 48×48 Tiny Tales faces by Mega Tiles (0021, 0711). Nick disliked agent-drawn
+  portraits, so agent-drawn backgrounds may clash in the same way; say so
   honestly and show them next to the bought portraits.
 - Any bought art follows ADR-0032 and the private assets repo (0110).
 - **Already bought (2026-10-02):** the Mega Tiles bundle includes
@@ -144,7 +144,7 @@ conversations*, with Nick's words).
   sign-off asks again about the four scene music picks (`audio.md`).
   1043 (the Playdate's dialogue screen) now says how the place shows
   there.
-- **Claude's starting rules** (in the design doc, Nick can veto): the
+- **the agent's starting rules** (in the design doc, Nick can veto): the
   place at about 40% brightness; an opening of about 1.5 s of movement
   and 0.5 s of darkening, Confirm skips it; actors are their map sprites
   (glyphs in the glyph look) at the map's walking speed; intro and

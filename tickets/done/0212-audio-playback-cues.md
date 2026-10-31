@@ -3,7 +3,7 @@ id: "0212"
 title: "Audio playback: sound and music cues from screens, played by app"
 type: infra
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -182,7 +182,7 @@ screens. Decisions are in ADR-0026.
   (`register_plugin`, quad_storage version) are the known ones from
   0206/0207.
 
-**Claude's starting rules** (the design docs don't cover these; Nick can
+**the agent's starting rules** (the design docs don't cover these; Nick can
 veto any of them):
 
 1. When the music is switching and the game asks for the old track again

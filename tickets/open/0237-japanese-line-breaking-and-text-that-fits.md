@@ -3,7 +3,7 @@ id: "0237"
 title: Japanese line breaking, and screens whose text must fit
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0235", "0236", "engine#2302"]

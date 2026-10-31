@@ -3,7 +3,7 @@ id: "0469"
 title: "Guides show a small picture of what each topic explains"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: []

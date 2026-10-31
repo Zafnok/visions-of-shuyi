@@ -3,7 +3,7 @@ id: "0220"
 title: "Help bars and tips name controller buttons when the controller was used last"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0032", "0217", "0219"]
@@ -169,7 +169,7 @@ keys again. Press a button: buttons again.
 *key* stops the controller's Confirm picking on the map). Notes added to
 0226 and 0816.
 
-*Claude's starting rules* (the design docs didn't say; Nick can veto;
+*the agent's starting rules* (the design docs didn't say; Nick can veto;
 also in `controls.md`, *Notes from building it (ticket 0220)*):
 
 - **Only a press that does something switches the text.** A key or button

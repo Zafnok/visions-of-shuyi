@@ -3,7 +3,7 @@ id: "0317"
 title: Attack spells the enemy can't counter (Cinder Oath)
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0056"]
@@ -46,7 +46,7 @@ doesn't strike back.
 - Update the `crate::spell` module docs (*Rules*) with the new rule.
 - Only the attacker's spell counts: if Rue has Cinder Oath equipped and is
   attacked from the next tile, she still counters with it (`magic.md`,
-  Claude's starting rule).
+  The agent's starting rule).
 
 **Out (do not do):**
 - Kept Promise and what triggers it (open, Nick: after the Chapter 1
@@ -116,5 +116,5 @@ doesn't strike back.
   (one fewer counter roll changes every roll after it), so no balance
   change is read from it. The winning replay (`ch01_winnable`) passes
   unchanged.
-- No new *Claude's starting rule*: the one this ticket implements (only
+- No new *the agent's starting rule*: the one this ticket implements (only
   the attacker's spell counts) was already written in `magic.md`.

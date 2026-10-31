@@ -3,7 +3,7 @@ id: "1034"
 title: "Playdate: button chords (A + B ends the turn, hold B + left/right picks the previous/next unit)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1033"]
@@ -156,7 +156,7 @@ lesson asks for Unit info, which has no Playdate button (`! not
 mapped`), so on a Playdate the lesson can't be finished and the turn
 can't end. Added to 1050's `blocked_by` and the roadmap.
 
-**Claude's starting rules** (how the chords feel, where the design is
+**the agent's starting rules** (how the chords feel, where the design is
 silent; Nick can veto):
 - On the Playdate, B cancels when you **let go** of it, and A confirms a
   split second (80 ms) after the press, or when you let go if sooner.

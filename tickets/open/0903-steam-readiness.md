@@ -3,7 +3,7 @@ id: "0903"
 title: "Steam readiness: steamworks feature flag, depot build script, Deck check"
 type: research
 milestone: M8 Release
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0816", "0902", "0906", "0908", "1064"]

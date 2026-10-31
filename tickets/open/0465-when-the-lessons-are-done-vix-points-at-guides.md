@@ -3,7 +3,7 @@ id: "0465"
 title: "When the lessons are done, Vix points at Guides and offers a fresh start"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0464"]
@@ -62,13 +62,13 @@ it):
 
 **In:**
 - **When:** the moment the last lesson the campaign's tutorial level
-  shows is done (*Claude's starting rule*). At Full that may be a later
+  shows is done (*the agent's starting rule*). At Full that may be a later
   turn (spells on tiles, Combat Arts); if Nick wanted it straight after
   turn 1–2's lessons, that's his call in the Act 1 playtest (1064). At None, never.
 - **What:** one guide box, in Vix's voice and with her face, wrapping as
   0459 does. It says she's done, that Guides in the map menu (named with
   the player's key, `{Cancel}`) has everything, and asks with three
-  answers (*Claude's wording, Nick can change*):
+  answers (*the agent's wording, Nick can change*):
   - "Keep going" (the cursor starts here: the safe answer, Nick's rule of
     non-destructive defaults);
   - "Restart the battle" (back to turn 1, lessons stay done);

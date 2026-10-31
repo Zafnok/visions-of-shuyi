@@ -3,7 +3,7 @@ id: "0466"
 title: "A tip about the map zoom on the first turn"
 type: content
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []
@@ -51,10 +51,10 @@ it):
 ## Scope
 
 **In:**
-- A tip "Zooming the map" (*Claude's wording*), at **Full**, on the first
+- A tip "Zooming the map" (*the agent's wording*), at **Full**, on the first
   turn of the first battle, after the turn-1 lessons (cursor → keys →
   next unit → selecting) and the start tip, so it doesn't add to the pile
-  at the start (*Claude's starting rule*: on the first player phase when
+  at the start (*the agent's starting rule*: on the first player phase when
   no lesson is open; if a trigger for that is missing in `tips.ron`, add
   one). Text names `{ZoomMap}` and says the view scrolls with the cursor.
 - Only when the map is drawn with pictures (zoom does nothing in the

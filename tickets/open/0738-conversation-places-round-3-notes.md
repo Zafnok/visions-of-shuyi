@@ -3,7 +3,7 @@ id: "0738"
 title: "Conversation places: longer openings, no outline on actors, a lighter study, units left standing at the toll-fort"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []
@@ -68,15 +68,15 @@ it):
 
 **In:**
 1. **Sparring ~2.0 s** (`assets/openings/ch01_sparring.ron`: one more
-   exchange or slower steps, *Claude's choice*, still facing each other).
+   exchange or slower steps, *the agent's choice*, still facing each other).
 2. **Dace pacing ~2.0–2.5 s** (`ch01_pacing.ron`: one more turn across
-   the rug, *Claude's starting rule*).
+   the rug, *the agent's starting rule*).
 3. **No outline on opening actors**, in every map skin (ADR-0038): a
    "no side" look for actors that aren't on a side, or an `outline: None`
    on the cast (say which). Not the neutral yellow.
 4. **Per-scene brightness:** an optional brightness on `@place` (e.g.
    `@place study 12 7 bright 0.6`; pick the directive form that fits
-   the `.dlg` format, ADR-0011) used by `ch01_tbc` only. *Claude's
+   the `.dlg` format, ADR-0011) used by `ch01_tbc` only. *the agent's
    starting value:* 0.6 for the study. Default stays 0.4.
 5. **Victory at the toll-fort:**
    - **Who's left standing:** the battle's surviving player units drawn

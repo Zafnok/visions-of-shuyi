@@ -3,7 +3,7 @@ id: "0715"
 title: Dialogue lines that depend on who is still in the army
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -201,7 +201,7 @@ None. What a scene says when someone is dead is story writing (0716).
   character" is in `content` (on `Scene::resolved`, with generated
   scenes) and in `ui` (on `DialoguePlayer`, over every embedded scene).
 
-**Rules a player would notice** (*Claude's starting rules*, for Nick to
+**Rules a player would notice** (*the agent's starting rules*, for Nick to
 agree or veto):
 
 1. In a scene **during a battle**, "there" means **on the map right

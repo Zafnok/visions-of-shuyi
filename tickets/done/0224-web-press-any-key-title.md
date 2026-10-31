@@ -3,7 +3,7 @@ id: "0224"
 title: Web build shows "Press any key" on the title before the music
 type: feature
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0034"]
@@ -39,7 +39,7 @@ the title music. The Windows build is unchanged.
 - A way for screens to know "some key was pressed this frame", whatever it
   is bound to (not an `Action`): e.g. a `bool` on `FrameInput` set by the
   app from macroquad's pressed keys.
-- Every rule in `docs/design/title-screen.md`, including Claude's starting
+- Every rule in `docs/design/title-screen.md`, including the agent's starting
   rules.
 
 **Out (do not do):**
@@ -119,4 +119,4 @@ the title music. The Windows build is unchanged.
   blocked-then-unlocked path. Nick's first run on Pages is the real check.
 - The F2 debug hint still shows in the corner while waiting (debug and
   Pages builds only).
-- Claude's starting rules are in `docs/design/title-screen.md`.
+- The agent's starting rules are in `docs/design/title-screen.md`.

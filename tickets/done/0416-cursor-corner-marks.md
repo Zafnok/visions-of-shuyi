@@ -3,7 +3,7 @@ id: "0416"
 title: Cursor as corner marks that never cover a neighbour's initials
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0402"]
@@ -105,5 +105,5 @@ no initial should ever be hidden.
 - Open for Nick (recorded in `look-and-feel.md` and ticket 0403): the
   selected-unit arrows `►Al◄` would hide a neighbour's letter the same way,
   so 0403 must ask before drawing them.
-- *Claude's starting rule:* tile glow strength up to 30% at full brightness
+- *the agent's starting rule:* tile glow strength up to 30% at full brightness
   (`GLOW_MAX`, tunable), matching the mockup Nick saw.

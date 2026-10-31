@@ -3,7 +3,7 @@ id: "1178"
 title: "Arrows at the map's edges on the Playdate"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1038"]

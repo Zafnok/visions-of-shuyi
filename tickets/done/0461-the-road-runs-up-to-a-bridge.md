@@ -3,7 +3,7 @@ id: "0461"
 title: "The road runs up to a bridge instead of narrowing at it"
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0421"
 title: Longer first delay before held keys repeat
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0204"]
@@ -62,7 +62,7 @@ too slow or still too fast.)
 
 ## Completion notes
 
-*Claude's starting rule:* 300 ms, applied to every held direction key (menus
+*the agent's starting rule:* 300 ms, applied to every held direction key (menus
 and the map cursor share one timing). It's the common "type-matic" default
 range (250–500 ms) and removes accidental double steps from a normal tap.
 ADR-0006 mentions 170 ms as the initial value; the data file is the source

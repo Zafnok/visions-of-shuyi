@@ -3,7 +3,7 @@ id: "0063"
 title: "Decide: rework the intro cinematic's shots (opening narration, faces, the 4x shot, the ending)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

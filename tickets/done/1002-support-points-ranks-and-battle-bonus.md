@@ -3,7 +3,7 @@ id: "1002"
 title: Support points, ranks and battle bonus (core rules + data)
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0010", "0304", "0305", "0306", "0307", "0309", "0311", "0801", "0802"]
@@ -140,7 +140,7 @@ None. Every rule and number comes from `supports.md`. The numbers there are
   units), with placeholder scenes in `assets/dialogue/test_supports.dlg`.
   Real pairs and conversations come from the story pipeline.
 
-**Rules decided where the design was silent** (*Claude's starting rules*;
+**Rules decided where the design was silent** (*the agent's starting rules*;
 Nick can veto any of them)
 
 1. **Only your own units build supports and get the bonus.** A green

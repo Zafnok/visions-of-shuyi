@@ -3,7 +3,7 @@ id: "1174"
 title: "Engine friction you can check: an area column, a trigger check in the gates, and net lines for refactors"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []
@@ -299,7 +299,7 @@ fixes":
   1168, 1169, 1170, 1171, 1172, 1173 and 1174 itself), so it is picked
   up when the block closes; `1172` is needed first anyway (its
   `--tree`);
-- `model: opus-5.5`, `effort: high`, like 1153.
+- `model: reasoning`, `effort: high`, like 1153.
 
 Then in `docs/ROADMAP.md`, the line this ticket's PR added (*The
 engine*, step 2) names the sweep ticket's number in place of "the

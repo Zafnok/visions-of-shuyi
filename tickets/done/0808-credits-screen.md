@@ -3,7 +3,7 @@ id: "0808"
 title: "Credits screen listing every third-party work"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0214", "0801"]
@@ -131,7 +131,7 @@ this):
   play even if the credits were one day opened from somewhere else. Coming
   from the title it simply carries on without restarting.
 
-*Claude's starting rules* for the parts Nick's note left open:
+*the agent's starting rules* for the parts Nick's note left open:
 
 - The list waits 2 seconds at the top, then moves up one line every half
   second. The whole list takes about a minute.
@@ -140,7 +140,7 @@ this):
   it; Confirm starts it again from where they are.
 - Rolling makes no sound.
 
-**Claude's starting choices (Nick can veto at sign-off).** The ticket
+**the agent's starting choices (Nick can veto at sign-off).** The ticket
 called its layout "a starting point", so these are how the screen looks
 and behaves today, not decisions:
 

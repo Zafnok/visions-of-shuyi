@@ -3,7 +3,7 @@ id: "0037"
 title: "Decide: more building tiles (village, gate, throne), capturing and healing tiles"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -147,6 +147,6 @@ waits for 0322, uses the `house` terrain instead of a map feature, and
 no longer needs Nick. 0409 no longer draws the house. 0849 waits for
 0322. 1064 waits for 0322 and 0471.
 
-**Claude's starting rules:** none new. The stand-in pictures (the small
+**the agent's starting rules:** none new. The stand-in pictures (the small
 World Map house, the Fortress archway, a chair) are placeholders until
 0471.

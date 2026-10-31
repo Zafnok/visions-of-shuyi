@@ -3,7 +3,7 @@ id: "0053"
 title: "Decide: multiplayer — which modes, how armies are set up, fairness, servers"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: high
 status: blocked
 blocked_by: ["0903"]
@@ -28,7 +28,7 @@ hard to make it work in a good way", and then:
 readiness, is the last release ticket today; if a later launch ticket is
 written, move this ticket's `blocked_by` to it).
 
-His first reactions to the five options Claude listed:
+His first reactions to the five options the agent listed:
 
 | Option | What it is | Nick |
 | ------ | ---------- | ---- |
@@ -71,7 +71,7 @@ on the day**:
   game, so they can be cheated).
 - **Other costs:** a modded game could compute the dice before a move is
   committed, so each roll needs a secret part from both sides that is only
-  revealed after the move is locked in (technical; Claude's job). The web
+  revealed after the move is locked in (technical; the agent's job). The web
   build can't use Steam, so web ↔ Steam play needs a relay of our own.
 
 ## Nick input

@@ -3,7 +3,7 @@ id: "0745"
 title: "Chapter 3 script: Greywater, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0744"]
@@ -33,7 +33,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -201,7 +201,7 @@ because an `xtask` unit test checks a `lang-status` report for the
 words "left out" and matched Rue's "He just left out the rest";
 ticket 1079 narrows that test. No test was changed.
 
-**Claude's starting rules:** none that touch play. For the Act 1
+**the agent's starting rules:** none that touch play. For the Act 1
 playtest (1064): whether the prior should die or live; whether Tamsin
 has enough in this chapter (her arc is Chapter 4's, and the cold reads
 found her the companion they'd miss least here); whether Joss's sleeve

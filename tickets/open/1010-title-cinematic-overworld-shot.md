@@ -3,7 +3,7 @@ id: "1010"
 title: "Add the overworld shot to the title cinematic"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0036", "0820", "1007"]

@@ -3,7 +3,7 @@ id: "0315"
 title: Remove non-player units' own consumables
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0501"]

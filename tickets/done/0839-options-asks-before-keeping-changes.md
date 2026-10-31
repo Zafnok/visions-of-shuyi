@@ -3,7 +3,7 @@ id: "0839"
 title: Leaving Options asks whether to keep the changes
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -44,7 +44,7 @@ page, and see the new speed.
   are a change like any other, kept or discarded on leaving.
 - `Reset tips` keeps working as it does (it asks first already).
 - Settings changed outside the Options screen keep saving at once: the
-  Zoom map key (`options.md`, *Claude's starting rule*) and the hand-layout
+  Zoom map key (`options.md`, *the agent's starting rule*) and the hand-layout
   picker.
 - Words in the language files (American English; `test` pack too); keys
   named through the keymap (`keyboard-input` skill).
@@ -99,7 +99,7 @@ page, and see the new speed.
   unchanged. Existing tests that relaunched after a change now keep it
   first.
 
-**Claude's starting rules** (the design docs were silent):
+**the agent's starting rules** (the design docs were silent):
 - Cancel on the question is Back (stay).
 - The three answers sit on one line, Keep, Discard, Back; the cursor's
   keys move between them and stop at the ends.

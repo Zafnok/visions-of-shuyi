@@ -3,7 +3,7 @@ id: "0405"
 title: Unit info screen, danger zone, map menu, end turn, phase banners, victory/defeat
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0404"]
@@ -96,7 +96,7 @@ new modes in `mode.rs` (map menu, unit list, objective, end-turn prompt, info),
 - No PLAYER PHASE banner at the very start of a battle: the screen is built
   from a state, not its start events; the real battle flow (0801) can show it.
 
-*Claude's starting rules* (the design docs were silent; Nick may veto):
+*the agent's starting rules* (the design docs were silent; Nick may veto):
 
 1. Info screen cycles the unit's faction in reading order (top to bottom,
    left to right); closing it leaves the cursor on the last unit shown. It

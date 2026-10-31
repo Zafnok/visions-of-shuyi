@@ -3,7 +3,7 @@ id: "0324"
 title: "An escape map names its exit on the objective line"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0319"]

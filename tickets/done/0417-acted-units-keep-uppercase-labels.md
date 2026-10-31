@@ -3,7 +3,7 @@ id: "0417"
 title: Acted units keep their uppercase label, dimmed only
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0404"]

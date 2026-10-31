@@ -3,7 +3,7 @@ id: "0501"
 title: "Enemy AI v1: behaviours, target scoring, deterministic planning"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0305", "0306", "0309"]
@@ -117,7 +117,7 @@ panicked, and every command was accepted.
 - The ticket's tie-break is `(target id, dest.y, dest.x, weapon id)`; a
   loadout slot is added last, for two copies of the same weapon.
 
-**Claude's starting rules** (gameplay the design docs don't settle; all
+**the agent's starting rules** (gameplay the design docs don't settle; all
 *tunable*, judged in playtest 0804):
 
 1. **Weights:** 10 per expected HP dealt, 300 × kill chance, +50 for

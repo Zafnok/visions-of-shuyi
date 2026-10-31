@@ -9,13 +9,13 @@ metadata:
 
 One `engine-pin` GitHub issue is one PR. The issue body **is** the ticket:
 the second exception to "work one ticket at a time from `tickets/open/`"
-(`CLAUDE.md` hard rule 1,
+(`AGENTS.md` hard rule 1,
 ADR-0096),
 like a `sonar` issue. There is no ticket file to write or move.
 `.github/workflows/engine-watch.yml` files the issue and keeps it up to
 date as the engine's `main` moves.
 
-**Model:** Opus 5.5, effort medium (Nick, 2026-10-25).
+**Capability:** `reasoning`, effort `medium` (portable form of Nick's recommendation; `tickets/README.md`).
 
 `work-ticket` still governs everything this skill doesn't change: gates,
 never weakening a gate, one PR, then stop. The PR stays **mechanical**:
@@ -50,6 +50,7 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    cargo xtask engine --off
    cargo xtask engine-pin <main's full commit>
    cargo xtask skill-pack
+   pwsh -File scripts/sync-agent-skills.ps1
    ```
 
    `skill-pack` builds with the new pin and copies its skill pack into
@@ -124,7 +125,7 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    is titled `Engine pin: <old 8> → <new 8> (N engine PRs)`, and its body
    has `Closes #<issue>`, the ledger section, the tickets written or
    changed, and an `Engine friction:` line ("none: no game code" when the
-   fixes are only call sites). No bare `@word` (`CLAUDE.md`): engine PR
+   fixes are only call sites). No bare `@word` (`AGENTS.md`): engine PR
    titles can have them, so put them in backticks. Then stop.
 
 ## Rules that trip agents up here

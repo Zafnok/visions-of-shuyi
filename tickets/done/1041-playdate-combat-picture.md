@@ -3,7 +3,7 @@ id: "1041"
 title: "Playdate: the simple one-bit combat picture"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1039", "1040", "1061", "0062"]
@@ -204,7 +204,7 @@ Row in `docs/engine/friction.md`.
 by engine#3056); engine#3056 (one-bit sprites drawn fast). 1057 got the
 day's battle numbers.
 
-***Claude's starting rules*** (in `docs/design/playdate.md`, *The combat
+***the agent's starting rules*** (in `docs/design/playdate.md`, *The combat
 picture*; for 1064's checklist, Nick can veto):
 - The backdrop lightened as in 0062's mockup (`0.6 b + 0.47`), showing
   the mockup's rows of the picture.

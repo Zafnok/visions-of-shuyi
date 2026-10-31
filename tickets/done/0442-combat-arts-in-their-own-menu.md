@@ -3,7 +3,7 @@ id: "0442"
 title: Combat Arts in their own menu, out of the forecast
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -162,7 +162,7 @@ forecast*, `turn-structure.md` → *Pointing at an enemy* and `magic.md`):
   spell's uses and numbers (they are on the `Fire` line above): with them
   the list was too wide to fit beside the unit.
 
-**Rules I decided** (*Claude's starting rules*, Nick can veto):
+**Rules I decided** (*the agent's starting rules*, Nick can veto):
 
 - `Arts` is listed when the unit has an art or a weapon active for a weapon
   it carries, and dimmed when none can be used on anyone from that tile.

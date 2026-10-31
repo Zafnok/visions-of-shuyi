@@ -3,7 +3,7 @@ id: "0716"
 title: Chapter 1 scenes when a companion has died
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0707", "0715"]
@@ -138,7 +138,7 @@ matters for this ticket:
 
 ## Completion notes
 
-Written on Opus 5.5, not fable-5.1: Nick's choice for this session.
+Written on Opus 5.5, not creative: Nick's choice for this session.
 
 ### What was done
 

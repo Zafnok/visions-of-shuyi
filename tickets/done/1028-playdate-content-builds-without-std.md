@@ -3,7 +3,7 @@ id: "1028"
 title: "Playdate: trpg-content builds without std (a generated file table instead of include_dir)"
 type: infra
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["1027"]

@@ -3,7 +3,7 @@ id: "0456"
 title: Checklist lessons from the guide; the turn waits until one is done
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0455", "0835"]
@@ -25,7 +25,7 @@ A **lesson** is a box from the guide (the tip box with the face, ticket
 0455) with a checklist. Each item is something to do, ticked as the player
 does it, in any order. When every item is ticked, the lesson closes. While
 it is open, the game works as usual under it (the items are real actions),
-but **the turn can't end** (*Claude's starting rule* for "forced"). Each
+but **the turn can't end** (*the agent's starting rule* for "forced"). Each
 lesson has a level: `Full` lessons show only at `Full`, `Short` lessons
 show at `Full` and `Short`, and none show at `None` (the campaign's
 `TutorialLevel`, ticket 0835). Each lesson shows once per campaign.
@@ -62,14 +62,14 @@ ticket 0457.
   item. Everything else works. The box doesn't take input, so the map
   under it stays usable. The box sits at the top of the map, and moves to
   the bottom while the cursor is in the top half, so it never hides the
-  cursor's tile. *Claude's starting rule.*
+  cursor's tile. *the agent's starting rule.*
 - Lessons done are kept with the campaign (`Campaign.lessons_done`, a set
   of ids, serde default empty), so a reload doesn't repeat one.
 - Only one lesson at a time; a lesson waits as tips do (combat playback,
   scenes, banners, notes, the rewind screen unless one of its items needs
   it). Tips wait while a lesson is open.
 - Rewind and lessons: rewinding never un-ticks an item or reopens a done
-  lesson. *Claude's starting rule.*
+  lesson. *the agent's starting rule.*
 - A test lesson in `assets-test/` used by the tests (cursor up/down/left/
   right on the test chapter's first turn).
 - The bots never see lessons (they play through `core`; lessons are UI
@@ -178,7 +178,7 @@ ticket 0457.
   unchanged and pass.
 - No follow-up tickets.
 
-**Claude's starting rules** (gameplay-affecting, for Nick to veto):
+**the agent's starting rules** (gameplay-affecting, for Nick to veto):
 
 1. When a tip and a lesson start at the same moment (the first turn at
    Full), the tip shows first and the lesson opens when it is closed.

@@ -3,7 +3,7 @@ id: "0701"
 title: Story bible, main cast sheets, act outline, Chapter 1 beat sheet
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0004", "0007", "0008"]
@@ -184,7 +184,7 @@ Worked by Opus 5.5 instead of Fable 5.1, at Nick's request.
   differs: the son is aware, sad and sympathetic, and the father can't refuse
   him.
 
-**Claude's starting rules (gameplay-affecting; Nick may veto)**
+**the agent's starting rules (gameplay-affecting; Nick may veto)**
 
 - **Talents** (`progression.md`):
   - the lead: Str

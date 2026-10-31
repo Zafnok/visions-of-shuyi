@@ -3,7 +3,7 @@ id: "1061"
 title: "Playdate: the bought art in the Playdate's bundle, as one-bit pictures"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["1040"]

@@ -3,7 +3,7 @@ id: "0208"
 title: Right- and left-handed key layouts, first-launch layout picker
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0204", "0205", "0207"]

@@ -3,7 +3,7 @@ id: "1197"
 title: The pin review asks what each engine PR gives the game, not only what it replaces
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

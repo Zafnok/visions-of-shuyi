@@ -3,7 +3,7 @@ id: "1181"
 title: "The engine's MCP server on the game: its session, `.mcp.json`, and a reconnect when the pin moves"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["1177", "engine#1133"]

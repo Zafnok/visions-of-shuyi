@@ -3,7 +3,7 @@ id: "0744"
 title: "Chapter 2 script: Kell's Ford, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0737"]
@@ -33,7 +33,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -184,7 +184,7 @@ The workspace test gate is red on `main` itself since 0071 merged
 are in neither the manifest nor `RESERVED`); ticket 0252 fixes it. No
 other gate is affected by this ticket.
 
-**Claude's starting rules:** none that touch play. For the Act 1
+**the agent's starting rules:** none that touch play. For the Act 1
 playtest (1064): whether Rue has enough presence in this chapter (she
 has four boxes outside the battle); whether the far-bank scene's
 lightness ("Your Grace!") sits right straight after the herald.

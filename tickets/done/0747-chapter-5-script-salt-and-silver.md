@@ -3,7 +3,7 @@ id: "0747"
 title: "Chapter 5 script: Salt and Silver, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0746"]
@@ -32,7 +32,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -161,7 +161,7 @@ them) was taken off the point by League privateers three days before and
 is held somewhere the League won't say; Ragna will find out and send
 word. The quest unlocks after this battle with Aske alive.
 
-**Claude's starting rules** (story staging, not gameplay): the boss is a
+**the agent's starting rules** (story staging, not gameplay): the boss is a
 nameless Hound officer (no new named character, so nothing went to
 Nick); the magistrate is nameless too; Hollis sees the sea on the Salt
 Road ridge and says "It's a lot of water", which Dace quotes in the cut;

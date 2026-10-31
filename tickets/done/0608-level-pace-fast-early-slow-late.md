@@ -3,7 +3,7 @@ id: "0608"
 title: "Level pace: about 2 levels per battle early, 1 every 2 battles late"
 type: tuning
 milestone: M5 Progression
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

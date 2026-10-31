@@ -3,7 +3,7 @@ id: "0033"
 title: "Decide: playtest bot player types and what each must achieve"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -165,7 +165,7 @@ autobalancing battles and generating skirmishes to order. Recorded in
 - Autobalancing: anything for random skirmishes, enemy numbers only for
   fixed skirmishes and side quests. "Lv 35" means a lv 35 battle.
 
-*Claude's starting rules* (Nick may veto):
+*the agent's starting rules* (Nick may veto):
 - Upper band edges are the lower edge +25 points; Easy/Hard/Finale rows of
   the band table are proposed values.
 - "Hardcore is faster" is checked as Hardcore's median turns < Normal's; no

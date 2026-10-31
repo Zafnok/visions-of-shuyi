@@ -3,7 +3,7 @@ id: "0425"
 title: "Menu and map-cursor sounds"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0212", "0213"]
@@ -41,7 +41,7 @@ holding a key down. Does the tick get tiring? Is the cursor volume right?
   wasn't asked).
 - The battle map cursor: each tile it moves → `cursor_move`. Key repeat
   (ticket 0421) ticks on every repeated step.
-- Selecting a disabled menu item plays **nothing**. This is *Claude's starting
+- Selecting a disabled menu item plays **nothing**. This is *the agent's starting
   rule*: list it in the PR for Nick.
 
 **Out (do not do):**
@@ -106,7 +106,7 @@ holding a key down. Does the tick get tiring? Is the cursor volume right?
 - Follow-ups: 0031 (decide the warning tone and the message-close whoosh),
   0427 (render and wire them).
 
-**Claude's starting rules** (the design docs don't cover these; Nick can
+**the agent's starting rules** (the design docs don't cover these; Nick can
 veto any of them):
 
 1. ~~Selecting a disabled menu item plays nothing.~~ Nick: it plays a

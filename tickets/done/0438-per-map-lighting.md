@@ -3,7 +3,7 @@ id: "0438"
 title: "Per-map lighting: low-light maps are shaded, noon maps are not"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0437"]
@@ -24,7 +24,7 @@ it can be like C/C2."
 Rule, in `docs/design/look-and-feel.md` (*Battle map: bought tiles and
 unit sprites*): lighting is set per map; noon shows the tiles as bought;
 low light shows them darkened; unit sprites keep their own colours in
-every light (*Claude's starting rule*, from how C3 was drawn).
+every light (*the agent's starting rule*, from how C3 was drawn).
 
 How C3 was made (the look Nick approved): each terrain pixel was moved 35%
 of the way to its own grey, then its red, green and blue were multiplied
@@ -90,7 +90,7 @@ data.
 1. **Data** `assets/data/lighting.ron`: `{ "noon": (grey: 0.0, tint: (1.0,
    1.0, 1.0)), "dusk": (grey: 0.35, tint: (0.62, 0.56, 0.46)), … }`.
    Start with **noon** (as bought), **dusk** (C3's values above) and
-   **night** (darker and bluer than dusk: *Claude's starting values*, e.g.
+   **night** (darker and bluer than dusk: *the agent's starting values*, e.g.
    grey 0.45, tint (0.40, 0.44, 0.58)). All *tunable*. Loader and validator
    in `trpg-content` (values in `0.0..=1.0`; `noon` must exist).
 2. **Map look**: `look: (tiles: "outdoor", light: "dusk")` in the `.map`
@@ -159,7 +159,7 @@ combat stage's backdrop follows the light too.
   invented: **Nick, say if Chapter 1's battle should be at dusk** (one
   word in `assets/maps/ch01.map`).
 
-**Claude's starting rules** (Nick can veto; all in `look-and-feel.md`):
+**the agent's starting rules** (Nick can veto; all in `look-and-feel.md`):
 
 - **Night** is darker and bluer than dusk (grey 0.45, tint 0.40 / 0.44 /
   0.58). Dusk is render C3's numbers exactly.

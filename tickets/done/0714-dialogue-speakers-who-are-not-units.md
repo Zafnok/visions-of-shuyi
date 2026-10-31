@@ -3,7 +3,7 @@ id: "0714"
 title: Dialogue speakers who aren't units; add the Chapter 1 cast as speakers
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0724"
 title: "Chapter 1 script: play the opening and the battle straight (fewer quips)"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0707"]
@@ -83,7 +83,7 @@ What to take from it:
 ## Nick input
 
 **Sign-off:** the PR lists, scene by scene, the lines that changed (old
-and new, as text). Nick reads them and comments. Claude writes every line
+and new, as text). Nick reads them and comments. The agent writes every line
 (Nick writes no dialogue); only tone and story decisions go to him.
 
 It waits until after his Chapter 1 playtest (0804). Asked whether it
@@ -173,7 +173,7 @@ and this one no longer waits for 0804.
 ## Completion notes
 
 Done 2026-10-12 (run on Opus 5.5, Nick's choice over the ticket's
-fable-5.1).
+creative).
 
 **What was done**
 

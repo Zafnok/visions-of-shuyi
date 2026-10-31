@@ -3,7 +3,7 @@ id: "0602"
 title: EXP bar animation and the level-up screen
 type: feature
 milestone: M5 Progression
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0601", "0404"]
@@ -79,7 +79,7 @@ The dopamine moment Nick asked for ("unit progression (level ups…)"). Shows
 10-cell example, so the 0.6 s fill looks smooth. Several awards to one unit
 in one command (e.g. Line Pierce's combats) show as one bar with the sum.
 
-**Choices Claude made where the docs were silent** (presentation, not game
+**Choices the agent made where the docs were silent** (presentation, not game
 rules; Nick may veto any):
 - The EXP bar closes by itself 0.5 s after it fills; a class-level notice
   with nothing else closes by itself after 1.2 s. The level-up page and a

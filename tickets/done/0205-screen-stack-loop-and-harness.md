@@ -3,7 +3,7 @@ id: "0205"
 title: Screen stack, game loop, menu widget, placeholder title screen, headless test Harness
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0203", "0204"]

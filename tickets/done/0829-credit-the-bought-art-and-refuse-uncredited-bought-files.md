@@ -3,7 +3,7 @@ id: "0829"
 title: "Credit the bought art, and refuse bought files that have no credit"
 type: bug
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -37,7 +37,7 @@ ticket that first puts it in the game". Three reasons:
 ## Nick input
 
 **Sign-off** after merge, on the Pages build: Credits shows an **Art**
-heading with the Tiny Tales entry. Comment on the wording (see *Claude's
+heading with the Tiny Tales entry. Comment on the wording (see *the agent's
 starting rules* in the completion notes).
 
 ## Scope
@@ -134,7 +134,7 @@ starting rules* in the completion notes).
 bundle's files by `display_path`, which is already tested (a function
 that is always empty in a gate can't be mutation-tested).
 
-**Claude's starting rules (veto any):**
+**the agent's starting rules (veto any):**
 
 - The heading is **Art**, after *Sound effects* and before *Fonts*.
 - The entry reads `"Tiny Tales" by Megatiles (artists: Rayane Félix,

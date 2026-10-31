@@ -3,7 +3,7 @@ id: "0411"
 title: "Battle notes: start-of-battle strategy hints for unique enemies"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0405", "0801"]
@@ -99,7 +99,7 @@ map menu's `Objective` page; the units they are about blink meanwhile.
 4. The box isn't always centred: see rule 2 below. On the test map a
    centred box would have covered the brigand it is about.
 
-**Claude's starting rules** (the design was silent; Nick may veto; also in
+**the agent's starting rules** (the design was silent; Nick may veto; also in
 `docs/design/magic.md`):
 
 1. The box comes before anything else in the battle: a turn-1 scene and the

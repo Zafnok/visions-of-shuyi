@@ -3,7 +3,7 @@ id: "0019"
 title: "Decide: should classes cap stats, and how does that fit a very high level cap?"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -18,7 +18,7 @@ completed: 2026-09-28
 `docs/design/progression.md` ("Stat caps") and `stats-and-combat.md` give
 every class a per-stat cap (e.g. Exile HP 42, Str 22; Blade Heir HP 50): a
 level-up roll can't raise a stat past its current class's cap. That rule was
-**Claude's tunable default**, never Nick's decision. It came up on
+**the agent's tunable default**, never Nick's decision. It came up on
 2026-09-28 when Nick questioned the `19/42` on the info screen (removed in
 0423): "We have 1) a level cap 2) random growth per level so how can a MAX be
 constrained by class...?"
@@ -75,7 +75,7 @@ ceiling numbers, fixed or rising with tier, are decided in 0013).
   "stats above the new caps"; 0602's level-up overlay shows no `MAX`.
 - Follow-up created: **0604** (remove `caps` from `classes.ron`, content and
   `core`; clamp to the hard ceilings).
-- *Claude's starting rule:* the promotion/class-change choice screen shows
+- *the agent's starting rule:* the promotion/class-change choice screen shows
   `MAX` even if it opens during a battle (a seal used from the battle menu),
   because it is a class-choice screen, not a battle screen. Nick may veto.
 - Until 0604 lands, the game still applies the old class caps.

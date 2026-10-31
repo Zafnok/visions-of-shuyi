@@ -3,7 +3,7 @@ id: "0819"
 title: "Title screen plays the intro cinematic in time with the title music"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0036", "0226", "0227", "0811", "0817"]
@@ -29,7 +29,7 @@ button` prompt on every build (0226). This ticket joins them in
 
 How the cinematic and the menu share the screen was decided in 0036
 (2026-10-03). The rules are in `docs/design/title-screen.md`, *Intro
-cinematic*: **How the title behaves** (rules 1–7, Nick's) and **Claude's
+cinematic*: **How the title behaves** (rules 1–7, Nick's) and **the agent's
 starting rules**. Read them first; in short:
 
 - The first press shows the logo and menu and starts the song (as today).
@@ -134,7 +134,7 @@ band behind `Press any key or button` and behind a notice.
 7. The logo shot must be the same picture as the title's own logo (0817
    shares the drawing), so when the menu appears on it nothing jumps.
 8. Update `docs/design/title-screen.md` only if a starting rule had to be
-   added while building (mark it as Claude's, for Nick to veto).
+   added while building (mark it as the agent's, for Nick to veto).
 
 ## Acceptance criteria
 
@@ -147,7 +147,7 @@ band behind `Press any key or button` and behind a notice.
       until the music starts, then follows it.
 - [x] Harness with `without_music()`: after 3 s the cinematic runs anyway
       and still loops at the track's length.
-- [x] Harness: each rule in *How the title behaves* and each of *Claude's
+- [x] Harness: each rule in *How the title behaves* and each of *the agent's
       starting rules* that this ticket builds has a test: a press at 14 s
       keeps the menu another 15 s; a press during the cinematic asks for
       the skip sound, stops the music, shows logo and menu, doesn't move
@@ -208,7 +208,7 @@ band behind `Press any key or button` and behind a notice.
   see-through by halves.
 - `Harness::wait` runs at most about 33 s, so the tests wait in pieces.
 
-**Claude's starting rules** (also in `docs/design/title-screen.md`; Nick
+**the agent's starting rules** (also in `docs/design/title-screen.md`; Nick
 can veto):
 
 - A skip fades the song out over half a second instead of cutting it.

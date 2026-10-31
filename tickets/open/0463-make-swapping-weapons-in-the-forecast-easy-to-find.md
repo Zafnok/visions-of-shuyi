@@ -3,7 +3,7 @@ id: "0463"
 title: "Make swapping weapons in the forecast easy to find"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

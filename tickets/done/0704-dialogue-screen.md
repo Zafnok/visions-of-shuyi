@@ -3,7 +3,7 @@ id: "0704"
 title: "Dialogue screen: two portraits, name plates, typewriter text box"
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0702", "0703"]

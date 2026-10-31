@@ -3,7 +3,7 @@ id: "0407"
 title: Item (battle pack) and Equip menus in battle
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0306", "0403"]
@@ -81,7 +81,7 @@ selection for items, a heal number popup, help-bar text.
 Deviations / UI choices (no game rules decided; core still allows any
 legal `UseItem`):
 
-- *Claude's starting rule (UI only):* `Item` is enabled, and a target listed,
+- *the agent's starting rule (UI only):* `Item` is enabled, and a target listed,
   only for units that are **hurt**; the player is never offered a use that
   heals nothing. Core would still accept it.
 - The `Equip` entry is disabled with fewer than two usable weapons; empty

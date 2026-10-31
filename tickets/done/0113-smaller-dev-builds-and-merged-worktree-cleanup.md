@@ -3,7 +3,7 @@ id: "0113"
 title: Smaller dev builds and cleanup of merged worktrees' build folders
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -56,7 +56,7 @@ worktree path, so only third-party dependencies would be shared.
 - Don't turn off incremental compilation.
 - Don't merge test files into fewer programs: ticket 0114.
 - The command never removes a worktree, a branch, or anything outside a
-  `target/` folder. Claude chat sessions are tied to their worktree folder and
+  `target/` folder. The agent chat sessions are tied to their worktree folder and
   Nick wants to keep them.
 
 ## Implementation steps

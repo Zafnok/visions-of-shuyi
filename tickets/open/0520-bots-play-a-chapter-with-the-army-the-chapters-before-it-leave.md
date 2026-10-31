@@ -3,7 +3,7 @@ id: "0520"
 title: Bots play a chapter with the army the chapters before it leave
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0848"]
@@ -55,7 +55,7 @@ anything left to judge by playing goes on 1064's checklist.
 - For a battle with Preparations: the pack filled from that army's
   stock the way a player would (consumables up to the pack cap), and
   what its gold buys at the chapter's basic shop, by a rule written in
-  `docs/playtesting.md` (*Claude's starting rule*).
+  `docs/playtesting.md` (*the agent's starting rule*).
 - Re-run `cargo shuyi autobalance --stage ch02 --apply` and the playtest
   with the new army; update `assets/battles/ch02.ron` and 0848's numbers
   where they move.

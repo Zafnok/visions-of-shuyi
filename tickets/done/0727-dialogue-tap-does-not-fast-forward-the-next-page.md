@@ -3,7 +3,7 @@ id: "0727"
 title: "Dialogue: a Confirm tap doesn't fast-forward the next page"
 type: bug
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -52,7 +52,7 @@ enough to start.
 
 1. In `dialogue.rs`, fast-forward only when an advance key has been held
    for at least `FAST_FORWARD_DELAY` seconds **on the page being revealed**
-   *(Claude's starting rule, tunable: 0.30 s)*. Keep a `held_s: f32` on the
+   *(the agent's starting rule, tunable: 0.30 s)*. Keep a `held_s: f32` on the
    screen: add `input.dt` each frame an `ADVANCE_KEYS` action is held, set
    it to 0 when none is held **and whenever a new page starts** (the press
    that advanced, or a choice being confirmed). So the tap that turns the
@@ -95,7 +95,7 @@ enough to start.
 - No deviations, no follow-up tickets. The fight playback's hold was not
   touched or tested here.
 
-**Claude's starting rule** (Nick can veto): holding Confirm speeds the text
+**the agent's starting rule** (Nick can veto): holding Confirm speeds the text
 up only after 0.3 s on that page. Keep it held through several pages and
 each page starts at the normal speed, then goes fast a moment later.
 

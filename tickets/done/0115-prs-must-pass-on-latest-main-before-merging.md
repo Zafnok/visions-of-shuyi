@@ -3,7 +3,7 @@ id: "0115"
 title: PRs must pass CI on the latest main before they merge
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

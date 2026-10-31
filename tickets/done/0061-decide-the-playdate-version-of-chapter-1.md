@@ -3,7 +3,7 @@ id: "0061"
 title: "Decide: the Playdate version of Chapter 1 (screen, buttons, crank, what's left out)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -155,7 +155,7 @@ changing the desktop or web game's look or controls; the technical test
 - 1025's scope now lists the voices, 1-bit portraits, combat picture,
   title cinematic, one build per language and the itch.io-then-Catalog
   order.
-- *Claude's starting rules* (Nick can veto): a white ground; corner
+- *the agent's starting rules* (Nick can veto): a white ground; corner
   pop-ups sit at the top and move down when the cursor comes near; the
   side panel's other contents live in Unit info and the map menu; the
   cursor's corner marks flip the pixels under them; winding the crank

@@ -3,7 +3,7 @@ id: "0125"
 title: "README: Chapter 1 pictures, the opening intro, progress, the engine and the Playdate"
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: low
 status: done
 blocked_by: []

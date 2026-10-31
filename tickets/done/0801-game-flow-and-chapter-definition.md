@@ -3,7 +3,7 @@ id: "0801"
 title: "Game flow: chapter definition file, campaign state, title → story → battle → result"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0405", "0502", "0705", "0307", "0708"]
@@ -186,7 +186,7 @@ chapters with several battles (world map and skirmishes: 1007, 1008 per
   "Space" in UI text.
 - Playtime is counted (`Ctx::clock_s`), ready for 0802's slots.
 
-**Claude's starting rules** (Nick's answers on PR #127 are in
+**the agent's starting rules** (Nick's answers on PR #127 are in
 `death-and-difficulty.md` and `setting-and-tone.md`: 1, 3, 4, 6 agreed, 2
 changed, 5 → type on keyboard / grid on controller, 7 → `Retry Battle`, 8
 fine with a credits screen later, 0808)

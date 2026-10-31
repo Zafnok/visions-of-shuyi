@@ -3,7 +3,7 @@ id: "0818"
 title: "Cinematic shots: characters, and conversation snippets"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0036", "0817", "0704", "0711"]
@@ -34,7 +34,7 @@ cinematic*):
 
 Character art is bought and drawn as sprite items (0711, ADR-0032,
 ADR-0038).
-Claude never draws character art.
+The agent never draws character art.
 
 ## Nick input
 
@@ -66,7 +66,7 @@ Claude never draws character art.
    first + count` of a dialogue scene. From the shot's `progress` and
    length, give each box an equal share of the time: reveal its text at
    `Ctx::text_speed` (capped so the whole box is shown for at least the
-   last third of its share), then hold. (*Claude's starting values,
+   last third of its share), then hold. (*the agent's starting values,
    tunable*, unless 0036's storyboard gives its own; list them in the PR
    for Nick.) Drawn from `t` alone (0817's rule), so split the drawing in `crates/ui/src/screens/dialogue.rs` into
    a function that takes the scene state (who is left and right, speaker,
@@ -162,7 +162,7 @@ Claude never draws character art.
 - No sound of its own: the shots ask for none (a scene's `@music` line is
   not followed).
 
-**Claude's starting rules (Nick can veto; also in
+**the agent's starting rules (Nick can veto; also in
 `docs/design/title-screen.md`)**
 
 - *How a snippet's text appears:* the boxes of a dialogue shot share its

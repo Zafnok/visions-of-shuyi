@@ -3,7 +3,7 @@ id: "0062"
 title: "Decide: how the Playdate's one-bit pictures look (portraits, the combat picture, the launcher card and icon)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -108,7 +108,7 @@ art are not committed).
 - **Found while making them:** a fighter drawn at 1.25× (the Brigand)
   had its face broken by pixel-doubling before the dither. It is now
   enlarged smoothly first (a rule in the doc; 1040 does it).
-- **Claude's starting rules** (Nick can veto):
+- **the agent's starting rules** (Nick can veto):
   - The listener is faded by a 50% checker.
   - The portrait style setting doesn't change the combat fighters (A
     only).

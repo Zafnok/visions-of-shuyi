@@ -3,7 +3,7 @@ id: "0736"
 title: "Research: what makes fantasy game dialogue compelling, written into the story-writing skill"
 type: research
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -54,7 +54,7 @@ closest to what he wants.
 ## Scope
 
 **In:**
-- Look for existing writing-craft resources made for Claude or other AI
+- Look for existing writing-craft resources made for the agent or other AI
   writers: published skills (for example Anthropic's skills repositories
   and community skill collections), writing-craft prompts and guides.
   For each, note what it teaches and its licence. Copy nothing whose
@@ -177,7 +177,7 @@ Fable 5.1 as the tests below say.
    nobody names a feeling): "for the characters to have any emotional
    ties, for the deaths to matter, they need to be first and foremost
    engaging and emotional. These people are so clearly robots (i.e.
-   Claude's specific vision of an optimized utopian world). Have more
+   The agent's specific vision of an optimized utopian world). Have more
    warmth without cringey jokes every 2 lines. Just talk more human, I
    don't know. Run more research subagents with this in mind. Or if there
    is a better model more suited to writing that isn't so 'tell, don't
@@ -218,7 +218,7 @@ round 4 scenes are the skill's example.
   its samples robots; craft.md keeps round 1's findings and says what was
   overcorrected.
 
-**Claude's starting rules** (story pacing and style Nick hasn't fixed;
+**the agent's starting rules** (story pacing and style Nick hasn't fixed;
 tunable, for the Act 1 playtest, 1064):
 
 - The scene-length budget: a chapter's first scene 8–14 boxes (cap 16), a

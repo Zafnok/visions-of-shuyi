@@ -3,7 +3,7 @@ id: "0748"
 title: "Chapter 6 script: The Ashfields, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0747"]
@@ -32,7 +32,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).

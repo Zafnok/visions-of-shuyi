@@ -3,7 +3,7 @@ id: "0070"
 title: "Decide: faces and combat pictures for Act 1's new cast, from the bought art"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -33,7 +33,7 @@ and a map sprite:
 Nick bought Mega Tiles' whole bundle (`look-and-feel.md`, *Portraits
 and battle art (bought)*): heroes with faces, busts, still battle
 images and map sprites, and still battler packs **without** faces. Art
-comes from that bundle only (no commissions, never drawn by Claude;
+comes from that bundle only (no commissions, never drawn by the agent;
 ADR-0040: the files and any picture pasted from them stay out of this
 repository).
 
@@ -116,7 +116,7 @@ sites, RPG Maker resources with open terms). The picks are recorded in
   `m_s_hero07` at 1.25×, recoloured.
 - **Gil:** generator face B; Sagak Art's "8-Bit Heroes 2: Fighter" at
   1.75× (Nick buys it, $3).
-- **Ragna:** generator face, bun and traveller's coat (Claude's pick of
+- **Ragna:** generator face, bun and traveller's coat (the agent's pick of
   Nick's two, "whichever fits her sheet better"; her sheet isn't written).
 - **Oriel:** generator face, greying with stubble; Shironejiya's court
   mage `m_s_mage_middle_m01` at 1.25×, hair greyed.
@@ -146,7 +146,7 @@ sites, RPG Maker resources with open terms). The picks are recorded in
 **Follow-up tickets:** 0076 (Hedda's and the Hound lieutenant's faces and
 combat pictures).
 
-**Gameplay rules decided by Claude:** none.
+**Gameplay rules decided by the agent:** none.
 
 **For Nick:** Gil's picture is a $3 itch.io pack you'd buy when Chapter 4
 is built; nothing was bought here.

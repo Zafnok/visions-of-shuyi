@@ -3,7 +3,7 @@ id: "0712"
 title: "Short name forms (first names) in the names table, so scripts can say \"Hollis\""
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0709"]

@@ -3,7 +3,7 @@ id: "0013"
 title: "Decide: number scale and strike thresholds"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -116,7 +116,7 @@ ceiling raised from 80 to 200, 0044's note that a bigger potion is "close
 to the HP limit anyway" is weaker late in the game; the heal sizes are
 tunable.
 
-*Claude's starting rules* (tunable, Nick may veto): the share is taken of
+*the agent's starting rules* (tunable, Nick may veto): the share is taken of
 the slower side's attack speed after weapon weight, counting 0 when it is
 below 0; 0608's starting curve: full EXP to Lv 39, half to Lv 69, a
 quarter after (about 110 battles to Lv 99).

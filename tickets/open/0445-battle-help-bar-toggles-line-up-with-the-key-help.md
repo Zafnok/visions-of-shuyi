@@ -3,7 +3,7 @@ id: "0445"
 title: "Battle help bar: the danger-zone hint on the left, auto-end in a column with end turn"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []
@@ -121,7 +121,7 @@ on 1064's checklist.
    - Also show one frame with the left-handed layout and one with a
      controller (`frame-png --layout left`, `--pad`), where the key names
      are other lengths.
-   These are Claude's suggestions, not decisions: Nick may want another.
+   These are the agent's suggestions, not decisions: Nick may want another.
 2. Record his answers in `docs/design/look-and-feel.md` (*Screen layout*)
    with the date and his words, and remove the item from *Open
    sub-questions*.

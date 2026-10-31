@@ -3,7 +3,7 @@ id: "0844"
 title: "Options: a setting that turns the title's intro cinematic off"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -50,12 +50,12 @@ it):
 
 **In:**
 - An Options row **"Intro: On / Off"**, default **On**, kept in the
-  profile like the other options. *Claude's starting rule:* it sits with
+  profile like the other options. *the agent's starting rule:* it sits with
   the other display rows, after Map look / Map zoom; on the title's
   Options and in battle alike (it does nothing in battle, which is fine).
 - With it Off, the title never goes idle into the cinematic: after the
   first press it shows the logo, the backdrop, the sparks and the menu
-  with the song, and stays (*Claude's starting rule*). The song keeps
+  with the song, and stays (*the agent's starting rule*). The song keeps
   looping.
 - Discard on leaving Options brings the old value back (0839's rules).
 - The Playdate's Options (1045) get the row too if they have the title
@@ -111,7 +111,7 @@ production lines (a toggle row like Auto-end, plus one condition).
 - **Deviation:** the Playdate has no title cinematic yet (1044 is open),
   so the row is in `PC_ONLY` and the Playdate list is unchanged. Ticket
   1044 should take `Row::Intro` out of `PC_ONLY` when it lands.
-- *Claude's starting rules* (from the ticket): the row sits after
+- *the agent's starting rules* (from the ticket): the row sits after
   Map zoom, shows in battle's Options too, and Off keeps the song looping.
   Restore defaults puts it back On.
 - Left for the Act 1 playtest (1064): turn the intro off, wait on the

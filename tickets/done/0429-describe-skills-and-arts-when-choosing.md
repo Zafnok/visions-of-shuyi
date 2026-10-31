@@ -3,7 +3,7 @@ id: "0429"
 title: Show what a skill or art does while choosing it in battle
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -196,7 +196,7 @@ that the cursor stops on greyed-out lines. Recorded in
 - 0410 was already done: follow-up **0453** (spell list descriptions)
   instead of editing it.
 
-**Claude's starting rules** (veto freely)
+**the agent's starting rules** (veto freely)
 - A greyed line under the cursor is a dimmer bar (the border colour)
   rather than the gold one.
 - The `Arts` / `Skill` entries of the action menu are still greyed when

@@ -3,7 +3,7 @@ id: "0414"
 title: "Combat Arts in the attack flow: arts list, forecast with arts, durability display"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0312", "0404", "0412"]
@@ -148,7 +148,7 @@ pick an art, and can you tell what it will do and what it costs?
   info screen shows `broken` for a 0/20 weapon. 0412's ring tests were
   replaced by list tests (`art_tests.rs`). The archer's forecast snapshot
   tints the brigand beside it too (Close Shot reaches it).
-- **Claude's starting rules (all presentation; please agree or veto):**
+- **the agent's starting rules (all presentation; please agree or veto):**
   - The list sits on the half of the map away from the attacker so it
     doesn't cover the fight.
   - When you switch targets, the chosen art stays if it can still be used

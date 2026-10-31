@@ -23,10 +23,10 @@ doesn't apply to them.
 
 ## Portraits and battle art: bought, not drawn
 
-Nick doesn't want Claude-drawn character art (ticket 0021). Dialogue faces
+Nick doesn't want agent-drawn character art (ticket 0021). Dialogue faces
 and combat-screen battle images are **bought**: Mega Tiles' Tiny Tales
 packs (`docs/design/look-and-feel.md`, *Portraits and battle art*;
-ADR-0032). Claude **never draws** a portrait, a face or a battle image.
+ADR-0032). The agent **never draws** a portrait, a face or a battle image.
 
 - **Allowed edits** on a bought image, and nothing more: recolour hair,
   clothes or eyes (swap a few exact colours), and small pixel edits (a scar,
@@ -80,7 +80,7 @@ yet, build its `GlyphBuffer` in a scratch test in `crates/xtask` and render
 it with `frame_png::Painter` (don't commit the scratch test). Built with
 `--features private-assets` the picture shows bought art: show it to Nick.
 Only a screenshot of the running game may be committed, never a mockup or
-a picture that hands the art out (`CLAUDE.md`, *Bought art*). Look at every render yourself before sending it, and fix
+a picture that hands the art out (`AGENTS.md`, *Bought art*). Look at every render yourself before sending it, and fix
 overlaps, cut-off text and invented details (no stats or rules that aren't in
 `docs/design/`). Offer genuinely different options, then iterate on his
 comments. He often asks for more options or a combination.

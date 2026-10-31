@@ -3,7 +3,7 @@ id: "0852"
 title: "Chapter 6 battle: The Ashfields, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608", "0516", "0517", "0520"]
@@ -34,14 +34,14 @@ the enemies are gone. As a world-map chapter it needs the world map (1007) and i
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
-0070 picked **Oriel**: a generator face with greying hair and stubble, and Shironejiya's court mage `m_s_mage_middle_m01` at 1.25× with his hair recoloured grey. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: Claude's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
+0070 picked **Oriel**: a generator face with greying hair and stubble, and Shironejiya's court mage `m_s_mage_middle_m01` at 1.25× with his hair recoloured grey. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and
 the full Act 1 playtest, 1064). Verification is by tests, `cargo shuyi
 frame-png` pictures of the map in the PR and the bots' reports. Levels,
-enemy counts, map size and turn counts are *Claude's starting values*
+enemy counts, map size and turn counts are *the agent's starting values*
 ("for the chapter tickets", the outline), tuned by the bots; list them
 in the Completion notes for 1064's checklist. A design question the
 docs don't answer (a rule, not a number) goes to Nick with `ask-nick`

@@ -3,7 +3,7 @@ id: "0060"
 title: "Decide: does the army ever walk around freely (towns, the world, dungeons)?"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1064"]

@@ -3,7 +3,7 @@ id: "1179"
 title: "Engine PRs are squash-merged, and engine-pin takes only a commit on the engine's main"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

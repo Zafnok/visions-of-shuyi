@@ -3,7 +3,7 @@ id: "1155"
 title: "The engine's screens fit the game's console: options and Key bindings laid out from the frame's size, not a fixed 100 × 32"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

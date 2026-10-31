@@ -3,7 +3,7 @@ id: "0325"
 title: "Arts C–S, part 1: the arts that change the combat's numbers"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0018"]
@@ -113,7 +113,7 @@ costs and numbers; the forecast spells out the new notes.
 - Friction: estimate ~150 production lines (written after the code, not
   before), measured 149: 1×.
 
-Claude's starting rules (none beyond the design doc): Long Thrust/Hurl keep
+The agent's starting rules (none beyond the design doc): Long Thrust/Hurl keep
 min range 1; the avoid debuff stops at 0. Left to judge by playing: the
 numbers (1064). Not done, as scoped: stances, area strikes, Disarm/Marked
 Shot/Unbroken Stride, special weapons (0326–0329).

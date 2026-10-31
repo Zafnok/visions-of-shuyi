@@ -3,7 +3,7 @@ id: "0050"
 title: "Decide: the roguelike run mode (title menu, own save slots)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0047", "1064"]
@@ -17,7 +17,7 @@ completed:
 
 Nick, 2026-10-04 and 2026-10-05
 ([`docs/design/replayability.md`](../../docs/design/replayability.md),
-*The run mode*). Claude pitched the skirmish generator (0510, a dev tool) as
+*The run mode*). The agent pitched the skirmish generator (0510, a dev tool) as
 a post-game mode: a chain of generated, bot-balanced fights, drafting
 recruits and Visions from three, with permadeath, ending when the lord
 falls, and things to unlock between runs (Into the Breach, Slay the Spire).

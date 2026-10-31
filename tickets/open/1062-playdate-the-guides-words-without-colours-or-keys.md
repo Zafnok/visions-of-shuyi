@@ -3,7 +3,7 @@ id: "1062"
 title: "Playdate: the guide's tips and lessons don't talk about colours, a mouse or keys"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1060"]
@@ -30,7 +30,7 @@ words are only true on the PC:
 
 1060 makes a lesson's `{Action}` name the Playdate's way to do it and
 counts it; it rewords nothing ("Out"). 1058 fits the box to the screen;
-it changes no words. Claude writes every line
+it changes no words. The agent writes every line
 (`docs/story/writers-guide.md`); whether the `keys` lesson exists on the
 Playdate at all is a tutorial design question (which lessons exist,
 `docs/design/tutorial.md`), so it goes to Nick.

@@ -3,7 +3,7 @@ id: "0304"
 title: Deterministic RNG, combat forecast and combat resolution
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0001", "0003", "0004", "0302"]

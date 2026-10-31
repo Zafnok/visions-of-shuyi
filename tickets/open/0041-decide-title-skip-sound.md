@@ -3,7 +3,7 @@ id: "0041"
 title: "Decide: the sound when a press skips the title cinematic"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: low
 status: todo
 blocked_by: []
@@ -55,7 +55,7 @@ one, or asks for another round.
   skill.
 - Record the answer in `docs/design/audio.md` (a row for cue `title_skip`
   with source and licence, Nick's words in the appendix) and replace the
-  "skip sound" line under *Claude's starting rules* and *Open
+  "skip sound" line under *the agent's starting rules* and *Open
   sub-questions* in `docs/design/title-screen.md`.
 - If 0819 is done: import the file (`assets-src/audio/import.py`), add the
   cue `title_skip` to `assets/audio/audio.ron`, a row to
@@ -67,7 +67,7 @@ one, or asks for another round.
 **Out (do not do):**
 - Changing when the sound plays or what the press does (decided in 0036).
 - Sounds inside the cinematic itself: it makes none
-  (`title-screen.md`, *Claude's starting rules*).
+  (`title-screen.md`, *the agent's starting rules*).
 
 ## Implementation steps
 
