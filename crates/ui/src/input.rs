@@ -74,8 +74,9 @@ pub use shuyi_ui::screens::key_bindings::{CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT}
 /// but the [crank's](CRANK_ACTIONS), with the text key of its player-facing label (`Unit info`) and its
 /// group, in the order the screen lists them (Nick's pick, ticket 0815):
 /// the required actions, then the optional ones, as in `controls.md`'s
-/// *Required and optional* table, then the dialogue log's own key group.
-pub const KEY_ROWS: [KeyRow; 18] = [
+/// *Required and optional* table, then the dialogue log's own key group and
+/// the world map's.
+pub const KEY_ROWS: [KeyRow; 20] = [
     (Action::CursorUp, "key_bindings.action.cursor_up", Required),
     (
         Action::CursorDown,
@@ -122,19 +123,6 @@ pub const KEY_ROWS: [KeyRow; 18] = [
         "key_bindings.action.dialogue_log",
         RowGroup::Shared(DIALOGUE_LOG_HEADING),
     ),
-];
-
-// engine-friction: engine#2395 (the Key bindings screen's glyph skin
-// draws every row with no scrolling, and the PC's panel is full: rows for
-// these would run over its border). Their keys work (`keymap.ron`); the
-// rows below join `KEY_ROWS` once the pin is past engine#2395 (game
-// follow-up ticket 1198).
-/// The world map's actions (1007), not on the Key bindings screen yet.
-pub const NOT_LISTED_YET: [Action; 2] = [Action::WorldArmy, Action::WorldFind];
-
-/// The rows the world map's actions will have on the Key bindings
-/// screen, under their own heading ([`NOT_LISTED_YET`]).
-pub const WORLD_MAP_ROWS: [KeyRow; 2] = [
     (
         Action::WorldArmy,
         "key_bindings.action.world_army",
