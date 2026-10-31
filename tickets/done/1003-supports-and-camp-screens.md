@@ -3,7 +3,7 @@ id: "1003"
 title: Supports and Camp lists at camp
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["1002", "0008", "0408", "0704", "0801", "0027"]
@@ -142,7 +142,7 @@ Done 2026-10-29.
   richer screen), about 600 production lines was a fair size; measured
   856 (1.4×), under 2×.
 
-**Claude's starting rules (for the Act 1 playtest, 1064)**
+**the agent's starting rules (for the Act 1 playtest, 1064)**
 
 1. Camp opens **once between two battles**: between two chapters
    (before the next chapter's scenes), or else before the Preparations

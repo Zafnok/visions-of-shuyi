@@ -3,7 +3,7 @@ id: "0065"
 title: "Decide: the player names Vix (and the lead) from suggested names or their own"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

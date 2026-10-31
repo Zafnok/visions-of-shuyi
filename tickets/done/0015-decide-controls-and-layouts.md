@@ -3,7 +3,7 @@ id: "0015"
 title: "Decide: controls, right/left-handed layouts, key per action"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

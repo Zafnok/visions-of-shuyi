@@ -3,7 +3,7 @@ id: "0749"
 title: "Chapter 7 script: Ossary, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0748"]
@@ -33,7 +33,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -132,7 +132,7 @@ Done 2026-10-30.
   imported, so the script carries it and marks the other two with a
   comment where the `@music` line goes; **0853 imports `holy_city` and
   `scene_dread` and adds those two lines** (its step 3 already says so).
-  The scenes 0071 left open use the existing mood cues as *Claude's
+  The scenes 0071 left open use the existing mood cues as *the agent's
   picks* (`dungeon_tense`, `talk_calm`, `scene_sad`).
 - **For 0853:** the scene ids and triggers are listed at the top of the
   script; the warden speaks twice before the fight (`ch07_crane`,

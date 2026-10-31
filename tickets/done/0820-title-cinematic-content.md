@@ -3,7 +3,7 @@ id: "0820"
 title: "The title cinematic itself: shots and snippets timed to the title song"
 type: content
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0036", "0706", "0707", "0803", "0818", "0819", "0827"]
@@ -118,7 +118,7 @@ there (a yes becomes a ticket that adds the row to the Options menu).
       first `@choice`, and the notes give each one's scene and box count.
 - [x] Snapshots: one per shot.
 - [ ] Watched with sound on native and web for two full loops; the notes
-      say so. (**Not met:** Claude can't hear. See the notes for what was
+      say so. (**Not met:** the agent can't hear. See the notes for what was
       checked instead; Nick's sign-off is the check by ear.)
 - [x] All gates in the `run-gates` skill pass.
 
@@ -149,7 +149,7 @@ everything the storyboard needs.
 
 No cut moved more than half a second.
 
-**How the cuts were set.** Claude can't hear, so "by ear" became a
+**How the cuts were set.** the agent can't hear, so "by ear" became a
 measurement: the song file's loudness in quarter-second steps (a
 throwaway program, not in the repo). It swells at 30.75 s, phrases start
 at 50.0 and 68.5, the loud part comes in at 85.25 and lifts at 95.5 and
@@ -213,7 +213,7 @@ shots 5 to 8 (its clock is the song's time less 68.5 s):
 - The Context paragraph about 0724 is out of date: 0724 landed first, and
   the snippets show its rewritten lines.
 
-**Claude's starting rules** (Nick can veto): which units march where, who
+**the agent's starting rules** (Nick can veto): which units march where, who
 fights whom, the HP each is left with, and the two box counts, all as
 above.
 

@@ -3,7 +3,7 @@ id: "0440"
 title: "Sprite units step on the spot while waiting and walk along their path"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0436"]
@@ -105,7 +105,7 @@ doesn't block the PR.
    it glides sideways under someone, only the columns under that tile
    are cut, so the sprite may need two sprite items with different
    clips). A walker crossing a tile an ally stands on is drawn in front
-   of the ally and isn't cut there (*Claude's starting rule*; say so in
+   of the ally and isn't cut there (*the agent's starting rule*; say so in
    the PR). 0433's generated test tileset has
    one picture per unit: a tileset entry without walking frames ignores
    `facing` and `frame` and only glides. Say in the tileset format
@@ -205,7 +205,7 @@ Done 2026-10-03.
 - On glyph ground, a unit between two tiles doesn't blank the ground's
   glyphs (Nick, 2026-10-04): the tile it leaves shows its ground at once.
 
-**Claude's starting rule** (for Nick to agree or veto)
+**the agent's starting rule** (for Nick to agree or veto)
 
 - A walking unit that passes over a tile an ally stands on is drawn in
   front of the ally, and isn't cut there (the ticket's rule).

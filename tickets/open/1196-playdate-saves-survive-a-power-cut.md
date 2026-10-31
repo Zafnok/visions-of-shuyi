@@ -3,7 +3,7 @@ id: "1196"
 title: Playdate saves survive a power cut (the engine's power-cut suite)
 type: bug
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

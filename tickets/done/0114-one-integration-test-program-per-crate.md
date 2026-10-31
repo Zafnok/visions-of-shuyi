@@ -3,7 +3,7 @@ id: "0114"
 title: One integration-test program per crate
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0113"]

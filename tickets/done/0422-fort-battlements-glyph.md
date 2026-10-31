@@ -3,7 +3,7 @@ id: "0422"
 title: Draw forts as battlements (╦╦) instead of brackets
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

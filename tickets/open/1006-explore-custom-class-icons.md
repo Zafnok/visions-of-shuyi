@@ -3,7 +3,7 @@ id: "1006"
 title: Explore custom 16×16 class icons for units on the map
 type: design-decision
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: blocked
 blocked_by: ["0401", "0021", "0110", "0711", "0433", "0039"]
@@ -23,11 +23,11 @@ tiles, were offered as a later experiment: one small single-colour picture per
 class (a helmeted head, a horse head, a drawn bow…), 16×16 px, tinted by
 faction like any glyph.
 
-**Changed 2026-09-30:** Nick doesn't want Claude-drawn character art (0021),
+**Changed 2026-09-30:** Nick doesn't want agent-drawn character art (0021),
 and the combat scene uses bought sprites (0413). The packs 0021 picked
 (Mega Tiles' Tiny Tales) include **16×20 map sprites** for every hero and
-still-battler class: offer those as well as Claude-drawn one-colour icons,
-and say honestly that Claude-drawn icons may clash in the same way the
+still-battler class: offer those as well as agent-drawn one-colour icons,
+and say honestly that agent-drawn icons may clash in the same way the
 portraits did. A 16×20 sprite is taller than a 16×16 tile; show how that
 looks. Showing the bought map sprites on the real battle screen needs the
 bought files (0110) and the PNG drawing (0711): both were added to
@@ -38,7 +38,7 @@ skin (0432), and pictures on the map come from a tileset file through the
 sprite skin (0433, added to `blocked_by`). So the versions shown to Nick
 are skins or tileset files, not new drawing code in the battle screen:
 initials (the glyph skin), bought map sprites over glyph terrain, and
-Claude-drawn one-colour icons. How a sprite unit shows its side, that it
+agent-drawn one-colour icons. How a sprite unit shows its side, that it
 has acted, its HP and an active effect is part of this decision: 0433's
 versions of those are placeholders.
 
@@ -50,9 +50,9 @@ tile rendering and battler rendering with these bought sprites without
 regret". Units become bought map sprites in ticket 0436 and terrain bought
 tiles in 0437; a sprite unit shows its side by a coloured outline and
 "acted" by going grey (decided the same day, built in 0436); the effect
-mark is an up or down arrow (ticket 0039). **What is left of this ticket** is only the Claude-drawn
+mark is an up or down arrow (ticket 0039). **What is left of this ticket** is only the agent-drawn
 one-colour class icons, which Nick didn't ask for and which may clash as
-the Claude-drawn portraits did. Don't start it unless Nick asks for icons
+The agent-drawn portraits did. Don't start it unless Nick asks for icons
 (for example as a mark on the glyph look, which players may pick in
 Options: tickets 0039 and 0824). `status: blocked` until then; Nick unblocks it by asking.
 

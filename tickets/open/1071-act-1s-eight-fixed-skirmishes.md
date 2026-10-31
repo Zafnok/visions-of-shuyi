@@ -3,7 +3,7 @@ id: "1071"
 title: "Act 1's eight fixed skirmishes, with Gil's recruitment"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1008", "1070", "0746", "0747", "0748", "0749", "0509", "0013", "0070", "0323", "0608"]
@@ -38,7 +38,7 @@ and combat picture are 0070's pick.
 
 None. No check after merge (Nick, 2026-10-21): `frame-png` pictures of
 each map and the bots' reports in the PR; levels, sizes and tiers are
-*Claude's starting values* in the Completion notes for 1064's
+*the agent's starting values* in the Completion notes for 1064's
 checklist.
 
 ## Scope

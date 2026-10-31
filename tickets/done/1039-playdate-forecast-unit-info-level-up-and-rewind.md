@@ -3,7 +3,7 @@ id: "1039"
 title: "Playdate: the forecast pop-up, unit info, the fight box, EXP and level-up, and the rewind screen"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1038", "1035", "0248"]
@@ -21,7 +21,7 @@ contents as the PC forecast (`docs/design/look-and-feel.md`, *Attack
 forecast*): both sides' HP, Hit, Crit, the strikes in order, the kill
 skull. Picture: `docs/design/playdate/q2-a-forecast.png`. The PC side
 panel's other contents (stats, weapons, chapter, turn, rewinds) are on
-the **Unit info** screen and in the map menu (*Claude's starting rule*).
+the **Unit info** screen and in the map menu (*the agent's starting rule*).
 
 0242 made the battle screen's views; ticket 0248 gives the forecast, unit
 info (`info.rs`), fight box (`playback.rs`), EXP bar and level-up page
@@ -55,7 +55,7 @@ it):
     (stats, weapons, items, skills), paged with the cursor if it doesn't
     fit 15 rows. The chapter, turn and rewind charges go in the map
     menu's header (1038's map menu; add them here if 1038 didn't).
-    *Claude's starting rule, from the design's "on the Unit info screen
+    *the agent's starting rule, from the design's "on the Unit info screen
     and in the map menu": the unit's own things on Unit info, the
     battle's in the map menu;*
   - **fight box** (the strikes as they play, when the combat picture is
@@ -184,7 +184,7 @@ and game ticket 1182 (deletes it, moves the pin). Row in
 
 **Follow-ups:** engine#2540 (a crank step in frame-png's script) and **1182** (the game's frame-png uses it and drops its own `--crank` and `--then-pad`; blocked by engine#2540). Neither is on the Act 1 critical path.
 
-***Claude's starting rules*** (in `docs/design/playdate.md`, *Layout*;
+***the agent's starting rules*** (in `docs/design/playdate.md`, *Layout*;
 for 1064's checklist, Nick can veto):
 - The forecast is a window half the screen wide down the half away from
   the two units, from the top; with one unit in each half, on the

@@ -3,7 +3,7 @@ id: "1042"
 title: "Playdate: one-bit portraits of Chapter 1's faces, made from the bought art"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1040", "1061", "0062"]

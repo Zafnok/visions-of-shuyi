@@ -3,7 +3,7 @@ id: "0119"
 title: Make the PR mutation gate finish in minutes, not hours
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

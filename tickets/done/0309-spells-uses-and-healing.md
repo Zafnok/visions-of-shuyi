@@ -3,7 +3,7 @@ id: "0309"
 title: "Spells: spell data, spell lists, uses per battle, Cast action, healing"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0004", "0302", "0304", "0306"]
@@ -155,7 +155,7 @@ None (all rules are in `magic.md`).
   `Cast` (attack and heal) and spell `Equip`, and the replay/save-load test
   includes spell casts and a spell counter.
 
-**Rules I had to pin down** (Claude's starting rules; Nick may veto):
+**Rules I had to pin down** (the agent's starting rules; Nick may veto):
 
 - **At battle start, a unit with nothing equipped gets a default,** chosen
   only from what it already has: the first weapon in its slots it can wield,

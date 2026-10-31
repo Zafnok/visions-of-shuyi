@@ -3,7 +3,7 @@ id: "1186"
 title: "Content folders: one rule for a broken file, so bundle::parsed and the hand fold-backs go, and the battle lights on the folder loader"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: blocked
 blocked_by: ["engine#2233"]

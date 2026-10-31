@@ -3,7 +3,7 @@ id: "0718"
 title: "Japanese translation pipeline: glossary, speech styles, the back-translation check"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: todo
 blocked_by: ["0042", "0235"]
@@ -15,7 +15,7 @@ completed:
 
 ## Context
 
-The Japanese option is machine-translated by Claude, chapter by chapter,
+The Japanese option is machine-translated by the agent, chapter by chapter,
 until a human translation replaces it (`docs/design/voices-languages-and-script.md`).
 ADR-0011 showed that LLM writing quality comes from process: a bible,
 character sheets, a separate critique pass. Translation needs the same,

@@ -261,6 +261,9 @@ jobs:
       - name: Report the PR's size
         if: github.event_name == 'pull_request'
         run: cargo xtask pr-size --base HEAD^1 --branch "$HEAD_REF"
+      - name: Check shared agent skill loaders
+        shell: pwsh
+        run: ./scripts/sync-agent-skills.ps1 -Check
       - name: Run ticket lint
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then

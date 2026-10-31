@@ -3,7 +3,7 @@ id: "0110"
 title: Keep bought assets in a private repo and bundle them at build time
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0021"]
@@ -34,7 +34,7 @@ read the sorted folders, not the zips. The repository names were stale too
 
 ## Nick input
 
-**Setup** (Claude doesn't make purchases, create repos or change access
+**Setup** (the agent doesn't make purchases, create repos or change access
 settings for him):
 
 1. ~~Buy the packs.~~ **Done 2026-10-02:** Nick bought Mega Tiles' whole
@@ -112,7 +112,7 @@ encrypting assets inside the binary (the licence doesn't require it).
 
 - **Private repository layout**, one repo `Zafnok/visions-of-shuyi-assets`:
   `game/` (what the game embeds), `library/tiny-tales/` (the bundle as Nick
-  and Claude sorted it: `characters/`, `tilesets/`, `battle-backgrounds/`,
+  and the agent sorted it: `characters/`, `tilesets/`, `battle-backgrounds/`,
   `ui/`, `licences/`, `spike-renders/`, `INDEX.md`, `index.html`),
   `tools/tiny-tales/` (the two character generators) and
   `originals/tiny-tales/` (the 37 zips, untouched). So: the sorted folders

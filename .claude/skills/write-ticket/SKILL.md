@@ -7,7 +7,7 @@ metadata:
 
 # Write a ticket
 
-Tickets must be good enough that a weaker model (Sonnet) can complete them
+Tickets must be good enough that an implementation-capable model can complete them
 without asking questions.
 
 ## Steps
@@ -47,7 +47,7 @@ without asking questions.
    - A ticket that draws a picture or puts something on the battle map
      says how it follows ADR-0038 (sprite items; the map scene and every
      map skin), and its tests of behaviour read the scene or the state.
-   - Model/effort per the routing table in ADR-0010.
+   - Capability/effort per `tickets/README.md` (ADR-0102); never a provider model id.
    - `blocked_by`: every ticket whose output this one needs.
    - **No ticket only to move the engine pin.** The engine watcher files
      that as an `engine-pin` issue (ADR-0096). A ticket that needs a

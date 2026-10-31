@@ -3,7 +3,7 @@ id: "0713"
 title: "Surname short forms in the names table, so scripts can say \"Sergeant Rook\""
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0712"]

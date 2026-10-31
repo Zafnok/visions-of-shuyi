@@ -3,7 +3,7 @@ id: "0439"
 title: "A key and a button toggle the battle map's zoom (1× / 2×), and the game remembers it"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0433"]
@@ -38,7 +38,7 @@ The art is not shrunk: the bought tiles and unit sprites are 16 pixels and
 the map shows them at their own size (1×). 2× is this ticket. What his
 note adds is a question nothing has decided: **which zoom a new player
 starts at.** Ask it with the others below, with both frames of Chapter 1's
-first turn side by side. *(Claude's suggestion to put to him, not a
+first turn side by side. *(the agent's suggestion to put to him, not a
 decision: start at 2×, since 1× is what he found too small.)* Tell him
 what 2× costs: Chapter 1's map is 24×16 and 2× shows about 17×14 of it, so
 the map scrolls.
@@ -184,7 +184,7 @@ required/optional lists), `look-and-feel.md` (*Zoom*) and `options.md`
 - Screenshots: `docs/screenshots/0439-zoom-1x.png`, `0439-zoom-2x.png`
   (Chapter 1's first turn, the bought art, as shown to Nick).
 
-**Claude's starting rules (Nick can veto; `controls.md`, *Zoom map*, and
+**the agent's starting rules (Nick can veto; `controls.md`, *Zoom map*, and
 `options.md`):**
 
 - The key works whenever the map is what you are looking at: browsing,

@@ -3,7 +3,7 @@ id: "0067"
 title: "Decide: the bought tiles and unit sprites on the Playdate's battle map, in one-bit"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []
@@ -107,7 +107,7 @@ Questions:
   ticket writes).
 - The combat picture (0062, 1041) and portraits (1042).
 - The frame rate (1059).
-- Drawing new art or touching up bought sprites by hand (Claude never
+- Drawing new art or touching up bought sprites by hand (the agent never
   draws character art; Nick vetoed commissions).
 
 ## Implementation steps

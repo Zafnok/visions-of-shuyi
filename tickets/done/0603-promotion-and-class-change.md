@@ -3,7 +3,7 @@ id: "0603"
 title: Promotion / class change (logic and choice screen)
 type: feature
 milestone: M5 Progression
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0005", "0306", "0601", "0602"]
@@ -139,7 +139,7 @@ sit in the party's stock and never take a battle-pack slot. Recorded in
 - Tickets 0408 (Preparations) and 0409 (shop screen) got a line each: seals
   aren't listed in the pack or the sell list.
 
-**Rules Claude decided where the design was silent** (*Claude's starting
+**Rules the agent decided where the design was silent** (*the agent's starting
 rules*; Nick may veto):
 
 1. **Armour the new class can't wear goes to the stock**, like weapons

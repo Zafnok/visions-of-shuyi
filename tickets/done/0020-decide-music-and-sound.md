@@ -3,7 +3,7 @@ id: "0020"
 title: "Decide: music and sound effects"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -29,7 +29,7 @@ Constraints already fixed elsewhere:
 - Tone (`docs/design/setting-and-tone.md`): FE-style medieval fantasy war,
   dark with warmth and humour.
 
-Technical side (Claude's call, recorded in an ADR by the first audio
+Technical side (the agent's call, recorded in an ADR by the first audio
 implementation ticket, not asked of Nick): macroquad's `audio` feature
 (quad-snd, MIT/Apache) plays WAV/OGG on Windows and web. On web, sound can
 start only after the first keypress. `ui` screens emit sound cues as data, and
@@ -121,7 +121,7 @@ Existing tickets edited:
 - 1008: skirmishes use the pool.
 - `docs/ROADMAP.md`: audio is no longer post–Chapter 1.
 
-**Claude's starting rules** (not decided by Nick; he can veto any):
+**the agent's starting rules** (not decided by Nick; he can veto any):
 - The map cursor tick plays at 60 % of the menu move sound's volume. Nick
   said "at a lower vol maybe".
 - Switching music fades the old track out over 0.5 s. A cue that's already

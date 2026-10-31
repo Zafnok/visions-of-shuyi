@@ -3,7 +3,7 @@ id: "0909"
 title: The web build's NOTICES.txt names the game's own works and license texts
 type: feature
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

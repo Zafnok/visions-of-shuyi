@@ -3,7 +3,7 @@ id: "0702"
 title: Dialogue script format (.dlg), parser/validator, dialogue player model
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0302"]

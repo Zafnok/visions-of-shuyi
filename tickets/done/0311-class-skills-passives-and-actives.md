@@ -3,7 +3,7 @@ id: "0311"
 title: "Class skills: passive effects, active skills paid with durability, timed effects"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0005", "0014", "0302", "0304", "0305", "0306", "0309"]
@@ -219,7 +219,7 @@ None. All numbers are in `progression.md`'s tier 1–2 skill table.
     Deadly Blow Sw, Rampage Ax, Trample Ax, Swoop Sp). Heavy Blow became Ax,
     not Gt, because the Raider wields only axes ("fine A is ok.. I'm just
     worried gauntlets won't have enough skills and axe too many").
-- **Claude's starting rules** (gameplay, where the design docs were silent):
+- **the agent's starting rules** (gameplay, where the design docs were silent):
   1. ~~Skill might added after effectiveness~~: **changed by Nick** (see
      below).
   2. When both sides get extra strikes (only via "+1 strike" skills), the

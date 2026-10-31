@@ -3,7 +3,7 @@ id: "1007"
 title: "World map: nodes, travel, towns, save and camp"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0801", "0802", "0409", "0805", "1003", "0025", "0026"]
@@ -230,7 +230,7 @@ all the same, a workaround for an engine assumption (below): row in
 the picture look's plates, Nick's request). 1070 and 1008 updated with
 what this ticket decided.
 
-**Claude's starting rules** (for the Act 1 playtest, 1064):
+**the agent's starting rules** (for the Act 1 playtest, 1064):
 
 - **The army goes around a battle it hasn't won** when another road
   leads there; if the only road passes through one, it stops there and

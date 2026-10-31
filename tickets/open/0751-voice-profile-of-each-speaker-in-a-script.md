@@ -3,7 +3,7 @@ id: "0751"
 title: "A voice profile of each speaker in a dialogue script (cargo xtask voices)"
 type: feature
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []

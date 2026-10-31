@@ -3,7 +3,7 @@ id: "1064"
 title: "Nick plays Act 1 on web and Playdate; feedback becomes tickets"
 type: playtest
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0512", "0250", "0318", "0446", "0449", "0461", "0462", "0463", "0465", "0466", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0842", "0843", "0844", "0845", "0846", "0847", "1039", "1041", "1043", "1044", "1046", "1058", "1060", "1062", "0313", "0409", "0443", "0606", "1003", "1007", "1008", "1065", "0319", "0511", "0506", "0509", "0510", "1038", "1042", "1051", "1056", "1057", "1059", "1066", "1067", "1068", "1069", "0743", "0744", "0252", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "1072", "1083", "1084", "1073", "1178", "0513", "0320", "0321", "0074", "1074", "0322", "0471", "0323", "0608", "1075", "0324", "0855", "0515", "0516", "0472", "1076", "1077", "0325", "0326", "0327", "0328", "0329", "0076", "1196", "0473", "0474", "0520", "0858", "1081", "1082", "1198"]
@@ -58,7 +58,7 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
     would have;
   - every ticket in `tickets/done/` whose *Nick input* quotes a waived
     sign-off (`grep -l "What the old sign-off asked" tickets/done`), and
-    the *Claude's starting rules* in their Completion notes;
+    the *the agent's starting rules* in their Completion notes;
   - 1050's questions: whether the enemy's pauses on the Playdate feel
     long, whether start-up feels slow (numbers from 0512's device run);
   - the new chapters' starting rules (0848–0854, 1070–1073) and the

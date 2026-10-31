@@ -3,7 +3,7 @@ id: "0017"
 title: "Decide: make fliers a late-game (tier 3+) class line"
 type: design-decision
 milestone: M5 Progression
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -80,7 +80,7 @@ elites (boss / sub-boss).
   a new tree, class tables (Flier moved to tier 3, a new tiers 4–5 table
   with no numbers yet), stats, skills, open sub-questions. The design README
   row is updated.
-- **Claude's starting choices (Nick may veto):** Lancer is the only parent of
+- **the agent's starting choices (Nick may veto):** Lancer is the only parent of
   Flier. The tier-3 Flier is Sp A/S and takes the old tier-3 Storm Lancer's
   base/caps/growths, so promoting from Lancer gives a positive bonus. The
   enemy "small number" limit is at most 2 generic fliers per battle before

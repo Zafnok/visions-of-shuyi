@@ -3,7 +3,7 @@ id: "0217"
 title: "Player key bindings: 3 slots per action, per-layout saved config, fixed Esc"
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0216"]
@@ -208,7 +208,7 @@ Nick's call during review (2026-09-30): only plain `Esc` and `Delete` are
 fixed; `Shift+Esc` and `Shift+Delete` are ordinary keys a player can bind
 (recorded in `controls.md`).
 
-*Claude's starting rules* (small; the design docs didn't say):
+*the agent's starting rules* (small; the design docs didn't say):
 
 - The first-launch layout picker draws each layout with the player's own
   keys for it (so after Options (0805) lets them come back to it, it shows

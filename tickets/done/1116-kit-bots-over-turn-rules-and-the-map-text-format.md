@@ -3,7 +3,7 @@ id: "1116"
 title: "Tactics kit: playtest bots over any TurnRules, and the .map text format"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["1114"]
@@ -126,6 +126,6 @@ the code before and after the port: the two reports are the same in every
 field but the date and speed (all 200 tries: result, turns, every fall,
 items, commands). `baseline.rs` passes unchanged.
 
-**Model:** worked on Opus 5.5 (the ticket says sonnet-5).
+**Model:** worked on Opus 5.5 (the ticket says implementation).
 
 **Gameplay rules decided:** none. Every battle plays identically.

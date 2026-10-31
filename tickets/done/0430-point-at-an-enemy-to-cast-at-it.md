@@ -3,7 +3,7 @@ id: "0430"
 title: Point at an enemy with a caster selected to cast at it
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -127,7 +127,7 @@ changes.
 **0442** (it asks him where the menu goes first). Until then up / down still
 move the arts list in the forecast.
 
-**Rules I decided** (*Claude's starting rules*, Nick can veto):
+**Rules I decided** (*the agent's starting rules*, Nick can veto):
 
 - If what is equipped can't reach the enemy from that tile, the forecast
   opens with the first weapon or spell that does (weapons before spells).

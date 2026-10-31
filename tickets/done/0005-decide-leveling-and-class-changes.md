@@ -3,7 +3,7 @@ id: "0005"
 title: "Decide: level ups, class changes and the class tree"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0001"]
@@ -155,7 +155,7 @@ Decided with Nick on 2026-09-25 and recorded in
     Nick, so the tree was shown as plain text instead.
   - The first tree gave only the magic lines a tier 3. Nick asked for tier 3
     on every line and for generic names.
-- **Follow-up rounds:** at first Claude filled several game levers in by
+- **Follow-up rounds:** at first the agent filled several game levers in by
   itself. Nick asked to decide them, so they were put to him in three more
   rounds. His decisions:
   - Promotion is one-way. Every reclass costs a Reclass Seal. Class progress
@@ -174,7 +174,7 @@ Decided with Nick on 2026-09-25 and recorded in
   - Skills flipped: active on unlock, passives on mastery.
   - The skill list and stat numbers are placeholders, to be judged in the
     playtest.
-- **Claude filled in, and Nick approved ("These are fine."): how the ally-EXP split works (even
+- **the agent filled in, and Nick approved ("These are fine."): how the ally-EXP split works (even
   split, remainder lost; deployed, alive and uncapped units only), the
   99-level placeholder cap, and the CP-per-tier values 10/17/25.
 - **Downstream tickets adjusted:** 0302 (class record, talent, generic

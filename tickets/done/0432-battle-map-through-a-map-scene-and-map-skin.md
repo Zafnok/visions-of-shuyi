@@ -3,7 +3,7 @@ id: "0432"
 title: "Battle map drawn through a map scene and a map skin (the look doesn't change)"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []

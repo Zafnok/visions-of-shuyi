@@ -3,7 +3,7 @@ id: "0459"
 title: The guide's box with the face covers the side panel on long lines
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []

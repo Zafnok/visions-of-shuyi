@@ -3,7 +3,7 @@ id: "0428"
 title: Point at an enemy with a unit selected to attack it
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -89,7 +89,7 @@ Let `can_hit(tile)` = some weapon slot `s` in `0..WEAPON_SLOTS` has
    `can_hit(end)`: keep the path unchanged.
 2. Otherwise, among `reach.stoppable()` tiles with `can_hit`, pick the one
    with the lowest `reach.cost(tile)`; ties → shortest `reach.path_to(tile)`;
-   still tied → lowest `(y, x)` (deterministic; *Claude's starting tie-break*,
+   still tied → lowest `(y, x)` (deterministic; *the agent's starting tie-break*,
    mention it to Nick in the PR). The path becomes `reach.path_to(tile)`.
 3. No such tile: the path is left as `steer` leaves it today (unchanged), and
    Confirm on the enemy does nothing.
@@ -188,7 +188,7 @@ Deviation: `tick` still returns only a `Mode`; the screen snaps the cursor onto
 the target whenever it is in `Mode::Targeting` after a tick (ticket step 6's
 second option).
 
-Gameplay rule I decided (*Claude's starting rule*): ties between equally cheap
+Gameplay rule I decided (*the agent's starting rule*): ties between equally cheap
 attack tiles go to the shortest path, then the topmost, then the leftmost tile.
 
 No follow-up tickets.

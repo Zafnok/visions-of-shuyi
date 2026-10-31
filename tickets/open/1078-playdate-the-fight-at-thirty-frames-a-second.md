@@ -3,7 +3,7 @@ id: "1078"
 title: "Playdate: the fight at 30 frames a second: move the pin past engine#3056 and time the combat picture on the device"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1041", "engine#3056"]

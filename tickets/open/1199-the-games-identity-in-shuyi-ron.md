@@ -3,7 +3,7 @@ id: "1199"
 title: "The game's identity in shuyi.ron: name, id, version, storage and icon, read from a generated APP"
 type: infra
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []
@@ -36,7 +36,7 @@ None. The name stays "Visions of Shuyi".
 
 **In:**
 - An `app` part in `shuyi.ron`, its `code` and `window_icons` in `crates/app`.
-  The id is Claude's choice, not under `com.example.`.
+  The id is the agent's choice, not under `com.example.`.
 - **`storage: "tactical-rpg"`, exactly**: any other name loses every player's
   saves (the comment on `STORAGE_NAME`).
 - `crates/app/src/main.rs` reads the title, the icons and the storage name

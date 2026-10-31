@@ -3,7 +3,7 @@ id: "0836"
 title: Player profiles hold the options, keys, tips seen and saves
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -44,7 +44,7 @@ before are still there (now `Player 1`).
   one used. The current profile chosen at start-up (`Ctx::with_storage`),
   `Player 1` made on a first launch.
 - Every key listed above read and written **for the current profile**
-  (e.g. under a per-profile key prefix; the scheme is Claude's call, keys
+  (e.g. under a per-profile key prefix; the scheme is the agent's call, keys
   must stay valid `Storage` keys, `^[a-z0-9_-]{1,64}$`).
 - **Migration:** a player from before profiles has their `settings`,
   `keybindings`/`layout`, `tips_seen`, slots and suspend moved into
@@ -132,7 +132,7 @@ before are still there (now `Player 1`).
 - Text: `profile.numbered` (`Player {n}`) in `assets/lang/en/ui.ron`, for
   `Player 1` and for profiles rebuilt from an unreadable list.
 
-**Claude's starting rules** (the design docs were silent):
+**the agent's starting rules** (the design docs were silent):
 
 - Two names that differ only in capitals count as the same name
   (`Mei` and `mei` can't both exist), and spaces around a name are dropped.

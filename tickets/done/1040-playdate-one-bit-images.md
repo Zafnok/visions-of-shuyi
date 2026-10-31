@@ -3,7 +3,7 @@ id: "1040"
 title: "Playdate: one-bit images made at build time and drawn as sprite items"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1032", "1036", "0062"]
@@ -153,7 +153,7 @@ the converter an engine tool; the method table stays the game's.
   the logo as solid white letters with a black shadow and rim, which is
   1044's to make. They stay PNGs (grey boxes on the Playdate until then).
 
-**Claude's starting rules** (Nick can veto; all *tunable*, the screens'
+**the agent's starting rules** (Nick can veto; all *tunable*, the screens'
 tickets may change them):
 
 - Backdrops (title and battle) are lightened with the same brightness

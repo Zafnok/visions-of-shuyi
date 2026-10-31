@@ -3,7 +3,7 @@ id: "0604"
 title: Remove per-class stat caps (hard ceilings only)
 type: feature
 milestone: M5 Progression
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0019"]
@@ -120,4 +120,4 @@ Deviations: core tests that used tight class caps now pass tight hard
 ceilings instead (`roll_under` / `tight()` in `progression/tests.rs`). The
 "stat above cap after a reclass" case became "stat above its ceiling".
 
-No gameplay rules were decided here (*Claude's starting rule*: none).
+No gameplay rules were decided here (*the agent's starting rule*: none).

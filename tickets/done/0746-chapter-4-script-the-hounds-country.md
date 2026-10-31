@@ -3,7 +3,7 @@ id: "0746"
 title: "Chapter 4 script: The Hound's Country, beat sheet and scenes"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736", "0743", "0745"]
@@ -32,7 +32,7 @@ length budget) and 0743 (the new cast's character sheets).
 
 ## Nick input
 
-None. Claude writes all scripts; only story decisions go to Nick (a
+None. The agent writes all scripts; only story decisions go to Nick (a
 change to a beat in `beats.md` or the outline, a new named character the
 cast doesn't have), asked with `ask-nick` before writing the scene that
 needs it. Nick reads the chapter in the Act 1 playtest (1064).
@@ -230,7 +230,7 @@ area anyone can enter.
 choices, not three: the fourth is in Gil's optional join scene, so a
 player who skips Millhaven Road sees three.
 
-**Claude's starting rules:** none that touch play. For the Act 1
+**the agent's starting rules:** none that touch play. For the Act 1
 playtest (1064): whether the gate confrontation (13 boxes before the
 battle, after a 14-box night scene) drags; whether Hollis's "Aye" and
 the stable are enough of a crack before Chapter 5's confession, or too

@@ -3,7 +3,7 @@ id: "1111"
 title: "The Harness core (key and pad scripts, waits, audio capture, snapshots) moves to the engine"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: high
 status: done
 blocked_by: ["1110"]

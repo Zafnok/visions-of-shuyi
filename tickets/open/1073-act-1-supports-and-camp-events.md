@@ -3,7 +3,7 @@ id: "1073"
 title: "Act 1's supports (C, B, A) and camp events"
 type: content
 milestone: Post–Chapter 1
-model: fable-5.1
+model: creative
 effort: high
 status: todo
 blocked_by: ["1003", "0743", "0750"]
@@ -30,7 +30,7 @@ last Act 1 script (0750) as well as the new cast's sheets (0743).
 
 ## Nick input
 
-None. Claude writes the conversations (story decisions only go to
+None. The agent writes the conversations (story decisions only go to
 Nick, with `ask-nick`: a support that would change a beat). Nick reads
 them in the Act 1 playtest (1064).
 

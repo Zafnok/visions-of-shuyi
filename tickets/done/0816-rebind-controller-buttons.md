@@ -3,7 +3,7 @@ id: "0816"
 title: "Rebind controller buttons on the Key bindings screen"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0032", "0219", "0220", "0815"]
@@ -154,7 +154,7 @@ screenshots of the built screen in `docs/screenshots/0816-*.png`.
   none down). Needed because a button binds when it is let go.
 - The ADR is 0053 (0050 and 0052 were taken by open PRs).
 
-**Claude's starting rules** (Nick can veto; also in `controls.md`):
+**the agent's starting rules** (Nick can veto; also in `controls.md`):
 - The screen opens on the side you pressed last (buttons after a button,
   keys after a key).
 - The switch row is one up from the first action. There, left shows the

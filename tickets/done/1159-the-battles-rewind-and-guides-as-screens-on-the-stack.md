@@ -3,7 +3,7 @@ id: "1159"
 title: "The battle's rewind and Guides pop-ups as screens on the stack, with the engine's screen results"
 type: feature
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["engine#2306", "1158"]

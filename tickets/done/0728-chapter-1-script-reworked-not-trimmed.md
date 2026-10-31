@@ -3,7 +3,7 @@ id: "0728"
 title: Rework the Chapter 1 script as scenes, not line by line
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: []
@@ -31,7 +31,7 @@ they say things rather than jokes on top.
 Read first: the `story-writing` skill and ADR-0011; `docs/story/` (bible,
 `chapters/ch01.md` beat sheet, `beats.md`, the characters' sheets, which
 0724 gave sample lines); `docs/design/setting-and-tone.md` (*Where the jokes
-go*, *Language*: American English); 0724's and 0707's completion notes. Claude writes all the lines; Nick
+go*, *Language*: American English); 0724's and 0707's completion notes. The agent writes all the lines; Nick
 decides only story questions.
 
 ## Nick input

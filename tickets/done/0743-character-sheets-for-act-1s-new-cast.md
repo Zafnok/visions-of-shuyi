@@ -3,7 +3,7 @@ id: "0743"
 title: "Character sheets for Act 1's new cast and named bosses"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: done
 blocked_by: ["0736"]
@@ -43,7 +43,7 @@ all of them for 0736 (the craft research that governs the scripts).
 
 ## Nick input
 
-None. Claude writes the sheets. A story decision goes to Nick with
+None. The agent writes the sheets. A story decision goes to Nick with
 `ask-nick` before the sheet that needs it: a new named character the
 cast doesn't have, or anything that changes a beat in `beats.md` or the
 outline. New names are placeholders Nick may rename

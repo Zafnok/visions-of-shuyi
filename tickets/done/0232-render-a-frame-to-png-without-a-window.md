@@ -3,7 +3,7 @@ id: "0232"
 title: "cargo xtask frame-png: render a scripted frame to a PNG without a window"
 type: infra
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0231"]
@@ -15,7 +15,7 @@ completed: 2026-10-02
 
 ## Context
 
-Claude checks the game three ways: text snapshots, the scripted `Harness`
+The agent checks the game three ways: text snapshots, the scripted `Harness`
 (ADR-0007), and the web build in the browser pane. Text snapshots show a
 sprite as one line (`sprite 8,8 240x240 portraits/…`), which says where a
 picture is but not what the frame looks like. Pictures for Nick (mockups,

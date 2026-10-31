@@ -3,7 +3,7 @@ id: "1075"
 title: "Playdate: weapon and spell lines that fit the screen"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

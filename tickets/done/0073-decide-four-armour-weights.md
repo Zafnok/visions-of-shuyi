@@ -3,7 +3,7 @@ id: "0073"
 title: "Decide: four armour weights (cloth, leather, chain, plate) and who wears them"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -122,7 +122,7 @@ example, the Tailor's weights, `magic.md`'s caster attack-speed note,
 `progression.md`'s promotion armour example and Commander line, 0443's
 shop rows and 0320's `blocked_by`.
 
-*Claude's starting rules:*
+*the agent's starting rules:*
 - A penalty can't take a stat below 0 (it follows from stats never being
   negative): Iron Plate's Res −3 only bites a wearer who has Res to lose.
 - The old Warded Robe (Res +2, 700) is retired; the Linen Robe replaces it.

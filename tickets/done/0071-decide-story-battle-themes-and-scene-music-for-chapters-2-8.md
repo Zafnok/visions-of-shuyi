@@ -3,7 +3,7 @@ id: "0071"
 title: "Decide: story-battle themes and scene music for Chapters 2–8"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -110,7 +110,7 @@ appendix).
   own, as the ticket's *Out* says. Two tracks list voices (Wendale Abbey,
   Solemn (Opening)): `audio.md` asks for an ear check for words on import.
 
-*Claude's starting rules* (tunable, for Nick to veto):
+*the agent's starting rules* (tunable, for Nick to veto):
 - If Hollis already fell in Classic mode, the rewritten farewell plays the
   same two cues (`scene_loss`, then `scene_departure`).
 - Every other Chapter 2–8 scene picks from the existing mood cues in its

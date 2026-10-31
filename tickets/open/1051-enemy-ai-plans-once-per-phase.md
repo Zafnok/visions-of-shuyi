@@ -3,7 +3,7 @@ id: "1051"
 title: "Enemy AI plans once per phase instead of once per command (same choices, faster on the Playdate)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: []

@@ -3,7 +3,7 @@ id: "1038"
 title: "Playdate: the battle screen's skin (the map fills the screen, corner pop-ups, menus, questions, banners)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1037", "1035", "0242"]
@@ -25,7 +25,7 @@ like Fire Emblem on the GBA):
   (*placement tunable*).
 - Anything else the PC side panel shows (stats, weapons, the chapter,
   turn and rewinds) is on the Unit info screen and in the map menu
-  (*Claude's starting rule*).
+  (*the agent's starting rule*).
 
 Ticket 0242 turns the battle screen's own drawing (panel, help bar,
 menus, questions, objective, banners, notes, tips) into a `BattleView`
@@ -71,7 +71,7 @@ it):
 - **No help bar:** the PC's help bar has no room. Where the PC shows a
   key hint the player needs to proceed (a question's answer keys), the
   window shows it inside, named through the keymap (`keyboard-input`
-  skill). *Claude's starting rule (Nick can veto): no help bar on the
+  skill). *the agent's starting rule (Nick can veto): no help bar on the
   Playdate's battle map; the map menu and the Playdate's printed buttons
   stand in for it.*
 - Corner pop-up placement: top-left (unit) and top-right (terrain); both
@@ -180,7 +180,7 @@ Playdate's window, so the uses left are cut with `…`; what the line keeps
 is Nick's look-and-feel call, asked before building). Added to 1064's
 `blocked_by` and the roadmap.
 
-***Claude's starting rules*** (in `docs/design/playdate.md`, *Layout*;
+***the agent's starting rules*** (in `docs/design/playdate.md`, *Layout*;
 for 1064's checklist, Nick can veto):
 - The corner pop-ups are flush in the corners in the battle's window look;
   the unit's shows name and `HP 19/19` (no bar), the terrain's its name

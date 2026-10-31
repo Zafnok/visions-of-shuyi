@@ -3,7 +3,7 @@ id: "0858"
 title: "Chapter 2 art: Joss's and Hendry's faces, map sprites and combat pictures"
 type: content
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["0848"]

@@ -3,7 +3,7 @@ id: "1020"
 title: "Map editor, part 2: units, the battle file and playing the battle"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1019"]

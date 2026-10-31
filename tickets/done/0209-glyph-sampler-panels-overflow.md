@@ -3,7 +3,7 @@ id: "0209"
 title: Keep the glyph sampler's demo panels on screen as the palette grows
 type: bug
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: []

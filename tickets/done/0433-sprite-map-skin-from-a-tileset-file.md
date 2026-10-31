@@ -3,7 +3,7 @@ id: "0433"
 title: "A sprite map skin read from a tileset file, switchable from the debug menu"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0231", "0432"]
@@ -59,7 +59,7 @@ None. Nothing changes for players: the glyph skin stays the default, and
 the sprite skin is reachable only from the debug menu.
 
 The looks below for things art alone doesn't show (whose side a unit is on,
-that it has acted, its HP, an active effect, the cursor) are **Claude's
+that it has acted, its HP, an active effect, the cursor) are **the agent's
 placeholders for the test skin**, not decisions. Say so in the PR. They are
 decided with Nick in ticket 0039 and built in 0436.
 
@@ -251,7 +251,7 @@ cleanly. Seen in passing: the cursor's 1-px corners are hard to see where
 they cross the placeholder side and HP bars, and side-by-side units' bars
 run into one line; both are for 0039/0436 to settle.
 
-**Placeholders for Nick** (Claude's, *not decided*; ticket 0039 decides,
+**Placeholders for Nick** (the agent's, *not decided*; ticket 0039 decides,
 0436 builds; nothing here reaches players, the glyph skin stays the game's
 look):
 

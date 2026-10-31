@@ -3,7 +3,7 @@ id: "0102"
 title: "CI: format, lint, test on 3 OSes, WASM build, docs"
 type: infra
 milestone: M0 Foundation
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0101"]

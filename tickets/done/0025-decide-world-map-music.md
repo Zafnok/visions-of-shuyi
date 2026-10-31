@@ -3,7 +3,7 @@ id: "0025"
 title: "Decide: the world map music"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -119,7 +119,7 @@ licences checked on their OpenGameArt pages. Recorded in `audio.md`
 - The quiet between two rounds of the map's track is 30 s (Nick, after
   the page: "probably more like 30s pause or maybe longer").
 
-*Claude's starting rules* (Nick didn't give these; tunable):
+*the agent's starting rules* (Nick didn't give these; tunable):
 - The map's track fades out over 3 s and back in over 3 s.
 
 Gates: docs only; `ticket-lint` and `typos` run (no code changed).

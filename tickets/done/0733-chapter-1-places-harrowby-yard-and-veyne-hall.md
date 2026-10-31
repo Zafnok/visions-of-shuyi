@@ -3,7 +3,7 @@ id: "0733"
 title: "Chapter 1's places: the yard at Harrowby and the study at Veyne Hall"
 type: content
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0732"]
@@ -142,7 +142,7 @@ darkening of every place, on top of dawn and night light. The study at
 night especially; if it is too dark to read, the light or the darkening
 can be raised.
 
-*Claude's starting rules (Nick can veto):*
+*the agent's starting rules (Nick can veto):*
 
 - Dawn light: a little lighter than dusk and rosy rather than golden
   (`lighting.ron`, tunable).

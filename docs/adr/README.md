@@ -18,7 +18,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0007](0007-testing-strategy.md) | Testing strategy | Accepted; behaviour tests read the map scene, per ADR-0038 |
 | [0008](0008-ci-quality-gates.md) | CI and quality gates (free tier only) | Superseded by ADR-0014 |
 | [0009](0009-distribution.md) | Distribution: Windows first, web, itch, Steam | Accepted |
-| [0010](0010-ticket-workflow-and-model-routing.md) | Ticket workflow and model routing | Accepted |
+| [0010](0010-ticket-workflow-and-model-routing.md) | Ticket workflow and model routing | Accepted; model routing and instruction entry point amended by ADR-0102 |
 | [0011](0011-story-authoring-pipeline.md) | Story authoring pipeline with LLMs | Accepted |
 | [0012](0012-visual-style.md) | Visual style: cells, tiles, color, portraits | Superseded by ADR-0018 |
 | [0013](0013-licensing-and-third-party-policy.md) | Licensing and third-party policy | Accepted; art/audio licenses amended by ADR-0027; bought art allowed by ADR-0032 |
@@ -109,6 +109,8 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0099](0099-world-maps-a-file-per-act-rules-in-core-the-look-in-the-file-and-two-skins.md) | World maps: a file per act (`assets/worldmaps/`), its rules in core (`Campaign::world`, commands and events, what is open worked out, never stored), its look in the file, a `WorldMapView` painted by a glyph and a picture skin; chapters say `world_map`; `SavePoint::WorldMap` with no new save version; the map's shortcuts in a key group of their own | Accepted (1007); extends ADR-0005, 0035, 0038, 0039, 0054 |
 | [0100](0100-mutation-shards-of-at-most-sixty-mutants-with-a-150-minute-limit.md) | Mutation shards of at most about 60 mutants: 1 shard up to 40 mutants, 4 up to 160, 8 up to 480, then one per 60, at most 20; each shard may run 150 minutes | Accepted (0133); supersedes ADR-0073 §1's shard rule and §3's time limit |
 | [0101](0101-a-game-pr-stays-under-about-3000-changed-lines-by-estimate-and-warning.md) | A game PR stays under about 3,000 changed lines: planned at about 2,000 and split before coding, measured by `cargo xtask pr-size` (generated and binary files left out by `.gitattributes`), warned about by a Claude Code hook and on the PR, never failed; `engine-pin` and `sonar` PRs exempt | Accepted (0135); extends ADR-0010, 0092 |
+
+| [0102](0102-portable-agent-workflows.md) | Portable agent workflows and capability routing | Accepted |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

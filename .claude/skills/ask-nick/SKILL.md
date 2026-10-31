@@ -1,13 +1,13 @@
 ---
 name: ask-nick
-description: Run a game-design decision with Nick (the owner) and record the answer in docs/design/. Use for every 00xx design-decision ticket and whenever a game-system question (stats, magic, progression, story, difficulty, world structure, look & feel) comes up. Not for technical questions, which Claude decides (write-adr).
+description: Run a game-design decision with Nick (the owner) and record the answer in docs/design/. Use for every 00xx design-decision ticket and whenever a game-system question (stats, magic, progression, story, difficulty, world structure, look & feel) comes up. Not for technical questions, which the agent decides (write-adr).
 metadata:
   version: "1.0"
 ---
 
 # Ask Nick a game-design question
 
-Nick decides **game design**. Claude decides **everything technical** and never
+Nick decides **game design**. The agent decides **everything technical** and never
 asks Nick about languages, libraries, architecture or code. Nick has said he
 likes being asked design questions *with examples from real games* and the
 option to describe his own vision.

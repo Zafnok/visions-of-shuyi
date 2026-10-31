@@ -3,7 +3,7 @@ id: "1043"
 title: "Playdate: the dialogue screen's skin (text box, speaker, one-bit portraits, choices, the dialogue log)"
 type: feature
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["1037", "1042", "0249"]
@@ -46,7 +46,7 @@ it):
   along the bottom (as many lines as fit with the face beside or above
   it), the speaker's name, the one-bit portrait as a sprite item, the
   reveal of text as on the PC, choices, the skip question, captions.
-  Layout: *Claude's starting rule (Nick can veto)*: the PC's arrangement
+  Layout: *the agent's starting rule (Nick can veto)*: the PC's arrangement
   (face beside the text box) scaled to the 50 × 15 screen; if it doesn't
   fit 0062's portrait size, the face sits above the box.
 - The dialogue log: a full-screen page, scrolled with the cursor.

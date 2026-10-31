@@ -3,7 +3,7 @@ id: "0806"
 title: Colour themes option (C, D, E, G palettes)
 type: feature
 milestone: M7 Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0805"]
@@ -88,7 +88,7 @@ says whether each still looks like its mockup; tweaks become `tuning` tickets.
   (sprite "acted" grey-dimming is unchanged).
 - Colours the mockups didn't list (ally, neutral, heal_range, danger_zone,
   exp_bar, stone, road, path, hp_mid, effect marks, etc.) are my derivations.
-- Claude's starting rules: the row is named "Colors" and the themes are named
+- The agent's starting rules: the row is named "Colors" and the themes are named
   as in Nick's list; Restore defaults puts the theme back to D.
 - Tests: content (same names, themes differ), settings round-trip, options
   unit + scripted (palette changes, saved, relaunch, restore), Quick Battle

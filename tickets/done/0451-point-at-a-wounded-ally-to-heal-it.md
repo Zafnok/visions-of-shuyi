@@ -3,7 +3,7 @@ id: "0451"
 title: Point at a wounded ally to heal it, like pointing at an enemy
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -133,7 +133,7 @@ Built:
 - Tests: `screens/battle/heal_aim_tests.rs` (tile choice, targets, the
   heal list, harness runs, one snapshot of the preview opened by pointing).
 
-*Claude's starting rules* (Nick can veto):
+*the agent's starting rules* (Nick can veto):
 
 - In the list, a heal that can't reach the ally pointed at from that tile
   is dimmed, and the list opens on the first one that can.

@@ -3,7 +3,7 @@ id: "0036"
 title: "Decide: the title screen's intro cinematic (how it fits the menu, storyboard, zoom)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -70,7 +70,7 @@ So "the brief pause" is about **17 seconds** (1:57 to 2:14).
 - Overworld: the world map is ticket 1007, **after Chapter 1**. Nothing to
   show yet.
 - Characters: bought faces (0706, 0711) and combat pictures (0413); none
-  bought yet. Claude never draws character art (`look-and-feel.md`).
+  bought yet. The agent never draws character art (`look-and-feel.md`).
 - Conversations: the dialogue screen (0704) exists; the Chapter 1 script is
   0707.
 - 0813 (screen transitions) is a separate decision. Fades or cuts *between
@@ -171,7 +171,7 @@ Yes / no / later.
 - A new section *Intro cinematic* in `docs/design/title-screen.md`: Nick's
   words, the rules, the final storyboard as a shot table (start time, what
   is on screen, movement, size), the approved snippet lines and characters,
-  Claude's starting rules marked as such, and open sub-questions.
+  The agent's starting rules marked as such, and open sub-questions.
 - Update the table in `docs/design/README.md`.
 - Update the tickets that build it so they match the answers: 0228, 0817,
   0818, 0819, 0820, 1010. Remove what the answers make unnecessary, and
@@ -283,7 +283,7 @@ used), 0706 (the lead's default face for the cinematic).
 fewer quips, to Nick's tone note now in `setting-and-tone.md`), 0827
 (cinematic shots where units march and fight).
 
-**Claude's starting rules** (listed in the design doc for Nick to veto):
+**the agent's starting rules** (listed in the design doc for Nick to veto):
 the menu also shows when the cinematic reaches the logo by itself; any
 press while the menu is up restarts the 15 seconds; a press in the silence
 puts the menu back on the 15-second rule; the skip press does nothing

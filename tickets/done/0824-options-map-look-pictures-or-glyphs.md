@@ -3,7 +3,7 @@ id: "0824"
 title: "Options: Map look (pictures or glyphs)"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0436", "0805"]
@@ -30,7 +30,7 @@ switch. 0805 builds the Options screen and the saved `Settings`.
 
 ## Nick input
 
-None. The starting rules below are Claude's; list them in the PR so Nick
+None. The starting rules below are the agent's; list them in the PR so Nick
 can veto:
 
 - The entry is **"Map look"** with the values **Pictures** and **Glyphs**;
@@ -104,7 +104,7 @@ registered under the game tileset's id as the public fixture.
 Deviation: none. The debug-menu skin switch is untouched; it stays until the
 next look change.
 
-*Claude's starting rules* (the ticket's list, for Nick to veto): the entry is
+*the agent's starting rules* (the ticket's list, for Nick to veto): the entry is
 "Map look" with Pictures and Glyphs; Pictures is the default; it switches
 terrain and units together; it changes the map at once and is remembered; a
 build without the bought files has only glyphs and doesn't show the entry.

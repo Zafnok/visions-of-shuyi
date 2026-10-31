@@ -3,7 +3,7 @@ id: "0729"
 title: A dialogue log to read back, see and replay earlier lines
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -46,12 +46,12 @@ the Chapter 1 opening with the bought portraits, real games for each):
 3. "Click to skip back": the scene goes back to that line and plays on
    from there; "skip forward again to latest seen point" jumps back to
    where the player was. What happens to a `@choice` passed on the way back
-   (its answer is kept and shown, or asked again)? Claude's suggestion:
+   (its answer is kept and shown, or asked again)? the agent's suggestion:
    kept, shown greyed, not asked again.
 4. Does the log hold the current scene only, or every scene of the
    chapter or the save (and the battle's lines: boss lines, death quotes)?
 5. Key: unbound by default (Nick: "optional binding"), or a default key?
-6. In the title cinematic's `Talk` shots: no log (Claude's suggestion).
+6. In the title cinematic's `Talk` shots: no log (the agent's suggestion).
 
 Record the answers in `docs/design/look-and-feel.md` (*Dialogue log*) and
 `controls.md`. **Sign-off:** in the Chapter 1 opening, open the log, scroll,
@@ -156,7 +156,7 @@ Chapter 1 opening with the bought portraits; recorded in
 - The acceptance criteria said "with a key bound": Nick gave the action a
   default key, so the tests use `b` (and one rebinds it to Up).
 
-**Claude's starting rules** (also in `look-and-feel.md` and `controls.md`):
+**the agent's starting rules** (also in `look-and-feel.md` and `controls.md`):
 
 - A text box too long for one page is one row of the log, in full; the
   line still typing when the log opens is in it in full.

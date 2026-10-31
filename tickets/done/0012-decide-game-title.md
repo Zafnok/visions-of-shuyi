@@ -3,7 +3,7 @@ id: "0012"
 title: "Decide: the game's title"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0701"]
@@ -61,4 +61,4 @@ his wife. Recorded in `docs/design/title.md` with his words.
   are *Shuyan Saga* and *Shu*.
 - Follow-up: **0905**, rename the binary, window, title screen, web page and
   release packages, without moving save data.
-- No Claude's starting rules: this ticket made no gameplay decisions.
+- No the agent's starting rules: this ticket made no gameplay decisions.

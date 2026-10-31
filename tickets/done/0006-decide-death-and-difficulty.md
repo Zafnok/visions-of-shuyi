@@ -3,7 +3,7 @@ id: "0006"
 title: "Decide: unit death, difficulty and undo"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -78,7 +78,7 @@ Update `docs/design/README.md`; adjust 0305, 0307, 0801, 0802 if needed.
 
 Nick answered in the project thread on 2026-09-25: 1D, 2A (charges vary by the
 map's intended difficulty; restarting a battle refunds them), 3B (one
-difficulty now; Hard/Merciless later), 4A. Claude first filled several levers
+difficulty now; Hard/Merciless later), 4A. The agent first filled several levers
 with its own values; Nick asked to decide them himself, so a second round of
 questions settled: dead unit's gear → stock; no cost for a Casual retreat;
 Classic → Casual only (same for Hard → Normal later); charge tiers 2/3/5/8

@@ -3,7 +3,7 @@ id: "0825"
 title: "Options: Language, and however the first launch picks one"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0042", "0233", "0805"]

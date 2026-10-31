@@ -3,7 +3,7 @@ id: "0472"
 title: "A downed unit shows its panel under the cursor, and every battle's objective line fits on the PC and the Playdate"
 type: bug
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1039"]
@@ -43,7 +43,7 @@ From the retro of the last 50 PRs (2026-10-22). Two small gaps where
 
 None. Verified by tests and `cargo shuyi frame-png` pictures in the PR
 (a downed unit under the cursor, PC and Playdate). That a downed unit
-shows its panel when the cursor is on it is a *Claude's starting rule*
+shows its panel when the cursor is on it is a *the agent's starting rule*
 (the panel already shows it during playback); it goes in the Completion
 notes for the Act 1 playtest's checklist (1064).
 

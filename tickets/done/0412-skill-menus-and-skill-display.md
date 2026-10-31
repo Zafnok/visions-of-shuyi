@@ -3,7 +3,7 @@ id: "0412"
 title: Skill display, active-skill menus and forecast markers
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0311", "0404", "0405"]
@@ -99,7 +99,7 @@ skill quick?
   help line names the skill key (Vault); the palette sampler.
 - **Follow-up:** 0426 (actives that add range, such as Long Shot, don't yet
   offer their extra targets).
-- **Claude's starting rules (please agree or veto):**
+- **the agent's starting rules (please agree or veto):**
   - Up/Down cycle skills while targeting (only when the unit has an active to choose).
   - The `Skill` entry only appears for units that know a non-combat
     active; it is dimmed if none can be used right now.

@@ -3,7 +3,7 @@ id: "1193"
 title: The MCP server's check, bots and replay on the game (GameTools for Trpg)
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: []
@@ -128,4 +128,4 @@ Done 2026-10-25.
 **Estimate (ADR-0092):** 120 production lines (the ticket's, judged by
 `Trpg::lang` and `frame`). Measured: 115 added (0.96×), under 2×.
 
-**Claude's starting rules:** none (dev tooling; no gameplay rule).
+**the agent's starting rules:** none (dev tooling; no gameplay rule).

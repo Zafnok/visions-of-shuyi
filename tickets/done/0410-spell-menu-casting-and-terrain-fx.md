@@ -3,7 +3,7 @@ id: "0410"
 title: "Spell menu, heal and tile targeting, affinity markers, terrain-change display"
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0309", "0310", "0404", "0407"]
@@ -149,7 +149,7 @@ Deviations from the plan:
 - About 40 existing tests and 27 snapshots changed, all for the two new
   units; every new snapshot was read.
 
-Rules and looks I had to choose (*Claude's starting rules*; Nick may veto,
+Rules and looks I had to choose (*the agent's starting rules*; Nick may veto,
 they are also in `magic.md`):
 
 1. **The menu opens on `Magic` only when a spell can hit an enemy.**

@@ -3,7 +3,7 @@ id: "1195"
 title: Stamp the bots' play records with the build that made them
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: []

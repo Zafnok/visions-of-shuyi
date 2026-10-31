@@ -3,7 +3,7 @@ id: "0320"
 title: "Specialty stores: an Alchemist and a Tailor that buy their goods at full price"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0073", "0321"]
@@ -112,7 +112,7 @@ table) rather than loading a town file. 1007 / 1070 should call
 Vendor's tile of the Quick Battle map, since that is the only shop screen
 until towns come.
 
-**Claude's starting rules** (for the Act 1 playtest, 1064):
+**the agent's starting rules** (for the Act 1 playtest, 1064):
 - A refused item at a specialty store shows no price (rather than a price
   it would never pay).
 - A Tailor and an Alchemist repair nothing (the design lists only trading).

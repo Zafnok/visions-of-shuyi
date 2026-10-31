@@ -3,7 +3,7 @@ id: "0026"
 title: "Decide: the capital city music"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

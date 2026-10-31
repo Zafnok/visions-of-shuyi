@@ -3,7 +3,7 @@ id: "1157"
 title: "Move the engine parts of open game tickets to the engine repository, and point their dependencies there"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: xhigh
 status: done
 blocked_by: ["1131", "1152"]

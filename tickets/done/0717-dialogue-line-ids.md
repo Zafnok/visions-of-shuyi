@@ -3,7 +3,7 @@ id: "0717"
 title: Every dialogue line gets a stable id
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

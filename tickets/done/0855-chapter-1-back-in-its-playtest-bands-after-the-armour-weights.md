@@ -3,7 +3,7 @@ id: "0855"
 title: "Chapter 1 back in its playtest bands after the four armour weights"
 type: tuning
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0321"]

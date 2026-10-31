@@ -3,7 +3,7 @@ id: "0054"
 title: "Decide: the mod policy — what mods may change, modded saves, Workshop, the licence"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1064"]
@@ -74,7 +74,7 @@ it or asks for it in his own words, and that is its own PR); any code.
       mods on (Steam games usually turn achievements off with mods).
    4. **Steam Workshop.** Wanted at launch, later, or never. Workshop's own
       terms say what Valve may do with uploads; they don't conflict with
-      `LICENSE` section 4 as far as Claude can tell, but a lawyer should
+      `LICENSE` section 4 as far as the agent can tell, but a lawyer should
       confirm.
    5. **Mods on the web build.** Options: native builds only (Windows,
       later Linux and macOS); the web build too, with a mod loaded from a

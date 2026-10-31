@@ -3,7 +3,7 @@ id: "0457"
 title: The lessons - basic controls and what's different here
 type: content
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0456"]
@@ -49,13 +49,13 @@ it can happen).
 
 **Sign-off:** after merge, play the Chapter 1 opening at `Full` and at
 `Short`. The items and timings below that the design doc doesn't fix are
-*Claude's starting rules*; list them in the PR for Nick to veto.
+*the agent's starting rules*; list them in the PR for Nick to veto.
 
 ## Scope
 
 **In:**
 - The ten lessons in `assets/data/lessons.ron`: items, triggers, levels.
-  Words are Claude's, in plain American English, ≤ 60 characters a line;
+  Words are the agent's, in plain American English, ≤ 60 characters a line;
   every key through `{Action}` placeholders (`keyboard-input` skill). The
   guide's voice comes later (0731); write them plainly now.
 - At `Full`, lessons 1 and 6 both start on turn 1: merge what 6 teaches
@@ -153,7 +153,7 @@ it can happen).
 - Follow-up: **0459** (the guide's box covers the side panel on long
   lines).
 
-**Claude's starting rules** (gameplay-affecting, for Nick to veto):
+**the agent's starting rules** (gameplay-affecting, for Nick to veto):
 
 1. **The order on turn 1 at Full:** the cursor (move it up, down, left,
    right), then the keys (move the cursor; open Options from the map

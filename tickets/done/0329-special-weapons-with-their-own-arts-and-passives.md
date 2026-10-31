@@ -3,7 +3,7 @@ id: "0329"
 title: "Special weapons: the first three, weapon passives, personal weapons, a warning before selling"
 type: feature
 milestone: M2 Core rules
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0018", "0325"]
@@ -132,7 +132,7 @@ Done as planned:
 
 Engine friction: estimate 350, measured 354 (1.0×), under 2×.
 
-*Claude's starting rules* (where the design is silent), for the Act 1
+*the agent's starting rules* (where the design is silent), for the Act 1
 playtest (1064):
 
 1. **Hold the Ford lasts like every stance**: from the attack until the

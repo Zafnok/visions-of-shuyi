@@ -3,7 +3,7 @@ id: "0034"
 title: "Decide: how the web build starts its title music (press a key)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: low
 status: done
 blocked_by: []
@@ -43,7 +43,7 @@ implementation ticket.
 
 Nick picked **any key**, shown as a `Press any key` line on the title screen
 where the menu goes (like GBA Fire Emblem's "Press Start"), **web build
-only, for now**. Claude's starting rules (listed in the design doc): the
+only, for now**. The agent's starting rules (listed in the design doc): the
 dismissing key does nothing else, the line is dim and still, the help line
 is hidden until the menu shows, a click doesn't dismiss it, and it shows
 once per page load. Built by ticket 0224. Ticket 0811 (title art) now notes

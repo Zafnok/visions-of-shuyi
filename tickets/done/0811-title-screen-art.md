@@ -3,7 +3,7 @@ id: "0811"
 title: Title screen art with the game's name
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0012", "0801"]
@@ -23,7 +23,7 @@ ticket covered the title's look. Found while listing Chapter 1 gaps
 (2026-09-29).
 
 Look and feel rules: `docs/design/look-and-feel.md` (0011), ADR-0018 (palette
-names only, glyph and half-block techniques). Nick disliked Claude-drawn
+names only, glyph and half-block techniques). Nick disliked agent-drawn
 *portraits* (0021), so offer lettering and scene options, not only drawn
 figures, and expect several rounds.
 
@@ -138,7 +138,7 @@ the rules are in `docs/design/look-and-feel.md`, *Title screen*.
 - Downstream tickets 0817, 0819 and 0830 got a note on how to draw the
   logo.
 
-**Rules I had to decide (*Claude's starting rules*; Nick can veto):**
+**Rules I had to decide (*the agent's starting rules*; Nick can veto):**
 
 - One backdrop per launch, random, never the same twice in a row, kept for
   the whole launch. (Nick: "yes sounds good".)

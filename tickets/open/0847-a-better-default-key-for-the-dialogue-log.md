@@ -3,7 +3,7 @@ id: "0847"
 title: "A better default keyboard key for the dialogue log"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: low
 status: todo
 blocked_by: []
@@ -18,7 +18,7 @@ completed:
 The dialogue log (0729) opens with `DialogueLog`: `b` in the right-handed
 layout, `n` left-handed, the left face button on a controller
 (`assets/data/keymap.ron`; `docs/design/controls.md`, *Dialogue log*).
-The keys were *Claude's starting rules*; the controller button came from
+The keys were *the agent's starting rules*; the controller button came from
 a PS4 guide for Persona 5. `DialogueLog` is in its own key group, so it
 may share a key with an action of the rest.
 

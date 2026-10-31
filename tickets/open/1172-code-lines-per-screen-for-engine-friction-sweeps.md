@@ -3,7 +3,7 @@ id: "1172"
 title: "cargo xtask code-lines --tree: production lines per file and per screen of the whole game, for engine-friction sweeps"
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: []

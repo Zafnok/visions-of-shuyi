@@ -3,7 +3,7 @@ id: "0234"
 title: Move every screen's text into the language file
 type: feature
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0233"]

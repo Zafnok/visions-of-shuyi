@@ -3,7 +3,7 @@ id: "0223"
 title: Make the menu select and cancel sounds quieter
 type: tuning
 milestone: M2 Engine
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0222"]
@@ -54,6 +54,6 @@ right next to the menu move tick and the battle sounds.
 
 Set both cues to 15, as planned. No code changes.
 
-*Claude's starting rule:* 15 % is my pick for "much too high". I read "too
+*the agent's starting rule:* 15 % is my pick for "much too high". I read "too
 high" as too loud, not as pitch that's too high. If you meant pitch, say so
 and that becomes a separate ticket to re-make the sounds.

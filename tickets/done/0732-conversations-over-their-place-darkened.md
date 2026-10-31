@@ -3,7 +3,7 @@ id: "0732"
 title: Draw each conversation over its place, darkened
 type: feature
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []
@@ -235,7 +235,7 @@ with *Pictures* (the bought tiles) the screen shows the part around the
 spot. Try `ch01_prebattle` and `ch01_victory`, and a battle line (Harl's)
 over the darkened battle.
 
-*Claude's starting rules (Nick can veto):*
+*the agent's starting rules (Nick can veto):*
 
 - When the spot is near the map's edge, the view stops at the edge
   rather than showing black past it (as the battle camera does); a map

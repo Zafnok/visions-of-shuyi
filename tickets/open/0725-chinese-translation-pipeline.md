@@ -3,7 +3,7 @@ id: "0725"
 title: "Chinese translation pipeline: glossary, names, speech styles, the back-translation check"
 type: content
 milestone: M6 Story & dialogue
-model: fable-5.1
+model: creative
 effort: high
 status: todo
 blocked_by: ["0045", "0235"]
@@ -15,7 +15,7 @@ completed:
 
 ## Context
 
-The Simplified Chinese option is machine-translated by Claude, chapter
+The Simplified Chinese option is machine-translated by the agent, chapter
 by chapter (`docs/design/voices-languages-and-script.md`, *Chinese*).
 It needs the same process as Japanese (0718;
 [ADR-0045 §6](../../docs/adr/0045-languages-text-by-key-and-line-ids.md)):

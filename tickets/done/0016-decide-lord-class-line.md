@@ -3,7 +3,7 @@ id: "0016"
 title: "Decide: the lord's unique class line"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0005", "0009"]
@@ -73,13 +73,13 @@ Nick answered in two rounds (2026-09-25):
 - **Q4:** the signature abilities *are* the lord classes' own skills,
   "nothing else on top" (no extra skill, personal spell or weapon).
 - **Q5:** names and numbers OK, except "Warlord", which Nick reserved for a
-  shared line. Claude renamed the lord's tier 3 **Grand Marshal**
+  shared line. The agent renamed the lord's tier 3 **Grand Marshal**
   (placeholder; Nick may rename it).
 
 Recorded in `progression.md` (*The lord's line*, tree, class tables,
 stats, tier-1–2 skills) and `chapter-1.md`'s roster row. The lord classes'
 skills (Inspire / Leadership, Crest Strike / Resolve, Rally / Leadership 2)
-and all the numbers are Claude's placeholders, as for every other class.
+and all the numbers are the agent's placeholders, as for every other class.
 
 0302 isn't done, so no new ticket was needed. Downstream tickets adjusted:
 0302 (the tree includes the `lord_only` line, plus validation), 0311 (ally

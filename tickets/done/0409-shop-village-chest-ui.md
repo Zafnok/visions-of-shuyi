@@ -3,7 +3,7 @@ id: "0409"
 title: Shop screen and Evacuate/Open actions in battle
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0308", "0403"]
@@ -119,7 +119,7 @@ Engine friction: estimate 550 production lines (the Guides screen's
 logic, view and skin, plus menu entries, messages and the panel line),
 measured 727 (1.32×) with the sale's confirmation, under 2×.
 
-### Claude's starting rules (for the Act 1 playtest, 1064)
+### the agent's starting rules (for the Act 1 playtest, 1064)
 
 - **Lines you can't afford stay selectable to read**, just dimmed;
   Confirm on one does nothing (the "can't" sound).

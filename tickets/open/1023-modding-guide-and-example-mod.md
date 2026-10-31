@@ -3,7 +3,7 @@ id: "1023"
 title: "Modding guide and an example mod, checked in CI"
 type: infra
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1016"]

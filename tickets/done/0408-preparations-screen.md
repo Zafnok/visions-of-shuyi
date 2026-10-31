@@ -3,7 +3,7 @@ id: "0408"
 title: Preparations screen (loadouts and battle pack)
 type: feature
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0306", "0403"]
@@ -129,7 +129,7 @@ spare gear, six Potions and two Elixirs to try it with.
    (`Steel Bow 25/25 from Test Scout`), and taking one swaps the two
    units' items in one step (`Preparations::gear_from_unit`).
 
-**Claude's starting rules** (Nick agreed, PR #140; 1 is new with the swap)
+**the agent's starting rules** (Nick agreed, PR #140; 1 is new with the swap)
 
 1. **Direct swaps:** if the other unit can't use what comes back (the
    knight can't wear the lord's Leather Vest), it goes to the stock. The

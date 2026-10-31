@@ -3,7 +3,7 @@ id: "1194"
 title: Gate the game's skills with check-skills
 type: infra
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["engine#2559"]

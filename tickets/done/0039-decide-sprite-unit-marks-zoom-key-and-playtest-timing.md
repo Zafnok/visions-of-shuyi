@@ -3,7 +3,7 @@ id: "0039"
 title: "Decide: how sprite units show their side and \"acted\", the zoom key, and what the playtest waits for"
 type: design-decision
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0038"]
@@ -150,7 +150,7 @@ and unit sprites* and § *Dialogue portraits*, with Nick's words:**
   bust is cut to its middle 64 columns and bottom 64 rows. This replaces
   0021's rule (faces at 5×).
 
-***Claude's starting rules*** (Nick can veto any of them):
+***the agent's starting rules*** (Nick can veto any of them):
 
 - When another unit stands in the tile above, an effect mark sits 4
   pixels lower, inside its own tile.

@@ -3,7 +3,7 @@ id: "1180"
 title: "The game's playtesting on the engine's: cargo shuyi playtest, targets by tier, weighted features, threat areas and the candidate order; the xtask command and the workflow's loop go"
 type: feature
 milestone: "Engine: carve"
-model: sonnet-5
+model: implementation
 effort: high
 status: blocked
 blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021"]

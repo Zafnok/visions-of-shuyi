@@ -3,7 +3,7 @@ id: "1113"
 title: "Cinematics: the timeline, easing and backdrop pan and zoom move to the engine; shot kinds are registered by the game"
 type: infra
 milestone: "Engine: carve"
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["1112"]

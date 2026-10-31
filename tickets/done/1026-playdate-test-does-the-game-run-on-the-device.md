@@ -3,7 +3,7 @@ id: "1026"
 title: "Playdate test: do the rules build for it, and how long does an enemy turn take"
 type: research
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: []

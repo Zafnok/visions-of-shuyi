@@ -3,7 +3,7 @@ id: "0321"
 title: "Four armour weights in the data: cloth, leather, chain, plate, and each class's max"
 type: feature
 milestone: M2 Core rules
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0073"]

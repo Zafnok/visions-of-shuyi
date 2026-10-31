@@ -3,7 +3,7 @@ id: "0003"
 title: "Decide: weapons, items and the weapon triangle"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -92,13 +92,13 @@ Nick answered all three questions plus three follow-ups. Recorded in
 `docs/design/weapons-and-items.md`.
 
 - **Weapons:** Nick went with neither A nor B. He asked for *Fire Emblem:
-  Fortune's Weave*'s model, which Claude researched: **no weapon triangle**,
+  Fortune's Weave*'s model, which the agent researched: **no weapon triangle**,
   a trait per weapon type (sword ×1.2 on follow-ups, spear ×2 vs Mounted,
   bow ×3 vs Flying at range 2, axe minimum 5 damage, gauntlet +15 avoid),
   durability spent **only by Combat Arts**, broken weapons still usable with
   penalties, repair at a blacksmith. Weapon ranks E–S grow with weapon EXP.
 - **Attack speed:** Nick asked for weight, Str, weapon skill and Spd, with
-  gauntlets reaching multiple strikes more easily than axes. Claude's formula:
+  gauntlets reaching multiple strikes more easily than axes. The agent's formula:
   `as_bonus = rank_speed − max(0, weapon wt + armour wt − Str/5)`, with gear
   adding to Spd. `stats-and-combat.md`'s examples are unchanged (weight 0, rank E).
 - **Inventory:** Nick's own design. Each unit has a loadout of 3 weapons,
@@ -106,7 +106,7 @@ Nick answered all three questions plus three follow-ups. Recorded in
   **per battle** (Nick: "scale them to the battle").
 - **Money:** FE on-map shops (Armoury / Vendor / Blacksmith), plus the same
   shops between chapters. Villages and chests.
-- Claude's starting rules that Nick may veto: using an item ends the unit's
+- The agent's starting rules that Nick may veto: using an item ends the unit's
   action (self or an adjacent ally); no trading during battle; items found
   mid-battle go into the pack past the cap; weapon EXP +2/+1 per combat;
   an art needs `durability_left ≥ cost`; chests need no key yet; default

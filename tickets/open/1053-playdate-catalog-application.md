@@ -3,7 +3,7 @@ id: "1053"
 title: "Playdate: prepare the application to Panic's Catalog"
 type: infra
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1052"]
@@ -24,7 +24,7 @@ question, not a design one)".
 ## Nick input
 
 **Setup:** Nick submits the application from his own Panic developer
-account (Claude never submits forms or signs in for him). Claude prepares
+account (the agent never submits forms or signs in for him). The agent prepares
 everything to paste, and the exact steps.
 
 ## Scope

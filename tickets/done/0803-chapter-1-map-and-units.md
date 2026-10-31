@@ -3,7 +3,7 @@ id: "0803"
 title: Chapter 1 content — map, roster, enemies, triggers, winning-replay test
 type: content
 milestone: M7 Chapter 1 & game flow
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0009", "0016", "0316", "0410", "0412", "0501", "0503", "0706", "0707", "0710", "0714", "0716", "0801", "0807"]
@@ -131,7 +131,7 @@ four chapter scenes. The map sketch and the as-built list are in
 **Asked of Nick (2026-10-11, recorded in `magic.md` and `audio.md`):**
 
 - Do Rue and Maud have their signature spells in Chapter 1? Nick left the
-  first pick to Claude ("I can tell you if they're OP"). Both are in.
+  first pick to the agent ("I can tell you if they're OP"). Both are in.
 - Battle music: `battle_bright` (Nick, "A").
 - The four scene cues: "I'll have to feel them out". They are in the build
   for the playtest, not approved.
@@ -157,7 +157,7 @@ rest hold their ground.
 turn 8 with nobody lost. Two tests play it: one against the rules alone,
 one through the real game from New Game to "To be continued".
 
-**Claude's starting rules** (the design docs were silent; all *tunable*,
+**the agent's starting rules** (the design docs were silent; all *tunable*,
 for Nick to judge in 0804):
 
 1. **Signature spells.** Rue's Cinder Oath: 9 power, 80 hit, the next tile

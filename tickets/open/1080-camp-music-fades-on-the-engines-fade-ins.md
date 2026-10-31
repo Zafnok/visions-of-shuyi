@@ -3,7 +3,7 @@ id: "1080"
 title: Camp's music fades as audio.md says, on the engine's fade-ins
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: ["1003", "engine#2341"]

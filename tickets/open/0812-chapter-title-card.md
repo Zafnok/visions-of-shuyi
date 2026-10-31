@@ -3,7 +3,7 @@ id: "0812"
 title: Chapter title card before a chapter starts
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0801"]

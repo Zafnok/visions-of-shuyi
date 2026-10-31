@@ -3,7 +3,7 @@ id: "0056"
 title: "Decide: Cinder Oath's range and what it is"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -114,6 +114,6 @@ items then this is not a conversation worth having".
   and the winning replay play exactly as before. 0317 re-runs both when
   the rule changes play. The full test suite (including the replay tests)
   passes.
-- *Claude's starting rule:* "no counter" covers only Rue's own attack. If
+- *the agent's starting rule:* "no counter" covers only Rue's own attack. If
   Cinder Oath is her equipped attack and an enemy attacks her from the
   next tile, she still counters with it, as any attack spell does.

@@ -3,7 +3,7 @@ id: "0214"
 title: "Import the chosen third-party music and sounds, with credits"
 type: content
 milestone: M1 Engine
-model: sonnet-5
+model: implementation
 effort: medium
 status: done
 blocked_by: ["0212"]
@@ -34,7 +34,7 @@ committed next to the files.
 
 **Setup:** approve the downloads when asked. Before downloading, the session
 lists every file with its source and size, as the safety rules require.
-Freesound originals need a logged-in account, and Claude must not log in. So
+Freesound originals need a logged-in account, and the agent must not log in. So
 this ticket uses freesound's public high-quality previews (see step 2). If
 Nick would rather have the originals: log in at freesound.org, open each
 sound's page (links in `audio.md`), click **Download**, and put the files in
@@ -187,7 +187,7 @@ track on Nick's machine): 80 ms (48 s track) to 460 ms (4:19); most
 110–260 ms. That's a visible freeze whenever the music changes, so I
 wrote **0215** (decode off the main thread).
 
-**Claude's starting rules** (Nick can veto; all *tunable*):
+**the agent's starting rules** (Nick can veto; all *tunable*):
 - `step_mounted` is one hoof-beat pair (0.14 s) played per tile, like the
   other footsteps, rather than the gallop looping while the unit moves.
   Units walk 12 tiles/s.

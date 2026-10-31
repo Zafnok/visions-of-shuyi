@@ -3,7 +3,7 @@ id: "0010"
 title: "Decide: supports and character relationships"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

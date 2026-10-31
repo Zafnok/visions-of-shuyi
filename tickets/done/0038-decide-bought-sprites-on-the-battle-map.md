@@ -3,7 +3,7 @@ id: "0038"
 title: "Decide: bought tiles and unit sprites on the battle map"
 type: design-decision
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0021"]
@@ -86,7 +86,7 @@ and unit sprites* and § *Combat screen*:**
 - In combat the two fighters always face each other; a picture that faces
   the wrong way is mirrored.
 - Fighters with no fitting art get more bought packs in a similar style
-  (Claude searches, Nick buys); characters who never fight may use the
+  (the agent searches, Nick buys); characters who never fight may use the
   Character Generator.
 
 **Answered the same day, after the PR opened:**
@@ -106,7 +106,7 @@ sprites walk; whether players may pick the glyph look; face or bust in
 dialogue. Combat's layout (box or full screen) and background stay with
 0413.
 
-***Claude's starting rule:*** unit sprites keep their own colours in every
+***the agent's starting rule:*** unit sprites keep their own colours in every
 light (C3 was drawn that way and Nick didn't comment on it).
 
 **Found on the real files** (corrects notes made from store previews):
@@ -120,7 +120,7 @@ mounted; the only human with an axe is the Amazon Warrior hero.
 for fighters with no fitting art), 0436 (unit sprites), 0437 (tileset
 terrain), 0438 (per-map lighting), 0439 (zoom toggle).
 
-**Tickets changed:** 1006 (its question is answered; only the Claude-drawn
+**Tickets changed:** 1006 (its question is answered; only the agent-drawn
 icons are left, and Nick didn't ask for them), 0433, 0413, 0706, 0711,
 0110, 0035, 0029, 0037.
 

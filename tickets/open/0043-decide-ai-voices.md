@@ -3,7 +3,7 @@ id: "0043"
 title: "Decide: AI voices — what is voiced, each voice by ear, on or off, the tool"
 type: design-decision
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: []
@@ -25,7 +25,7 @@ music: by ear, over several rounds.
 
 ## Nick input
 
-**Decision.** `ask-nick` skill. Steps 1–2 are Claude's research; Nick
+**Decision.** `ask-nick` skill. Steps 1–2 are the agent's research; Nick
 answers from step 3. He may need to do a **setup** step if a tool needs an
 account or an install on his machine: give exact clicks, and never ask him
 for a key in chat.

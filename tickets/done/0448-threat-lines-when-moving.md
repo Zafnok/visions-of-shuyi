@@ -3,7 +3,7 @@ id: "0448"
 title: "Show which enemies can attack the tile a unit is about to move to"
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0055"]
@@ -128,7 +128,7 @@ first turns on Pages.
   paints them last on its own tiles. 29 existing snapshots gained the
   arrow the Quick Battle's lord has from its first frame.
 
-**Rules decided here** (*Claude's starting rules*, Nick can veto; also in
+**Rules decided here** (*the agent's starting rules*, Nick can veto; also in
 the design docs):
 
 - **The glyph look starts each arrow at the edge of the enemy's tile**,

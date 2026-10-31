@@ -3,7 +3,7 @@ id: "1065"
 title: "The act ends: the closing scene, \"Act 1 ends\", and the army carried over"
 type: feature
 milestone: Post–Chapter 1
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["1007"]
@@ -26,7 +26,7 @@ to the title (`crates/ui/src/flow.rs`, `Stage::ToBeContinued`,
 map ("when an act's final story battle is won, the next act's world map
 replaces the current one"), but with no Act 2 there is nothing to load.
 
-`world-structure.md` (*Continents and acts*): "*Claude's default, Nick
+`world-structure.md` (*Continents and acts*): "*the agent's default, Nick
 may veto:* the whole army, stock, gold and support progress carry over
 to the next act, like one continuous campaign." So the player's Act 1
 army must survive the end of the act in a save Act 2 can start from.

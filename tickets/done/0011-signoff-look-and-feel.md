@@ -3,7 +3,7 @@ id: "0011"
 title: "Sign-off: look and feel (glyphs, colours, unit markers, portraits)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0203"]

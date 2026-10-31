@@ -3,7 +3,7 @@ id: "0204"
 title: Input actions, data-driven vim-style keymap, key repeat
 type: feature
 milestone: M1 Engine
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: ["0201"]

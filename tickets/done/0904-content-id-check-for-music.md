@@ -3,7 +3,7 @@ id: "0904"
 title: "Check the chosen music against YouTube Content ID before release"
 type: research
 milestone: M8 Release
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0214"]
@@ -26,8 +26,8 @@ uploading.
 
 ## Nick input
 
-**Setup** (Claude can't sign in to YouTube):
-1. Claude makes one video file per composer: a still picture (a screenshot
+**Setup** (the agent can't sign in to YouTube):
+1. The agent makes one video file per composer: a still picture (a screenshot
    of the credits screen if 0808 is done, otherwise the title screen), with
    that composer's chosen tracks playing one after another.
 2. Nick uploads each at https://studio.youtube.com → **Create** → **Upload
@@ -35,7 +35,7 @@ uploading.
 3. After about 10 minutes, open **Content** → the video. If the
    **Restrictions** column says "Copyright claim", click it and note which
    track and claimant.
-4. Tell Claude the results, then delete the test videos.
+4. Tell the agent the results, then delete the test videos.
 
 ## Scope
 

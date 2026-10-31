@@ -3,7 +3,7 @@ id: "0046"
 title: "Decide: stars on story battles and fixed skirmishes, Replay, and the \"Move on?\" question"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: ["1064"]

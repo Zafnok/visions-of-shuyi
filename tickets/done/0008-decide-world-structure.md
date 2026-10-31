@@ -3,7 +3,7 @@ id: "0008"
 title: "Decide: world structure (linear, world map, branching, open world)"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -112,7 +112,7 @@ are recorded verbatim in
   fights that matter and fights "just for grinding" are clearly different.
 - **Saving:** save anywhere on the world map. Camp is in the world map menu.
 
-Claude chose these starting values, marked *tunable*: random-skirmish spawn
+The agent chose these starting values, marked *tunable*: random-skirmish spawn
 count (0–2 per story battle, max 3), cap = latest story battle level − 1,
 group size 4–6, Easy tier, and world map unlocking after Chapter 2 by default.
 One default is marked "Nick may veto": the army, stock, gold and supports
@@ -124,7 +124,7 @@ into two tickets so each fits one PR:
 - **1007** World map: nodes, travel, towns, save and camp.
 - **1008** World map skirmishes: fixed and random, with markers and level cap.
 
-On this PR, Claude also split 0801's chapter file into a **battle file** and a
+On this PR, the agent also split 0801's chapter file into a **battle file** and a
 **chapter file**, so world-map battles and skirmishes are data-only additions
 (Nick asked that new battles be easy to add from data).
 

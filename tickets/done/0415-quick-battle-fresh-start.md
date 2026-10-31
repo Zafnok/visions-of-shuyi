@@ -3,7 +3,7 @@ id: "0415"
 title: Start the Quick Battle fresh (full HP, nobody has acted)
 type: tuning
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: done
 blocked_by: ["0402"]

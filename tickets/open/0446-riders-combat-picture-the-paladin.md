@@ -3,7 +3,7 @@ id: "0446"
 title: Riders' combat picture (Pixel Flag's Paladin)
 type: content
 milestone: M3 Battle UI
-model: sonnet-5
+model: implementation
 effort: low
 status: todo
 blocked_by: ["0413"]

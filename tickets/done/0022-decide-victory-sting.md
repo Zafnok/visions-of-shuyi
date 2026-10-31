@@ -3,7 +3,7 @@ id: "0022"
 title: "Decide: the victory sting"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -111,7 +111,7 @@ short ones, then all versions of the one Nick chose.
 - The second question (one sting or several) is answered by the above.
 - 0809 updated: `victory` is a pool of 13 files, and the two reserved cues
   are out of its scope.
-- *Claude's naming, not rules:* the cue ids `victory_grand` and
+- *the agent's naming, not rules:* the cue ids `victory_grand` and
   `ceremony_intro`.
 - Deviation: the clips were published with the page (private artifact) so
   the players work; nothing was added to the repository.

@@ -3,7 +3,7 @@ id: "0127"
 title: Mutation shards stop rebuilding from scratch and paying for the slow tests
 type: infra
 milestone: M0 Foundation
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

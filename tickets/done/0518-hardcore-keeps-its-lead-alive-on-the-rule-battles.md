@@ -3,7 +3,7 @@ id: "0518"
 title: "Find why Hardcore loses its lead early on test_escape and test_retreat"
 type: bug
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

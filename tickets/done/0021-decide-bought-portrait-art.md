@@ -3,7 +3,7 @@ id: "0021"
 title: "Decide the bought character art: portraits and battle sprites"
 type: design-decision
 milestone: M6 Story & dialogue
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []
@@ -16,7 +16,7 @@ completed: 2026-09-30
 ## Context
 
 While reviewing the dialogue screen (0704, PR #77, 2026-09-28) Nick said he
-doesn't like Claude's portrait art and wants bought portraits instead. After
+doesn't like the agent's portrait art and wants bought portraits instead. After
 a search of itch.io he picked the style of **CaptainSkolot's "Ultimate
 Portrait Pack"** bundle (<https://itch.io/s/121612/95-off-ultimate-portrait-pack>,
 45 packs, $13.99 for all in a sale ending around 2026-10-03).
@@ -68,7 +68,7 @@ the licence doesn't require it. So the bundle goes on the credits screen
 
 **Changed 2026-09-30: battle sprites too.** Nick expects full-body art of
 the two fighters on the combat screen (0011, `look-and-feel.md`; ticket
-0413). Since he doesn't want Claude-drawn character art, that art has to be
+0413). Since he doesn't want agent-drawn character art, that art has to be
 bought as well. His words: "I guess we need an itch artist who has a pack
 with portraits and battle sprites". **CaptainSkolot sells no full-body,
 battle or map sprites** (checked on <https://captainskolot.itch.io/>,
@@ -122,11 +122,11 @@ public repo, 0711 draws PNG portraits (64×64 if the art stays CaptainSkolot's),
 3. **Characters the chosen packs don't cover** (with CaptainSkolot: Tamsin
    and Crane in Chapter 1, see 0706; redo the check for another artist):
    options are commissioning the same artist (keeps the style consistent), changing the character's
-   portrait brief to fit a bought face (a story change), or having Claude
+   portrait brief to fit a bought face (a story change), or having the agent
    make small pixel edits to a bought face (recolours, a scar, a changed
    expression; not new hair or clothes).
 
-Nick buys the packs himself (Claude doesn't make purchases) and puts the
+Nick buys the packs himself (the agent doesn't make purchases) and puts the
 downloaded zips where 0110 says.
 
 ## Scope
@@ -166,7 +166,7 @@ anything.
 5. Update ADR-0018's status line the same way for its portrait section, and
    point it to 0711's ADR.
 6. Update the `ascii-art` skill's portrait section: portraits and battle
-   sprites are bought, and Claude doesn't draw them any more (except small edits if Nick allows them
+   sprites are bought, and the agent doesn't draw them any more (except small edits if Nick allows them
    in question 3).
 
 ## Acceptance criteria
@@ -201,7 +201,7 @@ anything.
     (1A).
   - AI-assisted art is OK only with a human touch.
   - No price ceiling: he decides each purchase.
-  - Gaps: Character Generator EX or Claude's small edits.
+  - Gaps: Character Generator EX or the agent's small edits.
   - Classes with no hero art: still images as stand-ins.
 
   Recorded in `look-and-feel.md` § *Portraits and battle art (bought)*.
@@ -214,10 +214,10 @@ anything.
     pixel; importer slices the 4×2 face set.
   - 0413: still images moved by code; the scene's remaining questions.
   - 0110, 0029, 1006: point to the new packs.
-- **Claude's decisions (technical):** dialogue uses the face set faces (8
+- **the agent's decisions (technical):** dialogue uses the face set faces (8
   expressions), not the one-expression large portraits. Faces are drawn at
   the largest whole scale that fits the existing frame.
-- **Claude's starting rule** (gameplay-facing, for Nick to veto): the
+- **the agent's starting rule** (gameplay-facing, for Nick to veto): the
   Brigand stand-in is the orc axe fighter, but Chapter 1's bandits **stay
   human in the story**. Nick accepted "3A" without choosing between that
   and making the bandits orcs.

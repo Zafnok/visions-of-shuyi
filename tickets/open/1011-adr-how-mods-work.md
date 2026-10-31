@@ -3,7 +3,7 @@ id: "1011"
 title: "ADR: how mods work — the mod folder, layering over the assets, merging data, ids, saves, scripting, the modder's tool"
 type: research
 milestone: Post–Chapter 1
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0054"]

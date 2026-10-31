@@ -3,7 +3,7 @@ id: "0512"
 title: "The bots play all of Act 1: softlocks, balance bands, saves at every node, and a Playdate run"
 type: feature
 milestone: M4 Enemy AI
-model: opus-5.5
+model: reasoning
 effort: high
 status: todo
 blocked_by: ["0506", "0509", "0319", "1051", "1065", "0743", "0744", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "1072", "1083", "1084", "1073", "1066", "1067", "1068", "1069"]

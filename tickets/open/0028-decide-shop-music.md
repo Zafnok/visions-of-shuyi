@@ -3,7 +3,7 @@ id: "0028"
 title: "Decide: the shop music"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []

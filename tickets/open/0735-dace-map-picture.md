@@ -3,7 +3,7 @@ id: "0735"
 title: Give Dace a map picture of his own
 type: content
 milestone: M6 Story & dialogue
-model: sonnet-5
+model: implementation
 effort: medium
 status: todo
 blocked_by: ["0734"]
@@ -38,7 +38,7 @@ units already used (`fighter_male.png`, `church_knight.png`…).
 of the bought bundle, shown as frames of the opening (`ch01_tbc`'s first
 second, picture look), each with the sheet's name. "Describe your own"
 is an option (another sheet from the bundle). Never a commission, never
-drawn by Claude (feedback: no commissions; bought art only).
+drawn by the agent (feedback: no commissions; bought art only).
 
 ## Scope
 

@@ -3,7 +3,7 @@ id: "0404"
 title: Attack targeting, combat forecast panel, combat playback
 type: feature
 milestone: M3 Battle UI
-model: opus-5.5
+model: reasoning
 effort: high
 status: done
 blocked_by: ["0403", "0304", "0306"]
@@ -170,11 +170,11 @@ strikes, 0.5 s fade, 0.4 s at the end.
 
 **Rules decided where the design was silent** (all presentation, no
 gameplay rule):
-- *Claude's starting rule:* the kill mark assumes every strike hits **and no
+- *the agent's starting rule:* the kill mark assumes every strike hits **and no
   crits** (Nick said "assuming all hit").
-- *Claude's starting rule:* the totals count every strike in the forecast,
+- *the agent's starting rule:* the totals count every strike in the forecast,
   including those after a kill (dimmed).
-- *Claude's starting rule:* the playback timings above.
+- *the agent's starting rule:* the playback timings above.
 
 Follow-up tickets: 0417 (acted units keep their uppercase label, dimmed
 only; Nick's feedback after playing this build).

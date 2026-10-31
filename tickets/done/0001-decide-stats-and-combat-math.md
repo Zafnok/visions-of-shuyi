@@ -3,7 +3,7 @@ id: "0001"
 title: "Decide: unit stats and combat math"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: done
 blocked_by: []

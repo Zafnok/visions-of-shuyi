@@ -3,7 +3,7 @@ id: "0059"
 title: "Decide: is the grid-tactics kit open in Shuyi Engine, and who may contribute code to it?"
 type: design-decision
 milestone: Design decisions
-model: opus-5.5
+model: reasoning
 effort: medium
 status: todo
 blocked_by: []
