@@ -3,7 +3,7 @@ id: "0230"
 title: "Bug: giving Select a key stops the controller picking on the map"
 type: bug
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0220"]

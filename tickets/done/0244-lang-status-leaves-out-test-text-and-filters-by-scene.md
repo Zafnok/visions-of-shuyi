@@ -3,7 +3,7 @@ id: "0244"
 title: "lang-status leaves out test text and can be narrowed to a file"
 type: feature
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0235"]

@@ -3,7 +3,7 @@ id: "0106"
 title: "Repo guardrails: PR template, ticket lint (xtask), branch protection"
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0102", "0103", "0104", "0105", "0109"]

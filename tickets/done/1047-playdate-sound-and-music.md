@@ -3,7 +3,7 @@ id: "1047"
 title: "Playdate: sound effects and music in formats the device plays"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1033", "1036"]

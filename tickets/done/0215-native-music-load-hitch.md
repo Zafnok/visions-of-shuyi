@@ -3,7 +3,7 @@ id: "0215"
 title: Stop the game freezing when a music track loads (native)
 type: bug
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0214"]

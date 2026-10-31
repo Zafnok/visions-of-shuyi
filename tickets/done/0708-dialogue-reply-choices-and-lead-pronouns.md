@@ -3,7 +3,7 @@ id: "0708"
 title: "Dialogue: lead reply choices and lead name/pronoun tokens"
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0702", "0704"]

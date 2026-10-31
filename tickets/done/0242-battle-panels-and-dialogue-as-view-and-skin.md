@@ -3,7 +3,7 @@ id: "0242"
 title: "The battle screen's panels and the dialogue screen: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0241", "0245", "0246", "0247"]

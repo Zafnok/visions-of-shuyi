@@ -3,7 +3,7 @@ id: "0506"
 title: "Persona bots: Casual, Normal and Hardcore players on the engine's rollout bot, checked against 0033's targets"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126", "engine#2128"]

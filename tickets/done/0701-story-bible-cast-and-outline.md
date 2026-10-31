@@ -3,7 +3,7 @@ id: "0701"
 title: Story bible, main cast sheets, act outline, Chapter 1 beat sheet
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0004", "0007", "0008"]

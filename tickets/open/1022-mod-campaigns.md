@@ -3,7 +3,7 @@ id: "1022"
 title: "Mod campaigns: a mod can add its own campaign, started from the title menu"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1015", "0054"]

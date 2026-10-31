@@ -3,7 +3,7 @@ id: "0466"
 title: "A tip about the map zoom on the first turn"
 type: content
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

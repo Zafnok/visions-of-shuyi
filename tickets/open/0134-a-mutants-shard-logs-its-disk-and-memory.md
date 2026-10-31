@@ -3,7 +3,7 @@ id: "0134"
 title: A mutants shard logs its disk and memory
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0133"]

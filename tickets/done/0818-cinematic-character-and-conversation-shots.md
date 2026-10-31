@@ -3,7 +3,7 @@ id: "0818"
 title: "Cinematic shots: characters, and conversation snippets"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0036", "0817", "0704", "0711"]

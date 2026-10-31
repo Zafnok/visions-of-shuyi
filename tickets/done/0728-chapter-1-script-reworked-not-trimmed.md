@@ -3,7 +3,7 @@ id: "0728"
 title: Rework the Chapter 1 script as scenes, not line by line
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: []

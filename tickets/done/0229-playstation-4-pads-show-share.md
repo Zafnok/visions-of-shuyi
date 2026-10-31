@@ -3,7 +3,7 @@ id: "0229"
 title: "PlayStation 4 pads show Share, not Create"
 type: feature
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0220"]

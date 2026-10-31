@@ -3,7 +3,7 @@ id: "0808"
 title: "Credits screen listing every third-party work"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0214", "0801"]

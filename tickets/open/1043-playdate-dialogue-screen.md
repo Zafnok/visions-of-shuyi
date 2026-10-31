@@ -3,7 +3,7 @@ id: "1043"
 title: "Playdate: the dialogue screen's skin (text box, speaker, one-bit portraits, choices, the dialogue log)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1037", "1042", "0249"]

@@ -3,7 +3,7 @@ id: "1160"
 title: "The game's lists on the engine's list cursor and scroll window: 13 hand-written cursors and 6 scroll windows go"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#2307"]

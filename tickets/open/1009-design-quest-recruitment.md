@@ -3,7 +3,7 @@ id: "1009"
 title: "Design recruitment by quests outside battle"
 type: design-decision
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1007"]

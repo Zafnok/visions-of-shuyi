@@ -3,7 +3,7 @@ id: "0907"
 title: "Say what is machine-made: credits, itch page, Steam's AI survey"
 type: feature
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0042", "0043", "0045"]

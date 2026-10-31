@@ -3,7 +3,7 @@ id: "0461"
 title: "The road runs up to a bridge instead of narrowing at it"
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

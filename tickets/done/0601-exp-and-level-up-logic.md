@@ -3,7 +3,7 @@ id: "0601"
 title: EXP gain and level-up rules
 type: feature
 milestone: M5 Progression
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0005", "0305", "0306"]

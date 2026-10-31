@@ -3,7 +3,7 @@ id: "0820"
 title: "The title cinematic itself: shots and snippets timed to the title song"
 type: content
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0036", "0706", "0707", "0803", "0818", "0819", "0827"]

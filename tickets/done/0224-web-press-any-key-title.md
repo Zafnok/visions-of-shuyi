@@ -3,7 +3,7 @@ id: "0224"
 title: Web build shows "Press any key" on the title before the music
 type: feature
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0034"]

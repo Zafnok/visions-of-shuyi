@@ -3,7 +3,7 @@ id: "0520"
 title: Bots play a chapter with the army the chapters before it leave
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0848"]

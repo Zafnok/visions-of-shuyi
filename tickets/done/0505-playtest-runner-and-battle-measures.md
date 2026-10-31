@@ -3,7 +3,7 @@ id: "0505"
 title: "cargo xtask playtest: run bots on a battle file and report the measures"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0504", "0801"]

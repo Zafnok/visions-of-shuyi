@@ -3,7 +3,7 @@ id: "0006"
 title: "Decide: unit death, difficulty and undo"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

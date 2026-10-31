@@ -3,7 +3,7 @@ id: "0328"
 title: "Arts C–S, part 4: Disarm, Marked Shot and Unbroken Stride"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0018", "0325"]

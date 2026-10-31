@@ -3,7 +3,7 @@ id: "0504"
 title: "Bot support in core: public legal-command list and luck reseeding for planning copies"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

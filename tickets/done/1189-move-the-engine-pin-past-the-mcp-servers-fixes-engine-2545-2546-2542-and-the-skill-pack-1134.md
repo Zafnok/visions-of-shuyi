@@ -3,7 +3,7 @@ id: "1189"
 title: "Move the engine pin past the MCP server's fixes (engine 2545, 2546, 2542) and the skill pack (engine 1134)"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#2546", "engine#2542", "engine#1134"]

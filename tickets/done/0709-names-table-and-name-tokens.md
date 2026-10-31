@@ -3,7 +3,7 @@ id: "0709"
 title: "Names table and name tokens, so story names can be renamed in one place"
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0702"]

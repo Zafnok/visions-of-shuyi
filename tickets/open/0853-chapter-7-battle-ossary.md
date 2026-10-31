@@ -3,7 +3,7 @@ id: "0853"
 title: "Chapter 7 battle: Ossary, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0749", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608", "0520"]

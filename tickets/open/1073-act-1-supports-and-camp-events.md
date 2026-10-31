@@ -3,7 +3,7 @@ id: "1073"
 title: "Act 1's supports (C, B, A) and camp events"
 type: content
 milestone: Post–Chapter 1
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
 blocked_by: ["1003", "0743", "0750"]

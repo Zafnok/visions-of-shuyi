@@ -3,7 +3,7 @@ id: "1105"
 title: "shuyi-assets: languages, text tokens, the dialogue format, voice and tip files"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1104"]

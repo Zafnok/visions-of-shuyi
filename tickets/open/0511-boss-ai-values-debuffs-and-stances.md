@@ -3,7 +3,7 @@ id: "0511"
 title: "Boss and green AI: weigh debuffs, stances, moves after attacking and drain"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0503"]

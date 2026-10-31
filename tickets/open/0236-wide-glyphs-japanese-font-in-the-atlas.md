@@ -3,7 +3,7 @@ id: "0236"
 title: "Wide glyphs: the Japanese font in the atlas, two cells per glyph"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0042", "engine#2301"]

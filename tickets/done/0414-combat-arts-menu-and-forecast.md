@@ -3,7 +3,7 @@ id: "0414"
 title: "Combat Arts in the attack flow: arts list, forecast with arts, durability display"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0312", "0404", "0412"]

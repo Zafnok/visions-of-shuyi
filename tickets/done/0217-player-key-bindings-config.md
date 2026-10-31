@@ -3,7 +3,7 @@ id: "0217"
 title: "Player key bindings: 3 slots per action, per-layout saved config, fixed Esc"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0216"]

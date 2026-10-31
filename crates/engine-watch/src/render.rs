@@ -157,7 +157,7 @@ pub fn render<S: BuildHasher>(
     body.push_str(&adoptions(ledger, open_ids, report.now));
     body.push_str(
         "\n### The work\n\nWork this issue with the `engine-pin` skill (`.claude/skills/engine-pin/SKILL.md`), in one PR, \
-         with a reasoning-capable model at medium effort (see tickets/README.md):\n\n\
+         using `opus-5.5 / gpt-6.1-sol` at medium effort (choose the member for your harness; see tickets/README.md):\n\n\
          - [ ] `cargo xtask engine-pin --report`, then pin the engine's `main` as it is then\n\
          - [ ] fix each *Breaking* row on the game side, behaviour unchanged\n\
          - [ ] decide each *New for games* row: `adopt → NNNN` or `not for the game: …`\n\

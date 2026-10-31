@@ -3,7 +3,7 @@ id: "0220"
 title: "Help bars and tips name controller buttons when the controller was used last"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0032", "0217", "0219"]

@@ -3,7 +3,7 @@ id: "0606"
 title: Promote and reclass from the between-battle menu
 type: feature
 milestone: M5 Progression
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0603", "0801", "0408"]

@@ -3,7 +3,7 @@ id: "1015"
 title: "Mods screen on the title menu, and saves that remember their mods"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1014", "0054"]

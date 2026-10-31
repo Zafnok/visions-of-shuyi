@@ -3,7 +3,7 @@ id: "0326"
 title: "Arts C–S, part 2: stances that react (Riposte, Spear Wall, Deflect, Overwatch)"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0018", "0325"]

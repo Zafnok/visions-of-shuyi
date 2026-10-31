@@ -3,7 +3,7 @@ id: "1077"
 title: "One-bit skins: each skin wraps the battle notes itself, lists scroll by the engine's rule, one menu text and the window box on the engine's panel"
 type: infra
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1039"]

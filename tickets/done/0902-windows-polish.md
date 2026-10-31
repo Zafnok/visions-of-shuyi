@@ -3,7 +3,7 @@ id: "0902"
 title: "Windows polish: no console window, exe icon and metadata, window icon, fullscreen toggle"
 type: feature
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0107"]

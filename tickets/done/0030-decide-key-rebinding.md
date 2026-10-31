@@ -3,7 +3,7 @@ id: "0030"
 title: "Decide: key rebinding rules (slots, required keys, conflicts, per-layout keys)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

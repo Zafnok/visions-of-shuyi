@@ -3,7 +3,7 @@ id: "0805"
 title: "Options menu: speeds, animations, fullscreen, key rebinding"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815", "0440"]

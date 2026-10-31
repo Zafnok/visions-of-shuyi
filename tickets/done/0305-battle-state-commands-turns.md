@@ -3,7 +3,7 @@ id: "0305"
 title: "Battle state: commands → events, turn/phase system, objectives, replay"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0002", "0006", "0303", "0304"]

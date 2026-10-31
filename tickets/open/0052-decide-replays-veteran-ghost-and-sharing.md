@@ -3,7 +3,7 @@ id: "0052"
 title: "Decide: replays, the veteran's ghost, and sharing a battle"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0046"]

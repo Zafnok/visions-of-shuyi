@@ -3,7 +3,7 @@ id: "1059"
 title: "Playdate: the battle map at 50 frames a second, the most the screen can show"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1057", "1038"]

@@ -3,7 +3,7 @@ id: "0833"
 title: "Title cinematic: shorter talk, units move like the game, a combat scene"
 type: content
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0832", "0728"]

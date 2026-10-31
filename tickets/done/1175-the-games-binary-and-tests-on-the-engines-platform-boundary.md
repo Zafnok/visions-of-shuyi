@@ -3,7 +3,7 @@ id: "1175"
 title: "The game's binary and tests on the engine's platform boundary: main builds a Start, the Harness comes from shuyi-platform"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#3003"]

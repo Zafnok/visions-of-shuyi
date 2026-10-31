@@ -3,7 +3,7 @@ id: "0238"
 title: "Voice clips: the manifest, the voice folder, and playing a line's clip"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0717"]

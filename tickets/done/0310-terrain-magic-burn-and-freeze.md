@@ -3,7 +3,7 @@ id: "0310"
 title: "Terrain magic: burn forests and freeze water with tile casts"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0301", "0303", "0305", "0309"]

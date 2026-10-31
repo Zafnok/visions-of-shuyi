@@ -3,7 +3,7 @@ id: "1052"
 title: "Playdate: package the builds and sell them on itch.io (one purchase, every language)"
 type: infra
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0901", "0062", "1064"]

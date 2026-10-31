@@ -3,7 +3,7 @@ id: "0832"
 title: A cinematic shot that plays the combat scene
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

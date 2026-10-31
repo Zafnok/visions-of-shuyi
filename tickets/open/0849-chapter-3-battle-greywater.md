@@ -3,7 +3,7 @@ id: "0849"
 title: "Chapter 3 battle: Greywater, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0745", "0509", "0013", "0070", "0071", "0037", "0322", "0069", "0323", "0608", "0520"]

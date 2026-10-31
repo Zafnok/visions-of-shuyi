@@ -3,7 +3,7 @@ id: "0722"
 title: Generate Chapter 1's voices
 type: content
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737"]

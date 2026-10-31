@@ -3,7 +3,7 @@ id: "0742"
 title: "Try other music for three Chapter 1 scenes (the letter, the Red Company, after the fight)"
 type: content
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0737"]

@@ -3,7 +3,7 @@ id: "0075"
 title: "Decide: the Moonblade's long optional questline"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0018"]

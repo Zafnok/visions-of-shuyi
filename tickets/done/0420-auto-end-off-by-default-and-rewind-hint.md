@@ -3,7 +3,7 @@ id: "0420"
 title: Auto-end off by default; show the Rewind key in the help bar
 type: tuning
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0307"]

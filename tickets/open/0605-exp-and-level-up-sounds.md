@@ -3,7 +3,7 @@ id: "0605"
 title: "Play the EXP bar and level-up sounds"
 type: feature
 milestone: M5 Progression
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
 blocked_by: ["0602", "0212"]

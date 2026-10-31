@@ -3,7 +3,7 @@ id: "0910"
 title: "Release packages made by shuyi export, not by hand in release.yml"
 type: infra
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
 blocked_by: ["0909", "engine#3075"]

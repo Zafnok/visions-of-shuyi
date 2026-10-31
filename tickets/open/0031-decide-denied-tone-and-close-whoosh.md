@@ -3,7 +3,7 @@ id: "0031"
 title: "Decide: the \"can't do that\" tone and the message-close whoosh"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

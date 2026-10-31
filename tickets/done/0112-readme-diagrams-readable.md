@@ -3,7 +3,7 @@ id: "0112"
 title: Make the README's diagrams readable
 type: bug
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0111"]

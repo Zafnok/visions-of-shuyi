@@ -3,7 +3,7 @@ id: "0430"
 title: Point at an enemy with a caster selected to cast at it
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

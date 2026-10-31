@@ -3,7 +3,7 @@ id: "0821"
 title: Save format guard - a golden save fails the build when a saved type changes without a version bump
 type: infra
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0802"]

@@ -3,7 +3,7 @@ id: "0032"
 title: "Decide: controller buttons, button names on screen, rebinding buttons"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0723"
 title: "A scriptwriter's kit: guide, script checker and scene preview for someone who doesn't program"
 type: infra
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0715", "0717"]

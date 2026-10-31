@@ -3,7 +3,7 @@ id: "0819"
 title: "Title screen plays the intro cinematic in time with the title music"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0036", "0226", "0227", "0811", "0817"]

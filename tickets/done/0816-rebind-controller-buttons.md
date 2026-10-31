@@ -3,7 +3,7 @@ id: "0816"
 title: "Rebind controller buttons on the Key bindings screen"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0032", "0219", "0220", "0815"]

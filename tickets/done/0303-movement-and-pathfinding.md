@@ -3,7 +3,7 @@ id: "0303"
 title: Movement range, pathfinding and attack/threat ranges
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0302"]

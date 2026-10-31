@@ -3,7 +3,7 @@ id: "1101"
 title: "Research: can we split an open-source 2D engine from the game, and what would it cost the game?"
 type: research
 milestone: "Engine: boundary"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: max
 status: done
 blocked_by: []

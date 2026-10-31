@@ -3,7 +3,7 @@ id: "0072"
 title: "Decide: when the battle map scrolls as the cursor nears the view's edge"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

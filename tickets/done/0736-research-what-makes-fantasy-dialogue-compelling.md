@@ -3,7 +3,7 @@ id: "0736"
 title: "Research: what makes fantasy game dialogue compelling, written into the story-writing skill"
 type: research
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

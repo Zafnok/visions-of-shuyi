@@ -3,7 +3,7 @@ id: "0219"
 title: "Controller input on Windows, Linux, macOS and web: buttons and sticks become Actions"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0032"]

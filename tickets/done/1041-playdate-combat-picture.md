@@ -3,7 +3,7 @@ id: "1041"
 title: "Playdate: the simple one-bit combat picture"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1039", "1040", "1061", "0062"]

@@ -3,7 +3,7 @@ id: "0848"
 title: "Chapter 2 battle: Kell's Ford, map, units, places and balance"
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0744", "0509", "0013", "0070", "0071", "0313", "0409", "0443", "0069", "0323", "0608", "0329", "0076"]

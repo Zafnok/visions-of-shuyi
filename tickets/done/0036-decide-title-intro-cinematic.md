@@ -3,7 +3,7 @@ id: "0036"
 title: "Decide: the title screen's intro cinematic (how it fits the menu, storyboard, zoom)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

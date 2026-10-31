@@ -3,7 +3,7 @@ id: "0017"
 title: "Decide: make fliers a late-game (tier 3+) class line"
 type: design-decision
 milestone: M5 Progression
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

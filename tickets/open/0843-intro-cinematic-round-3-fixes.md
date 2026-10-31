@@ -3,7 +3,7 @@ id: "0843"
 title: "Intro cinematic: longer talk, shorter fight hold, hit sounds, logo on the chord, a cleaner start"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

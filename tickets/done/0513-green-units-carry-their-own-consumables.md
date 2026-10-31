@@ -3,7 +3,7 @@ id: "0513"
 title: "Green units carry their own consumables and use them"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

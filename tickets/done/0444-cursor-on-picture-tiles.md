@@ -3,7 +3,7 @@ id: "0444"
 title: "The cursor on picture tiles: easier to see, if Nick wants it"
 type: tuning
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0437"]

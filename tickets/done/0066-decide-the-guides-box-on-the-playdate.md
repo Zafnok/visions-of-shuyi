@@ -3,7 +3,7 @@ id: "0066"
 title: "Decide: how the guide's tip and lesson box fits the Playdate's screen"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

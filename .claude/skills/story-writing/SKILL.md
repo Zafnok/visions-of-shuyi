@@ -308,8 +308,8 @@ The research found that the model's house character is a calm,
 competent consultant, and that it hides feelings far more than people do.
 Rules alone don't fix that (craft.md). What helps:
 
-- **Use a creative-capable model** (`tickets/README.md`; optional examples:
-  Fable / Astra). Judge its scenes against the voice and warmth criteria
+- **Recommended model: `fable-5.1 / gpt-6-astra`** (`tickets/README.md`).
+  Judge its scenes against the voice and warmth criteria
   here; no provider switch is required. In 0736's historical blind test,
   both judges preferred Fable 5.1 to Opus 5.5 on the same three scenes
   (craft.md, "Which model"). That evidence covers those tested drafts,

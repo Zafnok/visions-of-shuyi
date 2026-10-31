@@ -3,7 +3,7 @@ id: "0836"
 title: Player profiles hold the options, keys, tips seen and saves
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

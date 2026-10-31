@@ -3,7 +3,7 @@ id: "1014"
 title: "The mods folder: find mods, read their manifests and load order, hand them to content"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1012", "engine#2207"]

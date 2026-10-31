@@ -3,7 +3,7 @@ id: "0312"
 title: "Combat Arts: art data, learning by rank, costs and effects in forecast and resolution"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0014", "0304", "0305", "0306", "0311"]

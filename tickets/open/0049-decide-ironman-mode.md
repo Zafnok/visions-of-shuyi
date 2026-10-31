@@ -3,7 +3,7 @@ id: "0049"
 title: "Decide: Ironman mode — what a defeat does, saving, switching mode"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1064"]

@@ -3,7 +3,7 @@ id: "0235"
 title: "Language packs cover data names, tips and dialogue lines"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0233", "0717"]

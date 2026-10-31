@@ -3,7 +3,7 @@ id: "1040"
 title: "Playdate: one-bit images made at build time and drawn as sprite items"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1032", "1036", "0062"]

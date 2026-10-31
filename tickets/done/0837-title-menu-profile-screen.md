@@ -3,7 +3,7 @@ id: "0837"
 title: The title menu's Profile screen switches, adds, renames and deletes profiles
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0836", "0839"]

@@ -3,7 +3,7 @@ id: "0069"
 title: "Decide: Act 1's battle rules (escape, a fleeing boss, a boss who can't die, Hollis's death, side-quest rewards, what each chapter introduces)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

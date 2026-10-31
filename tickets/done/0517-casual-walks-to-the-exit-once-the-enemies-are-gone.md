@@ -3,7 +3,7 @@ id: "0517"
 title: "The Casual persona walks to the exit once the enemies are gone"
 type: bug
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0811"
 title: Title screen art with the game's name
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0012", "0801"]

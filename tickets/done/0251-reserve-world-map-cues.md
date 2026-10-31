@@ -3,7 +3,7 @@ id: "0251"
 title: Reserve the world map's music cues until a ticket imports them
 type: bug
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

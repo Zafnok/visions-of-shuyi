@@ -3,7 +3,7 @@ id: "1065"
 title: "The act ends: the closing scene, \"Act 1 ends\", and the army carried over"
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1007"]

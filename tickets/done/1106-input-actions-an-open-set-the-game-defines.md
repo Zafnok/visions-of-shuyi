@@ -3,7 +3,7 @@ id: "1106"
 title: "Input actions become an open set the game defines (ActionSet), with engine UI actions and named layouts"
 type: infra
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1105"]

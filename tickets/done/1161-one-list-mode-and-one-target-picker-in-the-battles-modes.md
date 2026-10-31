@@ -3,7 +3,7 @@ id: "1161"
 title: "One list mode and one target picker in the battle's modes, instead of five list modes and three near-copy pickers"
 type: feature
 milestone: "Engine: carve"
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0502"
 title: "Enemy phase playback: camera pans, moves, attacks, fast-forward"
 type: feature
 milestone: M4 Enemy AI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0501", "0405"]

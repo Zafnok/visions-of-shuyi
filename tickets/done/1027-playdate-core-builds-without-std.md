@@ -3,7 +3,7 @@ id: "1027"
 title: "Playdate: trpg-core builds without std (a default std feature) and CI checks it"
 type: infra
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

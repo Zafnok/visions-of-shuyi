@@ -3,7 +3,7 @@ id: "0318"
 title: "Cinder Oath can't be used to counter, either"
 type: feature
 milestone: M2 Core rules
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

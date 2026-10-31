@@ -3,7 +3,7 @@ id: "0327"
 title: "Arts C–S, part 3: strikes at several units (Wide Swing, Comet Lance, Arrow Rain, Chain Strike)"
 type: feature
 milestone: M2 Core rules
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0018", "0325"]

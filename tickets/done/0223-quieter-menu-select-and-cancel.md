@@ -3,7 +3,7 @@ id: "0223"
 title: Make the menu select and cancel sounds quieter
 type: tuning
 milestone: M2 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0222"]

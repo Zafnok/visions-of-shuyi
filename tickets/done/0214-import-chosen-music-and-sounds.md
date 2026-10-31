@@ -3,7 +3,7 @@ id: "0214"
 title: "Import the chosen third-party music and sounds, with credits"
 type: content
 milestone: M1 Engine
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0212"]

@@ -3,7 +3,7 @@ id: "0716"
 title: Chapter 1 scenes when a companion has died
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0707", "0715"]

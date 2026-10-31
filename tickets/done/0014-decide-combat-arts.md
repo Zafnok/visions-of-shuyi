@@ -3,7 +3,7 @@ id: "0014"
 title: "Decide: Combat Arts (weapon skills that spend durability)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0003"]

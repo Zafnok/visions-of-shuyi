@@ -3,7 +3,7 @@ id: "0724"
 title: "Chapter 1 script: play the opening and the battle straight (fewer quips)"
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0707"]

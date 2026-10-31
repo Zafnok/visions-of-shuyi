@@ -3,7 +3,7 @@ id: "0602"
 title: EXP bar animation and the level-up screen
 type: feature
 milestone: M5 Progression
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0601", "0404"]

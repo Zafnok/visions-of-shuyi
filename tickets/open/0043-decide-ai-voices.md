@@ -3,7 +3,7 @@ id: "0043"
 title: "Decide: AI voices — what is voiced, each voice by ear, on or off, the tool"
 type: design-decision
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: []

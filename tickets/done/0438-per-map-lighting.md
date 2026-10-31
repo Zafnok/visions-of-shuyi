@@ -3,7 +3,7 @@ id: "0438"
 title: "Per-map lighting: low-light maps are shaded, noon maps are not"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0437"]

@@ -3,7 +3,7 @@ id: "0807"
 title: "Per-battle music from the battle file (cue or skirmish pool)"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0212", "0214", "0801", "0814"]

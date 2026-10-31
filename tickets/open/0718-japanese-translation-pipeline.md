@@ -3,7 +3,7 @@ id: "0718"
 title: "Japanese translation pipeline: glossary, speech styles, the back-translation check"
 type: content
 milestone: M6 Story & dialogue
-model: creative
+model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
 blocked_by: ["0042", "0235"]

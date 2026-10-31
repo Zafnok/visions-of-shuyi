@@ -3,7 +3,7 @@ id: "0076"
 title: "Decide: Hedda's and the Hound lieutenant's faces and combat pictures"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

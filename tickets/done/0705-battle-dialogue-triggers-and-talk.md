@@ -3,7 +3,7 @@ id: "0705"
 title: "Battle dialogue triggers: turn events, boss encounters, death quotes, Talk/recruit"
 type: feature
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0704", "0405"]

@@ -3,7 +3,7 @@ id: "1164"
 title: "The profile screen and the name entry widget from the engine: the game keeps an opener and its one-bit skins"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#2310"]

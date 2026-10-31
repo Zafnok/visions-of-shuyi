@@ -3,7 +3,7 @@ id: "0445"
 title: "Battle help bar: the danger-zone hint on the left, auto-end in a column with end turn"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

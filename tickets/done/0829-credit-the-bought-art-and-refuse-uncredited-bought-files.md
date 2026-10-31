@@ -3,7 +3,7 @@ id: "0829"
 title: "Credit the bought art, and refuse bought files that have no credit"
 type: bug
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

@@ -3,7 +3,7 @@ id: "0433"
 title: "A sprite map skin read from a tileset file, switchable from the debug menu"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0231", "0432"]

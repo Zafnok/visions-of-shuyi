@@ -3,7 +3,7 @@ id: "1076"
 title: "Playdate: the exit area and a downed enemy get looks of their own, and the map's marks are checked to differ"
 type: bug
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

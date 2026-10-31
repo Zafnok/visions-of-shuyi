@@ -3,7 +3,7 @@ id: "0070"
 title: "Decide: faces and combat pictures for Act 1's new cast, from the bought art"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

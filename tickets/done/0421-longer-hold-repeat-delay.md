@@ -3,7 +3,7 @@ id: "0421"
 title: Longer first delay before held keys repeat
 type: tuning
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["0204"]

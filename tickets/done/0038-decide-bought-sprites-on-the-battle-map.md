@@ -3,7 +3,7 @@ id: "0038"
 title: "Decide: bought tiles and unit sprites on the battle map"
 type: design-decision
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0021"]

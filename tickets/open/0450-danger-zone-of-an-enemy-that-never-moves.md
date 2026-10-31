@@ -3,7 +3,7 @@ id: "0450"
 title: "Danger zone and shown range of an enemy that never moves: only what it reaches from its tile"
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []

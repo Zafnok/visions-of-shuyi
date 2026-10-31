@@ -3,7 +3,7 @@ id: "1185"
 title: "The first sweep's leftovers: five frame-time cleanups, four yes/no prompts on Ask, the last hand-written cursors, and cuts and centring on the helpers"
 type: infra
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1039"]

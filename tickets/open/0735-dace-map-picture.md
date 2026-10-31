@@ -3,7 +3,7 @@ id: "0735"
 title: Give Dace a map picture of his own
 type: content
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0734"]

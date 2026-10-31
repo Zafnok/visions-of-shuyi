@@ -3,7 +3,7 @@ id: "0035"
 title: "Decide Harl's combat picture (Chapter 1 boss)"
 type: design-decision
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

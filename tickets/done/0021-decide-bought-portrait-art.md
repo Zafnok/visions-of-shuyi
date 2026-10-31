@@ -3,7 +3,7 @@ id: "0021"
 title: "Decide the bought character art: portraits and battle sprites"
 type: design-decision
 milestone: M6 Story & dialogue
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: []

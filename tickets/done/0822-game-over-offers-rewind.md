@@ -3,7 +3,7 @@ id: "0822"
 title: "Game Over offers Rewind while charges are left"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

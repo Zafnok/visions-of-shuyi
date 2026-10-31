@@ -3,7 +3,7 @@ id: "1166"
 title: "Frame time and hurried clocks from the engine: the 13 dt cleanups and three hold-to-hurry clocks go"
 type: feature
 milestone: "Engine: carve"
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["engine#2312"]

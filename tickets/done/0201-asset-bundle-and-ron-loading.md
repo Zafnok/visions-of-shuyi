@@ -3,7 +3,7 @@ id: "0201"
 title: Embedded asset bundle, RON loading with good errors, palette data
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0101"]

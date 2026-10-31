@@ -3,7 +3,7 @@ id: "0325"
 title: "Arts C–S, part 1: the arts that change the combat's numbers"
 type: feature
 milestone: M2 Core rules
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0018"]

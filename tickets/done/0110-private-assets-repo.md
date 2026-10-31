@@ -3,7 +3,7 @@ id: "0110"
 title: Keep bought assets in a private repo and bundle them at build time
 type: infra
 milestone: M0 Foundation
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0021"]

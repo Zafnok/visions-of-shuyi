@@ -3,7 +3,7 @@ id: "1008"
 title: "World map skirmishes: fixed and random, with markers and level cap"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["1007", "0501", "0807"]

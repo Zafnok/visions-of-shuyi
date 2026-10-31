@@ -3,7 +3,7 @@ id: "0101"
 title: Cargo workspace skeleton with empty crates and xtask
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

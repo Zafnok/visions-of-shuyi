@@ -3,7 +3,7 @@ id: "1003"
 title: Supports and Camp lists at camp
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["1002", "0008", "0408", "0704", "0801", "0027"]

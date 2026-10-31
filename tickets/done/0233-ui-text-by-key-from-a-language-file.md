@@ -3,7 +3,7 @@ id: "0233"
 title: "Screen text by key from a language file (the mechanism, and the title screen)"
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

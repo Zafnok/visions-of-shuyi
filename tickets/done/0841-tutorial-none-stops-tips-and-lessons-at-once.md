@@ -3,7 +3,7 @@ id: "0841"
 title: "Setting Tutorial to None stops the tips and lessons already queued"
 type: bug
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

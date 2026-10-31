@@ -3,7 +3,7 @@ id: "1074"
 title: "Show when a discovered side quest closes (a deadline reminder on the world map)"
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1007"]

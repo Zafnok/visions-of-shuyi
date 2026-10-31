@@ -3,7 +3,7 @@ id: "0116"
 title: Upload the private assets repo, add its build key, and check the builds use it
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0110"]

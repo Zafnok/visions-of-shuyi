@@ -3,7 +3,7 @@ id: "1035"
 title: "Playdate: the crank rewinds, the system menu's three entries, and map menu entries for actions with no button"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["1034"]

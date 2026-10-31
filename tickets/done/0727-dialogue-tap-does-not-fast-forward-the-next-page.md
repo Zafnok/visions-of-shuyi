@@ -3,7 +3,7 @@ id: "0727"
 title: "Dialogue: a Confirm tap doesn't fast-forward the next page"
 type: bug
 milestone: M6 Story & dialogue
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

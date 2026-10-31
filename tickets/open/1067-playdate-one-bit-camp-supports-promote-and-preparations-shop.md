@@ -3,7 +3,7 @@ id: "1067"
 title: "Playdate: camp, supports, promotion and the Preparations shop in one bit"
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: todo
 blocked_by: ["1003", "0606", "0443", "1046"]

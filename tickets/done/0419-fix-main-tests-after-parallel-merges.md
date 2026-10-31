@@ -3,7 +3,7 @@ id: "0419"
 title: Fix main's test build and rewind tests after parallel merges
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

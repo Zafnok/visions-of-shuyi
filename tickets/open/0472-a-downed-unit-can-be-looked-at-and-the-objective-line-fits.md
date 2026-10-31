@@ -3,7 +3,7 @@ id: "0472"
 title: "A downed unit shows its panel under the cursor, and every battle's objective line fits on the PC and the Playdate"
 type: bug
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1039"]

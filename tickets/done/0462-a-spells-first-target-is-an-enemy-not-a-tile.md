@@ -3,7 +3,7 @@ id: "0462"
 title: "Aiming an attack or spell starts on an enemy, not a tile"
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

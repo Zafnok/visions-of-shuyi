@@ -3,7 +3,7 @@ id: "0203"
 title: Choose a licensed bitmap font, build its atlas, blit the GlyphBuffer, glyph sampler
 type: feature
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0202"]

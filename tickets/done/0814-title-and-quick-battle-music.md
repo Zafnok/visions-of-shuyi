@@ -3,7 +3,7 @@ id: "0814"
 title: "Play the title music and a skirmish track in Quick Battle"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0212", "0214", "0215"]

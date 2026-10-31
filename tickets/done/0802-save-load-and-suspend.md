@@ -3,7 +3,7 @@ id: "0802"
 title: Save/load between chapters and mid-battle suspend
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0006", "0207", "0801"]

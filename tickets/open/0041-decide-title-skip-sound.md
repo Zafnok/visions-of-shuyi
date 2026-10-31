@@ -3,7 +3,7 @@ id: "0041"
 title: "Decide: the sound when a press skips the title cinematic"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: low
 status: todo
 blocked_by: []

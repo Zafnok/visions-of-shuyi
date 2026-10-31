@@ -3,7 +3,7 @@ id: "0103"
 title: "CI: security and supply-chain gates (cargo-deny, CodeQL, Dependabot, Scorecard, zizmor, typos, machete)"
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0102"]

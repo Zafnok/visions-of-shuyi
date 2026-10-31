@@ -3,7 +3,7 @@ id: "1053"
 title: "Playdate: prepare the application to Panic's Catalog"
 type: infra
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["1052"]

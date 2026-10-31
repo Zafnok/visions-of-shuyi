@@ -3,7 +3,7 @@ id: "1199"
 title: "The game's identity in shuyi.ron: name, id, version, storage and icon, read from a generated APP"
 type: infra
 milestone: M8 Release
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

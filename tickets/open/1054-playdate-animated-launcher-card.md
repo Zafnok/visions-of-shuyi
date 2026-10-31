@@ -3,7 +3,7 @@ id: "1054"
 title: "Playdate: an animated launcher card"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1052"]

@@ -3,7 +3,7 @@ id: "0323"
 title: "Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100"
 type: feature
 milestone: M2 Core rules
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: []

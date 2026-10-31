@@ -3,7 +3,7 @@ id: "0212"
 title: "Audio playback: sound and music cues from screens, played by app"
 type: infra
 milestone: M1 Engine
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: []

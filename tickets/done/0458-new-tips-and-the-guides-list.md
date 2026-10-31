@@ -3,7 +3,7 @@ id: "0458"
 title: New tips (skills, magic, terrain) and the Guides list in the battle menu
 type: feature
 milestone: M3 Battle UI
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0455", "0456"]

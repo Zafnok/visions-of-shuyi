@@ -3,7 +3,7 @@ id: "0405"
 title: Unit info screen, danger zone, map menu, end turn, phase banners, victory/defeat
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0404"]

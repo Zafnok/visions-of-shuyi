@@ -3,7 +3,7 @@ id: "1057"
 title: "Playdate: find and cut where the battle's Game::frame time goes (18 ms a frame at least on the device)"
 type: feature
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: []

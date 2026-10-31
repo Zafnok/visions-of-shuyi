@@ -3,7 +3,7 @@ id: "0471"
 title: "Find a tileset for poor village houses, a throne, a better gate and the picture look's other gaps"
 type: research
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0322"]

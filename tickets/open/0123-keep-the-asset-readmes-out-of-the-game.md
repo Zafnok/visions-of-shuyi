@@ -3,7 +3,7 @@ id: "0123"
 title: Keep the asset READMEs out of the game
 type: infra
 milestone: M0 Foundation
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
 blocked_by: []

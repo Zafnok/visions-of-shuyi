@@ -3,7 +3,7 @@ id: "0047"
 title: "Decide: Visions (pick one of three, or skip) and heat for random skirmishes"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1064"]

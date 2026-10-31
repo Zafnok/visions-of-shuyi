@@ -3,7 +3,7 @@ id: "0908"
 title: "Polish before the Steam release: the title's sparks and the threat arrows' look"
 type: tuning
 milestone: M8 Release
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

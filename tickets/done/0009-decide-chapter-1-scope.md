@@ -3,7 +3,7 @@ id: "0009"
 title: "Decide: Chapter 1 scope (objective, roster, map, tutorial)"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0007"]

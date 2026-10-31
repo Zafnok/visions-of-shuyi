@@ -3,7 +3,7 @@ id: "0823"
 title: "Save tests close the PLAYER PHASE banner (main's CI is red)"
 type: bug
 milestone: M7 Chapter 1 & game flow
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: []

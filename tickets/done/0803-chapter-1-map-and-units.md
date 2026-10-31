@@ -3,7 +3,7 @@ id: "0803"
 title: Chapter 1 content — map, roster, enemies, triggers, winning-replay test
 type: content
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0009", "0016", "0316", "0410", "0412", "0501", "0503", "0706", "0707", "0710", "0714", "0716", "0801", "0807"]

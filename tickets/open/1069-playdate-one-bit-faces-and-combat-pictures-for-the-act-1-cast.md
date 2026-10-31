@@ -3,7 +3,7 @@ id: "1069"
 title: "Playdate: one-bit faces and combat pictures for Act 1's new cast"
 type: content
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["0070", "1042", "1041", "0076"]

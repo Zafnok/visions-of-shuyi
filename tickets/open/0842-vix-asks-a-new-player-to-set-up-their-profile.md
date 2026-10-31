@@ -3,7 +3,7 @@ id: "0842"
 title: "On a new profile, Vix suggests setting up the profile from the title"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []

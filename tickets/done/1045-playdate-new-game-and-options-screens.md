@@ -3,7 +3,7 @@ id: "1045"
 title: "Playdate: New Game and Options screens in one bit (mode, familiarity, lead select, options, button bindings)"
 type: feature
 milestone: Post–Chapter 1
-model: implementation
+model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: done
 blocked_by: ["1037", "1035", "0247"]

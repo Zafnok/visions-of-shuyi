@@ -3,7 +3,7 @@ id: "0051"
 title: "Decide: the randomizer — what it changes, where it's offered, sharing a seed"
 type: design-decision
 milestone: Design decisions
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1064"]

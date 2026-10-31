@@ -3,7 +3,7 @@ id: "0404"
 title: Attack targeting, combat forecast panel, combat playback
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0403", "0304", "0306"]

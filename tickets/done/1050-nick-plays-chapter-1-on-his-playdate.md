@@ -3,7 +3,7 @@ id: "1050"
 title: "Nick plays Chapter 1 on his Playdate; feedback becomes tickets"
 type: playtest
 milestone: Post–Chapter 1
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055", "1058", "1060", "1062", "0464", "0467", "0841"]

@@ -3,7 +3,7 @@ id: "0126"
 title: "SonarCloud's backlog becomes batched GitHub issues (sonar-triage)"
 type: infra
 milestone: M0 Foundation
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0104"]

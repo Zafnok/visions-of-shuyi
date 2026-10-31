@@ -3,7 +3,7 @@ id: "0448"
 title: "Show which enemies can attack the tile a unit is about to move to"
 type: feature
 milestone: M3 Battle UI
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0055"]

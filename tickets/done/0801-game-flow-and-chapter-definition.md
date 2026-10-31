@@ -3,7 +3,7 @@ id: "0801"
 title: "Game flow: chapter definition file, campaign state, title → story → battle → result"
 type: feature
 milestone: M7 Chapter 1 & game flow
-model: reasoning
+model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0405", "0502", "0705", "0307", "0708"]
