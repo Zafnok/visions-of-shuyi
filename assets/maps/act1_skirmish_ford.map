@@ -1,0 +1,16 @@
+(
+    // Ticket 1070: a map of Act 1's random-skirmish pool.
+    name: "A shallow ford",
+    legend: { '.': "plain", ':': "road", 'T': "forest", '~': "water", '=': "bridge", '^': "mountain" },
+)
+---
+..T.....~~...TT.
+.TT.....~~....T.
+........~~......
+.......~~.......
+:::::::====:::::
+.......~~.......
+...T...~~....T..
+..TT..~~....TTT.
+......~~........
+^.....~~......^^

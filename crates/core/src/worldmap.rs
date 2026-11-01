@@ -39,7 +39,8 @@
 //!   in the rules; whether a town opens on arrival is the player's setting.
 //! - **Entering** ([`WorldCommand::Enter`]) the army's place: a town opens
 //!   ([`WorldEvent::Entered`]); a battle not yet won starts.
-//! - **Towns** ([`Campaign::trade`]): a town's shops trade with the
+//! - **Towns** ([`Campaign::trade`]): a town's shops, whose stock grows with
+//!   the story ([`WorldMap::town_shops`]), trade with the
 //!   party's stock and gold, as between chapters ([`ShopSession`]); its
 //!   Blacksmith also repairs the weapons the army holds (*Claude's starting
 //!   rule*: a town shop sells only from the stock, since outside
@@ -78,6 +79,21 @@ pub enum NodeCondition {
     /// This character is in the army (a side quest's character, alive and
     /// recruited).
     Alive(CharacterId),
+    /// Never holds: the place's battle isn't made yet, and the ticket that
+    /// makes it removes this (1070: a map can name what it will hold).
+    NotBuilt,
+}
+
+/// More for one of a town's shops to sell once `when` holds: the stock
+/// growing with the story (`world-structure.md`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ShopGrowth {
+    /// The shop, by index in the town's list.
+    pub shop: usize,
+    /// When it comes on sale: every condition must hold.
+    pub when: Vec<NodeCondition>,
+    /// What comes on sale.
+    pub stock: Vec<ItemId>,
 }
 
 /// A side quest's battle and its scenes.
@@ -109,8 +125,11 @@ pub enum NodeKind {
     },
     /// A town and its shops.
     Town {
-        /// Its shops, in the order the town lists them.
+        /// Its shops, in the order the town lists them, as they start.
         shops: Vec<Shop>,
+        /// What they add later ([`WorldMap::town_shops`]).
+        #[serde(default)]
+        later: Vec<ShopGrowth>,
         /// Whether it is a capital (its music, `audio.md`).
         #[serde(default)]
         capital: bool,
@@ -296,7 +315,25 @@ impl WorldMap {
             NodeCondition::Cleared(id) => self.is_cleared(id, campaign),
             NodeCondition::Flag(flag) => campaign.flags.get(flag) == Some(&true),
             NodeCondition::Alive(character) => campaign.member(character).is_some(),
+            NodeCondition::NotBuilt => false,
         }
+    }
+
+    /// Town `id`'s shops as they are now for `campaign`: what they start
+    /// with and what has come on sale since. Empty for anything but a town.
+    pub fn town_shops(&self, id: &str, campaign: &Campaign) -> Vec<Shop> {
+        let Some(NodeKind::Town { shops, later, .. }) = self.node(id).map(|n| &n.kind) else {
+            return Vec::new();
+        };
+        let mut shops = shops.clone();
+        for growth in later {
+            if growth.when.iter().all(|c| self.holds(c, campaign))
+                && let Some(shop) = shops.get_mut(growth.shop)
+            {
+                shop.stock.extend(growth.stock.iter().cloned());
+            }
+        }
+        shops
     }
 
     /// The open places, in the map's order.

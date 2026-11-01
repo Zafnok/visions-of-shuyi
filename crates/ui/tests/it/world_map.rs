@@ -246,3 +246,109 @@ fn a_win_whose_next_chapter_has_no_map_starts_it() {
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
 }
+
+/// Act 1's real map (ticket 1070), from a save at `at` with `cleared` won
+/// and the given chapter's roster: the map as a player finds it.
+fn act1_from_a_save(at: &str, cleared: &[&str]) -> Harness {
+    let mut storage: Box<dyn Storage> = Box::new(MemoryStorage::new());
+    let ctx = Ctx::embedded().unwrap_or_else(|e| panic!("{e}"));
+    let content = &ctx.game.content;
+    let lead = trpg_core::LeadProfile::new("Mara", trpg_core::LeadGender::Female);
+    let mut c = trpg_content::battle_campaign(
+        content,
+        &content.battles["test"],
+        trpg_core::GameMode::Classic,
+        lead,
+    );
+    c.chapter = "test_wm1".into();
+    c.world = Some(trpg_core::WorldState {
+        map: "act1".into(),
+        at: at.into(),
+        cleared: cleared.iter().map(|&s| s.to_owned()).collect(),
+        ..trpg_core::WorldState::default()
+    });
+    let file = trpg_core::SaveFile::world_map(c);
+    trpg_ui::save::write(storage.as_mut(), &trpg_ui::save::slot_key(1), &file)
+        .unwrap_or_else(|e| panic!("{e:?}"));
+    let mut h = launch(storage);
+    // The title's Load Game, the first slot.
+    h.keys("Down f f");
+    assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
+    h
+}
+
+/// Travel between Chapter 4's open places; what isn't built yet shows and
+/// can't be reached. (1071 and 0850 open more of them as they make them.)
+#[test]
+fn act1_the_army_walks_chapter_4s_open_places() {
+    let mut h = act1_from_a_save("greywater", &[]);
+    let start = campaign(&h);
+    let content = &h.game().ctx().game.content;
+    let def = &content.worldmaps["act1"].map;
+    let open: Vec<&str> = def.open_nodes(&start).map(|n| n.id.as_str()).collect();
+    assert_eq!(open, ["greywater", "valley_road", "millhaven"]);
+    for shown in ["aldwater", "millhaven_road", "company_ledger"] {
+        assert!(def.is_shown(shown, &start), "{shown} shows, greyed");
+        assert!(!def.is_open(shown, &start), "{shown} isn't open");
+    }
+    assert!(!def.is_shown("veyne_hall", &start), "two roads on");
+    assert_snapshot!("act1_start", h.snapshot());
+    // Next place: The Valley Road, then Millhaven.
+    h.keys("s f");
+    walk(&mut h);
+    assert_eq!(at(&h), "valley_road");
+    h.keys("s f");
+    walk(&mut h);
+    assert_eq!(at(&h), "millhaven");
+}
+
+/// The stock of each of the first `shops` shops of the town the army is in,
+/// opened by Confirm from the map as a save lands on it, and left.
+fn town_stock(h: &mut Harness, shops: usize) -> Vec<Vec<String>> {
+    let mut stocks = Vec::new();
+    for i in 0..shops {
+        if map(h).view(h.game().ctx()).list.is_some() {
+            h.keys("d");
+        }
+        h.keys("f");
+        for _ in 0..i {
+            h.keys("Down");
+        }
+        h.keys("f");
+        assert_eq!(h.top_screen(), "town_shop");
+        let shop = h.game().screen::<TownScreen>();
+        let shop = shop.unwrap_or_else(|| panic!("no town shop"));
+        stocks.push(shop.shop().stock.iter().map(|i| i.0.clone()).collect());
+        h.keys("d");
+    }
+    stocks
+}
+
+/// Each town's shops open with their stock, and the stock grows with the
+/// story: Saltmere's last stock for Chapter 8 adds the Hi-Potion.
+#[test]
+fn act1_each_towns_shops_open_with_their_stock() {
+    let mut h = act1_from_a_save("millhaven", &[]);
+    let stocks = town_stock(&mut h, 3);
+    assert!(stocks[0].contains(&"iron_sword".to_owned()));
+    assert!(!stocks[0].contains(&"steel_sword".to_owned()), "Chapter 4");
+    assert_eq!(stocks[1], ["potion"]);
+    assert!(stocks[2].is_empty(), "a Blacksmith sells nothing");
+
+    let mut h = act1_from_a_save("millhaven", &["veyne_hall"]);
+    assert!(town_stock(&mut h, 1)[0].contains(&"steel_sword".to_owned()));
+
+    let mut h = act1_from_a_save("saltmere", &["veyne_hall", "salt_road"]);
+    let stocks = town_stock(&mut h, 5);
+    assert!(stocks[0].contains(&"steel_bow".to_owned()));
+    assert_eq!(stocks[1], ["potion"]);
+
+    let mut h = act1_from_a_save("saltmere", &["undercroft", "salt_road"]);
+    assert_eq!(town_stock(&mut h, 2)[1], ["potion", "hi_potion"]);
+
+    let mut h = act1_from_a_save("cairnford", &["envoys_house"]);
+    assert!(town_stock(&mut h, 3)[0].contains(&"steel_axe".to_owned()));
+
+    let mut h = act1_from_a_save("ossary", &["pilgrims_road"]);
+    assert!(town_stock(&mut h, 3)[2].contains(&"linen_robe".to_owned()));
+}

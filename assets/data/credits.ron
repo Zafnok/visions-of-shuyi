@@ -50,6 +50,7 @@
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
             "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/", "units/",
+            "worldmaps/act1.png",
          ]),
 
         // Shironejiya's free battle pictures (0413): the Brigand, the Raider

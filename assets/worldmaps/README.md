@@ -5,8 +5,8 @@ One file per act's world map (ticket 1007, ADR-0099,
 chapters name in `world_map` (`assets/chapters/README.md`). Loaded and
 checked by `trpg_content::worldmap`; the rules are `trpg_core::worldmap`.
 
-There is no real map here yet (Act 1's is ticket 1070). The test maps are
-in `assets-test/worldmaps/` (`test_world`, then `test_world_2`), which the
+`act1` is Act 1's map (ticket 1070). The test maps are in
+`assets-test/worldmaps/` (`test_world`, then `test_world_2`), which the
 debug menu's "Test world map" starts.
 
 ```ron
@@ -46,10 +46,10 @@ debug menu's "Test world map" starts.
 | `levels` | The act's enemy levels; random skirmishes are capped against it (1008). |
 | `music` | The music cue the map plays: to its end, a fade, 30 s of quiet, again (`audio.md`, *The world map*). |
 | `start` | The place the army starts at: open from the start (no `opens_when`) and not a battle. |
-| `final_node` | The act's final story battle. Winning it moves the army to `next`'s start, with nothing cleared; this map can't be reached again. |
+| `final_node` | The act's final story battle, or a `NotBuilt` place until its chapter exists. Winning it moves the army to `next`'s start, with nothing cleared; this map can't be reached again. |
 | `next` | The next act's map, or `None`. |
 | `size` | Across and down, in cells; the screen shows the whole map (no scrolling yet). |
-| `picture` | An image path in the bundle for the picture look (the bought World Map tiles, made into one picture per act, ticket 1070): drawn over the map's cells, stretched to `size`. Without one the picture look draws the glyph look. |
+| `picture` | An image path in the bundle for the picture look (the bought World Map tiles, made into one picture per act, ticket 1070): drawn over the map's cells, stretched to `size`. Without one, or in a build without the private assets, the picture look draws the glyph look. Act 1's is `assets-private/game/worldmaps/act1.png`, made from this file's `ground` by the private repository's `tools/worldmaps/act1_picture.py`: move a place or change the ground, and run it again. |
 | `ground` | The glyph look's ground: one character a cell (`' '` `.` `,` plain, `f` forest, `t` thicket, `^` mountain, `A` peak, `w` river, `~` sea). Empty: all plain. |
 
 **A place** (`nodes`):
@@ -59,9 +59,9 @@ debug menu's "Test world map" starts.
 | `id` | Unique on the map. |
 | `name` | Its name as the panel shows it (translatable: `worldmaps.<map>.<id>.name`). |
 | `pos` | Its cell. At least one cell from the left and right edges (its plate is three cells wide) and one row from the top (its level marker). |
-| `kind` | `StoryBattle("<chapter>")`: that chapter's battle (the chapter says `world_map: Some("<this map>")`). `SideQuest((battle, intro_scenes, victory_scenes))`: a battle of its own. `Town(shops: [...], capital: false)`: shops as on battle maps (`kind`, `stock`), checked as they are (a Tailor sells cloth and leather only, a Blacksmith sells nothing, no Basic shop). `Empty`: a place to pass through. `FixedSkirmish(battle: (battle: "fight", intro_scenes: [], victory_scenes: []), guards_path: true)`: an authored fight, won once. Random groups overlay cleared battle places (below). |
+| `kind` | `StoryBattle("<chapter>")`: that chapter's battle (the chapter says `world_map: Some("<this map>")`). `SideQuest((battle, intro_scenes, victory_scenes))`: a battle of its own. `Town(shops: [...], capital: false)`: shops as on battle maps (`kind`, `stock`), checked as they are (a Tailor sells cloth and leather only, a Blacksmith sells nothing, no Basic shop). `Empty`: a place to pass through. `FixedSkirmish(battle: (battle: "fight", intro_scenes: [], victory_scenes: []), guards_path: true)`: an authored fight, won once. Random groups overlay cleared battle places (below). A shop's stock can grow with the story: `(kind: Vendor, stock: ["potion"], later: [(when: [Cleared("undercroft")], stock: ["hi_potion"])])` adds what `later` lists once its conditions hold, checked like the rest of the shop. |
 | `music` | A cue played while the army stands there (a town's `village`, a capital's `capital`). |
-| `opens_when` | Every condition must hold for the place to open: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army). A story battle also waits for its chapter to begin. A cleared place stays open. Until it opens, a place one road from an open one shows what it is, greyed, with its road dimmed, and can't be travelled to (Nick, 1007). |
+| `opens_when` | Every condition must hold for the place to open: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army), `NotBuilt` (never: an `Empty` place holding a battle's spot until its ticket makes the battle, gives the place its kind and removes this). A story battle also waits for its chapter to begin. A cleared place stays open. Until it opens, a place one road from an open one shows what it is, greyed, with its road dimmed, and can't be travelled to (Nick, 1007). |
 | `hidden` | `true`: a secret, out of sight (its road too) until it opens. Default `false`. |
 
 A battle's **level marker** is worked out from its battle file: the

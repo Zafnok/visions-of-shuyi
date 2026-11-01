@@ -86,6 +86,11 @@ impl TownScreen {
         }
     }
 
+    /// The shop, with the stock it has now.
+    pub fn shop(&self) -> &Shop {
+        &self.shop
+    }
+
     /// The campaign as the shop has it.
     pub fn campaign(&self) -> &Campaign {
         &self.campaign

@@ -143,8 +143,174 @@ fn the_start_and_the_final_battle_are_checked() {
     let bad = text("", "").replace(r#"final_node: "b""#, r#"final_node: "a""#);
     assert_eq!(
         problems(&bad),
-        ["final_node \"a\" must be one of the map's story battles"]
+        [
+            "final_node \"a\" must be one of the map's story battles, or `NotBuilt` until its chapter exists"
+        ]
     );
+    // A place whose chapter doesn't exist yet may be named while `NotBuilt`.
+    let planned = text(
+        r#"(id: "z", name: "Z", pos: (5, 2), kind: Empty, opens_when: [NotBuilt]),"#,
+        r#"(from: "a", to: "z"),"#,
+    )
+    .replace(r#"final_node: "b""#, r#"final_node: "z""#);
+    assert_eq!(problems(&planned), Vec::<String>::new());
+}
+
+#[test]
+fn a_shops_later_stock_and_its_conditions_are_checked() {
+    let town = |later: &str| {
+        text(
+            &format!(
+                r#"(id: "t", name: "T", pos: (5, 2), kind: Town(shops: [
+                    (kind: Vendor, stock: ["potion"], later: [{later}]),
+                ])),"#
+            ),
+            r#"(from: "a", to: "t"),"#,
+        )
+    };
+    let good = town(r#"(when: [Cleared("b")], stock: ["hi_potion"])"#);
+    assert_eq!(problems(&good), Vec::<String>::new());
+    let bad = problems(&town(
+        r#"(when: [Cleared("nowhere")], stock: ["hi_potion"])"#,
+    ));
+    assert_eq!(bad, ["place \"t\": Cleared(\"nowhere\") names no place"]);
+    let bad = problems(&town(r#"(when: [Alive("nobody")], stock: ["hi_potion"])"#));
+    assert_eq!(bad, ["place \"t\": Alive(\"nobody\") names no character"]);
+    // A Vendor sells consumables: what it adds later is checked the same.
+    let bad = problems(&town(r#"(when: [Cleared("b")], stock: ["iron_sword"])"#));
+    assert_eq!(bad.len(), 1, "{bad:?}");
+    assert!(bad[0].contains("iron_sword"), "{bad:?}");
+}
+
+/// Act 1's real map (1070): what it holds, and that it keeps it as the
+/// tickets that make its battles fill them in.
+mod act1 {
+    use super::*;
+    use trpg_core::{NodeCondition, NodeKind, ShopKind};
+
+    fn map() -> WorldMap {
+        content().worldmaps["act1"].map.clone()
+    }
+
+    /// Items `kind` sells at `town` with everything it adds later.
+    fn stock(map: &WorldMap, town: &str, kind: ShopKind, later: bool) -> Vec<String> {
+        let Some(NodeKind::Town {
+            shops, later: more, ..
+        }) = map.node(town).map(|n| &n.kind)
+        else {
+            panic!("no town {town}");
+        };
+        let i = shops.iter().position(|s| s.kind == kind);
+        let i = i.unwrap_or_else(|| panic!("{town} has no {kind:?}"));
+        let grown = more.iter().filter(|g| later && g.shop == i);
+        shops[i]
+            .stock
+            .iter()
+            .chain(grown.flat_map(|g| &g.stock))
+            .map(|item| item.0.clone())
+            .collect()
+    }
+
+    #[test]
+    fn every_place_of_the_outline_is_on_the_map() {
+        let map = map();
+        for id in [
+            "veyne_hall",
+            "aldwater",
+            "millhaven_road",
+            "millhaven",
+            "company_ledger",
+            "envoys_house",
+            "salt_road",
+            "smugglers_cove",
+            "saltmere",
+            "letters_home",
+            "captains_oath",
+            "ashfields",
+            "burnt_mill",
+            "brennish_outriders",
+            "cairnford",
+            "undercroft",
+            "pilgrims_road",
+            "ossuary_gate",
+            "ossary",
+            "other_cart",
+            "unwritten",
+            "saltmere_docks",
+        ] {
+            assert!(map.node(id).is_some(), "no place {id}");
+        }
+        assert_eq!(map.final_node, "saltmere_docks");
+    }
+
+    #[test]
+    fn a_made_battle_is_never_marked_not_built() {
+        for node in &map().nodes {
+            let unbuilt = node.opens_when.contains(&NodeCondition::NotBuilt);
+            assert!(!(unbuilt && node.kind.is_battle()), "{}", node.id);
+        }
+    }
+
+    #[test]
+    fn each_side_quest_waits_for_its_character() {
+        let map = map();
+        for (place, who) in [
+            ("company_ledger", "sergeant"),
+            ("captains_oath", "retainer"),
+            ("letters_home", "poacher"),
+            ("other_cart", "heretic"),
+            ("unwritten", "keeper"),
+        ] {
+            let node = map.node(place).unwrap_or_else(|| panic!("no {place}"));
+            let alive = NodeCondition::Alive(trpg_core::CharacterId(who.into()));
+            assert!(node.opens_when.contains(&alive), "{place} waits for {who}");
+        }
+    }
+
+    #[test]
+    fn the_shops_follow_the_tiers() {
+        let map = map();
+        let steel = |s: &str| s.starts_with("steel_");
+        // Chapter 4 has no Steel yet; it reaches Millhaven from Chapter 5.
+        let armoury = stock(&map, "millhaven", ShopKind::Armoury, false);
+        assert!(!armoury.iter().any(|i| steel(i)), "{armoury:?}");
+        let armoury = stock(&map, "millhaven", ShopKind::Armoury, true);
+        assert!(armoury.iter().any(|i| steel(i)), "{armoury:?}");
+        // The Hi-Potion only from Chapter 8, at Saltmere.
+        for kind in [ShopKind::Vendor, ShopKind::Alchemist] {
+            assert_eq!(stock(&map, "saltmere", kind, false), ["potion"]);
+            assert_eq!(stock(&map, "saltmere", kind, true), ["potion", "hi_potion"]);
+        }
+        // Saltmere is the biggest shop in Act 1, and nothing sells the Elixir.
+        let size = |town| {
+            let Some(NodeKind::Town { shops, .. }) = map.node(town).map(|n| &n.kind) else {
+                panic!("no town {town}");
+            };
+            assert!(
+                !shops
+                    .iter()
+                    .any(|s| s.stock.iter().any(|i| i.0 == "elixir")),
+                "{town} sells the Elixir"
+            );
+            shops.iter().map(|s| s.stock.len()).sum::<usize>()
+        };
+        for town in ["millhaven", "cairnford", "ossary"] {
+            assert!(size("saltmere") > size(town), "{town} outsells Saltmere");
+        }
+    }
+
+    #[test]
+    fn the_random_pool_is_the_acts_own_and_its_levels_hold_the_cap() {
+        let map = map();
+        let rules = map.skirmishes.clone().unwrap_or_else(|| panic!("no pool"));
+        assert_eq!(rules.pool.len(), 3);
+        assert_eq!(
+            (rules.spawn, rules.maximum, rules.level_offset),
+            ((0, 2), 3, 1)
+        );
+        assert_eq!(rules.size, (4, 6));
+        assert_eq!(map.levels, (1, 30));
+    }
 }
 
 #[test]
