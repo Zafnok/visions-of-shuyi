@@ -67,7 +67,7 @@ repository; `say.ron` entries for Chapter 1's names; the pin
 - [ ] `cargo xtask voice status` reports no missing or stale clip for `ch01` (besides lines listed as left silent).
 - [ ] Every clip is OGG Vorbis, 44.1 kHz, mono, loudness-matched (the tool's own check).
 - [ ] The web build plays the first scene's voices without a gap longer than the text box appearing (checked in the browser).
-- [ ] `THIRD_PARTY_ASSETS.md` has the tool's row, marked AI-generated and *private*.
+- [ ] `THIRD_PARTY_ASSETS.md`'s two entries under *AI voice tools* become rows of its table, marked AI-generated and *private*, each with a credit in `assets/data/credits.ron` (the credits test needs both), shown only in a build that has clips.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

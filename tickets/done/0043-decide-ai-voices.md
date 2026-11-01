@@ -121,6 +121,8 @@ pages. The casting page's source shows only the last round, Vix's.
 
 Deviations from the plan:
 
+- The tools' terms are under *AI voice tools* in `THIRD_PARTY_ASSETS.md`, not in its
+  table: a table row needs a shown credit, and nothing they make ships until 0722.
 - Questions went in batches of up to three, not one at a time (the `ask-nick`
   limit, since Nick's turns are expensive).
 - Nick answered question 1 per character, so there are two reading tools.
