@@ -1606,7 +1606,8 @@ went over.
   line" (Aske still asks her question of him); nobody tells him not to
   give orders; **nobody tells Hollis about Wren** (he sits facing the
   plain all night and nobody says anything about it); the second reply
-  is gone; Chapter 8's line then can't be "Rue saw her" (0750).
+  is gone; **Crane tells him under Ossary** (Chapter 7, 0753), and
+  Chapter 8's line then drops her name.
 - **Joss dead:** nobody knew the horn at first light or at the Hounds'
   wave (Tamsin says riders); nobody stood very straight while the paper
   was read; nobody said "three times".
@@ -1804,7 +1805,8 @@ that the warden dies on every path.
 | The Master of Vows is Absalom Crane; he ordained Maud; he is Maud's "old master" | **the whole party**, from Maud on the road (his name) and in the barracks (his face) | that he gives Dace his orders (nobody has said so to the party; Joss saw the banner leave with a carriage, and Crane said "Dace" in front of everyone, which is as near as it gets) |
 | The Candles' barracks under Ossary is empty: its children were carted to the king's army two weeks before, and they are the nineteen whose fire line lit at the Ashfields | **the whole party**, from Crane; Oriel, who was to have had them | — |
 | Maud's autumn report was read by Crane himself, "more than once"; it was two and a half pages; she asked on the second page that they be gentle; it was "admirably thorough" and he "had only to send a man" | **the whole party** (Crane said it in front of everyone); Rue heard it and said it was the hands, not the pages | — |
-| Wren is "catalogued", "not lost"; "the abbey's book was careless" | **Hollis and the lead**, and everyone in the room, from Crane; Hollis took it as "not with the nineteen" | where she is (the later twist); that she is the bearer; **Dace** (he is told nothing; Chapter 8's line is Hollis's) |
+| Wren is "catalogued", "not lost"; "the abbey's book was careless" | **Hollis and the lead**, and everyone in the room, from Crane (the lead asked, in Hollis's absence); Hollis took it as "not with the nineteen" | where she is (the later twist); that she is the bearer; **Dace** (he is told nothing; Chapter 8's line is Hollis's, or the lead's) |
+| Wren walked off the field on her own feet, between two keepers in gray, and was "entered in my book that evening"; "you've mislaid the one with the burned hands; she saw it": **said by Crane only when Rue is not in the room** (she fell before she could tell it on the dead ground, or told it there and fell since; the script can't tell which, and the line is true on both, 0753) | **Hollis (if there) and the lead**, and everyone in the room; a first telling if Rue never told it, a confirmation if she did | **Dace** (Chapter 8) |
 | The Door: Othe kept it; it was opened once in the East; the Jade Reach shut it; the Vigil buried the vow; **Crane means to open it**; "death is a door"; a war buys a great many deaths | **the whole party**, from Crane, with Maud saying what novices are taught | the Door Vow by name; the king's part; the prince; what "comes back" (nobody says the word) |
 | **Only the East knows how it was shut**; ships go east from Saltmere and Ragna could get them on one | the party, from Maud and Hedda in the barn | that this is what they'll do (Chapter 8 decides; nobody decided anything tonight) |
 | The lead's confession (four pages, a magistrate's copy) has been read by Crane, who calls it well done and says Dace has put it to good use | the lead, the party | — |
@@ -1886,7 +1888,8 @@ Hounds leaving with a carriage, and the cut to Crane and Dace.
 - **Hollis dead:** nobody said "in and out" on the road, "spears out" at
   the post, "I know" at the gate, or "hoods up" in the street; nobody put
   a hand on a blanket (if Rue is also gone, nobody walks the row);
-  **nobody asked Crane about Wren**, and "not lost" is unsaid; narration
+  **the lead asks Crane about Wren** ("Where is she.") and hears "not
+  lost", and how she left the field if Rue is gone too (0753); narration
   says there is no back up; nobody checked the lead's shoulder in the
   yard; nobody told Rue "no" about going back, or said "she's not with
   them"; nobody said nobody is going anywhere tonight.
@@ -1915,7 +1918,11 @@ Hounds leaving with a carriage, and the cut to Crane and Dace.
   may still say he knows it; Hollis says nobody goes down there);
   nobody walks the row (Hollis touches every blanket to the end); Aske's
   question is unsaid; **no hands come up in the barracks**: the warden
-  steps between Crane and the room anyway and sends him up; the
+  steps between Crane and the room anyway and sends him up; **Crane
+  says how Wren left the field** (walked off on her own feet between two
+  keepers in gray, entered in his book that evening; "you've mislaid the
+  one with the burned hands"), her first telling if she fell before the
+  dead ground and a confirmation if she told it there (0753); the
   warden's exchange on the stair can't play; nobody has the keys or says
   she couldn't count, and Maud's "I'll say the words" is unsaid; nobody
   says "then we go back for them", so Hollis's "no" is unsaid; **nobody
@@ -2121,7 +2128,7 @@ on every path.
 | The king has named the exile Veyne a traitor, to be delivered alive, with a price, and everyone armed in their company with them; the warrant goes to Captain Marr | **the whole party**, from the bill | — |
 | Ragna's ship lay off Saltmere "till the ice"; it took the party east, and Ragna with it as far as the Brennish coast | the party, Ragna, Hedda; **Dace** (he saw it sail) | where it lands (Act 2) |
 | **Hollis is dead**, shot by Dace's archers on the Saltmere quay under Dace's own standing order ("anyone on the plank"), which Dace tried to call back too late | **the whole party**; **Dace** and his Hounds | — |
-| **Wren walked out of the Ashfields fire alive, after; two keepers in gray had her** | **Dace**, from Hollis dying (or from the lead, if Hollis was already gone; Rue added what she saw if she was there) | where she is now (the later twist); that she is the bearer; that the king has her |
+| **Wren walked out of the Ashfields fire alive, after; two keepers in gray had her** | **Dace**, from Hollis dying (Rue's name only if she is there; without her, "she walked off that field"), or from the lead, if Hollis was already gone (Rue added what she saw if she was there). On every path the facts were said earlier: by Rue on the dead ground, or by Crane under Ossary when she wasn't in the room (0753) | where she is now (the later twist); that she is the bearer; that the king has her |
 | Dace let the ship go: "nobody shoots", "there are no orders" | the party, the Hounds | — |
 | Dace has stopped believing Crane's door ("she's walking about somewhere") and is hunting for keepers in gray | **the player** | the party (they saw him kneel and give no order; nothing more) |
 | Hedda chose east, unlent; Ragna asked about the East's cold and bought her a cloak | the party, Ragna | — |
@@ -2229,7 +2236,10 @@ alone on the quay doubting the door, and the king's reading.
   had it in my hand"; the "go below" reply is answered by narration.
 - **Rue dead:** nobody asks about food at the crossroads, so Hedda's
   "Herring." is unsaid; Dace's exchange with her can't play; **on the
-  gangway without Hollis, the lead says "Two keepers in gray took her."
+  gangway with Hollis, he says she walked off that field without Rue's
+  name, and his death quote says the same** (he heard it from her or
+  from Crane; the scene can't tell which, 0753); **on the gangway
+  without Hollis, the lead says "Two keepers in gray took her."
   instead of Rue's account**; no bread on the deck; the silent reply is
   answered by narration.
 - **Joss dead:** nobody knows the hand on the bill; nobody names the
