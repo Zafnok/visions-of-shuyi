@@ -211,3 +211,9 @@ fn the_list_renders() {
     press(&mut s, &mut c, &[Action::CursorUp]);
     assert_snapshot!("tip", render(&s, &c).to_snapshot(&c.palette));
 }
+
+#[test]
+fn guides_declares_its_actions() {
+    let screen = GuidesScreen::new(&crate::screen::tests::ctx().game.content);
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::GUIDES);
+}

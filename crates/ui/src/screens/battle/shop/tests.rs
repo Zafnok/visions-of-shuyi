@@ -775,3 +775,9 @@ fn each_specialty_store_says_what_it_buys() {
     assert_eq!(c.text(kind_key(ShopKind::Alchemist)), "Alchemist");
     assert_eq!(Tab::of(ShopKind::Alchemist), [Tab::Buy, Tab::Sell]);
 }
+
+#[test]
+fn shop_declares_its_actions() {
+    let screen = ShopScreen::new(&battle_at(VENDOR, 0), LORD, VENDOR).unwrap();
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::SHOP);
+}

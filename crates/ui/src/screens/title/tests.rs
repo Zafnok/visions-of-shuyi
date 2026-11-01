@@ -1223,3 +1223,9 @@ fn a_frame_that_is_not_a_time_moves_nothing() {
         assert_eq!(t.phase, fading, "{bad}");
     }
 }
+
+#[test]
+fn title_declares_its_actions() {
+    let screen = TitleScreen::new(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::TITLE);
+}

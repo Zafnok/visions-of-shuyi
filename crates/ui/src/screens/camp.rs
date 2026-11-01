@@ -505,6 +505,10 @@ impl Screen<Shuyi> for CampScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::CAMP.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.start_music(ctx);
         if let Some(cue) = self.music.as_mut().and_then(|m| m.tick(ctx.clock_s)) {

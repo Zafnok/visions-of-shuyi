@@ -640,3 +640,9 @@ fn reclass_result_snapshot() {
     step(&mut s, &mut c, &[Confirm, Confirm]);
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
+
+#[test]
+fn class_change_declares_its_actions() {
+    let screen = demo(&crate::screen::tests::ctx(), ChangeKind::Promote);
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::CLASS_CHANGE);
+}

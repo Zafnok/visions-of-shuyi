@@ -148,6 +148,10 @@ impl Screen<Shuyi> for GuidesScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::GUIDES.to_vec())
+    }
+
     /// Steps the list for each action, with its menu sound; Cancel pops
     /// back to the battle's map menu, which nothing else changes.
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

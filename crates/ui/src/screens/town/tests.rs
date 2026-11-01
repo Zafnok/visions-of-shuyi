@@ -332,3 +332,13 @@ fn town_shop_snapshot() {
     h.keys("");
     assert_snapshot!(h.snapshot());
 }
+
+#[test]
+fn town_declares_its_actions() {
+    let screen = TownScreen::new(
+        army(&crate::screen::tests::ctx()),
+        shop(&crate::screen::tests::ctx(), "home", ShopKind::Vendor),
+        "Millbrook".into(),
+    );
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::TOWN);
+}

@@ -332,3 +332,12 @@ fn camp_snapshots() {
     h.keys("d d Down");
     assert_snapshot!("events", h.snapshot());
 }
+
+#[test]
+fn camp_declares_its_actions() {
+    let screen = CampScreen::new(
+        &crate::screen::tests::ctx(),
+        army(&crate::screen::tests::ctx()),
+    );
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::CAMP);
+}

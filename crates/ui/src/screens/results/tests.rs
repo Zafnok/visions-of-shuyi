@@ -367,3 +367,9 @@ fn results_level_up_snapshot() {
     h.keys("f");
     assert_eq!(h.top_screen(), "");
 }
+
+#[test]
+fn results_declares_its_actions() {
+    let screen = screen();
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::RESULTS);
+}

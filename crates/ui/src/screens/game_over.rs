@@ -131,6 +131,10 @@ impl Screen<Shuyi> for GameOverScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::GAME_OVER.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if !self.finished() {
             // A press jumps to the end, and is used up by that.
@@ -184,6 +188,10 @@ impl ToBeContinuedScreen {
 impl Screen<Shuyi> for ToBeContinuedScreen {
     fn name(&self) -> &'static str {
         Self::NAME
+    }
+
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::TO_BE_CONTINUED.to_vec())
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

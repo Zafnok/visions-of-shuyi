@@ -57,6 +57,10 @@ impl Screen<Shuyi> for CinematicScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::CINEMATIC.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if input.actions.contains(&Action::Cancel) {
             ctx.audio.menu(MenuSound::Cancel);
@@ -211,5 +215,11 @@ mod tests {
         assert_eq!(row.trim(), "No assets-test/cinematics/test.ron");
         assert!(bottom(&buf).ends_with(" back"));
         assert_eq!(buf.get(0, 0).unwrap().glyph, ' ');
+    }
+
+    #[test]
+    fn cinematic_declares_its_actions() {
+        let screen = CinematicScreen::new(&crate::screen::tests::ctx());
+        crate::screens::actions::assert_declares(&screen, crate::screens::actions::CINEMATIC);
     }
 }

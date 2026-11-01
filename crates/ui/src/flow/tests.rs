@@ -855,3 +855,9 @@ fn training_on_a_cleared_story_place_does_not_advance_the_story() {
     assert!(map.random_at("ford", &campaign).is_none());
     assert!(map.is_cleared("ford", &campaign));
 }
+
+#[test]
+fn flow_declares_its_actions() {
+    let screen = FlowScreen::new_game(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::FLOW);
+}

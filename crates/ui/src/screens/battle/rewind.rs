@@ -260,6 +260,10 @@ impl Screen<Shuyi> for RewindScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::REWIND.to_vec())
+    }
+
     /// Steps the list for each action, with its menu sound; pops with the
     /// first effect, for the battle to carry out.
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

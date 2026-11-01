@@ -268,3 +268,15 @@ fn game_over_with_rewind_snapshot() {
     let h = Harness::with_screen(Box::new(settled(true)));
     assert_snapshot!(h.snapshot());
 }
+
+#[test]
+fn game_over_declares_its_actions() {
+    let screen = settled(false);
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::GAME_OVER);
+}
+
+#[test]
+fn to_be_continued_declares_its_actions() {
+    let screen = ToBeContinuedScreen;
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::TO_BE_CONTINUED);
+}

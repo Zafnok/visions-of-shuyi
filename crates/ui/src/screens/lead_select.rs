@@ -254,6 +254,10 @@ impl Screen<Shuyi> for LeadSelectScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::LEAD_SELECT.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         // While typing, the game's keys do nothing: they are letters.
         if let Some(typing) = &mut self.typing {

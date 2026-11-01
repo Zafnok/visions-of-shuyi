@@ -20,11 +20,13 @@ use shuyi_cli::contract::bots::{BotsInput, BotsOutput};
 use shuyi_cli::contract::replay::{Record, ReplayRun};
 use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
-use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools};
+use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin};
 use shuyi_core::bots::playtest::Tries;
 use trpg_content::font::ATLAS_1BIT_PATH;
+use trpg_content::palette::PaletteDef;
 use trpg_core::BattleState;
 use trpg_ui::harness::{self, Core, Harness};
+use trpg_ui::input::fit::{Controls, GameControls};
 use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
 use trpg_ui::onebit::{self, FRAME_BYTES};
 use trpg_ui::platform::playdate_facts;
@@ -230,6 +232,23 @@ impl GameTools for Trpg {
     ) -> Result<AutobalancePlan, String> {
         balance::plan(&crate::repo_root(), stage, input)
     }
+
+    /// The keymap file's buttons and every screen's actions.
+    fn controls(&self) -> Option<Result<Box<dyn Controls>, String>> {
+        let content = trpg_content::load_embedded().map_err(|e| e.to_string());
+        Some(content.map(|content| {
+            let keymap = content.keymap;
+            let game = trpg_ui::screens::actions::every_screen()
+                .into_iter()
+                .fold(GameControls::new(keymap), GameControls::with);
+            Box::new(game) as Box<dyn Controls>
+        }))
+    }
+
+    /// The Playdate is the one one-bit target (`shuyi.ron`).
+    fn one_bit(&self, _target: &str) -> Option<Result<OneBitSkin, String>> {
+        Some(playdate_palette_def().map(one_bit::skin))
+    }
 }
 
 /// Plays `script` in a Harness started as `start` says and paints the
@@ -387,17 +406,23 @@ fn map_alone(h: &Core) -> Result<GlyphBuffer, String> {
 
 /// The Playdate's palette (ADR-0074), over the default theme's names.
 fn playdate_palette() -> Result<Palette, String> {
+    let def = playdate_palette_def()?;
+    Palette::new::<UiColor>(&def)
+        .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+}
+
+/// The Playdate's palette file, as loaded.
+fn playdate_palette_def() -> Result<PaletteDef, String> {
     let shown = |errors: Vec<trpg_content::ContentError>| {
         let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
         errors.join("; ")
     };
     let base = trpg_content::palette::load().map_err(shown)?;
-    let def = trpg_content::ink::load_playdate(&base).map_err(shown)?;
-    Palette::new::<UiColor>(&def)
-        .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+    trpg_content::ink::load_playdate(&base).map_err(shown)
 }
 
 mod balance;
+mod one_bit;
 mod plays;
 
 #[cfg(test)]

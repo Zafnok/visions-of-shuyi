@@ -1081,3 +1081,9 @@ fn winning_a_fixed_skirmish_shows_a_cleared_mark_without_a_level_or_blocked_path
     assert_eq!(view.panel.kind, "Fixed skirmish");
     assert_eq!(view.panel.lines, ["Won"]);
 }
+
+#[test]
+fn world_map_declares_its_actions() {
+    let screen = screen(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::WORLD_MAP);
+}

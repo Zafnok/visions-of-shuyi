@@ -48,7 +48,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo shuyi check-keys                    # no hard-coded keys (keyboard-input skill)
 cargo shuyi check-text                    # no new screen text written as a literal (ADR-0045)
-cargo shuyi check --target all            # the frame and text fit desktop, web and Playdate (0138; controls and one-bit patterns: 0140), and the game's identity is sound (1199)
+cargo shuyi check --target all            # the frame, text, controls and one-bit patterns fit desktop, web and Playdate (0138, 0140), and the game's identity is sound (1199)
 cargo shuyi app-info --check              # crates/app/src/app_info.rs is what shuyi.ron's `app` says (1199)
 cargo shuyi lint                          # the rules crate's fence on trpg-core: its clippy.toml's bans, floats among them, and its dependencies (0138, 0139)
 cargo xtask engine-pin --check           # the engine's pin agrees in shuyi-engine.rev, Cargo.toml, Cargo.lock (ADR-0063 §8)

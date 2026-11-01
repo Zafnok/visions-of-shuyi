@@ -500,3 +500,15 @@ fn overwrite_question_snapshot() {
     h.keys("f");
     assert_snapshot!(h.snapshot());
 }
+
+#[test]
+fn save_prompt_declares_its_actions() {
+    let screen = SavePromptScreen::new(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::SAVE_PROMPT);
+}
+
+#[test]
+fn save_slots_declares_its_actions() {
+    let screen = SlotPickerScreen::load(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::SAVE_SLOTS);
+}

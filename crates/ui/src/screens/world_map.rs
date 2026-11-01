@@ -886,6 +886,10 @@ impl Screen<Shuyi> for WorldMapScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::WORLD_MAP.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.tick_music(ctx);
         if let Some(t) = self.walk_on(ctx, input) {

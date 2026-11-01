@@ -130,3 +130,9 @@ fn viewer_snapshot() {
     v.update(&mut ctx, &frame(&[Action::CursorDown, Action::CursorRight]));
     assert_snapshot!(draw(&v, &ctx).to_snapshot(&ctx.palette));
 }
+
+#[test]
+fn portrait_viewer_declares_its_actions() {
+    let screen = PortraitViewerScreen::new();
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::PORTRAIT_VIEWER);
+}

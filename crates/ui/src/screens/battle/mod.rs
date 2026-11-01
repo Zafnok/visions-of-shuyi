@@ -2736,6 +2736,10 @@ impl Screen<Shuyi> for BattleScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::BATTLE.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.update_frame(ctx, input);
         // Still on screen: its tip, if any, is seen (0467).

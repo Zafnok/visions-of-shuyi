@@ -304,6 +304,10 @@ impl Screen<Shuyi> for DialogueScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::DIALOGUE.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.read(ctx, input);
         // The music the scene reached this frame (or, the first frame,

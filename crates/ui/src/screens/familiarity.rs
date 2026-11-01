@@ -100,6 +100,10 @@ impl Screen<Shuyi> for FamiliarityScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::FAMILIARITY.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         pick_one(&mut self.menu, ctx, input)
     }

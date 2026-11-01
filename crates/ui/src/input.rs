@@ -22,7 +22,7 @@ use trpg_content::keymap::format;
 use crate::screens::key_bindings::KeyRow;
 use crate::screens::key_bindings::RowGroup::{self, Optional, Required};
 
-pub use shuyi_ui::input::{bindings, crank, fixed, frame, help_keys, keymap, pad, state};
+pub use shuyi_ui::input::{bindings, crank, fit, fixed, frame, help_keys, keymap, pad, state};
 
 pub use bindings::{ButtonSlots, Slots};
 pub use crank::Crank;

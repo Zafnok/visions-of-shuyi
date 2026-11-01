@@ -274,6 +274,10 @@ impl Screen<Shuyi> for ResultsScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::RESULTS.to_vec())
+    }
+
     fn update(&mut self, _ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for action in &input.actions {
             if matches!(action, Action::Confirm | Action::Cancel) && self.press() {

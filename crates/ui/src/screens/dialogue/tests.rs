@@ -1047,3 +1047,9 @@ fn the_keys_after_the_one_that_starts_an_opening_wait() {
     assert!(!s.is_opening());
     assert_eq!(s.view(&c).text.shown, 0);
 }
+
+#[test]
+fn dialogue_declares_its_actions() {
+    let screen = full(&scene(vec![]));
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::DIALOGUE);
+}

@@ -30,12 +30,15 @@
     // The pure rules (ADR-0004): `lint` fences this package.
     rules: Some("trpg-core"),
 
-    // What `check --target` checks the game against (ticket 0138), by the
-    // engine's profiles: the sizes are `ConsoleSpec::PC` and
-    // `ConsoleSpec::PLAYDATE` (crates/ui/src/console.rs), with cells 16 px
-    // tall. The Playdate's front end is the game's own crate (ADR-0070),
-    // built by `cargo xtask playdate`, not the profile's backend: this
-    // check reads only the profile's display and input.
+    // The Playdate's front end is the game's own crate (ADR-0070), built by
+    // `cargo xtask playdate`, and its buttons are named as that crate reports
+    // them (crates/playdate/src/pads.rs), so its profile is the game's too
+    // (ticket 0140). This check reads only a profile's display and input.
+    target_profiles: Some("targets"),
+
+    // What `check --target` checks the game against (ticket 0138): the sizes
+    // are `ConsoleSpec::PC` and `ConsoleSpec::PLAYDATE`
+    // (crates/ui/src/console.rs), with cells 16 px tall.
     targets: {
         "desktop": (frame: (800, 512), scale: integer, text_px: 16),
         "web": (frame: (800, 512), scale: integer, text_px: 16),
