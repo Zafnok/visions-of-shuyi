@@ -5,6 +5,7 @@
 // A release build on Windows is a GUI program: no console window (ticket 0902).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod app_info;
 mod args;
 #[cfg(test)]
 mod tests;
@@ -16,6 +17,7 @@ use trpg_content::{bundle, font, voice};
 use trpg_ui::screen::{Lessons, Shuyi};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, ShuyiCtx};
 
+use crate::app_info::APP;
 use crate::args::Startup;
 
 // A build that ships has none of the test files (ADR-0057): only a debug
@@ -31,8 +33,11 @@ const _: () = assert!(
 
 /// The window: the console at 2x (1600x1024) plus a small margin, since the
 /// framebuffer can come out a pixel smaller than asked, which would drop
-/// to 1x. The icon is from `assets/icon/` (ticket 0902, `cargo xtask icon`).
-const WINDOW: Window = Window::new("Visions of Shuyi", 1640, 1064).with_icon(Some(Icon::new(
+/// to 1x. Its title is `shuyi.ron`'s `app` (ticket 1199). Its icon is drawn
+/// per size in `assets/icon/` (ticket 0902, `cargo xtask icon`), since the
+/// engine's downscale from one picture blurs the glyph at 16 and 32 px.
+// engine-friction: engine#3113
+const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(Some(Icon::new(
     include_bytes!("../../../assets/icon/icon-16.png"),
     include_bytes!("../../../assets/icon/icon-32.png"),
     include_bytes!("../../../assets/icon/icon-64.png"),
@@ -41,7 +46,7 @@ const WINDOW: Window = Window::new("Visions of Shuyi", 1640, 1064).with_icon(Som
 /// Where saves and settings are kept: never change it, or every player's
 /// saves are lost (`%APPDATA%/tactical-rpg`, `localStorage` keys under
 /// `tactical-rpg/`).
-const STORAGE_NAME: &str = "tactical-rpg";
+const STORAGE_NAME: &str = APP.storage;
 
 /// What the platform shell needs to know about the game.
 fn config() -> AppConfig {

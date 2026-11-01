@@ -76,15 +76,13 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 }
 
 /// The rows only the PC's screen shows (ticket 1045): what each does means
-/// nothing on the Playdate's skins (`SkinSet::Playdate`). `Fullscreen`: its
-/// screen is the device's, with no window. `Theme`: one bit has the
+/// nothing on the Playdate's skins (`SkinSet::Playdate`). `Theme`: one bit has the
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
 /// `Intro`: it has no title cinematic yet (ticket 1044 adds it, and should
 /// take the row out of this list). `Open towns on arrival`: it has no world
 /// map yet (1007; the row comes with it).
-pub const PC_ONLY: [Row; 6] = [
-    Row::Fullscreen,
+pub const PC_ONLY: [Row; 5] = [
     Row::Theme,
     Row::MapLook,
     Row::MapZoom,
@@ -402,8 +400,8 @@ impl From<Row> for &'static str {
 /// The rows shown, as the engine's screen takes them: every one, `Game
 /// mode` and `Tutorial` only with a campaign loaded, `Map look` only when
 /// the game has pictures and `Map zoom` only when it has them or the map
-/// skin in use can zoom; `Layout` only with a keyboard, and none of
-/// [`PC_ONLY`] on the Playdate.
+/// skin in use can zoom; `Layout` only with a keyboard, `Fullscreen`
+/// only in a window, and none of [`PC_ONLY`] on the Playdate.
 pub fn rows(ctx: &Ctx) -> Vec<OptionRow> {
     shown_rows(ctx).into_iter().map(Row::option).collect()
 }
@@ -423,6 +421,7 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
         .filter(|&r| r != Row::MapLook || pictures)
         .filter(|&r| r != Row::MapZoom || zooms)
         .filter(|&r| r != Row::Layout || keyboard)
+        .filter(|&r| r != Row::Fullscreen || ctx.platform.windowed)
         .filter(|r| pc || !PC_ONLY.contains(r))
         .collect()
 }

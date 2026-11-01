@@ -6,6 +6,13 @@ JavaScript, images, audio, SDK files) must be listed here, per
 checked automatically by `cargo-deny` and listed in the generated
 `THIRD_PARTY_LICENSES.html` in release packages.
 
+**The web build's notices come from `shuyi.ron`'s `notices`**: `cargo shuyi
+web` puts each file it names in `NOTICES.txt` whole, the license texts and
+[`assets/NOTICES-game.txt`](assets/NOTICES-game.txt), which lists the font
+and every music track and sound. A new row here that the web build ships
+needs an entry there; a test in `xtask`
+(`the_notices_name_the_games_works_and_license_texts`) fails without it.
+
 Only licenses allowed by ADR-0013 (amended by ADR-0027 and ADR-0032) are
 permitted. **Bought art** (ADR-0032) is listed here too, with the seller, the
 licence text as quoted on the store page, the date bought, whether it's

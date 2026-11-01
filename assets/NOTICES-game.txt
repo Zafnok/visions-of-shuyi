@@ -1,0 +1,274 @@
+The works by other people in Visions of Shuyi
+
+Their license texts follow in this file. The list is kept in step with
+THIRD_PARTY_ASSETS.md in the game's repository.
+
+Terminus Font
+  Author: Dimitar Toshkov Zhekov
+  Source: https://terminus-font.sourceforge.net/
+  Version: 4.49.1, as a picture of its glyphs, with glyphs of our own added
+  License: OFL-1.1
+
+New Sunrise
+  Author: nene
+  Source: https://opengameart.org/content/new-sunrise
+  Version: V1 (New Sunrise.wav) for the title screen; V2 (new_sunrise_V2_0.wav) for a first city visit
+  License: CC0-1.0
+
+Squirrel Village
+  Author: SoManyWhales
+  Source: https://opengameart.org/content/squirrel-village
+  Version: SV_loop.mp3 (the loop file) from squirrelvillage.zip
+  License: CC-BY-4.0
+
+Aria
+  Author: Kistol
+  Source: https://opengameart.org/content/aria
+  Version: Aria_2.ogg
+  License: CC0-1.0
+
+Dark Forest Theme
+  Author: cynicmusic
+  Source: https://opengameart.org/content/dark-forest-theme
+  Version: GameMusic_ForestTheme_24_0.mp3
+  License: CC0-1.0
+
+Dark Quest
+  Author: Alexandr Zhelanov
+  Source: https://opengameart.org/content/dark-quest
+  Version: Dark Quest.ogg
+  License: CC-BY-4.0
+
+Father's Scabbard
+  Author: SoManyWhales
+  Source: https://opengameart.org/content/fathers-scabbard
+  Version: Father's Scabbard - Loop.wav (the loop file) from fathers_scabbard.zip
+  License: CC-BY-4.0
+
+Field - Orchestra
+  Author: migfus20
+  Source: https://opengameart.org/content/field-orchestra
+  Version: asdf_2.mp3
+  License: CC-BY-4.0
+
+Classical Murder
+  Author: Alexandr Zhelanov
+  Source: https://opengameart.org/content/classical-murder
+  Version: Classical Murder.ogg
+  License: CC-BY-4.0
+
+Peractorum (from Emotional Orchestral Music)
+  Author: César da Rocha
+  Source: https://opengameart.org/content/emotional-orchestral-music
+  Version: Peractorum.wav from EmotionalOrchestra_24bit.zip
+  License: CC-BY-4.0
+
+Hesitation (Orchestral Version)
+  Author: Maarten Schellekens
+  Source: https://freemusicarchive.org/music/maarten-schellekens/free-music-made-for-screen/hesitation-orchestral-version/
+  Version: The orchestral version (the MP3 the page streams; the download button needs a login)
+  License: CC-BY-4.0
+
+Epic Endgame Cinematic
+  Author: cynicmusic
+  Source: https://opengameart.org/content/epic-endgame-cinematic
+  Version: ChoirChordsBassMaster.wav, the only version (it has vocals; no instrumental exists)
+  License: CC0-1.0
+
+Hope (Orchestral battle music)
+  Author: MintoDog
+  Source: https://opengameart.org/content/hopeorchestral-battle-music
+  Version: hope_orchestral_battle_music_bpm165.flac (made to loop)
+  License: CC0-1.0
+
+Determined Pursuit (Epic Orchestra Loop)
+  Author: Emma_MA
+  Source: https://opengameart.org/content/determined-pursuit-epic-orchestra-loop
+  Version: determined_pursuit_loop.wav (the file is the loop)
+  License: CC0-1.0
+
+Battle
+  Author: mla
+  Source: https://opengameart.org/content/battle-0
+  Version: battle.flac, whole file (the author's loop point, sample 378000, isn't used)
+  License: CC-BY-4.0
+
+Sigil
+  Author: Kistol
+  Source: https://opengameart.org/content/sigil
+  Version: Sigil_3.ogg
+  License: CC0-1.0
+
+Ending Scene (orchestral version)
+  Author: nene
+  Source: https://opengameart.org/content/ending-scene
+  Version: ending_scene_orchestral.wav
+  License: CC0-1.0
+
+Battle Theme A
+  Author: cynicmusic
+  Source: https://opengameart.org/content/battle-theme-a
+  Version: battleThemeA.mp3
+  License: CC0-1.0
+
+Battle Theme B for RPG
+  Author: cynicmusic
+  Source: https://opengameart.org/content/battle-theme-b-for-rpg
+  Version: battleThemeB.mp3
+  License: CC0-1.0
+
+Fantasy Choir 2 and 3
+  Author: César da Rocha
+  Source: https://opengameart.org/content/fantasy-choir-3-orchestral-pieces
+  Version: Fantasy Choir 2.wav and Fantasy Choir 3.wav from FantasyChoir24bit.zip
+  License: CC0-1.0
+
+Battle Themes 1, 2, 3 and 5
+  Author: Alexandr Zhelanov
+  Source: https://opengameart.org/content/battle-themes
+  Version: Battle Theme 1, 2, 3 and 5.mp3 from Battle Themes.zip (not 4)
+  License: CC-BY-4.0
+
+RPG - Battle Theme
+  Author: jocolloman
+  Source: https://opengameart.org/content/rpg-battle-theme-0
+  Version: battle_theme_2.wav (the uncompressed file, made to loop); copyright 2021 Joseph Collard
+  License: CC-BY-4.0
+
+Win Jingle
+  Author: Fupi
+  Source: https://opengameart.org/content/win-jingle
+  Version: 13 of the 17 .wav versions in winjingle.zip (not Saw, Square, Banjo or Harpsichord)
+  License: CC0-1.0
+
+The Fallen
+  Author: Jonathan Shaw (www.jshaw.co.uk)
+  Source: https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music
+  Version: The Fallen MP3.mp3 from The Fallen MP3_0.zip (RPG Orchestral Essentials), whole, with 12 s of silence added at the end
+  License: CC-BY-3.0
+
+Medieval: The Old Tower Inn
+  Author: RandomMind
+  Source: https://opengameart.org/content/medieval-the-old-tower-inn
+  Version: The_Old_Tower_Inn.mp3 (the full version, not the loop)
+  License: CC0-1.0
+
+Woodland Fantasy
+  Author: Matthew Pablo
+  Source: https://opengameart.org/content/woodland-fantasy
+  Version: Woodland Fantasy_0.mp3
+  License: CC-BY-3.0
+
+The World At Your Door (RPG Orchestral Essentials)
+  Author: Jonathan Shaw (InspectorJ)
+  Source: https://opengameart.org/node/108343
+  Version: The World At Your Door MP3.mp3 from The World At Your Door MP3.zip
+  License: CC-BY-3.0
+
+Adventures in Adventureland
+  Author: Kevin MacLeod
+  Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029
+  Version: Adventures in Adventureland.mp3
+  License: CC-BY-4.0
+
+Medieval: The Bard's Tale
+  Author: RandomMind
+  Source: https://opengameart.org/node/80558
+  Version: The_Bards_Tale.mp3 (the full version, not the loop)
+  License: CC0-1.0
+
+Sword sound 1
+  Author: Merrick079
+  Source: https://freesound.org/s/568170/
+  Version: HQ preview
+  License: CC0-1.0
+
+Knife Stab
+  Author: Mixedupmoviestuff
+  Source: https://freesound.org/s/179222/
+  Version: HQ preview
+  License: CC0-1.0
+
+Arrow Impact
+  Author: Twisted_Euphoria
+  Source: https://freesound.org/s/205938/
+  Version: HQ preview
+  License: CC0-1.0
+
+Punch
+  Author: EminYILDIRIM
+  Source: https://freesound.org/s/544680/
+  Version: HQ preview
+  License: CC-BY-4.0
+
+Deep Cut / Slash / Gash
+  Author: SypherZent
+  Source: https://freesound.org/s/420674/
+  Version: HQ preview
+  License: CC0-1.0
+
+Combat Punch Metal Armor
+  Author: EminYILDIRIM
+  Source: https://freesound.org/s/545021/
+  Version: HQ preview
+  License: CC-BY-4.0
+
+Short-Fireball-Woosh
+  Author: wjl
+  Source: https://freesound.org/s/267887/
+  Version: HQ preview
+  License: CC0-1.0
+
+Hard Glass Impact
+  Author: deleted freesound user 3656686
+  Source: https://freesound.org/s/418194/
+  Version: HQ preview; the uploader's account was deleted
+  License: CC0-1.0
+
+Magic Earth Spell Impact & Punch
+  Author: EminYILDIRIM
+  Source: https://freesound.org/s/541477/
+  Version: HQ preview
+  License: CC-BY-4.0
+
+Fireball Impact
+  Author: EminYILDIRIM
+  Source: https://freesound.org/s/577450/
+  Version: HQ preview, untrimmed
+  License: CC-BY-4.0
+
+Magic Ice Impact Skill Spell
+  Author: EminYILDIRIM
+  Source: https://freesound.org/s/550267/
+  Version: HQ preview, untrimmed
+  License: CC-BY-4.0
+
+Footstep_Dirt_00
+  Author: LittleRobotSoundFactory
+  Source: https://freesound.org/s/270415/
+  Version: HQ preview
+  License: CC-BY-4.0
+
+dirt/gravel footstep 4
+  Author: Yoyodaman234
+  Source: https://freesound.org/s/223153/
+  Version: HQ preview
+  License: CC0-1.0
+
+Footstep_Grass_5
+  Author: GiocoSound
+  Source: https://freesound.org/s/421135/
+  Version: HQ preview
+  License: CC0-1.0
+
+Knight Right Footstep on Gravel 5 (With Chainmail)
+  Author: Ali_6868
+  Source: https://freesound.org/s/384890/
+  Version: HQ preview
+  License: CC0-1.0
+
+Maxheadroom's Galloping Horse
+  Author: Podsburgh
+  Source: https://freesound.org/s/274898/
+  Version: HQ preview; one hoof-beat pair cut from 0.895-1.035 s
+  License: CC0-1.0

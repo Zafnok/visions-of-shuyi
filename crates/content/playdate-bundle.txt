@@ -17,6 +17,7 @@
 
 # Notes for whoever edits the files; the game never reads them.
 **/README.md
+NOTICES-game.txt
 audio/licenses/
 fonts/Terminus-LICENSE.txt
 

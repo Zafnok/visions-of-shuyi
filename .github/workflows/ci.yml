@@ -291,6 +291,9 @@ jobs:
       # The game fits every target shuyi.ron lists (ticket 0138).
       - name: Check the targets
         run: cargo shuyi check --target all
+      # crates/app/src/app_info.rs is what shuyi.ron's `app` says (ticket 1199).
+      - name: Check the game's identity
+        run: cargo shuyi app-info --check
       # The rules crate's fence, with check-keys and check-text (ticket 0138).
       - name: Lint the game's shape
         run: cargo shuyi lint

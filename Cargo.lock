@@ -1115,6 +1115,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "shuyi"
+version = "0.1.0"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=1eaa1fa02f2c577feae4454df8a9c2c93614a4f7#1eaa1fa02f2c577feae4454df8a9c2c93614a4f7"
+dependencies = [
+ "shuyi-app",
+ "shuyi-assets",
+ "shuyi-core",
+ "shuyi-platform",
+ "shuyi-ui",
+]
+
+[[package]]
 name = "shuyi-alloc-count"
 version = "0.1.0"
 source = "git+https://github.com/Zafnok/shuyi-engine?rev=1eaa1fa02f2c577feae4454df8a9c2c93614a4f7#1eaa1fa02f2c577feae4454df8a9c2c93614a4f7"
@@ -1358,6 +1370,7 @@ name = "trpg-app"
 version = "0.3.0"
 dependencies = [
  "macroquad",
+ "shuyi",
  "shuyi-app",
  "shuyi-platform",
  "tempfile",
