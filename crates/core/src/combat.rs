@@ -67,6 +67,14 @@
 //! When both sides have strikes 2..N (only possible with extra strikes),
 //! those strikes alternate after the first two, attacker first
 //! (*Claude's starting rule*).
+//!
+//! # First-hit debuffs
+//!
+//! A Combat Art's debuff starts on the attacker's first strike that hits
+//! (ticket 0330). A forecast of such an art carries both sides' numbers from
+//! then on ([`Forecast::after_first_hit`]), and every strike after that hit
+//! uses them. The strike list stays the one the combat began with: a Spd
+//! change adds, drops or reorders no strike until the next combat.
 
 use crate::prelude::*;
 
@@ -445,6 +453,56 @@ pub struct Forecast {
     pub attacker: SideForecast,
     /// The defender's numbers, if it counters.
     pub defender: Option<SideForecast>,
+    /// The numbers from the attacker's first hit on, if it puts a debuff on
+    /// the defender.
+    #[serde(default)]
+    pub after_first_hit: Option<AfterFirstHit>,
+}
+
+/// Both sides' numbers once a first-hit debuff is on the defender. Their
+/// `strikes` are the forecast's own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct AfterFirstHit {
+    /// The attacker's numbers.
+    pub attacker: SideForecast,
+    /// The defender's numbers, if it counters.
+    pub defender: Option<SideForecast>,
+}
+
+impl Forecast {
+    /// Sets [`Self::after_first_hit`] from `debuffed`, this combat's forecast
+    /// with the debuff on the defender, keeping this forecast's strikes.
+    pub fn set_after_first_hit(&mut self, debuffed: &Forecast) {
+        let defender = self.defender.zip(debuffed.defender);
+        self.after_first_hit = Some(AfterFirstHit {
+            attacker: SideForecast {
+                strikes: self.attacker.strikes,
+                ..debuffed.attacker
+            },
+            defender: defender.map(|(now, after)| SideForecast {
+                strikes: now.strikes,
+                ..after
+            }),
+        });
+    }
+
+    /// `by`'s numbers for a strike, once the attacker has hit or before
+    /// (`None`: a defender that doesn't counter).
+    pub fn numbers(&self, by: Side, attacker_has_hit: bool) -> Option<SideForecast> {
+        let after = self.after_first_hit.filter(|_| attacker_has_hit);
+        match by {
+            Side::Attacker => Some(after.map_or(self.attacker, |a| a.attacker)),
+            Side::Defender => after.map_or(self.defender, |a| a.defender),
+        }
+    }
+
+    /// The damage of the attacker's strikes if every one hits (no crit).
+    pub fn attacker_all_hit(&self) -> StatValue {
+        self.after_first_hit.map_or_else(
+            || self.attacker.all_hit(),
+            |a| a.attacker.all_hit() - a.attacker.damage + self.attacker.damage,
+        )
+    }
 }
 
 /// The forecast of `attacker` attacking `defender` from `distance` tiles, or
@@ -469,6 +527,7 @@ pub fn forecast(
     Some(Forecast {
         attacker: attacker_side,
         defender: defender_side,
+        after_first_hit: None,
     })
 }
 
@@ -659,11 +718,16 @@ pub fn strike_order(forecast: &Forecast) -> Vec<Side> {
 /// Who strikes whom: `(striker, target)` indices into `[attacker,
 /// defender]`, and the striker's numbers (`None`: a defender that doesn't
 /// counter).
-fn striker(forecast: &Forecast, by: Side) -> Option<(usize, usize, SideForecast)> {
-    match by {
-        Side::Attacker => Some((0, 1, forecast.attacker)),
-        Side::Defender => forecast.defender.map(|d| (1, 0, d)),
-    }
+fn striker(
+    forecast: &Forecast,
+    by: Side,
+    attacker_has_hit: bool,
+) -> Option<(usize, usize, SideForecast)> {
+    let numbers = forecast.numbers(by, attacker_has_hit)?;
+    Some(match by {
+        Side::Attacker => (0, 1, numbers),
+        Side::Defender => (1, 0, numbers),
+    })
 }
 
 /// A strike's damage before a crit: the first strike's, or the follow-up
@@ -705,7 +769,7 @@ pub fn resolve(
         if hp[0].current <= 0 || hp[1].current <= 0 {
             break;
         }
-        let Some((me, target, numbers)) = striker(forecast, by) else {
+        let Some((me, target, numbers)) = striker(forecast, by, landed[0] > 0) else {
             break;
         };
         struck[me] += 1;
@@ -780,7 +844,7 @@ pub fn if_all_hit(forecast: &Forecast, attacker: CombatHp, defender: CombatHp) -
     let mut struck = [0u8; 2];
     let mut strikes = Vec::new();
     for by in strike_order(forecast) {
-        let Some((me, target, numbers)) = striker(forecast, by) else {
+        let Some((me, target, numbers)) = striker(forecast, by, struck[0] > 0) else {
             continue;
         };
         struck[me] = struck[me].saturating_add(1);

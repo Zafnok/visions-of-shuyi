@@ -7,7 +7,9 @@ use crate::prelude::*;
 
 use super::{BattleState, CommandError, Event, Fight, Phase, Pos, Step, UnitAction};
 use crate::art::{ArtEffect, ArtId, ArtNote};
-use crate::combat::{CombatHp, Forecast, SideForecast, StrikePlan, forecast, if_all_hit};
+use crate::combat::{
+    CombatHp, Forecast, SideForecast, StrikePlan, forecast as combat_forecast, if_all_hit,
+};
 use crate::item::{Equipped, ItemId};
 use crate::skill::{
     CostSource, EffectSource, SkillCost, SkillId, TimedEffect, check_cost, pay_cost,
@@ -63,6 +65,16 @@ pub(super) fn check_arts_allowed(unit: &Unit) -> Result<(), CommandError> {
     } else {
         Err(CommandError::ArtsNotAllowed(unit.id))
     }
+}
+
+/// The debuff `art`'s first hit puts on `target`, until the end of its side's
+/// next phase; `None` if the art has none.
+fn first_hit_effect(art: &ArtUse, target: &Unit) -> Option<TimedEffect> {
+    Some(TimedEffect {
+        source: EffectSource::Art(art.art.clone()),
+        mods: art.effect.first_hit_mods()?,
+        until: TimedEffect::debuff_until(Phase::of(target.faction)),
+    })
 }
 
 impl BattleState {
@@ -139,7 +151,7 @@ impl BattleState {
         };
         let (a, v, _) = self.fighters(unit, victim, fight)?;
         let rules = self.tables.items.combat_rules();
-        Ok(forecast(&rules, &a, &v, distance).map(|mut f| {
+        Ok(combat_forecast(&rules, &a, &v, distance).map(|mut f| {
             f.defender = None;
             f.attacker.strikes = 1;
             (victim.id, f)
@@ -187,22 +199,42 @@ impl BattleState {
         paid.broke
     }
 
-    /// Puts `art`'s debuff, if it has one, on `target` if it still stands,
-    /// until the end of its side's next phase.
-    pub(super) fn debuff(&mut self, target: UnitId, art: &ArtUse, events: &mut Vec<Event>) {
-        let Some(mods) = art.effect.first_hit_mods() else {
-            return;
+    /// Works out the numbers of `forecast` from its art's first hit on, if
+    /// `fight`'s art has a debuff: the same fight, with the debuff on
+    /// `defender` (replacing the one it may have, as [`Self::debuff`] will).
+    pub(super) fn plan_first_hit(
+        &self,
+        unit: &Unit,
+        defender: &Unit,
+        fight: &Fight,
+        forecast: &mut Forecast,
+    ) -> Result<(), CommandError> {
+        let Some(effect) = fight.art.and_then(|art| first_hit_effect(art, defender)) else {
+            return Ok(());
         };
+        let mut debuffed = defender.clone();
+        debuffed.add_effect(effect);
+        let (a, d, _) = self.fighters(unit, &debuffed, fight)?;
+        let rules = self.tables.items.combat_rules();
+        let distance = Pos::manhattan(fight.dest, defender.pos);
+        if let Some(after) = combat_forecast(&rules, &a, &d, distance) {
+            forecast.set_after_first_hit(&after);
+        }
+        Ok(())
+    }
+
+    /// Puts `art`'s debuff, if it has one, on `target` if it still stands,
+    /// until the end of its side's next phase. The combat has already used
+    /// it from the first hit on ([`Self::plan_first_hit`]).
+    pub(super) fn debuff(&mut self, target: UnitId, art: &ArtUse, events: &mut Vec<Event>) {
         let Some(unit) = self.unit_mut(target).filter(|u| u.hp > 0) else {
             return;
         };
-        let until = TimedEffect::debuff_until(Phase::of(unit.faction));
-        let source = EffectSource::Art(art.art.clone());
-        unit.add_effect(TimedEffect {
-            source: source.clone(),
-            mods,
-            until,
-        });
+        let Some(effect) = first_hit_effect(art, unit) else {
+            return;
+        };
+        let (source, until) = (effect.source.clone(), effect.until);
+        unit.add_effect(effect);
         events.push(Event::EffectApplied {
             unit: target,
             source,

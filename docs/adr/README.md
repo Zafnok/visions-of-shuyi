@@ -113,6 +113,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0103](0103-paired-model-recommendations.md) | Paired Claude and OpenAI model recommendations | Accepted |
 | [0104](0104-random-skirmishes-overlay-cleared-places-and-rebuild-ordinary-battle-files.md) | Random skirmishes overlay cleared places and rebuild ordinary battle files | Accepted (1008); extends ADR-0099 |
 | [0105](0105-no-build-embeds-a-readme-every-bundle-layer-is-a-generated-table.md) | No build embeds a README; every bundle layer is a table `build.rs` writes | Accepted (0123); extends ADR-0005, ADR-0040, ADR-0057, ADR-0070 |
+| [0106](0106-a-forecast-carries-its-numbers-after-a-first-hit-debuff.md) | A forecast carries its numbers after a first-hit debuff | Accepted (0330); extends ADR-0022 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

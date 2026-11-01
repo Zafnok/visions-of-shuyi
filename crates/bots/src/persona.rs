@@ -363,7 +363,7 @@ fn danger(state: &BattleState) -> Danger {
             }
             if let Some(forecast) = state.threat_forecast(*enemy, unit.id) {
                 expected += expected_damage(&forecast.attacker);
-                worst += all_hit(&forecast.attacker);
+                worst += i64::from(forecast.attacker_all_hit());
                 let back = forecast.defender.as_ref().map_or(0, expected_damage) / 100;
                 let enemy_hp = state.unit(*enemy).map_or(0, |e| i64::from(e.hp));
                 out.counter += back.min(enemy_hp);
