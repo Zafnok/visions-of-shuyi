@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0124 — Check PR and ticket titles for accidental mentions
@@ -108,17 +108,17 @@ work starts, and the PR title, which is what the release notes use.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask check-mentions "[0710] Dialogue scripts choose the music: @music"`
+- [x] `cargo xtask check-mentions "[0710] Dialogue scripts choose the music: @music"`
       exits 1 and names `@music`.
-- [ ] The same title with the directive in backticks exits 0, and so does
+- [x] The same title with the directive in backticks exits 0, and so does
       `"Mail noreply@anthropic.com about [0001]"`.
-- [ ] A ticket in `tickets/open/` whose `title:` has a bare mention makes
+- [x] A ticket in `tickets/open/` whose `title:` has a bare mention makes
       `cargo xtask ticket-lint` fail with the ticket's path; the same title
       in `tickets/done/` does not (0710 stays as it is and the lint passes
       on the repository).
-- [ ] The `tickets` CI job runs the new step on pull requests and not on
+- [x] The `tickets` CI job runs the new step on pull requests and not on
       pushes to `main`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -136,5 +136,22 @@ work starts, and the PR title, which is what the release notes use.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+`bare_mentions` is in `crates/xtask/src/mentions.rs`. `cargo xtask ticket-lint`
+now fails on a bare mention in an open ticket's title, and the `tickets` CI job
+runs the new `cargo xtask check-mentions` on the PR title.
+
+- **Known gap (as the ticket says):** the check runs on each push, so a title
+  changed after the last push is not checked again.
+- **Deviations:** the line for `CLAUDE.md` went in `AGENTS.md`, which now holds
+  that bullet (`CLAUDE.md` imports it). `check_keys` no longer lives in
+  `main.rs`, so the new arm follows the other commands there.
+- **ADR-0014 left alone:** it is Accepted and accepted ADRs aren't edited.
+- **An at sign right after a mention** (`@alpha@beta`) reports only the first
+  name; the ticket's rule about the character before an at sign covers this.
+
+Verified: all gates pass locally. A throwaway ticket with a bare mention in its
+title failed the lint with its path in `tickets/open/` and passed in
+`tickets/done/`. The CI step itself first runs on this PR.
+
+Engine friction: estimate 50, measured 60 (1.2×), under 2×. No follow-up
+tickets. No gameplay rules decided.

@@ -13,6 +13,7 @@ use std::process::Command;
 use serde_norway::Value;
 
 use crate::engine;
+use crate::mentions;
 
 /// The prefix of an engine ticket's id in `blocked_by`: `engine#2007`.
 const ENGINE_PREFIX: &str = "engine#";
@@ -298,6 +299,14 @@ fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &
                                 "tickets in `tickets/open/` must not have `status: done`"
                                     .to_string(),
                             );
+                        }
+                        let title = scalar_string(map, "title").unwrap_or_default();
+                        for mention in mentions::bare_mentions(&title) {
+                            errors.push(format!(
+                                "title has the bare mention {mention}; GitHub would read the PR \
+                                 title as a mention of that user (put it in backticks or drop \
+                                 the at sign)"
+                            ));
                         }
                     }
                 }
@@ -630,6 +639,29 @@ completed:
                 .iter()
                 .any(|e| e.contains("does not match filename prefix"))
         );
+    }
+
+    #[test]
+    fn open_ticket_with_a_mention_in_its_title_is_an_error() {
+        let fm = VALID_FRONTMATTER.replace("Test ticket", "The music: @music");
+        let t = parse_ticket("p".to_string(), Folder::Open, "0106-x.md", &fm);
+        assert!(
+            t.errors
+                .iter()
+                .any(|e| e.contains("title has the bare mention @music")),
+            "{:?}",
+            t.errors
+        );
+    }
+
+    #[test]
+    fn done_ticket_with_a_mention_in_its_title_is_not_an_error() {
+        let fm = VALID_FRONTMATTER
+            .replace("Test ticket", "The music: @music")
+            .replace("status: todo", "status: done")
+            .replace("completed:", "completed: 2026-11-01");
+        let t = parse_ticket("p".to_string(), Folder::Done, "0106-x.md", &fm);
+        assert_eq!(t.errors, Vec::<String>::new());
     }
 
     #[test]

@@ -19,6 +19,7 @@ mod game_tools;
 mod icon;
 mod lines;
 mod map_sprite_import;
+mod mentions;
 mod playdate;
 mod playdate_audio;
 mod playdate_images;
@@ -46,7 +47,8 @@ const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n    \
 [--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
-engine [--off]                     build the game on Shuyi Engine checked out in shuyi-engine/\n  \
+check-mentions <text>              find what GitHub would read as a mention of a user, in a PR title\n  \
+engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check]    move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
 skill-pack [--check]               copy the pinned engine's skill pack into .claude/skills/, or check the copy (ADR-0097)\n  \
@@ -89,6 +91,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         ) => shuyi(name, args),
         Some("shuyi") => shuyi_cli::main_with(args, Some(&game_tools::Trpg)),
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
+        Some("check-mentions") => check_mentions(&args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
         Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
         Some("skill-pack") => skill_pack(&args.collect::<Vec<_>>()),
@@ -159,6 +162,29 @@ fn ticket_lint(args: &[String]) -> u8 {
     for error in &errors {
         eprintln!("  {error}");
     }
+    1
+}
+
+/// `check-mentions <text>`: no accidental mention of a GitHub user in a PR
+/// title, which the release notes are generated from (ticket 0124).
+fn check_mentions(args: &[String]) -> u8 {
+    let [text] = args else {
+        eprintln!("usage: cargo xtask check-mentions <text>");
+        return 2;
+    };
+    let found = mentions::bare_mentions(text);
+    if found.is_empty() {
+        println!("check-mentions: OK");
+        return 0;
+    }
+    eprintln!("check-mentions: {} bare mention(s)", found.len());
+    for mention in &found {
+        eprintln!("  {mention}");
+    }
+    eprintln!(
+        "put it in backticks or drop the at sign: GitHub reads it as a mention of that user, \
+         and the release notes list them as a contributor"
+    );
     1
 }
 
@@ -1226,6 +1252,28 @@ mod tests {
         // are worked — this exercises the wrapper's non-zero exit path
         // without depending on the repo's current ticket state.
         assert_eq!(ticket_lint(&args(&["--pr-branch", "t9999-ghost"])), 1);
+    }
+
+    #[test]
+    fn check_mentions_fails_on_a_bare_mention() {
+        let title = "[0710] Dialogue scripts choose the music: @music";
+        assert_eq!(dispatch(args(&["check-mentions", title]).into_iter()), 1);
+    }
+
+    #[test]
+    fn check_mentions_passes_on_backticks_and_an_email_address() {
+        for title in [
+            "[0710] Dialogue scripts choose the music: `@music`",
+            "Mail noreply@anthropic.com about [0001]",
+        ] {
+            assert_eq!(dispatch(args(&["check-mentions", title]).into_iter()), 0);
+        }
+    }
+
+    #[test]
+    fn check_mentions_takes_exactly_one_argument() {
+        assert_eq!(dispatch(args(&["check-mentions"]).into_iter()), 2);
+        assert_eq!(dispatch(args(&["check-mentions", "a", "b"]).into_iter()), 2);
     }
 
     #[test]

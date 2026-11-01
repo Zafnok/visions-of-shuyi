@@ -145,4 +145,6 @@ make a shared instruction work.
   comment, release notes): GitHub turns it into a mention of that user, and
   the generated release notes then list them as a contributor (it happened
   in v0.1.0 with `@music`, a dialogue directive). Put it in backticks or
-  drop the `@`. Only mention a real person on purpose.
+  drop the `@`. Only mention a real person on purpose. `cargo xtask
+  ticket-lint` checks open tickets' titles and CI checks the PR title
+  (`cargo xtask check-mentions`).

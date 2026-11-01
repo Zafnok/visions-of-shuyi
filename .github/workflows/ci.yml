@@ -247,6 +247,7 @@ jobs:
     env:
       HEAD_REF: ${{ github.head_ref }}
       EVENT_NAME: ${{ github.event_name }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
       # Depth 2 for pr-size below: HEAD is the PR's merge commit, HEAD^1 the
       # base's tip.
@@ -271,6 +272,11 @@ jobs:
           else
             cargo xtask ticket-lint
           fi
+      # No accidental mention of a GitHub user in the PR title: the release
+      # notes are generated from it (ticket 0124).
+      - name: Check the PR title for accidental mentions
+        if: github.event_name == 'pull_request'
+        run: cargo xtask check-mentions "$PR_TITLE"
       # No key hard-coded in game code or player text (keyboard-input skill).
       - name: Check for hard-coded keys
         run: cargo shuyi check-keys

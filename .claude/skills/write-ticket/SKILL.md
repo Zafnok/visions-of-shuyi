@@ -23,6 +23,7 @@ without asking questions.
 3. Copy `tickets/TEMPLATE.md` to `tickets/open/NNNN-short-kebab-title.md`.
    Keep a bare `@word` out of the `title:` (it becomes the PR title, where
    GitHub reads it as a mention of a user; see `work-ticket` step 6).
+   `cargo xtask ticket-lint` fails on one in an open ticket's title.
 4. Fill in **every** section:
    - **Context:** why this exists; link ADRs, design docs, the ticket/PR that
      discovered it.
