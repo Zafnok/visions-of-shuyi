@@ -1,5 +1,5 @@
 // TEST FILE: a green unit with consumables of its own (ticket 0513): an
-// unarmed villager at (13, 6), far from the army, with a raider next to it
+// unarmed non-combat villager at (13, 6), far from the army, with a raider next to it
 // and two Potions. Below half its HP, with no kill to make (it has no
 // weapon), it drinks one in the Other phase; the player's pack is never
 // touched. The bots play it (`cargo xtask playtest test_green`).
@@ -12,7 +12,7 @@
         (character: "test_archer", pos: (2, 4)),
     ],
     enemies: [
-        (template: "test_raider", pos: (13, 6), faction: Ally, name: Some("Villager"),
+        (template: "test_raider", pos: (13, 6), faction: Ally, noncombatant: true, name: Some("Villager"),
          loadout: Some((weapons: [])), items: ["potion", "potion"]),
         (template: "test_raider", pos: (12, 3)),
         (template: "test_raider", pos: (13, 4)),
