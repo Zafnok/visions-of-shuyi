@@ -88,6 +88,9 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(lesson) = &view.lesson {
         glyph::paint_lesson(ctx, &view.scene, lesson, buf);
     }
+    if let Some(end) = &view.lessons_end {
+        glyph::paint_lessons_end(ctx, &view.scene, end, buf);
+    }
     if let Some(tip) = &view.tip {
         tip_box::glyph::paint(ctx, tip, buf);
     }

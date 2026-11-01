@@ -13,7 +13,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
-pub use view::{FaceView, LessonItemView, LessonView, TipView};
+pub use view::{FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
 
 use core::fmt::Display;
 

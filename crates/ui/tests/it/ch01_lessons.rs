@@ -98,7 +98,15 @@ fn done(h: &Harness) -> Vec<String> {
 
 /// Moves the cursor from where the map shows it to `to` with the arrow keys.
 fn go(h: &mut Harness, to: Pos) {
-    let at = h.cursor_tile().unwrap_or_else(|| panic!("no cursor"));
+    let at = h.cursor_tile();
+    let at = at.unwrap_or_else(|| {
+        panic!(
+            "no cursor: {:?}
+{}",
+            h.screens(),
+            h.snapshot()
+        )
+    });
     let (dx, dy) = (to.x - at.x, to.y - at.y);
     for _ in 0..dx.abs() {
         h.keys(if dx < 0 { "Left" } else { "Right" });
@@ -591,4 +599,183 @@ fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
         .filter(|id| BASICS.contains(&id.as_str()))
         .collect();
     assert!(basics.is_empty(), "{basics:?}");
+}
+
+/// Whether the guide's box at the end of the lessons is up (0465).
+fn end_box(h: &Harness) -> bool {
+    battle(h).lessons_end_shown(h.game().ctx())
+}
+
+/// Backs out to the map from a unit's list or forecast, and has it wait.
+fn back_and_wait(h: &mut Harness) {
+    for _ in 0..4 {
+        if menu_entry(h).is_some() {
+            pick(h, MenuEntry::Wait);
+            h.wait(0.5);
+            return;
+        }
+        h.keys("d").wait(0.1);
+    }
+    panic!("no action menu: {:?}", battle(h).mode());
+}
+
+/// Every lesson `Short` shows, played on Chapter 1 from turn 1, the last
+/// (Rewind) on turn 2.
+fn finish_short(h: &mut Harness) {
+    assert_eq!(shown(h), Some("keys"));
+    h.keys("Right Left");
+    visit_options(h);
+    go(h, SERGEANT);
+    assert_eq!(shown(h), Some("threat_arrows"));
+    h.keys("f Left Left Down d").wait(0.1);
+    go(h, SERGEANT);
+    h.keys("f");
+    go(h, BRIGAND);
+    h.keys("f").wait(1.5);
+    h.keys("d");
+    assert_eq!(shown(h), Some("combat_arts"));
+    pick(h, MenuEntry::Arts);
+    back_and_wait(h);
+    go(h, HERETIC);
+    h.keys("f");
+    go(h, p(3, 10));
+    h.keys("f").wait(1.5);
+    pick(h, MenuEntry::Magic);
+    assert_eq!(shown(h), Some("terrain_magic"));
+    h.keys("f").wait(0.1);
+    back_and_wait(h);
+    assert!(!end_box(h), "Rewind is left");
+    wait_all(h);
+    h.wait(0.5);
+    end_turn(h);
+    to_turn(h, 2);
+    assert_eq!(shown(h), Some("rewind"));
+    h.keys("r d").wait(0.1);
+}
+
+/// Closes what stands before turn 1's map after a restart.
+fn back_on_turn_1(h: &mut Harness) {
+    skip_scenes(h);
+    h.wait(0.1);
+    while h.top_screen() == "dialogue" || battle(h).banner().is_some() || battle(h).notes_open() {
+        if h.top_screen() == "dialogue" {
+            skip_scenes(h);
+        } else {
+            h.keys("f");
+        }
+        h.wait(0.1);
+    }
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    assert_eq!(battle(h).state().turn(), 1);
+    let charges = battle(h).state().rewind_charges();
+    assert_eq!(battle(h).history().charges_left(), charges, "none spent");
+}
+
+/// Acceptance, `Short`: the box comes as the last lesson closes, says where
+/// Guides is with the player's key, starts on "Keep going", takes the keys
+/// while it is up; "Keep going" closes it for good and the battle goes on.
+#[test]
+fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
+    let mut h = chapter_1(TutorialLevel::Short, &[]);
+    finish_short(&mut h);
+    assert!(end_box(&h), "{}", h.snapshot());
+    insta::assert_snapshot!(h.snapshot());
+    let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
+    assert_eq!(view.focus, 0);
+    assert_eq!(
+        view.lines[1],
+        "Need a reminder? Guides, in the map menu (d)."
+    );
+    // It holds the keys: the map doesn't move, Cancel and End turn do nothing.
+    let at = h.cursor_tile();
+    h.keys("Left d Space");
+    assert_eq!(h.cursor_tile(), at);
+    assert!(end_box(&h) && matches!(battle(&h).mode(), Mode::Idle { .. }));
+    // Round the answers and back to the first.
+    h.keys("Up");
+    let focus = |h: &Harness| {
+        let view = battle(h).view(h.game().ctx()).lessons_end;
+        view.map(|v| v.focus)
+    };
+    assert_eq!(focus(&h), Some(2));
+    h.keys("Down");
+    assert_eq!(focus(&h), Some(0));
+    h.keys("f");
+    assert!(!end_box(&h));
+    assert_eq!(battle(&h).state().turn(), 2);
+    h.keys("Left");
+    assert_ne!(h.cursor_tile(), at, "the map is the player's again");
+}
+
+/// Acceptance: "Restart the battle" is turn 1 with every charge and the
+/// lessons done; the box doesn't come back.
+#[test]
+fn restart_the_battle_goes_back_to_turn_one_with_the_lessons_done() {
+    let mut h = chapter_1(TutorialLevel::Short, &[]);
+    finish_short(&mut h);
+    h.keys("Down f");
+    back_on_turn_1(&mut h);
+    assert_eq!(shown(&h), None);
+    assert!(!end_box(&h));
+    assert!(done(&h).contains(&"keys".to_owned()));
+    assert!(done(&h).contains(&"rewind".to_owned()));
+}
+
+/// Acceptance: "Restart with the lessons" is turn 1 with every charge and
+/// the lessons again, each opening at its moment; finishing them again
+/// doesn't ask again (once per campaign). The campaign's saves see it.
+#[test]
+fn restart_with_the_lessons_shows_them_again_and_does_not_ask_twice() {
+    let mut h = chapter_1(TutorialLevel::Short, &[]);
+    finish_short(&mut h);
+    h.keys("Down Down f");
+    back_on_turn_1(&mut h);
+    assert!(!done(&h).contains(&"keys".to_owned()));
+    assert!(!done(&h).contains(&"rewind".to_owned()));
+    finish_short(&mut h);
+    assert!(done(&h).contains(&"rewind".to_owned()));
+    assert!(!end_box(&h));
+}
+
+/// Acceptance, `Full`: the basic controls count too. Without the lessons
+/// that wait for their chance, the last is Rewind on turn 2, after Ending
+/// the turn.
+#[test]
+fn at_full_the_box_waits_for_the_basic_controls_too() {
+    let mut h = chapter_1(
+        TutorialLevel::Full,
+        &["threat_arrows", "combat_arts", "terrain_magic"],
+    );
+    openers(&mut h);
+    assert_eq!(shown(&h), Some("moving"));
+    h.keys("f f").wait(0.5);
+    pick(&mut h, MenuEntry::Wait);
+    h.wait(0.5);
+    go(&mut h, SERGEANT);
+    h.keys("f");
+    assert_eq!(shown(&h), Some("attacking"));
+    go(&mut h, BRIGAND);
+    h.keys("f").wait(1.5);
+    h.keys("f").hold("f", 4.0);
+    assert!(done(&h).contains(&"attacking".to_owned()));
+    assert!(!end_box(&h));
+    wait_all(&mut h);
+    h.wait(0.5);
+    assert_eq!(shown(&h), Some("ending_turn"));
+    end_turn(&mut h);
+    assert!(!end_box(&h));
+    to_turn(&mut h, 2);
+    assert!(!end_box(&h), "Rewind is left");
+    h.keys("r d").wait(0.1);
+    assert!(end_box(&h), "{}", h.snapshot());
+}
+
+/// Acceptance: at `None` the box never comes.
+#[test]
+fn at_none_the_box_never_comes() {
+    let mut h = chapter_1(TutorialLevel::None, &[]);
+    assert!(!end_box(&h));
+    end_turn(&mut h);
+    to_turn(&mut h, 2);
+    assert!(!end_box(&h));
 }

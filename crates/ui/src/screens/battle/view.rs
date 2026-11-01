@@ -37,7 +37,7 @@ use super::HealPopup;
 use super::banner::BannerKind;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
-use crate::tips::{LessonView, TipView};
+use crate::tips::{LessonView, LessonsEndView, TipView};
 use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
@@ -70,6 +70,8 @@ pub struct BattleView {
     pub tip: Option<TipView>,
     /// The checklist lesson on screen (ticket 0456), over the map.
     pub lesson: Option<LessonView>,
+    /// The guide's box at the end of the lessons (ticket 0465), over the map.
+    pub lessons_end: Option<LessonsEndView>,
     /// The line over the help: a combat's message, the preview of what is
     /// being aimed, or the toast.
     pub message: Option<MessageView>,

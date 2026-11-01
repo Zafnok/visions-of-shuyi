@@ -856,15 +856,15 @@ impl FlowScreen {
     /// screen was over the flow: the mode, if the Options screen on
     /// Preparations switched it to Casual (0805); the tutorial level picked
     /// on the Options screen (0838); the lessons a battle finished
-    /// ([`Ctx::campaign_lessons`], which only grows from the campaign's
-    /// own, 0456); its playtime. Its saves keep them. Returns whether it
+    /// ([`Ctx::campaign_lessons`], 0456; "Restart with the lessons" takes
+    /// some back, 0465); its playtime. Its saves keep them. Returns whether it
     /// switched to Casual.
     pub(crate) fn take_in(campaign: &mut Campaign, ctx: &Ctx, started_at: f64) -> bool {
         let casual = ctx.game.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode();
         if let Some(level) = ctx.game.campaign_tutorial {
             campaign.tutorial = level;
         }
-        if campaign.lessons_done.len() != ctx.game.campaign_lessons.len() {
+        if campaign.lessons_done != ctx.game.campaign_lessons {
             campaign.lessons_done.clone_from(&ctx.game.campaign_lessons);
         }
         let played = (ctx.clock_s - started_at).max(0.0);

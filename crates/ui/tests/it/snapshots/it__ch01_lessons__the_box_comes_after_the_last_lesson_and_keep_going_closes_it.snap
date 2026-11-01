@@ -1,0 +1,117 @@
+---
+source: crates/ui/tests/it/ch01_lessons.rs
+expression: h.snapshot()
+---
+          ╔═ Vix ═════════════════════════════════════════╗           ┌────────────────────────────┐
+          ║                                               ║           │ Plain                      │
+          ║ That's the lessons                            ║           │ DEF +0  AVO +0             │
+          ║ That's all I've got. You're on your own now.  ║           │                            │
+          ║ Need a reminder? Guides, in the map menu (d). ║           │                            │
+          ║ A fresh start costs nothing, if you want one. ║           │ Aske                       │
+          ║                                               ║           │ Archer  Lv 2               │
+          ║ >   Keep going                                ║           │ HP 17/17   ██████████      │
+          ║     Restart the battle                        ║           │ Player                     │
+          ║     Restart with the lessons                  ║           │                            │
+          ║                                               ║           │                            │
+          ╚═══════════════════════════════════════════════╝           │                            │
+          ......··..............Ra....Ar♣♣Br......Br......            │                            │
+          ≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈......Gu..♣♣♣♣            │                            │
+          ......··..............··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈            │                            │
+          ......··..............··......♣♣♣♣......··......            │                            │
+          ..♣♣♣♣··............Ar··....♣♣♣♣♣♣♣♣....Ra......            │                            │
+          ..♣♣♣♣Ru··..........Br··......♣♣♣♣......··..^^^^            │                            │
+          ........··Ho········TaBr··················..^^^^            │                            │
+          ....╦╦MaEl................................^^^^^^            │                            │
+          ......As··....^^^^......................♣♣♣♣....            │                            │
+          ..............^^^^^^....................♣♣♣♣♣♣..            │                            │
+          ................^^......................♣♣♣♣....            │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │ Gold 0                     │
+                                                                      └────────────────────────────┘
+                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+ arrows choose · f pick                                                                    F2 debug 
+--- colours ---
+aaaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabdcccccddddddddddddddddddddddb
+aaaaaaaaaabdccccccccccccccccccddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabdeeeedddddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabdcdddccccccccccddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddffffffffffddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabdggggggdddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhiihhhhhhhhhhhhhhjjhhhhkkllmmhhhhhhjjhhhhhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaannnnnnoonnnnnnnnnnnnnnoonnnnnnnnnnhhhhhhjjhhllllaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhiihhhhhhhhhhhhhhiihhhhhhhhnnnnnnnnoonnnnnnaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhiihhhhhhhhhhhhhhiihhhhhhllllhhhhhhiihhhhhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhlllliihhhhhhhhhhhhmmiihhhhllllllllhhhhjjhhhhhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhllllppiihhhhhhhhhhmmiihhhhhhllllhhhhhhiihhqqqqaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhhhiippiiiiiiiippjjiiiiiiiiiiiiiiiiiihhqqqqaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhrrsspphhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhqqqqqqaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhssiihhhhqqqqhhhhhhhhhhhhhhhhhhhhhhllllhhhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhhhhhhhhhqqqqqqhhhhhhhhhhhhhhhhhhhhllllllhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaahhhhhhhhhhhhhhhhqqhhhhhhhhhhhhhhhhhhhhhhllllhhhhaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatttttttttttttttttttttttttttttttttttttttttttttta
+attttttttttttttttttttttaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatttttttta
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:player bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:grass bg:grass_bg
+i = fg:road bg:road_bg
+j = fg:#7f4632 bg:road_bg
+k = fg:#744530 bg:forest_bg
+l = fg:forest bg:forest_bg
+m = fg:#784330 bg:grass_bg
+n = fg:water bg:water_bg
+o = fg:wood bg:water_bg
+p = fg:player bg:road_bg
+q = fg:mountain bg:mountain_bg
+r = fg:fort bg:fort_bg
+s = fg:player bg:grass_bg
+t = fg:text_dim bg:black
+--- overlays ---
+over  145,318 14x2  hp_high
+over  161,302 14x2  hp_high
+over  241,302 7x2  hp_mid
+over  248,302 7x2  black
+over  129,334 14x2  hp_high
+over  129,318 14x2  hp_high
+over  129,286 14x2  hp_high
+over  241,286 6x2  hp_mid
+over  247,286 8x2  black
+over  257,302 6x2  hp_mid
+over  263,302 8x2  black
+over  241,270 14x2  hp_high
+over  401,270 14x2  hp_high
+over  257,206 14x2  hp_high
+over  305,206 14x2  hp_high
+over  337,206 14x2  hp_high
+over  401,222 14x2  hp_high
+over  401,206 14x2  hp_high
+over  127,320 3x1  #a89a70
+over  127,320 1x3  #a89a70
+over  141,320 3x1  #a89a70
+over  143,320 1x3  #a89a70
+over  127,333 3x1  #a89a70
+over  127,331 1x3  #a89a70
+over  141,333 3x1  #a89a70
+over  143,331 1x3  #a89a70

@@ -87,7 +87,7 @@ use self::event_sounds::CueQueue;
 use self::flight::Flight;
 use self::guides::GuidesScreen;
 use self::layout::{MAP_VIEW, map_area};
-use self::lessons::LessonState;
+use self::lessons::{EndAnswer, LessonState};
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
@@ -108,7 +108,7 @@ use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
-use crate::tips::{LessonView, TipView};
+use crate::tips::{LessonView, LessonsEndView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
@@ -381,6 +381,8 @@ pub struct BattleScreen {
     tips: TipState,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
+    /// The answer the box at the end of the lessons is on (0465).
+    end_focus: usize,
     /// What the units left to act could do, for the lessons (0464): worked
     /// out when one asks, started anew whenever the battle changes.
     doable: Doable,
@@ -537,6 +539,7 @@ impl BattleScreen {
             queue: VecDeque::new(),
             tips: TipState::default(),
             lessons: LessonState::default(),
+            end_focus: 0,
             doable: Doable::default(),
             noticed: Vec::new(),
             battle_id: None,
@@ -777,7 +780,7 @@ impl BattleScreen {
     /// each takes the keys until it is closed (a tip by Confirm or Cancel,
     /// once it has been drawn, 0467; the notes by Confirm). Returns whether
     /// one took it.
-    fn overlay_key(&mut self, action: Action) -> bool {
+    fn overlay_key(&mut self, ctx: &mut Ctx, action: Action) -> bool {
         if let Some(tip) = self.shown_tip() {
             if matches!(action, Action::Confirm | Action::Cancel) && self.tips.on_screen(tip) {
                 self.tips.dismiss(tip);
@@ -788,6 +791,10 @@ impl BattleScreen {
             if action == Action::Confirm {
                 self.queue.pop_front();
             }
+            return true;
+        }
+        if self.lessons_end_shown(ctx) {
+            self.lessons_end_key(ctx, action);
             return true;
         }
         false
@@ -1062,6 +1069,53 @@ impl BattleScreen {
         Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }
 
+    /// Whether the box at the end of the lessons is on screen (0465): they
+    /// are all done, and the map is back to browsing with nothing else over
+    /// it, so it never cuts into what the last lesson had the player doing.
+    pub fn lessons_end_shown(&self, ctx: &Ctx) -> bool {
+        matches!(self.mode, Mode::Idle { .. })
+            && self.queue.is_empty()
+            && self.lesson_moment()
+            && self.due_tip().is_none()
+            && LessonState::end_due(ctx, self.battle_id.as_deref())
+    }
+
+    /// The box at the end of the lessons, if it is on screen.
+    fn lessons_end_view(&self, ctx: &Ctx) -> Option<LessonsEndView> {
+        self.lessons_end_shown(ctx)
+            .then(|| LessonsEndView::new(ctx, self.end_focus, self.cursor.pos))
+    }
+
+    /// Gives `action` to the box at the end of the lessons: it takes every
+    /// key while it is up. Cancel does nothing: the box asks for an answer.
+    fn lessons_end_key(&mut self, ctx: &mut Ctx, action: Action) {
+        let last = EndAnswer::ALL.len() - 1;
+        match action {
+            Action::CursorUp | Action::CursorDown => {
+                self.end_focus = if action == Action::CursorUp {
+                    self.end_focus.checked_sub(1).unwrap_or(last)
+                } else if self.end_focus == last {
+                    0
+                } else {
+                    self.end_focus + 1
+                };
+                ctx.audio.menu(MenuSound::Move);
+            }
+            Action::Confirm => {
+                ctx.audio.menu(MenuSound::Select);
+                LessonState::end_answered(ctx);
+                let answer = EndAnswer::ALL[self.end_focus];
+                if answer == EndAnswer::RestartWithLessons {
+                    self.lessons.show_again(ctx);
+                }
+                if answer != EndAnswer::KeepGoing {
+                    self.leaving = Some(Leaving::Restart);
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// Queues the lessons the fired triggers start, then
     /// [settles](Self::settle_lessons) them.
     fn absorb_lessons(&mut self, ctx: &Ctx) {
@@ -1314,10 +1368,12 @@ impl BattleScreen {
 
     /// With auto-end on, ends the player phase once the screen is back to
     /// browsing after the command that left no player unit ready.
-    fn check_auto_end(&mut self) {
+    fn check_auto_end(&mut self, ctx: &Ctx) {
         // A lesson in play holds the turn (0456), and one about ending it
-        // (0457) is the player's to do: auto-end waits for it.
+        // (0457) is the player's to do: auto-end waits for it, and for the
+        // box at the end of the lessons (0465).
         if !self.end_armed
+            || LessonState::end_due(ctx, self.battle_id.as_deref())
             || !matches!(self.mode, Mode::Idle { .. })
             || !self.queue.is_empty()
             || self.progress.is_some()
@@ -1949,6 +2005,9 @@ impl BattleScreen {
         if let Some(line) = self.overlay_help(ctx) {
             return line;
         }
+        if self.lessons_end_shown(ctx) {
+            return ctx.text_with("battle.lessons_end.help", &[]);
+        }
         let key = match &self.mode {
             Mode::Idle { threat } => {
                 let back = if threat.is_some() {
@@ -2370,6 +2429,7 @@ impl BattleScreen {
             banner: self.banner().map(|b| b.view(words, limit)),
             tip: self.tip_view(ctx),
             lesson: self.lesson_view(ctx),
+            lessons_end: self.lessons_end_view(ctx),
             message: self.message(),
             status: self.status(ctx),
             scene: self.scene(ctx),
@@ -2635,7 +2695,10 @@ impl BattleScreen {
         let mut actions: VecDeque<Action> = input.actions.iter().copied().collect();
         while let Some(action) = actions.pop_front() {
             self.tick_lessons(ctx);
-            if self.overlay_key(action) {
+            if self.overlay_key(ctx, action) {
+                if let Some(leaving) = self.leaving {
+                    return self.leave(leaving);
+                }
                 continue;
             }
             // The zoom is the player's view, not a move: in any phase.
@@ -2718,7 +2781,7 @@ impl BattleScreen {
             self.lessons.fire(trigger);
         }
         self.absorb_lessons(ctx);
-        self.check_auto_end();
+        self.check_auto_end(ctx);
         self.drive_ai(ctx);
         self.tick_lessons(ctx);
         // On screen as this frame ends, if it can still be done: open

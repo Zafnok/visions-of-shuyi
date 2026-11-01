@@ -596,6 +596,19 @@ fn a_closing_scene_kills_the_knight_in_every_mode_or_plays_without_them() {
 
 /// The Quick Battle's army with the lord and the knight's C conversation
 /// unlocked, at chapter `chapter`.
+/// Ticket 0465: the campaign takes in a set of lessons as long as its own
+/// but different ("Restart with the lessons" took one back as the answer to
+/// the box went in), or its saves would keep the old one.
+#[test]
+fn the_campaign_takes_in_lessons_that_changed_without_growing() {
+    let mut c = ctx();
+    let mut campaign = bonded_army(&c, QUICK_CHAPTER);
+    campaign.lessons_done = ["last".to_owned()].into();
+    c.game.campaign_lessons = ["answered".to_owned()].into();
+    FlowScreen::take_in(&mut campaign, &c, 0.0);
+    assert_eq!(campaign.lessons_done, c.game.campaign_lessons);
+}
+
 fn bonded_army(c: &Ctx, chapter: &str) -> Campaign {
     let content = &c.game.content;
     let def = &content.battles["quick"];

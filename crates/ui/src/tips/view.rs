@@ -11,6 +11,7 @@ use trpg_core::Pos;
 
 use super::fill_placeholders;
 use crate::screen::Ctx;
+use crate::screens::battle::lessons::EndAnswer;
 
 /// Names-table id of the guide's name, the box's title (0731).
 pub const GUIDE_NAME: &str = "guide";
@@ -18,6 +19,13 @@ pub const GUIDE_NAME: &str = "guide";
 pub const CLOSE_HINT: &str = "battle.help.close";
 /// Text key of the count under a lesson's checklist: `{n} of {m} done`.
 pub const LESSON_PROGRESS: &str = "battle.lesson.progress";
+
+/// Text key of the heading of the box at the end of the lessons (0465).
+pub const LESSONS_END_HEADING: &str = "battle.lessons_end.heading";
+/// Text key of that box's text.
+pub const LESSONS_END_TEXT: &str = "battle.lessons_end.text";
+/// The guide's expression in that box: pointing out a way out.
+const LESSONS_END_FACE: &str = "sly";
 
 /// One tip box.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,6 +104,54 @@ pub struct LessonItemView {
     pub label: String,
     /// Whether it is done (ticked).
     pub done: bool,
+}
+
+/// The guide's box at the end of the lessons (0465): the tip box, with
+/// answers in place of the close hint.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LessonsEndView {
+    /// The box's title: the guide's name.
+    pub title: String,
+    /// The guide's face, if the game has the guide's portrait.
+    pub face: Option<FaceView>,
+    /// The first line.
+    pub heading: String,
+    /// The text, its keys named, one entry per line.
+    pub lines: Vec<String>,
+    /// The answers, in order.
+    pub answers: Vec<String>,
+    /// The answer the cursor is on.
+    pub focus: usize,
+    /// The map tile the box must not hide: the cursor's.
+    pub clear_of: Pos,
+}
+
+impl LessonsEndView {
+    /// The box with the cursor on answer `focus`, clear of map tile
+    /// `clear_of`.
+    pub fn new(ctx: &Ctx, focus: usize, clear_of: Pos) -> Self {
+        let words = ctx.words();
+        let guide = ctx.game.content.portraits.get(GUIDE_PORTRAIT);
+        let face = guide
+            .is_some_and(|p| p.expression(LESSONS_END_FACE).is_some())
+            .then(|| FaceView {
+                portrait: GUIDE_PORTRAIT.to_owned(),
+                expression: LESSONS_END_FACE.to_owned(),
+            });
+        let text = ctx.text_with(LESSONS_END_TEXT, &[]);
+        Self {
+            title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
+            face,
+            heading: ctx.text(LESSONS_END_HEADING).to_owned(),
+            lines: text.lines().map(str::to_owned).collect(),
+            answers: EndAnswer::ALL
+                .iter()
+                .map(|a| ctx.text(a.text_key()).to_owned())
+                .collect(),
+            focus,
+            clear_of,
+        }
+    }
 }
 
 impl LessonView {
