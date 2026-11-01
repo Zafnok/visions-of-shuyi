@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1196 — Playdate saves survive a power cut
@@ -87,11 +87,11 @@ and about 80 test lines (the rig).
 
 ## Acceptance criteria
 
-- [ ] `power_cut_suite` passes on the Playdate `FileStorage` with rename
+- [x] `power_cut_suite` passes on the Playdate `FileStorage` with rename
       onto an existing file allowed and refused.
-- [ ] `conformance_suite` still passes in both.
-- [ ] The Playdate build and its clippy gates pass (`run-gates`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `conformance_suite` still passes in both.
+- [x] The Playdate build and its clippy gates pass (`run-gates`).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -101,4 +101,32 @@ and about 80 test lines (the rig).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+`FileStorage` now keeps a key's last good copy, as the engine's
+`shuyi-playdate` storage does: a write puts the value in `<key>.ron.tmp`,
+copies the old `.ron` to `<key>.ron.bak` when it is a good copy, then moves
+the `.tmp` into place. A read falls back to a good `.bak`, `list` names a
+good lone `.bak`, `delete` removes the `.bak` first, and a start's first
+write removes the `.tmp` files a cut left. Before the fix, the rig failed the
+suite where rename is refused: a cut after 3 operations read `Ok(None)`, the
+lost save this ticket describes.
+
+Flushing: the game's `SdkFiles::write` only closed the file. The SDK has
+`file->flush`, so the write now calls it before the close, through a new
+`pd_file_flush` in the shim, as the engine's device code does. Only the build
+proves this line: the suite runs on fake files.
+
+Deviation: the ticket wrote `.bak` before the tmp file. Here the tmp comes
+first, the order of both engine backends. Either passes the suite. It also
+goes beyond the listed fix in `list` and the `.tmp` sweep, both needed for the
+engine's behavior, and it updates `crates/playdate/README.md`.
+
+Limit: a value that is not itself a good copy (`""`) keeps no backup, so where
+rename is refused a cut in that one write can lose the old value. The engine's
+backend does the same; saves are never empty.
+
+For the Act 1 playtest (1064): each save now writes two flushed files instead
+of one unflushed file, so check that saving on the device has no noticeable
+hitch. This was not measured.
+
+No gameplay rule was decided. No follow-up tickets. When 1170 lands, this
+code goes with the rest of the backend.

@@ -41,6 +41,7 @@ unsafe extern "C" {
     fn pd_file_open_read_data(name: *const c_char) -> *mut c_void;
     fn pd_file_read(file: *mut c_void, buf: *mut c_void, len: c_uint) -> c_int;
     fn pd_file_write(file: *mut c_void, buf: *const c_void, len: c_uint) -> c_int;
+    fn pd_file_flush(file: *mut c_void) -> c_int;
     fn pd_file_close(file: *mut c_void) -> c_int;
     fn pd_file_error() -> *const c_char;
     fn pd_file_kind(name: *const c_char) -> c_int;

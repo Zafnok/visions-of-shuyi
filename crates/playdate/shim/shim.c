@@ -86,6 +86,7 @@ int pd_file_write(void* file, const void* buf, unsigned int len)
 {
 	return pd->file->write((SDFile*)file, buf, len);
 }
+int pd_file_flush(void* file) { return pd->file->flush((SDFile*)file); }
 int pd_file_close(void* file) { return pd->file->close((SDFile*)file); }
 const char* pd_file_error(void) { return pd->file->geterr(); }
 // 1 if `name` is a file, 0 if it is a folder, -1 if there is nothing there.
