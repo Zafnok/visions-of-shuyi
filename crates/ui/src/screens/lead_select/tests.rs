@@ -537,3 +537,9 @@ fn opts_into_as_any() {
     let any = Screen::as_any(&s).expect("opts into as_any");
     assert!(any.downcast_ref::<LeadSelectScreen>().is_some());
 }
+
+#[test]
+fn lead_select_declares_its_actions() {
+    let screen = LeadSelectScreen::new();
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::LEAD_SELECT);
+}

@@ -497,3 +497,9 @@ fn the_view_help_follows_the_rolling() {
     s.update(&mut c, &input(&[Action::Confirm]));
     assert_eq!(s.view(&c).help, "arrows scroll · f auto-scroll · d back");
 }
+
+#[test]
+fn credits_declares_its_actions() {
+    let screen = CreditsScreen::new(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::CREDITS);
+}

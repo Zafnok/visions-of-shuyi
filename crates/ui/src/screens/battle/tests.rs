@@ -850,3 +850,9 @@ fn a_pending_move_after_an_attack_is_chosen_on_the_map() {
     let archer = s.state().unit(UnitId(3)).unwrap();
     assert_eq!((archer.pos, archer.acted), (tiles[0], true));
 }
+
+#[test]
+fn battle_declares_its_actions() {
+    let screen = quick();
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::BATTLE);
+}

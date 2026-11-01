@@ -98,3 +98,9 @@ fn mode_select_snapshot() {
     h.keys("Down");
     assert_snapshot!(h.snapshot());
 }
+
+#[test]
+fn mode_select_declares_its_actions() {
+    let screen = ModeSelectScreen::new(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::MODE_SELECT);
+}

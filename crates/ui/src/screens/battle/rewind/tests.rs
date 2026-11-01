@@ -169,3 +169,9 @@ fn phase_names() {
     assert_eq!(ended(Phase::Enemy), "Enemy phase ended");
     assert_eq!(ended(Phase::Other), "Ally phase ended");
 }
+
+#[test]
+fn rewind_declares_its_actions() {
+    let screen = screen(1, 0);
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::REWIND);
+}

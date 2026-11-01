@@ -266,4 +266,10 @@ mod tests {
         let cues: Vec<_> = sounds.iter().map(|s| s.cue()).collect();
         assert_eq!(cues, [Some("menu_cancel")]);
     }
+
+    #[test]
+    fn sprite_test_declares_its_actions() {
+        let screen = SpriteTestScreen;
+        crate::screens::actions::assert_declares(&screen, crate::screens::actions::SPRITE_TEST);
+    }
 }

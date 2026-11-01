@@ -109,3 +109,9 @@ fn familiarity_snapshot() {
     h.keys("Down");
     assert_snapshot!(h.snapshot());
 }
+
+#[test]
+fn familiarity_declares_its_actions() {
+    let screen = FamiliarityScreen::new(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::FAMILIARITY);
+}

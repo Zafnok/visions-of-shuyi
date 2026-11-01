@@ -195,4 +195,10 @@ mod tests {
         let at = row(END_ROW).find('E').and_then(|x| i32::try_from(x).ok());
         assert_eq!(at.and_then(|x| buf.get(x, END_ROW)).map(|c| c.fg), Some(hi));
     }
+
+    #[test]
+    fn scene_preview_declares_its_actions() {
+        let screen = screen(&crate::screen::tests::ctx());
+        crate::screens::actions::assert_declares(&screen, crate::screens::actions::SCENE_PREVIEW);
+    }
 }

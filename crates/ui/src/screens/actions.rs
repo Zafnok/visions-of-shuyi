@@ -195,3 +195,17 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
     ]);
     screens
 }
+
+/// `screen` declares just `actions`.
+#[cfg(test)]
+pub(crate) fn assert_declares(
+    screen: &dyn crate::screen::Screen<crate::screen::Shuyi>,
+    actions: &[Action],
+) {
+    assert_eq!(
+        screen.actions().as_deref(),
+        Some(actions),
+        "{}",
+        screen.name()
+    );
+}

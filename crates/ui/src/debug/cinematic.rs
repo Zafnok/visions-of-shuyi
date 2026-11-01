@@ -216,4 +216,10 @@ mod tests {
         assert!(bottom(&buf).ends_with(" back"));
         assert_eq!(buf.get(0, 0).unwrap().glyph, ' ');
     }
+
+    #[test]
+    fn cinematic_declares_its_actions() {
+        let screen = CinematicScreen::new(&crate::screen::tests::ctx());
+        crate::screens::actions::assert_declares(&screen, crate::screens::actions::CINEMATIC);
+    }
 }

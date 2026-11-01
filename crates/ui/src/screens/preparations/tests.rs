@@ -1272,3 +1272,9 @@ fn selling_a_special_weapon_asks_first() {
     let left = s.setup().stock.weapons.iter().any(|w| w.def == moonblade);
     assert!(!left, "sold");
 }
+
+#[test]
+fn preparations_declares_its_actions() {
+    let screen = screen(&crate::screen::tests::ctx());
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::PREPARATIONS);
+}
