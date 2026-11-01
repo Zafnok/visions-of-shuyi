@@ -5,6 +5,20 @@
 (
     command: "cargo shuyi",
 
+    // Who the game is (ticket 1199): `cargo shuyi app-info` writes it into
+    // `code`. The version is the package's, which `release.yml` tags. Never
+    // change `storage`, or every player's saves are lost
+    // (`%APPDATA%/tactical-rpg`, `localStorage` keys under `tactical-rpg/`).
+    // No `icon` yet: the engine's downscale from one picture blurs the glyph
+    // at 16 and 32 px, so the window keeps the icons `cargo xtask icon` draws
+    // per size (`crates/app/src/main.rs`; engine#3113, ticket 1201).
+    app: (
+        name: "Visions of Shuyi",
+        id: "com.zafnok.visionsofshuyi",
+        storage: "tactical-rpg",
+        code: "crates/app/src/app_info.rs",
+    ),
+
     // The game's tool program: every command that runs the game
     // (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's
     // session) runs in xtask as `cargo run -p xtask -- shuyi <command>`,
