@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["0138"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1199 — The game's identity in shuyi.ron
@@ -68,14 +68,40 @@ with `cargo xtask icon`.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi check --target desktop` reports the part with no problem
+- [x] `cargo shuyi check --target desktop` reports the part with no problem
       and no `limits` line about it.
-- [ ] The window's title and icon are as before, and a save made by the
+- [x] The window's title and icon are as before, and a save made by the
       previous build still loads (storage name unchanged, tested).
-- [ ] `cargo shuyi app-info --check` passes, and is in CI.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo shuyi app-info --check` passes, and is in CI.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: `APP`'s name and storage name equal the literals players' saves depend
   on; its version equals the package's.
+
+## Completion notes
+
+- `shuyi.ron` has the `app` part; `crates/app/src/app_info.rs` is generated;
+  `WINDOW`'s title and `STORAGE_NAME` read `APP`. The id is
+  `com.zafnok.visionsofshuyi`, the same as the Playdate's `bundleID`.
+  `version` is unset, so `APP.version` is `CARGO_PKG_VERSION`, and a test says so.
+  `publisher` is unset: nothing reads it yet, and a store build can set it.
+- `trpg-app` now depends on the engine's `shuyi` crate, since the generated
+  file names `shuyi::platform`.
+- `cargo shuyi app-info --check` is in `run-gates` and CI.
+- **Deviation: the window's icons aren't read from `APP`.** The repository had
+  no 512 px source, so I drew one with the icon's own `draw`. Compared with
+  `assets/icon/`, the engine's downscale gives the same 64 px picture, but 64 of
+  256 pixels differ at 16 px and 133 of 1024 at 32 px, and the `@` is a blur that
+  can't be read at 16. The ticket says to keep the look, so `app` has no `icon` or
+  `window_icons`, and `WINDOW` still includes the three drawn PNG files, marked
+  `// engine-friction: engine#3113`. Engine ticket 3113
+  (Zafnok/shuyi-engine#209) adds pictures drawn per size, and 1201 moves the
+  icons into `APP`.
+- **`cargo xtask icon` stays:** it draws the pictures, and writes the exe's
+  `icon.ico` and the window's PNG files, none of which `app-info` writes.
+- Not run in a window or checked with an old save: the title and storage name
+  are the same literals by test, and the icon files are untouched.
+- Follow-ups: game 1201, engine 3113.
+- Engine friction: estimate 40, measured 8 (0.2×), under 2×.

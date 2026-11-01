@@ -12,7 +12,7 @@ use trpg_content::voice::{MANIFEST_FILE, clip_file};
 use trpg_content::{LineId, Variant};
 use trpg_ui::{Ctx, ShuyiCtx};
 
-use super::{STORAGE_NAME, WINDOW, config, look};
+use super::{APP, STORAGE_NAME, WINDOW, config, look};
 
 /// Runs a future that never waits on anything external.
 fn block_on<F: Future>(future: F) -> F::Output {
@@ -30,6 +30,15 @@ fn the_window_has_an_icon() {
     let conf = shuyi_app::window_conf(&WINDOW);
     assert!(conf.icon.is_some());
     assert_eq!(conf.window_title, "Visions of Shuyi");
+}
+
+/// Acceptance (1199): the name and the storage name players' saves depend
+/// on, as literals, and the version `release.yml` tags.
+#[test]
+fn who_the_game_is() {
+    assert_eq!(APP.name, "Visions of Shuyi");
+    assert_eq!(APP.storage, "tactical-rpg");
+    assert_eq!(APP.version, env!("CARGO_PKG_VERSION"));
 }
 
 /// Acceptance (1110): saves written before the engine's platform shell
