@@ -221,7 +221,9 @@ tickets anymore."
     `github.com/music` as a contributor because PR #157 was titled
     "...: @music" after the dialogue directive. Put backticks around it
     (`` `@music` ``) or leave the `@` out ("the music directive"). If the
-    ticket's own title has one, change it for the PR title.
+    ticket's own title has one, change it for the PR title. `cargo xtask
+    ticket-lint` checks open tickets' titles and CI checks the PR title
+    (`cargo xtask check-mentions`) on each push; the rest is on you.
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
     tickets created, an `Engine friction:` line ("Engine friction:
     estimate N, measured M (R×), <outcome or 'under 2×'>; signals:
