@@ -69,23 +69,43 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    say so in the PR; if the game can't build without it, pin the commit
    before the breaking PR instead and say why.
 
-4. **The adoption review**, one decision per *New for games* row. Ask:
+4. **The review of gains**, one decision per *New for games* row. A PR
+   that breaks the API and adds to it is in both *Breaking* and *New for
+   games*, and gets both decisions. Ask first:
+   **what does this let the game do, check or delete?** Name the game's
+   files or system that would use it (saves, the Playdate build, the bots
+   and playtest, tools and CI, screens).
+
+   Then two questions decide between a new ticket and changing an open one:
    - Does the game already have code doing this job? Search `crates/`,
      the rows of `docs/engine/friction.md` for that area, and
      `docs/engine/boundary.md`.
    - Does an open ticket plan to write code for it?
      `grep -rln "<the piece's name or job>" tickets/open`.
 
+   Read each *Nothing for the game* title too. A PR that changes behavior
+   or adds a suite or check in a crate the game links (storage, saves, the
+   renderer, input, the tools) gets a row with a decision even when it's
+   labeled `api: none`.
+
    Then record exactly one of:
-   - **`adopt → NNNN`**: a game ticket (`write-ticket`) that moves the
-     game onto the engine's piece and deletes the game's copy, stating the
-     lines it expects to remove; or an open ticket `NNNN` whose text you
-     change to use the engine's piece instead of writing its own. Example:
-     the engine ships threat areas and `crates/bots` computes its own
-     danger map → a ticket that switches the bots to the engine's and
-     deletes theirs, "about 120 lines removed".
-   - **`not for the game: <why>`**: one line. Example: "templates for new
-     games", "the game has no modules".
+   - **`adopt → NNNN`**: a game ticket (`write-ticket`) that puts the
+     engine's piece to use, and when the game has its own copy deletes it,
+     stating the lines it expects to remove; or an open ticket `NNNN` whose
+     text you change to use the engine's piece instead of writing its own.
+     Examples: the engine ships threat areas and `crates/bots` computes its
+     own danger map → a ticket that switches the bots to the engine's and
+     deletes theirs, "about 120 lines removed". With nothing to replace:
+     #152's stamped records → the bots' records get stamps (1195); #153's
+     power-cut suite → the Playdate's storage runs it (1196).
+   - **`not for the game: <why>`**: one line, a reason the game *can't* use
+     it: a part of the engine it doesn't use, or a platform it doesn't ship
+     on. Example: #95, "the game has no modules". "Nothing to replace" and
+     "tooling it gets at the pin" are not reasons. When it's unclear, write
+     the ticket: a ticket costs little and a missed gain costs a lot.
+
+   On a row with both decisions, write `fixed: …; adopt → NNNN` or `fixed:
+   …; not for the game: …`.
 
    When adopting needs an engine change first (the engine's piece almost
    fits), file the engine ticket in the engine's repository (its
@@ -108,6 +128,7 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    | #88 | 2013 | Public types moved onto constructors | fixed: `Window::new` and `AppConfig::new` in `crates/app` |
    | #102 | 2131 | Threat areas in the tactics kit | unblocks 1180 |
    | #78 | 2511 | Engine defaults, a prelude, `run_game` | adopt → 1191 |
+   | #152 | 2111 | Stamped records and saves | fixed: nothing to change; adopt → 1195 |
    | #93 | 2358 | Modules join a running game | not for the game: the game has no modules |
 
    Nothing for the game: 12 PRs (#75, #79, …)
@@ -118,7 +139,8 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
 
 7. **Check:** `cargo xtask engine-pin --check` (the ledger's last
    section is the pin, every row has a decision, every `adopt → NNNN`
-   names a ticket), `cargo xtask skill-pack --check` and `cargo xtask
+   names a ticket, a *Breaking* row that also adds has both decisions; it
+   asks GitHub about the last section's `fixed:`-only rows), `cargo xtask skill-pack --check` and `cargo xtask
    ticket-lint`.
 
 8. **Commit and PR.** Commit as `Engine pin: <old 8> → <new 8>`. The PR

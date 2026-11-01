@@ -190,6 +190,34 @@ pub fn gap(pin: &str) -> Result<Gap, String> {
     })
 }
 
+/// Which of the engine PRs `numbers` the report would list under both
+/// *Breaking* and *New for games*, by the public crates at `rev`. Asks `gh`
+/// nothing when there are none to ask about.
+pub fn breaking_and_new(numbers: &[u32], rev: &str) -> Result<Vec<u32>, String> {
+    if numbers.is_empty() {
+        return Ok(Vec::new());
+    }
+    let (dirs, _) = api_dirs(rev);
+    let mut both = Vec::new();
+    for &number in numbers {
+        let sha = gh(&[
+            "pr",
+            "view",
+            &number.to_string(),
+            "--repo",
+            ENGINE_REPO,
+            "--json",
+            "mergeCommit",
+            "--jq",
+            ".mergeCommit.oid",
+        ])?;
+        if crate::breaks_and_adds(&engine_pr(number, sha.trim())?, &dirs) {
+            both.push(number);
+        }
+    }
+    Ok(both)
+}
+
 /// The folders of the engine's public crates at `main`, and a note when
 /// the fallback list had to stand in.
 pub fn api_dirs(main: &str) -> (Vec<String>, Option<String>) {
