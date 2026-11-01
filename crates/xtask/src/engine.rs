@@ -226,6 +226,32 @@ fn ledger_problems(root: &Path, rev_text: &str) -> Vec<String> {
     found.unwrap_or_else(|e| vec![e])
 }
 
+/// What GitHub says is wrong with the ledger's last section: a row with only
+/// a `fixed:` for an engine PR that also adds public items. Apart from
+/// [`check`] because it asks `gh`, and no test reaches the network.
+fn gain_problems(root: &Path) -> Vec<String> {
+    let found = fetch::ledger(root).and_then(|sections| {
+        let Some(last) = sections.last() else {
+            return Ok(Vec::new());
+        };
+        let rev = read(root, REV_FILE)?;
+        let both = fetch::breaking_and_new(&ledger::fixed_only(last), rev.trim())?;
+        Ok(ledger::gains_undecided(last, &both))
+    });
+    found.unwrap_or_else(|e| vec![e])
+}
+
+/// `engine-pin --check` as CI runs it: [`check`], then [`gain_problems`].
+pub fn check_with_gains(root: &Path) -> Result<String, Vec<String>> {
+    let said = check(root)?;
+    let found = gain_problems(root);
+    if found.is_empty() {
+        Ok(said)
+    } else {
+        Err(found)
+    }
+}
+
 /// `engine-pin --report`: the engine watcher's report (ADR-0096), as the
 /// `engine-pin` issue would say it.
 ///
@@ -242,7 +268,7 @@ pub fn watch_report(root: &Path) -> Result<String, String> {
     Ok(markdown(&watch.report, rendered.as_ref()))
 }
 
-/// `engine-pin --check`.
+/// `engine-pin --check`, without what needs the network.
 pub fn check(root: &Path) -> Result<String, Vec<String>> {
     let files = (|| {
         Ok((

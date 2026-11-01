@@ -11,12 +11,14 @@
 #
 # The engine watcher's `fetch.rs` and `main.rs` only ask `gh` about the
 # engine's repository and read files (ticket 1190); no test reaches the
-# network. The parsing and sorting they hand the answers to are tested.
+# network. The parsing and sorting they hand the answers to are tested. So
+# do `gain_problems` and `check_with_gains` in `crates/xtask/src/engine.rs`
+# (ticket 1197).
 #
 # `Debuffs::visit_none` and `visit_unit` (`crates/core/src/art.rs`) return
 # an empty list, which is what `Default::default()` is: that mutant changes
 # nothing (ticket 0325).
-exclude_re = ["Debuffs>::visit_(none|unit)"]
+exclude_re = ["Debuffs>::visit_(none|unit)", "engine::(gain_problems|check_with_gains)"]
 exclude_globs = [
     "crates/app/**",
     "crates/playdate/src/pd/**",

@@ -75,11 +75,11 @@ fn internal_change() -> PrFile {
     )
 }
 
-fn kinds(report: &Report) -> Vec<(u32, Kind)> {
+fn kinds(report: &Report) -> Vec<(u32, Vec<Kind>)> {
     report
         .rows
         .iter()
-        .map(|r| (r.pr.number, r.kind.clone()))
+        .map(|r| (r.pr.number, r.kinds.clone()))
         .collect()
 }
 
@@ -204,7 +204,7 @@ fn the_api_label_wins_over_the_patch() {
         kinds(&report),
         [(
             2,
-            Kind::Breaking(vec!["the `api: breaking` label".to_owned()])
+            vec![Kind::Breaking(vec!["the `api: breaking` label".to_owned()])]
         )]
     );
     assert_eq!(report.due, Some(Why::PublicApi(2)));
@@ -252,7 +252,7 @@ fn breaking_lines_are_listed_once_across_the_body_and_the_notes() {
 }
 
 #[test]
-fn a_breaking_pr_that_also_unblocks_is_in_breaking() {
+fn a_breaking_pr_that_also_adds_and_unblocks_is_in_breaking_and_new_for_games() {
     let mut pr = finishes_2131(vec![api_change()]);
     pr.body = "Breaking: shuyi-core: threat moved\n".to_owned();
     let report = classify(gap(vec![pr]), &dirs(), &open_1180(), &[], merged());
@@ -260,13 +260,52 @@ fn a_breaking_pr_that_also_unblocks_is_in_breaking() {
         kinds(&report),
         [(
             102,
-            Kind::Breaking(vec!["shuyi-core: threat moved".to_owned()])
+            vec![
+                Kind::Breaking(vec!["shuyi-core: threat moved".to_owned()]),
+                Kind::NewForGames,
+            ]
         )]
     );
 }
 
 #[test]
-fn each_pr_goes_in_the_first_section_that_fits() {
+fn a_breaking_pr_is_also_new_only_when_it_adds_public_items() {
+    let breaking = |files, label: Option<&str>| {
+        let mut pr = pr(88, "[2013] Public types", files);
+        pr.body = "Breaking: shuyi-ui: BoxPlace\n".to_owned();
+        pr.labels.extend(label.map(str::to_owned));
+        breaks_and_adds(&pr, &dirs())
+    };
+    assert!(breaking(vec![api_change()], None));
+    assert!(breaking(vec![internal_change()], Some("api: added")));
+    assert!(breaking(
+        vec![PrFile {
+            path: "crates/core/src/huge.rs".to_owned(),
+            patch: None,
+        }],
+        None
+    ));
+    // A public item removed, or added outside an API crate's `src/`, adds nothing.
+    assert!(!breaking(
+        vec![file("crates/ui/src/a.rs", "-pub fn gone() {}\n")],
+        None
+    ));
+    assert!(!breaking(
+        vec![file("crates/xtask/src/a.rs", "+pub fn run() {}\n")],
+        None
+    ));
+    assert!(!breaking(vec![internal_change()], Some("api: breaking")));
+    // Adding without breaking is only *New for games*.
+    assert!(!breaks_and_adds(
+        &pr(78, "[2511] A prelude", vec![api_change()]),
+        &dirs()
+    ));
+    let label_only = labelled(pr(89, "[2014] x", vec![api_change()]), "api: breaking");
+    assert!(breaks_and_adds(&label_only, &dirs()));
+}
+
+#[test]
+fn a_pr_that_doesn_t_break_goes_in_the_first_other_section_that_fits() {
     let prs = vec![
         finishes_2131(vec![api_change()]),
         pr(78, "[2511] A prelude", vec![api_change()]),
@@ -281,10 +320,10 @@ fn each_pr_goes_in_the_first_section_that_fits() {
     assert_eq!(
         kinds(&report),
         [
-            (102, Kind::Unblocks(vec!["1180".to_owned()])),
-            (78, Kind::NewForGames),
-            (75, Kind::Nothing),
-            (79, Kind::Nothing),
+            (102, vec![Kind::Unblocks(vec!["1180".to_owned()])]),
+            (78, vec![Kind::NewForGames]),
+            (75, vec![Kind::Nothing]),
+            (79, vec![Kind::Nothing]),
         ]
     );
 }
@@ -299,7 +338,7 @@ fn only_a_ticket_moved_to_done_unblocks() {
         vec![file("tickets/open/2131-threat-areas.md", "+")],
     );
     let report = classify(gap(vec![filed]), &dirs(), &open_1180(), &[], merged());
-    assert_eq!(kinds(&report), [(94, Kind::Nothing)]);
+    assert_eq!(kinds(&report), [(94, vec![Kind::Nothing])]);
     assert_eq!(report.due, None);
     // A friction marker waits as a ticket does.
     let report = classify(
@@ -312,7 +351,7 @@ fn only_a_ticket_moved_to_done_unblocks() {
     let marker = "the `engine-friction: engine#2131` marker".to_owned();
     assert_eq!(
         kinds(&report),
-        [(102, Kind::Unblocks(vec![marker.clone()]))]
+        [(102, vec![Kind::Unblocks(vec![marker.clone()])])]
     );
     assert_eq!(report.due, Some(Why::Unblocks(marker)));
 }
@@ -440,13 +479,14 @@ fn the_issue_lists_every_pr_in_its_section() {
         breaking,
         finishes_2131(vec![]),
         pr(78, "[2511] A prelude", vec![api_change()]),
-        pr(75, "Tickets 2741-2768: x", vec![]),
+        labelled(pr(75, "Tickets 2741-2768: x", vec![]), "api: none"),
+        pr(76, "Bump a tool", vec![]),
     ];
     let report = classify(gap(prs), &dirs(), &open_1180(), &[], merged());
     let (title, body) = render(&report, &[], &HashSet::new(), &run()).unwrap();
     assert_eq!(
         title,
-        "Engine pin: 4 engine PRs behind (public API changed in #88)"
+        "Engine pin: 5 engine PRs behind (public API changed in #88)"
     );
     assert!(body.starts_with(
         "<!-- engine-pin:v1 main=6e7f71fd10e6ef49bc0c6f0f2250a9527c29a1e8 pin=3f2256d46ac066ee4656489d6d63d007990eb8be trigger=dispatch dispatch_seen=true dispatched=6e7f71fd10e6ef49bc0c6f0f2250a9527c29a1e8 -->\n"
@@ -460,11 +500,27 @@ fn the_issue_lists_every_pr_in_its_section() {
     assert!(section("Unblocks").contains("[#102]"));
     assert!(section("Unblocks").contains("| 1180 |"));
     assert!(section("New for games").contains("[#78]"));
-    assert!(section("Nothing for the game").contains("<details><summary>1 PR</summary>"));
-    assert!(section("Nothing for the game").contains("[#75]"));
+    assert!(!body.contains("<details>"));
+    assert!(section("Nothing for the game").contains("| Engine PR | Ticket | Title | Labels |"));
+    assert!(section("Nothing for the game").contains("x | api: none |"));
+    assert!(section("Nothing for the game").contains("Bump a tool | no labels |"));
     assert!(section("Adoption tickets still open").contains("None."));
     assert!(section("The work").contains("`engine-pin` skill"));
     assert!(!body.contains("dispatch didn't reach"));
+}
+
+#[test]
+fn a_pr_that_breaks_and_adds_is_listed_in_both_sections() {
+    let mut both = pr(152, "[2111] Stamped records", vec![api_change()]);
+    both.body = "Breaking: shuyi-core: Record gains a stamp\n".to_owned();
+    let report = classify(gap(vec![both]), &dirs(), &[], &[], merged());
+    let (_, body) = render(&report, &[], &HashSet::new(), &run()).unwrap();
+    let (breaking, new) = body.split_at(body.find("### New for games").unwrap());
+    assert!(breaking.contains("[#152]"), "{breaking}");
+    assert!(breaking.contains("Record gains a stamp"), "{breaking}");
+    let new = &new[..new.find("### Nothing").unwrap()];
+    assert!(new.contains("[#152]"), "{new}");
+    assert!(!new.contains("Record gains a stamp"), "{new}");
 }
 
 #[test]

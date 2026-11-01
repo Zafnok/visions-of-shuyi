@@ -9,7 +9,9 @@ A section is headed `## YYYY-MM-DD: <from 8 hex> → <to 8 hex> (N engine
 PRs), #<game PR>`. Its table has a row for every *Breaking*, *Unblocks* and
 *New for games* engine PR the move passed, each with a decision:
 
-- *Breaking:* `fixed: <what the game changed>`;
+- *Breaking:* `fixed: <what the game changed>`; for a PR the report also
+  lists under *New for games*, `fixed: …; adopt → NNNN` or `fixed: …; not for
+  the game: <why>`;
 - *Unblocks:* `unblocks NNNN`;
 - *New for games:* `adopt → NNNN` (a game ticket that moves the game onto
   the engine's piece, or an open ticket changed to use it; `adopt → NNNN
@@ -20,8 +22,10 @@ A line under the table counts the rest: `Nothing for the game: N PRs (#…,
 #…)`.
 
 `cargo xtask engine-pin --check` (in CI) fails when the last section isn't
-the pin in `shuyi-engine.rev`, when a row has no decision, or when an
-`adopt → NNNN` names no ticket in `tickets/open/` or `tickets/done/`.
+the pin in `shuyi-engine.rev`, when a row has no decision, when an
+`adopt → NNNN` names no ticket in `tickets/open/` or `tickets/done/`, or when
+a row of the last section has only `fixed:` for a PR that also adds public
+items (it asks GitHub about those rows). Older sections aren't asked about.
 
 ## 2026-10-25: baseline → 3f2256d4
 
