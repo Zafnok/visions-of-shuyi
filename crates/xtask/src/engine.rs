@@ -33,7 +33,8 @@ pub const CHECKOUT: &str = "shuyi-engine";
 /// The `[patch]` that points the build at the checkout.
 pub const PATCH_FILE: &str = ".cargo/engine-patch.toml";
 /// The engine's crates the game uses, with their folders in its repository.
-pub const CRATES: [(&str, &str); 6] = [
+pub const CRATES: [(&str, &str); 7] = [
+    ("shuyi", "crates/shuyi"),
     ("shuyi-core", "crates/core"),
     ("shuyi-assets", "crates/assets"),
     ("shuyi-ui", "crates/ui"),
@@ -554,6 +555,17 @@ mod tests {
         let found = problems(REV, &manifest(REV), "version = 4\n", false);
         assert_eq!(found.len(), CRATES.len(), "{found:?}");
         assert!(found[0].starts_with("Cargo.lock: no `"), "{found:?}");
+    }
+
+    #[test]
+    fn every_engine_crate_in_the_real_manifest_is_one_the_pin_moves() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.toml");
+        let manifest = std::fs::read_to_string(root).unwrap();
+        let declared = manifest
+            .lines()
+            .filter(|line| line.contains(&format!("git = \"{URL}\"")))
+            .count();
+        assert_eq!(manifest_revs(&manifest).len(), declared);
     }
 
     #[test]

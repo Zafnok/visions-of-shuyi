@@ -26,6 +26,11 @@ game list); 0062 decided how they look. The Playdate SDK licence lets us
 sell the game anywhere but forbids "Playdate" or "Panic" in the game's
 name without permission (ADR-0070, *Context*).
 
+Engine PR #197 (ticket 3010), passed by the pin move of 2026-11-01, adds
+`shuyi export playdate`: it writes `pdxinfo` from `shuyi.ron`'s `app`, makes
+the launcher's images, writes `NOTICES.txt`, and zips the `.pdx`. When 1170
+has moved the game onto it, use those instead of writing them here.
+
 **After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
 for Nick to play Chapter 1 on his Playdate (1050), which was folded
 into the Act 1 playtest; it now waits for 1064.
