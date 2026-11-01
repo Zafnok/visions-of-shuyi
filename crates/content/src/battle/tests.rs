@@ -1048,3 +1048,76 @@ fn village_errors_are_reported() {
         ["enemy 1: only enemies are raiders"]
     );
 }
+
+#[test]
+fn random_pool_rejects_each_narrative_or_unique_loot_feature() {
+    let c = content();
+    let b = &c.battles["test_random_meadow"];
+    let source = bundle::file("battles/test_random_meadow.ron").expect("file");
+    let raw = || parse_ron::<RawBattle>("pool", source).expect("parse");
+    assert!(pool_fits(&raw(), b, 6));
+    let reject = |change: fn(&mut RawBattle)| {
+        let mut r = raw();
+        change(&mut r);
+        assert!(!pool_fits(&r, b, 4));
+    };
+    reject(|r| r.enemies[0].template = None);
+    reject(|r| r.enemies[0].character = Some("lead".into()));
+    reject(|r| r.enemies[0].loadout = Some(RawLoadout::default()));
+    reject(|r| r.enemies[0].faction = Faction::Ally);
+    reject(|r| r.enemies[0].boss = true);
+    reject(|r| r.enemies[0].id = Some("named".into()));
+    reject(|r| r.enemies[0].name = Some("Named".into()));
+    reject(|r| r.enemies[0].items.push("potion".into()));
+    reject(|r| r.enemies[0].raider = true);
+    reject(|r| r.enemies[0].defeat = Defeat::Retreats);
+    reject(|r| {
+        let unit = r.enemies.remove(0);
+        r.reinforcements.push(RawReinforcement { turn: 2, unit });
+    });
+    reject(|r| {
+        r.battle_notes.push(RawNote {
+            text: "Story".into(),
+            units: vec![],
+        });
+    });
+    reject(|r| {
+        r.village = Some(RawVillage {
+            minimum: 1,
+            rewards: vec![],
+        });
+    });
+    reject(|r| r.clear_gold = 1);
+    reject(|r| r.clear_items.push("potion".into()));
+    reject(|r| r.default_pack.push("potion".into()));
+    reject(|r| r.player_slots[0].after_enemies = true);
+    reject(|r| {
+        r.objective = RawObjective::Seize {
+            pos: (5, 5),
+            by_lord: true,
+            turn_limit: None,
+        }
+    });
+    let mut r = raw();
+    r.triggers = c
+        .battles
+        .values()
+        .find(|b| !b.triggers.is_empty())
+        .expect("scripted battle")
+        .triggers
+        .clone();
+    assert!(!pool_fits(&r, b, 6));
+    let mut changed = b.clone();
+    changed.difficulty = Difficulty::Normal;
+    assert!(!pool_fits(&raw(), &changed, 6));
+    changed = b.clone();
+    changed.music = BattleMusic::Cue("battle_easy".into());
+    assert!(!pool_fits(&raw(), &changed, 6));
+    changed = b.clone();
+    changed.map.features = c.battles["test"].map.features.clone();
+    assert!(!pool_fits(&raw(), &changed, 6));
+    assert!(!pool_fits(&raw(), b, 7));
+    changed = b.clone();
+    changed.id = "missing".into();
+    assert!(!random_pool(&changed, 6));
+}

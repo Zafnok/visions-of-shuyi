@@ -48,6 +48,7 @@ pub mod playdate_images;
 pub mod portrait;
 pub mod ron_loader;
 pub mod skill;
+pub mod skirmish;
 pub mod spell;
 pub mod support;
 pub mod terrain;

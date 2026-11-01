@@ -113,6 +113,6 @@ pub use unit::{
 };
 pub use weapon::{WeaponKind, WeaponRank};
 pub use worldmap::{
-    NodeCondition, NodeKind, SideQuest, TownTrade, WorldCommand, WorldError, WorldEvent, WorldMap,
-    WorldNode, WorldState,
+    NodeCondition, NodeKind, RandomSkirmish, SideQuest, SkirmishRules, TownTrade, WorldCommand,
+    WorldError, WorldEvent, WorldMap, WorldNode, WorldState,
 };

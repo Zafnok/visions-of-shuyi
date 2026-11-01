@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["1007", "0501", "0807"]
 nick_input: none
-completed:
+completed: 2026-10-31
 ---
 
 # 1008 — World map skirmishes
@@ -91,6 +91,10 @@ it):
 
 ## Implementation steps
 
+Session estimate: about 650 production lines, using 1007's side-quest flow,
+battle loader and saved world state; about 2,000 total changed lines including
+tests, fixtures, documentation and the archived ticket (ADR-0092, ADR-0101).
+
 **Size (0135, ADR-0101):** about 2,500-3,300 changed lines, a coin flip. Keep the tests lean. If it
 passes 2,500, stop and split: core, content and enemy building stay here
 (with the property and determinism tests); `PlaceMark`, both skins,
@@ -112,11 +116,11 @@ passes 2,500, stop and split: core, content and enemy building stay here
 
 ## Acceptance criteria
 
-- [ ] Random groups never exceed the act's level cap or 3 on the map (property test).
-- [ ] A guarding fixed skirmish blocks travel until it's won; others don't (tests).
-- [ ] The same save + same actions spawns the same groups (determinism test).
-- [ ] Fixed and random nodes use different symbols and both show a level marker (snapshot).
-- [ ] Starting rules and anything left to judge by playing are in the
+- [x] Random groups never exceed the act's level cap or 3 on the map (property test).
+- [x] A guarding fixed skirmish blocks travel until it's won; others don't (tests).
+- [x] The same save + same actions spawns the same groups (determinism test).
+- [x] Fixed and random nodes use different symbols and both show a level marker (snapshot).
+- [x] Starting rules and anything left to judge by playing are in the
       Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
@@ -129,5 +133,78 @@ passes 2,500, stop and split: core, content and enemy building stay here
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Implemented fixed skirmishes with battle/scenes data and a guard flag, and
+saved random groups over cleared battle places. The campaign PCG stream,
+group levels, counts, seeds and rewards survive saves, suspends and retries.
+A group on an old story node never advances the story again. Only guarding
+fixed fights block through travel; random groups and optional fixed fights
+can be passed. Both skins share the red `!` / grey `?` plates, level labels,
+Find rows and hover text; a guard's panel explains its blocked path.
+
+Per-map `skirmishes/<world-map-id>.ron` files hold every tunable number and
+the ordinary battle-file pool. Content validates settings, references,
+Easy rout templates, default loadouts, music and rewards; it rebuilds each
+generic at the saved level using the ordinary battle loader. ADR-0104 and
+`assets/worldmaps/README.md` document the format and save behavior.
+
+The test world map has two fixed fights and two random maps. Its debug
+entry enables their test flag. Win Old Camp before Stone Mill to provide
+a cleared place for a random group; the test story battle is now level 5,
+so its training cap is 4. Demo random enemies are spaced, stationary
+brigands; the test fights have 20-turn bounds. No real Act 1 content was
+added, and no support threshold or ordinary battle/death/rewind rule changed.
+
+**Starting rules for 1064's checklist:**
+- The configured starting values are 0–2 groups per story win, at most 3,
+  4–6 enemies, Easy tier and a level offset of 1. A group uses the cap itself
+  (also bounded by the act's maximum), rather than rolling a lower level.
+- *The agent's starting rule:* rewards are 50% no clear loot, 25% 100 gold,
+  and 25% one potion, plus the ordinary combat and unused-rewind EXP.
+- *The agent's starting rule:* choose unused cleared battle places, excluding
+  the army; use the first N authored enemy entries, with template loadouts.
+  If no valid level remains, nothing spawns. If a later story level lowers
+  the cap, existing groups are lowered to it, or leave below the act minimum.
+- *The agent's starting rule:* the campaign RNG starts at seed 0 on first
+  use and continues across acts; each saved group keeps its rolled seed.
+- What remains for the Act 1 playtest: whether the marks make fight importance
+  obvious, and whether the real training content feels useful without grinding.
+  Real maps/enemies and balance remain 1070/1071; Visions and stars remain out.
+
+**Verification:** property tests cover changing story levels, count, size,
+cleared places and the army's exclusion; save/action determinism and guard
+travel have unit tests. The flow test wins a story battle, generates a group,
+suspends/continues/retries its ordinary battle and returns to the map after
+winning. A regression covers training on a cleared story node. The view
+snapshot and skin assertions cover both symbols, levels, Find and hover.
+Rendered frames are `docs/img/1008-fixed-skirmish.png` and
+`docs/img/1008-world-map.png` (earned through the normal UI).
+
+CI mutation reports led to explicit tests for inclusive tuning bounds,
+invalid saved counts/levels, encounter lookup, unchanged-cap events,
+cleared fixed markers and level-label colours in both skins.
+
+Personas, seeds 1–20 on each authored demo map (120 fights total): meadow
+wins Casual 20/20, Normal 19/20, Hardcore 20/20; wood 18/20, 19/20, 20/20.
+No-death/item success is 20/20, 19/20, 16/20 on meadow and 18/20, 18/20,
+19/20 on wood. Median turns are 5/3/3 and 5/4/4. Both commands pass, with
+some too-easy warnings; these are mechanical fixtures, not Act 1 balance.
+
+Every command in the game's `run-gates` list passed: formatting, clippy,
+workspace tests/doc tests, keys/text, pin/skill pack/skills, tickets/size,
+warning-free docs, web build, three no-std builds, both Playdate SDK clippy
+builds, dependency audit, machete and typos. The tooling test's temporary
+Git repository and cargo-deny's database lock required filesystem access;
+both passed on rerun. A native GNU playtest build was also produced.
+
+The gate checkbox remains open for the engine pack's supplemental target
+and fence checks: no targets or rules package are declared in this existing
+project file. `check --target all` reports SH3003; lint lists the missing
+fence as a limit. 0138 tracks that configuration work; the feature adds no
+new gate exemption or suppression.
+
+Engine friction: estimate 650, measured 428 added production lines (0.66×),
+under 2×. PR size: estimate 2,000, measured 1,786 changed lines.
+No engine change was needed. Follow-up 0138 records the existing missing
+target-profile settings and rules-package lint wiring in shuyi.ron; the
+supplemental target check reports SH3003 and lint reports that fence limit. The full UI fit within
+1008's split threshold, so no split was necessary.

@@ -343,6 +343,15 @@ pub fn from_source(
     refs: &BattleRefs<'_>,
 ) -> Result<BattleDef, Vec<ContentError>> {
     let raw: RawBattle = parse_ron(file, source).map_err(|e| vec![e])?;
+    build(file, stem, raw, refs)
+}
+
+fn build(
+    file: &str,
+    stem: &str,
+    raw: RawBattle,
+    refs: &BattleRefs<'_>,
+) -> Result<BattleDef, Vec<ContentError>> {
     let mut v = Checker::new(file, refs);
     if raw.id != stem {
         v.err(format!(
@@ -1009,3 +1018,70 @@ impl<'a, 'r> Checker<'a, 'r> {
 
 #[cfg(test)]
 mod tests;
+
+/// Builds a saved random group from its ordinary battle file. All ordinary
+/// placement, template, loadout and objective checks run on the result.
+pub fn random_skirmish(
+    group: &trpg_core::RandomSkirmish,
+    refs: &BattleRefs<'_>,
+) -> Result<BattleDef, Vec<ContentError>> {
+    let file = format!("{BATTLES_DIR}/{}.ron", group.battle);
+    let source = bundle::file(&file)
+        .ok_or_else(|| vec![ContentError::new(&file, "missing skirmish battle")])?;
+    let mut raw: RawBattle = parse_ron(&file, source).map_err(|e| vec![e])?;
+    if group.size == 0 || group.size as usize > raw.enemies.len() || group.level == 0 {
+        return Err(vec![ContentError::new(
+            &file,
+            "invalid saved skirmish size or level",
+        )]);
+    }
+    raw.enemies.truncate(group.size as usize);
+    for enemy in &mut raw.enemies {
+        enemy.level = Some(group.level);
+    }
+    raw.seed = group.seed;
+    raw.clear_gold = 0;
+    raw.clear_items.clear();
+    match &group.reward {
+        Some(Loot::Gold(gold)) => raw.clear_gold = *gold,
+        Some(Loot::Item(item)) => raw.clear_items.push(item.0.clone()),
+        None => {}
+    }
+    build(&file, &group.battle, raw, refs)
+}
+
+/// Whether a file is safe to use as a random pool template: only generic
+/// enemies and no scripts, unique loot, map chests, green units or reinforcements.
+pub(crate) fn random_pool(battle: &BattleDef, maximum: u32) -> bool {
+    let file = format!("{BATTLES_DIR}/{}.ron", battle.id);
+    let raw = bundle::file(&file).and_then(|s| parse_ron::<RawBattle>(&file, s).ok());
+    raw.is_some_and(|r| pool_fits(&r, battle, maximum))
+}
+
+fn pool_fits(r: &RawBattle, battle: &BattleDef, maximum: u32) -> bool {
+    r.enemies.len() >= maximum as usize
+        && r.enemies.iter().all(|e| {
+            e.template.is_some()
+                && e.character.is_none()
+                && e.loadout.is_none()
+                && e.faction == Faction::Enemy
+                && !e.boss
+                && e.id.is_none()
+                && e.name.is_none()
+                && e.items.is_empty()
+                && !e.raider
+                && e.defeat == Defeat::Falls
+        })
+        && r.reinforcements.is_empty()
+        && r.triggers.is_empty()
+        && r.battle_notes.is_empty()
+        && r.village.is_none()
+        && r.clear_gold == 0
+        && r.clear_items.is_empty()
+        && r.default_pack.is_empty()
+        && r.player_slots.iter().all(|s| !s.after_enemies)
+        && matches!(r.objective, RawObjective::Rout { .. })
+        && battle.map.features.is_empty()
+        && battle.difficulty == Difficulty::Easy
+        && battle.music == BattleMusic::Pool("skirmish".into())
+}

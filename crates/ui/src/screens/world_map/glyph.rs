@@ -78,6 +78,8 @@ fn ground(name: &str, x: i32, y: i32) -> (char, &'static str, &'static str) {
 pub(super) fn plate(mark: PlaceMark) -> (&'static str, char) {
     match mark {
         PlaceMark::StoryBattle => ("text_highlight", '‼'),
+        PlaceMark::FixedSkirmish => ("enemy", '!'),
+        PlaceMark::RandomSkirmish => ("text_dim", '?'),
         PlaceMark::SideQuest => ("ally", '♥'),
         PlaceMark::Town => ("wood", '⌂'),
         PlaceMark::Capital => ("fort", '⌂'),
@@ -96,6 +98,8 @@ pub(super) const LOCKED: &str = "text_dim";
 pub(super) fn level_ink(mark: PlaceMark) -> &'static str {
     match mark {
         PlaceMark::SideQuest => "ally",
+        PlaceMark::FixedSkirmish => "enemy",
+        PlaceMark::RandomSkirmish => "text_dim",
         _ => "text_highlight",
     }
 }

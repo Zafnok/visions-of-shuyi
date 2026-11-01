@@ -6,7 +6,7 @@
     title: "Test World I",
     number: Some(4),
     intro_scenes: ["test_wm_intro"],
-    battle: "test",
+    battle: "test_world_story",
     victory_scenes: ["test_wm_victory"],
     next: Some("test_wm2"),
     world_map: Some("test_world"),

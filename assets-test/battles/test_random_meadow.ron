@@ -1,0 +1,16 @@
+// TEST FILE: ordinary battle file used as a random pool template.
+(
+    id: "test_random_meadow", map: "test_skirmish_meadow",
+    player_slots: [(character: "lead", pos: (3, 5)), (character: "test_knight", pos: (3, 6))],
+    enemies: [
+        (template: "test_brigand", pos: (1, 1), ai: Stationary),
+        (template: "test_brigand", pos: (4, 1), ai: Stationary),
+        (template: "test_brigand", pos: (8, 1), ai: Stationary),
+        (template: "test_brigand", pos: (1, 3), ai: Stationary),
+        (template: "test_brigand", pos: (8, 4), ai: Stationary),
+        (template: "test_brigand", pos: (6, 6), ai: Stationary),
+    ],
+    preparations: true,
+    objective: Rout(turn_limit: Some(20)), difficulty: Easy, kind: RandomSkirmish,
+    music: Pool("skirmish"), seed: 1,
+)

@@ -14,7 +14,7 @@
 //! - **Places** ([`NodeKind`]): a **story battle** (a chapter's battle,
 //!   whose chapter lives on this map), a **side quest** (a battle with its
 //!   own scenes), a **town** (its shops) and an **empty** place to pass
-//!   through. Skirmishes, fixed and random, come with ticket 1008.
+//!   through. Fixed skirmishes name authored battles; saved random groups overlay cleared battle places (1008).
 //! - **Open places** ([`WorldMap::is_open`]): a place can be reached once
 //!   every one of its conditions ([`NodeCondition`]) holds; a story battle
 //!   also waits for its chapter to be the campaign's
@@ -31,9 +31,9 @@
 //!   open place to a shown one that isn't open yet is shown, not open.
 //! - **Travel** ([`WorldCommand::TravelTo`]): the army goes to an open
 //!   place along open roads, the fewest roads first. It never passes
-//!   *through* a battle not yet won: on the way, an unwon battle stops the
+//!   *through* a guarding battle not yet won: on the way, an unwon battle stops the
 //!   army there (*Claude's starting rule*), and a route around one is taken
-//!   when there is one.
+//!   when there is one. Non-guarding fixed fights and random groups may be passed.
 //! - **Battles are forced** (Nick, 1007): arriving at a battle not yet won
 //!   starts it ([`WorldEvent::BattleAhead`]). Nothing else opens by itself
 //!   in the rules; whether a town opens on arrival is the player's setting.
@@ -55,7 +55,10 @@
 
 use crate::prelude::*;
 
-use alloc::collections::{BTreeSet, VecDeque};
+use alloc::collections::{BTreeMap, BTreeSet, VecDeque};
+
+mod skirmish;
+pub use skirmish::{RandomSkirmish, SkirmishRules};
 
 use serde::{Deserialize, Serialize};
 
@@ -97,6 +100,13 @@ pub enum NodeKind {
     StoryBattle(String),
     /// A side quest (paralogue).
     SideQuest(SideQuest),
+    /// A hand-placed battle cleared once; only guards stop travel past it.
+    FixedSkirmish {
+        /// Battle and optional scenes.
+        battle: SideQuest,
+        /// Whether it blocks travel through its place until won.
+        guards_path: bool,
+    },
     /// A town and its shops.
     Town {
         /// Its shops, in the order the town lists them.
@@ -112,7 +122,10 @@ pub enum NodeKind {
 impl NodeKind {
     /// Whether it is a battle.
     pub fn is_battle(&self) -> bool {
-        matches!(self, Self::StoryBattle(_) | Self::SideQuest(_))
+        matches!(
+            self,
+            Self::StoryBattle(_) | Self::SideQuest(_) | Self::FixedSkirmish { .. }
+        )
     }
 }
 
@@ -154,6 +167,8 @@ pub struct WorldMap {
     pub next: Option<String>,
     /// The places.
     pub nodes: Vec<WorldNode>,
+    /// Random-skirmish settings, absent before this act has a pool.
+    pub skirmishes: Option<SkirmishRules>,
     /// The roads, each between two places.
     pub roads: Vec<(String, String)>,
 }
@@ -168,6 +183,9 @@ pub struct WorldState {
     /// The places whose battle is won.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     pub cleared: BTreeSet<String>,
+    /// Random groups by place; the underlying place remains cleared.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub skirmishes: BTreeMap<String, RandomSkirmish>,
 }
 
 /// What the player asks of the army on the world map.
@@ -191,6 +209,15 @@ pub enum WorldEvent {
     Entered(String),
     /// This place's battle is won.
     Cleared(String),
+    /// A random group appeared on a cleared place.
+    SkirmishSpawned {
+        /// Its place.
+        node: String,
+        /// The saved group.
+        group: RandomSkirmish,
+    },
+    /// Existing groups were lowered to the latest cap, or left when no valid level remains.
+    SkirmishesCapped(u32),
     /// This place opened.
     Opened(String),
     /// The act's map gave way to the next one, by id.
@@ -325,8 +352,35 @@ impl WorldMap {
 
     /// Whether place `id` holds a battle `campaign` hasn't won.
     pub fn is_unwon_battle(&self, id: &str, campaign: &Campaign) -> bool {
-        self.node(id)
-            .is_some_and(|n| n.kind.is_battle() && !self.is_cleared(id, campaign))
+        self.random_at(id, campaign).is_some()
+            || self
+                .node(id)
+                .is_some_and(|n| n.kind.is_battle() && !self.is_cleared(id, campaign))
+    }
+
+    /// A random group at this place on this map.
+    pub fn random_at<'a>(&self, id: &str, campaign: &'a Campaign) -> Option<&'a RandomSkirmish> {
+        campaign
+            .world
+            .as_ref()
+            .filter(|w| w.map == self.id)?
+            .skirmishes
+            .get(id)
+    }
+
+    /// Whether an unwon battle stops travel through this place.
+    pub fn blocks_path(&self, id: &str, campaign: &Campaign) -> bool {
+        !self.is_cleared(id, campaign)
+            && self.node(id).is_some_and(|n| {
+                n.kind.is_battle()
+                    && !matches!(
+                        n.kind,
+                        NodeKind::FixedSkirmish {
+                            guards_path: false,
+                            ..
+                        }
+                    )
+            })
     }
 
     /// The places next to `id` along open roads.
@@ -386,7 +440,7 @@ impl WorldMap {
     /// docs): around unwon battles if it can, else to the first unwon
     /// battle on the way. Both ends included.
     pub fn route(&self, from: &str, to: &str, campaign: &Campaign) -> Option<Vec<String>> {
-        let passable = |id: &str| !self.is_unwon_battle(id, campaign);
+        let passable = |id: &str| !self.blocks_path(id, campaign);
         if let Some(route) = self.search(from, to, campaign, passable) {
             return Some(route);
         }
@@ -394,7 +448,7 @@ impl WorldMap {
         if let Some(stop) = route
             .iter()
             .skip(1)
-            .position(|id| self.is_unwon_battle(id, campaign))
+            .position(|id| self.blocks_path(id, campaign))
         {
             route.truncate(stop + 2);
         }
@@ -411,6 +465,7 @@ impl Campaign {
                 map: map.id.clone(),
                 at: map.start.clone(),
                 cleared: BTreeSet::new(),
+                skirmishes: BTreeMap::new(),
             });
         }
     }
@@ -498,6 +553,17 @@ impl Campaign {
         if self.world.as_ref().is_none_or(|w| w.map != map.id) {
             return Vec::new();
         }
+        if map.node(node).is_none_or(|n| !n.kind.is_battle()) {
+            return Vec::new();
+        }
+        if let Some(world) = &mut self.world {
+            if world.skirmishes.remove(node).is_some() {
+                return vec![WorldEvent::Cleared(node.to_owned())];
+            }
+            if world.cleared.contains(node) {
+                return Vec::new();
+            }
+        }
         let before: BTreeSet<String> = map.open_nodes(self).map(|n| n.id.clone()).collect();
         if let Some(world) = &mut self.world {
             world.cleared.insert(node.to_owned());
@@ -519,6 +585,12 @@ impl Campaign {
                 .filter(|n| !before.contains(&n.id))
                 .map(|n| WorldEvent::Opened(n.id.clone())),
         );
+        if let Some(n) = map.node(node)
+            && matches!(n.kind, NodeKind::StoryBattle(_))
+            && let Some(level) = n.level
+        {
+            events.extend(self.spawn_skirmishes(map, level));
+        }
         events
     }
 }

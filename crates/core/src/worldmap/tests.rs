@@ -49,6 +49,7 @@ fn map() -> WorldMap {
     WorldMap {
         id: "act1".into(),
         act: 1,
+        skirmishes: None,
         levels: (3, 9),
         start: "camp".into(),
         final_node: "ch2".into(),
@@ -83,6 +84,7 @@ fn act2() -> WorldMap {
     WorldMap {
         id: "act2".into(),
         act: 2,
+        skirmishes: None,
         levels: (10, 15),
         start: "port".into(),
         final_node: "ch3".into(),
@@ -487,4 +489,220 @@ proptest! {
             prop_assert!(reachable(&m, &c, &here), "{here} can't be reached");
         }
     }
+}
+
+fn skirmish_map() -> WorldMap {
+    let mut m = map();
+    m.levels = (1, 50);
+    m.skirmishes = Some(SkirmishRules {
+        spawn: (2, 2),
+        maximum: 3,
+        level_offset: 1,
+        size: (4, 6),
+        pool: vec!["meadow".into(), "wood".into()],
+        rewards: vec![
+            None,
+            Some(crate::Loot::Gold(100)),
+            Some(crate::Loot::Item(ItemId("potion".into()))),
+        ],
+    });
+    for i in 0..12 {
+        let mut n = node(&format!("fight{i}"), story("ch01"), vec![]);
+        n.level = Some(3 + i);
+        m.nodes.push(n);
+    }
+    m
+}
+
+#[test]
+fn only_guarding_fixed_skirmishes_stop_through_travel() {
+    for guard in [false, true] {
+        let mut m = map();
+        m.nodes[1].kind = NodeKind::FixedSkirmish {
+            battle: SideQuest::default(),
+            guards_path: guard,
+        };
+        let mut c = campaign();
+        let route = m.route("camp", "ch1", &c).expect("route");
+        assert_eq!(
+            route.last().map(String::as_str),
+            Some(if guard { "town" } else { "ch1" })
+        );
+        assert!(
+            m.is_unwon_battle("town", &c),
+            "arriving still starts either fixed fight"
+        );
+        c.clear_node(&m, "town", None, None);
+        assert!(!m.blocks_path("town", &c));
+        assert_eq!(
+            m.route("camp", "ch1", &c)
+                .expect("route")
+                .last()
+                .map(String::as_str),
+            Some("ch1")
+        );
+        assert_eq!(c.clear_node(&m, "town", None, None), []);
+    }
+}
+
+#[test]
+fn groups_spawn_only_on_other_cleared_battles_and_wins_remove_them_once() {
+    let m = skirmish_map();
+    let mut c = campaign();
+    let events = c.clear_node(&m, "fight0", None, None);
+    assert!(events.iter().any(|e| matches!(e, WorldEvent::SkirmishSpawned { node, group } if node == "fight0" && group.level == 2)));
+    let before = c.clone();
+    assert_eq!(c.clear_node(&m, "absent", None, None), []);
+    assert_eq!(c.clear_node(&m, "camp", None, None), []);
+    assert_eq!(c, before);
+    // Arriving at a group starts it, but passing it en route doesn't.
+    assert!(m.is_unwon_battle("fight0", &c));
+    assert!(!m.blocks_path("fight0", &c));
+    let chapter = c.chapter.clone();
+    let rng = c.rng.clone();
+    assert_eq!(
+        c.clear_node(&m, "fight0", None, None),
+        [WorldEvent::Cleared("fight0".into())]
+    );
+    assert!(m.is_cleared("fight0", &c));
+    assert!(!m.is_unwon_battle("fight0", &c));
+    assert_eq!(c.chapter, chapter);
+    assert_eq!(c.rng, rng, "a training victory never rolls more groups");
+    assert_eq!(c.clear_node(&m, "fight0", None, None), []);
+}
+
+#[test]
+fn an_occupied_place_or_a_cap_below_the_acts_minimum_spawns_nothing() {
+    let mut m = skirmish_map();
+    let mut c = campaign();
+    c.world.as_mut().expect("world").at = "fight0".into();
+    c.clear_node(&m, "fight0", None, None);
+    assert!(c.world.as_ref().expect("world").skirmishes.is_empty());
+    m.nodes.last_mut().expect("story").level = Some(1);
+    c.clear_node(&m, "fight11", None, None);
+    assert!(c.world.as_ref().expect("world").skirmishes.is_empty());
+}
+
+#[test]
+fn saved_rng_and_groups_resume_the_same_sequence_and_rewards_cover_the_data() {
+    let m = skirmish_map();
+    let mut seen = [false; 3];
+    let mut pools = BTreeSet::new();
+    let mut sizes = BTreeSet::new();
+    for seed in 0..64 {
+        let mut c = campaign();
+        c.rng = Some(crate::SimRng::new(seed));
+        c.clear_node(&m, "fight0", None, None);
+        let save = ron::to_string(&c).expect("save");
+        let mut loaded: Campaign = ron::from_str(&save).expect("load");
+        assert_eq!(
+            c.clear_node(&m, "fight1", None, None),
+            loaded.clear_node(&m, "fight1", None, None)
+        );
+        assert_eq!(c, loaded);
+        for group in c.world.as_ref().expect("world").skirmishes.values() {
+            pools.insert(group.battle.clone());
+            sizes.insert(group.size);
+            seen[match group.reward {
+                None => 0,
+                Some(crate::Loot::Gold(100)) => 1,
+                Some(crate::Loot::Item(_)) => 2,
+                _ => panic!("unexpected reward"),
+            }] = true;
+        }
+    }
+    assert_eq!(seen, [true; 3]);
+    assert_eq!(pools.len(), 2);
+    assert_eq!(sizes, BTreeSet::from([4, 5, 6]));
+}
+
+proptest! {
+    #[test]
+    fn story_victory_sequences_respect_cap_capacity_and_occupied_place(
+        seed in any::<u64>(), clear in prop::collection::vec((any::<bool>(), 1u32..70), 1..12),
+    ) {
+        let mut m = skirmish_map();
+        let mut c = campaign();
+        c.rng = Some(crate::SimRng::new(seed));
+        for (i, (win_training, level)) in clear.iter().enumerate() {
+            let node = format!("fight{i}");
+            m.nodes.iter_mut().find(|n| n.id == node).expect("story").level = Some(*level);
+            c.world.as_mut().expect("world").at = node.clone();
+            c.clear_node(&m, &node, None, None);
+            let w = c.world.as_ref().expect("world");
+            prop_assert!(w.skirmishes.len() <= 3);
+            prop_assert!(!w.skirmishes.contains_key(&w.at));
+            for (place, g) in &w.skirmishes {
+                prop_assert!(w.cleared.contains(place));
+                prop_assert!(g.level >= 1 && g.level <= level.saturating_sub(1).min(50));
+                prop_assert!((4..=6).contains(&g.size));
+            }
+            if *win_training && let Some(place) = w.skirmishes.keys().next().cloned() {
+                c.clear_node(&m, &place, None, None);
+            }
+        }
+    }
+}
+
+#[test]
+fn lower_story_caps_also_limit_existing_groups_and_zero_rolls_are_possible() {
+    let mut m = skirmish_map();
+    let mut c = campaign();
+    c.clear_node(&m, "fight0", None, None);
+    m.nodes
+        .iter_mut()
+        .find(|n| n.id == "fight1")
+        .expect("story")
+        .level = Some(2);
+    c.world.as_mut().expect("world").at = "fight1".into();
+    assert!(
+        c.clear_node(&m, "fight1", None, None)
+            .contains(&WorldEvent::SkirmishesCapped(1))
+    );
+    assert_eq!(m.random_at("fight0", &c).expect("group").level, 1);
+    m.nodes
+        .iter_mut()
+        .find(|n| n.id == "fight2")
+        .expect("story")
+        .level = Some(1);
+    assert!(
+        c.clear_node(&m, "fight2", None, None)
+            .contains(&WorldEvent::SkirmishesCapped(0))
+    );
+    assert_eq!(c.world.as_ref().expect("world").skirmishes.len(), 0);
+    m.skirmishes.as_mut().expect("rules").spawn = (0, 2);
+    let mut counts = BTreeSet::new();
+    for seed in 0..64 {
+        let mut c = campaign();
+        c.rng = Some(crate::SimRng::new(seed));
+        c.world
+            .as_mut()
+            .expect("world")
+            .cleared
+            .extend((0..8).map(|i| format!("fight{i}")));
+        c.clear_node(&m, "fight8", None, None);
+        counts.insert(c.world.as_ref().expect("world").skirmishes.len());
+    }
+    assert_eq!(counts, BTreeSet::from([0, 1, 2]));
+}
+
+#[test]
+fn a_story_at_the_same_cap_keeps_existing_groups_without_a_cap_change_event() {
+    let mut m = skirmish_map();
+    let mut c = campaign();
+    c.clear_node(&m, "fight0", None, None);
+    let group = m.random_at("fight0", &c).expect("spawned").clone();
+    assert_eq!(group.level, 2);
+    m.skirmishes.as_mut().expect("rules").spawn = (0, 0);
+    m.nodes
+        .iter_mut()
+        .find(|n| n.id == "fight1")
+        .expect("story")
+        .level = Some(3);
+    c.world.as_mut().expect("world").at = "fight1".into();
+    assert_eq!(
+        c.clear_node(&m, "fight1", None, None),
+        [WorldEvent::Cleared("fight1".into())]
+    );
+    assert_eq!(m.random_at("fight0", &c), Some(&group));
 }

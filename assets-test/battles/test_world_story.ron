@@ -1,0 +1,25 @@
+// TEST FILE: Stone Mill on the test world map (1007/1008).
+// Its level-5 enemy gives training a level-4 cap; the lead can seize
+// the nearby fort within three turns, as in the original test battle.
+(
+    id: "test_world_story",
+    map: "test_small",
+    player_slots: [
+        (character: "lead", pos: (3, 5)),
+        (character: "test_knight", pos: (3, 6)),
+    ],
+    enemies: [
+        (template: "test_brigand", level: Some(5), pos: (8, 3), id: "road_brigand"),
+    ],
+    pack_cap: 3,
+    default_pack: ["potion", "potion"],
+    clear_gold: 500,
+    objective: Seize(pos: (5, 5), by_lord: true, turn_limit: Some(3)),
+    battle_notes: [
+        (text: "Brigand: guards the road, but the fort is nearer than the fight.", units: ["road_brigand"]),
+        (text: "Seize the fort within 3 turns: send your lead straight there.", units: []),
+    ],
+    difficulty: Normal,
+    music: Pool("skirmish"),
+    seed: 1,
+)

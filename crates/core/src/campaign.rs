@@ -363,6 +363,9 @@ pub struct Campaign {
     /// `SAVE_VERSION` 2 made before it still load (as `tutorial`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub world: Option<WorldState>,
+    /// Campaign RNG for world-map rolls; absent in older saves until first used.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rng: Option<crate::SimRng>,
     /// Seconds played.
     pub playtime_s: u64,
 }
@@ -448,6 +451,7 @@ impl Campaign {
             camp_seen: BTreeSet::new(),
             supports: SupportBook::default(),
             world: None,
+            rng: None,
             playtime_s: 0,
         }
     }

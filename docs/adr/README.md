@@ -111,6 +111,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0101](0101-a-game-pr-stays-under-about-3000-changed-lines-by-estimate-and-warning.md) | A game PR stays under about 3,000 changed lines: planned at about 2,000 and split before coding, measured by `cargo xtask pr-size` (generated and binary files left out by `.gitattributes`), warned about by a Claude Code hook and on the PR, never failed; `engine-pin` and `sonar` PRs exempt | Accepted (0135); extends ADR-0010, 0092 |
 | [0102](0102-portable-agent-workflows.md) | Portable agent workflows and capability routing | Accepted; model routing amended by ADR-0103 |
 | [0103](0103-paired-model-recommendations.md) | Paired Claude and OpenAI model recommendations | Accepted |
+| [0104](0104-random-skirmishes-overlay-cleared-places-and-rebuild-ordinary-battle-files.md) | Random skirmishes overlay cleared places and rebuild ordinary battle files | Accepted (1008); extends ADR-0099 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
