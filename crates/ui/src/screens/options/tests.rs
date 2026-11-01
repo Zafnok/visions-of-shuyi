@@ -91,6 +91,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     c.platform.keyboard = Keyboard::Absent;
     let no_layout: Vec<Row> = Row::ALL.into_iter().filter(|&r| r != Row::Layout).collect();
     assert_eq!(shown_rows(&c), no_layout);
+    c.platform.windowed = false;
     c.use_playdate_skins();
     let playdate = [
         Row::TextSpeed,

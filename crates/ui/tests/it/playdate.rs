@@ -16,8 +16,8 @@ use trpg_ui::input::{
     Action, Button, ButtonChord, Device, PLAYDATE_KEY_ROWS, PadKind, RIGHT_HANDED,
 };
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
+use trpg_ui::platform::playdate_facts;
 use trpg_ui::save::SUSPEND_KEY;
-use trpg_ui::screen::Keyboard;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::Mode;
@@ -38,7 +38,7 @@ use trpg_ui::{
 /// are turned on below), with the Playdate's own buttons (ticket 1034).
 fn playdate(ctx: &mut Ctx) {
     ctx.console = ConsoleSpec::PLAYDATE;
-    ctx.platform.keyboard = Keyboard::Absent;
+    ctx.platform = playdate_facts().unwrap_or_else(|e| panic!("{e}"));
     ctx.device = Device::Pad(PadKind::Playdate);
     ctx.use_playdate_buttons();
     ctx.key_prompt = KeyPrompt::Waiting;

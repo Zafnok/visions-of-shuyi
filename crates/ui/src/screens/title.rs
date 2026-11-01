@@ -4,7 +4,7 @@
 //! (0802); debug builds add `Quick Battle`, a test battle through the same
 //! flow; `Options` opens the [`OptionsScreen`](super::OptionsScreen) (0805); `Profile` the
 //! [`ProfileScreen`](profile::ProfileScreen) (0837); `Credits` opens the
-//! [`CreditsScreen`] (0808).
+//! [`CreditsScreen`] (0808); `Quit` leaves, where the game can quit (1200).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
 //! shows and does, and says it as plain data: a [`TitleView`]
@@ -253,7 +253,9 @@ impl TitleScreen {
         items.push(Item::Options);
         items.push(Item::Profile);
         items.push(Item::Credits);
-        items.push(Item::Quit);
+        if ctx.platform.can_quit() {
+            items.push(Item::Quit);
+        }
         let entries = items.into_iter().map(|item| {
             let enabled = item != Item::LoadGame || saved;
             MenuItem::new(ctx.text(item.key()))

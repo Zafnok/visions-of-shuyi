@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1200 — The title offers Quit only where the game can quit
@@ -62,13 +62,33 @@ Expected size: about 15 production lines.
 
 ## Acceptance criteria
 
-- [ ] As `web` and `playdate`, the title has no Quit and nothing on it quits.
-- [ ] As `desktop`, the title and its snapshots are unchanged.
-- [ ] As `playdate`, Options has no Fullscreen row, as before; as `web` and
+- [x] As `web` and `playdate`, the title has no Quit and nothing on it quits.
+- [x] As `desktop`, the title and its snapshots are unchanged.
+- [x] As `playdate`, Options has no Fullscreen row, as before; as `web` and
       `desktop` it has one, as before.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Integration (Harness): the three targets above.
 - Snapshot: only web's and the Playdate's title move, by the Quit row.
+
+## Completion notes
+
+- The Playdate's and the tools' starts set all of `ctx.platform` from
+  `trpg_ui::platform::playdate_facts`, which reads the profile with
+  `PlatformFacts::from_profile`. The title lists Quit only where
+  `can_quit()`. `Fullscreen` left `PC_ONLY`; `shown_rows` keeps it only where
+  `windowed`.
+- Deviations: the engine's `targets/` can't be included from a git dependency,
+  and the Playdate crate has no `shuyi-cli`, so the game keeps a copy of the
+  profile (`crates/ui/src/playdate_target.ron`); an xtask test checks its facts
+  against the engine's at the pin. The harness tests set the facts in the setup
+  closure, not with `Harness::as_target`: the title builds its menu as it opens,
+  and a real launch has its facts by then. The three targets' test is in xtask,
+  which has the engine's profiles.
+- The window's shortcut needed no game change: the engine's
+  `Game::toggle_fullscreen` already reads `windowed`.
+- Only a snapshot of a title without Quit was added (web's look); the Playdate
+  has no title snapshot, and the desktop's didn't move.
+- No gameplay rule was decided.

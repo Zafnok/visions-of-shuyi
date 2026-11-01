@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 
 use trpg_content::PaletteDef;
 use trpg_ui::input::{Device, PadKind};
-use trpg_ui::screen::{IdleMotion, Keyboard, Lessons};
+use trpg_ui::screen::{IdleMotion, Lessons};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, KeyPrompt, Palette, ShuyiCtx, Storage, UiColor};
 
 /// Loads the game's data and sets the context up as the Playdate runs the
@@ -24,7 +24,7 @@ pub fn context(storage: Box<dyn Storage>, seed: u64) -> Result<Ctx, String> {
 pub fn data(seed: u64) -> Result<Ctx, String> {
     let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
     ctx.console = ConsoleSpec::PLAYDATE;
-    ctx.platform.keyboard = Keyboard::Absent;
+    ctx.platform = trpg_ui::platform::playdate_facts()?;
     ctx.device = Device::Pad(PadKind::Playdate);
     // Its own buttons (A + B and the B chords), before the player's are
     // loaded with the storage.
@@ -66,6 +66,7 @@ fn palette(base: &PaletteDef) -> Result<Palette, String> {
 #[cfg(test)]
 mod tests {
     use trpg_content::Ink;
+    use trpg_ui::screen::Keyboard;
     use trpg_ui::screen::SkinSet;
     use trpg_ui::{MemoryStorage, Rgb};
 
@@ -78,6 +79,9 @@ mod tests {
         let ctx = context(Box::new(MemoryStorage::new()), 7).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(ctx.console, ConsoleSpec::PLAYDATE);
         assert_eq!(ctx.platform.keyboard, Keyboard::Absent);
+        assert_eq!(ctx.platform.target, "playdate");
+        assert!(!ctx.platform.can_quit());
+        assert!(!ctx.platform.windowed);
         assert_eq!(ctx.device, Device::Pad(PadKind::Playdate));
         assert!(!ctx.debug_tools);
         assert!(ctx.game.tips_enabled);

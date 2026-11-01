@@ -35,6 +35,7 @@ pub mod harness;
 pub mod input;
 pub mod map_view;
 pub mod onebit;
+pub mod platform;
 pub mod portrait;
 pub mod profiles;
 pub mod save;
@@ -58,6 +59,7 @@ pub use screen::{
     Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
 };
 pub use settings::{Settings, ShuyiSettings};
+pub use shuyi_ui::PlatformFacts;
 pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};
 pub use trpg_content::ImageId;
