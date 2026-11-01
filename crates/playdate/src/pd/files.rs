@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use core::ffi::{CStr, c_char, c_uint, c_void};
 
 use super::{
-    pd_file_close, pd_file_error, pd_file_kind, pd_file_list, pd_file_mkdir,
+    pd_file_close, pd_file_error, pd_file_flush, pd_file_kind, pd_file_list, pd_file_mkdir,
     pd_file_open_read_data, pd_file_open_write, pd_file_read, pd_file_rename, pd_file_unlink,
     pd_file_write,
 };
@@ -88,7 +88,8 @@ impl Files for SdkFiles {
         let len = c_uint::try_from(bytes.len()).map_err(|_| String::from("file too big"))?;
         let written = unsafe { pd_file_write(file, bytes.as_ptr().cast(), len) };
         let all = usize::try_from(written).ok() == Some(bytes.len());
-        let error = (!all).then(last_error);
+        let flushed = all && unsafe { pd_file_flush(file) } >= 0;
+        let error = (!flushed).then(last_error);
         let closed = ok(unsafe { pd_file_close(file) });
         match error {
             Some(error) => Err(error),

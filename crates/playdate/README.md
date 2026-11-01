@@ -117,7 +117,9 @@ nothing happens.
 
 The game's `Storage` is one `<key>.ron` file per key in the game's data
 folder (`Disk/Data/com.zafnok.visionsofshuyi/` in the Simulator), written
-to `<key>.ron.tmp` first and then moved over the old file. Profiles and
+to `<key>.ron.tmp` first and then moved over the old file, with the old
+value kept in `<key>.ron.bak`, so a save survives a power cut (the engine's
+`power_cut_suite`; `src/storage.rs` says what it promises). Profiles and
 saves are the PC's (ADR-0069). The debug build runs `trpg-ui`'s storage
 conformance suite on the real files at start, in the `storage-check`
 folder (left empty), and logs `storage: the conformance suite passed`; a
