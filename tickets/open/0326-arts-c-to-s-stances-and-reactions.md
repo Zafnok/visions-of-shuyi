@@ -34,6 +34,13 @@ their numbers:
 combat bonuses; these need flags the battle reads when a combat is built
 or a unit ends a move.
 
+**Either order with 0330:** if the first-hit timing correction is done,
+extend its shared strike path and preserve its same-combat debuff and
+preview regressions. If not, implement these reactions on the current
+path without taking on the numeric-debuff fix; 0330 then preserves the
+reaction ordering and tests while repairing activation timing. Neither
+ticket may restore the other's old behavior by replacing the strike loop.
+
 ## Nick input
 
 None. Verified by tests; the feel goes on 1064's checklist.

@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0750", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608", "0520"]
+blocked_by: ["0750", "0753", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608", "0520"]
 nick_input: none
 completed:
 ---
@@ -31,6 +31,9 @@ the number scale first. As a world-map chapter it needs the world map (1007) and
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
+0753 is required before wiring the finale: it repairs the source of Wren's
+revelation when Rue died before Chapter 6. Preserve its rendered-path
+fixtures when the scenes are attached to actual battle and victory flow.
 0070 kept **Dace**'s face (0706) and the dark knight (0040); Ragna's face is listed in 0851. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
 ## Nick input
@@ -84,7 +87,8 @@ before building.
 
 ## Implementation steps
 
-1. Read the beat sheet and script (0750), 0803 and its files, the
+1. Read the beat sheet and script (0750), 0753's corrected knowledge
+   paths and regressions, 0803 and its files, the
    design docs the extras touch, 0070's and 0071's answers.
 2. Map first (`ascii-art` skill for the layout), then units and the
    battle file, then the chapter file.
@@ -104,6 +108,10 @@ before building.
       in the PR.
 - [ ] Every scene's place exists and the script passes
       `cargo xtask check-script`.
+- [ ] Render the wired finale with Rue dead before Chapter 6, with Hollis
+      alive and gone, and with Rue dying after the disclosure: no speaker
+      uses an eyewitness fact absent from that path. Preserve 0753's
+      required reveal and both versions of Hollis's ending.
 - [ ] Starting values and anything left to judge by playing are in the
       Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.

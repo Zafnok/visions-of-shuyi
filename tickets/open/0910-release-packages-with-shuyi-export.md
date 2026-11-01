@@ -5,7 +5,7 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
+status: todo
 blocked_by: ["0909", "engine#3075", "0138"]
 nick_input: none
 completed:
@@ -29,12 +29,13 @@ does what `.github/workflows/release.yml` doesn't:
 - the Linux build in Valve's sniper SDK, so its glibc floor is known and old;
 - a universal macOS `.app`, signed ad hoc.
 
-`release.yml` does each package by hand in about 200 lines of shell. It can't
-move yet, for two reasons that are engine ticket 3075's: an export turns on no
-feature of the game's package, and the game's release builds need
-`private-assets` (ADR-0040); and a package holds only the program and the
-notes, and the game ships `music/`, `voice/` and the license files beside it
-(ADR-0046).
+`release.yml` does each package by hand in about 200 lines of shell.
+Engine PR #212 (3075) has now shipped feature selection, game package
+selection and files beside the program. That removes the two former
+blockers: `private-assets` (ADR-0040), and external music/voice/license
+files (ADR-0046). It merged after the current game pin. This ticket is
+ready to start by moving the pin past it; retain `engine#3075` as the
+minimum-revision dependency. Game 0909 and 0138 are already done.
 
 Engine PR #205 (ticket 3080), passed by the pin move of 2026-11-01: `shuyi
 web` builds in `dist/web.staging` and replaces `dist/web` whole, and `export
@@ -51,7 +52,8 @@ None.
 
 **In:**
 - `shuyi.ron` names the release's features and the files beside the program,
-  as 3075 made it possible. `notices` is 0909's.
+  as 3075 made it possible, and explicitly selects `trpg-app` (the project's
+  tool package is `xtask`). `notices` is 0909's.
 - `release.yml`'s Windows, Linux, macOS and web jobs call `cargo shuyi export
   <target> --release`, and upload what it makes, under the release's names.
 - The program's debug files are kept as release artifacts.
@@ -60,6 +62,9 @@ None.
 **Out (do not do):**
 - itch.io (0901) and Steam (0903).
 - The Playdate's package (1052).
+- The Playdate command/exporter cleanup (1206). Either order works:
+  this ticket changes desktop/web release jobs, while 1206 changes only
+  the Playdate build command; neither changes the other's package policy.
 - Changing what a player gets, other than the additions above: the music and
   voice stay beside the program, and Shironejiya's text stays bundled (0901).
 
@@ -71,7 +76,9 @@ None.
 3. Change `release.yml` target by target; run it from a test tag, and compare
    each package's files.
 
-Expected size: about 150 lines of `release.yml` removed.
+Expected size: about 150 lines of `release.yml` removed, a small manifest
+and package verification script; under 1,200 changed lines including tests,
+docs and the ticket move.
 
 ## Acceptance criteria
 
@@ -80,8 +87,19 @@ Expected size: about 150 lines of `release.yml` removed.
 - [ ] The Windows package runs with the music, on a machine with no MinGW.
 - [ ] The private art is in the release builds, and a build without the
       secret still fails or builds as `release.yml` says today.
+- [ ] Final extracted package inventories are compared, not only Cargo
+      commands. No parallel archive/app creation, stale web-file injection
+      or duplicated engine notice/path-remapping logic remains in the
+      release jobs. A missing required beside-file refuses a test export.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- A test tag's release run, its packages compared by hand in the PR.
+- A test tag's release run, extracted file inventories compared in the PR,
+  and a failed export with one required beside-file absent.
+- A Windows launch without MinGW verifies packaged runtime dependencies.
+
+## Completion notes
+
+*(Filled in by the session that completes the ticket: pin, package
+inventories, launch/refusal evidence, deviations and follow-ups.)*

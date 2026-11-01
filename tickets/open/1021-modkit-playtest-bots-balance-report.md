@@ -25,9 +25,14 @@ The bots are dev tooling and are never linked into the game (`CLAUDE.md`,
 ADR-0033). 1011's ADR puts them in `vos-modkit`, a separate tool shipped
 beside the game (1016).
 
-**Either order with 1180:** if 1180 is done, "the same report" is
-`cargo shuyi playtest`'s; if not, `cargo xtask playtest`'s, and 1180
-moves the modkit's report with it.
+**Either order with 1180:** if 1180 is done, the modkit uses its
+engine-backed persona/target types; if not, use the existing game
+types and 1180 adapts their shared interfaces when it lands.
+
+**Either order with 1207:** if 1207 is done, "the same report" is
+`cargo shuyi playtest`'s, built from the game's plan; if not, use
+`cargo xtask playtest`'s and 1207 moves the modkit's report integration
+with it. Preserve its displayed measures and bands in either order.
 
 ## Nick input
 

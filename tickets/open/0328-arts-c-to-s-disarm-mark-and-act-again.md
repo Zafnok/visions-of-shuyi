@@ -6,7 +6,7 @@ milestone: M2 Core rules
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0018", "0325"]
+blocked_by: ["0018", "0325", "0330"]
 nick_input: none
 completed:
 ---
@@ -27,6 +27,11 @@ decided three arts that change what units may do, not just numbers:
 - **Unbroken Stride** (Sword S, 8): if the target falls from the user's
   strikes this combat, the user may move its full Mov again and take
   another action; not Unbroken Stride again that phase.
+
+0330 is required first: it fixes the shipped debuffs' first-hit timing
+and shared preview/resolution path. Reuse that activation point for
+Disarm and Marked Shot; applying a state after the entire combat would
+miss Disarm's remaining counters and Marked Shot's subsequent strikes.
 
 ## Nick input
 
@@ -50,7 +55,8 @@ None. Verified by tests; the feel goes on 1064's checklist.
 
 ## Implementation steps
 
-1. Read the design doc's rules and 0312's debuff code.
+1. Read the design doc's rules, 0312's debuff code and 0330's completed
+   first-hit strike path and regressions.
 2. Add the two states and their expiry at the end of the target's next
    phase; refresh-on-reapply.
 3. Disarm in counters, legal actions and the AI's attack options.
@@ -62,6 +68,9 @@ None. Verified by tests; the feel goes on 1064's checklist.
 
 - [ ] A disarmed enemy doesn't counter and its AI doesn't attack with a
       weapon on its phase; it can still cast.
+- [ ] A miss before the first hit does not activate Disarm or Marked Shot;
+      after the first hit their effects change the remaining applicable
+      strikes/counters in that combat, in preview and resolution.
 - [ ] A marked unit's attackers get +20 hit / +10 crit in their forecast,
       until the end of its next phase.
 - [ ] Unbroken Stride gives one more turn after a kill, never twice in a

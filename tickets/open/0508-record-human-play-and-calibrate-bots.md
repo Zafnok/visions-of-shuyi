@@ -30,9 +30,14 @@ This ticket records play in the **Pages build only** (debug tools on,
 ADR-0023). The shipped game records nothing.
 
 **Either order with 1180:** if 1180 is done, the personas file is
-read through the engine's `Persona` (engine#2130) and the comparison
-runs beside `cargo shuyi playtest`; if not, as written here, and 1180
-moves it.
+read through the engine's `Persona` (engine#2130); if not, use the
+existing reader and 1180 adapts it when it lands. The game's recorded
+measure names and comparison behavior stay unchanged.
+
+**Either order with 1207:** if 1207 is done, `playtest-compare` runs
+beside `cargo shuyi playtest` and reuses the game's playtest plan; if
+not, use the current xtask runner and 1207 moves that integration when
+it lands, preserving the human/bot comparison's report.
 
 ## Nick input
 
