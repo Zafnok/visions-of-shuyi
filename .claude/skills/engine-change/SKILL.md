@@ -40,6 +40,15 @@ do it in the game (a game-side structure, `engine-friction` outcome 3).
    the game wraps it ("dialogue box" is game; "a text panel with a
    portrait slot and paged text" is engine).
 
+**A split is judged row by row.** When a game ticket splits work between
+the engine and the game, or an engine ticket written from the game lists
+Out items, run both tests on **each row** of the game's side and on each
+Out item that is generic (threads, timing, history, files, a contract
+operation, CI). "The game keeps its own" is an answer only for a row that
+fails a test. 0130 sent search to the engine and the rest to the game, and
+engine#2126 put timing, threads and a run history Out "the game keeps its
+own"; all three went to the engine later (the 0506 sweep).
+
 Write the change in one sentence in the generic shape before going on.
 You need that sentence for the engine ticket.
 

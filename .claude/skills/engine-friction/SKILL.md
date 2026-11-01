@@ -23,13 +23,30 @@ One sentence and a number: how many production lines the change
 *should* take with a good engine, and the reference you compared it
 with.
 
-- Start from the ticket: a ticket that adds a screen or a scene states
-  its expected size in its Implementation steps.
-- References: the same job in another engine or framework (Ren'Py's
-  `say` for a dialogue line, an egui window, a Godot scene), or a piece
-  of this repository that does something similar (the engine's
-  `crates/ui/src/screens/options.rs` for a screen with a view and
-  a skin, ADR-0054).
+- **The reference is another implementation of the same job**: an engine
+  example (hello-grid's playtest, about 75 lines), the same job in
+  another engine or framework (Ren'Py's `say` for a dialogue line, an
+  egui window, a Godot scene), or a piece of this repository that does
+  something similar (the engine's `crates/ui/src/screens/options.rs` for
+  a screen with a view and a skin, ADR-0054).
+- **The ticket's expected size is a starting point to check against that
+  reference, never the reference itself**: it inherits the ticket's split
+  between the engine and the game. 0506's 600 was 0130's and counted the
+  xtask command, the workflow and the targets as game work, so 1,060
+  measured "under 2×" while the sweep found seven engine pieces at 3.1×
+  to 9.2×.
+- **A move, rename or refactor counts every call site it touches**, since
+  a changed line counts as added. 1162 estimated its new lines, 30, and
+  measured 313, because every list builder, target picker and menu match
+  changed shape.
+- **Non-Rust code the change writes (workflows, scripts) is estimated and
+  counted by hand on the same line**: "estimate 60 + 15 YAML". `code-lines`
+  reads `*.rs` only, so 0506's 94-line workflow sat uncounted inside its
+  estimate.
+- **A ticket re-gated mid-work restates its estimate when it resumes**,
+  before its next code, for what is left on the engine it now has. 0506
+  came back from engine#2128 still holding 0130's number. The ratio uses
+  the restated estimate; the PR body gives both.
 - Count production code only: no tests, snapshots, data files or docs.
 
 Example: "a yes/no pop-up is one view and one skin, a fraction of the
@@ -49,7 +66,8 @@ It compares the working tree with its merge base with `origin/main`
 (`--base <ref>` for another). The measure is the **added** column of
 `total (game)`: a changed line counts as one removed and one added. If
 you changed the engine in the same PR (fix first, before 1131), its lines
-are in `total (engine)` and are not part of the game's ratio.
+are in `total (engine)` and are not part of the game's ratio. Add the
+non-Rust code you counted by hand (step 1).
 
 Ratio = measured ÷ estimate:
 
@@ -74,6 +92,12 @@ Any of these triggers the review at any ratio:
 - **Three or more rows in `docs/engine/friction.md` on the same engine
   area with outcome "accept"**. Since the last sweep, that (or three
   2×–3× rows there) also starts a sweep: see *Sweep* below.
+
+Answer the first three in the PR's `Engine friction:` line, at any ratio:
+`signals: workaround no · third copy no · budget no`. Each "yes" names the
+review's outcome (`workaround yes (1: engine#NNNN)`). 0506 moved the pin to
+an engine that had `shuyi playtest` and wrote its own command instead, and
+a line with room only for the ratio never asked.
 
 No trigger: stop here.
 
@@ -148,7 +172,7 @@ Outcome is the number and a few words; several findings go in one cell,
 separated by `;`. Follow-up names the tickets written in step 6, or `—`.
 
 Then put the line in the PR body: "Engine friction: estimate N, measured
-M (R×), <outcome>".
+M (R×), <outcome>; signals: workaround no · third copy no · budget no".
 
 ## Sweep
 

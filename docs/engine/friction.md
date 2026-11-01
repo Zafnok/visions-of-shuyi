@@ -130,6 +130,7 @@ lines for its playtest, measures and entrants included) and
 | 5 | A planner's candidate order: ranked groups (core), strikes, advances and holds (tactics kit) | 1: engine | 3.5× | engine#2132 |
 | 6 | Threat areas, the danger at a tile and walking distance to goals | 1: engine (tactics kit) | 3.3× | engine#2131 |
 | 7 | Weighted features and personas as data | 1: engine | 3.1× | engine#2130 |
+| — | The per-ticket check missed it: 0506's estimate came from its ticket's split | 1187 changed the estimate step | 1.8× | 1187 |
 
 The game moves onto all seven in one ticket, 1180 (blocked by them).
 After it, the game's playtesting should be about 450 production lines

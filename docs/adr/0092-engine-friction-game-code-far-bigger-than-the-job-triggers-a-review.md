@@ -151,6 +151,12 @@ picked up like any other, not a request to someone else.
 - **The skill**, `.claude/skills/engine-friction/SKILL.md`, has the
   steps of a review and two worked examples.
 
+*Note, 2026-11-01 (ticket 1187):* the estimate no longer "starts from the
+ticket" (§1): a ticket's size is a starting point to check against the
+reference, because it inherits the ticket's split. Non-Rust code is
+counted by hand beside `code-lines` (§2), and the PR line (§8) also
+answers the signals. The skill has the steps.
+
 ## Consequences
 
 - Every ticket costs one sentence before the code and one command after
