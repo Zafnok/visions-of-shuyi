@@ -1,14 +1,15 @@
 //! Rebuild when anything under `assets/` or `assets-test/` (the test files,
-//! ADR-0057) changes: `include_dir!` embeds the directory but does not tell
-//! cargo to watch it on stable Rust. The same for `assets-private/game/` and
+//! ADR-0057) changes. The same for `assets-private/game/` and
 //! `assets-private/test/` when the `private-assets` feature embeds them
 //! (ADR-0040), after checking that the first is there.
 //!
 //! Also writes, into `OUT_DIR`, the tables of files that are the bundle's
-//! layer without `std`, where `include_dir` does not build (ADR-0070 §3,
-//! `shuyi_assets::Layer::table`): `bundle_files.rs`, every file under
-//! `assets/`, sorted; `playdate_files.rs`, the same without the files
-//! `playdate-bundle.txt` leaves out (ticket 1036), and
+//! layers (`shuyi_assets::Layer::table`), each every file of its folder but
+//! the `README.md`s, which no build embeds (ADR-0105), sorted:
+//! `bundle_files.rs` of `assets/`, `test_files.rs` of `assets-test/`,
+//! `private_files.rs` and `private_test_files.rs` of the private folders
+//! (empty without the feature); `playdate_files.rs`, `assets/` without the
+//! files `playdate-bundle.txt` leaves out (ticket 1036), and
 //! `playdate_left_out.rs`, the paths of those.
 //!
 //! The Playdate's table holds a one-bit picture in place of each PNG it
@@ -42,12 +43,19 @@ const PRIVATE_TEST: &str = "../../assets-private/test";
 /// The story's files, relative to this crate.
 const ASSETS: &str = "../../assets";
 
+/// The test files, relative to this crate (ADR-0057).
+const TEST: &str = "../../assets-test";
+
+/// The name of the notes in an asset folder, which no build embeds
+/// (ADR-0105).
+const README: &str = "README.md";
+
 /// What the Playdate build leaves out of `assets/` (ticket 1036).
 const PLAYDATE_LIST: &str = "playdate-bundle.txt";
 
 fn main() {
     println!("cargo:rerun-if-changed={ASSETS}");
-    println!("cargo:rerun-if-changed=../../assets-test");
+    println!("cargo:rerun-if-changed={TEST}");
     println!("cargo:rerun-if-changed={PLAYDATE_LIST}");
     let private = std::env::var_os("CARGO_FEATURE_PRIVATE_ASSETS").is_some();
     if private {
@@ -70,10 +78,9 @@ type Source = (&'static str, String);
 
 /// Writes the tables (see the top of this file). Each is a `&[(path,
 /// bytes)]` expression with one `(path, include_bytes!(…))` per file,
-/// sorted by path (`/`-separated, relative to `assets/`), so the bundle can
-/// binary-search it. Every file `include_dir` embeds is in
-/// `bundle_files.rs`; a test keeps them equal. With `private`, the
-/// Playdate's private layer too ([`private_table`]); without, it is empty.
+/// sorted by path (`/`-separated, relative to its folder), so the bundle can
+/// binary-search it. With `private`, the private layers too
+/// ([`private_table`], [`whole_table`]); without, they are empty.
 fn write_file_tables(private: bool) {
     let mut files = Vec::new();
     walk(Path::new(ASSETS), "", &mut files);
@@ -88,7 +95,7 @@ fn write_file_tables(private: bool) {
         .collect();
     let read = |path: &str| std::fs::read_to_string(Path::new(ASSETS).join(path)).ok();
     let one_bit = convert_pictures(ASSETS, "onebit", &kept, read);
-    let as_is = |path: &String| -> Source { ("CARGO_MANIFEST_DIR", format!("/{ASSETS}/{path}")) };
+    let as_is = |path: &String| as_is(ASSETS, path);
     let playdate = |path: &String| -> Source {
         if one_bit.contains(path) {
             ("OUT_DIR", format!("/{}", one_bit_file("onebit", path)))
@@ -98,18 +105,42 @@ fn write_file_tables(private: bool) {
     };
     write_out("bundle_files.rs", &table(files.iter(), as_is));
     write_out("playdate_files.rs", &table(kept.iter(), playdate));
-    let private = if private {
-        private_table(&list, &files)
+    write_out("test_files.rs", &whole_table(TEST));
+    let empty = || String::from("&[]\n");
+    let (playdate_private, game, test) = if private {
+        (
+            private_table(&list, &files),
+            whole_table(PRIVATE),
+            whole_table(PRIVATE_TEST),
+        )
     } else {
-        String::from("&[]\n")
+        (empty(), empty(), empty())
     };
-    write_out("playdate_private_files.rs", &private);
+    write_out("playdate_private_files.rs", &playdate_private);
+    write_out("private_files.rs", &game);
+    write_out("private_test_files.rs", &test);
     let mut paths = String::from("&[\n");
     for path in &left_out {
         writeln!(paths, "    {path:?},").unwrap_or_else(|e| panic!("writing to a String: {e}"));
     }
     paths.push_str("]\n");
     write_out("playdate_left_out.rs", &paths);
+}
+
+/// The file at `path` in `folder`, as it is.
+fn as_is(folder: &str, path: &String) -> Source {
+    ("CARGO_MANIFEST_DIR", format!("/{folder}/{path}"))
+}
+
+/// The table of every file in `folder`; empty if it isn't there, as
+/// `assets-private/test/` may not be.
+fn whole_table(folder: &str) -> String {
+    let mut files = Vec::new();
+    if Path::new(folder).is_dir() {
+        walk(Path::new(folder), "", &mut files);
+    }
+    files.sort_unstable();
+    table(files.iter(), |path| as_is(folder, path))
 }
 
 /// The Playdate's table of the bought art in `assets-private/game/`
@@ -240,12 +271,10 @@ fn rules(list: &str) -> Vec<(usize, &str)> {
 }
 
 /// Whether a rule of `playdate-bundle.txt` leaves out the file at `path`:
-/// the rule is a file's path, a folder's (`audio/sfx/`, everything below
-/// it) or `**/` and a file name (every file of that name).
+/// the rule is a file's path or a folder's (`audio/sfx/`, everything below
+/// it).
 fn matches(&(_, rule): &(usize, &str), path: &str) -> bool {
-    if let Some(name) = rule.strip_prefix("**/") {
-        path.rsplit('/').next() == Some(name)
-    } else if rule.ends_with('/') {
+    if rule.ends_with('/') {
         path.starts_with(rule)
     } else {
         path == rule
@@ -272,7 +301,7 @@ fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
 }
 
 /// Adds the path (`prefix` + its name, `/`-separated) of every file in `dir`
-/// and the directories below it to `files`.
+/// and the directories below it to `files`, but the [`README`]s.
 fn walk(dir: &Path, prefix: &str, files: &mut Vec<String>) {
     let entries =
         std::fs::read_dir(dir).unwrap_or_else(|e| panic!("reading {}: {e}", dir.display()));
@@ -285,7 +314,7 @@ fn walk(dir: &Path, prefix: &str, files: &mut Vec<String>) {
         let path = format!("{prefix}{name}");
         if entry.path().is_dir() {
             walk(&entry.path(), &format!("{path}/"), files);
-        } else {
+        } else if name != README {
             files.push(path);
         }
     }

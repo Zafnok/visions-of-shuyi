@@ -381,8 +381,7 @@ fn prints_choices() {
 /// `characters.ron`).
 #[test]
 fn readme_choice_example_is_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
-    let example = readme.split("```").nth(5).unwrap_or_default();
+    let example = README.split("```").nth(5).unwrap_or_default();
     let table = from_sources(&[("README.md", example)], None, None, None, None);
     assert!(table.is_ok(), "{table:?}");
     let scene = table.unwrap_or_default().scenes.remove("ch01_gate");

@@ -265,7 +265,7 @@ fn embedded_placeholders_load() {
             assert_eq!((e.size.width, e.size.height), (32, 32));
         }
     }
-    // Only sidecars are portraits: not the README, not the images.
+    // Only sidecars are portraits: not the images.
     assert_eq!(portraits.len(), 4);
 }
 

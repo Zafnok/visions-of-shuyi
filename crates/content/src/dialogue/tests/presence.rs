@@ -633,10 +633,9 @@ fn a_block_that_can_only_go_one_way_is_an_error() {
 /// in a block able to be gone.
 #[test]
 fn readme_if_examples_are_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
     let everyone = cast(&["sergeant", "keeper", "heretic"], &[]);
     for (nth, blocks) in [(9, 1), (11, 3)] {
-        let example = readme.split("```").nth(nth).unwrap_or_default();
+        let example = README.split("```").nth(nth).unwrap_or_default();
         let scripts = scripts_from_sources(
             &[("README.md", example)],
             Some(&characters()),

@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0123 — Keep the asset READMEs out of the game
@@ -64,12 +64,12 @@ should hold only what it reads.
 
 ## Acceptance criteria
 
-- [ ] `bundle::files_under("")` lists no `README.md`, with and without the
+- [x] `bundle::files_under("")` lists no `README.md`, with and without the
       test files (`bundle::story_only`).
-- [ ] A release build of `trpg-app` does not contain the text of
+- [x] A release build of `trpg-app` does not contain the text of
       `assets/maps/README.md` (check the binary for a sentence of it, in a
       test or by hand with the command in the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,5 +78,29 @@ should hold only what it reads.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Every bundle layer is now a table `build.rs` writes, and its walk skips
+`README.md`, so no build embeds one (ADR-0105). `include_dir` is gone from the
+game's own crates; it stays in `Cargo.lock` through the engine.
+
+Deviations from the steps: none of the ticket's three ways was taken as
+written. The nearest is the filtered copy, but the tables that already existed
+for the Playdate needed no copy. The dialogue tests that run the README's
+examples now read it with `include_str!`. `lang.rs` lost its README filter,
+and `playdate-bundle.txt` its `**/README.md` line and `**/` form, which nothing
+else used.
+
+With `private-assets`, a missing `assets-private/test/` now gives an empty
+table where it used to stop a debug build from compiling (ADR-0105).
+
+Binary check, on `cargo build --release -p trpg-app`: a sentence each of the
+maps, dialogue and lang READMEs is found 0 times. There was no older release
+build to compare with, so the search itself was only controlled with a word
+the game's data does hold.
+
+The engine's credits check still excuses a private `README.md`; the bundle
+just no longer hands it one. No gameplay rule was decided.
+
+No line estimate was written before coding. Measured: 39 production lines
+added, 23 removed.
+
+Nothing for Nick to check.
