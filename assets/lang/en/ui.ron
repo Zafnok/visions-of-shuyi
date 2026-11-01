@@ -434,6 +434,12 @@
 
     // Under a lesson's checklist (0456): how many of its items are done.
     "battle.lesson.progress": "{n} of {m} done",
+    "battle.lessons_end.heading": "That's the lessons",
+    "battle.lessons_end.text": "That's all I've got. You're on your own now.\nNeed a reminder? Guides, in the map menu ({Cancel}).\nA fresh start costs nothing, if you want one.",
+    "battle.lessons_end.keep_going": "Keep going",
+    "battle.lessons_end.restart": "Restart the battle",
+    "battle.lessons_end.restart_with_lessons": "Restart with the lessons",
+    "battle.lessons_end.help": "{Cursor} choose · {Confirm} pick",
 
     // The battle: its help bar. A `help` is a whole line; a `hint` is one
     // part of a line whose parts come and go. `{keys}`, `{accept}` and

@@ -33,7 +33,7 @@ use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
 use crate::tips as tip_box;
-use crate::tips::LessonView;
+use crate::tips::{LessonView, LessonsEndView};
 use crate::widgets::menu::{self, MenuView};
 use trpg_core::Outcome;
 
@@ -98,6 +98,9 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(lesson) = &view.lesson {
         paint_lesson(ctx, &view.scene, lesson, buf);
     }
+    if let Some(end) = &view.lessons_end {
+        paint_lessons_end(ctx, &view.scene, end, buf);
+    }
     if let Some(tip) = &view.tip {
         tip_box::glyph::paint(ctx, tip, buf);
     }
@@ -109,11 +112,20 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 /// map skin draws `scene` (0456). Else (or with that tile out of view)
 /// against the top edge.
 pub fn lesson_at_bottom(ctx: &Ctx, scene: &MapScene, lesson: &LessonView) -> bool {
-    let tile = ctx
-        .game
-        .map_skin
-        .tile_cells(scene, MAP_VIEW, lesson.clear_of);
+    clear_at_bottom(ctx, scene, lesson.clear_of)
+}
+
+/// Whether a box that must not hide `tile` goes against the bottom edge.
+fn clear_at_bottom(ctx: &Ctx, scene: &MapScene, tile: trpg_core::Pos) -> bool {
+    let tile = ctx.game.map_skin.tile_cells(scene, MAP_VIEW, tile);
     tile.is_some_and(in_top_half)
+}
+
+/// Paints the box at the end of the lessons over the map that shows `scene`,
+/// clear of the cursor's tile.
+pub fn paint_lessons_end(ctx: &Ctx, scene: &MapScene, end: &LessonsEndView, buf: &mut GlyphBuffer) {
+    let at_bottom = clear_at_bottom(ctx, scene, end.clear_of);
+    tip_box::glyph::paint_lessons_end(ctx, end, at_bottom, buf);
 }
 
 /// Paints `lesson`'s box over the map that shows `scene`, clear of the

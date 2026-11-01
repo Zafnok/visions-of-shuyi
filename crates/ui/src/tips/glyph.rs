@@ -13,7 +13,7 @@
 //! item, its further rows under its label. Without the face every line of
 //! the formats fits.
 
-use super::view::{FaceView, LessonView, TipView};
+use super::view::{FaceView, LessonView, LessonsEndView, TipView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait_in;
@@ -151,6 +151,29 @@ pub fn lesson_rect(view: &LessonView, at_bottom: bool) -> Rect {
     Rect::new(left(w), y, w, h)
 }
 
+/// The rows of `view`'s text, wrapped to fit beside the face.
+fn lessons_end_lines(view: &LessonsEndView) -> Vec<String> {
+    wrapped(&view.lines, text_room(view.face.as_ref()))
+}
+
+/// Where the box at the end of the lessons goes: against the top edge of the
+/// map view, or its bottom edge if `at_bottom`, centred on it (`left`).
+pub fn lessons_end_rect(view: &LessonsEndView, at_bottom: bool) -> Rect {
+    let lines = lessons_end_lines(view);
+    let text = widest(lines.iter().chain([&view.heading]));
+    let answers = MARK_CELLS + widest(view.answers.iter());
+    // A blank row, the heading, the lines, a blank row, the answers, a blank
+    // row.
+    let rows = lines.len() + view.answers.len() + 4;
+    let (w, h) = size(&view.title, view.face.as_ref(), text.max(answers), rows);
+    let y = if at_bottom {
+        MAP_VIEW.y + MAP_VIEW.h - h
+    } else {
+        MAP_VIEW.y
+    };
+    Rect::new(left(w), y, w, h)
+}
+
 /// Paints a box at `rect` with `title` over its top border and `face` (if
 /// the game has its portrait) at its top left. Returns the column its text
 /// starts at: right of the face's place, if it has one.
@@ -244,6 +267,28 @@ pub fn paint_lesson(ctx: &Ctx, view: &LessonView, at_bottom: bool, buf: &mut Gly
         c(UiColor::TextDim),
         bg,
     );
+}
+
+/// Paints the box at the end of the lessons, against the map view's bottom
+/// edge if `at_bottom`, else its top edge: the answer the cursor is on
+/// highlighted, with a mark before it.
+pub fn paint_lessons_end(ctx: &Ctx, view: &LessonsEndView, at_bottom: bool, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let rect = lessons_end_rect(view, at_bottom);
+    let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
+    let lines = lessons_end_lines(view);
+    let mut y = paint_text(ctx, (x, rect.y + 2), &view.heading, &lines, buf) + 1;
+    for (i, answer) in view.answers.iter().enumerate() {
+        y += 1;
+        if i == view.focus {
+            let highlight = c(UiColor::TextHighlight);
+            buf.print(x, y, ">", highlight, bg);
+            buf.print(x + MARK_CELLS, y, answer, highlight, bg);
+        } else {
+            buf.print(x + MARK_CELLS, y, answer, c(UiColor::Text), bg);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -384,6 +429,51 @@ mod tests {
         assert_eq!(fg(r.x + 6, r.y + 6), Some(c.palette.get(UiColor::Text)));
     }
 
+    /// Ticket 0465: the box at the end of the lessons is its border, a blank
+    /// row, the heading, the text, a blank row, the answers and a blank row;
+    /// against the map's top edge, or its bottom one; the mark on the answer
+    /// the cursor is on.
+    #[test]
+    fn the_lessons_end_box_holds_its_rows_at_the_top_or_the_bottom() {
+        let v = LessonsEndView {
+            title: "Guide".into(),
+            face: None,
+            heading: "Head".into(),
+            lines: vec!["one".to_owned(), "two".to_owned()],
+            answers: vec!["a".to_owned(), "bb".to_owned(), "l".repeat(30)],
+            focus: 1,
+            clear_of: trpg_core::Pos::new(0, 0),
+        };
+        let top = lessons_end_rect(&v, false);
+        assert_eq!((top.y, top.h), (MAP_VIEW.y, 2 + 9));
+        // The widest answer: its mark and its label, in the margins.
+        assert_eq!(top.w, 2 + 4 + 30 + 2);
+        let bottom = lessons_end_rect(&v, true);
+        assert_eq!(bottom.y + bottom.h, MAP_VIEW.y + MAP_VIEW.h);
+        assert_eq!((bottom.x, bottom.w, bottom.h), (top.x, top.w, top.h));
+        let c = ctx();
+        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+        paint_lessons_end(&c, &v, false, &mut buf);
+        let row = |y: i32| -> String {
+            (top.x + 2..top.x + top.w - 2)
+                .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+                .collect::<String>()
+                .trim_end()
+                .to_owned()
+        };
+        let rows: Vec<String> = (top.y + 1..top.y + top.h - 1).map(row).collect();
+        let long = format!("    {}", "l".repeat(30));
+        assert_eq!(
+            rows,
+            ["", "Head", "one", "two", "", "    a", ">   bb", &long, ""]
+        );
+        let fg = |x, y| buf.get(x, y).map(|c| c.fg);
+        let highlight = Some(c.palette.get(UiColor::TextHighlight));
+        assert_eq!(fg(top.x + 6, top.y + 7), highlight);
+        assert_eq!(fg(top.x + 6, top.y + 6), Some(c.palette.get(UiColor::Text)));
+    }
+
     #[test]
     fn the_face_is_on_the_left_at_128_pixels_and_the_text_beside_it() {
         let c = with_guide();
@@ -520,6 +610,12 @@ mod tests {
             let mut v = TipView::new(&c, tip);
             v.face = face();
             assert!(inside(rect(&v)), "{:?}: {:?}", tip.trigger, rect(&v));
+        }
+        let mut end = LessonsEndView::new(&c, 0, trpg_core::Pos::new(0, 0));
+        end.face = face();
+        for at_bottom in [false, true] {
+            let r = lessons_end_rect(&end, at_bottom);
+            assert!(inside(r), "the end of the lessons: {r:?}");
         }
         assert_ne!(
             c.game.content.lessons.lessons,

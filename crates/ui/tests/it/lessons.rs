@@ -14,6 +14,8 @@ use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 /// The test lesson.
 const TEST_LESSON: &str = "test_cursor";
+/// What the campaign keeps once the box at the end of the lessons is answered.
+const END_ANSWERED: &str = "lessons_end_answered";
 
 /// A launch on `storage` with the right-handed layout picked, New Game on
 /// the test chapter, and the lessons on (as the game has them).
@@ -79,8 +81,9 @@ fn at_full_the_lesson_opens_holds_the_turn_and_closes() {
     assert_eq!(battle(&h).shown_lesson(), None);
     assert!(!h.snapshot().contains("Moving the cursor"));
     assert_eq!(lessons_done(&h), [TEST_LESSON]);
-    // Now End turn asks, and yes ends the phase.
-    h.keys("Space f");
+    // Keep going at the end of the lessons (0465); now End turn asks, and
+    // yes ends the phase.
+    h.keys("f Space f");
     assert_ne!(battle(&h).state().phase(), Phase::Player);
 }
 
@@ -116,6 +119,9 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
     to_battle(&mut h, "");
     h.keys("Up Down Left Right");
     assert_eq!(lessons_done(&h), [TEST_LESSON]);
+    // Keep going at the end of the lessons (0465).
+    h.keys("f");
+    assert_eq!(lessons_done(&h), [END_ANSWERED, TEST_LESSON]);
     // The map menu's Suspend, then yes.
     h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
@@ -124,7 +130,7 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
         .ok()
         .flatten()
         .unwrap_or_else(|| panic!("no suspend save"));
-    assert!(saved.contains("lessons_done:[\"test_cursor\"]"), "{saved}");
+    assert!(saved.contains("\"test_cursor\""), "{saved}");
     // The next launch: Continue.
     let mut h = launch(h.into_storage());
     h.keys("f");
@@ -132,7 +138,7 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
     h.wait(1.0);
     assert_eq!(battle(&h).state().turn(), 1);
     assert_eq!(battle(&h).shown_lesson(), None);
-    assert_eq!(lessons_done(&h), [TEST_LESSON]);
+    assert_eq!(lessons_done(&h), [END_ANSWERED, TEST_LESSON]);
 }
 
 /// Not done when suspended: the lesson opens again on Continue, from

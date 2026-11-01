@@ -117,6 +117,23 @@ New Game asks the player how familiar they are, with three answers:
   end. Lessons that need no unit (the cursor, the keys, the next unit,
   ending the turn, rewind) are unchanged. *Claude's starting rule.*
 
+- **The end of the lessons** (0465, Nick: "you're on your own for the
+  rest, if you need any help, here is where you find the Guide", and "ask
+  if the player is OK with their position or wants to retry battle with no
+  penalty, or retry tutorial with no penalty"). When the last lesson the
+  tutorial level shows is done, the guide says so, points at Guides in the
+  map menu, and asks: **Keep going** (the cursor starts here), **Restart
+  the battle** (back to turn 1, the lessons stay done), or **Restart with
+  the lessons** (back to turn 1, the lessons finished in this battle show
+  again). Neither restart costs anything: a restart spends no rewind
+  charge and counts nowhere. Never at None. *Claude's starting rules:* the
+  box waits until the map is back to browsing, so it doesn't cut into what
+  the last lesson had the player doing; it shows once per campaign, so
+  finishing the lessons a second time doesn't ask again; it needs a
+  campaign, so the debug Quick Battle has none. Since Spells that change
+  tiles and Combat Arts wait for their first chance, it can come on a
+  later turn or in a later battle.
+
 **Basic controls** (Full only):
 
 - Moving the cursor: up, down, left, right.
@@ -204,3 +221,4 @@ pictures in Guides (0469), a profile nudge on the title (0842), Vix's ears
 - **0457** the lessons themselves.
 - **0458** the new tips and the *Guides* list.
 - **0731** the guide's name and lines.
+- **0465** the guide's box at the end of the lessons.

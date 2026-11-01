@@ -19,6 +19,37 @@ use trpg_core::TutorialLevel;
 
 use crate::screen::{Ctx, Lessons};
 
+/// What the campaign keeps with its lessons once the player has answered
+/// the box at the end of them (0465): never a lesson's id. It stays through
+/// "Restart with the lessons", so the box shows once per campaign.
+const END_ANSWERED: &str = "lessons_end_answered";
+
+/// An answer to the box at the end of the lessons (0465), in the box's order:
+/// the cursor starts on the first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EndAnswer {
+    /// The battle goes on.
+    KeepGoing,
+    /// Back to turn 1; the lessons stay done.
+    Restart,
+    /// Back to turn 1; this battle's lessons show again.
+    RestartWithLessons,
+}
+
+impl EndAnswer {
+    /// Every answer, in the box's order.
+    pub const ALL: [Self; 3] = [Self::KeepGoing, Self::Restart, Self::RestartWithLessons];
+
+    /// Text key of its label.
+    pub fn text_key(self) -> &'static str {
+        match self {
+            Self::KeepGoing => "battle.lessons_end.keep_going",
+            Self::Restart => "battle.lessons_end.restart",
+            Self::RestartWithLessons => "battle.lessons_end.restart_with_lessons",
+        }
+    }
+}
+
 /// A lesson waiting or in play.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Waiting {
@@ -56,6 +87,9 @@ pub struct LessonState {
     /// The lessons put away unfinished ([`put_away`](Self::put_away)) and
     /// the turn they were put away in: they don't come back that turn.
     away: Vec<(String, u32)>,
+    /// The lessons finished on this screen, for "Restart with the lessons"
+    /// ([`show_again`](Self::show_again), 0465).
+    finished: Vec<String>,
 }
 
 impl LessonState {
@@ -72,6 +106,39 @@ impl LessonState {
     pub fn shows(ctx: &Ctx, level: LessonLevel) -> bool {
         ctx.game.lessons == Lessons::On
             && level.shows_at(ctx.game.campaign_tutorial.unwrap_or(TutorialLevel::Full))
+    }
+
+    /// Whether the campaign has finished every lesson its tutorial level
+    /// shows in battle `battle` (at least one), and hasn't answered the box
+    /// at the end of them yet (0465). A battle with no campaign has no such
+    /// box.
+    pub fn end_due(ctx: &Ctx, battle: Option<&str>) -> bool {
+        let done = &ctx.game.campaign_lessons;
+        if ctx.game.campaign_tutorial.is_none() || done.contains(END_ANSWERED) {
+            return false;
+        }
+        let mut shown = ctx
+            .game
+            .content
+            .lessons
+            .lessons
+            .iter()
+            .filter(|l| Self::shows(ctx, l.level) && l.starts_in(battle))
+            .peekable();
+        shown.peek().is_some() && shown.all(|l| done.contains(&l.id))
+    }
+
+    /// The campaign keeps that the box at the end of the lessons was answered.
+    pub fn end_answered(ctx: &mut Ctx) {
+        ctx.game.campaign_lessons.insert(END_ANSWERED.to_owned());
+    }
+
+    /// The lessons finished on this screen aren't done any more: they show
+    /// again when the battle starts again.
+    pub fn show_again(&self, ctx: &mut Ctx) {
+        for id in &self.finished {
+            ctx.game.campaign_lessons.remove(id);
+        }
     }
 
     /// Queues the lessons the fired triggers start in battle `battle`:
@@ -197,6 +264,7 @@ impl LessonState {
         }
         if front.ticked.iter().all(|&t| t) {
             ctx.game.campaign_lessons.insert(front.id.clone());
+            self.finished.push(front.id.clone());
             self.queue.pop_front();
             self.open = false;
         }
@@ -367,6 +435,75 @@ mod tests {
         assert!(!s.is_open() && !s.holds_turn());
         s.mark_open();
         assert!(!s.is_open());
+    }
+
+    /// Ticket 0465: the end of the lessons is due when every lesson the
+    /// level shows is done, in a campaign, until it is answered; a level
+    /// with none to show (None), or lessons off, never has it. Going up a
+    /// level holds it back until the new lessons are done too. A lesson
+    /// only for another battle doesn't count.
+    #[test]
+    fn the_end_is_due_once_every_lesson_shown_is_done_until_it_is_answered() {
+        let first = TipTrigger::FirstBattleStart;
+        let mut elsewhere = lesson("elsewhere", LessonLevel::Short, first, &[UP]);
+        elsewhere.battles = vec!["other".into()];
+        let mut c = with(vec![
+            lesson("basic", LessonLevel::Full, first, &[UP]),
+            lesson("short", LessonLevel::Short, first, &[UP]),
+            elsewhere,
+        ]);
+        let due = |c: &Ctx| LessonState::end_due(c, Some("here"));
+        // No campaign: never.
+        c.game.campaign_lessons.insert("basic".into());
+        c.game.campaign_lessons.insert("short".into());
+        assert!(!due(&c));
+        c.game.campaign_lessons.clear();
+        c.game.campaign_tutorial = Some(TutorialLevel::Short);
+        assert!(!due(&c), "nothing done yet");
+        c.game.campaign_lessons.insert("short".into());
+        assert!(due(&c));
+        assert!(
+            !LessonState::end_due(&c, Some("other")),
+            "one is left there"
+        );
+        c.game.lessons = Lessons::Off;
+        assert!(!due(&c));
+        c.game.lessons = Lessons::On;
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
+        assert!(!due(&c), "a basic lesson is left");
+        c.game.campaign_lessons.insert("basic".into());
+        assert!(due(&c));
+        c.game.campaign_tutorial = Some(TutorialLevel::None);
+        assert!(!due(&c), "None shows nothing");
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
+        LessonState::end_answered(&mut c);
+        assert!(!due(&c), "once per campaign");
+    }
+
+    /// Ticket 0465: "Restart with the lessons" takes back what this screen
+    /// finished, not what an earlier battle did, and not the answer.
+    #[test]
+    fn showing_again_takes_back_only_the_lessons_of_this_screen() {
+        let first = TipTrigger::FirstBattleStart;
+        let mut c = with(vec![
+            lesson("before", LessonLevel::Full, TipTrigger::FirstLowHp, &[UP]),
+            lesson("here", LessonLevel::Full, first, &[UP]),
+        ]);
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
+        c.game.campaign_lessons.insert("before".into());
+        let mut s = start(&c);
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
+        LessonState::end_answered(&mut c);
+        s.show_again(&mut c);
+        assert!(c.game.campaign_lessons.contains("before"));
+        assert!(!c.game.campaign_lessons.contains("here"));
+        assert!(c.game.campaign_lessons.contains(END_ANSWERED));
+        // They come back with their trigger; the box doesn't.
+        let s = start(&c);
+        assert_eq!(s.current(), Some("here"));
+        c.game.campaign_lessons.insert("here".into());
+        assert!(!LessonState::end_due(&c, None));
     }
 
     /// No unit left: nothing that takes one can be done.
