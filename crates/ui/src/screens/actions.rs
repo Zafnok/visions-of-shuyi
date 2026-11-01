@@ -209,3 +209,30 @@ pub(crate) fn assert_declares(
         screen.name()
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Each screen is listed once, with its table's actions, and the
+    /// engine's with the ones they declare for themselves.
+    #[test]
+    fn every_screen_lists_each_screen_once_with_its_actions() {
+        let screens = every_screen();
+        let listed = |name: &str| {
+            let mut found = screens.iter().filter(|s| s.screen == name);
+            let screen = found.next().unwrap_or_else(|| panic!("no {name}"));
+            assert!(found.next().is_none(), "{name} twice");
+            screen.actions.clone().unwrap_or_default()
+        };
+        assert_eq!(screens.len(), 32);
+        assert_eq!(listed(BattleScreen::NAME), BATTLE);
+        assert_eq!(listed("title"), TITLE);
+        assert_eq!(listed(FlowScreen::NAME), FLOW);
+        let options = crate::screens::options::screen();
+        assert_eq!(
+            Some(listed(OptionsScreen::NAME)),
+            crate::screen::Screen::actions(&options)
+        );
+    }
+}

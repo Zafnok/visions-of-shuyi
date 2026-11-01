@@ -16,7 +16,10 @@
 # `Debuffs::visit_none` and `visit_unit` (`crates/core/src/art.rs`) return
 # an empty list, which is what `Default::default()` is: that mutant changes
 # nothing (ticket 0325).
-exclude_re = ["Debuffs>::visit_(none|unit)"]
+#
+# `FlowScreen::actions` (`crates/ui/src/flow.rs`) declares an empty list, so
+# `Some(vec![])` changes nothing (ticket 0140).
+exclude_re = ["Debuffs>::visit_(none|unit)", "FlowScreen>::actions.*Some\(vec!\[\]\)"]
 exclude_globs = [
     "crates/app/**",
     "crates/playdate/src/pd/**",
