@@ -3,7 +3,8 @@
 //! The game builds on one engine commit, the pin (`shuyi-engine.rev`). This
 //! crate lists every engine PR between the pin and the engine's `main`,
 //! sorts each into *Breaking*, *Unblocks*, *New for games* or *Nothing for
-//! the game*, and says whether a pin move is due: a PR changed the public
+//! the game* (a PR that breaks the API and adds to it is in the first and
+//! the third), and says whether a pin move is due: a PR changed the public
 //! API, unblocks a game ticket, or changed engine code more than 48 hours
 //! ago. `.github/workflows/engine-watch.yml` files the answer as the one
 //! open issue labelled `engine-pin`, and the `engine-pin` skill works it.
@@ -76,7 +77,7 @@ pub struct OpenTicket {
     pub blocked_by: Vec<String>,
 }
 
-/// Where a PR goes in the report: the first that fits.
+/// A section of the report a PR goes in.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Kind {
     /// It breaks the public API: its `Breaking:` lines.
@@ -105,8 +106,8 @@ pub enum Why {
 pub struct Row {
     /// The PR.
     pub pr: EnginePr,
-    /// Its section.
-    pub kind: Kind,
+    /// Its sections: one, or *Breaking* and *New for games*.
+    pub kinds: Vec<Kind>,
 }
 
 /// The engine commits between the pin and `main`, as fetched.
@@ -211,6 +212,47 @@ fn declares_public(patch: &str) -> bool {
     })
 }
 
+/// Whether a patch adds a line that declares a public item.
+fn adds_public_line(patch: &str) -> bool {
+    patch.lines().any(|line| {
+        line.strip_prefix('+')
+            .map(str::trim_start)
+            .and_then(|c| c.strip_prefix("pub"))
+            .is_some_and(|rest| rest.starts_with(char::is_whitespace))
+    })
+}
+
+/// Whether a file is in the `src/` of a crate in `api_dirs`.
+fn in_api_src(file: &PrFile, api_dirs: &[String]) -> bool {
+    api_dirs
+        .iter()
+        .any(|dir| file.path.starts_with(&format!("{dir}src/")))
+}
+
+/// Whether a PR adds to the public API: the `api: added` label, or a public
+/// item added in a `src/` file of a crate in `api_dirs` (a file without a
+/// patch counts).
+fn adds_public(pr: &EnginePr, api_dirs: &[String]) -> bool {
+    api_label(pr) == Some("added")
+        || pr.files.iter().any(|file| {
+            in_api_src(file, api_dirs) && file.patch.as_deref().is_none_or(adds_public_line)
+        })
+}
+
+/// What a PR breaks: its `Breaking:` lines, or its `api: breaking` label.
+fn breaks(pr: &EnginePr) -> Vec<String> {
+    let mut lines = breaking_lines(pr);
+    if lines.is_empty() && api_label(pr) == Some("breaking") {
+        lines.push("the `api: breaking` label".to_owned());
+    }
+    lines
+}
+
+/// Whether the report lists a PR under both *Breaking* and *New for games*.
+pub fn breaks_and_adds(pr: &EnginePr, api_dirs: &[String]) -> bool {
+    !breaks(pr).is_empty() && adds_public(pr, api_dirs)
+}
+
 /// Whether a PR changes the engine's public API: its `api:` label when it
 /// has one, otherwise a public item declared or removed in a `src/` file of
 /// a crate in `api_dirs` (a file without a patch counts). A `Breaking:`
@@ -222,12 +264,9 @@ pub fn changes_public_api(pr: &EnginePr, api_dirs: &[String]) -> bool {
     if let Some(verdict) = api_label(pr) {
         return verdict != "none";
     }
-    pr.files.iter().any(|file| {
-        api_dirs
-            .iter()
-            .any(|dir| file.path.starts_with(&format!("{dir}src/")))
-            && file.patch.as_deref().is_none_or(declares_public)
-    })
+    pr.files
+        .iter()
+        .any(|file| in_api_src(file, api_dirs) && file.patch.as_deref().is_none_or(declares_public))
 }
 
 /// The `Breaking:` lines of a PR's body and of its tickets' notes, without
@@ -355,10 +394,7 @@ pub fn classify(
     let mut rows = Vec::new();
     for pr in gap.prs {
         let public = changes_public_api(&pr, api_dirs);
-        let mut breaking = breaking_lines(&pr);
-        if breaking.is_empty() && api_label(&pr) == Some("breaking") {
-            breaking.push("the `api: breaking` label".to_owned());
-        }
+        let breaking = breaks(&pr);
         let waits = unblocks(&pr, open, markers);
         let code = pr.files.iter().any(|f| f.path.starts_with("crates/"));
         let waited = epoch_seconds(&pr.merged_at).is_some_and(|t| now - t > WAIT_SECS);
@@ -372,16 +408,20 @@ pub fn classify(
             let day = pr.merged_at.get(..10).unwrap_or(&pr.merged_at).to_owned();
             due_wait = Some(Why::Waited(day));
         }
-        let kind = if !breaking.is_empty() {
-            Kind::Breaking(breaking)
+        let kinds = if !breaking.is_empty() {
+            let mut kinds = vec![Kind::Breaking(breaking)];
+            if adds_public(&pr, api_dirs) {
+                kinds.push(Kind::NewForGames);
+            }
+            kinds
         } else if !waits.is_empty() {
-            Kind::Unblocks(waits)
+            vec![Kind::Unblocks(waits)]
         } else if public {
-            Kind::NewForGames
+            vec![Kind::NewForGames]
         } else {
-            Kind::Nothing
+            vec![Kind::Nothing]
         };
-        rows.push(Row { pr, kind });
+        rows.push(Row { pr, kinds });
     }
     Report {
         pin: gap.pin,

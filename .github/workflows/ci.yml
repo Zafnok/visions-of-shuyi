@@ -278,6 +278,8 @@ jobs:
       # Cargo.toml and Cargo.lock, and the lock isn't the local checkout's
       # (ADR-0063 §8, ticket 1131).
       - name: Check the engine's pin
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo xtask engine-pin --check
       # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097).
       - name: Check the engine's skill pack

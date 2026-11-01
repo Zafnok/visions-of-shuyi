@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1197 — The pin review asks what each engine PR gives the game
@@ -105,14 +105,14 @@ the skill's step 4 rewritten.
 
 ## Acceptance criteria
 
-- [ ] A test in `crates/engine-watch/src/tests.rs`: a PR with a
+- [x] A test in `crates/engine-watch/src/tests.rs`: a PR with a
       `Breaking:` line and a `+pub fn` is in both sections of the report.
-- [ ] `engine-pin --check` fails on a ledger whose row for such a PR has
+- [x] `engine-pin --check` fails on a ledger whose row for such a PR has
       only `fixed:`, and passes with `fixed: …; adopt → NNNN`.
-- [ ] The skill's step 4 asks about gains first and has the examples
+- [x] The skill's step 4 asks about gains first and has the examples
       above.
-- [ ] `cargo shuyi check-skills .claude/skills` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo shuyi check-skills .claude/skills` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -121,4 +121,26 @@ the skill's step 4 rewritten.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `classify` gives each row its `kinds`. A PR that breaks and adds is under
+  *Breaking* and *New for games*. *Nothing for the game* is an open table with
+  a Labels column. The `engine-pin` skill's step 4 is now a review of gains.
+- **`--check` now asks GitHub.** The ledger can't say which PRs the report
+  lists in both sections, so `cargo xtask engine-pin --check` asks `gh` about
+  the last section's `fixed:`-only rows, and only those: no such row, no call.
+  CI's step has `GH_TOKEN`. Run locally, it needs `gh` signed in when such a
+  row exists. ADR-0096 §6 lists the older checks; this ticket and the header
+  of `docs/engine/pins.md` add this one.
+- **Deviation:** tests run `engine::check`, which stays offline.
+  `check_with_gains` adds the GitHub step for the command itself, so no test
+  reaches the network. It and `gain_problems` are left out of mutation testing,
+  like `fetch.rs`. Tried by hand on the real ledger: cutting #187's row down to
+  `fixed:` fails naming #187, and the real ledger passes.
+- **Deviation:** no carve-out for old sections was needed. Only the last
+  section is asked about, and every `fixed:` row in it already has a second
+  decision.
+- A PR that breaks the API and also unblocks a ticket is still not listed under
+  *Unblocks*, as before (the ticket's scope is Breaking and New for games).
+- Friction: 2.65× (estimate 60, measured 159), accepted because it is game
+  tooling: the ticket's estimate left out the online step and splitting it
+  from the tests.
+- No gameplay-affecting rules. No follow-up tickets.

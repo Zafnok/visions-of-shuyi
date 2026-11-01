@@ -6,7 +6,7 @@ use std::fmt::Write as _;
 use std::hash::BuildHasher;
 
 use crate::ledger::{self, Section};
-use crate::{ENGINE_REPO, Kind, Report, Row, Why};
+use crate::{ENGINE_REPO, Kind, Report, Why};
 
 /// What the workflow's run adds to the issue's marker.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -75,8 +75,13 @@ fn title_why(due: Option<&Why>) -> String {
     }
 }
 
-/// One section's table, or "None.".
-fn table(out: &mut String, rows: &[&Row], extra: Option<&str>) {
+/// The table of the section `pick` chooses, or "None.".
+fn table(out: &mut String, report: &Report, pick: fn(&Kind) -> bool, extra: Option<&str>) {
+    let rows: Vec<_> = report
+        .rows
+        .iter()
+        .filter_map(|r| r.kinds.iter().find(|k| pick(k)).map(|k| (r, k)))
+        .collect();
     if rows.is_empty() {
         out.push_str("None.\n");
         return;
@@ -87,12 +92,14 @@ fn table(out: &mut String, rows: &[&Row], extra: Option<&str>) {
         extra.map_or(String::new(), |e| format!(" {e} |")),
         if extra.is_some() { " --- |" } else { "" },
     );
-    for row in rows {
-        let more = match &row.kind {
+    for (row, kind) in rows {
+        let more = match kind {
             Kind::Breaking(lines) | Kind::Unblocks(lines) => {
                 format!(" {} |", cell(&lines.join("; ")))
             }
-            Kind::NewForGames | Kind::Nothing => String::new(),
+            Kind::Nothing if row.pr.labels.is_empty() => " no labels |".to_owned(),
+            Kind::Nothing => format!(" {} |", cell(&row.pr.labels.join(", "))),
+            Kind::NewForGames => String::new(),
         };
         let _ = writeln!(
             out,
@@ -122,38 +129,27 @@ pub fn render<S: BuildHasher>(
         title_why(report.due.as_ref())
     );
     let mut body = head(report, run);
-    let of = |pick: fn(&Kind) -> bool| {
-        report
-            .rows
-            .iter()
-            .filter(|r| pick(&r.kind))
-            .collect::<Vec<_>>()
-    };
     body.push_str(
-        "\n### Breaking\n\nFixed in the pin PR, on the game side, with behaviour unchanged.\n\n",
+        "\n### Breaking\n\nFixed in the pin PR, on the game side, with behaviour unchanged. A PR also under *New for games* needs that decision too.\n\n",
     );
     table(
         &mut body,
-        &of(|k| matches!(k, Kind::Breaking(_))),
+        report,
+        |k| matches!(k, Kind::Breaking(_)),
         Some("Breaking"),
     );
     body.push_str("\n### Unblocks\n\nThese game tickets become ready; the pin PR does nothing else for them.\n\n");
     table(
         &mut body,
-        &of(|k| matches!(k, Kind::Unblocks(_))),
+        report,
+        |k| matches!(k, Kind::Unblocks(_)),
         Some("Game tickets"),
     );
-    body.push_str("\n### New for games\n\nEach gets a decision in the review: `adopt → NNNN` or `not for the game: …`.\n\n");
-    table(&mut body, &of(|k| *k == Kind::NewForGames), None);
-    let nothing = of(|k| *k == Kind::Nothing);
-    let _ = writeln!(
-        body,
-        "\n### Nothing for the game\n\n<details><summary>{} PR{}</summary>\n",
-        nothing.len(),
-        plural(nothing.len())
-    );
-    table(&mut body, &nothing, None);
-    body.push_str("\n</details>\n\n### Adoption tickets still open\n\n");
+    body.push_str("\n### New for games\n\nWhat does each let the game do, check or delete? Each gets a decision in the review: `adopt → NNNN` or `not for the game: …`.\n\n");
+    table(&mut body, report, |k| *k == Kind::NewForGames, None);
+    body.push_str("\n### Nothing for the game\n\nNo public API added. Read each title: a PR that changes behavior or adds a suite or check in a crate the game links gets a ledger row and a decision, whatever its label says.\n\n");
+    table(&mut body, report, |k| *k == Kind::Nothing, Some("Labels"));
+    body.push_str("\n### Adoption tickets still open\n\n");
     body.push_str(&adoptions(ledger, open_ids, report.now));
     body.push_str(
         "\n### The work\n\nWork this issue with the `engine-pin` skill (`.claude/skills/engine-pin/SKILL.md`), in one PR, \
@@ -161,6 +157,7 @@ pub fn render<S: BuildHasher>(
          - [ ] `cargo xtask engine-pin --report`, then pin the engine's `main` as it is then\n\
          - [ ] fix each *Breaking* row on the game side, behaviour unchanged\n\
          - [ ] decide each *New for games* row: `adopt → NNNN` or `not for the game: …`\n\
+         - [ ] read each *Nothing for the game* title for a gain its label hides\n\
          - [ ] write the pin move's section in `docs/engine/pins.md`\n\
          - [ ] open the PR `Engine pin: <old 8> → <new 8> (N engine PRs)` that closes this issue\n",
     );

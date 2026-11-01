@@ -2,7 +2,7 @@
 //! move, newest last, headed `## YYYY-MM-DD: <from 8 hex> → <to 8 hex> (N
 //! engine PRs)`, with a row and a decision for every *Breaking*, *Unblocks*
 //! and *New for games* engine PR. `cargo xtask engine-pin --check` fails on
-//! what [`problems`] finds.
+//! what [`problems`] and [`gains_undecided`] find.
 
 use std::collections::HashSet;
 use std::hash::BuildHasher;
@@ -116,6 +116,49 @@ pub fn adopted(decision: &str) -> Vec<String> {
                 .filter(|id| id.chars().all(|c| c.is_ascii_digit()))
         })
         .map(str::to_owned)
+        .collect()
+}
+
+/// The engine PR a row's first cell names: `#88` or `[#88](…)`.
+fn pr_number(cell: &str) -> Option<u32> {
+    let digits = cell.split_once('#')?.1;
+    let end = digits
+        .find(|c: char| !c.is_ascii_digit())
+        .unwrap_or(digits.len());
+    digits[..end].parse().ok()
+}
+
+/// Whether a decision fixes a break and says nothing about adopting.
+fn is_fixed_only(decision: &str) -> bool {
+    decision.starts_with("fixed:")
+        && !decision.contains("adopt → ")
+        && !decision.contains("not for the game:")
+}
+
+/// The engine PRs of a section's rows with only a `fixed:`: the ones to ask
+/// GitHub about.
+pub fn fixed_only(section: &Section) -> Vec<u32> {
+    section
+        .rows
+        .iter()
+        .filter(|row| is_fixed_only(&row.decision))
+        .filter_map(|row| pr_number(&row.pr))
+        .collect()
+}
+
+/// What is wrong with a section's rows given `both`, the engine PRs the
+/// report lists under *Breaking* and *New for games*: a row with only a
+/// `fixed:`.
+pub fn gains_undecided(section: &Section, both: &[u32]) -> Vec<String> {
+    fixed_only(section)
+        .into_iter()
+        .filter(|number| both.contains(number))
+        .map(|number| {
+            format!(
+                "{PATH}, `{}`: engine PR #{number} also adds public items, so its row needs `fixed: …; adopt → NNNN` or `fixed: …; not for the game: …` (the `engine-pin` skill)",
+                section.heading
+            )
+        })
         .collect()
 }
 
@@ -242,6 +285,40 @@ mod tests {
             found[1].contains("the row of #90 has no decision"),
             "{found:?}"
         );
+    }
+
+    #[test]
+    fn a_fixed_row_of_a_pr_that_also_adds_needs_an_adoption_decision() {
+        let section = |decision: &str| {
+            let text = format!(
+                "## 2026-11-02: 1eaa1fa0 → 6e7f71fd\n| #88 | 2013 | Constructors | {decision} |\n| [#90](https://x/90) | 2024 | More | fixed: `new` |\n"
+            );
+            parse(&text).unwrap().remove(0)
+        };
+        let only = section("fixed: built with `new`");
+        assert_eq!(fixed_only(&only), [88, 90]);
+        let found = gains_undecided(&only, &[88]);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert!(found[0].contains("engine PR #88 also adds"), "{found:?}");
+        // Only breaks: nothing else to decide.
+        assert_eq!(gains_undecided(&only, &[]), [] as [String; 0]);
+        for decided in [
+            "fixed: built with `new`; adopt → 1191",
+            "fixed: built with `new`; not for the game: no modules",
+        ] {
+            assert_eq!(fixed_only(&section(decided)), [90]);
+            assert_eq!(gains_undecided(&section(decided), &[88]), [] as [String; 0]);
+        }
+        // Other decisions aren't asked about.
+        assert_eq!(fixed_only(&section("unblocks 1180")), [90]);
+    }
+
+    #[test]
+    fn a_row_names_its_pr_as_text_or_as_a_link() {
+        assert_eq!(pr_number("#88"), Some(88));
+        assert_eq!(pr_number("[#102](https://x/102)"), Some(102));
+        assert_eq!(pr_number("#"), None);
+        assert_eq!(pr_number("88"), None);
     }
 
     #[test]

@@ -175,22 +175,27 @@ fn engine(args: &[String]) -> u8 {
     report(engine::checkout(&repo_root(), off))
 }
 
+/// Prints what `engine-pin --check` found: its exit code.
+fn check_report(found: Result<String, Vec<String>>) -> u8 {
+    match found {
+        Ok(said) => {
+            println!("{said}");
+            0
+        }
+        Err(problems) => {
+            eprintln!("engine-pin: {} problem(s)", problems.len());
+            for problem in &problems {
+                eprintln!("  {problem}");
+            }
+            1
+        }
+    }
+}
+
 /// `engine-pin [<commit> | --check | --report]`: the engine's pinned commit.
 fn engine_pin(args: &[String]) -> u8 {
     match args {
-        [flag] if flag == "--check" => match engine::check(&repo_root()) {
-            Ok(said) => {
-                println!("{said}");
-                0
-            }
-            Err(problems) => {
-                eprintln!("engine-pin: {} problem(s)", problems.len());
-                for problem in &problems {
-                    eprintln!("  {problem}");
-                }
-                1
-            }
-        },
+        [flag] if flag == "--check" => check_report(engine::check_with_gains(&repo_root())),
         [flag] if flag == "--report" => report(engine::watch_report(&repo_root())),
         [commit] if !commit.starts_with('-') => report(engine::pin(&repo_root(), Some(commit))),
         [] => report(engine::pin(&repo_root(), None)),
@@ -1437,7 +1442,8 @@ mod tests {
 
     #[test]
     fn engine_pin_check_passes_on_the_real_repo() {
-        assert_eq!(engine_pin(&args(&["--check"])), 0);
+        assert_eq!(check_report(engine::check(&repo_root())), 0);
+        assert_eq!(check_report(Err(vec!["a problem".to_owned()])), 1);
         assert_eq!(engine_pin(&args(&["--bogus"])), 2);
         assert_eq!(engine_pin(&args(&["a", "b"])), 2);
         assert_eq!(engine(&args(&["--bogus"])), 2);
