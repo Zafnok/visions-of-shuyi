@@ -1,6 +1,6 @@
 # ADR-0046: Voice clips are files keyed by dialogue line id, generated now, replaceable by recordings
 
-- **Status:** Accepted (ticket 0238 built the plumbing; what it settled is under "As built")
+- **Status:** Accepted (ticket 0238 built the plumbing; what it settled is under "As built"); rules 1, 3 and 5 amended by ADR-0107
 - **Date:** 2026-10-03
 - **Related tickets:** 0043, 0238, 0717, 0720, 0721, 0722, 0826, 0907, 0903
 - **Amends:** ADR-0026 (a third kind of audio request) and ADR-0032 rule 2

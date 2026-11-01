@@ -5,10 +5,10 @@ type: design-decision
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-01
 ---
 
 # 0043 — Decide: AI voices — what is voiced, each voice by ear, on or off, the tool
@@ -96,11 +96,11 @@ existing character. No commissioning anyone (Nick's rule).
 
 ## Acceptance criteria
 
-- [ ] Every question has Nick's answer, verbatim, in the design doc.
-- [ ] The chosen tool's terms are quoted with date and URL and meet ADR-0046 rule 8.
-- [ ] A cast table covers every Chapter 1 speaker the answers say is voiced.
-- [ ] The listening page's source is in `assets-src/audio/`.
-- [ ] Dependent tickets are updated; `cargo xtask ticket-lint` passes.
+- [x] Every question has Nick's answer, verbatim, in the design doc.
+- [x] The chosen tool's terms are quoted with date and URL and meet ADR-0046 rule 8.
+- [x] A cast table covers every Chapter 1 speaker the answers say is voiced.
+- [x] The listening page's source is in `assets-src/audio/`.
+- [x] Dependent tickets are updated; `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -108,3 +108,55 @@ None (docs only).
 
 ## Completion notes
 
+Result: `docs/design/voices-languages-and-script.md`, *Voices*, with Nick's words,
+the rules, the cast table and the research; ADR-0107 for how the tools run. Free
+tools, per character: Qwen3-TTS designs every voice, and Qwen3-TTS or Chatterbox
+reads it. Nothing to pay. The 12 chosen voices are in
+`assets-src/audio/voice-refs/`.
+
+Listening pages: https://claude.ai/artifact/USzpopFocrPyqido9Ny5xC (the tools) and
+https://claude.ai/artifact/WQspqiQaEt5Wy4UUCdMCNn (the cast). Their sources are in
+`assets-src/audio/`. The clips and bought portraits are only in the published
+pages. The casting page's source shows only the last round, Vix's.
+
+Deviations from the plan:
+
+- Questions went in batches of up to three, not one at a time (the `ask-nick`
+  limit, since Nick's turns are expensive).
+- Nick answered question 1 per character, so there are two reading tools.
+- Nick added Vix to the voiced cast, and said button tutorials need no voices.
+  That made tickets 0475 and 0476.
+- Paid services were not sampled: Nick chose to hear the free tools first and was
+  satisfied. They are in reserve at the design doc's prices.
+- Mistakes corrected along the way: a question said 54 of 281 narration boxes and
+  17 lead lines; the real counts are 62 of 271 and 16. A woman's voice reached
+  Dace's first round, so pitch is now measured for men's parts. Rue's and Vix's
+  pitch-shifted candidates sounded bad and are ruled out; no chosen voice is one.
+
+Not verified: the script check ran on rounds 1 and 2 only, not on Rue's or Vix's
+later voices. Chapter 1's clips get it in 0722. No agent has heard any clip; Nick's
+ear is the check.
+
+Follow-up tickets:
+
+- **0077** decide the voices of the characters after Chapter 1
+- **0475** Vix's lines come apart from the objectives, with no key in what she says
+- **0476** Vix speaks her lessons and tips
+- **0754** the voice says another word for the player's name
+- **0755**, **0756** Japanese and Chinese voices for Chapter 1
+- **0757** generate Chapters 2 to 8's voices
+- **0859** auto-advance when the voice ends
+- **0860** a New Game options menu
+
+Updated: 0042, 0045, 0720, 0721, 0722, 0752, 0826, 0907, `docs/ROADMAP.md`,
+`docs/design/tutorial.md`, Vix's character sheet.
+
+**The agent's starting rules** (Nick can veto any):
+
+- The voice says "the exile" for the player's name for now, and a fitting word
+  later.
+- The New Game question comes after the familiarity question, until 0860.
+- A voice speaks the language of the text, with no separate setting.
+- Vix's sexy, upbeat direction is how she sounds, and her wording stays short and dry.
+- Auto-advance starts Off (0859). A player with no answer to the New Game question
+  yet hears voices (0826).

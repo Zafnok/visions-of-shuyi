@@ -110,7 +110,7 @@ covered); Cantonese. No mockup made with bought art is committed
       question 3 has his wife checking: whether the label says so
       ("machine translation, checked by a native reader") or stays as it
       is.
-   8. **Voices with Chinese text** is asked in 0043, not here.
+   8. **Voices with Chinese text** was answered in 0043: Chinese voices (0756).
 4. Record each answer verbatim and as a rule. If an answer needs work no
    ticket covers (a name list, system text input, a review step), write
    that ticket (`write-ticket`) and add it to 0726's `blocked_by` if

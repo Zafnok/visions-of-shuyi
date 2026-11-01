@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737"]
+blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737", "0754"]
 nick_input: none
 completed:
 ---
@@ -43,13 +43,13 @@ repository; `say.ron` entries for Chapter 1's names; the pin
 (`assets-private.rev`) in this repository.
 
 **Out (do not do):** rewording script lines so they read better aloud
-(write a ticket); other chapters; Japanese voices (a ticket of its own if
-0043 chose them); any clip committed to this repository.
+(write a ticket); other chapters (0757); Japanese and Chinese voices (0755,
+0756); Vix's lines (0476); any clip committed to this repository.
 
 ## Implementation steps
 
 1. `cargo xtask voice generate --dry-run`: note the line and character
-   counts. If the tool bills, tell Nick the cost and wait for his go.
+   counts. The tools are free, so there is nothing to approve.
 2. Add `say.ron` respellings for every name in Chapter 1; generate one
    line per name first and listen to each.
 3. `cargo xtask voice generate`. Listen to every clip once (or, if

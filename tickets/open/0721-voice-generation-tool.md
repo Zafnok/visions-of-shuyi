@@ -6,8 +6,8 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0043", "0238"]
-nick_input: setup
+blocked_by: ["0043", "0238", "0754"]
+nick_input: none
 completed:
 ---
 
@@ -17,18 +17,18 @@ completed:
 
 Voice clips are made outside the game by a tool and kept in the private
 assets repository ([ADR-0046](../../docs/adr/0046-voice-clips-by-line-id.md)
-rules 5 and 7). Nick picked the text-to-speech tool and each character's
-voice in 0043 (`docs/design/voices-languages-and-script.md`, *Voices*).
-Scripts will keep changing (and a hired writer may rewrite them), so the
-tool must redo only what changed, every time.
+rules 5 and 7). Nick picked the tools and each character's voice in 0043
+(`docs/design/voices-languages-and-script.md`, *Voices*), and
+[ADR-0107](../../docs/adr/0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md)
+says how they run: designed reference clips in
+`assets-src/audio/voice-refs/`, read by Qwen3-TTS or Chatterbox per
+character. Scripts will keep changing (and a hired writer may rewrite
+them), so the tool must redo only what changed, every time.
 
 ## Nick input
 
-**Setup**, only if 0043's tool needs it: installing it on his machine, or
-an account and a key. Write the exact steps in `docs/voice.md`. A key is
-read from an environment variable or a git-ignored file, never typed
-into chat, never committed. If the tool is a service, say what one
-chapter costs before running it and let Nick say go.
+None. Both tools are free and need no account or key. They run on Nick's
+machine; ADR-0107 says where they are installed, and the agent does it.
 
 ## Scope
 
@@ -42,8 +42,9 @@ the tool from the game.
 ## Implementation steps
 
 1. `voice/<lang>/cast.ron` (in the private repository's `voice/`):
-   character id → the tool's voice id and settings, from 0043's cast
-   table. Narration has its own entry if 0043 voices it.
+   character id → reference clip and reader (`Qwen3` or `Chatterbox`), from
+   0043's cast table. Narration has its own entry (`>`), and the lead's two
+   voices are `lead_m` and `lead_f`.
 2. `cargo xtask voice status [--lang en]`: loads the scripts, cast and
    manifest; prints per scene the lines that are voiced by 0043's rule
    and have no clip, a stale clip, or a clip whose cast voice changed;
@@ -56,9 +57,10 @@ the tool from the game.
    line is gone. `--dry-run` prints the count of lines and characters
    (what a service bills by) and makes nothing.
 4. The tool is called through one small trait (`Synth: text + voice →
-   audio`), with the chosen tool's implementation behind it, so swapping
-   tools later is one file. A fake implementation (a tone per line) is
-   used in tests.
+   audio`), with one implementation per reader behind it, so swapping tools
+   later is one file. The readers are Python programs in their own
+   environments (ADR-0107); the trait runs them as child processes. A fake
+   implementation (a tone per line) is used in tests.
 5. Loudness: match every clip to one level, the way 0214's import
    matched the music (reuse its code), and trim silence at both ends to
    at most 100 ms (*tunable*).
@@ -72,9 +74,14 @@ the tool from the game.
    a cast replaces the generated clips later (ADR-0046 rule 10).
 8. Never overwrite a `Recorded` clip; `generate` skips them and `status`
    lists them as stale for a human to re-record.
-9. **Voice directions (0752), either order:** if 0752 is done, send each
-   line's delivery direction to the tool with its words (through the
-   `Synth` trait) and print it in `voice script`; if not, 0752 adds it.
+9. **Voice directions (0752), either order:** if 0752 is done, pass each
+   line's delivery direction through the `Synth` trait and print it in
+   `voice script`; if not, 0752 adds it. Neither reader takes a direction in
+   words today (ADR-0107): Chatterbox has one intensity setting, and Qwen3
+   reads the emotion from the words. Each implementation does what it can
+   with a direction and says in `--dry-run` what it ignored.
+9b. **Spoken words (0754):** send what the line says aloud, with the
+   stand-in for the player's name, not what the box shows.
 10. `docs/voice.md`: how to run all three, where the files go, and the
    commit-and-pin steps for the private repository (`cargo xtask
    private-assets --pin`).

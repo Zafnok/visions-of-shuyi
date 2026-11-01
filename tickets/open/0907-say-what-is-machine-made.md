@@ -31,7 +31,7 @@ themselves when a human replaces something.
 lines and the store-page paragraph. 0042 (question 3),
 0045 (questions 3 and 7: whether anyone checked the Chinese, and how
 that is credited) and
-0043 (question 6) already fixed the in-game labels; this ticket doesn't
+0043 (question 6) already fixed the in-game labels, and the credits say "Voices generated with AI: Qwen3-TTS, Chatterbox." and "We hope to replace these with a human cast."; this ticket doesn't
 reopen them.
 
 ## Scope

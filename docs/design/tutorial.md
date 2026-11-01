@@ -213,6 +213,13 @@ None not stopping what's queued (0841), the forecast's weapon swap (0463),
 pictures in Guides (0469), a profile nudge on the title (0842), Vix's ears
 (0468).
 
+## Vix is voiced
+
+Decided in 0043 (`voices-languages-and-script.md`, *Voices*). What she says and the
+objectives are separate: her line is spoken and never names a key, and what names
+a key or a button is silent text. She has lines all through the tutorial. Tickets
+0475 and 0476.
+
 ## Built by
 
 - **0455** the guide's face in the tip box.
