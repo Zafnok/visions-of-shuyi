@@ -177,6 +177,9 @@ struct RawEnemy {
     loadout: Option<RawLoadout>,
     #[serde(default)]
     boss: bool,
+    /// A non-combat unit (a villager, a wild beast): no arts or actives.
+    #[serde(default)]
+    noncombatant: bool,
     /// What becomes of it at 0 HP: `Falls` (the default), `Retreats` or
     /// `GoesDown`.
     #[serde(default)]
@@ -618,6 +621,12 @@ impl<'a, 'r> Checker<'a, 'r> {
         unit.raider = e.raider;
         if e.boss {
             unit.role = Role::Boss;
+        }
+        if e.noncombatant {
+            if e.boss {
+                self.err(format!("{what}: a boss can't be non-combat"));
+            }
+            unit.role = Role::Noncombatant;
         }
         if let Some(name) = &e.name {
             unit.name.clone_from(name);
@@ -1066,6 +1075,7 @@ fn pool_fits(r: &RawBattle, battle: &BattleDef, maximum: u32) -> bool {
                 && e.loadout.is_none()
                 && e.faction == Faction::Enemy
                 && !e.boss
+                && !e.noncombatant
                 && e.id.is_none()
                 && e.name.is_none()
                 && e.items.is_empty()

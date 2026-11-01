@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0856 — Battle files mark a unit as non-combat
@@ -48,8 +48,8 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A battle file can make a unit `Role::Noncombatant`; `boss` with it is an error.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A battle file can make a unit `Role::Noncombatant`; `boss` with it is an error.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -59,5 +59,15 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `noncombatant: true` on an `enemies` or `reinforcements` entry sets
+  `Role::Noncombatant`; with `boss: true` it is an error ("a boss can't be
+  non-combat"). Documented in `assets/battles/README.md`; `test_green.ron`'s
+  villager uses it.
+- Random skirmish pools refuse an entry with the field, as they do `boss`.
+- The field is not limited to green units: the ticket asks only for the boss
+  error, and an enemy with the role simply stays without arts, as a regular
+  enemy does.
+- Deviation: the test villager keeps `loadout: Some((weapons: []))`. The role
+  stops arts and actives, not plain attacks, and the bots' baseline test needs
+  the villager to drink a Potion with no kill to make.
+- Gameplay rules decided: none. No follow-up tickets.

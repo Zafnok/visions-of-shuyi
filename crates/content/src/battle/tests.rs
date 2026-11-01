@@ -435,6 +435,26 @@ fn green_units_carry_their_own_consumables() {
 }
 
 #[test]
+fn noncombatant_sets_the_role_on_enemies_and_reinforcements() {
+    let c = content();
+    let source = OK
+        .replacen("boss: true,", "faction: Ally, noncombatant: true,", 1)
+        .replacen("ai: Guard)", "ai: Guard, noncombatant: true)", 1);
+    let def = load(&c, &source).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(def.enemies[0].role, Role::Noncombatant);
+    assert_eq!(def.reinforcements[0].unit.role, Role::Noncombatant);
+}
+
+#[test]
+fn a_boss_cant_be_noncombatant() {
+    let c = content();
+    assert_eq!(
+        errors(&c, "boss: true,", "boss: true, noncombatant: true,"),
+        ["enemy 1: a boss can't be non-combat"]
+    );
+}
+
+#[test]
 fn green_unit_errors() {
     let c = content();
     // Items on a player and an enemy, and a weapon and an unknown item on
@@ -1066,6 +1086,7 @@ fn random_pool_rejects_each_narrative_or_unique_loot_feature() {
     reject(|r| r.enemies[0].loadout = Some(RawLoadout::default()));
     reject(|r| r.enemies[0].faction = Faction::Ally);
     reject(|r| r.enemies[0].boss = true);
+    reject(|r| r.enemies[0].noncombatant = true);
     reject(|r| r.enemies[0].id = Some("named".into()));
     reject(|r| r.enemies[0].name = Some("Named".into()));
     reject(|r| r.enemies[0].items.push("potion".into()));
