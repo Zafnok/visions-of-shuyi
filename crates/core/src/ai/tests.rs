@@ -1879,6 +1879,7 @@ fn enemy_phase_planning_time() {
     let mut planning = std::time::Duration::ZERO;
     let mut commands = 0;
     loop {
+        #[expect(clippy::disallowed_methods, reason = "a test of the planning's time")]
         let t = Instant::now();
         let command = next_command(&state, &AiWeights::STARTING);
         planning += t.elapsed();

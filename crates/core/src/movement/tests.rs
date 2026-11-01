@@ -774,6 +774,7 @@ fn reachable_is_fast() {
     let rows: Vec<&str> = rows.iter().map(String::as_str).collect();
     let s = scene(&rows, "foot", 10);
     let runs = 1000;
+    #[expect(clippy::disallowed_methods, reason = "a test of the search's time")]
     let start = std::time::Instant::now();
     for _ in 0..runs {
         let reach = s.reach(MOVER).unwrap();

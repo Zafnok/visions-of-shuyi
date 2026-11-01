@@ -123,6 +123,7 @@ fn golden(kind: &str) -> SaveFile {
 /// Reads the current version's golden save of `kind`.
 fn read(kind: &str) -> (String, SaveFile) {
     let path = fixture(SAVE_VERSION, kind);
+    #[expect(clippy::disallowed_methods, reason = "a test reads its golden save")]
     let text = std::fs::read_to_string(&path).unwrap_or_else(|e| {
         panic!(
             "{}: {e}\nno golden save for SAVE_VERSION {SAVE_VERSION}: {HELP}",
@@ -141,6 +142,7 @@ fn read(kind: &str) -> (String, SaveFile) {
 fn regenerate() {
     for kind in KINDS {
         let text = ron::to_string(&golden(kind)).unwrap();
+        #[expect(clippy::disallowed_methods, reason = "a test writes its golden save")]
         std::fs::write(fixture(SAVE_VERSION, kind), text).unwrap();
     }
 }
@@ -224,6 +226,7 @@ fn older_golden_saves_still_show_their_version() {
         if version == SAVE_VERSION {
             continue;
         }
+        #[expect(clippy::disallowed_methods, reason = "a test reads its golden save")]
         let text = std::fs::read_to_string(&path).unwrap();
         let header: SaveHeader = ron::from_str(&text)
             .unwrap_or_else(|e| panic!("{}: its version can't be read: {e}", path.display()));

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use shuyi_assets::font::FontAtlasDef;
 use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
-use shuyi_cli::contract::{bots, check, replay};
+use shuyi_cli::contract::{bots, check, lint, replay, target};
 use shuyi_cli::font_atlas::{ATLAS_RANGES, ONE_BIT_FILE, read_font};
 use shuyi_cli::frame_png::{self, Options};
 use shuyi_cli::lang_status::{self, Part};
@@ -375,6 +375,93 @@ fn the_checks_pass_on_this_repository() {
         shuyi_cli::check_text::run_names(text, &project.root),
         Vec::<String>::new()
     );
+}
+
+/// Ticket 0138: `shuyi.ron` lists the game's three targets, at the
+/// console's sizes, and `check --target all` reaches each with no problem
+/// and no limit about a missing setting.
+#[test]
+fn the_project_declares_the_targets_at_the_consoles_sizes() {
+    let project = project();
+    let setting = |id: &str| project.config.targets[id];
+    for (id, console) in [
+        ("desktop", ConsoleSpec::PC),
+        ("web", ConsoleSpec::PC),
+        ("playdate", ConsoleSpec::PLAYDATE),
+    ] {
+        let (width, height) = console.px();
+        let (_, cell_height) = console.cell_px();
+        let found = setting(id);
+        assert_eq!(
+            (i32::from(found.frame.0), i32::from(found.frame.1)),
+            (width, height),
+            "{id}"
+        );
+        assert_eq!(i32::from(found.text_px), cell_height, "{id}");
+    }
+    let mut input = check::CheckInput::default();
+    input.target = Some(target::ALL.to_owned());
+    let answer = check::targets(&project.config, &project.root, &input, Some(&Trpg));
+    assert!(answer.ok, "{:?} {:?}", answer.error, answer.result);
+    let reports = answer.result.unwrap().targets;
+    let reached: Vec<&str> = reports.iter().map(|r| r.target.as_str()).collect();
+    assert_eq!(reached, ["desktop", "playdate", "web"]);
+    assert!(reports.iter().all(|r| r.problems.is_empty()), "{reports:?}");
+    let lacking: Vec<&String> = answer
+        .limits
+        .iter()
+        .filter(|limit| limit.contains("`targets`") || limit.contains("target profile"))
+        .collect();
+    assert_eq!(lacking, Vec::<&String>::new());
+}
+
+/// A cargo that finds nothing and keeps the commands it was given.
+#[derive(Default)]
+struct QuietCargo(std::cell::RefCell<Vec<String>>);
+
+impl lint::Cargo for QuietCargo {
+    fn run(&self, _root: &Path, args: &[&str]) -> Result<lint::Ran, String> {
+        self.0.borrow_mut().push(args.join(" "));
+        Ok(lint::Ran {
+            success: true,
+            ..lint::Ran::default()
+        })
+    }
+}
+
+/// Ticket 0138: `lint` fences `trpg-core`, with nothing left out. The
+/// cargo is a fake here: CI's `cargo shuyi lint` runs the real one.
+#[test]
+fn lint_fences_the_rules_crate() {
+    let project = project();
+    assert_eq!(project.config.rules.as_deref(), Some("trpg-core"));
+    let cargo = QuietCargo::default();
+    let answer = lint::lint(&cargo, &project, &lint::LintInput::default());
+    assert!(answer.ok, "{:?}", answer.result);
+    assert_eq!(answer.limits, Vec::<String>::new());
+    let ran = cargo.0.borrow();
+    assert!(
+        ran[0].starts_with("clippy --quiet -p trpg-core "),
+        "{ran:?}"
+    );
+    assert!(ran[1].starts_with("tree -p trpg-core "), "{ran:?}");
+}
+
+/// Ticket 0138: the fence's lints have bans to read: without the rules
+/// crate's `clippy.toml`, `lint` would pass having checked nothing.
+#[test]
+fn the_rules_crate_has_the_fences_bans() {
+    let bans = fs::read_to_string(repo_root().join("crates/core/clippy.toml")).unwrap();
+    for ban in [
+        "std::collections::HashMap",
+        "std::collections::HashSet",
+        "std::time::Instant::now",
+        "std::fs::read_to_string",
+        "std::thread::spawn",
+        "rand::random",
+    ] {
+        assert!(bans.contains(&format!("\"{ban}\"")), "{ban}");
+    }
 }
 
 /// `shuyi.ron` names the glyphs the game's content requires.

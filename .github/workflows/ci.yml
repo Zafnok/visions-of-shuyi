@@ -288,6 +288,12 @@ jobs:
       # No new screen text written as a string literal (ADR-0045).
       - name: Check for screen text written as literals
         run: cargo shuyi check-text
+      # The game fits every target shuyi.ron lists (ticket 0138).
+      - name: Check the targets
+        run: cargo shuyi check --target all
+      # The rules crate's fence, with check-keys and check-text (ticket 0138).
+      - name: Lint the game's shape
+        run: cargo shuyi lint
 
   # Single required check for this workflow. Matrix jobs skipped by `if:`
   # report one check with an unexpanded name, never the per-leg names, so
