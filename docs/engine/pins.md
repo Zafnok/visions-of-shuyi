@@ -149,7 +149,7 @@ Nothing for the game: 4 PRs (#184, #189, #191, #195). The skill pack's `shuyi-ne
 
 Also passed, unsorted by the report because its commit names no PR on the engine's side: engine #188 (3072), the game's icon in `shuyi.ron` and the window's icon from `AppInfo`: adopted with #186, in 1199.
 
-## 2026-11-01: 1eaa1fa0 → 0ad02fa5 (13 engine PRs), #502
+## 2026-11-01: 1eaa1fa0 → 0ad02fa5 (13 engine PRs), #503
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
