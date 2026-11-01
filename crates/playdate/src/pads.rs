@@ -4,9 +4,10 @@
 //! (ADR-0034, the `keyboard-input` skill). Like `shuyi-app`'s `pads.rs` it
 //! only translates; the only file in this crate that names buttons.
 //!
-//! A is reported at the binding position `South` and B at `East`, so the
-//! default `pad` table of `assets/data/keymap.ron` makes the D-pad move
-//! the cursor, A confirm and B cancel (`docs/design/playdate.md`, *Buttons
+//! A is reported at the binding position `East` and B at `West`, as the
+//! engine's profile has them, so the `playdate` table of
+//! `assets/data/keymap.ron` makes the D-pad move the cursor, A confirm and
+//! B cancel (`docs/design/playdate.md`, *Buttons
 //! and the crank*).
 
 use alloc::vec::Vec;
@@ -21,8 +22,8 @@ const BUTTONS: [(u32, Button); 6] = [
     (0x02, Button::DpadRight),
     (0x04, Button::DpadUp),
     (0x08, Button::DpadDown),
-    (0x10, Button::East),
-    (0x20, Button::South),
+    (0x10, Button::West),
+    (0x20, Button::East),
 ];
 
 /// The Playdate's one pad: never unplugged, no sticks.
@@ -85,17 +86,17 @@ mod tests {
         RawInputEvent::PadDown(button, PadKind::Playdate)
     }
 
-    /// The ticket: A is `South` (Confirm by default), B is `East` (Cancel),
+    /// The ticket: A is `East` (Confirm by default), B is `West` (Cancel),
     /// the D-pad is the D-pad.
     #[test]
-    fn a_is_south_b_is_east_and_the_d_pad_is_the_d_pad() {
+    fn a_is_east_b_is_west_and_the_d_pad_is_the_d_pad() {
         let mut p = pad();
-        assert_eq!(p.poll(A, A), [down(Button::South)]);
+        assert_eq!(p.poll(A, A), [down(Button::East)]);
         assert_eq!(
             p.poll(B | UP | LEFT, B | UP | LEFT),
             [
-                RawInputEvent::PadUp(Button::South),
-                down(Button::East),
+                RawInputEvent::PadUp(Button::East),
+                down(Button::West),
                 down(Button::DpadUp),
                 down(Button::DpadLeft),
             ]
@@ -108,9 +109,9 @@ mod tests {
     #[test]
     fn a_held_button_is_one_press_until_it_is_let_go() {
         let mut p = pad();
-        assert_eq!(p.poll(A, A), [down(Button::South)]);
+        assert_eq!(p.poll(A, A), [down(Button::East)]);
         assert_eq!(p.poll(A, 0), []);
-        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::South)]);
+        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::East)]);
         assert_eq!(p.poll(0, 0), []);
     }
 
@@ -118,7 +119,7 @@ mod tests {
     #[test]
     fn a_tap_between_two_frames_is_not_lost() {
         let mut p = pad();
-        assert_eq!(p.poll(0, B), [down(Button::East)]);
-        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::East)]);
+        assert_eq!(p.poll(0, B), [down(Button::West)]);
+        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::West)]);
     }
 }

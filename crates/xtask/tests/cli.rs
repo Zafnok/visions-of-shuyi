@@ -66,10 +66,12 @@ fn playtest_prints_the_report_and_exits_0() {
     let _ = std::fs::remove_dir_all(&history);
 }
 
+// `--offline`: `--check` alone asks GitHub about the ledger's last section,
+// which CI's own step does with a token, and no test reaches the network.
 #[test]
 fn engine_pin_check_on_the_real_repo_exits_0() {
     let output = xtask()
-        .args(["engine-pin", "--check"])
+        .args(["engine-pin", "--check", "--offline"])
         .output()
         .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
     assert_eq!(

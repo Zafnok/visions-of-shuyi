@@ -132,7 +132,7 @@ Beyond the engine's rules:
 ## The Playdate
 
 - **Button chords** (ticket 1034): a pad binding may be two buttons
-  together, `"South+East"`. The Playdate uses `keymap.ron`'s `playdate`
+  together, `"East+West"`. The Playdate uses `keymap.ron`'s `playdate`
   table instead of `pad` (`Ctx::use_playdate_buttons`, called by its front
   end): A + B ends the turn, hold B + left / right picks a unit. A chord
   button holds back its own action until its partner comes (B until it is

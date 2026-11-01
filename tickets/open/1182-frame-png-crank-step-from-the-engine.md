@@ -42,19 +42,17 @@ None. Tooling only; nothing the player sees changes.
   flag first, so the game's could no longer be reached)
 - Delete the game's `--then-pad` option, `After`, and their handling in
   `crates/xtask/src/game_tools.rs`; the `frame-png` test that used it
-  uses the engine's steps (`--crank -30 --pad South`).
+  uses the engine's steps (`--crank -30 --pad East`).
 - Update the commands for 1039's pictures if any doc names
   `--then-pad`.
 
 **Out (do not do):**
 - Any change to the pictures or the game.
 
-**Either order with 1170:** the examples below use the current frontend's
-South/East buttons. If 1170 has adopted engine 2410 first, use East/West
-as its keymap/profile specify, including the final Confirm pad step.
-If this ticket lands first, 1170 updates the same ordered-step regression
-and documented commands when it moves A/B. Whichever lands second proves
-the crank/pad sequence still reaches rewind and its help names agree.
+**Either order with 1170:** the pin move of 2026-11-01 moved the Playdate's
+A and B to East and West (engine 2410), and the examples below use them.
+Whichever lands second proves the crank/pad sequence still reaches rewind
+and its help names agree.
 
 ## Implementation steps
 
@@ -69,14 +67,14 @@ the crank/pad sequence still reaches rewind and its help names agree.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi frame-png r.png --playdate --pad "DpadDown South" --wait 0.1 --pad "DpadLeft South" --wait 0.1 --pad South --crank -30`
+- [ ] `cargo shuyi frame-png r.png --playdate --pad "DpadDown East" --wait 0.1 --pad "DpadLeft East" --wait 0.1 --pad East --crank -30`
       shows the rewind screen.
 - [ ] No `engine-friction: engine#2540`, `--then-pad`, `Start::after` or
       `enum After` remains in the implementation or current commands.
       Search the behavior and every spelling across `crates/` and current
       docs after merging main, not only the marker. Historical done
       tickets may retain their original descriptions.
-- [ ] Ordered engine steps `--crank -30 --pad South` reach the same
+- [ ] Ordered engine steps `--crank -30 --pad East` reach the same
       rewind state and picture as the old after-script fixture; the
       removed `--then-pad` option is rejected instead of silently ignored.
 - [ ] All gates in the `run-gates` skill pass.
