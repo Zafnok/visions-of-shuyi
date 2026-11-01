@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1187 — Engine friction checks that see the split
@@ -118,15 +118,15 @@ Expected size: no Rust; about 40 lines of skill text.
 
 ## Acceptance criteria
 
-- [ ] `engine-friction` step 1 names a reference implementation as the
+- [x] `engine-friction` step 1 names a reference implementation as the
       reference, counts call sites for moves and renames, counts non-Rust
       code by hand, and restates an estimate after a re-gate.
-- [ ] `work-ticket` §6's `Engine friction:` line has the signals.
-- [ ] `engine-change` §1 runs the tests on each row of a split and each
+- [x] `work-ticket` §6's `Engine friction:` line has the signals.
+- [x] `engine-change` §1 runs the tests on each row of a split and each
       generic Out item.
-- [ ] `work-ticket` says how an acceptance grep is written and when it
+- [x] `work-ticket` says how an acceptance grep is written and when it
       runs again.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -134,5 +134,20 @@ Expected size: no Rust; about 40 lines of skill text.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+All the Scope items are in: `engine-friction` steps 1, 2, 3 and 7,
+`work-ticket` §3, §4 and §6, `engine-change` §1, and the row under the
+0506 sweep. 1174 is still open, so step 1's refactor rule stands alone
+and 1174 links it.
+
+Deviations:
+
+- ADR-0092 said the estimate "starts from the ticket", which contradicts
+  the new step, so it has a dated note under its *Decision*, as Scope
+  allows.
+- `work-ticket` §6 only allowed merging `main` for a conflict or a need,
+  so it now names a "gone" grep as such a need; otherwise the rerun would
+  never happen.
+- `work-ticket`'s "none: no Rust code" became "none: no code", since a
+  workflow-only change now has an estimate.
+
+No follow-up tickets. No gameplay rules decided.

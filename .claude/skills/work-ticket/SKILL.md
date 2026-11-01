@@ -87,9 +87,9 @@ Set `status: in-progress` in the ticket frontmatter.
   `engine-friction` skill, step 1): one sentence and a number, how many
   production lines this change *should* take with a good engine, and the
   comparable code you judged it by (another engine doing the same job, or
-  a similar piece of this repository). Start from the size the ticket
-  states, if it states one. A ticket with no Rust code (docs, data, a
-  decision) skips this.
+  a similar piece of this repository). A size the ticket states is a
+  starting point to check against that reference, never the reference
+  itself. A ticket with no code (docs, data, a decision) skips this.
 - **Estimate the PR's size too** (ADR-0101): all the changed lines `cargo
   xtask pr-size` will count (code, tests, docs, the ticket file, hand-written
   data), not only the production lines above. Judge it by a done ticket of
@@ -175,6 +175,12 @@ Run `cargo xtask pr-size` and compare it with your estimate (ADR-0101).
 Walk the ticket's **Acceptance criteria** and tick each box honestly. If one
 cannot be met, say so in the Completion notes and in the PR; don't hide it.
 
+A grep that proves something is gone searches for what the code does, in
+every spelling (`is_finite()` on a frame time, not `dt.is_finite()`, which
+missed the five sites 1167 had renamed that morning; a loader that skips a
+file silently has no error message to search for). It runs again after
+merging `main` into the branch, before the PR merges (§6).
+
 ## 5. Archive the ticket (same PR)
 
 1. Fill in the ticket's `## Completion notes`: what was done, deviations from the
@@ -218,8 +224,9 @@ tickets anymore."
     ticket's own title has one, change it for the PR title.
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
     tickets created, an `Engine friction:` line ("Engine friction:
-    estimate N, measured M (R×), <outcome or 'under 2×'>"; "none: no Rust
-    code" when there is none), a `PR size:` line ("PR size: estimate N,
+    estimate N, measured M (R×), <outcome or 'under 2×'>; signals:
+    workaround no · third copy no · budget no", each "yes" naming the
+    review's outcome; "none: no code" when there is none), a `PR size:` line ("PR size: estimate N,
     measured M", with the reason if M passes about 3,000), and `Nick input:` line (e.g. "None: verified by tests and the
     pictures above; starting rules listed for the Act 1 playtest
     (1064)"). Never ask Nick to check a gameplay ticket after merge
@@ -233,7 +240,9 @@ tickets anymore."
   need not contain the latest `main` (ADR-0042). Merge `main` into the branch
   (`git fetch origin && git merge origin/main`, or the ccd_host
   `sync_with_base_branch` tool in an app worktree) only for a conflict or when
-  the PR needs something that landed on `main`.
+  the PR needs something that landed on `main`. An acceptance grep that
+  proves something is gone (§4) needs it: merge, run the grep again, then
+  merge the PR.
 
 ## Don'ts
 
