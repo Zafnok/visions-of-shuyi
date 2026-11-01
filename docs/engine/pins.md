@@ -161,7 +161,7 @@ Nothing for the game: 10 PRs (#196, #198, #199, #200, #202, #203, #204, #207, #2
 
 The notes on what the backend does went into 1170, 1196, 1048 and 1052. `cargo xtask engine-pin` didn't move the `shuyi` crate added by 1199, so the build held two engines; `crates/xtask/src/engine.rs` now lists it, and a test checks that list against the real `Cargo.toml`.
 
-## 2026-11-01: 0ad02fa5 → 76e05909 (17 engine PRs), #PRNUM
+## 2026-11-01: 0ad02fa5 → 76e05909 (17 engine PRs), #513
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
