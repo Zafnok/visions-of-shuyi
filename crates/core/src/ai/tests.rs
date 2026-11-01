@@ -716,7 +716,7 @@ fn scores_use_the_battles_own_forecast() {
         };
         let target = state.unit(UnitId(1)).unwrap();
         let odds = Odds::of(&preview.forecast, hp(unit), hp(target));
-        assert!(close(score, planner.score(&odds, false, 0.0)), "{score}");
+        assert_eq!(score, planner.score(&odds, false, 0));
     }
 }
 
@@ -1389,24 +1389,15 @@ fn decisions_order() {
         command: Command::EndPhase,
     };
     let order = |a: &Decision, b: &Decision| Decision::order(a, b);
+    assert_eq!(order(&d(2, Rank::Attack(5)), &d(1, Rank::Attack(4))), Less);
     assert_eq!(
-        order(&d(2, Rank::Attack(5.0)), &d(1, Rank::Attack(4.0))),
-        Less
-    );
-    assert_eq!(
-        order(&d(1, Rank::Attack(4.0)), &d(2, Rank::Attack(5.0))),
+        order(&d(1, Rank::Attack(4)), &d(2, Rank::Attack(5))),
         Greater
     );
+    assert_eq!(order(&d(1, Rank::Attack(4)), &d(2, Rank::Attack(4))), Less);
+    assert_eq!(order(&d(2, Rank::Attack(-9)), &d(1, Rank::Other(0))), Less);
     assert_eq!(
-        order(&d(1, Rank::Attack(4.0)), &d(2, Rank::Attack(4.0))),
-        Less
-    );
-    assert_eq!(
-        order(&d(2, Rank::Attack(-9.0)), &d(1, Rank::Other(0))),
-        Less
-    );
-    assert_eq!(
-        order(&d(1, Rank::Other(0)), &d(2, Rank::Attack(-9.0))),
+        order(&d(1, Rank::Other(0)), &d(2, Rank::Attack(-9))),
         Greater
     );
     assert_eq!(order(&d(2, Rank::Other(3)), &d(1, Rank::Other(4))), Less);
@@ -1540,8 +1531,18 @@ fn hp(current: StatValue, max: StatValue) -> CombatHp {
     CombatHp { current, max }
 }
 
-fn close(a: f64, b: f64) -> bool {
-    (a - b).abs() < 1e-9
+/// `n` hundredths of a point, of an HP or of a chance of 1.
+fn hundredths(n: i32) -> Score {
+    Score::from(n) * Score::from(CERTAIN) / 100
+}
+
+/// Odds of whole HP dealt and taken, and a chance of `kill` (0 or 1).
+fn whole(dealt: i32, taken: i32, kill: i32) -> Odds {
+    Odds {
+        dealt: hundredths(dealt * 100),
+        taken: hundredths(taken * 100),
+        kill: hundredths(kill * 100),
+    }
 }
 
 #[test]
@@ -1551,34 +1552,13 @@ fn odds_of_sure_strikes() {
         defender: Some(side(3, 3, 100, 1)),
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
-    assert_eq!(
-        o,
-        Odds {
-            dealt: 4.0,
-            taken: 3.0,
-            kill: 0.0
-        }
-    );
+    assert_eq!(o, whole(4, 3, 0));
     // A kill stops the counter.
     let o = Odds::of(&f, hp(10, 10), hp(4, 10));
-    assert_eq!(
-        o,
-        Odds {
-            dealt: 4.0,
-            taken: 0.0,
-            kill: 1.0
-        }
-    );
+    assert_eq!(o, whole(4, 0, 1));
     // Damage past 0 HP doesn't count.
     let o = Odds::of(&f, hp(10, 10), hp(2, 10));
-    assert_eq!(
-        o,
-        Odds {
-            dealt: 2.0,
-            taken: 0.0,
-            kill: 1.0
-        }
-    );
+    assert_eq!(o, whole(2, 0, 1));
 }
 
 #[test]
@@ -1590,9 +1570,9 @@ fn odds_of_chancy_strikes() {
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
     // Dealt: 0 (both miss), 5, 6, 11 → 10 max: (0 + 5 + 6 + 10) / 4.
-    assert!(close(o.dealt, 21.0 / 4.0), "{o:?}");
-    assert!(close(o.kill, 0.25), "{o:?}");
-    assert!(close(o.taken, 1.0), "{o:?}");
+    assert_eq!(o.dealt, hundredths(525), "{o:?}");
+    assert_eq!(o.kill, hundredths(25), "{o:?}");
+    assert_eq!(o.taken, hundredths(100), "{o:?}");
     // No counter, a missed strike never hits.
     let f = Forecast {
         attacker: side(5, 5, 0, 1),
@@ -1609,14 +1589,7 @@ fn odds_stop_when_the_attacker_falls() {
         defender: Some(side(5, 5, 100, 1)),
     };
     let o = Odds::of(&f, hp(3, 10), hp(10, 10));
-    assert_eq!(
-        o,
-        Odds {
-            dealt: 2.0,
-            taken: 3.0,
-            kill: 0.0
-        }
-    );
+    assert_eq!(o, whole(2, 3, 0));
 }
 
 #[test]
@@ -1652,22 +1625,89 @@ fn scores_add_up_the_weights() {
     };
     let planner = Planner::new(&state, &weights);
     let odds = Odds {
-        dealt: 4.0,
-        taken: 1.5,
-        kill: 0.5,
+        dealt: hundredths(400),
+        taken: hundredths(150),
+        kill: hundredths(50),
     };
     // 2×4 + 30×0.5 + 7 − 3×1.5 + 5×3 = 8 + 15 + 7 − 4.5 + 15.
-    assert!(close(planner.score(&odds, true, 3.0), 40.5));
-    assert!(close(planner.score(&odds, false, 0.0), 18.5));
+    assert_eq!(planner.score(&odds, true, 30), hundredths(4050));
+    assert_eq!(planner.score(&odds, false, 0), hundredths(1850));
+    // A tenth of terrain bonus, at 5 a point, is half a point.
+    assert_eq!(planner.score(&odds, false, 1), hundredths(1900));
 }
 
 #[test]
 fn terrain_bonus_is_def_plus_a_tenth_of_avoid() {
     let state = scene_units(&["Pf~E"]);
-    assert!(close(terrain_bonus(&state, p(0, 0)), 0.0));
-    assert!(close(terrain_bonus(&state, p(1, 0)), 3.0));
-    assert!(close(terrain_bonus(&state, p(2, 0)), 1.0));
-    assert!(close(terrain_bonus(&state, p(9, 9)), 0.0));
+    assert_eq!(terrain_tenths(&state, p(0, 0)), 0);
+    assert_eq!(terrain_tenths(&state, p(1, 0)), 30);
+    assert_eq!(terrain_tenths(&state, p(2, 0)), 10);
+    assert_eq!(terrain_tenths(&state, p(9, 9)), 0);
+}
+
+/// `n` strikes a side, each hitting 33% of the time for 1.
+fn long_combat(n: u8) -> Forecast {
+    Forecast {
+        attacker: side(1, 1, 33, n),
+        defender: Some(side(1, 1, 33, n)),
+    }
+}
+
+#[test]
+fn the_longest_combat_counts_its_chances_exactly() {
+    // 4 strikes a side, both on 1 HP: the first hit of either ends it. The
+    // attacker lands strike 1, 3, 5 or 7 after all before it missed, the
+    // defender strike 2, 4, 6 or 8; each term is a whole number of units.
+    let term = |misses: u32| 33 * 67_i128.pow(misses) * 100_i128.pow(7 - misses);
+    let o = Odds::of(&long_combat(4), hp(1, 1), hp(1, 1));
+    let kill: Score = [0, 2, 4, 6].map(term).iter().sum();
+    let fall: Score = [1, 3, 5, 7].map(term).iter().sum();
+    assert_eq!(
+        o,
+        Odds {
+            dealt: kill,
+            taken: fall,
+            kill,
+        }
+    );
+}
+
+#[test]
+fn a_combat_past_the_exact_length_still_adds_up() {
+    // 10 strikes, more than the rules give: its last chances round down, by
+    // less than a unit a branch, and no branch is lost.
+    let o = Odds::of(&long_combat(5), hp(99, 99), hp(99, 99));
+    assert!((o.dealt - hundredths(165)).abs() < 10_000, "{o:?}");
+    assert!((o.taken - hundredths(165)).abs() < 10_000, "{o:?}");
+    // With nothing to round, it stays exact.
+    let f = Forecast {
+        attacker: side(1, 1, 100, 5),
+        defender: Some(side(1, 1, 100, 5)),
+    };
+    assert_eq!(Odds::of(&f, hp(99, 99), hp(99, 99)), whole(5, 5, 0));
+}
+
+#[test]
+fn an_art_that_only_pays_for_itself_ties_with_the_plain_attack() {
+    // Unhorse on a 10-damage strike: +10 hit is worth 1 HP, at 10 a point,
+    // and its 2 durability cost 10. Floats put this art ahead by a rounding
+    // error (0.7 and 0.8 have no exact binary form), against the tie rule.
+    let state = scene_units(&["P.E"]);
+    let weights = AiWeights {
+        damage: 10,
+        durability: 5,
+        ..AiWeights::default()
+    };
+    let planner = Planner::new(&state, &weights);
+    let at = |hit| {
+        let f = Forecast {
+            attacker: side(10, 10, hit, 1),
+            defender: None,
+        };
+        planner.score(&Odds::of(&f, hp(20, 20), hp(20, 20)), false, 0)
+    };
+    assert_eq!(at(70), points(70));
+    assert_eq!(at(80) - points(5) * 2, at(70));
 }
 
 #[test]

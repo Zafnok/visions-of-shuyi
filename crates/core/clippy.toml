@@ -1,13 +1,12 @@
 # The rules are pure and deterministic (ADR-0004), and `cargo shuyi lint`
 # reads these bans (ticket 0138). This file replaces the workspace's
 # clippy.toml for this crate, so it repeats that file's two lines.
-#
-# As the engine's rules template, but for `f32` and `f64`: the AI's scores
-# are floats until ticket 0139.
 allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 
 disallowed-types = [
+    { path = "f32", reason = "floats can come out differently on another machine or the web: count in whole tiles, turns or hundredths" },
+    { path = "f64", reason = "floats can come out differently on another machine or the web: count in whole tiles, turns or hundredths" },
     { path = "std::collections::HashMap", reason = "its order changes from run to run, so replays differ: use BTreeMap" },
     { path = "std::collections::HashSet", reason = "its order changes from run to run, so replays differ: use BTreeSet" },
     { path = "hashbrown::HashMap", reason = "its order depends on its hasher: use BTreeMap", allow-invalid = true },
