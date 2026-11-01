@@ -112,6 +112,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0102](0102-portable-agent-workflows.md) | Portable agent workflows and capability routing | Accepted; model routing amended by ADR-0103 |
 | [0103](0103-paired-model-recommendations.md) | Paired Claude and OpenAI model recommendations | Accepted |
 | [0104](0104-random-skirmishes-overlay-cleared-places-and-rebuild-ordinary-battle-files.md) | Random skirmishes overlay cleared places and rebuild ordinary battle files | Accepted (1008); extends ADR-0099 |
+| [0105](0105-no-build-embeds-a-readme-every-bundle-layer-is-a-generated-table.md) | No build embeds a README; every bundle layer is a table `build.rs` writes | Accepted (0123); extends ADR-0005, ADR-0040, ADR-0057, ADR-0070 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

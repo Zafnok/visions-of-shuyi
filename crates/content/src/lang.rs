@@ -40,10 +40,6 @@ pub const LANG_DIR: &str = "lang";
 /// offered to players.
 pub const TEST: &str = "test";
 
-/// The directory's own description (`assets/lang/README.md`): no
-/// language's file.
-const README: &str = "README.md";
-
 /// The variant of a pack's dialogue line said of a male lead (`text_m`).
 pub const MALE: &str = "m";
 /// The variant of a pack's dialogue line said of a female lead (`text_f`).
@@ -167,7 +163,6 @@ pub fn load(data: Option<DataText>) -> Result<Lang, Vec<ContentError>> {
             path: path.strip_prefix(&prefix).unwrap_or(path),
             source: bundle::file(path),
         })
-        .filter(|file| file.path != README)
         .collect();
     from_files(&files, data, |path| {
         bundle::display_path(&format!("{LANG_DIR}/{path}"))

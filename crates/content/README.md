@@ -4,6 +4,8 @@ Loads and validates all game content from the `assets/` directory, which is
 embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
 
 - `bundle` — the embedded `assets/` tree: `file(path)`, `files_in(dir)`.
+  No build embeds a `README.md` (ADR-0105): they are notes beside the files,
+  so a test that needs one reads it from the repository.
   A debug build (so every test) also has the test files of `assets-test/`
   (ADR-0057); `story_only(|| ...)` hides them, for tests of what a build
   that ships holds.

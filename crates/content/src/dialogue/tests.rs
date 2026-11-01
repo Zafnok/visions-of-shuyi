@@ -655,13 +655,16 @@ fn embedded_test_scene_loads() {
     assert_eq!(otherwise, []);
 }
 
+/// The format's description, whose examples these tests run. No build
+/// embeds it (ADR-0105).
+const README: &str = include_str!("../../../../assets/dialogue/README.md");
+
 /// The full example in `assets/dialogue/README.md` parses and passes every
 /// check except the character ids (its cast isn't in `characters.ron`). Its
 /// `@music` lines name real music cues.
 #[test]
 fn readme_example_is_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
-    let example = readme.split("```").nth(1).unwrap_or_default();
+    let example = README.split("```").nth(1).unwrap_or_default();
     let audio = crate::audio::load().ok();
     assert!(audio.is_some());
     let table = from_sources(&[("README.md", example)], None, None, None, audio.as_ref());
@@ -777,8 +780,7 @@ fn music_needs_exactly_one_argument() {
 /// real music cues.
 #[test]
 fn readme_music_example_is_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
-    let example = readme.split("```").nth(3).unwrap_or_default();
+    let example = README.split("```").nth(3).unwrap_or_default();
     assert_eq!(errors_with_audio(example), [] as [&str; 0]);
     let (parsed, _) = parse_dlg("README.md", example);
     assert_eq!(parsed[0].scene.id, "ch01_bad_news");

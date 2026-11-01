@@ -18,9 +18,12 @@
 //! battles and pictures of the tests and the debug tools. They are added
 //! after the story's files ([`TEST_FILES`]); a build that ships has none.
 //!
-//! Without `std` (the Playdate, ADR-0070 §3) `include_dir` does not build:
-//! `assets/` is the table of files `build.rs` writes, and there are no test
-//! files. It is the **Playdate's bundle** (`playdate_layers`, ticket 1036):
+//! Every layer is a table of files `build.rs` writes, which holds no
+//! `README.md`: those are notes for whoever edits the files, and no build
+//! embeds them (ADR-0105).
+//!
+//! Without `std` (the Playdate, ADR-0070 §3) there are no test files, and
+//! `assets/` is the **Playdate's bundle** (`playdate_layers`, ticket 1036):
 //! `assets/` without the files `crates/content/playdate-bundle.txt` lists,
 //! which it leaves out on purpose ([`left_out`]). With the
 //! `private-assets` feature the bought art is a table too, laid over it
@@ -28,8 +31,6 @@
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
-#[cfg(feature = "std")]
-use include_dir::{Dir, include_dir};
 pub use shuyi_assets::bundle::LoadFile;
 
 use crate::error::ContentError;
@@ -38,16 +39,12 @@ use shuyi_assets::bundle as engine;
 pub use shuyi_assets::bundle::reading;
 pub use shuyi_assets::bundle::{Bundle, Layer, Watcher, story_only, watch};
 
-#[cfg(feature = "std")]
-static ASSETS: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets");
-
 /// Every file under `assets/`: its path (relative to `assets/`,
-/// `/`-separated) and contents, sorted by path. Only the test that keeps it
-/// and `include_dir` the same reads it.
-#[cfg(test)]
-static TABLE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
+/// `/`-separated) and contents, sorted by path.
+#[cfg(any(feature = "std", test))]
+static ASSETS: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
 
-/// [`TABLE`] without the files the Playdate leaves out: the bundle without
+/// [`ASSETS`] without the files the Playdate leaves out: the bundle without
 /// `std`.
 #[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
 static PLAYDATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/playdate_files.rs"));
@@ -66,17 +63,18 @@ static PLAYDATE_PRIVATE: &[(&str, &[u8])] =
     include!(concat!(env!("OUT_DIR"), "/playdate_private_files.rs"));
 
 #[cfg(all(feature = "std", feature = "private-assets"))]
-static PRIVATE: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/game");
+static PRIVATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/private_files.rs"));
 
 #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
-static TEST: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-test");
+static TEST: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/test_files.rs"));
 
 #[cfg(all(
     feature = "std",
     feature = "private-assets",
     any(debug_assertions, feature = "test-fixtures")
 ))]
-static PRIVATE_TEST: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/test");
+static PRIVATE_TEST: &[(&str, &[u8])] =
+    include!(concat!(env!("OUT_DIR"), "/private_test_files.rs"));
 
 /// Whether this build embeds the test files (`assets-test/`, ADR-0057): a
 /// debug build, or one with the `test-fixtures` feature, with `std`.
@@ -107,9 +105,9 @@ pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 pub fn layers() -> Vec<Layer> {
     vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
-        Layer::dir(PRIVATE_DISPLAY_ROOT, &PRIVATE).private(),
+        Layer::table(PRIVATE_DISPLAY_ROOT, PRIVATE).private(),
         #[cfg(feature = "std")]
-        Layer::dir(DISPLAY_ROOT, &ASSETS),
+        Layer::table(DISPLAY_ROOT, ASSETS),
         #[cfg(all(not(feature = "std"), feature = "private-assets"))]
         Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
         #[cfg(not(feature = "std"))]
@@ -119,11 +117,11 @@ pub fn layers() -> Vec<Layer> {
             feature = "private-assets",
             any(debug_assertions, feature = "test-fixtures")
         ))]
-        Layer::dir(PRIVATE_TEST_DISPLAY_ROOT, &PRIVATE_TEST)
+        Layer::table(PRIVATE_TEST_DISPLAY_ROOT, PRIVATE_TEST)
             .private()
             .test(),
         #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
-        Layer::dir(TEST_DISPLAY_ROOT, &TEST).test(),
+        Layer::table(TEST_DISPLAY_ROOT, TEST).test(),
     ]
 }
 
@@ -315,29 +313,54 @@ mod tests {
         assert_eq!(files_under("no_such_dir"), [] as [&str; 0]);
     }
 
-    /// The `no_std` bundle (`build.rs`'s table) and `include_dir` list the
-    /// same files of `assets/` with the same bytes, and answer every
-    /// function the same, so the two can't drift (ADR-0070 §3).
+    /// The paths (relative to `dir`, `/`-separated) of every file on disk
+    /// in `dir` and below it.
+    fn on_disk(dir: &std::path::Path, prefix: &str, files: &mut Vec<String>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let entry = entry.unwrap();
+            let path = format!("{prefix}{}", entry.file_name().to_str().unwrap());
+            if entry.path().is_dir() {
+                on_disk(&entry.path(), &format!("{path}/"), files);
+            } else {
+                files.push(path);
+            }
+        }
+    }
+
+    /// Each table is its folder on disk, file for file and byte for byte,
+    /// without the READMEs (ADR-0105).
     #[test]
-    fn the_no_std_table_holds_the_same_files_as_include_dir() {
-        let embedded = Bundle::new(vec![Layer::dir(DISPLAY_ROOT, &ASSETS)]);
-        let table = Bundle::new(vec![Layer::table(DISPLAY_ROOT, TABLE)]);
-        let all = embedded.files_under("");
-        assert!(all.len() > 100, "{} files", all.len());
-        assert_eq!(table.files_under(""), all);
-        for path in &all {
-            assert_eq!(table.bytes(path), embedded.bytes(path), "{path}");
-            assert_eq!(table.file(path), embedded.file(path), "{path}");
-            assert_eq!(table.display_path(path), embedded.display_path(path));
+    fn a_layer_is_its_folder_without_the_readmes() {
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for (folder, table) in [("assets", ASSETS), ("assets-test", TEST)] {
+            let folder = manifest.join("../..").join(folder);
+            let mut files = Vec::new();
+            on_disk(&folder, "", &mut files);
+            assert!(files.iter().any(|f| f.ends_with("README.md")), "{files:?}");
+            files.retain(|f| !f.ends_with("README.md"));
+            files.sort_unstable();
+            let paths: Vec<&str> = table.iter().map(|(path, _)| *path).collect();
+            assert_eq!(paths, files);
+            for (path, bytes) in table {
+                assert_eq!(*bytes, std::fs::read(folder.join(path)).unwrap(), "{path}");
+            }
         }
-        for dir in ["", "data", "audio", "audio/sfx", "lang", "no_such_dir"] {
-            assert_eq!(table.files_in(dir), embedded.files_in(dir), "{dir}");
-            assert_eq!(table.files_under(dir), embedded.files_under(dir), "{dir}");
-        }
-        assert_eq!(table.bytes("data/nope.ron"), None);
-        assert_eq!(table.file("data/nope.ron"), None);
-        assert_eq!(table.test_part("data/characters.ron"), None);
-        assert_eq!(table.display_path("data/nope.ron"), "assets/data/nope.ron");
+    }
+
+    /// No README in any listing or read, with or without the test files;
+    /// they stay in the repository, beside the files they describe.
+    #[test]
+    fn the_bundle_lists_and_reads_no_readme() {
+        let is_readme = |path: &&&str| path.rsplit('/').next() == Some("README.md");
+        assert_eq!(files_under("").iter().find(is_readme), None);
+        assert_eq!(story_only(|| files_under("")).iter().find(is_readme), None);
+        let readme = "maps/README.md";
+        assert_eq!(file(readme), None);
+        assert_eq!(bytes(readme), None);
+        assert_eq!(files_in("maps").iter().find(is_readme), None);
+        assert!(!left_out(readme));
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        assert!(manifest.join("../../assets").join(readme).is_file());
     }
 
     /// The Playdate's table is `assets/` without the files it leaves out,
@@ -346,7 +369,7 @@ mod tests {
     /// left-out files as left out.
     #[test]
     fn the_playdate_table_is_assets_without_what_it_leaves_out() {
-        let all = Bundle::new(vec![Layer::table(DISPLAY_ROOT, TABLE)]);
+        let all = Bundle::new(vec![Layer::table(DISPLAY_ROOT, ASSETS)]);
         let playdate = Bundle::new(playdate_layers());
         let kept = playdate.files_under("");
         assert!(kept.len() > 50, "{} files", kept.len());
@@ -372,7 +395,7 @@ mod tests {
         sorted.sort_unstable();
         assert_eq!(sorted, PLAYDATE_LEFT_OUT);
         // What `playdate-bundle.txt` lists.
-        for path in ["maps/README.md", "icon/icon.ico", "audio/sfx/heal.wav"] {
+        for path in ["icon/icon.ico", "audio/sfx/heal.wav"] {
             assert!(playdate.left_out(path), "{path}");
         }
         for path in [

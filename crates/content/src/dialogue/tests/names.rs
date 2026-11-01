@@ -205,8 +205,7 @@ fn a_rename_reaches_every_use() {
 /// against the real names table and reads as the README says.
 #[test]
 fn readme_names_example_is_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
-    let example = readme.split("```").nth(7).unwrap_or_default();
+    let example = README.split("```").nth(7).unwrap_or_default();
     let table = from_sources(&[("README.md", example)], None, None, Some(&names()), None);
     assert!(table.is_ok(), "{table:?}");
     let scene = table.unwrap_or_default().scenes.remove("ch01_road");
@@ -226,8 +225,8 @@ fn readme_names_example_is_valid() {
             "Emeric wants you out of the Thornmarch."
         ]
     );
-    assert!(readme.contains("\"The Thornmarch, dusk\""));
-    assert!(readme.contains("\"Emeric wants you out of the Thornmarch.\""));
+    assert!(README.contains("\"The Thornmarch, dusk\""));
+    assert!(README.contains("\"Emeric wants you out of the Thornmarch.\""));
 }
 
 #[test]

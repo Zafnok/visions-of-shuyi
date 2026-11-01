@@ -245,8 +245,7 @@ fn the_battle_is_only_for_a_battles_scenes() {
 /// The places example in `assets/dialogue/README.md` (its last) is valid.
 #[test]
 fn readme_places_example_is_valid() {
-    let readme = bundle::file("dialogue/README.md").unwrap_or_default();
-    let example = readme.rsplit("```").nth(1).unwrap_or_default();
+    let example = README.rsplit("```").nth(1).unwrap_or_default();
     assert_eq!(errors_with_audio(example), [] as [&str; 0]);
     let (parsed, _) = parse_dlg("README.md", example);
     assert_eq!(parsed[0].scene.id, "ch01_after");
