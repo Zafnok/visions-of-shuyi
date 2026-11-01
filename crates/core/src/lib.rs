@@ -1,5 +1,6 @@
 //! Pure, deterministic game rules. See ADR-0004.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(test), deny(clippy::float_arithmetic))]
 
 extern crate alloc;
 

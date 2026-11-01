@@ -459,9 +459,13 @@ fn the_rules_crate_has_the_fences_bans() {
         "std::fs::read_to_string",
         "std::thread::spawn",
         "rand::random",
+        "f32",
+        "f64",
     ] {
         assert!(bans.contains(&format!("\"{ban}\"")), "{ban}");
     }
+    let lib = fs::read_to_string(repo_root().join("crates/core/src/lib.rs")).unwrap();
+    assert!(lib.contains("#![cfg_attr(not(test), deny(clippy::float_arithmetic))]"));
 }
 
 /// `shuyi.ron` names the glyphs the game's content requires.

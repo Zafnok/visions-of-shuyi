@@ -881,6 +881,7 @@ proptest! {
 
 /// Average gain per stat over `n` level ups of `unit` in `class` (never
 /// applied, so ceilings don't interfere).
+#[expect(clippy::disallowed_types, reason = "a test's averages, not the rules")]
 fn average_gains(unit: &Unit, class: &ClassDef, min: u8, n: u32) -> [f64; 7] {
     let mut rng = SimRng::new(20_260_928);
     let mut totals: [StatValue; 7] = [0; 7];
@@ -894,6 +895,7 @@ fn average_gains(unit: &Unit, class: &ClassDef, min: u8, n: u32) -> [f64; 7] {
 }
 
 #[test]
+#[expect(clippy::disallowed_types, reason = "a test's averages, not the rules")]
 fn without_a_net_average_gains_match_the_growths() {
     let class = custom("c", 1, [70, 40, 10, 55, 130, 25, 0]);
     let u = unit_in("swordsman", [1; 7]);
@@ -909,6 +911,7 @@ fn without_a_net_average_gains_match_the_growths() {
 }
 
 #[test]
+#[expect(clippy::disallowed_types, reason = "a test's averages, not the rules")]
 fn with_the_real_net_averages_are_at_least_the_growths() {
     for tier in [1, 3] {
         let class = ClassDef {

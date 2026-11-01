@@ -111,6 +111,10 @@
 //! an art of the same id). A unit that can attack always does, whatever the
 //! score.
 //!
+//! Scores and chances are whole numbers, so every machine plays the same
+//! (ADR-0004): they count in units of 10^-16, a scale at which every chance
+//! of a combat of up to 8 strikes, and so every score, is exact.
+//!
 //! ## Arts and actives (ticket 0503)
 //!
 //! Only the units the battle lets use them do ([`Unit::may_use_arts`],
@@ -167,6 +171,21 @@ use crate::spell::{SpellId, SpellKind};
 use crate::stats::StatValue;
 use crate::terrain::MovementTypeId;
 use crate::unit::{Faction, Unit, UnitId};
+
+/// A score, or an expected number of HP, in units of 1 / [`CERTAIN`]. Wide
+/// enough for any weights and HP: `u32` × `u32` × [`CERTAIN`], a few times.
+type Score = i128;
+
+/// A chance of 1: 100^8. A strike multiplies a chance by a hit percent, and
+/// the game's rules give a side at most 4 strikes, so a combat's chances stay
+/// whole. A longer combat rounds a branch's hit chance down and gives the
+/// rest to its miss, so they still add up to this.
+const CERTAIN: u64 = 10_000_000_000_000_000;
+
+/// `n` score points.
+fn points(n: u32) -> Score {
+    Score::from(n) * Score::from(CERTAIN)
+}
 
 /// How an AI unit behaves. Set per unit by chapter data.
 #[derive(
@@ -293,7 +312,7 @@ struct Decision {
 #[derive(Debug, Clone, Copy)]
 enum Rank {
     /// An attack with this score: first, highest first.
-    Attack(f64),
+    Attack(Score),
     /// Anything else, by flow distance from the unit's tile: lowest first.
     Other(u32),
 }
@@ -302,7 +321,7 @@ impl Decision {
     /// Which of `a` and `b` acts first (`Less`: `a`).
     fn order(a: &Decision, b: &Decision) -> Ordering {
         let rank = match (a.rank, b.rank) {
-            (Rank::Attack(x), Rank::Attack(y)) => y.total_cmp(&x),
+            (Rank::Attack(x), Rank::Attack(y)) => y.cmp(&x),
             (Rank::Attack(_), Rank::Other(_)) => Ordering::Less,
             (Rank::Other(_), Rank::Attack(_)) => Ordering::Greater,
             (Rank::Other(x), Rank::Other(y)) => x.cmp(&y),
@@ -334,7 +353,7 @@ struct Extra {
     /// Added to the arm's max range.
     range: u32,
     /// Score its cost loses.
-    penalty: f64,
+    penalty: Score,
 }
 
 /// Something a unit can attack with, and its range.
@@ -490,13 +509,13 @@ impl<'a> Planner<'a> {
         unit: &Unit,
         reach: &Reach,
         dests: &[Pos],
-    ) -> (Option<(f64, Command)>, bool) {
+    ) -> (Option<(Score, Command)>, bool) {
         let state = self.state;
         let arms = arms(state, unit, self.weights);
         let Some(longest) = arms.iter().map(Arm::reach).max() else {
             return (None, false);
         };
-        let mut best: Option<(f64, Command)> = None;
+        let mut best: Option<(Score, Command)> = None;
         let mut can_kill = false;
         let mut targets: Vec<&Unit> = hostiles_of(state, unit).collect();
         targets.sort_by_key(|t| t.id);
@@ -516,9 +535,9 @@ impl<'a> Planner<'a> {
                 }
                 let path = reach.path_to(dest).unwrap_or_default();
                 let moved = u32::try_from(path.len().saturating_sub(1)).unwrap_or(u32::MAX);
-                let terrain = terrain_bonus(state, dest);
+                let terrain = terrain_tenths(state, dest);
                 for arm in &arms {
-                    let mut offer = |score: f64, action: UnitAction| {
+                    let mut offer = |score: Score, action: UnitAction| {
                         if best.as_ref().is_none_or(|(top, _)| score > *top) {
                             let command = Command::Act {
                                 unit: unit.id,
@@ -533,7 +552,7 @@ impl<'a> Planner<'a> {
                             state.plain_forecast(unit, dest, moved, target, &arm.with)
                     {
                         let odds = Odds::of(&forecast, own, theirs);
-                        can_kill |= odds.kill > 0.0;
+                        can_kill |= odds.kill > 0;
                         let score = self.score(&odds, target.is_lord, terrain);
                         offer(score, arm.action(target.id, None));
                     }
@@ -545,7 +564,7 @@ impl<'a> Planner<'a> {
                             continue;
                         };
                         let odds = Odds::of(&forecast, own, theirs);
-                        can_kill |= odds.kill > 0.0;
+                        can_kill |= odds.kill > 0;
                         let score = self.score(&odds, target.is_lord, terrain)
                             + self.pierce_score(own, pierce)
                             - extra.penalty;
@@ -583,16 +602,16 @@ impl<'a> Planner<'a> {
     /// What Line Pierce's strike `pierce` (the unit behind the target and
     /// the strike's forecast) adds to an attack's score (see the module
     /// docs).
-    fn pierce_score(&self, own: CombatHp, pierce: Option<(UnitId, Forecast)>) -> f64 {
+    fn pierce_score(&self, own: CombatHp, pierce: Option<(UnitId, Forecast)>) -> Score {
         let Some((forecast, victim)) = pierce.and_then(|(id, f)| Some((f, self.state.unit(id)?)))
         else {
-            return 0.0;
+            return 0;
         };
         let theirs = CombatHp {
             current: victim.hp,
             max: victim.stats.hp,
         };
-        self.score(&Odds::of(&forecast, own, theirs), victim.is_lord, 0.0)
+        self.score(&Odds::of(&forecast, own, theirs), victim.is_lord, 0)
     }
 
     /// The non-combat active `unit`, holding its tile, uses instead of
@@ -630,13 +649,14 @@ impl<'a> Planner<'a> {
         })
     }
 
-    /// An attack's score (see the module docs).
-    fn score(&self, odds: &Odds, lord: bool, terrain: f64) -> f64 {
+    /// An attack's score (see the module docs), from a tile with this terrain
+    /// bonus in tenths.
+    fn score(&self, odds: &Odds, lord: bool, terrain: i32) -> Score {
         let w = self.weights;
-        let lord = if lord { f64::from(w.lord) } else { 0.0 };
-        f64::from(w.damage) * odds.dealt + f64::from(w.kill) * odds.kill + lord
-            - f64::from(w.risk) * odds.taken
-            + f64::from(w.terrain) * terrain
+        let lord = if lord { points(w.lord) } else { 0 };
+        Score::from(w.damage) * odds.dealt + Score::from(w.kill) * odds.kill + lord
+            - Score::from(w.risk) * odds.taken
+            + points(w.terrain) * Score::from(terrain) / 10
     }
 
     /// A healer's heal of the most injured ally it can reach, if any.
@@ -868,13 +888,11 @@ fn extras(state: &BattleState, unit: &Unit, with: &Equipped, weights: &AiWeights
                 technique: Technique::Active(def.id.clone()),
                 range: *range,
                 penalty: match cost {
-                    SkillCost::Durability(points) => {
-                        f64::from(weights.durability) * f64::from(*points)
-                    }
-                    SkillCost::ExtraSpellUse => f64::from(weights.spell_use),
+                    SkillCost::Durability(cost) => points(weights.durability) * Score::from(*cost),
+                    SkillCost::ExtraSpellUse => points(weights.spell_use),
                     // Never a combat active's cost (the content check
                     // refuses it, and so does the battle).
-                    SkillCost::Uses(_) => 0.0,
+                    SkillCost::Uses(_) => 0,
                 },
             }),
             _ => None,
@@ -885,16 +903,11 @@ fn extras(state: &BattleState, unit: &Unit, with: &Equipped, weights: &AiWeights
         out.extend(arts.into_iter().map(|art| Extra {
             technique: Technique::Art(art.id.clone()),
             range: 0,
-            penalty: f64::from(weights.durability) * f64::from(art.cost),
+            penalty: points(weights.durability) * Score::from(art.cost),
         }));
     }
     out.sort_by(|a, b| (a.technique.id(), &a.technique).cmp(&(b.technique.id(), &b.technique)));
     out
-}
-
-/// The terrain bonus of standing on `pos`: its Def + Avoid / 10.
-fn terrain_bonus(state: &BattleState, pos: Pos) -> f64 {
-    f64::from(terrain_tenths(state, pos)) / 10.0
 }
 
 /// The terrain bonus of standing on `pos`, in tenths: Def × 10 + Avoid.
@@ -991,11 +1004,11 @@ fn flow_field(state: &BattleState, faction: Faction, movement_type: MovementType
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 struct Odds {
     /// Expected HP the defender loses.
-    dealt: f64,
+    dealt: Score,
     /// Expected HP the attacker loses.
-    taken: f64,
+    taken: Score,
     /// Chance the defender falls.
-    kill: f64,
+    kill: Score,
 }
 
 impl Odds {
@@ -1009,7 +1022,7 @@ impl Odds {
             max: [attacker.max, defender.max],
         };
         let mut odds = Odds::default();
-        walk.strike(0, walk.start, [0, 0], 1.0, &mut odds);
+        walk.strike(0, walk.start, [0, 0], CERTAIN, &mut odds);
         odds
     }
 }
@@ -1027,29 +1040,30 @@ struct Walk<'a> {
 impl Walk<'_> {
     /// Plays strike `i` on, from `hp` with `struck` strikes made per side,
     /// on a branch of this `chance`, adding its outcomes to `odds`.
-    fn strike(&self, i: usize, hp: [StatValue; 2], struck: [u8; 2], chance: f64, odds: &mut Odds) {
+    fn strike(&self, i: usize, hp: [StatValue; 2], struck: [u8; 2], chance: u64, odds: &mut Odds) {
         let striker = self.order.get(i).and_then(|&by| match by {
             Side::Attacker => Some((0, self.forecast.attacker)),
             Side::Defender => self.forecast.defender.map(|d| (1, d)),
         });
         let over = hp[0] <= 0 || hp[1] <= 0;
         let Some((me, numbers)) = striker.filter(|_| !over) else {
-            odds.dealt += chance * f64::from((self.start[1] - hp[1]).max(0));
-            odds.taken += chance * f64::from((self.start[0] - hp[0]).max(0));
+            let share = Score::from(chance);
+            odds.dealt += share * Score::from((self.start[1] - hp[1]).max(0));
+            odds.taken += share * Score::from((self.start[0] - hp[0]).max(0));
             if hp[1] <= 0 {
-                odds.kill += chance;
+                odds.kill += share;
             }
             return;
         };
         let mut struck = struck;
         struck[me] += 1;
         // Both branches, even one with no chance: it adds nothing.
-        let hit = f64::from(numbers.hit) / 100.0;
+        let hits = chance * u64::from(numbers.hit) / 100;
         let mut after = hp;
         let target = 1 - me;
         after[target] = struck_hp(&numbers, struck[me], hp[target], self.max[target]);
-        self.strike(i + 1, after, struck, chance * hit, odds);
-        self.strike(i + 1, hp, struck, chance * (1.0 - hit), odds);
+        self.strike(i + 1, after, struck, hits, odds);
+        self.strike(i + 1, hp, struck, chance - hits, odds);
     }
 }
 
