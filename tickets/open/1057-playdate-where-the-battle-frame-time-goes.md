@@ -91,6 +91,13 @@ second.
 
 ## Implementation steps
 
+**Either order with 1170:** if its engine-backed frontend has landed,
+use the engine 3011 report/bench hooks and the engine export route in
+place of the old `pd/entry.rs`/`pd/bench.rs` paths below. If this ticket
+lands first, 1170 must preserve these spans, measurements and resulting
+behavior before disconnecting the legacy frontend. This ticket does not
+wait for the optional migration or recreate a game SDK/driver afterward.
+
 1. Read ADR-0004, ADR-0070, ADR-0077 and 1055's completion notes;
    `crates/playdate/src/pd/entry.rs` (`Running::frame`) and
    `src/pd/bench.rs`; `trpg_ui::Game::frame` and the battle screen

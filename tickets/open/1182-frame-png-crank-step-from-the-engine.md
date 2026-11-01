@@ -24,6 +24,10 @@ options of its own to its `GameTools` in `crates/xtask/src/game_tools.rs`:
 Engine ticket 2540 adds `--crank` as a script step, in order with the
 others. The friction row is 1039's in `docs/engine/friction.md`.
 
+The pin is already past engine 2540 (game PR #482). This is ready; the
+remaining work is deleting the game-specific after-script path. Preserve
+the engine dependency as the minimum revision requirement.
+
 ## Nick input
 
 None. Tooling only; nothing the player sees changes.
@@ -45,6 +49,13 @@ None. Tooling only; nothing the player sees changes.
 **Out (do not do):**
 - Any change to the pictures or the game.
 
+**Either order with 1170:** the examples below use the current frontend's
+South/East buttons. If 1170 has adopted engine 2410 first, use East/West
+as its keymap/profile specify, including the final Confirm pad step.
+If this ticket lands first, 1170 updates the same ordered-step regression
+and documented commands when it moves A/B. Whichever lands second proves
+the crank/pad sequence still reaches rewind and its help names agree.
+
 ## Implementation steps
 
 1. ~~Move the pin (`cargo xtask engine-pin <rev>`), build, fix what the
@@ -60,12 +71,23 @@ None. Tooling only; nothing the player sees changes.
 
 - [ ] `cargo shuyi frame-png r.png --playdate --pad "DpadDown South" --wait 0.1 --pad "DpadLeft South" --wait 0.1 --pad South --crank -30`
       shows the rewind screen.
-- [ ] No `engine-friction: engine#2540` comment is left.
+- [ ] No `engine-friction: engine#2540`, `--then-pad`, `Start::after` or
+      `enum After` remains in the implementation or current commands.
+      Search the behavior and every spelling across `crates/` and current
+      docs after merging main, not only the marker. Historical done
+      tickets may retain their original descriptions.
+- [ ] Ordered engine steps `--crank -30 --pad South` reach the same
+      rewind state and picture as the old after-script fixture; the
+      removed `--then-pad` option is rejected instead of silently ignored.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the rewritten frame-png test.
+- Unit/integration: the rewritten frame-png test, ordered crank/pad
+  steps and rejection of the removed option.
+
+Expected size: about 30 production lines removed and a small test rewrite;
+under 500 changed lines including the ticket move.
 
 ## Completion notes
 

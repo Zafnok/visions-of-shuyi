@@ -42,10 +42,14 @@ Decided in the 2026-09-30 conversation, to carry into this ticket:
   GPU, an Intel Core Ultra 9 275HX and 64 GB RAM. Blackwell GPUs need a
   CUDA 12.8+ build of PyTorch (2.7 or later) if Python is chosen.
 
-**Either order with 1180:** if 1180 is done, the trained bot runs
-through `cargo shuyi playtest` as one more entrant of the game's
-playtest plan; if not, through `cargo xtask playtest`, and 1180 moves
-it.
+**Either order with 1180:** if 1180 is done, use its engine-backed
+persona and measure types for the trained entrant; if not, use the
+existing game types and 1180 adapts their shared interfaces when it lands.
+
+**Either order with 1207:** if 1207 is done, the trained bot runs through
+`cargo shuyi playtest` as one more entrant of the game's plan; if not,
+through `cargo xtask playtest`, and 1207 migrates that command integration
+while preserving the trained bot's report.
 
 ## Nick input
 

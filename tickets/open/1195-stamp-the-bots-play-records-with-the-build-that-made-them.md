@@ -32,6 +32,10 @@ carries only a format `version`. A record the bots wrote before a
 balance change replays as if the rules broke. The engine's `grid`
 template shows the pattern (`made()` in its `game` crate's `lib.rs`).
 
+The engine support is shipped and already pinned; no further engine
+feature is needed. The 2026-11-01 audit retains this as the one owner of
+stamp adoption rather than filing a duplicate.
+
 ## Nick input
 
 None.
@@ -69,7 +73,8 @@ None.
 4. In `replay`, set the returned `ReplayRun`'s `made` to
    `played.made.clone()` (`turns` leaves it `None`).
 
-Expected size: about 25 production lines.
+Expected size: about 25 production lines plus command-level regression
+tests; under 700 changed lines including docs and the ticket move.
 
 ## Acceptance criteria
 
@@ -79,6 +84,12 @@ Expected size: about 25 production lines.
       with its `content` changed, it fails with `SH3007`. With
       `--any-stamp`, it runs.
 - [ ] A record without `made` still replays.
+- [ ] Mismatches in engine, game build and content each fail through the
+      shared replay command with `SH3007`; `--any-stamp` overrides each.
+      Test deliberately altered stamps, not only helper equality.
+- [ ] Bot output contains the stamp and `ReplayRun` retains exactly the
+      recorded stamp; no game-local comparator or permissive fallback
+      bypasses the engine check.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

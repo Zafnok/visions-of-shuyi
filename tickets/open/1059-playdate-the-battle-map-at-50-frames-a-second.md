@@ -86,6 +86,13 @@ drain is acceptable go on the Act 1 playtest's checklist (1064; Nick,
 
 ## Implementation steps
 
+**Either order with 1170:** if its engine-backed frontend has landed,
+use the engine's report/bench hooks, frame pacing API and export route,
+not the retired `pd/entry.rs`/`pd/bench.rs` files or direct SDK calls below.
+If this ticket lands first, 1170 preserves its chosen rate, measurements
+and pacing behavior during cutover. Do not block this performance work
+on the optional port or rebuild a parallel frontend after it.
+
 1. Read ADR-0004, ADR-0070, ADR-0077, `crates/playdate/README.md`,
    `src/pd/entry.rs`, `src/pd/bench.rs`, and 1055's and 1057's
    completion notes.

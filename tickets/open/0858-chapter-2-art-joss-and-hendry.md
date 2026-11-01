@@ -24,6 +24,12 @@ portrait frames and are drawn by their class's map sprite and combat
 picture, as the Chapter 1 cast is in a build without the private
 assets.
 
+The 2026-11-01 audit of
+[PR 481](https://github.com/Zafnok/visions-of-shuyi/pull/481) confirmed
+this is still deferred acceptance work. Keep it on the Act 1 gate (1064),
+and distinguish a private-assets character image from a successful class
+fallback: a populated frame alone does not prove the chosen art loaded.
+
 The picks are 0070's and 0076's (`docs/design/look-and-feel.md`,
 *Faces and combat pictures for the Act 1 cast*):
 
@@ -108,6 +114,13 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 - [ ] With the private assets, Joss and Hendry have faces in every
       Chapter 2 scene, and their own map sprites and combat pictures.
+- [ ] The private-assets tests resolve the character-specific portrait,
+      map and battler ids for both characters; substituting a class default
+      or omitting a portrait fails. Ordinary gates remain independent of
+      the bought files.
+- [ ] Completion notes link screenshots of the running refusal scene and
+      Hendry's fight from the pinned private build, with neither raw bought
+      files nor extracted sprite sheets committed or attached.
 - [ ] `cargo shuyi private-assets --pin` passes (every new file has a
       credit).
 - [ ] All gates in the `run-gates` skill pass, the private-assets tests

@@ -1,238 +1,146 @@
 ---
 id: "1180"
-title: "The game's playtesting on the engine's: cargo shuyi playtest, targets by tier, weighted features, threat areas and the candidate order; the xtask command and the workflow's loop go"
+title: "The playtest bots on the engine's weights targets threats and candidate order"
 type: feature
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021"]
 nick_input: none
 completed:
 ---
 
-# 1180 — The game's playtesting on the engine's
+# 1180 — The bots on the engine's playtest pieces
 
 ## Context
 
-Ticket 0506 built the persona playtest bots (Casual, Normal, Hardcore)
-on the engine's rollout bot (engine#2125), playtest runner (engine#2126)
-and turn planner (engine#2128); ADR-0095 is their design and
-`docs/design/playtest-bots.md` the rules Nick decided (a bot knows the
-danger zone and the forecasts, never the enemy's mind; Casual's
-bands). It measured 1.8× (estimate 600, measured 1,060), under 2×, but
-the game wrote a lot that isn't the game's: Nick (2026-10-22) asked
-that it move into the engine, so other games get playtest personas and
-a playtest command out of the box. The sweep of the playtest area that
-followed (`docs/engine/friction.md`, rows "0506 (sweep)" and the
-section *0506, 2026-10-22*) filed seven engine tickets. This ticket
-moves the game onto them and deletes its own copies.
+The 0506 sweep (`docs/engine/friction.md`, ADR-0095) found seven generic
+pieces in the game's bots/tooling. Nick asked that other games get them
+too. All seven named engine tickets are done and the game pin has passed
+them (the 2026-10-25 move to `b4591a81`, and subsequent pins). Keep their
+ids as minimum-revision requirements; there is no remaining engine wait.
 
-What each engine ticket replaces (game repository paths):
-
-| Engine ticket | What it gives | What goes in the game |
-| ------------- | ------------- | --------------------- |
-| engine#2532 | `shuyi playtest` plays a game's playtest plan itself: stages, `--entrant` with groups, `--threads`, the game's defaults, time per try, `--report <path>` | `crates/xtask/src/playtest.rs`'s options, `Bot`, `play_on_threads`, `Record`/`Played`, `run`'s JSON file; the `playtest` arm of `crates/xtask/src/main.rs` |
-| engine#2533 | the history (`was …`, previous date and commit), summary items over named measures, `--brief` | `render`, `Lines`, `median`, `was`, `history_file`, `last_record`, `append`, `git_commit`, `utc_stamp` |
-| engine#2129 | `Targets<T>`: success rules, bands per tier, floors, medians; `checks(tier, entrants)` | `crates/bots/src/playtest.rs`'s `Targets`, `Faster` |
-| engine#2130 | `Weights<N>`, `Weighted`, `Persona<X>` | `crates/bots/src/persona.rs`'s `Weights`, `Persona`, `Tally`'s fields and `Tally::score` |
-| engine#2131 | `strike_area`, `Threats`, `Threats::danger`, `GoalDistance` | `persona.rs`'s `threats`, `Threat`, `Goals`, the sums in `danger` |
-| engine#2132 | `ranked_order`, `TacticsOrder` with `OrderHooks` | `persona.rs`'s `order`, `advance`, `hold`, `attack_key`, `once_per_action` |
-| engine#2021 | a reusable playtest workflow | the body of `.github/workflows/playtest.yml` |
-
-What stays the game's: the counting (`Tally::between`: what a fall, an
-HP lost, progress and approach mean), the forecast hook
-(`BattleState::threat_forecast`), the lord rules in `danger`, the
-classifier of commands (a strike's forecast, a heal's need, the enemy
-AI's pick), the talk rule and `PersonaBot`, `BattleMeasures` and
-`BattleMeasure` (the game's events and modes: accepted by the sweep),
-`BattleEntrant`, and the data files `crates/bots/personas.ron` and
-`crates/bots/targets.ron` (their shape may change; their values may
-not).
+The 2026-11-01 audit found this adoption still outstanding. The original
+combined ticket planned roughly 300 production lines added and 1,000
+removed but omitted much of the tests and wrapper deletion from its PR
+size. Split it now: this ticket moves bot/rules helpers; 1207, needed
+**after this one**, owns the CLI, history and reusable workflow and the
+removal of the old xtask wrapper. Every original requirement lives in one
+of these two tickets; no feature or policy is dropped.
 
 ## Nick input
 
-None. Nothing a player sees changes, and the personas must play exactly
-as before: verified by the tests and the bands below, not by Nick. What
-is left to judge by playing is already on the Act 1 playtest's
-checklist (1064).
+None. Persona choices and reports remain unchanged, verified by tests and
+seeded comparisons. No gameplay sign-off after merge. Any questions about
+how useful the personas feel remain the Act 1 playtest's concern (1064),
+not a prerequisite for this mechanical adoption.
 
 ## Scope
 
 **In:**
-- ~~Move the pin past the seven engine tickets (`engine-change` skill,
-  step 3.6 and §7).~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
-- `cargo shuyi playtest` is the game's playtest command: `Trpg` in
-  `crates/xtask/src/game_tools.rs` implements `playtest_stages` (the
-  battle ids of `assets/battles/`), `playtest_plan` and
-  `playtest_defaults` (`seed: 1`, `turns: 60`, `tries: 100`, as
-  `cargo xtask playtest` has today), with the game options `--mode
-  classic|casual` (the baseline's mode).
-- The plan: entrants `baseline`, `casual`, `normal`, `hardcore` with
-  their mode as the label; the group `all` = the three personas; the
-  default entrant `baseline`; checks from `Targets::checks` (engine#2129)
-  for the battle's `difficulty`; summary items per entrant that print
-  today's lines (won, deaths or retreats per try by mode, most fallen
-  unit, items median and max, turns median).
-- The bots on the engine's pieces (the table above).
-- `.github/workflows/playtest.yml` calls engine#2021's workflow with the
-  game's lever script as its `levers` input (`bash
-  .github/playtest-levers.sh`, 0514), never a broad path list such as
-  `assets/*` or `crates/core/*` (that would play on every dialogue,
-  art and test change again, which 0514 stopped at Nick's request), with
-  the concurrency engine#2021 documents (a push's run is never
-  cancelled, 0515), and the macroquad packages. The script names
-  `crates/xtask/src/playtest.rs`, which this ticket deletes: replace that
-  line with the files the playtest plan now lives in.
-- The enemy AI's walking distance (`flow` and `flow_field` in
-  `crates/core/src/ai.rs`: a flow field per faction and movement type,
-  the targets' tiles free to enter, the exit area in an escape) on the
-  kit's `GoalDistance` too, so the bots and the AI share one, as
-  `persona.rs`'s `Goals` does after step 4. The AI's tests and step 9's
-  comparison stay unchanged.
-- `trpg_core::threat_area` (`crates/core/src/movement.rs`) builds on the
-  kit's `strike_area`, its tests unchanged.
-- `docs/playtesting.md`, ADR-0095 (a line under *Decision* 6 and 3:
-  where the runner, targets, weights and order now live), and
-  `docs/engine/boundary.md` (the bots' row).
-- The completion notes name the engine PRs.
+- `crates/bots/src/persona.rs`: engine `Weights`, `Weighted` and
+  `Persona<PersonaGame>` from 2130; `Threats`/`GoalDistance` from 2131;
+  `TacticsOrder`/`OrderHooks` from 2132.
+- `crates/bots/src/playtest.rs`: `Targets<Difficulty>` and its tier bands,
+  floors and median comparisons from 2129. Keep the game's file reader.
+- Enemy AI's per-faction/movement-type distance field on `GoalDistance`,
+  and `trpg_core::threat_area` on `strike_area`, retaining their tests.
+- Game-owned semantic hooks: feature counts in `Tally::between`, forecast,
+  lord/HP caps, command classification and AI pick, talk handling,
+  `PersonaBot`, `BattleMeasures`, `BattleEntrant`, and the personas/targets'
+  values. Keep the 16 named features and every integer weight exactly.
+- Keep `BattleMeasure` and each measure's name as well as
+  `BattleMeasures`; the CLI and its consumers use those names. Map the
+  old `faster` target to the engine's `medians` entry with the same
+  values, and keep `Targets::from_ron` as the game's file reader.
+- Update the friction log, bots boundary row and ADR-0095 ownership notes.
 
 **Out (do not do):**
-- Changing any persona setting, weight, band, floor or success rule
-  (ADR-0095 §5: only 0508's comparison with Nick's play changes them).
-- Changing the measures or their names (0508 and 1021 read them).
-- New playtest features (a campaign run is 0512's).
+- CLI/history/workflow adoption, summary lines and xtask deletion: 1207
+  depends on this one and owns those original 1180 requirements.
+- Tuning settings, weights, floors, success rules or measures. Human
+  comparison is 0508's; campaign runs are 0512's; modkit is 1021's.
+- New game design or a new engine bot API.
 
-**Either order with 0450 and 0516:** 0450 gives one function for the
-tiles a unit threatens, a stationary enemy's included; if it is done,
-step 4's `Threats` takes stationary enemies from it rather than from
-`persona.rs`'s own copy of the rule; if not, keep the rule as it is and
-0450 moves it. 0516 fixes what `approach` and `enemy_fell` count in
-`Tally::between`, which stays the game's here: either order, the fix
-lives in `Tally::between`.
+**Either order with 0450:** if it is done, use its shared stationary
+threat helper in the `Threats` hook; if not, keep today's stationary
+rule in the game hook and 0450 changes that hook when it lands. 0516's
+feature-count fix is already done: preserve its corrected `approach`
+and `enemy_fell` counts in game-owned `Tally::between`.
 
-**Either order with 0507, 0508, 0509, 0512 and 1021:** each names
-`cargo xtask playtest` or reads `crates/bots/personas.ron`. If one of
-them is done first, its use of the command moves to `cargo shuyi
-playtest` here (0509's autobalance and 1021's modkit report keep their
-output; `playtest-compare` from 0508 keeps reading the personas file
-through engine#2130's `Persona`). If this ticket is done first, each of
-them is written against `cargo shuyi playtest`: update their text in
-this ticket's PR.
+**Either order with 0507, 0508, 0512 and 1021:** if one is done, adapt
+its shared bot types or persona-file reader to the engine-backed types
+here, without changing its report or command; if not, its ticket uses
+those types when it lands. CLI migration is 1207's, in either order
+with those consumers. 0509 is done: preserve its autobalance behavior
+and report while changing the common bot types.
 
 ## Implementation steps
 
-1. **A baseline to compare with**, before anything changes: on the
-   current pin (the pin move of 2026-10-25 changed no behaviour, so it
-   stands for the old pin in step 9 and the acceptance criteria), run `cargo xtask playtest <Chapter 1's battle id> --bot
-   all --runs 20 --json before.json` and the same without `--bot all`
-   into `before-baseline.json` (the id is the one `assets/battles/`
-   names Chapter 1). Keep both files outside the repo.
-2. ~~**Pin.** Check each engine ticket is in the engine's `tickets/done/`,
-   then `cargo xtask engine`, `git -C shuyi-engine switch main`,
-   `git -C shuyi-engine pull --ff-only`, `cargo xtask engine --off`,
-   `cargo xtask engine-pin`. Fix what the engine's breaking changes
-   break (engine#2532 replaces `GameTools::playtest`).~~ (done by the pin move of 2026-10-25, `3f2256d4` → `b4591a81`)
-3. **The scoring** (`crates/bots/src/persona.rs`): a `const FEATURES:
-   [&str; 16]` with today's names (`won`, `lost`, `lord fell`, …; spaces
-   or underscores, matching `personas.ron`'s keys); `Tally::between`
-   returns `[i64; 16]` (or keep `Tally` as a thin newtype over it if
-   tests read fields); `Scoring` becomes engine#2130's `Weighted`.
-   `Persona` becomes `trpg_bots::Persona = shuyi_core::bots::weigh::Persona<PersonaGame>`
-   with `PersonaGame { mode: GameMode }`; rewrite `personas.ron` into
-   that shape with the same numbers (a test compares each persona's
-   settings and weights with a table in the test).
-4. **The danger** (`persona.rs` `danger`, `threats`): build engine#2131's
-   `Threats<UnitId>` (stationary enemies with `strike_area_from`, the
-   rest from their stop tiles and `attack_ranges` with `strike_area`),
-   and sum with `Threats::danger` and a closure over
-   `BattleState::threat_forecast` that returns engine `Strike`s. The
-   caps (`exposed` at most the unit's HP, `counter` at most the enemy's
-   HP), `at_risk` (`worst >= hp`) and the lord-alone rule stay here.
-   `Goals` becomes `GoalDistance<u8>` keyed by the movement type.
-5. **The order** (`persona.rs` `order`): an `OrderHooks` impl for
-   `BattleState`: `prepare` builds the threats and goal distance;
-   `classify` gives `Strike` (from `preview_attack`, value `(expected
-   dealt, -expected taken)`, `way` = the action without its target and
-   tile), `Extra { group: 0, value: missing HP }` for heals (a heal that
-   moves ranks after one that doesn't, as today: fold it into `value`),
-   `Step` for a `Wait`, `End` for `EndPhase`, `Drop` for `Equip` and
-   `Talk`, `Other` for the rest; `pick` is `next_command` with the AI
-   weights. `PersonaOrder` becomes `TacticsOrder<PersonaHooks>`.
-6. **The targets** (`crates/bots/src/playtest.rs`): `Targets` becomes
-   `shuyi_core::bots::playtest::Targets<Difficulty>` (derive `Ord` on
-   `Difficulty` in `trpg-core`, a bot-only need: say so in its doc
-   comment); `faster` becomes one `medians` entry in `targets.ron`; the
-   game's `Targets::from_ron` stays as the reader. A test checks
-   `unknown_entrants` is empty for the four entrant names.
-7. **The command**: `Trpg::playtest_stages`, `playtest_plan`,
-   `playtest_defaults` in `crates/xtask/src/game_tools.rs`, built from
-   what `crates/xtask/src/playtest.rs::play` does today (the army of the
-   battle's player slots, `BattleStage`, `BattleEntrant`). Then delete
-   `crates/xtask/src/playtest.rs` and its tests and the `playtest` arm
-   and usage line of `crates/xtask/src/main.rs` (its CLI tests move to
-   `cargo shuyi playtest`, through `crates/xtask/tests/cli.rs`).
-8. **The workflow**: `.github/workflows/playtest.yml` becomes a caller of
-   engine#2021's workflow (its `levers` input set to the game's script,
-   its concurrency as above), pinned to the engine commit in
-   `shuyi-engine.rev` (the pin move also moves this line; add it to
-   `engine-pin`'s list of files if that command keeps such a list).
-9. **Compare**: run step 1's commands with `cargo shuyi playtest --stage
-   <id> --entrant all --tries 20 --report after.json` (and the
-   baseline). Every try's measures must equal `before.json`'s (same seeds:
-   the personas' choices are unchanged). If one differs, a step above
-   changed behaviour: find it, don't tune.
-10. **Docs**: `docs/playtesting.md` (the command, its options, where the
-    history is), ADR-0095, `docs/engine/boundary.md`.
-11. **Measure** with `cargo xtask code-lines` (the friction row of this
-    ticket; the estimate is below) and add the row.
+1. Save seeded persona/baseline measures and command traces before editing
+   on the current pin; use Chapter 1 and the existing escape/retreat test
+   fixtures, 20 seeds each. Record inputs and ignore wall-clock timing.
+2. Replace scoring with engine weighted arrays, preserving all feature
+   names/counts and persona values. Compare the decoded settings/weights
+   against an explicit pre-migration table in tests.
+3. Replace danger maps with `Threats<UnitId>` built from stop tiles and
+   attack ranges; stationary enemies use `strike_area_from`. Forecasts,
+   exposed/counter damage caps and the lord-alone rule remain game hooks.
+   Replace goals with movement-type-keyed `GoalDistance`.
+4. Implement `OrderHooks`: preserve the existing strike ordering and
+   forecast key, stationary-before-moving heal order, step/end/drop/other
+   categories and `next_command` tie behavior. Use `TacticsOrder` rather
+   than moving the old ranking algorithm to another game file.
+   In particular, a strike keeps `(expected dealt, -expected taken)`
+   and its action-without-target/tile `way`; heals are `Extra` group 0
+   ranked by missing HP with stationary heals before moving ones;
+   `Wait` is `Step`, `EndPhase` is `End`, `Equip` and `Talk` are `Drop`,
+   and the remaining commands are `Other`.
+5. Use `Targets<Difficulty>` (derive `Ord` only as necessary), keeping
+   tier values and entrant names. Move AI distances and `threat_area` to
+   the same engine helpers without broadening the legal-command set.
+6. Re-run step 1 and require equal command traces, per-try measures and
+   verdicts. Keep a small representative trace fixture as a regression
+   test. Update ownership docs and measure removals across all spellings.
+7. Leave the existing xtask playtest working for 1207's baseline. Record
+   completed engine reuse and the precise remaining 1207 pieces.
 
-**Expected size:** about 300 added production lines (the plan in
-`game_tools.rs` about 80, the hooks and closures about 120, the rest
-type changes) and about 1,000 removed. If the added lines pass 600,
-split at step 7 into a second ticket (the command and the workflow)
-and land steps 3–6 first.
+Expected size: about 180 added production lines and 450 removed, plus
+focused test changes; planned under 1,800 changed lines including docs
+and this ticket's move. The former command/workflow work is now 1207,
+not an optional split based only on added production lines.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commit that closed the last
-      of the seven engine tickets.
-- [ ] `crates/xtask/src/playtest.rs` is gone; `cargo xtask playtest`
-      prints "unknown command" (or the xtask usage).
-- [ ] `cargo shuyi playtest --stage <Chapter 1's id> --entrant all
-      --tries 20` gives, try by try, the same measures as `cargo xtask
-      playtest <id> --bot all --runs 20` did on the old pin (step 9),
-      and the same check verdicts.
-- [ ] Its text shows, per entrant, the same numbers as before: won,
-      deaths (Classic) or retreats (Casual) per try, most fallen unit,
-      items median and max, turns median, seconds per try, and `was …`
-      on a second run.
-- [ ] `--threads 1` and the default give the same report.
-- [ ] The Playtest workflow on this ticket's PR runs through the
-      engine's reusable workflow and passes; its job summary has every
-      battle's table.
-- [ ] `crates/bots/personas.ron` and `targets.ron` hold the same numbers
-      as before (a test compares them with a table).
-- [ ] `cargo xtask code-lines` shows `trpg-bots` and `xtask` production
-      lines down by at least 700 together.
-- [ ] A row in `docs/engine/friction.md` for this ticket.
-- [ ] `cargo xtask ticket-lint --check-engine` passes.
+- [ ] Pin is past the seven named engine tickets; `ticket-lint
+      --check-engine` passes. No pin move is required on today's main.
+- [ ] Seeded command traces, per-try measures and verdicts agree with the
+      pre-migration baseline, including retreat/escape and stationary
+      enemies. Existing AI and `crates/bots/tests/baseline.rs` tests pass.
+- [ ] Decoded personas/targets retain every weight/setting/band/floor;
+      `unknown_entrants` is empty for baseline/casual/normal/hardcore.
+- [ ] Tests compare the 16 feature names, persona settings, weights and
+      decoded target numbers against an explicit pre-migration table;
+      the old `faster` comparison is represented by the same median rule.
+- [ ] Game-local generic score accumulation, threat storage/danger sum,
+      goal-distance traversal, candidate ranking and target evaluation
+      are removed, not renamed. Semantic hooks remain game-owned.
+- [ ] The existing xtask playtest still works; 1207 has the remaining
+      CLI/history/workflow handoff and the friction log records this step.
+- [ ] Completion notes name the seven engine PRs/revisions and record
+      production-line counts before this ticket, so 1207 can verify the
+      original combined reduction of at least 700 production lines.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the scoring (`Tally::between` counts on the existing fixtures;
-  the old `score` tests now through `Weighted`), the danger (the
-  existing `danger` tests, unchanged expectations), the order (the
-  existing `order` tests, unchanged expectations), the targets.
-- Integration: `crates/bots/tests/baseline.rs` unchanged;
-  `crates/xtask/tests/cli.rs` runs `cargo shuyi playtest` on a test
-  battle.
-- Behaviour: step 9's comparison, kept as a test if it fits in a
-  minute (20 tries of Casual on the test battle, measures equal to a
-  committed fixture made on the old pin).
+- Unit: existing feature counts, danger/HP/lord caps, stationary threats,
+  candidate order and target tests through engine-backed implementations.
+- Integration: seeded traces/measures, unchanged AI baseline, decoded
+  persona/target-value equality. Behavior tests read state, not pixels.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+*(Filled in by the session that completes the ticket: baseline comparison,
+engine APIs used, removals, deviations and the remaining 1207 handoff.)*

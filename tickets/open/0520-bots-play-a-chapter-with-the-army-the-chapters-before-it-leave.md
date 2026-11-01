@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0848"]
+blocked_by: ["0848", "0330", "0521"]
 nick_input: none
 completed:
 ---
@@ -34,6 +34,19 @@ So a later chapter tuned by the bots (0848 tuned Chapter 2 this way) is
 tuned for a weaker army than a player brings, and plays easier than its
 bands say. 0848 found it; its Completion notes list the numbers.
 
+The 2026-11-01 PR audit confirmed this remains an acceptance deferral of
+[PR 481](https://github.com/Zafnok/visions-of-shuyi/pull/481), not proof
+that Chapter 2 is balanced for a campaign army. First-hit effects (0330)
+and AI technique scoring (0521) must be corrected before the final
+calibration here, so those fixes cannot invalidate its certified results.
+
+**Either order with 1207:** if the engine playtest-command adoption is
+done, put the shared campaign-army construction in the active
+`game_tools` plan/stage adapter and use `cargo shuyi playtest`. If not,
+use the existing wrapper with the same shared provider; 1207 preserves
+that provider and the resulting campaign-army reports when it migrates
+the command. This balance correction does not wait for optional cleanup.
+
 ## Nick input
 
 None. The bands and personas are Nick's (`docs/design/playtest-bots.md`);
@@ -59,6 +72,9 @@ anything left to judge by playing goes on 1064's checklist.
 - Re-run `cargo shuyi autobalance --stage ch02 --apply` and the playtest
   with the new army; update `assets/battles/ch02.ron` and 0848's numbers
   where they move.
+- Record the starting army, carried resources, seed set and configured
+  band verdicts alongside the report. A fresh-army run remains a diagnostic
+  comparison and cannot satisfy the campaign-army acceptance check.
 - Find out why Hardcore is not faster than Normal on `ch02` (0848: median
   6 turns against 4–5, `lower ✗`), where it was on `ch01`. A village
   race may make saving houses cost turns, which the check doesn't know:
@@ -72,7 +88,8 @@ anything left to judge by playing goes on 1064's checklist.
 
 ## Implementation steps
 
-1. Read `docs/playtesting.md`, `crates/xtask/src/playtest.rs`,
+1. Read `docs/playtesting.md`, `crates/xtask/src/playtest.rs` (or the
+   active `game_tools` playtest plan after 1207),
    `crates/xtask/src/game_tools/balance.rs`, `crates/bots/src/playtest.rs`
    and `trpg_content::chapter::battle_campaign`.
 2. Build the army for a story battle (Scope) in one function used by the
@@ -86,11 +103,18 @@ anything left to judge by playing goes on 1064's checklist.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask playtest ch02 --bot all` plays with the army Chapter
-      1 leaves and a pack of its Potions (a test shows the setup).
+- [ ] The active command plays with the army Chapter 1 leaves and a
+      pack of its Potions (a test shows the setup):
+      `cargo xtask playtest ch02 --bot all` before 1207, or
+      `cargo shuyi playtest --stage ch02 --entrant all` afterward.
 - [ ] Chapter 1's playtest numbers don't move.
-- [ ] Chapter 2 is back in its bands with the new army (or the Completion
-      notes say why not).
+- [ ] Chapter 2 meets its configured bands with the campaign army; the
+      report includes every persona and the Hardcore/Normal comparison.
+      A written explanation of a failed band does not count as a pass;
+      unresolved failures remain tracked and block certification.
+- [ ] The playtest and autobalance use the same deterministic starting
+      army, stock, gold and pack; a regression rejects a fresh level-data
+      army or an empty default pack for this campaign case.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

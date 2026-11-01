@@ -20,8 +20,11 @@ completed:
 one 512 px picture (engine ADR-0061), and that blurs the game's `@` at 16 and
 32 px: 64 of 256 and 133 of 1024 pixels differ, and the 16 px glyph can't be
 read. So `crates/app/src/main.rs` still includes `assets/icon/icon-{16,32,64}.png`,
-marked `// engine-friction: engine#3113`. That engine ticket lets a game give
-pictures drawn per size.
+marked `// engine-friction: engine#3113`. Engine PR #210 has now shipped
+that ticket and lets a game give pictures drawn per size. It merged after
+the current game pin: retain `engine#3113` as the minimum revision and
+move the pin first, rather than waiting for another implementation. Game
+1199 is already done.
 
 ## Nick input
 
@@ -53,7 +56,8 @@ None. The icon's picture doesn't change.
 3. Run `cargo shuyi app-info`, and use `APP.window_icon` in `main.rs`.
 4. Delete `assets/icon/icon-{16,32,64}.png` if nothing else reads them.
 
-Expected size: about 20 production lines changed.
+Expected size: about 20 production lines changed plus override/staleness
+checks; under 700 changed lines including docs and the ticket move.
 
 ## Acceptance criteria
 
@@ -62,11 +66,20 @@ Expected size: about 20 production lines changed.
 - [ ] `the_window_has_an_icon` passes, with `WINDOW.icon` equal to
       `APP.window_icon`.
 - [ ] `cargo shuyi app-info --check` and `cargo shuyi check --target all` pass.
+- [ ] Old direct window-icon includes and the engine-friction marker are
+      gone. Missing/incorrect-sized override files fail generation; stale
+      generated icons fail `app-info --check`. The exe `.ico` generator
+      and output remain intact.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: `WINDOW.icon` equals `APP.window_icon` in `crates/app/src/tests.rs`.
+- Integration: override pixel equality, missing/invalid-size input refusal
+  and stale generated output refusal through the existing engine commands.
 
 ## Completion notes
+
+*(Filled in by the session that completes the ticket: pin, pixel equality,
+refusal checks, deviations and follow-ups.)*
 

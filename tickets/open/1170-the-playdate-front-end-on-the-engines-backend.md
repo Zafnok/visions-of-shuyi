@@ -1,13 +1,13 @@
 ---
 id: "1170"
-title: "The Playdate front end on the engine's Playdate backend: the game keeps its config, its start and its one-bit skins"
+title: "The Playdate front end on the engine's backend with the game's config start and skins"
 type: feature
 milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
-blocked_by: ["engine#3028", "1175"]
-nick_input: none
+status: blocked
+blocked_by: ["1175", "1203", "engine#3010", "engine#3029", "engine#3028", "engine#2410", "engine#3011"]
+nick_input: setup
 completed:
 ---
 
@@ -15,116 +15,137 @@ completed:
 
 ## Context
 
-The first engine-friction sweep (1153, `docs/engine/friction.md`)
-measured the Playdate front end (`crates/playdate`, ADR-0070) at 1735
-production lines against an estimate of 100 (17×): the game's
-`crates/app/src/main.rs` is 66 lines over the engine's desktop backend,
-and the Playdate's should be the same plus the context setup in
-`start.rs`. About 1,585 lines are platform glue: SDK bindings, the
-allocator, the panic handler, the frame driver, storage, the game's own
-stack, audio, pictures, and the on-device report.
+The first friction sweep measured the Playdate front end at 1,735
+production lines against 100 (`docs/engine/friction.md`, 1153,
+ADR-0070). The 2026-11-01 audit confirmed that the platform loop,
+storage, audio, stack and exporter have now shipped in the engine:
+3010/3029 are at the game's pin; 3028 (PR #214) and the A/B button names
+2410 (#215) shipped after it. A pin move reaches them; no new feature
+implementation is needed for those pieces.
 
-The engine holds that work in its tickets 3003 (the platform boundary,
-`App::frame`, now with a loading phase), 3010 (the Playdate backend and
-`shuyi export playdate`, now pointing at the game's code to lift), 3011
-(on the device, now with the report a shipped game keeps), 3028 (the
-game on a stack of its own) and 3029 (audio). Each lifts code from this
-crate. This ticket moves the game onto them once they land.
+There is one real remaining engine prerequisite: 3011 owns the opt-in
+report a shipped game keeps. Current `shuyi_playdate::Driver` has no
+replacement for the game's loading-card/first-frame timestamps, slow
+bundle reads, minute frame/stack report and bench-phase observations.
+Do not delete or silently disable those to make this port fit. Wait for
+3011 and verify its hooks before cutover. Crash reports (engine 3076)
+and voice baking (3078) are absent from the current game and are not
+prerequisites for preserving behavior here.
 
-What the engine's backend holds at the pin of 2026-11-01
-(`docs/targets/playdate.md` in the engine):
-
-- `shuyi_playdate::main!(start)`, with a `Start`, a one-bit look
-  (`Look::with_one_bit`) and a pack read by `shuyi_playdate::pack()`.
-- The d-pad, A, B and crank, the system menu through `SystemMenu0`–`2` in
-  the keymap, and a storage that passes `power_cut_suite` (1196 fixes the
-  game's own until this lands).
-- `shuyi_playdate::audio::Speaker` on the SDK's players, and `shuyi export
-  playdate`, which bakes what `GameTools::audio` names to mono IMA ADPCM
-  at 44,100 Hz, the format of ADR-0084. So `crates/xtask/src/playdate_audio.rs`
-  (754 lines) goes too, and `crates/xtask/src/playdate.rs` (1,422 lines)
-  with `cargo xtask playdate`, as far as the exporter covers it.
-
-What it doesn't hold yet, so check each before deleting the game's copy:
-the on-device report (`report.rs`, engine 3011) and a crash report (engine
-3076). Help text naming the buttons is an engine limit until its 2410.
-Voice clips aren't baked until engine 3078, which is 1048's concern: the
-Playdate build plays no voices today.
+The original ticket also promised deleting 754 lines of audio tooling
+and 1,422 lines of exporter tooling, besides all platform modules/tests.
+That cannot fit one PR. The concrete split is: 1203 independently adopts
+audio baking first; this ticket makes the real backend/export cutover;
+1204 removes retired SDK/storage sources, 1205 then removes retired
+runtime audio/report helpers and verifies the physical frontend's
+under-200-line target, and 1206 removes the retired exporter. They depend
+on this cutover and remove only sources already disconnected here.
 
 ## Nick input
 
-None. Nick no longer checks gameplay tickets after merge (Nick,
-2026-10-21: "I will save all my checking for either design (i.e. 00
-tickets) or for the full act 1 playtest itself"). Verification is by
-tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
-(0506, 0509). What the old sign-off asked goes on the checklist of
-Nick's next playtest (1064, the Act 1 playtest, if this lands before
-it):
-
-> Play the Playdate build on the device after this lands
-> (sideload as usual) and say if anything feels different: start-up,
-> sound, saves, the system menu.
+**Setup, only for the required device measurements:** connect Nick's
+existing Playdate by USB, unlock it and leave it on its home screen;
+use the installed SDK's console/device tools. If it cannot be connected,
+keep the device acceptance pending. Simulator/link success is not a
+startup measurement. No purchase, new account or gameplay sign-off.
+Tests verify behavior; subjective startup/sound/save/menu feel goes to
+1064 if this optional migration lands before that playtest.
 
 ## Scope
 
 **In:**
-- Move the pin past engine#3028 (`engine-change` skill, step 7). 3010
-  (engine PR #197) and 3029 (#201) are done by the pin move of 2026-11-01.
-- `crates/playdate` keeps: the game's Playdate config (its name, data
-  folder, keymap, system menu labels, the loading card, the stack
-  size), `start.rs` (the game's context), and the build glue the
-  engine's exporter can't do for it (if any; say what in the
-  Completion notes). Everything the backend now does goes:
-  `src/pd/*`, `audio.rs`, `storage.rs`, `report.rs`, `pads.rs`,
-  `menu.rs`, `pictures.rs`, `stack.rs`, and `shim/` if the backend
-  replaced it.
-- `cargo xtask playdate` becomes a call to `shuyi export playdate`, or
-  goes, with `docs` and `crates/playdate/README.md` updated.
-- Start the Playdate build the way 1175 started the desktop one: a
-  `shuyi_platform::Start` with the game's loading card, its load and its
-  look, which the engine's Playdate backend runs (3003 changed how a
-  backend starts; 1175 moved the desktop `main` and the Harness onto it).
+- Verify 3011's report hooks, then move the pin past all named engine
+  tickets with `engine-pin` and its ledger/adoption review.
+- `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
+  loading card/data setup, one-bit look, saved settings and stack size.
+  Use the engine's SDK, allocator, panic path, driver, storage and audio.
+- Wire the game's project/audio/bake adapters and library feature to
+  `shuyi export playdate`; preserve selected Playdate music, 4x4 Bayer
+  stretch/dither policy, data folder and menu/keymap semantics. A/B move
+  to East/West consistently with 2410, including target profile/help.
+- Replace the public xtask build entry with a thin engine-export call
+  where compatibility is needed. Disconnect the old plan/modules from
+  compilation and execution here; no dead-code allow, no feature that
+  still selects the obsolete runtime, no duplicate allocator/panic path.
+- Delete the small obsolete heap/stack/pad/menu/picture/screen/text
+  helpers and the old `pd/allocator.rs`, `pd/panic.rs` and
+  `pd/game_stack.rs` as part of their cutover. Keep the game's card/start
+  only where they still describe its actual loading look/configuration.
+- Preserve reports/bench output through 3011 and compare real before/after
+  startup and minute reports. Retain Chapter 1 host/one-bit tests.
 
 **Out (do not do):**
-- The one-bit skins in `crates/ui` (the game's look,
-  `docs/design/playdate.md`).
-- The AI's speed on the device (1051) and the battle frame's time
-  (1057).
-- The other Playdate tickets (1057; 1059, the battle map at 50 frames a
-  second) touch `crates/playdate` too; 1056 (done) strips the debug
-  ELF's unwind sections in `crates/xtask/src/playdate.rs` so `pdc`
-  packs it, which engine 3010's exporter now also knows (1063 was its
-  duplicate, closed). **Either order works:** if one lands first and
-  changes a file this ticket deletes, check the engine's backend does
-  the same thing and, if it doesn't, add it there (a small engine PR,
-  `engine-change` skill) before deleting the game's copy.
+- Bulk deletion of disconnected files: 1204, 1205 and 1206 own the
+  bounded cleanup. Record an exact file inventory for each; they must
+  not later discover still-running code or remove unsupported behavior.
+- Audio converter replacement (1203, needed first), voice clips (1048),
+  sale packaging (1052), AI speed (1051), frame optimization (1057/1059),
+  and changing the one-bit skins in `crates/ui`.
+
+**Either order with 1057 and 1059:** if they land first, verify the engine
+keeps their measurements/behavior before disconnecting the old frontend;
+otherwise update their ticket paths to the engine-backed frontend here.
+The 1056 unwind-section fix is already in engine 3010's exporter.
+
+**Either order with 1182:** that ticket deletes the after-script pad
+workaround. If it is done first, keep its ordered engine crank/pad
+regression and update its button script to East/West during this port.
+If this port is first, update 1182's examples/test instructions to the
+adopted A/B positions here; 1182 still removes only its remaining wrapper.
+Whichever lands second checks the script and help names against the
+actual keymap/profile, not the old South/East positions.
 
 ## Implementation steps
 
-1. Write the estimate: about 1,600 lines removed, 100 added.
-2. Move the pin past engine#3028; build the device and Simulator targets.
-3. Replace the front end piece by piece (storage, audio, the stack,
-   the report), checking a device build after each with
-   `cargo xtask playdate` (or its replacement).
-4. Measure start-up and the minute report against the numbers in
-   ADR-0070 and 1057; write them in the Completion notes.
+1. Capture the current device/Simulator package inventory, old save,
+   button/chord/menu behavior, audio cues and startup/minute reports.
+   Read 1203's bake adapter and the now-shipped engine report hooks.
+2. Move the pin and wire the engine-backed library/start, context and
+   one-bit pictures/pack adapter. Keep SDK ownership in the engine.
+   Test after each step; never ship a silent temporary audio backend.
+3. Switch actual device and Simulator builds to `shuyi export playdate`.
+   Preserve private-art feature policy and the current music selection.
+   The old xtask module becomes unreferenced for 1206, not a fallback.
+4. Disconnect legacy SDK/storage/audio/report modules and obsolete Cargo
+   dependencies/features. Route preserved reports through the engine.
+   Move only still-relevant game-specific host tests to the new path;
+   engine-owned storage conformance and power-cut suites remain run at
+   the pinned engine revision, retaining 1196's guarantees.
+5. Load the saved pre-port file with the same bundle/data id. Measure
+   real startup and minute behavior against step 1/ADR-0070. Record
+   pending device evidence honestly; build-only evidence cannot check it.
+6. Give 1204–1206 exact retired-source inventories and update build docs,
+   friction/boundary ownership and downstream ticket paths.
+
+Expected size: about 250–350 added integration lines and small wiring
+removals, planned under 1,900 changed lines including tests/docs and the
+ticket move. Bulk source deletion is explicitly owned by 1204–1206.
 
 ## Acceptance criteria
 
-- [ ] `crates/playdate` is under 200 production lines.
-- [ ] A save made before the change loads after it (same data folder
-      and format).
-- [ ] Start-up to the title on the device is no slower than before
-      (the report's numbers in the Completion notes).
+- [ ] Actual device/Simulator packages use the engine backend/exporter;
+      old SDK/allocator/panic/driver/audio/storage/report modules and old
+      exporter are unreachable from Cargo and the public build command.
+- [ ] A save made before the port loads afterward with the same data
+      folder and format; engine storage conformance/power-cut tests run
+      at the pin, including rename refusal and torn writes from 1196.
+- [ ] A/B help, input/chords, crank notch, menu actions, cues/volumes,
+      selected music and one-bit image policy agree with the baseline.
+- [ ] Required loading/read/minute/stack/bench evidence remains available
+      through engine 3011. Real device startup to title is no slower than
+      baseline; before/after measurements are in the completion notes.
+- [ ] The exact retired-source lists are assigned to 1204–1206; the final
+      physical under-200-production-line frontend criterion is in 1205.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- The existing host tests that still apply (the engine now holds the
-  backend's), and `chapter_1.rs` (Chapter 1 played on the host through
-  the Playdate's skins).
+- Host: existing applicable Chapter 1/start/skin tests, old-save load,
+  input/help/menu mappings and audio schedule comparisons.
+- Integration: real device/Simulator export and runtime report, plus
+  authoritative engine storage conformance/power-cut suite at the pin.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+*(Filled in by the session that completes the ticket: pin, baseline and
+runtime evidence, retired-file inventories, deviations and follow-ups.)*

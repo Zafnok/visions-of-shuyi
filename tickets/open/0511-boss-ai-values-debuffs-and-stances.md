@@ -40,6 +40,14 @@ before the Act 1 playtest (1064) instead (re-gated 2026-10-21, 0129).
 Design: `docs/design/combat-arts.md` (the arts and what they do; *Enemies:
 bosses only; combat green units too*).
 
+**Either order with 0521:** that bug ticket repairs art reach and Cascade
+damage in the existing score walk; this ticket adds utility beyond those
+numbers. If 0521 is done, extend its final walk and preserve its fixtures.
+If this lands first, leave 0521's numerical/range corrections to that
+ticket and keep the utility branches compatible. The zero-new-weight
+comparison uses the base revision this PR actually builds on, including
+0330/0521 when present, rather than restoring their old bugs.
+
 ## Nick input
 
 None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
@@ -56,6 +64,8 @@ None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
 - Changing how the plain attack is scored, or the weights 0501 and 0503 set.
 - Non-combat actives (0503's rule for a unit holding its tile stays).
 - UI.
+- Art-range/Cascade scoring fixes (0521) and first-hit combat mechanics
+  (0330). They are separate fixes, not new utility weights.
 
 ## Implementation steps
 
@@ -82,7 +92,8 @@ None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
 
 - [ ] A boss archer in range of a unit it can't kill uses Pinning Shot when the debuff weight makes it worth its durability, and a plain shot when the weight is 0 (tests).
 - [ ] A boss that will be attacked next turn prefers a stance art over a plain attack of the same numbers; one out of every hostile unit's reach doesn't (tests).
-- [ ] With every new weight at 0 the AI chooses exactly as after 0503 (test).
+- [ ] With every new weight at 0 the AI chooses exactly as on this PR's
+      base revision (test), preserving 0330/0521's fixes if already merged.
 - [ ] Same state → same command (determinism test); every emitted command is valid (0501's property test still passes).
 - [ ] All gates in the `run-gates` skill pass.
 

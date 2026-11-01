@@ -269,9 +269,10 @@ Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
 (`assets/chapters/ch01.ron`); the chapter flow already chains chapters
 with `next`. Phases run in order, but Phase 1's questions and Phase 2's
 lanes overlap: a lane starts as soon as its own tickets are ready.
-Within a lane, → is order and · is "side by side". The only engine
-tickets Act 1 waits for are the playtest bots' (engine#2125–2128, Lane
-C; re-gated 2026-10-21 by 0130; engine#2128 added by 0506).
+Within a lane, → is order and · is "side by side". Act 1 waits for the
+playtest bots' engine tickets (engine#2125–2128, Lane C; re-gated
+2026-10-21 by 0130; engine#2128 added by 0506), and engine#2398's
+per-request fade to silence for **1080**'s specified music cycles.
 
 **Phase 1: Nick's design queue**, in this order (each unblocks the
 tickets in brackets):
@@ -324,6 +325,9 @@ Candle joins outside battle.
   explains the world map (after 1007, 1070) · **1082** icons for the
   world map's picture look (after 1007) · **1198** the world map's
   shortcuts on the Key bindings screen (after 1007, engine#2395).
+  **1080** corrects both camp and map music: engine#2398 first, then
+  3 s fades around 5 s camp quiet or 30 s map quiet; ordinary switches
+  keep their default duration.
 - **B. Battle rules:** **0319** escape, a boss who retreats, a boss
   who can't die, a scripted death (after 0069) → **0324** the escape
   objective names its exit · **0511** bosses use their
@@ -333,6 +337,10 @@ Candle joins outside battle.
   back in its playtest bands · **0323** extra strikes need
   a gap or a share of the enemy's speed, ceilings HP 200 / stats 100
   (0013) · **0608** the level pace, fast early and slow late (0013).
+  The 2026-11-01 PR audit adds **0330**, first-hit numeric debuffs in
+  the remaining combat and preview, then **0521**, AI art reach and
+  Cascade scoring, before final bot certification; **0328** reuses the
+  corrected first-hit handling.
 - **C. Bots**, engine first (0130): each step is an engine PR in
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
@@ -397,7 +405,9 @@ Candle joins outside battle.
 0736) → the scripts, one chapter at a time because the ledger makes
 them sequential: **0744** (Chapter 2, after 0737) → **0745** → **0746**
 → **0747** → **0748** → **0749** → **0750** (Chapter 8, also after
-0069). Each chapter's battle after its script, 0509, 0323, 0608, 0070 and
+0069). **0753** repairs the finale's knowledge on Classic death paths
+before **0854** wires it; it preserves the decided finale beat.
+Each chapter's battle after its script, 0509, 0323, 0608, 0070 and
 0071: **0848** Chapter 2 (also 0313, 0409, 0443, 0069, 0329) → **0858**
 Chapter 2's art (after Nick buys Hendry's picture and builds his face)
 and **0520** the bots play a chapter with the army the chapters before
@@ -421,7 +431,11 @@ web and on his Playdate.
 **Off the path** (nothing in Act 1 waits for them): engine 3010, 3028,
 3029 and game **1170** (the Playdate front end on the engine's
 backend: cleanup, the game's own front end already runs on the
-device); languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
+device), with its bounded adoption/cleanup tickets **1203–1206**, and
+**1180** → **1207** for bot semantics then playtest tooling adoption;
+**0141** native/browser capture checks, **0142** cross-target game replay
+goldens, and **1202** world-map scene data for the existing CLI/MCP hook;
+languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
 0718–0726, 0825, 0826, 0907, 1048, 1049); mods (0054, 1011–1024);
 replayability decisions **0046**–**0052** and **0060** (after 1064) and
 **0053**; release work (0901, 0903, 0906, 0908, 1052–1054); **0857**
