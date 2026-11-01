@@ -82,6 +82,7 @@ fn scripted(strikes: Vec<Strike>, attacks: [Option<Attack>; 2]) -> (Harness, Pla
         forecast: Forecast {
             attacker: numbers(),
             defender: Some(numbers()),
+            after_first_hit: None,
         },
         outcome: CombatOutcome {
             strikes,
@@ -397,6 +398,7 @@ fn a_heal_in_a_combat_command_plays_as_the_outro_starts() {
         forecast: Forecast {
             attacker: numbers(),
             defender: None,
+            after_first_hit: None,
         },
         outcome: CombatOutcome {
             strikes: vec![strike(Side::Attacker, true, false, 7, 13)],
@@ -460,6 +462,7 @@ fn a_weapon_or_spell_equipped_by_the_command_is_what_strikes() {
         forecast: Forecast {
             attacker: numbers(),
             defender: Some(numbers()),
+            after_first_hit: None,
         },
         outcome: CombatOutcome {
             strikes: vec![],

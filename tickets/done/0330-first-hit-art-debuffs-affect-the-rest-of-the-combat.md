@@ -5,10 +5,10 @@ type: bug
 milestone: M2 Core rules
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0325"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0330 — First-hit art debuffs affect the rest of the combat
@@ -97,16 +97,16 @@ it into a prerequisite ticket before coding rather than exceed the budget.
 
 ## Acceptance criteria
 
-- [ ] Regressions fail before the fix and pass afterward: subsequent
+- [x] Regressions fail before the fix and pass afterward: subsequent
       Rending Arrow damage uses reduced Def, Off Balance uses reduced
       avoid, and a Vital Point target's later counter uses reduced stats.
-- [ ] Misses do not activate a debuff; the first successful hit activates
+- [x] Misses do not activate a debuff; the first successful hit activates
       it once, including a successful zero-damage hit.
-- [ ] The preview's no-crit, all-hit strike outcomes match actual
+- [x] The preview's no-crit, all-hit strike outcomes match actual
       guaranteed-hit/no-crit resolution with these modifiers active.
-- [ ] Existing expiry, refresh, costs, save/replay and deterministic RNG
+- [x] Existing expiry, refresh, costs, save/replay and deterministic RNG
       tests pass; no unresolved mid-combat Spd rule was invented.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -118,5 +118,36 @@ it into a prerequisite ticket before coding rather than exceed the budget.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-ups and anything for the Act 1 playtest.)*
+**Done.** A first-hit debuff now changes the rest of its own combat.
+`Forecast` carries both sides' numbers from the attacker's first hit on
+(`after_first_hit`, ADR-0106). `resolve`, the preview's `if_all_hit`, the AI's
+`Walk` and the threat forecast all read them through the same plan. Six of the
+new battle regressions failed on the old code, showing the old numbers (for
+example Rending Arrow `[15, 15]`, now `[15, 20]`; Vital Point's counter 13, now
+9). The rest of the new tests check the guards and the shared numbers.
+
+**Spd in the middle of a combat.** No new rule: the strike list is fixed when
+the combat begins. A Spd debuff lowers avoid at once and changes strike counts
+from the next combat, as the design says ("a slowed enemy may now be doubled by
+the next attacker"). There was no question for Nick to answer.
+
+**Replays.** The roll protocol is unchanged, but the rolls' results can differ
+for these arts: a better hit chance can add a crit roll, and an earlier kill
+removes later strikes and their rolls. A record that uses these arts can
+therefore play out differently. No test's record or snapshot changed.
+
+**Left as it was** (no new UI look, per the ticket):
+
+- The forecast panel's `Hit` and the battle stage's numbers show the first
+  strike's. Its strike list and totals are exact.
+- The bots' expected damage (`expected_damage`) still uses the first strike's
+  numbers; only their worst case (`at_risk`) uses the new total.
+
+**For the Act 1 playtest (1064):** with Off Balance, the panel's `Hit` is the
+first strike's chance, and later strikes are better than it shows (its note
+says `avoid −20`). Does that read clearly enough in play?
+
+**Starting rules decided by the agent:** none.
+
+**Size:** estimate about 100 production lines, judged by 0325's `fight` and
+`preview_attack` change; measured 104 added. PR 732 changed lines.

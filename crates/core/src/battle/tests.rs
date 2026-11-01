@@ -147,7 +147,10 @@ fn skills() -> SkillTable {
 /// `pressure_point` (gauntlet E, 2), `sidestep` (gauntlet D, 3); plus
 /// `riposte`, a weapon art (sword, 1: hit +5) no weapon lists.
 fn test_arts() -> ArtTable {
-    let all = test_melee_arts().into_iter().chain(test_other_arts());
+    let all = test_melee_arts()
+        .into_iter()
+        .chain(test_other_arts())
+        .chain([test_rending_arrow()]);
     ArtTable {
         arts: all.map(|a| (a.id.clone(), a)).collect(),
     }
@@ -253,6 +256,24 @@ fn test_melee_arts() -> Vec<ArtDef> {
             },
         ),
     ]
+}
+
+/// `rending_arrow` (bow E, 4), for [`test_arts`].
+fn test_rending_arrow() -> ArtDef {
+    ArtDef {
+        id: ArtId::new("rending_arrow"),
+        name: "rending_arrow".into(),
+        kind: WeaponKind::Bow,
+        rank: Some(WeaponRank::E),
+        cost: 4,
+        effect: ArtEffect {
+            on_first_hit: vec![Debuff {
+                stat: StatKind::Def,
+                amount: 5,
+            }],
+            ..ArtEffect::default()
+        },
+    }
 }
 
 /// The bow and gauntlet arts of [`test_arts`], and `riposte`.

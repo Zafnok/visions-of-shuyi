@@ -1307,6 +1307,262 @@ fn an_avoid_debuff_stops_at_zero() {
     );
 }
 
+// ---- First-hit debuffs in their own combat (ticket 0330) ----------------------
+
+/// The damage of each strike `side` made, a crit counted as a plain hit.
+fn plain_damage(outcome: &CombatOutcome, side: Side) -> Vec<StatValue> {
+    let rules = crate::combat::CombatRules::default();
+    outcome
+        .strikes
+        .iter()
+        .filter(|s| s.by == side)
+        .map(|s| {
+            if s.crit {
+                s.damage / rules.crit_multiplier
+            } else {
+                s.damage
+            }
+        })
+        .collect()
+}
+
+fn landed(outcome: &CombatOutcome) -> Vec<bool> {
+    outcome.strikes.iter().map(|s| s.hit).collect()
+}
+
+/// A rank-D archer with Str 20 and Spd 4 against a target of Def `def` at
+/// range 2: might 3, hit 100, two strikes, no counter.
+fn archer_and_target(def: StatValue) -> Vec<Unit> {
+    vec![
+        stats(artist(1, p(0, 0), "longbow"), [30, 20, 0, 0, 4, 0, 0]),
+        stats(unit(3, Faction::Enemy, p(2, 0)), [100, 0, 0, 0, 0, def, 0]),
+    ]
+}
+
+#[test]
+fn rending_arrow_lowers_def_for_the_rest_of_its_own_combat() {
+    let mut s = battle(archer_and_target(8));
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "rending_arrow"));
+    let (_, _, outcome) = &combats(&events)[0];
+    // 23 against Def 8, then against Def 3.
+    assert_eq!(plain_damage(outcome, Side::Attacker), [15, 20]);
+    // The target keeps it, and it ends with the target's next phase.
+    assert!(events.contains(&art_applied(3, "rending_arrow", Phase::Other)));
+    let def = |s: &BattleState| {
+        let t = s.unit(UnitId(3)).unwrap();
+        crate::skill::effect_bonuses(&t.effects).apply(t.stats).def
+    };
+    assert_eq!(def(&s), 3);
+    end(&mut s);
+    assert_eq!(def(&s), 3);
+    end(&mut s);
+    assert_eq!(def(&s), 8);
+}
+
+#[test]
+fn a_first_hit_of_no_damage_still_starts_the_debuff() {
+    // 23 against Def 25 is 0, and it counts: then 23 against Def 20.
+    let mut s = battle(archer_and_target(25));
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "rending_arrow"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert!(outcome.strikes[0].hit);
+    assert_eq!(plain_damage(outcome, Side::Attacker), [0, 3]);
+    assert!(events.contains(&art_applied(3, "rending_arrow", Phase::Other)));
+}
+
+#[test]
+fn a_debuff_refreshed_mid_combat_does_not_stack_and_stops_at_zero() {
+    // Already rent (Def 8 → 3): both strikes are at Def 3, not Def −2.
+    let mut units = archer_and_target(8);
+    units.push(stats(
+        artist(2, p(2, 2), "longbow"),
+        [30, 20, 0, 0, 4, 0, 0],
+    ));
+    let mut s = battle(units);
+    act(&mut s, 2, p(2, 2), art_attack(3, "rending_arrow"));
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "rending_arrow"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert_eq!(plain_damage(outcome, Side::Attacker), [20, 20]);
+    assert_eq!(s.unit(UnitId(3)).map(|t| t.effects.len()), Some(1));
+    // Def 2 stops at 0.
+    let mut s = battle(archer_and_target(2));
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "rending_arrow"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert_eq!(plain_damage(outcome, Side::Attacker), [21, 23]);
+}
+
+#[test]
+fn vital_point_lowers_the_targets_counter_in_the_same_combat() {
+    // The target's Str 10 + might 3 against Def 0 is 13 before the hit and
+    // 9 after it. Dex 8 makes the counter sure (the knuckles give avoid 15).
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [30, 10, 0, 0, 0, 0, 0]),
+        stats(
+            with(unit(3, Faction::Enemy, p(1, 0)), "blade"),
+            [50, 10, 0, 8, 0, 5, 0],
+        ),
+    ]);
+    let shown = preview(&s, 1, p(0, 0), &art_attack(3, "vital_point"));
+    let planned: Vec<_> = shown.plan.strikes.iter().map(|x| x.damage).collect();
+    assert_eq!(planned, [8, 9]);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "vital_point"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert_eq!(plain_damage(outcome, Side::Defender), [9]);
+}
+
+#[test]
+fn a_missed_strike_leaves_the_counter_at_full_strength() {
+    // Avoid 200: the art's only strike misses, the sure counter doesn't
+    // change, and nothing is put on the target.
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [30, 10, 0, 0, 0, 0, 0]),
+        stats(
+            with(unit(3, Faction::Enemy, p(1, 0)), "blade"),
+            [50, 10, 0, 8, 100, 5, 0],
+        ),
+    ]);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "vital_point"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert!(!outcome.strikes[0].hit);
+    assert_eq!(plain_damage(outcome, Side::Defender)[0], 13);
+    assert!(!names(&events).contains(&"EffectApplied".to_owned()));
+}
+
+/// What `seed`'s hit rolls add up to for strikes in a row with these hit
+/// chances, each strike that hits also using up its crit roll.
+fn hit_rolls(seed: u64, hits: &[u32]) -> Vec<u32> {
+    let mut rng = SimRng::new(seed);
+    hits.iter()
+        .map(|&hit| {
+            let total = u32::from(rng.roll_percent()) + u32::from(rng.roll_percent());
+            if total < 2 * hit {
+                rng.roll_percent();
+            }
+            total
+        })
+        .collect()
+}
+
+/// The first seed whose [`hit_rolls`] pass `wanted`.
+fn seed_where(hits: &[u32], wanted: impl Fn(&[u32]) -> bool) -> u64 {
+    (0..100_000)
+        .find(|&seed| wanted(&hit_rolls(seed, hits)))
+        .unwrap()
+}
+
+/// A knuckles user with Spd `spd` on `seed` against a target with avoid 50
+/// (hit 50, 70 once Off Balance lands) that can't counter.
+fn off_balance_battle(spd: StatValue, seed: u64) -> BattleState {
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [30, 10, 0, 0, spd, 0, 0]),
+        stats(
+            Unit {
+                loadout: Loadout::default(),
+                ..unit(3, Faction::Enemy, p(1, 0))
+            },
+            [100, 0, 0, 0, 25, 0, 0],
+        ),
+    ]);
+    s.rng = SimRng::new(seed);
+    s
+}
+
+#[test]
+fn off_balance_lowers_avoid_for_the_later_strikes_of_its_own_combat() {
+    // The first strike hits at 50; the second's roll misses at 50, hits at 70.
+    let seed = seed_where(&[50, 70], |r| r[0] < 100 && (100..140).contains(&r[1]));
+    let mut s = off_balance_battle(31, seed);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "off_balance"));
+    let (_, forecast, outcome) = &combats(&events)[0];
+    assert_eq!((forecast.attacker.hit, forecast.attacker.strikes), (50, 2));
+    assert_eq!(landed(outcome), [true, true]);
+}
+
+#[test]
+fn off_balance_starts_on_the_first_strike_that_hits_not_the_first_strike() {
+    // Miss, then a roll that needs 70: still a miss, as nothing has hit yet.
+    let seed = seed_where(&[50, 50], |r| r[0] >= 100 && (100..140).contains(&r[1]));
+    let mut s = off_balance_battle(31, seed);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "off_balance"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert_eq!(landed(outcome), [false, false]);
+    assert!(!names(&events).contains(&"EffectApplied".to_owned()));
+    // Miss, hit, then a roll that needs 70: a hit.
+    let seed = seed_where(&[50, 50, 70], |r| {
+        r[0] >= 100 && r[1] < 100 && (100..140).contains(&r[2])
+    });
+    let mut s = off_balance_battle(43, seed);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "off_balance"));
+    let (_, _, outcome) = &combats(&events)[0];
+    assert_eq!(landed(outcome), [false, true, true]);
+}
+
+#[test]
+fn a_slowed_target_gives_no_extra_strike_in_the_combat_that_slowed_it() {
+    // Spd 6 against 5: one strike, though Spd 2 would allow two. The design
+    // gives those to "the next attacker".
+    let mut s = battle(vec![
+        stats(artist(1, p(0, 0), "knuckles"), [30, 10, 0, 0, 6, 0, 0]),
+        stats(
+            Unit {
+                loadout: Loadout::default(),
+                ..unit(3, Faction::Enemy, p(1, 0))
+            },
+            [100, 0, 0, 0, 5, 0, 0],
+        ),
+    ]);
+    let events = act(&mut s, 1, p(0, 0), art_attack(3, "pressure_point"));
+    let (_, forecast, outcome) = &combats(&events)[0];
+    assert_eq!(forecast.attacker.strikes, 1);
+    assert_eq!(outcome.strikes.len(), 1);
+}
+
+#[test]
+fn pinning_shot_changes_no_number_of_its_own_combat() {
+    let s = battle(archer_and_target(8));
+    let pinned = preview(&s, 1, p(0, 0), &art_attack(3, "pinning_shot"));
+    let plain = preview(&s, 1, p(0, 0), &attack(3));
+    assert_eq!(pinned.plan, plain.plan);
+}
+
+#[test]
+fn the_preview_matches_a_sure_combat_with_a_first_hit_debuff() {
+    for (art, def) in [
+        ("rending_arrow", 8),
+        ("rending_arrow", 2),
+        ("pinning_shot", 8),
+    ] {
+        let mut s = battle(archer_and_target(def));
+        let shown = preview(&s, 1, p(0, 0), &art_attack(3, art));
+        let events = act(&mut s, 1, p(0, 0), art_attack(3, art));
+        let (_, forecast, outcome) = &combats(&events)[0];
+        assert_eq!(*forecast, shown.forecast);
+        let planned: Vec<_> = shown.plan.strikes.iter().map(|x| x.damage).collect();
+        assert_eq!(planned, plain_damage(outcome, Side::Attacker));
+        assert_eq!(shown.plan.defender_hp, outcome.defender_hp);
+    }
+}
+
+#[test]
+fn a_threat_counts_a_first_hit_debuff() {
+    // A boss's Rending Arrow: 23 against Def 8, then against Def 3.
+    let s = battle(vec![
+        stats(unit(1, Faction::Player, p(0, 0)), [100, 0, 0, 0, 0, 8, 0]),
+        Unit {
+            role: Role::Boss,
+            ..stats(
+                ranked(
+                    with(unit(3, Faction::Enemy, p(2, 0)), "longbow"),
+                    WeaponRank::D,
+                ),
+                [30, 20, 0, 0, 4, 0, 0],
+            )
+        },
+    ]);
+    let threat = s.threat_forecast(UnitId(3), UnitId(1)).unwrap();
+    assert_eq!(threat.attacker_all_hit(), 35);
+}
+
 // ---- Special weapons (0329) --------------------------------------------------
 
 /// [`art_setup`] plus the special weapons of `combat-arts.md` on the test

@@ -1022,7 +1022,7 @@ impl Odds {
             max: [attacker.max, defender.max],
         };
         let mut odds = Odds::default();
-        walk.strike(0, walk.start, [0, 0], CERTAIN, &mut odds);
+        walk.strike(0, walk.start, [0, 0], false, CERTAIN, &mut odds);
         odds
     }
 }
@@ -1038,12 +1038,21 @@ struct Walk<'a> {
 }
 
 impl Walk<'_> {
-    /// Plays strike `i` on, from `hp` with `struck` strikes made per side,
-    /// on a branch of this `chance`, adding its outcomes to `odds`.
-    fn strike(&self, i: usize, hp: [StatValue; 2], struck: [u8; 2], chance: u64, odds: &mut Odds) {
-        let striker = self.order.get(i).and_then(|&by| match by {
-            Side::Attacker => Some((0, self.forecast.attacker)),
-            Side::Defender => self.forecast.defender.map(|d| (1, d)),
+    /// Plays strike `i` on, from `hp` with `struck` strikes made per side
+    /// and whether the attacker has hit yet, on a branch of this `chance`,
+    /// adding its outcomes to `odds`.
+    fn strike(
+        &self,
+        i: usize,
+        hp: [StatValue; 2],
+        struck: [u8; 2],
+        attacker_has_hit: bool,
+        chance: u64,
+        odds: &mut Odds,
+    ) {
+        let striker = self.order.get(i).and_then(|&by| {
+            let numbers = self.forecast.numbers(by, attacker_has_hit)?;
+            Some((usize::from(by == Side::Defender), numbers))
         });
         let over = hp[0] <= 0 || hp[1] <= 0;
         let Some((me, numbers)) = striker.filter(|_| !over) else {
@@ -1062,8 +1071,9 @@ impl Walk<'_> {
         let mut after = hp;
         let target = 1 - me;
         after[target] = struck_hp(&numbers, struck[me], hp[target], self.max[target]);
-        self.strike(i + 1, after, struck, hits, odds);
-        self.strike(i + 1, hp, struck, chance - hits, odds);
+        let has_hit = attacker_has_hit || me == 0;
+        self.strike(i + 1, after, struck, has_hit, hits, odds);
+        self.strike(i + 1, hp, struck, attacker_has_hit, chance - hits, odds);
     }
 }
 

@@ -255,6 +255,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 94, 3, 2),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -265,6 +266,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 3, 1),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -275,6 +277,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(11, 11, 71, 2, 2),
                 defender: None,
+                after_first_hit: None,
             },
         ),
         (
@@ -285,6 +288,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(11, 11, 71, 2, 2),
                 defender: Some(numbers(15, 15, 74, 1, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -295,6 +299,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 19, 3),
                 defender: Some(numbers(16, 16, 35, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -305,6 +310,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 90, 19, 2),
                 defender: Some(numbers(16, 16, 35, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -315,6 +321,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 19, 4),
                 defender: Some(numbers(16, 16, 15, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -325,6 +332,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 10, 94, 3, 2),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -335,6 +343,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(14, 14, 76, 1, 1)),
                 defender: Some(numbers(10, 10, 75, 2, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -345,6 +354,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(14, 14, 76, 1, 1)),
                 defender: Some(numbers(5, 5, 75, 2, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -355,6 +365,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(20, 20, 77, 3, 1)),
                 defender: None,
+                after_first_hit: None,
             },
         ),
         (
@@ -368,6 +379,7 @@ fn worked_examples() {
                     ..numbers(11, 11, 30, 0, 1)
                 },
                 defender: Some(numbers(5, 5, 99, 8, 2)),
+                after_first_hit: None,
             },
         ),
         (
@@ -378,6 +390,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(effective(numbers(20, 20, 92, 2, 1)), Affinity::Weak),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -388,6 +401,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(numbers(9, 9, 97, 0, 1), Affinity::Absorb),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                after_first_hit: None,
             },
         ),
         (
@@ -398,6 +412,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(numbers(4, 4, 97, 2, 1), Affinity::Resist),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                after_first_hit: None,
             },
         ),
     ];
@@ -1518,6 +1533,7 @@ fn missed_order(attacker: u8, defender: u8) -> Vec<Side> {
     let f = Forecast {
         attacker: numbers(1, 1, 0, 0, attacker),
         defender: Some(numbers(1, 1, 0, 0, defender)),
+        after_first_hit: None,
     };
     let mut rng = ScriptedRng::new(vec![0; 2 * usize::from(attacker + defender)]);
     let out = resolve(&rules(), &f, hp(10, 10), hp(10, 10), &mut rng);
@@ -1862,6 +1878,7 @@ fn cascading(strikes: u8, cascade: StatValue, crit: u8) -> Forecast {
             ..numbers(10, 12, 50, crit, strikes)
         },
         defender: None,
+        after_first_hit: None,
     }
 }
 
@@ -1911,10 +1928,124 @@ proptest! {
         let f = Forecast {
             attacker: SideForecast { cascade, ..numbers(damage, damage, 100, 0, 1) },
             defender: None,
+            after_first_hit: None,
         };
         prop_assert_eq!(f.attacker.all_hit(), damage);
         let out = resolve(&rules(), &f, hp(30, 30), hp(1000, 1000), &mut all_hits(1));
         prop_assert_eq!(out.strikes[0].damage, damage);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// First-hit debuffs (ticket 0330): both sides' numbers change from the
+// attacker's first hit on, and the strike list doesn't.
+
+/// Two attacker strikes (10, 50%) and a counter (8, sure), then 14 at 100%
+/// and a counter of 5 from the attacker's first hit on.
+fn debuffing() -> Forecast {
+    Forecast {
+        attacker: numbers(10, 10, 50, 0, 2),
+        defender: Some(numbers(8, 8, 100, 0, 1)),
+        after_first_hit: Some(AfterFirstHit {
+            attacker: numbers(14, 14, 100, 0, 2),
+            defender: Some(numbers(5, 5, 100, 0, 1)),
+        }),
+    }
+}
+
+#[test]
+fn a_first_hit_changes_the_numbers_of_the_strikes_after_it() {
+    // Hit (with its crit roll), counter, hit.
+    let mut rng = ScriptedRng::new([0, 0, 99, 0, 0, 99, 0, 0, 99]);
+    let out = resolve(&rules(), &debuffing(), hp(30, 30), hp(50, 50), &mut rng);
+    let damages: Vec<_> = out.strikes.iter().map(|s| s.damage).collect();
+    assert_eq!(damages, [10, 5, 14]);
+}
+
+#[test]
+fn a_miss_changes_no_numbers() {
+    // Miss at 50 (no crit roll), counter at full strength, and a roll of 99
+    // that the changed 100% would have made a hit.
+    let mut rng = ScriptedRng::new([99, 99, 0, 0, 99, 99, 99]);
+    let out = resolve(&rules(), &debuffing(), hp(30, 30), hp(50, 50), &mut rng);
+    let hits: Vec<_> = out.strikes.iter().map(|s| (s.hit, s.damage)).collect();
+    assert_eq!(hits, [(false, 0), (true, 8), (false, 0)]);
+}
+
+#[test]
+fn a_first_hit_is_in_the_plan_and_the_all_hit_total() {
+    let f = debuffing();
+    let plan = if_all_hit(&f, hp(30, 30), hp(50, 50));
+    let damages: Vec<_> = plan.strikes.iter().map(|s| s.damage).collect();
+    assert_eq!(damages, [10, 5, 14]);
+    assert_eq!(f.attacker_all_hit(), 24);
+    assert_eq!(f.attacker.all_hit(), 20);
+}
+
+#[test]
+fn numbers_after_a_first_hit_keep_the_forecasts_strikes_and_missing_counter() {
+    let mut f = Forecast {
+        attacker: numbers(10, 10, 50, 0, 2),
+        defender: None,
+        after_first_hit: None,
+    };
+    f.set_after_first_hit(&Forecast {
+        attacker: numbers(14, 14, 60, 0, 4),
+        defender: Some(numbers(5, 5, 100, 0, 3)),
+        after_first_hit: None,
+    });
+    assert_eq!(f.numbers(Side::Attacker, false), Some(f.attacker));
+    assert_eq!(
+        f.numbers(Side::Attacker, true),
+        Some(numbers(14, 14, 60, 0, 2))
+    );
+    assert_eq!(f.numbers(Side::Defender, true), None);
+    assert_eq!(strike_order(&f), [Side::Attacker, Side::Attacker]);
+    // A defender that counters keeps its own strikes too.
+    let mut f = debuffing();
+    f.set_after_first_hit(&Forecast {
+        attacker: numbers(14, 14, 60, 0, 4),
+        defender: Some(numbers(5, 5, 100, 0, 3)),
+        after_first_hit: None,
+    });
+    assert_eq!(
+        f.numbers(Side::Defender, true),
+        Some(numbers(5, 5, 100, 0, 1))
+    );
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(300))]
+
+    /// With a debuff, the plan is still what `resolve` does when every strike
+    /// hits and none crits, in the order the combat began with.
+    #[test]
+    fn the_plan_matches_resolve_with_a_first_hit_debuff(a in spec(), d in spec(), distance in 1..=2u32, cut in 0..10i32) {
+        let rules = rules();
+        let (a, d) = (build(&a), build(&d));
+        let mut weak = d.clone();
+        for stat in [&mut weak.stats.str, &mut weak.stats.def, &mut weak.stats.spd] {
+            *stat = (*stat - cut).max(0);
+        }
+        let (Some(mut f), Some(after)) =
+            (forecast(&rules, &a, &d, distance), forecast(&rules, &a, &weak, distance))
+        else {
+            return Ok(());
+        };
+        let order = strike_order(&f);
+        f.set_after_first_hit(&after);
+        prop_assert_eq!(strike_order(&f), order.clone());
+        let (ha, hd) = (hp(a.stats.hp, a.stats.hp), hp(d.stats.hp, d.stats.hp));
+        let plan = if_all_hit(&f, ha, hd);
+        let total: StatValue = plan.strikes.iter().filter(|s| s.by == Side::Attacker).map(|s| s.damage).sum();
+        prop_assert_eq!(f.attacker_all_hit(), total);
+        let numbers = [true, false].map(|hit| [f.numbers(Side::Attacker, hit), f.numbers(Side::Defender, hit)]);
+        if numbers.iter().flatten().flatten().all(|s| s.hit > 0 && s.crit < 100) {
+            let out = resolve(&rules, &f, ha, hd, &mut ScriptedRng::new([0, 0, 99].repeat(order.len())));
+            let happened: Vec<_> = plan.strikes.iter().filter(|s| !s.after_a_fall).map(|s| (s.by, s.damage, s.target_hp_after)).collect();
+            let real: Vec<_> = out.strikes.iter().map(|s| (s.by, s.damage, s.target_hp_after)).collect();
+            prop_assert_eq!(happened, real);
+        }
     }
 }
 

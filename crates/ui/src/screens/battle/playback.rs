@@ -747,6 +747,7 @@ mod tests {
                 forecast: Forecast {
                     attacker: numbers(),
                     defender: Some(numbers()),
+                    after_first_hit: None,
                 },
                 outcome: CombatOutcome {
                     strikes,
@@ -1075,6 +1076,7 @@ mod tests {
             forecast: Forecast {
                 attacker: numbers(),
                 defender: None,
+                after_first_hit: None,
             },
             outcome: CombatOutcome {
                 strikes: vec![strike(Side::Attacker, true, false, 9, 3)],

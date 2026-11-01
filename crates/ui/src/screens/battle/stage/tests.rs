@@ -65,6 +65,7 @@ fn fight(
             forecast: Forecast {
                 attacker: side_numbers(8, 96, 3),
                 defender: counter.then(|| side_numbers(9, 65, 0)),
+                after_first_hit: None,
             },
             outcome: CombatOutcome {
                 strikes,

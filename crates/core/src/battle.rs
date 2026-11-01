@@ -228,8 +228,11 @@
 //!   combat's spell uses:
 //!   - a **debuff** on the target if one of the attacker's strikes hit and
 //!     the target still stands ([`Event::EffectApplied`], until the end of
-//!     the target's next phase; the same art refreshes it). Mov and Spd
-//!     debuffs feed movement, the danger zone and attack speed;
+//!     the target's next phase; the same art refreshes it). The combat has
+//!     used it since that first hit
+//!     ([`Forecast::after_first_hit`](crate::combat::Forecast::after_first_hit)),
+//!     without changing its strike list. Mov and Spd debuffs feed movement,
+//!     the danger zone and attack speed from then on;
 //!   - **Line Pierce**: if the attacker still stands and the tile one step
 //!     past the target, on the straight or diagonal line from `dest`, holds
 //!     a unit hostile to it (any other angle has no such tile), one strike at that unit, even if the
@@ -2271,7 +2274,7 @@ impl BattleState {
                     self.fight_forecast(unit, target, &fight(from))
                 })
             });
-            let hits = |f: &Forecast| (f.attacker.all_hit(), f.attacker.hit);
+            let hits = |f: &Forecast| (f.attacker_all_hit(), f.attacker.hit);
             if let Some(found) = found
                 && best.as_ref().is_none_or(|b| hits(&found) > hits(b))
             {
@@ -2558,6 +2561,7 @@ impl BattleState {
         {
             forecast.defender = None;
         }
+        self.plan_first_hit(unit, defender, &fight, &mut forecast)?;
         let pierce = match &art {
             Some(a) if a.effect.line_pierce => {
                 self.plan_pierce(unit, defender, &fight, distance)?
@@ -2625,6 +2629,8 @@ impl BattleState {
         if self.uncounterable(fight.with, target) {
             forecast.defender = None;
         }
+        self.plan_first_hit(unit, target, fight, &mut forecast)
+            .ok()?;
         Some(forecast)
     }
 

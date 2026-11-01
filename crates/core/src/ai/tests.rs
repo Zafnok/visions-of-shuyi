@@ -1550,6 +1550,7 @@ fn odds_of_sure_strikes() {
     let f = Forecast {
         attacker: side(4, 4, 100, 1),
         defender: Some(side(3, 3, 100, 1)),
+        after_first_hit: None,
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
     assert_eq!(o, whole(4, 3, 0));
@@ -1562,11 +1563,30 @@ fn odds_of_sure_strikes() {
 }
 
 #[test]
+fn odds_count_a_first_hit_debuff_from_the_hit_on() {
+    // 50% for 4, then sure for 6 once it has hit; a sure counter of 4, or 2
+    // once it has hit.
+    let f = Forecast {
+        attacker: side(4, 4, 50, 2),
+        defender: Some(side(4, 4, 100, 1)),
+        after_first_hit: Some(crate::combat::AfterFirstHit {
+            attacker: side(4, 6, 100, 2),
+            defender: Some(side(2, 2, 100, 1)),
+        }),
+    };
+    let o = Odds::of(&f, hp(20, 20), hp(20, 20));
+    // Hit then sure: 10, half the time. Miss then 50%: 4 or 0.
+    assert_eq!(o.dealt, hundredths(600), "{o:?}");
+    assert_eq!(o.taken, hundredths(300), "{o:?}");
+}
+
+#[test]
 fn odds_of_chancy_strikes() {
     // 50% to hit twice for 5 (follow-up 6), against 4 HP of counter at 25%.
     let f = Forecast {
         attacker: side(5, 6, 50, 2),
         defender: Some(side(4, 4, 25, 1)),
+        after_first_hit: None,
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
     // Dealt: 0 (both miss), 5, 6, 11 → 10 max: (0 + 5 + 6 + 10) / 4.
@@ -1577,6 +1597,7 @@ fn odds_of_chancy_strikes() {
     let f = Forecast {
         attacker: side(5, 5, 0, 1),
         defender: None,
+        after_first_hit: None,
     };
     assert_eq!(Odds::of(&f, hp(10, 10), hp(10, 10)), Odds::default());
 }
@@ -1587,6 +1608,7 @@ fn odds_stop_when_the_attacker_falls() {
     let f = Forecast {
         attacker: side(2, 2, 100, 2),
         defender: Some(side(5, 5, 100, 1)),
+        after_first_hit: None,
     };
     let o = Odds::of(&f, hp(3, 10), hp(10, 10));
     assert_eq!(o, whole(2, 3, 0));
@@ -1601,6 +1623,7 @@ fn absorbed_strikes_heal() {
     let f = Forecast {
         attacker: absorb,
         defender: None,
+        after_first_hit: None,
     };
     // Healed up to max: nothing dealt.
     assert_eq!(Odds::of(&f, hp(10, 10), hp(8, 10)), Odds::default());
@@ -1650,6 +1673,7 @@ fn long_combat(n: u8) -> Forecast {
     Forecast {
         attacker: side(1, 1, 33, n),
         defender: Some(side(1, 1, 33, n)),
+        after_first_hit: None,
     }
 }
 
@@ -1683,6 +1707,7 @@ fn a_combat_past_the_exact_length_still_adds_up() {
     let f = Forecast {
         attacker: side(1, 1, 100, 5),
         defender: Some(side(1, 1, 100, 5)),
+        after_first_hit: None,
     };
     assert_eq!(Odds::of(&f, hp(99, 99), hp(99, 99)), whole(5, 5, 0));
 }
@@ -1703,6 +1728,7 @@ fn an_art_that_only_pays_for_itself_ties_with_the_plain_attack() {
         let f = Forecast {
             attacker: side(10, 10, hit, 1),
             defender: None,
+            after_first_hit: None,
         };
         planner.score(&Odds::of(&f, hp(20, 20), hp(20, 20)), false, 0)
     };
