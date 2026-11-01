@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#3029"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1203 — Playdate audio baking from the engine
@@ -65,15 +65,15 @@ docs and this ticket's move.
 
 ## Acceptance criteria
 
-- [ ] Existing sound/music selection and output paths match the baseline;
+- [x] Existing sound/music selection and output paths match the baseline;
       every needed variant is present and unselected music is absent.
-- [ ] Engine-baked fixture audio has the same decoded samples/ADPCM format
+- [x] Engine-baked fixture audio has the same decoded samples/ADPCM format
       as before; current device/Simulator build plans consume its paths.
-- [ ] A missing selected source fails naming it. Reusing cached output
+- [x] A missing selected source fails naming it. Reusing cached output
       after a source-byte change cannot silently return the old audio.
-- [ ] No game-local Vorbis/WAV decoder, mono mixer or ADPCM encoder remains
+- [x] No game-local Vorbis/WAV decoder, mono mixer or ADPCM encoder remains
       in the Playdate tool path, including moved/renamed copies.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,5 +83,25 @@ docs and this ticket's move.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: retained game policy,
-removed implementation, comparison evidence and 1170/1206 handoff.)*
+- **Retained game policy:** `playdate_audio::jobs` keeps every sound file and
+  only the music cues of `playdate-music.txt`, and refuses a cue that isn't in
+  the manifest. `Totals` and `run` stay for the build's summary line and
+  `Step::Audio`.
+- **Removed:** the Vorbis and WAV decoders, mono mix, IMA ADPCM encoder, WAV
+  writer, date-based cache and their algorithm tests, and the `hound` and
+  `lewton` dependencies of xtask. `shuyi-cli` now brings the decoders in.
+- **Comparison evidence:** before editing, the old converter baked the real
+  files. After the change, the engine bake did the same. All 41 outputs
+  (21 sounds, 20 tracks; `audio: 21 sound files 0.4 MB, 20 tracks 16.8 MB`)
+  have the same paths and SHA-256 hashes.
+- **Deviations:** sound files are now read from the embedded bundle, as
+  `GameAudio` requires, rather than from `assets/audio/` on disk; a sound added
+  to disk therefore needs xtask rebuilt, which cargo does. `xtask` builds
+  without `playdate-bundle`, so no sound is left out. The real device and
+  Simulator build was not run: its plan and `Step::Audio` are unchanged and
+  the output is byte-identical. The ADR-0084 status line notes the move and the
+  checksum cache. The old cache's files in `target/playdate/audio-v1/audio` and
+  `music` are ignored and go with the next clean.
+- **Handoff to 1170/1206:** the engine bake is reachable through `GameTools::audio`,
+  which the game doesn't implement yet: 1170/1206 can move `jobs`'s selection
+  there and delete this module's remaining wrapper.

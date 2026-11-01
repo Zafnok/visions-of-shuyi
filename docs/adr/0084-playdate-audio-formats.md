@@ -1,6 +1,6 @@
 # ADR-0084: Playdate audio formats: mono IMA ADPCM at 44.1 kHz, converted at build time
 
-- **Status:** Accepted
+- **Status:** Accepted; the conversion is now the engine's (`shuyi_cli::export::playdate::audio`, ticket 1203), with the same format, selection and paths, and a cache keyed by the source's checksum instead of its date. The game keeps the selection and the summary line
 - **Date:** 2026-10-17
 - **Related tickets:** 1047 (this), 1036, 1048, 1049
 - **Builds on:** ADR-0026 (audio cues as data, played by the platform),

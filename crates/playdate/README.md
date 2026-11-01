@@ -241,12 +241,13 @@ one-bit, or a touched-up `<stem>.1bit` beside a PNG taken as it is.
 
 (ticket 1047, [ADR-0084](../../docs/adr/0084-playdate-audio-formats.md))
 
-`cargo xtask playdate` converts every sound file of
-`assets/audio/audio.ron` and the music listed in
+`cargo xtask playdate` has the engine's bake
+(`shuyi_cli::export::playdate::audio`, ticket 1203) convert every sound
+file of `assets/audio/audio.ron` and the music listed in
 `crates/content/playdate-music.txt` (Chapter 1's) to mono IMA ADPCM WAVs
 at 44.1 kHz in `Source/audio/` and `Source/music/`; `pdc` makes them
 `.pda`s. Nothing is committed: the converted files are cached in
-`target/playdate/audio-v<n>/`. A new track for the Playdate is a line in
+`target/playdate/audio-v<n>/` under their source's checksum. A new track for the Playdate is a line in
 `playdate-music.txt`; the Chapter 1 test fails while Chapter 1 asks for
 a track the list leaves out.
 
