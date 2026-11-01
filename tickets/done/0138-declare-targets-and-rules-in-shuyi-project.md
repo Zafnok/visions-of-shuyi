@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-31
 ---
 
 # 0138 — Declare targets and rules in shuyi.ron
@@ -66,14 +66,14 @@ existing project settings and xtask command tests; no new screen.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi check --target all` reaches every declared target,
+- [x] `cargo shuyi check --target all` reaches every declared target,
       without SH3003 or a limit about missing target settings.
-- [ ] `cargo shuyi lint --json` runs the rules fence and reports no
+- [x] `cargo shuyi lint --json` runs the rules fence and reports no
       missing-rules-package limit or findings.
-- [ ] A test of the project wiring fails when the rules package or a
+- [x] A test of the project wiring fails when the rules package or a
       declared profile is missing, rather than accepting a limited check.
-- [ ] The checks run in CI and the game gate list.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The checks run in CI and the game gate list.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,4 +83,25 @@ existing project settings and xtask command tests; no new screen.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+`shuyi.ron` lists `desktop` and `web` (800 × 512) and `playdate` (400 × 240),
+integer scale, 16 px text, on the engine's profiles, and names `trpg-core` as
+the rules package. `cargo shuyi check --target all` and `cargo shuyi lint` are
+in `run-gates` and CI's `tickets` job. Tests in
+`crates/xtask/src/game_tools/tests.rs` fail if a target, its size or the rules
+package goes missing.
+
+**Deviation:** `crates/core/clippy.toml` is new. Without it, naming the package
+gave a fence with no bans: lint passed having checked only the dependencies.
+Five test-only uses of the clock and files in `trpg-core` are marked `#[expect]`.
+
+**Remaining limits, reported by the commands:**
+- The fence doesn't ban floats: the AI's scores in `ai.rs` are `f64`, which is
+  a real gap in determinism across machines. Ticket 0139.
+- `check --target` doesn't check controls or one-bit patterns: no screen
+  declares its actions and `Trpg` offers neither. Ticket 0140.
+- The identity isn't checked until 1199.
+- The Playdate's profile names the backend `shuyi-playdate`, but the game
+  builds with its own `trpg-playdate`. `check --target` doesn't read the
+  backend; 0910's exports don't package the Playdate.
+
+Gameplay rules decided: none.

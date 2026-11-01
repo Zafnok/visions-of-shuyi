@@ -13,6 +13,21 @@
     // `cargo run -p xtask --features private-assets -- frame-png …`.
     game: (package: "xtask", args: ["shuyi"]),
 
+    // The pure rules (ADR-0004): `lint` fences this package.
+    rules: Some("trpg-core"),
+
+    // What `check --target` checks the game against (ticket 0138), by the
+    // engine's profiles: the sizes are `ConsoleSpec::PC` and
+    // `ConsoleSpec::PLAYDATE` (crates/ui/src/console.rs), with cells 16 px
+    // tall. The Playdate's front end is the game's own crate (ADR-0070),
+    // built by `cargo xtask playdate`, not the profile's backend: this
+    // check reads only the profile's display and input.
+    targets: {
+        "desktop": (frame: (800, 512), scale: integer, text_px: 16),
+        "web": (frame: (800, 512), scale: integer, text_px: 16),
+        "playdate": (frame: (400, 240), scale: integer, text_px: 16),
+    },
+
     // Keys hard-coded in game code or text (ticket 0216, the
     // keyboard-input skill).
     check_keys: (
