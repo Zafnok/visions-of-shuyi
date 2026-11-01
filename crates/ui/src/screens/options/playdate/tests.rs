@@ -12,6 +12,7 @@ use shuyi_ui::Screen;
 fn playdate() -> Ctx {
     let mut c = pd_ctx();
     c.platform.keyboard = Keyboard::Absent;
+    c.platform.windowed = false;
     c
 }
 

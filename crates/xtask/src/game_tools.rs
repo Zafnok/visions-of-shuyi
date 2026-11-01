@@ -27,7 +27,8 @@ use trpg_core::BattleState;
 use trpg_ui::harness::{self, Core, Harness};
 use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
 use trpg_ui::onebit::{self, FRAME_BYTES};
-use trpg_ui::screen::{Ctx, Keyboard, Shuyi, ShuyiCtx};
+use trpg_ui::platform::playdate_facts;
+use trpg_ui::screen::{Ctx, Shuyi, ShuyiCtx};
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
@@ -287,13 +288,16 @@ fn battle_data(state: &BattleState) -> serde_json::Value {
 
 /// A Harness started as `start` says.
 fn harness(start: &Start) -> Result<Harness, String> {
-    let playdate = start.playdate.then(playdate_palette).transpose()?;
+    let playdate = start
+        .playdate
+        .then(|| Ok::<_, String>((playdate_palette()?, playdate_facts()?)))
+        .transpose()?;
     let setup = |ctx: &mut Ctx| {
-        if let Some(palette) = playdate {
+        if let Some((palette, facts)) = playdate {
             // As `crates/playdate/src/start.rs` starts the game.
             ctx.console = ConsoleSpec::PLAYDATE;
             ctx.palette = palette;
-            ctx.platform.keyboard = Keyboard::Absent;
+            ctx.platform = facts;
             ctx.device = Device::Pad(PadKind::Playdate);
             ctx.use_playdate_buttons();
             ctx.use_playdate_skins();

@@ -7,6 +7,7 @@
 //! look, pictures included.
 
 use insta::assert_snapshot;
+use shuyi_assets::target::Quit;
 use trpg_content::LangCode;
 use trpg_content::lang::TEST;
 use trpg_ui::audio::AudioRequest;
@@ -64,6 +65,20 @@ fn title_renders() {
     let help = view(&h).help;
     assert_eq!(help.as_deref(), Some("arrows move · f select · d back"));
     assert_snapshot!(h.snapshot());
+}
+
+/// Ticket 1200: where the player leaves through the system (a browser's
+/// tab), the title lists no Quit, and its last line is Credits.
+#[test]
+fn the_title_has_no_quit_where_the_game_cant_quit() {
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |c| c.platform.quit = Quit::System);
+    let (labels, _) = menu(&h);
+    assert_eq!(labels.last().map(String::as_str), Some("Credits"));
+    assert!(!labels.iter().any(|l| l == "Quit"));
+    assert_snapshot!(h.snapshot());
+    h.keys("Up f");
+    assert_eq!(h.screens(), ["title", "credits"]);
+    assert!(!h.quit_requested());
 }
 
 #[test]
