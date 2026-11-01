@@ -76,6 +76,11 @@ herself.
   (`docs/design/setting-and-tone.md`, *Where the jokes go*). Dry is fine;
   a gag is not.
 
+**How she sounds** (0043; `assets-src/audio/voice-refs/guide.flac`). Nick: "for Vix
+I want a more sexy but upbeat voice". An adult woman's voice, smooth and velvety,
+bright and playfully teasing. That is the sound; the wording above stays. Her
+spoken lines never name a key (0475).
+
 **Sample lines**
 
 - "Over to you. Steer the cursor with {Cursor}; {Select} on one of your

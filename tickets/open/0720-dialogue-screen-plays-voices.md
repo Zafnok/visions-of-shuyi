@@ -33,9 +33,9 @@ goes back to Nick through `ask-nick`.
 preloading voices; scenes shown during battles (ADR-0030) included, since
 they use the same screen.
 
-**Out (do not do):** voices outside dialogue scenes (battle shouts are a
-new ticket if 0043 asks for them); an auto-advance mode (a new ticket if
-0043 asks for it); Options (0826); changing the typewriter.
+**Out (do not do):** voices outside dialogue scenes (0043 chose no battle
+shouts; Vix's lessons and tips are 0476); the auto-advance mode (0859);
+Options (0826); changing the typewriter.
 
 ## Implementation steps
 
@@ -44,14 +44,15 @@ new ticket if 0043 asks for them); an auto-advance mode (a new ticket if
    the first page only and keeps playing across the pages.
 2. Advancing to another line, skipping the scene, opening a reply choice
    or leaving the screen calls `stop_voice()` first.
-3. Which lines ask at all follows 0043: narration or not, the lead's
-   lines, reply text. Put the rule in one function
+3. Which lines ask at all follows 0043: speech lines (the lead's included)
+   and narration are voiced; reply text is not. Put the rule in one function
    (`fn is_voiced(step) -> bool`) with the design doc's sentence quoted
    above it.
 4. When a scene starts, and after each line, send `PreloadVoices` for the
    lines that can come next (both branches' first lines at a choice).
-5. The typewriter and text speed behave as today unless 0043's question
-   7 says otherwise.
+5. The typewriter and text speed behave as today. The first press fills in
+   the box and leaves the voice playing; the next press goes to the next
+   line and stops the voice (0043, question 7).
 6. Rewinding a battle past a scene, or replaying one, plays voices again
    like the first time.
 7. **The dialogue log** (0729, `docs/design/look-and-feel.md`, *Dialogue
@@ -67,7 +68,8 @@ new ticket if 0043 asks for them); an auto-advance mode (a new ticket if
 - [ ] Harness test with `test.dlg` and 0238's test manifest: each voiced line queues one `PlayVoice` when its box appears; advancing queues `StopVoice` before the next.
 - [ ] Skipping a scene queues no `PlayVoice` for skipped lines and stops the current one.
 - [ ] With voices off, no voice request is queued.
-- [ ] Lines 0043 says aren't voiced never ask (one test per kind).
+- [ ] Reply text never asks for a voice; speech, the lead's speech and narration each do (one test per kind).
+- [ ] The first press on a typing line fills the box and queues no `StopVoice`; the next press queues it (test).
 - [ ] The dialogue log: moving its cursor onto a voiced line queues its `PlayVoice` (and none with *Voice on hover in the log* off); jumping to a line plays it as the box appears.
 - [ ] All gates in the `run-gates` skill pass.
 

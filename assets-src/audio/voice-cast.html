@@ -1,0 +1,158 @@
+<title>Shuyi Voice Casting</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one section per character, three candidate rows each, and a pick list at the end to copy, in the sound audition's palette (0020) */
+:root {
+  --bg: #0e0b08;
+  --panel: #1c1712;
+  --well: #120e0a;
+  --border: #6a5a40;
+  --text: #d0c4a8;
+  --dim: #a89b82;
+  --gold: #e6b860;
+  --font-body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font: 17px/1.5 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 60px; display: grid; gap: 34px; }
+header, section { display: grid; gap: 12px; }
+.eyebrow { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+h1 { font: 700 clamp(28px, 5vw, 40px)/1.1 var(--font-body); margin: 0; text-wrap: balance; }
+h2 { font: 700 24px/1.2 var(--font-body); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--dim); }
+.who { display: flex; gap: 14px; align-items: center; }
+.who img { width: 128px; height: 128px; flex: none; image-rendering: pixelated; background: var(--panel); border: 1px solid var(--border); }
+.who p { min-width: 0; }
+ol { margin: 0; padding-left: 26px; display: grid; gap: 4px; }
+.cand { background: var(--panel); border: 1px solid var(--border); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.cand.picked { border-color: var(--gold); }
+.head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.head b { font: 600 15px/1.3 var(--font-mono); color: var(--gold); }
+.reader { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.reader span { font: 500 13px/1 var(--font-mono); color: var(--dim); min-width: 92px; }
+button { font: 600 14px/1 var(--font-mono); color: var(--text); background: var(--well); border: 1px solid var(--border); padding: 11px 12px; cursor: pointer; }
+button:hover { border-color: var(--gold); }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button.on { background: var(--gold); border-color: var(--gold); color: var(--well); }
+textarea { width: 100%; min-height: 250px; background: var(--well); color: var(--text); border: 1px solid var(--border); padding: 12px; font: 500 14px/1.5 var(--font-mono); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Ticket 0043 · Casting · Chapter 1</div>
+    <h1>Who plays each character?</h1>
+    <p>Everyone is cast but Vix. E on Chatterbox is your baseline from last round. The other five are newly designed voices near it, with no pitch shifting, all on Chatterbox. Press <em>All</em> to hear a voice's lines in a row.</p>
+    <p class="muted">The lines keep Vix's current dry wording, so listen to the voice more than the words. Choose one with <em>Pick</em>, or tell me which is closest and what to change.</p>
+  </header>
+  <div id="cast" style="display:grid;gap:34px"></div>
+  <section>
+    <h2>Your picks</h2>
+    <textarea id="picks" aria-label="Your picks" readonly></textarea>
+    <div><button type="button" id="copy">Copy the list</button></div>
+  </section>
+</div>
+
+<script>
+const READER = { qwen: "Qwen3", chatter: "Chatterbox" };
+const CAST = [
+  { id: "vix", name: "Vix", portrait: "portraits/guide.png", bio: "The tutorial guide, outside the story. A dry insider who talks to the player, says what to do, then stops: calm, no exclamation marks, warmest at a plain \"Nice.\"", readers: ["chatter"], cands: [["E", "Baseline: your pick from last round"], ["H", "New: same brief as E, another voice"], ["I", "New: same brief as E, a third voice"], ["J", "New: warmer, lightly husky"], ["K", "New: smooth and velvety, less husky"], ["L", "New: huskier and a little lower, close to a laugh"]], lines: ["Over to you. That's everyone.", "Made a mess? Rewind undoes turns, for one of a few charges per map. Just looking is free.", "One of yours is badly hurt. Pull it back, or have it drink a Potion from its item menu."] },
+];
+
+const audio = new Audio();
+let queue = [], lit = null;
+const light = b => { if (lit) lit.classList.remove("on"); lit = b; if (b) b.classList.add("on"); };
+function playNext() {
+  const n = queue.shift();
+  if (!n) { light(null); return; }
+  light(n.button);
+  audio.src = n.src;
+  audio.play().catch(playNext);
+}
+function start(items) { audio.pause(); queue = items; playNext(); }
+audio.addEventListener("ended", () => setTimeout(playNext, 350));
+audio.addEventListener("error", playNext);
+
+const picks = {};
+const picksEl = document.getElementById("picks");
+function showPicks() {
+  picksEl.value = CAST.map(c => `${c.name}: ${picks[c.id] || "-"}`).join("\n");
+}
+function button(label, aria, onClick) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = label;
+  b.setAttribute("aria-label", aria);
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+const castEl = document.getElementById("cast");
+for (const c of CAST) {
+  const s = document.createElement("section");
+  const h = document.createElement("h2");
+  h.textContent = c.name;
+  const who = document.createElement("div");
+  who.className = "who";
+  if (c.portrait) {
+    const pic = document.createElement("img");
+    pic.src = c.portrait;
+    pic.alt = `Portrait of ${c.name}`;
+    who.append(pic);
+  }
+  const bio = document.createElement("p");
+  bio.textContent = c.bio;
+  who.append(bio);
+  const ol = document.createElement("ol");
+  ol.className = "muted";
+  c.lines.forEach(l => { const li = document.createElement("li"); li.textContent = l; ol.append(li); });
+  s.append(h, who, ol);
+  const cards = [];
+  for (const [cid, note] of c.cands) {
+    const card = document.createElement("div");
+    card.className = "cand";
+    const head = document.createElement("div");
+    head.className = "head";
+    const title = document.createElement("b");
+    title.textContent = `${cid} · ${note}`;
+    head.append(title);
+    const pickRow = document.createElement("div");
+    pickRow.className = "reader";
+    head.append(pickRow);
+    card.append(head);
+    for (const r of c.readers) {
+      const row = document.createElement("div");
+      row.className = "reader";
+      const label = document.createElement("span");
+      label.textContent = READER[r];
+      row.append(label);
+      const items = c.lines.map((_, i) => {
+        const item = { src: `clips/${r}/${c.id}_${cid}_${i + 1}.ogg` };
+        item.button = button(`${i + 1}`, `${c.name}, candidate ${cid}, ${READER[r]}, line ${i + 1}`, () => start([item]));
+        row.append(item.button);
+        return item;
+      });
+      if (items.length > 1) row.append(button("All", `${c.name}, candidate ${cid}, ${READER[r]}, all lines`, () => start(items.slice())));
+      card.append(row);
+      pickRow.append(button(c.readers.length > 1 ? `Pick with ${READER[r]}` : "Pick", `Pick ${c.name} candidate ${cid} with ${READER[r]}`, () => {
+        picks[c.id] = `${cid} (${note}), ${READER[r]}`;
+        cards.forEach(x => x.classList.toggle("picked", x === card));
+        showPicks();
+      }));
+    }
+    cards.push(card);
+    s.append(card);
+  }
+  castEl.append(s);
+}
+showPicks();
+document.getElementById("copy").addEventListener("click", () => {
+  const select = () => { picksEl.focus(); picksEl.select(); };
+  if (navigator.clipboard) navigator.clipboard.writeText(picksEl.value).catch(select);
+  else select();
+});
+</script>

@@ -75,7 +75,7 @@ translating anything (0719). No mockup made with bought art is committed
    6. **The game's title in Japanese:** keep *Visions of Shuyi* in Latin
       letters, or add a Japanese subtitle. (Feeds 0906's trademark check
       if it changes.)
-   7. **Voices with Japanese text** is asked in 0043, not here.
+   7. **Voices with Japanese text** was answered in 0043: Japanese voices (0755).
 4. Record each answer verbatim and as a rule. If an answer needs work no
    ticket covers (a kana name-entry grid), write that ticket (`write-ticket`)
    and add it to 0719's `blocked_by` if Chapter 1 in Japanese needs it.

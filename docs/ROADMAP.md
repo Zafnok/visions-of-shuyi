@@ -183,10 +183,13 @@ characters for "Shuyi", the Chinese title and font, and says who checks
 it (after 0042) → **0239** a wide font per language and Chinese line
 breaking (after 0236, 0237 and engine#2303); **0725** the translation pipeline (after
 0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
-*Voices* (ADR-0046): **0043** Nick picks the tool, what is voiced and each
-voice by ear; **0238** playback plumbing (after 0717) → **0720** the
-dialogue screen plays them, **0721** the generation tool, **0826** the
-Options rows (after 0805) → **0722** Chapter 1's voices.
+*Voices* (ADR-0046, ADR-0107): **0043** done, Nick picked the tools, what is
+voiced and each voice by ear; **0238** playback plumbing (after 0717) →
+**0754** the voice's word for the player's name, **0720** the dialogue screen
+plays them, **0721** the generation tool, **0826** the Options rows (after
+0805) → **0722** Chapter 1's voices → **0755**, **0756** Japanese and Chinese,
+**0077**, **0757** later chapters; **0475** → **0476** Vix speaks; **0859**
+auto-advance; **0860** a New Game options menu.
 *Script:* **0723** a scriptwriter's kit (after 0715).
 *Disclosure:* **0907** credits and store text say what is machine-made
 (0901 and 0903 use it).
