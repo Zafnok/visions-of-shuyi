@@ -11,7 +11,7 @@ mod args;
 mod tests;
 
 use macroquad::window::Conf;
-use shuyi_app::{AppConfig, Icon, VoiceFiles, Window};
+use shuyi_app::{AppConfig, VoiceFiles, Window};
 use shuyi_platform::{Card, Look, Setup, Start};
 use trpg_content::{bundle, font, voice};
 use trpg_ui::screen::{Lessons, Shuyi};
@@ -33,15 +33,8 @@ const _: () = assert!(
 
 /// The window: the console at 2x (1600x1024) plus a small margin, since the
 /// framebuffer can come out a pixel smaller than asked, which would drop
-/// to 1x. Its title is `shuyi.ron`'s `app` (ticket 1199). Its icon is drawn
-/// per size in `assets/icon/` (ticket 0902, `cargo xtask icon`), since the
-/// engine's downscale from one picture blurs the glyph at 16 and 32 px.
-// engine-friction: engine#3113
-const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(Some(Icon::new(
-    include_bytes!("../../../assets/icon/icon-16.png"),
-    include_bytes!("../../../assets/icon/icon-32.png"),
-    include_bytes!("../../../assets/icon/icon-64.png"),
-)));
+/// to 1x. Its title and icon are `shuyi.ron`'s `app` (tickets 1199, 1201).
+const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(APP.window_icon);
 
 /// Where saves and settings are kept: never change it, or every player's
 /// saves are lost (`%APPDATA%/tactical-rpg`, `localStorage` keys under
