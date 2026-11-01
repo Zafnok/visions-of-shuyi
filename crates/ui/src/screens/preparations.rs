@@ -976,6 +976,10 @@ impl Screen<Shuyi> for PreparationsScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::PREPARATIONS.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for &action in &input.actions {
             if let Some(pop) = self.handle(action, ctx) {

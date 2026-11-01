@@ -86,6 +86,10 @@ impl Screen<Shuyi> for SavePromptScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::SAVE_PROMPT.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         pick_one(&mut self.menu, ctx, input)
     }
@@ -395,6 +399,10 @@ pub fn army_text(ctx: &Ctx, n: usize) -> String {
 impl Screen<Shuyi> for SlotPickerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
+    }
+
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::SAVE_SLOTS.to_vec())
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

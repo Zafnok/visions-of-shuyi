@@ -1,0 +1,38 @@
+// The Playdate as this game plays it (ticket 0140): the engine's profile
+// (ADR-0008 §1), with the buttons and chords of the game's own front end
+// (ADR-0070). crates/playdate/src/pads.rs reports A at `South` and B at
+// `East`, where the engine's profile says `East` and `West`, and the keymap
+// file's `playdate` table (docs/design/playdate.md) presses B with left and
+// right as well as with A.
+(
+    id: "playdate",
+    status: Supported,
+    display: (
+        sizes: [(width: 400, height: 240)],
+        color: OneBit,
+        min_text_px: 8,
+        good_text_px: 10,
+    ),
+    frame_rate: (target: 30, floor: 30),
+    input: (
+        // Menu and Lock are the system's.
+        buttons: [
+            "DpadUp", "DpadDown", "DpadLeft", "DpadRight",
+            "South", "East",
+            "CrankForward", "CrankBack",
+        ],
+        chords: [("South", "East"), ("East", "DpadLeft"), ("East", "DpadRight")],
+        axes: ["Crank"],
+        system_menu_slots: 3,
+    ),
+    // The player leaves through the system's Home: a game shows no Quit.
+    quit: System,
+    budgets: (
+        // The engine profile's, provisional there too.
+        frame_instructions: 2_000_000,
+        peak_heap_bytes: 10_485_760, // 10 MB
+        package_bytes: 41_943_040, // 40 MB
+        startup_ms: 5_000,
+    ),
+    backend: "shuyi-playdate",
+)

@@ -55,6 +55,10 @@ impl Screen<Shuyi> for SpriteTestScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::SPRITE_TEST.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if input.actions.contains(&Action::Cancel) {
             ctx.audio.menu(MenuSound::Cancel);

@@ -251,6 +251,10 @@ impl Screen<Shuyi> for CreditsScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::CREDITS.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if !self.music_on {
             // The music state ignores a request for the track already on

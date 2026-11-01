@@ -102,6 +102,10 @@ impl Screen<Shuyi> for ModeSelectScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::MODE_SELECT.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         pick_one(&mut self.menu, ctx, input)
     }

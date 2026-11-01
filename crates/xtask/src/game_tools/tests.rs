@@ -415,6 +415,74 @@ fn the_project_declares_the_targets_at_the_consoles_sizes() {
     assert_eq!(lacking, Vec::<&String>::new());
 }
 
+/// Ticket 0140: `check --target all` checks the controls and the one-bit
+/// patterns: neither is a limit.
+#[test]
+fn check_target_checks_the_controls_and_the_one_bit_patterns() {
+    let project = project();
+    let mut input = check::CheckInput::default();
+    input.target = Some(target::ALL.to_owned());
+    let answer = check::targets(&project.config, &project.root, &input, Some(&Trpg));
+    assert!(answer.ok, "{:?} {:?}", answer.error, answer.result);
+    let unchecked: Vec<&String> = answer
+        .limits
+        .iter()
+        .filter(|limit| limit.contains("aren't checked"))
+        .collect();
+    assert_eq!(unchecked, Vec::<&String>::new());
+}
+
+/// Every screen is on the list once, and the controls reach the Playdate's
+/// table: its required actions fit, and a chord it lacks would be found.
+#[test]
+fn the_controls_list_each_screen_once_and_see_a_missing_chord() {
+    let screens = trpg_ui::screens::actions::every_screen();
+    let names: std::collections::BTreeSet<&str> = screens.iter().map(|s| s.screen).collect();
+    assert_eq!(names.len(), screens.len());
+    assert!(names.contains("battle") && names.contains("title") && names.contains("options"));
+
+    let project = project();
+    let profile = target::profile(&project.config, &project.root, "playdate")
+        .unwrap()
+        .profile;
+    let controls = Trpg.controls().unwrap().unwrap();
+    assert_eq!(controls.fit(&profile), Vec::new());
+    let mut lacking = profile.clone();
+    lacking.input.chords.clear();
+    let found = controls.fit(&lacking);
+    assert!(
+        found
+            .iter()
+            .any(|p| p.screen == Some("battle") && p.actions == ["EndTurn"]),
+        "{found:?}"
+    );
+}
+
+/// The map follows the palette's inks, and what must read apart does.
+#[test]
+fn the_one_bit_skin_reads_the_inks() {
+    use shuyi_assets::onebit::{self, Pattern};
+    let skin = Trpg.one_bit("playdate").unwrap().unwrap();
+    assert_eq!(onebit::check(&skin.palette, &skin.map), Vec::new());
+    let fg = |role: &str| skin.map.get(role).unwrap().fg;
+    assert_eq!(fg("map_player_tile"), Pattern::BLACK);
+    assert_eq!(fg("black"), Pattern::WHITE);
+    assert_ne!(fg("move_range"), fg("attack_range"));
+    assert_eq!(skin.map.roles.len(), skin.palette.colors.len());
+    assert_eq!(skin.map.distinct.len(), 2);
+}
+
+/// Text is never dithered on the Playdate (`one_bit.rs` says why this isn't
+/// the map's `text`).
+#[test]
+fn the_text_roles_are_solid_black() {
+    use trpg_content::ink::Ink;
+    let skin = Trpg.one_bit("playdate").unwrap().unwrap();
+    for role in ["text", "text_dim", "text_highlight"] {
+        assert_eq!(skin.palette.get(role), Some(Ink::Black.code()), "{role}");
+    }
+}
+
 /// A cargo that finds nothing and keeps the commands it was given.
 #[derive(Default)]
 struct QuietCargo(std::cell::RefCell<Vec<String>>);

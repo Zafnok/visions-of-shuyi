@@ -457,6 +457,10 @@ impl Screen<Shuyi> for TitleScreen {
         "title" // check-text: not player text (the screen's name)
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::TITLE.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if let Some(backdrop) = self.unstored.take() {
             // Not being able to remember it must not stop the title.

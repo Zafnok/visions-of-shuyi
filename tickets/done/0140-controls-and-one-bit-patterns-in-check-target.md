@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0138"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0140 — Controls and one-bit patterns in check --target
@@ -49,9 +49,9 @@ Estimate: about 300 production lines, 800 total.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi check --target all` reports neither limit.
-- [ ] Every problem it finds is fixed or has a ticket.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo shuyi check --target all` reports neither limit.
+- [x] Every problem it finds is fixed or has a ticket.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -59,4 +59,22 @@ Estimate: about 300 production lines, 800 total.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- Every screen declares its actions from one table,
+  `crates/ui/src/screens/actions.rs`, whose `every_screen` is what
+  `Trpg::controls` checks. A new screen must be added there by hand: nothing
+  fails if it is left off.
+- Title and Game Over declare every action, because any press skips them.
+- The check found one real problem: the engine's Playdate profile has A at
+  `East`, B at `West` and one chord, while the game's front end reports A at
+  `South` and B at `East` and uses three chords. No control changed. The game
+  now has its own profile, `targets/playdate.ron`, naming what its front end
+  (ADR-0070) really does; a copy of the engine's budgets comes with it.
+- Deviation: the game has no pattern file, because it draws with inks
+  (ADR-0074). `Trpg::one_bit` derives the map from the palette's inks
+  (`crates/xtask/src/game_tools/one_bit.rs`). The map's `text` stays empty,
+  since an ink has one pattern for ground and glyph; a test keeps the text
+  roles solid black instead.
+- The declared lists come from reading the code. The Harness now filters by
+  them and the UI tests pass, but only paths the tests play are proven.
+- No design questions, no gameplay rules decided, nothing to judge by playing.
+

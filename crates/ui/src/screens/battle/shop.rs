@@ -691,6 +691,10 @@ impl Screen<Shuyi> for ShopScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::SHOP.to_vec())
+    }
+
     /// Steps the screen for each action, with its menu sound; Cancel pops
     /// back to the battle with the [`ShopVisit`].
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

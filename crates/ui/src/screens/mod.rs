@@ -1,5 +1,6 @@
 //! The game's screens. Debug-only screens live in [`crate::debug`].
 
+pub mod actions;
 pub mod battle;
 pub mod camp;
 pub mod class_change;

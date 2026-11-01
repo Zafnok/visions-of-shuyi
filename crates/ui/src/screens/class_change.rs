@@ -540,6 +540,10 @@ impl Screen<Shuyi> for ClassChangeScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::CLASS_CHANGE.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for &action in &input.actions {
             match &mut self.stage {

@@ -911,6 +911,10 @@ impl Screen<Shuyi> for FlowScreen {
         self.next.as_ref().map_or(Self::NAME, |s| s.name())
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::FLOW.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, _input: &FrameInput) -> Transition {
         self.push_next(ctx)
     }

@@ -75,6 +75,10 @@ impl Screen<Shuyi> for PortraitViewerScreen {
         Self::NAME
     }
 
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::PORTRAIT_VIEWER.to_vec())
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let portraits = &ctx.game.content.portraits;
         for &action in &input.actions {
