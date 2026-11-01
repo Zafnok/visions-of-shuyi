@@ -1,0 +1,7 @@
+// Act 1's random skirmishes (ticket 1070): world-structure.md's starting
+// values and 1008's rewards, tunable after the Act 1 playtest (1064).
+(
+    spawn: (0, 2), maximum: 3, level_offset: 1, size: (4, 6),
+    pool: ["act1_random_road", "act1_random_ford", "act1_random_ash"],
+    rewards: [None, None, Some(Gold(100)), Some(Item(("potion")))],
+)

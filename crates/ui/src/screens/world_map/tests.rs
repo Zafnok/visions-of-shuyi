@@ -223,6 +223,7 @@ fn find_picks_the_nearest_and_cycles_both_ways() {
         .expect("the farm");
     farm.kind = NodeKind::Town {
         shops: Vec::new(),
+        later: Vec::new(),
         capital: false,
     };
     let mut c = army(&ctx);

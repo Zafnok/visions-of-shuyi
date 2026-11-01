@@ -1,0 +1,110 @@
+---
+source: crates/ui/tests/it/world_map.rs
+expression: h.snapshot()
+---
+≈   .  ,.  ,         ≈≈  ..  .  ^^ .^  ^       ^ ^^^ ^^  ^   ^ ▲ ^ ▲^^╔════════ Greywater ═════════╗
+≈     ^     .      ♣♣≈≈♠ ♣ .    ,   ^ ^  ▲^^^  ▲   ^ ▲^     ^ ^^^^▲^^ ║ Act 1 · Test World I       ║
+ ≈        ^.      ♠. ≈≈ ♣♣      .   .       ^^  ▲     ^   ^ ▲^▲▲^  ▲ ▲║                            ║
+   ^           .  ♣  ≈≈♣  ♣       .  .    .   ..         . ^ ▲▲▲▲▲  ^^║ Road                       ║
+   ^.▲,       ● ♠♣♣♣♠≈≈♣♣♣, ♣            .                   ^ ^  ^   ║ Your army is here          ║
+  ≈   .   ▲^     .♣♣♣≈≈ ♠♣♣♣  ,   ,   ,   ♠ ♣♠          ^.     .^  ^^▲║                            ║
+ ≈   ^^ ^ ^          ≈≈ ♠          .       ♣ ♠♣        , ^▲ ^^▲^^^^^^,║                            ║
+  .   .     .     .. ♣≈≈         .       ♠  ♣♠♣♣ .     . ^   ▲  . ^^^^║                            ║
+≈      .,       ,     ≈≈ .                 ♣♣♠♠♠♣          ^▲ ^ ^^ ^,^║                            ║
+≈≈   .     ,     . , .≈≈      ,          ♣♣..♣ ,     .         ^^  ▲^ ║                            ║
+   ♣  ●       ⌂ .     ≈≈           .         ♣♣           ,  .▲ .▲^▲  ║                            ║
+≈ ♣♣       ,.     .   ≈≈.     .    ,         ♣  ,  .            ,    .║                            ║
+      ..   ,     .  , ≈≈...    ,  ,   .           . , .         .   . ║                            ║
+ ≈♣♣♣♣♣..        .    ≈≈  , .     ♣...             .       .  .   .,  ║                            ║
+ ≈♣ ♣♣♣          .    ≈≈. .   ♣   ♣,                           .      ║                            ║
+   ♣  ♣.               ≈≈         ♣♣♣                . .    .  .   , .║                            ║
+≈    ♣        ●       ●       .♣ ,♣ ..      ..                 ,     .║                            ║
+              . ..   ≈≈ .    ,♣♣           .       .       ..       , ║                            ║
+≈ .♣ .       ,    . . ≈≈     .     ,.                       .    .    ║                            ║
+    ♠    ,    ♣ ♠   . ≈≈   ,   .  .         ,  .     ,            .   ║                            ║
+≈≈♣♠       ♣ ♣♠♠ ♣♣   ≈≈                  ..,.,    .      . .     ... ║                            ║
+  ♠♠♠  ▼  ♣♠ ♠ ♠♠♠♣♣. ≈≈      ,.. ..       ♣♣♣♣  .       ,   .        ║                            ║
+    ♠♣ Ma  ♠   ♠ ♣, ♠ ≈≈               ♣     ♣  ,,     .              ║                            ║
+     ≈≈≈≈,♣♣♣♣,♠♠♠♣  .≈≈    .,     .     ♣♣   .  ,  .   .       .    .║                            ║
+   ≈≈≈≈≈≈≈♣♠♠♣ ♣ ♣♣♠ .≈≈             , ,..,♣          .             . ║                            ║
+ ≈ ≈≈≈≈≈≈≈≈≈♣♠♣♠♣.     ≈≈ . .   ,         .      .      ,,        ... ║                            ║
+    ≈≈≈≈≈≈≈≈      ,   ≈≈       ≈      .       .     .  ,   .          ║                            ║
+≈  ≈≈≈≈≈   ., , .   , .  ≈      .      .   ..   .   ,   .       .     ║                            ║
+≈ ≈     ≈              ≈≈    ≈  ,        ≈ ≈     ≈≈    ≈≈  ≈≈≈  ,     ║                            ║
+       ≈                   ≈  ≈≈    ≈    ≈    ≈   ≈≈ ≈ ≈            ≈ ╚════════════════════════════╝
+                                                                                                    
+ arrows choose · f enter · a s places · c army · x find · d menu                                    
+--- colours ---
+aaabbbbbbbbbbbbbbbbbbccbbbbbbbbddddbddddddbdddddbedddddddddbdddedddeddfffffffffgggggggggggffffffffff
+aabbbbdbbbbbbbbbbbbhhccibhbbbbbbbdbbdddddedddbdedddddeeddddddddeddededfjkkkkkkkkkkkkkkkkkkkkjjjjjjjf
+aadbdddddbdbbbbbbbibbccbhhbbbbbbbbbbbbbbbbbbdddbebddbddbbbddeeeedddedefjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+addddbdddbdbbbbbbbhbbcchhhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdddeeeeeddddfjggggjjjjjjjjjjjjjjjjjjjjjjjf
+adbebebdddddbblbihhhicchhhbhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdddddbdddbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+adabdbbbbbedbbbbbbhhhcchihhhbbbbbbbbbbbbbbibhibbbbbbbbbbdbdddbbbedddeefjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabddddddddbbbbbbbbbbccbihbbbbbbbbbbbbbbbhhhbihbbbbbbbbbbdedeeeddeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbbbbbbbbbbbbbbbbbbhccbbbbbbbbbbbbbbbbbibbhihhbbbbbbbbbdbddeddbdddddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhbhhiiihbbbbbbbbbbdedddedddbdfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhhbbhhbbbbbbbbbbbbddddedddeddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaahbhlbbbbbbbmbbbbbbbccbbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbebbeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aahhbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbhbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aahhhhhbbbbbbbbbbbbbbbccbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aahbhhhbbbbbbbbbbbbbbbccbbbbbbhbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaahhbhbbbbbbbbbbbbbbbbccbbbhbbbbbhhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabhbhbbbbbbbbnbbbbbbblcbbbbbbbhbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbbbbbbbbbbbbbbbbbbccbbbbbbbhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabhbbhbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aahhibibbbbbbbhbibbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aahibhibbbhhhhiibhhbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaiiihbobbhihihiiihhbbccbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbihbmphhibbhihhbbibccbbbbbbbbbbbbbbbhhhbbhhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbaccccbhhhhbiiihbbbccbbbbbbbbbbbbbbbbbhhbhbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaccccccchiihbhbhhibbccbbbbbbbbbbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaccccccccchihihbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaaccccccccbbhbbbbbbbccaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaaacccbbbbbbbbbbbbbbbbaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaaaaaaabbbbbbbbbaaaaaaaaaaaaaabbbbaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffffffffffffffffffffffff
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+--- legend ---
+a = fg:water bg:sea
+b = fg:grass bg:grass_bg
+c = fg:water bg:water_bg
+d = fg:mountain bg:mountain_bg
+e = fg:peak bg:peak_bg
+f = fg:panel_border_focus bg:panel_bg
+g = fg:text_highlight bg:panel_bg
+h = fg:forest bg:forest_bg
+i = fg:thicket bg:thicket_bg
+j = fg:text bg:panel_bg
+k = fg:text_dim bg:panel_bg
+l = fg:text_dim bg:grass_bg
+m = fg:panel_bg bg:grass_bg
+n = fg:path bg:grass_bg
+o = fg:player bg:grass_bg
+p = fg:panel_bg bg:thicket_bg
+q = fg:text bg:black
+--- overlays ---
+under 45,161 78x14  text_dim
+under 109,65 14x110  text_dim
+under 109,257 78x14  text_dim
+under 46,162 76x12  road_bg
+under 110,66 12x108  road_bg
+under 110,258 76x12  road_bg
+under 53,257 14x110  path
+under 53,257 70x14  path
+under 109,161 14x110  path
+under 54,258 12x108  #4e422b
+under 54,258 68x12  #4e422b
+under 110,162 12x108  #4e422b
+under 108,160 16x16  wood
+under 52,352 24x16  player
+over  51,352 3x1  #e5d198
+over  51,352 1x3  #e5d198
+over  74,352 3x1  #e5d198
+over  76,352 1x3  #e5d198
+over  51,367 3x1  #e5d198
+over  51,365 1x3  #e5d198
+over  74,367 3x1  #e5d198
+over  76,365 1x3  #e5d198

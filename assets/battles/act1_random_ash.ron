@@ -1,0 +1,29 @@
+// A random skirmish of Act 1's pool (ticket 1070): burnt farmland. The first
+// `size` enemies are used, rebuilt at the group's level (ADR-0104).
+(
+    id: "act1_random_ash",
+    map: "act1_skirmish_ash",
+    player_slots: [
+        (character: "lead", pos: (2, 5)),
+        (character: "retainer", pos: (3, 6)),
+        (character: "sergeant", pos: (1, 6)),
+        (character: "poacher", pos: (2, 7)),
+        (character: "keeper", pos: (1, 4)),
+        (character: "heretic", pos: (3, 4)),
+        (character: "defector", pos: (0, 5)),
+    ],
+    enemies: [
+        (template: "hound_rider", pos: (12, 1)),
+        (template: "hound_raider", pos: (11, 4)),
+        (template: "hound_archer", pos: (14, 2)),
+        (template: "hound_swordsman", pos: (12, 7)),
+        (template: "hound_rider", pos: (15, 5)),
+        (template: "hound_guard", pos: (14, 8)),
+    ],
+    preparations: true,
+    objective: Rout(),
+    difficulty: Easy,
+    kind: RandomSkirmish,
+    music: Pool("skirmish"),
+    seed: 3,
+)

@@ -1,0 +1,195 @@
+// Act 1's world map (ticket 1070): the Old Kingdoms of Ardeval, from
+// docs/story/outline.md, Chapters 4 to 8. The army comes up out of the
+// Thornmarch in the south-west, through the valley heartland, down the Salt
+// Road to Saltmere on the south coast, east to the Ashfields, north to Ossary
+// and back to Saltmere's docks for the ship.
+//
+// Every battle here is `NotBuilt` until its ticket makes it: the ticket gives
+// the place its kind and removes `NotBuilt`, and the conditions beside it
+// are the ones it opens by. 0850-0854: the story battles, each with
+// `StoryBattle("chNN")`. 1071: the fixed skirmishes, `guards_path` as noted.
+// 1072, 1083, 1084: the side quests.
+//
+// `levels`, every shop's stock and when it grows are *the agent's starting
+// values*, for the Act 1 playtest (1064). Steel armour joins from Chapter 5
+// when 0074 decides it. Town shops sell no Elixir in Act 1
+// (weapons-and-items.md: only "a handful" exist).
+(
+    act: 1,
+    levels: (1, 30),
+    music: "world_map",
+    start: "greywater",
+    final_node: "saltmere_docks",
+    size: (70, 30),
+    picture: Some("worldmaps/act1.png"),
+    nodes: [
+        (id: "greywater", name: "Greywater", pos: (7, 22), kind: Empty),
+        (id: "valley_road", name: "The Valley Road", pos: (14, 16), kind: Empty),
+
+        // Chapter 4: The Hound's Country.
+        (id: "millhaven", name: "Millhaven", pos: (14, 10), music: Some("village"),
+         kind: Town(shops: [
+             (kind: Armoury,
+              stock: ["iron_sword", "iron_spear", "iron_axe", "iron_bow", "iron_gauntlets",
+                      "leather_vest", "chain_mail"],
+              // Chapter 5 on: Steel reaches the market towns.
+              later: [(when: [Cleared("veyne_hall")], stock: ["steel_sword", "steel_spear"])]),
+             (kind: Vendor, stock: ["potion"]),
+             (kind: Blacksmith),
+         ])),
+        // 1071: optional (`guards_path: false`).
+        (id: "millhaven_road", name: "Millhaven Road", pos: (6, 10), kind: Empty,
+         opens_when: [NotBuilt]),
+        // 1072: Tamsin's.
+        (id: "company_ledger", name: "The Company Ledger", pos: (14, 4), music: Some("side_quest"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("aldwater"), Alive("sergeant")]),
+        // 1071: guards the path to the hall (`guards_path: true`).
+        (id: "aldwater", name: "Aldwater Toll Bridge", pos: (22, 16), kind: Empty,
+         opens_when: [NotBuilt]),
+        // 0850: Chapter 4's story battle.
+        (id: "veyne_hall", name: "Veyne Hall", pos: (36, 11), kind: Empty,
+         opens_when: [NotBuilt]),
+        // 1083: Hollis's, by his wife's grave near the hall.
+        (id: "captains_oath", name: "The Captain's Oath", pos: (28, 7), music: Some("side_quest"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("veyne_hall"), Alive("retainer")]),
+
+        // Chapter 5: Salt and Silver.
+        // 1071: guards the path to Saltmere (`guards_path: true`).
+        (id: "salt_road", name: "The Salt Road", pos: (36, 19), kind: Empty,
+         opens_when: [NotBuilt, Cleared("veyne_hall")]),
+        // The biggest shop in Act 1, and its last (Chapter 8's Hi-Potion).
+        (id: "saltmere", name: "Saltmere", pos: (36, 24), music: Some("city_first_visit"),
+         kind: Town(shops: [
+             (kind: Armoury,
+              stock: ["iron_sword", "steel_sword", "iron_spear", "steel_spear", "iron_axe",
+                      "steel_axe", "iron_bow", "steel_bow", "iron_gauntlets", "steel_gauntlets",
+                      "chain_mail", "iron_plate", "speed_ring", "power_ring"]),
+             (kind: Vendor, stock: ["potion"],
+              later: [(when: [Cleared("undercroft")], stock: ["hi_potion"])]),
+             (kind: Alchemist, stock: ["potion"],
+              later: [(when: [Cleared("undercroft")], stock: ["hi_potion"])]),
+             (kind: Tailor, stock: ["linen_robe", "leather_vest"]),
+             (kind: Blacksmith),
+         ]),
+         opens_when: [Cleared("salt_road")]),
+        // 0851: Chapter 5's story battle.
+        (id: "envoys_house", name: "The Envoy's House", pos: (43, 26), kind: Empty,
+         opens_when: [NotBuilt, Cleared("salt_road")]),
+        // 1071: optional (`guards_path: false`), with loot.
+        (id: "smugglers_cove", name: "Smugglers' Cove", pos: (27, 24), kind: Empty,
+         opens_when: [NotBuilt, Cleared("salt_road")]),
+        // 1072: Aske's.
+        (id: "letters_home", name: "Letters Home", pos: (50, 26), music: Some("side_quest"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("envoys_house"), Alive("poacher")]),
+
+        // Chapter 6: The Ashfields.
+        (id: "cairnford", name: "Cairnford", pos: (50, 16), music: Some("village"),
+         kind: Town(shops: [
+             (kind: Armoury,
+              stock: ["iron_spear", "steel_spear", "iron_axe", "steel_axe", "iron_bow",
+                      "steel_bow", "chain_mail", "iron_plate"]),
+             (kind: Vendor, stock: ["potion"]),
+             (kind: Blacksmith),
+         ]),
+         opens_when: [Cleared("envoys_house")]),
+        // 1071: guards the path to the plain (`guards_path: true`).
+        (id: "burnt_mill", name: "The Burnt Mill", pos: (59, 16), kind: Empty,
+         opens_when: [NotBuilt, Cleared("envoys_house")]),
+        // 0852: Chapter 6's story battle.
+        (id: "ashfields", name: "The Ashfields", pos: (66, 22), music: Some("graveyard_desert"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("burnt_mill")]),
+        // 1071: optional (`guards_path: false`).
+        (id: "brennish_outriders", name: "Brennish Outriders", pos: (54, 22), kind: Empty,
+         opens_when: [NotBuilt, Cleared("envoys_house")]),
+
+        // Chapter 7: Ossary.
+        // 1071: guards the path into Ossary (`guards_path: true`).
+        (id: "pilgrims_road", name: "Pilgrims' Road", pos: (50, 10), kind: Empty,
+         opens_when: [NotBuilt, Cleared("ashfields")]),
+        // Relics and the Vigil's market.
+        (id: "ossary", name: "Ossary", pos: (50, 3), music: Some("graveyard_desert"),
+         kind: Town(shops: [
+             (kind: Armoury,
+              stock: ["iron_sword", "steel_sword", "iron_gauntlets", "steel_gauntlets",
+                      "focus_charm"]),
+             (kind: Alchemist, stock: ["potion"]),
+             (kind: Tailor, stock: ["linen_robe", "leather_vest"]),
+         ]),
+         opens_when: [Cleared("pilgrims_road")]),
+        // 0853: Chapter 7's story battle.
+        (id: "undercroft", name: "The Undercroft", pos: (58, 3), music: Some("dungeon_tense"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("pilgrims_road")]),
+        // 1071: optional (`guards_path: false`).
+        (id: "ossuary_gate", name: "The Ossuary Gate", pos: (43, 3), kind: Empty,
+         opens_when: [NotBuilt, Cleared("pilgrims_road")]),
+        // 1083: Rue's.
+        (id: "other_cart", name: "The Other Cart", pos: (58, 10), music: Some("side_quest"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("ashfields"), Alive("heretic")]),
+        // 1084: Maud's, "once Ossary is reached": its guard is won.
+        (id: "unwritten", name: "Unwritten", pos: (36, 3), music: Some("side_quest"),
+         kind: Empty, opens_when: [NotBuilt, Cleared("pilgrims_road"), Alive("keeper")]),
+
+        // Chapter 8: The Last Watch. 0854: the act's final story battle.
+        (id: "saltmere_docks", name: "Saltmere Docks", pos: (36, 27), kind: Empty,
+         opens_when: [NotBuilt, Cleared("undercroft")]),
+    ],
+    roads: [
+        (from: "greywater", to: "valley_road", via: [(7, 16)]),
+        (from: "valley_road", to: "millhaven"),
+        (from: "millhaven", to: "millhaven_road"),
+        (from: "millhaven", to: "company_ledger"),
+        (from: "valley_road", to: "aldwater"),
+        (from: "aldwater", to: "veyne_hall", via: [(27, 16), (27, 11)]),
+        (from: "veyne_hall", to: "captains_oath", via: [(36, 7)]),
+        (from: "veyne_hall", to: "salt_road"),
+        (from: "salt_road", to: "saltmere"),
+        (from: "saltmere", to: "smugglers_cove"),
+        (from: "saltmere", to: "saltmere_docks"),
+        (from: "saltmere", to: "envoys_house", via: [(43, 24)]),
+        (from: "envoys_house", to: "letters_home"),
+        (from: "salt_road", to: "cairnford", via: [(44, 19), (44, 16)]),
+        (from: "cairnford", to: "burnt_mill"),
+        (from: "burnt_mill", to: "ashfields", via: [(66, 16)]),
+        (from: "cairnford", to: "brennish_outriders", via: [(50, 22)]),
+        (from: "cairnford", to: "pilgrims_road"),
+        (from: "pilgrims_road", to: "ossary"),
+        (from: "pilgrims_road", to: "other_cart"),
+        (from: "ossary", to: "undercroft"),
+        (from: "ossary", to: "ossuary_gate"),
+        (from: "ossuary_gate", to: "unwritten"),
+    ],
+    // ' ' '.' ',' plain, 'f' forest, 't' thicket, '^' mountain, 'A' peak,
+    // 'w' river, '~' sea.
+    ground: [
+        "~~~  ,,. ,     ,     ww.    .. ^^^^ ^^^^^^ ^^^^^ A^^^^^^^^^ ^^^A^^^A^^",
+        "~~,.  ^   . .      ffwwt f..    .^ .^^^^^A^^^ ^A^^^^^AA^^^^^^^^A^^A^A^",
+        "~~^ ^^^^^ ^   ,  ,t  ww ff..   .  ,  ,  ,  .^^^ A ^^ ^^,  ^^AAAA^^^A^A",
+        "~^^^^ ^^^ ^   ,   f. wwffff   . .   ,,  .   , ,          ,^^^AAAAA^^^^",
+        "~^ A A ^^^^^,,  tffftwwfff,ff         .  ,      .    ,,   .^^^^^ ^^^  ",
+        "~^~,^ ..  A^      fffwwftfff,.   ,. ,  .  t ft .     , ,^ ^^^   A^^^AA",
+        "~~ ^^^^^^^^         ,ww,tf      .     ,  fff tf   . , .  ^A^AAA^^AAA^ ",
+        "~~       .     ,     fww.    .  ,      . t, ftff  .,    ,^ ^^A^^ ^^^^^",
+        "~~          . .. . .  ww       .,   ,    f.fftttf.   .     ^A^^^A^^^.^",
+        "~~ , ,     , .  ,     ww        .   , .  ff ,ff   ,      , ^^^^A^^^A^^",
+        "~~~f.f.,     ,        ww..,,               fffff   ,.      .. A,,AAA^ ",
+        "~~ff. , ..            ww,.,     . . . .  ,. ,f  .,.    .        .,.  ,",
+        "~~  f .    ,      , ,.ww     .  .                 ,   .   ,           ",
+        "~~fffff  ,        .   ww    , .   f  ..       ,          ,,    ,.    .",
+        "~~f fff,  ,   , , .   ww   .  f , f  ..        .  ..     .,           ",
+        "~~~ff,f        ,,  ,  .ww   f , , fff     .  ,  ,   , ..,    .  .  ,  ",
+        "~~ f f      .. . ,,    w ..    f ,f     .   ,          .    .  .      ",
+        "~~. .  ,  .,..     , ww . ,   ff ,,    .   ,      .  ,    . ,      , ,",
+        "~~ f  f      .     ,, ww ,.   ,.  ,   .,. .   ,    ,         .  ,, .  ",
+        "~~fft t  ,    f t   . ww   , ,   ,       .   ,,.     ..      . .,..  .",
+        "~~ft ft   fffftt,ff  ,ww    .     .  ,   ,   ,  . ,,     .    ,.  . . ",
+        "~~tttf    ftftftttff, ww  ,   ,,        ,.fffff   ,     , .  ,  .  ,,,",
+        "~~ .tf ,tfft  ftff, t ww       ..  ,   fff  ff            ,         , ",
+        "~~  ~wwww ffff tttf.. ww, .  .     . .   ff f   ,  , .  .   .  ,, .   ",
+        "~~~wwwwwwwfttf.f.fft  ww   , , .  ,  ,   . f .         ,     ,        ",
+        "~~~wwwwwwwwwftftf , , .ww    .    , .,      ..       ,.     ,         ",
+        "~~~~wwwwwwww  f     , ww~~~~~~~~ ,       ..   .       ,  .   .    ,,. ",
+        "~~~~~www   ,        ,  .~~~~~~~~   ,.  ., .    ,    ,   ,, ,. , ,.    ",
+        "~~~~~~~~~ ,.  . , ~~~~~~~~~~~~~~,   ~~~~~~~~~~~~~~~~~~~~~~~~~~~      ,",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+    ],
+)
