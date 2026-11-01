@@ -96,6 +96,17 @@ fn invalid_ranges_pool_files_and_special_rewards_are_rejected() {
         errors
     };
     assert_eq!(errors(&rules), Vec::<String>::new());
+    // Both ends are inclusive: fixed counts, including the capacity itself,
+    // are valid tuning choices. Zero capacity with zero spawns disables groups.
+    for (count, size) in [(0, 4), (3, 6)] {
+        let fixed = SkirmishRules {
+            spawn: (count, count),
+            maximum: count,
+            size: (size, size),
+            ..rules.clone()
+        };
+        assert_eq!(errors(&fixed), Vec::<String>::new());
+    }
     for bad in [
         SkirmishRules {
             spawn: (3, 2),
@@ -148,4 +159,78 @@ fn invalid_ranges_pool_files_and_special_rewards_are_rejected() {
     ] {
         assert!(!errors(&bad).is_empty(), "{bad:?}");
     }
+}
+
+fn saved_group() -> RandomSkirmish {
+    RandomSkirmish {
+        battle: "test_random_meadow".into(),
+        level: 4,
+        size: 4,
+        seed: 42,
+        reward: Some(Loot::Gold(100)),
+    }
+}
+
+#[test]
+fn saved_groups_reject_invalid_level_count_and_missing_battle() {
+    let c = crate::load_embedded().expect("content");
+    let group = saved_group();
+    for invalid in [
+        RandomSkirmish {
+            level: 0,
+            ..group.clone()
+        },
+        RandomSkirmish {
+            size: 0,
+            ..group.clone()
+        },
+        RandomSkirmish {
+            size: 7,
+            ..group.clone()
+        },
+        RandomSkirmish {
+            battle: "missing".into(),
+            ..group
+        },
+    ] {
+        assert!(
+            battle::random_skirmish(&invalid, &c.battle_refs()).is_err(),
+            "{invalid:?}"
+        );
+    }
+}
+
+#[test]
+fn resolving_a_saved_group_uses_its_rolls_and_preserves_ordinary_battle_lookup() {
+    use trpg_core::{GameMode, LeadGender, LeadProfile};
+    let c = crate::load_embedded().expect("content");
+    let mut campaign = crate::battle_campaign(
+        &c,
+        &c.battles["test"],
+        GameMode::Classic,
+        LeadProfile::new("Mara", LeadGender::Female),
+    );
+    campaign.enter_world(&c.worldmaps["test_world"].map);
+    let group = saved_group();
+    let world = campaign.world.as_mut().expect("world");
+    world.at = "ford".into();
+    world.cleared.insert("ford".into());
+    world.skirmishes.insert("ford".into(), group.clone());
+    let expected = battle::random_skirmish(&group, &c.battle_refs()).expect("generated");
+    assert_eq!(battle(&c, &campaign, &group.battle), Some(expected));
+    assert_eq!(
+        battle(&c, &campaign, "test"),
+        Some(c.battles["test"].clone())
+    );
+    assert_eq!(battle(&c, &campaign, "missing"), None);
+    // A corrupt matching group must not silently become the raw pool file.
+    campaign
+        .world
+        .as_mut()
+        .expect("world")
+        .skirmishes
+        .get_mut("ford")
+        .expect("group")
+        .level = 0;
+    assert_eq!(battle(&c, &campaign, &group.battle), None);
 }

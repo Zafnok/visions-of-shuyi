@@ -685,3 +685,24 @@ fn lower_story_caps_also_limit_existing_groups_and_zero_rolls_are_possible() {
     }
     assert_eq!(counts, BTreeSet::from([0, 1, 2]));
 }
+
+#[test]
+fn a_story_at_the_same_cap_keeps_existing_groups_without_a_cap_change_event() {
+    let mut m = skirmish_map();
+    let mut c = campaign();
+    c.clear_node(&m, "fight0", None, None);
+    let group = m.random_at("fight0", &c).expect("spawned").clone();
+    assert_eq!(group.level, 2);
+    m.skirmishes.as_mut().expect("rules").spawn = (0, 0);
+    m.nodes
+        .iter_mut()
+        .find(|n| n.id == "fight1")
+        .expect("story")
+        .level = Some(3);
+    c.world.as_mut().expect("world").at = "fight1".into();
+    assert_eq!(
+        c.clear_node(&m, "fight1", None, None),
+        [WorldEvent::Cleared("fight1".into())]
+    );
+    assert_eq!(m.random_at("fight0", &c), Some(&group));
+}

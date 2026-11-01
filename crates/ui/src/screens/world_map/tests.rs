@@ -1052,7 +1052,32 @@ fn skirmish_marks_levels_find_rows_and_hover_work_in_both_skins() {
         assert_eq!(buf.get(34, 13).map(|c| c.glyph), Some('?'));
         assert_eq!(buf.get(53, 19).map(|c| c.glyph), Some('L'));
         assert_eq!(buf.get(33, 12).map(|c| c.glyph), Some('L'));
+        assert_eq!(buf.get(53, 19).map(|c| c.fg), ctx.palette.lookup("enemy"));
+        assert_eq!(
+            buf.get(33, 12).map(|c| c.fg),
+            ctx.palette.lookup("text_dim")
+        );
         assert_eq!(glyph::plate(PlaceMark::FixedSkirmish), ("enemy", '!'));
         assert_eq!(glyph::plate(PlaceMark::RandomSkirmish), ("text_dim", '?'));
     }
+}
+
+#[test]
+fn winning_a_fixed_skirmish_shows_a_cleared_mark_without_a_level_or_blocked_path() {
+    let ctx = ctx();
+    let mut s = screen(&ctx);
+    s.campaign.flags.insert("test_skirmishes".into(), true);
+    let def = &ctx.game.content.worldmaps["test_world"];
+    s.campaign.clear_node(&def.map, "guard", None, None);
+    s.cursor = "guard".into();
+    let view = s.view(&ctx);
+    let place = view
+        .places
+        .iter()
+        .find(|p| p.pos == def.places["guard"])
+        .expect("guard");
+    assert_eq!(place.mark, PlaceMark::Cleared);
+    assert_eq!(place.level, None);
+    assert_eq!(view.panel.kind, "Fixed skirmish");
+    assert_eq!(view.panel.lines, ["Won"]);
 }

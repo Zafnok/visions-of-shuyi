@@ -179,6 +179,10 @@ snapshot and skin assertions cover both symbols, levels, Find and hover.
 Rendered frames are `docs/img/1008-fixed-skirmish.png` and
 `docs/img/1008-world-map.png` (earned through the normal UI).
 
+CI mutation reports led to explicit tests for inclusive tuning bounds,
+invalid saved counts/levels, encounter lookup, unchanged-cap events,
+cleared fixed markers and level-label colours in both skins.
+
 Personas, seeds 1–20 on each authored demo map (120 fights total): meadow
 wins Casual 20/20, Normal 19/20, Hardcore 20/20; wood 18/20, 19/20, 20/20.
 No-death/item success is 20/20, 19/20, 16/20 on meadow and 18/20, 18/20,
@@ -199,7 +203,7 @@ fence as a limit. 0138 tracks that configuration work; the feature adds no
 new gate exemption or suppression.
 
 Engine friction: estimate 650, measured 428 added production lines (0.66×),
-under 2×. PR size: estimate 2,000, measured 1,651 changed lines.
+under 2×. PR size: estimate 2,000, measured 1,786 changed lines.
 No engine change was needed. Follow-up 0138 records the existing missing
 target-profile settings and rules-package lint wiring in shuyi.ron; the
 supplemental target check reports SH3003 and lint reports that fence limit. The full UI fit within
