@@ -150,4 +150,4 @@ says `avoid −20`). Does that read clearly enough in play?
 **Starting rules decided by the agent:** none.
 
 **Size:** estimate about 100 production lines, judged by 0325's `fight` and
-`preview_attack` change; measured 104 added. PR about 800 changed lines.
+`preview_attack` change; measured 104 added. PR 732 changed lines.
