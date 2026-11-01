@@ -5,10 +5,10 @@ type: feature
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0909 — The web build's NOTICES.txt names the game's own works and license texts
@@ -76,14 +76,14 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi web --release` writes a `NOTICES.txt` that contains the
+- [x] `cargo shuyi web --release` writes a `NOTICES.txt` that contains the
       Terminus license, the CC0 and CC-BY texts, and each track's title
       and author.
-- [ ] The new test fails when a track is added to `audio.ron` without an
+- [x] The new test fails when a track is added to `audio.ron` without an
       entry in `assets/NOTICES-game.txt`.
-- [ ] `THIRD_PARTY_ASSETS.md`'s header says the web build's notices come
+- [x] `THIRD_PARTY_ASSETS.md`'s header says the web build's notices come
       from `shuyi.ron`'s `notices`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -92,5 +92,19 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+`shuyi.ron` has `notices`, naming `assets/NOTICES-game.txt` and the font's and
+the audio's license texts (CC-BY-3.0 included: three tracks use it).
+`cargo shuyi web --release` writes all of them into `dist/web/NOTICES.txt`.
+
+Deviations:
+
+- The attribution file also lists the 16 sounds of `assets/audio/sfx/`, not
+  only the font and music of step 1: the web build ships them, some are
+  CC-BY, and the ticket's scope says each shipped non-crate work. The test
+  covers every third-party work of `audio.ron` for the same reason.
+- `NOTICES-game.txt` is listed in `crates/content/playdate-bundle.txt`: it sits
+  under `assets/`, and the Playdate never reads it.
+- The engine writes the same `notices` into every package `cargo shuyi export`
+  makes, not only the web build's. That comes with the setting.
+
+Follow-ups: none. No gameplay rules decided.

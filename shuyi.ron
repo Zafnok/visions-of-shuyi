@@ -94,6 +94,17 @@
         dist: "dist/web",
     ),
 
+    // What `NOTICES.txt` adds to the crates and the engine's files (ticket
+    // 0909): the game's own works and their license texts. An xtask test
+    // keeps them in step with THIRD_PARTY_ASSETS.md and the audio manifest.
+    notices: (texts: [
+        "assets/NOTICES-game.txt",
+        "assets/fonts/Terminus-LICENSE.txt",
+        "assets/audio/licenses/CC0-1.0.txt",
+        "assets/audio/licenses/CC-BY-4.0.txt",
+        "assets/audio/licenses/CC-BY-3.0.txt",
+    ]),
+
     // The bought art (ticket 0110, ADR-0040): `game/` is embedded over
     // `assets/` with the `private-assets` feature, `test/` over
     // `assets-test/` (ADR-0057), `voice/` is copied to `voice/` (ADR-0046),

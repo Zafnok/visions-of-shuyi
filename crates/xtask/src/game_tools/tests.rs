@@ -492,6 +492,48 @@ fn the_project_checks_the_credits_the_content_reads() {
     assert_eq!(credits.private_root, PRIVATE_DISPLAY_ROOT);
 }
 
+/// Ticket 0909: `NOTICES.txt` carries the license text of every shipped
+/// row of `THIRD_PARTY_ASSETS.md` whose text is under `assets/`, and
+/// `assets/NOTICES-game.txt` credits those rows and every work of the audio
+/// manifest.
+#[test]
+fn the_notices_name_the_games_works_and_license_texts() {
+    let root = repo_root();
+    let texts = project().config.notices.unwrap().texts;
+    let table = fs::read_to_string(root.join("THIRD_PARTY_ASSETS.md")).unwrap();
+    let listed = fs::read_to_string(root.join("assets/NOTICES-game.txt"))
+        .unwrap()
+        .replace("\r\n", "\n");
+    let mut rows = 0;
+    for row in table.lines().filter(|line| line.starts_with("| ")) {
+        let cells: Vec<&str> = row.split(" | ").collect();
+        let Some((_, link)) = cells.get(4).and_then(|cell| cell.split_once("](assets/")) else {
+            continue;
+        };
+        let file = format!("assets/{}", link.trim_end_matches(')'));
+        assert!(texts.contains(&file), "{file} isn't in `notices`");
+        assert!(listed.contains(cells[1]), "{} isn't listed", cells[1]);
+        rows += 1;
+    }
+    assert!(rows > 40, "the table wasn't found: {rows} rows");
+    let entries: Vec<&str> = listed.split("\n\n").collect();
+    let audio = trpg_content::audio::load().unwrap();
+    let works = audio.credits.values();
+    for work in works.filter(|work| work.license != trpg_content::audio::OWN) {
+        let entry = entries
+            .iter()
+            .find(|entry| entry.lines().next() == Some(work.title.as_str()));
+        let entry = entry.unwrap_or_else(|| panic!("{} isn't listed", work.title));
+        for line in [
+            format!("  Author: {}\n", work.author),
+            format!("  Source: {}\n", work.source),
+            format!("  License: {}", work.license),
+        ] {
+            assert!(entry.contains(&line), "{}: no {line}", work.title);
+        }
+    }
+}
+
 /// The font sources the committed atlas is built from, relative to the
 /// repo root: Terminus, then our own extra glyphs (the controller
 /// buttons, the building tiles).
