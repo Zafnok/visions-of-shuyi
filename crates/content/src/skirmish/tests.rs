@@ -134,6 +134,14 @@ fn invalid_ranges_pool_files_and_special_rewards_are_rejected() {
             ..rules.clone()
         },
         SkirmishRules {
+            rewards: vec![Some(Loot::Item(ItemId("moonblade".into())))],
+            ..rules.clone()
+        },
+        SkirmishRules {
+            rewards: vec![Some(Loot::Item(ItemId("tier_2_seal".into())))],
+            ..rules.clone()
+        },
+        SkirmishRules {
             rewards: vec![Some(Loot::Item(ItemId("missing".into())))],
             ..rules
         },

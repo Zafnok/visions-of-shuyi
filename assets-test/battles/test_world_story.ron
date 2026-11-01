@@ -1,8 +1,6 @@
-// TEST FILE: the test chapter's battle (chapters/test.ron), which the
-// tests of the game flow play instead of the story
-// (NewGameDef::test_chapter). The lead seizes the fort next to them within 3 turns; one
-// brigand stands in the way. Its two battle notes (ticket 0411) are
-// placeholders too: one about the brigand, one about no unit.
+// TEST FILE: Stone Mill on the test world map (1007/1008).
+// Its level-5 enemy gives training a level-4 cap; the lead can seize
+// the nearby fort within three turns, as in the original test battle.
 (
     id: "test_world_story",
     map: "test_small",

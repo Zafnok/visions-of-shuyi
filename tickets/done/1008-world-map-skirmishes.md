@@ -199,7 +199,7 @@ fence as a limit. 0138 tracks that configuration work; the feature adds no
 new gate exemption or suppression.
 
 Engine friction: estimate 650, measured 428 added production lines (0.66×),
-under 2×. PR size: estimate 2,000, measured 1,646 changed lines.
+under 2×. PR size: estimate 2,000, measured 1,651 changed lines.
 No engine change was needed. Follow-up 0138 records the existing missing
 target-profile settings and rules-package lint wiring in shuyi.ron; the
 supplemental target check reports SH3003 and lint reports that fence limit. The full UI fit within
