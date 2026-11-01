@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["1199", "engine#3113"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1201 — The window's icons from shuyi.ron's app part
@@ -60,16 +60,16 @@ checks; under 700 changed lines including docs and the ticket move.
 
 ## Acceptance criteria
 
-- [ ] `crates/app/icon/{16,32,64}.png` have the same pixels as the
+- [x] `crates/app/icon/{16,32,64}.png` have the same pixels as the
       `assets/icon/` pictures they replace.
-- [ ] `the_window_has_an_icon` passes, with `WINDOW.icon` equal to
+- [x] `the_window_has_an_icon` passes, with `WINDOW.icon` equal to
       `APP.window_icon`.
-- [ ] `cargo shuyi app-info --check` and `cargo shuyi check --target all` pass.
-- [ ] Old direct window-icon includes and the engine-friction marker are
+- [x] `cargo shuyi app-info --check` and `cargo shuyi check --target all` pass.
+- [x] Old direct window-icon includes and the engine-friction marker are
       gone. Missing/incorrect-sized override files fail generation; stale
       generated icons fail `app-info --check`. The exe `.ico` generator
       and output remain intact.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,6 +79,22 @@ checks; under 700 changed lines including docs and the ticket move.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: pin, pixel equality,
-refusal checks, deviations and follow-ups.)*
+Pin: unchanged, 76e05909, already past engine#3113.
+
+Pixel equality: `crates/app/icon/{16,32,64}.png` were byte-identical to the
+deleted `assets/icon/icon-{16,32,64}.png` (compared with `cmp` before the
+delete). `the_windows_icons_are_drawn_at_each_size` keeps them equal to the
+hero option as drawn at each size. `assets/icon/icon.ico` came out unchanged.
+
+Refusals: `app_info_refuses_bad_or_stale_icons` runs the engine's `app-info`
+on `shuyi.ron`'s real `app` part in a temporary folder: a 17 px and a missing
+drawn picture are refused, and `--check` names a changed window icon.
+
+Deviation: `icon_sizes` names only 16 and 32, not 64. 64 is a whole fraction
+of the 512 px source, so the engine's downscale already gives those exact
+pixels and a third drawn file would add nothing. The test above would fail if
+that stopped being true.
+
+No gameplay rules decided and no follow-ups. The picture is unchanged, so
+nothing is left to judge by playing.
 

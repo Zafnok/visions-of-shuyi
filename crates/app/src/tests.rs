@@ -29,6 +29,7 @@ fn block_on<F: Future>(future: F) -> F::Output {
 fn the_window_has_an_icon() {
     let conf = shuyi_app::window_conf(&WINDOW);
     assert!(conf.icon.is_some());
+    assert_eq!(WINDOW.icon, APP.window_icon);
     assert_eq!(conf.window_title, "Visions of Shuyi");
 }
 
