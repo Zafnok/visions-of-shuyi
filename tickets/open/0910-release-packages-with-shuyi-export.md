@@ -36,6 +36,13 @@ feature of the game's package, and the game's release builds need
 notes, and the game ships `music/`, `voice/` and the license files beside it
 (ADR-0046).
 
+Engine PR #205 (ticket 3080), passed by the pin move of 2026-11-01: `shuyi
+web` builds in `dist/web.staging` and replaces `dist/web` whole, and `export
+web` refuses a folder holding a file the build didn't make. So the web job
+must add nothing to `dist/web` by hand. `release.yml`'s Package step copies
+the licenses into its own folder today; keep them out of `dist/web` when it
+moves.
+
 ## Nick input
 
 None.

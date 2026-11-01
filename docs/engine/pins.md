@@ -148,3 +148,15 @@ Nothing for the game: 10 PRs (#161, #163, #164, #165, #166, #167, #169, #171, #1
 Nothing for the game: 4 PRs (#184, #189, #191, #195). The skill pack's `shuyi-new-game`, `shuyi-ship`, `shuyi-stage-field` and `shuyi-stage-grid` gain identity, export, one-bit bakes and timers.
 
 Also passed, unsorted by the report because its commit names no PR on the engine's side: engine #188 (3072), the game's icon in `shuyi.ron` and the window's icon from `AppInfo`: adopted with #186, in 1199.
+
+## 2026-11-01: 1eaa1fa0 → 0ad02fa5 (13 engine PRs), #503
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #197 | 3010 | `shuyi-playdate`, the Playdate backend, and `shuyi export playdate`; the default notch is 45°, `ExportCx` gains fields, `Look` holds a `&dyn Images` | fixed: nothing to change (the game's keymap names its own 30° notch, it builds no `ExportCx` and moves no `Look` across threads); adopt → 1170 (after engine#3028) |
+| #201 | 3029 | The audio player's rules shared by every backend, and the Playdate's audio; `Sdk` and `export::playdate::Dirs` gain members | fixed: nothing to change (the game implements no `shuyi_playdate::Sdk` and builds no `Dirs`); adopt → 1170 (after engine#3028) |
+| #205 | 3080 | `shuyi web` builds in clean staging and replaces its folder; `export web` refuses stale files | adopt → 0910 (nothing in the game places files in `dist/web` by hand) |
+
+Nothing for the game: 10 PRs (#196, #198, #199, #200, #202, #203, #204, #207, #208, #209). #198 and #209 are only the engine's tickets 3075 and 3113, which 0910 and 1201 still wait on. The skill pack's `shuyi-ship` gains the Playdate's package.
+
+The notes on what the backend does went into 1170, 1196, 1048 and 1052. `cargo xtask engine-pin` didn't move the `shuyi` crate added by 1199, so the build held two engines; `crates/xtask/src/engine.rs` now lists it, and a test checks that list against the real `Cargo.toml`.

@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["engine#3010", "engine#3028", "engine#3029", "1175"]
+blocked_by: ["engine#3028", "1175"]
 nick_input: none
 completed:
 ---
@@ -31,6 +31,26 @@ The engine holds that work in its tickets 3003 (the platform boundary,
 game on a stack of its own) and 3029 (audio). Each lifts code from this
 crate. This ticket moves the game onto them once they land.
 
+What the engine's backend holds at the pin of 2026-11-01
+(`docs/targets/playdate.md` in the engine):
+
+- `shuyi_playdate::main!(start)`, with a `Start`, a one-bit look
+  (`Look::with_one_bit`) and a pack read by `shuyi_playdate::pack()`.
+- The d-pad, A, B and crank, the system menu through `SystemMenu0`–`2` in
+  the keymap, and a storage that passes `power_cut_suite` (1196 fixes the
+  game's own until this lands).
+- `shuyi_playdate::audio::Speaker` on the SDK's players, and `shuyi export
+  playdate`, which bakes what `GameTools::audio` names to mono IMA ADPCM
+  at 44,100 Hz, the format of ADR-0084. So `crates/xtask/src/playdate_audio.rs`
+  (754 lines) goes too, and `crates/xtask/src/playdate.rs` (1,422 lines)
+  with `cargo xtask playdate`, as far as the exporter covers it.
+
+What it doesn't hold yet, so check each before deleting the game's copy:
+the on-device report (`report.rs`, engine 3011) and a crash report (engine
+3076). Help text naming the buttons is an engine limit until its 2410.
+Voice clips aren't baked until engine 3078, which is 1048's concern: the
+Playdate build plays no voices today.
+
 ## Nick input
 
 None. Nick no longer checks gameplay tickets after merge (Nick,
@@ -48,8 +68,8 @@ it):
 ## Scope
 
 **In:**
-- Move the pin past the three engine tickets (`engine-change` skill,
-  step 7).
+- Move the pin past engine#3028 (`engine-change` skill, step 7). 3010
+  (engine PR #197) and 3029 (#201) are done by the pin move of 2026-11-01.
 - `crates/playdate` keeps: the game's Playdate config (its name, data
   folder, keymap, system menu labels, the loading card, the stack
   size), `start.rs` (the game's context), and the build glue the
@@ -82,7 +102,7 @@ it):
 ## Implementation steps
 
 1. Write the estimate: about 1,600 lines removed, 100 added.
-2. Move the pin; build the device and Simulator targets.
+2. Move the pin past engine#3028; build the device and Simulator targets.
 3. Replace the front end piece by piece (storage, audio, the stack,
    the report), checking a device build after each with
    `cargo xtask playdate` (or its replacement).

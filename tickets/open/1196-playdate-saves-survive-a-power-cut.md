@@ -33,6 +33,12 @@ battery, the console crashing) between the unlink and the rename leaves
 no save at all. Nick plays Chapter 1 on his Playdate (1050), so this
 is where it matters.
 
+Engine PR #197 (ticket 3010), passed by the pin move of 2026-11-01, adds
+`shuyi-playdate`, whose storage passes this suite over a fake SDK's files.
+The game moves onto it in 1170, which waits on engine#3028. If 1170 lands
+first, close this ticket as done by it. Until then the fix below stands,
+and the backend's storage is a closer pattern than the native one.
+
 ## Nick input
 
 None.

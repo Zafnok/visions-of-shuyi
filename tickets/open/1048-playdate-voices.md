@@ -27,6 +27,11 @@ screen asks for a line's clip through `Ctx::play_voice` (0720); 0722
 generates Chapter 1's clips. 1047 converts and plays audio on the
 Playdate; 1043 is the Playdate dialogue screen.
 
+Engine PR #201 (ticket 3029), passed by the pin move of 2026-11-01, plays
+the Playdate's sound through the engine, and its follow-up engine 3078 bakes
+voice clips. If 1170 has moved the game onto the backend by then, use 3078's
+baking instead of the game's converter.
+
 ## Nick input
 
 None. Nick no longer checks gameplay tickets after merge (Nick,
