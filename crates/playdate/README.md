@@ -94,10 +94,10 @@ ADR-0091).
 
 The D-pad, A and B are one controller of `PadKind::Playdate`, through the
 player's pad bindings like any controller (ADR-0034): A reports as the
-binding position `South` and B as `East`, so the default `pad` table of
-`assets/data/keymap.ron` makes the D-pad the cursor, A Confirm and B
-Cancel. Help text names them `A`, `B` and the D-pad. Since 1034 the
-front end uses `keymap.ron`'s `playdate` table (A + B, the B chords).
+binding position `East` and B as `West`, as the engine's profile has
+them, so `keymap.ron`'s `playdate` table (since 1034, with A + B and the
+B chords) makes the D-pad the cursor, A Confirm and B Cancel. Help text
+names them `A`, `B` and the D-pad.
 
 **The crank** (ticket 1035, ADR-0086) is two more buttons of that pad: a
 notch wound back (`notch_degrees` in `keymap.ron`'s `crank`, 30) presses

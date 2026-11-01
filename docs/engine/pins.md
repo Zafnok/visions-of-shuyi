@@ -160,3 +160,18 @@ Also passed, unsorted by the report because its commit names no PR on the engine
 Nothing for the game: 10 PRs (#196, #198, #199, #200, #202, #203, #204, #207, #208, #209). #198 and #209 are only the engine's tickets 3075 and 3113, which 0910 and 1201 still wait on. The skill pack's `shuyi-ship` gains the Playdate's package.
 
 The notes on what the backend does went into 1170, 1196, 1048 and 1052. `cargo xtask engine-pin` didn't move the `shuyi` crate added by 1199, so the build held two engines; `crates/xtask/src/engine.rs` now lists it, and a test checks that list against the real `Cargo.toml`.
+
+## 2026-11-01: 0ad02fa5 → 76e05909 (17 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #215 | 2410 | `PadKind::Playdate` names `East` A, `West` B and `South` X | fixed: the Playdate's A and B moved to `East` and `West` in `crates/playdate/src/pads.rs`, `assets/data/keymap.ron`'s `playdate` table, `targets/playdate.ron` and their tests; the player sees the same names |
+| #212 | 3075 | `shuyi export` builds named features and ships files beside the program; `ExportCx` gains fields | fixed: nothing to change (the game builds no `ExportCx`); adopt → 0910 |
+| #210 | 3113 | A game's icon with pictures drawn per size | unblocks 1201 and its `engine-friction: engine#3113` marker |
+| #214 | 3028 | The Playdate backend's game stack from the heap, and its high-water mark | unblocks 1170 |
+| #211 | 3081 | `exposure-report.json` of every export, and a `disclosure` part that refuses a package | adopt → 1208 |
+| #217 | 2812 | A new game's `AGENTS.md` points at the engine's docs (`{{engine.docs}}`) | not for the game: the placeholder is filled only when `shuyi new` writes a game, and this game's `AGENTS.md` was never written by it |
+| #221 | 2220 | Hot reload of any asset kind, `shuyi run --watch` | adopt → 1209 |
+| #206 | 2573 | Sound parity baselines and gates in the engine's CI; found that quad-snd's native loops aren't gapless | not for the game: the gates run on the engine's own probe and no game crate can call them. The game's music does loop natively, and only the engine's replacement (2210) can change that |
+
+Nothing for the game: 9 PRs (#175, #192, #213, #216, #218, #219, #220, #222, #223). #216 is research whose handoff is parked in the engine (3083); #218 is a tutorial for new games; #222 widens the engine's API gate, so `Breaking:` lines now cover `shuyi-playdate`. The skill pack's `shuyi-ship` gains `icon_sizes`, `exposure-report.json` and the `disclosure` part.

@@ -49,7 +49,7 @@ fn skip_scenes(h: &mut Harness) {
         if h.top_screen() != "dialogue" {
             return;
         }
-        h.pad("East South");
+        h.pad("West East");
     }
     panic!("the scenes never end: {:?}", h.screens());
 }
@@ -86,14 +86,14 @@ fn play_chapter_1() -> Vec<String> {
         if h.top_screen() == "lead_select" {
             break;
         }
-        h.pad("South");
+        h.pad("East");
     }
     assert_eq!(h.top_screen(), "lead_select", "{:?}", h.screens());
     // Down to Start, past the name, and A.
-    h.pad("DpadDown DpadDown South");
+    h.pad("DpadDown DpadDown East");
     skip_scenes(&mut h);
     // The battle's banner, then its opening scene.
-    h.pad("South");
+    h.pad("East");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let commands: Vec<Command> =
@@ -120,7 +120,7 @@ fn play_chapter_1() -> Vec<String> {
             "dialogue" => skip_scenes(&mut h),
             "save_prompt" => break,
             _ => {
-                h.wait(0.5).pad("South");
+                h.wait(0.5).pad("East");
             }
         }
     }
@@ -160,7 +160,7 @@ fn play_chapter_1() -> Vec<String> {
     let tracks = started.chain(in_scenes).collect();
     // "Save your progress?" (No): Chapter 2 starts (0848), with its first
     // scene.
-    h.pad("DpadDown South");
+    h.pad("DpadDown East");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch02"));
     assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);

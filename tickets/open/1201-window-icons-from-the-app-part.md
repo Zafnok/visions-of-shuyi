@@ -21,9 +21,8 @@ one 512 px picture (engine ADR-0061), and that blurs the game's `@` at 16 and
 32 px: 64 of 256 and 133 of 1024 pixels differ, and the 16 px glyph can't be
 read. So `crates/app/src/main.rs` still includes `assets/icon/icon-{16,32,64}.png`,
 marked `// engine-friction: engine#3113`. Engine PR #210 has now shipped
-that ticket and lets a game give pictures drawn per size. It merged after
-the current game pin: retain `engine#3113` as the minimum revision and
-move the pin first, rather than waiting for another implementation. Game
+that ticket and lets a game give pictures drawn per size. The pin move of
+2026-11-01 reached it; `engine#3113` stays as the minimum revision. Game
 1199 is already done.
 
 ## Nick input
@@ -33,8 +32,8 @@ None. The icon's picture doesn't change.
 ## Scope
 
 **In:**
-- Move the pin past engine#3113 as the first step (`engine-change` §7), or
-  wait for an open `engine-pin` PR.
+- ~~Move the pin past engine#3113 as the first step (`engine-change` §7), or
+  wait for an open `engine-pin` PR.~~ (done by the pin move of 2026-11-01)
 - `icon`, `icon_sizes` and `window_icons` in `shuyi.ron`'s `app`, with
   `window_icons: "crates/app/icon"`, outside `assets/`, which is embedded
   whole.
@@ -50,7 +49,7 @@ None. The icon's picture doesn't change.
 
 ## Implementation steps
 
-1. Move the pin.
+1. ~~Move the pin.~~ (done by the pin move of 2026-11-01)
 2. Have `cargo xtask icon build 1` write the source and the drawn pictures,
    and set the `app` part's three fields.
 3. Run `cargo shuyi app-info`, and use `APP.window_icon` in `main.rs`.

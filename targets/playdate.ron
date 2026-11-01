@@ -1,9 +1,9 @@
 // The Playdate as this game plays it (ticket 0140): the engine's profile
 // (ADR-0008 §1), with the buttons and chords of the game's own front end
-// (ADR-0070). crates/playdate/src/pads.rs reports A at `South` and B at
-// `East`, where the engine's profile says `East` and `West`, and the keymap
-// file's `playdate` table (docs/design/playdate.md) presses B with left and
-// right as well as with A.
+// (ADR-0070). crates/playdate/src/pads.rs reports A at `East` and B at
+// `West`, as the engine's profile says, and the keymap file's `playdate`
+// table (docs/design/playdate.md) presses B with left and right as well as
+// with A.
 (
     id: "playdate",
     status: Supported,
@@ -18,10 +18,10 @@
         // Menu and Lock are the system's.
         buttons: [
             "DpadUp", "DpadDown", "DpadLeft", "DpadRight",
-            "South", "East",
+            "East", "West",
             "CrankForward", "CrankBack",
         ],
-        chords: [("South", "East"), ("East", "DpadLeft"), ("East", "DpadRight")],
+        chords: [("East", "West"), ("West", "DpadLeft"), ("West", "DpadRight")],
         axes: ["Crank"],
         system_menu_slots: 3,
     ),

@@ -1,6 +1,6 @@
 //! The game as the Playdate's front end runs it (ticket 1033): its
-//! 50 × 15 console, no keyboard, and only the D-pad, A (`South`) and B
-//! (`East`) of a `PadKind::Playdate` pad. Screens keep their PC look until
+//! 50 × 15 console, no keyboard, and only the D-pad, A (`East`) and B
+//! (`West`) of a `PadKind::Playdate` pad. Screens keep their PC look until
 //! their Playdate skins land (1037 on), so this mostly checks where the
 //! buttons lead, not how it looks; and that the one-bit renderer draws those
 //! frames as 1032's did, whole or only what changed (ticket 1055).
@@ -50,7 +50,7 @@ fn skip_scenes(h: &mut Harness) {
         if h.top_screen() != "dialogue" {
             return;
         }
-        h.pad("East South");
+        h.pad("West East");
     }
     panic!("the scenes never end: {:?}", h.screens());
 }
@@ -65,18 +65,18 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
     assert_eq!(h.game().buffer().spec(), ConsoleSpec::PLAYDATE);
     // A ends the title's wait, then picks New Game, Classic and the
     // familiarity answer.
-    h.pad("South South South South");
+    h.pad("East East East East");
     assert_eq!(h.top_screen(), "lead_select");
     // The name: A on it opens the letter grid; B deletes a letter, A adds
     // the grid's first one (A), and A on Done (up, then left, from the
     // first letter) closes it.
-    h.pad("DpadDown South East South DpadUp DpadLeft South");
+    h.pad("DpadDown East West East DpadUp DpadLeft East");
     assert_eq!(h.top_screen(), "lead_select");
     // Then down to Start, and A.
-    h.pad("DpadDown South");
+    h.pad("DpadDown East");
     skip_scenes(&mut h);
     // The battle's banner (A), then its opening scene.
-    h.pad("South");
+    h.pad("East");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), None);
@@ -91,11 +91,11 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
     // dimmed on an empty tile); A on it and A on "Suspend the battle?"
     // write the suspend save and go back to the title.
     h.wait(1.0);
-    h.pad("South DpadUp South");
+    h.pad("East DpadUp East");
     for _ in 0..6 {
         h.pad("DpadDown");
     }
-    h.pad("South South");
+    h.pad("East East");
     assert_eq!(h.screens(), ["title"]);
     let saved = h.game().ctx().storage.read(SUSPEND_KEY);
     assert!(saved.is_ok_and(|s| s.is_some()), "no suspend save");
@@ -139,7 +139,7 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     let mut one_bit = OneBit::new(&h);
     // A ends the title's wait, then picks New Game (on its release: the
     // game flow pushes its first screen on the next frame).
-    h.pad("South South").wait(trpg_ui::harness::FRAME_DT);
+    h.pad("East East").wait(trpg_ui::harness::FRAME_DT);
     let Some(mode) = h.screen::<ModeSelectScreen>() else {
         panic!("no game mode screen: {:?}", h.screens());
     };
@@ -153,19 +153,19 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     );
     assert_snapshot!("playdate_mode_select", h.snapshot());
     one_bit.check(&h);
-    h.pad("South");
+    h.pad("East");
     let Some(familiarity) = h.screen::<FamiliarityScreen>() else {
         panic!("no familiarity screen: {:?}", h.screens());
     };
     assert_eq!(familiarity.view(h.game().ctx()).menu.items.len(), 3);
     assert_snapshot!("playdate_familiarity", h.snapshot());
     one_bit.check(&h);
-    h.pad("South");
+    h.pad("East");
     assert_eq!(h.top_screen(), "lead_select");
     assert_snapshot!("playdate_lead_select", h.snapshot());
     one_bit.check(&h);
     // A on the name opens the grid; B deletes a letter, A types the first.
-    h.pad("DpadDown South East South");
+    h.pad("DpadDown East West East");
     let Some(lead) = h.screen::<LeadSelectScreen>() else {
         panic!("no lead screen: {:?}", h.screens());
     };
@@ -177,7 +177,7 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     assert_snapshot!("playdate_letter_grid", h.snapshot());
     one_bit.check(&h);
     // Done (up, then left), down to Start, A: the opening scene.
-    h.pad("DpadUp DpadLeft South DpadDown South");
+    h.pad("DpadUp DpadLeft East DpadDown East");
     for _ in 0..40 {
         if h.top_screen() == "dialogue" {
             break;
@@ -198,7 +198,7 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
     let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
     h.use_pad(PadKind::Playdate);
     // The title's Options: third in its menu.
-    h.pad("South DpadDown DpadDown South");
+    h.pad("East DpadDown DpadDown East");
     assert_eq!(h.screens(), ["title", "options"]);
     let rows = |h: &Harness| -> Vec<&'static str> {
         let view = view_of(h, |s: &OptionsScreen, c| s.view(c));
@@ -211,13 +211,13 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
     assert!(shown.contains(&Row::KeyBindings.key()));
     assert_snapshot!("playdate_options", h.snapshot());
     // B leaves; the system menu's Options opens the same screen.
-    h.pad("East");
+    h.pad("West");
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(rows(&h), shown);
     // Key bindings: up from the first row, past Restore defaults and Reset
     // tips.
-    h.pad("DpadUp DpadUp DpadUp South");
+    h.pad("DpadUp DpadUp DpadUp East");
     let kb = |h: &Harness| {
         view_of(h, |s: &KeyBindingsScreen, c| {
             (s.is_controller_only(), s.view(c))
@@ -235,7 +235,7 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
     for _ in 0..rows_down.unwrap_or(0) {
         h.pad("DpadDown");
     }
-    h.pad("South South");
+    h.pad("East East");
     assert!(view_of(&h, |s: &KeyBindingsScreen, _| s.is_capturing()));
     // Hold B, press down, let go of down, then of B (B is Cancel when let
     // go: not here, after the capture).
@@ -243,21 +243,21 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
         h.frame(&[event], 1.0 / 30.0);
     };
     let pad = PadKind::Playdate;
-    frame(&mut h, RawInputEvent::PadDown(Button::East, pad));
+    frame(&mut h, RawInputEvent::PadDown(Button::West, pad));
     frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad));
     frame(&mut h, RawInputEvent::PadUp(Button::DpadDown));
-    frame(&mut h, RawInputEvent::PadUp(Button::East));
+    frame(&mut h, RawInputEvent::PadUp(Button::West));
     assert_eq!(h.top_screen(), "key_bindings");
     let (_, view) = kb(&h);
     let chord = |h: &Harness| h.game().ctx().pad_bindings().slots(Action::DangerZone)[0];
     let named = view.row(Action::DangerZone).map(|r| r.slots[0].clone());
     assert_eq!(named, Some(SlotView::Bound("B+↓".to_owned())));
     // B leaves Key bindings: saved.
-    h.pad("East");
+    h.pad("West");
     assert_eq!(h.top_screen(), "options");
-    assert_eq!(chord(&h), ButtonChord::pair(Button::East, Button::DpadDown));
+    assert_eq!(chord(&h), ButtonChord::pair(Button::West, Button::DpadDown));
     // Again, and Restore defaults (up from the first row): A, then A.
-    h.pad("South DpadUp South South East");
+    h.pad("East DpadUp East East West");
     assert_eq!(h.top_screen(), "options");
     assert_eq!(chord(&h), None);
 }
@@ -326,12 +326,12 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     let mut one_bit = OneBit::new(&h);
     one_bit.check(&h);
     // The title, then its menu.
-    h.pad("South");
+    h.pad("East");
     one_bit.frames(&mut h, 3, 0.2);
     // New Game, Classic, the familiarity answer, then Start.
-    h.pad("South South South");
+    h.pad("East East East");
     one_bit.check(&h);
-    h.pad("DpadDown DpadDown South");
+    h.pad("DpadDown DpadDown East");
     one_bit.check(&h);
     // The opening scene, a line typing out a frame at a time.
     let mut saw_dialogue = false;
@@ -344,14 +344,14 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     skip_scenes(&mut h);
     one_bit.check(&h);
     // The battle's banner, its scene, then the map.
-    h.pad("South");
+    h.pad("East");
     one_bit.check(&h);
     skip_scenes(&mut h);
     one_bit.frames(&mut h, 3, 0.4);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The guide closed, the cursor around the lead.
     for step in [
-        "South",
+        "East",
         "DpadUp",
         "DpadRight",
         "DpadDown",
@@ -374,9 +374,9 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     h.use_pad(PadKind::Playdate);
     // A to New Game, Classic and the familiarity answer, the name as it
     // is, Start; past the scenes and the banner.
-    h.pad("South South South South DpadDown DpadDown South");
+    h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("South");
+    h.pad("East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -389,11 +389,11 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     assert!(idle(&h) && on_a_ready_unit(&h));
     let start = h.cursor_tile();
     // Hold B, press right: the next ready unit, and B cancels nothing.
-    h.pad("East+DpadRight");
+    h.pad("West+DpadRight");
     assert!(idle(&h) && on_a_ready_unit(&h));
     assert_ne!(h.cursor_tile(), start);
     // And left: back to the first.
-    h.pad("East+DpadLeft");
+    h.pad("West+DpadLeft");
     assert_eq!(h.cursor_tile(), start);
     assert!(idle(&h));
     // Help text names the chords through the keymap.
@@ -401,13 +401,13 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     assert_eq!(key_name(keys, Action::EndTurn), "A+B");
     assert_eq!(key_name(keys, Action::NextUnit), "B+→");
     // A + B: the question, as on the PC.
-    h.pad("South+East");
+    h.pad("East+West");
     assert!(matches!(battle(&h), Some(Mode::EndTurnPrompt { .. })));
     // B alone backs out of it; A + B again, then A, ends the turn.
-    h.pad("East");
+    h.pad("West");
     assert!(idle(&h));
     assert_eq!(h.cursor_tile(), start, "B cancels, it doesn't move");
-    h.pad("South+East South");
+    h.pad("East+West East");
     let phase = h.battle().map(|b| b.state().phase());
     assert_ne!(phase, Some(Phase::Player));
 }
@@ -427,9 +427,9 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     })
     .with_shipped_story();
     h.use_pad(PadKind::Playdate);
-    h.pad("South South South South DpadDown DpadDown South");
+    h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("South");
+    h.pad("East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -444,7 +444,7 @@ fn battle(h: &Harness) -> &BattleScreen {
 /// player's turn 2: the enemy's phase at the held speed, its banners and
 /// scenes closed.
 fn to_turn_two(h: &mut Harness) {
-    h.pad("South+East South");
+    h.pad("East+West East");
     for _ in 0..200 {
         skip_scenes(h);
         let b = battle(h);
@@ -454,9 +454,9 @@ fn to_turn_two(h: &mut Harness) {
             return;
         }
         if b.banner().is_some() {
-            h.pad("South");
+            h.pad("East");
         } else {
-            h.hold_pad("South", 0.5);
+            h.hold_pad("East", 0.5);
         }
     }
     panic!("turn 2 never came");
@@ -490,15 +490,15 @@ fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
         .unwrap_or_else(|| panic!("no pop-ups"));
     assert!(panel.unit.is_none() && panel.terrain.is_some());
     // B opens the map menu beside the cursor, over the pop-ups; B closes it.
-    h.pad("East");
+    h.pad("West");
     let view = battle_view(&h);
     let place = view.menu.as_ref().map(|m| m.place);
     assert_eq!(place, h.cursor_tile().map(MenuPlace::Beside));
     assert!(!browsing(&view));
-    h.pad("East");
+    h.pad("West");
     assert!(browsing(&battle_view(&h)));
     // The lead moved a tile right: its action menu beside where it stands.
-    h.pad("DpadDown South DpadRight South").wait(1.0);
+    h.pad("DpadDown East DpadRight East").wait(1.0);
     assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
     let place = battle_view(&h).menu.map(|m| m.place);
     let moved = trpg_core::Pos::new(lead.x + 1, lead.y);
@@ -508,16 +508,16 @@ fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
         if matches!(battle(&h).mode(), Mode::Idle { .. }) {
             break;
         }
-        h.pad("East");
+        h.pad("West");
     }
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
-    h.pad("South+East");
+    h.pad("East+West");
     let Some(DialogView::Question(question)) = battle_view(&h).dialog else {
         panic!("no question: {:?}", battle(&h).mode());
     };
     assert_eq!(question.answers, "A yes / B no");
     // A: the enemy's phase, its banner over the map.
-    h.pad("South");
+    h.pad("East");
     let banner = battle_view(&h).banner.map(|b| b.title);
     assert_eq!(banner.as_deref(), Some("ENEMY PHASE"));
 }
@@ -565,11 +565,11 @@ fn winding_the_crank_back_rewinds_one_action_per_notch() {
     let oldest = points.last().copied();
     assert_eq!(rewind_points(&h), Some((points.clone(), oldest)));
     // B closes it, the battle as it was.
-    h.pad("East");
+    h.pad("West");
     assert!(h.screen::<RewindScreen>().is_none());
     assert_eq!(battle(&h).history().len(), points.len());
     // Again: the newest. A asks, and the crank does nothing meanwhile.
-    h.crank(-30.0).pad("South");
+    h.crank(-30.0).pad("East");
     let asking = |h: &Harness| {
         h.screen::<RewindScreen>()
             .is_some_and(RewindScreen::is_confirming)
@@ -579,9 +579,9 @@ fn winding_the_crank_back_rewinds_one_action_per_notch() {
     assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[0]))));
     // B backs out of the question; A, A rewinds for one charge (to the
     // enemy's phase, which plays on).
-    h.pad("East");
+    h.pad("West");
     assert!(!asking(&h) && h.screen::<RewindScreen>().is_some());
-    h.pad("South South");
+    h.pad("East East");
     assert!(h.screen::<RewindScreen>().is_none());
     assert_eq!(battle(&h).history().charges_left(), charges - 1);
 }
@@ -614,7 +614,7 @@ fn map_menu_shown(h: &Harness) -> Vec<MapEntry> {
 
 /// Opens the map menu (B, with nothing to cancel) and chooses `entry`.
 fn choose(h: &mut Harness, entry: MapEntry) {
-    h.pad("East");
+    h.pad("West");
     let at = map_menu_shown(h).iter().position(|&e| e == entry);
     let Some(at) = at else {
         panic!("no {entry:?} in the map menu");
@@ -622,7 +622,7 @@ fn choose(h: &mut Harness, entry: MapEntry) {
     for _ in 0..at {
         h.pad("DpadDown");
     }
-    h.pad("South");
+    h.pad("East");
 }
 
 /// Ticket 1035: with no keyboard, the map menu lists Danger Zone,
@@ -633,13 +633,13 @@ fn the_playdates_map_menu_lists_the_shortcuts_with_no_button() {
     use MapEntry::{AutoEnd, DangerZone, UnitInfo};
     let mut h = first_battle();
     let lead = h.cursor_tile();
-    h.pad("East");
+    h.pad("West");
     let shown = map_menu_shown(&h);
     assert_eq!(&shown[..2], &MapEntry::ALL[..2]);
     assert_eq!(&shown[2..5], &[DangerZone, AutoEnd, UnitInfo]);
     assert_eq!(&shown[5..], &MapEntry::ALL[2..]);
     assert!(map_menu_entries(&h).iter().all(|&(_, enabled)| enabled));
-    h.pad("East");
+    h.pad("West");
     // Danger Zone: the menu closes and the zone shows; again, it hides.
     choose(&mut h, DangerZone);
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
@@ -658,25 +658,25 @@ fn the_playdates_map_menu_lists_the_shortcuts_with_no_button() {
     let lead_id = units.iter().find(|u| Some(u.pos) == lead).map(|u| u.id);
     assert!(lead_id.is_some());
     assert!(matches!(battle(&h).mode(), Mode::Info { unit } if Some(*unit) == lead_id));
-    h.pad("East");
+    h.pad("West");
     assert_eq!(h.cursor_tile(), lead);
     // On an empty tile (above the lead) it is dimmed.
     h.pad("DpadUp");
     assert!(h.cursor_tile().and_then(|at| h.unit_at(at)).is_none());
-    h.pad("East");
+    h.pad("West");
     let unit_info = map_menu_entries(&h)
         .into_iter()
         .find(|&(e, _)| e == UnitInfo);
     assert_eq!(unit_info, Some((UnitInfo, false)));
-    h.pad("East");
+    h.pad("West");
     // Danger Zone given a button by the player (A + down here): gone.
     let mut buttons = h.game().ctx().pad_bindings();
-    let Some(chord) = ButtonChord::pair(Button::South, Button::DpadDown) else {
+    let Some(chord) = ButtonChord::pair(Button::East, Button::DpadDown) else {
         panic!("not a chord");
     };
     assert!(buttons.bind(Action::DangerZone, 0, chord).is_ok());
     assert!(h.ctx_mut().set_pad_bindings(buttons).is_ok());
-    h.pad("East");
+    h.pad("West");
     let shown = map_menu_shown(&h);
     assert!(!shown.contains(&DangerZone), "{shown:?}");
     assert!(shown.contains(&AutoEnd) && shown.contains(&UnitInfo));
@@ -716,17 +716,17 @@ fn the_system_menu_entries_work_where_they_can() {
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title"]);
     // Its menu: Options opens, B closes it.
-    h.pad("South");
+    h.pad("East");
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "options"]);
-    h.pad("East");
+    h.pad("West");
     assert_eq!(h.screens(), ["title"]);
     // No danger zone or log there.
     h.system_menu(SystemMenuEntry::DangerZone)
         .system_menu(SystemMenuEntry::DialogueLog);
     assert_eq!(h.screens(), ["title"]);
     // Into the opening scene: the log opens once a line has shown.
-    h.pad("South South South DpadDown DpadDown South");
+    h.pad("East East East DpadDown DpadDown East");
     for _ in 0..40 {
         if h.top_screen() == "dialogue" {
             break;
@@ -745,10 +745,10 @@ fn the_system_menu_entries_work_where_they_can() {
     // Options does not open over a scene.
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.top_screen(), "dialogue");
-    h.pad("East");
+    h.pad("West");
     assert!(!log_open(&h));
     skip_scenes(&mut h);
-    h.pad("South");
+    h.pad("East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -762,15 +762,15 @@ fn the_system_menu_entries_work_where_they_can() {
     // Options over the map, and over the open map menu.
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
-    h.pad("East");
-    h.pad("East");
+    h.pad("West");
+    h.pad("West");
     assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
-    h.pad("East");
+    h.pad("West");
     assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
     // A unit selected: Options waits for the map.
-    h.pad("East South");
+    h.pad("West East");
     assert!(matches!(battle(&h).mode(), Mode::Selected(_)));
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -783,12 +783,11 @@ fn quick_battle_on_the_playdate() -> Harness {
     h.use_pad(PadKind::Playdate);
     // A ends the title's wait; Quick Battle, then Preparations: left wraps
     // to `Fight!`; A closes the banner.
-    h.pad("South DpadDown South")
-        .wait(trpg_ui::harness::FRAME_DT);
+    h.pad("East DpadDown East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
-    h.pad("DpadLeft South").wait(trpg_ui::harness::FRAME_DT);
+    h.pad("DpadLeft East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.pad("South");
+    h.pad("East");
     h
 }
 
@@ -803,13 +802,13 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     let mut h = quick_battle_on_the_playdate();
     let lord = h.cursor_tile().unwrap_or_else(|| panic!("no cursor"));
     // The map menu: the turn and the rewind charges, for its frame.
-    h.pad("East");
+    h.pad("West");
     let shown = battle_view(&h)
         .map_info
         .unwrap_or_else(|| panic!("no info"));
     assert_eq!(shown.turn, "Turn 1");
     assert!(shown.charges.contains("charges left"), "{}", shown.charges);
-    h.pad("East");
+    h.pad("West");
     assert!(battle_view(&h).map_info.is_none());
     // Unit info on the lord: page 1; right and left turn the pages,
     // wrapping.
@@ -828,19 +827,19 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     h.pad("DpadDown");
     assert_ne!(battle_view(&h).info.map(|i| i.name), first);
     assert_eq!(page(&h), Some(info::PAGES - 1));
-    h.pad("East");
+    h.pad("West");
     assert!(battle_view(&h).info.is_none());
     h.pad("DpadUp");
     assert_eq!(h.cursor_tile(), Some(lord));
     choose(&mut h, MapEntry::UnitInfo);
     assert_eq!(page(&h), Some(0));
-    h.pad("East");
+    h.pad("West");
     // The lord beside the brigand, then Attack: the forecast, on the half
     // of the screen away from the two (with one on either half, away
     // from the brigand).
-    h.pad("South DpadRight DpadRight DpadRight DpadUp South")
+    h.pad("East DpadRight DpadRight DpadRight DpadUp East")
         .wait(0.5)
-        .pad("South");
+        .pad("East");
     let view = battle_view(&h);
     let Some(f) = &view.forecast else {
         panic!("no forecast: {:?}", battle(&h).mode());
@@ -862,13 +861,13 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     let split = left(attacker) != left(target);
     assert!(!under(attacker) || split, "the attacker under {at:?}");
     // A: the fight (B skips it), then the lord's EXP bar.
-    h.pad("South").wait(0.5);
+    h.pad("East").wait(0.5);
     assert!(
         matches!(battle(&h).mode(), Mode::Combat(_)),
         "{:?}",
         battle(&h).mode()
     );
-    h.pad("East").wait(1.0);
+    h.pad("West").wait(1.0);
     let progress = battle_view(&h).progress;
     assert!(
         matches!(
@@ -877,18 +876,18 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
         ),
         "{progress:?}"
     );
-    h.pad("South").wait(1.0);
+    h.pad("East").wait(1.0);
     // The crank wound back: the rewind screen, its map the whole screen,
     // its newest entry the fight; A asks, B backs out, B closes.
     h.crank(-30.0);
     let rewind = view_of(&h, RewindScreen::view);
     assert_eq!(rewind.scene.size, (24, 15));
     assert!(!rewind.list.entries.is_empty() && rewind.list.prompt.is_none());
-    h.pad("South");
+    h.pad("East");
     let rewind = view_of(&h, RewindScreen::view);
     assert!(rewind.list.prompt.is_some());
     assert_eq!(rewind.help, "A rewind · B back");
-    h.pad("East East");
+    h.pad("West West");
     assert!(h.screen::<RewindScreen>().is_none());
 }
 
@@ -902,11 +901,11 @@ fn a_fight_plays_its_combat_picture_to_the_end_on_the_playdate() {
     use trpg_ui::screens::battle::view::ProgressView;
     let mut h = quick_battle_on_the_playdate();
     // The lord beside the brigand, Attack, the forecast, then A: the fight.
-    h.pad("South DpadRight DpadRight DpadRight DpadUp South")
+    h.pad("East DpadRight DpadRight DpadRight DpadUp East")
         .wait(0.5)
-        .pad("South");
+        .pad("East");
     assert!(battle_view(&h).forecast.is_some(), "no forecast");
-    h.pad("South");
+    h.pad("East");
     let (mut frames, mut results, mut lowest) = (0, Vec::new(), None);
     while let Some(stage) = battle_view(&h).stage {
         let [left, right] = [stage.left, 1 - stage.left].map(|i| &stage.fighters[i]);

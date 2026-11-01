@@ -220,23 +220,23 @@ fn the_playdate_frame_is_400_by_240_in_black_and_white() {
 /// rewind screen; A asks there.
 #[test]
 fn the_crank_and_buttons_after_the_steps_open_the_rewind_screen() {
-    let given = parse(&["r.png", "--crank", "-30", "--then-pad", "South"]).unwrap();
+    let given = parse(&["r.png", "--crank", "-30", "--then-pad", "East"]).unwrap();
     let after = Start::of(&given.game).unwrap().after;
-    assert_eq!(after, [After::Pad("South".into())]);
+    assert_eq!(after, [After::Pad("East".into())]);
     let dir = temp_dir("crank");
     let quick = [
         "r.png",
         "--playdate",
         "--pad",
-        "DpadDown South",
+        "DpadDown East",
         "--wait",
         "0.1",
         "--pad",
-        "DpadLeft South",
+        "DpadLeft East",
         "--wait",
         "0.1",
         "--pad",
-        "South",
+        "East",
     ];
     let shows = |extra: &[&str]| {
         let options = parse(&[&quick[..], extra].concat()).unwrap();
