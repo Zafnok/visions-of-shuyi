@@ -377,6 +377,20 @@ keeper[sad]: Master-- I asked you to be gentle with her. It's on the second page
 retainer: {N:family.marr}. {n:sister}. Three years back. Where.
 vowmaster: Captain {n:family.marr}. I don't keep them by name. I keep them catalogued, and nothing of mine is lost. The abbey's book was careless.
 @left clear
+@else
+@left lead neutral
+lead: {n:sister}. Where is she.
+vowmaster: The captain's daughter. I don't keep them by name. I keep them catalogued, and nothing of mine is lost. The abbey's book was careless.
+@left clear
+@endif
+# Rue in the room: she told them on the dead ground how Wren left the
+# field (ch06_after), so Crane says no more. Rue gone: she may have fallen
+# before she could, or told them and fallen since, and an @if can't tell
+# which, so he says it; a confirmation on the one path, the first telling
+# on the other, and true on both (0753).
+@if heretic
+@else
+vowmaster: {N:family.marr}'s girl walked off the field on her own feet, between two keepers in gray, and was entered in my book that evening. You've mislaid the one with the burned hands. She saw it.
 @endif
 @if keeper
 @left keeper angry
