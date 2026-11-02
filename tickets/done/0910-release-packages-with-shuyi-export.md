@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0909", "engine#3075", "0138"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0910 — Release packages made by shuyi export
@@ -81,16 +81,16 @@ docs and the ticket move.
 
 ## Acceptance criteria
 
-- [ ] Each target's package has every file the last release's has, plus
+- [x] Each target's package has every file the last release's has, plus
       `NOTICES.txt`, and `export-report.json` beside it.
-- [ ] The Windows package runs with the music, on a machine with no MinGW.
-- [ ] The private art is in the release builds, and a build without the
+- [x] The Windows package runs with the music, on a machine with no MinGW.
+- [x] The private art is in the release builds, and a build without the
       secret still fails or builds as `release.yml` says today.
-- [ ] Final extracted package inventories are compared, not only Cargo
+- [x] Final extracted package inventories are compared, not only Cargo
       commands. No parallel archive/app creation, stale web-file injection
       or duplicated engine notice/path-remapping logic remains in the
       release jobs. A missing required beside-file refuses a test export.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -100,5 +100,63 @@ docs and the ticket move.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: pin, package
-inventories, launch/refusal evidence, deviations and follow-ups.)*
+Pin: `76e05909`, unchanged. Dry run on this branch, with the bought art:
+[run 41367418393](https://github.com/Zafnok/visions-of-shuyi/actions/runs/41367418393),
+all four packages green.
+
+**Done.** `shuyi.ron` has an `export` part (`trpg-app`, `private-assets`, the
+files beside the program). `release.yml`'s four jobs are one matrix job that runs
+`cargo shuyi export <target> --release`, then `scripts/check-release-package.sh`,
+then gives the files the release's names. The package names are unchanged.
+
+**Inventories**, extracted from the run's artifacts against v0.3.0's, top folder
+and macOS's `.app` path set aside:
+
+| Package | v0.3.0 files | Now | Lost | Added |
+| ------- | ------------ | --- | ---- | ----- |
+| windows-x64 | 48 | 56 | none | `NOTICES.txt`, `HOW-TO-OPEN.txt`, 6 tracks |
+| linux-x64 | 48 | 55 | none | `NOTICES.txt`, 6 tracks |
+| macos-universal | 48 | 58 | none | `NOTICES.txt`, `HOW-TO-OPEN.txt`, `Info.plist`, `CodeResources`, 6 tracks |
+| web | 54 | 60 | `mq_js_bundle-LICENSE-MIT.txt` | `NOTICES.txt`, 6 tracks |
+
+The 6 tracks were added to `music/` after v0.3.0. Every package's exposure report
+lists `private-assets`; each has `export-report.json` and `exposure-report.json`.
+Linux asks for glibc 2.30 at most (floor 2.31). macOS is signed ad hoc with both
+slices.
+
+**Launch.** The run's Windows package, extracted, with only System32 on `PATH`:
+window open, no MinGW module loaded, Windows' audio modules loaded, and imports
+free of MinGW DLLs. The music wasn't heard: the folder ships beside the program
+and the audio stack starts, nothing more was measured.
+
+**Refusals.** With `dist/licenses/THIRD_PARTY_LICENSES.html` absent, the export
+stops with `SH1002` naming the file, before building. The check script also
+refused a missing file and a claim of bought art the build doesn't have. A build
+without the key passes `--without private-assets` (run locally); a real release
+without the key still fails in the private-assets action, whose rule is
+unchanged. That branch, and the `release` job attaching `kept/*`, didn't run in
+a dry run: no real tag was pushed, because it would publish a public release.
+
+**Deviations.**
+- A dry run replaces the test tag, for the reason above; `release.yml` says it is
+  the same pipeline.
+- Windows now builds with GNU, as the exporter does (ADR-0108). `build.rs`
+  embedded the icon and version info on MSVC only, so it now does so on GNU too
+  and the check refuses a program without them.
+- The web package loses `mq_js_bundle-LICENSE-MIT.txt`, against the first
+  criterion as written: `NOTICES.txt` names `mq_js_bundle` with the MIT text, and
+  the fourth criterion forbids keeping the engine's notices by hand.
+- `README.txt` is one text for all targets, without the version (`beside` is the
+  same on each); `HOW-TO-OPEN.txt` replaces its opening advice. The packages' top
+  folders are now `-windows`, `-linux`, `-macos`. The web zip has `index.html` at
+  its root. macOS's `music` and `audio-licenses` are in `Contents/Resources`.
+- `music/README.md` moved to `docs/music.md`: `beside` copies a whole folder.
+- The `.debug` files and reports go on the GitHub Release beside the packages,
+  never in them, because workflow artifacts expire.
+- macOS's zip stays a `ditto` line, as the engine's CI does: its exporter leaves
+  a folder, and only `ditto` keeps the signature.
+
+**No follow-ups.** 1208 (disclosure list) is now unblocked on this side. 0903 must
+check `steamworks` on the GNU target (ADR-0108).
+
+No gameplay rules decided.

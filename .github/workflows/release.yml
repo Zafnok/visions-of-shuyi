@@ -1,8 +1,9 @@
 name: Release
 
-# Cuts a GitHub Release from a `vX.Y.Z` tag (ADR-0009): builds Windows, Linux,
-# macOS (universal) and web packages for `trpg-app`, each with third-party
-# licence notices, and attaches them to the release. `workflow_dispatch` runs
+# Cuts a GitHub Release from a `vX.Y.Z` tag (ADR-0009): `cargo shuyi export`
+# makes Windows, Linux, macOS (universal) and web packages (ticket 0910,
+# ADR-0108), and they are attached to the release with each program's debug file
+# and export reports. `workflow_dispatch` runs
 # the exact same pipeline as a dry run (packages are uploaded as workflow
 # artifacts but no release is created), so it can be exercised on a branch
 # before ever pushing a tag.
@@ -38,7 +39,6 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  BIN_NAME: visions-of-shuyi
 
 jobs:
   # Establishes the version for this run and whether this is a real release
@@ -83,7 +83,7 @@ jobs:
           echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
           echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
 
-  # Third-party licence notices (ADR-0013), shared by every package below.
+  # The crates' licenses (ADR-0013), which shuyi.ron ships in every package.
   licenses:
     name: licenses
     needs: check-version
@@ -109,265 +109,123 @@ jobs:
           path: THIRD_PARTY_LICENSES.html
           retention-days: 1
 
-  build-windows:
-    name: build-windows
+  # One job per target: `cargo shuyi export` (shuyi.ron's `export` part, ticket
+  # 0910) builds and packages it, then the package is checked and given the
+  # release's name. The Linux package builds in Valve's Steam Linux Runtime 3.0
+  # ("sniper") SDK, whose glibc 2.31 is the floor, at the engine CI's digest.
+  package:
+    name: package (${{ matrix.target }})
     needs: [check-version, licenses]
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - id: private
-        uses: ./.github/actions/private-assets
-        with:
-          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
-          required: ${{ github.repository == 'Zafnok/visions-of-shuyi' && needs.check-version.outputs.dry_run == 'false' }}
-      - run: rustup show
-      - run: rustup target add x86_64-pc-windows-msvc
-      - shell: bash
-        env:
-          PRIVATE_FEATURES: ${{ steps.private.outputs.features }}
-        run: cargo build --release --locked -p trpg-app --target x86_64-pc-windows-msvc --features "$PRIVATE_FEATURES"
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: licenses
-      - name: Package
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows
+            os: windows-latest
+            release_name: windows-x64
+          - target: linux
+            os: ubuntu-latest
+            release_name: linux-x64
+            container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20261007.263965@sha256:220d1dc739254155a91c010f959a4f8e7c183e69d18300d6be53a20aee12b02d
+          - target: macos
+            os: macos-latest
+            release_name: macos-universal
+          - target: web
+            os: ubuntu-latest
+            release_name: web
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    defaults:
+      run:
         shell: bash
-        env:
-          VERSION: ${{ needs.check-version.outputs.version }}
-        run: |
-          set -euo pipefail
-          pkg="visions-of-shuyi-$VERSION-windows-x64"
-          mkdir -p "$pkg"
-          cp "target/x86_64-pc-windows-msvc/release/$BIN_NAME.exe" "$pkg/"
-          cp LICENSE THIRD_PARTY_LICENSES.html "$pkg/"
-          cp assets/fonts/*LICENSE* "$pkg/"
-          # Audio credits and the CC license texts (ADR-0013, 0214).
-          cp THIRD_PARTY_ASSETS.md "$pkg/"
-          mkdir -p "$pkg/audio-licenses"
-          cp assets/audio/licenses/*.txt "$pkg/audio-licenses/"
-          # Music isn't embedded (ADR-0026): the folder ships beside the game.
-          mkdir -p "$pkg/music"
-          find music -maxdepth 1 -type f -name '*.ogg' -exec cp {} "$pkg/music/" \;
-          # Voice clips aren't embedded either (ADR-0046): the folder ships
-          # beside the game when this build has one.
-          if [ -d voice ]; then cp -r voice "$pkg/voice"; fi
-          cat > "$pkg/README.txt" <<EOF
-          Visions of Shuyi $VERSION (Windows x64)
-
-          Double-click $BIN_NAME.exe to run. No installation needed. Keep the
-          music folder next to it: the game's music is loaded from there.
-
-          LICENSE is the game's own license (proprietary; see it for what you
-          may and may not do with this copy). THIRD_PARTY_LICENSES.html and
-          the other *LICENSE* files cover open-source components used to
-          build the game. THIRD_PARTY_ASSETS.md credits the music, sounds
-          and font; their licenses are in audio-licenses/.
-          EOF
-          7z a "$pkg.zip" "$pkg"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: package-windows
-          path: visions-of-shuyi-*-windows-x64.zip
-
-  build-linux:
-    name: build-linux
-    needs: [check-version, licenses]
-    runs-on: ubuntu-latest
+    env:
+      TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # git and ssh are for the bought art's checkout.
+      - name: Set up the sniper SDK
+        if: matrix.target == 'linux'
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends git openssh-client ca-certificates curl \
+            build-essential pkg-config libasound2-dev libudev-dev libx11-dev libxi-dev \
+            libxkbcommon-dev libgl1-mesa-dev
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+            sh -s -- -y --profile minimal --default-toolchain none
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - id: private
         uses: ./.github/actions/private-assets
         with:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
           required: ${{ github.repository == 'Zafnok/visions-of-shuyi' && needs.check-version.outputs.dry_run == 'false' }}
-      - run: rustup show
-      - name: Install macroquad system libraries
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - shell: bash
-        env:
-          PRIVATE_FEATURES: ${{ steps.private.outputs.features }}
-        run: cargo build --release --locked -p trpg-app --target x86_64-unknown-linux-gnu --features "$PRIVATE_FEATURES"
+      - run: rustup toolchain install --no-self-update
+      # .cargo/config.toml links the GNU target with MSYS2's mingw-w64 GCC,
+      # whose binutils give `objcopy` and `windres`.
+      - name: Set up the Windows GNU target
+        if: matrix.target == 'windows'
+        run: |
+          /c/msys64/usr/bin/pacman.exe -Sy --noconfirm --needed mingw-w64-x86_64-gcc
+          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
+          rustup target add x86_64-pc-windows-gnu
+      - name: Set up both Mac targets
+        if: matrix.target == 'macos'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: licenses
-      - name: Package
+          path: dist/licenses
+      # The export's own cargo commands don't take --locked.
+      - run: cargo metadata --locked --format-version 1 > /dev/null
+      - name: Export
         env:
-          VERSION: ${{ needs.check-version.outputs.version }}
+          WITHOUT_ART: ${{ steps.private.outputs.export-flag }}
+        run: cargo shuyi export "$TARGET" --release $WITHOUT_ART
+      - name: Check the package
+        env:
+          ART: ${{ steps.private.outputs.features }}
+        run: bash scripts/check-release-package.sh "$TARGET" "dist/export/$TARGET" $ART
+      # The `.app` keeps its signature and its program's mode in a zip `ditto`
+      # writes; the export leaves macOS's package a folder.
+      - name: Zip the macOS package
+        if: matrix.target == 'macos'
+        working-directory: dist/export/macos
+        run: ditto -c -k --keepParent "$(ls -d visions-of-shuyi-*-macos)" package.zip
+      - name: Give the files the release's names
+        env:
+          NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}
+          FOLDER: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.target }}
         run: |
           set -euo pipefail
-          pkg="visions-of-shuyi-$VERSION-linux-x64"
-          mkdir -p "$pkg"
-          cp "target/x86_64-unknown-linux-gnu/release/$BIN_NAME" "$pkg/"
-          chmod +x "$pkg/$BIN_NAME"
-          cp LICENSE THIRD_PARTY_LICENSES.html "$pkg/"
-          cp assets/fonts/*LICENSE* "$pkg/"
-          # Audio credits and the CC license texts (ADR-0013, 0214).
-          cp THIRD_PARTY_ASSETS.md "$pkg/"
-          mkdir -p "$pkg/audio-licenses"
-          cp assets/audio/licenses/*.txt "$pkg/audio-licenses/"
-          # Music isn't embedded (ADR-0026): the folder ships beside the game.
-          mkdir -p "$pkg/music"
-          find music -maxdepth 1 -type f -name '*.ogg' -exec cp {} "$pkg/music/" \;
-          # Voice clips aren't embedded either (ADR-0046): the folder ships
-          # beside the game when this build has one.
-          if [ -d voice ]; then cp -r voice "$pkg/voice"; fi
-          cat > "$pkg/README.txt" <<EOF
-          Visions of Shuyi $VERSION (Linux x64)
-
-          Run ./$BIN_NAME from a terminal (mark it executable first if the
-          archive extractor didn't preserve that: chmod +x $BIN_NAME). Keep the
-          music folder next to it: the game's music is loaded from there.
-
-          LICENSE is the game's own license (proprietary; see it for what you
-          may and may not do with this copy). THIRD_PARTY_LICENSES.html and
-          the other *LICENSE* files cover open-source components used to
-          build the game. THIRD_PARTY_ASSETS.md credits the music, sounds
-          and font; their licenses are in audio-licenses/.
-          EOF
-          tar czf "$pkg.tar.gz" "$pkg"
+          from="dist/export/$TARGET"
+          mkdir -p dist/release/package dist/release/kept
+          case "$TARGET" in
+            linux) mv "$from/$FOLDER.tar.gz" "dist/release/package/$NAME.tar.gz" ;;
+            macos) mv "$from/package.zip" "dist/release/package/$NAME.zip" ;;
+            *) mv "$from/$FOLDER.zip" "dist/release/package/$NAME.zip" ;;
+          esac
+          if [ -f "$from/$FOLDER.debug" ]; then
+            mv "$from/$FOLDER.debug" "dist/release/kept/$NAME.debug"
+          fi
+          mv "$from/export-report.json" "dist/release/kept/$NAME.export-report.json"
+          mv "$from/exposure-report.json" "dist/release/kept/$NAME.exposure-report.json"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: package-linux
-          path: visions-of-shuyi-*-linux-x64.tar.gz
-
-  build-macos:
-    name: build-macos
-    needs: [check-version, licenses]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - id: private
-        uses: ./.github/actions/private-assets
-        with:
-          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
-          required: ${{ github.repository == 'Zafnok/visions-of-shuyi' && needs.check-version.outputs.dry_run == 'false' }}
-      - run: rustup show
-      - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
-      - shell: bash
-        env:
-          PRIVATE_FEATURES: ${{ steps.private.outputs.features }}
-        run: cargo build --release --locked -p trpg-app --target aarch64-apple-darwin --features "$PRIVATE_FEATURES"
-      - shell: bash
-        env:
-          PRIVATE_FEATURES: ${{ steps.private.outputs.features }}
-        run: cargo build --release --locked -p trpg-app --target x86_64-apple-darwin --features "$PRIVATE_FEATURES"
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: licenses
-      - name: Package (lipo universal binary)
-        env:
-          VERSION: ${{ needs.check-version.outputs.version }}
-        run: |
-          set -euo pipefail
-          pkg="visions-of-shuyi-$VERSION-macos-universal"
-          mkdir -p "$pkg"
-          lipo -create -output "$pkg/$BIN_NAME" \
-            "target/aarch64-apple-darwin/release/$BIN_NAME" \
-            "target/x86_64-apple-darwin/release/$BIN_NAME"
-          chmod +x "$pkg/$BIN_NAME"
-          cp LICENSE THIRD_PARTY_LICENSES.html "$pkg/"
-          cp assets/fonts/*LICENSE* "$pkg/"
-          # Audio credits and the CC license texts (ADR-0013, 0214).
-          cp THIRD_PARTY_ASSETS.md "$pkg/"
-          mkdir -p "$pkg/audio-licenses"
-          cp assets/audio/licenses/*.txt "$pkg/audio-licenses/"
-          # Music isn't embedded (ADR-0026): the folder ships beside the game.
-          mkdir -p "$pkg/music"
-          find music -maxdepth 1 -type f -name '*.ogg' -exec cp {} "$pkg/music/" \;
-          # Voice clips aren't embedded either (ADR-0046): the folder ships
-          # beside the game when this build has one.
-          if [ -d voice ]; then cp -r voice "$pkg/voice"; fi
-          cat > "$pkg/README.txt" <<EOF
-          Visions of Shuyi $VERSION (macOS, universal: Apple Silicon + Intel)
-
-          This build is unsigned. macOS will refuse to open it with a normal
-          double-click ("cannot be opened because the developer cannot be
-          verified"). Instead, right-click (or Control-click) $BIN_NAME and
-          choose Open, then confirm in the dialog that appears; you only need
-          to do this once. Keep the music folder next to it: the game's music
-          is loaded from there.
-
-          LICENSE is the game's own license (proprietary; see it for what you
-          may and may not do with this copy). THIRD_PARTY_LICENSES.html and
-          the other *LICENSE* files cover open-source components used to
-          build the game. THIRD_PARTY_ASSETS.md credits the music, sounds
-          and font; their licenses are in audio-licenses/.
-          EOF
-          ditto -c -k --sequesterRsrc "$pkg" "$pkg.zip"
+          name: package-${{ matrix.target }}
+          path: dist/release/package/*
+      # Never in a package: the debug file reads a player's crash report.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: package-macos
-          path: visions-of-shuyi-*-macos-universal.zip
-
-  build-web:
-    name: build-web
-    needs: [check-version, licenses]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - id: private
-        uses: ./.github/actions/private-assets
-        with:
-          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
-          required: ${{ github.repository == 'Zafnok/visions-of-shuyi' && needs.check-version.outputs.dry_run == 'false' }}
-      - run: rustup show
-      - env:
-          PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}
-        run: cargo shuyi web --release $PRIVATE_ASSETS_FLAG
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: licenses
-      - name: Package
-        env:
-          VERSION: ${{ needs.check-version.outputs.version }}
-        run: |
-          set -euo pipefail
-          pkg="visions-of-shuyi-$VERSION-web"
-          mkdir -p "$pkg"
-          cp -r dist/web/. "$pkg/"
-          cp LICENSE THIRD_PARTY_LICENSES.html "$pkg/"
-          cp assets/fonts/*LICENSE* "$pkg/"
-          # Audio credits and the CC license texts (ADR-0013, 0214).
-          cp THIRD_PARTY_ASSETS.md "$pkg/"
-          mkdir -p "$pkg/audio-licenses"
-          cp assets/audio/licenses/*.txt "$pkg/audio-licenses/"
-          # The web shell's JavaScript is Shuyi Engine's (ticket 1131): its
-          # license texts, from the engine at the pinned commit.
-          rev="$(cat shuyi-engine.rev)"
-          for js in mq_js_bundle quad-storage sapp_jsutils; do
-            curl -fsSL -o "$pkg/$js-LICENSE-MIT.txt" \
-              "https://raw.githubusercontent.com/Zafnok/shuyi-engine/$rev/crates/cli/web/$js-LICENSE-MIT.txt"
-          done
-          cat > "$pkg/README.txt" <<EOF
-          Visions of Shuyi $VERSION (web)
-
-          Serve this folder with any static file server and open index.html,
-          e.g.: python -m http.server 8000, then http://localhost:8000
-
-          LICENSE is the game's own license (proprietary; see it for what you
-          may and may not do with this copy). THIRD_PARTY_LICENSES.html and
-          the other *LICENSE* files cover open-source components used to
-          build the game. THIRD_PARTY_ASSETS.md credits the music, sounds
-          and font; their licenses are in audio-licenses/.
-          EOF
-          zip -r "$pkg.zip" "$pkg"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: package-web
-          path: visions-of-shuyi-*-web.zip
+          name: kept-${{ matrix.target }}
+          path: dist/release/kept/*
 
   # Only this job needs write access, and only for a real (non-dry-run) run.
   release:
     name: release
     if: needs.check-version.outputs.dry_run == 'false'
-    needs: [check-version, build-windows, build-linux, build-macos, build-web]
+    needs: [check-version, package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -377,7 +235,14 @@ jobs:
           pattern: package-*
           merge-multiple: true
           path: packages
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: kept-*
+          merge-multiple: true
+          path: kept
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          files: packages/*
+          files: |
+            packages/*
+            kept/*
           generate_release_notes: true
