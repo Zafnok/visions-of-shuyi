@@ -141,6 +141,23 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
         [] as [shuyi_core::bots::playtest::Check; 0]
     );
     assert!(Targets::from_ron("(success: {})").is_err());
+    let band = |kind, tier, name: &str| match &targets.checks_of(tier, kind, &[name])[0] {
+        Check::Rate { band, .. } => (band.min, band.max),
+        _ => unreachable!(),
+    };
+    let (fixed, random) = (BattleKind::FixedSkirmish, BattleKind::RandomSkirmish);
+    assert_eq!(band(fixed, Difficulty::Normal, "casual"), (70, 100));
+    assert_eq!(band(fixed, Difficulty::Normal, "normal"), (55, 80));
+    assert_eq!(band(random, Difficulty::Easy, "hardcore"), (70, 95));
+    assert_eq!(
+        band(BattleKind::Story, Difficulty::Normal, "casual"),
+        (30, 55)
+    );
+    assert_eq!(
+        band(BattleKind::SideQuest, Difficulty::Easy, "normal"),
+        (65, 90)
+    );
+    assert_eq!(band(fixed, Difficulty::Hard, "normal"), (40, 65));
 }
 
 #[test]

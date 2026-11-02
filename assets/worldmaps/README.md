@@ -61,7 +61,7 @@ debug menu's "Test world map" starts.
 | `pos` | Its cell. At least one cell from the left and right edges (its plate is three cells wide) and one row from the top (its level marker). |
 | `kind` | `StoryBattle("<chapter>")`: that chapter's battle (the chapter says `world_map: Some("<this map>")`). `SideQuest((battle, intro_scenes, victory_scenes))`: a battle of its own. `Town(shops: [...], capital: false)`: shops as on battle maps (`kind`, `stock`), checked as they are (a Tailor sells cloth and leather only, a Blacksmith sells nothing, no Basic shop). `Empty`: a place to pass through. `FixedSkirmish(battle: (battle: "fight", intro_scenes: [], victory_scenes: []), guards_path: true)`: an authored fight, won once. Random groups overlay cleared battle places (below). A shop's stock can grow with the story: `(kind: Vendor, stock: ["potion"], later: [(when: [Cleared("undercroft")], stock: ["hi_potion"])])` adds what `later` lists once its conditions hold, checked like the rest of the shop. |
 | `music` | A cue played while the army stands there (a town's `village`, a capital's `capital`). |
-| `opens_when` | Every condition must hold for the place to open: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army), `NotBuilt` (never: an `Empty` place holding a battle's spot until its ticket makes the battle, gives the place its kind and removes this). A story battle also waits for its chapter to begin. A cleared place stays open. Until it opens, a place one road from an open one shows what it is, greyed, with its road dimmed, and can't be travelled to (Nick, 1007). |
+| `opens_when` | Every condition must hold for the place to open: `Cleared("<place>")` (its battle won), `Flag("<flag>")`, `Alive("<character>")` (in the army), `Chapter(["<chapter>"])` (the campaign is in one of those chapters: a place fought only then, usually `hidden` too; 0510), `NotBuilt` (never: an `Empty` place holding a battle's spot until its ticket makes the battle, gives the place its kind and removes this). A story battle also waits for its chapter to begin. A cleared place stays open. Until it opens, a place one road from an open one shows what it is, greyed, with its road dimmed, and can't be travelled to (Nick, 1007). |
 | `hidden` | `true`: a secret, out of sight (its road too) until it opens. Default `false`. |
 
 A battle's **level marker** is worked out from its battle file: the
@@ -82,7 +82,7 @@ with its story battle.
 ## Skirmishes (1008, ADR-0104)
 
 A fixed skirmish names an ordinary battle file and optional scenes, as a
-side quest does. Its battle must use `music: Pool("skirmish")`. A guard
+side quest does (`cargo xtask skirmish new` generates one to order). Its battle must use `music: Pool("skirmish")`. A guard
 stops travel through its place until won; a non-guard may be passed. Both
 start on arrival when selected as a destination. Fixed fights show a red
 `!`, random groups a grey `?`; both have level markers and Find rows.
@@ -124,7 +124,7 @@ reinforcements, scenes/triggers, battle notes, late player slots, map
 features, default pack or authored clear loot, and `music: Pool("skirmish")`. The first
 `size` entries provide the positions and templates; all are rebuilt at
 the saved level, through the ordinary loader. The generated battle's clear
-loot replaces the file's loot. This leaves the pool usable by 0510's generator.
+loot replaces the file's loot. `cargo xtask skirmish new --kind random` adds to the pool (`docs/playtesting.md`, *Generating skirmishes*).
 Content validation rejects invalid ranges, missing battles and unsafe templates.
 
 The campaign's saved PCG RNG chooses place, pool entry, count, reward and

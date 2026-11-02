@@ -62,6 +62,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `solo_bench` | Characters in the army but not in the battle when it is played on its own (the Quick Battle): Preparations lists them so their gear can be traded. Ignored in the story. Default: empty. |
 | `solo_stock` | The stock when the battle is played on its own (the debug Quick Battle): item ids, one entry per item. Ignored in the story, where the stock is the campaign's. Default: empty. |
 | `solo_gold` | The party's gold when the battle is played on its own (the debug Quick Battle), to try the Preparations shop with. Ignored in the story, where the gold is the campaign's. Default 0. |
+| `bots_army` | Optional, written bare: `bots_army: (chapter: "ch02", level: 35)`. The army the playtest bots field here: who is recruited by that chapter, at that level, with its ordinary gear (`docs/playtesting.md`, *Generating skirmishes*). A generated skirmish has one. Ignored in the story, where the army is the player's. Default: the characters of the player slots, as the character data has them. |
 | `clear_gold` | Gold for winning. Default 0. |
 | `clear_items` | Items for winning, into the stock, one entry per item (`clear_items: ["houndmasters_axe"]`: the Hound lieutenant's axe, Chapter 2); a weapon comes as a fresh copy. Default: none. |
 | `objective` | `Rout()`, `DefeatUnit(unit: "garth")` (a character among the enemies or reinforcements), `Seize(pos: (x, y), by_lord: true)`, `Survive(turns: 8)`, `Escape(area: (x: 13, y: 2, w: 1, h: 6))` (every player unit still standing leaves through the exit area, one by one, with the `Escape` action; no turn limit: `turn-structure.md`, *Escape*). The first three take an optional `turn_limit: Some(n)`. `DefeatUnit` also takes `leftovers` (ticket 0845): `Stay`, the default, or `Flee` (`DefeatUnit(unit: "red_captain", leftovers: Flee)`, Chapter 1): when the unit is defeated, the battle is won and the enemies still on the map run, walking toward the nearest map edge as they fade, before the victory banner; they give no EXP and drop nothing. |
@@ -83,6 +84,7 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 - the id doesn't match the file name; an unknown map;
 - a `light` that isn't a light of `assets/data/lighting.ron` (with its line and column);
 - `preparations: true` with a `default_pack`; an unknown `solo_stock` or `clear_items` item; a `solo_bench` character that is unknown, in the battle or listed twice;
+- a `bots_army` level outside `1..=level_cap`;
 - an unknown character or template; an enemy with both or neither;
 - a level outside `1..=level_cap`, or a level given for a character;
 - a loadout the unit can't carry;

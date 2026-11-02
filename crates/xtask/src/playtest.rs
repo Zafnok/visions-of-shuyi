@@ -20,7 +20,9 @@ use serde::{Deserialize, Serialize};
 use shuyi_core::bots::playtest::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
-use trpg_bots::{BattleEntrant, BattleStage, Player, Targets, personas_from_ron};
+use trpg_bots::{
+    BattleEntrant, BattleStage, Player, Targets, field_army, personas_from_ron, reference_pack,
+};
 use trpg_content::{Content, battle_campaign};
 use trpg_core::{BattleDef, GameMode, LeadGender, LeadProfile, Turn};
 
@@ -273,11 +275,18 @@ pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
 
 /// The battle `def` as the bots play it. The army: the characters of the
 /// battle's player slots, fresh from the character data (as the debug
-/// Quick Battle fields them).
+/// Quick Battle fields them), or as its `bots_army` says (ticket 0510).
 pub fn stage(content: &Content, def: &BattleDef) -> BattleStage {
     let setup = |mode| {
         let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-        battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
+        let mut campaign = battle_campaign(content, def, mode, lead);
+        let Some(army) = &def.bots_army else {
+            return campaign.battle_setup(def, &content.tables());
+        };
+        field_army(&mut campaign, content, army);
+        let mut setup = campaign.battle_setup(def, &content.tables());
+        setup.pack.items = reference_pack(content, army, def.pack_cap);
+        setup
     };
     BattleStage {
         classic: setup(GameMode::Classic),
@@ -322,7 +331,7 @@ pub fn play(
         })
         .collect::<Result<Vec<_>, String>>()?;
     let names: Vec<&str> = entrants.iter().map(BattleEntrant::name).collect();
-    let checks = targets.checks(def.difficulty, &names);
+    let checks = targets.checks_of(def.difficulty, def.kind, &names);
 
     let (tries, took) = play_on_threads(&stage, &entrants, options)?;
     let report = judge(tries, &checks).map_err(|e| e.to_string())?;

@@ -1,4 +1,4 @@
-// TEST FILE: a skirmish made too hard on purpose, for the autobalance's
+// TEST FILE: a battle made too hard on purpose, for the autobalance's
 // tests (ticket 0509): the lord alone against three enemies, each 5 levels
 // above its template's. `cargo shuyi autobalance --stage test_too_hard`
 // brings it back into the personas' bands.
@@ -19,7 +19,7 @@
     default_pack: ["potion"],
     objective: Rout(),
     difficulty: Normal,
-    kind: FixedSkirmish,
+    kind: SideQuest,
     music: Pool("skirmish"),
     seed: 1,
 )

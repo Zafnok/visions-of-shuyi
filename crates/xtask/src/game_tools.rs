@@ -421,7 +421,7 @@ fn playdate_palette_def() -> Result<PaletteDef, String> {
     trpg_content::ink::load_playdate(&base).map_err(shown)
 }
 
-mod balance;
+pub mod balance;
 mod one_bit;
 mod plays;
 

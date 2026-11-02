@@ -502,3 +502,23 @@ fn fixed_skirmishes_validate_battle_scenes_and_music_pool() {
             .any(|e| e.contains("music must be"))
     );
 }
+
+#[test]
+fn a_chapter_condition_must_name_a_chapter() {
+    let c = content();
+    let place = |chapter: &str| {
+        text(
+            &format!(
+                r#"(id: "c", name: "C", pos: (5, 5), kind: Empty, opens_when: [Chapter(["{chapter}"])]),"#
+            ),
+            r#"(from: "a", to: "c", via: [(2, 5)]),"#,
+        )
+    };
+    assert!(from_source("w", "test_world", &place("ch02"), refs(&c)).is_ok());
+    let errors =
+        from_source("w", "test_world", &place("nope"), refs(&c)).expect_err("no such chapter");
+    assert!(
+        errors[0].to_string().contains("Chapter names no chapter"),
+        "{errors:?}"
+    );
+}

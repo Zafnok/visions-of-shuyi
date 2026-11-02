@@ -113,6 +113,25 @@ first one shifted down 30 points (*Claude's starting values, tunable*;
 Nick's earlier row was 60–85 / 75–100 / 55–80 / 50–75). The floor that
 blocks a change stays at 20%.
 
+**Skirmishes have their own bands** (Nick, 2026-11-01, ticket 0510). The
+first generated lv 35 battle lasted about 3 turns: the Casual bot won 95 of
+100 tries while Normal finished with nobody dead in 55 and Hardcore in 70.
+Casual only has to win, and in so short a fight making the enemies stronger
+only stopped the others keeping everyone alive. Asked what a skirmish should
+aim for, Nick picked a Casual band of its own, as in Fire Emblem Sacred
+Stones, where a newer player almost always wins a side fight and keeping
+everyone alive is the real test, and added: "normal and HC can also be
+slightly easier for skirmishes".
+
+| Skirmish tier | Casual | Normal | Hardcore |
+| ------------- | ------ | ------ | -------- |
+| Easy | 70–100% | 70–95% | 70–95% |
+| Normal | 70–100% | 55–80% | 55–80% |
+
+*Claude's starting values, tunable*: Casual's numbers, and "slightly easier"
+as 5 points. Every fixed and random skirmish uses this table; a skirmish of
+a higher tier keeps the table above, as do story battles and side quests.
+
 **Hardcore is faster than Normal (no par numbers).** Nick doesn't want to set
 a turn target per map by hand. The report compares the two bots
 automatically: Hardcore's median turns must be **lower than Normal's**,

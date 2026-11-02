@@ -1142,3 +1142,25 @@ fn random_pool_rejects_each_narrative_or_unique_loot_feature() {
     changed.id = "missing".into();
     assert!(!random_pool(&changed, 6));
 }
+
+#[test]
+fn bots_army_loads_and_its_level_is_checked() {
+    let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+    let refs = content.battle_refs();
+    let source = |level: u32| {
+        format!(
+            r#"(id: "b", map: "test_skirmish_meadow",
+               player_slots: [(character: "lead", pos: (3, 5))],
+               enemies: [(template: "test_brigand", pos: (1, 1))],
+               objective: Rout(), difficulty: Easy, music: Pool("skirmish"), seed: 1,
+               bots_army: (chapter: "ch02", level: {level}))"#
+        )
+    };
+    let def = from_source("b", "b", &source(35), &refs).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(
+        def.bots_army.map(|a| (a.chapter, a.level)),
+        Some(("ch02".to_owned(), 35))
+    );
+    assert!(from_source("b", "b", &source(0), &refs).is_err());
+    assert!(from_source("b", "b", &source(100), &refs).is_err());
+}

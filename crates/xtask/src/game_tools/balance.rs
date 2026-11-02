@@ -9,7 +9,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shuyi_cli::contract::autobalance::AutobalanceInput;
+use shuyi_cli::game::StageWrite;
 use shuyi_cli::{AutobalancePlan, Tunable};
+use shuyi_core::Knob;
 use shuyi_core::bots::playtest::play_tries;
 use trpg_bots::{BattleEntrant, Persona, Targets, TunedBattle, knobs, personas_from_ron};
 use trpg_content::battle::BATTLES_DIR;
@@ -46,9 +48,28 @@ pub fn plan(
     let source = bundle::file(&path).ok_or_else(|| format!("no battle \"{id}\""))?;
     let shown = bundle::display_path(&path);
     let text = BattleText::parse(&shown, id, source).map_err(|e| e.to_string())?;
-    let battle = TunedBattle::new(text, Arc::clone(&content));
-    let def = battle.load()?;
+    let battle = TunedBattle::new(text, content);
 
+    let knobs = knobs(&battle)?;
+    let file = root.join(&shown);
+    let write = Box::new(move |battle: &TunedBattle| {
+        std::fs::write(&file, battle.text.text()).map_err(|e| format!("{shown}: {e}"))?;
+        Ok(vec![shown.clone()])
+    });
+    tuned_plan(root, id, battle, knobs, write)
+}
+
+/// The plan of `battle`, of id `id`, changed by `knobs` and written by
+/// `write`: the personas' settings and targets read from under `root`.
+pub fn tuned_plan(
+    root: &Path,
+    id: &str,
+    battle: TunedBattle,
+    knobs: Vec<Box<dyn Knob<TunedBattle>>>,
+    write: StageWrite<TunedBattle>,
+) -> Result<AutobalancePlan, String> {
+    let def = battle.load()?;
+    let content = battle.content();
     let read =
         |file: &str| std::fs::read_to_string(root.join(file)).map_err(|e| format!("{file}: {e}"));
     let all = personas_from_ron(&read(PERSONAS_FILE)?)?;
@@ -58,7 +79,7 @@ pub fn plan(
         .collect::<Result<Vec<Persona>, _>>()
         .map_err(|name| format!("no persona \"{name}\" in {PERSONAS_FILE}"))?;
     let targets = Targets::from_ron(&read(TARGETS_FILE)?)?;
-    let tier = def.difficulty;
+    let (tier, kind) = (def.difficulty, def.kind);
 
     let play = Box::new(move |battle: &TunedBattle, entrant: usize, seed, turns| {
         let stage = stage(&content, &battle.load()?);
@@ -68,16 +89,10 @@ pub fn plan(
             play_tries(&stage, &persona, seed..seed + 1, turns).map_err(|e| e.to_string())?;
         tries.pop().ok_or_else(|| "no try".to_owned())
     });
-    let file = root.join(&shown);
-    let write = Box::new(move |battle: &TunedBattle| {
-        std::fs::write(&file, battle.text.text()).map_err(|e| format!("{shown}: {e}"))?;
-        Ok(vec![shown.clone()])
-    });
-    let knobs = knobs(&battle)?;
     Ok(AutobalancePlan::new(
         format!("{id} · {tier:?} tier · {:?}", def.kind),
         ENTRANTS.iter().map(|&n| (n.to_owned(), None)).collect(),
-        Box::new(move |names| targets.checks(tier, names)),
+        Box::new(move |names| targets.checks_of(tier, kind, names)),
         Box::new(Tunable::new(battle, knobs, play, write)),
     ))
 }

@@ -55,7 +55,7 @@ pub use battle::{
 };
 pub use camp::CampEvent;
 pub use campaign::{
-    ApplyError, BattleDef, BattleKind, BattleMusic, BattleRewards, Campaign, Difficulty,
+    ApplyError, BattleDef, BattleKind, BattleMusic, BattleRewards, BotsArmy, Campaign, Difficulty,
     GameTables, PlayerSlot, TutorialLevel, UNUSED_CHARGE_PERCENT,
 };
 pub use class::{

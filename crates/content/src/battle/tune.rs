@@ -319,6 +319,39 @@ fn enemy_spans(source: &str) -> Vec<Range<usize>> {
     spans
 }
 
+/// `source` with `line` added as the last entry of the root's `key: [...]`
+/// list, on a line of its own indented `indent`; `None` if it has no such
+/// list. Everything else, comments too, stays as written (a generated
+/// skirmish joining a world map's places, ticket 0510).
+pub fn add_to_list(source: &str, key: &str, line: &str, indent: &str) -> Option<String> {
+    let code = code(source);
+    let after = field_at(&code, key, 1)?;
+    let open = after + code[after..].iter().position(|&c| c == b'[')?;
+    let mut depth = 0;
+    let close = (open..code.len()).find(|&i| {
+        match code[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            _ => {}
+        }
+        depth == 0
+    })?;
+    let body = source[..close].trim_end();
+    let last = code[..body.len()]
+        .iter()
+        .rposition(|c| !c.is_ascii_whitespace())?;
+    let comma = if last == open || code[last] == b',' {
+        ""
+    } else {
+        ","
+    };
+    Some(format!(
+        "{body}{comma}\n{indent}{line},\n{}{}",
+        self::indent(source, close),
+        &source[close..]
+    ))
+}
+
 /// Entry `text` (`(` to `)`) with field `key` set to `value`: its value
 /// replaced, or the field added at the end.
 fn set_field(text: &str, key: &str, value: &str) -> String {

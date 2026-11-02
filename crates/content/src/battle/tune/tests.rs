@@ -200,3 +200,38 @@ fn set_field_replaces_the_whole_value_whatever_the_spacing() {
         "(level: Some(3) )"
     );
 }
+
+#[test]
+fn add_to_list_keeps_the_text_and_adds_a_line_at_the_end() {
+    let source = "(
+    a: [
+        1, // one
+        2
+    ],
+    b: [],
+)
+";
+    let added = add_to_list(source, "a", "3", "        ").expect("the list");
+    assert_eq!(
+        added,
+        "(
+    a: [
+        1, // one
+        2,
+        3,
+    ],
+    b: [],
+)
+"
+    );
+    let empty = add_to_list(source, "b", "x", "  ").expect("the empty list");
+    assert!(
+        empty.contains(
+            "b: [
+  x,
+    ],"
+        ),
+        "{empty}"
+    );
+    assert_eq!(add_to_list(source, "c", "x", ""), None);
+}

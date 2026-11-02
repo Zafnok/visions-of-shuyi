@@ -196,6 +196,18 @@ pub enum BattleMusic {
     Pool(String),
 }
 
+/// The army a battle is judged with: who the player has recruited by
+/// `chapter`, at `level`, with that chapter's ordinary gear
+/// (`docs/playtesting.md`, *Generating skirmishes*).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BotsArmy {
+    /// The chapter, by id.
+    pub chapter: String,
+    /// Every unit's character level.
+    pub level: crate::unit::Level,
+}
+
 /// One battle, as a battle file describes it (validated by `content`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BattleDef {
@@ -226,6 +238,10 @@ pub struct BattleDef {
     /// Characters in the army but not in the battle when it is played on
     /// its own (the Quick Battle's bench, to try trading gear with).
     pub solo_bench: Vec<CharacterId>,
+    /// The army the playtest bots field here instead of the characters as
+    /// the character data has them (a generated skirmish, ticket 0510). No
+    /// rule of play reads it.
+    pub bots_army: Option<BotsArmy>,
     /// Gold for winning.
     pub clear_gold: Gold,
     /// Items for winning, into the stock (the Hound lieutenant's axe,

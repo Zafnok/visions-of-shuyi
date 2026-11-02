@@ -121,6 +121,7 @@ fn def() -> BattleDef {
         solo_stock: vec![],
         solo_gold: 0,
         solo_bench: vec![],
+        bots_army: None,
         clear_gold: 500,
         clear_items: vec![],
         objective: Objective::Rout { turn_limit: None },

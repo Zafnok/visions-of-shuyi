@@ -23,20 +23,26 @@
 //!   as the engine's checks for a battle's tier.
 //! - [`knobs`]: what the autobalance may change in a battle file
 //!   ([`TunedBattle`], ticket 0509), the engine's `Knob`s.
+//! - [`generate`]: a skirmish to order, and [`reference_army`], what the
+//!   bots judge it with (ticket 0510).
 
+mod army;
 mod balance;
 mod bot;
 mod measures;
 mod persona;
 mod playtest;
+mod skirmish;
 
-pub use balance::{TunedBattle, knobs};
+pub use army::{field_army, reference_army, reference_pack, roster_by, story_chapters, tier_at};
+pub use balance::{TunedBattle, generated_knobs, knobs};
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::BattleMeasures;
 pub use persona::{
     Persona, PersonaBot, PersonaOrder, Personas, Scoring, Tally, Weights, order, personas_from_ron,
 };
 pub use playtest::{BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets};
+pub use skirmish::{Generated, Kind, Request, Units, add_place, add_to_pool, generate};
 
 #[cfg(test)]
 mod testkit;

@@ -94,6 +94,7 @@ enum RawCondition {
     Flag(String),
     Alive(String),
     NotBuilt,
+    Chapter(Vec<String>),
 }
 
 impl RawCondition {
@@ -104,6 +105,7 @@ impl RawCondition {
             Self::Flag(flag) => NodeCondition::Flag(flag),
             Self::Alive(who) => NodeCondition::Alive(CharacterId(who)),
             Self::NotBuilt => NodeCondition::NotBuilt,
+            Self::Chapter(chapters) => NodeCondition::Chapter(chapters),
         }
     }
 }
@@ -466,6 +468,13 @@ fn check_condition(
                 who.0
             ));
         }
+        NodeCondition::Chapter(chapters) => {
+            for chapter in chapters.iter().filter(|c| !refs.chapters.contains_key(*c)) {
+                err(format!(
+                    "place \"{id}\": Chapter names no chapter \"{chapter}\""
+                ));
+            }
+        }
         _ => {}
     }
 }
@@ -547,6 +556,28 @@ fn check_look(def: &WorldMapDef, err: &mut dyn FnMut(String)) {
                 "the road from \"{from}\" to \"{to}\" must run straight across or down between its turns"
             ));
         }
+    }
+}
+
+/// World map `id` from its file's text, with every problem of it (a
+/// generated skirmish's map before it is written, ticket 0510).
+pub fn from_source(
+    file: &str,
+    id: &str,
+    source: &str,
+    refs: WorldRefs<'_>,
+) -> Result<WorldMapDef, Vec<ContentError>> {
+    let raw = parse_ron::<RawWorldMap>(file, source).map_err(|e| vec![e])?;
+    let mut problems = Vec::new();
+    let def = build(id, raw, refs, &mut |m| problems.push(m));
+    check(&def, refs, &mut |m| problems.push(m));
+    if problems.is_empty() {
+        Ok(def)
+    } else {
+        Err(problems
+            .into_iter()
+            .map(|m| ContentError::new(file, m))
+            .collect())
     }
 }
 

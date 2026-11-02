@@ -11,8 +11,8 @@ use serde::Deserialize;
 use shuyi_core::bots::playtest::{Band, Check, Condition, Entrant, Measure, Measures, Want};
 use shuyi_core::{Bot, Report};
 use trpg_core::{
-    AiWeights, BattleSetup, BattleState, Command, Difficulty, Event, GameMode, Outcome, Phase,
-    UnitId,
+    AiWeights, BattleKind, BattleSetup, BattleState, Command, Difficulty, Event, GameMode, Outcome,
+    Phase, UnitId,
 };
 
 use crate::{BaselineBot, BattleMeasures, Persona, PersonaBot};
@@ -210,6 +210,9 @@ pub struct Targets {
     pub success: BTreeMap<String, Vec<Condition>>,
     /// The band of successes wanted, per tier and persona.
     pub bands: HashMap<Difficulty, BTreeMap<String, Band>>,
+    /// A skirmish's bands, per tier and persona; a tier it doesn't list has
+    /// [`bands`](Self::bands)' (Nick, ticket 0510).
+    pub skirmish_bands: HashMap<Difficulty, BTreeMap<String, Band>>,
     /// The share of successes under which the change is blocked, per
     /// persona that has one.
     pub floors: BTreeMap<String, u32>,
@@ -241,7 +244,18 @@ impl Targets {
     /// success band, with its floor, then the faster check when both of its
     /// personas play. An entrant with no target (the baseline) gets none.
     pub fn checks(&self, tier: Difficulty, entrants: &[&str]) -> Vec<Check> {
-        let bands = self.bands.get(&tier);
+        self.checks_with(self.bands.get(&tier), entrants)
+    }
+
+    /// [`checks`](Self::checks) for a battle of `kind`: a skirmish is judged
+    /// by its own bands.
+    pub fn checks_of(&self, tier: Difficulty, kind: BattleKind, entrants: &[&str]) -> Vec<Check> {
+        let skirmish = matches!(kind, BattleKind::FixedSkirmish | BattleKind::RandomSkirmish);
+        let own = self.skirmish_bands.get(&tier).filter(|_| skirmish);
+        self.checks_with(own.or_else(|| self.bands.get(&tier)), entrants)
+    }
+
+    fn checks_with(&self, bands: Option<&BTreeMap<String, Band>>, entrants: &[&str]) -> Vec<Check> {
         let mut checks: Vec<Check> = entrants
             .iter()
             .filter_map(|&name| {

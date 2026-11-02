@@ -1266,7 +1266,7 @@ mod tests {
                 "test_scout"
             ]
         );
-        assert_eq!(t.generics.len(), 13);
+        assert_eq!(t.generics.len(), 47);
         let lords: Vec<&str> = t
             .characters
             .values()
