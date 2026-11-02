@@ -560,6 +560,27 @@ fn the_project_checks_the_credits_the_content_reads() {
     assert_eq!(credits.private_root, PRIVATE_DISPLAY_ROOT);
 }
 
+/// Ticket 1208: every track and audio license `export.beside` ships is on the
+/// `disclosure` list, as each target names it, so a new one fails here and not
+/// when a release is cut.
+#[test]
+fn the_disclosure_list_names_the_music_and_licenses_a_package_ships() {
+    let root = repo_root();
+    let allowed = project().config.disclosure.unwrap().allowed_files;
+    for (folder, shipped_as) in [
+        ("music", "music"),
+        ("assets/audio/licenses", "audio-licenses"),
+    ] {
+        for entry in fs::read_dir(root.join(folder)).unwrap() {
+            let name = entry.unwrap().file_name();
+            let path = format!("{shipped_as}/{}", name.to_string_lossy());
+            let in_app = format!("visions-of-shuyi.app/Contents/Resources/{path}");
+            assert!(allowed.contains(&path), "{path}");
+            assert!(allowed.contains(&in_app), "{in_app}");
+        }
+    }
+}
+
 /// Ticket 0909: `NOTICES.txt` carries the license text of every shipped
 /// row of `THIRD_PARTY_ASSETS.md` whose text is under `assets/`, and
 /// `assets/NOTICES-game.txt` credits those rows and every work of the audio
