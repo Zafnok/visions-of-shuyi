@@ -30,6 +30,12 @@ outputs:
       it to cargo shuyi web.
     value: ${{ steps.plan.outputs.web-flag }}
 
+  export-flag:
+    description: >-
+      Empty when the art was checked out, otherwise '--without private-assets'.
+      Pass it to cargo shuyi export.
+    value: ${{ steps.plan.outputs.export-flag }}
+
 runs:
   using: composite
   steps:
@@ -47,6 +53,7 @@ runs:
             exit 1
           fi
           echo "::warning::PRIVATE_ASSETS_KEY is not available to this run: building with the public placeholders (ADR-0040)."
+          echo "export-flag=--without private-assets" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         rev=$(tr -d '[:space:]' < assets-private.rev)

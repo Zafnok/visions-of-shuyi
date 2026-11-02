@@ -125,6 +125,25 @@
         "assets/audio/licenses/CC-BY-3.0.txt",
     ]),
 
+    // What `cargo shuyi export` builds and ships for `release.yml` (ticket
+    // 0910). A build without the bought art passes `--without private-assets`.
+    // The licenses report is cargo-about's, made first (docs/releasing.md).
+    // On the web, `music` and `voice` come with the web build.
+    export: (
+        package: "trpg-app",
+        features: ["private-assets"],
+        beside: [
+            (path: "assets-src/package/README.txt"),
+            (path: "LICENSE"),
+            (path: "THIRD_PARTY_ASSETS.md"),
+            (path: "dist/licenses/THIRD_PARTY_LICENSES.html"),
+            (path: "assets/fonts/Terminus-LICENSE.txt"),
+            (path: "assets/audio/licenses", name: "audio-licenses"),
+            (path: "music"),
+            (path: "voice", optional: true),
+        ],
+    ),
+
     // The bought art (ticket 0110, ADR-0040): `game/` is embedded over
     // `assets/` with the `private-assets` feature, `test/` over
     // `assets-test/` (ADR-0057), `voice/` is copied to `voice/` (ADR-0046),

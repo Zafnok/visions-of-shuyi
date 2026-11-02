@@ -17,9 +17,10 @@ fn main() {
     }
 }
 
-/// The exe's icon and version info (ticket 0902), for an MSVC Windows
-/// target only. The GNU host has no `windres` (Nick's machine), so there the
-/// step is skipped with a warning; so it is if the resource compiler fails.
+/// The exe's icon and version info (ticket 0902). The GNU target's resource
+/// compiler is `windres`, in MSYS2's mingw-w64 binutils. Without a compiler
+/// the step is skipped with a warning; `release.yml` refuses such a package
+/// (`scripts/check-release-package.sh`).
 #[cfg(windows)]
 fn embed_windows_resources() {
     let target = |name: &str| std::env::var(name).unwrap_or_default();
@@ -27,10 +28,6 @@ fn embed_windows_resources() {
         return;
     }
     println!("cargo:rerun-if-changed=../../assets/icon/icon.ico");
-    if target("CARGO_CFG_TARGET_ENV") != "msvc" {
-        println!("cargo:warning=no exe icon or version info: only MSVC builds embed them");
-        return;
-    }
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/icon/icon.ico")
         .set("FileDescription", "Visions of Shuyi")

@@ -140,6 +140,7 @@ The test clips are tones made by `cargo xtask voice-test-clips` (it needs
 
 - `cargo shuyi web` copies `voice/` (its `.ron` and `.ogg` files) into
   `dist/web/voice/` when the folder exists.
-- `release.yml` copies `voice/` into each package when the folder exists.
+- `cargo shuyi export` copies `voice/` into each package when the folder
+  exists (`shuyi.ron`'s `export` part).
 - CI builds get the folder from the private repository
   (`.github/actions/private-assets`). Gates never read it.
