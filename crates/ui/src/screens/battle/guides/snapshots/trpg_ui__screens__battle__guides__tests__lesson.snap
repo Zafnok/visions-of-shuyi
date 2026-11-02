@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-assertion_line: 195
+assertion_line: 210
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
@@ -17,6 +17,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Spells that change tiles        │                                                                ║
 ║ Moving the cursor               │                                                                ║
 ║ Your move                       │                                                                ║
+║ Zooming the map                 │                                                                ║
 ║ Moving a unit                   │                                                                ║
 ║ Enemy in reach                  │                                                                ║
 ║ Attack forecast                 │                                                                ║
@@ -27,7 +28,6 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Skills                          │                                                                ║
 ║ Magic                           │                                                                ║
 ║ Terrain                         │                                                                ║
-║                                 │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║

@@ -168,6 +168,11 @@ for Nick to veto.
   lessons (above). The rest get **new tips at Full**: **skills**, **magic**
   (casting and healing) and **terrain** (movement costs and bonuses). A
   topic with a lesson doesn't also get a tip. *Claude's starting rule.*
+- **Zooming the map** (0466; Nick, playtest round 3: "ensure the guide has a
+  tip for zoom on first turn"), at Full, when the map is drawn with pictures.
+  It shows the first time the player is back on the map with no lesson in
+  play: normally turn 1, after the turn-1 lessons. With glyphs it waits until
+  pictures are on. *Claude's starting rule.*
 
 ### Guides (in the menu)
 
@@ -229,3 +234,4 @@ a key or a button is silent text. She has lines all through the tutorial. Ticket
 - **0458** the new tips and the *Guides* list.
 - **0731** the guide's name and lines.
 - **0465** the guide's box at the end of the lessons.
+- **0466** the zoom tip.

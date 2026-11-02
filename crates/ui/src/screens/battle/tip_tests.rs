@@ -661,6 +661,32 @@ fn resting_on_terrain_that_is_not_plain_ground_shows_the_terrain_tip_at_full_onl
     }
 }
 
+/// Ticket 0466: only at `Full`, once, and not under a skin that can't zoom
+/// until one that can is on.
+#[test]
+fn the_zoom_tip_waits_for_a_skin_that_can_zoom_and_shows_at_full_only() {
+    use trpg_core::TutorialLevel;
+    for (level, shown) in [
+        (Some(TutorialLevel::Full), true),
+        (Some(TutorialLevel::Short), false),
+        (Some(TutorialLevel::None), false),
+    ] {
+        let mut c = tipped();
+        c.game.campaign_tutorial = level;
+        let mut s = quick();
+        let zoom = TipTrigger::ZoomAvailable;
+        assert!(!dismiss_all(&mut s, &mut c).contains(&zoom), "{level:?}");
+        let skin = crate::map_view::skin_named(&c.game.content, "sprite").unwrap();
+        c.set_map_skin(skin);
+        assert_eq!(
+            dismiss_all(&mut s, &mut c).contains(&zoom),
+            shown,
+            "{level:?}"
+        );
+        assert!(!dismiss_all(&mut s, &mut c).contains(&zoom), "{level:?}");
+    }
+}
+
 #[test]
 fn plain_ground_is_cost_1_with_no_bonus() {
     let s = quick();
