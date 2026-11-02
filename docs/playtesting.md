@@ -306,8 +306,9 @@ for a test map): `maps/<id>.map`, `battles/<id>.ron`, where the id is
   only picks the ground and `--chapters` is refused.
 
 Nothing is written while a band is missed (`--force` writes it anyway): try
-another `--seed`. The story has no world map yet (1070), so without `--map`
-it uses the test world map.
+another `--seed`. Without `--map` it uses the story's first world map. Run it
+with `cargo run`, as above: a binary built before the last skirmish was written
+doesn't have that battle embedded, and refuses the next one.
 
 **The battle.** A 14 by 10 map, its ground drawn from the world map's within 3
 cells of the place, with the middle row clear so every unit can cross. Six

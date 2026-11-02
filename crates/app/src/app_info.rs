@@ -2,10 +2,15 @@
 //! Who the game is, as `shuyi.ron`'s `app` says: its name, id and version, and the
 //! name its saves are kept under.
 
-use shuyi::platform::AppInfo;
+use shuyi::platform::{AppInfo, WindowIcon};
 
 /// Who the game is: the window's title, the loading card and the storage read it.
 // check-text: not player text, who the game is (`shuyi.ron`'s `app`)
 #[rustfmt::skip]
 pub const APP: AppInfo = AppInfo::new("Visions of Shuyi", "com.zafnok.visionsofshuyi", env!("CARGO_PKG_VERSION"))
-    .with_storage("tactical-rpg");
+    .with_storage("tactical-rpg")
+    .with_window_icon(Some(WindowIcon::new(
+        include_bytes!("../icon/16.png"),
+        include_bytes!("../icon/32.png"),
+        include_bytes!("../icon/64.png"),
+    )));

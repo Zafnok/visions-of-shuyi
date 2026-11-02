@@ -3,6 +3,8 @@
 | Path | What |
 | ---- | ---- |
 | `sound-audition.html` | The listening page Nick chose the game's sounds on (0020). Recipes for the sounds we make ourselves (0213) |
+| `voice-audition.html`, `voice-cast.html` | The listening pages Nick chose the voices on (0043). Their clips and portraits aren't in the repository |
+| `voice-refs/` | The game's voices, one reference clip per cast entry (ADR-0107) |
 | `import.py` | Downloads the chosen third-party music and sounds and makes the game files (0214, ADR-0027) |
 | `originals/` | The downloads. **Git-ignored**: `import.py` fetches them again and checks each one's SHA-256 |
 

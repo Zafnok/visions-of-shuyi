@@ -153,6 +153,8 @@ ones.
 - A generated fixed skirmish defaults to Normal tier, is optional (it never
   blocks a road) and is named "Skirmish" on the map unless `--name` says
   otherwise. Its road comes from the nearest place.
+- The new road never starts at a place 1070 marks `NotBuilt`, since such a road
+  would never open.
 - A place limited to some chapters stays out of sight outside them. Once won, it
   stays on the map, as every won place does.
 - `--kind random` adds to the map's pool and makes no place, because random
@@ -167,10 +169,11 @@ ones.
   rest), so it can write only when a battle's classes alone land it in its bands.
   It was exercised end to end with `--force`, not balanced at full tries. A
   one-class random battle has nothing to turn until 0522.
-- `--map` is new: the story has no world map yet (1070), so the default falls
-  back to the test world map. Nick's "Chapter 2" example works in the tool and
-  its tests, but Chapters 1–3 have no world map in the design, so such a place
-  won't appear in real play until a map holds it.
+- `--map` is new. The default is the story's first world map (Act 1's, from 1070,
+  which landed during this ticket). Chapter 2 isn't on that map (it opens at
+  Chapter 4, `world-structure.md`), so Nick's "Chapter 2" example works in the
+  tool and its tests but such a place can't be reached in real play; a later
+  chapter number can.
 - The enemy templates are `skirmish_<class>` rows added to `characters.ron`,
   because the data had no generic mage or any tier 2 or 3 generic.
 - `test_too_hard` became a side quest, with the same knobs, so its test keeps the

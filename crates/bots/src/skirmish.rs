@@ -12,7 +12,7 @@ use std::fmt::Write as _;
 use trpg_content::Content;
 use trpg_content::battle::tune::add_to_list;
 use trpg_content::worldmap::WorldMapDef;
-use trpg_core::{BotsArmy, ClassDef, Level, Pos, SimRng};
+use trpg_core::{BotsArmy, ClassDef, Level, NodeCondition, Pos, SimRng};
 
 use crate::army::{roster_by, story_chapters, tier_at};
 
@@ -184,6 +184,7 @@ pub fn add_place(
         .map
         .nodes
         .iter()
+        .filter(|n| !n.opens_when.contains(&NodeCondition::NotBuilt))
         .filter_map(|n| Some((n, *world.places.get(&n.id)?)))
         .min_by_key(|(_, p)| (p.x - x).abs() + (p.y - y).abs());
     let Some((near, pos)) = near else {

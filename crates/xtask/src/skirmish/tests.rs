@@ -24,6 +24,7 @@ fn sandbox() -> PathBuf {
         "crates/bots/targets.ron",
         "assets-test/worldmaps/test_world.ron",
         "assets-test/skirmishes/test_world.ron",
+        "assets/worldmaps/act1.ron",
     ] {
         let to = root.join(file);
         fs::create_dir_all(to.parent().expect("a folder")).expect("a folder");
@@ -151,6 +152,39 @@ fn a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again() {
         "a second run mustn't overwrite the first"
     );
     let _ = (fs::remove_dir_all(one), fs::remove_dir_all(two));
+}
+
+#[test]
+fn without_a_map_it_goes_on_the_story_s_first_and_writes_beside_it() {
+    let root = sandbox();
+    let list = args(&[
+        "new",
+        "--at",
+        "10,10",
+        "--level",
+        "5",
+        "--force",
+        "--entrant",
+        "casual",
+        "--tries",
+        "1",
+        "--budget",
+        "1",
+        "--turns",
+        "3",
+    ]);
+    let ran = run(&root, &parse_args(&list).expect("good")).unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        ran.written,
+        [
+            "assets/maps/act1_skirmish_10_10.map",
+            "assets/battles/act1_skirmish_10_10.ron",
+            "assets/worldmaps/act1.ron",
+        ]
+    );
+    let world = fs::read_to_string(root.join("assets/worldmaps/act1.ron")).expect("it");
+    assert!(world.contains("(id: \"skirmish_10_10\""));
+    let _ = fs::remove_dir_all(root);
 }
 
 #[test]

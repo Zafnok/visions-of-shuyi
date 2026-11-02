@@ -445,7 +445,11 @@ rival: I'm-- it's fine. Don't stop. The streets! Hold the streets. ...{N:family.
 @scene ch08_death_retainer
 @if retainer
 @left retainer sad
+@if heretic
 retainer: Boy! ...{N:family.veyne}. You tell him. You tell him what the girl saw on the plain. Up the plank, kid. Up.
+@else
+retainer: Boy! ...{N:family.veyne}. You tell him. You tell him she walked off that plain. Up the plank, kid. Up.
+@endif
 @left clear
 @endif
 @end
@@ -615,7 +619,14 @@ keeper: Let me through! Let me-- I can see him, I've got it in my hand, let me g
 @right rival neutral
 @endif
 retainer[sad]: Boy. Come here. ...Your sister's alive.
+# Rue's name only while she is there: gone, she may have told him on the
+# dead ground or fallen before she could, and he heard it from Crane
+# then. Both lines are true either way (0753).
+@if heretic
 retainer: {N:heretic} saw her. Walking off the field, after, with two keepers in gray. ...Go and get her, boy.
+@else
+retainer: She walked off that field. After. Two keepers in gray had her. ...Go and get her, boy.
+@endif
 > He looks at {lead}'s shoulder. It's up. Then at his son. His hand comes off the spear.
 rival: ...
 @left clear

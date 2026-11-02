@@ -413,7 +413,7 @@ mod tests {
     /// and the system menu have those.
     #[test]
     fn embedded_playdate_buttons_match_the_design() {
-        use Button::{CrankBack, CrankForward, DpadDown, DpadLeft, DpadRight, DpadUp, East, South};
+        use Button::{CrankBack, CrankForward, DpadDown, DpadLeft, DpadRight, DpadUp, East, West};
         let k = load_keymap().unwrap_or_default();
         let one = |b| vec![ButtonChord::single(b)];
         let two = |a, b| ButtonChord::pair(a, b).into_iter().collect::<Vec<_>>();
@@ -423,11 +423,11 @@ mod tests {
             (Action::CursorDown, one(DpadDown)),
             (Action::CursorUp, one(DpadUp)),
             (Action::CursorRight, one(DpadRight)),
-            (Action::Confirm, one(South)),
-            (Action::Cancel, one(East)),
-            (Action::EndTurn, two(South, East)),
-            (Action::PrevUnit, two(East, DpadLeft)),
-            (Action::NextUnit, two(East, DpadRight)),
+            (Action::Confirm, one(East)),
+            (Action::Cancel, one(West)),
+            (Action::EndTurn, two(East, West)),
+            (Action::PrevUnit, two(West, DpadLeft)),
+            (Action::NextUnit, two(West, DpadRight)),
             (Action::RewindBack, one(CrankBack)),
             (Action::RewindForward, one(CrankForward)),
         ]);

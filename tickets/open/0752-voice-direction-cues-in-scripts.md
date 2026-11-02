@@ -73,7 +73,7 @@ the plumbing are technical. Verified by tests.
   or the voices (0043).
 - Adding directions to Chapter 1's lines (0737 writes the script; see
   below).
-- Narration voicing, if 0043 hasn't decided narration is voiced.
+- Narration voicing is decided (0043: narration is voiced); nothing here changes it. Neither chosen reader takes a direction in words today (ADR-0107), so the cue is mainly for 0721's dry run, for a later tool and for a human cast.
 
 ## Implementation steps
 

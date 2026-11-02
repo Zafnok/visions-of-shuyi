@@ -412,10 +412,10 @@ impl WorldMapScreen {
         let Some(def) = self.def(ctx) else {
             return Transition::None;
         };
-        let Some(NodeKind::Town { shops, .. }) = def.map.node(town).map(|n| &n.kind) else {
+        let shops = def.map.town_shops(town, &self.campaign);
+        if shops.is_empty() {
             return Transition::None;
-        };
-        let shops = shops.clone();
+        }
         let name = ctx.words().place_name(def, town).to_owned();
         ctx.audio.menu(MenuSound::Select);
         if let [shop] = shops.as_slice() {
@@ -545,10 +545,7 @@ impl WorldMapScreen {
                 let Some(def) = self.def(ctx) else {
                     return Transition::None;
                 };
-                let shop = match def.map.node(&town).map(|n| &n.kind) {
-                    Some(NodeKind::Town { shops, .. }) => shops.get(i).cloned(),
-                    _ => None,
-                };
+                let shop = def.map.town_shops(&town, &self.campaign).get(i).cloned();
                 let name = ctx.words().place_name(def, &town).to_owned();
                 match shop {
                     Some(shop) => Transition::Push(Box::new(TownScreen::new(

@@ -1,0 +1,148 @@
+<title>Shuyi Voice Audition</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one column of characters, each line a row of four same-sized play buttons, in the sound audition's palette (0020) */
+:root {
+  --bg: #0e0b08;
+  --panel: #1c1712;
+  --well: #120e0a;
+  --border: #6a5a40;
+  --text: #d0c4a8;
+  --dim: #a89b82;
+  --gold: #e6b860;
+  --font-body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font: 17px/1.5 var(--font-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 60px; display: grid; gap: 32px; }
+header, section { display: grid; gap: 14px; }
+.eyebrow { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+h1 { font: 700 clamp(28px, 5vw, 40px)/1.1 var(--font-body); margin: 0; text-wrap: balance; }
+h2 { font: 700 24px/1.2 var(--font-body); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--dim); }
+.tools { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.tool { background: var(--panel); border: 1px solid var(--border); padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; font-size: 15px; }
+.tool b { font: 600 14px/1.3 var(--font-mono); color: var(--gold); }
+.line { background: var(--panel); border: 1px solid var(--border); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.say { font-size: 19px; line-height: 1.35; }
+.cue { font-size: 14px; color: var(--dim); }
+.btns { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+button { font: 600 14px/1 var(--font-mono); color: var(--text); background: var(--well); border: 1px solid var(--border); padding: 12px 10px; cursor: pointer; min-width: 0; }
+button:hover { border-color: var(--gold); }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button.on { background: var(--gold); border-color: var(--gold); color: var(--well); }
+.all { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.all span { font-size: 14px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Ticket 0043 · Round 1 · Free tools</div>
+    <h1>Which tool should voice the game?</h1>
+    <p>Four free tools read the same Chapter 1 lines. Each tool designed its own voices from the same written description, so the character is the same brief in every column. Listen for acting, for whether a character still sounds like one person from line to line, and for whether Hollis and Harl sound like different men.</p>
+    <p class="muted">These are first takes with no retakes. No accent was asked for, and the tool's choice of accent is not final. Every clip is at the same volume. A script check confirmed the long lines say the right words, but nobody has listened to these yet.</p>
+  </header>
+
+  <section>
+    <h2>The tools</h2>
+    <div class="tools" id="tools"></div>
+    <p class="muted">All four are free and run on your graphics card, so there's no monthly bill. Each one's license allows selling the game with these voices and charges no royalties. If none is good enough, round 2 adds ElevenLabs (about $6 for Chapter 1, $66–$99 for the whole game) and Gemini (about $1, $14–$27).</p>
+  </section>
+
+  <div id="cast" style="display:grid;gap:32px"></div>
+</div>
+
+<script>
+const TOOLS = [
+  { id: "qwen", name: "Qwen3-TTS", notes: ["Made by Alibaba. Apache 2.0 license.", "Has the clearest documented way to keep a voice steady over hundreds of lines.", "These takes had no acting directions; it reads emotion from the words alone.", "Japanese and Chinese: yes."] },
+  { id: "vox", name: "VoxCPM2", notes: ["Made by OpenBMB. Apache 2.0 license.", "The only one here given an acting direction for each line.", "Records at the highest quality of the four.", "Japanese and Chinese: yes."] },
+  { id: "ming", name: "Ming-3.0", notes: ["Made by Ant Group. MIT license.", "Rated highest of the four in blind listening tests, though those judge naturalness, not acting.", "Its built-in voices copy known characters, so only designed voices are used. Its training data is the most doubtful of the four.", "Japanese and Chinese: yes."] },
+  { id: "chatter", name: "Chatterbox", notes: ["Made by Resemble AI. MIT license.", "Can't design voices, so it copies the Qwen3 column's voices. Any voice difference from that column is this tool's reading.", "Only control is how intense a line is, set per line here.", "Japanese and Chinese: yes."] },
+];
+const CAST = [
+  { id: "hollis", name: "Hollis", brief: "A man of fifty-six, an old soldier. Low, dry, weathered and slightly hoarse. Unhurried, plain, gruff, keeps his feelings hidden.", lines: [
+    ["Sideways, with the grain. You'll have the axe in your foot, and then who mends the boot? Give me the other one.", "Teaching the lead to chop wood while mending a boot."],
+    ["Forty years on my feet in other people's boots. Never seen the sea. Did you know that? Forty years. Pass me the thread.", "The same morning. He comes near a feeling and gives an order instead."],
+    ["Aye. ...Burn it. Somebody. I can't.", "The letter is from his own son."],
+    ["Kid— no. Don't. ...The sea. I'd have liked to see it. Tell the boy that, if you see him. Not the rest.", "His last words, if he falls in battle."],
+  ]},
+  { id: "lead_m", name: "The lead, as a man", brief: "A young man in his early twenties. Clear, even, quiet, middle pitch. Few words, calm and steady.", lines: [
+    ["Why the sea?", "Asking Hollis, curious."],
+    ["Dace's.", "Naming the handwriting on the letter."],
+    ["That's the Veyne seal.", "Finding the lead's own family seal on the enemy's orders."],
+    ["Not alone.", "Answering someone who says they'll go on alone."],
+  ]},
+  { id: "lead_f", name: "The lead, as a woman", brief: "A young woman in her early twenties. Clear, even, quiet, middle pitch. Few words, calm and steady.", lines: [
+    ["Why the sea?", "Asking Hollis, curious."],
+    ["Dace's.", "Naming the handwriting on the letter."],
+    ["That's the Veyne seal.", "Finding the lead's own family seal on the enemy's orders."],
+    ["Not alone.", "Answering someone who says they'll go on alone."],
+  ]},
+  { id: "harl", name: "Harl, the boss", brief: "A man of forty-six, a mercenary captain. Deep, gravelly, tired and bitter, rough from years of shouting orders.", lines: [
+    ["There you are, Your Grace. You could have walked up like the paper said. Three hundred a head, somebody's paying for you. Hold still and earn it.", "Meeting the lead in battle."],
+    ["Forty men I brought home from a war, and the crown gave us a road. Go home, whoever you are, before I take it out on you.", "Meeting anyone else in battle."],
+    ["Come up and fetch me! I put you on your first horse, girl. I can put you off it.", "Shouting down from the wall at Tamsin."],
+    ["Don't hang the boys. They were hungry, that's all they— Your Grace. Your Grace, come here.", "Dying, pleading for his men."],
+  ]},
+];
+
+const audio = new Audio();
+let queue = [], lit = null;
+const light = b => { if (lit) lit.classList.remove("on"); lit = b; if (b) b.classList.add("on"); };
+function playNext() {
+  const n = queue.shift();
+  if (!n) { light(null); return; }
+  light(n.button);
+  audio.src = n.src;
+  audio.play().catch(playNext);
+}
+function start(items) { audio.pause(); queue = items; playNext(); }
+audio.addEventListener("ended", () => setTimeout(playNext, 350));
+audio.addEventListener("error", playNext);
+
+document.getElementById("tools").innerHTML = TOOLS.map(t =>
+  `<div class="tool"><b>${t.name}</b>${t.notes.map(n => `<span>${n}</span>`).join("")}</div>`).join("");
+
+const castEl = document.getElementById("cast");
+for (const c of CAST) {
+  const s = document.createElement("section");
+  s.innerHTML = `<h2>${c.name}</h2><p class="muted">Description given to every tool: ${c.brief}</p>`;
+  const all = document.createElement("div");
+  all.className = "all";
+  all.innerHTML = "<span>All four lines:</span>";
+  s.append(all);
+  const byTool = Object.fromEntries(TOOLS.map(t => [t.id, []]));
+  c.lines.forEach(([text, cue], i) => {
+    const row = document.createElement("div");
+    row.className = "line";
+    row.innerHTML = `<div class="say"></div><div class="cue"></div><div class="btns"></div>`;
+    row.querySelector(".say").textContent = text;
+    row.querySelector(".cue").textContent = cue;
+    for (const t of TOOLS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = t.name;
+      b.setAttribute("aria-label", `${c.name}, line ${i + 1}, ${t.name}`);
+      const item = { src: `clips/${t.id}/${c.id}_${i + 1}.ogg`, button: b };
+      b.addEventListener("click", () => start([item]));
+      row.querySelector(".btns").append(b);
+      byTool[t.id].push(item);
+    }
+    s.append(row);
+  });
+  for (const t of TOOLS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = t.name;
+    b.setAttribute("aria-label", `${c.name}, all four lines, ${t.name}`);
+    b.addEventListener("click", () => start(byTool[t.id].slice()));
+    all.append(b);
+  }
+  castEl.append(s);
+}
+</script>

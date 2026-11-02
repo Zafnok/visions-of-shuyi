@@ -33,8 +33,7 @@ does what `.github/workflows/release.yml` doesn't:
 Engine PR #212 (3075) has now shipped feature selection, game package
 selection and files beside the program. That removes the two former
 blockers: `private-assets` (ADR-0040), and external music/voice/license
-files (ADR-0046). It merged after the current game pin. This ticket is
-ready to start by moving the pin past it; retain `engine#3075` as the
+files (ADR-0046). The pin move of 2026-11-01 reached it; `engine#3075` stays as the
 minimum-revision dependency. Game 0909 and 0138 are already done.
 
 Engine PR #205 (ticket 3080), passed by the pin move of 2026-11-01: `shuyi
@@ -70,7 +69,7 @@ None.
 
 ## Implementation steps
 
-1. Move the pin past engine#3075 if it isn't (`engine-pin`).
+1. ~~Move the pin past engine#3075 if it isn't (`engine-pin`).~~ (done by the pin move of 2026-11-01)
 2. Run `cargo shuyi export windows --release` locally, and compare the file
    list with the last release's zip.
 3. Change `release.yml` target by target; run it from a test tag, and compare

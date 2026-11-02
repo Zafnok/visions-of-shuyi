@@ -20,8 +20,8 @@ production lines against 100 (`docs/engine/friction.md`, 1153,
 ADR-0070). The 2026-11-01 audit confirmed that the platform loop,
 storage, audio, stack and exporter have now shipped in the engine:
 3010/3029 are at the game's pin; 3028 (PR #214) and the A/B button names
-2410 (#215) shipped after it. A pin move reaches them; no new feature
-implementation is needed for those pieces.
+2410 (#215) shipped after it. The pin move of 2026-11-01 reached them; no
+new feature implementation is needed for those pieces.
 
 There is one real remaining engine prerequisite: 3011 owns the opt-in
 report a shipped game keeps. Current `shuyi_playdate::Driver` has no
@@ -54,15 +54,17 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 ## Scope
 
 **In:**
-- Verify 3011's report hooks, then move the pin past all named engine
-  tickets with `engine-pin` and its ledger/adoption review.
+- Verify 3011's report hooks, then move the pin past 3011 if it isn't
+  there yet (`engine-pin`, with its ledger/adoption review). The pin move
+  of 2026-11-01 passed the others.
 - `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
   loading card/data setup, one-bit look, saved settings and stack size.
   Use the engine's SDK, allocator, panic path, driver, storage and audio.
 - Wire the game's project/audio/bake adapters and library feature to
   `shuyi export playdate`; preserve selected Playdate music, 4x4 Bayer
-  stretch/dither policy, data folder and menu/keymap semantics. A/B move
-  to East/West consistently with 2410, including target profile/help.
+  stretch/dither policy, data folder and menu/keymap semantics. A/B moved
+  to East/West with 2410 in the pin move of 2026-11-01, with the target
+  profile and the keymap's `playdate` table: keep them.
 - Replace the public xtask build entry with a thin engine-export call
   where compatibility is needed. Disconnect the old plan/modules from
   compilation and execution here; no dead-code allow, no feature that
@@ -89,11 +91,10 @@ The 1056 unwind-section fix is already in engine 3010's exporter.
 
 **Either order with 1182:** that ticket deletes the after-script pad
 workaround. If it is done first, keep its ordered engine crank/pad
-regression and update its button script to East/West during this port.
-If this port is first, update 1182's examples/test instructions to the
-adopted A/B positions here; 1182 still removes only its remaining wrapper.
-Whichever lands second checks the script and help names against the
-actual keymap/profile, not the old South/East positions.
+regression. The pin move of 2026-11-01 already moved A/B and its examples
+to East/West; 1182 still removes only its remaining wrapper. Whichever
+lands second checks the script and help names against the actual
+keymap/profile.
 
 ## Implementation steps
 

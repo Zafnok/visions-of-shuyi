@@ -94,10 +94,10 @@ ADR-0091).
 
 The D-pad, A and B are one controller of `PadKind::Playdate`, through the
 player's pad bindings like any controller (ADR-0034): A reports as the
-binding position `South` and B as `East`, so the default `pad` table of
-`assets/data/keymap.ron` makes the D-pad the cursor, A Confirm and B
-Cancel. Help text names them `A`, `B` and the D-pad. Since 1034 the
-front end uses `keymap.ron`'s `playdate` table (A + B, the B chords).
+binding position `East` and B as `West`, as the engine's profile has
+them, so `keymap.ron`'s `playdate` table (since 1034, with A + B and the
+B chords) makes the D-pad the cursor, A Confirm and B Cancel. Help text
+names them `A`, `B` and the D-pad.
 
 **The crank** (ticket 1035, ADR-0086) is two more buttons of that pad: a
 notch wound back (`notch_degrees` in `keymap.ron`'s `crank`, 30) presses
@@ -241,12 +241,13 @@ one-bit, or a touched-up `<stem>.1bit` beside a PNG taken as it is.
 
 (ticket 1047, [ADR-0084](../../docs/adr/0084-playdate-audio-formats.md))
 
-`cargo xtask playdate` converts every sound file of
-`assets/audio/audio.ron` and the music listed in
+`cargo xtask playdate` has the engine's bake
+(`shuyi_cli::export::playdate::audio`, ticket 1203) convert every sound
+file of `assets/audio/audio.ron` and the music listed in
 `crates/content/playdate-music.txt` (Chapter 1's) to mono IMA ADPCM WAVs
 at 44.1 kHz in `Source/audio/` and `Source/music/`; `pdc` makes them
 `.pda`s. Nothing is committed: the converted files are cached in
-`target/playdate/audio-v<n>/`. A new track for the Playdate is a line in
+`target/playdate/audio-v<n>/` under their source's checksum. A new track for the Playdate is a line in
 `playdate-music.txt`; the Chapter 1 test fails while Chapter 1 asks for
 a track the list leaves out.
 

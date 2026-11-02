@@ -37,6 +37,7 @@ fn cleared(id: &str) -> NodeCondition {
 fn town() -> NodeKind {
     NodeKind::Town {
         shops: Vec::new(),
+        later: Vec::new(),
         capital: false,
     }
 }
@@ -727,4 +728,71 @@ fn a_place_for_some_chapters_opens_only_in_them_and_stays_open_once_cleared() {
     campaign.clear_node(&map, "fight", None, None);
     campaign.chapter = "ch06".into();
     assert!(map.is_open("fight", &campaign));
+}
+
+/// The town of [`map`] with a Vendor of potions and an Armoury of swords,
+/// and Hi-Potions for its Vendor once `ch1` is won.
+fn growing_town() -> WorldMap {
+    let mut map = map();
+    let town = map.nodes.iter_mut().find(|n| n.id == "town");
+    let town = town.unwrap_or_else(|| panic!("no town"));
+    town.kind = NodeKind::Town {
+        shops: vec![
+            Shop {
+                kind: ShopKind::Vendor,
+                stock: vec![ItemId::new("potion")],
+            },
+            Shop {
+                kind: ShopKind::Armoury,
+                stock: vec![ItemId::new("sword")],
+            },
+        ],
+        later: vec![ShopGrowth {
+            shop: 0,
+            when: vec![cleared("ch1")],
+            stock: vec![ItemId::new("hi_potion")],
+        }],
+        capital: false,
+    };
+    map
+}
+
+#[test]
+fn a_towns_stock_grows_when_its_condition_holds() {
+    let map = growing_town();
+    let mut c = campaign();
+    c.enter_world(&map);
+    let stock = |c: &Campaign, i: usize| map.town_shops("town", c)[i].stock.clone();
+    assert_eq!(stock(&c, 0), [ItemId::new("potion")]);
+    c.world.as_mut().map(|w| w.cleared.insert("ch1".into()));
+    assert_eq!(
+        stock(&c, 0),
+        [ItemId::new("potion"), ItemId::new("hi_potion")]
+    );
+    assert_eq!(
+        stock(&c, 1),
+        [ItemId::new("sword")],
+        "only its own shop grows"
+    );
+    assert!(map.town_shops("camp", &c).is_empty(), "not a town");
+    assert_eq!(map.town_shops("nowhere", &c), Vec::new());
+}
+
+#[test]
+fn a_place_not_built_never_opens_whatever_else_holds() {
+    let mut map = map();
+    map.nodes.push(node(
+        "later",
+        NodeKind::Empty,
+        vec![NodeCondition::NotBuilt],
+    ));
+    map.roads.push(road("camp", "later"));
+    let mut c = campaign();
+    c.enter_world(&map);
+    assert!(!map.is_open("later", &c));
+    assert!(map.is_shown("later", &c), "one road from an open place");
+    assert_eq!(
+        c.world_command(&map, &WorldCommand::TravelTo("later".into())),
+        Err(WorldError::Locked)
+    );
 }

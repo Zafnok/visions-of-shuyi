@@ -169,8 +169,8 @@
         "WorldFind": ["West"],
     },
     // The Playdate's buttons (docs/design/playdate.md, Buttons and the
-    // crank), in place of `pad` on a Playdate: the D-pad, A (South) and B
-    // (East). Two buttons joined by + are pressed together: A + B ends
+    // crank), in place of `pad` on a Playdate: the D-pad, A (East) and B
+    // (West). Two buttons joined by + are pressed together: A + B ends
     // the turn, hold B + left / right picks the previous / next unit. The
     // crank wound back opens the rewind and steps it back, wound forwards
     // steps it towards the present. The shortcuts it has no button for are
@@ -181,11 +181,11 @@
         "CursorUp": ["DpadUp"],
         "CursorRight": ["DpadRight"],
 
-        "Confirm": ["South"],
-        "Cancel": ["East"],
-        "EndTurn": ["South+East"],
-        "PrevUnit": ["East+DpadLeft"],
-        "NextUnit": ["East+DpadRight"],
+        "Confirm": ["East"],
+        "Cancel": ["West"],
+        "EndTurn": ["East+West"],
+        "PrevUnit": ["West+DpadLeft"],
+        "NextUnit": ["West+DpadRight"],
         "Info": [],
         "DangerZone": [],
         "ToggleAutoEnd": [],

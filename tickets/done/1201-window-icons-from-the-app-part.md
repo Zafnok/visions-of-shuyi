@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["1199", "engine#3113"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 1201 — The window's icons from shuyi.ron's app part
@@ -21,9 +21,8 @@ one 512 px picture (engine ADR-0061), and that blurs the game's `@` at 16 and
 32 px: 64 of 256 and 133 of 1024 pixels differ, and the 16 px glyph can't be
 read. So `crates/app/src/main.rs` still includes `assets/icon/icon-{16,32,64}.png`,
 marked `// engine-friction: engine#3113`. Engine PR #210 has now shipped
-that ticket and lets a game give pictures drawn per size. It merged after
-the current game pin: retain `engine#3113` as the minimum revision and
-move the pin first, rather than waiting for another implementation. Game
+that ticket and lets a game give pictures drawn per size. The pin move of
+2026-11-01 reached it; `engine#3113` stays as the minimum revision. Game
 1199 is already done.
 
 ## Nick input
@@ -33,8 +32,8 @@ None. The icon's picture doesn't change.
 ## Scope
 
 **In:**
-- Move the pin past engine#3113 as the first step (`engine-change` §7), or
-  wait for an open `engine-pin` PR.
+- ~~Move the pin past engine#3113 as the first step (`engine-change` §7), or
+  wait for an open `engine-pin` PR.~~ (done by the pin move of 2026-11-01)
 - `icon`, `icon_sizes` and `window_icons` in `shuyi.ron`'s `app`, with
   `window_icons: "crates/app/icon"`, outside `assets/`, which is embedded
   whole.
@@ -50,7 +49,7 @@ None. The icon's picture doesn't change.
 
 ## Implementation steps
 
-1. Move the pin.
+1. ~~Move the pin.~~ (done by the pin move of 2026-11-01)
 2. Have `cargo xtask icon build 1` write the source and the drawn pictures,
    and set the `app` part's three fields.
 3. Run `cargo shuyi app-info`, and use `APP.window_icon` in `main.rs`.
@@ -61,16 +60,16 @@ checks; under 700 changed lines including docs and the ticket move.
 
 ## Acceptance criteria
 
-- [ ] `crates/app/icon/{16,32,64}.png` have the same pixels as the
+- [x] `crates/app/icon/{16,32,64}.png` have the same pixels as the
       `assets/icon/` pictures they replace.
-- [ ] `the_window_has_an_icon` passes, with `WINDOW.icon` equal to
+- [x] `the_window_has_an_icon` passes, with `WINDOW.icon` equal to
       `APP.window_icon`.
-- [ ] `cargo shuyi app-info --check` and `cargo shuyi check --target all` pass.
-- [ ] Old direct window-icon includes and the engine-friction marker are
+- [x] `cargo shuyi app-info --check` and `cargo shuyi check --target all` pass.
+- [x] Old direct window-icon includes and the engine-friction marker are
       gone. Missing/incorrect-sized override files fail generation; stale
       generated icons fail `app-info --check`. The exe `.ico` generator
       and output remain intact.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -80,6 +79,22 @@ checks; under 700 changed lines including docs and the ticket move.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: pin, pixel equality,
-refusal checks, deviations and follow-ups.)*
+Pin: unchanged, 76e05909, already past engine#3113.
+
+Pixel equality: `crates/app/icon/{16,32,64}.png` were byte-identical to the
+deleted `assets/icon/icon-{16,32,64}.png` (compared with `cmp` before the
+delete). `the_windows_icons_are_drawn_at_each_size` keeps them equal to the
+hero option as drawn at each size. `assets/icon/icon.ico` came out unchanged.
+
+Refusals: `app_info_refuses_bad_or_stale_icons` runs the engine's `app-info`
+on `shuyi.ron`'s real `app` part in a temporary folder: a 17 px and a missing
+drawn picture are refused, and `--check` names a changed window icon.
+
+Deviation: `icon_sizes` names only 16 and 32, not 64. 64 is a whole fraction
+of the 512 px source, so the engine's downscale already gives those exact
+pixels and a third drawn file would add nothing. The test above would fail if
+that stopped being true.
+
+No gameplay rules decided and no follow-ups. The picture is unchanged, so
+nothing is left to judge by playing.
 

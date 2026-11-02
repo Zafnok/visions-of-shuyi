@@ -223,6 +223,30 @@ fn a_place_for_one_chapter_opens_only_then_and_is_out_of_sight_otherwise() {
 }
 
 #[test]
+fn the_road_never_starts_at_a_place_that_is_not_built() {
+    let mut world = world().clone();
+    let nearest = world
+        .places
+        .iter()
+        .min_by_key(|(_, p)| (p.x - 10).abs() + (p.y - 10).abs());
+    let nearest = nearest.map(|(id, _)| id.clone()).expect("a place");
+    let node = world
+        .map
+        .nodes
+        .iter_mut()
+        .find(|n| n.id == nearest)
+        .expect("its node");
+    node.opens_when.push(NodeCondition::NotBuilt);
+    let made = generated(&request());
+    let text = add_place(world_source(), &world, &request(), &made.id).expect("added");
+    assert!(
+        !text.contains(&format!("(from: \"{nearest}\", to: \"skirmish_10_10\"")),
+        "{text}"
+    );
+    assert!(text.contains("to: \"skirmish_10_10\""), "{text}");
+}
+
+#[test]
 fn a_taken_cell_is_refused() {
     let at = world().places.get("camp").expect("a place");
     let request = Request {

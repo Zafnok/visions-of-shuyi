@@ -405,6 +405,15 @@ lead: Onward.
 - **The validator doesn't read the words.** A line that mentions someone
   who may be dead, or narration that has them do something, is yours to
   put in their block.
+- **An `@else` can't tell when they fell.** Someone gone now may have
+  fallen before the scene where they would have said something, or
+  after it. A line in their `@else` that leans on what they said there
+  must be true either way: say the fact without their name, or have
+  someone else who could know it say it (Chapter 7's Crane says how Wren
+  left the field only when Rue isn't in the room: her first telling on
+  one path, a confirmation on the other). The tests in
+  `crates/content/src/dialogue/tests/knowledge.rs` read those facts
+  along each Classic path.
 - Both parts of every block get line ids, translations and voice clips.
   `cargo xtask lines` lists them all.
 

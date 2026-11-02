@@ -9,7 +9,7 @@ use alloc::collections::{BTreeMap, BTreeSet, VecDeque};
 use serde::Deserialize;
 use trpg_core::{
     BattleDef, CharacterId, Faction, ItemId, ItemTable, NodeCondition, NodeKind, Pos, Shop,
-    ShopKind, SideQuest, WorldMap, WorldNode,
+    ShopGrowth, ShopKind, SideQuest, WorldMap, WorldNode,
 };
 
 use crate::audio::AudioManifest;
@@ -93,7 +93,29 @@ enum RawCondition {
     Cleared(String),
     Flag(String),
     Alive(String),
+    NotBuilt,
     Chapter(Vec<String>),
+}
+
+impl RawCondition {
+    /// The condition it means.
+    fn build(self) -> NodeCondition {
+        match self {
+            Self::Cleared(id) => NodeCondition::Cleared(id),
+            Self::Flag(flag) => NodeCondition::Flag(flag),
+            Self::Alive(who) => NodeCondition::Alive(CharacterId(who)),
+            Self::NotBuilt => NodeCondition::NotBuilt,
+            Self::Chapter(chapters) => NodeCondition::Chapter(chapters),
+        }
+    }
+}
+
+/// What a shop adds later, as written.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawLater {
+    when: Vec<RawCondition>,
+    stock: Vec<String>,
 }
 
 /// A shop as written.
@@ -103,6 +125,8 @@ struct RawShop {
     kind: ShopKind,
     #[serde(default)]
     stock: Vec<String>,
+    #[serde(default)]
+    later: Vec<RawLater>,
 }
 
 /// A place's kind as written.
@@ -240,27 +264,35 @@ fn build(
                 battle,
                 guards_path,
             },
-            RawKind::Town { shops, capital } => NodeKind::Town {
-                shops: shops
+            RawKind::Town { shops, capital } => {
+                let mut later = Vec::new();
+                let shops = shops
                     .into_iter()
-                    .map(|s| Shop {
-                        kind: s.kind,
-                        stock: s.stock.into_iter().map(ItemId).collect(),
+                    .enumerate()
+                    .map(|(shop, s)| {
+                        later.extend(s.later.into_iter().map(|l| ShopGrowth {
+                            shop,
+                            when: l.when.into_iter().map(RawCondition::build).collect(),
+                            stock: l.stock.into_iter().map(ItemId).collect(),
+                        }));
+                        Shop {
+                            kind: s.kind,
+                            stock: s.stock.into_iter().map(ItemId).collect(),
+                        }
                     })
-                    .collect(),
-                capital,
-            },
+                    .collect();
+                NodeKind::Town {
+                    shops,
+                    later,
+                    capital,
+                }
+            }
             RawKind::Empty => NodeKind::Empty,
         };
         let opens_when = node
             .opens_when
             .into_iter()
-            .map(|c| match c {
-                RawCondition::Cleared(id) => NodeCondition::Cleared(id),
-                RawCondition::Flag(flag) => NodeCondition::Flag(flag),
-                RawCondition::Alive(who) => NodeCondition::Alive(CharacterId(who)),
-                RawCondition::Chapter(chapters) => NodeCondition::Chapter(chapters),
-            })
+            .map(RawCondition::build)
             .collect();
         if def
             .places
@@ -325,10 +357,12 @@ fn check(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(String)) {
         }
         Some(_) => {}
     }
-    match map.node(&map.final_node).map(|n| &n.kind) {
-        Some(NodeKind::StoryBattle(_)) => {}
+    match map.node(&map.final_node) {
+        Some(n)
+            if matches!(n.kind, NodeKind::StoryBattle(_))
+                || n.opens_when.contains(&NodeCondition::NotBuilt) => {}
         _ => err(format!(
-            "final_node \"{}\" must be one of the map's story battles",
+            "final_node \"{}\" must be one of the map's story battles, or `NotBuilt` until its chapter exists",
             map.final_node
         )),
     }
@@ -389,31 +423,16 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
                     }
                 }
             }
-            NodeKind::Town { shops, .. } => check_town(id, shops, refs.items, err),
+            NodeKind::Town { shops, later, .. } => {
+                check_town(id, shops, later, refs.items, err);
+                for condition in later.iter().flat_map(|l| &l.when) {
+                    check_condition(id, condition, &ids, refs, err);
+                }
+            }
             NodeKind::Empty => {}
         }
         for condition in &node.opens_when {
-            match condition {
-                NodeCondition::Cleared(other) if !ids.contains(other.as_str()) => {
-                    err(format!(
-                        "place \"{id}\": Cleared(\"{other}\") names no place"
-                    ));
-                }
-                NodeCondition::Alive(who) if !refs.characters.characters.contains_key(who) => {
-                    err(format!(
-                        "place \"{id}\": Alive(\"{}\") names no character",
-                        who.0
-                    ));
-                }
-                NodeCondition::Chapter(chapters) => {
-                    for chapter in chapters.iter().filter(|c| !refs.chapters.contains_key(*c)) {
-                        err(format!(
-                            "place \"{id}\": Chapter names no chapter \"{chapter}\""
-                        ));
-                    }
-                }
-                _ => {}
-            }
+            check_condition(id, condition, &ids, refs, err);
         }
     }
     let stories = map.nodes.iter().filter_map(|n| match &n.kind {
@@ -428,12 +447,56 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
     }
 }
 
-/// Every problem with town `id`'s `shops`.
-fn check_town(id: &str, shops: &[Shop], items: &ItemTable, err: &mut dyn FnMut(String)) {
+/// The problem with a condition of place `id`, if any: it names a place or
+/// a character that doesn't exist.
+fn check_condition(
+    id: &str,
+    condition: &NodeCondition,
+    ids: &BTreeSet<&str>,
+    refs: WorldRefs<'_>,
+    err: &mut dyn FnMut(String),
+) {
+    match condition {
+        NodeCondition::Cleared(other) if !ids.contains(other.as_str()) => {
+            err(format!(
+                "place \"{id}\": Cleared(\"{other}\") names no place"
+            ));
+        }
+        NodeCondition::Alive(who) if !refs.characters.characters.contains_key(who) => {
+            err(format!(
+                "place \"{id}\": Alive(\"{}\") names no character",
+                who.0
+            ));
+        }
+        NodeCondition::Chapter(chapters) => {
+            for chapter in chapters.iter().filter(|c| !refs.chapters.contains_key(*c)) {
+                err(format!(
+                    "place \"{id}\": Chapter names no chapter \"{chapter}\""
+                ));
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Every problem with town `id`'s `shops`, with all they add `later`.
+fn check_town(
+    id: &str,
+    shops: &[Shop],
+    later: &[ShopGrowth],
+    items: &ItemTable,
+    err: &mut dyn FnMut(String),
+) {
     if shops.is_empty() {
         err(format!("town \"{id}\" has no shop"));
     }
-    for shop in shops {
+    let mut full = shops.to_vec();
+    for growth in later {
+        if let Some(shop) = full.get_mut(growth.shop) {
+            shop.stock.extend(growth.stock.iter().cloned());
+        }
+    }
+    for shop in &full {
         match (shop.kind, shop.stock.is_empty()) {
             (ShopKind::Basic, _) => {
                 err(format!(

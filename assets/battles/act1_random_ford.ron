@@ -1,0 +1,29 @@
+// A random skirmish of Act 1's pool (ticket 1070): a shallow ford. The first
+// `size` enemies are used, rebuilt at the group's level (ADR-0104).
+(
+    id: "act1_random_ford",
+    map: "act1_skirmish_ford",
+    player_slots: [
+        (character: "lead", pos: (2, 6)),
+        (character: "retainer", pos: (3, 7)),
+        (character: "sergeant", pos: (1, 7)),
+        (character: "poacher", pos: (2, 8)),
+        (character: "keeper", pos: (1, 5)),
+        (character: "heretic", pos: (3, 5)),
+        (character: "defector", pos: (0, 6)),
+    ],
+    enemies: [
+        (template: "hound_raider", pos: (11, 1)),
+        (template: "hound_swordsman", pos: (12, 4)),
+        (template: "hound_archer", pos: (14, 3)),
+        (template: "hound_raider", pos: (11, 8)),
+        (template: "hound_guard", pos: (13, 6)),
+        (template: "hound_archer", pos: (15, 7)),
+    ],
+    preparations: true,
+    objective: Rout(),
+    difficulty: Easy,
+    kind: RandomSkirmish,
+    music: Pool("skirmish"),
+    seed: 2,
+)

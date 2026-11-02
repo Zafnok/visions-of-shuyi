@@ -1,0 +1,16 @@
+(
+    // Ticket 1070: a map of Act 1's random-skirmish pool.
+    name: "A valley road",
+    legend: { '.': "plain", ':': "road", 'T': "forest", '^': "mountain" },
+)
+---
+...T......TT....
+..TT.......T....
+.......TTT......
+::::::::::::::::
+................
+..T.....TTT...T.
+.TT..........TT.
+...............^
+...TT.........^^
+....T.......T...

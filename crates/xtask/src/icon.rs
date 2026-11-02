@@ -3,9 +3,11 @@
 //! coloured square, so it is reproducible and in the game's own style.
 //!
 //! `preview` writes every option at 32×32 and 256×256 for Nick to pick from.
-//! `build` writes the picked option to `assets/icon/`: `icon.ico` (16, 32,
-//! 48, 256; the exe's icon, ticket 0902) and `icon-{16,32,64}.png` (the
-//! window's icon, read by `app`).
+//! `build` writes the picked option: `assets/icon/icon.ico` (16, 32, 48, 256;
+//! the exe's icon, ticket 0902) and, in `assets-src/icon/`, what `shuyi.ron`'s
+//! `app` reads for the window (ticket 1201): `icon.png`, and the sizes the
+//! engine's downscale would blur, drawn in `icon-{16,32}.png`. `cargo shuyi
+//! app-info` makes the window's icons from those.
 
 use std::fs;
 use std::path::Path;
@@ -49,8 +51,11 @@ const OPTIONS: &[Option_] = &[
 
 /// Sizes of the pictures in the `.ico`.
 const ICO_SIZES: [u32; 4] = [16, 32, 48, 256];
-/// Sizes of the PNG files `app` hands to the window.
-const WINDOW_SIZES: [u32; 3] = [16, 32, 64];
+/// The side of `shuyi.ron`'s `icon`. 64 is a whole fraction of it, so the
+/// engine's downscale gives the 64 px window icon these same pixels.
+const SOURCE_SIZE: u32 = 512;
+/// Sizes of the window's icons drawn for `shuyi.ron`'s `icon_sizes`.
+const DRAWN_SIZES: [u32; 2] = [16, 32];
 
 pub fn run(args: &[String], root: &Path) -> Result<String, String> {
     let atlas = Atlas::load(root)?;
@@ -85,14 +90,20 @@ pub fn run(args: &[String], root: &Path) -> Result<String, String> {
                 pictures.push((size, encode_png(size, size, &atlas.draw(o, size)?)?));
             }
             fs::write(out.join("icon.ico"), ico(&pictures)).map_err(|e| e.to_string())?;
-            for size in WINDOW_SIZES {
+            let source = root.join("assets-src/icon");
+            fs::create_dir_all(&source).map_err(|e| e.to_string())?;
+            let png = encode_png(SOURCE_SIZE, SOURCE_SIZE, &atlas.draw(o, SOURCE_SIZE)?)?;
+            fs::write(source.join("icon.png"), png).map_err(|e| e.to_string())?;
+            for size in DRAWN_SIZES {
                 let png = encode_png(size, size, &atlas.draw(o, size)?)?;
-                fs::write(out.join(format!("icon-{size}.png")), png).map_err(|e| e.to_string())?;
+                fs::write(source.join(format!("icon-{size}.png")), png)
+                    .map_err(|e| e.to_string())?;
             }
             Ok(format!(
-                "wrote option {n} ({}) to {}",
+                "wrote option {n} ({}) to {} and {}: now run `cargo shuyi app-info`",
                 o.name,
-                out.display()
+                out.display(),
+                source.display()
             ))
         }
         _ => Err("usage: cargo xtask icon preview <out-dir> | build <option>".to_owned()),
@@ -176,6 +187,10 @@ impl Atlas {
 
 #[cfg(test)]
 mod tests {
+    use shuyi_cli::Project;
+    use shuyi_cli::app_info;
+    use shuyi_cli::project::AppPart;
+
     use super::*;
 
     fn root() -> &'static Path {
@@ -186,7 +201,7 @@ mod tests {
     fn every_option_draws_at_every_size() {
         let atlas = Atlas::load(root()).unwrap();
         for o in OPTIONS {
-            for size in ICO_SIZES.into_iter().chain(WINDOW_SIZES) {
+            for size in ICO_SIZES.into_iter().chain(DRAWN_SIZES) {
                 let px = atlas.draw(o, size).unwrap();
                 assert_eq!(px.len(), (size * size * 4) as usize, "{}", o.name);
                 assert!(px.chunks(4).any(|p| p[..3] == o.fg), "{} {size}", o.name);
@@ -303,9 +318,79 @@ mod tests {
         assert!(out.contains("option 2 (sword)"), "{out}");
         let ico = fs::read(dir.join("assets/icon/icon.ico")).unwrap();
         assert_eq!(&ico[..6], &[0, 0, 1, 0, 4, 0]);
-        for size in WINDOW_SIZES {
-            assert!(dir.join(format!("assets/icon/icon-{size}.png")).is_file());
+        assert!(dir.join("assets-src/icon/icon.png").is_file());
+        for size in DRAWN_SIZES {
+            assert!(
+                dir.join(format!("assets-src/icon/icon-{size}.png"))
+                    .is_file()
+            );
         }
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// `shuyi.ron`'s `app`, as the engine's commands read it.
+    fn app_part() -> AppPart {
+        Project::load(root()).unwrap().config.app.unwrap()
+    }
+
+    /// Acceptance (1201): the window's icons are the hero drawn at each size,
+    /// the 64 px one by the engine's downscale of the 512 px source.
+    #[test]
+    fn the_windows_icons_are_drawn_at_each_size() {
+        let part = app_part();
+        assert_eq!(
+            part.icon_sizes.keys().copied().collect::<Vec<_>>(),
+            DRAWN_SIZES
+        );
+        assert_eq!(
+            app_info::stale(&part, root(), "cargo shuyi"),
+            Vec::<String>::new()
+        );
+        let atlas = Atlas::load(root()).unwrap();
+        for size in [16, 32, 64] {
+            let png = fs::read(root().join(format!("crates/app/icon/{size}.png"))).unwrap();
+            let (w, h, pixels) = decode_png(&png).unwrap();
+            assert_eq!((w, h), (size, size));
+            assert!(pixels == atlas.draw(&OPTIONS[0], size).unwrap(), "{size}");
+        }
+    }
+
+    /// Acceptance (1201): `app-info` refuses a drawn picture that is missing
+    /// or the wrong size, and `--check` a window icon that is out of date.
+    #[test]
+    fn app_info_refuses_bad_or_stale_icons() {
+        let dir = std::env::temp_dir().join(format!("icon-refuse-{}", std::process::id()));
+        let fonts = dir.join("assets/fonts");
+        fs::create_dir_all(&fonts).unwrap();
+        for f in ["atlas.png", "atlas.ron"] {
+            fs::copy(root().join("assets/fonts").join(f), fonts.join(f)).unwrap();
+        }
+        run(&["build".to_owned(), "1".to_owned()], &dir).unwrap();
+        let part = app_part();
+        let app_info = |check| app_info::run(&part, &dir, "cargo shuyi", check);
+        app_info(false).unwrap();
+        app_info(true).unwrap();
+
+        let drawn = dir.join("assets-src/icon/icon-16.png");
+        let good = fs::read(&drawn).unwrap();
+        fs::write(&drawn, encode_png(17, 17, &[0; 17 * 17 * 4]).unwrap()).unwrap();
+        let err = app_info(false).unwrap_err();
+        assert!(
+            err.contains("app.icon_sizes") && err.contains("17 × 17"),
+            "{err}"
+        );
+        fs::remove_file(&drawn).unwrap();
+        let err = app_info(false).unwrap_err();
+        assert!(
+            err.contains("app.icon_sizes") && err.contains("can't be read"),
+            "{err}"
+        );
+        fs::write(&drawn, good).unwrap();
+
+        let window = dir.join("crates/app/icon/32.png");
+        fs::write(&window, encode_png(32, 32, &[0; 32 * 32 * 4]).unwrap()).unwrap();
+        let err = app_info(true).unwrap_err();
+        assert!(err.contains("crates/app/icon/32.png"), "{err}");
         fs::remove_dir_all(&dir).unwrap();
     }
 

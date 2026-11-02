@@ -194,14 +194,17 @@ mod tests {
         let mut ctx = first_launch();
         ctx.platform.keyboard = Keyboard::Absent;
         ctx.device = playdate;
+        ctx.use_playdate_buttons();
         let mut game = start(ctx);
         game.frame(&[], 0.0);
         assert_eq!(game.ctx().device, playdate, "help names its buttons");
         game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.screens(), ["title"]);
         let press = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
-        game.frame(&[press(Button::South)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[press(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
+        // The flow pushes its first screen on its first frame.
+        game.frame(&[], 0.0);
         assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         assert_eq!(game.ctx().layout(), None);
         assert_eq!(game.ctx().device, playdate);
@@ -486,8 +489,8 @@ mod tests {
         ctx.use_playdate_buttons();
         let mut game = new(ctx, Box::new(Spy(std::rc::Rc::clone(&seen))));
         let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
-        game.frame(&[down(Button::South)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[down(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
         game.frame(&[], 0.0);
         // A key afterwards is keyboard input again.
         game.frame(&[RawInputEvent::Down(Chord::plain(Key::F))], 0.0);
@@ -507,13 +510,13 @@ mod tests {
         ctx.use_playdate_buttons();
         let mut game = start(ctx);
         let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
-        game.frame(&[down(Button::South)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[down(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
         game.frame(&[], 1.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         assert_eq!(game.screens(), ["title"]);
-        game.frame(&[down(Button::South)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[down(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
         // The flow pushes its first screen on its first frame.
         game.frame(&[], 0.0);
         assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);

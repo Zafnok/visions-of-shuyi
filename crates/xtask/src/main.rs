@@ -50,7 +50,7 @@ ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/REA
 [--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
 check-mentions <text>              find what GitHub would read as a mention of a user, in a PR title\n  \
 engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
-engine-pin [<commit> | --check]    move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
+engine-pin [<commit> | --check [--offline]] move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
 skill-pack [--check]               copy the pinned engine's skill pack into .claude/skills/, or check the copy (ADR-0097)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
@@ -220,10 +220,13 @@ fn check_report(found: Result<String, Vec<String>>) -> u8 {
     }
 }
 
-/// `engine-pin [<commit> | --check | --report]`: the engine's pinned commit.
+/// `engine-pin [<commit> | --check [--offline] | --report]`: the engine's pinned commit.
 fn engine_pin(args: &[String]) -> u8 {
     match args {
         [flag] if flag == "--check" => check_report(engine::check_with_gains(&repo_root())),
+        [flag, offline] if flag == "--check" && offline == "--offline" => {
+            check_report(engine::check(&repo_root()))
+        }
         [flag] if flag == "--report" => report(engine::watch_report(&repo_root())),
         [commit] if !commit.starts_with('-') => report(engine::pin(&repo_root(), Some(commit))),
         [] => report(engine::pin(&repo_root(), None)),
