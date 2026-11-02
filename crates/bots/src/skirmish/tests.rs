@@ -123,7 +123,7 @@ fn the_same_request_and_seed_make_the_same_files_and_another_seed_doesnt() {
 
 #[test]
 fn the_map_takes_its_ground_from_the_world_map_around_the_cell() {
-    // 13,4 is deep in the test world's forest; 40,6 on open plain.
+    // 17,5 is deep in the test world's forest; 37,6 on open plain.
     let forest = generated(&Request {
         at: (17, 5),
         ..request()
@@ -244,6 +244,100 @@ fn the_road_never_starts_at_a_place_that_is_not_built() {
         "{text}"
     );
     assert!(text.contains("to: \"skirmish_10_10\""), "{text}");
+}
+
+#[test]
+fn the_road_starts_at_the_nearest_place_and_turns_only_when_it_must() {
+    let road = |at| {
+        let request = Request { at, ..request() };
+        let made = generated(&request);
+        let text = add_place(world_source(), world(), &request, &made.id).expect("added");
+        let to = format!("to: \"skirmish_{}_{}\"", at.0, at.1);
+        let line = text.lines().find(|l| l.contains(&to)).expect("its road");
+        line.trim().to_owned()
+    };
+    assert_eq!(
+        road((10, 10)),
+        "(from: \"camp\", to: \"skirmish_10_10\", via: [(8, 10)]),"
+    );
+    assert_eq!(
+        road((50, 18)),
+        "(from: \"guard\", to: \"skirmish_50_18\", via: [(54, 18)]),"
+    );
+    // Straight down from Wolf Pass, straight across from Old Camp.
+    assert_eq!(road((30, 8)), "(from: \"pass\", to: \"skirmish_30_8\"),");
+    assert_eq!(
+        road((60, 7)),
+        "(from: \"training\", to: \"skirmish_60_7\"),"
+    );
+}
+
+#[test]
+fn the_cell_must_leave_room_for_the_place_s_plate_and_marker() {
+    let at = |at| generate(&CONTENT, world(), &Request { at, ..request() });
+    assert!(at((68, 10)).is_ok());
+    assert!(at((69, 10)).is_err());
+    assert!(at((0, 10)).is_err());
+    assert!(at((10, 0)).is_err());
+    assert!(at((10, 29)).is_err() || world().ground_at(Pos::new(10, 29)) == "sea");
+}
+
+#[test]
+fn the_region_is_every_cell_within_reach_of_the_place() {
+    let mut rows = vec![".".repeat(20); 20];
+    rows[4].replace_range(5..6, "f");
+    rows[10].replace_range(11..12, "^");
+    let world = WorldMapDef {
+        size: (20, 20),
+        ground: rows,
+        ..WorldMapDef::default()
+    };
+    let cells = region(&world, Pos::new(8, 7));
+    assert_eq!(cells.len(), 49);
+    assert_eq!(cells[0], "forest");
+    assert_eq!(cells[48], "mountain");
+    assert_eq!(cells.iter().filter(|g| **g == "plain").count(), 47);
+}
+
+#[test]
+fn the_map_leaves_the_sides_and_the_middle_row_clear() {
+    let text = map_text(&["forest"], "w", 1, 2, &mut SimRng::new(1));
+    let rows: Vec<&str> = text.split("---\n").nth(1).expect("tiles").lines().collect();
+    assert_eq!(rows.len(), 10);
+    for (y, row) in rows.iter().enumerate() {
+        let want = if y == 5 {
+            "..............".to_owned()
+        } else {
+            format!("....{}....", "T".repeat(6))
+        };
+        assert_eq!(*row, want, "row {y}");
+    }
+}
+
+#[test]
+fn each_ground_becomes_its_tile() {
+    let tiles: String = [
+        "plain", "forest", "thicket", "mountain", "peak", "water", "sea",
+    ]
+    .into_iter()
+    .map(tile_of)
+    .collect();
+    assert_eq!(tiles, ".TT^^~~");
+}
+
+#[test]
+fn the_army_is_the_earliest_chapter_s_or_the_story_s_last() {
+    let chapter = |list: &[&str]| {
+        let chapters: Vec<String> = list.iter().map(|c| (*c).to_owned()).collect();
+        army_chapter(&CONTENT, &chapters)
+    };
+    assert_eq!(chapter(&["ch02", "ch01"]), Ok("ch01".to_owned()));
+    let last = story_chapters(&CONTENT).last().map(|c| c.id.clone());
+    assert_eq!(chapter(&[]).ok(), last);
+    assert_eq!(
+        chapter(&["nope"]),
+        Err("no chapter \"nope\" in the story".to_owned())
+    );
 }
 
 #[test]

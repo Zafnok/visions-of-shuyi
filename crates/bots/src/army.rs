@@ -297,6 +297,95 @@ mod tests {
     }
 
     #[test]
+    fn every_stat_grows_by_the_average_within_the_ceiling() {
+        let content = content();
+        let start = reference_army(&content, &army("ch01", 1));
+        let unit = start.first().expect("a unit");
+        let class = content.classes.get(&unit.class).expect("its class");
+        let mut grown = unit.clone();
+        grow(&mut grown, class, 20, &content);
+        for kind in [
+            StatKind::Hp,
+            StatKind::Str,
+            StatKind::Mag,
+            StatKind::Dex,
+            StatKind::Spd,
+            StatKind::Def,
+            StatKind::Res,
+        ] {
+            let gain = StatValue::from(growth(unit, class, kind)) * 20 / 100;
+            assert!(gain > 0, "{kind:?} shows nothing here");
+            assert_eq!(
+                grown.stats.get(kind),
+                unit.stats.get(kind) + gain,
+                "{kind:?}"
+            );
+        }
+        let mut capped = unit.clone();
+        grow(&mut capped, class, 100_000, &content);
+        assert_eq!(capped.stats.hp, content.classes.hard_ceilings.hp);
+    }
+
+    #[test]
+    fn a_personal_spell_is_learned_from_its_level() {
+        let content = content();
+        let spell = trpg_core::SpellId::new("personal");
+        let learned = |level| {
+            let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+            unit.personal_spells = vec![(20, spell.clone())];
+            raise(&mut unit, &content, &army("ch01", level));
+            unit.learned.contains(&spell)
+        };
+        assert!(!learned(19));
+        assert!(learned(20));
+        assert!(learned(21));
+    }
+
+    #[test]
+    fn a_promotion_that_can_t_happen_says_so() {
+        let content = content();
+        let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+        let class = content.classes.get(&unit.class).expect("its class").clone();
+        let nowhere = trpg_core::ClassId("nowhere".to_owned());
+        assert!(!advance(&mut unit, &class, &nowhere, &content));
+        let next = class.promotes_to.first().expect("a promotion");
+        assert!(advance(&mut unit, &class, next, &content));
+        assert_eq!(&unit.class, next);
+    }
+
+    #[test]
+    fn gear_fits_the_class_one_weapon_a_kind() {
+        let content = content();
+        let mut worn = 0;
+        for level in [5, 20, 40] {
+            for unit in reference_army(&content, &army("ch02", level)) {
+                let class = content.classes.get(&unit.class).expect("its class");
+                let weapons: Vec<_> = unit.loadout.weapons.iter().flatten().collect();
+                let defs: Vec<_> = weapons
+                    .iter()
+                    .map(|w| content.items.weapon(&w.def).expect("a weapon"))
+                    .collect();
+                for def in &defs {
+                    assert!(unit.can_wield(def, class), "{} at {level}", unit.name);
+                }
+                for (i, def) in defs.iter().enumerate() {
+                    let same = defs[..i].iter().any(|d| d.kind == def.kind);
+                    assert!(!same, "{} carries two of a kind", unit.name);
+                }
+                let Some(armour) = &unit.loadout.armour else {
+                    panic!("{} at {level} wears nothing", unit.name);
+                };
+                let Some(ItemDef::Armour(a)) = content.items.get(armour) else {
+                    panic!("{armour:?} isn't armour");
+                };
+                assert!(class.can_wear(a.weight_class), "{} at {level}", unit.name);
+                worn += 1;
+            }
+        }
+        assert!(worn > 0);
+    }
+
+    #[test]
     fn units_promote_on_the_way_up_and_can_fight() {
         let content = content();
         for (level, tier) in [(12, 1), (13, 2), (32, 2), (33, 3), (99, 3)] {

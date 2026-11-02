@@ -297,12 +297,10 @@ fn army_chapter(content: &Content, chapters: &[String]) -> Result<String, String
     if let Some(unknown) = chapters.iter().find(|c| !story.iter().any(|s| s.id == **c)) {
         return Err(format!("no chapter \"{unknown}\" in the story"));
     }
-    let wanted =
-        |c: &&&trpg_content::chapter::ChapterDef| chapters.is_empty() || chapters.contains(&c.id);
     let found = if chapters.is_empty() {
         story.last()
     } else {
-        story.iter().find(wanted)
+        story.iter().find(|c| chapters.contains(&c.id))
     };
     found
         .map(|c| c.id.clone())
