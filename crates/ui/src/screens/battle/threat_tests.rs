@@ -3,15 +3,21 @@
 //! battle changes. What the scene shows while playing is in
 //! `crates/ui/tests/it/threat.rs`.
 
-use trpg_core::{Command, Pos, UnitAction, UnitId};
+use std::collections::BTreeMap;
 
-use super::testing::{Stacked, skirmish_charged};
+use trpg_core::{
+    AiBehavior, ClassId, Command, ItemId, Objective, Pos, Role, StatKind, Unit, UnitAction, UnitId,
+    WeaponInstance, WeaponKind, WeaponRank,
+};
+
+use super::testing::{Stacked, battle_with, quick_units, skirmish_charged};
 use super::{BattleScreen, KeptThreat, quick_battle, threat_enemies};
+use crate::FrameInput;
 use crate::harness::FRAME_DT;
 use crate::input::Action;
-use crate::map_view::ThreatView;
-use crate::screen::Ctx;
+use crate::map_view::{ThreatView, range};
 use crate::screen::tests::ctx;
+use crate::screen::{Ctx, Screen};
 
 const LORD: UnitId = UnitId(1);
 
@@ -130,4 +136,63 @@ fn a_rewind_drops_the_kept_list() {
     assert!(s.rewind().is_none());
     assert!(s.history().is_empty());
     assert_eq!(shown(&s, &c), Some((p(6, 2), real)));
+}
+
+/// The Quick Battle with only the lord and one enemy at (5, 5): stationary,
+/// unable to walk (the danger zone would still let it, ticket 0450), with an
+/// iron spear (range 1), `change` applied. The cursor is on the lord.
+fn spear_enemy(c: &Ctx, change: impl FnOnce(&mut Unit)) -> BattleScreen {
+    let (map, mut units) = quick_units(c);
+    units.retain(|u| u.id == LORD || u.pos == p(7, 4));
+    let enemy = &mut units[1];
+    enemy.pos = p(5, 5);
+    enemy.ai = AiBehavior::Stationary;
+    enemy.stats.set(StatKind::Mov, 0);
+    enemy.class = ClassId("guard".to_owned());
+    enemy.loadout.weapons[0] = Some(WeaponInstance {
+        def: ItemId::new("iron_spear"),
+        durability_left: 20,
+    });
+    change(enemy);
+    let objective = Objective::Rout { turn_limit: None };
+    BattleScreen::new(battle_with(c, map, units, objective))
+}
+
+fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
+    for &action in actions {
+        s.update(c, &FrameInput::new(vec![action], FRAME_DT, vec![]));
+    }
+}
+
+#[test]
+fn a_tile_only_an_art_reaches_is_in_the_danger_zone_the_arrows_and_the_shown_range() {
+    let mut c = ctx();
+    let two_away = p(6, 4);
+    let spear_c = |u: &mut Unit| {
+        u.weapon_ranks = BTreeMap::from([(WeaponKind::Spear, WeaponRank::C)]);
+    };
+    let pick = [Action::CursorRight, Action::CursorRight, Action::Confirm];
+
+    let mut boss = spear_enemy(&c, |u| {
+        u.role = Role::Boss;
+        spear_c(u);
+    });
+    assert_eq!(threat_enemies(boss.state(), LORD, two_away), [p(5, 5)]);
+    press(&mut boss, &mut c, &[Action::DangerZone]);
+    assert!(boss.scene(&c).tinted(range::DANGER).contains(&two_away));
+    press(&mut boss, &mut c, &[Action::DangerZone]);
+    press(&mut boss, &mut c, &pick);
+    assert!(boss.scene(&c).tinted(range::ATTACK).contains(&two_away));
+
+    // An ordinary enemy with the same spear and rank doesn't reach it.
+    let mut ordinary = spear_enemy(&c, spear_c);
+    assert_eq!(
+        threat_enemies(ordinary.state(), LORD, two_away),
+        [] as [Pos; 0]
+    );
+    press(&mut ordinary, &mut c, &[Action::DangerZone]);
+    assert!(!ordinary.scene(&c).tinted(range::DANGER).contains(&two_away));
+    press(&mut ordinary, &mut c, &[Action::DangerZone]);
+    press(&mut ordinary, &mut c, &pick);
+    assert!(!ordinary.scene(&c).tinted(range::ATTACK).contains(&two_away));
 }

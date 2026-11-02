@@ -232,7 +232,8 @@ advanced tacticians not mandatory for every playstyle". Nick asked to
 is worked out with every unit of yours as a wall it can't walk through,
 and the unit you are moving counted on the tile you're moving it to
 (`threats_at`, `crates/core/src/movement.rs`). An enemy that never moves
-uses only its weapon's range from where it stands.
+uses only its range from where it stands. Its range counts the arts and combat
+actives it may use and can pay for now, not only its weapon (ticket 0477).
 
 Decided 2026-10-12, ticket 0055. Nick asked for it while playing Chapter 1
 (ticket 0804):

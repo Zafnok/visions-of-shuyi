@@ -104,7 +104,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
         state.classes(),
         state.units(),
         Faction::Player,
-        |u| u.attack_ranges(state.classes(), state.items(), state.spells()),
+        |u| state.threat_ranges(u),
     )
     .unwrap();
     assert!(!expected.is_empty());

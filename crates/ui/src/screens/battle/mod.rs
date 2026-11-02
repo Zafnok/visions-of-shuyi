@@ -254,7 +254,7 @@ pub fn danger_tiles(state: &BattleState) -> TileSet {
         state.classes(),
         state.units(),
         Faction::Player,
-        |u| u.attack_ranges(state.classes(), state.items(), state.spells()),
+        |u| state.threat_ranges(u),
     )
     .unwrap_or_else(|_| TileSet::new(tiles.width(), tiles.height()))
 }
@@ -270,7 +270,7 @@ pub fn threat_enemies(state: &BattleState, unit: UnitId, tile: Pos) -> Vec<Pos> 
         state.units(),
         unit,
         tile,
-        |u| u.attack_ranges(state.classes(), state.items(), state.spells()),
+        |u| state.threat_ranges(u),
     )
     .unwrap_or_default();
     let at = ids.into_iter().filter_map(|id| state.unit(id));

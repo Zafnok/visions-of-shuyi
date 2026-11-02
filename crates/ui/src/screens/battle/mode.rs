@@ -868,7 +868,7 @@ fn is_ready_player(state: &BattleState, id: UnitId) -> bool {
 /// The threat area of unit `id` ([`threat_area`] with its attack ranges).
 fn threat_of(state: &BattleState, id: UnitId) -> Option<Threat> {
     let unit = state.unit(id)?;
-    let ranges = unit.attack_ranges(state.classes(), state.items(), state.spells());
+    let ranges = state.threat_ranges(unit);
     let area = threat_area(
         state.map(),
         state.terrain(),

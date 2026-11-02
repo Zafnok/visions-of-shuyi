@@ -35,8 +35,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::class::{ClassTable, UnitTag};
 use crate::combat::{CombatMods, MitigationStat, PowerStat, WeaponStats, WeaponTrait};
-use crate::item::ItemTable;
-use crate::skill::{CostSource, SkillCost, TimedMods, check_cost};
+use crate::item::{ItemTable, WEAPON_SLOTS};
+use crate::movement::AttackRange;
+use crate::skill::{
+    ActiveEffect, CostSource, SkillCost, SkillKind, SkillTable, TimedMods, check_cost,
+};
+use crate::spell::SpellTable;
 use crate::stats::{StatKind, StatValue};
 use crate::unit::{Faction, Role, Unit};
 use crate::weapon::{WeaponKind, WeaponRank};
@@ -366,6 +370,82 @@ impl Unit {
             .into_iter()
             .filter(|a| check_cost(self, a.skill_cost(), &CostSource::Weapon(slot)).is_ok())
             .collect()
+    }
+
+    /// Every range the unit could attack at now, without duplicates: its
+    /// [`Unit::attack_ranges`], and with each of those weapons and spells
+    /// the combat actives that fit it and the arts ([`Unit::usable_arts`])
+    /// it can pay for, if it [may use them](Unit::may_use_arts). An art
+    /// replaces the range it names; an active adds to the maximum. What the
+    /// danger zone, the threat arrows and the AI's own danger zone read.
+    pub fn threat_ranges(
+        &self,
+        classes: &ClassTable,
+        items: &ItemTable,
+        spells: &SpellTable,
+        arts: &ArtTable,
+        skills: &SkillTable,
+    ) -> Vec<AttackRange> {
+        let Some(class) = classes.get(&self.class) else {
+            return Vec::new();
+        };
+        let may = self.may_use_arts();
+        let usable = if may {
+            self.usable_skills(classes, skills)
+        } else {
+            Vec::new()
+        };
+        // The ranges an active adds to an attack of `kind` (`None`: a spell)
+        // paid from `source`.
+        let bonuses = |kind: Option<WeaponKind>, source: &CostSource| -> Vec<u32> {
+            let strikes = usable.iter().filter_map(|d| match &d.kind {
+                SkillKind::Active {
+                    cost,
+                    effect: ActiveEffect::Strike { with, range, .. },
+                } if with.allows(kind, kind.is_none())
+                    && check_cost(self, *cost, source).is_ok() =>
+                {
+                    Some(*range)
+                }
+                _ => None,
+            });
+            strikes.collect()
+        };
+        let mut ranges = Vec::new();
+        for slot in 0..WEAPON_SLOTS {
+            let Some((_, def)) = self.usable_weapon(slot, class, items) else {
+                continue;
+            };
+            let (min, max) = (def.min_range, def.max_range);
+            ranges.push((min, max));
+            let source = CostSource::Weapon(slot);
+            let active = bonuses(Some(def.kind), &source);
+            ranges.extend(active.iter().map(|b| (min, max.saturating_add(*b))));
+            if may {
+                let usable_arts = self.usable_arts(slot, classes, items, arts);
+                ranges.extend(usable_arts.iter().map(|a| {
+                    (
+                        a.effect.min_range.unwrap_or(min),
+                        a.effect.max_range.unwrap_or(max),
+                    )
+                }));
+            }
+        }
+        for spell in &self.learned {
+            if let Some(def) = self.castable_attack(spell, spells) {
+                let (min, max) = (def.min_range, def.max_range);
+                ranges.push((min, max));
+                let active = bonuses(None, &CostSource::Spell(spell.clone()));
+                ranges.extend(active.iter().map(|b| (min, max.saturating_add(*b))));
+            }
+        }
+        let mut seen = Vec::with_capacity(ranges.len());
+        for range in ranges {
+            if !seen.contains(&range) {
+                seen.push(range);
+            }
+        }
+        seen
     }
 }
 

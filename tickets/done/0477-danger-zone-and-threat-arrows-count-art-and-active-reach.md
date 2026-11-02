@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0521"]
 nick_input: none
-completed:
+completed: 2026-11-02
 ---
 
 # 0477 — Danger zone and threat arrows count art and active reach
@@ -71,14 +71,14 @@ playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] A stationary boss with a range-1 spear at rank C puts a tile two away in
+- [x] A stationary boss with a range-1 spear at rank C puts a tile two away in
       the danger zone, in `threats_at` and in its shown range.
-- [ ] The same boss with a broken spear or below rank C doesn't, and neither
+- [x] The same boss with a broken spear or below rank C doesn't, and neither
       does an ordinary enemy with the same weapon and rank.
-- [ ] An archer boss with Long Shot's bonus threatens one tile farther.
-- [ ] A healer outside what a hostile art reaches retreats as it did; one
+- [x] An archer boss with Long Shot's bonus threatens one tile farther.
+- [x] A healer outside what a hostile art reaches retreats as it did; one
       inside moves out of it.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -89,5 +89,28 @@ playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-ups and anything for 1064.)*
+- `Unit::threat_ranges` (`crates/core/src/art.rs`), with
+  `BattleState::threat_ranges` for a battle's tables: each usable weapon's
+  range, plus (if the unit may use arts) each combat active that fits it
+  and can be paid from it (the maximum plus its range bonus, as
+  `plan_active` checks it) and each art it can pay for (the art's own
+  minimum and maximum replacing the weapon's); each castable attack
+  spell's, plus the actives that fit a spell and can pay (Overcast-style:
+  a second use left). An art and an active never combine (the battle
+  refuses that), so no range adds both.
+- The danger zone, the threat arrows, a picked enemy's shown range, the
+  AI's danger zone (healer retreat, Brace) and the personas' check all use
+  it. `Unit::attack_ranges` stays for a selected player unit's own red
+  attack tiles: the ticket covers only "who can attack this tile", and a
+  wider own-unit overlay would be a look nobody asked for.
+- The danger zone still lets a stationary enemy walk (0450), so the tests
+  wall the enemy in (core) or set its Mov to 0 (screen), which leaves the
+  art as the only reach.
+- Planning budget: 20 enemy commands in 5.7 ms (budget 50 ms).
+- Persona baseline, ch01, 200 tries each: unchanged (casual 98, normal 119,
+  hardcore 145 succeed, the same as before the change). No Chapter 1 enemy
+  can use an art that reaches farther than its weapon.
+- For 1064: a selected player unit's red tiles still show weapon and spell
+  reach only, not Long Thrust's or Long Shot's (the action menu still
+  offers the art from a tile two away). Judge on the playtest whether that
+  reads wrong.

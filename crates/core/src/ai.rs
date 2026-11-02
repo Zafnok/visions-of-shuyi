@@ -824,14 +824,13 @@ impl<'a> Planner<'a> {
         let state = self.state;
         let mut dangers = self.dangers.borrow_mut();
         Rc::clone(dangers.entry(faction).or_insert_with(|| {
-            let (classes, items, spells) = (state.classes(), state.items(), state.spells());
             let zone = danger_zone(
                 state.map(),
                 state.terrain(),
-                classes,
+                state.classes(),
                 state.units(),
                 faction,
-                |u| u.attack_ranges(classes, items, spells),
+                |u| state.threat_ranges(u),
             );
             let tiles = &state.map().tiles;
             Rc::new(zone.unwrap_or_else(|_| TileSet::new(tiles.width(), tiles.height())))

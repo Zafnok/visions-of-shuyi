@@ -350,6 +350,13 @@ fn skills() -> SkillTable {
         strike("zeal", dur(1), WeaponReq::Any, sure, 0),
         strike("long_shot", dur(3), bow, might(0), 1),
         strike(
+            "far_cast",
+            SkillCost::ExtraSpellUse,
+            WeaponReq::Spell,
+            might(0),
+            1,
+        ),
+        strike(
             "overcast",
             SkillCost::ExtraSpellUse,
             WeaponReq::Spell,
@@ -2418,4 +2425,155 @@ fn a_raider_out_of_reach_walks_to_the_nearest_house() {
 fn a_player_unit_evacuates_a_house_in_reach() {
     let state = village(&["P..h....E"], true, false);
     assert_eq!(next(&state), act(1, p(3, 0), UnitAction::Evacuate));
+}
+
+// ------------------------------------------------- arts and actives' reach
+
+/// A stationary enemy (unit 2) walled in at (4,1), so that the danger zone
+/// (which still lets it walk, ticket 0450) shows only its ranges, with a
+/// player at (0,0), carrying `weapon` in slot 0, with `change` applied.
+fn holding(weapon: &str, change: impl FnOnce(&mut Unit)) -> BattleState {
+    enemy_phase(&["P...#.", "...#E#", "....#."], |u| {
+        u[1] = carrying(u[1].clone(), &[weapon]);
+        u[1].ai = AiBehavior::Stationary;
+        change(&mut u[1]);
+    })
+}
+
+/// The enemy of [`holding`].
+fn held(state: &BattleState) -> &Unit {
+    state.unit(UnitId(2)).unwrap()
+}
+
+/// Rank C in spears: Long Thrust.
+fn spear_c(u: &mut Unit) {
+    u.weapon_ranks = BTreeMap::from([(WeaponKind::Spear, WeaponRank::C)]);
+}
+
+/// Breaks the weapon in slot 0.
+fn broken(u: &mut Unit) {
+    u.loadout.weapons[0].as_mut().unwrap().durability_left = 0;
+}
+
+/// Whether the enemy of [`holding`] strikes `tile`: the AI's danger zone and
+/// the threats to the player there must agree.
+fn strikes(state: &BattleState, tile: Pos) -> bool {
+    let weights = AiWeights::STARTING;
+    let in_zone = Planner::new(state, &weights)
+        .danger(Faction::Player)
+        .contains(tile);
+    let listed = crate::movement::threats_at(
+        state.map(),
+        state.terrain(),
+        state.classes(),
+        state.units(),
+        UnitId(1),
+        tile,
+        |u| state.threat_ranges(u),
+    )
+    .unwrap();
+    assert_eq!(in_zone, listed == [UnitId(2)], "{tile:?}");
+    in_zone
+}
+
+#[test]
+fn a_boss_threatens_what_its_art_reaches() {
+    let state = holding("spear", |u| {
+        boss(u);
+        spear_c(u);
+    });
+    assert_eq!(state.threat_ranges(held(&state)), [(1, 1), (1, 2)]);
+    assert!(strikes(&state, p(2, 1)));
+    assert!(!strikes(&state, p(1, 1)));
+}
+
+#[test]
+fn an_art_it_cannot_use_or_pay_for_adds_no_reach() {
+    let two_away = p(2, 1);
+    assert!(!strikes(&holding("spear", boss), two_away));
+    let snapped = holding("spear", |u| {
+        boss(u);
+        spear_c(u);
+        broken(u);
+    });
+    assert!(!strikes(&snapped, two_away));
+    assert!(!strikes(&holding("spear", spear_c), two_away));
+}
+
+#[test]
+fn an_active_adds_to_the_weapon_it_fits() {
+    let long_shot = |u: &mut Unit| {
+        boss(u);
+        knowing(u, &["long_shot"]);
+    };
+    // The bow reaches 2; Long Shot one more.
+    let archer = holding("bow", long_shot);
+    assert_eq!(archer.threat_ranges(held(&archer)), [(2, 2), (2, 3)]);
+    assert!(strikes(&archer, p(1, 1)));
+    assert!(!strikes(&archer, p(0, 1)));
+    // It fits only a bow, one that can pay, and only someone who may use it.
+    let sword = holding("sword", long_shot);
+    assert_eq!(sword.threat_ranges(held(&sword)), [(1, 1)]);
+    let snapped = holding("bow", |u| {
+        long_shot(u);
+        broken(u);
+    });
+    assert_eq!(snapped.threat_ranges(held(&snapped)), [(2, 2)]);
+    let ordinary = holding("bow", |u| knowing(u, &["long_shot"]));
+    assert_eq!(ordinary.threat_ranges(held(&ordinary)), [(2, 2)]);
+}
+
+#[test]
+fn an_active_adds_to_a_spell_it_fits_if_a_second_use_is_left() {
+    let state = holding("sword", |u| {
+        boss(u);
+        knowing(u, &["far_cast"]);
+        u.learned = BTreeSet::from([SpellId::new("fire")]);
+    });
+    let far = (1, 3);
+    let mut caster = held(&state).clone();
+    assert!(state.threat_ranges(&caster).contains(&far));
+    while caster.spells.uses_left(&SpellId::new("fire")) > 1 {
+        caster.spells.spend(&SpellId::new("fire"));
+    }
+    let ranges = state.threat_ranges(&caster);
+    assert!(ranges.contains(&(1, 2)) && !ranges.contains(&far));
+}
+
+#[test]
+fn an_art_replaces_the_minimum_too() {
+    // Close Shot, a bow art of rank D: an adjacent tile as well.
+    let state = holding("bow", |u| {
+        boss(u);
+        ranked(u);
+    });
+    assert!(state.threat_ranges(held(&state)).contains(&(1, 2)));
+}
+
+#[test]
+fn a_healer_moves_out_of_what_a_hostile_art_reaches() {
+    // The wounded enemy 2 stands at (7,0). A player with a spear threatens up
+    // to 5 steps from (0,0), or 6 with Long Thrust: only then is (6,0) unsafe.
+    let plan = |change: fn(&mut Unit)| {
+        let state = enemy_phase(&["P......E.", ".......E."], |u| {
+            u[0] = carrying(u[0].clone(), &["spear"]);
+            change(&mut u[0]);
+            edit(u, 2, |x| x.hp = 10);
+            edit(u, 3, |x| {
+                x.ai = AiBehavior::Healer;
+                x.learned = BTreeSet::from([SpellId::new("heal")]);
+            });
+        });
+        let weights = AiWeights::STARTING;
+        match Planner::new(&state, &weights)
+            .decide(state.unit(UnitId(3)).unwrap())
+            .unwrap()
+            .command
+        {
+            Command::Act { dest, .. } => dest,
+            other => panic!("{other:?}"),
+        }
+    };
+    assert_eq!(plan(|_| {}), p(6, 0));
+    assert_eq!(plan(spear_c), p(8, 0));
 }
