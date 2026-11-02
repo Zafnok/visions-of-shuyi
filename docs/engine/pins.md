@@ -176,7 +176,7 @@ The notes on what the backend does went into 1170, 1196, 1048 and 1052. `cargo x
 
 Nothing for the game: 9 PRs (#175, #192, #213, #216, #218, #219, #220, #222, #223). #216 is research whose handoff is parked in the engine (3083); #218 is a tutorial for new games; #222 widens the engine's API gate, so `Breaking:` lines now cover `shuyi-playdate`. The skill pack's `shuyi-ship` gains `icon_sizes`, `exposure-report.json` and the `disclosure` part.
 
-## 2026-11-02: 76e05909 → 1e3d2d39 (16 engine PRs), #PRNUM
+## 2026-11-02: 76e05909 → 1e3d2d39 (16 engine PRs), #524
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
