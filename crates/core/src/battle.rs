@@ -455,7 +455,7 @@ use crate::item::{
     BattlePack, ConsumableEffect, Equipped, ItemDef, ItemId, ItemTable, Stock, WEAPON_SLOTS,
 };
 use crate::map::BattleMap;
-use crate::movement::{MoveError, reachable};
+use crate::movement::{AttackRange, MoveError, reachable};
 use crate::progression::{self, CombatResult, StatGains};
 use crate::rng::SimRng;
 use crate::shop::{self, Gold, Loot, Shop, ShopError};
@@ -2061,6 +2061,12 @@ impl BattleState {
     /// Combat Arts.
     pub fn arts(&self) -> &ArtTable {
         &self.tables.arts
+    }
+
+    /// [`Unit::threat_ranges`] of `unit`, with this battle's tables.
+    pub fn threat_ranges(&self, unit: &Unit) -> Vec<AttackRange> {
+        let t = &self.tables;
+        unit.threat_ranges(&t.classes, &t.items, &t.spells, &t.arts, &t.skills)
     }
 
     /// The player side's consumables.

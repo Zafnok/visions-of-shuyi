@@ -392,7 +392,7 @@ type Threat<'a> = (UnitId, Box<dyn Fn(Pos) -> bool + 'a>);
 /// phase: the danger zone, one enemy at a time, as the player sees it (one
 /// that never moves only from its own tile).
 fn threats(state: &BattleState) -> Vec<Threat<'_>> {
-    let ranges = |u: &Unit| u.attack_ranges(state.classes(), state.items(), state.spells());
+    let ranges = |u: &Unit| state.threat_ranges(u);
     let enemies = state
         .units()
         .iter()
