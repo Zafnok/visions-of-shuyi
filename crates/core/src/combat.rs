@@ -718,7 +718,7 @@ pub fn strike_order(forecast: &Forecast) -> Vec<Side> {
 /// Who strikes whom: `(striker, target)` indices into `[attacker,
 /// defender]`, and the striker's numbers (`None`: a defender that doesn't
 /// counter).
-fn striker(
+pub(crate) fn striker(
     forecast: &Forecast,
     by: Side,
     attacker_has_hit: bool,
@@ -733,7 +733,7 @@ fn striker(
 /// A strike's damage before a crit: the first strike's, or the follow-up
 /// damage from a side's second strike on, plus Cascade's bonus for the
 /// `hits` the side has landed so far.
-fn base_damage(numbers: &SideForecast, nth: u8, hits: u8) -> StatValue {
+pub(crate) fn base_damage(numbers: &SideForecast, nth: u8, hits: u8) -> StatValue {
     let base = if nth > 1 {
         numbers.followup_damage
     } else {
@@ -743,7 +743,7 @@ fn base_damage(numbers: &SideForecast, nth: u8, hits: u8) -> StatValue {
 }
 
 /// `target` after taking (or, for Absorb, being healed by) `damage`.
-fn take(target: &mut CombatHp, damage: StatValue, healed: bool) {
+pub(crate) fn take(target: &mut CombatHp, damage: StatValue, healed: bool) {
     target.current = if healed {
         (target.current + damage).min(target.max)
     } else {
