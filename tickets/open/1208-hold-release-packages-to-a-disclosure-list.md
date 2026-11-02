@@ -5,7 +5,7 @@ type: feature
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0910", "engine#3081"]
 nick_input: none
 completed:

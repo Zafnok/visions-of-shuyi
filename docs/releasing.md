@@ -20,6 +20,13 @@ writes (the program, `NOTICES.txt`, `HOW-TO-OPEN.txt`). A file it names that
 isn't there refuses the export; only `voice` is optional. On macOS the folders
 are inside the `.app`, in `Contents/Resources`.
 
+Its `disclosure` part is the list a package is held to (ticket 1208): a file it
+doesn't name, a forbidden path or a canary from the test files refuses the
+export with `SH3012`, names the file and its source, and removes the package. A
+new track or voice clip needs its two lines there, as on macOS it has another
+path. The check finds what is written plainly: it guards against mistakes, not
+against a player digging.
+
 Beside each package the release carries, never in it:
 
 - `<package>.debug`, Windows and Linux: the program with its line tables, which
