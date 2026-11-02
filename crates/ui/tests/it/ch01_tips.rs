@@ -93,6 +93,43 @@ fn finish_cursor_lesson(h: &mut Harness) {
     assert_ne!(battle(h).shown_lesson(), Some("cursor"));
 }
 
+/// Ticket 0466: on a map that can zoom, the zoom tip stays away through
+/// the turn-1 lessons (cursor, keys, next unit, selecting) and the action
+/// menu the last one ends in, and shows back on the map.
+#[test]
+fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
+    let mut h = chapter_1();
+    h.with_map_skin("sprite");
+    let mut seen = Vec::new();
+    for keys in ["Up Down Left Right", "Right Left"] {
+        h.keys(keys);
+        seen.extend(close_tips(&mut h));
+    }
+    // Options from the map menu, and back to the map.
+    h.keys("d Down Down Down f d d");
+    seen.extend(close_tips(&mut h));
+    assert_eq!(battle(&h).shown_lesson(), Some("next_unit"));
+    h.keys("s");
+    go(&mut h, LEAD);
+    h.keys("e d");
+    seen.extend(close_tips(&mut h));
+    assert_eq!(battle(&h).shown_lesson(), Some("moving"));
+    h.keys("f Up f").wait(1.0);
+    assert!(
+        matches!(battle(&h).mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        battle(&h).mode()
+    );
+    assert_eq!(battle(&h).shown_lesson(), None);
+    seen.extend(close_tips(&mut h));
+    assert!(!seen.contains(&TipTrigger::ZoomAvailable), "{seen:?}");
+    // Back out of the menu and the move, to the map.
+    h.keys("d d").wait(0.1);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    assert_eq!(battle(&h).state().turn(), 1);
+    assert!(close_tips(&mut h).contains(&TipTrigger::ZoomAvailable));
+}
+
 /// (a) Rue's action menu opens while a lesson is open: the Magic tip
 /// waits for it, then shows once the lesson is done.
 #[test]

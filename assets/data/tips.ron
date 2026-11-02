@@ -10,8 +10,9 @@
 // FirstForecast, FirstLowHp, FirstLevelUp, FirstEnemyPhase,
 // DangerZoneAvailable, FirstSkillUnit (a unit with a skill is selected),
 // FirstCaster (the action menu opens for a unit that knows a spell),
-// FirstTerrain (the cursor rests on a tile that isn't plain ground). At
-// most one tip per trigger.
+// FirstTerrain (the cursor rests on a tile that isn't plain ground),
+// ZoomAvailable (browsing a map whose look can zoom, with no lesson in play).
+// At most one tip per trigger.
 //
 // The battle menu's Guides lists every tip, in this order, after the
 // lessons (ticket 0458).
@@ -28,6 +29,13 @@
             title: "Your move",
             text: "Over to you. Steer the cursor with {Cursor}; {Select} on\none of your units picks it up. Press {NextUnit} for whoever\ncan still act, and {Info} for what you're working with.",
             face: "neutral",
+        ),
+        (
+            id: "zoom",
+            trigger: ZoomAvailable,
+            title: "Zooming the map",
+            text: "Can't see it all? The view scrolls with your cursor. Press\n{ZoomMap} to zoom the map in or out; again to switch back.",
+            face: "sly",
         ),
         (
             id: "unit_selected",

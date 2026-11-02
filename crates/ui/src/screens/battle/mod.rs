@@ -876,6 +876,17 @@ impl BattleScreen {
         }
     }
 
+    /// Fires [`TipTrigger::ZoomAvailable`] while the map, under a skin that
+    /// can zoom, is being browsed with no lesson in play (0466). After the
+    /// lessons have absorbed this frame's triggers, so the first frame of a
+    /// battle sees the ones it starts.
+    fn detect_zoom_tip(&mut self, ctx: &Ctx) {
+        let browsing = matches!(self.mode, Mode::Idle { .. });
+        if browsing && !self.lessons.in_play() && ctx.game.map_skin.zoom().is_some() {
+            self.tips.fire(TipTrigger::ZoomAvailable);
+        }
+    }
+
     /// The tip and lesson triggers the battle's current state shows.
     fn triggers_now(&self) -> Vec<TipTrigger> {
         let mut fired = Vec::new();
@@ -2690,8 +2701,9 @@ impl BattleScreen {
         };
         self.tick_popups(dt);
         self.detect_tips();
-        self.tips.absorb(ctx);
         self.absorb_lessons(ctx);
+        self.detect_zoom_tip(ctx);
+        self.tips.absorb(ctx);
         let mut actions: VecDeque<Action> = input.actions.iter().copied().collect();
         while let Some(action) = actions.pop_front() {
             self.tick_lessons(ctx);

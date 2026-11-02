@@ -77,6 +77,9 @@ pub enum TipTrigger {
     /// Def, Avoid or healing bonus, or a movement cost other than 1
     /// (0458).
     FirstTerrain,
+    /// The player is browsing a map whose look can zoom, with no lesson in
+    /// play (ticket 0466).
+    ZoomAvailable,
     // The triggers below start lessons only (ticket 0457): no tip uses them
     // yet.
     /// In the player's phase, every unit of the player's has acted.
@@ -170,6 +173,7 @@ mod tests {
             TipTrigger::FirstSkillUnit,
             TipTrigger::FirstCaster,
             TipTrigger::FirstTerrain,
+            TipTrigger::ZoomAvailable,
         ] {
             assert!(table.for_trigger(trigger).is_some(), "{trigger:?}");
         }
