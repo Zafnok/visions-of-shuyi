@@ -116,17 +116,19 @@ map and a place on the world map, or an entry in the random pool. The reference
 army is `crates/bots/src/army.rs`; battles keep it in a new `bots_army` field,
 so `playtest` and `autobalance` judge them the same way.
 
-**Measured with the full 100 tries**, on the test world map, then removed (they
-are not committed):
+**Measured with the full 100 tries** on Act 1's world map, after merging 1070 and
+the newer engine pin, one after the other as a user would. The files were then
+removed: a sample fight doesn't belong in Act 1.
 
 | Request | Seed | Casual | Normal | Hardcore | Search |
 | ------- | ---: | -----: | -----: | -------: | ------ |
-| `--at 10,10 --level 35 --units mix` | 2 | 94 | 68 | 78 | 35 min |
+| `--at 10,10 --level 35 --units mix` | 1 | 92 | 56 | 79 | 32 min |
 | `--at 13,13 --level 40 --units mage --chapters 2` | 1 | 71 | 65 | 76 | 12 min |
 
-The written files passed `trpg-content`'s tests after a rebuild, and
-`cargo xtask playtest` gave the same three lv 35 numbers. A seed can miss:
-lv 35 seed 1 ended with Hardcore at 83, over its band, and wrote nothing.
+The written files passed `trpg-content`'s tests after a rebuild. Earlier, on the
+test world map and the old pin, `cargo xtask playtest` gave exactly the search's
+numbers for a lv 35 battle. A seed can miss: on that map and pin, lv 35 seed 1
+ended with Hardcore at 83, over its band, and wrote nothing, while seed 2 passed.
 Same arguments and seed gave identical files in the end-to-end test.
 
 **Nick's decision while working** (`docs/design/playtest-bots.md`, *Skirmishes
