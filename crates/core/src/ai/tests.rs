@@ -22,7 +22,7 @@ use super::*;
 use crate::art::{ArtDef, ArtEffect, ArtTable};
 use crate::battle::{BattleSetup, Event, Objective, Reinforcement};
 use crate::class::{ClassDef, ClassId, ClassTable, UnitTags, WeaponProficiency};
-use crate::combat::{CombatMods, DamageType};
+use crate::combat::{CombatMods, DamageType, SideForecast};
 use crate::item::{
     BattlePack, ConsumableDef, ConsumableEffect, ItemDef, ItemId, ItemTable, Loadout, Stock,
     WeaponDef, WeaponInstance,
@@ -70,13 +70,18 @@ fn classes() -> ClassTable {
         move_points: 4,
         base: Stats::default(),
         growths: crate::stats::Growths::default(),
-        weapons: [WeaponKind::Sword, WeaponKind::Bow]
-            .map(|kind| WeaponProficiency {
-                kind,
-                start: WeaponRank::E,
-                max: WeaponRank::S,
-            })
-            .to_vec(),
+        weapons: [
+            WeaponKind::Sword,
+            WeaponKind::Bow,
+            WeaponKind::Spear,
+            WeaponKind::Axe,
+        ]
+        .map(|kind| WeaponProficiency {
+            kind,
+            start: WeaponRank::E,
+            max: WeaponRank::S,
+        })
+        .to_vec(),
         max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
@@ -118,7 +123,8 @@ fn weapon(name: &str, might: StatValue, hit: StatValue, (min, max): (u32, u32)) 
 /// `sword` (might 5), `blade` (3), `lance` (10), `flaky` (5, hit 50),
 /// `javelin` (4, range 1–2), `bow` (a bow: 5, range 2), `potion` (heals 10).
 /// With their own arts: `pike` (5; `line_pierce`), `trick` (5, hit 50;
-/// `bash`, `aim`, `zeal`) and `knack` (5, hit 50; `zeal`).
+/// `bash`, `aim`, `zeal`), `knack` (5, hit 50; `zeal`) and `moonblade` (5;
+/// `moonwave`). Of other kinds, range 1: `spear` and `axe` (5).
 fn items() -> ItemTable {
     let bow = WeaponDef {
         kind: WeaponKind::Bow,
@@ -130,7 +136,16 @@ fn items() -> ItemTable {
             ..weapon(name, 5, hit, (1, 1))
         })
     };
+    let of_kind = |name: &str, kind| {
+        ItemDef::Weapon(WeaponDef {
+            kind,
+            ..weapon(name, 5, 100, (1, 1))
+        })
+    };
     let entries = [
+        ("spear", of_kind("Spear", WeaponKind::Spear)),
+        ("axe", of_kind("Axe", WeaponKind::Axe)),
+        ("moonblade", with_arts("Moonblade", 100, &["moonwave"])),
         ("pike", with_arts("Pike", 100, &["line_pierce"])),
         ("trick", with_arts("Trick", 50, &["bash", "aim", "zeal"])),
         ("knack", with_arts("Knack", 50, &["zeal"])),
@@ -207,7 +222,10 @@ fn spells() -> SpellTable {
 
 /// The rank D arts `guard_break` (sword, 4 durability: hit +10, no counter)
 /// and `close_shot` (bow, 2: min range 1, hit −10), and the weapon arts
-/// `line_pierce` (4) and `aim`, `bash` and `zeal` (1: hit +20).
+/// `line_pierce` (4) and `aim`, `bash` and `zeal` (1: hit +20). As the game
+/// has them: `long_thrust` (spear C) and `hurl` (axe B), which reach 1–2 with
+/// hit −10; `moonwave` (a weapon art), which reaches 2 and hits Res; and
+/// `cascade` (sword A: each hit deals 3 more than the one before).
 fn arts() -> ArtTable {
     let art = |id: &str, kind, rank, cost, effect| ArtDef {
         id: ArtId::new(id),
@@ -236,7 +254,33 @@ fn arts() -> ArtTable {
         line_pierce: true,
         ..ArtEffect::default()
     };
+    let thrown = || ArtEffect {
+        hit: -10,
+        min_range: Some(1),
+        max_range: Some(2),
+        ..ArtEffect::default()
+    };
+    let moonwave = ArtEffect {
+        max_range: Some(2),
+        power: Some(crate::combat::PowerStat::Higher),
+        mitigation: Some(crate::combat::MitigationStat::Res),
+        ..ArtEffect::default()
+    };
+    let cascade = ArtEffect {
+        cascade: 3,
+        ..ArtEffect::default()
+    };
     let arts = [
+        art(
+            "long_thrust",
+            WeaponKind::Spear,
+            Some(WeaponRank::C),
+            3,
+            thrown(),
+        ),
+        art("hurl", WeaponKind::Axe, Some(WeaponRank::B), 4, thrown()),
+        art("moonwave", sword, None, 4, moonwave),
+        art("cascade", sword, Some(WeaponRank::A), 6, cascade),
         art("guard_break", sword, d, 4, guard_break),
         art("close_shot", WeaponKind::Bow, d, 2, close_shot),
         art("line_pierce", sword, None, 4, line_pierce),
@@ -1275,6 +1319,151 @@ fn techniques_that_change_the_range_reach_their_targets() {
     assert_eq!(next(&state), art_attack(2, p(1, 0), 1, "close_shot"));
 }
 
+/// `weapon` for a boss (unit 2 of `rows`), at `rank` in `kind`, holding its
+/// tile; `change` then edits the boss.
+fn holding_with(
+    rows: &[&str],
+    weapon: &'static str,
+    (kind, rank): (WeaponKind, WeaponRank),
+    change: impl FnOnce(&mut Unit),
+) -> BattleState {
+    enemy_phase(rows, |u| {
+        u[1] = carrying(u[1].clone(), &[weapon]);
+        boss(&mut u[1]);
+        u[1].weapon_ranks = BTreeMap::from([(kind, rank)]);
+        u[1].ai = AiBehavior::Stationary;
+        change(&mut u[1]);
+    })
+}
+
+/// A range-1 weapon, the art that makes it reach 2, and the rank it takes.
+const THROWS: [(&str, &str, WeaponKind, WeaponRank); 3] = [
+    ("spear", "long_thrust", WeaponKind::Spear, WeaponRank::C),
+    ("axe", "hurl", WeaponKind::Axe, WeaponRank::B),
+    ("moonblade", "moonwave", WeaponKind::Sword, WeaponRank::E),
+];
+
+#[test]
+fn an_art_that_reaches_farther_than_every_weapon_is_considered() {
+    for (weapon, art, kind, rank) in THROWS {
+        let state = holding_with(&["P.E"], weapon, (kind, rank), |_| {});
+        let command = next(&state);
+        assert_eq!(command, art_attack(2, p(2, 0), 1, art));
+        state.clone().apply(&command).unwrap();
+    }
+}
+
+#[test]
+fn a_walking_boss_throws_from_where_no_counter_reaches_it() {
+    // From 2 tiles: 90% of 5 (45) less 3 durability (15). Next to the target:
+    // 5 (50) less the sword's counter (25). The throw wins by 5.
+    let state = enemy_phase(&["P...E"], |u| {
+        u[1] = carrying(u[1].clone(), &["spear"]);
+        boss(&mut u[1]);
+        u[1].weapon_ranks = BTreeMap::from([(WeaponKind::Spear, WeaponRank::C)]);
+    });
+    assert_eq!(next(&state), art_attack(2, p(2, 0), 1, "long_thrust"));
+}
+
+#[test]
+fn an_art_that_reaches_farther_is_still_used_close_up() {
+    // Moonwave hits Res: 5 (50) less its 4 durability (20) beats the plain
+    // attack's 2 (20), with the same counter.
+    let state = enemy_phase(&["PE"], |u| {
+        u[0].stats.def = 3;
+        u[1] = carrying(u[1].clone(), &["moonblade"]);
+        boss(&mut u[1]);
+    });
+    assert_eq!(next(&state), art_attack(2, p(1, 0), 1, "moonwave"));
+}
+
+#[test]
+fn only_those_who_may_use_a_long_art_and_can_pay_for_it_reach_with_it() {
+    for (weapon, _, kind, rank) in THROWS {
+        let idle = wait(2, p(2, 0));
+        // An ordinary enemy.
+        let state = holding_with(&["P.E"], weapon, (kind, rank), |u| u.role = Role::Regular);
+        assert_eq!(next(&state), idle);
+        // A broken weapon pays for nothing.
+        let state = holding_with(&["P.E"], weapon, (kind, rank), |u| {
+            u.loadout.weapons[0].as_mut().unwrap().durability_left = 0;
+        });
+        assert_eq!(next(&state), idle);
+    }
+    // Below the art's rank.
+    let low = (WeaponKind::Spear, WeaponRank::D);
+    let state = holding_with(&["P.E"], "spear", low, |_| {});
+    assert_eq!(next(&state), wait(2, p(2, 0)));
+    // A noncombatant green unit never does; a combat one does.
+    let green = |role| {
+        let mut state = enemy_phase(&["A.E.......P"], |u| {
+            u[0] = carrying(u[0].clone(), &["spear"]);
+            u[0].weapon_ranks = BTreeMap::from([(WeaponKind::Spear, WeaponRank::C)]);
+            u[0].ai = AiBehavior::Stationary;
+            u[0].role = role;
+        });
+        state.apply(&Command::EndPhase).unwrap();
+        next(&state)
+    };
+    assert_eq!(
+        green(Role::Regular),
+        art_attack(1, p(0, 0), 2, "long_thrust")
+    );
+    assert_eq!(green(Role::Noncombatant), wait(1, p(0, 0)));
+}
+
+/// A boss (unit 2), fast enough to strike twice for 5 each and able to use
+/// Cascade, two tiles from unit 1 at `target_hp`, an archer that can't
+/// counter it from the tile between them.
+fn cascading(target_hp: StatValue) -> BattleState {
+    enemy_phase(&["P.E"], |u| {
+        u[0] = carrying(u[0].clone(), &["bow"]);
+        u[0].hp = target_hp;
+        boss(&mut u[1]);
+        u[1].stats.spd = 10;
+        u[1].weapon_ranks = BTreeMap::from([(WeaponKind::Sword, WeaponRank::A)]);
+    })
+}
+
+#[test]
+fn cascade_is_worth_the_damage_of_its_hits() {
+    let (art, plain) = (
+        art_attack(2, p(1, 0), 1, "cascade"),
+        attack(2, p(1, 0), 1, 0),
+    );
+    // No kill: 3 more damage (30) against 6 durability.
+    let state = cascading(20);
+    assert_eq!(next(&state), plain, "it costs 30: a tie");
+    assert_eq!(next_costing(&state, 4, 0), art, "it costs 24");
+    // The plain attack's 10 leave 3 HP: only Cascade's 13 kill.
+    assert_eq!(next(&cascading(13)), art);
+    // 10 kill anyway, and Cascade would add nothing.
+    assert_eq!(next_costing(&cascading(10), 0, 0), plain);
+}
+
+#[test]
+fn cascades_odds_match_the_combat_it_fights() {
+    for (target_hp, dealt, kill) in [(20, 13, 0), (13, 13, 1), (7, 7, 1)] {
+        let state = cascading(target_hp);
+        let action = UnitAction::Attack {
+            target: UnitId(1),
+            slot: 0,
+            active: None,
+            art: Some(ArtId::new("cascade")),
+        };
+        let forecast = state
+            .preview_attack(UnitId(2), p(1, 0), &action)
+            .unwrap()
+            .forecast;
+        let odds = Odds::of(&forecast, hp(20, 20), hp(target_hp, 20));
+        assert_eq!(odds, whole(dealt, 0, kill), "at {target_hp} HP");
+        let mut fought = state.clone();
+        fought.apply(&act(2, p(1, 0), action)).unwrap();
+        let left = fought.unit(UnitId(1)).map_or(0, |u| u.hp);
+        assert_eq!(left, target_hp - dealt, "at {target_hp} HP");
+    }
+}
+
 #[test]
 fn line_pierce_counts_the_unit_behind_the_target() {
     // Players 1 and 2 in a row: the pierce's 5 damage (worth 50) pays for
@@ -1627,11 +1816,144 @@ fn absorbed_strikes_heal() {
     };
     // Healed up to max: nothing dealt.
     assert_eq!(Odds::of(&f, hp(10, 10), hp(8, 10)), Odds::default());
-    assert_eq!(struck_hp(&absorb, 1, 8, 10), 10);
-    assert_eq!(struck_hp(&absorb, 1, 5, 10), 8);
-    assert_eq!(struck_hp(&side(3, 7, 100, 2), 2, 10, 10), 3);
-    assert_eq!(struck_hp(&side(3, 7, 100, 2), 1, 10, 10), 7);
-    assert_eq!(struck_hp(&side(3, 7, 100, 2), 2, 5, 10), 0);
+    // It heals 3, up to max, then a first-hit debuff turns the next strike
+    // into 7 of damage.
+    let f = Forecast {
+        attacker: absorb,
+        defender: None,
+        after_first_hit: Some(crate::combat::AfterFirstHit {
+            attacker: side(3, 7, 100, 2),
+            defender: None,
+        }),
+    };
+    assert_eq!(Odds::of(&f, hp(10, 10), hp(8, 10)), whole(5, 0, 0));
+    assert_eq!(Odds::of(&f, hp(10, 10), hp(5, 10)), whole(4, 0, 0));
+}
+
+/// [`side`] with Cascade's bonus.
+fn cascade_side(damage: StatValue, followup: StatValue, hit: u8, strikes: u8) -> SideForecast {
+    SideForecast {
+        cascade: 3,
+        ..side(damage, followup, hit, strikes)
+    }
+}
+
+fn alone(attacker: SideForecast) -> Forecast {
+    Forecast {
+        attacker,
+        defender: None,
+        after_first_hit: None,
+    }
+}
+
+#[test]
+fn cascade_adds_to_each_hit_after_the_first() {
+    let big = hp(99, 99);
+    let o = Odds::of(&alone(cascade_side(5, 5, 100, 3)), big, big);
+    assert_eq!(o, whole(5 + 8 + 11, 0, 0));
+    // On top of the sword's follow-up damage.
+    let o = Odds::of(&alone(cascade_side(5, 6, 100, 3)), big, big);
+    assert_eq!(o, whole(5 + 9 + 12, 0, 0));
+    // One strike has nothing to add to.
+    let o = Odds::of(&alone(cascade_side(5, 5, 100, 1)), big, big);
+    assert_eq!(o, whole(5, 0, 0));
+}
+
+#[test]
+fn cascade_counts_hits_and_not_strikes() {
+    let big = hp(99, 99);
+    // Two strikes at 50%: 13, 5, 5 (the miss comes first: no bonus), 0.
+    let o = Odds::of(&alone(cascade_side(5, 5, 50, 2)), big, big);
+    assert_eq!(o.dealt, hundredths(575), "{o:?}");
+    // Three: hit, miss, hit is 5 + 8, not 5 + 11. Eight branches: 24; 13
+    // three times; 5 three times; 0.
+    let o = Odds::of(&alone(cascade_side(5, 5, 50, 3)), big, big);
+    assert_eq!(o.dealt, hundredths(975), "{o:?}");
+}
+
+#[test]
+fn cascade_stops_with_the_combat() {
+    // The target falls to the second hit's 8: the third strike never comes.
+    let f = alone(cascade_side(5, 5, 100, 3));
+    assert_eq!(Odds::of(&f, hp(9, 9), hp(13, 20)), whole(13, 0, 1));
+    // The attacker falls to the counter after its first hit.
+    let f = Forecast {
+        defender: Some(side(9, 9, 100, 1)),
+        ..f
+    };
+    assert_eq!(Odds::of(&f, hp(9, 9), hp(99, 99)), whole(5, 9, 0));
+}
+
+/// One side's numbers, hitting half the time and never critting.
+fn any_side(strikes: u8) -> impl Strategy<Value = SideForecast> {
+    (0..12, 0..12, 0..5, any::<bool>()).prop_map(move |(damage, followup, cascade, absorb)| {
+        SideForecast {
+            cascade,
+            affinity: absorb.then_some(Affinity::Absorb),
+            ..side(damage, followup, 50, strikes)
+        }
+    })
+}
+
+/// A forecast of up to 4 strikes a side, with or without a counter and a
+/// first-hit debuff.
+fn any_forecast() -> impl Strategy<Value = Forecast> {
+    (1..=4u8, 1..=4u8).prop_flat_map(|(a, d)| {
+        (
+            any_side(a),
+            proptest::option::of(any_side(d)),
+            any_side(a),
+            any_side(d),
+            any::<bool>(),
+        )
+            .prop_map(|(attacker, defender, after_a, after_d, debuff)| Forecast {
+                attacker,
+                defender,
+                after_first_hit: debuff.then_some(crate::combat::AfterFirstHit {
+                    attacker: after_a,
+                    defender: defender.map(|_| after_d),
+                }),
+            })
+    })
+}
+
+proptest! {
+    /// The odds are the average of every way the rolls can make the combat
+    /// fall out, each resolved by the combat itself: whatever a forecast
+    /// says, the walk can't read it differently.
+    #[test]
+    fn odds_are_what_resolve_does_on_average(
+        forecast in any_forecast(),
+        (a_hp, a_lost) in (1..40, 0..10),
+        (d_hp, d_lost) in (1..40, 0..10),
+    ) {
+        let (attacker, defender) = (hp(a_hp, a_hp + a_lost), hp(d_hp, d_hp + d_lost));
+        let strikes = strike_order(&forecast).len();
+        let rules = items().combat_rules();
+        let mut expected = Odds::default();
+        for pattern in 0..1u32 << strikes {
+            // A hit takes two rolls and a crit roll, a miss only the two.
+            let rolls: Vec<u8> = (0..strikes)
+                .flat_map(|i| {
+                    if pattern >> i & 1 == 1 { vec![0, 0, 99] } else { vec![99, 99] }
+                })
+                .collect();
+            let outcome = crate::combat::resolve(
+                &rules,
+                &forecast,
+                attacker,
+                defender,
+                &mut crate::rng::ScriptedRng::new(rolls),
+            );
+            let share = Score::from(CERTAIN >> strikes);
+            expected.dealt += share * Score::from((d_hp - outcome.defender_hp).max(0));
+            expected.taken += share * Score::from((a_hp - outcome.attacker_hp).max(0));
+            if outcome.defender_hp <= 0 {
+                expected.kill += share;
+            }
+        }
+        prop_assert_eq!(Odds::of(&forecast, attacker, defender), expected);
+    }
 }
 
 #[test]

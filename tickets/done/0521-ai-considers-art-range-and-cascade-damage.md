@@ -5,10 +5,10 @@ type: bug
 milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0325", "0329", "0139", "0330"]
 nick_input: none
-completed:
+completed: 2026-11-01
 ---
 
 # 0521 — AI considers art range and Cascade damage
@@ -86,17 +86,17 @@ prerequisite before coding if the final 0330 representation needs more.
 
 ## Acceptance criteria
 
-- [ ] The range-2 fixtures fail before the fix and select a valid Long
+- [x] The range-2 fixtures fail before the fix and select a valid Long
       Thrust, Hurl or Moonwave afterward with no unrelated long-range arm.
-- [ ] Unaffordable arts and ordinary/noncombatant enemies remain excluded.
-- [ ] With 100% hit and no crits, Cascade's expected damage/kill result
+- [x] Unaffordable arts and ordinary/noncombatant enemies remain excluded.
+- [x] With 100% hit and no crits, Cascade's expected damage/kill result
       matches actual resolution, including early death.
-- [ ] A hit/miss/hit branch increments Cascade on landed hits only;
+- [x] A hit/miss/hit branch increments Cascade on landed hits only;
       a one-strike attack gains no Cascade bonus.
-- [ ] The same state gives the same valid command; weights and plain
+- [x] The same state gives the same valid command; weights and plain
       attacks with no new effects are unchanged. Any baseline changes
       are measured and explained in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -109,5 +109,33 @@ prerequisite before coding if the final 0330 representation needs more.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, baseline changes, follow-ups and anything for 1064.)*
+**Done.** The AI now considers an art that reaches farther than any of the
+unit's weapons, and its odds count Cascade by the hits landed on each branch.
+
+- **Reach.** Each technique has its own `reach` (an art's replacement maximum,
+  or the arm's maximum plus an active's bonus). The broad bound uses it, and a
+  technique is skipped at a distance beyond its own reach. The battle still has
+  the final say on who may use what and on the minimum range.
+- **Strikes.** `Walk` uses the resolver's own `striker`, `base_damage` and
+  `take`, so `struck_hp`, the AI's copy, is gone. A property test averages
+  `resolve` over every way the rolls can fall and compares that with the odds,
+  so a new forecast field can't silently vanish from the walk.
+
+**Red first.** On the old code the range-2 fixtures waited instead of
+attacking, and the Cascade cases counted no bonus (three 50% strikes of 5 gave
+7.5 expected damage; it is 9.75).
+
+**Baselines.** No result changed on the seeds compared: every try's line matched
+its "before" line. Those were the baseline bot on `ch01` (200 tries) and the
+three personas on `ch01`, `ch02` and `act1_random_road` (30 tries each, against
+the first 30 of a 100-try run on the old code). The bosses of `ch01` and `ch02`
+are at Axe D, below Hurl's rank B, and nobody in these battles has Cascade's
+rank A.
+
+**Rules decided.** None. Weights are unchanged.
+
+**Follow-up.** 0477: the danger zone, the threat arrows and the AI's own danger
+zone read only weapon and spell ranges, so they don't show what an art or an
+active reaches.
+
+**For 1064.** Nothing new from these battles.

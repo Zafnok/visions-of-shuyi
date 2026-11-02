@@ -105,7 +105,8 @@
 //! with the weights of [`AiWeights`] (`assets/data/ai.ron`). The
 //! expectations play the forecast's strikes out in order, each hitting with
 //! its displayed hit chance (follow-ups included), ignoring crits and
-//! stopping when a unit falls, as combat does. The highest score wins; ties
+//! stopping when a unit falls, as combat does, with the same damage: Cascade's
+//! bonus counts the hits landed on each branch. The highest score wins; ties
 //! go to the lowest `(target id, y, x, weapon or spell id, slot)`, then to
 //! the plain attack, then to the lowest art or active id (an active before
 //! an art of the same id). A unit that can attack always does, whatever the
@@ -122,7 +123,8 @@
 //! player units, when the AI plays them). For such a unit every attack
 //! above is also scored with each Combat Art it can use with that weapon
 //! and each of its combat actives, one per attack, from the forecast the
-//! battle gives with it (its range changes included):
+//! battle gives with it (its range changes included, so an art can reach
+//! farther than any of the unit's weapons):
 //!
 //! ```text
 //! score = the attack's score with the art or active
@@ -161,7 +163,7 @@ use crate::battle::{
     UnitAction, burns,
 };
 
-use crate::combat::{CombatHp, Forecast, Side, SideForecast, strike_order};
+use crate::combat::{CombatHp, Forecast, Side, base_damage, strike_order, striker, take};
 use crate::geom::{Grid, Pos};
 use crate::item::{Equipped, WEAPON_SLOTS};
 use crate::magic::Affinity;
@@ -350,8 +352,8 @@ impl Technique {
 /// A technique an [`Arm`] can attack with.
 struct Extra {
     technique: Technique,
-    /// Added to the arm's max range.
-    range: u32,
+    /// The farthest the arm reaches with it.
+    reach: u32,
     /// Score its cost loses.
     penalty: Score,
 }
@@ -392,8 +394,8 @@ impl Arm {
 
     /// The farthest it reaches with any of its techniques.
     fn reach(&self) -> u32 {
-        let bonus = self.extras.iter().map(|e| e.range).max().unwrap_or(0);
-        self.max.saturating_add(bonus)
+        let farthest = self.extras.iter().map(|e| e.reach).max();
+        self.max.max(farthest.unwrap_or(0))
     }
 }
 
@@ -557,6 +559,9 @@ impl<'a> Planner<'a> {
                         offer(score, arm.action(target.id, None));
                     }
                     for extra in &arm.extras {
+                        if distance > extra.reach {
+                            continue;
+                        }
                         let action = arm.action(target.id, Some(&extra.technique));
                         let Some((forecast, pierce)) =
                             state.attack_forecast(unit, dest, &path, &action)
@@ -844,7 +849,7 @@ fn arms(state: &BattleState, unit: &Unit, weights: &AiWeights) -> Vec<Arm> {
             if let Some((copy, def)) = unit.usable_weapon(slot, class, state.items()) {
                 let with = Equipped::Weapon(slot);
                 let arm = Arm {
-                    extras: extras(state, unit, &with, weights),
+                    extras: extras(state, unit, &with, def.max_range, weights),
                     with,
                     min: def.min_range,
                     max: def.max_range,
@@ -857,7 +862,7 @@ fn arms(state: &BattleState, unit: &Unit, weights: &AiWeights) -> Vec<Arm> {
         if let Some(def) = unit.castable_attack(spell, state.spells()) {
             let with = Equipped::Spell(spell.clone());
             let arm = Arm {
-                extras: extras(state, unit, &with, weights),
+                extras: extras(state, unit, &with, def.max_range, weights),
                 with,
                 min: def.min_range,
                 max: def.max_range,
@@ -869,11 +874,17 @@ fn arms(state: &BattleState, unit: &Unit, weights: &AiWeights) -> Vec<Arm> {
     arms.into_iter().map(|(_, _, arm)| arm).collect()
 }
 
-/// The techniques `unit` tries when attacking with `with`: its combat
-/// actives, and with a weapon the Combat Arts it can pay for, ordered by id
+/// The techniques `unit` tries when attacking with `with`, whose own range
+/// ends at `max`: its combat actives, and with a weapon the Combat Arts it can pay for, ordered by id
 /// (an active first). None for a unit that may not use them. The battle
 /// refuses those that don't fit the attack ([`BattleState::attack_forecast`]).
-fn extras(state: &BattleState, unit: &Unit, with: &Equipped, weights: &AiWeights) -> Vec<Extra> {
+fn extras(
+    state: &BattleState,
+    unit: &Unit,
+    with: &Equipped,
+    max: u32,
+    weights: &AiWeights,
+) -> Vec<Extra> {
     if !unit.may_use_arts() {
         return Vec::new();
     }
@@ -886,7 +897,7 @@ fn extras(state: &BattleState, unit: &Unit, with: &Equipped, weights: &AiWeights
                 effect: ActiveEffect::Strike { range, .. },
             } => Some(Extra {
                 technique: Technique::Active(def.id.clone()),
-                range: *range,
+                reach: max.saturating_add(*range),
                 penalty: match cost {
                     SkillCost::Durability(cost) => points(weights.durability) * Score::from(*cost),
                     SkillCost::ExtraSpellUse => points(weights.spell_use),
@@ -902,7 +913,7 @@ fn extras(state: &BattleState, unit: &Unit, with: &Equipped, weights: &AiWeights
         let arts = unit.usable_arts(slot, state.classes(), state.items(), state.arts());
         out.extend(arts.into_iter().map(|art| Extra {
             technique: Technique::Art(art.id.clone()),
-            range: 0,
+            reach: art.effect.max_range.unwrap_or(max),
             penalty: points(weights.durability) * Score::from(art.cost),
         }));
     }
@@ -1019,10 +1030,15 @@ impl Odds {
             forecast,
             order: strike_order(forecast),
             start: [attacker.current, defender.current],
-            max: [attacker.max, defender.max],
+        };
+        let branch = Branch {
+            hp: [attacker, defender],
+            struck: [0, 0],
+            landed: [0, 0],
+            chance: CERTAIN,
         };
         let mut odds = Odds::default();
-        walk.strike(0, walk.start, [0, 0], false, CERTAIN, &mut odds);
+        walk.strike(0, branch, &mut odds);
         odds
     }
 }
@@ -1033,62 +1049,61 @@ struct Walk<'a> {
     order: Vec<Side>,
     /// HP going in: `[attacker, defender]`.
     start: [StatValue; 2],
-    /// Max HP: `[attacker, defender]`.
-    max: [StatValue; 2],
+}
+
+/// One branch so far, each array `[attacker, defender]`.
+#[derive(Clone, Copy)]
+struct Branch {
+    hp: [CombatHp; 2],
+    /// Strikes made.
+    struck: [u8; 2],
+    /// Those of them that hit.
+    landed: [u8; 2],
+    chance: u64,
 }
 
 impl Walk<'_> {
-    /// Plays strike `i` on, from `hp` with `struck` strikes made per side
-    /// and whether the attacker has hit yet, on a branch of this `chance`,
-    /// adding its outcomes to `odds`.
-    fn strike(
-        &self,
-        i: usize,
-        hp: [StatValue; 2],
-        struck: [u8; 2],
-        attacker_has_hit: bool,
-        chance: u64,
-        odds: &mut Odds,
-    ) {
-        let striker = self.order.get(i).and_then(|&by| {
-            let numbers = self.forecast.numbers(by, attacker_has_hit)?;
-            Some((usize::from(by == Side::Defender), numbers))
-        });
-        let over = hp[0] <= 0 || hp[1] <= 0;
-        let Some((me, numbers)) = striker.filter(|_| !over) else {
+    /// Plays strike `i` on from `branch`, adding its outcomes to `odds`.
+    fn strike(&self, i: usize, branch: Branch, odds: &mut Odds) {
+        let Branch {
+            hp,
+            mut struck,
+            landed,
+            chance,
+        } = branch;
+        let next = self
+            .order
+            .get(i)
+            .and_then(|&by| striker(self.forecast, by, landed[0] > 0));
+        let over = hp[0].current <= 0 || hp[1].current <= 0;
+        let Some((me, target, numbers)) = next.filter(|_| !over) else {
             let share = Score::from(chance);
-            odds.dealt += share * Score::from((self.start[1] - hp[1]).max(0));
-            odds.taken += share * Score::from((self.start[0] - hp[0]).max(0));
-            if hp[1] <= 0 {
+            odds.dealt += share * Score::from((self.start[1] - hp[1].current).max(0));
+            odds.taken += share * Score::from((self.start[0] - hp[0].current).max(0));
+            if hp[1].current <= 0 {
                 odds.kill += share;
             }
             return;
         };
-        let mut struck = struck;
         struck[me] += 1;
         // Both branches, even one with no chance: it adds nothing.
         let hits = chance * u64::from(numbers.hit) / 100;
-        let mut after = hp;
-        let target = 1 - me;
-        after[target] = struck_hp(&numbers, struck[me], hp[target], self.max[target]);
-        let has_hit = attacker_has_hit || me == 0;
-        self.strike(i + 1, after, struck, has_hit, hits, odds);
-        self.strike(i + 1, hp, struck, attacker_has_hit, chance - hits, odds);
-    }
-}
-
-/// A target's HP after the `nth` strike of a side with `numbers` hits it
-/// without a crit (an Absorb strike heals it, up to `max`).
-fn struck_hp(numbers: &SideForecast, nth: u8, hp: StatValue, max: StatValue) -> StatValue {
-    let damage = if nth > 1 {
-        numbers.followup_damage
-    } else {
-        numbers.damage
-    };
-    if numbers.affinity == Some(Affinity::Absorb) {
-        (hp + damage).min(max)
-    } else {
-        (hp - damage).max(0)
+        let mut hit = Branch {
+            struck,
+            chance: hits,
+            ..branch
+        };
+        let damage = base_damage(&numbers, struck[me], landed[me]);
+        let healed = numbers.affinity == Some(Affinity::Absorb);
+        take(&mut hit.hp[target], damage, healed);
+        hit.landed[me] += 1;
+        self.strike(i + 1, hit, odds);
+        let miss = Branch {
+            struck,
+            chance: chance - hits,
+            ..branch
+        };
+        self.strike(i + 1, miss, odds);
     }
 }
 
