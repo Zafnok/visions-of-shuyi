@@ -50,6 +50,22 @@
             "hardcore": (min: 35, max: 60),
         },
     },
+    // The same for a skirmish, fixed or random, by its tier (Nick, 2026-11-01,
+    // ticket 0510): a fight of a few turns, where winning is far easier than
+    // nobody dying. Casual's numbers and the 5 points easier for Normal and
+    // Hardcore are Claude's starting values, tunable.
+    skirmish_bands: {
+        Easy: {
+            "casual": (min: 70, max: 100),
+            "normal": (min: 70, max: 95),
+            "hardcore": (min: 70, max: 95),
+        },
+        Normal: {
+            "casual": (min: 70, max: 100),
+            "normal": (min: 55, max: 80),
+            "hardcore": (min: 55, max: 80),
+        },
+    },
     // Casual succeeding in under 20% of tries blocks the change: the battle
     // is basically unwinnable (starting value, tunable).
     floors: {"casual": 20},

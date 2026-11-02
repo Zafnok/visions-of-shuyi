@@ -78,6 +78,10 @@ pub enum NodeCondition {
     /// This character is in the army (a side quest's character, alive and
     /// recruited).
     Alive(CharacterId),
+    /// The campaign is in one of these chapters, by id (a skirmish that
+    /// shows up only then, ticket 0510). Once cleared the place stays open,
+    /// as every cleared place does.
+    Chapter(Vec<String>),
 }
 
 /// A side quest's battle and its scenes.
@@ -296,6 +300,7 @@ impl WorldMap {
             NodeCondition::Cleared(id) => self.is_cleared(id, campaign),
             NodeCondition::Flag(flag) => campaign.flags.get(flag) == Some(&true),
             NodeCondition::Alive(character) => campaign.member(character).is_some(),
+            NodeCondition::Chapter(chapters) => chapters.contains(&campaign.chapter),
         }
     }
 

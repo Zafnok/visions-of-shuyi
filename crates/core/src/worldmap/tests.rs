@@ -706,3 +706,25 @@ fn a_story_at_the_same_cap_keeps_existing_groups_without_a_cap_change_event() {
     );
     assert_eq!(m.random_at("fight0", &c), Some(&group));
 }
+
+#[test]
+fn a_place_for_some_chapters_opens_only_in_them_and_stays_open_once_cleared() {
+    let mut map = map();
+    map.nodes.push(node(
+        "fight",
+        NodeKind::FixedSkirmish {
+            battle: SideQuest::default(),
+            guards_path: false,
+        },
+        vec![NodeCondition::Chapter(vec!["ch05".into()])],
+    ));
+    let mut campaign = campaign();
+    campaign.enter_world(&map);
+    campaign.chapter = "ch04".into();
+    assert!(!map.is_open("fight", &campaign));
+    campaign.chapter = "ch05".into();
+    assert!(map.is_open("fight", &campaign));
+    campaign.clear_node(&map, "fight", None, None);
+    campaign.chapter = "ch06".into();
+    assert!(map.is_open("fight", &campaign));
+}

@@ -17,6 +17,8 @@ fail-fast = { max-fail = 1, terminate = "immediate" }
 priority = -100
 filter = '''
     test(=battle::quick_battle_keeps_one_skirmish_track)
+  | test(=skirmish::tests::a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again)
+  | test(=skirmish::tests::a_random_skirmish_joins_the_pool_and_makes_no_place)
   | test(=credits::after_the_last_row_the_list_starts_again_from_the_top)
   | test(=dialogue::tests::no_embedded_scene_shows_someone_who_is_gone)
   | test(=dialogue_log::a_jump_back_shows_the_portraits_as_they_were_and_reading_on_keeps_the_lines)

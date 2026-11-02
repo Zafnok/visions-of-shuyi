@@ -1,0 +1,354 @@
+//! A skirmish to order (ticket 0510, `docs/design/playtest-bots.md`,
+//! *Generating a skirmish to order*): from a request, a small map, a battle
+//! file and the world map's text with the skirmish on it. Pure: the caller
+//! reads the files, balances the battle and writes them
+//! (`cargo xtask skirmish`). Deterministic from the request's seed.
+//!
+//! One layout for now, the army on the left and the enemies on the right;
+//! ticket 0522 adds layouts.
+
+use std::fmt::Write as _;
+
+use trpg_content::Content;
+use trpg_content::battle::tune::add_to_list;
+use trpg_content::worldmap::WorldMapDef;
+use trpg_core::{BotsArmy, ClassDef, Level, Pos, SimRng};
+
+use crate::army::{roster_by, story_chapters, tier_at};
+
+/// A generated map's size across and down (*the agent's starting rule*):
+/// a third of Chapter 1's map each way, about what 3–6 turns can cross
+/// (`world-structure.md`, *Random skirmishes*).
+const MAP_SIZE: (i32, i32) = (14, 10);
+
+/// The enemies a generated battle starts with (`world-structure.md`: 4–6;
+/// a pool battle needs its map's largest group). The search may change a
+/// fixed skirmish's.
+const ENEMIES: u32 = 6;
+
+/// How far the ground is read around the world map's cell.
+const REGION: i32 = 3;
+
+/// Templates a skirmish may field start with this (`characters.ron`).
+const TEMPLATES: &str = "skirmish_";
+
+/// A random skirmish in the file's own words.
+const RANDOM: &str = "RandomSkirmish";
+
+/// Which enemies the request wants.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Units {
+    /// A mix of the classes of the level's tier.
+    Mix,
+    /// One class, or every class fighting with one kind of weapon: `mage`,
+    /// `Iron Rider`, `axe`.
+    Only(String),
+}
+
+/// Whether the skirmish is a place of its own or joins the random pool.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
+    /// A place of the world map, won once.
+    Fixed,
+    /// A battle file of the map's random pool.
+    Random,
+}
+
+/// A skirmish as asked for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Request {
+    /// The world map, by id.
+    pub map: String,
+    /// The cell on it.
+    pub at: (i32, i32),
+    /// The battle's level.
+    pub level: Level,
+    /// Its enemies.
+    pub units: Units,
+    /// The chapters it shows in, by id; none: all of them.
+    pub chapters: Vec<String>,
+    /// Fixed or random.
+    pub kind: Kind,
+    /// The map tier's name in a battle file.
+    pub tier: String,
+    /// Its seed.
+    pub seed: u64,
+    /// A fixed skirmish's name on the world map.
+    pub name: String,
+}
+
+/// What [`generate`] made.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Generated {
+    /// The battle's and the map's id.
+    pub id: String,
+    /// The `.map` file's text.
+    pub map_text: String,
+    /// The battle file's text.
+    pub battle_text: String,
+    /// The army the bots judge it with.
+    pub army: BotsArmy,
+}
+
+/// The skirmish `request` asks for on world map `world`.
+pub fn generate(
+    content: &Content,
+    world: &WorldMapDef,
+    request: &Request,
+) -> Result<Generated, String> {
+    let (x, y) = request.at;
+    let at = Pos::new(x, y);
+    let (w, h) = world.size;
+    if !(1..w - 1).contains(&x) || !(1..h).contains(&y) {
+        return Err(format!(
+            "{x},{y} is not on world map \"{}\", which is {w} by {h}",
+            request.map
+        ));
+    }
+    let cap = content.classes.level_cap;
+    if !(1..=cap).contains(&request.level) {
+        return Err(format!("level {}: must be 1 to {cap}", request.level));
+    }
+    if world.ground_at(at) == "sea" {
+        return Err(format!("{x},{y} is open sea: nowhere to fight"));
+    }
+    let ground = region(world, at);
+    let id = format!("{}_skirmish_{x}_{y}", request.map);
+    let mut rng = SimRng::new(request.seed);
+    let templates = templates(content, &request.units, request.level)?;
+    let army = BotsArmy {
+        chapter: army_chapter(content, &request.chapters)?,
+        level: request.level,
+    };
+    let map_text = map_text(&ground, &request.map, x, y, &mut rng);
+    let roster = roster_by(content, &army.chapter);
+    let slots: Vec<String> = roster
+        .iter()
+        .zip(army_tiles())
+        .map(|(who, (x, y))| format!("(character: \"{}\", pos: ({x}, {y}))", who.0))
+        .collect();
+    let enemies: Vec<String> = enemy_tiles()
+        .take(ENEMIES as usize)
+        .map(|(x, y)| {
+            let template = &templates[rng.roll_below(len(&templates)) as usize];
+            let level = around(request.level, cap, &mut rng);
+            format!("(template: \"{template}\", level: Some({level}), pos: ({x}, {y}))")
+        })
+        .collect();
+    let kind = match request.kind {
+        Kind::Fixed => "FixedSkirmish",
+        Kind::Random => RANDOM,
+    };
+    let list = |lines: &[String]| {
+        let mut out = String::new();
+        for line in lines {
+            let _ = writeln!(out, "        {line},");
+        }
+        out
+    };
+    let battle_text = format!(
+        "// Generated by `cargo xtask skirmish new` (ticket 0510): lv {level}, seed {seed}.\n\
+         (\n    id: \"{id}\",\n    map: \"{id}\",\n    player_slots: [\n{slots}    ],\n    \
+         enemies: [\n{enemies}    ],\n    preparations: true,\n    objective: Rout(),\n    \
+         difficulty: {tier},\n    kind: {kind},\n    music: Pool(\"skirmish\"),\n    \
+         bots_army: (chapter: \"{chapter}\", level: {level}),\n    seed: {seed},\n)\n",
+        level = request.level,
+        seed = request.seed,
+        slots = list(&slots),
+        enemies = list(&enemies),
+        tier = request.tier,
+        chapter = army.chapter,
+    );
+    Ok(Generated {
+        id,
+        map_text,
+        battle_text,
+        army,
+    })
+}
+
+/// World map text `source` with `request`'s fixed skirmish on it, its road
+/// from the nearest place, `battle` its battle.
+pub fn add_place(
+    source: &str,
+    world: &WorldMapDef,
+    request: &Request,
+    battle: &str,
+) -> Result<String, String> {
+    let (x, y) = request.at;
+    if world.places.values().any(|p| (p.x, p.y) == (x, y)) {
+        return Err(format!("a place already stands at {x},{y}"));
+    }
+    let node_id = format!("skirmish_{x}_{y}");
+    let near = world
+        .map
+        .nodes
+        .iter()
+        .filter_map(|n| Some((n, *world.places.get(&n.id)?)))
+        .min_by_key(|(_, p)| (p.x - x).abs() + (p.y - y).abs());
+    let Some((near, pos)) = near else {
+        return Err(format!("world map \"{}\" has no places", request.map));
+    };
+    // A place limited to some chapters stays out of sight the rest of the
+    // time: one road from an open place would show it greyed.
+    let limits = if request.chapters.is_empty() {
+        String::new()
+    } else {
+        let quoted: Vec<String> = request
+            .chapters
+            .iter()
+            .map(|c| format!("\"{c}\""))
+            .collect();
+        format!(
+            ", opens_when: [Chapter([{}])], hidden: true",
+            quoted.join(", ")
+        )
+    };
+    let node = format!(
+        "(id: \"{node_id}\", name: \"{name}\", pos: ({x}, {y}),\n         \
+         kind: FixedSkirmish(battle: (battle: \"{battle}\"), guards_path: false){limits})",
+        name = request.name
+    );
+    let turn = if pos.x == x || pos.y == y {
+        String::new()
+    } else {
+        format!(", via: [({}, {y})]", pos.x)
+    };
+    let road = format!("(from: \"{}\", to: \"{node_id}\"{turn})", near.id);
+    let missing = |list: &str| format!("the world map's text has no {list} list");
+    let text = add_to_list(source, "nodes", &node, "        ").ok_or_else(|| missing("nodes"))?;
+    add_to_list(&text, "roads", &road, "        ").ok_or_else(|| missing("roads"))
+}
+
+/// Random pool text `source` with `battle` in its pool.
+pub fn add_to_pool(source: &str, battle: &str) -> Result<String, String> {
+    add_to_list(source, "pool", &format!("\"{battle}\""), "        ")
+        .ok_or_else(|| "the pool file has no pool list".to_owned())
+}
+
+/// The ground around `at`, by [`GROUND`](trpg_content::worldmap::GROUND)'s
+/// names.
+fn region(world: &WorldMapDef, at: Pos) -> Vec<&'static str> {
+    let cells = (-REGION..=REGION).flat_map(|dy| (-REGION..=REGION).map(move |dx| (dx, dy)));
+    cells
+        .map(|(dx, dy)| world.ground_at(Pos::new(at.x + dx, at.y + dy)))
+        .collect()
+}
+
+/// The map's text. Tiles between the army's and the enemies' columns come
+/// from `ground`, drawn at random as often as it has them, except the
+/// middle row, left clear so every unit can cross.
+fn map_text(ground: &[&str], world: &str, x: i32, y: i32, rng: &mut SimRng) -> String {
+    let (w, h) = MAP_SIZE;
+    let mut out = format!(
+        "(\n    name: \"Skirmish on {world} at {x},{y}\",\n    legend: {{ '.': \"plain\", \
+         'T': \"forest\", '^': \"mountain\", '~': \"water\" }},\n)\n---\n"
+    );
+    for row in 0..h {
+        for column in 0..w {
+            let clear = column < 4 || column >= w - 4 || row == h / 2;
+            let tile = if clear {
+                '.'
+            } else {
+                tile_of(ground[rng.roll_below(len(ground)) as usize])
+            };
+            out.push(tile);
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn tile_of(ground: &str) -> char {
+    match ground {
+        "forest" | "thicket" => 'T',
+        "mountain" | "peak" => '^',
+        "water" | "sea" => '~',
+        _ => '.',
+    }
+}
+
+/// The army's tiles: two columns on the left, from the top.
+fn army_tiles() -> impl Iterator<Item = (i32, i32)> {
+    (0..MAP_SIZE.1).flat_map(|y| [(1, y), (2, y)])
+}
+
+/// The enemies' tiles, from the first column of their side on the right.
+fn enemy_tiles() -> impl Iterator<Item = (i32, i32)> {
+    let (w, h) = MAP_SIZE;
+    [w - 3, w - 2]
+        .into_iter()
+        .flat_map(move |x| (0..h).step_by(2).map(move |y| (x, y)))
+}
+
+/// A level 1 off `level` at most, within the cap: "around lv 35".
+fn around(level: Level, cap: Level, rng: &mut SimRng) -> Level {
+    (level + rng.roll_below(3)).saturating_sub(1).clamp(1, cap)
+}
+
+fn len<T>(list: &[T]) -> u32 {
+    u32::try_from(list.len()).unwrap_or(u32::MAX)
+}
+
+/// The earliest of `chapters` in the story, or the story's last chapter.
+fn army_chapter(content: &Content, chapters: &[String]) -> Result<String, String> {
+    let story = story_chapters(content);
+    if let Some(unknown) = chapters.iter().find(|c| !story.iter().any(|s| s.id == **c)) {
+        return Err(format!("no chapter \"{unknown}\" in the story"));
+    }
+    let wanted =
+        |c: &&&trpg_content::chapter::ChapterDef| chapters.is_empty() || chapters.contains(&c.id);
+    let found = if chapters.is_empty() {
+        story.last()
+    } else {
+        story.iter().find(wanted)
+    };
+    found
+        .map(|c| c.id.clone())
+        .ok_or_else(|| "the story has no chapters".to_owned())
+}
+
+/// The templates of `units`, in id order.
+pub fn templates(content: &Content, units: &Units, level: Level) -> Result<Vec<String>, String> {
+    let fits = |class: &ClassDef| match units {
+        Units::Mix => class.tier == tier_at(level),
+        Units::Only(what) => {
+            let what = what.to_lowercase();
+            class.id.0 == what
+                || class.name.to_lowercase() == what
+                || class
+                    .weapons
+                    .first()
+                    .is_some_and(|w| format!("{:?}", w.kind).to_lowercase() == what)
+        }
+    };
+    let generics = &content.characters.generics;
+    let mut found: Vec<String> = generics
+        .iter()
+        .filter(|(id, _)| id.starts_with(TEMPLATES))
+        .filter(|(_, g)| content.classes.get(&g.class).is_some_and(fits))
+        .map(|(id, _)| id.clone())
+        .collect();
+    found.sort();
+    if found.is_empty() {
+        return Err(format!(
+            "no enemy template fits {units:?}: name a class that fights, or a weapon type"
+        ));
+    }
+    Ok(found)
+}
+
+/// Whether `class` can attack with a spell at class level 1.
+#[cfg(test)]
+fn casts(content: &Content, class: &ClassDef) -> bool {
+    class.spells.iter().any(|(level, id)| {
+        *level <= 1
+            && content
+                .spells
+                .get(id)
+                .is_some_and(|s| matches!(s.kind, trpg_core::SpellKind::Attack { .. }))
+    })
+}
+
+#[cfg(test)]
+mod tests;

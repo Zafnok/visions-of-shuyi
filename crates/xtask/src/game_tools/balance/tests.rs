@@ -89,7 +89,7 @@ fn the_too_hard_battle_is_brought_into_its_bands_and_written() {
     let written = fs::read_to_string(root.join(shown)).unwrap();
     let authored = bundle::file("battles/test_too_hard.ron").unwrap_or_default();
     assert_ne!(written, authored);
-    assert!(written.starts_with("// TEST FILE: a skirmish made too hard"));
+    assert!(written.starts_with("// TEST FILE: a battle made too hard"));
     assert!(written.contains("        // The raider rides in from the north.\n"));
     let content = Arc::new(trpg_content::load_embedded().unwrap());
     let text = BattleText::parse(shown, "test_too_hard", &written).unwrap();
@@ -107,7 +107,7 @@ fn the_plan_names_the_battle_and_refuses_what_it_cant_balance() {
     let root = root("autobalance-plan");
     let input = AutobalanceInput::default();
     let plan = plan(&root, Some("test_too_hard"), &input).unwrap_or_else(|e| panic!("{e}"));
-    assert_eq!(plan.title, "test_too_hard · Normal tier · FixedSkirmish");
+    assert_eq!(plan.title, "test_too_hard · Normal tier · SideQuest");
     let names: Vec<&str> = plan.entrants.iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(names, ENTRANTS);
     // Each persona's band, then Hardcore faster than Normal.

@@ -28,6 +28,7 @@ mod portrait_import;
 mod pr_size;
 mod sfx;
 mod skill_pack;
+mod skirmish;
 mod test_auto;
 mod test_card;
 mod test_tileset;
@@ -111,6 +112,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
+        Some("skirmish") => skirmish::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
         Some("check-script") => check_script(&args.collect::<Vec<_>>()),

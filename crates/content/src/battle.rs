@@ -89,6 +89,9 @@ struct RawBattle {
     solo_gold: u32,
     #[serde(default)]
     solo_bench: Vec<String>,
+    /// Written bare: `bots_army: (chapter: "ch02", level: 35)`.
+    #[serde(default, deserialize_with = "bare")]
+    bots_army: Option<trpg_core::BotsArmy>,
     #[serde(default)]
     clear_gold: u32,
     #[serde(default)]
@@ -349,6 +352,13 @@ pub fn from_source(
     build(file, stem, raw, refs)
 }
 
+/// A `bots_army`'s level must be one a unit can have.
+fn bots_army_level(v: &mut Checker<'_, '_>, army: Option<&trpg_core::BotsArmy>, cap: u32) {
+    if let Some(army) = army.filter(|a| !(1..=cap).contains(&a.level)) {
+        v.err(format!("bots_army: level {} is out of range", army.level));
+    }
+}
+
 fn build(
     file: &str,
     stem: &str,
@@ -412,6 +422,7 @@ fn build(
     let default_pack = v.pack(&raw.default_pack, pack_cap, raw.preparations);
     let (solo_stock, solo_bench) = v.solo(&raw.solo_stock, &raw.solo_bench);
     let clear_items = v.items("clear_items", &raw.clear_items);
+    bots_army_level(&mut v, raw.bots_army.as_ref(), refs.classes.level_cap);
     v.music(&raw.music);
     v.errors.extend(check_map_labels(file, &everyone));
     v.errors.extend(check_triggers(
@@ -439,6 +450,7 @@ fn build(
         solo_stock,
         solo_gold: raw.solo_gold,
         solo_bench,
+        bots_army: raw.bots_army,
         clear_gold: raw.clear_gold,
         clear_items,
         objective: objective.unwrap_or(Objective::Rout { turn_limit: None }),
@@ -1063,7 +1075,13 @@ pub fn random_skirmish(
 /// enemies and no scripts, unique loot, map chests, green units or reinforcements.
 pub(crate) fn random_pool(battle: &BattleDef, maximum: u32) -> bool {
     let file = format!("{BATTLES_DIR}/{}.ron", battle.id);
-    let raw = bundle::file(&file).and_then(|s| parse_ron::<RawBattle>(&file, s).ok());
+    bundle::file(&file).is_some_and(|source| pool_source_fits(source, battle, maximum))
+}
+
+/// `random_pool` for battle file text not in the bundle yet (a generated
+/// one, ticket 0510), `battle` being what it loads as.
+pub fn pool_source_fits(source: &str, battle: &BattleDef, maximum: u32) -> bool {
+    let raw = parse_ron::<RawBattle>(&battle.id, source).ok();
     raw.is_some_and(|r| pool_fits(&r, battle, maximum))
 }
 

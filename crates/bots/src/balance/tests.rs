@@ -337,3 +337,19 @@ fn a_class_knob_steps_both_ways_from_the_enemy_s_own_template() {
     assert_eq!(weapon.describe(-1), "Raider at 7,1: weapon a tier down");
     assert_eq!(weapon.describe(0), "Raider at 7,1 as authored");
 }
+
+#[test]
+fn a_generated_battle_keeps_its_enemies_near_its_level_and_a_pool_battle_only_changes_class() {
+    let id = "test_random_meadow";
+    let content = Arc::new(trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}")));
+    let source = trpg_content::bundle::file(&format!("battles/{id}.ron")).expect("the file");
+    let text = BattleText::parse(id, id, source).unwrap_or_else(|e| panic!("{e}"));
+    let battle = TunedBattle::new(text, content);
+    let fixed = generated_knobs(&battle, false).unwrap_or_else(|e| panic!("{e}"));
+    assert!(fixed.iter().all(|k| k.name() != "unnamed enemies' level"));
+    let levels = fixed.iter().filter(|k| k.name().ends_with(": level"));
+    assert!(levels.clone().count() > 0);
+    assert!(levels.into_iter().all(|k| k.range() == (-3..=3)));
+    let pool = generated_knobs(&battle, true).unwrap_or_else(|e| panic!("{e}"));
+    assert!(pool.iter().all(|k| k.name().ends_with(": class")));
+}

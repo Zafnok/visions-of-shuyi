@@ -36,7 +36,9 @@ Bots:
 | `baseline` | `--mode` | The enemy AI playing the player's side: charges, attacks the best target, never uses items. A yardstick, with no target. | — |
 
 The army a bot fields is the characters of the battle's player slots, as
-they are in the character data (the same army the debug Quick Battle uses).
+they are in the character data (the same army the debug Quick Battle uses),
+or, in a battle with a `bots_army`, the reference army (*Generating
+skirmishes*).
 
 ### How the personas think
 
@@ -221,15 +223,15 @@ not a green unit), each knob in the order the search tries it:
 authored. Named units, the player's slots, reinforcements, the map, the
 objective and the story moments are never changed (a test checks every
 step of every knob). A step that can't apply (no free tile, no higher
-tier, a class that can't stand there) is skipped. A random skirmish
-gains terrain and layout knobs with its generator (0510).
+tier, a class that can't stand there) is skipped. A generated skirmish has its own set (*Generating
+skirmishes*).
 
 **The output** first names the battle, its tier and kind, then why the
 search stopped and how many evaluations it made, then each change it
 kept, in the knobs' words:
 
 ```
-test_too_hard · Normal tier · FixedSkirmish
+test_too_hard · Normal tier · SideQuest
 
 stuck: no knob brings it nearer its bands · 28 evaluations
 unnamed enemies' level -8: every unnamed enemy -8 levels
@@ -272,6 +274,77 @@ first. Review the diff and the `after` report before committing it.
 
 Autobalance is a dev tool Claude runs; CI never runs it, only the
 playtest.
+
+## Generating skirmishes
+
+Nick says where and what (`docs/design/playtest-bots.md`, *Generating a
+skirmish to order*), and the tool writes the battle:
+
+```bash
+cargo run --release -q -p xtask -- skirmish new --at 10,10 --level 35 --units mix
+cargo run --release -q -p xtask -- skirmish new --at 13,13 --level 40 --units mage --chapters 2
+```
+
+Those are his two examples: "a skirmish on grid 10,10 of open world map
+that's lv35 scaled difficulty, made up of a mix of units" and "a skirmish on
+grid 13,13 lv40 scaled difficulty showing up in ch2 only made up wholly of
+mages". `cargo xtask skirmish new --help` lists every option. Same arguments
+and `--seed`, same files. It refuses a cell on open sea or with a place on
+it, and a battle file that already exists.
+
+**What it writes**, beside the world map's file (`assets/`, or `assets-test/`
+for a test map): `maps/<id>.map`, `battles/<id>.ron`, where the id is
+`<world map>_skirmish_<x>_<y>`, and then either
+
+- `--kind fixed`, the default: a place on the world map at that cell, optional
+  to fight, with a road from the nearest place. With `--chapters` it opens only
+  in those chapters and is out of sight the rest of the time; once won it stays
+  on the map, as every won place does.
+- `--kind random`: an entry in the map's random pool
+  (`skirmishes/<world map>.ron`). A random group has no place of its own: it
+  appears on a cleared battle place at the level the game gives it, so `--at`
+  only picks the ground and `--chapters` is refused.
+
+Nothing is written while a band is missed (`--force` writes it anyway): try
+another `--seed`. The story has no world map yet (1070), so without `--map`
+it uses the test world map.
+
+**The battle.** A 14 by 10 map, its ground drawn from the world map's within 3
+cells of the place, with the middle row clear so every unit can cross. Six
+enemies, each within a level of `--level`, from the `skirmish_<class>` templates
+of `characters.ron`: with `--units mix`, the classes of the tier the army has
+reached by that level; with a class or a weapon type, only those (`mage` is the
+tier-1 Mage at any level). No healers: a template must be able to attack.
+
+**The reference army** (`bots_army` in the battle file,
+`crates/bots/src/army.rs`) is what "a lv 35 battle" means for the bots, and
+`cargo xtask playtest` and `cargo shuyi autobalance` field it too. No rule of
+play reads it: in the story the player brings their own army. An approximation:
+
+| Part | What it is |
+| ---- | ---------- |
+| Who | The New Game roster and whoever a scene recruits by the chapter: the earliest of `--chapters`, else the story's last. A chapter's victory scenes count from the next chapter on, since a place of that chapter is fought before them. |
+| Level | Exactly `--level`. A unit's stats rise by the average of its class's growths, its talent included; a level up's luck and minimum gains don't count. |
+| Class | Promoted at lv 13 and lv 33, into the first class its class promotes to, by the rules' own promotion. Nothing forces a promotion; that is about when a player who keeps up makes it (about 2 levels a battle, mastery in about 6 and 10 battles, `progression.md`). |
+| Gear | The best of each weapon kind and the best armour the basic shop sells by the chapter, as far as the unit's ranks allow. The pack is full of the best consumable on sale. |
+
+**The search** lands the three bots in the skirmish bands of the battle's tier
+(`--tier`; a random battle is always Easy; `docs/design/playtest-bots.md`,
+*Skirmishes have their own bands*). A generated skirmish changes under
+the random-skirmish rules whatever its kind (Nick, *Generating a skirmish to
+order*):
+
+| Knob | Steps | Fixed | Random |
+| ---- | ----- | :---: | :----: |
+| `<enemy>: level` | −3 to +3, so the enemies stay around the level asked for | ✓ | |
+| `<enemy>: count` | −1, +1 | ✓ | |
+| `<enemy>: class` | another template the battle uses | ✓ | ✓ |
+| `<enemy>: weapon` | a tier down or up | ✓ | |
+
+A pool battle keeps only its classes: a spawned group replaces every level and
+may field fewer enemies than the file lists, and the pool refuses authored
+weapons. Layouts and the position, reinforcement and terrain knobs are ticket
+0522, and until then a one-class random battle has nothing to turn.
 
 ## For developers
 

@@ -93,6 +93,7 @@ enum RawCondition {
     Cleared(String),
     Flag(String),
     Alive(String),
+    Chapter(Vec<String>),
 }
 
 /// A shop as written.
@@ -258,6 +259,7 @@ fn build(
                 RawCondition::Cleared(id) => NodeCondition::Cleared(id),
                 RawCondition::Flag(flag) => NodeCondition::Flag(flag),
                 RawCondition::Alive(who) => NodeCondition::Alive(CharacterId(who)),
+                RawCondition::Chapter(chapters) => NodeCondition::Chapter(chapters),
             })
             .collect();
         if def
@@ -403,6 +405,13 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
                         who.0
                     ));
                 }
+                NodeCondition::Chapter(chapters) => {
+                    for chapter in chapters.iter().filter(|c| !refs.chapters.contains_key(*c)) {
+                        err(format!(
+                            "place \"{id}\": Chapter names no chapter \"{chapter}\""
+                        ));
+                    }
+                }
                 _ => {}
             }
         }
@@ -484,6 +493,28 @@ fn check_look(def: &WorldMapDef, err: &mut dyn FnMut(String)) {
                 "the road from \"{from}\" to \"{to}\" must run straight across or down between its turns"
             ));
         }
+    }
+}
+
+/// World map `id` from its file's text, with every problem of it (a
+/// generated skirmish's map before it is written, ticket 0510).
+pub fn from_source(
+    file: &str,
+    id: &str,
+    source: &str,
+    refs: WorldRefs<'_>,
+) -> Result<WorldMapDef, Vec<ContentError>> {
+    let raw = parse_ron::<RawWorldMap>(file, source).map_err(|e| vec![e])?;
+    let mut problems = Vec::new();
+    let def = build(id, raw, refs, &mut |m| problems.push(m));
+    check(&def, refs, &mut |m| problems.push(m));
+    if problems.is_empty() {
+        Ok(def)
+    } else {
+        Err(problems
+            .into_iter()
+            .map(|m| ContentError::new(file, m))
+            .collect())
     }
 }
 

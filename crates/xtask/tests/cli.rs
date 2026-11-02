@@ -109,7 +109,7 @@ fn autobalance_brings_the_too_hard_battle_into_its_bands() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert_eq!(output.status.code(), Some(0), "{stdout}");
     assert!(
-        stdout.starts_with("test_too_hard · Normal tier · FixedSkirmish\n"),
+        stdout.starts_with("test_too_hard · Normal tier · SideQuest\n"),
         "{stdout}"
     );
     // Its pack's Potion heals 20 (0443), so -5 levels is enough.

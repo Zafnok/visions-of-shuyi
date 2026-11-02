@@ -6,8 +6,8 @@
 //!
 //! Every battle kind has the "enemy numbers" set for now: the level, count,
 //! class and weapon of each generic enemy the story doesn't name. Named
-//! units, the map and the objective stay as authored. A random skirmish
-//! gains terrain and layout knobs with its generator (0510).
+//! units, the map and the objective stay as authored. A generated skirmish
+//! has its own set ([`generated_knobs`], ticket 0510).
 
 use std::sync::Arc;
 
@@ -29,6 +29,11 @@ impl TunedBattle {
     /// Battle file `text`, loaded against `content`.
     pub fn new(text: BattleText, content: Arc<Content>) -> Self {
         Self { text, content }
+    }
+
+    /// The content it loads against.
+    pub fn content(&self) -> Arc<Content> {
+        Arc::clone(&self.content)
     }
 
     /// The battle as the content check loads it, or its errors.
@@ -106,14 +111,51 @@ impl TunedBattle {
 /// The knobs of `battle`'s kind, in the order the search tries them.
 pub fn knobs(battle: &TunedBattle) -> Result<Vec<Box<dyn Knob<TunedBattle>>>, String> {
     let def = battle.load()?;
-    // Every kind has the enemy numbers; 0510 adds the random skirmish's
-    // terrain and layout.
+    // Every kind has the enemy numbers.
     Ok(enemy_numbers(battle, &def))
+}
+
+/// The most a generated skirmish's enemies may move from the level asked
+/// for (*the agent's starting rule*): "enemies around lv 35" stays so.
+const GENERATED_LEVEL_STEPS: i32 = 3;
+
+/// The knobs of a generated skirmish (ticket 0510), which the search lands
+/// in its bands under the random-skirmish rules whatever its `kind`
+/// (`playtest-bots.md`, *Generating a skirmish to order*): each enemy's
+/// count, class, weapon and a little of its level. A battle for the random
+/// pool keeps only its classes: a spawned group replaces every level, may
+/// field fewer enemies than the file lists, and the pool refuses authored
+/// weapons. Ticket 0522 adds positions, reinforcements and terrain.
+pub fn generated_knobs(
+    battle: &TunedBattle,
+    pool: bool,
+) -> Result<Vec<Box<dyn Knob<TunedBattle>>>, String> {
+    let def = battle.load()?;
+    let mut knobs: Vec<Box<dyn Knob<TunedBattle>>> = Vec::new();
+    for mut each in enemy_changes(battle, &def) {
+        if pool && !matches!(each.change, Change::Class(..)) {
+            continue;
+        }
+        if matches!(each.change, Change::Level(_)) {
+            each.change = Change::Level(GENERATED_LEVEL_STEPS);
+        }
+        knobs.push(Box::new(each));
+    }
+    Ok(knobs)
 }
 
 /// The "enemy numbers" knobs: every unnamed enemy's level, then each one's
 /// level, count, class and weapon.
 fn enemy_numbers(battle: &TunedBattle, def: &BattleDef) -> Vec<Box<dyn Knob<TunedBattle>>> {
+    let mut knobs: Vec<Box<dyn Knob<TunedBattle>>> = vec![Box::new(AllLevels)];
+    for each in enemy_changes(battle, def) {
+        knobs.push(Box::new(each));
+    }
+    knobs
+}
+
+/// Each unnamed enemy's level, then count, class and weapon.
+fn enemy_changes(battle: &TunedBattle, def: &BattleDef) -> Vec<Each> {
     let entries = battle.text.entries();
     let unnamed: Vec<(usize, String)> = entries
         .iter()
@@ -137,23 +179,23 @@ fn enemy_numbers(battle: &TunedBattle, def: &BattleDef) -> Vec<Box<dyn Knob<Tune
         .iter()
         .map(|t| (t.clone(), class_name(t)))
         .collect();
-    let mut knobs: Vec<Box<dyn Knob<TunedBattle>>> = vec![Box::new(AllLevels)];
+    let mut knobs = Vec::new();
     for (entry, label) in &unnamed {
-        knobs.push(Box::new(Each::new(Change::Level, *entry, label)));
+        knobs.push(Each::new(Change::Level(5), *entry, label));
     }
     for (entry, label) in &unnamed {
-        knobs.push(Box::new(Each::new(Change::Count, *entry, label)));
+        knobs.push(Each::new(Change::Count, *entry, label));
     }
     for (entry, label) in &unnamed {
         let own = entries[*entry].template.as_ref();
         let at = templates.iter().position(|t| Some(t) == own).unwrap_or(0);
         if templates.len() > 1 {
             let class = Change::Class(at, Arc::clone(&classes));
-            knobs.push(Box::new(Each::new(class, *entry, label)));
+            knobs.push(Each::new(class, *entry, label));
         }
     }
     for (entry, label) in &unnamed {
-        knobs.push(Box::new(Each::new(Change::Weapon, *entry, label)));
+        knobs.push(Each::new(Change::Weapon, *entry, label));
     }
     knobs
 }
@@ -192,8 +234,8 @@ impl Knob<TunedBattle> for AllLevels {
 
 /// What an [`Each`] knob changes.
 enum Change {
-    /// Its level, -5 to +5.
-    Level,
+    /// Its level, up to this many levels either way.
+    Level(i32),
     /// -1 removes it, +1 adds a copy on a free tile within 2 of it.
     Count,
     /// Its class: another template of the battle's (index, then every
@@ -215,7 +257,7 @@ struct Each {
 impl Each {
     fn new(change: Change, entry: usize, label: &str) -> Self {
         let what = match change {
-            Change::Level => "level",
+            Change::Level(_) => "level",
             Change::Count => "count",
             Change::Class(..) => "class",
             Change::Weapon => "weapon",
@@ -267,7 +309,7 @@ impl Knob<TunedBattle> for Each {
 
     fn range(&self) -> std::ops::RangeInclusive<i32> {
         match &self.change {
-            Change::Level => -5..=5,
+            Change::Level(steps) => -*steps..=*steps,
             Change::Count | Change::Weapon => -1..=1,
             Change::Class(at, all) => {
                 let at = i32::try_from(*at).unwrap_or(0);
@@ -279,7 +321,7 @@ impl Knob<TunedBattle> for Each {
 
     fn apply(&self, battle: &TunedBattle, step: i32) -> Option<TunedBattle> {
         match (&self.change, step) {
-            (Change::Level, _) => battle.with(self.entry, |b, foe| {
+            (Change::Level(_), _) => battle.with(self.entry, |b, foe| {
                 foe.level = b.moved(foe, step);
                 Some(())
             }),
@@ -314,7 +356,7 @@ impl Knob<TunedBattle> for Each {
     fn describe(&self, step: i32) -> String {
         let label = &self.label;
         match (&self.change, step) {
-            (Change::Level, _) => format!("{label} {step:+} levels"),
+            (Change::Level(_), _) => format!("{label} {step:+} levels"),
             (Change::Count | Change::Weapon, 0) => format!("{label} as authored"),
             (Change::Count, 1..) => format!("one more beside {label}"),
             (Change::Count, _) => format!("removed {label}"),
