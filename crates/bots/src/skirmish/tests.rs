@@ -264,6 +264,11 @@ fn the_road_starts_at_the_nearest_place_and_turns_only_when_it_must() {
         road((50, 18)),
         "(from: \"guard\", to: \"skirmish_50_18\", via: [(54, 18)]),"
     );
+    // Hollow Farm is nearer than the Lighthouse, far off along the same row.
+    assert_eq!(
+        road((20, 14)),
+        "(from: \"farm\", to: \"skirmish_20_14\", via: [(18, 14)]),"
+    );
     // Straight down from Wolf Pass, straight across from Old Camp.
     assert_eq!(road((30, 8)), "(from: \"pass\", to: \"skirmish_30_8\"),");
     assert_eq!(

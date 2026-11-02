@@ -386,6 +386,15 @@ mod tests {
     }
 
     #[test]
+    fn a_unit_with_no_armour_buys_some() {
+        let content = content();
+        let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+        unit.loadout.armour = None;
+        gear(&mut unit, &content, 2);
+        assert!(unit.loadout.armour.is_some());
+    }
+
+    #[test]
     fn units_promote_on_the_way_up_and_can_fight() {
         let content = content();
         for (level, tier) in [(12, 1), (13, 2), (32, 2), (33, 3), (99, 3)] {
