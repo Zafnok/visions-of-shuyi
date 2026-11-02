@@ -65,6 +65,7 @@ voice/
 | `line` | The dialogue line id. |
 | `variant` | `M` or `F` for a gendered pair; left out otherwise. |
 | `spoken` | The words the clip says: the line's text with every `{n:…}` name and pronoun filled in, as it was when the clip was made. |
+| `direction` | How the line was to be said when the clip was made (`assets/dialogue/README.md`, "Directions"); left out if it had none. |
 | `voice` | The cast voice that says it. |
 | `made_by` | `Generated(tool, model, date)` or `Recorded(actor)`. The credits and store pages say which voices are generated while any are. |
 
@@ -83,6 +84,12 @@ example after a rename in `assets/data/names.ron`. A stale clip is not an
 error: the game leaves it out and that line is silent until the clip is
 made again. The same goes for a plain clip on a line that needs a gendered
 pair, and for any clip on a line with `{lead}`.
+
+A clip whose line's `direction` changed still says the right words, so it
+keeps playing. It is not stale, but it **needs remaking**
+(`trpg_content::voice::needs_remake`), and the voice tool makes it again. How
+a direction reaches the tools, so that it changes the delivery and isn't read
+aloud, is [ADR-0109](adr/0109-voice-directions-reach-the-voice-design-model-apart-from-the-words.md).
 
 ## `cast.ron`
 

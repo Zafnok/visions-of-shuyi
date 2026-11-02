@@ -223,6 +223,45 @@ What the player hears: the calm track under the first line; it fades and
 the sad one starts as the second line appears, not before; silence for the
 narration, and after the scene.
 
+### How a line is said: directions
+
+A **direction** says how a line is spoken, in plain words, for the voice
+tool or an actor. The player never reads it: it isn't in the text box or
+the log. It goes in brackets before the colon, after any expression:
+
+```dlg
+@scene guide_directions
+@left  lead neutral
+@right messenger neutral
+messenger (out of breath): The bridge is down.
+messenger[sad] (in a low voice, full of grief): They didn't wait for us.
+> (slowly): Nobody answers.
+@delivery in low voices, keeping out of sight
+lead: Then we go by the mill.
+messenger: Now?
+messenger (whispering, frightened): They're on the road.
+@delivery clear
+lead: Move.
+@end
+```
+
+`@delivery` sets a direction for every speech and narration line after it,
+until `@delivery clear`, the next `@delivery` or the end of the scene. A
+line's own direction wins over it. Inside an `@if` part or a reply's
+reaction, `@delivery` lasts to the end of that part.
+
+- Write one where the words, the punctuation and the expression don't
+  already make the delivery clear. Never on every line.
+- An expression is the face; a direction is the voice. They can differ: a
+  neutral face can say a line through its teeth.
+- Say what the voice does, and don't explain the plot. It's free text. The
+  voice tools were tested on "calmly", "excitedly", "shouting, furious",
+  "whispering, frightened" and "in a low voice, full of grief". For sadness
+  use that last one: "close to tears" and "voice breaking" spoiled the voice.
+- Replies (`*` lines) are silent text, so they take no direction.
+- Changing a direction costs one line's voice clip and no translation: the
+  line keeps its id.
+
 ### Reply choices: `@choice`
 
 The lead is the player's character, and speaks mostly through **reply

@@ -63,7 +63,10 @@ Every line is one of these. Directives start at the very first column.
 | `@joins <character>` | A recruit on a story beat (Joss, `battle-scenes-and-recruitment.md`): when the scene plays, the character joins the army, fresh from `characters.ron`. The army can lose them from the next chapter on, so later scenes show them only in `@if` blocks; the scenes of the chapter that recruits them need none. See "Rules". |
 | `<character>: <text>` | The character speaks. They must be on screen (`@left`/`@right` first). |
 | `<character>[<expression>]: <text>` | The character changes expression, then speaks. The new expression stays. |
+| `<character> (<direction>): <text>`, `<character>[<expression>] (<direction>): <text>` | The line says how it is spoken. See "Directions". |
 | `> <text>` | Narration: a text box with no speaker. |
+| `> (<direction>): <text>` | Narration that says how it is spoken. |
+| `@delivery <direction>`, `@delivery clear` | A direction for the speech and narration lines after it, and its end. See "Directions". |
 | `  <text>` (indented) | Continues the speech or narration line above; the two are joined with one space. |
 | `@choice` … `@endchoice` | The lead's reply choice: see below. |
 | `@if <character>` … `@else` … `@endif` | Lines that play only if the character is still there, and the lines that play instead: see "Who is still there". |
@@ -428,10 +431,10 @@ cargo xtask lines ch01_intro
 ```
 
 prints one row per line: the id, who says it (`>` for narration, `*` for
-a reply) and the text as written.
+a reply), its direction (empty if it has none) and the text as written.
 
 ```
-ch01_intro_e4a70fe9	lead	Again.
+ch01_intro_e4a70fe9	lead	quietly	Again.
 ```
 
 An id is `<scene id>_<8 hex digits>`: a hash of the speaker and the text
@@ -444,13 +447,49 @@ space). So:
   another scene, does the same.
 - **Moving a line within its scene, or adding and removing lines around
   it, changes nothing.** Nor does changing the speaker's expression, a
-  reply's tone, or where a long line is broken over continuation lines.
+  reply's tone, a direction, or where a long line is broken over
+  continuation lines.
 - **The same line twice in a scene** (the same speaker saying the same
   words) gets `_2` on the second, `_3` on the third, in script order:
   `ch01_intro_e4a70fe9_2`. Removing the first makes the second the first.
 - Renaming a scene changes the id of every line in it.
 - Very rarely, two different lines of one scene hash to the same id; the
   validator reports both, and the fix is to reword one.
+
+## Directions
+
+A direction says how a line is spoken, in plain words, for the voice tool
+or an actor. The dialogue screen and the log never show it.
+
+```
+@scene ch01_ford
+@left retainer neutral
+retainer (out of breath): The bridge is down.
+retainer[sad] (in a low voice, full of grief): They didn't wait.
+> (slowly): Nobody answers.
+@delivery low, keeping out of sight
+retainer: We go by the mill.
+> The rain covers them.
+@delivery clear
+retainer: Move.
+@end
+```
+
+- A line's own direction goes before the colon, after any expression.
+- `@delivery` covers every speech and narration line after it, until
+  `@delivery clear`, the next `@delivery` or `@end`. A line's own direction
+  wins over it. Inside an `@if` part or a reply's reaction, it lasts to the
+  end of that part.
+- It is free text in plain ASCII, without a `:`. An empty one is an error.
+- Replies (`*` lines) are silent, so they take no direction.
+- A narration line that opens with a bracket and has `):` after it reads as
+  a direction. Reword such a line.
+- **Changing a direction keeps the line id**, so translations stay current.
+  The voice tool makes that line's clip again (`docs/voice.md`), and the old
+  clip plays until then.
+- An expression (`[angry]`) is the face and a direction is the voice. Write
+  one where the words, the punctuation and the expression don't already make
+  the delivery clear, and never on every line.
 
 ## Places
 

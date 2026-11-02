@@ -116,6 +116,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0106](0106-a-forecast-carries-its-numbers-after-a-first-hit-debuff.md) | A forecast carries its numbers after a first-hit debuff | Accepted (0330); extends ADR-0022 |
 | [0107](0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md) | Free local voice tools, with designed voices and a reader per character | Accepted (0043); amends ADR-0046 |
 | [0108](0108-windows-release-builds-with-the-gnu-toolchain.md) | The Windows release builds with the GNU toolchain | Accepted (0910); amends ADR-0009 |
+| [0109](0109-voice-directions-reach-the-voice-design-model-apart-from-the-words.md) | Voice directions reach the voice design model, apart from the words | Accepted (0752); amends ADR-0107 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

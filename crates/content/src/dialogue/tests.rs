@@ -32,6 +32,7 @@ fn id(s: &str) -> CharacterId {
 
 fn say(speaker: &str, expression: Option<&str>, text: &str) -> Step {
     Step::Say {
+        direction: None,
         speaker: id(speaker),
         expression: expression.map(Into::into),
         text: text.into(),
@@ -49,6 +50,7 @@ fn place(side: Side, character: &str, expression: &str) -> Step {
 
 fn narrate(text: &str) -> Step {
     Step::Narrate {
+        direction: None,
         text: text.into(),
         line: LineId::default(),
     }
@@ -630,7 +632,11 @@ fn embedded_test_scene_loads() {
             Step::Caption {
                 text: "Village of Heth, dusk".into()
             },
-            narrate("The rain had not stopped for three days."),
+            Step::Narrate {
+                direction: Some("slowly, tired".into()),
+                text: "The rain had not stopped for three days.".into(),
+                line: LineId::default(),
+            },
             place(Side::Left, "test_lord", "neutral"),
         ])
     );
@@ -890,6 +896,7 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
         arb_side().prop_map(|side| Step::Clear { side }),
         (arb_id(), proptest::option::of(arb_id()), arb_text()).prop_map(|(s, expression, text)| {
             Step::Say {
+                direction: None,
                 speaker: CharacterId(s),
                 expression,
                 text,
@@ -897,6 +904,7 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
             }
         }),
         arb_text().prop_map(|text| Step::Narrate {
+            direction: None,
             text,
             line: LineId::default(),
         }),

@@ -312,6 +312,7 @@ fn a_talk_shot_names_boxes_of_a_scene_before_its_first_choice() {
 fn the_boxes_of_a_talk_shot_each_fit_one_page() {
     let c = content();
     let narrate = |text: String| Step::Narrate {
+        direction: None,
         text,
         line: crate::LineId::default(),
     };

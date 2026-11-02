@@ -186,8 +186,9 @@ breaking (after 0236, 0237 and engine#2303); **0725** the translation pipeline (
 *Voices* (ADR-0046, ADR-0107): **0043** done, Nick picked the tools, what is
 voiced and each voice by ear; **0238** playback plumbing (after 0717) →
 **0754** the voice's word for the player's name, **0720** the dialogue screen
-plays them, **0721** the generation tool, **0826** the Options rows (after
-0805) → **0722** Chapter 1's voices → **0755**, **0756** Japanese and Chinese,
+plays them, **0721** the generation tool, **0752** done, directions on script
+lines (ADR-0109) → **0758** Chapter 1's directions, **0826** the Options rows
+(after 0805) → **0722** Chapter 1's voices → **0755**, **0756** Japanese and Chinese,
 **0077**, **0757** later chapters; **0475** → **0476** Vix speaks; **0859**
 auto-advance; **0860** a New Game options menu.
 *Script:* **0723** a scriptwriter's kit (after 0715).

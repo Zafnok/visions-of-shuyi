@@ -33,6 +33,8 @@ Chapter 1; write a ticket for more); chapters after 8.
 
 ## Implementation steps
 
+0. Write voice directions into each chapter's script first, as 0758 did for
+   Chapter 1 (ADR-0109): adding one later makes that line again.
 1. Follow 0722's steps 1–5, one chapter per commit in the private repository. A
    rewrite of a script after this makes its lines stale, and `cargo xtask voice
    generate` redoes only those.

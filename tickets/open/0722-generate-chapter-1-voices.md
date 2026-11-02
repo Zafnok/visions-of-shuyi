@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737", "0754"]
+blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737", "0754", "0758"]
 nick_input: none
 completed:
 ---

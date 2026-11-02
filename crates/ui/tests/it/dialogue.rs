@@ -162,6 +162,35 @@ fn narration_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// `test.dlg` directs its first narration and the lord's first line. The
+/// words are on screen and the directions aren't (0752); the snapshots above
+/// and below hold those same screens.
+#[test]
+fn a_direction_is_not_shown() {
+    let mut h = full_screen();
+    h.keys("f");
+    assert_eq!(page(&h), "The rain had not stopped for three days.");
+    let mut said_the_directed_line = false;
+    while h.top_screen() == "dialogue" {
+        said_the_directed_line |= page(&h) == "Better late than... well.";
+        let screen = h.snapshot();
+        for direction in ["slowly", "tired", "warmly", "teasing"] {
+            assert!(!screen.contains(direction), "{screen}");
+        }
+        h.keys("f");
+    }
+    assert!(said_the_directed_line);
+
+    // The dialogue log neither.
+    let mut h = full_screen();
+    h.keys("f f f f f f");
+    h.keys("b");
+    let log = h.snapshot();
+    assert!(log.contains("The rain had not stopped"), "{log}");
+    assert!(!log.contains("slowly"), "{log}");
+    assert!(!log.contains("teasing"), "{log}");
+}
+
 /// The lord's first line, part-way through its reveal.
 #[test]
 fn mid_reveal_snapshot() {
@@ -260,6 +289,7 @@ fn skipping_stops_at_the_choice() {
 #[test]
 fn two_reply_choice_snapshot() {
     let say = |who: &str, text: &str| Step::Say {
+        direction: None,
         speaker: CharacterId(who.into()),
         expression: None,
         text: text.into(),
@@ -312,6 +342,7 @@ fn two_reply_choice_snapshot() {
 /// and nothing after it.
 fn music_scene() -> Harness {
     let narrate = |text: &str| Step::Narrate {
+        direction: None,
         text: text.into(),
         line: trpg_content::LineId::default(),
     };

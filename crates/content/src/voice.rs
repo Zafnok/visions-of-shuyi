@@ -191,6 +191,13 @@ pub fn is_stale(clip: &VoiceClip, dialogue: &DialogueTable, names: &Names) -> bo
     VoiceManifest::is_stale(clip, dialogue, |text, v| spoken(text, v, names))
 }
 
+/// Whether `clip` should be made again: it is stale ([`is_stale`]), or its
+/// line's direction changed. A clip whose direction alone changed stays
+/// playable: it still says the words on screen (ADR-0109).
+pub fn needs_remake(clip: &VoiceClip, dialogue: &DialogueTable, names: &Names) -> bool {
+    VoiceManifest::needs_remake(clip, dialogue, |text, v| spoken(text, v, names))
+}
+
 /// The clips of `manifest` that aren't stale ([`is_stale`]).
 pub fn playable(manifest: &VoiceManifest, dialogue: &DialogueTable, names: &Names) -> Playable {
     manifest.playable(dialogue, |text, v| spoken(text, v, names))
