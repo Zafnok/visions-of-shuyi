@@ -253,6 +253,7 @@ fn advancing_a_finished_scene_does_nothing() {
     let mut player = play(&Scene {
         id: "s".into(),
         steps: vec![Step::Narrate {
+            direction: None,
             text: "x".into(),
             line: trpg_content::LineId::default(),
         }],
@@ -299,6 +300,7 @@ fn a_scene_without_text_starts_finished() {
 #[test]
 fn expression_changes_and_offscreen_speakers() {
     let say = |who: &str, e: Option<&str>| Step::Say {
+        direction: None,
         speaker: id(who),
         expression: e.map(Into::into),
         text: "t".into(),
@@ -347,6 +349,7 @@ fn option(text: &str, steps: Vec<Step>) -> ChoiceOption {
 
 fn narration(text: &str) -> Step {
     Step::Narrate {
+        direction: None,
         text: text.into(),
         line: trpg_content::LineId::default(),
     }
@@ -650,6 +653,7 @@ fn arb_step() -> impl Strategy<Value = Step> {
         side().prop_map(|side| Step::Clear { side }),
         (who(), proptest::option::of(expression()), "[a-z]{1,6}").prop_map(
             |(speaker, expression, text)| Step::Say {
+                direction: None,
                 speaker,
                 expression,
                 text,
@@ -657,6 +661,7 @@ fn arb_step() -> impl Strategy<Value = Step> {
             }
         ),
         "[a-z]{1,6}".prop_map(|text| Step::Narrate {
+            direction: None,
             text,
             line: trpg_content::LineId::default()
         }),
@@ -1031,6 +1036,7 @@ proptest! {
 #[test]
 fn the_line_on_screen_and_each_reply_have_their_ids() {
     let say = |text: &str, line: &str| Step::Say {
+        direction: None,
         speaker: id("lead"),
         expression: None,
         text: text.into(),
@@ -1056,6 +1062,7 @@ fn the_line_on_screen_and_each_reply_have_their_ids() {
                 options: vec![reply("Yes.", "t.yes"), reply("No.", "t.no")],
             },
             Step::Narrate {
+                direction: None,
                 text: "Done.".into(),
                 line: LineId::new("t.done"),
             },

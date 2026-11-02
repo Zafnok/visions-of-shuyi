@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-02
 ---
 
 # 0752 — Voice-direction cues in `.dlg` scripts
@@ -98,15 +98,15 @@ the plumbing are technical. Verified by tests.
 
 ## Acceptance criteria
 
-- [ ] A test script with directions parses; the dialogue screen snapshot
+- [x] A test script with directions parses; the dialogue screen snapshot
       of such a line shows no direction text.
-- [ ] Changing only a direction keeps the line id and marks the voice
+- [x] Changing only a direction keeps the line id and marks the voice
       clip stale (tests).
-- [ ] `cargo xtask lines <scene>` prints the direction column.
-- [ ] `check-script` flags an empty direction.
-- [ ] The README, the writer's guide (with a checked `dlg` example) and
+- [x] `cargo xtask lines <scene>` prints the direction column.
+- [x] `check-script` flags an empty direction.
+- [x] The README, the writer's guide (with a checked `dlg` example) and
       the story-writing skill describe it.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -117,4 +117,45 @@ the plumbing are technical. Verified by tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done. A script line can say how it is spoken, and it was heard working on the
+real voice tools.
+
+**The format:** `speaker (direction): text`, `speaker[expression] (direction):
+text`, `> (direction): text`, and `@delivery <direction>` / `@delivery clear`
+(`assets/dialogue/README.md`, "Directions"; ADR-0109). The parser and the manifest
+are the engine's, so the format landed first as engine#3114,
+`Zafnok/shuyi-engine#238`, and this PR moves the pin to that merge. It passes 15
+more engine PRs (`docs/engine/pins.md`).
+
+**Tested with Nick, beyond the ticket:** he asked to prove that a direction
+changes the tone and isn't read aloud. Across all the takes a speech-to-text check
+heard no direction word, and neither did Nick. Two rounds by ear, on Harl, the
+lead (woman), Hollis and Vix, on the listening page published as a private
+artifact: `claude.ai/artifact/CK8BrWLt8WNXZMA9CbKpSw`. His words and picks are in
+`docs/design/voices-languages-and-script.md`. The recipe is ADR-0109. It amends
+ADR-0107, which expected directions to have little effect. The lab's scripts are
+`D:\voice-lab\scripts\dir*.py` and `r2_*.py`, with the takes in `D:\voice-lab\out\`.
+Only 0721 turns them into a tool.
+
+**Deviations:**
+- A changed direction doesn't make the clip stale in the sense the game uses,
+  where a stale clip goes silent. The clip stays playable, because it still says
+  the words on screen, and a new `needs_remake` tells the voice tool to redo it.
+  The acceptance criterion holds for the tool, which is who it was for.
+- `lines` puts the direction before the text, so the long column stays last.
+
+**Follow-ups:** 0758 writes directions into Chapter 1, and 0722 now waits for it.
+0757 writes them into the later chapters first. 0721's steps now say how to pass a
+direction, retry bad takes and keep a whisper quiet. 1210 comes from the pin move.
+
+*The agent's starting rules*, for the Act 1 playtest (1064):
+- A directed clip keeps its distance from its character's level, within limits,
+  so a whisper stays quiet. The limits are 0721's to set.
+- Writers direct a minority of lines. Two lines per character were heard, so
+  whether directions hold over a whole scene is still to judge by ear.
+- A character's undirected lines keep their chosen reader, and directed lines take
+  ADR-0109's recipe. Whether the two sound like one person across a scene hasn't
+  been heard. If not, a whole scene may need to go one way.
+
+Engine friction: estimate 150 production lines (ticket, judged by 0238), measured
+155 (145 engine, 10 game), 1.0×.

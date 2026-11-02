@@ -225,8 +225,8 @@ more and faster, not less.
 
 ### Punctuation is the voice acting
 
-The game has no voice acting on most lines and no stage directions, so
-punctuation tells the player how a line is said. Nick, on 0736's second
+A player who has turned voices off sees no stage directions, so punctuation
+tells the player how a line is said. Nick, on 0736's second
 samples: "A period is a fact, an ellipses or an emdash... at least implies
 some trailing thought. And what about exclamation marks?" Those samples
 ended 86% of their sentences on a period and had no exclamation mark at
@@ -270,6 +270,19 @@ same way, whether `!`, `...` or `--` (a tic). Don't stack marks (`!!`,
 warning), and keep the plot facts in plain sentences. Put different temperatures and line lengths in
 every two-portrait scene, so the voices are told apart by more than
 rhythm. Run the cover test (critique pass) on every scene.
+
+### Voice directions
+
+A speech or narration line can say how it is spoken, for the voice tool or
+an actor, and the player never reads it: `retainer (in a low voice, full of
+grief): They didn't wait.`, `> (slowly): Nobody answers.`, or `@delivery
+<direction>` for a stretch (`assets/dialogue/README.md`, "Directions"). Write
+one where the punctuation and the expression don't already make the delivery
+obvious, never on every line, and in the character's range: a gruff man
+doesn't go "excitedly" because the scene is exciting. Write the punctuation
+first, as the player without voices reads only that. For sadness write "in a
+low voice, full of grief": "close to tears" and "voice breaking" spoiled the
+voice when Nick listened (ADR-0109).
 
 ### Battle lines
 

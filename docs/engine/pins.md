@@ -175,3 +175,16 @@ The notes on what the backend does went into 1170, 1196, 1048 and 1052. `cargo x
 | #206 | 2573 | Sound parity baselines and gates in the engine's CI; found that quad-snd's native loops aren't gapless | not for the game: the gates run on the engine's own probe and no game crate can call them. The game's music does loop natively, and only the engine's replacement (2210) can change that |
 
 Nothing for the game: 9 PRs (#175, #192, #213, #216, #218, #219, #220, #222, #223). #216 is research whose handoff is parked in the engine (3083); #218 is a tutorial for new games; #222 widens the engine's API gate, so `Breaking:` lines now cover `shuyi-playdate`. The skill pack's `shuyi-ship` gains `icon_sizes`, `exposure-report.json` and the `disclosure` part.
+
+## 2026-11-02: 76e05909 → 1e3d2d39 (16 engine PRs), #524
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #234 | 2518 | Session records of everything that reaches a game, at the platform; `Start` is `non_exhaustive` | fixed: nothing to change (the game builds `Start` with `Start::new`); adopt → 1210 |
+| #238 | 3114 | A dialogue line carries a direction; a voice clip remembers it | fixed: the game's tests that build `Say` and `Narrate`, and 0752 here; adopt → 0721 |
+| #236 | 2575 | The Harness starts a game from its real `Start` and plays a session record to any frame | adopt → 1210 |
+| #232 | 2210 | `shuyi-sound`'s PCM and source core, with WAV and Vorbis decoders | not for the game: no backend plays through it yet, and the game plays sound only through a backend |
+| #237 | 3030 | `shuyi-sound`'s mixer | not for the game: no backend plays through it yet (its own PR: quad-snd's path is unchanged) |
+| #225 | 2242 | Hot reload of the pictures a backend uploaded | adopt → 1209 |
+
+Nothing for the game: 10 PRs (#176, #185, #224, #226, #228, #229, #230, #231, #233, #235). #176 moves the engine's `image` crate; the game's pictures load the same, and the gates ran on it. #235 is research.

@@ -231,6 +231,27 @@ mod tests {
     }
 
     #[test]
+    fn an_empty_direction_is_reported_and_a_direction_is_accepted() {
+        let draft = Draft::new("direction.dlg");
+        fs::write(
+            &draft.0,
+            "@scene draft_752\n@left lead neutral\nlead (): Go.\n@delivery\n\
+             lead (quietly): Stay.\n> (slowly): It rains.\n@delivery low\n> Night falls.\n@end\n",
+        )
+        .unwrap();
+        let (scripts, only) = scripts(&root(), Some(&draft.0)).unwrap();
+        let name = shown(&draft.0);
+        assert_eq!(
+            report(&problems(&scripts), only.as_deref(), scripts.len()),
+            format!(
+                "{name}:3: a line's ( ) has no direction in it\n\
+                 {name}:4: @delivery needs a direction, or \"clear\"\n\
+                 2 problems in {name}\n"
+            )
+        );
+    }
+
+    #[test]
     fn a_script_of_the_game_is_checked_once_under_its_own_name() {
         let path = root().join("assets/dialogue/ch01.dlg");
         let (with, only) = scripts(&root(), Some(&path)).unwrap();

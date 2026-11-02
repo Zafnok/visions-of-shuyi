@@ -6,12 +6,12 @@
 
 @scene test
 @caption Village of Heth, dusk
-> The rain had not stopped for three days.
+> (slowly, tired): The rain had not stopped for three days.
 @left  test_lord neutral
 @if test_knight
 @right test_knight angry
 test_knight: You're late.
-test_lord[happy]: Better late than... well.
+test_lord[happy] (warmly, teasing): Better late than... well.
 test_knight: Than never. Say it.
   I've heard it from you often enough.
 @right clear

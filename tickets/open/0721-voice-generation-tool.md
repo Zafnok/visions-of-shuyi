@@ -61,9 +61,11 @@ the tool from the game.
    later is one file. The readers are Python programs in their own
    environments (ADR-0107); the trait runs them as child processes. A fake
    implementation (a tone per line) is used in tests.
-5. Loudness: match every clip to one level, the way 0214's import
-   matched the music (reuse its code), and trim silence at both ends to
-   at most 100 ms (*tunable*).
+5. Loudness: match every undirected clip to one level, the way 0214's
+   import matched the music (reuse its code), and trim silence at both ends
+   to at most 100 ms (*tunable*). A directed clip keeps its distance from
+   its character's level, within a floor and a ceiling (*tunable*), so a
+   whisper stays quiet (ADR-0109 rule 4). Nick heard them unmatched in 0752.
 6. Pronunciation: `voice/<lang>/say.ron`, name id or word → how to spell
    it for the tool (invented names are often misread). `spoken` in the
    manifest stays the real text; the respelling is only what is sent.
@@ -74,12 +76,15 @@ the tool from the game.
    a cast replaces the generated clips later (ADR-0046 rule 10).
 8. Never overwrite a `Recorded` clip; `generate` skips them and `status`
    lists them as stale for a human to re-record.
-9. **Voice directions (0752), either order:** if 0752 is done, pass each
-   line's delivery direction through the `Synth` trait and print it in
-   `voice script`; if not, 0752 adds it. Neither reader takes a direction in
-   words today (ADR-0107): Chatterbox has one intensity setting, and Qwen3
-   reads the emotion from the words. Each implementation does what it can
-   with a direction and says in `--dry-run` what it ignored.
+9. **Voice directions (0752, done):** `Line::direction` goes through the
+   `Synth` trait, is printed in `voice script`, and is written to each
+   clip's `direction` in the manifest. `status` and `generate` redo a clip by
+   `trpg_content::voice::needs_remake`. A line with no direction goes to its
+   reader as in step 4. A directed line takes the recipe of ADR-0109, whoever
+   reads the character: Nick picked it by ear, Hollis and Vix included.
+   `generate` keeps the first take whose transcript is the
+   line's words and retries the rest; a line with no good take is reported,
+   not saved. `--dry-run` counts directed lines apart: each costs more.
 9b. **Spoken words (0754):** send what the line says aloud, with the
    stand-in for the player's name, not what the box shows.
 10. `docs/voice.md`: how to run all three, where the files go, and the
@@ -89,7 +94,7 @@ the tool from the game.
 ## Acceptance criteria
 
 - [ ] With the fake synth: `generate` on `test.dlg` makes one clip per voiced line; a second run makes none (test).
-- [ ] Rewording a line, renaming a name in it, or changing its speaker's voice makes exactly that line's clip regenerate (tests).
+- [ ] Rewording a line, renaming a name in it, changing its direction, or changing its speaker's voice makes exactly that line's clip regenerate (tests).
 - [ ] A `Recorded` clip is never overwritten (test).
 - [ ] `--dry-run` writes nothing and prints the counts.
 - [ ] `script --character` output for a test character is snapshot-tested.

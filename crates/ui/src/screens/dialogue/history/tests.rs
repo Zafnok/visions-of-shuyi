@@ -8,6 +8,7 @@ use super::*;
 
 fn say(speaker: &str, text: &str) -> Step {
     Step::Say {
+        direction: None,
         speaker: CharacterId(speaker.into()),
         expression: None,
         text: text.into(),

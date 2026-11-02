@@ -22,6 +22,7 @@ fn press(s: &mut DialogueScreen, c: &mut Ctx, action: Action) -> Transition {
 
 fn say(speaker: &str, text: &str) -> Step {
     Step::Say {
+        direction: None,
         speaker: CharacterId(speaker.into()),
         expression: None,
         text: text.into(),
@@ -699,6 +700,7 @@ fn music(cue: &str) -> Step {
 
 fn narrate(text: &str) -> Step {
     Step::Narrate {
+        direction: None,
         text: text.into(),
         line: trpg_content::LineId::default(),
     }
@@ -1020,6 +1022,7 @@ fn a_jump_in_the_log_shows_that_lines_place() {
 fn the_keys_after_the_one_that_starts_an_opening_wait() {
     let mut c = ctx();
     let narrate = |text: &str| Step::Narrate {
+        direction: None,
         text: text.into(),
         line: trpg_content::LineId::default(),
     };

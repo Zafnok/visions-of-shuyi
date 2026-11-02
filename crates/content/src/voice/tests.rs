@@ -33,6 +33,32 @@ fn names() -> Names {
     names_with("the king")
 }
 
+/// Changing only a line's direction keeps its id and asks for a new clip,
+/// and the old clip plays until there is one (ADR-0109).
+#[test]
+fn a_changed_direction_keeps_the_id_and_asks_for_a_new_clip() {
+    let table = |line: &str| {
+        let script = format!("@scene s\n@left test_lord neutral\n{line}\n@end\n");
+        from_sources(&[("t.dlg", &script)], None, None, None, None).unwrap()
+    };
+    let plain = table("test_lord: Hello.");
+    let loud = table("test_lord (shouting): Hello.");
+    let line = plain.scenes["s"].lines()[0].id.to_string();
+    assert_eq!(loud.scenes["s"].lines()[0].id.as_str(), line);
+
+    let manifest = from_source(
+        "voice.ron",
+        &manifest_source(&[clip(&line, "", "Hello.")]),
+        &plain,
+    )
+    .unwrap();
+    let names = names();
+    assert!(!needs_remake(&manifest.clips[0], &plain, &names));
+    assert!(needs_remake(&manifest.clips[0], &loud, &names));
+    assert!(!is_stale(&manifest.clips[0], &loud, &names));
+    assert_eq!(playable(&manifest, &loud, &names).len(), 1);
+}
+
 /// The id of the line of [`SCRIPT`] written `text`, said by `speaker`.
 fn id(speaker: &str, text: &str) -> String {
     let dialogue = dialogue();

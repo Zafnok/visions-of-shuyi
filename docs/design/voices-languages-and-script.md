@@ -149,6 +149,17 @@ voices too".
 
 > ill go with K
 
+**10. Directions** (0752, by ear, 2026-11-01; "excitedly" should change the
+tone and never be read aloud). On four ways to make a directed line:
+
+> A is out of the running bc it too drastically alters the character's voice.
+> D is bad too bc the direction doesn't change the delivery whatsoever. Somehow
+> the slowly, close to tears delivery is haunted and always corrupts the voices
+> which reflects poorly on B even though in general B sounds about on par with C.
+
+No direction was heard read aloud. In the next round he picked **B**, "Low, full
+of grief" for sadness, and "Yes, use them".
+
 ### The rules
 
 **What is heard**
@@ -183,6 +194,15 @@ voices too".
   goes to the next line and stops the voice.
 - An Options setting moves to the next line by itself when the clip ends
   (0859).
+
+**How a line is said**
+
+- A script line can carry a direction ("whispering, frightened"). It changes
+  how the voice says the line, and is never read aloud or shown (0752,
+  ADR-0109).
+- A quiet direction stays quiet: a whisper isn't brought up to the level of
+  a shout.
+- For sadness the script says "in a low voice, full of grief".
 
 **Other languages**
 
