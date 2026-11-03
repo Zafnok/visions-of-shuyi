@@ -197,7 +197,7 @@ Nothing for the game: 10 PRs (#176, #185, #224, #226, #228, #229, #230, #231, #2
 
 Nothing for the game: 1 PR (#244), a `pulldown-cmark` advisory in the engine's own tools. The skill pack's `shuyi-debug-replay` gains reproducing a bug from a session record.
 
-## 2026-11-03: 96e97bf0 → 2d2166f6 (6 engine PRs), #PRNUM
+## 2026-11-03: 96e97bf0 → 2d2166f6 (6 engine PRs), #537
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
