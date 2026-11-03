@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["1039"]
 nick_input: none
-completed:
+completed: 2026-11-03
 ---
 
 # 0472 — A downed unit can be looked at, and the objective line fits
@@ -96,14 +96,14 @@ callers), plus tests.
 
 ## Acceptance criteria
 
-- [ ] With the cursor on a downed unit, the PC side panel and the
+- [x] With the cursor on a downed unit, the PC side panel and the
       Playdate pop-up show it (tests on the view; pictures in the PR).
-- [ ] A downed unit can't be picked, targeted or moved (a test: Confirm
+- [x] A downed unit can't be picked, targeted or moved (a test: Confirm
       on it does what Confirm on an empty tile does).
-- [ ] The objective fit test passes for every battle and language pack,
+- [x] The objective fit test passes for every battle and language pack,
       and fails on a battle whose `exit_name` is 60 characters (a test
       with a built battle).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -113,5 +113,26 @@ callers), plus tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- `BattleScreen::looked_at()` (`screens/battle/mod.rs`): the unit on the
+  field under the cursor, or else one down on the tile. `panel_view` uses
+  it outside playback, so the PC side panel and the Playdate's corner
+  pop-ups (both built from the panel view) show a downed unit. Every
+  command path (picking, targets, threat arrows, help line, danger zone)
+  stays on `hovered()`: Confirm on a downed unit opens the map menu, as on
+  an empty tile, and the help line is the empty tile's.
+- The escape line moved into `map_menu::escape_text` so the fit test can
+  build it at "(N/N out)", N the battle's player slots.
+- `every_battles_objective_line_fits_the_pc_and_the_playdate`: every
+  embedded battle (`assets/` and `assets-test/`), English and every pack,
+  fits the PC box's inside (map view 70 − 4 = 66 cells) and the Playdate
+  window's (50 − 4 = 46). No shipped battle failed; no `exit_name`
+  changed. `an_exit_named_in_60_characters_does_not_fit` checks it fails.
+- Deviation: the panel tests down the Quick Battle's brigand (the attack
+  skirmish 0319's tests already use, deterministic) instead of
+  `test_hold`'s rogue; the PR's pictures are of `test_hold`'s rogue.
+- Pictures: `docs/img/0472-downed-pc.png`, `docs/img/0472-downed-playdate.png`.
+- Friction: estimate 30, measured 23 (under 2×).
+
+*The agent's starting rule* (for the Act 1 playtest, 1064): a unit that
+went down shows its panel (PC) or pop-up (Playdate) when the cursor is on
+it, as during playback; it can't be picked, targeted or moved.

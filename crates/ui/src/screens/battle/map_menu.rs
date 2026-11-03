@@ -255,21 +255,27 @@ pub fn objective_text(state: &BattleState, exit: Option<&str>, words: Words<'_>)
             let out = state.escaped().len();
             let on_map = state.units().iter();
             let total = out + on_map.filter(|u| u.faction == Faction::Player).count();
-            match exit {
-                Some(place) => words.text_with(
-                    "battle.objective.escape_to",
-                    &[
-                        ("place", &words.exit_name(place)),
-                        ("out", &out),
-                        ("total", &total),
-                    ],
-                ),
-                None => words.text_with(
-                    "battle.objective.escape",
-                    &[("out", &out), ("total", &total)],
-                ),
-            }
+            escape_text(exit, (out, total), words)
         }
+    }
+}
+
+/// An escape's objective line: to `exit` (or `the exit`), with `out` of
+/// `total` out.
+pub fn escape_text(exit: Option<&str>, (out, total): (usize, usize), words: Words<'_>) -> String {
+    match exit {
+        Some(place) => words.text_with(
+            "battle.objective.escape_to",
+            &[
+                ("place", &words.exit_name(place)),
+                ("out", &out),
+                ("total", &total),
+            ],
+        ),
+        None => words.text_with(
+            "battle.objective.escape",
+            &[("out", &out), ("total", &total)],
+        ),
     }
 }
 
@@ -539,5 +545,62 @@ mod tests {
             end_turn_question(Words::ENGLISH, 3),
             "End turn with 3 units ready?"
         );
+    }
+
+    /// Battle `def`'s objective line at its longest in `words`: an
+    /// escape's with every player slot out.
+    fn longest_objective(c: &crate::Ctx, def: &trpg_core::BattleDef, words: Words<'_>) -> String {
+        use trpg_core::{GameMode, LeadGender, LeadProfile, lead::DEFAULT_NAME};
+        let exit = def.exit_name.as_deref();
+        if let Objective::Escape { .. } = def.objective {
+            let n = def.player_slots.len();
+            return escape_text(exit, (n, n), words);
+        }
+        let content = &c.game.content;
+        let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
+        let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
+        let (s, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+        objective_text(&s, exit, words)
+    }
+
+    /// Whether `line` fits the objective box: on the PC, inside the
+    /// double border and a blank column either side over the map view;
+    /// on the Playdate, inside its window's frame and margins, which cut
+    /// it there (0472).
+    fn fits(line: &str) -> bool {
+        use crate::ConsoleSizes;
+        use crate::screens::battle::layout::MAP_VIEW;
+        let pc = MAP_VIEW.w - 4;
+        let playdate = i32::from(crate::ConsoleSpec::PLAYDATE.cols) - 4;
+        crate::screens::playdate::cells(line) <= pc.min(playdate)
+    }
+
+    /// Every battle's objective line fits, in English and every pack.
+    #[test]
+    fn every_battles_objective_line_fits_the_pc_and_the_playdate() {
+        let c = ctx();
+        let content = &c.game.content;
+        let packs = content
+            .lang
+            .codes()
+            .map(|code| Words::new(&content.lang, code));
+        let all: Vec<Words<'_>> = core::iter::once(Words::ENGLISH).chain(packs).collect();
+        assert!(all.len() > 1, "the test pack is embedded");
+        for (id, def) in &content.battles {
+            for &words in &all {
+                let line = longest_objective(&c, def, words);
+                assert!(fits(&line), "{id}: {line:?}");
+            }
+        }
+    }
+
+    /// An exit 60 characters long is too long.
+    #[test]
+    fn an_exit_named_in_60_characters_does_not_fit() {
+        let c = ctx();
+        let mut def = c.game.content.battles["test_escape"].clone();
+        assert!(fits(&longest_objective(&c, &def, Words::ENGLISH)));
+        def.exit_name = Some("x".repeat(60));
+        assert!(!fits(&longest_objective(&c, &def, Words::ENGLISH)));
     }
 }
