@@ -538,7 +538,7 @@ undercroft_warden: The chest key's the little one. The brass. Air them out. They
 
 @scene ch07_death_lead
 @left lead sad
-> {lead} goes down on the worn stairs, and the lamp goes down them ahead of {them}.
+> {lead|The exile} goes down on the worn stairs, and the lamp goes down them ahead of {them}.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -704,7 +704,7 @@ battlemage: I've lost count of you. I'll stand here by the wall and count you pa
 @if retainer
 @left retainer neutral
 @right lead neutral
-> {n:retainer.first} looks at {lead}'s guard before he looks at anything else.
+> {n:retainer.first} looks at {lead|the exile}'s guard before he looks at anything else.
 retainer: Shoulder up. ...Good. You're all right.
 @left clear
 @right clear
@@ -769,7 +769,7 @@ keeper: Let me see your hands-- no. Yours are fine, I looked on the stairs. Mine
 @right clear
 @if heretic
 @right heretic neutral
-> {n:heretic} sits down between {n:keeper} and {lead} with half a loaf, and tears it, and doesn't hand any of it over yet.
+> {n:heretic} sits down between {n:keeper} and {lead|the exile} with half a loaf, and tears it, and doesn't hand any of it over yet.
 heretic: He said thorough.
 keeper: Yes. Two and a half pages. I put in what you ate. I put in that you ate standing up, by the door, like you'd have to run. I thought if they knew that they'd be-- I thought it would make them kind.
 heretic: It was the hands. One line, "burned hands," and he'd have known. You could've written one line. ...I'm saying it wasn't the pages, Keeper.

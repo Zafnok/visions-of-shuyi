@@ -144,10 +144,10 @@ keeper: Is the sea cold? I've never-- I've read about it, obviously, the school 
 @right clear
 @endif
 @if heretic
-> {n:heretic} eats walking, and puts a piece of bread in {lead}'s hand without looking at {them}.
+> {n:heretic} eats walking, and puts a piece of bread in {lead|the exile}'s hand without looking at {them}.
 @endif
 @if prizefighter
-> {n:prizefighter.first} has moved to the ditch side of the road, between {lead} and the hedge, and says nothing about it.
+> {n:prizefighter.first} has moved to the ditch side of the road, between {lead|the exile} and the hedge, and says nothing about it.
 @endif
 @if retainer
 @right retainer neutral
@@ -199,9 +199,9 @@ retainer: {N:family.veyne} in the middle. Nobody runs for the stone, I don't car
 @right retainer surprised
 retainer: That's it, then. That's the sea. Huh. ...It's a lot of water.
 @if sergeant
-> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead} looks at his face, not at the sea. Behind them nobody speaks, not even {n:sergeant.first}.
+> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead|the exile} looks at his face, not at the sea. Behind them nobody speaks, not even {n:sergeant.first}.
 @else
-> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead} looks at his face, not at the sea.
+> He has stopped walking. He stands with the spear in his hand and says nothing else, and {lead|the exile} looks at his face, not at the sea.
 @endif
 @right clear
 @left clear
@@ -336,7 +336,7 @@ retainer: You were mine. From the night we walked out that gate you were mine, m
 * blunt: Four years, and a fire.
   retainer: Four years and a fire. Say it as often as you like. I'm not arguing it tonight, or any other night.
 * act: Move over.
-  > {lead} sits down on the step beside him. He moves the knee over, slowly, and for a while neither of them says anything, and the tide comes in.
+  > {lead|The exile} sits down on the step beside him. He moves the knee over, slowly, and for a while neither of them says anything, and the tide comes in.
   retainer: You're cold. Give me that strap, it's twisted.
 @endchoice
 @right retainer neutral
@@ -345,7 +345,7 @@ retainer: Boots off, you won't sleep in wet boots, I've told you since you were 
 @left clear
 @right clear
 @else
-> Stairs down from the quay to the water, and the tide coming in loud over the stones. {lead} sits on the third step alone.
+> Stairs down from the quay to the water, and the tide coming in loud over the stones. {lead|The exile} sits on the third step alone.
 @if heretic
 @left heretic neutral
 heretic: Here. Bread. I'm not asking what you're doing down here. I'm sitting, is all. It's a step, isn't it?
@@ -465,7 +465,7 @@ hound_officer: Off the quay. Get them off the quay before the halberds-- somebod
 
 @scene ch05_death_lead
 @left lead sad
-> {lead} is down in the doorway. The door stands open behind {them}.
+> {lead|The exile} is down in the doorway. The door stands open behind {them}.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -639,7 +639,7 @@ defector: Your Grace? Say something. Please, just-- anything.
 * blunt: Now it's said. Sit down.
   defector: Yes, Your Grace. ...It's said. It is said, isn't it. Yes.
 * act: Here. Your tin. It was under the table.
-  > {lead} puts the flat tin of needles in his hand. He holds it in both of them and doesn't open it.
+  > {lead|The exile} puts the flat tin of needles in his hand. He holds it in both of them and doesn't open it.
   defector[sad]: Thank you. I didn't know I'd-- thank you.
 @endchoice
 @right defector neutral
@@ -686,7 +686,7 @@ poacher: Well? Noble. Say it.
 * blunt: Then don't do it again.
   poacher: I cannot now. The man is gone and the boat is gone. ...That is not what you asked. No. I will not.
 * act: Give me your hands. They're blue.
-  > {lead} takes her hands and holds them. She lets {them}, for a count of three, and takes them back.
+  > {lead|The exile} takes her hands and holds them. She lets {them}, for a count of three, and takes them back.
   poacher: They are not blue. It is the light.
 @endchoice
 @right poacher neutral

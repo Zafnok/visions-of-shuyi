@@ -14,6 +14,7 @@ mod openings;
 mod presence;
 mod rules;
 mod setting;
+mod stand_in;
 
 use shuyi_assets::dialogue::{self as engine, Directive, Parsed};
 use trpg_core::{CharacterId, Pos};
@@ -27,6 +28,7 @@ pub use shuyi_assets::dialogue::{
     DialogueLimits, Line, LineId, Lines, MusicLine, NARRATION_SPEAKER, PartLines, Present,
     REPLY_SPEAKER, Side, caption_key, check_duplicates, print_scene,
 };
+pub use stand_in::{StandIns, missing as missing_stand_ins, stand_in, written};
 
 use crate::audio::AudioManifest;
 use crate::bundle;
@@ -85,8 +87,29 @@ pub type DialogueTable = engine::DialogueTable<Stage>;
 pub type ParsedScene = engine::ParsedScene<Stage>;
 /// Every scene of every dialogue file, with where each was written: what
 /// the checks that need the battles and the roster ([`check_presence`])
-/// run on once those are loaded.
-pub type Scripts = engine::Scripts<Stage>;
+/// run on once those are loaded. Its lines show `{lead}` where a script
+/// wrote a stand-in, `{lead|the exile}`; [`stand_ins`](Self::stand_ins)
+/// keeps those lines as written (ticket 0754).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Scripts {
+    /// The scenes, by id.
+    pub table: DialogueTable,
+    /// The scenes as written, in file order.
+    pub parsed: Vec<ParsedScene>,
+    /// The lines written with a stand-in, by id, as written.
+    pub stand_ins: StandIns,
+}
+
+impl Scripts {
+    /// The engine's `scripts`, with `stand_ins` taken out of their lines.
+    fn with(scripts: engine::Scripts<Stage>, stand_ins: StandIns) -> Self {
+        Self {
+            table: scripts.table,
+            parsed: scripts.parsed,
+            stand_ins,
+        }
+    }
+}
 
 /// The game's directives: what is staged around the talk.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -320,8 +343,23 @@ pub fn load_scripts(
         names,
         audio,
     };
-    match engine::scripts_from_parsed(files, &rules) {
-        Ok(scripts) if errors.is_empty() => Ok(scripts),
+    checked(files, errors, &rules)
+}
+
+/// [`Scripts`] of `files`, each line's stand-ins taken out first, or every
+/// problem with them added to `errors` (those found reading them), ordered
+/// by file and line.
+fn checked(
+    mut files: Vec<engine::DialogueFile<Stage>>,
+    mut errors: Vec<ContentError>,
+    rules: &rules::Rules<'_>,
+) -> Result<Scripts, Vec<ContentError>> {
+    let mut stand_ins = StandIns::new();
+    for scene in files.iter_mut().flat_map(|file| &mut file.scenes) {
+        stand_ins.extend(stand_in::take(scene));
+    }
+    match engine::scripts_from_parsed(files, rules) {
+        Ok(scripts) if errors.is_empty() => Ok(Scripts::with(scripts, stand_ins)),
         result => {
             errors.extend(result.err().unwrap_or_default());
             errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
@@ -358,7 +396,16 @@ pub fn scripts_from_sources<F: AsRef<str>>(
         names,
         audio,
     };
-    engine::scripts_from_sources(files, &rules)
+    let mut errors = Vec::new();
+    let files = files
+        .iter()
+        .map(|(file, source)| {
+            let (scenes, e) = engine::parse_dlg(file.as_ref(), source);
+            errors.extend(e);
+            engine::DialogueFile { scenes }
+        })
+        .collect();
+    checked(files, errors, &rules)
 }
 
 #[cfg(test)]

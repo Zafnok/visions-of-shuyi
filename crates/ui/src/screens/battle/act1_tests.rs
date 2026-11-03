@@ -258,3 +258,43 @@ fn the_leftovers_leaving() {
     h.wait(0.4 * FLEE_S);
     assert_snapshot!(h.snapshot());
 }
+
+/// The attack skirmish once its unkillable brigand is down, the cursor on
+/// it; and where it lies.
+fn brigand_down() -> (Harness, Pos) {
+    let mut h = aiming(skirmish(5, Defeat::GoesDown));
+    h.keys("f").wait(5.0);
+    let s = h.battle_mut().expect("a battle");
+    let at = s.state().down()[0].pos;
+    s.cursor.jump(at);
+    (h, at)
+}
+
+/// The side panel shows a downed unit under the cursor, as playback does
+/// (0472), and so do the Playdate's corner pop-ups.
+#[test]
+fn a_downed_unit_under_the_cursor_shows_in_the_side_panel() {
+    let (h, at) = brigand_down();
+    let s = h.battle().expect("a battle");
+    assert_eq!(s.hovered(), None, "commands don't see it");
+    assert_eq!(s.looked_at().map(|u| u.pos), Some(at));
+    let unit = s.view(h.game().ctx()).panel.and_then(|p| p.unit);
+    let unit = unit.expect("the panel shows it");
+    assert_eq!(unit.name, "Brigand");
+    assert_eq!(unit.hp, 0);
+    assert_snapshot!(h.snapshot());
+    let mut pd = crate::map_view::playdate::tests::pd_ctx();
+    pd.console = <crate::ConsoleSpec as crate::ConsoleSizes>::PLAYDATE;
+    let panel = s.view(&pd).panel.expect("browsing");
+    assert_eq!(panel.unit.map(|u| u.name).as_deref(), Some("Brigand"));
+}
+
+/// Confirm on a downed unit does what it does on an empty tile: it opens
+/// the map menu, picking nothing.
+#[test]
+fn a_downed_unit_cant_be_picked() {
+    let (mut h, _) = brigand_down();
+    h.keys("f");
+    let mode = h.battle().map(BattleScreen::mode);
+    assert!(matches!(mode, Some(Mode::MapMenu { .. })), "{mode:?}");
+}

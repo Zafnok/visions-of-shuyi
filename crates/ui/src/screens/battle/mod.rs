@@ -1520,6 +1520,15 @@ impl BattleScreen {
         self.state.units().iter().find(|u| self.drawn_pos(u) == pos)
     }
 
+    /// The unit drawn under the cursor to look at: [`hovered`](Self::hovered),
+    /// or a unit down on the tile (0472). Only the panel reads it; commands
+    /// see units on the field alone.
+    pub fn looked_at(&self) -> Option<&Unit> {
+        let pos = self.cursor.pos;
+        let down = || self.state.down().iter().find(|u| u.pos == pos);
+        self.hovered().or_else(down)
+    }
+
     /// Where `unit` is drawn: its tile, or where it walks or stands before
     /// its move is sent ([`Mode::drawn_pos`]).
     fn drawn_pos(&self, unit: &Unit) -> Pos {
@@ -2512,7 +2521,7 @@ impl BattleScreen {
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
             panel::view(told, pos, hovered.map(|(u, _)| u), selected)
         } else {
-            panel::view(told, pos, self.hovered(), selected)
+            panel::view(told, pos, self.looked_at(), selected)
         }
     }
 

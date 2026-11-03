@@ -205,7 +205,7 @@ retainer: Three days to the sea, then. Walk, all of you. It's going to snow.
 @music talk_calm
 @if retainer
 > The hill above the harbor, late. The town's lights below, and one lantern out on the water where the ships lie.
-> {n:retainer.first} sits with {lead}'s sword across his knees and the stone, doing the edge.
+> {n:retainer.first} sits with {lead|the exile}'s sword across his knees and the stone, doing the edge.
 @left retainer neutral
 @right lead neutral
 retainer: Sit. You're in my light. Have you ever been on a boat? Don't say the mill pond. The pond's got a bottom.
@@ -233,11 +233,11 @@ retainer: Give it here, Keeper. And sit down, you're letting the cold in.
 @endif
 @left clear
 @else
-> The hill above the harbor, late. The town's lights below, and one lantern out on the water where the ships lie. {lead} sits with {their} sword across {their} knees and does the edge {themself}.
+> The hill above the harbor, late. The town's lights below, and one lantern out on the water where the ships lie. {lead|The exile} sits with {their} sword across {their} knees and does the edge {themself}.
 @if keeper
 @left keeper neutral
 @right lead neutral
-keeper: Let me see your hands before you-- they're fine. I knew they were fine. ...Sleep, {lead}. Please. Someone ought to say it to you, so I am.
+keeper: Let me see your hands before you-- they're fine. I knew they were fine. ...Sleep, {lead|you}. Please. Someone ought to say it to you, so I am.
 @left clear
 @right clear
 @endif
@@ -288,7 +288,7 @@ envoy: I'll have every one of you on her, exile. Now go stand somewhere. You're 
 
 @scene ch08_prebattle
 @caption {N:place.saltmere}, the docks
-> Hound black comes out of all three streets at once and stops at the quay's edge, as if the stones were a line. Out in front of it, {n:rival.first}, hands empty, looking only at {lead}.
+> Hound black comes out of all three streets at once and stops at the quay's edge, as if the stones were a line. Out in front of it, {n:rival.first}, hands empty, looking only at {lead|the exile}.
 @left lead neutral
 @right rival neutral
 rival: {N:family.veyne}. The ship can go. I don't care about a cog. Come up the steps with me, and I'll stand at the top and watch it sail with all your people on it.
@@ -432,7 +432,7 @@ rival: I'm-- it's fine. Don't stop. The streets! Hold the streets. ...{N:family.
 
 @scene ch08_death_lead
 @left lead sad
-> {lead} goes down on the wet stones of the quay, a plank's length from the ship.
+> {lead|The exile} goes down on the wet stones of the quay, a plank's length from the ship.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -612,7 +612,7 @@ retainer: I've got the knee. I'm slow. If I go last, nobody's stuck behind me. U
 rival: Archers-- hold! Hold, that's-- hold!
 > The volley is already in the air. {n:retainer.first} goes down at the foot of the plank, to his knees and then onto his side, with the spear across the boards.
 # @music scene_loss: 0071's pick for the moment Hollis dies; 0854 imports the cue and adds the line here.
-> {N:rival.first}'s hand is up, and {n:faction.hounds} hold where they are. He comes down the quay alone. {lead} is back down the plank before anyone can stop {them}.
+> {N:rival.first}'s hand is up, and {n:faction.hounds} hold where they are. He comes down the quay alone. {lead|The exile} is back down the plank before anyone can stop {them}.
 @if keeper
 @right keeper surprised
 keeper: Let me through! Let me-- I can see him, I've got it in my hand, let me get to him.
@@ -627,7 +627,7 @@ retainer: {N:heretic} saw her. Walking off the field, after, with two keepers in
 @else
 retainer: She walked off that field. After. Two keepers in gray had her. ...Go and get her, boy.
 @endif
-> He looks at {lead}'s shoulder. It's up. Then at his son. His hand comes off the spear.
+> He looks at {lead|the exile}'s shoulder. It's up. Then at his son. His hand comes off the spear.
 rival: ...
 @left clear
 rival[sad]: Nobody shoots. Let it go, the ship. ...Get on your boat, {n:family.veyne}. There are no orders.
@@ -641,14 +641,14 @@ sergeant: Up! Your Former Grace, up, now, I've got you-- {their} other arm, one 
 shieldbearer: Up, outlaw. Easy. I've got you. Up.
 @left clear
 @else
-> Hands take {lead} by the collar and haul {them} up the plank.
+> Hands take {lead|the exile} by the collar and haul {them} up the plank.
 @endif
 @endif
 # @music scene_departure: 0071's pick for the ship sailing; 0854 imports the cue and adds the line here.
 > The plank is pulled in, and the water opens between them. On the quay {n:rival.first} is on one knee, with his father.
 @right clear
 @else
-> The ship is loaded and the last line is off. Hound black fills the three streets. {lead} is last up the plank, and the archers on the long roof have their bows drawn on {them}.
+> The ship is loaded and the last line is off. Hound black fills the three streets. {lead|The exile} is last up the plank, and the archers on the long roof have their bows drawn on {them}.
 @left lead neutral
 @right rival angry
 rival: Hold. ...Nobody looses. I'll hang the man who does.
@@ -682,7 +682,7 @@ lead: Go and get her.
 @scene ch08_sail
 @caption At sea, that evening
 # scene_departure (0071's cue for the ship sailing) carries on from the quay; no change here.
-> The deck, and the coast a line behind the ship, and then not even that. {lead} stands at the rail.
+> The deck, and the coast a line behind the ship, and then not even that. {lead|The exile} stands at the rail.
 @left lead neutral
 @if retainer
 @dies retainer
@@ -698,7 +698,7 @@ keeper: I had it in my hand. The salve. I had it out, I was three steps from him
 @endif
 @if heretic
 @right heretic neutral
-> {n:heretic} puts bread into {lead}'s hand without a word, and sits down on the deck with her back against the rail.
+> {n:heretic} puts bread into {lead|the exile}'s hand without a word, and sits down on the deck with her back against the rail.
 heretic: Did he eat? Today, before. Did anybody see him eat anything? ...Anybody?
 @right clear
 @endif
@@ -716,10 +716,10 @@ shieldbearer: I've never been east of the fjord. {N:envoy.first} has, once. She 
   @if shieldbearer
   @right shieldbearer neutral
   shieldbearer: No-- all right. Wake me at the bell, outlaw.
-  > Her cloak goes around {lead}'s shoulders on the way past.
+  > Her cloak goes around {lead|the exile}'s shoulders on the way past.
   @right clear
   @else
-  > No one argues. A cloak goes around {lead}'s shoulders on the way past.
+  > No one argues. A cloak goes around {lead|the exile}'s shoulders on the way past.
   @endif
 * blunt: Go below. All of you.
   @if keeper
@@ -751,10 +751,10 @@ prizefighter: Rule fourteen is struck, Champion. I struck it on the quay. ...I w
 @if poacher
 @right poacher neutral
 poacher: {N:family.veyne}. You are wet. Sit down.
-> {lead} sits.
+> {lead|The exile} sits.
 @right clear
 @else
-> {lead} sits down, after a while, where {they} stood.
+> {lead|The exile} sits down, after a while, where {they} stood.
 @endif
 @left clear
 @end

@@ -155,6 +155,56 @@ fn a_line_with_the_leads_name_has_no_spoken_text() {
 }
 
 #[test]
+fn a_stand_in_is_what_the_voice_says_for_the_name() {
+    for gender in [Male, Female] {
+        assert_eq!(
+            spoken_text("Welcome back, {lead|the exile}.", &names(), gender).as_deref(),
+            Some("Welcome back, the exile.")
+        );
+    }
+    assert_eq!(
+        spoken_text("{lead|The exile} draws {their} sword.", &names(), Female).as_deref(),
+        Some("The exile draws her sword.")
+    );
+    // Every name needs one.
+    assert_eq!(
+        spoken_text("{lead|The exile} and {lead}.", &names(), Male),
+        None
+    );
+}
+
+/// A line written with a stand-in can have a clip; changing the stand-in
+/// keeps the line's id and makes the clip stale (ADR-0107 rule 4).
+#[test]
+fn a_changed_stand_in_keeps_the_id_and_makes_the_clip_stale() {
+    let scripts = |line: &str| {
+        let script = format!(
+            "@scene s
+@left test_lord neutral
+{line}
+@end
+"
+        );
+        dialogue::scripts_from_sources(&[("t.dlg", &script)], None, None, None, None).unwrap()
+    };
+    let exile = scripts("test_lord: Welcome back, {lead|the exile}.");
+    let heir = scripts("test_lord: Welcome back, {lead|the heir}.");
+    let line = exile.table.scenes["s"].lines()[0].id.to_string();
+    assert_eq!(heir.table.scenes["s"].lines()[0].id.as_str(), line);
+
+    let source = manifest_source(&[clip(&line, "", "Welcome back, the exile.")]);
+    let manifest = from_source("voice.ron", &source, &exile.table).unwrap();
+    let (names, clip) = (names(), &manifest.clips[0]);
+    let exile = dialogue::written(&exile.table, &exile.stand_ins);
+    let heir = dialogue::written(&heir.table, &heir.stand_ins);
+    assert!(!is_stale(clip, &exile, &names));
+    assert_eq!(playable(&manifest, &exile, &names).len(), 1);
+    assert!(is_stale(clip, &heir, &names));
+    assert!(needs_remake(clip, &heir, &names));
+    assert!(playable(&manifest, &heir, &names).is_empty());
+}
+
+#[test]
 fn only_pronoun_tokens_change_with_gender() {
     assert!(changes_with_gender("{They} left."));
     assert!(changes_with_gender("It is {theirs}."));
