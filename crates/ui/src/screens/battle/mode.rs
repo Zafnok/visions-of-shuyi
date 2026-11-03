@@ -1219,7 +1219,8 @@ fn step_list(
     }
 }
 
-/// `line` of the list `menu` chosen: an art opens its forecast; a spell
+/// `line` of the list `menu` chosen: an art opens its forecast (an art used
+/// as an action of its own, Overwatch, is used at once); a spell
 /// picks what it is cast on, an item who it is used on, the cursor on the
 /// first; a skill that needs no target is used at once, Shove picks who it
 /// is used on; a weapon or spell is equipped and the action menu reopens
@@ -1233,7 +1234,13 @@ fn choose_line(
 ) -> (Mode, Effect) {
     let (s, m) = (sel.clone(), menu.clone());
     let chosen = match line {
-        Line::Art(art) => Targeting::art(state, s, m, art).map(|t| show_forecast(t, state)),
+        // (The menu never chooses a dimmed, unusable art.)
+        Line::Art(art) => match &art.technique {
+            super::art_list::Technique::Art(id) if art.technique.is_action(state) => Some(apply(
+                super::art_list::action_art_command(sel.unit, sel.dest(), id, art.slot),
+            )),
+            _ => Targeting::art(state, s, m, art).map(|t| show_forecast(t, state)),
+        },
         Line::Spell(c) => CastTargeting::new(state, s, m, c.clone()).map(|t| aim(t, state)),
         // (The menu never chooses a dimmed, unusable skill.)
         Line::Skill(c) if !c.needs_target => Some(apply(use_command(&sel, &c.skill, None))),

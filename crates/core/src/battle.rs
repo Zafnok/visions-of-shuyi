@@ -248,6 +248,30 @@
 //!   unit, then the attacker). [`BattleState::preview_attack`] gives the UI
 //!   the forecast, the durability change and the art's
 //!   [notes](crate::art::ArtNote) before committing.
+//!
+//!   **Stances that react** (ticket 0326; a stance's
+//!   [`StanceReaction`](crate::skill::StanceReaction)), read whenever a combat is
+//!   worked out or fought, so a stance taken in this combat counts in it:
+//!   - **Riposte** (`StrikesFirst`): attacked, the unit's first counter
+//!     comes before the attacker's first strike
+//!     ([`Reactions`](crate::combat::Reactions)).
+//!   - **Spear Wall** (`Counters`): attacked, its weapon
+//!     reaches from 1 to that distance and its counters get the hit bonus.
+//!   - **Deflect** (`Deflect`): the first strike at it that would hit
+//!     misses and it strikes back (the strikes'
+//!     [`reaction`](crate::combat::Strike::reaction)); then the stance ends
+//!     ([`Event::EffectExpired`] after the combat).
+//!   - **Overwatch** (`Overwatch`) is an art used as an action of its own,
+//!     [`UnitAction::UseArt`]: it equips and pays as an art, takes the
+//!     stance ([`Event::ArtUsed`], the payment, [`Event::EffectApplied`])
+//!     and ends the action like `Wait`, with no EXP. Then, whenever a unit
+//!     hostile to the user ends an `Act`'s move ([`Event::UnitMoved`]) on a
+//!     tile its equipped weapon reaches, it shoots it once
+//!     ([`Event::OverwatchShot`], an [`Event::CombatResolved`] of one strike
+//!     with no counter, the stance's [`Event::EffectExpired`], weapon EXP as
+//!     an art's, the fall, unit EXP as a combat's), before the unit's
+//!     action. A unit that falls doesn't act; one that didn't move isn't
+//!     shot. Several units on Overwatch shoot in unit order.
 //! - **Unit EXP and class points** ([`crate::progression`] has the rules;
 //!   `docs/design/progression.md`), for **player units** only, each an
 //!   award of EXP ([`Event::ExpGained`], then [`Event::LeveledUp`] and any
@@ -719,6 +743,15 @@ pub enum UnitAction {
         /// The unit it is used on (Shove), or `None` (every other skill).
         target: Option<UnitId>,
     },
+    /// Use a Combat Art as an action of its own, with no target (Overwatch,
+    /// [`ArtEffect::is_action`](crate::art::ArtEffect::is_action)), paid
+    /// from the weapon in loadout slot `slot` (equips it).
+    UseArt {
+        /// The art.
+        art: ArtId,
+        /// The weapon's loadout slot.
+        slot: usize,
+    },
 }
 
 /// What a [`UnitAction::Cast`] is cast on.
@@ -911,6 +944,18 @@ pub enum Event {
         spell: SpellId,
         /// Uses left.
         uses_left: u8,
+    },
+    /// A unit on an Overwatch stance shoots a hostile unit that has just
+    /// ended a move in its weapon's range; the shot's
+    /// [`Event::CombatResolved`] follows, then the stance ends
+    /// ([`Event::EffectExpired`]).
+    OverwatchShot {
+        /// The unit on Overwatch.
+        unit: UnitId,
+        /// The art whose stance it is.
+        art: ArtId,
+        /// The unit it shoots.
+        target: UnitId,
     },
     /// A combat was fought.
     CombatResolved {
@@ -1734,6 +1779,8 @@ enum Step {
     Wait,
     /// A combat, with a weapon or an attack spell.
     Attack(Box<AttackStep>),
+    /// An art used as an action of its own.
+    Art(Box<ArtUse>),
     /// A non-combat active.
     Skill {
         active: Box<ActiveUse>,
@@ -2475,6 +2522,7 @@ impl BattleState {
             UnitAction::UseSkill { ref skill, target } => {
                 self.plan_skill(unit, dest, skill, target)?
             }
+            UnitAction::UseArt { ref art, slot } => self.plan_action_art(unit, art, slot)?,
         })
     }
 
@@ -2568,6 +2616,8 @@ impl BattleState {
             forecast.defender = None;
         }
         self.plan_first_hit(unit, defender, &fight, &mut forecast)?;
+        forecast.reactions =
+            arts::reactions(unit, defender, arts::new_stance(unit, &fight), &forecast);
         let pierce = match &art {
             Some(a) if a.effect.line_pierce => {
                 self.plan_pierce(unit, defender, &fight, distance)?
@@ -2637,6 +2687,8 @@ impl BattleState {
         }
         self.plan_first_hit(unit, target, fight, &mut forecast)
             .ok()?;
+        forecast.reactions =
+            arts::reactions(unit, target, arts::new_stance(unit, fight), &forecast);
         Some(forecast)
     }
 
@@ -2928,22 +2980,38 @@ impl BattleState {
         self.units.iter_mut().find(|u| u.id == id)
     }
 
+    /// Moves unit `id` along `path` (validated; its tile first), then lets
+    /// the Overwatch stances react. Returns whether it may act: not if it
+    /// was shot down (the battle judged then, as it may be over).
+    fn walk(&mut self, id: UnitId, path: Vec<Pos>, events: &mut Vec<Event>) -> bool {
+        let Some(&dest) = path.last().filter(|_| path.len() > 1) else {
+            return true;
+        };
+        if let Some(u) = self.unit_mut(id) {
+            u.pos = dest;
+        }
+        events.push(Event::UnitMoved { unit: id, path });
+        if !self.overwatch(id, events) {
+            return true;
+        }
+        if let Some(outcome) = self.judge() {
+            self.finish(outcome, events);
+        }
+        false
+    }
+
     /// Carries out a validated `Act`: `path` ends at the unit's `dest`.
     fn act(&mut self, id: UnitId, path: Vec<Pos>, step: Step, events: &mut Vec<Event>) {
         let dest = path.last().copied();
-        if let Some(dest) = dest
-            && path.len() > 1
-        {
-            if let Some(u) = self.unit_mut(id) {
-                u.pos = dest;
-            }
-            events.push(Event::UnitMoved { unit: id, path });
+        if !self.walk(id, path, events) {
+            return;
         }
         let mut seized = false;
         let mut move_after = 0;
         match step {
             Step::Wait => {}
             Step::Attack(attack) => move_after = self.attack(id, &attack, events),
+            Step::Art(art) => self.use_action_art(id, &art, events),
             Step::Skill { active, effect } => {
                 let award = SkillAward::of(&effect);
                 let (helped, points) = self.skill_support(&effect);
@@ -2992,7 +3060,11 @@ impl BattleState {
             Step::Shop(till) => {
                 let till = *till;
                 if let Some(u) = self.unit_mut(id) {
+                    // An Overwatch shot may have hurt it since the visit
+                    // was worked out.
+                    let hp = u.hp;
                     *u = till.unit;
+                    u.hp = hp;
                 }
                 self.gold = till.gold;
                 self.pack = till.pack;
@@ -3331,9 +3403,12 @@ impl BattleState {
         &mut self,
         attacker: UnitId,
         defender: UnitId,
-        forecast: Forecast,
+        mut forecast: Forecast,
         events: &mut Vec<Event>,
     ) -> Tally {
+        if let (Some(a), Some(d)) = (self.unit(attacker), self.unit(defender)) {
+            forecast.reactions = arts::reactions(a, d, None, &forecast);
+        }
         let hp = |s: &Self, id| {
             s.unit(id)
                 .map_or(CombatHp { current: 0, max: 0 }, |u| CombatHp {
@@ -3358,12 +3433,14 @@ impl BattleState {
             }
         }
         let tally = Tally::of(&outcome, [attacker, defender], [a.current, d.current]);
+        let deflected = outcome.clone();
         events.push(Event::CombatResolved {
             attacker,
             defender,
             forecast,
             outcome,
         });
+        self.end_deflects([attacker, defender], &deflected, events);
         tally
     }
 

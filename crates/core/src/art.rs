@@ -38,7 +38,8 @@ use crate::combat::{CombatMods, MitigationStat, PowerStat, WeaponStats, WeaponTr
 use crate::item::{ItemTable, WEAPON_SLOTS};
 use crate::movement::AttackRange;
 use crate::skill::{
-    ActiveEffect, CostSource, SkillCost, SkillKind, SkillTable, TimedMods, check_cost,
+    ActiveEffect, CostSource, SkillCost, SkillKind, SkillTable, StanceReaction, TimedMods,
+    check_cost,
 };
 use crate::spell::SpellTable;
 use crate::stats::{StatKind, StatValue};
@@ -73,7 +74,7 @@ impl Debuff {
         TimedMods {
             stats: vec![(self.stat, -self.amount)],
             combat: CombatMods::default(),
-            stops_enemies: false,
+            ..Default::default()
         }
     }
 }
@@ -212,6 +213,15 @@ impl ArtEffect {
         mods.mitigation = self.mitigation.or(mods.mitigation);
     }
 
+    /// Whether the art is used as an action of its own, with no attack and
+    /// no target (Overwatch: its stance has
+    /// [`StanceReaction::Overwatch`]), rather than in an attack.
+    pub fn is_action(&self) -> bool {
+        self.stance
+            .as_ref()
+            .is_some_and(|s| s.reacts(StanceReaction::Overwatch))
+    }
+
     /// Pack Hunt's might for `allies` other units of the user's side next
     /// to the target; 0 without it.
     pub fn pack_might(&self, allies: usize) -> StatValue {
@@ -237,7 +247,7 @@ impl ArtEffect {
                 avoid_debuff: self.on_first_hit_avoid,
                 ..CombatMods::default()
             },
-            stops_enemies: false,
+            ..Default::default()
         })
     }
 

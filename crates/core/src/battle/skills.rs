@@ -216,9 +216,7 @@ impl BattleState {
         }
         if let Some(art) = fight.art {
             // An art's stance counts in its own combat, once.
-            if let Some(stance) = &art.effect.stance
-                && !attacker.has_effect(&EffectSource::Art(art.art.clone()))
-            {
+            if let Some(stance) = super::arts::new_stance(attacker, fight) {
                 a_bonus.add_timed(stance);
             }
             if let Some(w) = a.weapon.as_mut() {
@@ -242,6 +240,15 @@ impl BattleState {
             &mut d,
             &self.bonuses(defender, defender.pos, &d_usable, &d_ctx),
         );
+        // Spear Wall: an attacked unit's stance widens its weapon's reach
+        // and aims its counters.
+        for (reach, hit) in defender.effects.iter().filter_map(|e| e.mods.counters()) {
+            if let Some(w) = d.weapon.as_mut().filter(|w| w.kind.is_some()) {
+                w.min_range = w.min_range.min(1);
+                w.max_range = w.max_range.max(reach);
+            }
+            d.mods.hit += hit;
+        }
         let post_move =
             post_move_tiles(&a_usable, &a_ctx).max(fight.active.map_or(0, |x| x.post_move));
         Ok((a, d, post_move))

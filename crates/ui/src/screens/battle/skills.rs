@@ -19,6 +19,7 @@ use super::mode::{Line, Selection};
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
+use trpg_core::StanceReaction;
 
 /// A skill's cost as text: `3 dur` (weapon durability), `+1 use` (one more
 /// use of the spell) or, for a non-attack active, its uses left this battle
@@ -93,17 +94,33 @@ pub fn stats_text(words: Words<'_>, stats: &[(StatKind, StatValue)]) -> String {
 }
 
 /// A timed effect's bonuses as text: its stats, then its combat numbers,
-/// then whether it stops enemies.
+/// then whether it stops enemies, then how it reacts (`strikes first`,
+/// `counters at 1–2`, `counters hit +15`, `deflects a hit and strikes
+/// back`, `shoots an enemy moving in range`).
 pub fn timed_text(words: Words<'_>, mods: &TimedMods) -> String {
-    let stops = if mods.stops_enemies {
-        words.text("battle.stance.stops_enemies").to_owned()
-    } else {
-        String::new()
+    let flag = |on: bool, key| {
+        if on {
+            words.text(key).to_owned()
+        } else {
+            String::new()
+        }
+    };
+    let reaction = match mods.reaction {
+        None => String::new(),
+        Some(StanceReaction::StrikesFirst) => flag(true, "battle.stance.strikes_first"),
+        Some(StanceReaction::Counters { reach, hit }) => [
+            words.text_with("battle.stance.counter_reach", &[("n", &reach)]),
+            words.text_with("battle.stance.counter_hit", &[("n", &hit)]),
+        ]
+        .join(" "),
+        Some(StanceReaction::Deflect) => flag(true, "battle.stance.deflect"),
+        Some(StanceReaction::Overwatch) => flag(true, "battle.stance.overwatch"),
     };
     [
         stats_text(words, &mods.stats),
         mods_text(words, &mods.combat),
-        stops,
+        flag(mods.stops_enemies, "battle.stance.stops_enemies"),
+        reaction,
     ]
     .into_iter()
     .filter(|t| !t.is_empty())

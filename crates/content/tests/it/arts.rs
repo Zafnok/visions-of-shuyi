@@ -193,8 +193,8 @@ fn the_worked_example_w1_with_each_sword_art() {
 
 /// Each art, used by a rank-D unit of a class that wields its kind with
 /// that kind's iron weapon (a weapon art: with the special weapon that
-/// carries it, at that weapon's rank), on an enemy in range: the attack is
-/// accepted, announced and paid.
+/// carries it, at that weapon's rank), on an enemy in range (Overwatch: as
+/// an action of its own): the attack is accepted, announced and paid.
 #[test]
 fn every_art_can_be_used_with_its_iron_weapon() {
     let weapon = |kind| match kind {
@@ -205,7 +205,7 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         WeaponKind::Gauntlet => ("brawler", "iron_gauntlets"),
     };
     let (arts, items) = (&content().arts, &content().items);
-    assert_eq!(arts.arts.len(), 22);
+    assert_eq!(arts.arts.len(), 26);
     for (id, art) in &arts.arts {
         let (class, iron) = weapon(art.kind);
         let own = items.items.iter().find_map(|(item, def)| match def {
@@ -244,7 +244,16 @@ fn every_art_can_be_used_with_its_iron_weapon() {
                 ("iron_sword", WeaponKind::Sword),
             ),
         ]);
-        let events = act(&mut s, 1, p(0, 0), attack(3, Some(&id.0)));
+        // Overwatch is an action of its own, with no target.
+        let action = if art.effect.is_action() {
+            UnitAction::UseArt {
+                art: id.clone(),
+                slot: 0,
+            }
+        } else {
+            attack(3, Some(&id.0))
+        };
+        let events = act(&mut s, 1, p(0, 0), action);
         assert_eq!(
             events.first(),
             Some(&Event::ArtUsed {
@@ -278,6 +287,10 @@ fn rank_arts_c_to_s_are_taught_by_their_rank() {
         names
     };
     assert_eq!(by_rank(Sword, A), ["cascade"]);
+    assert_eq!(by_rank(Sword, C), ["riposte"]);
+    assert_eq!(by_rank(Spear, B), ["spear_wall"]);
+    assert_eq!(by_rank(Bow, B), ["overwatch"]);
+    assert_eq!(by_rank(Gauntlet, B), ["deflect"]);
     assert_eq!(by_rank(Spear, C), ["long_thrust"]);
     assert_eq!(by_rank(Spear, A), ["skypiercer"]);
     assert_eq!(by_rank(Axe, B), ["hurl"]);

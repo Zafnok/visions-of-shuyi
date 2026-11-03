@@ -248,7 +248,7 @@ fn notes_spell_out_the_effects_that_are_not_numbers() {
             avoid: 20,
             ..CombatMods::default()
         },
-        stops_enemies: false,
+        ..Default::default()
     };
     let effect = ArtEffect {
         hit: 10,
@@ -282,7 +282,7 @@ fn a_debuff_is_a_negative_stat_bonus() {
         TimedMods {
             stats: vec![(StatKind::Mov, -3)],
             combat: CombatMods::default(),
-            stops_enemies: false,
+            ..Default::default()
         }
     );
 }
@@ -354,7 +354,7 @@ fn a_first_hit_debuff_lists_stats_and_avoid() {
                 avoid_debuff: 20,
                 ..CombatMods::default()
             },
-            stops_enemies: false,
+            ..Default::default()
         })
     );
     assert_eq!(ArtEffect::default().first_hit_mods(), None);

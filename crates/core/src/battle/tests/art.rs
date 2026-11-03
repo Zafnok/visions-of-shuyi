@@ -806,7 +806,7 @@ fn a_stance_counts_once_when_already_on_the_user() {
                     avoid: 20,
                     ..CombatMods::default()
                 },
-                stops_enemies: false,
+                ..Default::default()
             },
             until: Phase::Player,
         });

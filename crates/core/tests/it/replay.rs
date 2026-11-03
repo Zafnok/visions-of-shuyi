@@ -189,7 +189,7 @@ pub(super) fn skills() -> Arc<SkillTable> {
                     mods: TimedMods {
                         stats: vec![(StatKind::Def, 2)],
                         combat: CombatMods::default(),
-                        stops_enemies: false,
+                        ..Default::default()
                     },
                     this_combat: true,
                 }),

@@ -8,11 +8,13 @@ use crate::prelude::*;
 use super::{BattleState, CommandError, Event, Fight, Phase, Pos, Step, UnitAction};
 use crate::art::{ArtEffect, ArtId, ArtNote};
 use crate::combat::{
-    CombatHp, Forecast, SideForecast, StrikePlan, forecast as combat_forecast, if_all_hit,
+    CombatHp, CombatOutcome, Forecast, Reactions, Side, SideForecast, StrikePlan, StrikeReaction,
+    forecast as combat_forecast, if_all_hit,
 };
 use crate::item::{Equipped, ItemId};
 use crate::skill::{
-    CostSource, EffectSource, SkillCost, SkillId, TimedEffect, check_cost, pay_cost,
+    CostSource, EffectSource, SkillCost, SkillId, StanceReaction, TimedEffect, TimedMods,
+    check_cost, pay_cost,
 };
 use crate::unit::{Unit, UnitId};
 
@@ -77,13 +79,69 @@ fn first_hit_effect(art: &ArtUse, target: &Unit) -> Option<TimedEffect> {
     })
 }
 
+/// The stance reactions of a combat of `attacker` against `defender` with
+/// `forecast` ([`Reactions`]): Riposte's order if the defender counters, and
+/// each side's Deflect. `stance` is a stance the attacker takes in this
+/// combat but doesn't have yet (its art's, for a preview).
+pub(super) fn reactions(
+    attacker: &Unit,
+    defender: &Unit,
+    stance: Option<&TimedMods>,
+    forecast: &Forecast,
+) -> Reactions {
+    let has = |u: &Unit, r| u.effects.iter().any(|e| e.mods.reacts(r));
+    Reactions {
+        defender_first: forecast.defender.is_some() && has(defender, StanceReaction::StrikesFirst),
+        deflects: [
+            has(attacker, StanceReaction::Deflect)
+                || stance.is_some_and(|m| m.reacts(StanceReaction::Deflect)),
+            has(defender, StanceReaction::Deflect),
+        ],
+    }
+}
+
+/// The stance `fight`'s art puts on `unit` in this combat, if `unit`
+/// doesn't have it yet.
+pub(super) fn new_stance<'a>(unit: &Unit, fight: &Fight<'a>) -> Option<&'a TimedMods> {
+    let art = fight.art?;
+    let stance = art.effect.stance.as_ref()?;
+    (!unit.has_effect(&EffectSource::Art(art.art.clone()))).then_some(stance)
+}
+
 impl BattleState {
-    /// Validates `unit` using art `id` in an attack with `with`.
+    /// Validates `unit` using art `id` in an attack with `with`: never an
+    /// art used as an action of its own (Overwatch).
     pub(super) fn plan_art(
         &self,
         unit: &Unit,
         id: &ArtId,
         with: &Equipped,
+    ) -> Result<ArtUse, CommandError> {
+        self.art_use(unit, id, with, false)
+    }
+
+    /// Validates `unit` using art `id`, an art used as an action of its own
+    /// ([`ArtEffect::is_action`]), with the weapon in `slot`.
+    pub(super) fn plan_action_art(
+        &self,
+        unit: &Unit,
+        id: &ArtId,
+        slot: usize,
+    ) -> Result<Step, CommandError> {
+        self.check_wield(unit.id, slot)?;
+        check_arts_allowed(unit)?;
+        let art = self.art_use(unit, id, &Equipped::Weapon(slot), true)?;
+        Ok(Step::Art(Box::new(art)))
+    }
+
+    /// Validates `unit` using art `id` with `with`, in an attack or, if
+    /// `action`, as an action of its own: the art must be of that sort.
+    fn art_use(
+        &self,
+        unit: &Unit,
+        id: &ArtId,
+        with: &Equipped,
+        action: bool,
     ) -> Result<ArtUse, CommandError> {
         let tables = &self.tables;
         let def = tables
@@ -98,9 +156,10 @@ impl BattleState {
         let Equipped::Weapon(slot) = *with else {
             return Err(not_usable());
         };
-        let fits = unit
-            .arts_for(slot, &tables.classes, &tables.items, &tables.arts)
-            .contains(&def);
+        let fits = def.effect.is_action() == action
+            && unit
+                .arts_for(slot, &tables.classes, &tables.items, &tables.arts)
+                .contains(&def);
         let copy = unit
             .loadout
             .weapon(slot)
@@ -197,6 +256,140 @@ impl BattleState {
             });
         }
         paid.broke
+    }
+
+    /// Unit `id` uses the action art `art` (validated, [`Step::Art`]): it
+    /// equips the art's weapon, pays and takes the stance. Nothing else
+    /// happens until the stance reacts ([`Self::overwatch`]).
+    pub(super) fn use_action_art(&mut self, id: UnitId, art: &ArtUse, events: &mut Vec<Event>) {
+        let with = Equipped::Weapon(art.slot);
+        if self
+            .unit(id)
+            .is_some_and(|u| u.loadout.equipped.as_ref() != Some(&with))
+        {
+            self.equip(id, with, events);
+        }
+        let broke = self.commit_art(id, art, events);
+        events.extend(broke);
+    }
+
+    /// Overwatch: unit `id` has just ended a move. Each unit hostile to it
+    /// on an Overwatch stance whose equipped weapon reaches it shoots it
+    /// once, in the battle's unit order, each stance then ending: one
+    /// strike with no counter ([`Event::OverwatchShot`], then the combat),
+    /// weapon EXP as an art's and unit EXP as a combat's. Returns whether
+    /// `id` fell (or went down): it then doesn't act.
+    pub(super) fn overwatch(&mut self, id: UnitId, events: &mut Vec<Event>) -> bool {
+        let Some(mover) = self.unit(id) else {
+            return false;
+        };
+        let watchers: Vec<(UnitId, ArtId)> = self
+            .units
+            .iter()
+            .filter(|u| u.faction.is_hostile_to(mover.faction))
+            .filter_map(|u| {
+                u.effects.iter().find_map(|e| match &e.source {
+                    EffectSource::Art(art) if e.mods.reacts(StanceReaction::Overwatch) => {
+                        Some((u.id, art.clone()))
+                    }
+                    _ => None,
+                })
+            })
+            .collect();
+        for (watcher, art) in watchers {
+            let Some((shot, kind)) = self.overwatch_shot(watcher, id) else {
+                continue;
+            };
+            events.push(Event::OverwatchShot {
+                unit: watcher,
+                art,
+                target: id,
+            });
+            let tally = self.clash(watcher, id, shot, events);
+            self.end_reaction(watcher, StanceReaction::Overwatch, events);
+            let exp = self.tables.items.rules.weapon_exp(
+                tally.struck[0],
+                tally.hits[0],
+                tally.dealt[0],
+                true,
+            );
+            if let Some(kind) = kind {
+                self.gain_weapon_exp(watcher, kind, exp, events);
+            }
+            self.remove_fallen(&[id], events);
+            self.award_combat(&tally, events);
+            if self.unit(id).is_none() {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// The numbers of unit `watcher`'s Overwatch shot at `target` where it
+    /// stands, with its equipped weapon (and that weapon's kind): one strike,
+    /// no counter. `None` if it has no weapon equipped or `target` is out of
+    /// its range.
+    fn overwatch_shot(
+        &self,
+        watcher: UnitId,
+        target: UnitId,
+    ) -> Option<(Forecast, Option<crate::weapon::WeaponKind>)> {
+        let (unit, target) = (self.unit(watcher)?, self.unit(target)?);
+        let with = unit.loadout.equipped.clone()?;
+        if !matches!(with, Equipped::Weapon(_)) {
+            return None;
+        }
+        let fight = Fight {
+            dest: unit.pos,
+            moved: 0,
+            with: &with,
+            active: None,
+            art: None,
+        };
+        let (a, d, _) = self.fighters(unit, target, &fight).ok()?;
+        let rules = self.tables.items.combat_rules();
+        let distance = Pos::manhattan(unit.pos, target.pos);
+        let mut shot = combat_forecast(&rules, &a, &d, distance)?;
+        shot.defender = None;
+        shot.attacker.strikes = 1;
+        Some((shot, a.weapon.and_then(|w| w.kind)))
+    }
+
+    /// Ends unit `id`'s first stance with `reaction` (its Deflect, its
+    /// Overwatch): it has reacted ([`Event::EffectExpired`]).
+    pub(super) fn end_reaction(
+        &mut self,
+        id: UnitId,
+        reaction: StanceReaction,
+        events: &mut Vec<Event>,
+    ) {
+        let Some(unit) = self.unit_mut(id) else {
+            return;
+        };
+        let Some(i) = unit.effects.iter().position(|e| e.mods.reacts(reaction)) else {
+            return;
+        };
+        let source = unit.effects.remove(i).source;
+        events.push(Event::EffectExpired { unit: id, source });
+    }
+
+    /// Ends the Deflect stance of each side of `outcome`'s combat between
+    /// `units` (`[attacker, defender]`) that deflected a strike.
+    pub(super) fn end_deflects(
+        &mut self,
+        units: [UnitId; 2],
+        outcome: &CombatOutcome,
+        events: &mut Vec<Event>,
+    ) {
+        for strike in &outcome.strikes {
+            if strike.reaction == Some(StrikeReaction::Deflected) {
+                let target = match strike.by {
+                    Side::Attacker => units[1],
+                    Side::Defender => units[0],
+                };
+                self.end_reaction(target, StanceReaction::Deflect, events);
+            }
+        }
     }
 
     /// Works out the numbers of `forecast` from its art's first hit on, if
