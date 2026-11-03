@@ -297,6 +297,7 @@ fn load(loading: Box<Loading>) -> Step {
     }
     reset_elapsed();
     let start = millis();
+    let name = loading.boot.name();
     let mut step = game_stack::run(move || {
         let Loading { card, boot } = *loading;
         match boot.step(&mut SdkHost) {
@@ -305,7 +306,12 @@ fn load(loading: Box<Loading>) -> Step {
             Err(e) => panic!("the game did not start: {e}"),
         }
     });
-    LOAD_MS.fetch_add(millis().wrapping_sub(start), Ordering::Relaxed);
+    let ms = millis().wrapping_sub(start);
+    LOAD_MS.fetch_add(ms, Ordering::Relaxed);
+    // SAFETY: one thread (see `Front`).
+    if let Some(reads) = unsafe { &mut *READS.0.get() } {
+        reads.callback(name, ms);
+    }
     if let Step::Running(running) = &mut step {
         report_load(running);
     } else {
@@ -367,6 +373,7 @@ fn report_load(running: &mut Running) {
         game_stack::high_water(),
     ));
     lines.extend(reads.summary(end_ms));
+    lines.push(reads.callbacks());
     lines.push(report::sounds(running.audio.samples()));
     for line in &lines {
         log(line);

@@ -4,15 +4,17 @@
 //! callback has not returned for 10 seconds, and the whole start in one
 //! callback took longer than that on the device.
 //!
-//! The steps are the game's data ([`start::data`]), the player's settings
-//! and saves ([`start::with_storage`]), the sounds (as many in a callback
-//! as [`Host::out_of_time`] allows) and the title. Plain code: `src/pd/
+//! The steps are the game's data in three ([`StagedLoad`]: what the
+//! dialogue is checked against, the dialogue, the rest), the player's
+//! settings and saves ([`start::with_storage`]), the sounds (as many in a
+//! callback as [`Host::out_of_time`] allows) and the title. Plain code: `src/pd/
 //! entry.rs` runs it on the SDK, and the tests and `chapter_1.rs` on fakes.
 
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::String;
 
+use trpg_content::StagedLoad;
 use trpg_ui::{Ctx, Game, Storage};
 
 use crate::audio::{Audio, Speaker};
@@ -46,8 +48,12 @@ pub trait Host {
 
 /// The step the next update callback runs.
 pub enum Boot<S: Speaker> {
-    /// The game's data.
+    /// The game's data, up to the dialogue.
     Data,
+    /// The dialogue.
+    Dialogue(Box<StagedLoad>),
+    /// The rest of the game's data, and the context over it.
+    Context(Box<StagedLoad>),
     /// The player's settings and saves, over the data.
     Storage(Box<Ctx>),
     /// The sounds, some of them loaded.
@@ -82,6 +88,18 @@ pub enum Next<S: Speaker> {
 }
 
 impl<S: Speaker> Boot<S> {
+    /// What this step is called in the load report.
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Data => "data",
+            Self::Dialogue(_) => "dialogue",
+            Self::Context(_) => "context",
+            Self::Storage(_) => "storage",
+            Self::Sounds(_) => "sounds",
+            Self::Title(_) => "title",
+        }
+    }
+
     /// Runs this step with `host`.
     ///
     /// # Errors
@@ -89,8 +107,13 @@ impl<S: Speaker> Boot<S> {
     /// If the game's data or the Playdate's palette fails to load.
     pub fn step<H: Host<Speaker = S>>(self, host: &mut H) -> Result<Next<S>, String> {
         Ok(Next::Step(match self {
-            Self::Data => {
-                let ctx = start::data(host.seed())?;
+            Self::Data => Self::Dialogue(Box::new(StagedLoad::start())),
+            Self::Dialogue(mut load) => {
+                load.dialogue();
+                Self::Context(load)
+            }
+            Self::Context(load) => {
+                let ctx = start::with_content(load.finish(), host.seed())?;
                 host.mark(STORAGE);
                 Self::Storage(Box::new(ctx))
             }
@@ -231,12 +254,7 @@ pub(crate) mod tests {
         let mut boot = Boot::Data;
         let mut steps = Vec::new();
         loop {
-            steps.push(match boot {
-                Boot::Data => "data",
-                Boot::Storage(_) => "storage",
-                Boot::Sounds(_) => "sounds",
-                Boot::Title(_) => "title",
-            });
+            steps.push(boot.name());
             match boot.step(host).unwrap_or_else(|e| panic!("{e}")) {
                 Next::Step(next) => boot = next,
                 Next::Started(started) => return (*started, steps),
@@ -259,13 +277,16 @@ pub(crate) mod tests {
         files.len()
     }
 
-    /// Data, storage, sounds and the title, one callback each, the
+    /// The data in three, storage, sounds and the title, one callback each, the
     /// report's marks between them; then the title is up with every sound.
     #[test]
     fn the_steps_run_in_order_one_per_call_to_the_title() {
         let mut host = TestHost::default();
         let (started, steps) = boot(&mut host);
-        assert_eq!(steps, ["data", "storage", "sounds", "title"]);
+        assert_eq!(
+            steps,
+            ["data", "dialogue", "context", "storage", "sounds", "title"]
+        );
         assert_eq!(host.marks, [STORAGE, SOUNDS, TITLE]);
         assert_eq!(host.warnings, Vec::<String>::new());
         assert_eq!(started.game.top_screen(), Some("title"));
@@ -285,7 +306,7 @@ pub(crate) mod tests {
         let (started, steps) = boot(&mut host);
         let files = sound_files(started.game.ctx());
         // One sound a callback, then one that finds none left.
-        let mut expected = Vec::from(["data", "storage"]);
+        let mut expected = Vec::from(["data", "dialogue", "context", "storage"]);
         expected.extend(core::iter::repeat_n("sounds", files + 1));
         expected.push("title");
         assert_eq!(steps, expected);

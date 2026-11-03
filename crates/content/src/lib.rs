@@ -276,108 +276,233 @@ pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content
 /// Loads and validates everything; the dialogue files are `scripts`, or
 /// the bundle's when `None`.
 fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
-    let palette = crate::palette::load();
-    let terrain = TerrainDef::load(palette.as_ref().ok());
-    let maps = load_maps(terrain.as_ref().ok());
-    let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
-    let classes = class::load(movement);
-    let (items, basic_shop) = load_items(classes.as_ref().ok());
-    let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
-    let (lighting, names) = (lighting::load(), names::load());
-    let lit = lighting.as_ref().ok();
-    let (maps, battle_lights) = (check_map_lights(maps, lit), load_battle_lights(lit));
-    let characters = character::load(
-        classes.as_ref().ok(),
-        items.as_ref().ok(),
-        names.as_ref().ok(),
-    );
-    let spells = check_spell_references(
-        spell::load(terrain.as_ref().ok().map(|t| &t.display)),
-        classes.as_ref().ok(),
-        characters.as_ref().ok(),
-    );
-    let skills = check_skill_references(skill::load(), classes.as_ref().ok());
-    let arts = check_art_references(art::load(), items.as_ref().ok());
-    let (images, audio) = (crate::image::load(), audio::load());
-    let portraits = load_portraits(images.as_ref().ok());
-    let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
-    let title_art = load_title(images.as_ref().ok());
-    let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
-    let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
-    let scripts = match scripts {
-        Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
-        None => dialogue::load_scripts(cast, faces, known, cues),
-    };
-    let scenes = scripts.as_ref().ok().map(|s| &s.table);
-    let (battles, chapters, new_game) = load_story(
-        maps.as_ref().ok(),
-        terrain.as_ref().ok(),
-        classes.as_ref().ok(),
-        items.as_ref().ok(),
-        characters.as_ref().ok(),
-        scenes,
-        audio.as_ref().ok(),
-    );
-    let (fields, rules) = (battles.as_ref().ok(), (&classes, &terrain));
-    let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
-    let openings = load_openings(maps.as_ref().ok(), cast, rules);
-    let (supports, camp) = load_camp_talks(cast, scenes, fields);
-    let story = (fields, chapters.as_ref().ok(), new_game.as_ref().ok());
-    let places = (maps.as_ref().ok(), openings.as_ref().ok());
-    let away = (supports.as_ref().ok(), camp.as_ref().ok());
-    let (dialogue, stand_ins) = check_dialogue(scripts, places, story, away);
-    let tilesets = load_tilesets(
-        images.as_ref().ok(),
-        terrain.as_ref().ok(),
-        classes.as_ref().ok(),
-        characters.as_ref().ok(),
-    );
-    let mut units = Loaded {
-        classes,
-        items,
-        basic_shop,
-        spells,
-        skills,
-        arts,
-        names,
-        characters,
-        // Before the portraits move in: checked against the guide's.
-        tips: tip::load(faces),
-        lessons: load_lessons(battles.as_ref().ok(), faces),
-        portraits,
-        dialogue,
-        stand_ins,
-        ai: ai::load(),
-        credits: credits::load(audio.as_ref().ok()),
-        audio,
-        images,
-        tilesets,
-        battles,
-        chapters,
-        new_game,
-        supports,
-        camp,
-        lang: Ok(Lang::default()),
-        battlers: stage_art,
-        lighting,
-        battle_lights,
-        title: title_art,
-        cinematics,
-        openings,
-        worldmaps: Ok(BTreeMap::new()),
-    };
-    load_worldmaps_and_lang(&mut units, terrain.as_ref().ok(), maps.as_ref().ok());
-    let themes = palette::load_themes(palette.as_ref().ok());
-    let content = assemble(
-        palette,
-        keymap::load_keymap(),
-        crate::font::load(),
-        terrain,
-        maps,
-        units,
-    );
-    // The combat shots' fights need everything else (ADR-0062).
-    with_themes(content.and_then(cinematic::check_fights), themes)
+    let early = Early::load();
+    let scripts = early.scripts(scripts);
+    early.finish(scripts)
+}
+
+/// A loader's value, or its errors.
+type Loading<T> = Result<T, Vec<ContentError>>;
+
+/// [`load_embedded`] in three calls, for a front end that must hand
+/// control back to its platform between them (the Playdate's update
+/// callback, ticket 1086): [`StagedLoad::start`], [`StagedLoad::dialogue`],
+/// [`StagedLoad::finish`]. The content and its errors are the same.
+pub struct StagedLoad {
+    early: Early,
+    /// The dialogue, once [`StagedLoad::dialogue`] has loaded it.
+    scripts: Option<Loading<dialogue::Scripts>>,
+}
+
+impl StagedLoad {
+    /// Installs the game's bundle ([`bundle::install`]) and loads what the
+    /// dialogue is checked against.
+    pub fn start() -> Self {
+        bundle::install();
+        Self {
+            early: Early::load(),
+            scripts: None,
+        }
+    }
+
+    /// Loads and checks the bundle's dialogue files.
+    pub fn dialogue(&mut self) {
+        self.scripts = Some(self.early.scripts::<&str>(None));
+    }
+
+    /// Loads the rest (the dialogue too, if [`StagedLoad::dialogue`] has
+    /// not) and puts the content together.
+    ///
+    /// # Errors
+    ///
+    /// Every error of every file, as [`load_embedded`].
+    pub fn finish(self) -> Result<Content, ContentErrors> {
+        let scripts = self
+            .scripts
+            .unwrap_or_else(|| self.early.scripts::<&str>(None));
+        self.early.finish(scripts)
+    }
+}
+
+/// What [`load`] loads before the dialogue: what the scripts are checked
+/// against, and what loads without them.
+struct Early {
+    palette: Loading<PaletteDef>,
+    terrain: Loading<TerrainDef>,
+    maps: Loading<BTreeMap<String, MapDef>>,
+    classes: Loading<ClassTable>,
+    items: Loading<ItemTable>,
+    basic_shop: Loading<BasicStock>,
+    lighting: Loading<Lighting>,
+    names: Loading<Names>,
+    battle_lights: Loading<BTreeMap<String, String>>,
+    characters: Loading<CharacterTable>,
+    spells: Loading<SpellTable>,
+    skills: Loading<SkillTable>,
+    arts: Loading<ArtTable>,
+    images: Loading<ImageTable>,
+    audio: Loading<AudioManifest>,
+    portraits: Loading<BTreeMap<String, Portrait>>,
+    stage_art: Loading<BattlerTable>,
+    title_art: Loading<TitleArt>,
+}
+
+impl Early {
+    fn load() -> Self {
+        let palette = crate::palette::load();
+        let terrain = TerrainDef::load(palette.as_ref().ok());
+        let maps = load_maps(terrain.as_ref().ok());
+        let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
+        let classes = class::load(movement);
+        let (items, basic_shop) = load_items(classes.as_ref().ok());
+        let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
+        let (lighting, names) = (lighting::load(), names::load());
+        let lit = lighting.as_ref().ok();
+        let (maps, battle_lights) = (check_map_lights(maps, lit), load_battle_lights(lit));
+        let characters = character::load(
+            classes.as_ref().ok(),
+            items.as_ref().ok(),
+            names.as_ref().ok(),
+        );
+        let spells = check_spell_references(
+            spell::load(terrain.as_ref().ok().map(|t| &t.display)),
+            classes.as_ref().ok(),
+            characters.as_ref().ok(),
+        );
+        let skills = check_skill_references(skill::load(), classes.as_ref().ok());
+        let arts = check_art_references(art::load(), items.as_ref().ok());
+        let (images, audio) = (crate::image::load(), audio::load());
+        let portraits = load_portraits(images.as_ref().ok());
+        let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
+        let title_art = load_title(images.as_ref().ok());
+        Self {
+            palette,
+            terrain,
+            maps,
+            classes,
+            items,
+            basic_shop,
+            lighting,
+            names,
+            battle_lights,
+            characters,
+            spells,
+            skills,
+            arts,
+            images,
+            audio,
+            portraits,
+            stage_art,
+            title_art,
+        }
+    }
+
+    /// The dialogue: `scripts`, or the bundle's files when `None`.
+    fn scripts<F: AsRef<str>>(&self, scripts: Option<&[(F, &str)]>) -> Loading<dialogue::Scripts> {
+        let (cast, faces) = (self.characters.as_ref().ok(), self.portraits.as_ref().ok());
+        let (known, cues) = (self.names.as_ref().ok(), self.audio.as_ref().ok());
+        match scripts {
+            Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
+            None => dialogue::load_scripts(cast, faces, known, cues),
+        }
+    }
+
+    /// The rest, checked against these and the dialogue `scripts`, and
+    /// the content put together.
+    fn finish(self, scripts: Loading<dialogue::Scripts>) -> Result<Content, ContentErrors> {
+        let Self {
+            palette,
+            terrain,
+            maps,
+            classes,
+            items,
+            basic_shop,
+            lighting,
+            names,
+            battle_lights,
+            characters,
+            spells,
+            skills,
+            arts,
+            images,
+            audio,
+            portraits,
+            stage_art,
+            title_art,
+        } = self;
+        let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
+        let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
+        let scenes = scripts.as_ref().ok().map(|s| &s.table);
+        let (battles, chapters, new_game) = load_story(
+            maps.as_ref().ok(),
+            terrain.as_ref().ok(),
+            classes.as_ref().ok(),
+            items.as_ref().ok(),
+            characters.as_ref().ok(),
+            scenes,
+            audio.as_ref().ok(),
+        );
+        let (fields, rules) = (battles.as_ref().ok(), (&classes, &terrain));
+        let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
+        let openings = load_openings(maps.as_ref().ok(), cast, rules);
+        let (supports, camp) = load_camp_talks(cast, scenes, fields);
+        let story = (fields, chapters.as_ref().ok(), new_game.as_ref().ok());
+        let places = (maps.as_ref().ok(), openings.as_ref().ok());
+        let away = (supports.as_ref().ok(), camp.as_ref().ok());
+        let (dialogue, stand_ins) = check_dialogue(scripts, places, story, away);
+        let tilesets = load_tilesets(
+            images.as_ref().ok(),
+            terrain.as_ref().ok(),
+            classes.as_ref().ok(),
+            characters.as_ref().ok(),
+        );
+        let mut units = Loaded {
+            classes,
+            items,
+            basic_shop,
+            spells,
+            skills,
+            arts,
+            names,
+            characters,
+            // Before the portraits move in: checked against the guide's.
+            tips: tip::load(faces),
+            lessons: load_lessons(battles.as_ref().ok(), faces),
+            portraits,
+            dialogue,
+            stand_ins,
+            ai: ai::load(),
+            credits: credits::load(audio.as_ref().ok()),
+            audio,
+            images,
+            tilesets,
+            battles,
+            chapters,
+            new_game,
+            supports,
+            camp,
+            lang: Ok(Lang::default()),
+            battlers: stage_art,
+            lighting,
+            battle_lights,
+            title: title_art,
+            cinematics,
+            openings,
+            worldmaps: Ok(BTreeMap::new()),
+        };
+        load_worldmaps_and_lang(&mut units, terrain.as_ref().ok(), maps.as_ref().ok());
+        let themes = palette::load_themes(palette.as_ref().ok());
+        let content = assemble(
+            palette,
+            keymap::load_keymap(),
+            crate::font::load(),
+            terrain,
+            maps,
+            units,
+        );
+        // The combat shots' fights need everything else (ADR-0062).
+        with_themes(content.and_then(cinematic::check_fights), themes)
+    }
 }
 
 /// Loads the world maps into `units` (checked against its battles,
