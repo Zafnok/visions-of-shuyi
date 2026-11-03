@@ -87,11 +87,12 @@ command it:
 1. **talks** first, if two units can talk that haven't yet (talking costs
    nothing);
 2. **plans its turn**: short sequences of its own commands, each step from
-   a list of **candidates**: each unit's best attack on each target; what
-   the enemy AI would do in its place; healing a wounded unit; moving each
-   unit as far towards the enemy (the boss, the tile to seize) as it can
-   walk; moving each unit to the nearest tile out of every enemy's reach;
-   the other ways of attacking; and ending the turn last;
+   a list of **candidates**: each unit's best attack; what the enemy AI
+   would do in its place; healing a wounded unit; moving each unit as far
+   towards the enemy (the boss, the tile to seize) as it can walk; moving
+   each unit to the nearest tile out of every enemy's reach; each unit's
+   attack on its other targets (after every unit's move, ADR-0111); the
+   other ways of attacking; and ending the turn last;
 3. plays each partial plan on a few **copies** of the battle with fresh
    luck and no hidden reinforcements, and **scores** where each copy got
    to, by what the persona cares about. It never plays the enemy's turn

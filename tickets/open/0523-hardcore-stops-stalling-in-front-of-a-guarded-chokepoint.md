@@ -5,7 +5,7 @@ type: bug
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["0520"]
 nick_input: none
 completed:
@@ -108,5 +108,62 @@ left to judge by playing goes on 1064's checklist.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Hardcore no longer stands in front of Hendry's ford: the stall
+was the order's cap, not the scoring, and the order changed (ADR-0111,
+amending ADR-0095 §2).
+
+- **The trace (step 1)** (seed 116, a throwaway test calling
+  `play_observed` on the campaign army, scoring every candidate at each
+  turn passed with nothing done): turns 4–9 end with nobody moving, as
+  0520 saw. Every candidate the persona weighed scored below ending the
+  turn (−150 to −5170), **but Hollis stepping into the ford scored +122**
+  (not at risk, his counter worth more than his danger) and Rue's advance
+  +12. They were places 12 and 16 of the order; Hardcore tries 12, the
+  12th being `EndPhase`. Places 1–9 were Tamsin's, the lead's and Aske's
+  attacks on each of their three targets (Hendry and two guards), all
+  blows they couldn't survive. 0520's reading (ending a turn costs
+  nothing) is true but not the cause: nothing better was ever weighed.
+- **The fix** (`crates/bots/src/persona.rs`, `order` and the new
+  `split_attacks`): each unit's best attack first (its best target); its
+  attacks on its other targets after every unit's advance and hold, before
+  the other ways of striking. 11 production lines.
+- **The test** `hardcore_walks_its_sturdy_unit_up_a_guarded_ford`: a ford
+  with a `Stationary` boss and two bowmen at its north end, three frail
+  units who can each strike all three (and would fall to the reply), and
+  a unit that can't be hurt a turn behind. It failed before the fix (no
+  win in three turns: nine attacks and two doomed advances filled the 12
+  places, and the sturdy unit's advance was cut) and passes after. It
+  also fails under candidates 1 and 2.
+- **The three candidates, by the numbers** (Hardcore on Chapter 2, seeds
+  101–200, wins with nobody dying):
+
+| Change | Succeeds | Wins by turn (3 / 4 / 5 / 6 / 7 / 8+) | Median | Normal's | Faster |
+| ------ | -------- | -------------------------------------- | ------ | -------- | ------ |
+| none (`main`) | 57 | 13 / 10 / 10 / 13 / 6 / 11 | 5 | 4 | ✗ |
+| 1. `turns` when a plan ends its turn | 61 | 13 / 15 / 13 / 11 / 6 / 6 | 5 | 4 | ✗ |
+| 2. `turns` for a turn passed with nothing done | 62 | 13 / 10 / 15 / 15 / 6 / 5 | 5 | 4 | ✗ |
+| 3. `approach` by the safest tile | not run: every unit already stood on it (its hold was waiting in place, 0) | | | | |
+| **the order** | 60 | 11 / 9 / 21 / 10 / 7 / 7 | 5 | 6 | ✓ |
+
+  1 and 2 change Hardcore alone (Normal's `turns` is 0, so Normal stays
+  at 4) and shorten the tail only by a side effect: a unit waiting where
+  it stands beats a costly end of turn, which takes its attacks off the
+  list and lets Hollis's advance in.
+
+AUTOBALANCE_NOTES
+
+**Deviations:** the ticket's candidates were all scoring changes; the
+trace showed the order's cap, so the fix is in the order (still "how the
+personas plan", `persona.rs`). Candidate 3 wasn't run, for the reason in
+the table. `personas.ron` is unchanged.
+
+**Follow-up tickets:** 0524 (Chapter 1's Hardcore rate back inside its
+band).
+
+**the agent's starting rules:** none (no gameplay rule; the bots' order
+is dev tooling).
+
+**Left to judge by playing (1064):** nothing new; Chapter 2's numbers
+moved with the autobalance above.
+
+Engine friction: estimate 15, measured 11 (0.7×), under 2×.
