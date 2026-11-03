@@ -120,3 +120,40 @@ fn the_pack_takes_the_stock_first_then_what_the_gold_buys() {
     assert_eq!(setup.gold, 1, "paid for");
     assert!(setup.stock.items.is_empty(), "everything packed");
 }
+
+#[test]
+fn a_full_pack_buys_nothing_more() {
+    let content = content();
+    let def = &content.battles["ch02"];
+    let mut setup = battle_campaign(&content, def, GameMode::Classic, lead())
+        .battle_setup(def, &content.tables());
+    setup.stock = trpg_core::Stock::default();
+    let potion = ItemId::new("potion");
+    let price = content.items.consumable(&potion).map_or(0, |c| c.price);
+    let cap = u32::try_from(setup.pack.cap).unwrap_or(0);
+    setup.gold = price * (cap + 2);
+    prepare(&mut setup, Some(&content.basic_shop.shop(2)));
+    assert_eq!(setup.pack.items.len(), setup.pack.cap);
+    assert_eq!(setup.gold, price * 2, "only the pack's worth bought");
+    assert_eq!(
+        setup.stock.count(&potion),
+        0,
+        "nothing bought for the stock"
+    );
+}
+
+#[test]
+fn whoever_a_scene_has_recruited_by_the_chapter_joins() {
+    let content = content();
+    let mut campaign = new_campaign(&content, GameMode::Classic, lead());
+    let rue = CharacterId("heretic".into());
+    campaign
+        .roster
+        .retain(|u| u.character.as_ref() != Some(&rue));
+    recruit(&mut campaign, &content, "ch02");
+    let joined = campaign
+        .member(&rue)
+        .unwrap_or_else(|| panic!("Rue didn't join"));
+    assert_eq!(joined.faction, Faction::Player);
+    assert_eq!(campaign.roster.len(), content.new_game.roster.len());
+}
