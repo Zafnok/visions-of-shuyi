@@ -407,6 +407,13 @@ pub fn describe(r: &Replayed, words: Words<'_>) -> String {
                         .map_or(words.text("battle.rewind.a_skill"), |d| words.skill(d));
                     did_to("battle.rewind.used", who, skill, "")
                 }
+                UnitAction::UseArt { art, .. } => {
+                    let art = s
+                        .arts()
+                        .get(art)
+                        .map_or(words.text("battle.rewind.a_skill"), |d| words.art(d));
+                    did_to("battle.rewind.used", who, art, "")
+                }
             }
         }
         Command::Equip { unit, .. } => did("battle.rewind.equipped", name(s, *unit)),

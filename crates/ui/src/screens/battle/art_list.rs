@@ -4,14 +4,16 @@
 //! combat actives that swing a weapon, each with its cost and source. What
 //! can't be used from there is dimmed with the reason. Every check is
 //! [`BattleState::preview_attack`], so the menu never offers what the core
-//! would refuse (ADR-0004). A spell active is a line of the spell list
+//! would refuse (ADR-0004). An art used as an action of its own (Overwatch,
+//! ticket 0326) reads `ends action`, needs no target and is checked as its
+//! `Act` ([`BattleState::check`]): it is chosen at once. A spell active is a line of the spell list
 //! instead (`Fire + Overcast`, [`super::magic`]).
 
 use crate::prelude::*;
 use trpg_core::{
-    ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CommandError, CostError, Equipped,
-    Event, Faction, MitigationStat, Pos, PowerStat, SkillCost, SkillId, StatKind, Unit, UnitAction,
-    UnitId, UnitTag, WEAPON_SLOTS,
+    ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, Command, CommandError, CostError,
+    Equipped, Event, Faction, MitigationStat, Pos, PowerStat, SkillCost, SkillId, StatKind, Unit,
+    UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
 };
 
 use super::attack::{spell_uses, weapon_durability};
@@ -56,6 +58,15 @@ impl Technique {
                 target: CastTarget::Unit(target),
                 active,
             },
+        }
+    }
+
+    /// Whether it is an art used as an action of its own, with no target
+    /// (Overwatch).
+    pub fn is_action(&self, state: &BattleState) -> bool {
+        match self {
+            Technique::Art(id) => state.arts().get(id).is_some_and(|a| a.effect.is_action()),
+            Technique::Attack | Technique::Active(_) => false,
         }
     }
 
@@ -271,8 +282,23 @@ pub enum Fit {
     No,
 }
 
-/// How `technique` with `with` fits an attack by `unit` from `dest`: every
-/// check is the core's ([`BattleState::preview_attack`] on each unit).
+/// The command that uses the action art `art` (Overwatch) with the weapon
+/// in `slot`, for `unit` moved to `dest`.
+pub fn action_art_command(unit: UnitId, dest: Pos, art: &ArtId, slot: usize) -> Command {
+    Command::Act {
+        unit,
+        dest,
+        action: UnitAction::UseArt {
+            art: art.clone(),
+            slot,
+        },
+    }
+}
+
+/// How `technique` with `with` fits an attack by `unit` from `dest` (an
+/// action art: its use there): every check is the core's
+/// ([`BattleState::preview_attack`] on each unit, or the `Act`'s
+/// [`BattleState::check`]).
 pub fn fit(
     state: &BattleState,
     unit: UnitId,
@@ -280,6 +306,15 @@ pub fn fit(
     with: &Equipped,
     technique: &Technique,
 ) -> Fit {
+    if let (Technique::Art(art), Equipped::Weapon(slot)) = (technique, with)
+        && technique.is_action(state)
+    {
+        return match state.check(&action_art_command(unit, dest, art, *slot)) {
+            Ok(()) => Fit::Hits,
+            Err(CommandError::CannotPayArt { error, .. }) => Fit::Cost(error),
+            Err(_) => Fit::No,
+        };
+    }
     let mut found = Fit::No;
     for target in state.units() {
         match state.preview_attack(unit, dest, &technique.action(target.id, with)) {
@@ -389,7 +424,8 @@ pub fn source_label(state: &BattleState, words: Words<'_>, technique: &Technique
 /// Width of the name column.
 const NAME_W: usize = 14;
 
-/// The arts menu: `Guard Break     −4 dur  D`, a dimmed line with its
+/// The arts menu: `Guard Break     −4 dur  D`, `Overwatch  −5 dur  B  ends
+/// action` for an art used as an action of its own, a dimmed line with its
 /// reason after it, focused on the first line that can be chosen. The
 /// focused line's effect shows under the list (ticket 0429), dimmed lines
 /// too: the focus stops on them.
@@ -400,7 +436,12 @@ pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Me
             let name = c.technique.name(state, words);
             let cost = cost_label(state, words, &c.technique);
             let source = source_label(state, words, &c.technique);
-            let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
+            let label = if c.technique.is_action(state) {
+                let ends = words.text("battle.art.ends_action");
+                format!("{name:<NAME_W$}  {cost:>6}  {source}  {ends}")
+            } else {
+                format!("{name:<NAME_W$}  {cost:>6}  {source:<6}")
+            };
             let item = MenuItem::new(label).with_value(Line::Art(c.clone()));
             let item = match &c.blocked {
                 None => item,
@@ -448,7 +489,8 @@ pub fn header(
 /// The name of the art or active a boss or a green unit used in `events`
 /// (`combat-arts.md`: "the forecast and playback show its name"), for the
 /// playback's banner. `before` holds the units as they were before. The
-/// player chose its own, so its units get none.
+/// player chose its own, so its units get none, but an Overwatch shot is
+/// named whoever shoots: it comes on the other side's turn.
 pub fn playback_banner(
     state: &BattleState,
     words: Words<'_>,
@@ -465,6 +507,7 @@ pub fn playback_banner(
         Event::SkillUsed { unit, skill } if not_player(unit) => {
             Some(skill_name(state, words, skill))
         }
+        Event::OverwatchShot { art, .. } => Some(art_name(state, words, art)),
         _ => None,
     })
 }
@@ -571,7 +614,7 @@ mod tests {
                 avoid: 20,
                 ..CombatMods::default()
             },
-            stops_enemies: false,
+            ..Default::default()
         };
         assert_eq!(
             note_text(Words::ENGLISH, &ArtNote::Stance(stance)),
@@ -619,6 +662,14 @@ mod tests {
             text("hold_the_ford"),
             "stance: enemies stepping next to it stop"
         );
+        // The stances that react (0326).
+        assert_eq!(text("riposte"), "stance: strikes first");
+        assert_eq!(
+            text("spear_wall"),
+            "stance: counters at 1–2 counters hit +15"
+        );
+        assert_eq!(text("deflect"), "stance: deflects a hit and strikes back");
+        assert_eq!(text("overwatch"), "stance: shoots an enemy moving in range");
         assert_eq!(text("moonwave"), "reaches 2; higher of Str/Mag; hits Res");
         assert_eq!(text("unhorse"), "+10 hit; ×3 vs Mounted");
         assert_eq!(text("armor_cleave"), "×2 vs Armored");

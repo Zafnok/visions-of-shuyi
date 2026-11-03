@@ -39,6 +39,14 @@
 //! `r1 + r2 < 2 * hit`; only a hit rolls `r3` and crits iff `r3 < crit`.
 //! Combat stops as soon as a unit reaches 0 HP.
 //!
+//! Stances can change that ([`Reactions`], ticket 0326): with Riposte the
+//! defender's first strike comes before the attacker's; with Deflect the
+//! first strike at a side that would hit misses instead (no crit roll), and
+//! that side at once strikes back once with its first-strike numbers (it
+//! rolls hit and crit as usual, isn't countered, and doesn't count as one
+//! of its strikes, its hits for Cascade or the attacker's first hit). A
+//! side with no numbers in the forecast (it can't counter) only deflects.
+//!
 //! # Skill modifiers
 //!
 //! Each side carries [`CombatMods`] gathered from skills (ticket 0311,
@@ -457,6 +465,31 @@ pub struct Forecast {
     /// the defender.
     #[serde(default)]
     pub after_first_hit: Option<AfterFirstHit>,
+    /// The stances that change how the strikes go.
+    #[serde(default)]
+    pub reactions: Reactions,
+}
+
+/// Stances that change a combat's strikes rather than its numbers (see the
+/// module docs). The default changes nothing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Reactions {
+    /// The defender's first strike comes before the attacker's first
+    /// (Riposte). Nothing without a counter.
+    pub defender_first: bool,
+    /// `[attacker, defender]`: the first strike at that side that would hit
+    /// misses, and it strikes back at once (Deflect).
+    pub deflects: [bool; 2],
+}
+
+/// How a strike came about, if a stance made it differ from the usual.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum StrikeReaction {
+    /// It would have hit, but its target deflected it: it missed.
+    Deflected,
+    /// The strike back of a unit that deflected the strike before it.
+    StrikeBack,
 }
 
 /// Both sides' numbers once a first-hit debuff is on the defender. Their
@@ -527,6 +560,7 @@ pub fn forecast(
     Some(Forecast {
         attacker: attacker_side,
         defender: defender_side,
+        reactions: Reactions::default(),
         after_first_hit: None,
     })
 }
@@ -671,6 +705,9 @@ pub struct Strike {
     pub damage: StatValue,
     /// Whether it healed the target (Absorb) instead of hurting it.
     pub healed: bool,
+    /// A Deflect's miss or strike back, if it is one.
+    #[serde(default)]
+    pub reaction: Option<StrikeReaction>,
     /// The target's HP after the strike.
     pub target_hp_after: StatValue,
 }
@@ -695,12 +732,17 @@ pub fn roll_hit(rng: &mut impl RandomSource, hit: u8) -> bool {
 }
 
 /// The order of `forecast`'s strikes if nobody falls: attacker, defender
-/// (if it counters), then the strikes 2..N, alternating attacker first if
-/// both sides have some.
+/// (if it counters; first with Riposte, [`Reactions::defender_first`]),
+/// then the strikes 2..N, alternating attacker first if both sides have
+/// some. A Deflect's strike back isn't in it.
 pub fn strike_order(forecast: &Forecast) -> Vec<Side> {
     let mut order = vec![Side::Attacker];
     if forecast.defender.is_some() {
-        order.push(Side::Defender);
+        if forecast.reactions.defender_first {
+            order.insert(0, Side::Defender);
+        } else {
+            order.push(Side::Defender);
+        }
     }
     let extra = |s: Option<SideForecast>| s.map_or(0, |s| s.strikes.saturating_sub(1));
     let (a_extra, d_extra) = (extra(Some(forecast.attacker)), extra(forecast.defender));
@@ -752,7 +794,8 @@ pub(crate) fn take(target: &mut CombatHp, damage: StatValue, healed: bool) {
 }
 
 /// Plays out `forecast` with `rng`: strikes in [`strike_order`], stopping
-/// when a unit reaches 0 HP.
+/// when a unit reaches 0 HP, with a Deflect's miss and strike back (the
+/// module docs).
 pub fn resolve(
     rules: &CombatRules,
     forecast: &Forecast,
@@ -764,6 +807,7 @@ pub fn resolve(
     let mut hp = [attacker, defender];
     let mut struck = [0u8; 2];
     let mut landed = [0u8; 2];
+    let mut deflects = forecast.reactions.deflects;
     let mut strikes = Vec::with_capacity(order.len());
     for by in order {
         if hp[0].current <= 0 || hp[1].current <= 0 {
@@ -776,6 +820,27 @@ pub fn resolve(
         let base = base_damage(&numbers, struck[me], landed[me]);
         let healed = numbers.affinity == Some(Affinity::Absorb);
         let hit = roll_hit(rng, numbers.hit);
+        if hit && deflects[target] {
+            deflects[target] = false;
+            strikes.push(Strike {
+                by,
+                hit: false,
+                crit: false,
+                damage: 0,
+                healed,
+                reaction: Some(StrikeReaction::Deflected),
+                target_hp_after: hp[target].current,
+            });
+            strikes.extend(strike_back(
+                rules,
+                forecast,
+                me,
+                landed[0] > 0,
+                &mut hp,
+                rng,
+            ));
+            continue;
+        }
         landed[me] += u8::from(hit);
         let crit = hit && rng.roll_percent() < numbers.crit;
         let damage = match (hit, crit) {
@@ -791,6 +856,7 @@ pub fn resolve(
             crit,
             damage,
             healed,
+            reaction: None,
             target_hp_after: t.current,
         });
     }
@@ -799,6 +865,43 @@ pub fn resolve(
         attacker_hp: hp[0].current,
         defender_hp: hp[1].current,
     }
+}
+
+/// The strike back of the side that deflected a strike by side `me`
+/// (`hp` is `[attacker, defender]`), if it has numbers in `forecast`.
+fn strike_back(
+    rules: &CombatRules,
+    forecast: &Forecast,
+    me: usize,
+    attacker_has_hit: bool,
+    hp: &mut [CombatHp; 2],
+    rng: &mut impl RandomSource,
+) -> Option<Strike> {
+    let by = if me == 0 {
+        Side::Defender
+    } else {
+        Side::Attacker
+    };
+    let numbers = forecast.numbers(by, attacker_has_hit)?;
+    let hit = roll_hit(rng, numbers.hit);
+    let crit = hit && rng.roll_percent() < numbers.crit;
+    let damage = match (hit, crit) {
+        (false, _) => 0,
+        (true, false) => numbers.damage,
+        (true, true) => numbers.damage * rules.crit_multiplier,
+    };
+    let healed = numbers.affinity == Some(Affinity::Absorb);
+    let t = &mut hp[me];
+    take(t, damage, healed);
+    Some(Strike {
+        by,
+        hit,
+        crit,
+        damage,
+        healed,
+        reaction: Some(StrikeReaction::StrikeBack),
+        target_hp_after: t.current,
+    })
 }
 
 /// One strike of a [`StrikePlan`].
@@ -810,6 +913,9 @@ pub struct PlannedStrike {
     pub damage: StatValue,
     /// Whether it heals the target (Absorb) instead of hurting it.
     pub healed: bool,
+    /// A Deflect's miss (it changes no HP) or strike back, if it is one.
+    #[serde(default)]
+    pub reaction: Option<StrikeReaction>,
     /// The target's HP after it, if every strike so far hit.
     pub target_hp_after: StatValue,
     /// Whether a unit has already fallen by then, so the strike only
@@ -838,19 +944,52 @@ pub struct StrikePlan {
 }
 
 /// `forecast` played out as if every strike hit and none crit: the same
-/// order, damage and HP rules as [`resolve`].
+/// order, damage and HP rules as [`resolve`], so a Deflect still turns the
+/// first strike at its side into a miss and a strike back.
 pub fn if_all_hit(forecast: &Forecast, attacker: CombatHp, defender: CombatHp) -> StrikePlan {
     let mut hp = [attacker, defender];
     let mut struck = [0u8; 2];
+    let mut landed = [0u8; 2];
+    let mut deflects = forecast.reactions.deflects;
     let mut strikes = Vec::new();
     for by in strike_order(forecast) {
-        let Some((me, target, numbers)) = striker(forecast, by, struck[0] > 0) else {
+        let Some((me, target, numbers)) = striker(forecast, by, landed[0] > 0) else {
             continue;
         };
         struck[me] = struck[me].saturating_add(1);
-        let damage = base_damage(&numbers, struck[me], struck[me] - 1);
+        let damage = base_damage(&numbers, struck[me], landed[me]);
         let healed = numbers.affinity == Some(Affinity::Absorb);
         let after_a_fall = hp[0].current <= 0 || hp[1].current <= 0;
+        if !after_a_fall && deflects[target] {
+            deflects[target] = false;
+            strikes.push(PlannedStrike {
+                by,
+                damage: 0,
+                healed,
+                reaction: Some(StrikeReaction::Deflected),
+                target_hp_after: hp[target].current,
+                after_a_fall,
+            });
+            let back = if me == 0 {
+                Side::Defender
+            } else {
+                Side::Attacker
+            };
+            if let Some(numbers) = forecast.numbers(back, landed[0] > 0) {
+                let healed = numbers.affinity == Some(Affinity::Absorb);
+                take(&mut hp[me], numbers.damage, healed);
+                strikes.push(PlannedStrike {
+                    by: back,
+                    damage: numbers.damage,
+                    healed,
+                    reaction: Some(StrikeReaction::StrikeBack),
+                    target_hp_after: hp[me].current,
+                    after_a_fall,
+                });
+            }
+            continue;
+        }
+        landed[me] = landed[me].saturating_add(1);
         if !after_a_fall {
             take(&mut hp[target], damage, healed);
         }
@@ -858,6 +997,7 @@ pub fn if_all_hit(forecast: &Forecast, attacker: CombatHp, defender: CombatHp) -
             by,
             damage,
             healed,
+            reaction: None,
             target_hp_after: hp[target].current,
             after_a_fall,
         });

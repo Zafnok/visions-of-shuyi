@@ -3,7 +3,8 @@
 // Every number is TUNABLE (FE-sized until ticket 0013). Ranks C-S (ticket
 // 0018's list, "Ranks C-S" in the design doc) arrive in parts: the arts that
 // change one combat's numbers or put a debuff on the target are here (0325);
-// stances, area strikes and special weapons' own arts come with 0326-0329;
+// the stances that react are here too (0326); area strikes and special
+// weapons' own arts come with 0327-0329;
 // the special weapons' arts (0329) are at the end.
 // Loaded by trpg_content::art; the rules are in trpg_core::art and
 // trpg_core::battle.
@@ -45,7 +46,18 @@
 //                                the larger of Str and Mag)
 //   mitigation: Some(Def | Res)  the target's stat that mitigates it
 // A stance may also have stops_enemies: true: a hostile unit stepping onto
-//   a tile next to the user must stop there (Hold the Ford).
+//   a tile next to the user must stop there (Hold the Ford); and a
+//   reaction (0326), one of:
+//   reaction: Some(StrikesFirst) attacked, the user's first counter comes
+//                                before the attacker's first strike
+//   reaction: Some(Counters(reach: n, hit: h))
+//                                attacked, the user counters at 1..n, its
+//                                counters' hit +h
+//   reaction: Some(Deflect)      the first strike at the user that would
+//                                hit misses and the user strikes back; once
+//   reaction: Some(Overwatch)    the art is an action of its own (no
+//                                attack); the first hostile unit ending a
+//                                move in the weapon's range is shot once
 (
     arts: [
         // Sword
@@ -61,6 +73,10 @@
             id: "cascade", name: "Cascade", kind: Sword, rank: Some(A), cost: 6,
             effect: (cascade: 3),
         ),
+        (
+            id: "riposte", name: "Riposte", kind: Sword, rank: Some(C), cost: 4,
+            effect: (stance: Some((reaction: Some(StrikesFirst)))),
+        ),
         // Spear
         (
             id: "unhorse", name: "Unhorse", kind: Spear, rank: Some(E), cost: 2,
@@ -73,6 +89,10 @@
         (
             id: "skypiercer", name: "Skypiercer", kind: Spear, rank: Some(A), cost: 5,
             effect: (effective: [(Flying, 2)]),
+        ),
+        (
+            id: "spear_wall", name: "Spear Wall", kind: Spear, rank: Some(B), cost: 4,
+            effect: (stance: Some((reaction: Some(Counters(reach: 2, hit: 15))))),
         ),
         (
             id: "line_pierce", name: "Line Pierce", kind: Spear, rank: Some(D), cost: 4,
@@ -112,6 +132,10 @@
             id: "rending_arrow", name: "Rending Arrow", kind: Bow, rank: Some(C), cost: 4,
             effect: (on_first_hit: [(stat: Def, amount: 5)]),
         ),
+        (
+            id: "overwatch", name: "Overwatch", kind: Bow, rank: Some(B), cost: 5,
+            effect: (stance: Some((reaction: Some(Overwatch)))),
+        ),
         // Gauntlet
         (
             id: "pressure_point", name: "Pressure Point", kind: Gauntlet, rank: Some(E), cost: 2,
@@ -120,6 +144,10 @@
         (
             id: "off_balance", name: "Off Balance", kind: Gauntlet, rank: Some(C), cost: 3,
             effect: (on_first_hit_avoid: 20),
+        ),
+        (
+            id: "deflect", name: "Deflect", kind: Gauntlet, rank: Some(B), cost: 5,
+            effect: (stance: Some((reaction: Some(Deflect)))),
         ),
         (
             id: "sidestep", name: "Sidestep", kind: Gauntlet, rank: Some(D), cost: 3,

@@ -361,7 +361,7 @@ fn test_other_arts() -> Vec<ArtDef> {
                         avoid: 20,
                         ..CombatMods::default()
                     },
-                    stops_enemies: false,
+                    ..Default::default()
                 }),
                 ..e()
             },
@@ -421,7 +421,7 @@ fn test_combat_actives() -> Vec<SkillDef> {
     let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods {
         stats,
         combat,
-        stops_enemies: false,
+        ..Default::default()
     };
     let bow = |range| {
         test_strike_with(
@@ -517,7 +517,7 @@ fn test_other_actives() -> Vec<SkillDef> {
     let timed = |stats: Vec<(StatKind, StatValue)>, combat| TimedMods {
         stats,
         combat,
-        stops_enemies: false,
+        ..Default::default()
     };
     let buff = |cost, area, mods| active(cost, ActiveEffect::Buff { area, mods });
     let heal = |n, radius| active(uses(n), ActiveEffect::Heal { radius, power: 5 });
@@ -3605,6 +3605,7 @@ mod act1_rules;
 mod art;
 mod bots;
 mod progression;
+mod reactions;
 mod shop;
 mod skill;
 mod spell;

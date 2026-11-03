@@ -226,6 +226,49 @@ pub struct TimedMods {
     /// A hostile unit that steps onto a tile next to this one must stop
     /// there (Hold the Ford's stance; [`crate::movement`]).
     pub stops_enemies: bool,
+    /// How the stance reacts to later combats and moves (ticket 0326).
+    pub reaction: Option<StanceReaction>,
+}
+
+/// A stance that changes how later combats or moves go, not just numbers
+/// (`combat-arts.md`, *Ranks C–S*). Written in data as e.g.
+/// `reaction: Some(Deflect)`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum StanceReaction {
+    /// Attacked, the unit's first counter strike comes before the
+    /// attacker's first strike (Riposte; [`crate::combat::Reactions`]).
+    StrikesFirst,
+    /// Attacked, the unit counters at distance 1 up to `reach`, whatever
+    /// its weapon's own range, and its counters get `hit` more (Spear
+    /// Wall: 2 and 15).
+    Counters {
+        /// The farthest distance it counters at.
+        reach: u32,
+        /// Added to its counter strikes' hit.
+        hit: StatValue,
+    },
+    /// The first enemy strike on the unit that would hit misses, and the
+    /// unit strikes back at once; then the stance ends (Deflect).
+    Deflect,
+    /// The first hostile unit that ends a move within the unit's weapon
+    /// range is shot once before it acts; then the stance ends (Overwatch,
+    /// [`crate::battle`]). An art with it is used as an action of its own.
+    Overwatch,
+}
+
+impl TimedMods {
+    /// Whether its reaction is `reaction`.
+    pub fn reacts(&self, reaction: StanceReaction) -> bool {
+        self.reaction == Some(reaction)
+    }
+
+    /// Spear Wall's `(reach, hit)`, if it is that stance.
+    pub fn counters(&self) -> Option<(u32, StatValue)> {
+        match self.reaction {
+            Some(StanceReaction::Counters { reach, hit }) => Some((reach, hit)),
+            _ => None,
+        }
+    }
 }
 
 /// A combat active's stance rider (Nick: "some might only apply for the

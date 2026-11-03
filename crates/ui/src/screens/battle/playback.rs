@@ -30,7 +30,7 @@ use shuyi_ui::HurryClock;
 
 use trpg_core::{
     CharacterId, ClassId, Event, Faction, Pos, Side, SideForecast, StatKind, StatValue, Strike,
-    Unit, UnitId,
+    StrikeReaction, Unit, UnitId,
 };
 
 use super::event_sounds::{Attack, cast_sound, sound_for_strike};
@@ -634,8 +634,12 @@ fn timeline(bouts: &[Bout], falls: usize, anchors: &[Anchor], t: &Timings) -> Ve
 }
 
 /// What the box shows for strike `strike`: `HIT -7`, `MISS`, `CRITICAL!
-/// -21`, or `+9` for an Absorb heal.
+/// -21`, `+9` for an Absorb heal, or `DEFLECTED` for a strike a Deflect
+/// turned into a miss (the strike back then plays as a strike of its own).
 pub fn result_text(words: Words<'_>, strike: &Strike) -> String {
+    if strike.reaction == Some(StrikeReaction::Deflected) {
+        return words.text("battle.playback.deflected").to_owned();
+    }
     let key = match (strike.hit, strike.crit, strike.healed) {
         (false, _, _) => "battle.playback.miss",
         (true, _, true) => "battle.playback.heal",
@@ -704,6 +708,7 @@ mod tests {
             crit,
             damage,
             healed: false,
+            reaction: None,
             target_hp_after: after,
         }
     }
@@ -747,6 +752,7 @@ mod tests {
                 forecast: Forecast {
                     attacker: numbers(),
                     defender: Some(numbers()),
+                    reactions: trpg_core::Reactions::default(),
                     after_first_hit: None,
                 },
                 outcome: CombatOutcome {
@@ -1076,6 +1082,7 @@ mod tests {
             forecast: Forecast {
                 attacker: numbers(),
                 defender: None,
+                reactions: trpg_core::Reactions::default(),
                 after_first_hit: None,
             },
             outcome: CombatOutcome {

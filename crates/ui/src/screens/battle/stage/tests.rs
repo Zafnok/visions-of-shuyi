@@ -22,6 +22,7 @@ fn strike(by: Side, hit: bool, crit: bool, damage: StatValue, after: StatValue) 
         crit,
         damage,
         healed: false,
+        reaction: None,
         target_hp_after: after,
     }
 }
@@ -65,6 +66,7 @@ fn fight(
             forecast: Forecast {
                 attacker: side_numbers(8, 96, 3),
                 defender: counter.then(|| side_numbers(9, 65, 0)),
+                reactions: trpg_core::Reactions::default(),
                 after_first_hit: None,
             },
             outcome: CombatOutcome {

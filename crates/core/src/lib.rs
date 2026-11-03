@@ -64,8 +64,9 @@ pub use class::{
 };
 pub use combat::{
     CombatHp, CombatMods, CombatOutcome, CombatRules, CombatantInput, DamageType, Forecast,
-    MitigationStat, PlannedStrike, PowerStat, Side, SideForecast, Strike, StrikePlan, WeaponStats,
-    WeaponTrait, forecast, if_all_hit, resolve, roll_hit, strike_order,
+    MitigationStat, PlannedStrike, PowerStat, Reactions, Side, SideForecast, Strike, StrikePlan,
+    StrikeReaction, WeaponStats, WeaponTrait, forecast, if_all_hit, resolve, roll_hit,
+    strike_order,
 };
 pub use geom::{Dir, Grid, GridSizeError, Pos};
 pub use history::{BattleHistory, Replayed, RewindError};
@@ -96,7 +97,7 @@ pub use shop::{
 pub use skill::{
     ActiveEffect, Area, Bonuses, Condition, CostError, CostSource, EffectSource, Paid,
     PassiveEffect, SkillContext, SkillCost, SkillDef, SkillId, SkillKind, SkillTable, SkillUses,
-    Stance, TimedEffect, TimedMods, WeaponReq, check_cost, pay_cost,
+    Stance, StanceReaction, TimedEffect, TimedMods, WeaponReq, check_cost, pay_cost,
 };
 pub use spell::{
     EffectDuration, SpellChanges, SpellDef, SpellId, SpellKind, SpellState, SpellTable,

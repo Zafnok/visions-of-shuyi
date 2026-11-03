@@ -255,6 +255,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 94, 3, 2),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -266,6 +267,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 3, 1),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -277,6 +279,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(11, 11, 71, 2, 2),
                 defender: None,
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -288,6 +291,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(11, 11, 71, 2, 2),
                 defender: Some(numbers(15, 15, 74, 1, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -299,6 +303,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 19, 3),
                 defender: Some(numbers(16, 16, 35, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -310,6 +315,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 90, 19, 2),
                 defender: Some(numbers(16, 16, 35, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -321,6 +327,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 9, 92, 19, 4),
                 defender: Some(numbers(16, 16, 15, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -332,6 +339,7 @@ fn worked_examples() {
             Forecast {
                 attacker: numbers(9, 10, 94, 3, 2),
                 defender: Some(numbers(12, 12, 63, 0, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -343,6 +351,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(14, 14, 76, 1, 1)),
                 defender: Some(numbers(10, 10, 75, 2, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -354,6 +363,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(14, 14, 76, 1, 1)),
                 defender: Some(numbers(5, 5, 75, 2, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -365,6 +375,7 @@ fn worked_examples() {
             Forecast {
                 attacker: effective(numbers(20, 20, 77, 3, 1)),
                 defender: None,
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -379,6 +390,7 @@ fn worked_examples() {
                     ..numbers(11, 11, 30, 0, 1)
                 },
                 defender: Some(numbers(5, 5, 99, 8, 2)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -390,6 +402,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(effective(numbers(20, 20, 92, 2, 1)), Affinity::Weak),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -401,6 +414,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(numbers(9, 9, 97, 0, 1), Affinity::Absorb),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -412,6 +426,7 @@ fn worked_examples() {
             Forecast {
                 attacker: with(numbers(4, 4, 97, 2, 1), Affinity::Resist),
                 defender: Some(numbers(6, 6, 89, 1, 1)),
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: None,
             },
         ),
@@ -438,6 +453,7 @@ fn example_1_scripted_trace() {
         crit: false,
         damage,
         healed: false,
+        reaction: None,
         target_hp_after,
     };
     assert_eq!(
@@ -1533,6 +1549,7 @@ fn missed_order(attacker: u8, defender: u8) -> Vec<Side> {
     let f = Forecast {
         attacker: numbers(1, 1, 0, 0, attacker),
         defender: Some(numbers(1, 1, 0, 0, defender)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     let mut rng = ScriptedRng::new(vec![0; 2 * usize::from(attacker + defender)]);
@@ -1878,6 +1895,7 @@ fn cascading(strikes: u8, cascade: StatValue, crit: u8) -> Forecast {
             ..numbers(10, 12, 50, crit, strikes)
         },
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     }
 }
@@ -1928,6 +1946,7 @@ proptest! {
         let f = Forecast {
             attacker: SideForecast { cascade, ..numbers(damage, damage, 100, 0, 1) },
             defender: None,
+            reactions: crate::combat::Reactions::default(),
             after_first_hit: None,
         };
         prop_assert_eq!(f.attacker.all_hit(), damage);
@@ -1946,6 +1965,7 @@ fn debuffing() -> Forecast {
     Forecast {
         attacker: numbers(10, 10, 50, 0, 2),
         defender: Some(numbers(8, 8, 100, 0, 1)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: Some(AfterFirstHit {
             attacker: numbers(14, 14, 100, 0, 2),
             defender: Some(numbers(5, 5, 100, 0, 1)),
@@ -1987,11 +2007,13 @@ fn numbers_after_a_first_hit_keep_the_forecasts_strikes_and_missing_counter() {
     let mut f = Forecast {
         attacker: numbers(10, 10, 50, 0, 2),
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     f.set_after_first_hit(&Forecast {
         attacker: numbers(14, 14, 60, 0, 4),
         defender: Some(numbers(5, 5, 100, 0, 3)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     });
     assert_eq!(f.numbers(Side::Attacker, false), Some(f.attacker));
@@ -2006,6 +2028,7 @@ fn numbers_after_a_first_hit_keep_the_forecasts_strikes_and_missing_counter() {
     f.set_after_first_hit(&Forecast {
         attacker: numbers(14, 14, 60, 0, 4),
         defender: Some(numbers(5, 5, 100, 0, 3)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     });
     assert_eq!(
@@ -2116,5 +2139,143 @@ fn mods_change_the_power_and_mitigation_stats() {
     assert_eq!(
         f.attacker.damage,
         (plain.attacker.damage + res - def).max(0)
+    );
+}
+
+// ---- Stances that react (ticket 0326) ----------------------------------------
+
+/// One side's numbers: one strike of `damage` at `hit` and `crit`.
+fn strike_numbers(damage: StatValue, hit: u8, crit: u8) -> SideForecast {
+    SideForecast {
+        damage,
+        followup_damage: damage,
+        hit,
+        crit,
+        strikes: 1,
+        cascade: 0,
+        effective: false,
+        broken: false,
+        affinity: None,
+    }
+}
+
+/// Damage of each strike, with its reaction.
+fn dealt(out: &CombatOutcome) -> Vec<(Side, StatValue, Option<StrikeReaction>)> {
+    out.strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect()
+}
+
+#[test]
+fn a_strike_back_rolls_its_own_crit() {
+    use StrikeReaction::{Deflected, StrikeBack};
+    // The defender deflects the attacker's hit and strikes back (crit 50),
+    // then counters as usual.
+    let f = Forecast {
+        attacker: strike_numbers(4, 100, 0),
+        defender: Some(strike_numbers(4, 100, 50)),
+        after_first_hit: None,
+        reactions: Reactions {
+            defender_first: false,
+            deflects: [false, true],
+        },
+    };
+    let fight = |crit_roll| {
+        let mut rng = ScriptedRng::new([0, 0, 0, 0, crit_roll, 0, 0, 99]);
+        resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng)
+    };
+    // A roll of 49 is under 50: a crit, ×3.
+    let out = fight(49);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 0, Some(Deflected)),
+            (Side::Defender, 12, Some(StrikeBack)),
+            (Side::Defender, 4, None),
+        ]
+    );
+    assert!(out.strikes[1].crit);
+    assert_eq!((out.attacker_hp, out.defender_hp), (4, 20));
+    // 50 isn't under 50: no crit.
+    let out = fight(50);
+    assert!(!out.strikes[1].crit);
+    assert_eq!(out.strikes[1].damage, 4);
+    assert_eq!(out.attacker_hp, 12);
+}
+
+/// The attacker (hit 90) deflects; its numbers change from its first hit
+/// on (9 damage instead of 4).
+fn deflecting_debuffer(defender_first: bool) -> Forecast {
+    Forecast {
+        attacker: strike_numbers(4, 90, 0),
+        defender: Some(strike_numbers(3, 100, 0)),
+        after_first_hit: Some(AfterFirstHit {
+            attacker: strike_numbers(9, 90, 0),
+            defender: Some(strike_numbers(3, 100, 0)),
+        }),
+        reactions: Reactions {
+            defender_first,
+            deflects: [true, false],
+        },
+    }
+}
+
+#[test]
+fn a_strike_back_uses_the_numbers_after_the_first_hit_once_there_is_one() {
+    use StrikeReaction::{Deflected, StrikeBack};
+    let f = deflecting_debuffer(false);
+    // The attacker hits first: its strike back uses the later numbers.
+    let mut rng = ScriptedRng::new([0, 0, 0, 0, 0, 0, 0, 0]);
+    let out = resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 4, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 9, Some(StrikeBack)),
+        ]
+    );
+    // It misses first: the strike back uses the numbers before a hit.
+    let mut rng = ScriptedRng::new([99, 99, 0, 0, 0, 0, 0]);
+    let out = resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 0, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 4, Some(StrikeBack)),
+        ]
+    );
+    // The plan if every strike hits agrees: after the hit, 9.
+    let plan = if_all_hit(&f, hp(20, 20), hp(20, 20));
+    let backs: Vec<_> = plan
+        .strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect();
+    assert_eq!(
+        backs,
+        [
+            (Side::Attacker, 4, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 9, Some(StrikeBack)),
+        ]
+    );
+    assert_eq!(plan.defender_hp, 7);
+    // With a Riposte counter first, nobody has hit yet: 4.
+    let plan = if_all_hit(&deflecting_debuffer(true), hp(20, 20), hp(20, 20));
+    let backs: Vec<_> = plan
+        .strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect();
+    assert_eq!(
+        backs,
+        [
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 4, Some(StrikeBack)),
+            (Side::Attacker, 4, None),
+        ]
     );
 }

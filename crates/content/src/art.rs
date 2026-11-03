@@ -5,7 +5,9 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
-use trpg_core::{ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, WeaponKind, WeaponRank};
+use trpg_core::{
+    ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, StanceReaction, WeaponKind, WeaponRank,
+};
 
 use crate::bundle;
 use crate::error::ContentError;
@@ -128,6 +130,19 @@ fn problems(kind: WeaponKind, effect: &ArtEffect) -> Vec<String> {
     }
     if effect.effective.iter().any(|&(_, mult)| mult < 1) {
         out.push("an effectiveness multiplier must be at least 1".into());
+    }
+    if let Some(stance) = &effect.stance {
+        if let Some((0, _)) = stance.counters() {
+            out.push("Counters' reach must be at least 1".into());
+        }
+        // Overwatch is used without attacking: an attack's effects do nothing.
+        let alone = ArtEffect {
+            stance: Some(stance.clone()),
+            ..ArtEffect::default()
+        };
+        if stance.reacts(StanceReaction::Overwatch) && *effect != alone {
+            out.push("an overwatch art has no effect but its stance".into());
+        }
     }
     out
 }
