@@ -114,5 +114,5 @@ fn first_battle(content: &Content) -> Result<String, String> {
 fn stage(content: &Content, battle: &str) -> Result<BattleStage, String> {
     let def = content.battles.get(battle);
     let def = def.ok_or_else(|| format!("no battle \"{battle}\" in assets/battles"))?;
-    Ok(crate::playtest::stage(content, def))
+    crate::playtest::stage(content, def)
 }

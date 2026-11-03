@@ -18,7 +18,7 @@ use trpg_content::battle::BATTLES_DIR;
 use trpg_content::battle::tune::BattleText;
 use trpg_content::bundle;
 
-use crate::playtest::{PERSONAS_FILE, TARGETS_FILE, stage};
+use crate::playtest::{PERSONAS_FILE, TARGETS_FILE, army, stage};
 
 /// Who the search lands in their bands: the personas, never the baseline.
 const ENTRANTS: [&str; 3] = ["casual", "normal", "hardcore"];
@@ -80,9 +80,11 @@ pub fn tuned_plan(
         .map_err(|name| format!("no persona \"{name}\" in {PERSONAS_FILE}"))?;
     let targets = Targets::from_ron(&read(TARGETS_FILE)?)?;
     let (tier, kind) = (def.difficulty, def.kind);
+    // The army is the battle's as authored: a knob changes only enemies.
+    let fielded = army(&content, &def, &stage(&content, &def)?).line();
 
     let play = Box::new(move |battle: &TunedBattle, entrant: usize, seed, turns| {
-        let stage = stage(&content, &battle.load()?);
+        let stage = stage(&content, &battle.load()?)?;
         let name = ENTRANTS[entrant];
         let persona = BattleEntrant::persona(name, personas[entrant], content.ai, &stage);
         let mut tries =
@@ -90,7 +92,7 @@ pub fn tuned_plan(
         tries.pop().ok_or_else(|| "no try".to_owned())
     });
     Ok(AutobalancePlan::new(
-        format!("{id} · {tier:?} tier · {:?}", def.kind),
+        format!("{id} · {tier:?} tier · {:?}\n{fielded}", def.kind),
         ENTRANTS.iter().map(|&n| (n.to_owned(), None)).collect(),
         Box::new(move |names| targets.checks_of(tier, kind, names)),
         Box::new(Tunable::new(battle, knobs, play, write)),

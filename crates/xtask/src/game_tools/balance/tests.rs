@@ -107,7 +107,12 @@ fn the_plan_names_the_battle_and_refuses_what_it_cant_balance() {
     let root = root("autobalance-plan");
     let input = AutobalanceInput::default();
     let plan = plan(&root, Some("test_too_hard"), &input).unwrap_or_else(|e| panic!("{e}"));
-    assert_eq!(plan.title, "test_too_hard · Normal tier · SideQuest");
+    let (first, army) = plan.title.split_once('\n').unwrap_or_default();
+    assert_eq!(first, "test_too_hard · Normal tier · SideQuest");
+    assert!(
+        army.starts_with("army · fresh from the character data · "),
+        "{army}"
+    );
     let names: Vec<&str> = plan.entrants.iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(names, ENTRANTS);
     // Each persona's band, then Hardcore faster than Normal.

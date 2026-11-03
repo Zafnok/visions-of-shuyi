@@ -4,22 +4,40 @@
 // Hollis, Tamsin, Aske, Maud, Rue.
 [
     // Turn 1
-    Act(unit:(2),dest:(x:13,y:13),action:Attack(target:(10),slot:1,active:None,art:Some(("unhorse")))),
     Act(unit:(6),dest:(x:11,y:12),action:Cast(spell:("fire"),target:Unit((10)),active:None)),
-    Act(unit:(4),dest:(x:7,y:11),action:Attack(target:(8),slot:0,active:None,art:Some(("pinning_shot")))),
+    Act(unit:(2),dest:(x:12,y:12),action:Attack(target:(10),slot:0,active:None,art:Some(("unhorse")))),
+    Act(unit:(4),dest:(x:4,y:11),action:Evacuate),
     Act(unit:(1),dest:(x:11,y:10),action:Evacuate),
-    Act(unit:(3),dest:(x:4,y:11),action:Evacuate),
-    Equip(unit:(5),equipped:Weapon(0)),
+    Act(unit:(5),dest:(x:7,y:13),action:Wait),
+    Act(unit:(3),dest:(x:6,y:9),action:Attack(target:(8),slot:0,active:Some(("lance_rush")),art:None)),
     EndPhase,
     // Turn 2
-    Act(unit:(6),dest:(x:10,y:9),action:Wait),
-    Act(unit:(1),dest:(x:14,y:10),action:Attack(target:(11),slot:0,active:None,art:Some(("guard_break")))),
-    Act(unit:(4),dest:(x:11,y:10),action:Attack(target:(11),slot:0,active:None,art:None)),
-    Act(unit:(2),dest:(x:17,y:13),action:Evacuate),
-    Act(unit:(5),dest:(x:9,y:12),action:Wait),
-    Act(unit:(3),dest:(x:4,y:10),action:Wait),
+    Act(unit:(3),dest:(x:12,y:10),action:Attack(target:(11),slot:0,active:None,art:Some(("long_thrust")))),
+    Act(unit:(6),dest:(x:13,y:9),action:Cast(spell:("fire"),target:Unit((11)),active:None)),
+    Act(unit:(1),dest:(x:16,y:10),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+    Act(unit:(4),dest:(x:4,y:10),action:Attack(target:(7),slot:0,active:None,art:None)),
+    Act(unit:(2),dest:(x:16,y:12),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(5),dest:(x:10,y:12),action:Wait),
     EndPhase,
     // Turn 3
-    Act(unit:(6),dest:(x:8,y:6),action:Cast(spell:("fire"),target:Unit((12)),active:Some(("overcast")))),
-    // Some(Victory) on turn 3; lost: []; houses saved: 5 of 5
+    Act(unit:(4),dest:(x:2,y:11),action:Attack(target:(7),slot:0,active:None,art:Some(("close_shot")))),
+    Act(unit:(1),dest:(x:17,y:13),action:Evacuate),
+    EndPhase,
+    // Turn 4
+    Act(unit:(5),dest:(x:11,y:10),action:UseSkill(skill:("sanctuary"),target:None)),
+    Act(unit:(2),dest:(x:17,y:9),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(6),dest:(x:13,y:8),action:Wait),
+    Act(unit:(4),dest:(x:4,y:10),action:Attack(target:(7),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 5
+    Act(unit:(4),dest:(x:3,y:12),action:Attack(target:(7),slot:0,active:None,art:None)),
+    Act(unit:(5),dest:(x:13,y:9),action:Cast(spell:("heal"),target:Unit((6)),active:None)),
+    Act(unit:(3),dest:(x:11,y:14),action:Wait),
+    Act(unit:(1),dest:(x:16,y:9),action:UseSkill(skill:("inspire"),target:None)),
+    Act(unit:(2),dest:(x:19,y:7),action:Wait),
+    Act(unit:(6),dest:(x:13,y:7),action:Wait),
+    EndPhase,
+    // Turn 6
+    Act(unit:(6),dest:(x:11,y:5),action:Cast(spell:("fire"),target:Unit((12)),active:None)),
+    // Some(Victory) on turn 6; lost: []; houses saved: 4 of 5
 ]

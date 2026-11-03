@@ -117,6 +117,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0107](0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md) | Free local voice tools, with designed voices and a reader per character | Accepted (0043); amends ADR-0046 |
 | [0108](0108-windows-release-builds-with-the-gnu-toolchain.md) | The Windows release builds with the GNU toolchain | Accepted (0910); amends ADR-0009 |
 | [0109](0109-voice-directions-reach-the-voice-design-model-apart-from-the-words.md) | Voice directions reach the voice design model, apart from the words | Accepted (0752); amends ADR-0107 |
+| [0110](0110-bots-arrive-at-a-chapter-through-the-recorded-playthroughs-before-it.md) | The bots arrive at a chapter through the recorded playthroughs before it | Accepted (0520); extends ADR-0033 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
