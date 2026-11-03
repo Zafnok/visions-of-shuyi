@@ -8,6 +8,7 @@
     (key: "world_map.kind.random_skirmish", source: "Random skirmish", text: "RANDOM SKIRMISH"),
     (key: "world_map.kind.fixed_skirmish", source: "Fixed skirmish", text: "FIXED SKIRMISH"),
     (key: "title.press_any_key", source: "Press any key or button", text: "PRESS ANY KEY OR BUTTON"),
+    (key: "title.press_any_button", source: "Press any button", text: "PRESS ANY BUTTON"),
     (key: "title.continue", source: "Resume", text: "RESUME"),
     (key: "title.new_game", source: "New Game", text: "NEW GAME"),
     (key: "title.load_game", source: "Load Game", text: "LOAD GAME"),

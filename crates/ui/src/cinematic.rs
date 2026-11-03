@@ -30,11 +30,12 @@ use trpg_content::{ImageId, Shot, ShotAction, Side, battle_campaign};
 use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};
 
 use crate::color::UiColor;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::{MapScene, MapSkin, UnitView};
 use crate::screen::{Ctx, IdleMotion, Shuyi};
 use crate::screens::battle::stage::{self, view::StageView};
-use crate::screens::title::glyph::paint_logo;
+use crate::screens::title::paint_logo;
 use crate::settings::MapZoom;
 
 mod action;
@@ -84,6 +85,17 @@ impl core::ops::Deref for MapPicture {
 pub fn shot_skin(ctx: &Ctx) -> MapSkin {
     let skin = &ctx.game.map_skin;
     skin.at_zoom(MapZoom::X1).unwrap_or_else(|| skin.clone())
+}
+
+/// A map shot's zoom (`zoom` in its file, for the PC's console) on
+/// `console`: as many times smaller as the console is narrower, rounded
+/// half up, and at least 1. So a shot shows about as much of the map on
+/// the Playdate, half as wide (3× and 4× become 2×, 2× becomes 1×;
+/// ticket 1044), and stays whole steps.
+pub fn console_zoom(console: ConsoleSpec, zoom: u8) -> u8 {
+    let (pc, here) = (ConsoleSpec::PC.px().0, console.px().0);
+    let scaled = (i32::from(zoom) * here + pc / 2) / pc.max(1);
+    u8::try_from(scaled.clamp(1, i32::from(zoom.max(1)))).unwrap_or(zoom)
 }
 
 /// The whole map of battle `def` with its units where they start: the
@@ -228,6 +240,10 @@ impl ShotPainter for Built {
                 pan,
                 ..
             } => {
+                let pan = Pan {
+                    zoom: console_zoom(ctx.console, pan.zoom),
+                    ..*pan
+                };
                 let PanFrame { origin_px, zoom } =
                     pan.frame(ctx.console, picture.size_px(), screen, moment.progress);
                 Frame::MapPan { origin_px, zoom }
@@ -296,7 +312,7 @@ impl ShotPainter for Built {
             }
             (Frame::Combat { seconds }, Built::Combat { duel: Some(duel) }) => {
                 if let Some(view) = duel.view(ctx, &cast.lead, seconds) {
-                    stage::glyph::paint(ctx, &view, buf);
+                    stage::SKINS.paint(ctx, &view, buf);
                 }
             }
             _ => {}

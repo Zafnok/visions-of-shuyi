@@ -106,8 +106,8 @@ mod tests {
             image(&table, &pictures, fighter)
         );
         assert!(image(&table, &pictures, fighter).is_some());
-        // The logo is still a PNG: no picture.
-        assert_eq!(image(&table, &pictures, "title/logo.png"), None);
+        // The logo is a lettering (ticket 1044), found by its PNG's id too.
+        assert!(image(&table, &pictures, "title/logo.png").is_some());
         assert!(Pictures::default().is_empty());
     }
 

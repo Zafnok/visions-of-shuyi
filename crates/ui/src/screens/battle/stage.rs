@@ -17,6 +17,14 @@ pub mod glyph;
 pub mod motion;
 pub mod view;
 
+/// The stage's skins (ADR-0083), for a fight shown alone over the whole
+/// screen (the title's cinematic): the PC's, and the Playdate's combat
+/// picture (ticket 1041). A battle's own skins paint it inside theirs.
+pub const SKINS: crate::screens::Skins<StageView> = crate::screens::Skins {
+    glyph: glyph::paint,
+    playdate: |ctx, view, buf| super::playdate::stage::paint(ctx, view, buf.bounds(), buf),
+};
+
 /// What `strike` did to its target.
 fn blow(strike: &Strike) -> Blow {
     match (strike.hit, strike.healed, strike.crit) {

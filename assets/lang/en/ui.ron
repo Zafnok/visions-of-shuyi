@@ -8,6 +8,8 @@
 {
     // The title screen.
     "title.press_any_key": "Press any key or button",
+    // Where there is no keyboard (the Playdate, ticket 1044).
+    "title.press_any_button": "Press any button",
     "title.continue": "Continue",
     "title.new_game": "New Game",
     "title.load_game": "Load Game",

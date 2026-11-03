@@ -37,6 +37,9 @@ pub struct Kind {
     /// How wide a white rim it gets round its figure, in the picture's
     /// pixels ([`with_rim`]); 0 for none.
     pub rim: u16,
+    /// Whether it is a lettering, made by [`lettering`] instead of its
+    /// styles' methods.
+    pub lettering: bool,
 }
 
 /// A lightening of a picture before it is converted: each brightness `b`
@@ -167,10 +170,11 @@ const SCREEN_WIDE: Scale = Scale::Times(25, 21);
 /// (`docs/design/playdate.md`, *The combat picture*).
 pub const FIGHTER_RIM: u16 = 2;
 
-/// Every kind of picture the Playdate draws one-bit. A PNG of `assets/`
-/// outside these folders stays a PNG in its bundle (the font's atlas,
-/// the title's logo, the map's pictures), and a sprite of it is drawn as
-/// a grey box until its own ticket gives it a method.
+/// Every kind of picture the Playdate draws one-bit, but the title's
+/// letterings ([`LETTERING`]). A PNG of `assets/` outside these folders
+/// stays a PNG in its bundle (the font's atlas, the map's pictures), and
+/// a sprite of it is drawn as a grey box until its own ticket gives it a
+/// method.
 pub const KINDS: &[Kind] = &[
     // Q1: style A by default, and the Playdate's portrait style setting
     // (1042) picks one of the four, in this order. The bust at 2×.
@@ -186,6 +190,7 @@ pub const KINDS: &[Kind] = &[
         ],
         lift: None,
         rim: 0,
+        lettering: false,
     },
     // Q2: the fighters in style A only, at the PC's double size; one at
     // 1.25× is enlarged smoothly first. A white rim of 2 pixels keeps the
@@ -197,6 +202,7 @@ pub const KINDS: &[Kind] = &[
         styles: &[style("a", STYLE_A)],
         lift: None,
         rim: FIGHTER_RIM,
+        lettering: false,
     },
     // Q2: the battle backdrop, lightened and dithered.
     Kind {
@@ -206,6 +212,7 @@ pub const KINDS: &[Kind] = &[
         styles: &[style("a", BATTLE_BACKDROP)],
         lift: Some(BATTLE_LIFT),
         rim: 0,
+        lettering: false,
     },
     // Q3 and 1044: the title's backdrops, dithered like the card's.
     Kind {
@@ -215,13 +222,36 @@ pub const KINDS: &[Kind] = &[
         styles: &[style("a", BACKDROP)],
         lift: None,
         rim: 0,
+        lettering: false,
     },
 ];
 
 /// The title's pictures that are not backdrops: its logo and the Game
-/// Over words, a lettering of solid blocks that 1044 makes one-bit its
-/// own way (white letters, a black shadow and rim), not by dithering.
-const NOT_BACKDROPS: [&str; 2] = ["title/logo.png", "title/game_over.png"];
+/// Over words, letterings of solid blocks ([`LETTERING`]).
+const LETTERINGS: [&str; 2] = ["title/logo.png", "title/game_over.png"];
+
+/// How many screen pixels a block of a lettering is (*tunable*: 0062's
+/// launcher card has 4; 3 leaves the title room for its menu).
+pub const LETTER_BLOCK: u32 = 3;
+
+/// A lettering's pixels darker than this brightness (of 255) are its
+/// shadow; the others its letters. The logo's shadow is the palette's
+/// `sea` (about 23), its darkest letters `wood` (about 116).
+const SHADOW_BELOW: u8 = 64;
+
+/// The title's logo and the Game Over words (ticket 1044, 0062 Q3): white
+/// letters, a black shadow and a black rim a block wide, so they read
+/// over a dithered backdrop ([`lettering`]). Not dithered: its one style
+/// is named as every kind's first, and its method is not used.
+pub static LETTERING: Kind = Kind {
+    name: "lettering",
+    folder: "title",
+    scale: Scale::Times(LETTER_BLOCK, 1),
+    styles: &[style("a", STYLE_A)],
+    lift: None,
+    rim: 0,
+    lettering: true,
+};
 
 /// The kind of the picture at `path` (relative to `assets/`), or `None`
 /// if the Playdate keeps it as it is.
@@ -229,8 +259,11 @@ pub fn kind_of(path: &str) -> Option<&'static Kind> {
     let png = path
         .rsplit_once('.')
         .is_some_and(|(_, ext)| ext.eq_ignore_ascii_case("png"));
-    if !png || NOT_BACKDROPS.contains(&path) {
+    if !png {
         return None;
+    }
+    if LETTERINGS.contains(&path) {
+        return Some(&LETTERING);
     }
     KINDS.iter().find(|kind| {
         path.strip_prefix(kind.folder)
@@ -260,8 +293,13 @@ pub fn touch_ups(files: &[String]) -> BTreeMap<String, String> {
 
 /// The one-bit picture file of the `width` × `height` picture of `rgba`
 /// pixels, made as `job` says: lightened if its kind is, converted by its
-/// kind's methods, then given its kind's rim.
+/// kind's methods, then given its kind's rim; a lettering by
+/// [`lettering`].
 pub fn make(width: u32, height: u32, rgba: &[u8], job: &Job<'_>) -> Result<Vec<u8>, String> {
+    if job.kind.lettering {
+        let (num, den) = job.scale;
+        return lettering(width, height, rgba, num / den.max(1));
+    }
     let lifted = job.kind.lift.map(|lift| lift.apply(rgba));
     let pixels = lifted.as_deref().unwrap_or(rgba);
     let image = Rgba::new(width, height, pixels).ok_or("decoded to the wrong number of pixels")?;
@@ -313,6 +351,63 @@ pub fn with_rim(file: &[u8], width: u16) -> Result<Vec<u8>, String> {
     let planes: Vec<&[u8]> = styles.iter().map(Vec::as_slice).collect();
     let size = (bitmap.width(), bitmap.height());
     Ok(encode(size, bitmap.source_size(), &planes, Some(&grown))?)
+}
+
+/// The one-bit picture file of lettering `rgba` (`width` × `height`
+/// pixels; [`LETTERING`]), each of its pixels a block `block` screen
+/// pixels square: its letters white, its shadow (pixels darker than
+/// `SHADOW_BELOW`) black, and each see-through pixel beside or
+/// diagonally next to one of them black, as a rim. The rim takes a block
+/// more on every side, so the picture is `block` × (the PNG's size + 2)
+/// while its source size stays the PNG's: it is drawn whole, at its own
+/// size.
+pub fn lettering(width: u32, height: u32, rgba: &[u8], block: u32) -> Result<Vec<u8>, String> {
+    let (png_w, png_h) = (width as usize, height as usize);
+    let px = block.max(1) as usize;
+    if rgba.len() != png_w * png_h * 4 {
+        return Err("decoded to the wrong number of pixels".into());
+    }
+    // Whether the PNG's pixel left of and above block (col, row) shows,
+    // and if so whether it is white.
+    let at = |col: usize, row: usize| -> Option<bool> {
+        let (x, y) = (col.checked_sub(1)?, row.checked_sub(1)?);
+        if x >= png_w || y >= png_h {
+            return None;
+        }
+        let p = &rgba[(y * png_w + x) * 4..][..4];
+        let pixel = [p[0], p[1], p[2], p[3]];
+        (p[3] >= 128).then(|| shuyi_assets::bitmap::dither::brightness(pixel) >= SHADOW_BELOW)
+    };
+    let (cols, rows) = (png_w + 2, png_h + 2);
+    let pixels = |n: usize| u16::try_from(n * px).map_err(|_| "too big for a one-bit picture");
+    let size = (pixels(cols)?, pixels(rows)?);
+    let stride = Bitmap::stride(size.0);
+    let mut white = vec![0u8; stride * usize::from(size.1)];
+    let mut mask = white.clone();
+    for (row, col) in (0..rows).flat_map(|r| (0..cols).map(move |c| (r, c))) {
+        let rim = || {
+            let mut near = (row.saturating_sub(1)..=row + 1)
+                .flat_map(|r| (col.saturating_sub(1)..=col + 1).map(move |c| (c, r)));
+            near.any(|(c, r)| at(c, r).is_some())
+        };
+        let Some(is_white) = at(col, row).or_else(|| rim().then_some(false)) else {
+            continue;
+        };
+        for y in row * px..(row + 1) * px {
+            for x in col * px..(col + 1) * px {
+                let (byte, bit) = (y * stride + x / 8, 0x80 >> (x % 8));
+                mask[byte] |= bit;
+                if is_white {
+                    white[byte] |= bit;
+                }
+            }
+        }
+    }
+    let source = (
+        u16::try_from(width).map_err(|_| "too big")?,
+        u16::try_from(height).map_err(|_| "too big")?,
+    );
+    Ok(encode(size, source, &[&white], Some(&mask))?)
 }
 
 /// A picture to convert: its path, how much it is enlarged and its kind.
@@ -412,8 +507,9 @@ mod tests {
         assert_eq!(name("battlers/brigand.png"), Some("combat picture"));
         assert_eq!(name("battlebacks/fields.png"), Some("battle backdrop"));
         assert_eq!(name("title/fields_b_dusk.PNG"), Some("title backdrop"));
-        assert_eq!(name("title/logo.png"), None);
-        assert_eq!(name("title/game_over.png"), None);
+        assert_eq!(name("title/logo.png"), Some("lettering"));
+        assert_eq!(name("title/game_over.png"), Some("lettering"));
+        assert_eq!(name("title/logo.1bit"), None);
         assert_eq!(name("title/title.ron"), None);
         assert_eq!(name("battlers/brigand.ron"), None);
         assert_eq!(name("portraitsx/a.png"), None);
@@ -482,15 +578,21 @@ mod tests {
         assert_eq!(touched_up("portraits/a/sad.png", &files), None);
         assert_eq!(touched_up("battlers/brigand.png", &files), None);
         // Only a picture the Playdate draws one-bit.
-        assert_eq!(touched_up("title/logo.png", &files), None);
+        assert_eq!(
+            touched_up("title/logo.png", &files).as_deref(),
+            Some("title/logo.1bit")
+        );
         assert_eq!(touched_up("portraits/a/happy.1bit", &files), None);
         let all = touch_ups(&files);
         assert_eq!(
             all.into_iter().collect::<Vec<_>>(),
-            [(
-                "portraits/a/happy.png".to_string(),
-                "portraits/a/happy.1bit".to_string()
-            )]
+            [
+                (
+                    "portraits/a/happy.png".to_string(),
+                    "portraits/a/happy.1bit".to_string()
+                ),
+                ("title/logo.png".to_string(), "title/logo.1bit".to_string())
+            ]
         );
     }
 
@@ -504,7 +606,7 @@ mod tests {
             "battlers/default.ron",
             "battlers/unused.png",
             "portraits/lead_f/happy.png",
-            "title/logo.png",
+            "title/logo.ron",
         ]);
         let read = |path: &str| match path {
             "battlers/brigand.ron" => {
@@ -644,5 +746,39 @@ mod tests {
         for path in ["portraits/a/b.png", "battlebacks/fields.png", "title/x.png"] {
             assert_eq!(rim(path), 0, "{path}");
         }
+    }
+
+    #[test]
+    fn a_lettering_is_white_letters_a_black_shadow_and_a_black_rim() {
+        // A letter pixel (the logo's `cursor`), its shadow (`sea`) to its
+        // right, and a see-through one below the letter.
+        let rgba = [
+            0xf0, 0xdc, 0xa0, 255, 0x0c, 0x1a, 0x2c, 255, //
+            0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        let file = lettering(2, 2, &rgba, 1).unwrap();
+        // A block of rim all round: 4 × 4, standing for the 2 × 2 PNG.
+        let bitmap = Bitmap::parse(&file).unwrap();
+        assert_eq!(bitmap.source_size(), (2, 2));
+        let rows = ["####", "#.##", "####", "    "];
+        assert_eq!(drawn(&file), rows);
+        // Each block `block` pixels square.
+        let big = lettering(2, 2, &rgba, LETTER_BLOCK).unwrap();
+        assert_eq!(bitmap_size(&big), (12, 12));
+        assert_eq!(drawn(&big)[3], "###...######");
+        assert_eq!(drawn(&big)[9], "            ");
+        assert!(lettering(2, 2, &rgba[..8], 1).is_err());
+        // A letter from brightness 64 up, shown from alpha 128 up: grey 64,
+        // grey 63, white at alpha 128, white at alpha 127.
+        let edges = [
+            64, 64, 64, 255, 63, 63, 63, 255, 255, 255, 255, 128, 255, 255, 255, 127,
+        ];
+        assert_eq!(drawn(&lettering(4, 1, &edges, 1).unwrap())[1], "#.#.# ");
+        // The logo and the Game Over words are made so, LETTER_BLOCK big.
+        let files = paths(&["title/fields_b_day.png", "title/logo.png"]);
+        let jobs = jobs(&files, |_| None).unwrap();
+        assert_eq!((jobs[1].kind, jobs[1].scale), (&LETTERING, (3, 1)));
+        assert_eq!(make(2, 2, &rgba, &jobs[1]), Ok(big));
+        assert!(!jobs[0].kind.lettering);
     }
 }
