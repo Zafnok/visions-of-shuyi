@@ -68,6 +68,10 @@ games are references for *conventions* only (ADR-0013).
 5. Token rules for translators, in the README: `{lead}` and `{n:…}` are
    kept; `{they}`-style tokens are usually dropped in Japanese (the
    subject is left out); key-name placeholders are kept as they are.
+   A `.dlg` line's stand-in for the lead's name (`{lead|the exile}`, 0754)
+   isn't in the English text a pack translates: the line shows `{lead}`. A
+   translated line that is voiced takes the stand-in in its own language
+   the same way, which the pack's token check must then allow.
 6. `assets/lang/ja/lang.ron`: name `日本語`, `made_by: Machine`.
 7. Add a "Translating" section to the `story-writing` skill pointing at
    the README, and a row for it in ADR-0011's pipeline list by way of a

@@ -22,6 +22,7 @@ use core::fmt;
 use shuyi_ui::GameData;
 use shuyi_ui::frame::color::Palette;
 use shuyi_ui::input::help_keys::HelpKeys;
+use trpg_content::dialogue;
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
 use trpg_content::{
@@ -256,11 +257,11 @@ impl GameData for Shuyi {
         );
         let content = &self.content;
         match voice::from_source(&file, source, &content.dialogue) {
-            Ok(manifest) => Ok(voice::playable(
-                &manifest,
-                &content.dialogue,
-                &content.names,
-            )),
+            Ok(manifest) => {
+                // The lines as written: what the voice says for the name.
+                let written = dialogue::written(&content.dialogue, &content.stand_ins);
+                Ok(voice::playable(&manifest, &written, &content.names))
+            }
             Err(errors) => {
                 let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
                 Err(errors.join("; "))

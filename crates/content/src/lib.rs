@@ -151,6 +151,10 @@ pub struct Content {
     pub portraits: BTreeMap<String, Portrait>,
     /// Dialogue scenes by id.
     pub dialogue: DialogueTable,
+    /// The dialogue lines written with a stand-in for the player's name,
+    /// as written, by line id: what the voice says (ticket 0754,
+    /// [`dialogue::written`]).
+    pub stand_ins: dialogue::StandIns,
     /// The AI's numbers.
     pub ai: AiWeights,
     /// One-time contextual tips.
@@ -321,7 +325,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let story = (fields, chapters.as_ref().ok(), new_game.as_ref().ok());
     let places = (maps.as_ref().ok(), openings.as_ref().ok());
     let away = (supports.as_ref().ok(), camp.as_ref().ok());
-    let dialogue = check_dialogue(scripts, places, story, away);
+    let (dialogue, stand_ins) = check_dialogue(scripts, places, story, away);
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -342,6 +346,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         lessons: load_lessons(battles.as_ref().ok(), faces),
         portraits,
         dialogue,
+        stand_ins,
         ai: ai::load(),
         credits: credits::load(audio.as_ref().ok()),
         audio,
@@ -514,17 +519,22 @@ type PlaceFiles<'a> = (
 
 /// Adds the checks that need the maps, the openings and the story to the
 /// dialogue's result: the places and openings ([`check_places`]), then who
-/// is there ([`check_presence`]).
+/// is there ([`check_presence`]); and the lines written with a stand-in
+/// for the player's name (none if the dialogue failed to load).
 fn check_dialogue(
     scripts: Result<dialogue::Scripts, Vec<ContentError>>,
     (maps, openings): PlaceFiles,
     (battles, chapters, new_game): StoryRefs,
     (supports, camp): AwayRefs,
-) -> Result<DialogueTable, Vec<ContentError>> {
+) -> (Result<DialogueTable, Vec<ContentError>>, dialogue::StandIns) {
+    let stand_ins = scripts
+        .as_ref()
+        .map_or_else(|_| dialogue::StandIns::new(), |s| s.stand_ins.clone());
     let places = dialogue::PlaceRefs::new(maps, battles, chapters, supports);
     let places = places.with_openings(openings).with_camp(camp);
-    let scripts = check_places(scripts, &places);
-    check_presence(scripts, battles, chapters, new_game, (supports, camp))
+    let scripts = check_stand_ins(check_places(scripts, &places));
+    let table = check_presence(scripts, battles, chapters, new_game, (supports, camp));
+    (table, stand_ins)
 }
 
 /// The supports and the camp events, each if it loaded: the scenes played
@@ -543,6 +553,25 @@ fn check_places(
         .parsed
         .iter()
         .flat_map(|scene| dialogue::check_places(scene, places))
+        .collect();
+    if errors.is_empty() {
+        Ok(scripts)
+    } else {
+        Err(errors)
+    }
+}
+
+/// Adds the stand-in check ([`dialogue::missing_stand_ins`]: every speech
+/// and narration line that says the player's name says what the voice
+/// says instead, ticket 0754) to the dialogue's result.
+fn check_stand_ins(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+) -> Result<dialogue::Scripts, Vec<ContentError>> {
+    let scripts = scripts?;
+    let errors: Vec<ContentError> = scripts
+        .parsed
+        .iter()
+        .flat_map(|scene| dialogue::missing_stand_ins(scene, &scripts.stand_ins))
         .collect();
     if errors.is_empty() {
         Ok(scripts)
@@ -920,6 +949,7 @@ struct Loaded {
     characters: Result<CharacterTable, Vec<ContentError>>,
     portraits: Result<BTreeMap<String, Portrait>, Vec<ContentError>>,
     dialogue: Result<DialogueTable, Vec<ContentError>>,
+    stand_ins: dialogue::StandIns,
     ai: Result<AiWeights, Vec<ContentError>>,
     tips: Result<TipTable, Vec<ContentError>>,
     lessons: Result<LessonTable, Vec<ContentError>>,
@@ -978,6 +1008,7 @@ fn assemble(
         characters: take(units.characters, &mut errors),
         portraits: take(units.portraits, &mut errors),
         dialogue: take(units.dialogue, &mut errors),
+        stand_ins: units.stand_ins,
         ai: take(units.ai, &mut errors),
         tips: take(units.tips, &mut errors),
         audio: take(units.audio, &mut errors),
@@ -1248,6 +1279,7 @@ mod tests {
             characters: ok_characters(),
             portraits: ok_portraits(),
             dialogue: ok_dialogue(),
+            stand_ins: dialogue::StandIns::new(),
             ai: ai::load(),
             tips: ok_tips(),
             lessons: ok_lessons(),
@@ -1408,6 +1440,7 @@ mod tests {
                     characters: Err(e("u")),
                     portraits: Err(e("o")),
                     dialogue: Err(e("d")),
+                    stand_ins: dialogue::StandIns::new(),
                     ai: Err(e("w")),
                     tips: Err(e("y")),
                     lessons: Err(e("E")),
@@ -1470,6 +1503,7 @@ mod tests {
                     },
                     portraits: if i == 12 { Err(e("o")) } else { ok_portraits() },
                     dialogue: if i == 13 { Err(e("d")) } else { ok_dialogue() },
+                    stand_ins: dialogue::StandIns::new(),
                     ai: if i == 14 { Err(e("w")) } else { ai::load() },
                     tips: if i == 15 { Err(e("y")) } else { ok_tips() },
                     audio: if i == 16 { Err(e("v")) } else { audio::load() },

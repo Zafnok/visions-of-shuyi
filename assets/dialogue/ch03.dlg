@@ -124,7 +124,7 @@ retainer: Nobody's rowing anywhere in the dark. My girl's in that book too. What
 @endchoice
 @right clear
 @else
-> Nobody is rowing anywhere in the dark. Nobody has asked {lead} what {they} wants out of that book, either, and it is a thing {they} could say now, to the fire.
+> Nobody is rowing anywhere in the dark. Nobody has asked {lead|the exile} what {they} wants out of that book, either, and it is a thing {they} could say now, to the fire.
 @choice
 * earnest: Why they'd write a child down at all.
   > Nobody answers that. Nobody good wants it written.
@@ -302,7 +302,7 @@ heretic: Get it out. Get it out of the fire, never mind your hands, I'll do your
 
 @scene ch03_death_lead
 @left lead sad
-> {lead} is down on the causeway stone, and the water is very close on both sides.
+> {lead|The exile} is down on the causeway stone, and the water is very close on both sides.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -442,7 +442,7 @@ keeper: There. I've taken it. That's a keeper carrying the register out of her o
 > {n:heretic} shuts the big book and takes it off the desk, and nobody stops her.
 @left clear
 @else
-> {lead} shuts the big book and takes it off the desk. Nobody else is going to.
+> {lead|The exile} shuts the big book and takes it off the desk. Nobody else is going to.
 @endif
 @endif
 @if heretic
@@ -476,13 +476,13 @@ heretic: "{n:sister}. {N:place.harrowby}. Tested." That's a keeper's hand. "Swor
 retainer: They told us dead. ...Lost.
 @right clear
 @else
-> {lead} finds the page for him. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, and then {n:place.ashfields}, and one word: lost.
+> {lead|The exile} finds the page for him. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, and then {n:place.ashfields}, and one word: lost.
 retainer: They told us dead. ...Lost.
 @endif
 @endif
 @left clear
 @else
-> {lead} turns to the M's without anyone asking. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, {n:place.ashfields}, and one word: lost. Her family was told dead.
+> {lead|The exile} turns to the M's without anyone asking. {N:sister}. {N:place.harrowby}. Tested, sworn to fire, the year, {n:place.ashfields}, and one word: lost. Her family was told dead.
 @endif
 @if sergeant
 @left sergeant neutral
@@ -511,12 +511,12 @@ defector: There's hundreds of {n:family.marr}s. Every third farm in the valley's
 @endif
 @if retainer
 @if heretic
-> {n:retainer.first} has gone to the window and stands with his back to the room. {n:heretic} isn't looking at the book anymore. She is looking at him. {lead} hasn't moved.
+> {n:retainer.first} has gone to the window and stands with his back to the room. {n:heretic} isn't looking at the book anymore. She is looking at him. {lead|The exile} hasn't moved.
 @else
-> {n:retainer.first} has gone to the window and stands with his back to the room. {lead} hasn't moved from the door.
+> {n:retainer.first} has gone to the window and stands with his back to the room. {lead|The exile} hasn't moved from the door.
 @endif
 @else
-> {lead} hasn't moved from the door.
+> {lead|The exile} hasn't moved from the door.
 @endif
 @end
 
@@ -572,7 +572,7 @@ keeper: The paper on the chapel door. "The girl with the burned hands." ...Those
 heretic: ...
 keeper: I asked them to be gentle. And they sent {n:red_captain.nickname}. I didn't know, I swear by {n:god.mother.name} I didn't know what they'd-- I'm not asking you anything. I had to say it. That's all.
 heretic: Give me the salve.
-> {n:keeper} gives it to her. {n:heretic} doesn't open it. She looks past her, at {lead} in the door.
+> {n:keeper} gives it to her. {n:heretic} doesn't open it. She looks past her, at {lead|the exile} in the door.
 heretic: You heard her. Well?
 @choice
 * earnest: She came and said it to your face.
@@ -581,7 +581,7 @@ heretic: You heard her. Well?
 * blunt: Her hands have kept us all alive.
   heretic[neutral]: ...Yes. I know what her hands are worth. I've had them on mine every night. That's the-- that's what makes it-- ...Yes.
 * act: Give me that. I'll do them.
-  > {lead} takes the jar out of {n:heretic}'s fingers. She lets {them}.
+  > {lead|The exile} takes the jar out of {n:heretic}'s fingers. She lets {them}.
   heretic[surprised]: You'll get it in the scars, you don't know where they-- fine. The left first. It's worse.
 @endchoice
 heretic[neutral]: I'm not going anywhere, if that's what you're both standing there for. Where would I go? Stop looking at me. Both of you.

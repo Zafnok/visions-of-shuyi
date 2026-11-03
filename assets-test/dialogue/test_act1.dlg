@@ -19,10 +19,10 @@ test_rogue: Down... but not done.
 @left  lead neutral
 @if test_knight
 @right test_knight neutral
-test_knight: Go, {lead}. I'll hold the line.
+test_knight: Go, {lead|exile}. I'll hold the line.
 @dies test_knight
 @right clear
 @else
-> {lead} holds the line alone, and remembers who should be here.
+> {lead|The exile} holds the line alone, and remembers who should be here.
 @endif
 @end

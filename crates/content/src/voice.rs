@@ -19,7 +19,7 @@ use shuyi_assets::voice::{self as engine, ClipVariant};
 use trpg_core::lead::{self, LeadGender, LeadProfile, Part};
 
 use crate::character::CharacterTable;
-use crate::dialogue::{DialogueTable, LineId};
+use crate::dialogue::{self, DialogueTable, LineId};
 use crate::error::ContentError;
 use crate::names::Names;
 
@@ -100,18 +100,21 @@ pub type VoiceManifest = engine::VoiceManifest<Variant>;
 pub type Playable = engine::Playable<Variant>;
 
 /// The words `text` (a dialogue line as written) says of a lead of
-/// `gender`, with today's `names`: every name and pronoun token filled in.
-/// `None` for a line with `{lead}`: the player types that name, so no clip
-/// can say it.
+/// `gender`, with today's `names`: every name and pronoun token filled in,
+/// and the stand-in said for the player's name (`{lead|the exile}` says
+/// "the exile", ticket 0754). `None` for a line with a bare `{lead}`: the
+/// player types that name, so no clip can say it.
 pub fn spoken_text(text: &str, names: &Names, gender: LeadGender) -> Option<String> {
-    // Only the pronouns are read: a line with the name has no spoken text.
+    // Only the pronouns are read: the name is a stand-in or nothing.
     let lead = LeadProfile::new("", gender);
     let mut out = String::with_capacity(text.len());
     for part in lead::split_tokens(&names.substitute(text)) {
         match part {
             Part::Token(lead::NAME_TOKEN) => return None,
             Part::Token(t) => {
-                if let Some(word) = lead.token(t) {
+                if let Some(words) = dialogue::stand_in(t) {
+                    out.push_str(words);
+                } else if let Some(word) = lead.token(t) {
                     out.push_str(&word);
                 } else {
                     out.push('{');
@@ -184,7 +187,9 @@ fn spoken(text: &str, variant: Variant, names: &Names) -> Option<String> {
 }
 
 /// Whether `clip` is stale: its `spoken` is not what its line says
-/// today (with `names`, of the lead its variant is for). A clip of a
+/// today (with `names`, of the lead its variant is for). `dialogue` is
+/// the lines as written ([`dialogue::written`]), so a stand-in for the
+/// player's name is read. A clip of a
 /// line that is gone, has `{lead}`, or changes with the lead's gender
 /// while the clip is for both, is stale too.
 pub fn is_stale(clip: &VoiceClip, dialogue: &DialogueTable, names: &Names) -> bool {
@@ -198,7 +203,8 @@ pub fn needs_remake(clip: &VoiceClip, dialogue: &DialogueTable, names: &Names) -
     VoiceManifest::needs_remake(clip, dialogue, |text, v| spoken(text, v, names))
 }
 
-/// The clips of `manifest` that aren't stale ([`is_stale`]).
+/// The clips of `manifest` that aren't stale ([`is_stale`]), with
+/// `dialogue` as written ([`dialogue::written`]).
 pub fn playable(manifest: &VoiceManifest, dialogue: &DialogueTable, names: &Names) -> Playable {
     manifest.playable(dialogue, |text, v| spoken(text, v, names))
 }
