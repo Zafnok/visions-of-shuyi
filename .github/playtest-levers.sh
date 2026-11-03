@@ -8,21 +8,26 @@
 # and maps, the number tables in assets/data, the rules (crates/core), how
 # content becomes a battle (crates/content), the bots and their settings
 # (crates/bots), the engine pin, and the playtest command and this
-# workflow themselves. Tests, docs, dialogue, art, audio, fonts, text and
-# the other data files are not.
+# workflow themselves. A later chapter is played with the army the earlier
+# ones leave (ticket 0520), so the chapters, the New Game file, the basic
+# shop and the recorded playthroughs that win the earlier chapters are
+# levers too. Tests, docs, dialogue, art, audio, fonts, text and the other
+# data files are not.
 set -euo pipefail
 
 play=false
 while IFS= read -r path; do
   [ -z "$path" ] && continue
   case "$path" in
+    # The recorded playthroughs the bots' army plays (ticket 0520).
+    crates/ui/tests/it/fixtures/*_winning.ron) ;;
     # Tests and docs change no balance.
     */tests/*|*/tests.rs|*/testkit.rs|*.md) continue ;;
     assets/battles/*|assets/maps/*) ;;
     assets/data/ai.ron|assets/data/arts.ron|assets/data/characters.ron) ;;
     assets/data/classes.ron|assets/data/items.ron|assets/data/new_game.ron) ;;
     assets/data/skills.ron|assets/data/spells.ron|assets/data/supports.ron) ;;
-    assets/data/terrain.ron) ;;
+    assets/data/terrain.ron|assets/data/basic_shop.ron|assets/chapters/*) ;;
     crates/core/src/*|crates/content/src/*|crates/bots/*) ;;
     shuyi-engine.rev) ;;
     crates/xtask/src/playtest.rs|.github/workflows/playtest.yml|.github/playtest-levers.sh) ;;

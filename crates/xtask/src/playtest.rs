@@ -21,10 +21,11 @@ use shuyi_core::bots::playtest::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
 use trpg_bots::{
-    BattleEntrant, BattleStage, Player, Targets, field_army, personas_from_ron, reference_pack,
+    BattleEntrant, BattleStage, Player, Targets, arrival, chapters_before, field_army,
+    personas_from_ron, reference_pack,
 };
 use trpg_content::{Content, battle_campaign};
-use trpg_core::{BattleDef, GameMode, LeadGender, LeadProfile, Turn};
+use trpg_core::{BattleDef, BattleSetup, Faction, GameMode, LeadGender, LeadProfile, Turn};
 
 /// The command's usage text.
 pub const USAGE: &str = "usage: cargo xtask playtest <battle-id> [options]\n\n\
@@ -226,10 +227,48 @@ pub struct Record {
     pub tier: String,
     /// The turn cap.
     pub turn_cap: Turn,
+    /// The army the bots fielded (none in a run kept before ticket 0520).
+    #[serde(default)]
+    pub army: Army,
     /// Who played, in order.
     pub played: Vec<Played>,
     /// The engine's report: every try's measures and the checks.
     pub report: PlaytestReport,
+}
+
+/// The army a run fielded (ticket 0520).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct Army {
+    /// Where it comes from: `campaign after ch01`, `reference army lv 35
+    /// by ch02` or `fresh from the character data`.
+    pub from: String,
+    /// Each unit in unit order, `Hollis guard lv 5`.
+    pub units: Vec<String>,
+    /// The pack, by item id.
+    pub pack: Vec<String>,
+    /// The gold it has.
+    pub gold: u32,
+}
+
+impl Army {
+    /// `army · campaign after ch01 · Lead exile lv 1, … · pack potion,
+    /// potion · gold 100`; nothing for a run with no army kept.
+    pub fn line(&self) -> String {
+        if self.from.is_empty() {
+            return String::new();
+        }
+        let pack = if self.pack.is_empty() {
+            "empty".to_owned()
+        } else {
+            self.pack.join(", ")
+        };
+        format!(
+            "army · {} · {} · pack {pack} · gold {}",
+            self.from,
+            self.units.join(", "),
+            self.gold
+        )
+    }
 }
 
 /// What a run found: the report's text, and whether the battle is blocked.
@@ -273,24 +312,54 @@ pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
     })
 }
 
-/// The battle `def` as the bots play it. The army: the characters of the
-/// battle's player slots, fresh from the character data (as the debug
-/// Quick Battle fields them), or as its `bots_army` says (ticket 0510).
-pub fn stage(content: &Content, def: &BattleDef) -> BattleStage {
-    let setup = |mode| {
+/// The battle `def` as the bots play it, the same for the playtest and
+/// the autobalance. The army: as its `bots_army` says (ticket 0510); else,
+/// in a story chapter after the first, the army the chapters before it
+/// leave, its pack filled in Preparations (`trpg_bots::arrival`, ticket
+/// 0520); else the characters of its player slots, fresh from the
+/// character data (as the debug Quick Battle fields them).
+pub fn stage(content: &Content, def: &BattleDef) -> Result<BattleStage, String> {
+    let setup = |mode| -> Result<BattleSetup, String> {
         let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+        if def.bots_army.is_none()
+            && let Some(setup) = arrival(content, def, mode, lead.clone())?
+        {
+            return Ok(setup);
+        }
         let mut campaign = battle_campaign(content, def, mode, lead);
         let Some(army) = &def.bots_army else {
-            return campaign.battle_setup(def, &content.tables());
+            return Ok(campaign.battle_setup(def, &content.tables()));
         };
         field_army(&mut campaign, content, army);
         let mut setup = campaign.battle_setup(def, &content.tables());
         setup.pack.items = reference_pack(content, army, def.pack_cap);
-        setup
+        Ok(setup)
     };
-    BattleStage {
-        classic: setup(GameMode::Classic),
-        casual: setup(GameMode::Casual),
+    Ok(BattleStage {
+        classic: setup(GameMode::Classic)?,
+        casual: setup(GameMode::Casual)?,
+    })
+}
+
+/// The army of `stage`, battle `def`'s, as the report shows it: where it
+/// comes from, and Classic's units, pack and gold (Casual's are the same
+/// but for the mode).
+pub fn army(content: &Content, def: &BattleDef, stage: &BattleStage) -> Army {
+    let before = chapters_before(content, &def.id);
+    let from = match (&def.bots_army, before.last()) {
+        (Some(army), _) => format!("reference army lv {} by {}", army.level, army.chapter),
+        (None, Some(last)) => format!("campaign after {}", last.id),
+        (None, None) => "fresh from the character data".to_owned(),
+    };
+    let setup = &stage.classic;
+    let players = setup.units.iter().filter(|u| u.faction == Faction::Player);
+    Army {
+        from,
+        units: players
+            .map(|u| format!("{} {} lv {}", u.name, u.class.0, u.level))
+            .collect(),
+        pack: setup.pack.items.iter().map(|i| i.0.clone()).collect(),
+        gold: setup.gold,
     }
 }
 
@@ -311,7 +380,7 @@ pub fn play(
             known.join(", ")
         ));
     };
-    let stage = stage(content, def);
+    let stage = stage(content, def)?;
     let personas = personas_from_ron(personas)?;
     let targets = Targets::from_ron(targets)?;
     let entrants = options
@@ -351,6 +420,7 @@ pub fn play(
         battle: options.battle.clone(),
         tier: format!("{:?}", def.difficulty),
         turn_cap: options.turn_cap,
+        army: army(content, def, &stage),
         played,
         report,
     })
@@ -429,6 +499,10 @@ pub fn render(record: &Record, previous: Option<&Record>) -> String {
         names.join(", "),
         record.turn_cap
     );
+    let army = record.army.line();
+    if !army.is_empty() {
+        let _ = writeln!(out, "{army}");
+    }
     let _ = write!(out, "{}", record.report);
     out.push('\n');
     let width = names.iter().map(|n| n.chars().count()).max().unwrap_or(0);

@@ -415,7 +415,8 @@ Each chapter's battle after its script, 0509, 0323, 0608, 0070 and
 0071: **0848** Chapter 2 (also 0313, 0409, 0443, 0069, 0329) → **0858**
 Chapter 2's art (after Nick buys Hendry's picture and builds his face)
 and **0520** the bots play a chapter with the army the chapters before
-it leave → **0849** Chapter 3 (also 0037, 0069), **0850**–**0854**
+it leave → **0523** Hardcore stops stalling in front of a guarded
+chokepoint → **0849** Chapter 3 (also 0037, 0069), **0850**–**0854**
 Chapters 4–8 (also 1007, 1008, 0319, 1070). The world map's content: **1070** nodes,
 towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
 eight fixed skirmishes, with Gil (after 0746–0749) and **1072**, **1083** and **1084** the five

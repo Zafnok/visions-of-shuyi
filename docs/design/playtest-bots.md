@@ -142,6 +142,15 @@ died and won" is what both success rules share; with Hardcore's whole rule,
 is not a per-map par. If Hardcore is not faster, that's flagged as a problem
 with the bots, not the map.
 
+*How the check reads on Chapter 2* (ticket 0520): on Kell's Ford it
+passes on seeds 1–100 and fails on 101–200, with every band met on both.
+Not the village race: Hardcore's slow wins come from waiting. In front of
+Hendry's guarded ford it can stand for several turns, ending its turn
+with nothing done, because every step forward puts a unit in reach and
+ending a turn costs it nothing within the turn it plans (seed 116: no unit
+moves on turns 4–10). That is a fault of the bots, tracked by ticket
+0523; Chapter 1, where the enemy comes to the army, doesn't show it.
+
 ## Surprise reinforcements
 
 **No bot knows about them** (Q8 A). Every bot plays like someone seeing the

@@ -35,10 +35,48 @@ Bots:
 | `hardcore` | Classic | Nobody dead, few turns, few items. Plans the furthest and never strays: it stands in for veterans. | it wins, nobody dies, and it used at most 1 item |
 | `baseline` | `--mode` | The enemy AI playing the player's side: charges, attacks the best target, never uses items. A yardstick, with no target. | — |
 
-The army a bot fields is the characters of the battle's player slots, as
-they are in the character data (the same army the debug Quick Battle uses),
-or, in a battle with a `bots_army`, the reference army (*Generating
-skirmishes*).
+### The army
+
+The army a bot fields (`crates/xtask/src/playtest.rs`, `stage`: the
+playtest and the autobalance build it the same way) is, for a battle:
+
+- **with a `bots_army`** (a generated skirmish): the reference army
+  (*Generating skirmishes*);
+- **of a story chapter after the first:** the army the chapters before it
+  leave (ticket 0520, `crates/bots/src/arrival.rs`). The campaign starts
+  as New Game; each earlier chapter's battle is won by its **recorded
+  playthrough** (the player's commands in
+  `crates/ui/tests/it/fixtures/<battle>_winning.ron`, which `trpg-ui`'s
+  `ch0N_winnable` tests play in the real game), the enemy playing as in
+  the game, and its result applied as the game applies it: the EXP, every
+  rewind charge unused (their bonus EXP), the clear gold and items, the
+  pack's leftovers back in the stock, everyone rested. Whoever a scene
+  recruits by the chapter joins fresh from the character data. Then the
+  battle's Preparations: the pack (below), nothing else (weapons and
+  armour stay where they are);
+- **else** (Chapter 1, the debug Quick Battle, the test battles): the
+  characters of its player slots fresh from the character data, with the
+  battle's default pack.
+
+The same content always gives the same army. Every report says which one
+it was on its second line, Classic's units with their class and level,
+the pack and the gold:
+
+```
+army · campaign after ch01 · Lead exile lv 1, Hollis guard lv 5, … · pack potion, potion, potion · gold 100
+```
+
+**The pack in Preparations** (*the agent's starting rule*): first the
+stock's consumables, the dearest first, up to the pack's cap; then, while
+the pack has room, the dearest consumable the chapter's basic shop sells
+that the gold still pays for, bought and packed. So Chapter 2's bots,
+whose Chapter 1 playthrough drank its three Potions, buy three with 900
+of the 1000 gold it gave (Potions cost 300) and bring them.
+
+A recorded playthrough the rules no longer win (a balance change to an
+earlier chapter) stops the playtest of every later chapter with an error
+naming it: record a new one (its test says how) and look at what the
+change did to the chapter.
 
 ### How the personas think
 
@@ -171,6 +209,7 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 | Part | Meaning |
 | ---- | ------- |
 | first line | Battle, its tier (its `difficulty`, which picks the bands), the bots, the turn cap. |
+| `army · …` | The army the bots fielded (*The army*): where it comes from, each unit's class and level, the pack, the gold. |
 | `N/100 succeed … band …` | How many tries met the bot's success rule, and the band its tier wants: **✓** in the band, **✗ too hard** under it, **⚠ too easy** over it. `blocked` after it: under the 20% floor. |
 | `turns median … lower` | Hardcore's median turns against Normal's, both over the tries won with nobody dying: **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
 | `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell Maud 1`) and on which turn (`fell Maud turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`. |
@@ -179,6 +218,26 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 
 To watch one try again: `cargo xtask playtest ch01 --bot normal --seed 17
 --runs 1`.
+
+Chapter 2 on 2026-11-03 (ticket 0520), with the army Chapter 1 leaves,
+after the autobalance raised every unnamed Hound from level 1 to 5:
+
+```
+ch02 · Normal tier · casual, normal, hardcore · turn cap 60
+army · campaign after ch01 · Lead exile lv 1, Hollis Marr guard lv 5, Tamsin Rook rider lv 6, Aske archer lv 2, Maud cleric lv 1, Rue mage lv 3 · pack potion, potion, potion · gold 100
+
+             seeds 1–100            seeds 101–200
+casual       47/100  band 30–55% ✓  50/100 ✓
+normal       52/100  band 50–75% ✓  61/100 ✓
+hardcore     55/100  band 50–75% ✓  57/100 ✓
+hardcore turns median 4 (normal 5) lower ✓    5 (normal 4) lower ✗
+```
+
+(Condensed.) With the fresh army and the level-1 Hounds 0848 tuned
+against, the campaign army made it too easy: 70, 76 and 84 out of 100.
+The ✗ on seeds 101–200 is Hardcore stalling in front of the guarded
+ford, a fault of the bots tracked by ticket 0523
+(`design/playtest-bots.md`, *Hardcore is faster than Normal*).
 
 ## History
 
@@ -226,12 +285,14 @@ step of every knob). A step that can't apply (no free tile, no higher
 tier, a class that can't stand there) is skipped. A generated skirmish has its own set (*Generating
 skirmishes*).
 
-**The output** first names the battle, its tier and kind, then why the
+**The output** first names the battle, its tier and kind, and the army
+(as the playtest's second line does), then why the
 search stopped and how many evaluations it made, then each change it
 kept, in the knobs' words:
 
 ```
 test_too_hard · Normal tier · SideQuest
+army · fresh from the character data · …
 
 stuck: no knob brings it nearer its bands · 28 evaluations
 unnamed enemies' level -8: every unnamed enemy -8 levels
