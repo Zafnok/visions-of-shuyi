@@ -4,10 +4,11 @@
 //! callback has not returned for 10 seconds, and the whole start in one
 //! callback took longer than that on the device.
 //!
-//! The steps are the game's data in three ([`StagedLoad`]: what the
-//! dialogue is checked against, the dialogue, the rest), the player's
-//! settings and saves ([`start::with_storage`]), the sounds (as many in a
-//! callback as [`Host::out_of_time`] allows) and the title. Plain code: `src/pd/
+//! The steps are the game's data ([`StagedLoad`]: what the dialogue is
+//! checked against, the dialogue, the rest), the player's settings and
+//! saves ([`start::with_storage`]), the sounds and the title. The
+//! dialogue's checks and the sounds go on over as many callbacks as
+//! [`Host::out_of_time`] needs. Plain code: `src/pd/
 //! entry.rs` runs it on the SDK, and the tests and `chapter_1.rs` on fakes.
 
 use alloc::boxed::Box;
@@ -41,8 +42,8 @@ pub trait Host {
     fn mark(&mut self, name: &str);
     /// Logs a problem found while starting.
     fn warn(&mut self, warning: &str);
-    /// Whether this update callback has run long enough: the sounds load
-    /// until it has, then go on in the next.
+    /// Whether this update callback has run long enough: the dialogue's
+    /// checks and the sounds go on until it has, then in the next.
     fn out_of_time(&mut self) -> bool;
 }
 
@@ -50,7 +51,7 @@ pub trait Host {
 pub enum Boot<S: Speaker> {
     /// The game's data, up to the dialogue.
     Data,
-    /// The dialogue.
+    /// The dialogue, some of it loaded.
     Dialogue(Box<StagedLoad>),
     /// The rest of the game's data, and the context over it.
     Context(Box<StagedLoad>),
@@ -109,7 +110,11 @@ impl<S: Speaker> Boot<S> {
         Ok(Next::Step(match self {
             Self::Data => Self::Dialogue(Box::new(StagedLoad::start())),
             Self::Dialogue(mut load) => {
-                load.dialogue();
+                while load.dialogue() {
+                    if host.out_of_time() {
+                        return Ok(Next::Step(Self::Dialogue(load)));
+                    }
+                }
                 Self::Context(load)
             }
             Self::Context(load) => {
@@ -295,8 +300,8 @@ pub(crate) mod tests {
         assert_eq!(started.audio.samples(), files);
     }
 
-    /// A callback that runs out of time stops the sounds; the next one
-    /// goes on with them.
+    /// A callback that runs out of time stops the dialogue's checks and the
+    /// sounds; the next one goes on with them.
     #[test]
     fn the_sounds_go_on_in_the_next_callback_when_one_runs_out_of_time() {
         let mut host = TestHost {
@@ -304,9 +309,15 @@ pub(crate) mod tests {
             ..TestHost::default()
         };
         let (started, steps) = boot(&mut host);
+        let scenes = started.game.ctx().game.content.dialogue.scenes.len();
         let files = sound_files(started.game.ctx());
-        // One sound a callback, then one that finds none left.
-        let mut expected = Vec::from(["data", "dialogue", "context", "storage"]);
+        // The dialogue's files, a scene a callback, the scripts put
+        // together, then one that finds the dialogue done and goes on to the
+        // rest of the data; one sound a callback, then one that finds none
+        // left.
+        let mut expected = Vec::from(["data"]);
+        expected.extend(core::iter::repeat_n("dialogue", scenes + 3));
+        expected.extend(["context", "storage"]);
         expected.extend(core::iter::repeat_n("sounds", files + 1));
         expected.push("title");
         assert_eq!(steps, expected);

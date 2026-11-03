@@ -284,14 +284,25 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
 /// A loader's value, or its errors.
 type Loading<T> = Result<T, Vec<ContentError>>;
 
-/// [`load_embedded`] in three calls, for a front end that must hand
-/// control back to its platform between them (the Playdate's update
-/// callback, ticket 1086): [`StagedLoad::start`], [`StagedLoad::dialogue`],
+/// [`load_embedded`] in parts, for a front end that must hand control
+/// back to its platform between them (the Playdate's update callback,
+/// ticket 1086): [`StagedLoad::start`], [`StagedLoad::dialogue`] until it
+/// returns false (the files, then a scene at a time), then
 /// [`StagedLoad::finish`]. The content and its errors are the same.
 pub struct StagedLoad {
     early: Early,
-    /// The dialogue, once [`StagedLoad::dialogue`] has loaded it.
-    scripts: Option<Loading<dialogue::Scripts>>,
+    /// How far the dialogue is.
+    dialogue: Dialogue,
+}
+
+/// How far a [`StagedLoad`]'s dialogue is.
+enum Dialogue {
+    /// Not read yet.
+    Unread,
+    /// Read, its scenes being checked.
+    Checking(dialogue::ScriptsLoad),
+    /// Loaded, or its errors.
+    Done(Loading<dialogue::Scripts>),
 }
 
 impl StagedLoad {
@@ -301,28 +312,58 @@ impl StagedLoad {
         bundle::install();
         Self {
             early: Early::load(),
-            scripts: None,
+            dialogue: Dialogue::Unread,
         }
     }
 
-    /// Loads and checks the bundle's dialogue files.
-    pub fn dialogue(&mut self) {
-        self.scripts = Some(self.early.scripts::<&str>(None));
+    /// Does the next part of the dialogue: reads and parses the bundle's
+    /// files, then checks a scene, then puts the scripts together; false
+    /// once that is done.
+    pub fn dialogue(&mut self) -> bool {
+        let early = &self.early;
+        self.dialogue = match core::mem::replace(&mut self.dialogue, Dialogue::Unread) {
+            Dialogue::Unread => Dialogue::Checking(dialogue::ScriptsLoad::start()),
+            Dialogue::Checking(mut load) => {
+                let (cast, faces, known, cues) = early.script_refs();
+                if load.check_next(cast, faces, known, cues) {
+                    Dialogue::Checking(load)
+                } else {
+                    Dialogue::Done(load.finish(cast, faces, known, cues))
+                }
+            }
+            done @ Dialogue::Done(_) => {
+                self.dialogue = done;
+                return false;
+            }
+        };
+        true
     }
 
-    /// Loads the rest (the dialogue too, if [`StagedLoad::dialogue`] has
-    /// not) and puts the content together.
+    /// Loads the rest (what is left of the dialogue first) and puts the
+    /// content together.
     ///
     /// # Errors
     ///
     /// Every error of every file, as [`load_embedded`].
     pub fn finish(self) -> Result<Content, ContentErrors> {
-        let scripts = self
-            .scripts
-            .unwrap_or_else(|| self.early.scripts::<&str>(None));
+        let (cast, faces, known, cues) = self.early.script_refs();
+        let scripts = match self.dialogue {
+            Dialogue::Unread => self.early.scripts::<&str>(None),
+            Dialogue::Checking(load) => load.finish(cast, faces, known, cues),
+            Dialogue::Done(scripts) => scripts,
+        };
         self.early.finish(scripts)
     }
 }
+
+/// What the dialogue is checked against: the characters, their portraits,
+/// the names and the audio, each if it loaded.
+type ScriptRefs<'a> = (
+    Option<&'a CharacterTable>,
+    Option<&'a BTreeMap<String, Portrait>>,
+    Option<&'a Names>,
+    Option<&'a AudioManifest>,
+);
 
 /// What [`load`] loads before the dialogue: what the scripts are checked
 /// against, and what loads without them.
@@ -397,10 +438,19 @@ impl Early {
         }
     }
 
+    /// What the dialogue is checked against.
+    fn script_refs(&self) -> ScriptRefs<'_> {
+        (
+            self.characters.as_ref().ok(),
+            self.portraits.as_ref().ok(),
+            self.names.as_ref().ok(),
+            self.audio.as_ref().ok(),
+        )
+    }
+
     /// The dialogue: `scripts`, or the bundle's files when `None`.
     fn scripts<F: AsRef<str>>(&self, scripts: Option<&[(F, &str)]>) -> Loading<dialogue::Scripts> {
-        let (cast, faces) = (self.characters.as_ref().ok(), self.portraits.as_ref().ok());
-        let (known, cues) = (self.names.as_ref().ok(), self.audio.as_ref().ok());
+        let (cast, faces, known, cues) = self.script_refs();
         match scripts {
             Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
             None => dialogue::load_scripts(cast, faces, known, cues),

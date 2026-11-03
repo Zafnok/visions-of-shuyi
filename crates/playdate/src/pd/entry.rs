@@ -45,10 +45,10 @@ use crate::storage::{self, FileStorage};
 /// says why).
 const REFRESH_RATE: f32 = 30.0;
 
-/// Seconds a frame of the start loads sounds for before it leaves the
-/// rest to the next (`crate::boot`), far under the 10 the Playdate OS
-/// allows a frame.
-const SOUNDS_SECONDS: f32 = 1.0;
+/// Seconds a frame of the start goes on with the dialogue's checks or the
+/// sounds before it leaves the rest to the next (`crate::boot`), far under
+/// the 10 the Playdate OS allows a frame.
+const STEP_SECONDS: f32 = 1.0;
 
 /// What the front end does on its next frame.
 enum Step {
@@ -436,7 +436,7 @@ impl Host for SdkHost {
     }
 
     fn out_of_time(&mut self) -> bool {
-        elapsed() > SOUNDS_SECONDS
+        elapsed() > STEP_SECONDS
     }
 }
 
