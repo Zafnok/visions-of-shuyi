@@ -12,19 +12,7 @@ pub const USAGE: &str = "usage: visions-of-shuyi [--scene <scene id> [--lead m|f
 /// What a wrong `--lead` is answered with.
 const LEAD_VALUES: &str = "--lead needs male or female (or the first letter)";
 
-/// Where the game starts.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Startup {
-    /// At the title screen.
-    Title,
-    /// On a dialogue scene, with the default lead of this gender.
-    Scene {
-        /// The scene's id.
-        id: String,
-        /// The lead's gender.
-        gender: LeadGender,
-    },
-}
+pub use trpg_ui::start::Startup;
 
 /// The start-up `args` (without the program's name) ask for, or what is
 /// wrong with them.

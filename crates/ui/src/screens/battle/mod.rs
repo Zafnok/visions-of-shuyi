@@ -2815,6 +2815,13 @@ impl Screen<Shuyi> for BattleScreen {
         Some(crate::screens::actions::BATTLE.to_vec())
     }
 
+    /// The battle's rules state, in a session record's frame hash (ticket
+    /// 1210): a playback that plays the battle differently is found at the
+    /// frame it parts.
+    fn state_hash(&self) -> Option<shuyi_core::StateHash> {
+        shuyi_core::state_hash(&self.state).ok()
+    }
+
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.update_frame(ctx, input);
         // Still on screen: its tip, if any, is seen (0467).

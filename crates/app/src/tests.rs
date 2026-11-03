@@ -10,9 +10,10 @@ use shuyi_app::read_voice_manifest;
 use shuyi_app::storage::{data_dir, web_prefix};
 use trpg_content::voice::{MANIFEST_FILE, clip_file};
 use trpg_content::{LineId, Variant};
+use trpg_ui::start::Startup;
 use trpg_ui::{Ctx, ShuyiCtx};
 
-use super::{APP, STORAGE_NAME, WINDOW, config, look};
+use super::{APP, STORAGE_NAME, WINDOW, config};
 
 /// Runs a future that never waits on anything external.
 fn block_on<F: Future>(future: F) -> F::Output {
@@ -123,7 +124,7 @@ fn the_font_and_images_are_the_contents() {
     let ctx = Ctx::embedded().unwrap();
     let config = config();
     let content = &ctx.game.content;
-    let look = look(&ctx.game);
+    let look = (trpg_ui::start::start(WINDOW.title, Ok(Startup::Title)).look)(&ctx.game);
     assert!(std::ptr::eq(look.font, &raw const content.font));
     assert!(std::ptr::eq(look.images, &raw const content.images));
     assert!((config.files)(config.font_png).is_some());

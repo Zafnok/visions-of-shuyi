@@ -789,6 +789,20 @@ fn the_session_reads_the_battles_scene_and_paints_its_frame() {
     assert_eq!(picture, shot.image);
 }
 
+/// Ticket 1210: `run --session` plays a kept record from the game's real
+/// start to its last frame, and reads the battle it ends in.
+#[test]
+fn a_session_record_plays_from_the_real_start() {
+    let path = repo_root().join("crates/ui/tests/it/sessions/quick_battle.session.ron");
+    let text = fs::read_to_string(path).unwrap();
+    let record = SessionRecord::from_ron(&text).unwrap();
+    let mut session = Trpg.session_from(&record, Stamps::Check).unwrap();
+    let played = session.play_record().unwrap();
+    assert_eq!(played.first_difference, None);
+    assert_eq!(played.frames as usize, record.frames.len());
+    assert_eq!(session.scene().unwrap().screen, "battle");
+}
+
 /// Ticket 1193: `check` (the MCP server's) passes on the game's content.
 #[test]
 fn check_passes_on_the_content() {
