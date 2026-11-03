@@ -69,6 +69,9 @@ pub trait Speaker {
 pub struct Audio<S: Speaker> {
     /// Every sound file loaded, by its path in the manifest.
     samples: BTreeMap<String, S::Sample>,
+    /// The sound files not loaded yet, each with the first cue that plays
+    /// it: the next one last.
+    unloaded: Vec<(String, String)>,
     /// Each sound cue's volume (0–1) and its variants' files, which may be
     /// missing from `samples` (warned when loading).
     sounds: BTreeMap<String, (f32, Vec<String>)>,
@@ -107,35 +110,39 @@ struct Track<S: Speaker> {
 }
 
 impl<S: Speaker> Audio<S> {
-    /// Loads every sound file of `manifest` from the `.pdx`. A file that is
-    /// not there is left out with a warning; its cue plays its other
-    /// variants, or nothing. `seed` seeds the variant picker.
+    /// Loads every sound file of `manifest` from the `.pdx`
+    /// ([`Self::new`], then [`Self::load_next`] until none is left).
     pub fn load(speaker: &mut S, manifest: &AudioManifest, seed: u64) -> Self {
-        let mut samples = BTreeMap::new();
-        let mut warnings = Vec::new();
+        let mut audio = Self::new(manifest, seed);
+        while audio.load_next(speaker) {}
+        audio
+    }
+
+    /// The player of `manifest`'s sounds and music, no sound file loaded
+    /// yet: [`Self::load_next`] loads them one at a time, so the start can
+    /// spread them over several update callbacks (ticket 1086). `seed`
+    /// seeds the variant picker.
+    pub fn new(manifest: &AudioManifest, seed: u64) -> Self {
+        let mut unloaded = Vec::new();
         let mut sounds = BTreeMap::new();
         for (cue, sound) in &manifest.sounds {
             for file in &sound.files {
-                if samples.contains_key(file) {
-                    continue;
-                }
-                let path = audio::playdate_sound_path(file);
-                match speaker.load_sample(&path) {
-                    Some(sample) => {
-                        samples.insert(file.clone(), sample);
-                    }
-                    None => warnings.push(format!("sound \"{cue}\": {path} is not in the .pdx")),
+                if !unloaded.iter().any(|(_, f)| f == file) {
+                    unloaded.push((cue.clone(), file.clone()));
                 }
             }
             sounds.insert(cue.clone(), (percent(sound.volume), sound.files.clone()));
         }
+        // Loaded from the end.
+        unloaded.reverse();
         let music = manifest
             .music
             .iter()
             .map(|(cue, m)| (cue.clone(), (m.file.clone(), percent(m.volume), m.looped)))
             .collect();
         Self {
-            samples,
+            samples: BTreeMap::new(),
+            unloaded,
             sounds,
             music,
             tracks: BTreeMap::new(),
@@ -145,8 +152,28 @@ impl<S: Speaker> Audio<S> {
             music_volume: 1.0,
             sound_volume: 1.0,
             paused: false,
-            warnings,
+            warnings: Vec::new(),
         }
+    }
+
+    /// Loads the next sound file from the `.pdx`, in the manifest's order;
+    /// false if every one was loaded already. A file that is not there is
+    /// left out with a warning; its cue plays its other variants, or
+    /// nothing.
+    pub fn load_next(&mut self, speaker: &mut S) -> bool {
+        let Some((cue, file)) = self.unloaded.pop() else {
+            return false;
+        };
+        let path = audio::playdate_sound_path(&file);
+        match speaker.load_sample(&path) {
+            Some(sample) => {
+                self.samples.insert(file, sample);
+            }
+            None => self
+                .warnings
+                .push(format!("sound \"{cue}\": {path} is not in the .pdx")),
+        }
+        true
     }
 
     /// How many sound files are loaded.
@@ -544,6 +571,27 @@ mod tests {
             ["sound \"step\": audio/sfx/step_b is not in the .pdx"]
         );
         assert_eq!(audio.take_warnings(), [] as [std::string::String; 0]);
+    }
+
+    /// The start loads the sounds a few per update callback (ticket 1086):
+    /// one file a call, in the same order, until none is left.
+    #[test]
+    fn the_sounds_load_one_file_a_call() {
+        let mut speaker = fake();
+        let mut audio = Audio::new(&manifest(), 1);
+        assert_eq!(speaker.calls, []);
+        assert_eq!(audio.samples(), 0);
+        assert!(audio.load_next(&mut speaker));
+        assert_eq!(speaker.calls, [Call::Load("audio/sfx/blip".into())]);
+        assert_eq!(audio.samples(), 1);
+        let mut calls = 1;
+        while audio.load_next(&mut speaker) {
+            calls += 1;
+        }
+        assert_eq!(calls, 4);
+        assert_eq!(audio.samples(), 3);
+        assert!(!audio.load_next(&mut speaker));
+        assert_eq!(speaker.calls.len(), 4);
     }
 
     #[test]

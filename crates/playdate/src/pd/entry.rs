@@ -2,8 +2,10 @@
 //! frame from the SDK's update callback.
 //!
 //! The first frame shows the loading card (ticket 1036, `crate::card`),
-//! drawn with the game's font. The next loads the game on the game's own
-//! stack, timing every file it reads from the bundle; then the game runs
+//! drawn with the game's font. The next frames load the game on the
+//! game's own stack, one step of the start each (ticket 1086,
+//! `crate::boot`), timing every file it reads from the bundle; then the
+//! game runs
 //! (ticket 1033): each frame reads the buttons and the crank (ticket
 //! 1035), hands the game an entry of the system menu chosen since the last
 //! frame, calls `Game::frame` with the time since the last frame, and when
@@ -22,7 +24,7 @@ use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::input::{Crank, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent, Storage};
 
 use super::files::SdkFiles;
 use super::sound::Sdk;
@@ -31,25 +33,38 @@ use super::{
     set_menu_item_title, set_refresh_rate, show, write_file,
 };
 use crate::audio::Audio;
+use crate::boot::{Boot, Host, Next, Started};
+use crate::card;
 use crate::menu::{self, Chosen, Titles};
 use crate::pads::PlaydatePad;
 use crate::pictures::Pictures;
 use crate::report::{self, Minute, Reads};
 use crate::storage::{self, FileStorage};
-use crate::{card, start};
 
 /// Frames a second the SDK runs the game at, at most (the crate README
 /// says why).
 const REFRESH_RATE: f32 = 30.0;
 
+/// Seconds a frame of the start loads sounds for before it leaves the
+/// rest to the next (`crate::boot`), far under the 10 the Playdate OS
+/// allows a frame.
+const SOUNDS_SECONDS: f32 = 1.0;
+
 /// What the front end does on its next frame.
 enum Step {
     /// Show the loading card; it reaches the screen at the end of the frame.
     ShowCard,
-    /// Load the game, the card on the screen.
-    Load(Box<Card>),
+    /// Run the start's next step, the card on the screen.
+    Load(Box<Loading>),
     /// The game is running.
     Running(Box<Running>),
+}
+
+/// The start, behind the loading card.
+struct Loading {
+    card: Card,
+    /// The step the next frame runs.
+    boot: Boot<Sdk>,
 }
 
 /// The loading card on the screen, and what the game takes over from it.
@@ -121,6 +136,13 @@ static READS: Watched = Watched(UnsafeCell::new(None));
 /// `millis` when the game started.
 static STARTED: AtomicU32 = AtomicU32::new(0);
 
+/// Milliseconds the start's earlier callbacks took, as `f32` bits: the
+/// load report's clock, stopped between callbacks.
+static LOADING_MS: AtomicU32 = AtomicU32::new(0);
+
+/// Whole milliseconds the start's callbacks took, by `millis`.
+static LOAD_MS: AtomicU32 = AtomicU32::new(0);
+
 /// Whether the game has loaded: from then on the debug build logs each
 /// file read.
 static LOADED: AtomicBool = AtomicBool::new(false);
@@ -128,6 +150,12 @@ static LOADED: AtomicBool = AtomicBool::new(false);
 /// Milliseconds since the game started.
 fn since_start() -> u32 {
     millis().wrapping_sub(STARTED.load(Ordering::Relaxed))
+}
+
+/// Milliseconds the start has run for: its earlier callbacks and this
+/// one so far.
+fn loading_ms() -> f32 {
+    f32::from_bits(LOADING_MS.load(Ordering::Relaxed)) + elapsed() * 1000.0
 }
 
 /// Called by the shim once, at `kEventInit`, before the first frame.
@@ -166,7 +194,7 @@ pub extern "C" fn trpg_playdate_update() -> c_int {
 fn on_read(path: &str, found: bool) {
     // SAFETY: one thread (see `Front`), and nothing here reads files.
     if let Some(reads) = unsafe { &mut *READS.0.get() } {
-        reads.add(path, found, elapsed() * 1000.0);
+        reads.add(path, found, loading_ms());
     } else if cfg!(debug_assertions) && LOADED.load(Ordering::Relaxed) {
         let missing = if found { "" } else { ", not in the bundle" };
         log(&alloc::format!(
@@ -188,16 +216,21 @@ fn update(step: &mut Step) -> bool {
             let changed = show(&frame);
             let shown = report::card_shown(since_start());
             log(&shown);
-            *step = Step::Load(Box::new(Card { font, frame, shown }));
+            *step = Step::Load(Box::new(Loading {
+                card: Card { font, frame, shown },
+                boot: Boot::Data,
+            }));
             changed
         }
         Step::Load(_) => {
-            let Step::Load(card) = core::mem::replace(step, Step::ShowCard) else {
+            let Step::Load(loading) = core::mem::replace(step, Step::ShowCard) else {
                 return false;
             };
-            *step = Step::Running(load(card));
-            // The first frame's time starts now, not before loading.
-            reset_elapsed();
+            *step = load(loading);
+            if matches!(step, Step::Running(_)) {
+                // The first frame's time starts now, not before loading.
+                reset_elapsed();
+            }
             false
         }
         Step::Running(running) => {
@@ -246,29 +279,93 @@ fn update(step: &mut Step) -> bool {
     }
 }
 
-/// Loads the game behind the card, noting every file it reads, and logs
-/// how long that took.
-fn load(mut card: Box<Card>) -> Box<Running> {
-    // The debug build (the Simulator's) checks the game's storage on the
-    // real files first.
-    if cfg!(debug_assertions) {
-        game_stack::run(|| storage::check(SdkFiles));
-        log("storage: the conformance suite passed");
+/// Runs the start's next step behind the card (`crate::boot`), noting
+/// every file it reads: the step after it, or once the game has started,
+/// the game, with how long the start took logged.
+fn load(loading: Box<Loading>) -> Step {
+    if matches!(loading.boot, Boot::Data) {
+        // The debug build (the Simulator's) checks the game's storage on
+        // the real files first.
+        if cfg!(debug_assertions) {
+            game_stack::run(|| storage::check(SdkFiles));
+            log("storage: the conformance suite passed");
+        }
+        // SAFETY: one thread (see `Front`).
+        unsafe { *READS.0.get() = Some(Reads::default()) };
+        LOADING_MS.store(0f32.to_bits(), Ordering::Relaxed);
+        LOAD_MS.store(0, Ordering::Relaxed);
     }
-    let shown = core::mem::take(&mut card.shown);
-    // SAFETY: one thread (see `Front`).
-    unsafe { *READS.0.get() = Some(Reads::default()) };
     reset_elapsed();
     let start = millis();
-    let mut running = game_stack::run(|| start_game(card))
-        .unwrap_or_else(|e| panic!("the game did not start: {e}"));
-    let load_ms = millis().wrapping_sub(start);
-    let end_ms = elapsed() * 1000.0;
+    let mut step = game_stack::run(move || {
+        let Loading { card, boot } = *loading;
+        match boot.step(&mut SdkHost) {
+            Ok(Next::Step(boot)) => Step::Load(Box::new(Loading { card, boot })),
+            Ok(Next::Started(started)) => Step::Running(running(card, *started)),
+            Err(e) => panic!("the game did not start: {e}"),
+        }
+    });
+    LOAD_MS.fetch_add(millis().wrapping_sub(start), Ordering::Relaxed);
+    if let Step::Running(running) = &mut step {
+        report_load(running);
+    } else {
+        LOADING_MS.store(loading_ms().to_bits(), Ordering::Relaxed);
+    }
+    step
+}
+
+/// The game started behind the `card`.
+fn running(card: Card, started: Started<Sdk>) -> Box<Running> {
+    let Card { font, frame, shown } = card;
+    let Started {
+        game,
+        audio,
+        speaker,
+    } = started;
+    let content = &game.ctx().game.content;
+    let pad = PlaydatePad::new(content.keymap.stick);
+    let crank = Crank::new(content.keymap.crank);
+    let pictures = Pictures::new(&content.images);
+    let mut running = Box::new(Running {
+        game,
+        pad,
+        crank,
+        menu: [None, None, None],
+        titles: Titles::default(),
+        audio,
+        speaker,
+        font,
+        pictures,
+        shown: None,
+        frame,
+        minute: Minute::default(),
+        report: Some(Report {
+            log: Vec::from([shown]),
+            each: Vec::new(),
+        }),
+        #[cfg(feature = "bench")]
+        bench: super::bench::Bench::new(),
+    });
+    running.name_menu();
+    running
+}
+
+/// Logs how long the start took, after the card's line in `running`'s
+/// report, which is written once the game's first frame is shown.
+fn report_load(running: &mut Running) {
+    let end_ms = loading_ms();
     // SAFETY: one thread (see `Front`).
     let reads = unsafe { (*READS.0.get()).take() }.unwrap_or_default();
     LOADED.store(true, Ordering::Relaxed);
-    let mut lines = Vec::from([shown]);
-    lines.extend(report::loaded(load_ms, game_stack::high_water()));
+    let mut lines: Vec<String> = running
+        .report
+        .take()
+        .map(|report| report.log)
+        .unwrap_or_default();
+    lines.extend(report::loaded(
+        LOAD_MS.load(Ordering::Relaxed),
+        game_stack::high_water(),
+    ));
     lines.extend(reads.summary(end_ms));
     lines.push(report::sounds(running.audio.samples()));
     for line in &lines {
@@ -281,7 +378,6 @@ fn load(mut card: Box<Card>) -> Box<Running> {
         }
     }
     running.report = Some(Report { log: lines, each });
-    running
 }
 
 /// Logs when the game's first frame was shown, and writes the whole load
@@ -302,54 +398,39 @@ fn write_report(report: &Report) {
     write_file(report::FILE, file.as_bytes());
 }
 
-/// Notes in the load report that the step `name` of the start began.
-fn mark(name: &str) {
-    // SAFETY: one thread (see `Front`).
-    if let Some(reads) = unsafe { &mut *READS.0.get() } {
-        reads.mark(name, elapsed() * 1000.0);
-    }
-}
+/// The start's platform: the clock, the Playdate's files for the player's
+/// storage, the SDK's sound players and the load report.
+struct SdkHost;
 
-/// Loads the game's data and starts the game at the title, as the
-/// Playdate runs it (`crate::start`), with its files for storage, drawn
-/// with the card's font into its frame.
-fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
-    let Card { font, frame, .. } = *card;
-    let ctx = start::data(u64::from(millis()))?;
-    mark("the player's settings and saves");
-    let mut ctx = start::with_storage(ctx, Box::new(FileStorage::new(SdkFiles)))?;
-    for warning in ctx.take_warnings() {
-        log(&warning);
+impl Host for SdkHost {
+    type Speaker = Sdk;
+
+    fn seed(&mut self) -> u64 {
+        u64::from(millis())
     }
-    let pad = PlaydatePad::new(ctx.game.content.keymap.stick);
-    let crank = Crank::new(ctx.game.content.keymap.crank);
-    let pictures = Pictures::new(&ctx.game.content.images);
-    mark("the sounds");
-    let mut speaker = Sdk::new();
-    let mut audio = Audio::load(&mut speaker, &ctx.game.content.audio, u64::from(millis()));
-    for warning in audio.take_warnings() {
-        log(&alloc::format!("audio: {warning}"));
+
+    fn storage(&mut self) -> Box<dyn Storage> {
+        Box::new(FileStorage::new(SdkFiles))
     }
-    mark("the title");
-    let mut running = Box::new(Running {
-        game: trpg_ui::game::start(ctx),
-        pad,
-        crank,
-        menu: [None, None, None],
-        titles: Titles::default(),
-        audio,
-        speaker,
-        font,
-        pictures,
-        shown: None,
-        frame,
-        minute: Minute::default(),
-        report: None,
-        #[cfg(feature = "bench")]
-        bench: super::bench::Bench::new(),
-    });
-    running.name_menu();
-    Ok(running)
+
+    fn speaker(&mut self) -> Sdk {
+        Sdk::new()
+    }
+
+    fn mark(&mut self, name: &str) {
+        // SAFETY: one thread (see `Front`).
+        if let Some(reads) = unsafe { &mut *READS.0.get() } {
+            reads.mark(name, loading_ms());
+        }
+    }
+
+    fn warn(&mut self, warning: &str) {
+        log(warning);
+    }
+
+    fn out_of_time(&mut self) -> bool {
+        elapsed() > SOUNDS_SECONDS
+    }
 }
 
 impl Running {

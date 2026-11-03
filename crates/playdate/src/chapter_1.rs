@@ -18,13 +18,12 @@ use trpg_content::audio;
 use trpg_content::bundle::{self, Bundle};
 use trpg_content::{MusicLine, Step};
 use trpg_core::{BattleState, Command, Outcome, Phase, next_command};
-use trpg_ui::MemoryStorage;
 use trpg_ui::audio::MusicCommand;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::PadKind;
 use trpg_ui::screen::Lessons;
 
-use crate::{card, start};
+use crate::{boot, card};
 
 /// The PC test's winning playthrough: the player's commands, in order.
 const PLAYTHROUGH: &str = include_str!("../../ui/tests/it/fixtures/ch01_winning.ron");
@@ -72,13 +71,14 @@ fn send(h: &mut Harness, command: &Command) {
 fn play_chapter_1() -> Vec<String> {
     // The card's font comes first, as on the device.
     card::font().unwrap_or_else(|e| panic!("{e}"));
-    let mut ctx = start::context(Box::new(MemoryStorage::new()), 1)
-        .unwrap_or_else(|e| panic!("the game did not start: {e}"));
-    // The guide's tips and lessons are read at the start; off, they never
-    // stop the recorded commands.
+    // Then the start's steps, one call each.
+    let (mut started, _) = boot::tests::boot(&mut boot::tests::TestHost::default());
+    // The guide's tips and lessons are read once a game begins; off, they
+    // never stop the recorded commands.
+    let ctx = started.game.ctx_mut();
     ctx.game.tips_enabled = false;
     ctx.game.lessons = Lessons::Off;
-    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
+    let mut h = Harness::from_game(started.game);
     h.use_pad(PadKind::Playdate);
     // A ends the title's wait; then New Game, Classic, and on until the
     // lead's screen.
