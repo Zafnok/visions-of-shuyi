@@ -2141,3 +2141,141 @@ fn mods_change_the_power_and_mitigation_stats() {
         (plain.attacker.damage + res - def).max(0)
     );
 }
+
+// ---- Stances that react (ticket 0326) ----------------------------------------
+
+/// One side's numbers: one strike of `damage` at `hit` and `crit`.
+fn strike_numbers(damage: StatValue, hit: u8, crit: u8) -> SideForecast {
+    SideForecast {
+        damage,
+        followup_damage: damage,
+        hit,
+        crit,
+        strikes: 1,
+        cascade: 0,
+        effective: false,
+        broken: false,
+        affinity: None,
+    }
+}
+
+/// Damage of each strike, with its reaction.
+fn dealt(out: &CombatOutcome) -> Vec<(Side, StatValue, Option<StrikeReaction>)> {
+    out.strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect()
+}
+
+#[test]
+fn a_strike_back_rolls_its_own_crit() {
+    // The defender deflects the attacker's hit and strikes back (crit 50),
+    // then counters as usual.
+    let f = Forecast {
+        attacker: strike_numbers(4, 100, 0),
+        defender: Some(strike_numbers(4, 100, 50)),
+        after_first_hit: None,
+        reactions: Reactions {
+            defender_first: false,
+            deflects: [false, true],
+        },
+    };
+    let fight = |crit_roll| {
+        let mut rng = ScriptedRng::new([0, 0, 0, 0, crit_roll, 0, 0, 99]);
+        resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng)
+    };
+    use StrikeReaction::{Deflected, StrikeBack};
+    // A roll of 49 is under 50: a crit, ×3.
+    let out = fight(49);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 0, Some(Deflected)),
+            (Side::Defender, 12, Some(StrikeBack)),
+            (Side::Defender, 4, None),
+        ]
+    );
+    assert!(out.strikes[1].crit);
+    assert_eq!((out.attacker_hp, out.defender_hp), (4, 20));
+    // 50 isn't under 50: no crit.
+    let out = fight(50);
+    assert!(!out.strikes[1].crit);
+    assert_eq!(out.strikes[1].damage, 4);
+    assert_eq!(out.attacker_hp, 12);
+}
+
+/// The attacker (hit 90) deflects; its numbers change from its first hit
+/// on (9 damage instead of 4).
+fn deflecting_debuffer(defender_first: bool) -> Forecast {
+    Forecast {
+        attacker: strike_numbers(4, 90, 0),
+        defender: Some(strike_numbers(3, 100, 0)),
+        after_first_hit: Some(AfterFirstHit {
+            attacker: strike_numbers(9, 90, 0),
+            defender: Some(strike_numbers(3, 100, 0)),
+        }),
+        reactions: Reactions {
+            defender_first,
+            deflects: [true, false],
+        },
+    }
+}
+
+#[test]
+fn a_strike_back_uses_the_numbers_after_the_first_hit_once_there_is_one() {
+    use StrikeReaction::{Deflected, StrikeBack};
+    let f = deflecting_debuffer(false);
+    // The attacker hits first: its strike back uses the later numbers.
+    let mut rng = ScriptedRng::new([0, 0, 0, 0, 0, 0, 0, 0]);
+    let out = resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 4, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 9, Some(StrikeBack)),
+        ]
+    );
+    // It misses first: the strike back uses the numbers before a hit.
+    let mut rng = ScriptedRng::new([99, 99, 0, 0, 0, 0, 0]);
+    let out = resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng);
+    assert_eq!(
+        dealt(&out),
+        [
+            (Side::Attacker, 0, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 4, Some(StrikeBack)),
+        ]
+    );
+    // The plan if every strike hits agrees: after the hit, 9.
+    let plan = if_all_hit(&f, hp(20, 20), hp(20, 20));
+    let backs: Vec<_> = plan
+        .strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect();
+    assert_eq!(
+        backs,
+        [
+            (Side::Attacker, 4, None),
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 9, Some(StrikeBack)),
+        ]
+    );
+    assert_eq!(plan.defender_hp, 7);
+    // With a Riposte counter first, nobody has hit yet: 4.
+    let plan = if_all_hit(&deflecting_debuffer(true), hp(20, 20), hp(20, 20));
+    let backs: Vec<_> = plan
+        .strikes
+        .iter()
+        .map(|s| (s.by, s.damage, s.reaction))
+        .collect();
+    assert_eq!(
+        backs,
+        [
+            (Side::Defender, 0, Some(Deflected)),
+            (Side::Attacker, 4, Some(StrikeBack)),
+            (Side::Attacker, 4, None),
+        ]
+    );
+}

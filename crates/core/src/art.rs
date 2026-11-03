@@ -73,7 +73,6 @@ impl Debuff {
     pub fn mods(self) -> TimedMods {
         TimedMods {
             stats: vec![(self.stat, -self.amount)],
-            combat: CombatMods::default(),
             ..Default::default()
         }
     }
