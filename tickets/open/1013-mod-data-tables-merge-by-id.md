@@ -62,7 +62,10 @@ says; the mods folder (1014).
 4. Switch each table's `load` to the merged loader, one commit per few
    tables so a failure is easy to find. The cross-checks that already run
    after loading (`check_seals`, `check_spell_references`, ...) run on the
-   merged tables unchanged.
+   merged tables unchanged. Either order with 1236 (one `checked` helper
+   replaces those six adapters in `lib.rs`): if 1236 is done, the merged
+   results go through its `checked(result, dep, check)` calls; if not,
+   keep the adapters and 1236 replaces them afterwards.
 5. A test mod under `crates/content/tests/mods/` (not in `assets/`): one
    that adds an item, one that changes an existing item's might, one that
    removes a tip. Tests build `Layer`s from it with 1012's test helpers.
