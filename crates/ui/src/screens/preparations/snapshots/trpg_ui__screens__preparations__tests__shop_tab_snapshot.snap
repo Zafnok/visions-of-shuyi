@@ -23,7 +23,7 @@ expression: h.snapshot()
 ║  Linen Robe                  300   Res +4                                                        ║
 ║  Leather Vest                400   Def +2  Res +2                                                ║
 ║  Chain Mail                  800   Def +4  Res +1                                                ║
-║  Iron Plate                1 500   Def +8  Res +-3                                               ║
+║  Iron Plate                1 500   Def +8  Res -3                                                ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║
