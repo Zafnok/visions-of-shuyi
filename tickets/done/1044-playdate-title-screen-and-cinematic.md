@@ -93,7 +93,7 @@ cinematic keeps time with the song (once 1047 is in).
 
 - [x] The cinematic plays to the title menu in the Simulator; the menu
       works.
-- [ ] Device frame time in the PR.
+- [x] Device frame time in the PR.
 - [x] No PC snapshot changes.
 - [x] Starting rules and anything left to judge by playing are in the
       Completion notes (they go on 1064's checklist).
@@ -157,7 +157,26 @@ brigand's attack on the combat picture, the whole field), reached the
 logo at 117 s with the menu back, and A there opened the game mode
 screen.
 
-**Device frame time:** see the PR (Nick sideloads the build).
+**Device frame time** (Nick's Playdate, 2026-11-03, a release build
+with 1086's start-up fix, the title left alone for about 3 minutes; the
+minute report):
+
+```
+On title for 60 seconds: 19.3 frames a second
+Game::frame: min 4.1 / avg 6.4 / max 61.1 ms, n = 1,158
+Render and copy: min 7.5 / avg 44.4 / max 84.3 ms, n = 1,086
+Game stack used: 31,928 of 65,536 bytes
+Music: none
+```
+
+The render is what costs (44 ms on average, 84 at most); the game's own
+frame is 6 ms. That minute's map shots and fights are not told apart in
+the report. The fights are 1078's (the combat picture at 30 frames a
+second) and the map's drawing is 1059's; nothing new for this ticket.
+**No music sounded** that minute, so whether the cinematic keeps time
+with the song on the device is not measured; it goes on 1064's list. The
+1044 build without 1086 crashed on launch (the start-up load, ticket
+1086, PR #537): this PR's build starts only once #537 is in.
 
 **Deviations.** The talk shots and the faces shot are not given a
 Playdate look here: they draw the dialogue screen's PC look, which is off
@@ -190,4 +209,5 @@ title cinematic*; for 1064's checklist, Nick can veto):
 block reads on the device; whether the menu window over the dithered
 backdrop is comfortable; whether the cuts in place of fades feel abrupt;
 whether the 2× map shots are too big or too small on the small screen;
-whether the cinematic keeps time with the song on the device.
+whether the cinematic keeps time with the song on the device (no music
+sounded in the measured minute).
