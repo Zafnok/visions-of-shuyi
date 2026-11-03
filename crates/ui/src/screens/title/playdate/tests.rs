@@ -153,6 +153,17 @@ fn around_a_hole_is_up_to_four_rectangles() {
             PxRect::new(300, 50, 100, 50),
         ]
     );
+    // An area away from the screen's corner.
+    let inset = PxRect::new(10, 20, 100, 100);
+    assert_eq!(
+        around(inset, Some(PxRect::new(30, 50, 40, 20))),
+        [
+            PxRect::new(10, 20, 100, 30),
+            PxRect::new(10, 70, 100, 50),
+            PxRect::new(10, 50, 20, 20),
+            PxRect::new(70, 50, 40, 20),
+        ]
+    );
     // A hole past the area leaves it whole.
     let below = PxRect::new(0, 224, 400, 16);
     assert_eq!(around(area, Some(below)), [area]);
@@ -236,6 +247,15 @@ fn the_prompt_is_a_window_of_its_own_in_the_menus_place() {
     assert_eq!(rows[12], "║ Press any button ║");
     assert_eq!(find(&buf, 12, "Press"), Some(17));
     assert_eq!(rows[14], "");
+    // Too long for the screen: the window as wide as it, the line cut
+    // inside its frame.
+    v.prompt = Some("Press any button ".repeat(4));
+    let rows = rows_of(&c, &v);
+    assert!(
+        rows[12].starts_with("║ Press") && rows[12].ends_with("… ║"),
+        "{}",
+        rows[12]
+    );
     let hole = px_rect(Rect::new(15, 11, 20, 3));
     for sprite in buf.sprites() {
         assert_eq!(sprite.clip.intersect(&hole), None, "{sprite:?}");
@@ -258,14 +278,18 @@ fn the_menu_and_the_cinematic_cut_in_halfway_through_their_fades() {
     let player = CinematicPlayer::new(&c, "title", None).unwrap();
     let shot = |brightness| CinematicView {
         player: Rc::new(player.clone()),
-        t_ms: 1000,
+        t_ms: 70_000,
         brightness,
     };
     v.cinematic = Some(shot(128));
     let buf = painted(&c, &v);
     let (image, _) = logo(&c);
     assert!(buf.sprites().iter().all(|s| s.image != image), "no logo");
-    assert!(buf.backdrop().is_some(), "the map");
+    // The moment the view says: 70 s in, the brigand's attack.
+    let mut fight = blank();
+    player.draw(&c, 70.0, 1.0, &mut fight);
+    assert_eq!(rows(&buf), rows(&fight));
+    assert_eq!(buf.sprites(), fight.sprites());
     v.cinematic = Some(shot(127));
     let buf = painted(&c, &v);
     assert!(buf.sprites().iter().any(|s| s.image == image), "the logo");

@@ -51,18 +51,17 @@ fn int(v: u32) -> i32 {
 }
 
 /// The parts of `area` outside `hole` (each a rectangle; all of `area`
-/// with no hole).
+/// with no hole). The parts below and to the right of the hole run past
+/// `area` and are cut to it.
 pub fn around(area: PxRect, hole: Option<PxRect>) -> Vec<PxRect> {
     let Some(hole) = hole else {
         return vec![area];
     };
-    let (top, bottom) = (hole.y, hole.y + hole.h);
-    let (left, right) = (hole.x, hole.x + hole.w);
     let parts = [
-        PxRect::new(area.x, area.y, area.w, top - area.y),
-        PxRect::new(area.x, bottom, area.w, area.y + area.h - bottom),
-        PxRect::new(area.x, top, left - area.x, hole.h),
-        PxRect::new(right, top, area.x + area.w - right, hole.h),
+        PxRect::new(area.x, area.y, area.w, hole.y - area.y),
+        PxRect::new(area.x, hole.y + hole.h, area.w, area.h),
+        PxRect::new(area.x, hole.y, hole.x - area.x, hole.h),
+        PxRect::new(hole.x + hole.w, hole.y, area.w, hole.h),
     ];
     parts.iter().filter_map(|p| p.intersect(&area)).collect()
 }

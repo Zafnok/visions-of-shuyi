@@ -297,8 +297,8 @@ pub fn touch_ups(files: &[String]) -> BTreeMap<String, String> {
 /// [`lettering`].
 pub fn make(width: u32, height: u32, rgba: &[u8], job: &Job<'_>) -> Result<Vec<u8>, String> {
     if job.kind.lettering {
-        let (num, den) = job.scale;
-        return lettering(width, height, rgba, num / den.max(1));
+        // A lettering's scale is a whole number of pixels a block.
+        return lettering(width, height, rgba, job.scale.0);
     }
     let lifted = job.kind.lift.map(|lift| lift.apply(rgba));
     let pixels = lifted.as_deref().unwrap_or(rgba);
@@ -765,8 +765,12 @@ mod tests {
         // Each block `block` pixels square.
         let big = lettering(2, 2, &rgba, LETTER_BLOCK).unwrap();
         assert_eq!(bitmap_size(&big), (12, 12));
-        assert_eq!(drawn(&big)[3], "###...######");
-        assert_eq!(drawn(&big)[9], "            ");
+        let tripled = |row: &str| row.chars().flat_map(|c| [c; 3]).collect::<String>();
+        let rows: Vec<String> = rows
+            .iter()
+            .flat_map(|r| std::iter::repeat_n(tripled(r), 3))
+            .collect();
+        assert_eq!(drawn(&big), rows);
         assert!(lettering(2, 2, &rgba[..8], 1).is_err());
         // A letter from brightness 64 up, shown from alpha 128 up: grey 64,
         // grey 63, white at alpha 128, white at alpha 127.
