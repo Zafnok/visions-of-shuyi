@@ -286,23 +286,14 @@ type Loading<T> = Result<T, Vec<ContentError>>;
 
 /// [`load_embedded`] in parts, for a front end that must hand control
 /// back to its platform between them (the Playdate's update callback,
-/// ticket 1086): [`StagedLoad::start`], [`StagedLoad::dialogue`] until it
-/// returns false (the files, then a scene at a time), then
-/// [`StagedLoad::finish`]. The content and its errors are the same.
+/// ticket 1086): [`StagedLoad::start`], [`StagedLoad::read_dialogue`],
+/// [`StagedLoad::check_scene`] as many times as
+/// [`StagedLoad::scenes_to_check`] says, then [`StagedLoad::finish`]. The
+/// content and its errors are the same.
 pub struct StagedLoad {
     early: Early,
-    /// How far the dialogue is.
-    dialogue: Dialogue,
-}
-
-/// How far a [`StagedLoad`]'s dialogue is.
-enum Dialogue {
-    /// Not read yet.
-    Unread,
-    /// Read, its scenes being checked.
-    Checking(dialogue::ScriptsLoad),
-    /// Loaded, or its errors.
-    Done(Loading<dialogue::Scripts>),
+    /// The dialogue, once read: its scenes being checked.
+    dialogue: Option<dialogue::ScriptsLoad>,
 }
 
 impl StagedLoad {
@@ -312,35 +303,33 @@ impl StagedLoad {
         bundle::install();
         Self {
             early: Early::load(),
-            dialogue: Dialogue::Unread,
+            dialogue: None,
         }
     }
 
-    /// Does the next part of the dialogue: reads and parses the bundle's
-    /// files, then checks a scene, then puts the scripts together; false
-    /// once that is done.
-    pub fn dialogue(&mut self) -> bool {
-        let early = &self.early;
-        self.dialogue = match core::mem::replace(&mut self.dialogue, Dialogue::Unread) {
-            Dialogue::Unread => Dialogue::Checking(dialogue::ScriptsLoad::start()),
-            Dialogue::Checking(mut load) => {
-                let (cast, faces, known, cues) = early.script_refs();
-                if load.check_next(cast, faces, known, cues) {
-                    Dialogue::Checking(load)
-                } else {
-                    Dialogue::Done(load.finish(cast, faces, known, cues))
-                }
-            }
-            done @ Dialogue::Done(_) => {
-                self.dialogue = done;
-                return false;
-            }
-        };
-        true
+    /// Reads and parses the bundle's dialogue files.
+    pub fn read_dialogue(&mut self) {
+        self.dialogue = Some(dialogue::ScriptsLoad::start());
     }
 
-    /// Loads the rest (what is left of the dialogue first) and puts the
-    /// content together.
+    /// How many of the dialogue's scenes are left to check (none before
+    /// [`StagedLoad::read_dialogue`]).
+    pub fn scenes_to_check(&self) -> usize {
+        self.dialogue
+            .as_ref()
+            .map_or(0, dialogue::ScriptsLoad::unchecked)
+    }
+
+    /// Checks the dialogue's next scene, if one is left.
+    pub fn check_scene(&mut self) {
+        let (cast, faces, known, cues) = self.early.script_refs();
+        if let Some(load) = &mut self.dialogue {
+            load.check_next(cast, faces, known, cues);
+        }
+    }
+
+    /// Loads the rest (the dialogue first, what is left of it) and puts
+    /// the content together.
     ///
     /// # Errors
     ///
@@ -348,9 +337,8 @@ impl StagedLoad {
     pub fn finish(self) -> Result<Content, ContentErrors> {
         let (cast, faces, known, cues) = self.early.script_refs();
         let scripts = match self.dialogue {
-            Dialogue::Unread => self.early.scripts::<&str>(None),
-            Dialogue::Checking(load) => load.finish(cast, faces, known, cues),
-            Dialogue::Done(scripts) => scripts,
+            None => self.early.scripts::<&str>(None),
+            Some(load) => load.finish(cast, faces, known, cues),
         };
         self.early.finish(scripts)
     }

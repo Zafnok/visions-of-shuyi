@@ -332,8 +332,8 @@ pub fn load_scripts(
 /// [`load_scripts`] a scene at a time, for a front end that must hand
 /// control back to its platform between them (the Playdate, ticket 1086):
 /// [`ScriptsLoad::start`] reads and parses the files,
-/// [`ScriptsLoad::check_next`] checks a scene, and [`ScriptsLoad::finish`]
-/// gives the scripts. They and their errors are [`load_scripts`]'.
+/// [`ScriptsLoad::check_next`] checks a scene ([`ScriptsLoad::unchecked`]
+/// are left), and [`ScriptsLoad::finish`] gives the scripts. They and their errors are [`load_scripts`]'.
 pub struct ScriptsLoad {
     /// The scenes' checks, a scene at a time.
     check: engine::ScriptsCheck<Stage>,
@@ -374,22 +374,27 @@ impl ScriptsLoad {
         }
     }
 
-    /// Checks the next scene against the tables, as [`load_scripts`] does;
-    /// false if every scene was checked already.
+    /// How many scenes are left to check.
+    pub fn unchecked(&self) -> usize {
+        self.check.unchecked()
+    }
+
+    /// Checks the next scene against the tables, as [`load_scripts`] does,
+    /// if one is left.
     pub fn check_next(
         &mut self,
         characters: Option<&CharacterTable>,
         portraits: Option<&PortraitTable>,
         names: Option<&Names>,
         audio: Option<&AudioManifest>,
-    ) -> bool {
+    ) {
         let rules = rules::Rules {
             characters,
             portraits,
             names,
             audio,
         };
-        self.check.check_next(&rules)
+        self.check.check_next(&rules);
     }
 
     /// The [`Scripts`], the scenes not checked yet checked first, or every

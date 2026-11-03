@@ -111,10 +111,12 @@ struct Track<S: Speaker> {
 
 impl<S: Speaker> Audio<S> {
     /// Loads every sound file of `manifest` from the `.pdx`
-    /// ([`Self::new`], then [`Self::load_next`] until none is left).
+    /// ([`Self::new`], then [`Self::load_next`] for each).
     pub fn load(speaker: &mut S, manifest: &AudioManifest, seed: u64) -> Self {
         let mut audio = Self::new(manifest, seed);
-        while audio.load_next(speaker) {}
+        for _ in 0..audio.to_load() {
+            audio.load_next(speaker);
+        }
         audio
     }
 
@@ -156,13 +158,17 @@ impl<S: Speaker> Audio<S> {
         }
     }
 
-    /// Loads the next sound file from the `.pdx`, in the manifest's order;
-    /// false if every one was loaded already. A file that is not there is
-    /// left out with a warning; its cue plays its other variants, or
-    /// nothing.
-    pub fn load_next(&mut self, speaker: &mut S) -> bool {
+    /// How many sound files are left to load.
+    pub fn to_load(&self) -> usize {
+        self.unloaded.len()
+    }
+
+    /// Loads the next sound file from the `.pdx`, in the manifest's order,
+    /// if one is left. A file that is not there is left out with a
+    /// warning; its cue plays its other variants, or nothing.
+    pub fn load_next(&mut self, speaker: &mut S) {
         let Some((cue, file)) = self.unloaded.pop() else {
-            return false;
+            return;
         };
         let path = audio::playdate_sound_path(&file);
         match speaker.load_sample(&path) {
@@ -173,7 +179,6 @@ impl<S: Speaker> Audio<S> {
                 .warnings
                 .push(format!("sound \"{cue}\": {path} is not in the .pdx")),
         }
-        true
     }
 
     /// How many sound files are loaded.
@@ -581,16 +586,18 @@ mod tests {
         let mut audio = Audio::new(&manifest(), 1);
         assert_eq!(speaker.calls, []);
         assert_eq!(audio.samples(), 0);
-        assert!(audio.load_next(&mut speaker));
+        assert_eq!(audio.to_load(), 4);
+        audio.load_next(&mut speaker);
         assert_eq!(speaker.calls, [Call::Load("audio/sfx/blip".into())]);
         assert_eq!(audio.samples(), 1);
-        let mut calls = 1;
-        while audio.load_next(&mut speaker) {
-            calls += 1;
+        assert_eq!(audio.to_load(), 3);
+        for _ in 0..3 {
+            audio.load_next(&mut speaker);
         }
-        assert_eq!(calls, 4);
+        assert_eq!(audio.to_load(), 0);
         assert_eq!(audio.samples(), 3);
-        assert!(!audio.load_next(&mut speaker));
+        // None is left: the next load does nothing.
+        audio.load_next(&mut speaker);
         assert_eq!(speaker.calls.len(), 4);
     }
 

@@ -5,11 +5,11 @@
 //! callback took longer than that on the device.
 //!
 //! The steps are the game's data ([`StagedLoad`]: what the dialogue is
-//! checked against, the dialogue, the rest), the player's settings and
-//! saves ([`start::with_storage`]), the sounds and the title. The
-//! dialogue's checks and the sounds go on over as many callbacks as
-//! [`Host::out_of_time`] needs. Plain code: `src/pd/
-//! entry.rs` runs it on the SDK, and the tests and `chapter_1.rs` on fakes.
+//! checked against, the dialogue's files, its scenes' checks, the rest),
+//! the player's settings and saves ([`start::with_storage`]), the sounds
+//! and the title. The scenes' checks and the sounds go on over as many
+//! callbacks as [`Host::out_of_time`] needs. Plain code: `src/pd/entry.rs`
+//! runs it on the SDK, and the tests and `chapter_1.rs` on fakes.
 
 use alloc::boxed::Box;
 use alloc::format;
@@ -51,8 +51,10 @@ pub trait Host {
 pub enum Boot<S: Speaker> {
     /// The game's data, up to the dialogue.
     Data,
-    /// The dialogue, some of it loaded.
+    /// The dialogue's files, read and parsed.
     Dialogue(Box<StagedLoad>),
+    /// The dialogue's scenes, some of them checked.
+    Scenes(Box<StagedLoad>),
     /// The rest of the game's data, and the context over it.
     Context(Box<StagedLoad>),
     /// The player's settings and saves, over the data.
@@ -94,6 +96,7 @@ impl<S: Speaker> Boot<S> {
         match self {
             Self::Data => "data",
             Self::Dialogue(_) => "dialogue",
+            Self::Scenes(_) => "scenes",
             Self::Context(_) => "context",
             Self::Storage(_) => "storage",
             Self::Sounds(_) => "sounds",
@@ -110,9 +113,14 @@ impl<S: Speaker> Boot<S> {
         Ok(Next::Step(match self {
             Self::Data => Self::Dialogue(Box::new(StagedLoad::start())),
             Self::Dialogue(mut load) => {
-                while load.dialogue() {
+                load.read_dialogue();
+                Self::Scenes(load)
+            }
+            Self::Scenes(mut load) => {
+                for _ in 0..load.scenes_to_check() {
+                    load.check_scene();
                     if host.out_of_time() {
-                        return Ok(Next::Step(Self::Dialogue(load)));
+                        return Ok(Next::Step(Self::Scenes(load)));
                     }
                 }
                 Self::Context(load)
@@ -138,7 +146,8 @@ impl<S: Speaker> Boot<S> {
             }
             Self::Sounds(mut loaded) => {
                 let Loaded { audio, speaker, .. } = &mut *loaded;
-                while audio.load_next(speaker) {
+                for _ in 0..audio.to_load() {
+                    audio.load_next(speaker);
                     if host.out_of_time() {
                         return Ok(Next::Step(Self::Sounds(loaded)));
                     }
@@ -282,7 +291,7 @@ pub(crate) mod tests {
         files.len()
     }
 
-    /// The data in three, storage, sounds and the title, one callback each, the
+    /// The data in four, storage, sounds and the title, one callback each, the
     /// report's marks between them; then the title is up with every sound.
     #[test]
     fn the_steps_run_in_order_one_per_call_to_the_title() {
@@ -290,7 +299,9 @@ pub(crate) mod tests {
         let (started, steps) = boot(&mut host);
         assert_eq!(
             steps,
-            ["data", "dialogue", "context", "storage", "sounds", "title"]
+            [
+                "data", "dialogue", "scenes", "context", "storage", "sounds", "title"
+            ]
         );
         assert_eq!(host.marks, [STORAGE, SOUNDS, TITLE]);
         assert_eq!(host.warnings, Vec::<String>::new());
@@ -311,12 +322,10 @@ pub(crate) mod tests {
         let (started, steps) = boot(&mut host);
         let scenes = started.game.ctx().game.content.dialogue.scenes.len();
         let files = sound_files(started.game.ctx());
-        // The dialogue's files, a scene a callback, the scripts put
-        // together, then one that finds the dialogue done and goes on to the
-        // rest of the data; one sound a callback, then one that finds none
-        // left.
-        let mut expected = Vec::from(["data"]);
-        expected.extend(core::iter::repeat_n("dialogue", scenes + 3));
+        // A scene a callback, then one that finds none left and goes on to
+        // the rest of the data; the same with the sounds.
+        let mut expected = Vec::from(["data", "dialogue"]);
+        expected.extend(core::iter::repeat_n("scenes", scenes + 1));
         expected.extend(["context", "storage"]);
         expected.extend(core::iter::repeat_n("sounds", files + 1));
         expected.push("title");
