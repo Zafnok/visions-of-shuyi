@@ -19,8 +19,11 @@ shuyi-ui.workspace = true
 # The engine's asset types the context reads through this game's data
 # (1109): the text by key.
 shuyi-assets.workspace = true
-# The engine's test Harness, for the `harness` feature (engine ADR-0024).
+# The game's start on a device (`src/start.rs`, ticket 1210), with `std`,
+# and the engine's test Harness, for the `harness` feature (engine ADR-0024).
 shuyi-platform = { workspace = true, optional = true }
+# The battle's rules state in a session record's frame hash (ticket 1210).
+shuyi-core.workspace = true
 # The player's saved settings (ADR-0050) and the game's saves.
 serde.workspace = true
 ron.workspace = true
@@ -35,6 +38,8 @@ std = [
     "shuyi-assets/std",
     "ron/std",
     "serde/std",
+    "dep:shuyi-platform",
+    "shuyi-platform/std",
 ]
 # The headless test `Harness` (src/harness.rs, over the engine's), for
 # integration tests. It starts games in the test chapter, so it brings the
@@ -62,5 +67,7 @@ onebit-reference = ["shuyi-ui/onebit-reference"]
 trpg-ui = { path = ".", features = ["harness", "onebit-reference"] }
 # A sample game's actions, for a menu driven by another game's actions.
 shuyi-assets = { workspace = true, features = ["std", "sample-actions"] }
+# Plays the kept session records (`tests/it/sessions.rs`, ticket 1210).
+shuyi-platform = { workspace = true, features = ["std", "harness"] }
 proptest.workspace = true
 insta.workspace = true

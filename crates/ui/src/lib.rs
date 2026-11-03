@@ -43,6 +43,8 @@ pub mod screen;
 pub mod screens;
 pub mod settings;
 pub mod snapshot;
+#[cfg(feature = "std")]
+pub mod start;
 pub mod storage;
 pub mod tips;
 pub mod widgets;

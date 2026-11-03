@@ -12,13 +12,9 @@ mod tests;
 
 use macroquad::window::Conf;
 use shuyi_app::{AppConfig, VoiceFiles, Window};
-use shuyi_platform::{Card, Look, Setup, Start};
 use trpg_content::{bundle, font, voice};
-use trpg_ui::screen::{Lessons, Shuyi};
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, ShuyiCtx};
 
 use crate::app_info::APP;
-use crate::args::Startup;
 
 // A build that ships has none of the test files (ADR-0057): only a debug
 // build and a `debug-tools` build embed them. Features are shared across a
@@ -58,26 +54,6 @@ fn config() -> AppConfig {
     config
 }
 
-/// What the game's frames are painted with: its font atlas and pictures.
-fn look(game: &Shuyi) -> Look<'_> {
-    Look::new(&game.content.font, &game.content.images)
-}
-
-/// The game on the platform `setup` describes: at the title, or on the
-/// scene the command line asks for (ticket 0723).
-fn start(setup: Setup) -> Result<Game, String> {
-    let startup = args::startup()?;
-    let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
-    ctx.console = ConsoleSpec::PC;
-    ctx.game.tips_enabled = true;
-    ctx.game.lessons = Lessons::On;
-    let ctx = setup.ctx(ctx);
-    match startup {
-        Startup::Title => Ok(trpg_ui::game::start(ctx)),
-        Startup::Scene { id, gender } => trpg_ui::game::start_on_scene(ctx, &id, gender),
-    }
-}
-
 fn window_conf() -> Conf {
     shuyi_app::window_conf(&WINDOW)
 }
@@ -86,6 +62,6 @@ fn window_conf() -> Conf {
 async fn main() {
     // The game's name in white on black while it loads, as on the
     // Playdate (ticket 1036).
-    let start = Start::new(Card::text(WINDOW.title), look, start);
+    let start = trpg_ui::start::start(WINDOW.title, args::startup());
     shuyi_app::run(config(), start).await;
 }
