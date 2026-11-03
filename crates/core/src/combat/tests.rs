@@ -2169,6 +2169,7 @@ fn dealt(out: &CombatOutcome) -> Vec<(Side, StatValue, Option<StrikeReaction>)> 
 
 #[test]
 fn a_strike_back_rolls_its_own_crit() {
+    use StrikeReaction::{Deflected, StrikeBack};
     // The defender deflects the attacker's hit and strikes back (crit 50),
     // then counters as usual.
     let f = Forecast {
@@ -2184,7 +2185,6 @@ fn a_strike_back_rolls_its_own_crit() {
         let mut rng = ScriptedRng::new([0, 0, 0, 0, crit_roll, 0, 0, 99]);
         resolve(&rules(), &f, hp(20, 20), hp(20, 20), &mut rng)
     };
-    use StrikeReaction::{Deflected, StrikeBack};
     // A roll of 49 is under 50: a crit, ×3.
     let out = fight(49);
     assert_eq!(
