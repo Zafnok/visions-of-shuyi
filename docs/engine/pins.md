@@ -189,7 +189,7 @@ Nothing for the game: 9 PRs (#175, #192, #213, #216, #218, #219, #220, #222, #22
 
 Nothing for the game: 10 PRs (#176, #185, #224, #226, #228, #229, #230, #231, #233, #235). #176 moves the engine's `image` crate; the game's pictures load the same, and the gates ran on it. #235 is research.
 
-## 2026-11-03: 1e3d2d39 → 96e97bf0 (2 engine PRs), #PR
+## 2026-11-03: 1e3d2d39 → 96e97bf0 (2 engine PRs), #529
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
