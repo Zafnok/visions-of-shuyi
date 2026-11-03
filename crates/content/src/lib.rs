@@ -1938,6 +1938,15 @@ mod tests {
             with_draft.dialogue.scenes.len(),
             embedded.dialogue.scenes.len() + 1
         );
+        // Checked against the game's characters: a speaker who isn't one
+        // is an error.
+        let mut stranger = files.clone();
+        stranger.push(("who.dlg".to_owned(), "@scene who\nnobody: Hello.\n@end\n"));
+        let errors = load_with_scripts(&stranger).unwrap_err();
+        assert_eq!(
+            errors.0,
+            [ContentError::new("who.dlg", "unknown character \"nobody\"").at(2, None)]
+        );
         // A broken script is reported under the name given.
         more.push(("bad.dlg".to_owned(), "@scene bad\n@end\n"));
         let errors = load_with_scripts(&more).unwrap_err();
