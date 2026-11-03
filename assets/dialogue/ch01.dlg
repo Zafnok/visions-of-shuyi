@@ -78,7 +78,7 @@
 @right retainer neutral
 > {n:retainer.first} sits on the block by the fire with one of {lead}'s boots on his knee and an awl in his fist. He has not slept. There is a folded paper in his coat that he keeps touching.
 retainer: Sideways, with the grain. You'll have the axe in your foot, and then who mends the boot? Give me the other one.
-retainer: Forty years on my feet in other people's boots. Never seen the sea. Did you know that? Forty years. Pass me the thread.
+retainer (tired and offhand, not looking up): Forty years on my feet in other people's boots. Never seen the sea. Did you know that? Forty years. Pass me the thread.
 lead: Why the sea?
 retainer[sad]: Because it's the one thing the boy wrote home about from the war that I believed. ...There. Try that. And what'll you do, when this lifts? It lifts. Kings forget.
 @choice
@@ -90,7 +90,7 @@ retainer[sad]: Because it's the one thing the boy wrote home about from the war 
   retainer[sad]: ...Aye. Well. Put the boot on.
 @endchoice
 > {lead} puts the boot on. Across the hamlet the chapel bell starts, an hour early, and goes on ringing.
-retainer[neutral]: That's not the hour. Get the swords. Under the floor, you know where. Go on.
+retainer[neutral] (quiet and quick, already on his feet): That's not the hour. Get the swords. Under the floor, you know where. Go on.
 @end
 
 # By the chapel, minutes later (ch01.map, where the party starts). The
@@ -104,7 +104,7 @@ retainer[neutral]: That's not the hour. Get the swords. Under the floor, you kno
 @left lead neutral
 @right keeper surprised
 keeper: This was nailed to the chapel door. I took it down before anyone-- I took it down, and I rang the bell. They'll burn the village at noon unless three people walk up to the toll-fort.
-keeper: "The exile. The old man. The girl with the burned hands." ...That's not how a soldier says it. That's how a keeper writes it down. ...Go on, somebody else read it. My hands won't.
+keeper (reading it aloud, then her own voice, unsteady): "The exile. The old man. The girl with the burned hands." ...That's not how a soldier says it. That's how a keeper writes it down. ...Go on, somebody else read it. My hands won't.
 @right sergeant angry
 sergeant: Give it to me, Keeper, before you drop it. That's {n:red_captain.first}'s writing on somebody else's paper, he writes on the backs of things. And he'll do it. He burned a farm last winter for less.
 @right heretic angry
@@ -115,16 +115,16 @@ sergeant: What do you have to do with any of this, Sparks? With their mill, with
 heretic: Why don't you ask whoever wrote it?
 @right retainer neutral
 > {n:retainer.first} takes the folded paper out of his coat and holds it out, to nobody in particular.
-retainer: This came last night. By peddler. It says get out of the march by tonight, they're coming for everyone who was at the mill that night, burn this. It isn't signed.
+retainer (flat and even, giving nothing away): This came last night. By peddler. It says get out of the march by tonight, they're coming for everyone who was at the mill that night, burn this. It isn't signed.
 @right sergeant neutral
-sergeant: Whose hand, Captain? ...It's the boy's, isn't it. Your boy's.
+sergeant (quieter than usual, slowing down): Whose hand, Captain? ...It's the boy's, isn't it. Your boy's.
 lead: {n:rival.first}'s.
 @right retainer sad
-retainer: Aye. ...Burn it. Somebody. I can't.
+retainer (in a low voice, full of grief): Aye. ...Burn it. Somebody. I can't.
 @right heretic neutral
 > {n:heretic} takes it out of his hand, and it is ash between her fingers before anyone can speak. She is looking at {lead}, not at the letter.
 @right sergeant neutral
-sergeant: Sparks. Your sleeve's smoking.
+sergeant (flat, not alarmed): Sparks. Your sleeve's smoking.
 @right heretic neutral
 heretic: It does that.
 @right poacher neutral
@@ -153,7 +153,7 @@ retainer: Then we don't wait either. The ford's the only road out, and they're s
 
 @scene ch01_first_turn
 @left retainer neutral
-retainer: Kid. Boots holding? Good. Keep the road under you. The fort's not going anywhere.
+retainer (low, meant for the lead alone): Kid. Boots holding? Good. Keep the road under you. The fort's not going anywhere.
 @end
 
 # Harl's first fight. A scene written for him and one character replaces
@@ -161,27 +161,28 @@ retainer: Kid. Boots holding? Good. Keep the road under you. The fort's not goin
 
 @scene ch01_boss_engage
 @right red_captain neutral
-red_captain: Forty men I brought home from a war, and the crown gave us a road. Go home, whoever you are, before I take it out on you.
+red_captain (tired and bitter, not shouting): Forty men I brought home from a war, and the crown gave us a road. Go home, whoever you are, before I take it out on you.
 @end
 
 @scene ch01_boss_engage_lead
 @left lead neutral
 @right red_captain neutral
-red_captain: There you are, Your Grace. You could have walked up like the paper said. Three hundred a head, somebody's paying for you. Hold still and earn it.
+red_captain (mocking, almost friendly): There you are, Your Grace. You could have walked up like the paper said. Three hundred a head, somebody's paying for you. Hold still and earn it.
 @end
 
 @scene ch01_boss_engage_sergeant
 @left sergeant angry
 @right red_captain neutral
+@delivery called across the fort wall
 red_captain: Who's that on the gray? ...{n:sergeant.last}? {n:sergeant.last}, you're alive. I had you down as dead in a ditch.
 sergeant: You had me down as a lot of things. Get off the wall, {n:red_captain.first}.
 red_captain[angry]: Come up and fetch me! I put you on your first horse, girl. I can put you off it.
-sergeant[sad]: You did. And I held the horses at that farm after, and watched. ...Get off the wall.
+sergeant[sad] (steadier and lower, still carrying to the wall): You did. And I held the horses at that farm after, and watched. ...Get off the wall.
 @end
 
 @scene ch01_boss_half
 @right red_captain angry
-red_captain: Should've cooked the deer. Should've waited for-- Come on, then! I'm still standing.
+red_captain (the first of it muttered to himself, then shouting): Should've cooked the deer. Should've waited for-- Come on, then! I'm still standing.
 @end
 
 # Said to the lead, who may be nowhere near him. He hands over the one
@@ -191,8 +192,8 @@ red_captain: Should've cooked the deer. Should've waited for-- Come on, then! I'
 @scene ch01_death_red_captain
 @left lead neutral
 @right red_captain sad
-red_captain: Don't hang the boys. They were hungry, that's all they-- Your Grace. Your Grace, come here.
-red_captain: A lord bought you. Your own wax on the paper, your own crest, silver up front. Ask the new one in your hall what you cost him.
+red_captain (weak and short of breath, pleading): Don't hang the boys. They were hungry, that's all they-- Your Grace. Your Grace, come here.
+red_captain (with the last of his strength, meaning it to hurt): A lord bought you. Your own wax on the paper, your own crest, silver up front. Ask the new one in your hall what you cost him.
 @end
 
 # The lead's fall is game over in both modes.
@@ -209,7 +210,7 @@ red_captain: A lord bought you. Your own wax on the paper, your own crest, silve
 
 @scene ch01_death_retainer
 @left retainer sad
-retainer: Kid-- no. Don't. ...The sea. I'd have liked to see it. Tell the boy that, if you see him. Not the rest.
+retainer (weak, in a low voice, more tired than afraid): Kid-- no. Don't. ...The sea. I'd have liked to see it. Tell the boy that, if you see him. Not the rest.
 @end
 
 @scene ch01_retreat_retainer
@@ -229,7 +230,7 @@ sergeant: Down. I'm down, I'm not out. Help me up-- no, don't, I'll do it. Ride 
 
 @scene ch01_death_poacher
 @left poacher sad
-poacher: They had a third man on the wall. I did not see him. ...Skin the deer properly, before it turns. Noble. I did not see him.
+poacher (flat and still, almost puzzled): They had a third man on the wall. I did not see him. ...Skin the deer properly, before it turns. Noble. I did not see him.
 @end
 
 @scene ch01_retreat_poacher
@@ -239,17 +240,17 @@ poacher: I cannot draw. Give me a sword. I have never held a sword. Give me one 
 
 @scene ch01_death_keeper
 @left keeper sad
-keeper: The bell. Somebody ring the bell when it's over, or they won't come out of the chapel. They won't come out until they hear it. Promise me the bell.
+keeper (weak and urgent, holding on to the one thought): The bell. Somebody ring the bell when it's over, or they won't come out of the chapel. They won't come out until they hear it. Promise me the bell.
 @end
 
 @scene ch01_retreat_keeper
 @left keeper surprised
-keeper: Oh. Oh, that's a lot of blood, and it's mine, isn't it. I'm going to sit down now. Leave me, I can do my own hands.
+keeper (dazed, oddly calm): Oh. Oh, that's a lot of blood, and it's mine, isn't it. I'm going to sit down now. Leave me, I can do my own hands.
 @end
 
 @scene ch01_death_heretic
 @left heretic sad
-heretic: I burned it for the old man and he didn't even-- never mind. ...It isn't noon yet. It isn't noon, so why is it dark?
+heretic (quiet and confused, the anger gone out of it): I burned it for the old man and he didn't even-- never mind. ...It isn't noon yet. It isn't noon, so why is it dark?
 @end
 
 @scene ch01_retreat_heretic
@@ -276,7 +277,7 @@ heretic: Enough. I'm out, I'm empty, don't-- I'll be in the ditch. Don't look fo
 @right heretic neutral
 > {n:heretic} is going through the dead men's packs for food. In {n:red_captain.first}'s coat she finds a paper: three lines, a price, a seal in blue wax. She stops with it in both hands.
 lead: That's the {n:family.veyne} seal.
-heretic[angry]: Yours. The one you cut off your coat. ...The last time I saw this wax it was on a cart, at night, and the cart was full of children. Your house's wax. Did you know?
+heretic[angry] (cold and exact, not shouting): Yours. The one you cut off your coat. ...The last time I saw this wax it was on a cart, at night, and the cart was full of children. Your house's wax. Did you know?
 @choice
 * earnest: No. And I'll find out who did.
   heretic: Then find out. I'll be watching while you do.
@@ -304,6 +305,7 @@ heretic[angry]: Yours. The one you cut off your coat. ...The last time I saw thi
 @endif
 @if sergeant
 @right sergeant angry
+@delivery quiet and level
 @if retainer
 sergeant: Don't look at him. Give him a minute. ...It's the boy's, Your Former Grace. The hall, the title, the wax, it all went to him with the king's thanks. You knew that. You just never saw it in wax.
 @else
@@ -311,17 +313,18 @@ sergeant: It's the boy's, Your Former Grace. The Captain's boy, {n:rival.first},
 @endif
 > She goes to the body, cuts the red cloth off his head with her knife, and doesn't look at his face. She takes out the ledger, writes one word in it, and shuts it.
 @if keeper
-sergeant[sad]: He picked me out of a muster line once. Fourteen of us. ...Keeper. How do you spell "fourteen"?
+sergeant[sad] (in a low voice, full of grief, and the question plainly): He picked me out of a muster line once. Fourteen of us. ...Keeper. How do you spell "fourteen"?
 @else
-sergeant[sad]: He picked me out of a muster line once. Fourteen of us. ...I can't spell "fourteen". It'll have to be the number.
+sergeant[sad] (in a low voice, full of grief, and the question plainly): He picked me out of a muster line once. Fourteen of us. ...I can't spell "fourteen". It'll have to be the number.
 @endif
+@delivery clear
 @right clear
 @else
 > Only the one who holds the hall seals with it, and the hall is {n:rival}'s now. Nobody goes to the body.
 @endif
 @if poacher
 @right poacher neutral
-poacher: Sit down. All of you. Nobody has eaten since the bell. Sit. I will do the deer. You will only make it worse.
+poacher (flat, not unkind): Sit down. All of you. Nobody has eaten since the bell. Sit. I will do the deer. You will only make it worse.
 @right clear
 @endif
 @if keeper
@@ -343,6 +346,7 @@ heretic: Fine. In front of me, then. Where I can see you.
 @if retainer
 @right retainer neutral
 > {n:retainer.first} gets up off the step. He takes {lead}'s sword, cleans the blade on his own sleeve, and gives it back. He says nothing about the hall, or the boy.
+@delivery in a low voice, full of grief
 @if sergeant
 @else
 retainer[sad]: {n:sergeant.first} owed me two crowns at dice and brought it up every week like I'd forget. Her horse is still standing saddled at the gate. Somebody see to it.
@@ -359,6 +363,7 @@ retainer[sad]: The girl. Twice this week she took bread off my table and glared 
 @else
 retainer[sad]: {n:poacher} drilled worse than any recruit I ever had, and came back every morning to be told so. She faces north. See she faces north.
 @endif
+@delivery clear
 @right clear
 @else
 > {lead} digs the graves by the chapel {themself}, one by one. Nobody digs one for {n:red_captain.first}.
@@ -382,5 +387,5 @@ messenger: My lord. {N:vowmaster.title} asks whether it is done. He asked me to 
 rival: It's done. That says so. Go.
 @right clear
 > When the door shuts he locks the other letter in the desk drawer, still sealed, on top of the seal, and sits down in the old lord's chair, which he never does when anyone can see.
-rival[happy]: You never once did as you were told, {n:family.veyne}. Your whole life. ...Good.
+rival[happy] (alone, to himself, almost fond): You never once did as you were told, {n:family.veyne}. Your whole life. ...Good.
 @end
