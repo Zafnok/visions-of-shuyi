@@ -92,7 +92,7 @@ second.
 ## Implementation steps
 
 **Either order with 1170:** if its engine-backed frontend has landed,
-use engine 3088's run report and its draw-phase switch and the engine export route in
+use engine 3090's run report and its draw-phase switch and the engine export route in
 place of the old `pd/entry.rs`/`pd/bench.rs` paths below. If this ticket
 lands first, 1170 must preserve these spans, measurements and resulting
 behavior before disconnecting the legacy frontend. This ticket does not

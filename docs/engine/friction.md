@@ -86,7 +86,7 @@ how many screens or loaders would shrink.
 | Rank | Finding | Outcome | Ratio | Shrinks | Score | Tickets |
 | ---- | ------- | ------- | ----- | ------- | ----- | ------- |
 | 1 | A list cursor (wrap, skipping disabled rows, a clamp after a removal) and a scroll window: 13 hand-written cursors and 6 scroll windows by 4 rules | 1: engine | 1.8× | 15 | 27 | engine#2307, 1160 |
-| 2 | The Playdate backend's gaps no engine ticket held: the game's own stack, the audio player, the loading phase and the on-device report | 1: engine (3003, 3010 and 3011 hold the rest; the report moved to 3088 on 2026-11-03) | 17× | 1 | 17 | engine#3028, engine#3029, engine#3088, 1170 |
+| 2 | The Playdate backend's gaps no engine ticket held: the game's own stack, the audio player, the loading phase and the on-device report | 1: engine (3003, 3010 and 3011 hold the rest; the report moved to 3090 on 2026-11-03) | 17× | 1 | 17 | engine#3028, engine#3029, engine#3090, 1170 |
 | 3 | A screen's result when it pops, and a hook when the screen above it pops | 1: engine | 1.6× | 10 | 16 | engine#2306, 1158, 1159 |
 | 4 | A frame time promised finite and not negative, and a clock a held action speeds up and a press skips | 2: engine | 1.6× | 8 | 12.8 | engine#2312, 1166 |
 | 5 | A folder loader on the bundle: parse every file of a folder, collect the errors | 1: engine | 1.5× | 8 | 12 | engine#2208, 1169 |

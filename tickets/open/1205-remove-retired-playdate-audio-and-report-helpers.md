@@ -42,7 +42,7 @@ no repeated setup or new gameplay sign-off is requested.
 
 **Out (do not do):**
 - New audio/report behavior, weakening the original report or suppressing
-  tests. 1170 already waits for engine 3088's equivalent reporting (the
+  tests. 1170 already waits for engine 3090's equivalent reporting (the
   opt-in run report, split out of 3011).
 - Old exporter deletion (1206): either order works after 1170; it removes
   xtask-only files while this ticket removes frontend-only files.

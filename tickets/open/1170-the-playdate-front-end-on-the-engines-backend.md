@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
-blocked_by: ["engine#3088"]
+blocked_by: ["engine#3090"]
 nick_input: setup
 completed:
 ---
@@ -30,7 +30,7 @@ minute frame/stack report and bench-phase observations. Do not delete or
 silently disable those to make this port fit. That report sat inside
 engine 3011, a device research ticket for After MVP; the game/engine
 boundary audit of 2026-11-03 split it into
-[engine#3088](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/3088-the-playdate-backends-opt-in-run-report.md),
+[engine#3090](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/3090-the-playdate-backends-opt-in-run-report.md),
 tested on the fake SDK and clock, so this ticket no longer waits for a
 device run. 1175, 1203, engine 3010, 3029, 3028 and 2410 are done and at
 the pin. Crash reports (engine 3076) and voice baking (3078) are absent
@@ -74,7 +74,7 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 ## Scope
 
 **In:**
-- Move the pin past engine 3088's merge if an open `engine-pin` PR has
+- Move the pin past engine 3090's merge if an open `engine-pin` PR has
   not (`engine-pin`, with its ledger/adoption review), then verify its
   report against the game's. The pin move of 2026-11-01 passed the others.
 - `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
@@ -93,7 +93,7 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
   helpers and the old `pd/allocator.rs`, `pd/panic.rs` and
   `pd/game_stack.rs` as part of their cutover. Keep the game's card/start
   only where they still describe its actual loading look/configuration.
-- Preserve reports/bench output through engine 3088's `RunReport` (on,
+- Preserve reports/bench output through engine 3090's `RunReport` (on,
   with the game's `load-report.txt` file; phases on in the bench build)
   and compare real before/after startup and minute reports. The old
   bench's reference-render comparison and every-other-minute music pause
@@ -146,7 +146,7 @@ files; if not, wire the adapter to `playdate_images` as now, and 1221
 moves it.
 
 **Either order with 1227:** if 1227 is done, `crates/playdate/src/start.rs`
-already calls `PlatformFacts::builtin("playdate")` (engine#3089): keep
+already calls `PlatformFacts::builtin("playdate")` (engine#3091): keep
 that call, or the engine backend's own facts; if not, keep whatever
 `trpg_ui::platform::playdate_facts` call the new start still needs, and
 1227 replaces it.
@@ -155,8 +155,8 @@ that call, or the engine backend's own facts; if not, keep whatever
 
 1. Capture the current device/Simulator package inventory, old save,
    button/chord/menu behavior, audio cues and startup/minute reports.
-   Read 1203's bake adapter and engine 3088's `RunReport`.
-2. Move the pin past engine 3088's merge (unless an open `engine-pin` PR
+   Read 1203's bake adapter and engine 3090's `RunReport`.
+2. Move the pin past engine 3090's merge (unless an open `engine-pin` PR
    did), then wire the engine-backed library/start
    (`shuyi_playdate::main!(start, stack_bytes = …, report = …)`), context
    and one-bit pictures/pack adapter. Keep SDK ownership in the engine.
@@ -191,7 +191,7 @@ ticket move. Bulk source deletion is explicitly owned by 1204–1206.
 - [ ] A/B help, input/chords, crank notch, menu actions, cues/volumes,
       selected music and one-bit image policy agree with the baseline.
 - [ ] Required loading/read/minute/stack/bench evidence remains available
-      through engine 3088's report. Real device startup to title is no slower than
+      through engine 3090's report. Real device startup to title is no slower than
       baseline; before/after measurements are in the completion notes.
 - [ ] The system menu lists Danger Zone, Dialogue Log and Options from
       the keymap's `SystemMenu0`–`2`, and each does what it did;

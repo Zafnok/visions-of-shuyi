@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: haiku-4.5 / gpt-6-luna
 effort: low
 status: blocked
-blocked_by: ["engine#3089"]
+blocked_by: ["engine#3091"]
 nick_input: none
 completed:
 ---
@@ -24,7 +24,7 @@ can't `include_str!` a file of a git dependency.
 parses it, and `the_playdates_facts_are_the_engines`
 (`crates/xtask/src/game_tools/tests.rs`) exists only to keep the copy
 equal to the engine's at the pin.
-[engine#3089](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/3089-built-in-target-profiles-readable-from-no-std.md)
+[engine#3091](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/3091-built-in-target-profiles-readable-from-no-std.md)
 adds `shuyi_assets::target::builtin(id)` and
 `shuyi_ui::PlatformFacts::builtin(id)`, readable from `no_std`.
 
@@ -45,7 +45,7 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past engine#3089 (`engine-change` skill §7, with its
+- Move the pin past engine#3091 (`engine-change` skill §7, with its
   `engine-pin` ledger row), unless an open `engine-pin` PR has.
 - Delete `crates/ui/src/playdate_target.ron` and `crates/ui/src/platform.rs`
   (and `pub mod platform;` in `crates/ui/src/lib.rs`); each user calls
@@ -61,7 +61,7 @@ None.
 
 ## Implementation steps
 
-1. **Pin** past engine#3089.
+1. **Pin** past engine#3091.
 2. Replace the three calls with `PlatformFacts::builtin("playdate")`,
    through `trpg_ui::PlatformFacts` (re-exported in `crates/ui/src/lib.rs`)
    where a crate has no `shuyi-ui` dependency; the error type stays
@@ -72,7 +72,7 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commit that closed engine#3089.
+- [ ] `shuyi-engine.rev` is at or past the commit that closed engine#3091.
 - [ ] `grep -rn "playdate_target\|playdate_facts" crates` finds nothing.
 - [ ] The Playdate tests in `crates/ui/tests/it/playdate.rs` pass
       unchanged apart from the call.
