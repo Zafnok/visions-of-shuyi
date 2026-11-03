@@ -70,6 +70,16 @@ its 256 cases.
 - `every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills`:
   it moved to Shuyi Engine with the tactics kit's sprite ground (1115),
   so it runs in the engine's suite, not this one.
+- `map_view::sprite::tests::tiles_lie_inside_the_area_edge_to_edge`:
+  1232 deletes it (a copy of the grid kit's test, from the game/engine
+  boundary audit of 2026-11-03). **Either order with 1232:** if 1232 is
+  done, it is gone; if not, leave it to 1232 rather than speed it up.
+  1232 keeps `sprite_skin_paints_only_the_area`,
+  `sprite_units_skin_paints_only_the_area` and
+  `glyph_skin_paints_only_the_area` (they paint this game's units), so
+  they stay this ticket's. 1231 deletes none of the table's tests (its
+  tests are `trpg-content`'s), and 1218 keeps
+  `no_embedded_scene_shows_someone_who_is_gone`.
 
 ## Implementation steps
 

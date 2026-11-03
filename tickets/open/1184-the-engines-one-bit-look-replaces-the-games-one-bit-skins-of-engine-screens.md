@@ -34,6 +34,20 @@ and 3010"; 3001 closed on 2026-10-20 and nothing followed. engine#2371
 gives the engine's widget and screen skins a look and ships a one-bit
 look for them. This ticket deletes the game's copies.
 
+The game/engine boundary audit of 2026-11-03 found that the battle's
+menu painter (`item_text`, `has_notes`, `shown`, `menu_size`,
+`paint_menu`, `paint_menu_framed` in `screens/battle/playdate.rs`,
+about 60 production lines, and the second copy, `menu_size`,
+`menu_text` and `menu` in `screens/playdate.rs`, about 30) needs two
+things engine#2371 didn't plan: the turn and the rewind charges set
+into the frame's top and bottom edges (`pd::window`'s title,
+`pd::footer`), and the rows clamped to the map area. engine#2371 now
+has them as its menu painter's `MenuFrame` (`with_title`,
+`with_footer`, `fitting(rows)`, scrolled by `Scroll::Centred`, the rule
+1077 moves these menus onto first), and its status is `todo` (its old
+blocker, engine 3053, is done). See
+[engine#2371](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/2371-a-one-bit-look-for-the-engines-screens-and-widgets.md).
+
 ## Nick input
 
 None. The Playdate's screens must look as they do now (the look is
@@ -51,8 +65,14 @@ Completion notes.
   Playdate shows it) and widgets (menu, question, name entry), instead
   of the game's skins.
 - The battle's one-bit menus painted by the engine's menu skin in the
-  one-bit look, if it covers the battle menu's note line and scroll
-  marks; else keep `paint_menu` and write why.
+  one-bit look through `size_in`/`paint_in`: the map menu's turn as the
+  `MenuFrame` title and its charges as the footer, `fitting` the rows
+  the map area leaves. `item_text`, `has_notes`, `shown`, `menu_size`,
+  `paint_menu` and `paint_menu_framed` go, and `screens/playdate.rs`'s
+  `menu_size`, `menu_text` and `menu` once nothing calls them.
+  `paint_header` (the weapon and its uses) stays, painted over the
+  frame as now, unless it fits as the title. If a detail still can't be matched, keep that
+  function and write why.
 - The game's one-bit files above, emptied of what moved; whatever
   names a game concept (the lead select's and mode select's one-bit
   skins, the map skin) stays.
@@ -63,18 +83,19 @@ Completion notes.
 
 ## Implementation steps
 
-1. **Read** engine#2371's API and docs, ADR-0091, the files above, the
+1. **Pin** past engine#2371.
+2. **Read** engine#2371's API and docs, ADR-0091, the files above, the
    `Skins` choice by target (`crates/ui/src/screen.rs` or where the game
    picks a skin per target), and the one-bit snapshots
    (`crates/ui/tests/it/playdate.rs` and the `snapshots/` beside the
    one-bit skins).
-2. **Pin** past engine#2371.
 3. One screen at a time, snapshots unchanged after each: Options, Key
    bindings, Profiles and name entry, then the shared window, menu and
    question painters, then the battle's menus.
 4. **Measure** with `cargo xtask code-lines`: expect `trpg-ui` down by
-   about 500 production lines; add the friction row if the added lines
-   pass 2× the estimate (about 60).
+   about 520 production lines (about 430 from the engine screens'
+   skins, about 90 from the two menu painters); add the friction row if
+   the added lines pass 2× the estimate (about 60).
 
 ## Acceptance criteria
 
@@ -84,6 +105,8 @@ Completion notes.
       the PR and is a detail engine#2371 recorded as decided).
 - [ ] `cargo xtask code-lines` shows `trpg-ui` production lines down by
       at least 400.
+- [ ] `grep -n "fn paint_menu_framed\|fn item_text" crates/ui/src/screens/battle/playdate.rs`
+      finds nothing, or the Completion notes say which detail kept it.
 - [ ] All gates in the `run-gates` skill pass, including
       `cargo xtask ticket-lint --check-engine` and the CI `playdate` job.
 

@@ -53,6 +53,15 @@ due and none is filed, a net column in `code-lines` with a refactor
 rule, and the second sweep written now as a ticket that waits for the
 `11xx` block.
 
+The game/engine boundary audit of 2026-11-03 (finding records#5) read
+the rows by engine crate and found two groups that met the log's own
+"three accept rows" rule with no review logged: `shuyi_ui` widgets and
+drawing (1160, 1162, 1163, 1165) and `shuyi_assets` loading (1169,
+1176, 0509). Under this ticket's finer areas and its refactor rule
+neither would fire (each of those rows but 0509 has a negative net),
+but nobody judged their leftovers, so step 7 runs that one short review
+per group here, once the columns exist.
+
 ## Nick input
 
 None.
@@ -71,6 +80,8 @@ None.
   gate on the ratio is not (step 5).
 - The second sweep ticket, written now and blocked by the rest of the
   `11xx` block, plus its line in `docs/ROADMAP.md` (step 6).
+- One short review of each group the 2026-11-03 audit flagged, logged
+  as two rows (step 7).
 
 **Out (do not do):**
 - A gate on any ratio, estimate or line count (ADR-0092 rejects one;
@@ -81,6 +92,11 @@ None.
   over the other. If 1172 is done first, its tree mode has no diff and
   gets no net column.
 - Running a sweep. The sweep ticket written in step 6 runs it.
+- The leftovers other tickets already hold, which step 7 only reads as
+  held: 1185 (the four yes/no prompts, the battle and class change's
+  shared dialog painter, `Pen::cut` and the inline cuts), 1186 and
+  engine#2233 (`bundle::parsed`), 1220 and engine#2244 (0509's RON
+  scanner), and 0068 (whether a PC name is cut with `…`).
 - Changing what counts as a production line.
 
 ## Implementation steps
@@ -157,6 +173,16 @@ In `docs/engine/friction.md`:
    | 1163 | `question` | −24 |
    | 1165 | `drawing` | −6 |
    | 1167 | `grid skin` | −196 |
+   | 1169 | `bundle` | −111 |
+   | 1173 | `bundle` | +70 (208 added, 138 removed) |
+   | 1171 | `game` | −7 |
+   | 1176 | `bundle` | −5 (9 added, 14 removed) |
+   | 0509 | `bundle` | check: most of its 652 added lines are new |
+   | 0510 | `bundle` | from its row's note |
+
+   Either order with 1220, which adds the 0510 row: if 1220 is done,
+   backfill its row like the rest; if not, leave it out here, and 1220
+   writes it with both columns.
 
    Rows added by tickets merged after this one was written get filled the
    same way.
@@ -215,7 +241,9 @@ Also in the skill:
 ### 4. `cargo xtask friction-check`
 
 New `crates/xtask/src/friction_check.rs`, wired in `main.rs` like
-`ticket-lint`. It reads `docs/engine/friction.md`, `docs/ROADMAP.md`
+`ticket-lint` (either order with 1235: if it is done, through its
+`report_problems`; if not, like `ticket-lint` today, and 1235 moves
+it). It reads `docs/engine/friction.md`, `docs/ROADMAP.md`
 and the files in `tickets/open/` and `tickets/done/`. No git, no
 network, no diff.
 
@@ -228,10 +256,11 @@ network, no diff.
    `accept` or `4` (any of its findings is outcome 4, `4:` after a `;`
    too) or its ratio is ≥ 2 and < 3, **and** its Net is `—` or above
    zero (the refactor rule). Count per area (`game` and `tooling` count
-   like any other). At three or more on one area, the trigger fires
-   unless **an open sweep ticket** exists: a file in `tickets/open/`
-   with a `**Sweep trigger:**` line (any area: a sweep covers the whole
-   game).
+   like any other). A row whose Ticket cell contains `(area review)`
+   (step 7) restarts the count of each area it names. At three or
+   more on one area, the trigger fires unless **an open sweep ticket**
+   exists: a file in `tickets/open/` with a `**Sweep trigger:**` line
+   (any area: a sweep covers the whole game).
 3. **Milestone trigger.** Read the block column of the *Milestones*
    table in `docs/ROADMAP.md` (`00xx`, `01xx`, … `11xx`). A block is
    **closed** when `tickets/open/` has no ticket of that block other
@@ -268,7 +297,8 @@ network, no diff.
      the same with an open sweep ticket pass;
    - a row with a negative Net doesn't count; a 2.5× row and an
      `accept` row with Net `—` count; a 1.5× row with outcome `3:` doesn't;
-   - rows before the last `(sweep)` row don't count;
+   - rows before the last `(sweep)` row don't count, nor rows on an
+     area before an `(area review)` row that names it;
    - a row with two areas counts for both;
    - an unknown area fails with its name in the message;
    - a block with only a sweep ticket open is closed; a closed block
@@ -306,6 +336,32 @@ engine*, step 2) names the sweep ticket's number in place of "the
 second sweep". A new `11xx` ticket written later adds itself to the
 sweep's `blocked_by` (say so in the skill's *When a sweep runs*).
 
+### 7. Review the two groups the 2026-11-03 audit flagged
+
+Follow the `engine-friction` skill's review (outcomes 1 to 4) for each
+group, on the leftovers the rows' notes give, checked by the audit:
+
+- **Widgets and drawing** (areas `list cursor; menu; question; drawing`):
+  1160, the Playdate centers an even scroll window rounding the other
+  way from `Scroll::Centred`; 1162, lists of data names translated when
+  they open (about 20 lines); 1163, `AskView` has no third line or
+  message row, so three questions keep their own painter (an optional
+  message line would let 1185's shared painter shrink); 1165,
+  `meter_cells` (`screens/battle/units.rs:47`) rounds by its own rule,
+  not `meter_fill`'s, and `print_clipped` (`screens/battle/glyph.rs:271`)
+  cuts hard where `print_cut` adds `…`.
+- **Loading** (area `bundle`): 1169's `bundle::parsed` and 0509's RON
+  scanner, both held (Scope, Out); judge only whether anything else is
+  left.
+
+Log one row per group, Ticket `1174 (area review)`, Net `—`, the
+outcome of each leftover, and its follow-up. The likely engine
+ergonomics are an optional message line on `AskView`, a hard-cut mode
+on `print_cut` (after 0068) and a rounding choice on `meter_fill`,
+about 35 game lines in all, so "accept" is a fair outcome for any of
+them. Each one not accepted gets an engine ticket and a game follow-up
+by the `engine-change` skill's *Ticket and follow-up*.
+
 ## Acceptance criteria
 
 - [ ] `docs/engine/friction.md` has an *Areas* list, and every row of its
@@ -324,6 +380,9 @@ sweep's `blocked_by` (say so in the skill's *When a sweep runs*).
 - [ ] The second sweep ticket exists in `tickets/open/` with its
       `**Sweep trigger:**` line and the `blocked_by` in step 6, and
       `docs/ROADMAP.md` names it.
+- [ ] `docs/engine/friction.md` has the two `1174 (area review)` rows of
+      step 7, each leftover with an outcome, and every engine ticket they
+      file has its game follow-up.
 - [ ] `cargo xtask ticket-lint` passes.
 - [ ] All gates in the `run-gates` skill pass.
 

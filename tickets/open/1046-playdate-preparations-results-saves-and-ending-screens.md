@@ -50,7 +50,12 @@ it):
   1040's tool, if the game over screen shows it on the PC.
 - Credits: every credit as on the PC, scrolled to fit, plus the
   Playdate SDK if 1031's row says it needs a credit (it is a tool, not
-  an asset: probably not).
+  an asset: probably not). **Either order with 1211:** if 1211 is
+  done, the credits screen is the engine's (`shuyi_ui::screens::credits`):
+  use engine#2371's one-bit painter if it exists, else give
+  `CreditsScreen::painted_by` a one-bit painter of the engine's
+  `CreditsView` with a `CreditsLayout` for 50 × 15; if not, paint the
+  game's `CreditsView`, and 1211 moves the painter onto `painted_by`.
 - Look tests with each skin; behaviour tests read the views.
 
 **Out (do not do):**

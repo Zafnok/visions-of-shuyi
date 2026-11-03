@@ -29,6 +29,21 @@ size. Split it now: this ticket moves bot/rules helpers; 1207, needed
 removal of the old xtask wrapper. Every original requirement lives in one
 of these two tickets; no feature or policy is dropped.
 
+The game/engine boundary audit of 2026-11-03 checked again: game 0506
+and all seven engine tickets are in `done/`, and the pin (`96e97bf`) is
+past them, so this ticket is ready now. It found two more things here:
+
+- `crates/core/src/movement.rs` keeps three more copies of
+  `shuyi_core::threat` beside `threat_area` (`attack_tiles`, `danger_zone`
+  and `threats_at`, lines 415-528). The engine's `strike_area` is
+  `threat_area`'s loop, `Threats::zone` is `danger_zone`'s union,
+  `Threats::reaches` is `threats_at`'s filter, and `strike_area_from` is
+  its stationary branch. All four move together here.
+- Only the AI's **hostile-target** flow (`flow_field` in
+  `crates/core/src/ai.rs`, where stepping onto a target's tile is free)
+  is `GoalDistance`'s rule. The escape exit and `raid_flow` charge
+  terrain on the goal tile, so they stay on `path::flow_field`.
+
 ## Nick input
 
 None. Persona choices and reports remain unchanged, verified by tests and
@@ -44,8 +59,17 @@ not a prerequisite for this mechanical adoption.
   `TacticsOrder`/`OrderHooks` from 2132.
 - `crates/bots/src/playtest.rs`: `Targets<Difficulty>` and its tier bands,
   floors and median comparisons from 2129. Keep the game's file reader.
-- Enemy AI's per-faction/movement-type distance field on `GoalDistance`,
-  and `trpg_core::threat_area` on `strike_area`, retaining their tests.
+- Enemy AI's per-faction/movement-type distance field to hostile
+  targets on `GoalDistance<MovementTypeId>`, one per faction in the
+  Planner's existing `RefCell` map. The escape and raid flows stay on
+  `path::flow_field` (their goal tiles cost terrain).
+- `trpg_core::movement`'s `attack_tiles`, `threat_area`, `danger_zone`
+  and `threats_at` as adapters over `shuyi_core::threat`, with their
+  signatures unchanged so the ui, AI and bots callers don't change.
+  The game keeps `Reach`'s stop tiles, the hostility filter,
+  `MoveError::UnknownUnit` and the ranges hook (`threat_ranges`), and
+  `danger_zone`'s empty answer stays a map-sized (W×H) set, not the
+  engine's 0×0.
 - Game-owned semantic hooks: feature counts in `Tally::between`, forecast,
   lord/HP caps, command classification and AI pick, talk handling,
   `PersonaBot`, `BattleMeasures`, `BattleEntrant`, and the personas/targets'
@@ -88,6 +112,13 @@ and report while changing the common bot types.
    attack ranges; stationary enemies use `strike_area_from`. Forecasts,
    exposed/counter damage caps and the lord-alone rule remain game hooks.
    Replace goals with movement-type-keyed `GoalDistance`.
+   In `crates/core/src/movement.rs`: `threat_area` is
+   `strike_area(reach.stoppable(), ranges)` (still empty for no ranges);
+   `attack_tiles` is `strike_area(stoppable, &[(min, max)])` minus the
+   stops; `danger_zone` collects each hostile unit's `Threat<UnitId>`
+   into a `Threats` and answers `zone()`, or a W×H empty set when there
+   are none; `threats_at` keeps its moved-unit copy and answers
+   `reaches(at)`, with `strike_area_from` for a `Stationary` unit.
 4. Implement `OrderHooks`: preserve the existing strike ordering and
    forecast key, stationary-before-moving heal order, step/end/drop/other
    categories and `next_command` tie behavior. Use `TacticsOrder` rather
@@ -98,8 +129,12 @@ and report while changing the common bot types.
    `Wait` is `Step`, `EndPhase` is `End`, `Equip` and `Talk` are `Drop`,
    and the remaining commands are `Other`.
 5. Use `Targets<Difficulty>` (derive `Ord` only as necessary), keeping
-   tier values and entrant names. Move AI distances and `threat_area` to
-   the same engine helpers without broadening the legal-command set.
+   tier values and entrant names. Move the AI's hostile-target flow
+   (`flow` and `flow_field` in `crates/core/src/ai.rs`) and its `danger`
+   cache to the same engine helpers without broadening the legal-command
+   set. Delete the geometry-only proptest `attack_tiles_match_brute_force`
+   (`crates/core/src/movement/tests.rs`); keep the picture, Hold the Ford,
+   hostility and never-moves tests as adapter tests.
 6. Re-run step 1 and require equal command traces, per-try measures and
    verdicts. Keep a small representative trace fixture as a regression
    test. Update ownership docs and measure removals across all spellings.
@@ -107,7 +142,8 @@ and report while changing the common bot types.
    completed engine reuse and the precise remaining 1207 pieces.
 
 Expected size: about 180 added production lines and 450 removed, plus
-focused test changes; planned under 1,800 changed lines including docs
+about 25 more removed from `movement.rs` and 12 from the AI's target
+flow (2026-11-03 audit), and about 50 test lines; planned under 1,800 changed lines including docs
 and this ticket's move. The former command/workflow work is now 1207,
 not an optional split based only on added production lines.
 
@@ -126,6 +162,12 @@ not an optional split based only on added production lines.
 - [ ] Game-local generic score accumulation, threat storage/danger sum,
       goal-distance traversal, candidate ranking and target evaluation
       are removed, not renamed. Semantic hooks remain game-owned.
+- [ ] `attack_tiles`, `threat_area`, `danger_zone` and `threats_at` in
+      `crates/core/src/movement.rs` answer through `shuyi_core::threat`
+      with no diamond loop of their own; their existing callers and
+      tests pass unchanged, and an empty `danger_zone` is map-sized.
+- [ ] The AI's hostile-target flow is a `GoalDistance`; the escape and
+      raid flows are unchanged, and the seeded traces above agree.
 - [ ] The existing xtask playtest still works; 1207 has the remaining
       CLI/history/workflow handoff and the friction log records this step.
 - [ ] Completion notes name the seven engine PRs/revisions and record

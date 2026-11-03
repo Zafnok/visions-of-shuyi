@@ -38,7 +38,8 @@ was waiting for (its open blockers, carried over); the Playdate tickets
 The 2026-11-01 PR audit also gates this playtest on the same-combat
 first-hit correction (0330), AI art reach and Cascade scoring (0521),
 the death-path knowledge correction before the finale (0753), and the
-specified camp/world-map music cycle (1080, after engine 2398). Those
+specified camp/world-map music cycle (1080; only its 3 s fade-out
+waits for engine 2398, in 1080 or the follow-up it writes). Those
 tickets prove their behavior automatically before this playtest; Nick
 does not become their individual acceptance check. Chapter 2's carried
 army proof (0520) and chosen art (0858) remain existing blockers.
