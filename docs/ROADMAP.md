@@ -369,7 +369,8 @@ Candle joins outside battle.
   · **1056** (done) · **1076** the exit area and a downed enemy get
   looks of their own · **1077** one-bit skins wrap their own notes and
   scroll by the engine's rule (after 1039).
-- **E. Playdate, Act 1:** **1068** one chapter's assets at a time
+- **E. Playdate, Act 1:** **1086** the start-up load stalls past 10
+  seconds and the game crashes on launch (ready; first) · **1068** one chapter's assets at a time
   (ready; measure first) · **1196** saves survive a power cut (ready) · **1066** world map, towns and shop (after
   1007, 1008, 0409, 1038) · **1067** camp, supports, promotion and the
   Preparations shop (after 1003, 0606, 0443, 1046) · **1069** one-bit
