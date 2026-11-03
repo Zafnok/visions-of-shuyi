@@ -134,9 +134,9 @@ forecast, the playback and on the map.
 - Friction: estimate ~400 production lines, written after the code rather
   than before (the 0325 lapse again); measured 454: 1.1×, under 2×.
 - PR size: 1,925 changed lines.
-- Follow-up: 0759 (a dialogue print/parse round trip fails on text that
-  starts with `(`; found by the property test in a full run, unrelated to
-  this ticket).
+- Seen on the way: the dialogue round-trip property test failed once on
+  text that starts with `(`, unrelated to this ticket; 0759 (filed from
+  0474) already covers it.
 
 The agent's starting rules (the design doc is silent; for the Act 1
 playtest, 1064):
