@@ -8,7 +8,9 @@
 //! `autobalance` (ticket 0509) is [`balance`]'s.
 //!
 //! The session (ticket 1181) is the game started as `frame-png` starts it,
-//! its scene the battle's map and its picture `frame-png`'s.
+//! its scene the battle's map and its picture `frame-png`'s. A session
+//! record (`run --session`, ticket 1210) plays from the game's real start
+//! instead, the one its debug build recorded from.
 //!
 //! `frame-png` starts the game in the test Harness with the game's own
 //! options: the layout picked before, the Playdate's screen (ADR-0074),
@@ -22,6 +24,7 @@ use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin};
 use shuyi_core::bots::playtest::Tries;
+use shuyi_platform::session::{SessionRecord, Stamps};
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_content::palette::PaletteDef;
 use trpg_core::BattleState;
@@ -32,7 +35,12 @@ use trpg_ui::onebit::{self, FRAME_BYTES};
 use trpg_ui::platform::playdate_facts;
 use trpg_ui::screen::{Ctx, Shuyi, ShuyiCtx};
 use trpg_ui::screens::BattleScreen;
+use trpg_ui::start::Startup;
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
+
+/// The loading card's title, as the binary's window has it (`shuyi.ron`'s
+/// `app`).
+const TITLE: &str = "Visions of Shuyi";
 
 /// The game's `frame-png` options.
 const OPTIONS: [GameOption; 7] = [
@@ -184,7 +192,20 @@ impl GameTools for Trpg {
     }
 
     fn session(&self, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
-        Ok(Box::new(session(Start::of(options)?)?))
+        let start = Start::of(options)?;
+        Ok(Box::new(session(harness(&start)?.into_core(), start)))
+    }
+
+    /// `record` played from the game's real start, the one its debug build
+    /// recorded from (ticket 1210), with the session's scene and picture.
+    fn session_from(
+        &self,
+        record: &SessionRecord,
+        stamps: Stamps,
+    ) -> Result<Box<dyn Session>, String> {
+        let real = trpg_ui::start::start(TITLE, Ok(Startup::Title));
+        let h = Core::from_session(real, record, stamps).map_err(|e| e.to_string())?;
+        Ok(Box::new(session(h, Start::of(&[])?)))
     }
 
     fn lang(&self) -> Result<GameLang, String> {
@@ -268,13 +289,12 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
 }
 
 /// The session (`cargo shuyi run`, `scene`, the MCP server's; ticket
-/// 1181): the game started as `frame` starts it, its scene the battle's
-/// map and its picture `frame`'s.
-fn session(start: Start) -> Result<Headless<Shuyi>, String> {
-    let h = harness(&start)?.into_core();
-    Ok(Headless::new(h)
+/// 1181) of `h`: its scene the battle's map and its picture `frame`'s, as
+/// `start` paints it.
+fn session(h: Core, start: Start) -> Headless<Shuyi> {
+    Headless::new(h)
         .with_scene(scene)
-        .with_picture(move |h, scale| picture(&start, h, scale)))
+        .with_picture(move |h, scale| picture(&start, h, scale))
 }
 
 /// The battle on `h`'s screen: its map scene as text, its state as data

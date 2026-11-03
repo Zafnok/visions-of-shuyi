@@ -188,3 +188,11 @@ Nothing for the game: 9 PRs (#175, #192, #213, #216, #218, #219, #220, #222, #22
 | #225 | 2242 | Hot reload of the pictures a backend uploaded | adopt → 1209 |
 
 Nothing for the game: 10 PRs (#176, #185, #224, #226, #228, #229, #230, #231, #233, #235). #176 moves the engine's `image` crate; the game's pictures load the same, and the gates ran on it. #235 is research.
+
+## 2026-11-03: 1e3d2d39 → 96e97bf0 (2 engine PRs), #529
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #239 | 2519 | Session records from real builds: debug builds keep their last sessions, the debug menu's "Save session" (a download on the web), and `shuyi run`, `scene` and MCP play them; `SceneOutput` and `StartOutput` gain `session` | fixed: nothing to change (the game builds neither output); adopt → 1210 (in this PR: the game's start moved to `trpg_ui::start`, `session_from` in the tools, the battle's state in the frame hash and a kept record) |
+
+Nothing for the game: 1 PR (#244), a `pulldown-cmark` advisory in the engine's own tools. The skill pack's `shuyi-debug-replay` gains reproducing a bug from a session record.
