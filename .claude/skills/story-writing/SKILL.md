@@ -456,6 +456,13 @@ writing the lead"); the validator enforces the limits below.
   `{theirs}` `{themself}` (`{They}` etc. at the start of a sentence). They
   become he/she, so the verb agrees with he/she: `{They} knows`, not
   `{They} know`. No line may depend on the lead's gender.
+- **Say what the voice says for the name.** Every speech and narration line
+  that says `{lead}` writes the voice's words after a bar:
+  `{lead|The exile} sits.` (ADR-0107 rule 4, `assets/dialogue/README.md`,
+  "What the voice says for the name"). "the exile" is the starting rule; a
+  line may take a word that fits the speaker and the moment (`Sleep,
+  {lead|you}.`), never a name. Read the line aloud with the words in: the
+  grammar and the `{they}` around them must still hold.
 
 ## Critique pass (mandatory before committing a script)
 

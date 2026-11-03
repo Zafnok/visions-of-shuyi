@@ -106,7 +106,7 @@
 poacher: Ash. That is ash. ...The plain. Two days, if the wind is from there. It is from there.
 @left clear
 @else
-> Something gray settles on {lead}'s sleeve and doesn't melt. Ash, from somewhere north.
+> Something gray settles on {lead|the exile}'s sleeve and doesn't melt. Ash, from somewhere north.
 @endif
 @if shieldbearer
 @if keeper
@@ -501,7 +501,7 @@ crown_knight: Not here. Not on the warm ground, it comes back at night, the fire
 
 @scene ch06_death_lead
 @left lead sad
-> {lead} is down in the ash, and the ash is already on the blue coat.
+> {lead|The exile} is down in the ash, and the ash is already on the blue coat.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -673,7 +673,7 @@ shieldbearer: Here. It's dry. The envoy's own hand, and three copies.
 @left lead neutral
 @else
 @left lead neutral
-> The spears stay level while {lead} takes the paper out of {their} coat and holds it out. A long time passes before anyone takes it.
+> The spears stay level while {lead|the exile} takes the paper out of {their} coat and holds it out. A long time passes before anyone takes it.
 @endif
 @if defector
 > He reads it twice, standing in the ash. The second time he reads it slower. {n:defector.first} stands very straight the whole time.
@@ -731,14 +731,14 @@ heretic: Toward the king's side. Walking.
 retainer: She snored. Twelve years old and you could hear her through two walls. You heard it, I'd bet.
 heretic: Everybody heard it. The whole barracks. She said it was the boy next to her.
 @left lead neutral
-> {n:retainer.first} looks at {lead}.
+> {n:retainer.first} looks at {lead|the exile}.
 @choice
 * earnest: We'll find her.
   retainer: Don't say that to me tonight. ...Say it tomorrow. Tonight just sit down.
 * act: Eat something.
   retainer[surprised]: ...Don't you start. ...Well, hand it over, then.
 * silent: ...
-  > {lead} sits down in the ash next to him. He moves his bad knee over to make room, and that's all.
+  > {lead|The exile} sits down in the ash next to him. He moves his bad knee over to make room, and that's all.
 @endchoice
 @right retainer neutral
 retainer: Go to sleep, both of you. I'm watching it.

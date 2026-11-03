@@ -374,14 +374,19 @@ become he or she, so the verb agrees with he and she: `{They} knows`, not
 @scene guide_lead
 @left  lead neutral
 @right messenger neutral
-messenger: {lead}? That's the name on the letter. It's yours, then.
-> {lead} turns it over in {their} hands. {They} knows the writing.
+messenger: {lead|Exile}? That's the name on the letter. It's yours, then.
+> {lead|The exile} turns it over in {their} hands. {They} knows the writing.
 lead: Thank you.
 @end
 ```
 
 With the default male lead the narration reads: "Ellery turns it over in
 his hands. He knows the writing."
+
+After the bar is what the voice says for the name, since no voice can say
+the name the player typed: the voice reads "The exile turns it over in his
+hands." Every speech and narration line that says `{lead}` has one
+(`assets/dialogue/README.md`, "What the voice says for the name").
 
 ## 4. Names are never typed out
 

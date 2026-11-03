@@ -4,7 +4,7 @@
 
 @scene test_wm_intro
 @left  lead neutral
-> {lead} looks down the road. Something waits ahead.
+> {lead|The exile} looks down the road. Something waits ahead.
 @end
 
 @scene test_wm_victory

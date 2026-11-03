@@ -164,7 +164,7 @@ and their portrait is `lead_m` or `lead_f` by gender.
 @scene ch01_gate
 @left  lead neutral
 @right bors angry
-bors: {lead}. You took your time.
+bors: {lead|Exile}. You took your time.
 @choice
 * earnest: We do this properly, or not at all.
   bors[surprised]: ...Huh. Fine.
@@ -175,7 +175,7 @@ bors: {lead}. You took your time.
   bors[angry]: Charming as ever.
 @endchoice
 @right bors neutral
-> {lead} checks {their} sword. {They} knows the way from here.
+> {lead|The exile} checks {their} sword. {They} knows the way from here.
 lead: Let's move.
 @end
 ```
@@ -214,6 +214,18 @@ In speech, narration, captions and reply text:
 capitalised word, for the start of a sentence. The tokens become he/she, so
 write the verb to agree with he/she: `{They} knows`, not `{They} know`.
 
+### What the voice says for the name
+
+A voice can't say the name the player typed, so a speech or narration line
+that names the lead says what the voice says instead, after a bar:
+`{lead|the exile}`. The text box shows the name; the voice says "the
+exile" (`docs/voice.md`). Capitalize it at the start of a sentence
+(`{lead|The exile} sits.`). The words fit the line: "the exile" is the
+starting rule, and a line may take another (`Sleep, {lead|you}.`), but
+never a name: write no name token or name in it, since names can change.
+The stand-in isn't part of the line: changing it keeps the line's id and
+its translations, and only the voice clip must be made again.
+
 ### Rules for choices and the lead
 
 - A choice has **2 or 3** replies. Choices can't be nested.
@@ -227,6 +239,10 @@ write the verb to agree with he/she: `{They} knows`, not `{They} know`.
 - Only the tokens above and name tokens (`{n:<id>}`, see "Names") exist;
   any other `{...}`, or a `{` without a `}`,
   is an error.
+- A speech or narration line that says `{lead}` gives it a stand-in,
+  `{lead|the exile}`; a bare `{lead}` is an error there. Replies are
+  silent, so they need none. A bar on any other token, or with no words
+  after it, is an unknown token.
 - Lengths count each token at its longest: `{lead}` as 12 characters (the
   longest name), `{themself}` as 7 (`himself`), and so on.
 
