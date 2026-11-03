@@ -263,7 +263,7 @@ fn bonuses_add_and_apply() {
     b.add_timed(&TimedMods {
         stats: vec![(StatKind::Def, 5), (StatKind::Res, 5), (StatKind::Def, 1)],
         combat: hit(10),
-        stops_enemies: false,
+        ..Default::default()
     });
     assert_eq!(b.stats, Stats::from_growable([0, 0, 0, 0, 0, 6, 5], 0));
     assert_eq!(b.combat, hit(10));
@@ -355,7 +355,7 @@ fn effect_bonuses_add_every_effect() {
         mods: TimedMods {
             stats: vec![(StatKind::Def, def)],
             combat: hit(1),
-            stops_enemies: false,
+            ..Default::default()
         },
         until: Phase::Player,
     };
@@ -810,7 +810,7 @@ fn the_same_effect_refreshes_and_effects_expire_by_phase() {
         mods: TimedMods {
             stats: vec![(StatKind::Def, def)],
             combat: CombatMods::default(),
-            stops_enemies: false,
+            ..Default::default()
         },
         until,
     };
@@ -863,7 +863,7 @@ fn art_effects_are_keyed_by_art_and_mov_effects_change_move_points() {
         mods: TimedMods {
             stats: vec![(StatKind::Mov, -3)],
             combat: CombatMods::default(),
-            stops_enemies: false,
+            ..Default::default()
         },
         until,
     };

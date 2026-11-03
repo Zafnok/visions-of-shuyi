@@ -76,7 +76,7 @@
 @opening ch01_sparring
 @left lead neutral
 @right retainer neutral
-> {n:retainer.first} sits on the block by the fire with one of {lead}'s boots on his knee and an awl in his fist. He has not slept. There is a folded paper in his coat that he keeps touching.
+> {n:retainer.first} sits on the block by the fire with one of {lead|the exile}'s boots on his knee and an awl in his fist. He has not slept. There is a folded paper in his coat that he keeps touching.
 retainer: Sideways, with the grain. You'll have the axe in your foot, and then who mends the boot? Give me the other one.
 retainer (tired and offhand, not looking up): Forty years on my feet in other people's boots. Never seen the sea. Did you know that? Forty years. Pass me the thread.
 lead: Why the sea?
@@ -89,7 +89,7 @@ retainer[sad]: Because it's the one thing the boy wrote home about from the war 
 * blunt: Go home.
   retainer[sad]: ...Aye. Well. Put the boot on.
 @endchoice
-> {lead} puts the boot on. Across the hamlet the chapel bell starts, an hour early, and goes on ringing.
+> {lead|The exile} puts the boot on. Across the hamlet the chapel bell starts, an hour early, and goes on ringing.
 retainer[neutral] (quiet and quick, already on his feet): That's not the hour. Get the swords. Under the floor, you know where. Go on.
 @end
 
@@ -122,7 +122,7 @@ lead: {n:rival.first}'s.
 @right retainer sad
 retainer (in a low voice, full of grief): Aye. ...Burn it. Somebody. I can't.
 @right heretic neutral
-> {n:heretic} takes it out of his hand, and it is ash between her fingers before anyone can speak. She is looking at {lead}, not at the letter.
+> {n:heretic} takes it out of his hand, and it is ash between her fingers before anyone can speak. She is looking at {lead|the exile}, not at the letter.
 @right sergeant neutral
 sergeant (flat, not alarmed): Sparks. Your sleeve's smoking.
 @right heretic neutral
@@ -200,7 +200,7 @@ red_captain (with the last of his strength, meaning it to hurt): A lord bought y
 
 @scene ch01_death_lead
 @left lead sad
-> {lead} is down. In {n:place.harrowby} the bell goes on ringing for a while, and then it stops.
+> {lead|The exile} is down. In {n:place.harrowby} the bell goes on ringing for a while, and then it stops.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -288,7 +288,7 @@ heretic[angry] (cold and exact, not shouting): Yours. The one you cut off your c
 @endchoice
 @right clear
 @else
-> In {n:red_captain.first}'s coat, a folded paper sealed in blue wax: the crest of {n:house.veyne}, the one {lead} cut off {their} own coat.
+> In {n:red_captain.first}'s coat, a folded paper sealed in blue wax: the crest of {n:house.veyne}, the one {lead|the exile} cut off {their} own coat.
 @choice
 * earnest: We go and ask him. To his face.
   > Nobody argues.
@@ -300,7 +300,7 @@ heretic[angry] (cold and exact, not shouting): Yours. The one you cut off your c
 @endif
 @if retainer
 @right retainer sad
-> {n:retainer.first} looks at the wax over {lead}'s shoulder for a long moment. Then he goes and sits down on the gate step with his back to everyone.
+> {n:retainer.first} looks at the wax over {lead|the exile}'s shoulder for a long moment. Then he goes and sits down on the gate step with his back to everyone.
 @right clear
 @endif
 @if sergeant
@@ -345,7 +345,7 @@ heretic: Fine. In front of me, then. Where I can see you.
 @endif
 @if retainer
 @right retainer neutral
-> {n:retainer.first} gets up off the step. He takes {lead}'s sword, cleans the blade on his own sleeve, and gives it back. He says nothing about the hall, or the boy.
+> {n:retainer.first} gets up off the step. He takes {lead|the exile}'s sword, cleans the blade on his own sleeve, and gives it back. He says nothing about the hall, or the boy.
 @delivery in a low voice, full of grief
 @if sergeant
 @else
@@ -366,7 +366,7 @@ retainer[sad]: {n:poacher} drilled worse than any recruit I ever had, and came b
 @delivery clear
 @right clear
 @else
-> {lead} digs the graves by the chapel {themself}, one by one. Nobody digs one for {n:red_captain.first}.
+> {lead|The exile} digs the graves by the chapel {themself}, one by one. Nobody digs one for {n:red_captain.first}.
 @endif
 > Down in {n:place.harrowby}, somebody has found the bell rope. It's ringing again.
 @end

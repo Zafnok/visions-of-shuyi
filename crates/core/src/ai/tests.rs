@@ -339,7 +339,7 @@ fn skills() -> SkillTable {
                 mods: TimedMods {
                     stats: vec![(StatKind::Def, 3)],
                     combat: CombatMods::default(),
-                    stops_enemies: false,
+                    ..Default::default()
                 },
             },
         },
@@ -1746,6 +1746,7 @@ fn odds_of_sure_strikes() {
     let f = Forecast {
         attacker: side(4, 4, 100, 1),
         defender: Some(side(3, 3, 100, 1)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
@@ -1765,6 +1766,7 @@ fn odds_count_a_first_hit_debuff_from_the_hit_on() {
     let f = Forecast {
         attacker: side(4, 4, 50, 2),
         defender: Some(side(4, 4, 100, 1)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: Some(crate::combat::AfterFirstHit {
             attacker: side(4, 6, 100, 2),
             defender: Some(side(2, 2, 100, 1)),
@@ -1782,6 +1784,7 @@ fn odds_of_chancy_strikes() {
     let f = Forecast {
         attacker: side(5, 6, 50, 2),
         defender: Some(side(4, 4, 25, 1)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     let o = Odds::of(&f, hp(10, 10), hp(10, 10));
@@ -1793,6 +1796,7 @@ fn odds_of_chancy_strikes() {
     let f = Forecast {
         attacker: side(5, 5, 0, 1),
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     assert_eq!(Odds::of(&f, hp(10, 10), hp(10, 10)), Odds::default());
@@ -1804,6 +1808,7 @@ fn odds_stop_when_the_attacker_falls() {
     let f = Forecast {
         attacker: side(2, 2, 100, 2),
         defender: Some(side(5, 5, 100, 1)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     let o = Odds::of(&f, hp(3, 10), hp(10, 10));
@@ -1819,6 +1824,7 @@ fn absorbed_strikes_heal() {
     let f = Forecast {
         attacker: absorb,
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     // Healed up to max: nothing dealt.
@@ -1828,6 +1834,7 @@ fn absorbed_strikes_heal() {
     let f = Forecast {
         attacker: absorb,
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: Some(crate::combat::AfterFirstHit {
             attacker: side(3, 7, 100, 2),
             defender: None,
@@ -1849,6 +1856,7 @@ fn alone(attacker: SideForecast) -> Forecast {
     Forecast {
         attacker,
         defender: None,
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     }
 }
@@ -1916,6 +1924,7 @@ fn any_forecast() -> impl Strategy<Value = Forecast> {
             .prop_map(|(attacker, defender, after_a, after_d, debuff)| Forecast {
                 attacker,
                 defender,
+                reactions: crate::combat::Reactions::default(),
                 after_first_hit: debuff.then_some(crate::combat::AfterFirstHit {
                     attacker: after_a,
                     defender: defender.map(|_| after_d),
@@ -2002,6 +2011,7 @@ fn long_combat(n: u8) -> Forecast {
     Forecast {
         attacker: side(1, 1, 33, n),
         defender: Some(side(1, 1, 33, n)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     }
 }
@@ -2036,6 +2046,7 @@ fn a_combat_past_the_exact_length_still_adds_up() {
     let f = Forecast {
         attacker: side(1, 1, 100, 5),
         defender: Some(side(1, 1, 100, 5)),
+        reactions: crate::combat::Reactions::default(),
         after_first_hit: None,
     };
     assert_eq!(Odds::of(&f, hp(99, 99), hp(99, 99)), whole(5, 5, 0));
@@ -2057,6 +2068,7 @@ fn an_art_that_only_pays_for_itself_ties_with_the_plain_attack() {
         let f = Forecast {
             attacker: side(10, 10, hit, 1),
             defender: None,
+            reactions: crate::combat::Reactions::default(),
             after_first_hit: None,
         };
         planner.score(&Odds::of(&f, hp(20, 20), hp(20, 20)), false, 0)

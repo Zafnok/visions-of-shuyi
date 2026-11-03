@@ -89,6 +89,10 @@ write the README whole and add a line to 0718 saying to do that.
    key-name placeholders are kept as they are. Full-width punctuation
    (`，。！？：；`), `“ ”` for speech, `……` and `——` doubled, no space
    between Chinese and Latin text.
+   A `.dlg` line's stand-in for the lead's name (`{lead|the exile}`, 0754)
+   isn't in the English text a pack translates: the line shows `{lead}`. A
+   translated line that is voiced takes the stand-in in its own language
+   the same way, which the pack's token check must then allow.
 6. `assets/lang/zhhans/lang.ron`: name `简体中文`, `made_by: Machine`,
    and the fields 0239 added (`wide_font`, `wide_punctuation: true`) if
    0239 is done; if it isn't, add a line to 0239 to set them.

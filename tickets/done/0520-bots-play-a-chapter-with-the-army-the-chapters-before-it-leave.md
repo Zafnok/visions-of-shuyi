@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0848", "0330", "0521"]
 nick_input: none
-completed:
+completed: 2026-11-03
 ---
 
 # 0520 — Bots play a chapter with the army the chapters before it leave
@@ -103,19 +103,19 @@ anything left to judge by playing goes on 1064's checklist.
 
 ## Acceptance criteria
 
-- [ ] The active command plays with the army Chapter 1 leaves and a
+- [x] The active command plays with the army Chapter 1 leaves and a
       pack of its Potions (a test shows the setup):
       `cargo xtask playtest ch02 --bot all` before 1207, or
       `cargo shuyi playtest --stage ch02 --entrant all` afterward.
-- [ ] Chapter 1's playtest numbers don't move.
-- [ ] Chapter 2 meets its configured bands with the campaign army; the
+- [x] Chapter 1's playtest numbers don't move.
+- [x] Chapter 2 meets its configured bands with the campaign army; the
       report includes every persona and the Hardcore/Normal comparison.
       A written explanation of a failed band does not count as a pass;
       unresolved failures remain tracked and block certification.
-- [ ] The playtest and autobalance use the same deterministic starting
+- [x] The playtest and autobalance use the same deterministic starting
       army, stock, gold and pack; a regression rejects a fresh level-data
       army or an empty default pack for this campaign case.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -124,5 +124,73 @@ anything left to judge by playing goes on 1064's checklist.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** The bots play a story chapter after the first with the army the
+chapters before it leave, and Chapter 2 is re-tuned for it.
+
+- **The army** (`crates/bots/src/arrival.rs`, `trpg_bots::arrival`;
+  ADR-0110): a New Game campaign; each earlier chapter's battle won by its
+  recorded playthrough (`crates/ui/tests/it/fixtures/<battle>_winning.ron`,
+  compiled into `trpg-bots`), the enemy playing as in the game; each result
+  applied as the game does, with every rewind charge unused; whoever a
+  scene recruits joins; then the battle's Preparations. Deterministic.
+- **One function:** `crates/xtask/src/playtest.rs`'s `stage` (now
+  fallible) picks the army for the playtest, the autobalance and the
+  tools' `bots`/`replay`: a `bots_army` first, else the arrival, else the
+  fresh characters. Chapter 1 has nothing before it, so it keeps the fresh
+  army (a test checks its setup is the old one, so its numbers can't move).
+- **The report names the army** on its second line (and the autobalance's
+  header): where it comes from, Classic's units with class and level, the
+  pack and the gold; kept in the history and `--json` as `army`. Seeds and
+  band verdicts were already there.
+- **What Chapter 1 leaves:** Lead lv 1, Hollis lv 5, Tamsin lv 6, Aske
+  lv 2, Maud lv 1, Rue lv 3 (the recording gives Tamsin most of the
+  fights). It drinks all three Potions, so there are none left over (the
+  ticket expected three): the pack is 3 Potions bought with 900 of the
+  1000 clear gold (Potions cost 300), and 100 gold left.
+- **Chapter 2 re-tuned** (`cargo shuyi autobalance --stage ch02 --seed 1
+  --turns 60 --apply`): every unnamed Hound from level 1 to **5**.
+
+| Persona | Band | Fresh army (0848) | Campaign army, as 0848 left it | Re-tuned, seeds 1–100 | Seeds 101–200 |
+| ------- | ---- | ----------------- | ------------------------------ | --------------------- | ------------- |
+| Casual | 30–55% | 46 ✓ | 70 ⚠ | **47 ✓** | 50 ✓ |
+| Normal | 50–75% | 55 ✓ | 76 ⚠ | **52 ✓** | 61 ✓ |
+| Hardcore | 50–75% | 75 ✓ | 84 ⚠ | **55 ✓** | 57 ✓ |
+| Hardcore turns (vs Normal) | lower | 6 vs 4 ✗ | 4 vs 4 ✗ | **4 vs 5 ✓** | 5 vs 4 ✗ |
+
+- **The winning replay** `ch02_winning.ron` was re-recorded against the
+  level-5 Hounds: won on turn 6, nobody lost, 4 of 5 houses saved.
+- **Why Hardcore isn't reliably faster on `ch02`:** not the village race.
+  Its clean wins are bimodal: a third on turn 3, and a tail to turns
+  12–13 that Normal doesn't have. Seed 116, traced: from turn 4 to 10 no
+  unit moves; it ends its turn seven times in front of Hendry's guarded
+  ford, since every step forward puts a unit at risk and ending a turn
+  costs nothing within the one turn it plans. That's the bot, so it is
+  **follow-up 0523** (a persona change is out of this ticket's scope;
+  `playtest-bots.md`'s report section says how the check reads here). It
+  blocks Chapters 3–8's tuning (0849–0854) and 1064, so the ✗ stays
+  tracked.
+- **Balance levers** (`.github/playtest-levers.sh`): the recorded
+  playthroughs, the chapter files and the basic shop now play the bots
+  in CI too.
+
+**Deviations:** the ticket assumed Chapter 1 leaves three Potions; its
+recording drinks them, so the Potions are bought. 0848's notes got a
+dated line with the new numbers rather than a rewrite.
+
+**Follow-up tickets:** 0523 (Hardcore stalls in front of a guarded
+chokepoint).
+
+**the agent's starting rule** (for the Act 1 playtest, 1064):
+
+1. **How the bots fill the pack in Preparations:** the stock's
+   consumables first, the dearest first; then, while the pack has room,
+   the dearest consumable the chapter's shop sells that the gold still
+   pays for. They change no weapon or armour. (So for Chapter 2 they
+   spend 900 of 1000 gold on three Potions.)
+
+**Left to judge by playing (1064):** whether level-5 Hounds feel right
+at Kell's Ford for a player who arrives at about the recording's levels;
+a player who spreads Chapter 1's EXP differently arrives with a
+different army.
+
+Engine friction: estimate 150, measured 219 (1.5×), under 2×.

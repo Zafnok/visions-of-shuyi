@@ -1,7 +1,7 @@
 //! Tests of the art file: the embedded data matches `combat-arts.md`, and
 //! every validation rule reports its error.
 
-use trpg_core::{CombatMods, Debuff, StatKind, TimedMods, UnitTag};
+use trpg_core::{CombatMods, Debuff, StanceReaction, StatKind, TimedMods, UnitTag};
 
 use super::*;
 
@@ -52,6 +52,11 @@ fn the_embedded_arts_match_the_design_table() {
         ("rending_arrow", "Rending Arrow", Bow, C, 4),
         ("off_balance", "Off Balance", Gauntlet, C, 3),
         ("vital_point", "Vital Point", Gauntlet, S, 8),
+        // The stances that react (ticket 0326).
+        ("riposte", "Riposte", Sword, C, 4),
+        ("spear_wall", "Spear Wall", Spear, B, 4),
+        ("overwatch", "Overwatch", Bow, B, 5),
+        ("deflect", "Deflect", Gauntlet, B, 5),
     ];
     let rows: Vec<_> = rows
         .into_iter()
@@ -113,7 +118,7 @@ fn the_embedded_art_effects_match_the_design_table() {
             avoid: 20,
             ..CombatMods::default()
         },
-        stops_enemies: false,
+        ..Default::default()
     };
     let rows = [
         ("flowing_cut", with(|e| e.sword_followup = Some((3, 2)))),
@@ -224,6 +229,40 @@ fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
     }
 }
 
+/// `combat-arts.md`, *Ranks C-S* (ticket 0326): the stances that react.
+#[test]
+fn the_embedded_reacting_stances_match_the_design_table() {
+    let stance = |f: fn(&mut TimedMods)| {
+        let mut mods = TimedMods::default();
+        f(&mut mods);
+        with(move |e| e.stance = Some(mods))
+    };
+    let rows = [
+        (
+            "riposte",
+            stance(|m| m.reaction = Some(StanceReaction::StrikesFirst)),
+        ),
+        (
+            "spear_wall",
+            stance(|m| m.reaction = Some(StanceReaction::Counters { reach: 2, hit: 15 })),
+        ),
+        (
+            "overwatch",
+            stance(|m| m.reaction = Some(StanceReaction::Overwatch)),
+        ),
+        (
+            "deflect",
+            stance(|m| m.reaction = Some(StanceReaction::Deflect)),
+        ),
+    ];
+    let t = embedded();
+    for (id, effect) in rows {
+        assert_eq!(get(&t, id).effect, effect, "{id}");
+    }
+    assert!(get(&t, "overwatch").effect.is_action());
+    assert!(!get(&t, "deflect").effect.is_action());
+}
+
 /// Only special weapons have arts of their own (`combat-arts.md`), and the
 /// embedded items pass the checks.
 #[test]
@@ -314,6 +353,14 @@ fn every_rule_reports_its_error() {
         (
             r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (effective: [(Flying, 0)])"#,
             "an effectiveness multiplier must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Spear, rank: None, cost: 1, effect: (stance: Some((reaction: Some(Counters(reach: 0, hit: 0)))))"#,
+            "Counters' reach must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (hit: 10, stance: Some((reaction: Some(Overwatch))))"#,
+            "an overwatch art has no effect but its stance",
         ),
     ];
     for (fields, message) in cases {

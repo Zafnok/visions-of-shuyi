@@ -30,7 +30,12 @@ game adapting each to the other:
   game wraps it in `bundle::parsed` (`crates/content/src/bundle.rs`),
   with each parse closure reporting its own errors and returning
   `Option`. 1169's friction row: "a third such loader would make it an
-  engine variant that keeps what parsed".
+  engine variant that keeps what parsed". The third is there: the world
+  map loader (`worldmap::load_all`, `crates/content/src/worldmap.rs`)
+  uses `bundle::parsed` the same way, and the skirmish pool loader it
+  calls (`skirmish::load`, `crates/content/src/skirmish.rs`) pushes into
+  the caller's `&mut errors` (found by the game/engine boundary audit of
+  2026-11-03).
 - `Formats::load_each` (engine 2219) gives **each file's result**. The
   map, cinematic and dialogue loaders want all-or-nothing, so each folds
   the map back by hand (`crates/content/src/map.rs`, `cinematic.rs`,
@@ -57,9 +62,18 @@ was skipped (the battle loader already reports it).
 
 **In:**
 - Move the pin past engine#2233 (`engine-change` skill, §7).
-- The chapter and battler loaders on the file-by-file `Bundle` variant;
-  `bundle::parsed` goes; their parse closures return `Result` instead of
-  pushing to a shared `errors` and returning `Option`.
+- The chapter, battler and world map loaders on the file-by-file
+  `Bundle` variant; `bundle::parsed` goes; their parse closures return
+  `Result` instead of pushing to a shared `errors` and returning
+  `Option`.
+- `skirmish::load` returns its errors (`Vec<ContentError>`, or a
+  `Result`) instead of taking `&mut errors`; `worldmap::load_all` adds
+  them. Same messages.
+- **Either order with 1223:** if 1223 is done, keep its calls
+  (`bundle::source`, `Entries`, the shared light message) as these
+  loaders move; if not, nothing to do (1223 makes its changes where the
+  code is after this ticket, and the light check and the fetch stay
+  its).
 - The map, cinematic and dialogue loaders use the engine's helper
   instead of folding by hand.
 - `battle::load_lights` on `bundle::load_each` (all-or-nothing is right
@@ -77,12 +91,14 @@ was skipped (the battle loader already reports it).
 1. **Read** engine#2233's API, `crates/content/src/bundle.rs`
    (`load_each`, `parsed`, `files_in`), `chapter.rs`, `battler.rs`,
    `map.rs`, `cinematic.rs`, `dialogue.rs`, `battle.rs`
-   (`load_lights`, `light_of`) and their tests.
+   (`load_lights`, `light_of`), `worldmap.rs` (`load_all`), `skirmish.rs`
+   (`load`) and their tests.
 2. **Pin** (as above).
 3. One loader at a time, tests green after each: lights, then map,
-   cinematic, dialogue, then chapter and battler; delete `parsed`.
+   cinematic, dialogue, then chapter, battler and world map (with
+   `skirmish::load`); delete `parsed`.
 4. **Measure** with `cargo xtask code-lines` (estimate about 15 added
-   lines, about 50 removed).
+   lines, about 62 removed).
 
 ## Acceptance criteria
 
@@ -91,7 +107,7 @@ was skipped (the battle loader already reports it).
 - [ ] `grep -rn "fn parsed\|files_in(BATTLES_DIR)" crates/content/src`
       finds nothing.
 - [ ] No content loader folds a file-by-file map into all-or-nothing by
-      hand.
+      hand, and `skirmish::load` takes no `&mut Vec<ContentError>`.
 - [ ] A battle file that isn't UTF-8 is reported by the lights loader (a
       test).
 - [ ] All gates in the `run-gates` skill pass, including

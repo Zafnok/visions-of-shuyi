@@ -27,6 +27,7 @@
 //!   bots judge it with (ticket 0510).
 
 mod army;
+mod arrival;
 mod balance;
 mod bot;
 mod measures;
@@ -35,6 +36,7 @@ mod playtest;
 mod skirmish;
 
 pub use army::{field_army, reference_army, reference_pack, roster_by, story_chapters, tier_at};
+pub use arrival::{arrival, chapters_before, prepare};
 pub use balance::{TunedBattle, generated_knobs, knobs};
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::BattleMeasures;

@@ -250,6 +250,7 @@ fn record() -> Record {
         battle: "ch01".to_owned(),
         tier: "Normal".to_owned(),
         turn_cap: 60,
+        army: Army::default(),
         played: vec![
             Played {
                 name: "normal".to_owned(),
@@ -434,6 +435,90 @@ fn history_has_a_file_per_battle_and_bot() {
         file(Bot::Normal, GameMode::Classic),
         h.join("quick-normal.jsonl")
     );
+}
+
+// ---- The army (ticket 0520) ----------------------------------------------------
+
+/// Battle `id` with the characters of its slots fresh from the character
+/// data, its pack the battle's default: the army before ticket 0520.
+fn fresh(id: &str, mode: GameMode) -> BattleSetup {
+    let def = &CONTENT.battles[id];
+    let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+    battle_campaign(&CONTENT, def, mode, lead).battle_setup(def, &CONTENT.tables())
+}
+
+fn stage_of(id: &str) -> BattleStage {
+    stage(&CONTENT, &CONTENT.battles[id]).unwrap()
+}
+
+#[test]
+fn chapter_1_is_played_with_the_army_it_always_was() {
+    let stage = stage_of("ch01");
+    for mode in [GameMode::Classic, GameMode::Casual] {
+        assert_eq!(stage.setup(mode), &fresh("ch01", mode));
+    }
+    let army = army(&CONTENT, &CONTENT.battles["ch01"], &stage);
+    assert_eq!(army.from, "fresh from the character data");
+    assert_eq!(army.pack, ["potion", "potion", "potion"]);
+}
+
+/// Acceptance: the playtest and the autobalance (the same `stage`) play
+/// Chapter 2 with the army Chapter 1 leaves and a pack of Potions, never
+/// the character data's levels or an empty pack.
+#[test]
+fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
+    let def = &CONTENT.battles["ch02"];
+    let stage = stage_of("ch02");
+    for mode in [GameMode::Classic, GameMode::Casual] {
+        let setup = stage.setup(mode);
+        let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+        let arrived = arrival(&CONTENT, def, mode, lead).unwrap();
+        assert_eq!(Some(setup), arrived.as_ref());
+        let fresh = fresh("ch02", mode);
+        let players = |s: &BattleSetup| -> Vec<(String, u32, u32)> {
+            let units = s.units.iter().filter(|u| u.faction == Faction::Player);
+            units.map(|u| (u.name.clone(), u.level, u.exp)).collect()
+        };
+        assert_eq!(players(setup).len(), 6);
+        assert_ne!(players(setup), players(&fresh), "not the character data's");
+        assert!(fresh.pack.items.is_empty(), "the default pack is empty");
+        assert!(setup.pack.items.iter().all(|i| i.0 == "potion"));
+        assert_ne!(setup.pack.items.len(), 0, "a pack of Potions");
+    }
+    let army = army(&CONTENT, def, &stage);
+    assert_eq!(army.from, "campaign after ch01");
+    assert_eq!(army.units.len(), 6);
+    let line = army.line();
+    assert!(
+        line.starts_with("army · campaign after ch01 · Lead "),
+        "{line}"
+    );
+    assert!(
+        line.ends_with(&format!(
+            " · pack potion, potion, potion · gold {}",
+            army.gold
+        )),
+        "{line}"
+    );
+}
+
+#[test]
+fn the_report_names_the_army() {
+    let mut record = record();
+    record.army = Army {
+        from: "campaign after ch01".to_owned(),
+        units: vec!["Lead exile lv 1".to_owned(), "Hollis guard lv 5".to_owned()],
+        pack: vec!["potion".to_owned()],
+        gold: 100,
+    };
+    let text = render(&record, None);
+    let second = text.lines().nth(1).unwrap_or_default();
+    assert_eq!(
+        second,
+        "army · campaign after ch01 · Lead exile lv 1, Hollis guard lv 5 · pack potion · gold 100"
+    );
+    record.army.pack.clear();
+    assert!(render(&record, None).contains(" · pack empty · gold 100\n"));
 }
 
 // ---- Playing ------------------------------------------------------------------

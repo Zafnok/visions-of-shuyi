@@ -32,25 +32,25 @@
     ],
     enemies: [
         // South bank: raiders at the houses, and one to meet the party.
-        (template: "hound_raider", pos: (1, 12), raider: true, level: Some(1)),
-        (template: "hound_raider", pos: (7, 9), raider: true, level: Some(1)),
-        (template: "hound_raider", pos: (22, 10), raider: true, level: Some(1)),
-        (template: "hound_swordsman", pos: (13, 12), level: Some(1)),
+        (template: "hound_raider", pos: (1, 12), raider: true, level: Some(5)),
+        (template: "hound_raider", pos: (7, 9), raider: true, level: Some(5)),
+        (template: "hound_raider", pos: (22, 10), raider: true, level: Some(5)),
+        (template: "hound_swordsman", pos: (13, 12), level: Some(5)),
         // The bridge road.
-        (template: "hound_archer", pos: (18, 10), ai: Guard, level: Some(1)),
+        (template: "hound_archer", pos: (18, 10), ai: Guard, level: Some(5)),
         // The ford's north end: Hendry and his guards.
         (character: "hound_lieutenant", pos: (9, 5), ai: Stationary, boss: true),
-        (template: "hound_guard", pos: (8, 6), ai: Guard, level: Some(1)),
-        (template: "hound_guard", pos: (10, 6), ai: Guard, level: Some(1)),
-        (template: "hound_archer", pos: (11, 5), ai: Guard, level: Some(1)),
+        (template: "hound_guard", pos: (8, 6), ai: Guard, level: Some(5)),
+        (template: "hound_guard", pos: (10, 6), ai: Guard, level: Some(5)),
+        (template: "hound_archer", pos: (11, 5), ai: Guard, level: Some(5)),
         // North bank: the rest of the raid. One raider comes from the
         // north-east for the big house by the water, then the north-west
         // one; the others hold.
-        (template: "hound_raider", pos: (23, 4), raider: true, level: Some(1)),
-        (template: "hound_raider", pos: (23, 5), ai: Guard, level: Some(1)),
-        (template: "hound_rider", pos: (16, 5), ai: Guard, level: Some(1)),
-        (template: "hound_swordsman", pos: (5, 3), ai: Guard, level: Some(1)),
-        (template: "hound_swordsman", pos: (1, 4), ai: Guard, level: Some(1)),
+        (template: "hound_raider", pos: (23, 4), raider: true, level: Some(5)),
+        (template: "hound_raider", pos: (23, 5), ai: Guard, level: Some(5)),
+        (template: "hound_rider", pos: (16, 5), ai: Guard, level: Some(5)),
+        (template: "hound_swordsman", pos: (5, 3), ai: Guard, level: Some(5)),
+        (template: "hound_swordsman", pos: (1, 4), ai: Guard, level: Some(5)),
     ],
     preparations: true,
     pack_cap: 4,

@@ -29,6 +29,8 @@
 //!      - `Attack`: for each unit (unit order), each weapon slot, plain,
 //!        then with each combat active the unit can use (id order), then
 //!        with each Combat Art for that weapon ([`Unit::arts_for`] order);
+//!      - `UseArt`: each weapon slot, each Combat Art for that weapon (an
+//!        Overwatch is the only one accepted);
 //!      - `Cast` of each learned spell (id order): at each unit (unit
 //!        order), plain then with each combat active, then at each tile
 //!        (row-major);
@@ -208,6 +210,12 @@ impl Options {
                         .map(|a| attack(None, Some(a.clone()))),
                 );
             }
+        }
+        for (slot, arts) in self.arts.iter().enumerate() {
+            out.extend(arts.iter().map(|art| UnitAction::UseArt {
+                art: art.clone(),
+                slot,
+            }));
         }
         for spell in &unit.learned {
             for t in &near {

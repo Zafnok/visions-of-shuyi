@@ -69,6 +69,11 @@ it):
   have landed, give them a Playdate paint here too (small); if not,
   they are not this ticket's job.
 
+**Either order with 1230:** if 1230 is done, `crates/ui/src/cinema.rs`
+is gone: read and import `shuyi_ui::frame::cinema` directly; if not,
+import the engine's module anyway (1230 then deletes the unused
+re-export).
+
 **Carve (1113):** either order works. If 1113 moved the cinematic
 timeline to the engine, the shot kinds and their paints stay the game's.
 

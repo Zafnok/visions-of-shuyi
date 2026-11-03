@@ -71,12 +71,12 @@ fn affinity_name(words: Words<'_>, affinity: Affinity) -> &str {
     })
 }
 
-/// A gear bonus as text: its non-zero stats, `Def +2  Res +1`.
+/// A gear bonus as text: its non-zero stats with their signs, `Def +8  Res -3`.
 pub fn bonus_text(words: Words<'_>, bonus: &Stats) -> String {
     StatKind::ALL
         .iter()
         .filter(|&&k| bonus.get(k) != 0)
-        .map(|&k| format!("{} +{}", stat_name(words, k), bonus.get(k)))
+        .map(|&k| format!("{} {:+}", stat_name(words, k), bonus.get(k)))
         .collect::<Vec<_>>()
         .join("  ")
 }
@@ -368,6 +368,16 @@ mod tests {
             (range_text(1, 1), range_text(1, 2)),
             ("1".into(), "1-2".into())
         );
+    }
+
+    #[test]
+    fn a_negative_bonus_reads_minus_not_plus_minus() {
+        let bonus = Stats {
+            def: 8,
+            res: -3,
+            ..Stats::default()
+        };
+        assert_eq!(bonus_text(Words::ENGLISH, &bonus), "Def +8  Res -3");
     }
 
     #[test]

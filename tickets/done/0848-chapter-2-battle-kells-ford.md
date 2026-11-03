@@ -199,7 +199,10 @@ both; nothing built them yet):
   pack empty). A player arrives about two levels up with Chapter 1's
   Potions, so Chapter 2 should play easier than these numbers.
   Follow-up 0520 gives the bots the army the chapters before leave, and
-  re-tunes.
+  re-tunes. *(0520, 2026-11-03: with that army these numbers became 70 /
+  76 / 84, too easy; every unnamed Hound went to level 5, and the bands
+  are met again: 47 / 52 / 55 on seeds 1–100, 50 / 61 / 57 on 101–200.
+  The winning replay was re-recorded.)*
 
 **Winning replay:** `crates/ui/tests/it/fixtures/ch02_winning.ron`, with
 the army Chapter 1's recorded playthrough leaves: won on turn 3, nobody
@@ -249,7 +252,8 @@ now wait for it).
    up out of the water at +4).
 6. **Joss:** Swordsman, level 3, talent Dex, 21 HP, Str 6, Dex 9, Spd 9,
    Def 4, Res 2; Iron Sword and Leather Vest.
-7. **The Hounds:** 14, all level 1 after autobalance: 4 raiders who burn
+7. **The Hounds:** 14, all level 1 after autobalance (level 5 since
+   0520 re-tuned them for the army Chapter 1 leaves): 4 raiders who burn
    houses (two by the south houses, one on the bridge road, one from
    the north-east), 3 swordsmen, 2 archers, 2 guards with Hendry,
    1 rider, and 1 raider-class soldier holding the north-east.

@@ -23,7 +23,7 @@ fn load_files(
         names,
         audio,
     };
-    engine::scripts_from_files(files, &rules)
+    engine::scripts_from_files(files, &rules).map(|s| Scripts::with(s, StandIns::new()))
 }
 
 fn id(s: &str) -> CharacterId {

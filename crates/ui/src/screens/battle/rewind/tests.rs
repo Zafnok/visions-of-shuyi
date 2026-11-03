@@ -163,6 +163,31 @@ fn an_item_is_named_from_the_pack_or_the_green_units_own() {
 }
 
 #[test]
+fn an_art_used_as_an_action_is_named() {
+    let before = skirmish(&ctx(), 20);
+    let used = |art: &str| Replayed {
+        before: before.clone(),
+        command: Command::Act {
+            unit: UnitId(3),
+            dest: Pos::new(8, 4),
+            action: UnitAction::UseArt {
+                art: trpg_core::ArtId::new(art),
+                slot: 0,
+            },
+        },
+        events: vec![],
+    };
+    assert_eq!(
+        describe(&used("overwatch"), Words::ENGLISH),
+        "Turn 1 · Test Archer used Overwatch"
+    );
+    assert_eq!(
+        describe(&used("no_such_art"), Words::ENGLISH),
+        "Turn 1 · Test Archer used a skill"
+    );
+}
+
+#[test]
 fn phase_names() {
     let ended = |phase| Words::ENGLISH.text(phase_ended(phase));
     assert_eq!(ended(Phase::Player), "Player phase ended");

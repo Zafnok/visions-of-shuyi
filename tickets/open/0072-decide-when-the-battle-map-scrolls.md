@@ -25,7 +25,8 @@ moves"), Nick, 2026-10-21:
 > followup / 00 ticket rather than in this ticket"
 
 Today the camera follows the cursor (`Camera::follow`, the engine's
-`shuyi_ui::grid::camera`, used by `crates/ui/src/screens/battle/camera.rs`):
+`shuyi_ui::grid::camera`, used through `crates/ui/src/screens/battle/camera.rs`,
+a re-export that 1230 deletes):
 the view scrolls once the cursor comes within **3 tiles** of its edge
 (`Camera::MARGIN`), one tile per step, and stops at the map's edge. At 2×
 with the bought art the view is 17 × 15 tiles; Chapter 1's map is 24 × 16.

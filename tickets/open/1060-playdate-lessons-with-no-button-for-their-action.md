@@ -68,6 +68,11 @@ None. The design already says where these actions are on the Playdate
 - The lesson box's look on the Playdate (1058).
 - New lessons, or rewording a lesson beyond the placeholder.
 
+**Either order with 1170:** if 1170 is done, Danger Zone, Dialogue log
+and Options are bound to `SystemMenu0`-`2` in the keymap's `playdate`
+table, so their placeholders and ticks follow those bindings; if not,
+nothing to do (1170 keeps this ticket's lesson ticks passing).
+
 ## Implementation steps
 
 1. Read `crates/ui/src/screens/battle/lessons.rs` (`tick`, `DoneWhen`),

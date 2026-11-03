@@ -21,7 +21,7 @@ test_knight: Than never. Say it.
 test_archer: Was that about me?
 test_lord[sad]: It's always about you.
 @left lead neutral
-test_archer: {lead}! You came back for us.
+test_archer: {lead|Exile}! You came back for us.
 @choice
 * earnest: I said I would. I keep my word.
   test_archer[happy]: You do. It's why we follow you.
@@ -33,5 +33,5 @@ test_archer: {lead}! You came back for us.
 @endchoice
 @right test_archer neutral
 lead: Let's move.
-> {lead} tightens {their} grip on the sword. {They} won't lose anyone today.
+> {lead|The exile} tightens {their} grip on the sword. {They} won't lose anyone today.
 @end

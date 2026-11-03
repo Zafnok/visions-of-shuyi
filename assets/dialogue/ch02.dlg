@@ -108,7 +108,7 @@ poacher: I hunt.
 @endif
 @if heretic
 @right heretic neutral
-> {n:heretic} has walked in front all night and said nothing. She comes back down the line and puts half a loaf against {lead}'s chest, and holds it there until {lead} takes it.
+> {n:heretic} has walked in front all night and said nothing. She comes back down the line and puts half a loaf against {lead|the exile}'s chest, and holds it there until {lead|the exile} takes it.
 heretic: You've had nothing since the fort. I counted. ...What are you looking at me for? Eat it.
 @right clear
 @endif
@@ -281,7 +281,7 @@ keeper: Let me see. Let me see it, don't-- I'm a keeper, give me your arm. Don't
 
 @scene ch02_death_lead
 @left lead sad
-> {lead} is down in the water at the ford. Across the river the tower's bell goes on, and nobody comes.
+> {lead|The exile} is down in the water at the ford. Across the river the tower's bell goes on, and nobody comes.
 @end
 
 # The companions: a death quote in Classic, a retreat line in Casual
@@ -301,7 +301,7 @@ retainer: Knee. No, I'm not getting up. Hold the road without me, I'll catch up.
 
 @scene ch02_death_sergeant
 @left sergeant sad
-sergeant: Your Former Grace. ...No. {lead}. There. Four years and I never once said it. Should have, once.
+sergeant: Your Former Grace. ...No. {lead|Friend}. There. Four years and I never once said it. Should have, once.
 @end
 
 @scene ch02_retreat_sergeant
@@ -458,11 +458,11 @@ retainer: ...Eat.
 @else
 > Nobody says anything to that.
 @endif
-> A flat tin comes out of the wet coat: needles, and a card of black thread. He has {lead}'s cuff between his fingers before anyone has agreed to anything.
+> A flat tin comes out of the wet coat: needles, and a card of black thread. He has {lead|the exile}'s cuff between his fingers before anyone has agreed to anything.
 defector: Hold still, it's just the cuff, it's been hanging since the fort. My ma would skin me for that stitch, but it'll hold. I'm going to make a whole coat one day, you know. My own, from cloth I picked.
 @if heretic
 @right heretic neutral
-heretic: Your hands are shaking. Stop, you'll put that through {lead}'s wrist. ...Stop. I'll hold the cuff. You do the needle.
+heretic: Your hands are shaking. Stop, you'll put that through {lead|the exile}'s wrist. ...Stop. I'll hold the cuff. You do the needle.
 @right defector surprised
 defector: They're not-- they are. They are a bit. It's the cold, that's all.
 @endif

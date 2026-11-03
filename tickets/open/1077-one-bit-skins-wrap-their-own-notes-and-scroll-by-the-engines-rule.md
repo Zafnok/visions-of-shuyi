@@ -84,7 +84,13 @@ the snapshots.
 **Out (do not do):**
 - Moving one-bit skins into the engine (1184).
 - The yes/no prompts and the PC skins' leftovers (1185).
+- The PC skins' hand-built boxes and the PC shop, Guides and
+  Preparations list windows (1238).
 - Changing the PC look.
+
+**Either order with 1238** (the PC skins' boxes on `panel`): 1238 leaves
+`pd::window` and the one-bit scroll rule here. If 1238 is done, give
+`pd::window` the same `PanelLook` its boxes use; if not, as written.
 
 ## Implementation steps
 

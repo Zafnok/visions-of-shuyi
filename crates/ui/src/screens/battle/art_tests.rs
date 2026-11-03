@@ -820,3 +820,174 @@ fn a_target_beyond_every_line_isnt_offered() {
     assert!(!with(&state, &Technique::Attack).contains(&UnitId(4)));
     assert!(with(&state, &long).contains(&UnitId(4)));
 }
+
+// ---- Stances that react (ticket 0326) ----------------------------------------
+
+/// The Quick Battle with the archer (unit 3) at Bow B, so it knows
+/// Overwatch, its bow at `durability`.
+fn ranger(c: &Ctx, durability: u32) -> BattleState {
+    battle(c, |units| {
+        units[2]
+            .weapon_ranks
+            .insert(trpg_core::WeaponKind::Bow, trpg_core::WeaponRank::B);
+        units[2].loadout.weapons[0]
+            .as_mut()
+            .unwrap()
+            .durability_left = durability;
+    })
+}
+
+/// The archer's arts menu open, focused on Overwatch.
+fn on_overwatch(c: &mut Ctx, state: BattleState) -> BattleScreen {
+    let mut s = archer_menu(c, state);
+    choose_entry(&mut s, c, MenuEntry::Arts);
+    let at = lines(&s).iter().position(|l| l.0 == "Overwatch");
+    let at = at.unwrap_or_else(|| panic!("no Overwatch: {:?}", lines(&s)));
+    for _ in 0..8 {
+        let Mode::List { menu, .. } = s.mode() else {
+            unreachable!()
+        };
+        if menu.focus() == at {
+            break;
+        }
+        step(&mut s, c, &[Action::CursorDown]);
+    }
+    s
+}
+
+/// The focused line's label, as the menu writes it.
+fn focused_label(s: &BattleScreen) -> String {
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    text_of(&menu.items()[menu.focus()].label).to_owned()
+}
+
+#[test]
+fn overwatch_ends_the_action_with_no_target() {
+    let mut c = ctx();
+    let state = ranger(&c, 20);
+    let mut s = on_overwatch(&mut c, state);
+    let label = focused_label(&s);
+    assert!(label.starts_with("Overwatch"), "{label}");
+    assert!(label.ends_with("−5 dur  B  ends action"), "{label}");
+    assert_eq!(
+        focused_note(&s).as_deref(),
+        Some("stance: shoots an enemy moving in range")
+    );
+    // Chosen: used at once, no forecast, no target.
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(!matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    let archer = s.state().unit(UnitId(3)).unwrap();
+    assert!(archer.acted);
+    assert!(archer.has_effect(&EffectSource::Art(ArtId::new("overwatch"))));
+    assert_eq!(durability(s.state(), UnitId(3)), 15);
+}
+
+#[test]
+fn overwatch_is_offered_with_nobody_in_range_and_dimmed_when_the_bow_is_broken() {
+    let mut c = ctx();
+    // Nobody in the bow's range: Overwatch needs no target.
+    let far = battle(&c, |units| {
+        units[2]
+            .weapon_ranks
+            .insert(trpg_core::WeaponKind::Bow, trpg_core::WeaponRank::B);
+        units[3].pos = p(12, 0);
+    });
+    let s = on_overwatch(&mut c, far);
+    let listed = lines(&s);
+    let line = listed.iter().find(|l| l.0 == "Overwatch").unwrap();
+    assert_eq!((line.1, line.2.as_deref()), (true, None));
+    // A broken bow: dimmed, with the reason.
+    let found = art_lines(&ranger(&c, 0), UnitId(3), p(8, 4));
+    let menu = arts_menu(&ranger(&c, 0), Words::ENGLISH, &found);
+    let listed = shown(&menu);
+    let line = listed.iter().find(|l| l.0 == "Overwatch").unwrap();
+    assert_eq!((line.1, line.2.as_deref()), (false, Some("broken")));
+}
+
+/// The archer's arts menu on Overwatch.
+#[test]
+fn arts_menu_with_overwatch_snapshot() {
+    let mut c = ctx();
+    let state = ranger(&c, 20);
+    let s = on_overwatch(&mut c, state);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// The lord (Swordsman, Sword C) with Riposte chosen: a normal combat and
+/// the stance's line.
+#[test]
+fn forecast_with_riposte_snapshot() {
+    let mut c = ctx();
+    let state = battle(&c, |units| {
+        units[0].class = ClassId("swordsman".to_owned());
+        units[0]
+            .weapon_ranks
+            .insert(trpg_core::WeaponKind::Sword, trpg_core::WeaponRank::C);
+    });
+    let s = lord_on_brigand(&mut c, state, "Riposte");
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.notes, ["stance: strikes first"]);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+#[test]
+fn reacting_stances_read_as_the_design_writes_them() {
+    use trpg_core::TimedMods;
+    let stance = |mods: TimedMods| {
+        super::art_list::note_text(Words::ENGLISH, &trpg_core::ArtNote::Stance(mods))
+    };
+    let d = TimedMods::default;
+    assert_eq!(
+        stance(TimedMods {
+            reaction: Some(trpg_core::StanceReaction::StrikesFirst),
+            ..d()
+        }),
+        "stance: strikes first"
+    );
+    assert_eq!(
+        stance(TimedMods {
+            reaction: Some(trpg_core::StanceReaction::Counters { reach: 2, hit: 15 }),
+            ..d()
+        }),
+        "stance: counters at 1–2 counters hit +15"
+    );
+    assert_eq!(
+        stance(TimedMods {
+            reaction: Some(trpg_core::StanceReaction::Deflect),
+            ..d()
+        }),
+        "stance: deflects a hit and strikes back"
+    );
+}
+
+#[test]
+fn a_deflected_strike_and_an_overwatch_shot_show_in_the_playback() {
+    let c = ctx();
+    let state = ranger(&c, 20);
+    let deflected = trpg_core::Strike {
+        by: trpg_core::Side::Attacker,
+        hit: false,
+        crit: false,
+        damage: 0,
+        healed: false,
+        reaction: Some(trpg_core::StrikeReaction::Deflected),
+        target_hp_after: 20,
+    };
+    assert_eq!(
+        super::playback::result_text(Words::ENGLISH, &deflected),
+        "DEFLECTED"
+    );
+    // The shot is named whoever's it is: it comes on the other side's turn.
+    let shot = Event::OverwatchShot {
+        unit: UnitId(3),
+        art: ArtId::new("overwatch"),
+        target: UnitId(4),
+    };
+    let units = state.units().to_vec();
+    assert_eq!(
+        playback_banner(&state, Words::ENGLISH, &[shot], &units).as_deref(),
+        Some("Overwatch")
+    );
+}

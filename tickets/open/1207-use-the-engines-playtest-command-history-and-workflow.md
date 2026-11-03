@@ -58,6 +58,9 @@ command, not by a new gameplay sign-off.
   direct CLI tests there. Retain game-specific construction and semantic
   regression coverage through the new plan and `crates/xtask/tests/cli.rs`.
   Do not relocate a runner, worker pool, history reader or formatter.
+  `playtest::stage` (the `BattleStage` builder, about 20 lines) is the
+  exception: `game_tools/plays.rs` calls it for `bots` and `replay`, so
+  it moves beside the plan rather than going with the file.
 - `.github/workflows/playtest.yml` calls the engine's reusable workflow
   pinned to `shuyi-engine.rev`, with the game's lever script
   `bash .github/playtest-levers.sh`, required macroquad system packages,
@@ -83,6 +86,12 @@ command, not by a new gameplay sign-off.
 - Reimplementing shipped engine APIs, a new engine feature, or a ticket
   only to move the engine pin.
 
+**Either order with 1240** (the tools' `bots` folded into `playtest`,
+after engine#2544): if 1240 is done, `Trpg::playtest_plan` exists with
+the plain `baseline` run and its play record: grow that plan with the
+stages, personas, checks and summary here, keeping its record; if not,
+nothing to do (1240 adds the record to this plan when it lands).
+
 **Either order with 0507, 0508, 0512 and 1021:** if one is done, migrate
 its command/report use to `cargo shuyi playtest` here, preserving its
 output (`playtest-compare` still reads personas through 1180's engine
@@ -97,6 +106,11 @@ resources, pack setup and Chapter 2 reports. If not, retain the existing
 starting-army behavior here and leave 0520 the active plan/provider paths
 and engine command syntax. Do not restore a fresh-army setup over 0520's
 correction or make that balance correction wait for this cleanup.
+
+**Either order with 1233:** if 1233 is done, its xtask `playtest` row
+(`docs/engine/boundary.md:270`) says "moves with 1207": write it as
+moved with the rest of this ticket's `boundary.md` change; if not,
+change that row here, and 1233 leaves it.
 
 ## Implementation steps
 

@@ -79,6 +79,12 @@ sees them on his Playdate.
 the Playdate) is done, its arrows' ink is in the distinct-marks test;
 if not, 1178 adds it.
 
+**Either order with 1213:** if 1213 is done, the danger zone's edge is
+the kit's `RangeOutline` on `ONE_BIT` (`map_view/playdate/marks.rs` is
+gone): an exit-area border is `range::EXIT` added to that outline (or a
+painter of its own if its thickness or ink must differ); if not, draw it
+in `map_view/playdate/marks.rs`, and 1213 moves it onto the outline.
+
 **Out (do not do):**
 - The PC skins (they have colour: the exit area's tint there is fine).
 - Allies' and neutral units' looks (waiting for a chapter that has them).

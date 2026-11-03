@@ -51,6 +51,18 @@ Playdate cursor's marks; **C** describe your own. Record the answer in
   the PC glyph skin uses (`edges::arrows`, `glyph::edge_arrow`), in the
   Playdate's inks, driven by the scene's `clock_ms` if they blink.
 
+**Either order with 1213:** 1213 (from the game/engine boundary audit
+of 2026-11-03) moves the arrows onto the kit's skins (engine#3203,
+`GlyphStyle.edges`). If 1213 is done, write no painter: set `ONE_BIT`'s
+`edges` to `EdgeArrows` with the PC glyphs, the ink Nick's pick uses,
+and `EdgeShow::Steady` for A or `EdgeShow::Blink { period_ms: 1000 }`
+for B (C: the nearest `EdgeShow`, or an engine request if none fits).
+If not, add `OneBitUnits::paint_over` as below, and 1213 replaces it
+with that setting.
+
+**Either order with 1076:** if 1076 is done, the distinct-marks test
+exists: add the arrows' ink to it; if not, nothing to do (1076 adds it).
+
 **Out (do not do):**
 - When the scene has arrows, or where they sit: 0449's.
 - The camera and when it scrolls (0072).
@@ -60,7 +72,8 @@ Playdate cursor's marks; **C** describe your own. Record the answer in
 
 1. Ask Nick as above; record the answer.
 2. Add `paint_over` to `OneBitUnits` (`crates/ui/src/map_view/playdate.rs`)
-   reusing `edges::arrows` and `glyph::edge_arrow`.
+   reusing `edges::arrows` and `glyph::edge_arrow`. If 1213 is done,
+   set `ONE_BIT`'s `edges` instead (the 1213 clause above).
 3. Add the `more` case to the Playdate skin's tests
    (`crates/ui/src/map_view/playdate/tests.rs`) and check its
    paints-only-the-area property still holds (`any_scene` sets `more`).

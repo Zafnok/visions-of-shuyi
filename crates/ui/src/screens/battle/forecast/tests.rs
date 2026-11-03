@@ -33,6 +33,7 @@ fn strikes_read_as_damage_or_a_heal() {
         by: Side::Attacker,
         damage: 8,
         healed: false,
+        reaction: None,
         target_hp_after: 4,
         after_a_fall: false,
     };

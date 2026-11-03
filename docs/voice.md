@@ -29,7 +29,12 @@ voice/
 - Files are OGG Vorbis, 44.1 kHz, mono.
 - A line whose words change with the lead's gender (`{they}`, `{their}`…)
   has two clips, `.m.ogg` and `.f.ogg`. Every other line has one.
-- A line with `{lead}` (the name the player types) can't have a clip.
+- A line that says the lead's name (which the player types) writes what the
+  voice says instead, `{lead|the exile}` (ADR-0107 rule 4; how to write it:
+  `assets/dialogue/README.md`, "What the voice says for the name"). The text
+  box shows the name and the clip says the stand-in, so the clip's `spoken`
+  has "the exile" where the box has the name. A bare `{lead}` can't have a
+  clip; the content checks allow one only in a reply, which is silent.
 
 ## `voice.ron`
 
@@ -83,7 +88,11 @@ A clip is **stale** when its `spoken` is not what its line says today, for
 example after a rename in `assets/data/names.ron`. A stale clip is not an
 error: the game leaves it out and that line is silent until the clip is
 made again. The same goes for a plain clip on a line that needs a gendered
-pair, and for any clip on a line with `{lead}`.
+pair, and for any clip on a line with a bare `{lead}`. Changing a line's
+stand-in for the name (`{lead|the exile}` to `{lead|the heir}`) keeps its id
+and its translations, and makes its clip stale. The game checks clips against
+the lines as written (`trpg_content::dialogue::written`), so the stand-ins
+are read.
 
 A clip whose line's `direction` changed still says the right words, so it
 keeps playing. It is not stale, but it **needs remaking**

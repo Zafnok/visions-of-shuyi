@@ -242,6 +242,39 @@ fn an_effect_that_lowers_a_number_is_a_penalty_and_any_other_a_bonus() {
     assert!(!v.effects.bonus && v.effects.penalty && v.has_effect());
 }
 
+/// Ticket 0326: a unit on Overwatch (or another stance that only reacts)
+/// shows its stance on the map as Brace's and Sidestep's do.
+#[test]
+fn a_stance_that_only_reacts_shows_as_a_bonus() {
+    let c = ctx();
+    let state = crate::screens::battle::quick_battle(&c.game.content).unwrap();
+    for mods in [
+        TimedMods {
+            reaction: Some(trpg_core::StanceReaction::Overwatch),
+            ..TimedMods::default()
+        },
+        TimedMods {
+            reaction: Some(trpg_core::StanceReaction::Deflect),
+            ..TimedMods::default()
+        },
+        TimedMods {
+            reaction: Some(trpg_core::StanceReaction::StrikesFirst),
+            ..TimedMods::default()
+        },
+        TimedMods {
+            reaction: Some(trpg_core::StanceReaction::Counters { reach: 2, hit: 15 }),
+            ..TimedMods::default()
+        },
+    ] {
+        assert!(!hinders(&mods), "{mods:?}");
+        let mut unit = state.units()[0].clone();
+        unit.add_effect(effect("overwatch", mods));
+        let v = UnitView::of(&unit);
+        assert!(v.effects.bonus && !v.effects.penalty);
+        assert!(unit_text(&v).contains("bonus"), "{}", unit_text(&v));
+    }
+}
+
 #[test]
 fn the_terrains_are_the_contents_by_id() {
     let c = ctx();

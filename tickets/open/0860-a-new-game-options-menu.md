@@ -49,7 +49,11 @@ the `shuyi-screen` skill: logic, a view of plain data, and a skin.
    skill, or the `engine-friction` skill if the code runs far over. The game
    doesn't wait on the engine.
 3. Build the screen, and move the voices, familiarity and mode questions onto it
-   as Nick answered.
+   as Nick answered. **Either order with 1234** (one choice screen): if 1234 is
+   done, mode and familiarity are specs of its `ChoiceScreen`
+   (`screens/choice.rs`): move their rows here and delete the specs, keeping
+   `ChoiceScreen` for the save prompt. If not, move `mode_select.rs` and
+   `familiarity.rs` here and delete them.
 4. All text through `ctx.text`, keys through the player's keymap, and no key
    hard-coded (`keyboard-input` skill).
 

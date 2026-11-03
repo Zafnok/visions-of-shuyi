@@ -235,6 +235,7 @@ mod tests {
             crit,
             damage,
             healed,
+            reaction: None,
             target_hp_after: 5,
         }
     }

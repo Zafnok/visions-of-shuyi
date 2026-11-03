@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-03
 ---
 
 # 0474 — A negative stat bonus reads Res -3, not Res +-3
@@ -50,9 +50,9 @@ None. Verified by tests and the snapshots; nothing to judge by playing.
 
 ## Acceptance criteria
 
-- [ ] `bonus_text` of `(def: 8, res: -3)` is `Def +8  Res -3` (unit test).
-- [ ] No snapshot shows `+-`: `grep -rn "+-" crates/ui/src --include=*.snap` is empty.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `bonus_text` of `(def: 8, res: -3)` is `Def +8  Res -3` (unit test).
+- [x] No snapshot shows `+-`: `grep -rn "+-" crates/ui/src --include=*.snap` is empty.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -61,5 +61,10 @@ None. Verified by tests and the snapshots; nothing to judge by playing.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+`bonus_text` formats each bonus with `{:+}`, so a penalty reads `Res -3`
+and a bonus still reads `Def +8`. New unit test
+`a_negative_bonus_reads_minus_not_plus_minus`; the one snapshot that showed
+`+-` (the Preparations Shop tab's Iron Plate line) changed only on that
+line. No deviations, no follow-ups, no starting rules.
+
+Engine friction: estimate 1 line, measured 1 (1×), under 2×.
