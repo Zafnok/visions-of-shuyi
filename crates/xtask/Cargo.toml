@@ -41,3 +41,7 @@ serde_norway = "0.9.42"
 # `frame-png` renders the bought art (ADR-0040): commit its output only as a
 # screenshot of the game (`CLAUDE.md`, *Bought art*).
 private-assets = ["trpg-content/private-assets"]
+
+[dev-dependencies]
+# `voice script`'s recording script, snapshot-tested (ticket 0721).
+insta.workspace = true

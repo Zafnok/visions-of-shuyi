@@ -37,6 +37,7 @@ mod tickets;
 mod tileset_import;
 mod tileset_ron;
 mod title_art;
+mod voice;
 mod voice_test;
 
 use std::env;
@@ -116,6 +117,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
         Some("check-script") => check_script(&args.collect::<Vec<_>>()),
+        Some("voice") => voice(&args.collect::<Vec<_>>()),
         Some("voice-test-clips") => voice_test_clips(&args.collect::<Vec<_>>()),
         Some(command) => {
             eprintln!("unknown command: {command}");
@@ -310,6 +312,30 @@ fn icon(args: &[String]) -> u8 {
         Err(e) => {
             eprintln!("icon: {e}");
             2
+        }
+    }
+}
+
+fn voice(args: &[String]) -> u8 {
+    if args.iter().any(|a| a == "--help") {
+        println!("{}", voice::USAGE);
+        return 0;
+    }
+    let args = match voice::parse(args) {
+        Ok(args) => args,
+        Err(e) => {
+            eprintln!("{e}");
+            return 2;
+        }
+    };
+    match voice::run(&repo_root(), &args) {
+        Ok(report) => {
+            println!("{report}");
+            0
+        }
+        Err(e) => {
+            eprintln!("voice: {e}");
+            1
         }
     }
 }
