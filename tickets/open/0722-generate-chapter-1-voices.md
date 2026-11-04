@@ -55,7 +55,8 @@ repository; `say.ron` entries for Chapter 1's names; the pin
 3. `cargo xtask voice generate`. Listen to every clip once (or, if
    listening isn't possible in the session, transcribe each clip with a
    speech-to-text tool and compare with `spoken`; list mismatches).
-   Regenerate bad ones; a line that won't come out right after three
+   Regenerate bad ones (remove the clip's entry from `voice.ron` and run
+   `generate` again, `docs/voice.md`); a line that won't come out right after three
    tries is listed in the notes and left silent (remove its clip).
 4. Commit to the private repository, `cargo xtask private-assets --pin`,
    commit `assets-private.rev` here.
@@ -65,7 +66,7 @@ repository; `say.ron` entries for Chapter 1's names; the pin
 ## Acceptance criteria
 
 - [ ] `cargo xtask voice status` reports no missing or stale clip for `ch01` (besides lines listed as left silent).
-- [ ] Every clip is OGG Vorbis, 44.1 kHz, mono, loudness-matched (the tool's own check).
+- [ ] Every clip is OGG Vorbis, 44.1 kHz, mono, loudness-matched (0721's `generate` makes them so; it has no separate check command, so measure a sample with ffmpeg's `ebur128` as `assets-src/audio/import.py --check` does).
 - [ ] The web build plays the first scene's voices without a gap longer than the text box appearing (checked in the browser).
 - [ ] `THIRD_PARTY_ASSETS.md`'s two entries under *AI voice tools* become rows of its table, marked AI-generated and *private*, each with a credit in `assets/data/credits.ron` (the credits test needs both), shown only in a build that has clips.
 - [ ] All gates in the `run-gates` skill pass.

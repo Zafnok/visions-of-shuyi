@@ -1,0 +1,34 @@
+---
+source: crates/xtask/src/voice/tests.rs
+expression: script
+---
+Recording script: test_archer
+Deliver each line as OGG Vorbis, mono, 44.1 kHz, under the file name shown,
+in the voice folder's language folder (docs/voice.md).
+
+test/test_01439969.ogg
+  scene:  test
+  before: narrator: The knight stamps off into the rain.
+  say:    Was that about me?
+
+test/test_855189a1.ogg
+  scene:  test
+  before: test_lord: It's always about you.
+  say:    Exile! You came back for us.
+
+test/test_52af7786.ogg
+  scene:  test
+  before: the lead (a reply): I said I would. I keep my word.
+  say:    You do. It's why we follow you.
+
+test/test_ea4bd284.ogg
+  scene:  test
+  before: the lead (a reply): Someone has to carry your arrows.
+  say:    I carry my own arrows, thank you.
+
+test/test_d027813d.ogg
+  scene:  test
+  before: the lead (a reply): Get moving. We're not safe here.
+  say:    Right. Moving.
+
+5 lines

@@ -119,6 +119,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0109](0109-voice-directions-reach-the-voice-design-model-apart-from-the-words.md) | Voice directions reach the voice design model, apart from the words | Accepted (0752); amends ADR-0107 |
 | [0110](0110-bots-arrive-at-a-chapter-through-the-recorded-playthroughs-before-it.md) | The bots arrive at a chapter through the recorded playthroughs before it | Accepted (0520); extends ADR-0033 |
 | [0111](0111-the-playdates-start-runs-a-step-per-update-callback.md) | The Playdate's start runs a step per update callback | Accepted (1086); extends ADR-0070 |
+| [0112](0112-the-voice-tool-plans-from-the-files-and-checks-every-take-by-ear.md) | The voice tool plans from the files and checks every take by ear | Accepted (0721); extends ADR-0046, ADR-0107, ADR-0109 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

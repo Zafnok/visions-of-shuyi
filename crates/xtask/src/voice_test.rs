@@ -55,7 +55,7 @@ pub fn plan(root: &Path) -> Result<Vec<(String, Vec<i16>)>, String> {
 /// where the tests run (as `web.rs` does for `wasm-opt`). What they make
 /// is checked: a test compares the committed clips with [`plan`].
 #[mutants::skip]
-fn ffmpeg() -> &'static str {
+pub(crate) fn ffmpeg() -> &'static str {
     if Path::new(MSYS_FFMPEG).is_file() {
         MSYS_FFMPEG
     } else {

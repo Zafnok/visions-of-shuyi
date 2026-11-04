@@ -105,14 +105,116 @@ aloud, is [ADR-0109](adr/0109-voice-directions-reach-the-voice-design-model-apar
 ```ron
 (
     voices: {
-        "hollis": "hollis_a",
-        ">": "narrator_a",
+        ">": (clip: "narrator", reader: Qwen3),
+        "lead_m": (clip: "lead_m", reader: Qwen3),
+        "lead_f": (clip: "lead_f", reader: Qwen3),
+        "retainer": (clip: "retainer", reader: Chatterbox),
     },
 )
 ```
 
-Speaker (a character id, or `>` for narration) to voice id. The game doesn't
-read it; the clip-making tool (`cargo xtask voice`, ticket 0721) does.
+Each speaker's voice ([ADR-0107](adr/0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md)
+rule 2), from the cast table of `docs/design/voices-languages-and-script.md`:
+a character id, `>` for narration, and `lead_m` and `lead_f` for the lead's
+two voices. `clip` is the voice's reference clip,
+`assets-src/audio/voice-refs/<clip>.flac`, and the manifest's `voice` names
+it. `reader` reads its undirected lines: `Qwen3` or `Chatterbox`. Every
+directed line takes ADR-0109's recipe, whoever the reader. The game doesn't
+read this file; `cargo xtask voice` does.
+
+The test folder's `crates/app/tests/voice/en/cast.ron` is still in the
+engine's older form, speaker to voice id, which
+`trpg_content::voice::cast_from_source` reads (ticket 0760).
+
+## `say.ron`
+
+```ron
+{
+    "aske": "Ask",
+    "Harrow": "Harro",
+}
+```
+
+How to spell a name or a word for the readers, which often misread
+invented names: a name id of `assets/data/names.ron` (for that name as it
+is today) or a word, and the spelling to send. Only whole words change.
+The manifest's `spoken` keeps the real words; the respelling is only what
+the reader is sent. Changing an entry makes the clips of the lines that use
+it again. Optional.
+
+## `sent.ron`
+
+What the tool sent to make each clip, by clip file: the words as spelled
+for the reader, and a fingerprint of the voice's reference clip. The tool
+writes it; nothing else reads it. A clip is made again when the tool would
+send other words (`say.ron` changed) or the reference clip was replaced.
+
+## Making the clips: `cargo xtask voice`
+
+On a developer's machine with the voice lab (ADR-0107 rule 3:
+`D:\voice-lab`, its Python environments in `envs\qwen` and
+`envs\chatter`, its models in `hf\`; another place by `--lab` or the
+`VOICE_LAB` variable) and `ffmpeg`. Never in the game or in CI. It reads the
+scripts the game is built with, so build after editing a script (any
+`cargo xtask` command does).
+
+```bash
+cargo xtask voice status
+```
+
+Per scene: the clips to make and why (no clip, the words changed, the
+direction changed, the voice changed, `say.ron` spells it differently), the
+recorded clips a person must record again, the clips to remove (their line
+is gone, or it now needs a gendered pair instead of one clip or the other
+way round), and the lines whose speaker has no voice in `cast.ron`.
+
+```bash
+cargo xtask voice generate --dry-run
+```
+
+```bash
+cargo xtask voice generate
+```
+
+Removes the clips `status` would remove, then makes the rest. Undirected
+lines go to their voice's reader; directed lines to ADR-0109's recipe. Every
+take is transcribed (faster-whisper) and kept when it says the line's words
+(or the respelled ones); otherwise the next seed is tried, up to four. A
+line with no good take is reported and not saved. Each clip is trimmed to at
+most 0.1 s of silence at either end and brought to −18 LUFS (true peak at
+most −1 dBTP); a directed clip keeps its distance from its voice's level,
+from 12 dB below to 6 dB above, so a whisper stays quiet. These numbers are
+in `crates/xtask/src/voice/synth.rs`, marked *tunable*. The manifest and
+`sent.ron` are written after every batch, so a stopped run keeps what it
+made. A `Recorded` clip is never made or replaced. `--dry-run` counts the
+clips and characters it would send, directed ones apart, and makes nothing.
+
+A clip that transcribes right but sounds wrong is made again by removing its
+entry from `voice.ron` (and its file) and running `generate`: the next take
+is a new one.
+
+```bash
+cargo xtask voice script --character retainer
+```
+
+A recording script for an actor (ADR-0046 rule 10): per line, the file to
+deliver, the scene, the line before it, the direction and the words. A
+character id, `>` for the narrator, or `lead_m` / `lead_f`.
+
+Every command takes `--lang <code>` (default `en`), `--scene <id>` (one
+scene, a test scene too; by default every scene of `assets/dialogue/`) and
+`--dir <folder>` (default `assets-private/voice`, the private repository's
+voice folder). The readers are `tools/voice/lab.py`, one command per step,
+each run in its lab environment.
+
+### Committing the clips
+
+1. `cargo shuyi private-assets` (the checkout must have `voice/`).
+2. `cargo xtask voice generate`, then `cargo xtask voice status` to see
+   what is left.
+3. In `assets-private/`: commit `voice/` and push.
+4. Here: `cargo shuyi private-assets --pin`, and commit
+   `assets-private.rev` in the ticket's PR.
 
 ## How the game plays them
 
