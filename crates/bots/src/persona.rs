@@ -114,7 +114,7 @@ pub struct Tally {
     pub enemy_fell: i64,
     /// Progress towards the objective: in a rout, the enemies' HP taken; in
     /// a boss fight, the boss's; in a seize, how many tiles closer the
-    /// nearest unit that may seize got; in an escape (0319), how many units
+    /// nearest unit that may seize got, walking; in an escape (0319), how many units
     /// got out; nothing in a survive.
     pub progress: i64,
     /// Tiles the standing player units came closer to their goal, all
@@ -440,14 +440,22 @@ fn hp_of(state: &BattleState, id: UnitId) -> i64 {
     state.unit(id).map_or(0, |u| i64::from(u.hp))
 }
 
-/// How far the nearest player unit that may seize stands from `pos`; 0 if
-/// there is none.
+/// How far the nearest player unit that may seize stands from `pos`,
+/// walking (the flow field, as [`Tally::approach`] measures): as the crow
+/// flies, a lord on Greywater's shore came "closer" to the scriptorium by
+/// walking away from the causeway, and stayed there (0849). As the crow
+/// flies only when none can walk there; 0 if there is none.
 fn seize_distance(state: &BattleState, pos: Pos, by_lord: bool) -> i64 {
     let may_seize = |u: &&Unit| u.faction == Faction::Player && (u.is_lord || !by_lord);
-    let units = state.units().iter().filter(may_seize);
-    units
-        .map(|u| i64::from(Pos::manhattan(u.pos, pos)))
-        .min()
+    let mut goals = Goals {
+        state,
+        targets: vec![pos],
+        fields: BTreeMap::new(),
+    };
+    let units = || state.units().iter().filter(may_seize);
+    let walking = units().filter_map(|u| goals.distance(u, u.pos)).min();
+    walking
+        .or_else(|| units().map(|u| i64::from(Pos::manhattan(u.pos, pos))).min())
         .unwrap_or(0)
 }
 
@@ -492,7 +500,9 @@ impl Order<BattleState> for PersonaOrder {
 ///    Potion in two pack slots, or used by any unit in reach, is one heal),
 ///    from a healer's own tile if one can: else a wounded lord's heals fill
 ///    every place tried and no advance is ever weighed (0519);
-/// 4. each ready unit's escape, once, on an escape map (0517);
+/// 4. each ready unit's escape, once, on an escape map (0517), and its
+///    seize on a seize map: in the rest the cap cut it, and a lord
+///    standing on the tile never took it (0849);
 /// 5. each ready unit's advance: waiting on the tile it can reach that is
 ///    nearest the objective's goals, walking (the engine's flow field), if that is
 ///    nearer than where it stands;
@@ -549,7 +559,7 @@ pub fn order(
                 } else if let Some((missing, heal)) = heal_need(state, *unit, *dest, action) {
                     let moves = state.unit(*unit).is_some_and(|u| u.pos != *dest);
                     heals.push(((missing, !moves), heal, command));
-                } else if *action == UnitAction::Escape {
+                } else if matches!(action, UnitAction::Escape | UnitAction::Seize) {
                     escapes.push(command);
                 } else {
                     if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {

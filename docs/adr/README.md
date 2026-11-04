@@ -120,6 +120,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0110](0110-bots-arrive-at-a-chapter-through-the-recorded-playthroughs-before-it.md) | The bots arrive at a chapter through the recorded playthroughs before it | Accepted (0520); extends ADR-0033 |
 | [0111](0111-the-playdates-start-runs-a-step-per-update-callback.md) | The Playdate's start runs a step per update callback | Accepted (1086); extends ADR-0070 |
 | [0112](0112-a-persona-weighs-every-units-move-before-a-second-target.md) | A persona weighs every unit's move before any unit's attack on a second target: the order lists each unit's best attack, then the pick, heals, escapes, advances and holds, then each unit's other targets (the cap had cut a sturdy unit's advance, and Hardcore stalled at a guarded ford) | Accepted (0523); amends ADR-0095 §2 |
+| [0113](0113-the-voice-tool-plans-from-the-files-and-checks-every-take-by-ear.md) | The voice tool plans from the files and checks every take by ear | Accepted (0721); extends ADR-0046, ADR-0107, ADR-0109 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

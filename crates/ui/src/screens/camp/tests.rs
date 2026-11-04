@@ -232,7 +232,17 @@ fn camp_takes_its_track_back_after_a_conversations_music() {
     assert_eq!(ctx.audio.take(), []);
     ctx.music_clock = Some(clock("talk_calm"));
     s.uncovered(&mut ctx, None);
-    assert_eq!(ctx.audio.take(), [AudioRequest::play_music(track, None)]);
+    let back = music::Speaker::faded_in(&ctx, &track);
+    assert_eq!(ctx.audio.take(), [back]);
+    // In the quiet between two tracks, nothing starts early.
+    let length = f64::from(ctx.game.content.audio.music[&track].length_ms) / 1000.0;
+    ctx.clock_s += length;
+    update(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.audio.take(), [AudioRequest::StopMusic]);
+    ctx.clock_s += 1.0;
+    s.uncovered(&mut ctx, None);
+    update(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.audio.take(), [], "the quiet goes on");
 }
 
 /// What is said instead of an empty list, in the panel under its title.
@@ -287,8 +297,63 @@ fn camp_plays_the_camp_pool_in_turn() {
     assert_eq!(ctx.audio.take(), [AudioRequest::StopMusic]);
     ctx.clock_s += music::QUIET_S + 1.0;
     update(&mut s, &mut ctx, &[]);
-    let next = AudioRequest::play_music(pool[(at + 1) % pool.len()].clone(), None);
+    let next = music::Speaker::faded_in(&ctx, &pool[(at + 1) % pool.len()]);
     assert_eq!(ctx.audio.take(), [next]);
+}
+
+/// `secs` seconds of camp in frames of 0.1 s, each heard by `speaker`.
+fn play(s: &mut CampScreen, ctx: &mut Ctx, speaker: &mut music::Speaker, secs: f64) {
+    let mut left = secs;
+    while left > 0.05 {
+        left -= 0.1;
+        ctx.clock_s += 0.1;
+        update(s, ctx, &[]);
+        speaker.play(ctx, 0.1);
+    }
+}
+
+fn started(speaker: &music::Speaker, cue: &str) -> bool {
+    let start = crate::audio::MusicCommand::start(cue, 0.0);
+    speaker.commands().contains(&start)
+}
+
+/// The whole cycle by the clock (ticket 1080, `audio.md`, *Starting
+/// values*): the first track fades in over 3 s, fades out as it ends,
+/// camp is silent 5 s, then the next starts at zero gain and reaches full
+/// gain over 3 s.
+#[test]
+fn each_camp_track_fades_in_after_five_seconds_of_quiet() {
+    let mut ctx = ctx();
+    let pool = ctx.game.content.audio.pools[POOL].clone();
+    let mut speaker = music::Speaker::new(&ctx);
+    let mut s = CampScreen::new(&ctx, bonded(&ctx));
+    update(&mut s, &mut ctx, &[]);
+    speaker.play(&mut ctx, 0.0);
+    let first = s.music.as_ref().map(|m| m.track().to_owned()).unwrap();
+    let at = pool.iter().position(|c| *c == first).unwrap();
+    let next = pool[(at + 1) % pool.len()].clone();
+    let audio = &ctx.game.content.audio;
+    let length = f64::from(audio.music[&first].length_ms) / 1000.0;
+    let fade = f64::from(audio.music_fade_ms) / 1000.0;
+    assert!(started(&speaker, &first), "{:?}", speaker.commands());
+    play(&mut s, &mut ctx, &mut speaker, 1.5);
+    assert!((speaker.gain(&first) - 0.5).abs() < 0.05);
+    play(&mut s, &mut ctx, &mut speaker, 1.6);
+    assert!(speaker.gain(&first) > 0.99);
+    // Until the fade, at full gain.
+    play(&mut s, &mut ctx, &mut speaker, length - fade - 3.1 - 0.2);
+    assert!(speaker.gain(&first) > 0.99);
+    // Faded out with its end, then silent for the quiet.
+    play(&mut s, &mut ctx, &mut speaker, fade + 0.4);
+    assert_eq!(speaker.gain(&first), 0.0);
+    play(&mut s, &mut ctx, &mut speaker, music::QUIET_S - 0.4);
+    assert!(!started(&speaker, &next), "the quiet is silent");
+    // The next track from zero gain, at full gain 3 s later.
+    play(&mut s, &mut ctx, &mut speaker, 0.3);
+    assert!(started(&speaker, &next), "{:?}", speaker.commands());
+    assert!(speaker.gain(&next) < 0.1);
+    play(&mut s, &mut ctx, &mut speaker, 3.0);
+    assert!(speaker.gain(&next) > 0.99);
 }
 
 /// Scripted keys: open Supports, watch the lord's NEW conversation with

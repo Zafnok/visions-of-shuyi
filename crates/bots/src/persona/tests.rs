@@ -413,6 +413,11 @@ fn progress_follows_the_objective() {
     // No one who may seize: no distance.
     let empty = start(vec![enemy(4, 8)]);
     assert_eq!(seize_distance(&empty, tile(0), false), 0);
+    // Walking, not as the crow flies (0849): the fort's walls at x 9-12
+    // stand between the lord at x 8 and the tile at x 13, five tiles off;
+    // the way round is longer.
+    let walled = start(vec![lord(player(1, 8))]);
+    assert_eq!(seize_distance(&walled, tile(13), true), 7);
 }
 
 /// A unit that walks onto the exit and leaves scores more than one that
@@ -454,6 +459,34 @@ fn escaping_scores_more_than_waiting_on_the_exit() {
         let score = |end: &BattleState| Tally::between(&begin, end).score(&persona.weights);
         assert!(score(&escaped) > score(&waited), "{name}");
     }
+}
+
+/// On a seize map the lord's seize comes before every wait but the AI's
+/// own pick, as an escape does (0849): among the rest the cap cut it, and
+/// a lord standing on the tile never seized.
+#[test]
+fn order_offers_the_lords_seize_before_the_waits() {
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 0);
+    let s = BattleState::new(BattleSetup {
+        objective: Objective::Seize {
+            pos: tile(3),
+            by_lord: true,
+            turn_limit: None,
+        },
+        ..setup(vec![lord(player(1, 1)), player(2, 0), far])
+    })
+    .0;
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    let is =
+        |c: &Command, want: &UnitAction| matches!(c, Command::Act { action, .. } if action == want);
+    let seize = ordered.iter().position(|c| is(c, &UnitAction::Seize));
+    let seize = seize.unwrap_or_else(|| panic!("no seize in {ordered:?}"));
+    let pick = next_command(&s, &content().ai);
+    let first_wait = ordered
+        .iter()
+        .position(|c| Some(c) != pick.as_ref() && is(c, &UnitAction::Wait));
+    assert!(first_wait.is_none_or(|w| seize < w), "{ordered:?}");
 }
 
 /// On an escape map with no enemy left, a persona weighs each unit's

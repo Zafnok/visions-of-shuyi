@@ -1,4 +1,4 @@
-//! Recorded playthroughs of the story's battles (tickets 0803, 0848): the
+//! Recorded playthroughs of the story's battles (tickets 0803, 0848, 0849): the
 //! player's commands, phase by phase, played back against the rules alone
 //! or the real game, and the search that records them.
 //!
@@ -6,10 +6,11 @@
 //! commands, its `EndPhase` included). The enemy plays as it does in the
 //! game: the AI's command, else the end of its phase.
 
+use shuyi_core::path::flow_field;
 use trpg_content::Content;
 use trpg_core::{
-    BattleState, Command, Faction, Outcome, Phase, Pos, SimRng, UnitAction, legal_commands,
-    next_command,
+    BattleState, Command, Faction, Objective, Outcome, Phase, Pos, SimRng, UnitAction,
+    legal_commands, next_command,
 };
 use trpg_ui::harness::Harness;
 
@@ -42,8 +43,10 @@ pub fn play(state: &mut BattleState, content: &Content, commands: &[Command]) {
 }
 
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
+/// Chapter 3's last fight and its four victory scenes come one after the
+/// other.
 pub fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
+    for _ in 0..12 {
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -129,6 +132,7 @@ fn worth(state: &BattleState) -> i64 {
     }
     let mut worth = 0;
     let enemies = || state.units().iter().filter(|u| u.faction == Faction::Enemy);
+    let seize = seize_field(state);
     for unit in state.units() {
         let hp = i64::from(unit.hp);
         if unit.faction == Faction::Player {
@@ -137,6 +141,11 @@ fn worth(state: &BattleState) -> i64 {
             // Keep moving toward the fight.
             let nearest = enemies().map(|e| Pos::manhattan(e.pos, unit.pos)).min();
             worth -= i64::from(nearest.unwrap_or(0));
+            // And the lord toward a tile to seize, walking: only it wins it.
+            if let Some(field) = seize.as_ref().filter(|_| unit.is_lord) {
+                let walk = field.get(unit.pos).copied().flatten();
+                worth -= 20 * i64::from(walk.unwrap_or(u32::MAX / 64));
+            }
         } else {
             worth -= 200 + hp * 3;
         }
@@ -148,6 +157,26 @@ fn worth(state: &BattleState) -> i64 {
         worth += 300 * i64::from(village.saved()) - 600 * i64::from(village.lost());
     }
     worth - 5_000 * i64::try_from(lost(state).len()).unwrap_or(0)
+}
+
+/// How far the lord walks from each tile to the tile to seize, in a Seize
+/// battle: as the crow flies, the lead on Greywater's shore walks away
+/// from the causeway (0849).
+fn seize_field(state: &BattleState) -> Option<shuyi_core::grid::Grid<Option<u32>>> {
+    let Objective::Seize { pos, .. } = state.objective() else {
+        return None;
+    };
+    let lord = state.units().iter().find(|u| u.is_lord)?;
+    let movement = state.classes().get(&lord.class)?.movement_type;
+    let tiles = &state.map().tiles;
+    let cost = |tile: Pos| {
+        if tile == pos {
+            return Some(0);
+        }
+        let terrain = tiles.get(tile)?;
+        state.terrain().move_cost(*terrain, movement).map(u32::from)
+    };
+    Some(flow_field(tiles.width(), tiles.height(), [pos], cost))
 }
 
 /// One way to play the Player phase `state` is in, picked by `rng`: the
