@@ -90,7 +90,7 @@ fn chapter_2_plays_from_new_game_to_to_be_continued() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(&h).units().len(), 6 + 14, "six and the raid");
+    assert_eq!(battle(&h).units().len(), 6 + 15, "six and the raid");
     playthrough::play_in_game(&mut h, &winning_commands());
     playthrough::on_to_the_save_prompt(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));

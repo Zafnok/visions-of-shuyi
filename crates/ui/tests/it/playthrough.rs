@@ -90,7 +90,7 @@ pub fn play_in_game(h: &mut Harness, commands: &[Command]) {
 /// After a won battle: its last scenes, the VICTORY banner, the results
 /// and the victory scenes, up to "Save your progress?".
 pub fn on_to_the_save_prompt(h: &mut Harness) {
-    for _ in 0..40 {
+    for _ in 0..60 {
         match h.top_screen() {
             "dialogue" => skip_scenes(h),
             "save_prompt" => break,

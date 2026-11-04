@@ -63,7 +63,7 @@ it was on its second line, Classic's units with their class and level,
 the pack and the gold:
 
 ```
-army · campaign after ch01 · Lead exile lv 1, Hollis guard lv 5, … · pack potion, potion, potion · gold 100
+army · campaign after ch01 · Lead exile lv 1, Hollis Marr guard lv 4, … · pack potion, potion, potion · gold 100
 ```
 
 **The pack in Preparations** (*the agent's starting rule*): first the
@@ -255,6 +255,39 @@ The stall is gone, and Casual plays Kell's Ford better too. Two runs of
 the autobalance (160 evaluations) found no setting with every band met:
 Casual now wins about as often as Normal wins with nobody dying, and
 enemy numbers move both alike. Ticket 0524 re-tunes Chapters 1 and 2.
+
+After 0524 (2026-11-04). Chapter 1: the autobalance's one change, the
+raider at the road bridge's north end from level 2 to 1 (every other Red
+Company enemy is already at level 1), and a new recorded playthrough
+(won on turn 10, nobody lost):
+
+```
+ch01         seeds 1–100            seeds 101–200
+casual       45/100  band 30–55% ✓  50/100 ✓
+normal       61/100  band 50–75% ✓  56/100 ✓
+hardcore     70/100  band 50–75% ✓  67/100 ✓
+hardcore turns median 8 (normal 9) lower ✓    8 (normal 9) lower ✓
+```
+
+Chapter 2, with the army that playthrough leaves (Hollis lv 4, Tamsin
+lv 8, Rue lv 3) and a second raider beside the west house's, at 1,13:
+
+```
+ch02         seeds 1–100            seeds 101–200
+casual       43/100  band 30–55% ✓  39/100 ✓
+normal       54/100  band 50–75% ✓  60/100 ✓
+hardcore     64/100  band 50–75% ✓  72/100 ✓
+hardcore turns median 5 (normal 6) lower ✓    5 (normal 6) lower ✓
+```
+
+Why a raider and not levels: over 200 traced tries Normal won 178 and
+Casual 139, so Normal's misses are deaths and Casual's are defeats (28
+by the village, 33 by its lord). Casual mostly loses the village when a
+house goes unevacuated on the Hounds' first turn. The second raider
+meets whoever evacuates the west house with two axes on that turn:
+Normal sends someone sturdier or kills one, while Casual often loses its
+evacuator there and runs short later. Placement matters: the count
+knob's own tile for the copy, 1,11, put Normal at 41 on both ranges.
 
 ## History
 
