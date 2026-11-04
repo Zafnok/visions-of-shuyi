@@ -142,6 +142,34 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
         ),
+        // Act 1's side quests (ticket 1072; docs/story/chapters/side-*.md).
+        // Ambrose Tull, the crown paymaster: a clerk in a borrowed vest who
+        // retreats out the barn's back door at 0 HP (The Company Ledger).
+        (
+            id: "paymaster", class: "swordsman", level: 9,
+            talent: Dex,
+            base: (24, 6, 0, 9, 7, 5, 4),
+            weapon_ranks: [(Sword, D)],
+            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
+        ),
+        // Denny Rudd, a Red Company rider who rode with Tamsin, on the
+        // paymaster's shilling (The Company Ledger): a named enemy who falls.
+        (
+            id: "red_veteran", class: "rider", level: 9,
+            talent: Str,
+            base: (30, 10, 0, 7, 8, 7, 1),
+            weapon_ranks: [(Sword, D), (Spear, C)],
+            loadout: (weapons: ["steel_spear", "iron_sword"], armour: Some("chain_mail")),
+        ),
+        // Jory Casker, a League privateer with a council paper, the boss of
+        // Letters Home.
+        (
+            id: "privateer", class: "swordsman", level: 14, map_label: Some("Ca"),
+            talent: Spd,
+            base: (29, 10, 1, 14, 18, 7, 4),
+            weapon_ranks: [(Sword, C)],
+            loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
+        ),
     ],
     generics: [
         // The Red Company (Chapter 1's enemies).
@@ -170,6 +198,12 @@
             loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
         ),
         (id: "warden_archer", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
+        // The Saltmere League's privateers (Letters Home, ticket 1072): sailors
+        // who are nobody's soldiers. Levels are set in the battle file.
+        (id: "privateer_cutlass", class: "swordsman", level: 2, loadout: (weapons: ["iron_sword"])),
+        (id: "privateer_bowman", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
+        (id: "privateer_axe", class: "raider", level: 2, loadout: (weapons: ["iron_axe"])),
+        (id: "privateer_brawler", class: "brawler", level: 2, loadout: (weapons: ["iron_gauntlets"])),
         // One per class a generated skirmish may field (ticket 0510, `cargo xtask
         // skirmish`): the class's iron weapon, or its spells. Levels are set in
         // the battle files. Healers can't win a fight, so they have none.
@@ -223,5 +257,6 @@
     // before 0853 makes a unit of her.
     // Chapter 8 (ticket 0750): the king speaks in the closing scene and
     // never fights in Act 1.
-    speakers: ["rival", "vowmaster", "messenger", "herald", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king"],
+    // Letters Home (ticket 1072): the hill people's boat master only speaks.
+    speakers: ["rival", "vowmaster", "messenger", "herald", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
 )

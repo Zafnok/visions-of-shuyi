@@ -37,6 +37,7 @@ mod save;
 mod scene_camera;
 mod scene_preview;
 mod sessions;
+mod side_quests;
 mod split_keys;
 mod sprite_test;
 mod threat;
