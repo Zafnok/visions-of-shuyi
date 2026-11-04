@@ -205,7 +205,7 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         WeaponKind::Gauntlet => ("brawler", "iron_gauntlets"),
     };
     let (arts, items) = (&content().arts, &content().items);
-    assert_eq!(arts.arts.len(), 26);
+    assert_eq!(arts.arts.len(), 27);
     for (id, art) in &arts.arts {
         let (class, iron) = weapon(art.kind);
         let own = items.items.iter().find_map(|(item, def)| match def {
@@ -233,6 +233,11 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         );
         user.weapon_ranks
             .insert(art.kind, rank.unwrap_or(WeaponRank::D));
+        // A personal weapon's art: the unit is its wielder.
+        let wielder = own.and_then(|(_, w)| w.special.as_ref()?.wielder.clone());
+        if wielder.is_some() {
+            user.character = wielder;
+        }
         let mut s = battle(vec![
             user,
             unit(

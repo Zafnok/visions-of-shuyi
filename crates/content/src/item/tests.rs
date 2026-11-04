@@ -46,8 +46,8 @@ fn row(
 }
 
 /// The special weapons of `combat-arts.md` (*Special weapons*, 0018).
-fn special_weapons() -> [(&'static str, WeaponDef); 3] {
-    use WeaponKind::{Axe, Spear, Sword};
+fn special_weapons() -> [(&'static str, WeaponDef); 4] {
+    use WeaponKind::{Axe, Bow, Spear, Sword};
     use WeaponRank::{C, D, E};
     let special = |mut w: WeaponDef, art: &str, passive: Option<WeaponPassive>| {
         w.arts = vec![ArtId(art.into())];
@@ -64,6 +64,15 @@ fn special_weapons() -> [(&'static str, WeaponDef); 3] {
         (1, 20, 800),
     );
     spear.max_range = 2;
+    let mut tors_bow = special(
+        row("Tor's Bow", (Bow, E), [7, 85, 10, 3], (2, 25, 1200)),
+        "longshot",
+        None,
+    );
+    tors_bow.special = Some(SpecialWeapon {
+        wielder: Some(CharacterId("poacher".into())),
+        passive: None,
+    });
     let moonlit = WeaponPassive {
         name: "Moonlit".into(),
         mitigation: Some(MitigationStat::Res),
@@ -78,6 +87,8 @@ fn special_weapons() -> [(&'static str, WeaponDef); 3] {
             ),
         ),
         ("fordwardens_spear", special(spear, "hold_the_ford", None)),
+        // Aske's personal weapon (ticket 1072, *Letters Home*).
+        ("tors_bow", tors_bow),
         (
             "moonblade",
             special(
@@ -232,7 +243,7 @@ fn gear_and_consumables_match_the_design() {
         let s = t.seal(&id(key));
         assert_eq!(s.map(|s| (s.name.as_str(), s.kind)), Some((name, kind)));
     }
-    assert_eq!(t.items.len(), 10 + 3 + 4 + 3 + 3 + 3);
+    assert_eq!(t.items.len(), 10 + 4 + 4 + 3 + 3 + 3);
     assert_eq!(
         t.get(&id("linen_robe")).map(ItemDef::name),
         Some("Linen Robe")

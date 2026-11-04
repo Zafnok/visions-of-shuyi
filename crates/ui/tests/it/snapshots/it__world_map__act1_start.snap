@@ -6,7 +6,7 @@ expression: h.snapshot()
 ≈     ^     .      ♣♣≈≈♠ ♣ .    ,   ^ ^  ▲^^^  ▲   ^ ▲^     ^ ^^^^▲^^ ║ Act 1 · Test World I       ║
  ≈        ^.      ♠. ≈≈ ♣♣      .   .       ^^  ▲     ^   ^ ▲^▲▲^  ▲ ▲║                            ║
    ^           .  ♣  ≈≈♣  ♣       .  .    .   ..         . ^ ▲▲▲▲▲  ^^║ Road                       ║
-   ^.▲,       ● ♠♣♣♣♠≈≈♣♣♣, ♣            .                   ^ ^  ^   ║ Your army is here          ║
+   ^.▲,       ♥ ♠♣♣♣♠≈≈♣♣♣, ♣            .                   ^ ^  ^   ║ Your army is here          ║
   ≈   .   ▲^     .♣♣♣≈≈ ♠♣♣♣  ,   ,   ,   ♠ ♣♠          ^.     .^  ^^▲║                            ║
  ≈   ^^ ^ ^          ≈≈ ♠          .       ♣ ♠♣        , ^▲ ^^▲^^^^^^,║                            ║
   .   .     .     .. ♣≈≈         .       ♠  ♣♠♣♣ .     . ^   ▲  . ^^^^║                            ║
@@ -45,19 +45,19 @@ aabddddddddbbbbbbbbbbccbihbbbbbbbbbbbbbbbhhhbihbbbbbbbbbbdedeeeddeeedbfjjjjjjjjj
 aabbbbbbbbbbbbbbbbbbbhccbbbbbbbbbbbbbbbbbibbhihhbbbbbbbbbdbddeddbdddddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhbhhiiihbbbbbbbbbbdedddedddbdfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhhbbhhbbbbbbbbbbbbddddedddeddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aaahbhlbbbbbbbmbbbbbbbccbbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbebbeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaahbhmbbbbbbblbbbbbbbccbbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbebbeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbhbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhhhhbbbbbbbbbbbbbbbccbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahbhhhbbbbbbbbbbbbbbbccbbbbbbhbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaahhbhbbbbbbbbbbbbbbbbccbbbhbbbbbhhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aabhbhbbbbbbbbnbbbbbbblcbbbbbbbhbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabhbhbbbbbbbbnbbbbbbbmcbbbbbbbhbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbccbbbbbbbhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabhbbhbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhibibbbbbbbhbibbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahibhibbbhhhhiibhhbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaiiihbobbhihihiiihhbbccbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aabbihbmphhibbhihhbbibccbbbbbbbbbbbbbbbhhhbbhhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbihblphhibbhihhbbibccbbbbbbbbbbbbbbbhhhbbhhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbaccccbhhhhbiiihbbbccbbbbbbbbbbbbbbbbbhhbhbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaccccccchiihbhbhhibbccbbbbbbbbbbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaccccccccchihihbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
@@ -79,8 +79,8 @@ h = fg:forest bg:forest_bg
 i = fg:thicket bg:thicket_bg
 j = fg:text bg:panel_bg
 k = fg:text_dim bg:panel_bg
-l = fg:text_dim bg:grass_bg
-m = fg:panel_bg bg:grass_bg
+l = fg:panel_bg bg:grass_bg
+m = fg:text_dim bg:grass_bg
 n = fg:path bg:grass_bg
 o = fg:player bg:grass_bg
 p = fg:panel_bg bg:thicket_bg
@@ -99,6 +99,7 @@ under 54,258 12x108  #4e422b
 under 54,258 68x12  #4e422b
 under 110,162 12x108  #4e422b
 under 108,160 16x16  wood
+under 108,64 16x16  text_dim
 under 52,352 24x16  player
 over  51,352 3x1  #e5d198
 over  51,352 1x3  #e5d198

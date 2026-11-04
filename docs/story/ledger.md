@@ -2257,3 +2257,107 @@ alone on the quay doubting the door, and the king's reading.
   Hollis, the coast goes in narration.**
 - **Oriel fell in the crossing (Classic):** nobody asks to come; the
   first-turn line is Hedda's; his battle lines can't play.
+
+## Act 1's side quests (optional; played at the player's own time)
+
+Written by 1072 from `assets/dialogue/side_ledger.dlg` and
+`side_letters.dlg`. A side quest is optional and stays open from its
+unlock to the end of the act, so a player may fight it before or after
+any later chapter, or never. **Nothing in either changes what the main
+chapters say happened**, and no main chapter may assume one was played.
+Each is written so it holds whenever it is fought: *The Company Ledger*
+leans on nothing after the toll bridge, *Letters Home* on nothing after
+Saltmere, and in neither does anyone say a thing a later chapter
+reveals.
+
+### The Company Ledger (Tamsin's; after Aldwater Toll Bridge, Tamsin alive)
+
+- **At Kingsmead**, the crown's tithe barn north of Millhaven, the
+  paymaster **Ambrose Tull** came out to the gate with Tamsin's number
+  counted into a purse, and **said what the "no funds" were: a warrant.**
+  Companies stood down under the Ash Peace were struck from the rolls
+  after three years and their pay reassigned to the Hounds; he pays Red
+  Company men a shilling a day out of it to guard the barn. Tamsin
+  wouldn't let him say the number, and **wouldn't take the purse** ("if
+  I take it off his hand, it's paid"; a book with forty-one names in it
+  and he has the one purse). Joss knew the barn: the Hounds' pay goes
+  out on the first with six riders, and he knows the back door. Aske told
+  her to take it. **Denny Rudd**, who rode in her troop and lent her a
+  saddle, stood on the barn step for the shilling; his wife has the
+  cough. The party took the barn; **Tull ran out the back with the purse
+  he counted for her**, alive, and the paid men ran with him. Denny is
+  dead if the player killed him (his death quote: the week's shilling is
+  in his left boot; Rook knows where his wife lives).
+- **In the strongroom** Tamsin counted out **four thousand two hundred and
+  twelve, exactly**, and left the rest ("that's their month; I'm not
+  him"). Maud did the sums in the book and found Harl under the wrong
+  column; Tamsin: leave him where he is. **She handed the number to the
+  lead for the war chest, as a payment** ("I'm paying you, that's all
+  this is"); the lead's reply is the player's (one asked for the book
+  instead, and got the purse). **She is not crossing the names out:** he
+  paid her; he didn't pay them. Joss was glad the Hounds' month was
+  still there and hated being glad. Rue took two hams.
+- **Who knows what:** the whole party heard that the Unpaid's pay went
+  to the Hounds by warrant, and that Tull pays the Unpaid out of it.
+  Tamsin said her number here once, counting. Coldwell was not said.
+- **Relationships:** Tamsin and the lead: she paid them, the only way
+  she gives. Tamsin and Maud: the sums, and the wrong column. Tamsin and
+  Denny: "Rook" and "get off the step", both ways. Tamsin and Aske:
+  "take it", and she didn't.
+- **Status:** the army has 4,212 crowns more. The Hounds' month is still
+  in the barn; six riders will find it there on the first. Tull is alive
+  somewhere with a purse.
+- **If a companion is dead:** nobody said the back door (Joss), the
+  cheap men out front or "eat something" (Hollis), "take it" (Aske), the
+  wrong column (Maud), the hams (Rue). Tamsin can't be dead: the quest
+  doesn't open without her.
+
+### Letters Home (Aske's; after the Envoy's House, Aske alive)
+
+- **Ragna's word came** (how the place opens): the hill people's boat,
+  taken off the point, lies at **Gull Creek** east of Saltmere, held by
+  **Jory Casker**, a League privateer with a council paper. From the
+  cliff Aske knew the boat by the patch on its sail and knew what a
+  nailed hatch means (a hill letter Maud read to her). Rue said, to the
+  others, that a boat with people in it doesn't burn and she wasn't
+  going to. Hedda (if there): a council paper on the sloop makes it
+  lawful, and she washed a floor for that council three years. Aske went
+  down the path first. The party beat Casker (he's dead if the player
+  killed him; "it was lawful"; the paper's in his coat) and his crew ran
+  for the sloop. Casker had tagged Aske's silver with her mother's name
+  in his own hand (if she fought him).
+- **On the shingle, Sten**, the hill people's boat master, who reads
+  Aske's letters to her mother and writes her answers, came up out of
+  the hold last with a bundle: **Tor's bow, sent south by her mother**,
+  and her mother's words, **in Brennish**: stop sending it; the hold
+  eats; she would rather have the girl than the silver; if the girl
+  won't come home she'll have her brother's bow and not die with a bad
+  Ardevali one. **Aske translated it wrong for the party** ("the hold is
+  well; he says thank you for the boat"). **Hedda, if there, said that
+  wasn't what he said**; without her, Sten found his one Ardevali word,
+  "mother", and the party understood that much. Aske: she knows what
+  her mother said. The lead's reply is the player's (one was "your
+  mother's right", and she said her mor is not right, she is her mor,
+  it is different). **She sent the silver anyway, and a line in her own
+  hand** with five "come"s in it (Maud: four is enough; it is not). The
+  boat sailed north on the tide. Sten will read it by the kitchen fire,
+  bad letters and all, and say she was thinner. Rue fed the hill people
+  from the privateers' pot and didn't look over once.
+- **Who knows what:** **Hedda** (if alive) heard every word of what the
+  mother said; nobody else in the party understood it but through
+  Aske's wrong translation and the word "mother". **Aske's mother has
+  asked her to come home, and she hasn't answered yes or no.** The party
+  knows the hold's silver and letters went home.
+- **Relationships:** Aske and her mother: the bow, and the asking. Aske
+  and Hedda: Hedda caught the lie, kindly ("hill girl"). Aske and Maud:
+  the tail of the long letter, again. Aske and the lead: the reply.
+  Aske and Rue: nothing said, on purpose; Rue fed her people.
+- **Status:** Aske has **Tor's Bow** (a personal weapon only she can
+  wield). The hill people's boat is gone north with its silver and
+  letters, Aske's among them.
+- **If a companion is dead:** nobody said the drop (Maud) or showed the
+  tail of the letter; nobody said the mare won't go down (Tamsin);
+  nobody said "the fire first" (Hollis) or "the plank"; Rue's two lines
+  go; without Hedda, Sten says "mother" himself. Aske can't be dead: the
+  quest doesn't open without her.
+

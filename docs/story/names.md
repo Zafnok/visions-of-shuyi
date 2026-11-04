@@ -68,6 +68,16 @@ Act 1's named bosses, and the sergeant guarding one of them (sheets by 0743):
 | `greywater_prior` | Edwin Sallow | Prior of Greywater Abbey; Chapter 3 boss |
 | `undercroft_warden` | Constance Hobb | Warden of the Candles' barracks under Ossary; Crane's champion, Chapter 7 boss |
 
+Act 1's side quests (ticket 1072; sheets are short voice cards in their
+beat sheets, `chapters/side-tamsin.md` and `chapters/side-aske.md`):
+
+| Id | Current name | Who |
+| -- | ------------ | --- |
+| `paymaster` | Ambrose Tull | The crown paymaster of the southern counties, whose mark came back on three years of the Red Company's pay-notes; the boss of *The Company Ledger* (retreats) |
+| `red_veteran` | Denny Rudd | A Red Company rider who rode with Tamsin, now guarding the paymaster's barn on a shilling a day; a named enemy in *The Company Ledger* |
+| `privateer` | Jory Casker | A Saltmere League privateer with a council paper, who took the hill people's boat; the boss of *Letters Home* |
+| `boatmaster` | Sten | The master of the hill people's boat, who carries the refugees' letters both ways and reads Aske's to her mother (an NPC; speaks in *Letters Home*) |
+
 Outside the story (talks only to the player):
 
 | Id | Current name | Who |
@@ -114,6 +124,12 @@ just as it does a full name.
 | `greywater_prior.last` | Sallow | `greywater_prior` (Edwin Sallow): "Prior Sallow" |
 | `undercroft_warden.first` | Constance | `undercroft_warden` (Constance Hobb) |
 | `undercroft_warden.last` | Hobb | `undercroft_warden` (Constance Hobb): "Warden Hobb" |
+| `paymaster.first` | Ambrose | `paymaster` (Ambrose Tull) |
+| `paymaster.last` | Tull | `paymaster` (Ambrose Tull): what Tamsin calls him |
+| `red_veteran.first` | Denny | `red_veteran` (Denny Rudd) |
+| `red_veteran.last` | Rudd | `red_veteran` (Denny Rudd): what the paymaster calls him |
+| `privateer.first` | Jory | `privateer` (Jory Casker) |
+| `privateer.last` | Casker | `privateer` (Jory Casker): "Captain Casker" |
 | `family.marr` | Marr | The family name of `retainer`, `rival` and `sister` |
 | `family.veyne` | Veyne | The lead's family name (also in `house.veyne` and `place.veyne_hall`) |
 | `faction.brennmark.adj` | Brennish | `faction.brennmark` without its article: the adjective ("a Brennish bow"), and what Tamsin calls Aske |
@@ -206,5 +222,7 @@ just as it does a full name.
 | `place.burnt_mill` | the Burnt Mill | Chapter 6 fixed skirmish |
 | `place.pilgrims_road` | Pilgrims' Road | Chapter 7 fixed skirmish |
 | `place.ossuary_gate` | the Ossuary Gate | Chapter 7 fixed skirmish |
+| `place.kingsmead` | Kingsmead | The crown's tithe barn north of Millhaven, where the southern counties' pay is counted: *The Company Ledger*'s battle (1072) |
+| `place.gull_creek` | Gull Creek | A creek east of Saltmere where the League's privateers lie up: *Letters Home*'s battle (1072) |
 | `word.mother` | *mor* | Brennish for mother (Aske) |
 | `word.home` | *hus* | Brennish for home (Aske) |

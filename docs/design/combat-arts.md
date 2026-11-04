@@ -542,6 +542,7 @@ and for the wave's power: "whichever is higher for the wielder".
 | **Houndmaster's Axe** | Axe | D | 10 | 70 | 5 | 7 | 1 | 25 | 900 | Chapter 2: the Hound lieutenant's axe, given when the battle is won |
 | **Fordwarden's Spear** | Spear | E | 6 | 80 | 0 | 5 | 1–2 | 20 | 800 | Chapter 2: a reward for saving houses past the minimum |
 | **Moonblade** *(working name)* | Sword | C | 10 | 85 | 0 | 4 | 1 | 30 | 3000 | The end of a long optional questline (Nick; not Chapters 2–3) |
+| **Tor's Bow** | Bow | E | 7 | 85 | 10 | 3 | 2 | 25 | 1200 | *Letters Home*, Aske's side quest (1072): her brother's hill bow, sent south by her mother; **personal**, only Aske wields it |
 
 - **Houndmaster's Axe: Pack Hunt** (3 dur): this combat, might **+2 for
   each other unit of the user's side next to the target**, up to +6. The
@@ -563,6 +564,12 @@ and for the wave's power: "whichever is higher for the wielder".
     the wielder"). A target at 2 counters only if it reaches 2.
   - Its stats and rank are placeholders until its questline is placed
     (ticket 0075); it is the late-game blade, so they are high.
+- **Tor's Bow** (ticket 1072, *Letters Home*; the first **personal
+  weapon**, `world-structure.md` *Side quest rewards*): only Aske can
+  wield it (`wielder: Some("poacher")`). **Longshot** (3 dur): this
+  attack reaches **2–3** instead of 2, at hit −10. A target at 3 counters
+  only if it reaches 3. *Claude's starting numbers*, for the Act 1
+  playtest (1064).
 - **Chapter 3** gets no special weapon from this decision: the Moonblade
   moved to its questline, and Greywater's reliquary chests are Chapter 3's
   ticket's to fill.

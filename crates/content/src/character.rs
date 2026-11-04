@@ -1254,8 +1254,11 @@ mod tests {
                 "hound_lieutenant",
                 "keeper",
                 "lead",
+                "paymaster",
                 "poacher",
+                "privateer",
                 "red_captain",
+                "red_veteran",
                 "retainer",
                 "sergeant",
                 "test_archer",
@@ -1266,7 +1269,7 @@ mod tests {
                 "test_scout"
             ]
         );
-        assert_eq!(t.generics.len(), 47);
+        assert_eq!(t.generics.len(), 51);
         let lords: Vec<&str> = t
             .characters
             .values()

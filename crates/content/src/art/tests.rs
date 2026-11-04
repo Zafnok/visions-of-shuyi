@@ -68,6 +68,8 @@ fn the_embedded_arts_match_the_design_table() {
         ("pack_hunt", "Pack Hunt", Axe, None, 3),
         ("hold_the_ford", "Hold the Ford", Spear, None, 3),
         ("moonwave", "Moonwave", Sword, None, 4),
+        // Tor's Bow, Aske's personal weapon (ticket 1072, *Letters Home*).
+        ("longshot", "Longshot", Bow, None, 3),
     ];
     assert_eq!(t.arts.len(), rows.len() + weapon_arts.len());
     for (id, name, kind, rank, cost) in rows.into_iter().chain(weapon_arts) {
@@ -104,6 +106,14 @@ fn the_embedded_weapon_art_effects_match_the_design() {
             e.max_range = Some(2);
             e.power = Some(PowerStat::Higher);
             e.mitigation = Some(MitigationStat::Res);
+        })
+    );
+    assert_eq!(
+        get(&t, "longshot").effect,
+        with(|e| {
+            e.hit = -10;
+            e.min_range = Some(2);
+            e.max_range = Some(3);
         })
     );
 }

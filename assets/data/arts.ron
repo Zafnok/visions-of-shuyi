@@ -173,5 +173,11 @@
             id: "moonwave", name: "Moonwave", kind: Sword, rank: None, cost: 4,
             effect: (max_range: Some(2), power: Some(Higher), mitigation: Some(Res)),
         ),
+        // Tor's Bow (1072, Letters Home): a hill hunter's long shot, 2 to 3
+        // tiles, a little less sure.
+        (
+            id: "longshot", name: "Longshot", kind: Bow, rank: None, cost: 3,
+            effect: (hit: -10, min_range: Some(2), max_range: Some(3)),
+        ),
     ],
 )

@@ -1,0 +1,328 @@
+# The Company Ledger, Tamsin's side quest (ticket 1072). Written on a
+# blank page from the beat sheet's cards (the story-writing skill).
+# Beat sheet: docs/story/chapters/side-tamsin.md. Continuity:
+# docs/story/ledger.md. Voice cards: docs/story/characters/*.md and the
+# beat sheet (the paymaster, Denny).
+#
+# An optional battle on the Act 1 map (worldmaps/act1.ron,
+# `company_ledger`): it opens once the toll bridge is won while Tamsin
+# is in the army, and may be fought before Veyne Hall or after Saltmere,
+# so nothing below leans on anything after the bridge. Scene ids, as
+# battles/side_company_ledger.ron wires them:
+#
+#   Before the battle (intro_scenes)
+#     side_ledger_intro                  the barn gate: the purse she won't take
+#
+#   In the battle (triggers, each once)
+#     side_ledger_first_turn             TurnStart(turn: 1, phase: Player)
+#     side_ledger_barn                   UnitEntersArea(who: Faction(Player), the barn)
+#     side_ledger_veteran_engage         CombatStart(unit: "red_veteran"): anyone else
+#     side_ledger_veteran_engage_sergeant CombatStart(unit: "red_veteran", against: Some("sergeant"))
+#     side_ledger_veteran_fell           UnitFell(unit: "red_veteran")
+#     side_ledger_boss_engage            CombatStart(unit: "paymaster"): anyone else
+#     side_ledger_boss_engage_sergeant   CombatStart(unit: "paymaster", against: Some("sergeant"))
+#     side_ledger_boss_half              HalfHp(unit: "paymaster")
+#     side_ledger_boss_retreat           UnitFell(unit: "paymaster"): he retreats, which wins
+#     side_ledger_death_lead             UnitFell(unit: "lead"): game over in both modes
+#     side_ledger_death_<id>             UnitFell(unit: "<id>", mode: Some(Classic))
+#     side_ledger_retreat_<id>           UnitFell(unit: "<id>", mode: Some(Casual))
+#       for <id> = retainer, sergeant, poacher, keeper, heretic, defector;
+#       Gil's and Hedda's are written below in "@if" blocks and wait for
+#       their slots (1071 makes Gil a unit, 0851 Hedda): wire them then
+#       and drop the blocks.
+#
+#   After the battle (victory_scenes)
+#     side_ledger_victory                the strongroom: the number, and the book
+#
+# The validator doesn't know a side quest's scenes can count on their
+# character, so Tamsin's lines before and after the battle sit in "@if
+# sergeant" blocks like everyone else's (ADR-0055); in the battle her
+# triggers name her. Every companion may have died before this (Classic),
+# and Gil may never have been beaten, so each is in an "@if" block too,
+# and both scenes read through without any of them.
+#
+# Places: the quest's own map, behind the talk (dialogue/README.md,
+# Places). Music: the mood cues are this ticket's picks; the battle's cue
+# is in its file.
+#
+# Tone (setting-and-tone.md, "Where the jokes go"): the gate and the
+# battle are played straight; the strongroom is a quiet scene after, where
+# the warmth is a woman counting coin she has wanted for three years and
+# finding it is only coin.
+
+# The barn gate, at the end of a day's ride.
+
+@scene side_ledger_intro
+@caption {N:place.kingsmead}, the barn gate
+@place side_company_ledger 11,6
+@music talk_calm
+> The crown's tithe barn at the end of a day's riding, its shadow out across the yard, two pay-wagons under the open doors. Black coats at the gate. In the yard, faded red.
+@if sergeant
+@left sergeant angry
+sergeant: Red. That's {n:red_veteran.first} on the barn step. He lent me a saddle when mine went, and he's standing a crown step for a shilling a day. They all are. Look at them!
+@left clear
+@endif
+@if defector
+@right defector sad
+defector: The pay comes out of here. {N:faction.hounds}', first of the month, a wagon and six riders, I rode with it twice, I know the whole-- ...I know where the back door is. That's all I meant.
+@right clear
+@endif
+@if retainer
+@right retainer neutral
+retainer: Red in front, black behind. He's put the cheap ones where the arrows land. ...Eat something. You fed the horse at noon and not yourself, I watched you.
+@right clear
+@endif
+@music talk_antagonist
+> The gate bar lifts. The paymaster comes out between two guards with a purse in both hands, already counted, the way a clerk settles an account.
+@right paymaster neutral
+paymaster: Sergeant {n:sergeant.last}, late of {n:faction.red_company}. I know the hand. Three years of notes, and I have every one of them filed. Four thousand two hundred and--
+@if sergeant
+@left sergeant angry
+sergeant: Don't. You don't get to say my number. You put "no funds" under it for three years, you don't get to say it out loud like you know it.
+@left clear
+@endif
+paymaster: There were never no funds. There was a warrant: the companies stood down under {n:event.ash_peace}, struck off after three years, the pay to {n:faction.hounds}. I count it, I don't make it.
+paymaster: Those men in the yard get a shilling a day of it from me, which is more than the crown gave them. This is your number, counted this morning when I heard the bridge fell. Take it and ride.
+@if poacher
+@left poacher neutral
+poacher: Take it. It is silver, it is yours, it is in his hand. Take it, and then we take the rest. ...Why are you looking at him like that. Take it.
+@left clear
+@endif
+@if sergeant
+@left sergeant sad
+sergeant: ...If I take it off his hand, it's paid. There's a book in my saddlebag with forty-one names in it, and he's got the one purse.
+sergeant[angry]: Count out the rest, {n:paymaster.last}. All of it. Then I'll ride.
+@left clear
+@endif
+@left lead neutral
+lead: We take the barn.
+paymaster[angry]: Then it's on the warrant that you did. ...{n:red_veteran.last}. The gate.
+> He goes in. The bar drops. The man on the barn step hasn't moved.
+@end
+
+# In the battle.
+
+@scene side_ledger_first_turn
+@if sergeant
+@left sergeant angry
+sergeant: Gate first, and nobody goes round the wall end alone, there's bows on the step. {n:red_veteran.first}'s mine. I mean it. Nobody touches {n:red_veteran.first} but me.
+@left clear
+@endif
+@end
+
+@scene side_ledger_barn
+@if sergeant
+@left sergeant neutral
+sergeant: He's in the end room, I can hear him. ...He's counting. Listen to him. He's still counting.
+@left clear
+@else
+> Behind the inner wall somebody is counting under his breath, and doesn't stop.
+@endif
+@end
+
+@scene side_ledger_veteran_engage
+@right red_veteran neutral
+red_veteran: I'm paid to stand on this step. So I'm standing on it. Come up, then.
+@end
+
+@scene side_ledger_veteran_engage_sergeant
+@left sergeant angry
+@right red_veteran neutral
+red_veteran: {n:sergeant.last}. ...You went in the night. Didn't say. Didn't even take your pay-notes off the captain's table.
+sergeant: {n:red_captain.first} had them. I've had every one back since, one a season, with "no funds" under each. Get off the step, {n:red_veteran.first}.
+red_veteran: It's a shilling a day and my wife's got the cough back. Real coin, {n:sergeant.last}, every week, in my hand. You get off the step.
+sergeant: ...Then guard up. I'm coming over it.
+@end
+
+@scene side_ledger_veteran_fell
+@right red_veteran sad
+red_veteran: Left boot. The week's shilling, it's in my left boot. ...{n:sergeant.last} knows where my wife lives. Somebody ask {n:sergeant.last}.
+@end
+
+@scene side_ledger_boss_engage
+@right paymaster surprised
+paymaster: I'm a clerk! I count. There's a warrant for every penny in that room with the king's wax on it, I can show you the--
+@end
+
+@scene side_ledger_boss_engage_sergeant
+@left sergeant angry
+@right paymaster neutral
+paymaster: Sergeant. The purse is on the desk, where you left it. It's still yours. Nobody else wants it, take it and let me out the back, and we're square.
+sergeant: You counted it this morning. Did you count them? The ones in my book. {n:red_captain.first}'s troop, that's eleven on its own. Did they come up on your warrant?
+paymaster: I don't keep the dead, Sergeant. The rolls do, and the rolls were closed. ...I'm sorry for it. I am. It isn't my column.
+sergeant: It's mine. I keep them.
+@end
+
+@scene side_ledger_boss_half
+@right paymaster angry
+paymaster: {n:red_veteran.last}! The back door, {n:red_veteran.last}, now, I'll double it-- double, I said, where are you!
+@end
+
+@scene side_ledger_boss_retreat
+@right paymaster sad
+paymaster: Keep it. Keep the room, keep the-- the purse is mine, I counted it, it's on the warrant, it's-- don't. I'm going. I'm gone, look, I'm--
+> The back door bangs. The men in the yard look at it, and at each other, and run.
+@end
+
+@scene side_ledger_death_lead
+@left lead sad
+> {lead|The exile} is down in the lane, and the barn is still shut. The paid men stay paid.
+@end
+
+@scene side_ledger_death_retainer
+@left retainer sad
+retainer: Gate's yours. Hold it, don't come back for me. Shoulder up. ...Up, I said.
+@end
+
+@scene side_ledger_retreat_retainer
+@left retainer angry
+retainer: Knee. It's the knee, it's gone, I'm not-- get me to the wall and go on. Go on!
+@end
+
+@scene side_ledger_death_sergeant
+@left sergeant sad
+sergeant: The book's in the saddlebag. The red column's not paid. Don't let anybody tell you it's paid, not him, not anyone. ...Catch the mare.
+@end
+
+@scene side_ledger_retreat_sergeant
+@left sergeant angry
+sergeant: I'm walking. I'm walking, I said, leave me-- somebody get the mare off the bridge, she'll go in!
+@end
+
+@scene side_ledger_death_poacher
+@left poacher sad
+poacher: Six arrows. I had six left, they are good ones, I fletched them myself. ...Somebody take them. Do not leave them for the red men.
+@end
+
+@scene side_ledger_retreat_poacher
+@left poacher angry
+poacher: I am not done. I am not-- ...Pull me back. Pull me back, then, if you are going to.
+@end
+
+@scene side_ledger_death_keeper
+@left keeper sad
+keeper: The columns. I was teaching her the columns, we'd only got to the second-- somebody finish the sums. Please. Somebody who can add.
+@end
+
+@scene side_ledger_retreat_keeper
+@left keeper sad
+keeper: I'm all right, I'm-- no. No, I'm not, I'm not all right, I'll just-- I'll sit here. I'll just sit.
+@end
+
+@scene side_ledger_death_heretic
+@left heretic sad
+heretic: Who's got the bread? ...Give it her. The one with the book, she hasn't eaten, I watched. Give it to her.
+@end
+
+@scene side_ledger_retreat_heretic
+@left heretic angry
+heretic: I can't throw past-- fine. Fine, I'm going. Hog the fire, see if I care.
+@end
+
+@scene side_ledger_death_defector
+@left defector sad
+defector: Is it the first tomorrow? The wagon-- it doesn't matter. ...Tell my ma I kept to the drill. She won't know what it means. Tell her anyway.
+@end
+
+@scene side_ledger_retreat_defector
+@left defector surprised
+defector: That was wrong, wasn't it, I went up the step wrong-- I'll go round. I'm going round!
+@end
+
+# Gil's and Hedda's lines, for when they have slots here (1071, 0851).
+
+@scene side_ledger_death_prizefighter
+@if prizefighter
+@left prizefighter sad
+prizefighter: Well struck. ...Nobody stand behind me now. I'm going down.
+@left clear
+@endif
+@end
+
+@scene side_ledger_retreat_prizefighter
+@if prizefighter
+@left prizefighter neutral
+prizefighter: Rule-- no. Champion, behind somebody else. I'm sitting down.
+@left clear
+@endif
+@end
+
+@scene side_ledger_death_shieldbearer
+@if shieldbearer
+@left shieldbearer sad
+shieldbearer: The little boat. In my pack. ...Somebody finish the mast. He's eight.
+@left clear
+@endif
+@end
+
+@scene side_ledger_retreat_shieldbearer
+@if shieldbearer
+@left shieldbearer neutral
+shieldbearer: Easy. I'm sitting down, that's all. Somebody take the gate.
+@left clear
+@endif
+@end
+
+# The strongroom, at dusk.
+
+@scene side_ledger_victory
+@caption {N:place.kingsmead}, the strongroom
+@place side_company_ledger 7,2
+@music scene_sad
+> Dusk in the stone room at the barn's end. Chests, a desk, a warrant under a weight, one lamp. The purse he counted is gone with him. {n:sergeant.first} is on her knees at a chest.
+@if sergeant
+@left sergeant neutral
+sergeant: Four thousand two hundred and eleven. Twelve. ...That's it. That's all it is, it's coin, it's heavier than I-- shut up, {n:sergeant.first}. Count it again.
+sergeant: There's more in the chest. That's their month, the black coats'. ...Leave it. I'm not him. Shut the lid on it.
+@left clear
+@endif
+@if defector
+@right defector sad
+defector: They'll come for it on the first with six riders and it'll be here. ...I'm glad it'll be here. I shouldn't be glad. Half of them have ma's. Forget I said it.
+@right clear
+@endif
+@if keeper
+@right keeper neutral
+keeper: You've put him under the wrong column again. {n:red_captain.first}. He's under what's owed to you, and he owes you, surely he-- may I? No, I'll do the sums. You count, I'll write.
+@right clear
+@endif
+@if sergeant
+@left sergeant sad
+sergeant: ...Don't fix it. Leave him where he is.
+@left lead neutral
+@right sergeant neutral
+sergeant: Four thousand two hundred and twelve. The company's. The company's me, so I say where it goes, and it goes in the war chest. Don't make a face, Your Former Grace, I'm paying you, that's all this is.
+@choice
+* earnest: It's yours. You waited three years for it.
+  sergeant: I know whose it is. That's how I get to say. ...Take it before I count it a third time, my hands have gone.
+* wry: Paying me for what, exactly?
+  sergeant[happy]: The mare's keep. Have you seen what she eats? ...And the rest. There's a rest. You know there's a rest.
+  > She pushes the purse at {lead|the exile} and {they} takes it.
+* act: Give me the book instead.
+  > {lead|The exile} holds out a hand for the book, not the purse. {n:sergeant.first} looks at the hand for a long time, and puts the purse in it.
+  sergeant: Nobody gets the book. ...It's the same thing. It's-- it's not the same thing. Take the gold.
+@endchoice
+sergeant[neutral]: I'm not crossing them out. Any of them. He paid me. He didn't pay them.
+@right clear
+@left clear
+@endif
+@if poacher
+@left poacher neutral
+poacher: He ran with the other purse. The one he counted for you. ...He will spend it. It will be gone by the spring and nobody will have had it.
+@left clear
+@endif
+@if heretic
+@left heretic happy
+heretic: There's a larder. Hams. Is anybody going to stop me? ...No? Then there's hams and I'm taking two.
+@left clear
+@endif
+@if retainer
+@left retainer neutral
+retainer: Horses. The county's awake, and I want a day's ride between us and this barn by dark. ...Shoulder, {n:family.veyne}. It's dropped.
+@left clear
+@endif
+> The barn doors stand open on the dusk. {lead|The exile} goes out last but one.
+@if sergeant
+> Behind {them}, {n:sergeant.first} buttons the book inside her jacket, where it was.
+@endif
+@end
