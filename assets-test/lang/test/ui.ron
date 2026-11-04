@@ -97,6 +97,9 @@
     (key: "options.row.theme", source: "Colors", text: "COLORS"),
     (key: "options.row.music_volume", source: "Music volume", text: "MUSIC VOLUME"),
     (key: "options.row.sound_volume", source: "Sound volume", text: "SOUND VOLUME"),
+    (key: "options.row.voices", source: "Voices (AI-generated)", text: "VOICES (AI-GENERATED)"),
+    (key: "options.row.voice_volume", source: "Voice volume", text: "VOICE VOLUME"),
+    (key: "options.row.log_voice", source: "Voice on hover in the log", text: "VOICE ON HOVER IN THE LOG"),
     (key: "options.row.layout", source: "Layout", text: "LAYOUT"),
     (key: "options.row.key_bindings", source: "Key bindings", text: "KEY BINDINGS"),
     (key: "options.row.game_mode", source: "Game mode", text: "GAME MODE"),
@@ -1437,4 +1440,8 @@
     (key: "world_map.menu.title", source: "Menu", text: "MENU"),
     (key: "world_map.won", source: "Won", text: "WON"),
     (key: "world_map.not_open", source: "Not open yet", text: "NOT OPEN YET"),
+    (key: "voices_question.question", source: "Play with AI-generated voices?", text: "PLAY WITH AI-GENERATED VOICES?"),
+    (key: "voices_question.yes", source: "Yes", text: "YES"),
+    (key: "voices_question.no", source: "No", text: "NO"),
+    (key: "voices_question.help", source: "{Cursor} choose · {Confirm} select · {Cancel} back", text: "{Cursor} CHOOSE · {Confirm} SELECT · {Cancel} BACK"),
 ]

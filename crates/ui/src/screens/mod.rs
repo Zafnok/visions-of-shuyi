@@ -20,6 +20,7 @@ pub mod results;
 pub mod save;
 pub mod title;
 pub mod town;
+pub mod voices_question;
 pub mod world_map;
 
 use crate::prelude::*;
@@ -41,6 +42,7 @@ pub use results::ResultsScreen;
 pub use save::{SavePromptScreen, SlotPickerScreen};
 pub use title::TitleScreen;
 pub use town::TownScreen;
+pub use voices_question::VoicesQuestionScreen;
 pub use world_map::{WorldBattle, WorldMapScreen};
 
 use crate::glyph_buffer::GlyphBuffer;

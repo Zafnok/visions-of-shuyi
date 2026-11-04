@@ -208,6 +208,9 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Theme, s.theme != before.theme),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
+            (Row::Voices, s.voices != before.voices),
+            (Row::VoiceVolume, s.voice_volume != before.voice_volume),
+            (Row::LogVoice, s.game.log_voice != before.game.log_voice),
         ];
         let rows: Vec<Row> = changed.iter().filter(|c| c.1).map(|c| c.0).collect();
         assert_eq!(rows, [row]);
@@ -246,6 +249,9 @@ fn rows_show_their_values() {
             "Earthy painterly*",
             "<80/100>",
             "<80/100>",
+            "On*",
+            "<80/100>",
+            "On*",
             "Right-handed",
             "",
             "",
