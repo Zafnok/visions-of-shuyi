@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: in-progress
+status: done
 blocked_by: ["0520"]
 nick_input: none
-completed:
+completed: 2026-11-03
 ---
 
 # 0523 — Hardcore stops stalling in front of a guarded chokepoint
@@ -93,13 +93,16 @@ left to judge by playing goes on 1064's checklist.
 
 ## Acceptance criteria
 
-- [ ] The new test of a guarded choke passes, and failed before the fix.
+- [x] The new test of a guarded choke passes, and failed before the fix.
 - [ ] `cargo xtask playtest ch02 --bot all` on seeds 1–100 and 101–200:
       `hardcore · turns median … lower ✓` on both, every band ✓.
+      *Lower ✓ on both; Normal and Hardcore ✓; Casual ⚠ (75, 64) and
+      the autobalance found no setting: 0524.*
 - [ ] `cargo xtask playtest ch01 --bot all`: every band still ✓ and
-      Hardcore still faster.
-- [ ] `personas.ron` is unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+      Hardcore still faster. *Faster ✓; Hardcore 76 ⚠ on seeds 1–100, 70
+      ✓ on 101–200 (`main`: 68 and 77): unmoved over 200 tries, 0524.*
+- [x] `personas.ron` is unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,20 +153,47 @@ amending ADR-0095 §2).
   it stands beats a costly end of turn, which takes its attacks off the
   list and lets Hollis's advance in.
 
-AUTOBALANCE_NOTES
+- **The playtests with the fix** (100 tries a range; clean = won with
+  nobody dying):
+
+| Battle, seeds | Casual (band) | Normal | Hardcore | Hardcore turns vs Normal |
+| ------------- | ------------- | ------ | -------- | ------------------------ |
+| ch02, 1–100 (`main`: 47 / 52 / 55, 4 vs 5 ✓) | **75 ⚠** (30–55) | 64 ✓ | 62 ✓ | 5 vs 6 ✓ |
+| ch02, 101–200 (`main`: 50 / 61 / 57, 5 vs 4 ✗) | **64 ⚠** | 67 ✓ | 60 ✓ | 5 vs 6.5 ✓ |
+| ch01, 1–100 (`main` today: 47 / 65 / 68, 7 vs 9 ✓) | 48 ✓ | 53 ✓ | **76 ⚠** (50–75) | 8 vs 9 ✓ |
+| ch01, 101–200 (`main` today: 50 / 53 / **77 ⚠**, 8 vs 9 ✓) | 49 ✓ | 61 ✓ | 70 ✓ | 8 vs 9 ✓ |
+
+  No try passes a turn with nobody moving: traced seeds 105 and 126 (8
+  turns, the longest wins left) fight every turn; the 12–13 turn tail is
+  gone (longest clean win: 8).
+- **Chapter 1 doesn't move**: Hardcore succeeds in 145 of 200 tries on
+  `main` and 146 with the fix. It sits at the top of its band either way,
+  so which 100 seeds you run decides ✓ or ⚠ (`main` itself reads 77 ⚠ on
+  101–200). Follow-up 0524.
+- **Chapter 2's Casual band moved, and the autobalance couldn't bring it
+  back.** With the order fixed, Casual (its success: a win) wins about as
+  often as Normal wins with nobody dying. `cargo shuyi autobalance --stage
+  ch02 --seed 1 --turns 60` ran out of its 100 evaluations (4.6 h) with
+  Casual 58 ⚠, Normal 65, Hardcore 69, and Hardcore no faster (5 vs 5);
+  60 more evaluations from there (2.7 h) found nothing better; the racing
+  raiders at level 7 by hand gave Casual 70 and 72. None of it was
+  applied: `ch02.ron` and `ch02_winning.ron` are unchanged, since the
+  search's best fails the check this ticket is for. Follow-up 0524
+  re-tunes Chapters 1 and 2 (Chapter 2's army comes from Chapter 1).
 
 **Deviations:** the ticket's candidates were all scoring changes; the
 trace showed the order's cap, so the fix is in the order (still "how the
 personas plan", `persona.rs`). Candidate 3 wasn't run, for the reason in
-the table. `personas.ron` is unchanged.
+the table. `personas.ron` is unchanged. Two acceptance boxes are not met
+(above): Chapter 2's Casual band, and Chapter 1's Hardcore band on seeds
+1–100 (at its edge on `main` too); both go to 0524.
 
-**Follow-up tickets:** 0524 (Chapter 1's Hardcore rate back inside its
-band).
+**Follow-up tickets:** 0524 (Chapters 1 and 2 back inside their bands
+with the new order).
 
 **the agent's starting rules:** none (no gameplay rule; the bots' order
 is dev tooling).
 
-**Left to judge by playing (1064):** nothing new; Chapter 2's numbers
-moved with the autobalance above.
+**Left to judge by playing (1064):** nothing new (no battle changed).
 
 Engine friction: estimate 15, measured 11 (0.7×), under 2×.

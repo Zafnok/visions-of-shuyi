@@ -240,6 +240,22 @@ The ✗ on seeds 101–200 is Hardcore stalling in front of the guarded
 ford, a fault of the bots tracked by ticket 0523
 (`design/playtest-bots.md`, *Hardcore is faster than Normal*).
 
+After 0523 (2026-11-03, ADR-0111: each unit's best attack first, its
+other targets after every unit's move), Chapter 2 unchanged:
+
+```
+             seeds 1–100            seeds 101–200
+casual       75/100  band 30–55% ⚠  64/100 ⚠
+normal       64/100  band 50–75% ✓  67/100 ✓
+hardcore     62/100  band 50–75% ✓  60/100 ✓
+hardcore turns median 5 (normal 6) lower ✓    5 (normal 6) lower ✓
+```
+
+The stall is gone, and Casual plays Kell's Ford better too. Two runs of
+the autobalance (160 evaluations) found no setting with every band met:
+Casual now wins about as often as Normal wins with nobody dying, and
+enemy numbers move both alike. Ticket 0524 re-tunes Chapters 1 and 2.
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

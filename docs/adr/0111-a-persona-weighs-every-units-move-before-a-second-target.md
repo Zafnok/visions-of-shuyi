@@ -81,9 +81,11 @@ The scoring is unchanged, and so are the personas' settings and weights
   against 6, and 5 against 6.5), and no try passes a turn with nobody
   moving: its longest win is now turn 8, every turn of it fought.
 - It changes every persona, so the bands move. Casual plays Chapter 2
-  much better (50 and 47 out of 100 before, 64 and 75 after); ticket 0523
-  re-autobalanced Chapter 2 for it (its Completion notes have the
-  numbers).
+  much better (47 and 50 out of 100 before, 75 and 64 after, over its
+  30–55% band), as often as Normal wins it with nobody dying. Two runs of
+  the autobalance (100 and 60 evaluations) found no enemy setting that
+  puts every persona in its band, so Chapter 2 stays as 0520 tuned it and
+  ticket 0524 re-tunes it (with Chapter 1, whose army it inherits).
 - Chapter 1 doesn't move: Hardcore succeeds in 145 of 200 tries before and
   146 after (seeds 1–200), and is faster than Normal both times. It sits at
   the top of its 50–75% band either way (77 on seeds 101–200 before, 76 on

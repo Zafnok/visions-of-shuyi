@@ -150,6 +150,10 @@ with nothing done, because every step forward puts a unit in reach and
 ending a turn costs it nothing within the turn it plans (seed 116: no unit
 moves on turns 4–10). That is a fault of the bots, tracked by ticket
 0523; Chapter 1, where the enemy comes to the army, doesn't show it.
+*Fixed* (0523, ADR-0111): the cause was the bots' list of moves to try,
+which was full of doomed attacks before the move worth making; with it
+fixed, Hardcore is faster on both seed ranges (5 turns against Normal's
+6, and 5 against 6.5).
 
 ## Surprise reinforcements
 
