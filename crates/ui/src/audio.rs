@@ -21,7 +21,9 @@
 
 use trpg_content::Variant;
 
-pub use shuyi_ui::audio::{MusicClock, MusicCommand, MusicState, pick_from_pool, splitmix64};
+pub use shuyi_ui::audio::{
+    MusicClock, MusicCommand, MusicState, MusicSwitch, pick_from_pool, splitmix64,
+};
 
 /// Something a screen wants heard ([`shuyi_ui::audio::AudioRequest`]).
 /// Cue ids are the ones in `assets/audio/audio.ron`.
