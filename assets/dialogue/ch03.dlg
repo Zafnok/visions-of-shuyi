@@ -30,18 +30,18 @@
 #     ch03_confession               the kitchen: Maud tells Rue
 #     ch03_tbc                      Veyne Hall: Dace and the report
 #
-# Until 0849 wires the triggers, the validator can't know which scene
-# plays for whom, so every companion line in a battle scene below sits
-# in an "@if" block for them (ADR-0055). Once a trigger names the
-# companion (a death quote, a retreat line, the boss against Maud, Ned
-# against Hollis), that "@if" can only go one way and the validator
-# reports it: 0849 removes those blocks as it wires each trigger. The
+# A battle scene whose trigger names a companion (a death quote, a
+# retreat line, the boss against Maud, Ned against Hollis) needs no "@if"
+# for them: 0849 removed those blocks as it wired each trigger. The
 # "@if" in ch03_first_turn and ch03_scriptorium stay: a turn-start scene
-# and an area anyone can enter can't count on anyone.
+# and an area anyone can enter can't count on anyone (ADR-0055).
 #
-# No @place directives yet: the maps are 0849's. The @music lines are
-# this ticket's picks from the mood cues (0071); the battle's own cue,
-# battle_church_2, is Nick's and goes in the battle file.
+# Places (0849): the boathouse (greywater_boathouse), the causeway's foot
+# and the scriptorium on the battle's own map (@place battle), the
+# causeway at night (greywater_causeway), the kitchen (greywater_kitchen)
+# and Veyne Hall's yard (veyne_yard). The @music lines are 0745's picks
+# from the mood cues (0071); the battle's own cue, battle_church_2, is
+# Nick's and is in the battle file.
 #
 # The six companions may have died in Chapter 1 or 2 (Classic), so
 # outside the battle every line of theirs is in an "@if" block, and each
@@ -74,6 +74,7 @@
 @scene ch03_intro
 @caption The lake shore, the night before
 @music talk_calm
+@place greywater_boathouse 12,9
 > Two days north of the ford. A boathouse on the lake shore with a fire in it that shouldn't be there, and across the water the island, with one chimney smoking against the dark.
 @if heretic
 @if poacher
@@ -164,6 +165,7 @@ defector: Black's ours. Hound black, I'd know it anywhere, I've sewn enough of i
 @scene ch03_prebattle
 @caption The causeway, dawn
 @music dungeon_tense
+@place battle 5,7
 > First light. The causeway runs out over flat gray water to a gate, and the gate is shut. The chimney is still going.
 @left lead neutral
 @if keeper
@@ -223,11 +225,9 @@ keeper: He's still burning them. I can smell it from here, that's paper, that's-
 hound_sergeant: You're the exile's people. I was told you might be. Turn around and go back over the stone, and I never saw you, and the prior never hears it. I'm forty-seven. I'd like to go to bed tonight.
 @end
 
-# Ned and Hollis: the man who stood his gate for fifteen years. The @if
-# goes when 0849 wires this as Ned against Hollis.
+# Ned and Hollis: the man who stood his gate for fifteen years.
 
 @scene ch03_sergeant_engage_retainer
-@if retainer
 @left retainer neutral
 @right hound_sergeant surprised
 hound_sergeant: ...Captain.
@@ -237,7 +237,6 @@ hound_sergeant: He asks after you. Every winter, is the old man still-- every wi
 retainer: ...Guard up, {n:hound_sergeant.first}. I'm not going back down.
 @left clear
 @right clear
-@endif
 @end
 
 # Said to whoever is nearest.
@@ -254,11 +253,9 @@ hound_sergeant: Captain... the bay. Your bay, at the hall. Nobody's had her out 
 greywater_prior: Not one step nearer that hearth! Whatever you came for, it's ash, it's ash or it will be by morning-- there's a mother for every name in that book. Would you have it read out in a tavern? Would you?
 @end
 
-# The prior and the keeper he was prior to for six years. The @if goes
-# when 0849 wires this as the prior against Maud.
+# The prior and the keeper he was prior to for six years.
 
 @scene ch03_boss_engage_keeper
-@if keeper
 @left keeper sad
 @right greywater_prior surprised
 greywater_prior: {n:keeper}? Child, what are you doing on my causeway? Go home. Say you found the gate shut, I'll write {n:faction.vigil} the same, and neither of us need lie about it, come morning.
@@ -267,7 +264,6 @@ greywater_prior: Because somebody with a sword will read it otherwise. You, chil
 keeper: Then you know what you're burning. I'm not going home, Prior. I don't have one. I'm sorry. I'm coming in anyway.
 @left clear
 @right clear
-@endif
 @end
 
 @scene ch03_boss_half
@@ -308,103 +304,78 @@ heretic: Get it out. Get it out of the fire, never mind your hands, I'll do your
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). Last words are about the living;
 # the shapes differ from each other and from the earlier chapters'. They
-# can fire in any order, so none names another companion. The @if blocks
-# go when 0849 wires each one.
+# can fire in any order, so none names another companion.
 
 @scene ch03_death_retainer
-@if retainer
 @left retainer sad
 retainer: Knee's gone. ...Did you eat this morning? You didn't. There's bread in my left pocket, it's squashed, it's still bread. Kid. Eat it.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_retainer
-@if retainer
 @left retainer angry
 retainer: That's the knee. The other one, this time. I'll keep the spear. Mind the gate.
 @left clear
-@endif
 @end
 
 @scene ch03_death_sergeant
-@if sergeant
 @left sergeant sad
 sergeant: Twelve. With me it's twelve, and I can't write myself in, can I. ...Put me under the right column. Whoever does it. The right one.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_sergeant
-@if sergeant
 @left sergeant angry
 sergeant: They got the shoulder. Hold her head, one of you, she doesn't like the stone. I'll walk her back myself, I'm not baggage.
 @left clear
-@endif
 @end
 
 @scene ch03_death_poacher
-@if poacher
 @left poacher sad
 poacher: My pack. There are two letters in it, not sent. To my mor. One of you who can write, finish them. She cannot read. Someone will have to sit with her and read them.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_poacher
-@if poacher
 @left poacher angry
 poacher: I am out of arrows. Not hurt. Out. Do not look at me like that. I counted them. I counted wrong.
 @left clear
-@endif
 @end
 
 @scene ch03_death_keeper
-@if keeper
 @left keeper sad
 keeper: Tell her-- the girl with the burned hands, tell her it was me. My letter. I asked them to be gentle with her, and-- tell her I asked. ...{N:god.mother.name} keep you. Tell her.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_keeper
-@if keeper
 @left keeper surprised
 keeper: Oh. Oh, that's-- no, I can see it, I know what it is, I know exactly what to do about it. Leave me the salve and go, I'm all right, I'm-- go.
 @left clear
-@endif
 @end
 
 @scene ch03_death_heretic
-@if heretic
 @left heretic sad
 heretic: {N:god.pyre.name}'s teeth. In a church. ...The others are in that book, and I never got to read them all. Somebody read them. Out loud, every one.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_heretic
-@if heretic
 @left heretic angry
 heretic: Empty. Nothing comes. Fine. I'll be at the gate, and I'm not happy about it.
 @left clear
-@endif
 @end
 
 @scene ch03_death_defector
-@if defector
 @left defector sad
 defector: That was right, wasn't it? The river, and this. Don't answer. I've decided it was. Your Grace, I've decided.
 @left clear
-@endif
 @end
 
 @scene ch03_retreat_defector
-@if defector
 @left defector surprised
 defector: It's the leg. Only the leg, I can-- no, I can't. Your Grace, go on, I'll keep the stair. I'll keep the stair, I'm good at stairs.
 @left clear
-@endif
 @end
 
 # ---------------------------------------------------------------------------
@@ -418,6 +389,7 @@ defector: It's the leg. Only the leg, I can-- no, I can't. Your Grace, go on, I'
 @scene ch03_register
 @caption The scriptorium
 @music scene_tragic
+@place battle 18,3
 > The long room over the gate. The hearth is choked with red ledgers, half of them burned through. On the desk the big book lies open where he left it, a pen across the page. Someone has covered him.
 @if sergeant
 @if keeper
@@ -526,6 +498,7 @@ defector: There's hundreds of {n:family.marr}s. Every third farm in the valley's
 @scene ch03_telling
 @caption The causeway, night
 @music scene_sad
+@place greywater_causeway 6,8
 @if heretic
 > Night. The shore end of the causeway. {n:heretic} sits on the edge with her feet over the black water and half a loaf in her lap.
 @left lead neutral
@@ -561,6 +534,7 @@ heretic: And him. Up there. His boy's name was on that page and he said nothing 
 
 @scene ch03_confession
 @caption The abbey kitchen, later
+@place greywater_kitchen 12,7
 @if keeper
 @if heretic
 > The kitchen, and a hearth that works. The novices' pot is empty; {n:heretic} has eaten what was in it and is sitting with the pot in her lap.
@@ -598,6 +572,7 @@ heretic[neutral]: I'm not going anywhere, if that's what you're both standing th
 @scene ch03_tbc
 @caption {N:place.veyne_hall}, the yard
 @music talk_antagonist
+@place veyne_yard 12,8
 > Night, the yard at {n:place.veyne_hall}. A lantern on the mounting block, a rider's horse still blowing, and {n:rival.first} reading the rider's paper a second time.
 @left rival neutral
 rival: The causeway. In daylight. And the prior's dead, and the book's gone, and "the rest of his papers." The rest of his papers. Did whoever wrote this know what the rest of-- no. They wouldn't.

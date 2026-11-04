@@ -1,0 +1,50 @@
+(
+    // Chapter 3 (ticket 0849, docs/story/chapters/ch03.md): Greywater
+    // Abbey, on its island in the lake. The party comes in on the shore at
+    // the left; the causeway runs east over the deep water, two wide, with
+    // a landing halfway (x 9-10), to the abbey's gate at x 15 (two tiles,
+    // y 7-8) between two towers. Inside: the gate passage, the courtyard
+    // and its cloister garth, and along the north wall the scriptorium,
+    // the long room over the gate (x 16-21, y 2-4), its stair at (18, 5),
+    // the prior's seat at its west end (16, 3), the Seize point. The
+    // reliquary beside it (x 23-26), its door at (24, 5), holds the three
+    // chests. The shallows under the south tower lead a wader to the
+    // breach in the west wall at (15, 11). Every water tile but those and
+    // the reeds by the shore is the lake: nobody but a flier crosses it.
+    name: "Greywater Abbey",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '~': "sea",
+        'w': "water",
+        '#': "wall",
+        '_': "floor",
+        'F': "fort",
+        'G': "gate",
+        'K': "throne",
+    },
+    features: {
+        (23, 2): Chest(Gold(800)),
+        (26, 2): Chest(Item("elixir")),
+        (26, 4): Chest(Item("focus_charm")),
+    },
+    look: (light: "dawn"),
+)
+---
+TTTT~~~~~~~~~~~~~~~~~~~~~~~~
+TT..~~~~~~~~~~~#############
+T...w~~~~~~~~~~#______#____#
+....w~~~~~~~~~~#K_____#____#
+....w~~~~~~~~~~#______#____#
+....~~~~~~~~~~~###_#####_###
+....~~~~~::~~~~F__.........#
+....:::::::::::G__.........#
+....:::::::::::G__..____...#
+....~~~~~::~~~wF__.._TT_...#
+....~~~~~~~~~ww#...._TT_...#
+....w~~~~~~~~~w.....____...#
+....w~~~~~~~~~~#.........TT#
+T...w~~~~~~~~~~#.........TT#
+TT..~~~~~~~~~~~#############
+TTTT~~~~~~~~~~~~~~~~~~~~~~~~

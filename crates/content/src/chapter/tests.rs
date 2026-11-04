@@ -51,6 +51,21 @@ fn embedded_chapters_and_new_game_load() {
         ch02.victory_scenes,
         ["ch02_victory", "ch02_join", "ch02_tbc"]
     );
+    assert_eq!(ch02.next.as_deref(), Some("ch03"));
+    // Chapter 3 (0849): Greywater, the scriptorium, no recruit.
+    let ch03 = &c.chapters["ch03"];
+    assert_eq!((ch03.battle.as_str(), ch03.number), ("ch03", Some(3)));
+    assert_eq!(ch03.intro_scenes, ["ch03_intro", "ch03_prebattle"]);
+    assert_eq!(
+        ch03.victory_scenes,
+        [
+            "ch03_register",
+            "ch03_telling",
+            "ch03_confession",
+            "ch03_tbc"
+        ]
+    );
+    assert_eq!(ch03.next, None);
     assert_eq!(c.new_game.first_chapter, "ch01");
     assert_eq!(c.new_game.roster.len(), 6);
     assert_eq!(c.new_game.roster[0].0, LEAD_ID);

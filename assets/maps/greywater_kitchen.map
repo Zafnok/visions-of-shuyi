@@ -1,0 +1,36 @@
+(
+    // Greywater Abbey's kitchen, late on the night after the battle
+    // (ticket 0849, docs/story/chapters/ch03.md, "The kitchen"): a stone
+    // room, the hearth that works at the top with its step below it, where
+    // Maud sits down at the end, the shelves of pots either side, the long
+    // table at (12, 7), the door at (12, 13) where the lead stands. A place
+    // behind a conversation, never a battle's map.
+    name: "Greywater Abbey",
+    legend: {
+        '#': "wall",
+        '_': "floor",
+        ':': "road",
+        '*': "burning",
+        's': "shelf",
+        'd': "desk",
+        '+': "door",
+    },
+    look: (tiles: "indoor", light: "night"),
+)
+---
+#########################
+#########################
+###########***###########
+######sss__:::__sss######
+######_____________######
+######_____________######
+######_____________######
+######____ddddd____######
+######____ddddd____######
+######_____________######
+######_____________######
+######_____________######
+######_____________######
+############+############
+#########################
+#########################

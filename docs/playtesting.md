@@ -256,6 +256,24 @@ the autobalance (160 evaluations) found no setting with every band met:
 Casual now wins about as often as Normal wins with nobody dying, and
 enemy numbers move both alike. Ticket 0524 re-tunes Chapters 1 and 2.
 
+Chapter 3 on 2026-11-04 (ticket 0849), with the army Chapters 1 and 2
+leave, the first story battle with a Seize objective:
+
+```
+             seeds 1–100            seeds 101–200
+casual       37/100  band 30–55% ✓  34/100 ✓
+normal       67/100  band 50–75% ✓  62/100 ✓
+hardcore     52/100  band 50–75% ✓  66/100 ✓
+hardcore turns median 9 (normal 10) lower ✓    9 (normal 11) lower ✓
+```
+
+It showed two faults of the personas on a Seize map, both fixed by 0849
+(`trpg_bots::order`, `seize_distance`): a seize was never among the
+commands tried (it is now listed with the escapes), and the progress to
+the Seize point was counted as the crow flies, so a lead on the shore
+walked away from the causeway to the corner nearest the scriptorium
+across the lake and stayed there (it is now counted walking).
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and
