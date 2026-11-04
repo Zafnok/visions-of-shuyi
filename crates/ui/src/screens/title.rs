@@ -10,7 +10,8 @@
 //! shows and does, and says it as plain data: a [`TitleView`]
 //! ([`TitleScreen::view`]). [`glyph::paint`] draws that view: the logo
 //! picture over this launch's backdrop (`docs/design/look-and-feel.md`,
-//! *Title screen*; ADR-0059), with the menu under it.
+//! *Title screen*; ADR-0059), with the menu under it; [`playdate::paint`]
+//! draws it on the Playdate's one-bit screen (ticket 1044).
 //! Tests of what happened read the view; only [`glyph`]'s tests read cells.
 //!
 //! **The intro cinematic** (ticket 0819; `docs/design/title-screen.md`,
@@ -19,6 +20,7 @@
 //! press skips to its last shot, the logo, where the menu is back.
 
 pub mod glyph;
+pub mod playdate;
 pub mod song;
 pub mod view;
 
@@ -32,7 +34,7 @@ use trpg_content::ImageId;
 use song::SongTime;
 use view::FULL;
 
-use super::{CreditsScreen, debug_hint, profile};
+use super::{CreditsScreen, Skins, debug_hint, profile};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
@@ -41,7 +43,8 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save;
 use crate::screen::{
-    Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, ScreenResult, Shuyi, Transition,
+    Ctx, FrameInput, IdleMotion, KeyPrompt, Keyboard, Screen, ScreenResult, Shuyi, SkinSet,
+    Transition,
 };
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
@@ -54,6 +57,29 @@ pub const TITLE_CINEMATIC: &str = "title";
 /// The sound of a press that skips the cinematic: the sword hit, until
 /// Nick picks one (ticket 0041).
 pub const TITLE_SKIP_SOUND: &str = "hit_sword";
+
+/// The title's skins (ADR-0083): the PC's glyph look and the Playdate's
+/// one-bit one.
+pub const SKINS: Skins<TitleView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
+
+/// Paints the title's picture alone over the whole of `buf` in `ctx`'s
+/// skin set: `backdrop` (if any), the logo, and on the PC the `sparks` (if
+/// any) as they are that many milliseconds after the title appeared. The
+/// cinematic's logo shot (ticket 0817).
+pub fn paint_logo(
+    ctx: &Ctx,
+    backdrop: Option<ImageId>,
+    sparks: Option<u32>,
+    buf: &mut GlyphBuffer,
+) {
+    match ctx.game.skin_set {
+        SkinSet::Glyph => glyph::paint_logo(ctx, backdrop, sparks, buf),
+        SkinSet::Playdate => playdate::paint_logo(ctx, backdrop, None, buf),
+    }
+}
 
 /// Seconds the menu waits without a press before the cinematic takes over
 /// (Nick's number; *tunable*).
@@ -344,11 +370,20 @@ impl TitleScreen {
             menu_opacity,
             backdrop: self.backdrop,
             sparks: (ctx.idle_motion == IdleMotion::On).then_some(sparks_ms),
-            prompt: waiting.then(|| ctx.text("title.press_any_key").to_owned()),
+            prompt: waiting.then(|| ctx.text(Self::prompt_key(ctx)).to_owned()),
             menu: menu.then(|| self.menu.view()),
             notice: self.notice.clone().filter(|_| menu),
             help: menu.then(|| Self::help(ctx)),
             debug_hint: debug_hint(ctx),
+        }
+    }
+
+    /// The key of the "press any key or button" line's text: only buttons
+    /// where there is no keyboard (the Playdate).
+    fn prompt_key(ctx: &Ctx) -> &'static str {
+        match ctx.platform.keyboard {
+            Keyboard::Absent => "title.press_any_button",
+            Keyboard::Present => "title.press_any_key",
         }
     }
 
@@ -537,7 +572,7 @@ impl Screen<Shuyi> for TitleScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

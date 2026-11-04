@@ -51,8 +51,9 @@ fn the_rows_fill_a_window_the_focused_name_a_bar_its_value_between_arrows() {
     let reset = shown.iter().position(|r| r.contains("Reset tips")).unwrap();
     assert_eq!(shown[reset - 1], format!("║{:48}║", ""));
     assert!(shown[reset - 2].contains("Key bindings"));
-    // All the Playdate's rows fit: no marks.
-    assert!(!shown[0].contains(MORE_ABOVE) && !shown[13].contains(MORE_BELOW));
+    // Since Intro came (ticket 1044) the Playdate's rows are one more
+    // than its window holds: Restore defaults is below, marked.
+    assert!(!shown[0].contains(MORE_ABOVE) && shown[13].contains(MORE_BELOW));
     assert_eq!(shown[14], screen().view(&c).help);
 }
 
@@ -146,12 +147,15 @@ fn a_long_value_is_cut_and_the_number_box_is_a_bar() {
     paint(&c, &view, &mut buf);
     let shown = rows(&buf);
     // Cut a cell before the arrow's place and the frame.
+    // The window scrolls to the volume: rows found by their text.
+    let long = shown.iter().position(|r| r.contains("a value far too"));
+    let long = long.unwrap_or_else(|| panic!("{shown:#?}"));
     assert!(
-        shown[2].ends_with("a value far too lon…  ║"),
+        shown[long].ends_with("a value far too lon…  ║"),
         "{}",
-        shown[2]
+        shown[long]
     );
-    let y = to_i32(volume) + 1;
+    let y = to_i32(shown.iter().position(|r| r.contains(" 75_")).unwrap());
     assert!(is_bar(&buf, y, " 75_"));
     assert_eq!(find(&buf, y, " 75_"), Some(VALUE_X - 1));
     // The box: four cells and one either side.

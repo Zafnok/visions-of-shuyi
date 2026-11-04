@@ -406,7 +406,8 @@ mod tests {
             assert!(playdate.bytes(path).is_some(), "{path}");
         }
         // One-bit pictures at the size the Playdate shows them, in their
-        // styles (`playdate_images.rs`); the logo stays a PNG.
+        // styles (`playdate_images.rs`); the logo a lettering, a block of
+        // rim round its 52 × 31 blocks, 3 pixels each.
         let bitmap = |path| {
             let bytes = playdate.bytes(path).unwrap_or_default();
             let bitmap = shuyi_assets::bitmap::Bitmap::parse(bytes).ok();
@@ -422,8 +423,8 @@ mod tests {
             bitmap("title/fields_b_dusk.png"),
             Some((400, 295, 1, false))
         );
-        assert_eq!(bitmap("title/logo.png"), None);
-        assert_eq!(
+        assert_eq!(bitmap("title/logo.png"), Some((162, 99, 1, true)));
+        assert_ne!(
             playdate.bytes("title/logo.png"),
             all.bytes("title/logo.png")
         );

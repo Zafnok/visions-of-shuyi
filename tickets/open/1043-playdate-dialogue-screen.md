@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["1037", "1042", "0249"]
+blocked_by: ["1037", "1042", "0249", "1044"]
 nick_input: none
 completed:
 ---
@@ -57,6 +57,15 @@ it):
 - Text that names a button goes through the keymap (`keyboard-input`
   skill).
 - Look tests with the skin; behaviour tests read the view.
+- **The title cinematic's talk and faces shots** (ticket 1044 left them
+  to this ticket): `crates/ui/src/cinematic/talk.rs` paints a text box
+  with `dialogue::glyph::paint` and `cinematic/faces.rs` the faces in
+  the PC's 34 × 18 frames, so on the Playdate both are off the 50 × 15
+  screen today (the talk shots blank, the faces shot two frame edges).
+  Paint them with this ticket's Playdate paint (the talk shot through the
+  dialogue's skins; the faces in the Playdate's portrait frames), and
+  add a check to the Playdate title test in `tests/it/playdate.rs`
+  (`the_title_cinematic_plays_to_its_menu_on_the_playdate`).
 
 **Out (do not do):**
 - Voices (1048).

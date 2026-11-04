@@ -79,16 +79,10 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// nothing on the Playdate's skins (`SkinSet::Playdate`). `Theme`: one bit has the
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
-/// `Intro`: it has no title cinematic yet (ticket 1044 adds it, and should
-/// take the row out of this list). `Open towns on arrival`: it has no world
-/// map yet (1007; the row comes with it).
-pub const PC_ONLY: [Row; 5] = [
-    Row::Theme,
-    Row::MapLook,
-    Row::MapZoom,
-    Row::Intro,
-    Row::Towns,
-];
+/// `Open towns on arrival`: it has no world map yet (1007; the row comes
+/// with it). (`Intro` is on both since the Playdate's title has the
+/// cinematic, ticket 1044.)
+pub const PC_ONLY: [Row; 4] = [Row::Theme, Row::MapLook, Row::MapZoom, Row::Towns];
 
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

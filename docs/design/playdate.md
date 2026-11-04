@@ -21,6 +21,7 @@ numbers and the forecast in them are placeholders.
 | `1037-*.png` | **As built** (ticket 1037, `cargo shuyi frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
 | `1038-*.png` | **As built** (ticket 1038, `cargo shuyi frame-png --playdate`, shown at ×2): Harrowby Ford's battle screen browsing, with the pop-ups moved down, the action menu, a skill list with its note, the map menu, the unit list, the objective page, the end-turn question, a phase banner |
 | `1039-*.png` | **As built** (ticket 1039, `cargo shuyi frame-png --playdate`, shown at ×2): the forecast (Quick Battle) on the half away from its units, with the kill skull, the EXP bar, Unit info's three pages for Ellery and a brigand in Harrowby Ford, the map menu with the turn and charges, the rewind list and its question |
+| `1044-*.png` | **As built** (ticket 1044, `cargo shuyi frame-png --playdate`, shown at ×2): the title with its menu and with "Press any button", and the cinematic's march, fight and whole-field shots |
 | `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words
@@ -591,7 +592,40 @@ it loads.
 *Claude's starting rule:* its backdrops are dithered like the card's
 (lightened, Bayer 4 × 4), and its logo is the card's (white letters,
 black shadow and rim). Its fight shots use the combat picture above.
-Nick saw the card, not the cinematic. He signs off on it in 1044.
+Nick saw the card, not the cinematic. Since 2026-10-21 that check is on the Act 1 playtest's list (1064).
+
+As built by ticket 1044 (`cargo shuyi frame-png --playdate`, shown at ×2,
+the public placeholder backdrop and fighters):
+[`1044-title.png`](playdate/1044-title.png) (the menu, a debug build's
+with Quick Battle), [`1044-prompt.png`](playdate/1044-prompt.png),
+[`1044-map.png`](playdate/1044-map.png) (turn 1's march),
+[`1044-fight.png`](playdate/1044-fight.png),
+[`1044-field.png`](playdate/1044-field.png) (the whole field). In the
+Simulator with the bought art (screenshots of the running game):
+[`1044-simulator-title.png`](playdate/1044-simulator-title.png) (the
+logo shot, the menu back), [`1044-simulator-fight.png`](playdate/1044-simulator-fight.png).
+
+*Claude's starting rules (ticket 1044, Nick can veto):*
+
+- **The title:** the launch's backdrop over the whole screen but the
+  bottom row, its middle rows shown; the logo at the top, **3 pixels a
+  block** (the card's 4 leaves no room for the menu), a block of black
+  rim all round; the menu in a window (the look of 1045's windows) whose
+  bottom is on the row over the help line, which is on a white bottom
+  row. A notice (Continue can't) takes the help line's place.
+- **No Quit** (the ticket's rule): the system menu leaves the game.
+- **"Press any button"** in a window in the menu's place before the first
+  press: the Playdate has no keys, and no keyboard or pad pictures.
+- **No sparks:** dots are lost in the backdrop's dither.
+- **No fades** (one bit has none): the menu and the cinematic each cut in
+  at the middle of the PC's fade.
+- **The map shots show about as much of the map as the PC's:** the file's
+  zoom halved, rounded up (3× and 4× become 2×, 2× becomes 1×, so the
+  whole field fits the screen), as the screen is half as wide.
+- **The light:** the backdrops are already one picture per time of day;
+  the map and the combat picture have no tints on the Playdate.
+- **The talk and faces shots** are drawn by the dialogue screen's
+  Playdate look, which ticket 1043 makes; until then they are blank.
 
 ## Open sub-questions
 

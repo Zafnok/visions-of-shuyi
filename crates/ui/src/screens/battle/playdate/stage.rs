@@ -76,7 +76,7 @@ fn int(v: u32) -> i32 {
 /// the converter rounds (`shuyi_assets::bitmap::convert`): the size of a
 /// one-bit picture made from a PNG side `v` pixels long, so each of its
 /// pixels lands on one of the screen's.
-fn enlarged(v: u32, (num, den): (u32, u32)) -> i32 {
+pub(crate) fn enlarged(v: u32, (num, den): (u32, u32)) -> i32 {
     let den = den.max(1);
     int((v * num + den / 2) / den)
 }

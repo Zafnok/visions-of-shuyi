@@ -667,3 +667,14 @@ fn the_titles_fights_end_before_their_cuts() {
     }
     assert!(fights >= 1);
 }
+
+/// Ticket 1044: a map shot's zoom on a console half as wide as the PC's
+/// (the Playdate's) is halved, rounded half up, and at least 1.
+#[test]
+fn a_map_shot_zooms_half_as_much_on_the_playdate() {
+    for zoom in 1..=4 {
+        assert_eq!(super::console_zoom(ConsoleSpec::PC, zoom), zoom);
+    }
+    let on_playdate = (1..=4).map(|z| super::console_zoom(ConsoleSpec::PLAYDATE, z));
+    assert_eq!(on_playdate.collect::<Vec<_>>(), [1, 1, 2, 2]);
+}

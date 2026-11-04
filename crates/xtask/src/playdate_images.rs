@@ -230,7 +230,12 @@ mod tests {
         }
         assert!(out.join("title/fields_b_dusk.a.png").is_file());
         assert!(out.join("battlers/brigand.1bit").is_file());
-        assert!(!out.join("title/logo.1bit").exists());
+        // The logo is a lettering: a block of rim round its 52 × 31.
+        let logo = fs::read(out.join("title/logo.1bit")).unwrap();
+        let logo = Bitmap::parse(&logo).unwrap();
+        assert_eq!((logo.width(), logo.height()), (162, 99));
+        assert!(out.join("title/logo.a.png").is_file());
+        assert!(!out.join("title/title.1bit").exists());
         let pictures = Pictures::of_the_bundle().unwrap();
         assert_eq!(pictures.0.get("portraits/lead_f/happy.png"), Some(&face));
         // The renderer finds it by its image id, in style A.
@@ -239,7 +244,9 @@ mod tests {
         assert_eq!(pictures.image(id), Image::from_bitmap(&bitmap, 0));
         assert!(pictures.image(id).is_some());
         let logo = table.id("title/logo.png").unwrap();
-        assert_eq!(pictures.image(logo), None);
+        assert!(pictures.image(logo).is_some());
+        let map = table.id("images/effect_marks.png").unwrap();
+        assert_eq!(pictures.image(map), None);
         let _ = fs::remove_dir_all(&out);
     }
 

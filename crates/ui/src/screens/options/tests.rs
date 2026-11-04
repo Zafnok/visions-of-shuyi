@@ -100,6 +100,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
         Row::EnemyPhaseSpeed,
         Row::AutoEnd,
         Row::Cursor,
+        Row::Intro,
         Row::MusicVolume,
         Row::SoundVolume,
         Row::KeyBindings,

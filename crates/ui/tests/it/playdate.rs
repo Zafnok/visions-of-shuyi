@@ -10,6 +10,7 @@ use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{Faction, Phase};
+use trpg_ui::cinematic::Frame as Shot;
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{
@@ -942,5 +943,88 @@ fn a_fight_plays_its_combat_picture_to_the_end_on_the_playdate() {
     assert!(
         matches!(progress, Some(ProgressView::Exp(_))),
         "{progress:?}"
+    );
+}
+
+/// The title's view on the Playdate.
+fn title_view(h: &Harness) -> trpg_ui::screens::title::TitleView {
+    view_of(h, trpg_ui::screens::TitleScreen::view)
+}
+
+/// What the title's cinematic shows now on the Playdate's screen, and the
+/// time it is at, in seconds; `None` while it isn't showing alone.
+fn cinematic_frame(h: &Harness) -> Option<(Shot, f32)> {
+    let shot = title_view(h).cinematic.filter(|s| s.brightness == 255)?;
+    #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
+    let t = shot.t_ms as f32 / 1000.0;
+    let screen = trpg_ui::glyph_buffer::Rect::new(0, 0, 50, 15);
+    Some((shot.player.frame(h.game().ctx(), t, screen), t))
+}
+
+/// Waits, a quarter second at a time, until `seen` says so (at most
+/// `seconds`).
+fn wait_for(h: &mut Harness, seconds: f32, mut seen: impl FnMut(&Harness) -> bool) {
+    let mut waited = 0.0;
+    while !seen(h) {
+        assert!(
+            waited < seconds,
+            "not seen in {seconds} s: {:?}",
+            h.screens()
+        );
+        h.wait(0.25);
+        waited += 0.25;
+    }
+}
+
+/// Ticket 1044: on the Playdate's skins, with no music, left alone the
+/// title's cinematic plays: its map shots at half the file's zoom (3×
+/// becomes 2×), its fights on the combat picture, then the logo with the
+/// menu, which works. Read from the title's view; a few frames are drawn
+/// one-bit as the front end draws them.
+#[test]
+fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
+    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    h.without_music();
+    let mut one_bit = OneBit::new(&h);
+    assert_eq!(title_view(&h).prompt.as_deref(), Some("Press any button"));
+    one_bit.check(&h);
+    h.pad("East");
+    assert!(title_view(&h).menu.is_some());
+    one_bit.check(&h);
+    // The first turn's march (from 56 s).
+    wait_for(&mut h, 80.0, |h| {
+        cinematic_frame(h).is_some_and(|(_, t)| t > 60.0)
+    });
+    let Some((Shot::MapPan { zoom, .. }, _)) = cinematic_frame(&h) else {
+        panic!("no map shot: {:?}", cinematic_frame(&h));
+    };
+    assert_eq!(zoom, 2);
+    one_bit.check(&h);
+    // The brigand attacks the lead (from 68.5 s): the combat picture.
+    wait_for(&mut h, 15.0, |h| {
+        matches!(cinematic_frame(h), Some((Shot::Combat { .. }, _)))
+    });
+    let shot = title_view(&h)
+        .cinematic
+        .unwrap_or_else(|| panic!("no shot"));
+    #[allow(clippy::cast_precision_loss)]
+    let t = shot.t_ms as f32 / 1000.0;
+    assert!(shot.player.stage(h.game().ctx(), t).is_some());
+    one_bit.frames(&mut h, 3, 0.5);
+    // The logo (from 117 s), with the menu back.
+    wait_for(&mut h, 60.0, |h| title_view(h).cinematic.is_none());
+    let view = title_view(&h);
+    let menu = view.menu.unwrap_or_else(|| panic!("no menu"));
+    let focused = menu.focused().map(|i| h.game().ctx().label(&i.label));
+    assert_eq!(focused.as_deref(), Some("New Game"));
+    one_bit.check(&h);
+    // Its New Game works.
+    wait_for(&mut h, 1.0, |h| title_view(h).menu_opacity == 255);
+    h.pad("East").wait(trpg_ui::harness::FRAME_DT);
+    assert!(
+        h.screen::<ModeSelectScreen>().is_some(),
+        "{:?}",
+        h.screens()
     );
 }
