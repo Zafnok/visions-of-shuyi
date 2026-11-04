@@ -205,3 +205,11 @@ Nothing for the game: 1 PR (#244), a `pulldown-cmark` advisory in the engine's o
 | #240 | 3031 | The in-house sound backend behind `shuyi-app`'s `in-house-sound` (CPAL on Windows, a Web Audio worklet), off by default; `WavSource` and `VorbisSource` take what they read as a type | fixed: nothing to change (the game uses neither source); adopt → 1241 (after engine#3084) |
 
 Nothing for the game: 4 PRs (#245, #247, #248, #249). #245 and #249 are the sound-parity gates' and the in-house web backend's CI, which the game doesn't build; #247 and #248 are engine tickets only.
+
+## 2026-11-04: 2d2166f6 → 1a84a71e (2 engine PRs), 0826
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #253 | 3208 | Voices on or off and their volume are player settings: `Settings::voices` and `voice_volume` (0–100), `Ctx::has_voices`, voices off stops the clip playing, `OptionRow::voices` and `voice_volume`, `Harness::voice_volume`; `Ctx::voices_on`, `voice_volume`, `voice_gain` and the voice volume constants are gone | fixed: the game's tests read and change the settings; adopt → 0826 (in this PR: the saved settings' version 2, the Options rows and the New Game question) |
+
+Nothing for the game: 1 PR (#251), the sound gate's retry on Windows timings, in the engine's own CI.

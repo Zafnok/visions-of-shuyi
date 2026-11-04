@@ -2,7 +2,7 @@
 //! scenes and battle to the result; and saving and loading it (0802).
 //!
 //! ```text
-//! New Game → mode → familiarity → lead → [chapter: intro scenes → (Camp → Preparations) → battle
+//! New Game → mode → familiarity → (voices?) → lead → [chapter: intro scenes → (Camp → Preparations) → battle
 //!     ├─ victory → apply the result → the results (0810: gold, rewind
 //!     │            bonus, level ups) → victory scenes
 //!     │            → "Save your progress?" (→ slot picker)
@@ -18,6 +18,10 @@
 //!         → victory → results → victory scenes → the place cleared)
 //!     → the world map again (the next act's, after the act's final battle)
 //! ```
+//!
+//! "Play with AI-generated voices?" (ticket 0826) is asked only when voice
+//! clips were found ([`Ctx::has_voices`](shuyi_ui::Ctx::has_voices)); its
+//! answer is the Voices setting, kept in the player profile.
 //!
 //! [`FlowScreen`] is one screen on the stack that owns the campaign and
 //! pushes the flow's screens over itself, one at a time: when one pops,
@@ -106,6 +110,7 @@ use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::mode_select::ModeSelectScreen;
 use crate::screens::preparations::PreparationsScreen;
 use crate::screens::save::{SavePromptScreen, SlotOutcome, SlotPickerScreen};
+use crate::screens::voices_question::VoicesQuestionScreen;
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen, WorldBattle, WorldMapScreen};
 use crate::storage::Storage;
 
@@ -187,6 +192,9 @@ enum Stage {
     /// How familiar the player is (the tutorial level), in the mode
     /// picked.
     Familiarity(GameMode),
+    /// "Play with AI-generated voices?", in the mode and tutorial level
+    /// picked.
+    Voices(GameMode, TutorialLevel),
     /// The lead's gender and name, in the mode and tutorial level picked.
     Lead(GameMode, TutorialLevel),
     /// A chapter's scene.
@@ -771,6 +779,17 @@ impl FlowScreen {
         }
     }
 
+    /// After the familiarity question: the voices question when there are
+    /// voice clips (ticket 0826), otherwise the lead screen.
+    fn after_familiarity(&mut self, ctx: &Ctx, mode: GameMode, level: TutorialLevel) {
+        if ctx.has_voices() {
+            let screen = VoicesQuestionScreen::new(ctx);
+            self.show(Stage::Voices(mode, level), Box::new(screen));
+        } else {
+            self.show(Stage::Lead(mode, level), Box::new(LeadSelectScreen::new()));
+        }
+    }
+
     /// The screen over the flow popped with `result`: what comes next
     /// ([`show`](Self::show)); nothing when the flow is over.
     fn advance(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) {
@@ -782,16 +801,28 @@ impl FlowScreen {
                 }
             }
             Stage::Familiarity(mode) => match result.and_then(ScreenResult::take) {
-                Some(level) => {
-                    self.show(Stage::Lead(mode, level), Box::new(LeadSelectScreen::new()));
-                }
+                Some(level) => self.after_familiarity(ctx, mode, level),
                 None => self.show(Stage::Mode, Box::new(ModeSelectScreen::new(ctx))),
             },
+            Stage::Voices(mode, level) => {
+                if let Some(on) = result.and_then(ScreenResult::take::<bool>) {
+                    // The answer applies even if it can't be saved (it is
+                    // then lost on quit; Options changes it as well).
+                    ctx.change_settings(|s| s.voices = on).ok();
+                    self.show(Stage::Lead(mode, level), Box::new(LeadSelectScreen::new()));
+                } else {
+                    let screen = FamiliarityScreen::new(ctx);
+                    self.show(Stage::Familiarity(mode), Box::new(screen));
+                }
+            }
             Stage::Lead(mode, level) => {
                 if let Some(lead) = result.and_then(ScreenResult::take::<LeadProfile>) {
                     let mut campaign = new_campaign(&ctx.game.content, mode, lead);
                     campaign.tutorial = level;
                     self.begin(ctx, campaign);
+                } else if ctx.has_voices() {
+                    let screen = VoicesQuestionScreen::new(ctx);
+                    self.show(Stage::Voices(mode, level), Box::new(screen));
                 } else {
                     let screen = FamiliarityScreen::new(ctx);
                     self.show(Stage::Familiarity(mode), Box::new(screen));

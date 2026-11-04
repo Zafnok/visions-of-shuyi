@@ -19,16 +19,16 @@ expression: h.snapshot()
                     │   Colors║                                      ║         │                    
                     │   Music ║ Restore every option to its default? ║         │                    
                     │   Sound ║ f yes / d no                         ║         │                    
-                    │         ║                                      ║         │                    
-                    │   Layout╚══════════════════════════════════════╝         │                    
+                    │   Voices║                                      ║         │                    
+                    │   Voice ╚══════════════════════════════════════╝         │                    
+                    │   Voice on hover in the log On                           │                    
+                    │                                                          │                    
+                    │   Layout                    Right-handed                 │                    
                     │   Key bindings                                           │                    
                     │                                                          │                    
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
                     └──────────────────────────────────────────────────────────┘                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
                                                                                                     
                                                                                                     
                                                                                                     
@@ -57,11 +57,11 @@ aaaaaaaaaaaaaaaaaaaabdddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddggggggggggggggggggddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

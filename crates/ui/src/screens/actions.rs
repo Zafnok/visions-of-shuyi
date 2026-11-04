@@ -11,7 +11,7 @@ use super::{
     BattleScreen, CampScreen, ClassChangeScreen, CreditsScreen, DialogueScreen, FamiliarityScreen,
     GameOverScreen, KeyBindingsScreen, LayoutPickerScreen, LeadSelectScreen, ModeSelectScreen,
     OptionsScreen, PreparationsScreen, ProfileScreen, ResultsScreen, SavePromptScreen,
-    SlotPickerScreen, ToBeContinuedScreen, TownScreen, WorldMapScreen,
+    SlotPickerScreen, ToBeContinuedScreen, TownScreen, VoicesQuestionScreen, WorldMapScreen,
     battle::{guides::GuidesScreen, rewind::RewindScreen, shop::ShopScreen},
 };
 use crate::debug::{
@@ -105,6 +105,8 @@ pub const DIALOGUE: &[Action] = &[
 ];
 /// What the familiarity screen reacts to.
 pub const FAMILIARITY: &[Action] = LIST;
+/// What the voices question reacts to.
+pub const VOICES_QUESTION: &[Action] = LIST;
 /// Any action skips what is animating (`title::pressed`).
 pub const GAME_OVER: &[Action] = &Action::ALL;
 /// What the to be continued screen reacts to.
@@ -151,7 +153,7 @@ pub const WORLD_MAP: &[Action] = &[
 /// Every screen the game can show, for `check --target`: the game's by the
 /// table above, the engine's by the widgets they declare themselves with.
 pub fn every_screen() -> Vec<ScreenActions<Action>> {
-    let own: [(&'static str, &[Action]); 25] = [
+    let own: [(&'static str, &[Action]); 26] = [
         (CinematicScreen::NAME, CINEMATIC),
         (PortraitViewerScreen::NAME, PORTRAIT_VIEWER),
         (ScenePreviewScreen::NAME, SCENE_PREVIEW),
@@ -176,6 +178,7 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
         (SlotPickerScreen::NAME, SAVE_SLOTS),
         ("title", TITLE), // check-text: not player text (the screen's name)
         (TownScreen::NAME, TOWN),
+        (VoicesQuestionScreen::NAME, VOICES_QUESTION),
         (WorldMapScreen::NAME, WORLD_MAP),
     ];
     let mut screens: Vec<ScreenActions<Action>> = own
@@ -225,7 +228,7 @@ mod tests {
             assert!(found.next().is_none(), "{name} twice");
             screen.actions.clone().unwrap_or_default()
         };
-        assert_eq!(screens.len(), 32);
+        assert_eq!(screens.len(), 33);
         assert_eq!(listed(BattleScreen::NAME), BATTLE);
         assert_eq!(listed("title"), TITLE);
         assert_eq!(listed(FlowScreen::NAME), FLOW);

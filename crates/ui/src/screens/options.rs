@@ -8,7 +8,10 @@
 //! player keeps it: leaving with anything changed asks whether to keep
 //! it, throw it away or stay (ticket 0839, `docs/design/options.md`). A
 //! volume goes from 0 to 100: left and right move its slider, Confirm
-//! opens a box to type the exact number ([`NumberBox`]). `Layout` opens
+//! opens a box to type the exact number ([`NumberBox`]). The voices
+//! (ticket 0826, `docs/design/voices-languages-and-script.md`) have a
+//! switch, a volume and whether the dialogue log's cursor plays them,
+//! shown even when no voice clips were found. `Layout` opens
 //! the layout picker ([`layout_picker::change`]) and `Key bindings` the
 //! Key bindings screen; with a campaign loaded, `Game mode` shows its
 //! mode, and at Preparations switches Classic to Casual, never back and
@@ -40,7 +43,9 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
-use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, MapZoom, Settings, TownsOpen};
+use crate::settings::{
+    AnimSpeed, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, Settings, TownsOpen,
+};
 use crate::tips::reset_tips;
 
 /// The Options screen for this game
@@ -80,9 +85,18 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
 /// `Open towns on arrival`: it has no world map yet (1007; the row comes
-/// with it). (`Intro` is on both since the Playdate's title has the
-/// cinematic, ticket 1044.)
-pub const PC_ONLY: [Row; 4] = [Row::Theme, Row::MapLook, Row::MapZoom, Row::Towns];
+/// with it). The voices' three rows: it plays no voice yet (1048 brings
+/// them back with its clips). (`Intro` is on both since the Playdate's
+/// title has the cinematic, ticket 1044.)
+pub const PC_ONLY: [Row; 7] = [
+    Row::Theme,
+    Row::MapLook,
+    Row::MapZoom,
+    Row::Towns,
+    Row::Voices,
+    Row::VoiceVolume,
+    Row::LogVoice,
+];
 
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -117,6 +131,13 @@ pub enum Row {
     MusicVolume,
     /// [`Settings::sound_volume`].
     SoundVolume,
+    /// [`Settings::voices`]: "Voices (AI-generated)".
+    Voices,
+    /// [`Settings::voice_volume`].
+    VoiceVolume,
+    /// [`ShuyiSettings::log_voice`](crate::ShuyiSettings::log_voice): "Voice on
+    /// hover in the log".
+    LogVoice,
     /// The right- or left-handed layout: opens the layout picker.
     Layout,
     /// Opens the Key bindings screen.
@@ -133,7 +154,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 20] = [
+    pub const ALL: [Row; 23] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -148,6 +169,9 @@ impl Row {
         Row::Theme,
         Row::MusicVolume,
         Row::SoundVolume,
+        Row::Voices,
+        Row::VoiceVolume,
+        Row::LogVoice,
         Row::Layout,
         Row::KeyBindings,
         Row::GameMode,
@@ -174,6 +198,9 @@ impl Row {
             Row::Theme => "options.row.theme",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
+            Row::Voices => "options.row.voices",
+            Row::VoiceVolume => "options.row.voice_volume",
+            Row::LogVoice => "options.row.log_voice",
             Row::Layout => "options.row.layout",
             Row::KeyBindings => "options.row.key_bindings",
             Row::GameMode => "options.row.game_mode",
@@ -204,6 +231,8 @@ impl Row {
             Row::Fullscreen => OptionRow::fullscreen(),
             Row::MusicVolume => OptionRow::music_volume(),
             Row::SoundVolume => OptionRow::sound_volume(),
+            Row::Voices => OptionRow::voices(),
+            Row::VoiceVolume => OptionRow::voice_volume(),
             Row::RestoreDefaults => OptionRow::restore_defaults(),
             Row::AnimSpeed => choice::<AnimSpeed>(self),
             Row::EnemyPhaseSpeed => choice::<EnemyPhaseSpeed>(self),
@@ -222,6 +251,16 @@ impl Row {
                 RowValue::toggle(
                     |ctx| ctx.settings().game.auto_end_turn,
                     |ctx, on| ctx.preview_settings(|s| s.game.auto_end_turn = on),
+                ),
+            ),
+            Row::LogVoice => OptionRow::new(
+                self.key(),
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.log_voice == LogVoice::OnHover,
+                    |ctx, on| {
+                        let log = if on { LogVoice::OnHover } else { LogVoice::Off };
+                        ctx.preview_settings(|s| s.game.log_voice = log)
+                    },
                 ),
             ),
             Row::Intro => OptionRow::new(

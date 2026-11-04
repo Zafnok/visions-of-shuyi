@@ -2,7 +2,8 @@
 //! (`shuyi_ui::settings`, ticket 1109: text speed, fullscreen, the color
 //! theme, the volumes and the layout picked) and this game's own
 //! ([`ShuyiSettings`]: animation and enemy-phase speeds, combat
-//! animations, auto-end, the cursor style and the map's look and zoom).
+//! animations, auto-end, the cursor style, the map's look and zoom, and
+//! whether the dialogue log's cursor plays voices).
 //! Saved as one RON record under [`SETTINGS_KEY`], whose form this game
 //! keeps (ADR-0050); [`Ctx`] loads them with its storage and saves them on
 //! every change ([`Ctx::change_settings`]). Key bindings are saved apart
@@ -25,8 +26,13 @@ pub use shuyi_ui::settings::{DEFAULT_VOLUME, GameSettings, MAX_VOLUME, SETTINGS_
 /// ([`Settings::game`](shuyi_ui::settings::Settings::game)).
 pub type Settings = shuyi_ui::settings::Settings<ShuyiSettings>;
 
-/// The saved format's version.
-pub const SETTINGS_VERSION: u32 = 1;
+/// The saved format's version: 2 since the voices (ticket 0826). A
+/// version 1 save loads with the voices' defaults.
+pub const SETTINGS_VERSION: u32 = 2;
+
+/// The versions [`Settings::from_ron`] reads: each one's missing fields take
+/// their defaults.
+const READ_VERSIONS: [u32; 2] = [1, SETTINGS_VERSION];
 
 /// How much faster animations play at [`AnimSpeed::Fast`]. *Tunable.*
 pub const FAST_ANIM: f32 = 2.0;
@@ -209,6 +215,21 @@ pub struct ShuyiSettings {
     pub intro: bool,
     /// When a town on the world map opens its shops (Nick, ticket 1007).
     pub towns: TownsOpen,
+    /// Whether moving the dialogue log's cursor onto a line plays its
+    /// voice (ticket 0729, `docs/design/options.md`, *Voices in the
+    /// dialogue log*).
+    pub log_voice: LogVoice,
+}
+
+/// Whether the dialogue log's cursor plays the voice of the line it moves
+/// onto (ticket 0826).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LogVoice {
+    /// It does (the default).
+    #[default]
+    OnHover,
+    /// It doesn't: a line's voice plays only when its box is shown again.
+    Off,
 }
 
 /// When a town on the world map opens its shops (Nick, ticket 1007).
@@ -233,6 +254,7 @@ impl Default for ShuyiSettings {
             map_zoom: MapZoom::default(),
             intro: true,
             towns: TownsOpen::OnArrival,
+            log_voice: LogVoice::OnHover,
         }
     }
 }
@@ -288,6 +310,15 @@ struct SettingsFile {
     theme: Theme,
     music_volume: u8,
     sound_volume: u8,
+    /// `Some(false)` when voices are off, otherwise left out, as `intro`
+    /// (ticket 0826).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    voices: Option<bool>,
+    voice_volume: u8,
+    /// `Some(false)` when the log's cursor plays no voice, otherwise left
+    /// out, as `intro`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    log_voice: Option<bool>,
 }
 
 impl Default for SettingsFile {
@@ -316,6 +347,9 @@ fn file(s: &Settings) -> SettingsFile {
         theme: s.theme,
         music_volume: s.music_volume,
         sound_volume: s.sound_volume,
+        voices: (!s.voices).then_some(false),
+        voice_volume: s.voice_volume,
+        log_voice: (game.log_voice == LogVoice::Off).then_some(false),
     }
 }
 
@@ -329,14 +363,15 @@ impl GameSettings for ShuyiSettings {
         ron::ser::to_string_pretty(&file(settings), config).unwrap_or_default()
     }
 
-    /// Reads the saved form. Text that can't be read, or of another
-    /// version, gives `Err` with why (the caller then uses the defaults);
-    /// a missing field takes its default, an unknown layout counts as none
-    /// picked and a volume over [`MAX_VOLUME`] is brought down to it.
+    /// Reads the saved form. Text that can't be read, or of a version
+    /// other than 1 and 2, gives `Err` with why (the caller then uses the
+    /// defaults); a missing field takes its default, an unknown layout
+    /// counts as none picked and a volume over [`MAX_VOLUME`] is brought
+    /// down to it.
     // check-text: not player text (warnings for the log)
     fn from_ron(text: &str) -> Result<Settings, String> {
         let file: SettingsFile = ron::from_str(text).map_err(|e| format!("unreadable: {e}"))?;
-        if file.version != SETTINGS_VERSION {
+        if !READ_VERSIONS.contains(&file.version) {
             let version = file.version;
             return Err(format!("version {version} isn't {SETTINGS_VERSION}"));
         }
@@ -346,6 +381,8 @@ impl GameSettings for ShuyiSettings {
         s.theme = file.theme;
         s.music_volume = file.music_volume.min(MAX_VOLUME);
         s.sound_volume = file.sound_volume.min(MAX_VOLUME);
+        s.voices = file.voices.unwrap_or(true);
+        s.voice_volume = file.voice_volume.min(MAX_VOLUME);
         s.game = ShuyiSettings {
             anim_speed: file.anim_speed,
             combat_animations: file.combat_animations,
@@ -359,6 +396,11 @@ impl GameSettings for ShuyiSettings {
                 TownsOpen::OnConfirm
             } else {
                 TownsOpen::OnArrival
+            },
+            log_voice: if file.log_voice == Some(false) {
+                LogVoice::Off
+            } else {
+                LogVoice::OnHover
             },
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
@@ -393,8 +435,40 @@ mod tests {
             intro: true,
             // On arrival too, as before ticket 1007.
             towns: TownsOpen::OnArrival,
+            // On, as before ticket 0826 (as are the voices).
+            log_voice: LogVoice::OnHover,
         };
         s
+    }
+
+    /// Ticket 0826: voices are on at 80 and the log's cursor plays them,
+    /// all three are saved, and a version 1 save (from before them) loads
+    /// with those defaults and the rest as it was.
+    #[test]
+    fn the_voice_settings_default_on_round_trip_and_migrate() {
+        let s = Settings::default();
+        let defaults = (s.voices, s.voice_volume, s.game.log_voice);
+        assert_eq!(defaults, (true, 80, LogVoice::OnHover));
+        let text = s.to_ron();
+        assert!(
+            !text.contains("voices") && !text.contains("log_voice"),
+            "{text}"
+        );
+        let mut off = Settings::default();
+        off.voices = false;
+        off.voice_volume = 0;
+        off.game.log_voice = LogVoice::Off;
+        let text = off.to_ron();
+        assert!(text.contains("version: 2,"), "{text}");
+        assert!(text.contains("voices: Some(false),"), "{text}");
+        assert!(text.contains("log_voice: Some(false),"), "{text}");
+        assert_eq!(Settings::from_ron(&text), Ok(off));
+        let old = Settings::from_ron("Settings(version: 1, sound_volume: 3)").unwrap();
+        let mut expected = Settings::default();
+        expected.sound_volume = 3;
+        assert_eq!(old, expected);
+        let loud = Settings::from_ron("Settings(version: 2, voice_volume: 250)").unwrap();
+        assert_eq!(loud.voice_volume, MAX_VOLUME);
     }
 
     /// Ticket 0844: the intro is on by default, saved only when off, and an
@@ -444,15 +518,25 @@ mod tests {
 
     /// Ticket 1109: settings saved before the engine had the settings
     /// (written by `main` at `6677932e`, every setting changed, and the
-    /// defaults) load as they were, and are written again byte for byte.
+    /// defaults) load as they were. They were written byte for byte the
+    /// same until version 2 added the voices (0826): now that form, plus
+    /// the voice volume (voices and the log's, on, are left out).
     #[test]
     fn settings_saved_before_the_split_load_unchanged() {
-        let saved = as_written(include_str!("settings/saved_before_1109.ron"));
+        // The form written now: version 2, with the voice volume last.
+        let as_now = |text: &str| {
+            let text = text.replace("version: 1,", "version: 2,");
+            let body = text.trim_end().strip_suffix(")").unwrap_or_default();
+            as_written(&format!("{body}    voice_volume: 80,\n)"))
+        };
+        let before = include_str!("settings/saved_before_1109.ron");
+        let saved = as_written(before);
         assert_eq!(Settings::from_ron(&saved), Ok(changed()));
-        assert_eq!(changed().to_ron(), saved);
-        let defaults = as_written(include_str!("settings/defaults_before_1109.ron"));
+        assert_eq!(changed().to_ron(), as_now(before));
+        let before = include_str!("settings/defaults_before_1109.ron");
+        let defaults = as_written(before);
         assert_eq!(Settings::from_ron(&defaults), Ok(Settings::default()));
-        assert_eq!(Settings::default().to_ron(), defaults);
+        assert_eq!(Settings::default().to_ron(), as_now(before));
     }
 
     #[test]
@@ -538,10 +622,12 @@ mod tests {
     fn bad_text_and_other_versions_are_refused() {
         let unreadable = Settings::from_ron("nonsense").unwrap_err();
         assert!(unreadable.starts_with("unreadable: "), "{unreadable}");
-        assert_eq!(
-            Settings::from_ron("Settings(version: 2)"),
-            Err("version 2 isn't 1".to_owned())
-        );
+        for version in [0, 3] {
+            assert_eq!(
+                Settings::from_ron(&format!("Settings(version: {version})")),
+                Err(format!("version {version} isn't 2"))
+            );
+        }
     }
 
     #[test]
