@@ -7,10 +7,12 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use trpg_content::PaletteDef;
+use trpg_content::{Content, ContentErrors, PaletteDef};
 use trpg_ui::input::{Device, PadKind};
 use trpg_ui::screen::{IdleMotion, Lessons};
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, KeyPrompt, Palette, ShuyiCtx, Storage, UiColor};
+use trpg_ui::{
+    ConsoleSizes, ConsoleSpec, Ctx, KeyPrompt, LoadError, Palette, ShuyiCtx, Storage, UiColor,
+};
 
 /// Loads the game's data and sets the context up as the Playdate runs the
 /// game, its settings read from `storage`; `seed` picks the title's music.
@@ -22,7 +24,14 @@ pub fn context(storage: Box<dyn Storage>, seed: u64) -> Result<Ctx, String> {
 /// [`context`]'s first step: the game's data, and the context as the
 /// Playdate runs the game, before the storage.
 pub fn data(seed: u64) -> Result<Ctx, String> {
-    let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
+    with_content(trpg_content::load_embedded(), seed)
+}
+
+/// [`data`] with the game's data loaded already (`crate::boot` loads it
+/// in steps), or its errors.
+pub fn with_content(content: Result<Content, ContentErrors>, seed: u64) -> Result<Ctx, String> {
+    let content = content.map_err(|e| LoadError::Content(e).to_string())?;
+    let mut ctx = Ctx::from_content(content).map_err(|e| e.to_string())?;
     ctx.console = ConsoleSpec::PLAYDATE;
     ctx.platform = trpg_ui::platform::playdate_facts()?;
     ctx.device = Device::Pad(PadKind::Playdate);

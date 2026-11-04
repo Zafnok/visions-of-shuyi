@@ -25,6 +25,7 @@
 extern crate alloc;
 
 pub mod audio;
+pub mod boot;
 pub mod card;
 pub mod heap;
 pub mod menu;

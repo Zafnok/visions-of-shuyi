@@ -47,6 +47,9 @@ pub struct Reads {
     /// whether the bundle has it (`None` for a step), and when
     /// (milliseconds after loading started).
     reads: Vec<(String, Option<bool>, f32)>,
+    /// Each update callback of the start (ticket 1086): the step it ran,
+    /// and its milliseconds.
+    callbacks: Vec<(String, u32)>,
 }
 
 /// One file's reads, or one step, for the report.
@@ -70,6 +73,23 @@ impl Reads {
     /// after loading started: the time to the next read is its own.
     pub fn mark(&mut self, name: &str, at_ms: f32) {
         self.reads.push((format!("({name})"), None, at_ms));
+    }
+
+    /// Notes that an update callback of the start ran its step `step` for
+    /// `ms` milliseconds.
+    pub fn callback(&mut self, step: &str, ms: u32) {
+        self.callbacks.push((String::from(step), ms));
+    }
+
+    /// The update callbacks of the start, in order, each with its step and
+    /// time: the Playdate OS ends a game whose callback runs 10 seconds.
+    pub fn callbacks(&self) -> String {
+        let each: Vec<String> = self
+            .callbacks
+            .iter()
+            .map(|(step, ms)| format!("{step} {}", grouped(*ms as usize)))
+            .collect();
+        format!("Start, ms per update callback: {}", each.join(", "))
     }
 
     /// Each file read and each step, by name, when loading ended at
@@ -447,6 +467,18 @@ mod tests {
                 "  data/palette.ron: 12.5 ms, 2 reads",
                 "  lang/fr/ui.ron: 0.5 ms, not in the bundle",
             ]
+        );
+    }
+
+    #[test]
+    fn the_callbacks_are_listed_in_order_with_their_times() {
+        let mut reads = Reads::default();
+        reads.callback("data", 1_234);
+        reads.callback("sounds", 900);
+        reads.callback("sounds", 12);
+        assert_eq!(
+            reads.callbacks(),
+            "Start, ms per update callback: data 1,234, sounds 900, sounds 12"
         );
     }
 
