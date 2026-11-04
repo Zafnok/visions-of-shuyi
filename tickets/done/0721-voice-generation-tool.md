@@ -112,7 +112,7 @@ the tool from the game.
 **What was built.** `cargo xtask voice status | generate | script`
 (`crates/xtask/src/voice.rs`, `voice/{files,plan,synth}.rs`), the readers in
 `tools/voice/lab.py`, `docs/voice.md` (how to run it, the files, the
-commit-and-pin steps), and ADR-0112 for the tool's choices.
+commit-and-pin steps), and ADR-0113 for the tool's choices.
 
 - **The plan** is a pure function of the scripts as written, the names, the
   cast, `say.ron`, the manifest and `sent.ron` (`voice/plan.rs`). Voiced:
@@ -129,7 +129,7 @@ commit-and-pin steps), and ADR-0112 for the tool's choices.
 - **`sent.ron`** (new, beside the manifest) records the words sent and the
   reference clip's fingerprint per clip: the engine's manifest reader denies
   extra fields, so this is how a `say.ron` change or a replaced reference
-  clip is seen (ADR-0112).
+  clip is seen (ADR-0113).
 - **Readers:** one batch per reader per seed, as child processes in the
   lab's environments: Qwen3 (Base clone), Chatterbox, and ADR-0109's
   recipe for every directed line (VoiceDesign take with the instruct turn,

@@ -684,24 +684,34 @@ fn order_puts_attacks_first_by_expected_damage() {
         }
         _ => unreachable!(),
     };
-    // First, one attack on each target: the best way of striking it, from
-    // any tile, the better first.
-    let firsts = &ordered[..2];
+    let pick = next_command(&s, &content().ai).unwrap();
+    // First, the unit's best attack: the best way of striking its best
+    // target, from any tile.
+    let first = &ordered[0];
+    let best = legal.iter().filter(|c| is_attack(c)).map(rank).max();
+    assert_eq!(Some(rank(first)), best, "{first:?}");
+    // The best way of striking the other target comes after the unit's
+    // move (0523), and before every other way of striking.
+    let other = |c: &Command| is_attack(c) && attacks(c, 1, 2) != attacks(first, 1, 2);
+    let second = ordered.iter().position(other).unwrap();
+    let best = legal.iter().filter(|c| other(c)).map(rank).max();
+    assert_eq!(Some(rank(&ordered[second])), best, "{ordered:?}");
+    let waits = |c: &Command| {
+        matches!(
+            c,
+            Command::Act {
+                action: UnitAction::Wait,
+                ..
+            }
+        )
+    };
+    let moved = ordered.iter().position(waits).unwrap();
+    assert!(moved < second || ordered[second] == pick, "{ordered:?}");
     assert!(
-        attacks(&firsts[0], 1, 2) != attacks(&firsts[1], 1, 2),
-        "{firsts:?}"
-    );
-    assert!(rank(&firsts[0]) >= rank(&firsts[1]));
-    for first in firsts {
-        let target = |c: &Command| attacks(c, 1, 2) == attacks(first, 1, 2);
-        let best = legal
+        ordered[1..second]
             .iter()
-            .filter(|c| is_attack(c) && target(c))
-            .map(rank)
-            .max();
-        assert_eq!(Some(rank(first)), best, "{first:?}");
-    }
-    assert!(!is_attack(&ordered[2]), "{:?}", ordered[2]);
+            .all(|c| !is_attack(c) || *c == pick)
+    );
     // Every other way of striking comes later, once each, from its best
     // tile: every one the legal list has.
     let all: Vec<&Command> = ordered.iter().filter(|c| is_attack(c)).collect();
@@ -726,10 +736,8 @@ fn order_puts_attacks_first_by_expected_damage() {
     for pair in later.windows(2) {
         assert!(rank(pair[0]) >= rank(pair[1]), "{pair:?}");
     }
-    // The baseline's own pick comes right after the firsts, if it isn't
-    // one of them.
-    let pick = next_command(&s, &content().ai).unwrap();
-    assert!(firsts.contains(&pick) || ordered[2] == pick);
+    // The baseline's own pick comes right after the first, if it isn't it.
+    assert!(ordered[..2].contains(&pick));
 }
 
 #[test]
@@ -1531,4 +1539,101 @@ fn a_persona_talks_first_once_per_pair() {
     );
     let second = bot.choose(&s);
     assert!(!matches!(second, Command::Talk { .. }), "{second:?}");
+}
+
+/// [`guarded_ford`]'s map: a river crossed by a road at x 4.
+const FORD: &str = r#"(
+    name: "Ford",
+    legend: { '.': "plain", ':': "road", '~': "water" },
+)
+---
+....:....
+....:....
+~~~~:~~~~
+~~~~:~~~~
+....:....
+....:....
+....:....
+....:....
+"#;
+
+/// A river crossed by one ford (x 4) and, at its north end, the boss
+/// (enemy 10, a swordsman) with a bowman either side (11 and 12), none of
+/// whom ever moves: the ford's mouth (4, 1) is next to all three, and the
+/// ford's top tile is in the bows' reach. Three frail swordsmen (1 HP,
+/// units 1 to 3) can each walk to the mouth and strike any of the three,
+/// and fall to the boss's reply; unit 4, further back, can't be hurt and
+/// fells the boss with one blow, but needs a turn to get there.
+fn guarded_ford() -> BattleState {
+    let content = content();
+    let map = trpg_content::map::parse_map("ford", FORD, &content.terrain.display)
+        .unwrap_or_else(|e| panic!("{e:?}"))
+        .map;
+    let at = |mut unit: Unit, x, y| {
+        unit.pos = Pos::new(x, y);
+        unit
+    };
+    let bowman = |id, x| {
+        let loadout = trpg_core::LoadoutDef {
+            weapons: vec![ItemId::new("iron_bow")],
+            ..trpg_core::LoadoutDef::default()
+        };
+        let class = trpg_core::ClassId("archer".into());
+        let unit = Unit::generic(
+            UnitId(id),
+            &class,
+            &content.classes,
+            1,
+            Faction::Enemy,
+            Pos::new(x, 1),
+        );
+        stationary(
+            unit.unwrap()
+                .with_loadout(&loadout, &content.classes, &content.items)
+                .unwrap(),
+        )
+    };
+    let mut tank = rigged(at(player(4, 0), 4, 7));
+    tank.stats.def = 99;
+    tank.stats.res = 99;
+    let units = vec![
+        at(weak(player(1, 0)), 3, 5),
+        at(weak(player(2, 0)), 4, 5),
+        at(weak(player(3, 0)), 5, 5),
+        tank,
+        at(stationary(enemy(10, 0)), 4, 0),
+        bowman(11, 3),
+        bowman(12, 5),
+    ];
+    let mut setup = setup(units);
+    setup.map = map;
+    setup.pack.items.clear();
+    setup.objective = Objective::DefeatUnit {
+        unit: UnitId(10),
+        turn_limit: None,
+        leftovers: trpg_core::Leftovers::Stay,
+    };
+    BattleState::new(setup).0
+}
+
+#[test]
+fn hardcore_walks_its_sturdy_unit_up_a_guarded_ford() {
+    // Every frail unit's way forward is a blow it can't survive, nine of
+    // them; the order once held each frail unit's attack on each of the
+    // three before any unit's advance, so unit 4's advance never made the
+    // cut and Hardcore ended its turns with nobody moving (0523).
+    for seed in 1..=2 {
+        let end = play_out(guarded_ford(), &mut bot("hardcore", seed), 3);
+        assert_eq!(end.outcome(), Some(Outcome::Victory), "seed {seed}");
+        let fell = end.fallen().iter().filter(|u| u.faction == Faction::Player);
+        assert_eq!(fell.count(), 0, "seed {seed}");
+    }
+    let s = guarded_ford();
+    let ordered = order(&s, legal_commands(&s), &content().ai, 12);
+    let advance = Command::Act {
+        unit: UnitId(4),
+        dest: Pos::new(4, 2),
+        action: UnitAction::Wait,
+    };
+    assert!(ordered.contains(&advance), "{ordered:?}");
 }
