@@ -46,7 +46,7 @@ use trpg_content::WorldMapDef;
 use trpg_core::{Campaign, LEAD_ID, NodeKind, Pos, WorldCommand, WorldEvent, WorldMap};
 pub use view::{ListView, PanelView, PlaceMark, PlaceView, WorldMapView};
 
-use super::camp::music::{CampMusic, MusicCue};
+use super::camp::music::{CampMusic, ask};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
@@ -855,14 +855,6 @@ fn pulse(t: f32) -> f32 {
     let mut cursor = shuyi_ui::grid::cursor::Cursor::new(Pos::default());
     cursor.tick(t);
     cursor.brightness()
-}
-
-/// Asks for `cue` on `ctx`'s audio.
-fn ask(ctx: &mut Ctx, cue: &MusicCue) {
-    match cue {
-        MusicCue::Play(cue) => ctx.audio.play_music(cue),
-        MusicCue::Stop => ctx.audio.stop_music(),
-    }
 }
 
 /// Paints `view`: with pictures when the player's map look is pictures and

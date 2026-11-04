@@ -12,6 +12,7 @@ use crate::audio::AudioRequest;
 use crate::color::UiColor;
 use crate::glyph_buffer::PxRect;
 use crate::screen::tests::ctx;
+use crate::screens::camp::music::Speaker;
 use crate::screens::popped_with;
 
 /// The test battle's army (the lead and the test knight) at the test world
@@ -830,14 +831,28 @@ fn a_towns_music_while_it_is_open_then_the_maps() {
     let mut ctx = ctx();
     let mut s = screen(&ctx);
     press(&mut s, &mut ctx, &[]);
-    let map = AudioRequest::play_music("world_map", None);
+    let map = Speaker::faded_in(&ctx, "world_map");
     assert_eq!(ctx.audio.take(), std::slice::from_ref(&map));
-    // Confirm on Millbrook, where the army stands: its shops and its cue.
+    // Confirm on Millbrook, where the army stands: its shops and its cue,
+    // an ordinary switch (the manifest's: the map's track fades out over
+    // its fade, then the town's starts at full gain).
     press(&mut s, &mut ctx, &[Action::Confirm]);
     ctx.audio.take();
     press(&mut s, &mut ctx, &[]);
     let village = AudioRequest::play_music("village", None);
-    assert_eq!(ctx.audio.take(), [village]);
+    assert_eq!(ctx.audio.take(), std::slice::from_ref(&village));
+    let mut speaker = Speaker::new(&ctx);
+    ctx.audio.play_music("world_map");
+    speaker.play(&mut ctx, 0.0);
+    ctx.audio.play_music("village");
+    let fade = f32::from(u16::try_from(ctx.game.content.audio.music_fade_ms).unwrap()) / 1000.0;
+    speaker.play(&mut ctx, fade / 2.0);
+    assert!((speaker.gain("world_map") - 0.5).abs() < 0.01);
+    assert_eq!(speaker.gain("village"), 0.0);
+    speaker.play(&mut ctx, fade / 2.0 + 0.01);
+    speaker.play(&mut ctx, 0.0);
+    assert_eq!(speaker.gain("world_map"), 0.0);
+    assert_eq!(speaker.gain("village"), 1.0, "{:?}", speaker.commands());
     press(&mut s, &mut ctx, &[Action::Cancel]);
     ctx.audio.take();
     press(&mut s, &mut ctx, &[]);
@@ -864,8 +879,56 @@ fn the_maps_track_rests_between_rounds() {
     frame(&mut s, &mut ctx, &[], fade + QUIET_S - 1.0);
     assert_eq!(ctx.audio.take(), []);
     frame(&mut s, &mut ctx, &[], 1.0);
-    let again = AudioRequest::play_music("world_map", None);
+    let again = Speaker::faded_in(&ctx, "world_map");
     assert_eq!(ctx.audio.take(), [again]);
+}
+
+/// `secs` seconds of the map in frames of 0.1 s, each heard by `speaker`.
+fn play(s: &mut WorldMapScreen, ctx: &mut Ctx, speaker: &mut Speaker, secs: f64) {
+    let mut left = secs;
+    while left > 0.05 {
+        left -= 0.1;
+        frame(s, ctx, &[], 0.1);
+        speaker.play(ctx, 0.1);
+    }
+}
+
+/// How many times the map's track has started, each at zero gain.
+fn starts(speaker: &Speaker) -> usize {
+    let start = crate::audio::MusicCommand::start("world_map", 0.0);
+    speaker.commands().iter().filter(|c| **c == start).count()
+}
+
+/// The whole cycle by the clock (ticket 1080, `audio.md`, *Starting
+/// values*): the map's track fades in over 3 s, fades out as it ends, the
+/// map is silent 30 s, then it starts again at zero gain and reaches full
+/// gain over 3 s.
+#[test]
+fn the_maps_track_fades_in_again_after_thirty_seconds_of_quiet() {
+    let mut ctx = ctx();
+    let mut speaker = Speaker::new(&ctx);
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[]);
+    speaker.play(&mut ctx, 0.0);
+    let audio = &ctx.game.content.audio;
+    let length = f64::from(audio.music["world_map"].length_ms) / 1000.0;
+    let fade = f64::from(audio.music_fade_ms) / 1000.0;
+    assert_eq!(starts(&speaker), 1, "{:?}", speaker.commands());
+    play(&mut s, &mut ctx, &mut speaker, 1.5);
+    assert!((speaker.gain("world_map") - 0.5).abs() < 0.05);
+    play(&mut s, &mut ctx, &mut speaker, 1.6);
+    assert!(speaker.gain("world_map") > 0.99);
+    play(&mut s, &mut ctx, &mut speaker, length - fade - 3.1 - 0.2);
+    assert!(speaker.gain("world_map") > 0.99);
+    play(&mut s, &mut ctx, &mut speaker, fade + 0.4);
+    assert_eq!(speaker.gain("world_map"), 0.0);
+    play(&mut s, &mut ctx, &mut speaker, QUIET_S - 0.4);
+    assert_eq!(starts(&speaker), 1, "the quiet is silent");
+    play(&mut s, &mut ctx, &mut speaker, 0.3);
+    assert_eq!(starts(&speaker), 2, "{:?}", speaker.commands());
+    assert!(speaker.gain("world_map") < 0.1);
+    play(&mut s, &mut ctx, &mut speaker, 3.0);
+    assert!(speaker.gain("world_map") > 0.99);
 }
 
 /// The glyph look: each place's plate and the army's in pixels under the

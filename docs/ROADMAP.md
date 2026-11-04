@@ -276,8 +276,8 @@ lanes overlap: a lane starts as soon as its own tickets are ready.
 Within a lane, → is order and · is "side by side". Act 1 waits for the
 playtest bots' engine tickets (engine#2125–2128, Lane C; re-gated
 2026-10-21 by 0130; engine#2128 added by 0506), and engine#2398's
-per-request fade to silence for **1080**'s 3 s fade-outs (its fade-ins
-are at the pin, engine 2341).
+per-request fade to silence for **1087**'s 3 s fade-outs (**1080**'s
+fade-ins are at the pin, engine 2341).
 
 **Phase 1: Nick's design queue**, in this order (each unblocks the
 tickets in brackets):
@@ -330,9 +330,9 @@ Candle joins outside battle.
   explains the world map (after 1007, 1070) · **1082** icons for the
   world map's picture look (after 1007) · **1198** the world map's
   shortcuts on the Key bindings screen (after 1007, engine#2395).
-  **1080** corrects both camp and map music: the fade-ins on engine
-  2341 now, engine#2398 for the fade-outs, then 3 s fades around 5 s camp quiet or 30 s map quiet; ordinary switches
-  keep their default duration.
+  **1080** corrects both camp and map music: 3 s fade-ins after 5 s camp
+  quiet or 30 s map quiet, on engine 2341 → **1087** the 3 s fade-outs
+  (after engine#2398); ordinary switches keep their default duration.
 - **B. Battle rules:** **0319** escape, a boss who retreats, a boss
   who can't die, a scripted death (after 0069) → **0324** the escape
   objective names its exit · **0511** bosses use their
