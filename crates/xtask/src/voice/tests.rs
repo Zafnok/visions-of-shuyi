@@ -341,6 +341,22 @@ fn the_cast_names_characters_narration_and_the_leads_voices() {
     assert_eq!(Cast::entry("hollis", Variant::M), "hollis");
 }
 
+/// The game's test voice folder keeps the tool's form of the cast.
+#[test]
+fn the_test_voice_folders_cast_is_read_by_the_tool() {
+    let path = root()
+        .join("crates/app/tests/voice/en")
+        .join(files::CAST_FILE);
+    let source = fs::read_to_string(&path).unwrap();
+    let characters = content().characters;
+    let cast = files::cast(&source, |id| {
+        characters.can_speak(&trpg_core::CharacterId(id.to_owned()))
+    })
+    .unwrap();
+    assert_eq!(cast.voices.len(), 3);
+    assert!(cast.voices.values().all(|v| v.clip == "test_tone"));
+}
+
 #[test]
 fn respelling_replaces_whole_words_and_names_by_id() {
     let say = files::say("{\"town\": \"Hayth\", \"Aske\": \"Ask\"}").unwrap();

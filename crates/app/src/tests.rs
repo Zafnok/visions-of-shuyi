@@ -111,11 +111,6 @@ fn the_test_voice_folder_gives_the_game_its_three_clips() {
         assert!(short, "{file}: {length:?}");
     }
     assert!(!ctx.has_voice(&line(3)));
-    // The cast beside it is valid too.
-    let cast = std::fs::read_to_string(format!("{TEST_DIR}/cast.ron")).unwrap();
-    let characters = Some(&ctx.game.content.characters);
-    let cast = trpg_content::voice::cast_from_source("cast.ron", &cast, characters);
-    assert_eq!(cast.map(|c| c.voices.len()), Ok(3));
 }
 
 /// The platform shell reads the game's font and images from its content.

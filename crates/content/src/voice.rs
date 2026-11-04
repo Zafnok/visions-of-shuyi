@@ -1,6 +1,5 @@
 //! Voice clips (ADR-0046, `docs/voice.md`): the manifest
-//! `voice/<lang>/voice.ron` that lists every clip by dialogue line id, and
-//! the cast `voice/<lang>/cast.ron`. The `voice/` folder ships beside the
+//! `voice/<lang>/voice.ron` that lists every clip by dialogue line id. The `voice/` folder ships beside the
 //! game and is not embedded, so nothing here reads a file: `app` reads the
 //! text and these functions parse and validate it.
 //!
@@ -8,7 +7,7 @@
 //! something else today (a name in `names.ron` changed), the clip is
 //! **stale** and is left out of the [`Playable`] set.
 //!
-//! The manifest, the cast and the staleness rule are the engine's
+//! The manifest and the staleness rule are the engine's
 //! (`shuyi_assets::voice`, ticket 1105); the game adds its folders, its
 //! clip [`Variant`]s (one per gender of the lead) and the words a line says
 //! of the lead ([`spoken_text`]).
@@ -18,20 +17,17 @@ use serde::Deserialize;
 use shuyi_assets::voice::{self as engine, ClipVariant};
 use trpg_core::lead::{self, LeadGender, LeadProfile, Part};
 
-use crate::character::CharacterTable;
 use crate::dialogue::{self, DialogueTable, LineId};
 use crate::error::ContentError;
 use crate::names::Names;
 
-pub use shuyi_assets::voice::{Cast, MadeBy};
+pub use shuyi_assets::voice::MadeBy;
 
 /// Folder, next to the game, that holds one folder of clips per language.
 /// Not embedded (ADR-0046 rule 4).
 pub const VOICE_DIR: &str = "voice";
 /// The manifest's file name inside a language's folder.
 pub const MANIFEST_FILE: &str = "voice.ron";
-/// The cast's file name inside a language's folder.
-pub const CAST_FILE: &str = "cast.ron";
 /// The language the script is written in: the only voice folder read until
 /// the player can pick a language (ADR-0045 §5).
 pub const SOURCE_LANG: &str = "en";
@@ -157,20 +153,6 @@ pub fn from_source(
     dialogue: &DialogueTable,
 ) -> Result<VoiceManifest, Vec<ContentError>> {
     engine::from_source(file, source, dialogue)
-}
-
-/// Parses and validates cast `source`, attributing errors to `file`: no
-/// voice id is empty, and every speaker is the narration's or, when
-/// `characters` is given, a character that can speak.
-pub fn cast_from_source(
-    file: &str,
-    source: &str,
-    characters: Option<&CharacterTable>,
-) -> Result<Cast, Vec<ContentError>> {
-    let can_speak = |speaker: &str| {
-        characters.is_none_or(|c| c.can_speak(&trpg_core::CharacterId(speaker.to_owned())))
-    };
-    engine::cast_from_source(file, source, can_speak)
 }
 
 /// The words a clip of `variant` must say for the line written `text`,

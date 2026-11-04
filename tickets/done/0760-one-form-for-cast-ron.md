@@ -5,10 +5,10 @@ type: infra
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["0721"]
 nick_input: none
-completed:
+completed: 2026-11-04
 ---
 
 # 0760 — One form for `cast.ron`: drop the game's reader of the older one
@@ -55,10 +55,29 @@ skill).
 
 ## Acceptance criteria
 
-- [ ] Every `cast.ron` in the repository has the tool's form.
-- [ ] Nothing in the game reads the older form.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every `cast.ron` in the repository has the tool's form.
+- [x] Nothing in the game reads the older form.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: the test folder's cast parses with the tool's reader.
+
+## Completion notes
+
+- `crates/app/tests/voice/en/cast.ron` is in the tool's form: the three
+  test speakers share the reference clip `test_tone` (the manifest's
+  voice), read by `Qwen3`. No file exists for that clip; only a run of
+  `cargo xtask voice` on the folder would need one, and none does.
+- `trpg_content::voice` no longer re-exports the engine's `Cast` and
+  `cast_from_source`, and their two tests are gone. `CAST_FILE` moved to
+  the tool (`crates/xtask/src/voice/files.rs`), its only user.
+- The app test `the_test_voice_folder_gives_the_game_its_three_clips`
+  dropped its cast half; the new xtask test
+  `the_test_voice_folders_cast_is_read_by_the_tool` reads the test
+  folder's cast with the tool's reader.
+- `docs/voice.md`: the note on the older form is gone.
+- Step 4: the engine's `Cast` has no user left in the game. Engine ticket
+  2250 (`Zafnok/shuyi-engine`) proposes dropping it; the game needs no
+  change when the pin passes it.
+- No gameplay rules decided.

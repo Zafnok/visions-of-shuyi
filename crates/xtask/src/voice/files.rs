@@ -11,8 +11,8 @@ use trpg_content::dialogue::{LineId, NARRATION_SPEAKER};
 use trpg_content::voice::{MadeBy, Variant, VoiceClip};
 use trpg_core::lead::LEAD_ID;
 
-/// The cast's file name: `trpg_content`'s.
-pub use trpg_content::voice::CAST_FILE;
+/// The cast's file name inside a language's folder. The game never reads it.
+pub const CAST_FILE: &str = "cast.ron";
 /// How to spell names and words for the readers.
 pub const SAY_FILE: &str = "say.ron";
 /// What the tool sent to make each clip.
