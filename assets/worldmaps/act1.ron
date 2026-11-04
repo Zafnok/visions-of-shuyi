@@ -8,7 +8,8 @@
 // the place its kind and removes `NotBuilt`, and the conditions beside it
 // are the ones it opens by. 0850-0854: the story battles, each with
 // `StoryBattle("chNN")`. 1071: the fixed skirmishes, `guards_path` as noted.
-// 1072, 1083, 1084: the side quests.
+// 1083 and 1084: the side quests still to build (1072 built Tamsin's and
+// Aske's).
 //
 // `levels`, every shop's stock and when it grows are *the agent's starting
 // values*, for the Act 1 playtest (1064). Steel armour joins from Chapter 5
@@ -40,9 +41,11 @@
         // 1071: optional (`guards_path: false`).
         (id: "millhaven_road", name: "Millhaven Road", pos: (6, 10), kind: Empty,
          opens_when: [NotBuilt]),
-        // 1072: Tamsin's.
+        // Tamsin's side quest (1072; docs/story/chapters/side-tamsin.md).
         (id: "company_ledger", name: "The Company Ledger", pos: (14, 4), music: Some("side_quest"),
-         kind: Empty, opens_when: [NotBuilt, Cleared("aldwater"), Alive("sergeant")]),
+         kind: SideQuest((battle: "side_company_ledger", intro_scenes: ["side_ledger_intro"],
+                          victory_scenes: ["side_ledger_victory"])),
+         opens_when: [Cleared("aldwater"), Alive("sergeant")]),
         // 1071: guards the path to the hall (`guards_path: true`).
         (id: "aldwater", name: "Aldwater Toll Bridge", pos: (22, 16), kind: Empty,
          opens_when: [NotBuilt]),
@@ -78,9 +81,11 @@
         // 1071: optional (`guards_path: false`), with loot.
         (id: "smugglers_cove", name: "Smugglers' Cove", pos: (27, 24), kind: Empty,
          opens_when: [NotBuilt, Cleared("salt_road")]),
-        // 1072: Aske's.
+        // Aske's side quest (1072; docs/story/chapters/side-aske.md).
         (id: "letters_home", name: "Letters Home", pos: (50, 26), music: Some("side_quest"),
-         kind: Empty, opens_when: [NotBuilt, Cleared("envoys_house"), Alive("poacher")]),
+         kind: SideQuest((battle: "side_letters_home", intro_scenes: ["side_letters_intro"],
+                          victory_scenes: ["side_letters_victory"])),
+         opens_when: [Cleared("envoys_house"), Alive("poacher")]),
 
         // Chapter 6: The Ashfields.
         (id: "cairnford", name: "Cairnford", pos: (50, 16), music: Some("village"),

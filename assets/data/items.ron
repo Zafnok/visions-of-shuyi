@@ -67,6 +67,11 @@
         // 0848 (the first two) and 0075 (the Moonblade, a working name).
         (id: "houndmasters_axe", name: "Houndmaster's Axe", kind: Axe, rank: D, might: 10, hit: 70, crit: 5, weight: 7, range: (1, 1), durability: 25, price: 900, arts: ["pack_hunt"], special: true),
         (id: "fordwardens_spear", name: "Fordwarden's Spear", kind: Spear, rank: E, might: 6, hit: 80, crit: 0, weight: 5, range: (1, 2), durability: 20, price: 800, arts: ["hold_the_ford"], special: true),
+        // Tor's Bow (ticket 1072, Letters Home): Aske's brother's hill bow,
+        // sent south by her mother; a personal weapon only she can wield,
+        // with its own art, Longshot. Renaming Tor (`brother_tor`) renames
+        // this too.
+        (id: "tors_bow", name: "Tor's Bow", kind: Bow, rank: E, might: 7, hit: 85, crit: 10, weight: 3, range: (2, 2), durability: 25, price: 1200, arts: ["longshot"], special: true, wielder: Some("poacher")),
         (id: "moonblade", name: "Moonblade", kind: Sword, rank: C, might: 10, hit: 85, crit: 0, weight: 4, range: (1, 1), durability: 30, price: 3000, arts: ["moonwave"], special: true, passive: Some((name: "Moonlit", mitigation: Some(Res)))),
     ],
     armour: [

@@ -35,6 +35,13 @@
     "hound_sergeant": "Ned Tolley",
     "greywater_prior": "Edwin Sallow",
     "undercroft_warden": "Constance Hobb",
+    // Act 1's side quests (1072): the paymaster and a Red Company rider
+    // (The Company Ledger), a League privateer and the hill people's boat
+    // master (Letters Home).
+    "paymaster": "Ambrose Tull",
+    "red_veteran": "Denny Rudd",
+    "privateer": "Jory Casker",
+    "boatmaster": "Sten",
     // Outside the story: the tutorial guide, the tip box's title (0731).
     "guide": "Vix",
 
@@ -74,6 +81,13 @@
     "greywater_prior.last": "Sallow",
     "undercroft_warden.first": "Constance",
     "undercroft_warden.last": "Hobb",
+    // Act 1's side quests (1072).
+    "paymaster.first": "Ambrose",
+    "paymaster.last": "Tull",
+    "red_veteran.first": "Denny",
+    "red_veteran.last": "Rudd",
+    "privateer.first": "Jory",
+    "privateer.last": "Casker",
     "family.marr": "Marr",
     "family.veyne": "Veyne",
     "faction.brennmark.adj": "Brennish",
@@ -154,6 +168,8 @@
     "place.burnt_mill": "the Burnt Mill",
     "place.pilgrims_road": "Pilgrims' Road",
     "place.ossuary_gate": "the Ossuary Gate",
+    "place.kingsmead": "Kingsmead",
+    "place.gull_creek": "Gull Creek",
     "word.mother": "mor",
     "word.home": "hus",
 }
