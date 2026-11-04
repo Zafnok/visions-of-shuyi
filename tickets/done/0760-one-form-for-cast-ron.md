@@ -77,7 +77,11 @@ skill).
   `the_test_voice_folders_cast_is_read_by_the_tool` reads the test
   folder's cast with the tool's reader.
 - `docs/voice.md`: the note on the older form is gone.
-- Step 4: the engine's `Cast` has no user left in the game. Engine ticket
-  2250 (`Zafnok/shuyi-engine`) proposes dropping it; the game needs no
-  change when the pin passes it.
+- Step 4: the engine's `Cast` has no user left in the game, but because it
+  was too thin, not because a cast isn't the engine's job. So the engine
+  grows instead (Nick, 2026-11-04: lean towards engine features): engine
+  2250 makes its cast one a voice tool can use (the tool's own settings,
+  a voice per clip variant), engine 2251 adds the plan of which clips to
+  make, make again, record again or remove, and game 1242 moves
+  `cargo xtask voice` onto both.
 - No gameplay rules decided.
