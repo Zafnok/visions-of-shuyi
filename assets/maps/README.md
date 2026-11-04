@@ -94,6 +94,10 @@ changes.
 | `kells_road.map` | Chapter 2, a halt in the dark (`ch02_intro`): the road above Kell's Ford, before dawn |
 | `kells_far_bank.map` | Chapter 2, the boy from the river (`ch02_join`): the far bank of the ford, at dusk |
 | `veyne_guardroom.map` | Chapter 2, to be continued (`ch02_tbc`): the guardroom at Veyne Hall's gate, at night |
+| `greywater_boathouse.map` | Chapter 3, the boathouse (`ch03_intro`): a boathouse on Greywater's lake shore, the night before |
+| `greywater_causeway.map` | Chapter 3, the causeway at night (`ch03_telling`): the shore end of the causeway, the night after |
+| `greywater_kitchen.map` | Chapter 3, the kitchen (`ch03_confession`): the abbey's kitchen, later that night |
+| `veyne_yard.map` | Chapter 3, to be continued (`ch03_tbc`): the yard at Veyne Hall, at night |
 
 ## Rules checked by the loader
 

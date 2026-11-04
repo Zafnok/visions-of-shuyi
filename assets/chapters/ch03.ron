@@ -1,0 +1,14 @@
+// Chapter 3: Greywater (ticket 0849). Beat sheet:
+// docs/story/chapters/ch03.md; script: dialogue/ch03.dlg. No recruit.
+// `next` becomes Some("ch04") with Chapter 4's battle (ticket 0850), which
+// opens the Act 1 world map (world-structure.md): a chapter that doesn't
+// exist yet can't be named.
+(
+    id: "ch03",
+    title: "Chapter 3: Greywater",
+    number: Some(3),
+    intro_scenes: ["ch03_intro", "ch03_prebattle"],
+    battle: "ch03",
+    victory_scenes: ["ch03_register", "ch03_telling", "ch03_confession", "ch03_tbc"],
+    next: None,
+)
