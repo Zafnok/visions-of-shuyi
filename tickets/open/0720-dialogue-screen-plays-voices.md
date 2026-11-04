@@ -59,7 +59,9 @@ Options (0826); changing the typewriter.
    log*): jumping to a line from the log shows its box again, so steps 1–2
    play its voice as usual. **Moving the log's cursor onto a line plays
    that line's voice** (stopping the one playing), unless the Options
-   setting *Voice on hover in the log* (0826) is off. The log's rows know
+   setting *Voice on hover in the log* (0826,
+   `ctx.settings().game.log_voice`) is off. Voices off altogether
+   (`Settings::voices`) already makes `ctx.play_voice` do nothing. The log's rows know
    their line (`LogRow::line` in `screens/dialogue/log.rs`); a reply row
    follows step 3's rule for reply text.
 

@@ -56,7 +56,9 @@ it):
 - The front end plays `AudioRequest`s for voices with the file player
   (or a sample player per line), stopping the previous line as the PC
   does.
-- The voice volume option works.
+- The voice volume option works: take `Row::Voices`, `Row::VoiceVolume`
+  and `Row::LogVoice` out of `PC_ONLY` in `crates/ui/src/screens/options.rs`
+  (0826 left them out while the Playdate plays no voice).
 - Builds without the private clips are silent, as on the PC.
 - The `.pdx` size with voices in the PR.
 

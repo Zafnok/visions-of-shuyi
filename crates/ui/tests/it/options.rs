@@ -7,7 +7,7 @@
 //! Rows, top to bottom: Text speed, Animation speed, Combat animations,
 //! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, (Map look, with the
 //! bought pictures), Colors, Music volume,
-//! Sound volume, Layout, Key bindings, (Game mode and Tutorial, with a
+//! Sound volume, Voices, Voice volume, Voice on hover in the log, Layout, Key bindings, (Game mode and Tutorial, with a
 //! campaign), Reset tips, Restore defaults. `key_bindings_screen.rs` opens the Key bindings
 //! row.
 //!
@@ -36,7 +36,8 @@ const TO_FULLSCREEN: &str = "Down Down Down Down Down";
 const TO_CURSOR: &str = "Down Down Down Down Down Down";
 const TO_THEME: &str = "Down Down Down Down Down Down Down Down Down";
 const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down Down Down";
-const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down Down Down";
+const TO_LAYOUT: &str =
+    "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down";
 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).

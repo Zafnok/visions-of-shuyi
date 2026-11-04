@@ -29,13 +29,13 @@ insta = "1"
 # `shuyi-engine.rev`: `cargo xtask engine-pin <commit>` moves both. The
 # crates the Playdate builds without `std` have their default features off
 # here; a crate that needs `std` turns it on.
-shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60", default-features = false }
-shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60", default-features = false }
-shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60", default-features = false }
-shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60", default-features = false }
-shuyi = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60" }
-shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60" }
-shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "2d2166f64fe38db978bfe9b16cdff1a9ec83cf60" }
+shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042", default-features = false }
+shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042", default-features = false }
+shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042", default-features = false }
+shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042", default-features = false }
+shuyi = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042" }
+shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042" }
+shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1a84a71e21f6ba212d6628fecbdc5767de999042" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -39,10 +39,7 @@ use crate::map_view::MapSkin;
 use crate::settings::{Settings, ShuyiSettings};
 use crate::words::{Language, Words};
 
-pub use shuyi_ui::ctx::{
-    DEFAULT_MUSIC_SEED, DEFAULT_VOICE_VOLUME, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard,
-    MAX_VOICE_VOLUME,
-};
+pub use shuyi_ui::ctx::{DEFAULT_MUSIC_SEED, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard};
 pub use shuyi_ui::screen::{Screen, ScreenResult};
 
 /// What every screen shares: Shuyi Engine's services and this game's part,
@@ -460,7 +457,9 @@ pub(crate) mod tests {
                 play(&lines[1], Variant::None)
             ]
         );
-        c.voices_on = false;
+        c.change_settings(|s| s.voices = false).unwrap();
+        // Turning them off stops the voice playing (ticket 0826).
+        assert_eq!(c.audio.take(), [AudioRequest::StopVoice]);
         assert!(!c.has_voice(&lines[0]));
         c.play_voice(&lines[0]);
         c.preload_voices(&lines);
@@ -569,15 +568,17 @@ pub(crate) mod tests {
         );
     }
 
+    /// Ticket 0826: the voices are settings, on at 80 until changed, and
+    /// the volume is a factor from silent to full.
     #[test]
-    fn the_voice_volume_is_a_factor_of_ten_steps() {
+    fn the_voice_settings_start_on_and_the_volume_is_a_factor() {
         let mut c = ctx();
-        assert!(c.voices_on);
-        assert_eq!(c.voice_volume, DEFAULT_VOICE_VOLUME);
-        assert!((c.voice_gain() - 0.8).abs() < f32::EPSILON);
-        for (volume, gain) in [(0, 0.0), (5, 0.5), (10, 1.0), (200, 1.0)] {
-            c.voice_volume = volume;
-            assert!((c.voice_gain() - gain).abs() < f32::EPSILON, "{volume}");
+        assert!(c.settings().voices);
+        assert!((c.settings().voice_factor() - 0.8).abs() < f32::EPSILON);
+        for (volume, gain) in [(0, 0.0), (50, 0.5), (100, 1.0)] {
+            c.change_settings(|s| s.voice_volume = volume).unwrap();
+            let factor = c.settings().voice_factor();
+            assert!((factor - gain).abs() < f32::EPSILON, "{volume}");
         }
     }
 
