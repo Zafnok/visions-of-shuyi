@@ -38,7 +38,7 @@ use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::DialogueScreen;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem, SuffixKind};
-use music::{CampMusic, MusicCue};
+use music::{CampMusic, ask};
 
 /// The music pool camp plays (`assets/audio/audio.ron`).
 pub const POOL: &str = "camp";
@@ -454,14 +454,6 @@ impl CampScreen {
             }
             None => Transition::None,
         }
-    }
-}
-
-/// Asks for `cue` on `ctx`'s audio.
-fn ask(ctx: &mut Ctx, cue: &MusicCue) {
-    match cue {
-        MusicCue::Play(cue) => ctx.audio.play_music(cue),
-        MusicCue::Stop => ctx.audio.stop_music(),
     }
 }
 

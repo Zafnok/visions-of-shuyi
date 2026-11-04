@@ -15,7 +15,8 @@
 //! ```
 //!
 //! and read the new fixture's last lines (who fell, how many turns, how
-//! many houses).
+//! many houses). A new Chapter 2 playthrough leaves Chapter 3 another
+//! army: record Chapter 3's again after it (`ch03_winnable`).
 
 use trpg_content::{Content, new_campaign};
 use trpg_core::{BattleState, Campaign, CharacterId, GameMode, ItemId, Outcome};
@@ -27,14 +28,15 @@ use crate::playthrough::{self, battle, lost, skip_scenes};
 
 const FIXTURE: &str = include_str!("fixtures/ch02_winning.ron");
 
-fn winning_commands() -> Vec<trpg_core::Command> {
+/// The player's commands, in order.
+pub fn winning_commands() -> Vec<trpg_core::Command> {
     playthrough::commands("ch02_winning.ron", FIXTURE)
 }
 
 /// The campaign as Chapter 1's recorded playthrough leaves it (every
 /// rewind charge unused, as the game counts them), and Chapter 2's battle
 /// as it starts with it, Preparations left as they are.
-fn chapter_2(content: &Content) -> (Campaign, BattleState) {
+pub fn chapter_2(content: &Content) -> (Campaign, BattleState) {
     let tables = content.tables();
     let mut campaign = new_campaign(content, GameMode::Classic, lead());
     let first = &content.battles["ch01"];
@@ -67,20 +69,16 @@ fn the_recorded_playthrough_beats_the_lieutenant() {
     assert!(campaign.stock.weapons.iter().any(|w| w.def == axe));
 }
 
-/// Acceptance: New Game reaches Chapter 2 through Chapter 1, and Chapter
-/// 2 plays through the real game: its intro scenes, Preparations, the
-/// battle won with the recorded commands, the results, the herald, Joss
-/// joining on the far bank, Veyne Hall, the save prompt, "To be
-/// continued".
-#[test]
-fn chapter_2_plays_from_new_game_to_to_be_continued() {
-    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
-    chapter_1_won(&mut h);
+/// New Game, then Chapters 1 and 2 won with the recorded commands
+/// through the real game (their scenes skipped, Preparations left as
+/// they are), up to Chapter 2's "Save your progress?".
+pub fn chapter_2_won(h: &mut Harness) {
+    chapter_1_won(h);
     // "Save your progress?" No; Chapter 2's halt and the ford's edge.
     h.keys("Down f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch02"));
-    skip_scenes(&mut h);
+    skip_scenes(h);
     // Preparations for the first time; Left wraps to `Fight!`.
     assert_eq!(
         h.screens(),
@@ -90,9 +88,20 @@ fn chapter_2_plays_from_new_game_to_to_be_continued() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(&h).units().len(), 6 + 14, "six and the raid");
-    playthrough::play_in_game(&mut h, &winning_commands());
-    playthrough::on_to_the_save_prompt(&mut h);
+    assert_eq!(battle(h).units().len(), 6 + 14, "six and the raid");
+    playthrough::play_in_game(h, &winning_commands());
+    playthrough::on_to_the_save_prompt(h);
+}
+
+/// Acceptance: New Game reaches Chapter 2 through Chapter 1, and Chapter
+/// 2 plays through the real game: its intro scenes, Preparations, the
+/// battle won with the recorded commands, the results, the herald, Joss
+/// joining on the far bank, Veyne Hall, the save prompt, and on to
+/// Chapter 3 (0849).
+#[test]
+fn chapter_2_plays_from_new_game_into_chapter_3() {
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    chapter_2_won(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     let joss = CharacterId("defector".into());
@@ -102,9 +111,8 @@ fn chapter_2_plays_from_new_game_to_to_be_continued() {
     let axe = ItemId::new("houndmasters_axe");
     assert!(campaign.stock.weapons.iter().any(|w| w.def == axe));
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
-    h.keys("f");
-    assert_eq!(h.screens(), ["title"]);
+    let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
+    assert_eq!(chapter.as_deref(), Some("ch03"));
 }
 
 /// Records a new `fixtures/ch02_winning.ron` ([`playthrough::record`]).

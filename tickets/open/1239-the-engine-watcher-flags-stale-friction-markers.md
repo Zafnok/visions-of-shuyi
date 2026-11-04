@@ -94,7 +94,7 @@ Expected size: about 80 production lines (`lib.rs` 25, `fetch.rs` 35,
 - [ ] `friction_markers` reports the path and line of each marker
       (unit test over a fixture string).
 - [ ] On this branch, `cargo xtask engine-pin --check` passes: 1182
-      names engine#2540 and 1080 names engine#2341 (or, if either is
+      names engine#2540 and camp music's names engine#2398 (1087's; or, if either is
       done, its marker is gone).
 - [ ] The issue body's *The work* list has the marker line (render test).
 - [ ] All gates in the `run-gates` skill pass.

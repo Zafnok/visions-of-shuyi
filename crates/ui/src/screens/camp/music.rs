@@ -5,15 +5,18 @@
 //! order goes round the pool, so no track plays twice in a row.
 //!
 //! [`CampMusic`] is the schedule, by the game's clock: what to ask for,
-//! and when. It plays nothing itself: the camp screen passes what it
-//! asks for to [`Ctx::audio`](crate::screen::Ctx).
+//! and when. It plays nothing itself: camp and the world map pass what it
+//! asks for to [`ask`], which asks [`Ctx::audio`](crate::screen::Ctx).
+//! Each track fades in over audio.md's 3 s ([`FADE_IN_MS`]).
 //!
-//! The engine fades a track out only over the manifest's one fade
-//! (`music_fade_ms`) and doesn't fade one in, so a track here stops that
-//! long before its end and the next starts at full volume, not with
-//! audio.md's 3 s fades: a workaround until the engine has both.
+//! The engine stops music only over the manifest's one fade
+//! (`music_fade_ms`), so a track here starts to fade that long before its
+//! end, not audio.md's 3 s: a workaround until the engine can stop with a
+//! fade of its own.
 
+use crate::audio::MusicSwitch;
 use crate::prelude::*;
+use crate::screen::Ctx;
 
 /// What camp should ask for now.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +52,26 @@ pub struct CampMusic {
 /// How long camp is quiet between two tracks, in seconds, after the fade
 /// (audio.md, *Starting values*: 5 s, TUNABLE).
 pub const QUIET_S: f64 = 5.0;
+
+/// How long each track fades in, in milliseconds (audio.md, *Starting
+/// values*: 3 s, camp and the world map alike).
+pub const FADE_IN_MS: u32 = 3000;
+
+/// Asks `ctx`'s audio for `cue`. A track fades in over [`FADE_IN_MS`]; a
+/// track it interrupts (a conversation's, a town's) fades out over the
+/// manifest's fade first, the two never overlapping.
+pub fn ask(ctx: &mut Ctx, cue: &MusicCue) {
+    match cue {
+        MusicCue::Play(cue) => {
+            let out_ms = ctx.game.content.audio.music_fade_ms;
+            let switch = MusicSwitch::new(out_ms, FADE_IN_MS, false);
+            ctx.audio.play_music_with(cue, switch);
+        }
+        // engine-friction: engine#2398 (the fade-out is the manifest's one
+        // fade, not audio.md's 3 s)
+        MusicCue::Stop => ctx.audio.stop_music(),
+    }
+}
 
 impl CampMusic {
     /// The rotation of `tracks` (cue, length in seconds), starting with
@@ -94,8 +117,8 @@ impl CampMusic {
     /// Plays track `index` from clock time `now`.
     fn play(&mut self, index: usize, now: f64) -> MusicCue {
         let (cue, length) = self.tracks[index].clone();
-        // engine-friction: engine#2341 (the fade-out starts the manifest's
-        // one fade before the end, not audio.md's 3 s; no fade-in)
+        // The fade-out starts its length before the end, so the track and
+        // its fade end together.
         let until = now + (length - self.fade_s).max(0.0);
         self.phase = Phase::Playing { index, until };
         MusicCue::Play(cue)
@@ -123,6 +146,90 @@ impl CampMusic {
             Phase::Playing { index, .. } => Some(self.play(index, now)),
             Phase::Quiet { .. } => None,
         }
+    }
+}
+
+/// The engine's music state standing in for a speaker, for tests: it
+/// takes the requests a screen made, hears each track as it starts, and
+/// says each track's gain.
+#[cfg(test)]
+pub(crate) struct Speaker {
+    state: crate::audio::MusicState,
+    commands: Vec<crate::audio::MusicCommand>,
+}
+
+#[cfg(test)]
+impl Speaker {
+    /// Silence, switching as `ctx`'s audio manifest says by default.
+    pub(crate) fn new(ctx: &Ctx) -> Self {
+        let switch = ctx.game.content.audio.music_switch();
+        Self {
+            state: crate::audio::MusicState::with_switch(switch),
+            commands: Vec::new(),
+        }
+    }
+
+    /// The request a track of camp or the world map makes for `cue`.
+    pub(crate) fn faded_in(ctx: &Ctx, cue: &str) -> crate::audio::AudioRequest {
+        let out_ms = ctx.game.content.audio.music_fade_ms;
+        let switch = MusicSwitch::new(out_ms, FADE_IN_MS, false);
+        crate::audio::AudioRequest::play_music(cue, Some(switch))
+    }
+
+    /// Takes `ctx`'s requests, then plays `dt` seconds.
+    pub(crate) fn play(&mut self, ctx: &mut Ctx, dt: f32) {
+        for request in ctx.audio.take() {
+            self.state.request(&request, &mut self.commands);
+        }
+        self.hear();
+        self.state.update(dt, &mut self.commands);
+        self.hear();
+    }
+
+    /// Every track started sounds at once.
+    fn hear(&mut self) {
+        let started: Vec<String> = self
+            .commands
+            .iter()
+            .filter_map(|c| match c {
+                crate::audio::MusicCommand::Start { cue, .. } => Some(cue.clone()),
+                _ => None,
+            })
+            .collect();
+        for cue in started {
+            let clock = crate::audio::MusicClock {
+                cue,
+                position: 0.0,
+                length: 1.0,
+            };
+            self.state.heard(Some(&clock));
+        }
+    }
+
+    /// `cue`'s gain now: 0 when it doesn't play.
+    pub(crate) fn gain(&self, cue: &str) -> f32 {
+        use crate::audio::MusicCommand as C;
+        let mut gain = 0.0;
+        for command in &self.commands {
+            match command {
+                C::Start {
+                    cue: c, gain: g, ..
+                }
+                | C::Gain { cue: c, gain: g }
+                    if c == cue =>
+                {
+                    gain = *g;
+                }
+                C::Stop { cue: c } if c == cue => gain = 0.0,
+                _ => {}
+            }
+        }
+        gain
+    }
+
+    /// The music commands so far, in order.
+    pub(crate) fn commands(&self) -> &[crate::audio::MusicCommand] {
+        &self.commands
     }
 }
 

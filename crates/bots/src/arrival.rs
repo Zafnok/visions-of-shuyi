@@ -14,10 +14,10 @@ use trpg_core::{
 use crate::army::{roster_by, story_chapters};
 
 /// The story battles' recorded winning playthroughs, by battle id: the
-/// player's commands, phase by phase (tickets 0803 and 0848). `trpg-ui`'s
-/// `ch01_winnable` and `ch02_winnable` tests play them in the real game
-/// and say how to record a new one.
-const PLAYTHROUGHS: [(&str, &str); 2] = [
+/// player's commands, phase by phase (tickets 0803, 0848 and 0849).
+/// `trpg-ui`'s `ch01_winnable`, `ch02_winnable` and `ch03_winnable` tests
+/// play them in the real game and say how to record a new one.
+const PLAYTHROUGHS: [(&str, &str); 3] = [
     (
         "ch01",
         include_str!("../../ui/tests/it/fixtures/ch01_winning.ron"),
@@ -25,6 +25,10 @@ const PLAYTHROUGHS: [(&str, &str); 2] = [
     (
         "ch02",
         include_str!("../../ui/tests/it/fixtures/ch02_winning.ron"),
+    ),
+    (
+        "ch03",
+        include_str!("../../ui/tests/it/fixtures/ch03_winning.ron"),
     ),
 ];
 

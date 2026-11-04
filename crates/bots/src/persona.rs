@@ -114,7 +114,7 @@ pub struct Tally {
     pub enemy_fell: i64,
     /// Progress towards the objective: in a rout, the enemies' HP taken; in
     /// a boss fight, the boss's; in a seize, how many tiles closer the
-    /// nearest unit that may seize got; in an escape (0319), how many units
+    /// nearest unit that may seize got, walking; in an escape (0319), how many units
     /// got out; nothing in a survive.
     pub progress: i64,
     /// Tiles the standing player units came closer to their goal, all
@@ -440,14 +440,22 @@ fn hp_of(state: &BattleState, id: UnitId) -> i64 {
     state.unit(id).map_or(0, |u| i64::from(u.hp))
 }
 
-/// How far the nearest player unit that may seize stands from `pos`; 0 if
-/// there is none.
+/// How far the nearest player unit that may seize stands from `pos`,
+/// walking (the flow field, as [`Tally::approach`] measures): as the crow
+/// flies, a lord on Greywater's shore came "closer" to the scriptorium by
+/// walking away from the causeway, and stayed there (0849). As the crow
+/// flies only when none can walk there; 0 if there is none.
 fn seize_distance(state: &BattleState, pos: Pos, by_lord: bool) -> i64 {
     let may_seize = |u: &&Unit| u.faction == Faction::Player && (u.is_lord || !by_lord);
-    let units = state.units().iter().filter(may_seize);
-    units
-        .map(|u| i64::from(Pos::manhattan(u.pos, pos)))
-        .min()
+    let mut goals = Goals {
+        state,
+        targets: vec![pos],
+        fields: BTreeMap::new(),
+    };
+    let units = || state.units().iter().filter(may_seize);
+    let walking = units().filter_map(|u| goals.distance(u, u.pos)).min();
+    walking
+        .or_else(|| units().map(|u| i64::from(Pos::manhattan(u.pos, pos))).min())
         .unwrap_or(0)
 }
 
@@ -480,10 +488,10 @@ impl Order<BattleState> for PersonaOrder {
 
 /// `commands` (the legal commands of `state`) as a persona tries them:
 ///
-/// 1. each unit's best attack on each target (the most expected damage
-///    dealt, then the least taken back, of every weapon, art and active
-///    and every tile), the best first, so that every unit that can strike
-///    has a say before any unit's second way of striking the same target;
+/// 1. each unit's best attack (the most expected damage dealt, then the
+///    least taken back, of every target, weapon, art and active and every
+///    tile), the best first, so that every unit that can strike has a say
+///    before any unit's second way of striking;
 /// 2. the baseline's own pick ([`next_command`] with `ai`), so a persona
 ///    can always do what the enemy AI would, moves towards the enemy
 ///    included;
@@ -492,20 +500,26 @@ impl Order<BattleState> for PersonaOrder {
 ///    Potion in two pack slots, or used by any unit in reach, is one heal),
 ///    from a healer's own tile if one can: else a wounded lord's heals fill
 ///    every place tried and no advance is ever weighed (0519);
-/// 4. each ready unit's escape, once, on an escape map (0517);
+/// 4. each ready unit's escape, once, on an escape map (0517), and its
+///    seize on a seize map: in the rest the cap cut it, and a lord
+///    standing on the tile never took it (0849);
 /// 5. each ready unit's advance: waiting on the tile it can reach that is
 ///    nearest the objective's goals, walking (the engine's flow field), if that is
 ///    nearer than where it stands;
 /// 6. each ready unit's hold: waiting on the tile it can reach that no
 ///    enemy can strike next phase (the danger zone), nearest the
 ///    objective's goals, if it isn't its advance;
-/// 7. the other attacks: each other way of striking (weapon, art or
+/// 7. each unit's best attack on each of its other targets, the best
+///    first: after every unit's move, so that units with several targets
+///    each don't fill the places tried with blows and leave a sturdier
+///    unit's advance out (0523);
+/// 8. the other attacks: each other way of striking (weapon, art or
 ///    active) once, from its best tile, the best first;
-/// 8. the rest in the legal order, but for its unit actions when no enemy
+/// 9. the rest in the legal order, but for its unit actions when no enemy
 ///    of the player is left on the map: a player with nothing left to
 ///    fear doesn't wander, it walks to the goal (0517);
-/// 9. ending the phase last, in place of the last of the first `cap` if
-///    there are that many, so the cap never cuts it.
+/// 10. ending the phase last, in place of the last of the first `cap` if
+///     there are that many, so the cap never cuts it.
 ///
 /// `Equip` is dropped (an attack equips its weapon) and so is `Talk` (the
 /// persona talks before it plans, [`PersonaBot`]).
@@ -545,7 +559,7 @@ pub fn order(
                 } else if let Some((missing, heal)) = heal_need(state, *unit, *dest, action) {
                     let moves = state.unit(*unit).is_some_and(|u| u.pos != *dest);
                     heals.push(((missing, !moves), heal, command));
-                } else if *action == UnitAction::Escape {
+                } else if matches!(action, UnitAction::Escape | UnitAction::Seize) {
                     escapes.push(command);
                 } else {
                     if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {
@@ -570,17 +584,7 @@ pub fn order(
         }
         first
     });
-    let (mut out, others): (Vec<Command>, Vec<Command>) = {
-        let mut struck: Vec<(UnitId, Option<UnitId>)> = Vec::new();
-        once_per_action(attacks.into_iter().map(|(_, c)| c))
-            .into_iter()
-            .partition(|c| {
-                let key = attack_key(c);
-                let first = !struck.contains(&key);
-                struck.push(key);
-                first
-            })
-    };
+    let (mut out, targets, others) = split_attacks(attacks.into_iter().map(|(_, c)| c));
     // Only the baseline's pick can be in two of the lists.
     let pick = pick.filter(|pick| !out.contains(pick));
     let not_pick = |c: &Command| pick.as_ref() != Some(c);
@@ -600,6 +604,7 @@ pub fn order(
     let not_listed = |c: &Command| not_pick(c) && !advances.contains(c) && !holds.contains(c);
     out.extend(advances.iter().filter(|c| not_pick(c)).cloned());
     out.extend(holds.iter().filter(|c| not_pick(c)).cloned());
+    out.extend(targets.into_iter().filter(not_pick));
     out.extend(others.into_iter().filter(not_pick));
     let foes = state
         .units()
@@ -612,6 +617,34 @@ pub fn order(
         out.push(Command::EndPhase);
     }
     out
+}
+
+/// `attacks`, best first, as [`order`] tries them: each unit's best
+/// attack; each unit's best attack on each of its other targets; each
+/// other way of striking, once.
+///
+/// A unit's other targets wait for every unit's move, or three units with
+/// three targets each fill the places tried and no unit's advance is ever
+/// weighed (0523).
+fn split_attacks(
+    attacks: impl Iterator<Item = Command>,
+) -> (Vec<Command>, Vec<Command>, Vec<Command>) {
+    let mut struck: Vec<(UnitId, Option<UnitId>)> = Vec::new();
+    let (firsts, others): (Vec<Command>, Vec<Command>) =
+        once_per_action(attacks).into_iter().partition(|c| {
+            let key = attack_key(c);
+            let first = !struck.contains(&key);
+            struck.push(key);
+            first
+        });
+    let mut units: Vec<UnitId> = Vec::new();
+    let (best, targets) = firsts.into_iter().partition(|c| {
+        let unit = attack_key(c).0;
+        let first = !units.contains(&unit);
+        units.push(unit);
+        first
+    });
+    (best, targets, others)
 }
 
 /// Keeps `command` (unit `id` waiting on `dest`, a tile out of every
