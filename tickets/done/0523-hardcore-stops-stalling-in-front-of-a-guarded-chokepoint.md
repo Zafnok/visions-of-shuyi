@@ -112,7 +112,7 @@ left to judge by playing goes on 1064's checklist.
 ## Completion notes
 
 **Done.** Hardcore no longer stands in front of Hendry's ford: the stall
-was the order's cap, not the scoring, and the order changed (ADR-0111,
+was the order's cap, not the scoring, and the order changed (ADR-0112,
 amending ADR-0095 §2).
 
 - **The trace (step 1)** (seed 116, a throwaway test calling

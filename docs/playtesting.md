@@ -91,7 +91,7 @@ command it:
    would do in its place; healing a wounded unit; moving each unit as far
    towards the enemy (the boss, the tile to seize) as it can walk; moving
    each unit to the nearest tile out of every enemy's reach; each unit's
-   attack on its other targets (after every unit's move, ADR-0111); the
+   attack on its other targets (after every unit's move, ADR-0112); the
    other ways of attacking; and ending the turn last;
 3. plays each partial plan on a few **copies** of the battle with fresh
    luck and no hidden reinforcements, and **scores** where each copy got
@@ -240,7 +240,7 @@ The ✗ on seeds 101–200 is Hardcore stalling in front of the guarded
 ford, a fault of the bots tracked by ticket 0523
 (`design/playtest-bots.md`, *Hardcore is faster than Normal*).
 
-After 0523 (2026-11-03, ADR-0111: each unit's best attack first, its
+After 0523 (2026-11-03, ADR-0112: each unit's best attack first, its
 other targets after every unit's move), Chapter 2 unchanged:
 
 ```

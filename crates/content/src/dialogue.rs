@@ -326,44 +326,104 @@ pub fn load_scripts(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<Scripts, Vec<ContentError>> {
-    let mut files = Vec::new();
-    let mut errors = Vec::new();
-    for result in formats::install()
-        .load_each::<engine::DialogueFile<Stage>>(bundle::install(), DIALOGUE_DIR)
-        .into_values()
-    {
-        match result {
-            Ok(file) => files.push(file),
-            Err(e) => errors.extend(e),
-        }
-    }
-    let rules = rules::Rules {
-        characters,
-        portraits,
-        names,
-        audio,
-    };
-    checked(files, errors, &rules)
+    ScriptsLoad::start().finish(characters, portraits, names, audio)
 }
 
-/// [`Scripts`] of `files`, each line's stand-ins taken out first, or every
-/// problem with them added to `errors` (those found reading them), ordered
-/// by file and line.
-fn checked(
-    mut files: Vec<engine::DialogueFile<Stage>>,
-    mut errors: Vec<ContentError>,
-    rules: &rules::Rules<'_>,
-) -> Result<Scripts, Vec<ContentError>> {
-    let mut stand_ins = StandIns::new();
-    for scene in files.iter_mut().flat_map(|file| &mut file.scenes) {
-        stand_ins.extend(stand_in::take(scene));
+/// [`load_scripts`] a scene at a time, for a front end that must hand
+/// control back to its platform between them (the Playdate, ticket 1086):
+/// [`ScriptsLoad::start`] reads and parses the files,
+/// [`ScriptsLoad::check_next`] checks a scene ([`ScriptsLoad::unchecked`]
+/// are left), and [`ScriptsLoad::finish`] gives the scripts. They and their errors are [`load_scripts`]'.
+pub struct ScriptsLoad {
+    /// The scenes' checks, a scene at a time.
+    check: engine::ScriptsCheck<Stage>,
+    /// The problems found reading the files.
+    errors: Vec<ContentError>,
+    /// The lines written with a stand-in, taken out of the scenes.
+    stand_ins: StandIns,
+}
+
+impl ScriptsLoad {
+    /// Reads and parses every `*.dlg` file in the bundle.
+    pub fn start() -> Self {
+        let mut files = Vec::new();
+        let mut errors = Vec::new();
+        for result in formats::install()
+            .load_each::<engine::DialogueFile<Stage>>(bundle::install(), DIALOGUE_DIR)
+            .into_values()
+        {
+            match result {
+                Ok(file) => files.push(file),
+                Err(e) => errors.extend(e),
+            }
+        }
+        Self::of(files, errors)
     }
-    match engine::scripts_from_parsed(files, rules) {
-        Ok(scripts) if errors.is_empty() => Ok(Scripts::with(scripts, stand_ins)),
-        result => {
-            errors.extend(result.err().unwrap_or_default());
-            errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
-            Err(errors)
+
+    /// The check of `files`, each line's stand-ins taken out first, with
+    /// `errors` (those found reading them).
+    fn of(mut files: Vec<engine::DialogueFile<Stage>>, errors: Vec<ContentError>) -> Self {
+        let mut stand_ins = StandIns::new();
+        for scene in files.iter_mut().flat_map(|file| &mut file.scenes) {
+            stand_ins.extend(stand_in::take(scene));
+        }
+        Self {
+            check: engine::ScriptsCheck::new(files),
+            errors,
+            stand_ins,
+        }
+    }
+
+    /// How many scenes are left to check.
+    pub fn unchecked(&self) -> usize {
+        self.check.unchecked()
+    }
+
+    /// Checks the next scene against the tables, as [`load_scripts`] does,
+    /// if one is left.
+    pub fn check_next(
+        &mut self,
+        characters: Option<&CharacterTable>,
+        portraits: Option<&PortraitTable>,
+        names: Option<&Names>,
+        audio: Option<&AudioManifest>,
+    ) {
+        let rules = rules::Rules {
+            characters,
+            portraits,
+            names,
+            audio,
+        };
+        self.check.check_next(&rules);
+    }
+
+    /// The [`Scripts`], the scenes not checked yet checked first, or every
+    /// problem with them, ordered by file and line.
+    ///
+    /// # Errors
+    ///
+    /// Every problem found, reading the files and checking the scenes.
+    pub fn finish(
+        self,
+        characters: Option<&CharacterTable>,
+        portraits: Option<&PortraitTable>,
+        names: Option<&Names>,
+        audio: Option<&AudioManifest>,
+    ) -> Result<Scripts, Vec<ContentError>> {
+        let rules = rules::Rules {
+            characters,
+            portraits,
+            names,
+            audio,
+        };
+        let mut errors = self.errors;
+        match self.check.finish(&rules) {
+            Ok(scripts) if errors.is_empty() => Ok(Scripts::with(scripts, self.stand_ins)),
+            result => {
+                errors.extend(result.err().unwrap_or_default());
+                errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
+                Err(errors)
+            }
         }
     }
 }
@@ -390,12 +450,6 @@ pub fn scripts_from_sources<F: AsRef<str>>(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<Scripts, Vec<ContentError>> {
-    let rules = rules::Rules {
-        characters,
-        portraits,
-        names,
-        audio,
-    };
     let mut errors = Vec::new();
     let files = files
         .iter()
@@ -405,7 +459,7 @@ pub fn scripts_from_sources<F: AsRef<str>>(
             engine::DialogueFile { scenes }
         })
         .collect();
-    checked(files, errors, &rules)
+    ScriptsLoad::of(files, errors).finish(characters, portraits, names, audio)
 }
 
 #[cfg(test)]

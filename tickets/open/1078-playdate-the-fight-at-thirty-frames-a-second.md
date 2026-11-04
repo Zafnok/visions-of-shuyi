@@ -74,6 +74,11 @@ minute reports.
 - Changing the look 0062 and 1041 decided (`docs/design/playdate.md`,
   *The combat picture*), except the tunables named above.
 
+**Either order with 1234:** if 1234 is done, `playdate/stage.rs`'s
+`fighter_sprite`, `reach_px`, `result_row` and `int` are one geometry
+shared with `stage/glyph.rs`: make this ticket's sprite changes there;
+if not, change `playdate/stage.rs`, and 1234 keeps what changed.
+
 ## Implementation steps
 
 1. Read 1041's completion notes, engine#3056's, ADR-0077 and

@@ -52,6 +52,11 @@ None.
   is done first and writes this same `PlayRecord`, its records get the
   stamp through this ticket. If 0508 comes later, it fills `made` from
   the same helper.
+- Moving where the record is written: 1240 (after engine#2544) writes
+  it from the engine's `playtest` try instead of `bots`. **Either order
+  with 1240:** if 1240 is done, fill `made` in the plan's record hook it
+  wrote, not in `plays::bots` (gone), and test it through `playtest`; if
+  not, fill it in `plays::bots` as below, and 1240 keeps it.
 - Stamping saves (the engine's save stamps are its own business).
 - Baked packs (the game bakes none).
 

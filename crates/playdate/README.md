@@ -6,7 +6,8 @@ clock, files and the allocator, and holds no game or screen logic.
 
 From its first frame it shows the loading card, the game's name centred
 in the game's font (ticket 1036, `src/card.rs`); then it loads the game
-on the game's own stack and runs it (ticket 1033). The screens are drawn
+on the game's own stack, a step per update (see *The start*), and runs
+it (ticket 1033). The screens are drawn
 into a 50 × 15 console, each in its Playdate skin where it has one (the
 map, 1037; New Game, Options, Key bindings and Profile, 1045); the others
 still wear the PC's skins and are cut off until theirs land (1038 on).
@@ -47,6 +48,7 @@ listed.
 | `src/card.rs` | The loading card, and the game's font read before the rest of the data |
 | `src/pictures.rs` | The one-bit pictures the renderer draws, read once from the bundle |
 | `src/start.rs` | The game's context as the Playdate starts it: console, palette, buttons, no keyboard |
+| `src/boot.rs` | The start, one step per update (ticket 1086): the data in parts, the player's storage, the sounds, the title |
 | `src/chapter_1.rs` | The test that plays Chapter 1 against the Playdate's bundle |
 | `src/{heap,stack,text,report}.rs` | The plain, tested parts: allocator arithmetic, the stack's size and high-water mark, C strings, the logged reports |
 | `setup.c-LICENSE.md` | The license of the SDK's `setup.c`, which is linked into the game (0BSD) |
@@ -55,9 +57,24 @@ Without the `sdk` feature the crate builds on any machine, so
 `cargo test --workspace` and `cargo clippy --workspace` never need the
 SDK. `cargo xtask playdate` turns it on.
 
+## The start
+
+The Playdate OS ends a game whose update callback has not returned for
+10 seconds, and the device runs the start 600 to 1,300 times slower than
+the Simulator (ticket 1086: 15 seconds in all). So the start
+(`src/boot.rs`) runs one step per update, the loading card on the
+screen: what the dialogue is checked against (`trpg_content::StagedLoad`),
+the dialogue's files, its scenes' checks, the rest of the data and the
+game's context, the player's
+settings and saves, the sounds, and the title. The dialogue's scenes are
+checked and the sounds loaded one at a time until the update has run a
+second, then the next update goes on with them. A step that grows past
+about 5 seconds on the device (the load report's last line below says)
+is split again.
+
 ## The frame loop
 
-Each SDK update (`src/pd/entry.rs`):
+Each SDK update once the game runs (`src/pd/entry.rs`):
 
 1. `dt` is the SDK's elapsed-time timer since the last update (it starts
    after loading, so the first frame does not count the load).
@@ -143,6 +160,7 @@ Game data loaded in … ms
 Game stack used: … of 65,536 bytes
 Bundle: … reads of … files, 0 not in the bundle
 Slowest files, ms to the next read: dialogue/ch01.dlg …, (the title) …, …
+Start, ms per update callback: data …, dialogue …, scenes …, …, context …, storage …, sounds …, title …
 Sounds: 21 files loaded
 First frame of the game shown … ms after start
 ```
@@ -150,7 +168,9 @@ First frame of the game shown … ms after start
 A file's time runs from its read to the next one: the parsing and
 checking of what it holds, roughly (a loader may read several files
 before parsing them). The steps that read no file are named in brackets:
-`(the player's settings and saves)`, `(the sounds)`, `(the title)`. `load-report.txt`
+`(the player's settings and saves)`, `(the sounds)`, `(the title)`.
+The times leave out the time between updates; "Start, ms per update
+callback" is each update of the start (see *The start*). `load-report.txt`
 holds the same lines and every file read with its time; the debug build
 also logs each, and each file read once the game runs.
 

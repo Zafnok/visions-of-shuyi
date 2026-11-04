@@ -196,3 +196,12 @@ Nothing for the game: 10 PRs (#176, #185, #224, #226, #228, #229, #230, #231, #2
 | #239 | 2519 | Session records from real builds: debug builds keep their last sessions, the debug menu's "Save session" (a download on the web), and `shuyi run`, `scene` and MCP play them; `SceneOutput` and `StartOutput` gain `session` | fixed: nothing to change (the game builds neither output); adopt → 1210 (in this PR: the game's start moved to `trpg_ui::start`, `session_from` in the tools, the battle's state in the frame hash and a kept record) |
 
 Nothing for the game: 1 PR (#244), a `pulldown-cmark` advisory in the engine's own tools. The skill pack's `shuyi-debug-replay` gains reproducing a bug from a session record.
+
+## 2026-11-03: 96e97bf0 → 2d2166f6 (6 engine PRs), #537
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #250 | game 1086 | The literal-name check finds each name's form once per scene; the longest name once per scene and per pack file; `ScriptsCheck` checks scripts a scene at a time | adopt → 1086 (in this PR: `trpg_content::StagedLoad` and `dialogue::ScriptsLoad` check the Playdate's scenes over several update callbacks) |
+| #240 | 3031 | The in-house sound backend behind `shuyi-app`'s `in-house-sound` (CPAL on Windows, a Web Audio worklet), off by default; `WavSource` and `VorbisSource` take what they read as a type | fixed: nothing to change (the game uses neither source); adopt → 1241 (after engine#3084) |
+
+Nothing for the game: 4 PRs (#245, #247, #248, #249). #245 and #249 are the sound-parity gates' and the in-house web backend's CI, which the game doesn't build; #247 and #248 are engine tickets only.

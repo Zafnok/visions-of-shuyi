@@ -59,6 +59,18 @@ with a ticket that renamed or moved the code. What they missed:
    hard-cut helper. Two placeholders are centred by `label.len()` (bytes,
    not cells: `info.rs` and `progress.rs`), so a non-ASCII translation
    sits off-centre.
+5. **Three more, from the game/engine boundary audit of 2026-11-03.**
+   The box at the end of the lessons steps its three answers by hand
+   (`lessons_end_key` in `screens/battle/mod.rs`, over the plain
+   `end_focus` field and `EndAnswer::ALL`, playing the move and select
+   sounds itself): the engine's `Ask` with no cancel answer.
+   `turn_page` in `screens/battle/info.rs` writes its own wrap
+   (`(page + 1) % pages`, `checked_sub(1).unwrap_or(pages - 1)`) beside
+   `wrap_step`. And the battle shop's special-sale question
+   (`step_special` in `screens/battle/shop.rs`) hands `Ask::handle` a
+   throwaway `AudioQueue::new(AUDIO)`, then compares the focus before
+   and after to report `ShopEffect::Moved`; the town's and the
+   Preparations' shops pass `ctx.audio`.
 
 The battle's five target pickers keep a plain `index` and `wrap_step`
 behind 1161's `Picker` trait on purpose (their fields are public to
@@ -89,6 +101,16 @@ are centred by cells (the same in English). Verified by the snapshots.
 - Inline cuts through `print_clipped` (or `cut` where nothing is
   printed), `Pen::cut` on it, and the two placeholders on
   `print_centred`.
+- The lessons-end box held as an `Ask<EndAnswer>` (no `cancelled_by`),
+  `lessons_end_key` passing the key to `ask.handle(action, &mut
+  ctx.audio)`, and `LessonsEndView`'s answers and focus taken from it.
+  `Ask` also steps on Left and Right; accept that, or filter the two
+  before the `Ask`, and say which in the Completion notes.
+- `turn_page` on `wrap_step`.
+- The battle shop's special-sale question given the screen's audio
+  queue, as the other two shops do, so the throwaway queue and the
+  focus comparison go. If the battle shop's step must stay free of
+  `ctx`, keep it and say why in the Completion notes.
 - Snapshot changes, reviewed (none expected except where a test language
   has non-ASCII text).
 
@@ -100,6 +122,15 @@ are centred by cells (the same in English). Verified by the snapshots.
 - New engine features: if `Ask` can't express a prompt, keep that prompt
   and write it in the Completion notes with the `engine-friction` skill's
   outcome.
+- The hand-built boxes beside `GlyphBuffer::panel` and the shop, Guides
+  and Preparations list windows (1238).
+
+**Either order with 1238:** if 1238 is done, the cuts sit inside its
+panels: change only the cuts. If not, leave the `fill_rect` +
+`draw_box` pairs for 1238. **Either order with 1216** (one shop flow):
+if 1216 is done, its shared shop picker plays on the queue it is handed
+and the throwaway queue is gone: skip that item. If not, change
+`step_special` in `screens/battle/shop.rs`; 1216 then keeps it.
 
 ## Implementation steps
 
@@ -116,8 +147,10 @@ are centred by cells (the same in English). Verified by the snapshots.
 5. **Cuts and centring**: `grep -rn "chars().take(" crates/ui/src` and
    `grep -rn "len()) / 2\|\.len() / 2" crates/ui/src` for the
    centring; each hit on a label goes through the helper.
-6. **Measure** with `cargo xtask code-lines` (estimate: count the call
-   sites changed, not the helpers removed: about 120 added lines).
+6. **Item 5**: the lessons-end box, `turn_page`, the shop's question.
+7. **Measure** with `cargo xtask code-lines` (estimate: count the call
+   sites changed, not the helpers removed: about 120 added lines, and
+   about 20 more for item 5, which removes about 18).
 
 ## Acceptance criteria
 
@@ -131,11 +164,17 @@ are centred by cells (the same in English). Verified by the snapshots.
 - [ ] `grep -rn "chars().take(" crates/ui/src/screens` finds no label
       cut outside the helpers.
 - [ ] A test centres a label with a two-byte character by cells.
+- [ ] `grep -rn "end_focus\|unwrap_or(pages - 1)" crates/ui/src/screens/battle`
+      and `grep -rn "AudioQueue::new" crates/ui/src/screens` find
+      nothing outside tests.
+- [ ] A test: the lessons-end box wraps from its last answer to its
+      first, and Cancel answers nothing.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: each prompt's answers; the centring by cells.
+- Unit: each prompt's answers; the centring by cells; the lessons-end
+  box; `turn_page` at both ends; the special sale's move sound.
 - Snapshot: the battle's prompts, the rewind screen, the dialogue log
   (reviewed, expected unchanged).
 

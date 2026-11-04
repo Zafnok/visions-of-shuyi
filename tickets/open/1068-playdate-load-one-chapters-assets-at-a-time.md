@@ -35,6 +35,11 @@ short ADR note, and nothing else changes.
 build (Simulator, *Device → Upload Game to Device*) and pastes the
 Simulator console, as for 1036 and 1055.
 
+**Either order with 1086** (the start-up load split across update
+callbacks, so the device's 10-second limit holds): if 1086 is done, load
+a chapter's assets in its steps; if not, keep each load inside one
+callback under 5 seconds on the device, as 1086 asks.
+
 ## Scope
 
 **In:**

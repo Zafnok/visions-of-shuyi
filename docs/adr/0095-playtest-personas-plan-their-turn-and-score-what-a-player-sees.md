@@ -1,6 +1,6 @@
 # ADR-0095: Playtest personas plan their own turn on the engine's turn planner and score what a player sees; their settings and targets are dev-tooling RON files
 
-- **Status:** Accepted; §2's order amended by ADR-0111
+- **Status:** Accepted; §2's order amended by ADR-0112
 - **Date:** 2026-10-22
 - **Related tickets:** 0506, 0033, 0505, 0508, 0509; engine#2125, engine#2126, engine#2128
 

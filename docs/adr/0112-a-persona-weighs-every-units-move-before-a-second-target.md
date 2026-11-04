@@ -1,4 +1,4 @@
-# ADR-0111: A persona weighs every unit's move before any unit's attack on a second target
+# ADR-0112: A persona weighs every unit's move before any unit's attack on a second target
 
 - **Status:** Accepted
 - **Date:** 2026-11-03

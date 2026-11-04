@@ -16,7 +16,7 @@ completed:
 ## Context
 
 Ticket 0523 changed the order in which the personas weigh their moves
-(ADR-0111: each unit's best attack first, its other targets after every
+(ADR-0112: each unit's best attack first, its other targets after every
 unit's move). It fixed Hardcore's stall at Kell's Ford, and it left two
 bands out, measured with 100 tries per seed range:
 

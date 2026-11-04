@@ -9,6 +9,35 @@ fn all_embedded_assets_load() {
     }
 }
 
+/// The load in parts, as the Playdate runs it (ticket 1086), gives the
+/// same content as the load in one call, each scene checked once, and
+/// finishing at any point checks what is left.
+#[test]
+fn the_staged_load_gives_the_same_content() {
+    let whole = trpg_content::load_embedded().unwrap_or_else(|errors| panic!("{errors}"));
+    let scenes = whole.dialogue.scenes.len();
+    let mut load = trpg_content::StagedLoad::start();
+    assert_eq!(load.scenes_to_check(), 0);
+    load.read_dialogue();
+    assert_eq!(load.scenes_to_check(), scenes);
+    for left in (1..=scenes).rev() {
+        assert_eq!(load.scenes_to_check(), left);
+        load.check_scene();
+    }
+    assert_eq!(load.scenes_to_check(), 0);
+    load.check_scene();
+    assert_eq!(load.finish(), Ok(whole.clone()));
+    // Finished before the dialogue is read, or with some of it checked.
+    assert_eq!(
+        trpg_content::StagedLoad::start().finish(),
+        Ok(whole.clone())
+    );
+    let mut load = trpg_content::StagedLoad::start();
+    load.read_dialogue();
+    load.check_scene();
+    assert_eq!(load.finish(), Ok(whole));
+}
+
 /// Every speech line, narration line and reply of every `.dlg` has a line
 /// id that starts with its scene's id, and no two lines share one
 /// (ADR-0045 §3).
