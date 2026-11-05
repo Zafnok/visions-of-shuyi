@@ -213,3 +213,14 @@ Nothing for the game: 4 PRs (#245, #247, #248, #249). #245 and #249 are the soun
 | #253 | 3208 | Voices on or off and their volume are player settings: `Settings::voices` and `voice_volume` (0–100), `Ctx::has_voices`, voices off stops the clip playing, `OptionRow::voices` and `voice_volume`, `Harness::voice_volume`; `Ctx::voices_on`, `voice_volume`, `voice_gain` and the voice volume constants are gone | fixed: the game's tests read and change the settings; adopt → 0826 (in this PR: the saved settings' version 2, the Options rows and the New Game question) |
 
 Nothing for the game: 1 PR (#251), the sound gate's retry on Windows timings, in the engine's own CI.
+
+## 2026-11-04: 1a84a71e → b7a4674e (11 engine PRs), #541
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #256 | 2350 | The font atlas keeps the characters the text uses, and `shuyi check` fails on text it can't draw; `font_atlas::build_atlas` and `run` take an `AtlasChars` | fixed: the xtask's up-to-date atlas test passes `AtlasChars::default()`, the atlas of before; the engine's `.dlg` parser now takes any character but a control character, so the game reads `.dlg` files through its own `AsciiDlg` format and `dialogue::parse_dlg`, which keep ADR-0045's plain-ASCII text with the same errors; adopt → 1243 |
+| #264 | 2301 | Wide glyphs, two cells per character, from a wide font in the atlas; `text_width` and `cut` take the widths, `FontAtlasDef` has `wide`, packs are version 8 | fixed: `trpg_content::lang::text_width` and `trpg_ui::screens::playdate::cut` measure with `CellWidths::NARROW`, the xtask icon test's atlas has `wide`; adopt → 0236 |
+| #257 | 2137 | Real time's first step: `TickSim`, tick records that replay, `TickDriver` and its input latch; `FrameInput` gains presses, releases and `resumed` | not for the game: its rules are turns over `TurnRules`, with no stage that steps in fixed ticks |
+| #260 | 2411 | A key or button let go while the game is suspended stays held after the resume: `InputState::release_all`, called on the first frame after `Game::set_resumed` | adopt → 1170 (the desktop and web builds get it through `shuyi_app::run`; the Playdate's shim never forwards `kEventResume`) |
+
+Nothing for the game: 7 PRs (#246, #254, #255, #258, #259, #261, #265). #246, #258, #261 and #265 are the sound gate's and `shuyi-sound`'s mutation testing in the engine's own CI; #254, #255 and #259 are engine tickets only (#259's voice cast and clip plan are 1242's).

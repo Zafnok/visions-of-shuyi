@@ -22,8 +22,13 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::{MenuView, word_wrap};
-pub use shuyi_ui::screens::cut;
 use shuyi_ui::widgets::AskView;
+
+/// `text` cut to `w` cells, every character one cell wide: the game's
+/// font has no wide glyphs.
+pub fn cut(text: &str, w: usize) -> String {
+    shuyi_ui::screens::cut(text, w, &shuyi_assets::font::CellWidths::NARROW)
+}
 
 /// The mark in a list's frame that more lines are above.
 pub const MORE_ABOVE: &str = "▲";

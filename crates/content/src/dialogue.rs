@@ -278,8 +278,48 @@ impl Directive for Stage {
 /// Parses dialogue `source` (errors attributed to `file`) into its scenes,
 /// in file order, and every syntax error found. A scene with errors in it
 /// is still returned (without the broken lines), so later checks can run.
+///
+/// The text is plain ASCII (ADR-0045: the English source keeps to the
+/// font's safe set). The engine's parser takes any character but a control
+/// character, so this checks every line but a comment.
 pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentError>) {
-    engine::parse_dlg(file, source)
+    let (scenes, mut errors) = engine::parse_dlg(file, source);
+    errors.retain(|e| !e.message.starts_with("control character U+"));
+    errors.extend(not_ascii(file, source));
+    errors.sort_by_key(|e| e.line);
+    (scenes, errors)
+}
+
+/// One error per character outside printable ASCII on each line of
+/// `source` but a comment, with its column; common typographic
+/// punctuation gets its ASCII spelling suggested.
+fn not_ascii(file: &str, source: &str) -> Vec<ContentError> {
+    let mut errors = Vec::new();
+    for (n, line) in (1u32..).zip(source.lines()) {
+        let line = line.trim_end();
+        if line.trim_start_matches(' ').starts_with('#') {
+            continue;
+        }
+        for (column, c) in (1u32..).zip(line.chars()) {
+            if (' '..='~').contains(&c) {
+                continue;
+            }
+            let ascii = match c {
+                '\u{2018}' | '\u{2019}' => Some("'"),
+                '\u{201C}' | '\u{201D}' => Some("\""),
+                '\u{2026}' => Some("..."),
+                '\u{2014}' => Some("--"),
+                '\u{2013}' => Some("-"),
+                _ => None,
+            };
+            let message = match ascii {
+                Some(ascii) => format!("non-ASCII punctuation {c:?}; use {ascii} instead"),
+                None => format!("unsupported character {c:?}; dialogue text is plain ASCII"),
+            };
+            errors.push(ContentError::new(file, message).at(n, Some(column)));
+        }
+    }
+    errors
 }
 
 /// Checks one scene, replaying it to know who is on screen at each line.
@@ -454,7 +494,7 @@ pub fn scripts_from_sources<F: AsRef<str>>(
     let files = files
         .iter()
         .map(|(file, source)| {
-            let (scenes, e) = engine::parse_dlg(file.as_ref(), source);
+            let (scenes, e) = parse_dlg(file.as_ref(), source);
             errors.extend(e);
             engine::DialogueFile { scenes }
         })

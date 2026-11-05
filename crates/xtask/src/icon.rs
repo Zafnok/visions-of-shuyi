@@ -187,6 +187,8 @@ impl Atlas {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use shuyi_cli::Project;
     use shuyi_cli::app_info;
     use shuyi_cli::project::AppPart;
@@ -237,6 +239,7 @@ mod tests {
                 cell_h: 4,
                 columns: 2,
                 glyphs: [('b', 0), ('a', 1)].into_iter().collect(),
+                wide: BTreeMap::new(),
             },
             width: 4,
             pixels,

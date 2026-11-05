@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0042", "engine#2301"]
+blocked_by: ["0042"]
 nick_input: none
 completed:
 ---
@@ -30,7 +30,8 @@ one in the atlas (`font-atlas --wide <font.bdf>`, the characters the
 packs use plus a set the project file names), a wide character in two
 buffer cells, drawn as one 16×16 glyph, and `text_width` counting it as
 two. This ticket is the game's half: the font, its licence, the game's
-atlas and the game's own layout code.
+atlas and the game's own layout code. engine#2301 shipped as engine
+#264 and the pin move of 2026-11-04 reached it.
 
 ## Nick input
 
@@ -40,8 +41,7 @@ None (the font is 0042's answer).
 
 **In:** the font's BDF in `assets-src/fonts/` and its licence; the
 game's atlas regenerated with it; the set of wide glyphs the game always
-needs; the game's layout code measuring with `text_width`; moving the
-engine pin to a commit with engine#2301.
+needs; the game's layout code measuring with `text_width`.
 
 **Out (do not do):** the engine's half (engine#2301); line breaking and
 length limits (0237); translating (0719); a second wide font for Chinese
@@ -52,9 +52,13 @@ at 16 px is part of this ticket (a one-off, documented in
 
 ## Implementation steps
 
-1. Move the pin to an engine `main` that has engine#2301 (`cargo xtask
-   engine-pin <commit>`, the `engine-change` skill §7), and fix what the
-   new API needs (`text_width` takes the atlas's widths).
+1. ~~Move the pin to an engine `main` that has engine#2301~~ (done by the
+   pin move of 2026-11-04). That move kept the game narrow with two
+   shims that measure with `CellWidths::NARROW`:
+   `trpg_content::lang::text_width` (`crates/content/src/lang.rs`) and
+   `trpg_ui::screens::playdate::cut` (`crates/ui/src/screens/playdate.rs`).
+   Delete both: the content checks measure with the language's widths,
+   the screens pass `buf.widths()` to the engine's `cut`.
 2. Add the font's BDF and licence text (`assets-src/fonts/`,
    `assets/fonts/<Name>-LICENSE.txt`), a row in `THIRD_PARTY_ASSETS.md`
    and a section in `assets/fonts/README.md`.

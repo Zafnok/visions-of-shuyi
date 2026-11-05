@@ -10,7 +10,7 @@ use core::marker::PhantomData;
 
 use once_cell::race::OnceBox;
 use shuyi_assets::credits::CreditsRon;
-use shuyi_assets::dialogue::Dlg;
+use shuyi_assets::dialogue::DialogueFile;
 use shuyi_assets::font::FontAtlasRon;
 use shuyi_assets::format::{NOT_FOUND, RegisterError, TEXT_MAX_BYTES, text};
 use shuyi_assets::keymap::KeymapRon;
@@ -47,7 +47,7 @@ pub fn register(formats: &mut Formats) -> Result<(), RegisterError> {
         bundle::display_path(audio::AUDIO_PATH),
         bundle::PRIVATE_DISPLAY_ROOT,
     ))?;
-    formats.register(Dlg::<dialogue::Stage>::new())?;
+    formats.register(AsciiDlg)?;
     formats.register(KeymapRon::<keymap::Action>::new())?;
     // The legend's terrain ids, as the terrain file lists them (every
     // bundle the game reads has the same one); its colours are checked
@@ -108,6 +108,42 @@ impl<T> Default for TableRon<T> {
     /// The format of table `T`.
     fn default() -> Self {
         Self(PhantomData)
+    }
+}
+
+/// The `.dlg` format of the game's directives, read by
+/// [`dialogue::parse_dlg`]: the engine's `Dlg` with the game's
+/// plain-ASCII text (ADR-0045), which the engine's parser no longer
+/// checks (engine #256).
+struct AsciiDlg;
+
+impl Format for AsciiDlg {
+    type Asset = DialogueFile<dialogue::Stage>;
+
+    fn id(&self) -> &'static str {
+        "dlg"
+    }
+
+    fn extensions(&self) -> &'static [&'static str] {
+        &["dlg"]
+    }
+
+    fn max_bytes(&self) -> usize {
+        TEXT_MAX_BYTES
+    }
+
+    fn decode(
+        &self,
+        file: &AssetPath,
+        bytes: &[u8],
+        _cx: &DecodeCx<'_>,
+    ) -> Result<Self::Asset, Vec<ContentError>> {
+        let (scenes, errors) = dialogue::parse_dlg(file.shown(), text(file, bytes)?);
+        if errors.is_empty() {
+            Ok(DialogueFile { scenes })
+        } else {
+            Err(errors)
+        }
     }
 }
 
