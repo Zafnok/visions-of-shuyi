@@ -47,7 +47,10 @@ fn the_cast_stand_as_characters_without_marks() {
     // Dace has his class (a Shadowblade since 0850, though he doesn't fight
     // in Chapter 1).
     let dace = &cast_units(&c, &c.game.content.openings["ch01_pacing"], &lead())[0];
-    assert_eq!((dace.class.0.as_str(), dace.label.as_str()), ("shadowblade", "Da"));
+    assert_eq!(
+        (dace.class.0.as_str(), dace.label.as_str()),
+        ("shadowblade", "Da")
+    );
 }
 
 #[test]
