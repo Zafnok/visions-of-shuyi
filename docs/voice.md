@@ -230,9 +230,14 @@ each run in its lab environment.
 - Clips play at `ctx.voice_volume` (0–10, default 8).
 - A missing or unreadable clip file is a logged warning and silence.
 
-No game screen plays a voice yet (the dialogue screen will, ticket 0720).
-Until then the debug menu's **Voice test** says the test scene's voiced
-lines, one per press.
+The dialogue screen (ticket 0720) says each line's clip as its text box
+comes up, speech and narration but never a reply the player picks. The
+first press fills in the box and leaves the voice playing; moving on to
+another line, a choice or out of the scene stops it. After each line it
+preloads the next 3, and at a choice the first line of each reply's
+reaction. The dialogue log's cursor says the line it moves onto unless
+*Voice on hover in the log* is off. The debug menu's **Voice test** says
+the test scene's voiced lines, one per press, without the screen.
 
 ## Trying it with the test clips
 

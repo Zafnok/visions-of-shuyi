@@ -13,6 +13,9 @@
 //! plays before a line: the opening's characters walk on the place at
 //! full brightness ([`crate::cinematic::opening`]), the place darkens,
 //! then the line comes up.
+//!
+//! Each text box says its line's voice clip (ticket 0720, ADR-0046) as it
+//! comes up, and tells `app` which lines can come next so it loads them.
 
 pub mod glyph;
 pub mod history;
@@ -31,12 +34,14 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
 use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::settings::LogVoice;
 use crate::widgets::Ask;
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
-use log::LogView;
+use log::{LogView, RowKind};
 use shuyi_ui::dialogue::{Step, TextBox};
+use trpg_content::LineId;
 use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
 
 /// Characters per text line: the box less a 3-cell margin each side.
@@ -47,6 +52,50 @@ pub const TEXT_LINES: usize = trpg_content::dialogue::BOX_LINES;
 /// be held on a page before it reveals faster (so the tap that turned the
 /// page doesn't speed the next one up): the engine's text box's.
 pub use shuyi_ui::dialogue::text_box::{FAST_FORWARD, FAST_FORWARD_DELAY};
+
+/// How many lines past the one on screen `app` is told are coming: the
+/// clips it keeps loaded ahead (ADR-0046).
+const VOICES_AHEAD: usize = 3;
+
+/// Whether a line of `kind` has a voice. `docs/design/voices-languages-and-script.md`,
+/// *Voices*: "Every speech line in a story scene has a voice, the lead's
+/// scripted lines included, and so does narration." and "The replies a
+/// player picks (`*` lines) stay silent text."
+fn is_voiced(kind: RowKind) -> bool {
+    match kind {
+        RowKind::Speech | RowKind::Narration => true,
+        RowKind::Reply => false,
+    }
+}
+
+/// The lines that can come after the one on `player`'s screen, in order:
+/// up to [`VOICES_AHEAD`] text boxes, and at a choice the first line of
+/// each reply's reaction (then no further).
+fn coming_lines(player: &DialoguePlayer) -> Vec<LineId> {
+    let mut lines = Vec::new();
+    let mut ahead = player.clone();
+    while lines.len() < VOICES_AHEAD {
+        if ahead.is_choosing() {
+            let options = ahead.current().choices.map_or(0, |c| c.len());
+            for option in 0..options {
+                let mut reply = ahead.clone();
+                reply.choose(option);
+                if let Some(line) = reply.line().filter(|_| !reply.is_choosing()) {
+                    lines.push(line.clone());
+                }
+            }
+            break;
+        }
+        ahead.advance();
+        match ahead.line() {
+            None => break,
+            // The line it answers, already on screen.
+            Some(_) if ahead.is_choosing() => {}
+            Some(line) => lines.push(line.clone()),
+        }
+    }
+    lines
+}
 
 /// An opening playing (0734): which, and for how long so far.
 #[derive(Debug, Clone, PartialEq)]
@@ -108,6 +157,11 @@ pub struct DialogueScreen {
     battle: Option<Rc<Place>>,
     /// The opening playing before the text box, if any.
     playing: Option<Playing>,
+    /// A text box (or a choice) came up and its voice hasn't been asked
+    /// for yet: it is, once no opening plays before it.
+    voice_due: bool,
+    /// Whether a voice was asked for and not stopped since.
+    speaking: bool,
 }
 
 impl DialogueScreen {
@@ -129,6 +183,8 @@ impl DialogueScreen {
             jumped_music: None,
             battle: None,
             playing: None,
+            voice_due: false,
+            speaking: false,
         };
         screen.start_box();
         screen
@@ -259,8 +315,9 @@ impl DialogueScreen {
 
     /// Wraps the player's current text box and starts on its first page.
     /// At a choice, the line being answered stays up, fully shown (its last
-    /// page), under the replies menu.
+    /// page), under the replies menu. Its voice is due.
     fn show_box(&mut self) {
+        self.voice_due = true;
         let view = self.player.current();
         let text = TextBox::new(view.text.as_deref().unwrap_or(""), TEXT_W, TEXT_LINES);
         let menu = view.choices.map(|choices| {
@@ -324,6 +381,7 @@ impl Screen<Shuyi> for DialogueScreen {
         if music.is_some() {
             self.music = music;
         }
+        self.voice(ctx, &transition);
         transition
     }
 
@@ -341,6 +399,66 @@ impl Screen<Shuyi> for DialogueScreen {
 }
 
 impl DialogueScreen {
+    /// The voices this frame (0043, question 7): leaving the screen stops
+    /// the one playing; a box come up stops it and says its own line, once
+    /// any opening before it is over, then tells `app` the lines that can
+    /// come next. Pages of one line, and the press that fills in the box,
+    /// leave it playing.
+    fn voice(&mut self, ctx: &mut Ctx, transition: &Transition) {
+        if matches!(transition, Transition::Pop) {
+            self.stop_voice(ctx);
+            return;
+        }
+        if !self.voice_due || self.playing.is_some() {
+            return;
+        }
+        self.voice_due = false;
+        self.stop_voice(ctx);
+        let narration = self.player.current().narration;
+        let kind = if narration {
+            RowKind::Narration
+        } else {
+            RowKind::Speech
+        };
+        let in_box = !self.player.is_choosing() && is_voiced(kind);
+        if let Some(line) = self.player.line().filter(|_| in_box).cloned() {
+            self.speak(ctx, &line);
+        }
+        ctx.preload_voices(&coming_lines(&self.player));
+    }
+
+    /// Says `line`, if it has a voice that plays now.
+    fn speak(&mut self, ctx: &mut Ctx, line: &LineId) {
+        if ctx.has_voice(line) {
+            self.stop_voice(ctx);
+            ctx.play_voice(line);
+            self.speaking = true;
+        }
+    }
+
+    /// Stops the voice asked for, if one was.
+    fn stop_voice(&mut self, ctx: &mut Ctx) {
+        if self.speaking {
+            ctx.stop_voice();
+            self.speaking = false;
+        }
+    }
+
+    /// The log's cursor moved onto row `row`: says its line, if it is a
+    /// voiced one and *Voice on hover in the log* is on (0826).
+    fn speak_row(&mut self, ctx: &mut Ctx, row: usize) {
+        if ctx.settings().game.log_voice == LogVoice::Off {
+            return;
+        }
+        let log = log::view(ctx, &self.history, row);
+        let Some(focused) = log.focused() else {
+            return;
+        };
+        if let Some(line) = focused.line.clone().filter(|_| is_voiced(focused.kind)) {
+            self.speak(ctx, &line);
+        }
+    }
+
     /// One frame of reading: the keys, then the typewriter.
     fn read(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if self.player.is_finished() {
@@ -480,6 +598,7 @@ impl DialogueScreen {
                 if to != focus {
                     ctx.audio.menu(MenuSound::Move);
                     self.log = Some(to);
+                    self.speak_row(ctx, to);
                 }
                 false
             }

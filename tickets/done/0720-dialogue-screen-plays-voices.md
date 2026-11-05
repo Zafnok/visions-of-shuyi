@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0043", "0238"]
 nick_input: answer-first
-completed:
+completed: 2026-11-04
 ---
 
 # 0720 — The dialogue screen plays each line's voice
@@ -67,13 +67,13 @@ Options (0826); changing the typewriter.
 
 ## Acceptance criteria
 
-- [ ] Harness test with `test.dlg` and 0238's test manifest: each voiced line queues one `PlayVoice` when its box appears; advancing queues `StopVoice` before the next.
-- [ ] Skipping a scene queues no `PlayVoice` for skipped lines and stops the current one.
-- [ ] With voices off, no voice request is queued.
-- [ ] Reply text never asks for a voice; speech, the lead's speech and narration each do (one test per kind).
-- [ ] The first press on a typing line fills the box and queues no `StopVoice`; the next press queues it (test).
-- [ ] The dialogue log: moving its cursor onto a voiced line queues its `PlayVoice` (and none with *Voice on hover in the log* off); jumping to a line plays it as the box appears.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Harness test with `test.dlg` and 0238's test manifest: each voiced line queues one `PlayVoice` when its box appears; advancing queues `StopVoice` before the next.
+- [x] Skipping a scene queues no `PlayVoice` for skipped lines and stops the current one.
+- [x] With voices off, no voice request is queued.
+- [x] Reply text never asks for a voice; speech, the lead's speech and narration each do (one test per kind).
+- [x] The first press on a typing line fills the box and queues no `StopVoice`; the next press queues it (test).
+- [x] The dialogue log: moving its cursor onto a voiced line queues its `PlayVoice` (and none with *Voice on hover in the log* off); jumping to a line plays it as the box appears.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -81,3 +81,33 @@ Options (0826); changing the typewriter.
 
 ## Completion notes
 
+Done. `crates/ui/src/screens/dialogue.rs` asks for voices after each
+frame's reading (`DialogueScreen::voice`): a text box that came up (once
+any `@opening` before it has played) stops the voice asked for and says
+its line; a choice opening stops it and says nothing; leaving the screen
+stops it. `is_voiced(RowKind)` holds the design doc's rule, quoted above
+it, and serves both the text box and the log. After each box (and at the
+start) `PreloadVoices` lists the next 3 lines, or at a choice the first
+line of each reply's reaction (`coming_lines`, ADR-0046's "3 ahead"). The
+log's cursor says the line it moves onto unless *Voice on hover in the
+log* is off; a jump shows the box again and says it as usual. Tests:
+`crates/ui/src/screens/dialogue/tests/voice.rs` (11 tests on the test
+scene with 0238's test manifest, a clip for every line). `docs/voice.md`
+now describes what the screen does.
+
+Deviations: the tests drive the screen's `update` with a test `Ctx`, as
+0238's tests do, not the integration `Harness`: the test manifest helper
+(`screen::tests::test_voices`) is crate-private. The debug menu's
+**Voice test** stays (it says clips one per press without a scene).
+
+The agent's starting rules (where the design doc is silent):
+
+- Opening the log says nothing; only moving its cursor does. Closing the
+  log leaves whatever voice is playing.
+- The cursor moving onto a reply, or onto *Back to latest*, leaves the
+  voice playing.
+- A line whose box waits behind an `@opening` is said when the box comes
+  up after the opening, not while the opening plays.
+
+For the Act 1 playtest (1064): how the voice and the typewriter feel
+together, and whether the log's hover voice is welcome.

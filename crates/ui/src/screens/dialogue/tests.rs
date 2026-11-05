@@ -1056,3 +1056,5 @@ fn dialogue_declares_its_actions() {
     let screen = full(&scene(vec![]));
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::DIALOGUE);
 }
+
+mod voice;

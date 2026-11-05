@@ -12,8 +12,8 @@
 //! the choice isn't saved. The
 //! scene camera pans and zooms the test map as a backdrop behind a window
 //! (ticket 0228, ADR-0048). "Voice test" says the test scene's lines that
-//! have a voice clip, one per press (ticket 0238), until the dialogue
-//! screen plays voices (0720). "Play test cinematic" plays
+//! have a voice clip, one per press (ticket 0238), without playing the
+//! scene. "Play test cinematic" plays
 //! `assets-test/cinematics/test.ron` in a loop (ticket 0817, ADR-0060).
 //! The scene preview isn't in the menu: `app` opens the game on it for
 //! `--scene` (ticket 0723).
