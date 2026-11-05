@@ -3,7 +3,7 @@
 use trpg_core::lead::LeadGender::{Female, Male};
 
 use super::*;
-use crate::dialogue::{NARRATION_SPEAKER, from_sources};
+use crate::dialogue::from_sources;
 
 /// A scene `s` with a plain line, a line with a name, a line that changes
 /// with the lead's gender, a line with the lead's name, and narration.
@@ -457,36 +457,4 @@ fn clips_that_cannot_say_their_line_are_stale() {
     // Reworded speech: a different text under the same clip.
     let reworded = manifest(&[clip(&hello(), "", "Hello there.")]);
     assert!(is_stale(&reworded.clips[0], &d, &n));
-}
-
-#[test]
-fn a_cast_maps_speakers_to_voices() {
-    let characters = crate::character::load(None, None, None).ok();
-    let source = "(voices: {\n\"test_lord\": \"lord_a\",\n\">\": \"narrator\",\n})";
-    let cast = cast_from_source("cast.ron", source, characters.as_ref()).unwrap();
-    assert_eq!(cast.voices["test_lord"], "lord_a");
-    assert_eq!(cast.voices[NARRATION_SPEAKER], "narrator");
-    // Without the character table, any speaker passes.
-    let anyone = "(voices: {\"nobody\": \"x\"})";
-    assert!(cast_from_source("cast.ron", anyone, None).is_ok());
-    assert!(cast_from_source("cast.ron", "(voices: 3)", None).is_err());
-}
-
-#[test]
-fn a_cast_with_an_unknown_speaker_or_an_empty_voice_is_an_error() {
-    let characters = crate::character::load(None, None, None).ok();
-    assert!(characters.is_some());
-    let source = "(voices: {\n\"nobody\": \"x\",\n\"test_lord\": \" \",\n})";
-    let errors: Vec<String> = cast_from_source("cast.ron", source, characters.as_ref())
-        .unwrap_err()
-        .iter()
-        .map(ToString::to_string)
-        .collect();
-    assert_eq!(
-        errors,
-        [
-            "cast.ron:2: \"nobody\" is not a character that speaks",
-            "cast.ron:3: \"test_lord\" has no voice",
-        ]
-    );
 }

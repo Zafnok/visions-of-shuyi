@@ -122,10 +122,6 @@ it. `reader` reads its undirected lines: `Qwen3` or `Chatterbox`. Every
 directed line takes ADR-0109's recipe, whoever the reader. The game doesn't
 read this file; `cargo xtask voice` does.
 
-The test folder's `crates/app/tests/voice/en/cast.ron` is still in the
-engine's older form, speaker to voice id, which
-`trpg_content::voice::cast_from_source` reads (ticket 0760).
-
 ## `say.ron`
 
 ```ron
