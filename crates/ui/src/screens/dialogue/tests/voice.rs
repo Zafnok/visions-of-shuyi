@@ -338,8 +338,10 @@ fn a_scene_shown_again_says_its_lines_again() {
 /// reactions: not that line again.
 #[test]
 fn the_line_before_a_choice_preloads_the_reactions() {
-    let (mut c, scene) = voiced(false);
+    // The line has a clip, so it would show if it were listed again.
+    let (mut c, scene) = voiced_plain_question();
     let question = line(&scene, "test_archer", "You came back for us.");
+    assert!(c.has_voice(&question));
     let mut s = test_screen(&c, &scene);
     while s.player().line() != Some(&question) {
         press(&mut s, &mut c, Action::Confirm);
