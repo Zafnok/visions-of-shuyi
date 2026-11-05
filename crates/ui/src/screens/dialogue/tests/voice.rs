@@ -10,7 +10,27 @@ use crate::screen::tests::test_voices;
 /// A context whose every line of the test scene has a clip, and the
 /// test scene, at Instant text speed unless `typing`.
 fn voiced(typing: bool) -> (Ctx, Scene) {
+    voiced_in(ctx(), typing)
+}
+
+/// [`voiced`], with the line the choice answers written without the
+/// lead's name, so it has a clip too.
+fn voiced_plain_question() -> (Ctx, Scene) {
     let mut c = ctx();
+    let scene = c.game.content.dialogue.scenes.get_mut(TEST_SCENE).unwrap();
+    for step in &mut scene.steps {
+        if let Step::Say { text, .. } = step
+            && text.contains("You came back for us.")
+        {
+            *text = "You came back for us.".into();
+        }
+    }
+    scene.assign_line_ids();
+    voiced_in(c, false)
+}
+
+/// `c` with a clip for every line of its test scene, and that scene.
+fn voiced_in(mut c: Ctx, typing: bool) -> (Ctx, Scene) {
     let count = c.game.content.dialogue.scenes[TEST_SCENE].lines().len();
     let (manifest, _) = test_voices(&c, &(0..count).collect::<Vec<_>>());
     c.set_voice_manifest(&manifest);
@@ -29,12 +49,12 @@ fn test_screen(c: &Ctx, scene: &Scene) -> DialogueScreen {
     DialogueScreen::told(c, scene, c.game.lead.clone(), &Present::Everyone)
 }
 
-/// The id of the test scene's line by `speaker` that starts with `text`.
+/// The id of the test scene's line by `speaker` that has `text` in it.
 fn line(scene: &Scene, speaker: &str, text: &str) -> LineId {
     let lines = scene.lines();
     let found = lines
         .iter()
-        .find(|l| l.speaker == speaker && l.text.starts_with(text));
+        .find(|l| l.speaker == speaker && l.text.contains(text));
     found.expect("the test scene has the line").id.clone()
 }
 
@@ -312,4 +332,47 @@ fn a_scene_shown_again_says_its_lines_again() {
     let mut again = test_screen(&c, &scene);
     let (said_again, _) = read_through(&mut again, &mut c);
     assert_eq!(played(&said), played(&said_again));
+}
+
+/// On the line a choice answers, what comes next is the replies'
+/// reactions: not that line again.
+#[test]
+fn the_line_before_a_choice_preloads_the_reactions() {
+    let (mut c, scene) = voiced(false);
+    let question = line(&scene, "test_archer", "You came back for us.");
+    let mut s = test_screen(&c, &scene);
+    while s.player().line() != Some(&question) {
+        press(&mut s, &mut c, Action::Confirm);
+    }
+    assert!(!s.player().is_choosing());
+    let reactions = [
+        line(&scene, "test_archer", "You do."),
+        line(&scene, "test_archer", "I carry my own"),
+        line(&scene, "test_archer", "Right. Moving."),
+    ];
+    let preload = AudioRequest::PreloadVoices {
+        lines: reactions
+            .iter()
+            .map(|l| (l.clone(), Variant::None))
+            .collect(),
+    };
+    assert_eq!(voices(&mut c).last(), Some(&preload));
+}
+
+/// Opening a choice stops the line it answers and doesn't say it again.
+#[test]
+fn a_choice_opening_does_not_say_its_line_again() {
+    let (mut c, scene) = voiced_plain_question();
+    let question = line(&scene, "test_archer", "You came back for us.");
+    assert!(c.has_voice(&question));
+    let mut s = test_screen(&c, &scene);
+    while s.player().line() != Some(&question) {
+        press(&mut s, &mut c, Action::Confirm);
+    }
+    assert_eq!(played(&voices(&mut c)).last(), Some(&question));
+    press(&mut s, &mut c, Action::Confirm);
+    assert!(s.player().is_choosing());
+    let opened = voices(&mut c);
+    assert_eq!(opened.first(), Some(&AudioRequest::StopVoice));
+    assert_eq!(played(&opened), [] as [LineId; 0]);
 }
