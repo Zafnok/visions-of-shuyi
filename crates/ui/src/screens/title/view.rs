@@ -9,6 +9,7 @@ use alloc::rc::Rc;
 use trpg_content::ImageId;
 
 use crate::cinematic::CinematicPlayer;
+use crate::tips::view::FaceView;
 use crate::widgets::MenuView;
 
 /// As solid or as bright as can be ([`TitleView::menu_opacity`],
@@ -52,8 +53,25 @@ pub struct TitleView {
     pub menu: Option<MenuView>,
     /// Why `Continue` couldn't, until the next key.
     pub notice: Option<String>,
+    /// The guide's note beside the menu while the profile in use was never
+    /// set up (ticket 0842); shown and faded with the menu.
+    pub note: Option<NoteView>,
     /// The help line: what the keys do here (not shown with the prompt).
     pub help: Option<String>,
     /// The hint at the debug menu's key, in a build with debug tools.
     pub debug_hint: Option<String>,
+}
+
+/// The guide's note beside the title's menu (ticket 0842): a small tip box
+/// that takes no keys.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NoteView {
+    /// The box's title: the guide's name.
+    pub title: String,
+    /// The guide's face, if the game has the guide's portrait.
+    pub face: Option<FaceView>,
+    /// The first line.
+    pub heading: String,
+    /// The text, one entry per paragraph; the skin wraps it.
+    pub lines: Vec<String>,
 }

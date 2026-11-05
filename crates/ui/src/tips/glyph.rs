@@ -28,7 +28,7 @@ pub const FACE_CELLS: (i32, i32) = (16, 8);
 
 /// Cells between the border and what is inside, and between the face and
 /// the text.
-const MARGIN: i32 = 2;
+pub(crate) const MARGIN: i32 = 2;
 
 /// The mark before an item to do, and before one done: glyphs of the box,
 /// like its borders, not text.
@@ -184,6 +184,19 @@ fn paint_frame(
     face: Option<&FaceView>,
     buf: &mut GlyphBuffer,
 ) -> i32 {
+    paint_frame_sized(ctx, rect, title, face.map(|f| (f, FACE_CELLS, 0.0)), buf)
+}
+
+/// [`paint_frame`] with the face (if any) in an area of its own size in
+/// cells, faded by its `dim` (0 none, 1 gone): the guide's note on the
+/// title (0842) has a smaller one.
+pub(crate) fn paint_frame_sized(
+    ctx: &Ctx,
+    rect: Rect,
+    title: &str,
+    face: Option<(&FaceView, (i32, i32), f32)>,
+    buf: &mut GlyphBuffer,
+) -> i32 {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
@@ -196,19 +209,19 @@ fn paint_frame(
         bg,
     );
     let x = rect.x + MARGIN;
-    let Some(face) = face else {
+    let Some((face, face_cells, dim)) = face else {
         return x;
     };
     if let Some(portrait) = ctx.game.content.portraits.get(&face.portrait) {
         let at = (x, rect.y + 1);
-        draw_portrait_in(buf, at, FACE_CELLS, portrait, &face.expression, 0.0, false);
+        draw_portrait_in(buf, at, face_cells, portrait, &face.expression, dim, false);
     }
-    x + FACE_CELLS.0 + MARGIN
+    x + face_cells.0 + MARGIN
 }
 
 /// Paints `heading` highlighted at `(x, y)`, then `lines` under it.
 /// Returns the row of the last.
-fn paint_text(
+pub(crate) fn paint_text(
     ctx: &Ctx,
     (x, mut y): (i32, i32),
     heading: &str,

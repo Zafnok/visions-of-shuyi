@@ -19,6 +19,12 @@
     "title.credits": "Credits",
     "title.quit": "Quit",
     "title.help": "{Cursor} move · {Confirm} select · {Cancel} back",
+    // The guide's note beside the menu until the profile in use is
+    // renamed, an option kept or a game saved (ticket 0842). `{name}` is
+    // the profile's name. In the guide's voice
+    // (`docs/story/characters/guide.md`).
+    "title.note.heading": "Still {name}?",
+    "title.note.text": "Profile, on this menu, gives you a name of your own. Your options and saves stay with it.",
 
     // Player profiles (`docs/design/options.md`). `{n}` is the profile's
     // number: the first profile, made on a first launch, is `Player 1`.

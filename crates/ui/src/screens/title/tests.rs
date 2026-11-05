@@ -1229,3 +1229,56 @@ fn title_declares_its_actions() {
     let screen = TitleScreen::new(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::TITLE);
 }
+
+/// Ticket 0842: on a profile never set up the guide's note shows with the
+/// menu (the profile's name in its heading), not with the prompt, and
+/// not while the cinematic plays alone; it fades with the menu.
+#[test]
+fn the_guides_note_shows_with_the_menu_on_a_new_profile() {
+    let mut c = ctx();
+    c.key_prompt = KeyPrompt::Waiting;
+    let mut t = TitleScreen::new(&c);
+    assert_eq!(t.view(&c).note, None, "not with the prompt");
+    c.key_prompt = KeyPrompt::Pressed;
+    t.update(&mut c, &input(&[]));
+    let note = t.view(&c).note.unwrap();
+    assert_eq!(note.title, "Vix");
+    assert_eq!(note.heading, "Still Player 1?");
+    assert!(note.lines.concat().contains("Profile"), "{:?}", note.lines);
+    // The game has the guide's face only with the bought art.
+    let has_face = c
+        .game
+        .content
+        .portraits
+        .contains_key(trpg_content::tip::GUIDE_PORTRAIT);
+    assert_eq!(note.face.is_some(), has_face);
+    // Nothing set up: nothing kept.
+    assert_eq!(c.storage.read(profiles::SET_UP_KEY), Ok(None));
+
+    let mut c = ctx();
+    let mut t = in_cinematic(&mut c, 20.0);
+    assert_eq!(t.view(&c).note, None, "not over the cinematic");
+    t.update(&mut c, &input(&[Action::Confirm]));
+    let view = t.view(&c);
+    assert!(view.note.is_some() && view.menu.is_some());
+}
+
+/// Ticket 0842: once the title sees the profile set up, it keeps the mark,
+/// shows no note, and the profile stays set up after its save is gone.
+#[test]
+fn a_profile_seen_set_up_is_kept_and_has_no_note() {
+    let mut c = ctx();
+    c.storage.write(save::SUSPEND_KEY, "anything").unwrap();
+    let mut t = TitleScreen::new(&c);
+    assert_eq!(t.view(&c).note, None);
+    assert_eq!(
+        c.storage.read(profiles::SET_UP_KEY),
+        Ok(None),
+        "not before an update"
+    );
+    t.update(&mut c, &input(&[]));
+    assert!(matches!(c.storage.read(profiles::SET_UP_KEY), Ok(Some(_))));
+    c.storage.delete(save::SUSPEND_KEY).unwrap();
+    t.uncovered(&mut c, None);
+    assert_eq!(t.view(&c).note, None);
+}

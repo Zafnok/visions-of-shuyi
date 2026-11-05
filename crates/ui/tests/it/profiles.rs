@@ -515,3 +515,69 @@ fn a_name_another_profile_has_is_refused_and_the_box_stays() {
     h.keys("Escape Left f f").type_text("Abcdefghijklm");
     assert_eq!(screen(&h).typed(), Some("Abcdefghijkl"));
 }
+
+/// The heading of the guide's note on the title (ticket 0842), if shown.
+fn note(h: &Harness) -> Option<String> {
+    let title = h.game().screen::<TitleScreen>();
+    let title = title.unwrap_or_else(|| panic!("no title"));
+    title.view(h.game().ctx()).note.map(|n| n.heading)
+}
+
+/// Ticket 0842: a new profile has the guide's note on the title; renaming
+/// it on the Profile screen takes the note away, for good.
+#[test]
+fn the_guides_note_shows_until_the_profile_is_renamed() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    assert_eq!(note(&h).as_deref(), Some("Still Player 1?"));
+    h.keys("Down Down Down f f f Backspace")
+        .type_text("Ana")
+        .keys("Enter");
+    assert_eq!(names(&h), ["Player Ana"]);
+    h.keys("d");
+    assert_eq!(h.screens(), ["title"]);
+    assert_eq!(note(&h), None);
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(note(&h), None);
+}
+
+/// Ticket 0842: keeping an option in Options takes the note away.
+#[test]
+fn keeping_an_option_takes_the_guides_note_away() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    assert!(note(&h).is_some());
+    // Options, text speed one faster, back, Keep.
+    h.keys("Down Down f Right d Left Left f");
+    assert_eq!(h.screens(), ["title"]);
+    assert_eq!(text_speed(&h), TextSpeed::Fast);
+    assert_eq!(note(&h), None);
+}
+
+/// Ticket 0842: a game saved takes the note away, and it stays away when
+/// the save is gone (a suspend save continued).
+#[test]
+fn saving_a_game_takes_the_guides_note_away_for_good() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    save_at(&mut h, SUSPEND_KEY, "Odo");
+    let mut h = Harness::with_storage(h.into_storage());
+    assert_eq!(note(&h), None);
+    h.wait(0.1);
+    ok(h.ctx_mut().storage.delete(SUSPEND_KEY));
+    let h = Harness::with_storage(h.into_storage());
+    assert!(!save::has_suspend(&h.game().ctx().storage));
+    assert_eq!(note(&h), None);
+}
+
+/// Ticket 0842: each profile has its own note: a new one shows it with its
+/// own name while the one set up doesn't.
+#[test]
+fn other_profiles_keep_their_guides_note() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    save_at(&mut h, &slot_key(1), "Mara");
+    let second = add(&mut h, "Player 2");
+    switch(&mut h, second);
+    let mut h = Harness::with_storage(h.into_storage());
+    assert_eq!(note(&h).as_deref(), Some("Still Player 2?"));
+    switch(&mut h, ProfileId::FIRST);
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(note(&h), None);
+}

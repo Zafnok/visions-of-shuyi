@@ -11,14 +11,17 @@ use shuyi_ui::float::Float;
 
 use trpg_content::ImageId;
 
-use super::view::{FULL, TitleView};
+use super::view::{FULL, NoteView, TitleView};
 use crate::audio::splitmix64;
 use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::{centre_x, paint_debug_hint, print_centred};
+use crate::tips::glyph::{MARGIN, paint_frame_sized, paint_text};
 use crate::widgets::menu::glyph as menu_glyph;
+use crate::widgets::word_wrap;
 
 /// Console pixels per logo pixel: a cell's width, the size of the blocks
 /// the lettering is made of.
@@ -34,6 +37,11 @@ pub const EDGE_PX: i32 = 32;
 const MENU_ROW: i32 = 18;
 /// Row of the "press any key or button" line.
 const PROMPT_ROW: i32 = 20;
+/// Cells between the menu box and the guide's note right of it (0842).
+const NOTE_GAP: i32 = 2;
+/// The guide's face in the note, in cells: a 64×64 bust at 1×, half the
+/// tip box's (a small note, not a lesson).
+pub const NOTE_FACE_CELLS: (i32, i32) = (8, 4);
 
 /// The pictures beside the "press any key or button" line, as rows of
 /// glyphs: a keyboard on its left and a controller on its right, so it is
@@ -237,6 +245,10 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
         menu_glyph::paint(ctx, menu, buf, x, MENU_ROW);
         buf.dim(Rect::new(x, MENU_ROW, w, h), solid);
+        if let Some(note) = &view.note {
+            let menu_box = Rect::new(x, MENU_ROW, w, h);
+            paint_note(ctx, note, menu_box, solid, buf);
+        }
         if let Some(notice) = &view.notice {
             // On a band of its own, a blank cell wider on each side.
             let len = notice.chars().count();
@@ -259,6 +271,41 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     if let Some(hint) = &view.debug_hint {
         paint_debug_hint(&ctx.palette, hint, buf, bottom);
     }
+}
+
+/// Where the guide's note goes right of the menu box `menu` in `buf`, its
+/// top level with the menu's and its right edge a cell short of the
+/// screen's at most, and its rows: the heading's, then the text's, each
+/// wrapped to the room beside the face.
+pub fn note_layout(note: &NoteView, menu: Rect, buf: &GlyphBuffer) -> (Rect, Vec<String>) {
+    let left = menu.x + menu.w + NOTE_GAP;
+    let face_w = note.face.as_ref().map_or(0, |_| NOTE_FACE_CELLS.0 + MARGIN);
+    let most = i32::from(buf.width()) - 1 - left;
+    let room = usize::try_from(most - MARGIN - face_w - MARGIN).unwrap_or(1);
+    let paragraphs = core::iter::once(&note.heading).chain(&note.lines);
+    let rows: Vec<String> = paragraphs.flat_map(|p| word_wrap(p, room)).collect();
+    let len = |s: &String| i32::try_from(s.chars().count()).unwrap_or(i32::MAX);
+    let text_w = rows.iter().map(len).max().unwrap_or(0);
+    let title_w = len(&note.title) + 2;
+    let w = MARGIN + face_w + text_w.max(title_w - face_w) + MARGIN;
+    let face_h = note.face.as_ref().map_or(0, |_| NOTE_FACE_CELLS.1);
+    let text_h = i32::try_from(rows.len()).unwrap_or(0);
+    (Rect::new(left, menu.y, w, face_h.max(text_h) + 2), rows)
+}
+
+/// Paints the guide's note right of the menu box `menu` ([`note_layout`]),
+/// as the tip box with a smaller face, as solid as the menu (`solid`).
+fn paint_note(ctx: &Ctx, note: &NoteView, menu: Rect, solid: f32, buf: &mut GlyphBuffer) {
+    let (rect, rows) = note_layout(note, menu, buf);
+    let face = note
+        .face
+        .as_ref()
+        .map(|f| (f, NOTE_FACE_CELLS, 1.0 - solid));
+    let x = paint_frame_sized(ctx, rect, &note.title, face, buf);
+    if let Some((heading, lines)) = rows.split_first() {
+        paint_text(ctx, (x, rect.y + 1), heading, lines, buf);
+    }
+    buf.dim(rect, solid);
 }
 
 #[cfg(test)]
@@ -311,6 +358,7 @@ mod tests {
                 shown: 2,
             }),
             notice: None,
+            note: None,
             help: Some("help".to_owned()),
             debug_hint: None,
         }
@@ -517,6 +565,148 @@ mod tests {
         let help = buf.get(column(&buf, bottom, "help"), bottom).unwrap();
         assert_eq!(help.fg, c.palette.get(UiColor::TextDim));
         assert_eq!(help.bg, c.palette.get(UiColor::Black));
+    }
+
+    /// Ticket 0842: the guide's note sits right of the menu, level with
+    /// its top, clear of the menu, the logo and the help line and inside
+    /// the screen, with the widest menu (the debug one in the test
+    /// language) and the face or none; its heading and text are inside it.
+    #[test]
+    fn the_guides_note_is_right_of_the_menu_clear_of_it_and_the_logo() {
+        use crate::screens::TitleScreen;
+        use crate::tips::view::FaceView;
+        let mut c = ctx();
+        let (image, size) = c.game.content.title.logo.unwrap();
+        let logo = logo_sprite(image, size);
+        let cell_h = i32::from(ConsoleSpec::PC.cell_h);
+        for lang in ["en", trpg_content::lang::TEST] {
+            c.lang = trpg_content::LangCode::new(lang).unwrap();
+            let mut view = TitleScreen::with_quick_battle(&c).view(&c);
+            let menu = view.menu.clone().unwrap();
+            let (w, h) = menu_glyph::size(&c, &menu);
+            let x = (i32::from(ConsoleSpec::PC.cols) - w) / 2;
+            let menu_box = Rect::new(x, MENU_ROW, w, h);
+            for face in [
+                None,
+                Some(FaceView {
+                    portrait: "guide".into(),
+                    expression: "neutral".into(),
+                }),
+            ] {
+                let note = view.note.as_mut().unwrap();
+                note.face = face;
+                let buf = painted(&c, &view);
+                let note = view.note.as_ref().unwrap();
+                let (rect, rows) = note_layout(note, menu_box, &buf);
+                assert_eq!(rect.y, MENU_ROW, "{lang}");
+                assert!(rect.x > menu_box.x + menu_box.w, "{lang}: {rect:?}");
+                assert!(logo.dest.y + logo.dest.h <= rect.y * cell_h, "{lang}");
+                assert!(rect.x + rect.w < i32::from(buf.width()), "{lang}: {rect:?}");
+                assert!(
+                    rect.y + rect.h < i32::from(buf.height()) - 1,
+                    "{lang}: {rect:?}"
+                );
+                assert!(rows.len() >= 3, "{lang}: {rows:?}");
+                let x =
+                    rect.x + MARGIN + note.face.as_ref().map_or(0, |_| NOTE_FACE_CELLS.0 + MARGIN);
+                for (y, row) in (rect.y + 1..).zip(&rows) {
+                    assert_eq!(column(&buf, y, row), x, "{lang}: {row}");
+                    assert!(y < rect.y + rect.h - 1);
+                }
+                assert!(text(&buf, rect.y).contains(&format!(" {} ", note.title)));
+            }
+        }
+    }
+
+    fn note(face: bool, title: &str, lines: &[&str]) -> NoteView {
+        use crate::tips::view::FaceView;
+        NoteView {
+            title: title.to_owned(),
+            face: face.then(|| FaceView {
+                portrait: "guide".into(),
+                expression: "neutral".into(),
+            }),
+            heading: "H".to_owned(),
+            lines: lines.iter().map(|l| (*l).to_owned()).collect(),
+        }
+    }
+
+    /// The note is as wide as its text or its title (with a cell each side
+    /// of it) beside the face, plus its margins, and as tall as the face or
+    /// the text between its borders; text that won't fit is wrapped to the
+    /// room left before the screen's last column.
+    #[test]
+    fn the_note_is_as_big_as_its_text_or_title_beside_the_face() {
+        let c = ctx();
+        let buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale(&c));
+        let menu = Rect::new(40, MENU_ROW, 11, 4);
+        let left = 53;
+        let size = |n: &NoteView| {
+            let (rect, rows) = note_layout(n, menu, &buf);
+            assert_eq!((rect.x, rect.y), (left, MENU_ROW));
+            (rect.w, rect.h, rows)
+        };
+        // A title of 5 cells: wider than the text.
+        let rows = vec!["H".to_owned(), "a".to_owned()];
+        assert_eq!(
+            size(&note(false, "Vix", &["a"])),
+            (2 + 5 + 2, 2 + 2, rows.clone())
+        );
+        // The face's 8 cells and a margin, beside text one cell wide: the
+        // title runs over the face's place too.
+        assert_eq!(
+            size(&note(true, "Vix", &["a"])),
+            (2 + 8 + 2 + 1 + 2, 4 + 2, rows)
+        );
+        // 46 cells to the screen's last column: 42 for the text, or 32
+        // beside the face; one-letter words fill all but one of them.
+        let long = ["a"; 30].join(" ");
+        for (face, room) in [(false, 42), (true, 32)] {
+            let (w, h, rows) = size(&note(face, "Vix", &[&long]));
+            assert_eq!(rows[1].chars().count(), room - 1, "{face}");
+            let face_w = if face { 10 } else { 0 };
+            assert_eq!(w, 2 + face_w + i32::try_from(room).unwrap() - 1 + 2);
+            assert!(left + w < i32::from(buf.width()));
+            assert_eq!(
+                h,
+                i32::try_from(rows.len())
+                    .unwrap()
+                    .max(if face { 4 } else { 0 })
+                    + 2
+            );
+        }
+    }
+
+    /// The face fades with the menu, as the note's text does.
+    #[test]
+    fn the_notes_face_fades_with_the_menu() {
+        let mut c = ctx();
+        let mut guide = c.game.content.portraits["test_lord"].clone();
+        let first = guide.expressions[0].clone();
+        guide.expressions.push(trpg_content::portrait::Expression {
+            name: "neutral".into(),
+            ..first
+        });
+        c.game.content.portraits.insert("guide".into(), guide);
+        let (image, size) = c.game.content.title.logo.unwrap();
+        let logo = logo_sprite(image, size);
+        let face_opacity = |opacity: u8| {
+            let mut v = view();
+            v.note = Some(note(true, "Vix", &["a"]));
+            v.menu_opacity = opacity;
+            let buf = painted(&c, &v);
+            let faces: Vec<u8> = buf
+                .sprites()
+                .iter()
+                .filter(|s| s.dest != logo.dest)
+                .map(|s| s.opacity)
+                .collect();
+            assert_eq!(faces.len(), 1, "{faces:?}");
+            faces[0]
+        };
+        assert_eq!(face_opacity(FULL), 255);
+        let half = face_opacity(128);
+        assert!((120..=135).contains(&half), "{half}");
     }
 
     /// A keyboard on the line's left and a controller on its right, each

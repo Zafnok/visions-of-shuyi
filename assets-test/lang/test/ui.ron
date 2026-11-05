@@ -27,6 +27,12 @@
     ),
     (key: "profile.numbered", source: "Player {n}", text: "PLAYER {n}"),
     (key: "title.profile", source: "Profile", text: "PROFILE"),
+    (key: "title.note.heading", source: "Still {name}?", text: "STILL {name}?"),
+    (
+        key: "title.note.text",
+        source: "Profile, on this menu, gives you a name of your own. Your options and saves stay with it.",
+        text: "PROFILE, ON THIS MENU, GIVES YOU A NAME OF YOUR OWN. YOUR OPTIONS AND SAVES STAY WITH IT.",
+    ),
     (key: "profile.title", source: "Profile", text: "PROFILE"),
     (key: "profile.current", source: "in use", text: "IN USE"),
     (key: "profile.add", source: "Add a profile", text: "ADD A PROFILE"),

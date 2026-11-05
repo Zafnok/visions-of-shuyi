@@ -25,7 +25,7 @@ pub mod song;
 pub mod view;
 
 use crate::prelude::*;
-pub use view::{CinematicView, TitleView};
+pub use view::{CinematicView, NoteView, TitleView};
 
 use alloc::rc::Rc;
 
@@ -41,11 +41,13 @@ use crate::cinematic::{CinematicPlayer, millis};
 use crate::flow::FlowScreen;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
+use crate::profiles::{self, SetUp};
 use crate::save;
 use crate::screen::{
     Ctx, FrameInput, IdleMotion, KeyPrompt, Keyboard, Screen, ScreenResult, Shuyi, SkinSet,
     Transition,
 };
+use crate::tips::view::{FaceView, GUIDE_NAME};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The title screen's music cue (`audio.md`).
@@ -80,6 +82,14 @@ pub fn paint_logo(
         SkinSet::Playdate => playdate::paint_logo(ctx, backdrop, None, buf),
     }
 }
+
+/// Text key of the heading of the guide's note on a profile never set up
+/// (ticket 0842); `{name}` is the profile's name.
+pub const NOTE_HEADING: &str = "title.note.heading";
+/// Text key of that note's text.
+pub const NOTE_TEXT: &str = "title.note.text";
+/// The guide's expression in that note: plain instructions.
+const NOTE_FACE: &str = "neutral";
 
 /// Seconds the menu waits without a press before the cinematic takes over
 /// (Nick's number; *tunable*).
@@ -232,6 +242,10 @@ pub struct TitleScreen {
     song: SongTime,
     /// What is showing.
     phase: Phase,
+    /// Whether the profile in use was set up, as of when the title was
+    /// last shown ([`refresh`](Self::refresh)): until it was, the guide's
+    /// note shows beside the menu.
+    set_up: SetUp,
 }
 
 impl TitleScreen {
@@ -260,6 +274,7 @@ impl TitleScreen {
             player: None,
             song: SongTime::default(),
             phase: Phase::MENU,
+            set_up: SetUp::No,
         };
         title.refresh(ctx);
         title
@@ -302,8 +317,11 @@ impl TitleScreen {
     /// otherwise it stays.
     ///
     /// Makes the cinematic again too, as `ctx` paints it now, with the
-    /// lead of the most recent save ([`save::latest_lead`]).
+    /// lead of the most recent save ([`save::latest_lead`]), and looks
+    /// again at whether the profile in use was set up
+    /// ([`profiles::set_up`]).
     pub fn refresh(&mut self, ctx: &Ctx) {
+        self.set_up = profiles::set_up(ctx);
         let lead = save::latest_lead(&ctx.storage);
         let player = CinematicPlayer::new(ctx, TITLE_CINEMATIC, lead);
         self.player = player.map(|p| Rc::new(p.with_backdrop(self.backdrop)));
@@ -373,8 +391,40 @@ impl TitleScreen {
             prompt: waiting.then(|| ctx.text(Self::prompt_key(ctx)).to_owned()),
             menu: menu.then(|| self.menu.view()),
             notice: self.notice.clone().filter(|_| menu),
+            note: (menu && !self.set_up.done()).then(|| Self::note(ctx)),
             help: menu.then(|| Self::help(ctx)),
             debug_hint: debug_hint(ctx),
+        }
+    }
+
+    /// The guide's note suggesting the Profile screen (ticket 0842), with
+    /// the name of the profile in use.
+    fn note(ctx: &Ctx) -> NoteView {
+        let words = ctx.words();
+        let guide = ctx
+            .game
+            .content
+            .portraits
+            .get(trpg_content::tip::GUIDE_PORTRAIT);
+        let face = guide
+            .is_some_and(|p| p.expression(NOTE_FACE).is_some())
+            .then(|| FaceView {
+                portrait: trpg_content::tip::GUIDE_PORTRAIT.to_owned(),
+                expression: NOTE_FACE.to_owned(),
+            });
+        let profiles = ctx.profiles();
+        let profile = profiles.get(profiles.current());
+        // check-text: not a data name (the player's own)
+        let name = profile.map_or("", |p| p.name.as_str());
+        NoteView {
+            title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
+            face,
+            heading: ctx.text_with(NOTE_HEADING, &[("name", &name)]),
+            lines: ctx
+                .text_with(NOTE_TEXT, &[])
+                .lines()
+                .map(str::to_owned)
+                .collect(),
         }
     }
 
@@ -499,6 +549,12 @@ impl Screen<Shuyi> for TitleScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if self.set_up == SetUp::Seen {
+            // Once: a mark that can't be written is tried again the next
+            // time the title is shown (`refresh` sees it is missing).
+            let _ = profiles::keep_set_up(&mut ctx.storage);
+            self.set_up = SetUp::Kept;
+        }
         if let Some(backdrop) = self.unstored.take() {
             // Not being able to remember it must not stop the title.
             let _ = ctx

@@ -60,6 +60,7 @@ fn view(c: &Ctx) -> TitleView {
             shown: 5,
         }),
         notice: None,
+        note: None,
         help: Some("✛ move · Ⓐ select".to_owned()),
         debug_hint: None,
     }
