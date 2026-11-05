@@ -9,7 +9,7 @@ use shuyi_assets::font::FontAtlasDef;
 use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
 use shuyi_cli::contract::{bots, check, lint, replay, target};
-use shuyi_cli::font_atlas::{ATLAS_RANGES, ONE_BIT_FILE, read_font};
+use shuyi_cli::font_atlas::{ATLAS_RANGES, AtlasChars, ONE_BIT_FILE, read_font};
 use shuyi_cli::frame_png::{self, Options};
 use shuyi_cli::lang_status::{self, Part};
 
@@ -702,7 +702,8 @@ fn the_tile_shapes_are_the_terrains_pictures() {
 }
 
 /// The committed atlas must be exactly what the tool produces from the
-/// committed font source.
+/// committed font source and the characters the game's text uses, as
+/// `cargo shuyi font-atlas` keeps them (ticket 1243).
 #[test]
 fn committed_atlas_is_up_to_date() {
     let project = project();
@@ -710,19 +711,16 @@ fn committed_atlas_is_up_to_date() {
     let rules = project.config.font_atlas.as_ref().unwrap();
     let dir = std::env::temp_dir().join(format!("xtask-atlas-check-{}", std::process::id()));
     let fonts = SOURCES.map(|source| root.join(source));
-    let msg = shuyi_cli::font_atlas::run(
-        rules,
-        project.config.command(),
-        &fonts,
-        None,
-        &dir,
-        &shuyi_cli::font_atlas::AtlasChars::default(),
-    )
-    .unwrap();
+    let chars =
+        AtlasChars::of_lang(&lang().lang, &rules.required_glyphs).with_wide(&rules.wide_glyphs);
+    let msg =
+        shuyi_cli::font_atlas::run(rules, project.config.command(), &fonts, None, &dir, &chars)
+            .unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
     let rerun = "rerun `cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf \
-                 assets-src/fonts/pad-shapes.bdf assets/fonts`";
+                 assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf \
+                 assets/fonts`";
     assert_eq!(
         read(&dir.join("atlas.ron")),
         read(&root.join("assets/fonts/atlas.ron")),
@@ -811,13 +809,15 @@ fn a_session_record_plays_from_the_real_start() {
     assert_eq!(session.scene().unwrap().screen, "battle");
 }
 
-/// Ticket 1193: `check` (the MCP server's) passes on the game's content.
+/// Ticket 1193: `check` (the MCP server's) passes on the game's content,
+/// its text checked against the font atlas too (ticket 1243).
 #[test]
 fn check_passes_on_the_content() {
     let answer = check::check(&Trpg, &check::CheckInput::default());
     let errors = answer.result.as_ref().map(|r| r.errors.clone());
     assert!(answer.ok, "{:?} {errors:?}", answer.error);
     assert_eq!(errors, Some(Vec::new()));
+    assert_eq!(answer.limits, Vec::<String>::new());
 }
 
 /// Ticket 1193: a broken file is an error of `check`, with its file and
@@ -835,6 +835,31 @@ fn check_finds_a_broken_file_by_file_and_line() {
     let errors = answer.result.unwrap().errors;
     let ai = errors.iter().find(|e| e.file == "assets/data/ai.ron");
     assert!(ai.is_some_and(|e| e.line.is_some()), "{errors:?}");
+}
+
+/// Ticket 1243: a test pack line with a character the font atlas can't
+/// draw fails `check`, naming the character on the pack's file (as the
+/// engine names it, from the language's folder).
+#[test]
+fn check_finds_a_character_the_atlas_cant_draw() {
+    const UI: &str = "lang/test/ui.ron";
+    let ui = fs::read_to_string(repo_root().join("assets-test").join(UI)).unwrap();
+    let snowman = ui.replace("text: \"NEW GAME\"", "text: \"NEW GAME \u{2603}\"");
+    assert_ne!(snowman, ui);
+    let bytes: &'static [u8] = Box::leak(snowman.into_boxed_str()).as_bytes();
+    let files: &'static [(&str, &[u8])] = Box::leak(Box::new([(UI, bytes)]));
+    let mut layers = vec![trpg_content::bundle::Layer::table("assets-test", files).test()];
+    layers.extend(trpg_content::bundle::layers());
+    let bundle = Box::leak(Box::new(trpg_content::bundle::Bundle::new(layers)));
+    let answer = trpg_content::bundle::reading(bundle, || {
+        check::check(&Trpg, &check::CheckInput::default())
+    });
+    assert!(!answer.ok);
+    let errors = answer.result.unwrap().errors;
+    let named = errors
+        .iter()
+        .any(|e| e.file == "test/ui.ron" && e.message.contains('\u{2603}'));
+    assert!(named, "{errors:?}");
 }
 
 /// Ticket 1193: `bots` plays as many games as asked, each with a record.

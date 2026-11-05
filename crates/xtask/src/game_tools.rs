@@ -17,6 +17,7 @@
 //! the map alone, the prompt start, the tips and a light for every battle.
 
 use shuyi_assets::ContentError;
+use shuyi_assets::font::FontAtlasDef;
 use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::contract::bots::{BotsInput, BotsOutput};
 use shuyi_cli::contract::replay::{Record, ReplayRun};
@@ -266,6 +267,11 @@ impl GameTools for Trpg {
         }))
     }
 
+    /// The atlas the game loads, which `check` checks its text against.
+    fn font_atlas(&self) -> Option<Result<FontAtlasDef, String>> {
+        Some(trpg_content::font::load().map_err(|errors| shown(&errors)))
+    }
+
     /// The Playdate is the one one-bit target (`shuyi.ron`).
     fn one_bit(&self, _target: &str) -> Option<Result<OneBitSkin, String>> {
         Some(playdate_palette_def().map(one_bit::skin))
@@ -433,12 +439,14 @@ fn playdate_palette() -> Result<Palette, String> {
 
 /// The Playdate's palette file, as loaded.
 fn playdate_palette_def() -> Result<PaletteDef, String> {
-    let shown = |errors: Vec<trpg_content::ContentError>| {
-        let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
-        errors.join("; ")
-    };
-    let base = trpg_content::palette::load().map_err(shown)?;
-    trpg_content::ink::load_playdate(&base).map_err(shown)
+    let base = trpg_content::palette::load().map_err(|errors| shown(&errors))?;
+    trpg_content::ink::load_playdate(&base).map_err(|errors| shown(&errors))
+}
+
+/// `errors` on one line.
+fn shown(errors: &[trpg_content::ContentError]) -> String {
+    let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+    errors.join("; ")
 }
 
 pub mod balance;
