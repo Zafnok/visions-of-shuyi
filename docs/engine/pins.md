@@ -214,7 +214,7 @@ Nothing for the game: 4 PRs (#245, #247, #248, #249). #245 and #249 are the soun
 
 Nothing for the game: 1 PR (#251), the sound gate's retry on Windows timings, in the engine's own CI.
 
-## 2026-11-04: 1a84a71e → b7a4674e (11 engine PRs), #541
+## 2026-11-04: 1a84a71e → b7a4674e (11 engine PRs), #547
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
