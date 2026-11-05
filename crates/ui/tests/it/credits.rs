@@ -47,11 +47,11 @@ fn the_list_rolls_by_itself() {
     h.wait(1.5);
     assert_eq!(h.snapshot(), top);
     // Then a row every half second: after 4.6 s in all, five or six rows
-    // (the frames' times don't add up exactly), so the third entry leads.
+    // (the frames' times don't add up exactly), so the first entry is gone.
     h.wait(3.1);
     let rolled = h.snapshot();
     assert_ne!(rolled, top);
-    assert!(!glyphs(&rolled).contains("\"Aria\" by Kistol"));
+    assert!(!glyphs(&rolled).contains("\"A Slave To No One"));
     assert!(glyphs(&rolled).contains("\"Battle Theme A\" by cynicmusic"));
     assert!(glyphs(&rolled).contains('▲'));
     // Rolling makes no sound.

@@ -1,0 +1,38 @@
+(
+    // A Hound post on the Millhaven road, at night (ticket 0850,
+    // docs/story/chapters/ch04.md, "To be continued"): the road across the
+    // middle, the post's hut at (12, 5) with its brazier at (14, 7) for
+    // the lantern, a rack of spears, the rider's horse lines by the hedge,
+    // dark fields and woods all round. A place behind a conversation,
+    // never a battle's map.
+    name: "Millhaven Road",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        'h': "hedge",
+        'R': "roof",
+        'H': "house_wall",
+        'D': "house_door",
+        'r': "rack",
+        '*': "burning",
+    },
+    look: (light: "night"),
+)
+---
+TTTTTTTT.........TTTTTTTT
+TTTTTT.............TTTTTT
+TTTT...................TT
+TT.........RRRRR.......TT
+T..........RRRRR........T
+...........HHDHH.........
+........r.........r......
+..............*..........
+:::::::::::::::::::::::::
+:::::::::::::::::::::::::
+.........................
+..hhhhhhh.......hhhhhhh..
+T.......................T
+TT.....................TT
+TTTT.................TTTT
+TTTTTTTT.........TTTTTTTT

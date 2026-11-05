@@ -90,7 +90,7 @@ impl Cast {
             }
         }
         for (id, chapter) in chapters {
-            for scene in &chapter.intro_scenes {
+            for scene in chapter.opening_scenes.iter().chain(&chapter.intro_scenes) {
                 let is_first = *id == new_game.first_chapter;
                 let there = if is_first {
                     roster.clone()
@@ -136,7 +136,7 @@ impl Cast {
         chapters: &BTreeMap<String, ChapterDef>,
     ) -> Self {
         for chapter in chapters.values() {
-            let scenes = chapter.intro_scenes.iter().chain(&chapter.victory_scenes);
+            let scenes = chapter.scenes();
             let joiners: BTreeSet<CharacterId> = scenes
                 .clone()
                 .filter_map(|scene| joins.get(scene))

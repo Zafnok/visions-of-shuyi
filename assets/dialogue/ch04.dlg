@@ -45,24 +45,23 @@
 #     ch04_victory                  the yard, then the stable: Hollis
 #     ch04_tbc                      a Hound post on the Millhaven road: Dace
 #
-# Until 0850 and 1071 wire the triggers, the validator can't know which
-# scene plays for whom, so every companion line in a battle scene below
-# sits in an "@if" block for them (ADR-0055). Once a trigger names the
-# companion (a death quote, a retreat line, Dace against Hollis), that
-# "@if" can only go one way and the validator reports it: 0850 removes
-# those blocks as it wires each trigger. The "@if" in ch04_first_turn and
-# ch04_passage stay: a turn-start scene and an area anyone can enter
-# can't count on anyone.
+# 0850 wired the story battle's triggers: a scene whose trigger names a
+# companion (a death quote, a retreat line, Dace against Hollis) plays
+# only with them there, so it has no "@if" for them (ADR-0055). The "@if"
+# in ch04_first_turn and ch04_passage stay: a turn-start scene and an area
+# anyone can enter can't count on anyone. 1071 does the same for the
+# skirmishes' scenes.
 #
-# Gil (prizefighter) is a speaker in characters.ron until 1071 makes him a
-# unit. He joins only if beaten on Millhaven Road, so outside his own
+# Gil (prizefighter) became a unit in 0850 (Veyne Hall has a slot for
+# him). He joins only if beaten on Millhaven Road, so outside his own
 # battle lines every line of his is in an "@if prizefighter" block, and
 # the chapter reads through without him.
 #
-# No @place directives yet: the maps are 0850's and 1071's. The @music
-# lines are this ticket's picks from the mood cues (0071); the story
-# battle's own cue, battle_rival, is Nick's and goes in the battle file;
-# the skirmishes use the skirmish pool (1008).
+# Places (0850): the valley road, the rise above the hall, the gate (the
+# battle's own map), the stable and the yard beside it, the Hound post.
+# The skirmishes' are 1071's. The @music lines are 0746's picks from the
+# mood cues (0071); the story battle's own cue, battle_rival, is Nick's
+# and is in the battle file; the skirmishes use the skirmish pool (1008).
 #
 # The seven companions may have died in Chapters 1-3 (Classic), so
 # outside the battles every line of theirs is in an "@if" block, and each
@@ -92,6 +91,7 @@
 @scene ch04_intro
 @caption The valley road, morning
 @music talk_calm
+@place valley_road 12,6
 > A week south of the lake. The forest road comes out on a hill's shoulder and the valley opens under it: stubble, bare orchards, stone farms, a crossroads with a black pennant on a post.
 @if poacher
 @left poacher neutral
@@ -312,6 +312,7 @@ prizefighter: There is not. ...I intend to put on a fair of my own, one day, whe
 @scene ch04_eve
 @caption The rise above {n:place.veyne_hall}, dusk
 @music scene_sad
+@place veyne_rise 12,7
 > Dusk, and no fire. From the rise the valley is already dark, and all that shows of the hall is its lights.
 @left lead neutral
 @if retainer
@@ -388,6 +389,7 @@ heretic: Eat that. You didn't eat, and I'm not carrying you tomorrow. Stop looki
 @scene ch04_gate
 @caption {N:place.veyne_hall}, the gate, dawn
 @music talk_antagonist
+@place battle 13,11
 > Gray light. The gate {lead|the exile} went out of four years ago opens from inside before anybody has reached it. In the gateway, bare-headed, the yard full of black behind him: {n:rival.first}.
 @left lead neutral
 @right rival happy
@@ -475,11 +477,9 @@ lead: Stand still.
 rival[angry]: No. ...You'd go right anyway. You always did.
 @end
 
-# Dace and his father. The @if goes when 0850 wires this as Dace against
-# Hollis.
+# Dace and his father.
 
 @scene ch04_boss_engage_retainer
-@if retainer
 @left retainer neutral
 @right rival sad
 rival: Don't. Go stand somewhere else, I'm asking you. Anywhere else. There's a whole yard.
@@ -488,13 +488,11 @@ rival[angry]: Twenty years. Twenty years of you shouting that at me across this 
 retainer: Guard up. You're dropping it.
 @left clear
 @right clear
-@endif
 @end
 
-# Dace and the girl from the cart. The @if goes when 0850 wires it.
+# Dace and the girl from the cart.
 
 @scene ch04_boss_engage_heretic
-@if heretic
 @left heretic angry
 @right rival neutral
 heretic: You lifted me in. By my belt, like a sack of coal, and you were crying, and you did it anyway. You don't even know me. Look at me.
@@ -503,13 +501,11 @@ heretic: I was in the cart at the mill when you found your sister in it. I ran. 
 rival[angry]: Then run. Run, then, I won't--
 @left clear
 @right clear
-@endif
 @end
 
-# Dace and the boy he knew by name. The @if goes when 0850 wires it.
+# Dace and the boy he knew by name.
 
 @scene ch04_boss_engage_defector
-@if defector
 @left defector sad
 @right rival neutral
 rival: {N:defector.last}. Hood down in my yard. Good. Come here. Stand by me. You were in the smoke. That's what we'll say.
@@ -517,7 +513,6 @@ defector: That's what the lieutenant said. At the ford. Those words, Captain, th
 rival[angry]: Company words. Everybody says them. I don't know. I don't know which of us said them first.
 @left clear
 @right clear
-@endif
 @end
 
 @scene ch04_boss_half
@@ -543,119 +538,90 @@ rival: No. No, not in this house, I'm not-- the laundry door. I know the laundry
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). Last words are about the living;
 # the shapes differ from each other and from the earlier chapters'. They
-# can fire in any order, so none names another companion. The @if blocks
-# go when 0850 wires each one.
+# can fire in any order, so none names another companion.
 
 @scene ch04_death_retainer
-@if retainer
 @left retainer sad
 retainer: Shoulder up, kid. Shoulder. ...The bay's in the end stall. She'll be fat, nobody will have had her out. Shoulder up.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_retainer
-@if retainer
 @left retainer angry
 retainer: Don't look at me, kid, look at your guard. It's the hip. I'm walking out the laundry door. Hold the yard.
 @left clear
-@endif
 @end
 
 @scene ch04_death_sergeant
-@if sergeant
 @left sergeant sad
 sergeant: Cross it out. Your name, in my book, under what's owed me-- cross it out, Your Former Grace. You don't owe me anything.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_sergeant
-@if sergeant
 @left sergeant angry
 sergeant: Somebody catch my horse! She's bolting, she'll be in the river-- never mind me, I'm walking, catch the horse!
 @left clear
-@endif
 @end
 
 @scene ch04_death_poacher
-@if poacher
 @left poacher sad
 poacher: Two more on the wall, behind the-- two. I counted. ...I am not cold. Do not put a cloak on me, I will know.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_poacher
-@if poacher
 @left poacher angry
 poacher: The string went. I have no spare. I am no use to you now, and I do not want to talk about it.
 @left clear
-@endif
 @end
 
 @scene ch04_death_keeper
-@if keeper
 @left keeper sad
 keeper: Give them back. The names, to the mothers. The book's in my pack, in my robe, keep it dry-- give them back. Please.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_keeper
-@if keeper
 @left keeper surprised
 keeper: Oh. Oh, that's a lot of-- it's all right. It's all right, I know what this is, I've done it to all of you. Leave me the bag and go.
 @left clear
-@endif
 @end
 
 @scene ch04_death_heretic
-@if heretic
 @left heretic sad
 heretic: Did anybody eat? Nobody ate this morning, I watched, not one of you. ...Eat something. All of you. I mean it.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_heretic
-@if heretic
 @left heretic angry
 heretic: {N:god.pyre.name}'s teeth. My hands. I can't close them, I can't-- somebody else throw. I'm not watching. Somebody else.
 @left clear
-@endif
 @end
 
 @scene ch04_death_defector
-@if defector
 @left defector sad
 defector: Your Grace-- was it right? No, don't, I know. ...My ma's two valleys over. She'll hear it was the captain's house. Could it be the war instead? Could it just be the war?
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_defector
-@if defector
 @left defector surprised
 defector: Arm. Not the sword arm, the-- no, it is the sword arm. Sorry. Sorry, Your Grace, I'll-- sorry.
 @left clear
-@endif
 @end
 
 @scene ch04_death_prizefighter
-@if prizefighter
 @left prizefighter sad
 prizefighter: Champion. Don't-- stay where you are, it's done. ...Well struck. Whoever that was. Well struck.
 @left clear
-@endif
 @end
 
 @scene ch04_retreat_prizefighter
-@if prizefighter
 @left prizefighter angry
 prizefighter: That's the count on me. ...Go on, Champion. I have been down before. It is nothing.
 @left clear
-@endif
 @end
 
 # ---------------------------------------------------------------------------
@@ -667,6 +633,7 @@ prizefighter: That's the count on me. ...Go on, Champion. I have been down befor
 @scene ch04_victory
 @caption {N:place.veyne_hall}, the yard
 @music scene_tragic
+@place veyne_stable 16,8
 > Late morning, and the yard is quiet. {N:faction.hounds} who didn't go out the laundry door after him are in the cellar with the door barred. The kitchen door stands open.
 @if keeper
 @left keeper neutral
@@ -701,6 +668,7 @@ heretic: He's in the stable. The old man. He went in there before anybody had sa
 @endif
 @endif
 @caption The stable
+@place veyne_stable 5,6
 @if retainer
 > The end stall. A bay mare, fat as a barrel, and {n:retainer.first} with a brush, brushing her flank the way he did every morning for twenty years. He doesn't turn around.
 @left lead neutral
@@ -738,6 +706,7 @@ retainer: Watch her off side when you go past. She kicks. She always did.
 @scene ch04_tbc
 @caption A Hound post, {n:place.millhaven_road}, night
 @music talk_antagonist
+@place millhaven_post 12,8
 > A post on the road, a lantern, a rider waiting with the paper on his knee. {n:rival.first} has his arm bound against his chest, and is on his feet.
 @left rival neutral
 rival: Write it as I say it. "The exile holds {n:place.veyne_hall}. The register and the pay-book are with the exile. I am alive." Stop there. Read it back.

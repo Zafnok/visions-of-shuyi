@@ -20,8 +20,9 @@ characters placed on a place and walking there, drawn by the map skins
 with their map picture. `ch01_tbc` opens on Dace (character id `rival`)
 pacing the study at Veyne Hall (`assets/openings/ch01_pacing.ron`).
 
-Dace is a **speaker** (`assets/data/characters.ron`, `speakers`): he has
-no class, and the private tileset (`assets-private/game/tilesets/
+Dace was a **speaker** (`assets/data/characters.ron`, `speakers`) with no
+class when this was written; since 0850 he is a character, an enemy
+Shadowblade, and the private tileset (`assets-private/game/tilesets/
 tiny_tales.ron`, `units` → `characters`) names no picture for him. The
 sprite skin then draws the tileset's `fallback` picture
 (`units/adventurer_m1.png`), the same one generic units get, so in the

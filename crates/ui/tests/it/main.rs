@@ -10,6 +10,7 @@ mod ch01_tips;
 mod ch01_winnable;
 mod ch02_winnable;
 mod ch03_winnable;
+mod ch04_winnable;
 mod cinematic;
 mod class_change;
 mod controller;

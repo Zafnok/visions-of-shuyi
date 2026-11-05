@@ -40,6 +40,11 @@ pub struct ChapterDef {
     /// (ticket 0443). `None` for a chapter of no number (a test's).
     #[serde(default)]
     pub number: Option<u32>,
+    /// A world-map chapter's scenes when it begins, in order, before the
+    /// map shows (0850). Empty for a linear chapter: its intro scenes open
+    /// it.
+    #[serde(default)]
+    pub opening_scenes: Vec<String>,
     /// Scenes before the battle, in order.
     #[serde(default)]
     pub intro_scenes: Vec<String>,
@@ -56,6 +61,15 @@ pub struct ChapterDef {
     /// when the army arrives there. `None`: a linear chapter.
     #[serde(default)]
     pub world_map: Option<String>,
+}
+
+impl ChapterDef {
+    /// Every scene of the chapter, in the order they play: the opening
+    /// scenes, the intro scenes, the victory scenes.
+    pub fn scenes(&self) -> impl Iterator<Item = &String> + Clone {
+        let before = self.opening_scenes.iter().chain(&self.intro_scenes);
+        before.chain(&self.victory_scenes)
+    }
 }
 
 /// How a new game starts.
@@ -157,10 +171,13 @@ pub fn check_chapter(
     if !battles.contains_key(&def.battle) {
         err(format!("no battle \"{}\"", def.battle));
     }
-    for scene in def.intro_scenes.iter().chain(&def.victory_scenes) {
+    for scene in def.scenes() {
         if dialogue.get(scene).is_none() {
             err(format!("no dialogue scene \"{scene}\""));
         }
+    }
+    if def.world_map.is_none() && !def.opening_scenes.is_empty() {
+        err("opening_scenes: only a world-map chapter has them".to_owned());
     }
     errors
 }

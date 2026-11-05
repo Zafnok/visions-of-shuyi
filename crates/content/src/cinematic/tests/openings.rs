@@ -124,13 +124,13 @@ fn the_cast_are_characters_on_tiles_they_can_stand_on() {
 #[test]
 fn the_walks_are_checked_as_a_cinematic_action_on_the_place() {
     let c = content();
-    let cast = "(who: \"rival\", at: (9, 8))";
+    let cast = "(who: \"messenger\", at: (9, 8))";
     let action = [
         // Into the desk: someone with no class walks on foot.
-        "(at: 0.0, do: Walk(unit: \"rival\", path: [(9, 8), (9, 5)], secs: 0.5))",
-        "(at: 1.0, do: Strike(unit: \"rival\", target: \"rival\", hp_left: 0))",
+        "(at: 0.0, do: Walk(unit: \"messenger\", path: [(9, 8), (9, 5)], secs: 0.5))",
+        "(at: 1.0, do: Strike(unit: \"messenger\", target: \"messenger\", hp_left: 0))",
         "(at: 1.0, do: Walk(unit: \"hollis\", path: [(1, 1), (2, 1)], secs: 0.5))",
-        "(at: 1.0, do: Walk(unit: \"rival\", path: [(9, 5), (9, 20)], secs: 0.5))",
+        "(at: 1.0, do: Walk(unit: \"messenger\", path: [(9, 5), (9, 20)], secs: 0.5))",
     ];
     let source = opening("veyne_study", cast, &action.join(", "));
     assert_eq!(

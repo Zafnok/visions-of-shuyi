@@ -7,6 +7,10 @@ expression: h.snapshot()
   │                                                                                              │  
   │ Music                                                                                        │  
   │                                                                                              │  
+  │   "A Slave To No One (RPG Orchestral Essentials)" by Jonathan Shaw (www.jshaw.co.uk)         │  
+  │     CC-BY-3.0 ·                                                                              │  
+  │     https://opengameart.org/content/a-slave-to-no-one-rpg-orchestral-essentials-boss-music   │  
+  │                                                                                              │  
   │   "Adventures in Adventureland" by Kevin MacLeod                                             │  
   │     CC-BY-4.0 · https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2100029      │  
   │                                                                                              │  
@@ -25,11 +29,7 @@ expression: h.snapshot()
   │   "Battle Themes 1, 2, 3 and 5" by Alexandr Zhelanov                                         │  
   │     CC-BY-4.0 · https://opengameart.org/content/battle-themes                                │  
   │                                                                                              │  
-  │   "Classical Murder" by Alexandr Zhelanov                                                    │  
-  │     CC-BY-4.0 · https://opengameart.org/content/classical-murder                             │  
-  │                                                                                              │  
-  │   "Dark Forest Theme" by cynicmusic                                                          │  
-  │     CC0-1.0 · https://opengameart.org/content/dark-forest-theme                            ▼ │  
+  │   "Classical Murder" by Alexandr Zhelanov                                                  ▼ │  
   │                                                                                              │  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
                                                                                                     
@@ -39,6 +39,10 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdeeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddfffffffffffddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddbaa
@@ -58,11 +62,7 @@ aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabdddddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabdddddfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffddddddddddddddddddddddddddddfdbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfdbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

@@ -59,6 +59,8 @@
         (id: "battle_epic_b", file: "battle_theme_b.ogg", volume: 100, length_ms: 66038, credit: Credit("battle_theme_b")),
         (id: "battle_church_2", file: "fantasy_choir_2.ogg", volume: 100, length_ms: 126131, credit: Credit("fantasy_choir")),
         (id: "battle_church_3", file: "fantasy_choir_3.ogg", volume: 100, length_ms: 91241, credit: Credit("fantasy_choir")),
+        // Veyne Hall (Chapter 4, ticket 0850): Nick's pick for Dace (0071).
+        (id: "battle_rival", file: "a_slave_to_no_one.ogg", volume: 100, length_ms: 270000, credit: Credit("a_slave_to_no_one")),
         // The skirmish pool's tracks (pools below).
         (id: "skirmish_zhelanov_1", file: "zhelanov_battle_theme_1.ogg", volume: 100, length_ms: 100415, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_2", file: "zhelanov_battle_theme_2.ogg", volume: 100, length_ms: 88790, credit: Credit("zhelanov_battle_themes")),
@@ -216,6 +218,11 @@
          source: "https://opengameart.org/node/80558", license: "CC0-1.0",
          tags: ["music", "camp", "adventurous", "road", "medieval"],
          note: "The_Bards_Tale.mp3 (the full version, not the loop)"),
+        (id: "a_slave_to_no_one", title: "A Slave To No One (RPG Orchestral Essentials)", author: "Jonathan Shaw (www.jshaw.co.uk)",
+         source: "https://opengameart.org/content/a-slave-to-no-one-rpg-orchestral-essentials-boss-music",
+         license: "CC-BY-3.0",
+         tags: ["music", "battle_rival", "battle", "boss", "orchestral"],
+         note: "A Slave To No One MP3.mp3 from A Slave To No One MP3.zip (RPG Orchestral Essentials), its first 4:30, faded out"),
         (id: "the_world_at_your_door", title: "The World At Your Door (RPG Orchestral Essentials)", author: "Jonathan Shaw (InspectorJ)",
          source: "https://opengameart.org/node/108343", license: "CC-BY-3.0",
          tags: ["music", "world_map", "calm", "adventurous", "orchestral"],

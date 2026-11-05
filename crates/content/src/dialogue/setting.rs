@@ -69,7 +69,7 @@ impl<'a> PlaceRefs<'a> {
                 let Some(battle) = battles.get(&chapter.battle) else {
                     continue;
                 };
-                for scene in chapter.intro_scenes.iter().chain(&chapter.victory_scenes) {
+                for scene in chapter.scenes() {
                     add(scene, battle);
                 }
             }

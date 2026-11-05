@@ -142,6 +142,29 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
         ),
+        // Chapter 4 (ticket 0850; docs/story/chapters/ch04.md).
+        // Dace Marr, the Chapter 4 boss (rival.md): captain of the king's
+        // Hounds, an enemy Shadowblade in Act 1 (swords and gauntlets),
+        // quick (his talent is Spd). At Veyne Hall he retreats at 0 HP
+        // (battles/ch04.ron, `defeat: Retreats`). Hard to put down rather
+        // than hard-hitting: the bots' Chapter 4 runs (playtesting.md).
+        (
+            id: "rival", class: "shadowblade", level: 8,
+            talent: Spd,
+            base: (40, 11, 1, 13, 13, 8, 4),
+            weapon_ranks: [(Sword, C), (Gauntlet, D)],
+            loadout: (weapons: ["steel_sword", "iron_gauntlets"], armour: Some("leather_vest")),
+        ),
+        // Gil Parrow, Champion of Six Fairs (prizefighter.md): a Brawler
+        // who joins if beaten on Millhaven Road (1071), a little behind
+        // the party's front line. A prize-fighter's talent is Str.
+        (
+            id: "prizefighter", class: "brawler", level: 5,
+            talent: Str,
+            base: (27, 8, 0, 6, 10, 5, 2),
+            weapon_ranks: [(Gauntlet, D)],
+            loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
+        ),
         // Act 1's side quests (ticket 1072; docs/story/chapters/side-*.md).
         // Ambrose Tull, the crown paymaster: a clerk in a borrowed vest who
         // retreats out the barn's back door at 0 HP (The Company Ledger).
@@ -243,9 +266,9 @@
         (id: "skirmish_arcanist", class: "arcanist", level: 1, loadout: (weapons: [])),
     ],
     // speakers: ids that may speak in dialogue (.dlg) but aren't units
-    // (yet). Each needs a name in names.ron. The rival and the Master of
-    // Vows don't fight in Chapter 1; the messenger (ticket 0707) only
-    // ever speaks.
+    // (yet). Each needs a name in names.ron. The Master of Vows doesn't
+    // fight in Chapter 1; the messenger (ticket 0707) only ever speaks.
+    // Dace (the rival) and Gil became characters in 0850.
     // Chapter 2 (ticket 0744): the herald only ever speaks (Joss and the
     // Hound lieutenant became characters in 0848; the Hound sergeant and
     // the prior of Greywater in 0849).
@@ -258,5 +281,5 @@
     // Chapter 8 (ticket 0750): the king speaks in the closing scene and
     // never fights in Act 1.
     // Letters Home (ticket 1072): the hill people's boat master only speaks.
-    speakers: ["rival", "vowmaster", "messenger", "herald", "prizefighter", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
+    speakers: ["vowmaster", "messenger", "herald", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
 )

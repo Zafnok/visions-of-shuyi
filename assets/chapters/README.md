@@ -11,6 +11,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
     id: "ch01",
     title: "Chapter 1: …",
     number: Some(1),
+    opening_scenes: [],                 // a world-map chapter's: see below
     intro_scenes: ["ch01_intro", "ch01_prebattle"],
     battle: "ch01",                     // assets/battles/ch01.ron
     victory_scenes: ["ch01_victory", "ch01_tbc"],
@@ -24,6 +25,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
 | `id` | Must match the file name. |
 | `title` | The chapter's title (for the title card, 0812, and the save slots: a save shows the title of the chapter it goes on with). |
 | `number` | The chapter's number in the story, from 1: the Preparations shop sells what this chapter unlocked (`assets/data/basic_shop.ron`, 0443). Default: `None`, no shop (test chapters). |
+| `opening_scenes` | A world-map chapter's scenes when it begins, before its map shows (0850). Only on a world-map chapter. Default: none. |
 | `intro_scenes` | Scene ids (`assets/dialogue/`) played in order before the battle. Default: none. |
 | `battle` | The battle's id (`assets/battles/`). |
 | `victory_scenes` | Scenes played in order after a victory. Default: none. They play for the army as the battle left it: a companion who died in Classic is gone, and their lines must be in `@if` blocks (`assets/dialogue/README.md`, "Who is still there"). |
@@ -36,7 +38,8 @@ A chapter with `world_map: Some("<map>")` lives on that world map: its
 story battle is the map's place whose kind is `StoryBattle("<this
 chapter>")` (each such chapter has exactly one, and the map names no
 chapter that doesn't point back). When the chapter begins, the army is put
-on the map (at its `start`, the first time on that map) and the map shows;
+on the map (at its `start`, the first time on that map), its
+`opening_scenes` play, and the map shows;
 the chapter's `intro_scenes` play when the army **arrives** at its story
 battle's place, then its battle; after a victory, its `victory_scenes`,
 then the place is cleared and `next` begins. No "Save your progress?":
@@ -72,7 +75,7 @@ Checked: the first chapter exists; every roster character exists, once,
 and the lead (`"lead"`) is among them; every stock item exists. The lead's
 unit takes the name the player gives it at New Game.
 
-`ch01.ron` is Chapter 1, where New Game starts, `ch02.ron` Chapter 2 and `ch03.ron` Chapter 3. `test.ron` (the test
+`ch01.ron` is Chapter 1, where New Game starts, `ch02.ron` Chapter 2, `ch03.ron` Chapter 3 and `ch04.ron` Chapter 4, the first on the Act 1 world map. `test.ron` (the test
 chapter: the tests of the game flow start a new game there,
 `NewGameDef::test_chapter`) and `quick.ron` (the debug Quick Battle, no
 scenes) are test files, never part of the story: they are in

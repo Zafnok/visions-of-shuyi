@@ -44,10 +44,10 @@ fn the_cast_stand_as_characters_without_marks() {
             .all(|u| !u.marks && u.faction == Faction::Neutral)
     );
     assert_eq!(lead_unit.class.0, "exile");
-    // Dace has no class (he never fights in Chapter 1): his picture is the
-    // skin's for his character.
+    // Dace has his class (a Shadowblade since 0850, though he doesn't fight
+    // in Chapter 1).
     let dace = &cast_units(&c, &c.game.content.openings["ch01_pacing"], &lead())[0];
-    assert_eq!((dace.class.0.as_str(), dace.label.as_str()), ("", "Da"));
+    assert_eq!((dace.class.0.as_str(), dace.label.as_str()), ("shadowblade", "Da"));
 }
 
 #[test]

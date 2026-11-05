@@ -4,7 +4,8 @@
 // Road to Saltmere on the south coast, east to the Ashfields, north to Ossary
 // and back to Saltmere's docks for the ship.
 //
-// Every battle here is `NotBuilt` until its ticket makes it: the ticket gives
+// Every battle here is `NotBuilt` until its ticket makes it (Veyne Hall is
+// 0850's; Aldwater Toll Bridge passes through until 1071): the ticket gives
 // the place its kind and removes `NotBuilt`, and the conditions beside it
 // are the ones it opens by. 0850-0854: the story battles, each with
 // `StoryBattle("chNN")`. 1071: the fixed skirmishes, `guards_path` as noted.
@@ -46,12 +47,12 @@
          kind: SideQuest((battle: "side_company_ledger", intro_scenes: ["side_ledger_intro"],
                           victory_scenes: ["side_ledger_victory"])),
          opens_when: [Cleared("aldwater"), Alive("sergeant")]),
-        // 1071: guards the path to the hall (`guards_path: true`).
-        (id: "aldwater", name: "Aldwater Toll Bridge", pos: (22, 16), kind: Empty,
-         opens_when: [NotBuilt]),
-        // 0850: Chapter 4's story battle.
-        (id: "veyne_hall", name: "Veyne Hall", pos: (36, 11), kind: Empty,
-         opens_when: [NotBuilt]),
+        // 1071: guards the path to the hall (`guards_path: true`). Until it
+        // is built, a place to pass through on the way to the hall (0850):
+        // 1071 gives it its kind.
+        (id: "aldwater", name: "Aldwater Toll Bridge", pos: (22, 16), kind: Empty),
+        // Chapter 4's story battle (0850).
+        (id: "veyne_hall", name: "Veyne Hall", pos: (36, 11), kind: StoryBattle("ch04")),
         // 1083: Hollis's, by his wife's grave near the hall.
         (id: "captains_oath", name: "The Captain's Oath", pos: (28, 7), music: Some("side_quest"),
          kind: Empty, opens_when: [NotBuilt, Cleared("veyne_hall"), Alive("retainer")]),

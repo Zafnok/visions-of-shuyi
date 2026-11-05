@@ -56,7 +56,7 @@ pub fn roster_by(content: &Content, chapter: &str) -> Vec<CharacterId> {
         }
     };
     for def in story_chapters(content) {
-        recruit(&mut def.intro_scenes.iter());
+        recruit(&mut def.opening_scenes.iter().chain(&def.intro_scenes));
         if def.id == chapter {
             break;
         }

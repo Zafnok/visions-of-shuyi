@@ -34,6 +34,14 @@ fills in their nodes. They use the `skirmish` music pool (1008), are
 balanced by the bots (0509) after 0013's number scale, and Gil's face
 and combat picture are 0070's pick.
 
+**From 0850:** Gil is already a unit in `characters.ron` (a Brawler,
+level 5, *Claude's starting values*: Veyne Hall has a slot for him and
+his death and retreat lines), so this ticket places him on *Millhaven
+Road* and may retune him; his art is 0862. *Aldwater Toll Bridge* is an
+`Empty` place on the Act 1 map until this ticket, so the army can walk
+through it to Veyne Hall: give it its kind (`guards_path: true`) here,
+and Tamsin's side quest (`Cleared("aldwater")`) opens with it.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21): `frame-png` pictures of

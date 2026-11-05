@@ -157,3 +157,17 @@ fn whoever_a_scene_has_recruited_by_the_chapter_joins() {
     assert_eq!(joined.faction, Faction::Player);
     assert_eq!(campaign.roster.len(), content.new_game.roster.len());
 }
+
+/// Each earlier chapter's battle is played with whoever had joined by
+/// then (0850): Joss, recruited after Chapter 2, fights Chapter 3's
+/// recorded playthrough on the way to Chapter 4, which fails without him.
+#[test]
+fn a_recruit_fights_the_chapters_after_his_join_on_the_way() {
+    let content = content();
+    let setup = arrive(&content, "ch04", GameMode::Classic);
+    let setup = setup.unwrap_or_else(|| panic!("Chapter 4 has an arrival"));
+    let joss = CharacterId("defector".into());
+    let army = players(&setup);
+    assert!(army.iter().any(|(who, _)| *who == joss), "Joss is there");
+    assert_eq!(army.len(), 7, "the seven; Gil joins only on Millhaven Road");
+}
