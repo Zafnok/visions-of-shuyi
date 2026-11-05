@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-04
 ---
 
 # 1243 — `shuyi check` checks the game's text against its font atlas
@@ -65,13 +65,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi check` passes with no limit saying the text isn't
+- [x] `cargo shuyi check` passes with no limit saying the text isn't
       checked against the atlas.
-- [ ] A test pack line with a character the atlas lacks fails `check`
+- [x] A test pack line with a character the atlas lacks fails `check`
       (a test of the game's tools, on the test language pack).
-- [ ] `committed_atlas_is_up_to_date` builds the atlas from the text's
+- [x] `committed_atlas_is_up_to_date` builds the atlas from the text's
       characters and passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,3 +79,20 @@ None.
   can't draw fails naming the character; with the real packs it passes.
 
 ## Completion notes
+
+- `Trpg::font_atlas` offers the atlas the game loads
+  (`trpg_content::font::load`); `cargo shuyi check` now checks every text
+  of every language against it and reports no limit.
+- `check` found nothing: every character the game's text uses (English,
+  the test pack) is already in the atlas's ranges. `cargo shuyi
+  font-atlas` rerun with the text's characters changed no file.
+- `committed_atlas_is_up_to_date` builds with the text's `AtlasChars`
+  (and the project's wide glyphs, as the command does); its rerun message
+  now names `tile-shapes.bdf` too, which it had left out.
+- `check_finds_a_character_the_atlas_cant_draw` puts a snowman in the
+  test pack's `title.new_game` and sees `check` fail naming it;
+  `check_passes_on_the_content` now also asserts no limits.
+- The engine names the file from the language's folder (`test/ui.ron`,
+  `TextAt::path`, documented), not from the repository; the test expects
+  that form.
+- No gameplay rules decided.
