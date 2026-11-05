@@ -188,7 +188,10 @@ fn try_phase(
     plain: bool,
 ) -> Vec<Command> {
     let mut commands = Vec::new();
-    while state.outcome().is_none() && state.phase() == Phase::Player {
+    // One Player phase: with no enemy left (a Seize map), ending it
+    // starts the next turn's Player phase at once.
+    let turn = state.turn();
+    while state.outcome().is_none() && state.phase() == Phase::Player && state.turn() == turn {
         let ai = next_command(state, &content.ai);
         // A potion is for someone who is hurt.
         let wasted = |action: &UnitAction| match action {

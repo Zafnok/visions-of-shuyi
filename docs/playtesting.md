@@ -307,6 +307,18 @@ the Seize point was counted as the crow flies, so a lead on the shore
 walked away from the causeway to the corner nearest the scriptorium
 across the lake and stayed there (it is now counted walking).
 
+After 0524's new Chapter 2 recording (2026-11-04), Chapter 3's army is
+Lead lv 3, Hollis lv 6, Tamsin lv 8, Aske lv 5, Maud lv 3, Rue lv 8 and
+Joss lv 3, and Chapter 3 unchanged:
+
+```
+             seeds 1–100            seeds 101–200
+casual       49/100  band 30–55% ✓  47/100 ✓
+normal       70/100  band 50–75% ✓  72/100 ✓
+hardcore     69/100  band 50–75% ✓  74/100 ✓
+hardcore turns median 9 (normal 10) lower ✓    8 (normal 10) lower ✓
+```
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

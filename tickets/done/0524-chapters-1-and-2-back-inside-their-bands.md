@@ -168,12 +168,32 @@ Hardcore faster than Normal on all four.
   of half a second (was 40): the new recording wins on turn 14 with more
   Hounds left to flee one by one, and needs between 41 and 50.
 
+- **Chapter 3** (0849 merged while this was open): its army comes from
+  Chapter 2's recording, so it was played again on both ranges, Chapter
+  3 unchanged. Every band holds, a little easier than 0849 left it:
+
+| Battle, seeds | Casual (30–55) | Normal (50–75) | Hardcore (50–75) | Hardcore turns vs Normal |
+| ------------- | -------------- | -------------- | ---------------- | ------------------------ |
+| ch03, 1–100 (0849: 37 / 67 / 52) | 49 ✓ | 70 ✓ | 69 ✓ | 9 vs 10 ✓ |
+| ch03, 101–200 (0849: 34 / 62 / 66) | 47 ✓ | 72 ✓ | 74 ✓ | 8 vs 10 ✓ |
+
+  Army: Lead lv 3, Hollis lv 6, Tamsin lv 8, Aske lv 5, Maud lv 3, Rue
+  lv 8, Joss lv 3. `ch03_winning.ron` re-recorded: won on turn 6, nobody
+  lost.
+- **A recorder bug it took to re-record Chapter 3**
+  (`playthrough::try_phase`): one try of the Player phase ran until the
+  phase changed. On a Seize map with every enemy dead (this army clears
+  Greywater by turn 5), ending the phase starts the next turn's Player
+  phase at once, and the try that plays the AI's own picks (every unit
+  waits) never ended: the first attempt ran five and a half hours. A try
+  now stops when the turn changes too.
+
 **Deviations:** Chapter 2's change isn't one the autobalance writes: its
 count knob puts the copy on the first free tile it tries (1,11), which
 is too hard for Normal (41 on both ranges). The ticket allows the
 battle's numbers the trace points at when the knobs can't; the enemy is
-the knob's copy, one tile further south. Chapter 3 has no battle file
-yet (0849 is still open), so there was nothing to replay there.
+the knob's copy, one tile further south. Chapter 3 landed on `main`
+meanwhile (0849): played again and re-recorded above.
 
 **Follow-up tickets:** none.
 
