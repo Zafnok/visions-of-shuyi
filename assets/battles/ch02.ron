@@ -8,7 +8,9 @@
 //
 // The race (with the raiders as authored): the two raiders on the south
 // bank burn the west house and the house by the ford on the Hounds' first
-// turn unless they are evacuated (or the raider killed); the one on the
+// turn unless they are evacuated (or the raider killed), and a second
+// raider beside the west one (0524) meets whoever evacuates that house
+// with two axes on the Hounds' first turn; the one on the
 // bridge road reaches the south-east house on their second; the one
 // coming from the north-east reaches the big house by the water on their
 // third, then walks on to the north-west one. Hendry holds the ford's north end with a
@@ -33,6 +35,7 @@
     enemies: [
         // South bank: raiders at the houses, and one to meet the party.
         (template: "hound_raider", pos: (1, 12), raider: true, level: Some(5)),
+        (template: "hound_raider", pos: (1, 13), raider: true, level: Some(5)),
         (template: "hound_raider", pos: (7, 9), raider: true, level: Some(5)),
         (template: "hound_raider", pos: (22, 10), raider: true, level: Some(5)),
         (template: "hound_swordsman", pos: (13, 12), level: Some(5)),

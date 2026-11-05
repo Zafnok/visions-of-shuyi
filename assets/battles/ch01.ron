@@ -28,8 +28,9 @@
         (template: "red_raider", pos: (20, 9), ai: Guard),
         // The footbridge's north end.
         (template: "red_brigand", pos: (5, 4), ai: Guard, id: "footbridge_brigand"),
-        // The road bridge's north end.
-        (template: "red_raider", pos: (11, 5), ai: Guard, level: Some(2)),
+        // The road bridge's north end. Level 1 since 0524 (the autobalance:
+        // Hardcore won 73% of 200 tries at level 2, the top of its band).
+        (template: "red_raider", pos: (11, 5), ai: Guard, level: Some(1)),
         (template: "red_archer", pos: (14, 5), ai: Guard),
         (template: "red_brigand", pos: (16, 5), ai: Guard),
         // A rider on the fort road: spears are what hurt horses.

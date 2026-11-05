@@ -88,7 +88,7 @@ pub fn chapter_2_won(h: &mut Harness) {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(h).units().len(), 6 + 14, "six and the raid");
+    assert_eq!(battle(h).units().len(), 6 + 15, "six and the raid");
     playthrough::play_in_game(h, &winning_commands());
     playthrough::on_to_the_save_prompt(h);
 }

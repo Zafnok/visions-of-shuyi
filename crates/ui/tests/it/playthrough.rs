@@ -93,7 +93,7 @@ pub fn play_in_game(h: &mut Harness, commands: &[Command]) {
 /// After a won battle: its last scenes, the VICTORY banner, the results
 /// and the victory scenes, up to "Save your progress?".
 pub fn on_to_the_save_prompt(h: &mut Harness) {
-    for _ in 0..40 {
+    for _ in 0..60 {
         match h.top_screen() {
             "dialogue" => skip_scenes(h),
             "save_prompt" => break,
@@ -188,7 +188,10 @@ fn try_phase(
     plain: bool,
 ) -> Vec<Command> {
     let mut commands = Vec::new();
-    while state.outcome().is_none() && state.phase() == Phase::Player {
+    // One Player phase: with no enemy left (a Seize map), ending it
+    // starts the next turn's Player phase at once.
+    let turn = state.turn();
+    while state.outcome().is_none() && state.phase() == Phase::Player && state.turn() == turn {
         let ai = next_command(state, &content.ai);
         // A potion is for someone who is hurt.
         let wasted = |action: &UnitAction| match action {
