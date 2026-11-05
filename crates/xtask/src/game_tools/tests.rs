@@ -710,7 +710,15 @@ fn committed_atlas_is_up_to_date() {
     let rules = project.config.font_atlas.as_ref().unwrap();
     let dir = std::env::temp_dir().join(format!("xtask-atlas-check-{}", std::process::id()));
     let fonts = SOURCES.map(|source| root.join(source));
-    let msg = shuyi_cli::font_atlas::run(rules, project.config.command(), &fonts, &dir).unwrap();
+    let msg = shuyi_cli::font_atlas::run(
+        rules,
+        project.config.command(),
+        &fonts,
+        None,
+        &dir,
+        &shuyi_cli::font_atlas::AtlasChars::default(),
+    )
+    .unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
     let rerun = "rerun `cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf \

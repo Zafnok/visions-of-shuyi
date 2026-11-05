@@ -30,8 +30,14 @@ use crate::error::ContentError;
 pub use data::{DataText, Tables, from_tables};
 pub use shuyi_assets::lang::{
     ENGLISH, Entry, LangCode, LangFile, LangInfo, LangPack, LangStatus, LineEntry, LineKind,
-    LineText, MadeBy, Orphan, PackSources, Source, SourceLine, english_from_source, text_width,
+    LineText, MadeBy, Orphan, PackSources, Source, SourceLine, english_from_source,
 };
+
+/// The cells `text` takes, every character one cell wide: the game's font
+/// has no wide glyphs.
+pub fn text_width(text: &str) -> usize {
+    shuyi_assets::lang::text_width(text, &shuyi_assets::font::CellWidths::NARROW)
+}
 
 /// Directory of the languages inside the asset bundle.
 pub const LANG_DIR: &str = "lang";

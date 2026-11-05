@@ -47,6 +47,13 @@ The same audit found two more things this cutover must carry:
   `assets/data/keymap.ron`'s `playdate` table binds `DangerZone`,
   `DialogueLog` and `Options` to `[]`, so after the cutover the menu
   would be silently empty.
+- **Buttons let go in the system menu.** Since engine #260 (pin move
+  of 2026-11-04) `Game::set_resumed` lets go of every held button on the
+  first frame after a resume. The engine's `App` calls it on the
+  system's `Resume`; the game's shim (`crates/playdate/shim/shim.c`)
+  handles only `kEventInit`, so today a button held into the system menu
+  and let go there stays held. The cutover makes the Playdate's
+  `kEventResume` reach the engine's backend.
 - **The allocator has drifted.** The game's `pd/allocator.rs` `dealloc`
   lacks the engine's null check, and the engine wraps its `SdkAlloc` in
   `shuyi_alloc_count::CountingAlloc` in debug builds (heap counts); one
@@ -197,6 +204,9 @@ ticket move. Bulk source deletion is explicitly owned by 1204–1206.
       the keymap's `SystemMenu0`–`2`, and each does what it did;
       `crates/ui/src/game/system_menu.rs` and `crates/playdate/src/menu.rs`
       are gone, and the `crates/ui/tests/it/playdate.rs` menu tests pass.
+- [ ] A button held when the system menu opens and let go in it is not
+      held after the game resumes (`Game::set_resumed` on
+      `kEventResume`, engine #260).
 - [ ] The exact retired-source lists are assigned to 1204–1206; the final
       physical under-200-production-line frontend criterion is in 1205.
 - [ ] All gates in the `run-gates` skill pass.
