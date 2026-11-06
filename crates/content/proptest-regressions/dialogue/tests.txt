@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 280ef6e9ef35b8cfc71afd7a9bd50976091caaa86b6ebacc4aaa37cef29aa97f # shrinks to scenes = [Scene { id: "a", steps: [If { character: CharacterId("a"), then: [], otherwise: [Narrate { text: "():a", direction: None, line: LineId("a_ac0a263f") }] }] }]
