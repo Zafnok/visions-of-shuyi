@@ -12,7 +12,9 @@
 //! Where the script asks (`@opening`, ticket 0734), a short moving opening
 //! plays before a line: the opening's characters walk on the place at
 //! full brightness ([`crate::cinematic::opening`]), the place darkens,
-//! then the line comes up.
+//! then the line comes up. A scene played straight after a won battle
+//! fades from its place at full brightness into the darkening the same
+//! way, with no one moving ([`DialogueScreen::fading_in`], ticket 0738).
 //!
 //! Each text box says its line's voice clip (ticket 0720, ADR-0046) as it
 //! comes up, and tells `app` which lines can come next so it loads them.
@@ -28,7 +30,7 @@ use trpg_content::{MusicLine, Names, OpeningDef, PlaceLine, Present, Scene};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
-use crate::cinematic::opening::{cast_units, darkened, opening_ms, opening_units};
+use crate::cinematic::opening::{DARKEN_MS, cast_units, darkened_after, opening_ms, opening_units};
 use crate::dialogue::{DialoguePlayer, Portrait};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
@@ -100,8 +102,9 @@ fn coming_lines(player: &DialoguePlayer) -> Vec<LineId> {
 /// An opening playing (0734): which, and for how long so far.
 #[derive(Debug, Clone, PartialEq)]
 struct Playing {
-    /// The opening's id (`assets/openings/`).
-    id: String,
+    /// The opening's id (`assets/openings/`); `None` for the place fading
+    /// into the darkening with no one moving (after a battle, 0738).
+    id: Option<String>,
     /// Seconds since it started.
     elapsed_s: f32,
 }
@@ -110,6 +113,28 @@ impl Playing {
     /// Milliseconds since it started.
     fn clock_ms(&self) -> u64 {
         crate::cinematic::millis(self.elapsed_s)
+    }
+
+    /// Its opening, if it has one and the content has it.
+    fn def<'c>(&self, ctx: &'c Ctx) -> Option<&'c OpeningDef> {
+        ctx.game.content.openings.get(self.id.as_ref()?)
+    }
+
+    /// How long it plays in `ctx`, darkening included, in milliseconds: no
+    /// time for an opening the content hasn't got.
+    fn length_ms(&self, ctx: &Ctx) -> u32 {
+        match (&self.id, self.def(ctx)) {
+            (None, _) => DARKEN_MS,
+            (Some(_), def) => def.map_or(0, opening_ms),
+        }
+    }
+
+    /// How far the place has darkened now.
+    fn darkened(&self, ctx: &Ctx) -> f32 {
+        match (&self.id, self.def(ctx)) {
+            (None, _) => darkened_after(0, self.clock_ms()),
+            (Some(_), def) => def.map_or(1.0, |d| darkened_after(d.length_ms, self.clock_ms())),
+        }
     }
 }
 
@@ -227,6 +252,23 @@ impl DialogueScreen {
         }
     }
 
+    /// The same screen fading in, for a scene played straight after a won
+    /// battle (Nick, 0738: "fade to the darkened, rather than being
+    /// darkened immediately"): if its first text box has a place behind it
+    /// and no opening before it, the place starts at full brightness and
+    /// darkens over [`DARKEN_MS`] before the box comes up, as after an
+    /// opening.
+    #[must_use]
+    pub fn fading_in(mut self) -> Self {
+        if self.playing.is_none() && self.player.current().place.is_some() {
+            self.playing = Some(Playing {
+                id: None,
+                elapsed_s: 0.0,
+            });
+        }
+        self
+    }
+
     /// The map `@place battle` shows, if the screen was given one.
     pub fn battle(&self) -> Option<&Place> {
         self.battle.as_deref()
@@ -272,7 +314,8 @@ impl DialogueScreen {
         self.menu.as_ref()
     }
 
-    /// Whether an opening is playing before the text box (0734).
+    /// Whether an opening is playing before the text box (0734), or the
+    /// place is fading in ([`fading_in`](Self::fading_in), 0738).
     pub fn is_opening(&self) -> bool {
         self.playing.is_some()
     }
@@ -304,7 +347,10 @@ impl DialogueScreen {
     /// [`show_box`](Self::show_box).
     fn start_box(&mut self) {
         if let Some(id) = self.player.take_opening() {
-            self.playing = Some(Playing { id, elapsed_s: 0.0 });
+            self.playing = Some(Playing {
+                id: Some(id),
+                elapsed_s: 0.0,
+            });
         }
         let view = self.player.current();
         if view.text.is_some() && view.choices.is_none() {
@@ -566,7 +612,7 @@ impl DialogueScreen {
                 _ => {}
             }
         }
-        let length = self.playing_def(ctx).map_or(0, opening_ms);
+        let length = self.playing.as_ref().map_or(0, |p| p.length_ms(ctx));
         if let Some(playing) = &mut self.playing {
             playing.elapsed_s += input.dt();
             if playing.clock_ms() >= u64::from(length) {
@@ -574,11 +620,6 @@ impl DialogueScreen {
             }
         }
         Transition::None
-    }
-
-    /// The opening playing, if the content has it.
-    fn playing_def<'c>(&self, ctx: &'c Ctx) -> Option<&'c OpeningDef> {
-        ctx.game.content.openings.get(&self.playing.as_ref()?.id)
     }
 
     /// One key in the open log: the cursor keys move, Confirm goes to the
@@ -693,10 +734,13 @@ impl DialogueScreen {
         view.place = current
             .place
             .and_then(|line| self.place_scene(ctx, line, opening));
+        view.bright = current
+            .place
+            .and_then(PlaceLine::bright)
+            .map(trpg_content::Bright::share);
         if let Some(playing) = &self.playing {
-            let def = self.playing_def(ctx);
             view.opening = Some(OpeningView {
-                darkened: def.map_or(1.0, |d| darkened(d, playing.clock_ms())),
+                darkened: playing.darkened(ctx),
             });
         }
         view.log = self.log_view(ctx);
@@ -716,7 +760,7 @@ impl DialogueScreen {
     ) -> Option<MapScene> {
         let view = screen_tiles(ctx);
         match line {
-            PlaceLine::Map { map, at } => {
+            PlaceLine::Map { map, at, .. } => {
                 let def = ctx.game.content.maps.get(map)?;
                 let mut place = Place::of_map(def);
                 if let Some(opening) = opening.filter(|o| o.map == *map) {
@@ -724,7 +768,7 @@ impl DialogueScreen {
                 }
                 Some(place.scene(*at, view))
             }
-            PlaceLine::Battle { at } => Some(self.battle.as_ref()?.scene(*at, view)),
+            PlaceLine::Battle { at, .. } => Some(self.battle.as_ref()?.scene(*at, view)),
             PlaceLine::None => None,
         }
     }
@@ -732,7 +776,8 @@ impl DialogueScreen {
     /// The characters of `opening` where it has them now: as far into it
     /// as it has played, or where it left them once it is over.
     fn opening_cast(&self, ctx: &Ctx, opening: &OpeningDef) -> Vec<UnitView> {
-        let playing = self.playing.as_ref().filter(|p| p.id == opening.id);
+        let playing = self.playing.as_ref();
+        let playing = playing.filter(|p| p.id.as_ref() == Some(&opening.id));
         let clock_ms = playing.map_or(u64::from(opening.length_ms), Playing::clock_ms);
         let start = cast_units(ctx, opening, self.player.lead());
         opening_units(&start, opening, clock_ms)

@@ -40,11 +40,13 @@ them (`trpg_ui::cinematic::opening`).
 | `action` | What they do: walks, at least one, as a cinematic's action has them (`assets/cinematics/README.md`, *Action*), with `unit` naming someone of the cast by their character. No strikes. |
 
 - Who they are on the place: their map picture (the lead's by the look
-  the player chose), or their two-letter label in the glyph look. No HP
+  the player chose), or their two-letter label in the glyph look, on no
+  side: no outline, the label in the text colour (Nick, 0738). No HP
   bar. Someone with a class walks by its movement type; a speaker (who
   has none) walks on foot.
-- How long it plays: until its last walk ends. About **1.5 seconds**
-  (Nick: half of the mockup's 3); the darkening adds half a second.
+- How long it plays: until its last walk ends. About **2 seconds**
+  (Nick, 0738: the sparring "maybe 2s", Dace's pacing "Longer"); the
+  darkening adds half a second.
 - A walker faces the way it goes; with `facing`, that way all along (a
   step back towards an opponent). After a walk it keeps facing the way it
   last faced, not the camera.
@@ -56,4 +58,4 @@ Chapter 1's two:
 | Opening | Scene | Place |
 | ------- | ----- | ----- |
 | `ch01_sparring` | `ch01_intro` | the yard at Harrowby: the lead and Hollis step in and back at each other |
-| `ch01_pacing` | `ch01_tbc` | the study at Veyne Hall: Dace paces across the rug and half way back |
+| `ch01_pacing` | `ch01_tbc` | the study at Veyne Hall: Dace paces across the rug, back, and half way across again |

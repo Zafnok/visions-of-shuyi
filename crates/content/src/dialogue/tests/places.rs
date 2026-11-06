@@ -4,15 +4,24 @@ use trpg_core::{BattleMap, Grid, Pos, TerrainId};
 
 use super::*;
 
+/// The error of a `@place` line that isn't one.
+const NEEDS: &str = "@place needs a map id and a tile (\"@place ch01 3,12\"), or \"battle\" and a \
+                     tile, either with a brightness after it or not (\"@place ch01 3,12 bright \
+                     60%\"); or \"none\"";
+
 fn map_at(map: &str, x: i32, y: i32) -> Step {
     Step::Directive(Stage::Setting(PlaceLine::Map {
         map: map.into(),
         at: Pos::new(x, y),
+        bright: None,
     }))
 }
 
 fn battle_at(x: i32, y: i32) -> Step {
-    Step::Directive(Stage::Setting(PlaceLine::Battle { at: Pos::new(x, y) }))
+    Step::Directive(Stage::Setting(PlaceLine::Battle {
+        at: Pos::new(x, y),
+        bright: None,
+    }))
 }
 
 #[test]
@@ -62,8 +71,7 @@ fn place_lines_parse_anywhere_in_a_scene() {
 
 #[test]
 fn place_needs_a_map_and_a_tile_or_none() {
-    let needs = "@place needs a map id and a tile (\"@place ch01 3,12\"), \"battle\" and a tile, \
-                 or \"none\"";
+    let needs = NEEDS;
     let tile = |t: &str| format!("\"{t}\" is not a tile; write it as <x>,<y>, e.g. 3,12");
     assert_eq!(
         errors(&scene(
@@ -250,4 +258,65 @@ fn readme_places_example_is_valid() {
     let (parsed, _) = parse_dlg("README.md", example);
     assert_eq!(parsed[0].scene.id, "ch01_after");
     assert_eq!(parsed[0].scene.steps[1], battle_at(20, 3));
+}
+
+/// `@place` with a brightness (0738): a percentage from 1% to 100% after
+/// the tile, on a map or the battle; never on `none`.
+#[test]
+fn place_lines_may_say_how_bright_the_place_is() {
+    let src = "@scene s\n@place yard 3,12 bright 60%\n> One.\n@place battle 0,0 bright 100%\n\
+               > Two.\n@place yard 1,1\n> Three.\n@end\n";
+    let (parsed, errors) = parse_dlg("t.dlg", src);
+    assert_eq!(errors, []);
+    let bright = |line: &Step| match line {
+        Step::Directive(Stage::Setting(place)) => place.bright().map(Bright::percent),
+        _ => panic!("not a place: {line:?}"),
+    };
+    let steps = bare(&parsed[0].scene.steps);
+    assert_eq!(
+        [&steps[0], &steps[2], &steps[4]].map(bright),
+        [Some(60), Some(100), None]
+    );
+    let Step::Directive(Stage::Setting(study)) = &steps[0] else {
+        panic!("not a place: {:?}", steps[0]);
+    };
+    assert_eq!(study.args(), "yard 3,12 bright 60%");
+    let scene = Scene {
+        id: "s".into(),
+        steps: steps.clone(),
+    };
+    assert_eq!(scenes(&print_scene(&scene)), [scene]);
+    let share = Bright::new(60).map(Bright::share);
+    assert!(share.is_some_and(|s| (s - 0.6).abs() < f32::EPSILON));
+    assert_eq!(PlaceLine::None.bright(), None);
+}
+
+#[test]
+fn a_brightness_is_a_percentage_from_1_to_100() {
+    let not = |n: &str| {
+        format!(
+            "\"{n}\" is not a brightness; write it as a percentage from 1% to 100%, e.g. \
+             \"bright 60%\""
+        )
+    };
+    assert_eq!(
+        errors(&scene(
+            "@place yard 1,1 bright 0%\n@place yard 1,1 bright 101%\n@place yard 1,1 bright 60\n\
+             @place yard 1,1 bright 0.6\n@place yard 1,1 bright\n@place none bright 50%\n\
+             @place bright 50%\n@place yard 1,1 bright +60%\n@place yard 1,1 bright %\n> x"
+        )),
+        [
+            format!("t.dlg:4: {}", not("0%")),
+            format!("t.dlg:5: {}", not("101%")),
+            format!("t.dlg:6: {}", not("60")),
+            format!("t.dlg:7: {}", not("0.6")),
+            format!("t.dlg:8: {NEEDS}"),
+            format!("t.dlg:9: {NEEDS}"),
+            format!("t.dlg:10: {NEEDS}"),
+            format!("t.dlg:11: {}", not("+60%")),
+            format!("t.dlg:12: {}", not("%")),
+        ]
+    );
+    assert_eq!(Bright::new(0), None);
+    assert_eq!(Bright::new(101), None);
 }

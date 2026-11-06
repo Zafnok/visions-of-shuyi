@@ -16,6 +16,7 @@ fn an_opening_line_parses_and_prints_back() {
     let place = Step::Directive(Stage::Setting(PlaceLine::Map {
         map: "yard".into(),
         at: Pos::new(1, 1),
+        bright: None,
     }));
     let scene = Scene {
         id: "s".into(),

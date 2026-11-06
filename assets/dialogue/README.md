@@ -57,6 +57,7 @@ Every line is one of these. Directives start at the very first column.
 | `@music stop` | Fades the music out to silence. |
 | `@place <map> <x>,<y>` | Draws the scene over that map of `assets/maps/` (its file name without `.map`), darkened, centred on tile `x`,`y`, from here until the next `@place`. See "Places". |
 | `@place battle <x>,<y>` | The same over the map of the scene's battle. |
+| `@place <map> <x>,<y> bright <n>%`, `@place battle <x>,<y> bright <n>%` | The same, darkened only to `n`% of its brightness (1% to 100%) instead of the usual 40%. See "Places". |
 | `@place none` | Back to black behind the talk. |
 | `@opening <opening>` | Before the next text box, plays that opening of `assets/openings/` (its file name without `.ron`) on the place: its characters move, then the place darkens and the talk comes up. See "Places". |
 | `@dies <character>` | A death in the scene (Hollis, `death-and-difficulty.md`): when the scene plays, the character leaves the army for good, in Classic and Casual alike; their gear goes to the stock and their supports end. Usually inside an `@if` block for them. See "Rules". |
@@ -102,7 +103,8 @@ The validator reports every broken rule, with the file and line:
   `assets/audio/audio.ron` (not a sound, not a music pool), or `stop`.
 - **Places**: `@place` names a map of `assets/maps/` and a tile on it,
   `battle` and a tile on the battle's map in a scene that has a battle,
-  or `none`. Every reply of a choice, and both parts of an `@if` block,
+  or `none`; a brightness after the tile is `bright` and a whole
+  percentage from 1% to 100%. Every reply of a choice, and both parts of an `@if` block,
   leave the same place (as with the caption).
 - **Openings**: `@opening` names an opening of `assets/openings/` made
   for the place in force, which is a map of `assets/maps/` (not
@@ -536,9 +538,17 @@ glyphs, with *Pictures* in the tiles, like the battle map.
   to bottom) as far as the map allows; a map smaller than the screen sits
   in its middle.
 - `@place battle <x>,<y>`: the scene's battle map. Only in a scene that
-  has a battle: a chapter's intro and victory scenes (its battle's field,
-  with nobody on it) and a battle trigger's scene (the battle as it
-  stands, units and all). Not in a support conversation.
+  has a battle: a chapter's intro scenes (its battle's field, with nobody
+  on it), its victory scenes (the field with the player's units left
+  standing where the battle ended, on no side, ticket 0738) and a battle
+  trigger's scene (the battle as it stands, units and all). Not in a
+  support conversation. A scene played straight after a won battle shows
+  its place at full brightness first and darkens it over half a second
+  before the first text box, as after an opening.
+- `bright <n>%` after the tile: this place is darkened only to `n`% of its
+  brightness, not the usual 40% (Chapter 1's study at night: `@place
+  veyne_study 12,7 bright 60%`, ticket 0738). An opening on it darkens to
+  that brightness too.
 - `@place none`: black again.
 - The place lasts until the next `@place`, through text boxes and replies.
 - A scene with no `@place` is drawn on black, as before. A scene played
@@ -547,7 +557,7 @@ glyphs, with *Pictures* in the tiles, like the battle map.
 - `@opening <opening>`: a short moving opening (ticket 0734), **only where
   the script asks** for one. Before the next text box the place is shown
   at full brightness, with no portraits or text box (the caption stays),
-  while the opening's characters walk on it (about a second and a half),
+  while the opening's characters walk on it (about two seconds),
   then it darkens over half a second and the text box comes up. Its
   characters stay where it left them, darkened with the place, until the
   next `@place`. The player's Confirm key goes straight to the text box;

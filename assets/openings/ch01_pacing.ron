@@ -1,7 +1,8 @@
-// ch01_tbc's opening (ticket 0734): night in the old lord's study at Veyne
-// Hall (veyne_study.map), Dace pacing once across the rug before the desk
-// and half way back. About 1.5 s; the dialogue screen then darkens the
-// study over 0.5 s and the talk starts. Pace: TUNABLE.
+// ch01_tbc's opening (tickets 0734, 0738): night in the old lord's study
+// at Veyne Hall (veyne_study.map), Dace pacing across the rug before the
+// desk, back again, and half way across once more. About 2.4 s (Nick,
+// 0738: "Longer"); the dialogue screen then darkens the study over 0.5 s
+// and the talk starts. Pace: TUNABLE.
 (
     id: "ch01_pacing",
     map: "veyne_study",
@@ -10,6 +11,7 @@
     ],
     action: [
         (at: 0.0, do: Walk(unit: "rival", path: [(9, 8), (15, 8)], secs: 0.85)),
-        (at: 0.95, do: Walk(unit: "rival", path: [(15, 8), (12, 8)], secs: 0.5)),
+        (at: 0.95, do: Walk(unit: "rival", path: [(15, 8), (9, 8)], secs: 0.85)),
+        (at: 1.9, do: Walk(unit: "rival", path: [(9, 8), (12, 8)], secs: 0.5)),
     ],
 )

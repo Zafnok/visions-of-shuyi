@@ -1372,19 +1372,64 @@ talk over the darkened yard; Dace pacing a stone hall). His answers:
   | `ch01_intro` (the letter) | Harrowby, the yard behind the lead's rented house, dawn: a new tileset place | the lead and Hollis spar |
   | `ch01_prebattle` (the Red Company) | the battle map, at Harrowby by the chapel | none |
   | the battle's scenes | the battle map, as it stands | none |
-  | `ch01_victory` (after the fight) | the battle map, at the toll-fort | none |
-  | `ch01_tbc` (Veyne Hall) | Veyne Hall, the lead's father's old study, night: a new tileset place | Dace paces |
+  | `ch01_victory` (after the fight) | the battle map, at the toll-fort, noon, with the party where the battle left them | none: the field fades into the darkening |
+  | `ch01_tbc` (Veyne Hall) | Veyne Hall, the lead's father's old study, night, darkened less (60%) | Dace paces |
+
+**Round 3** (Nick, after playing Chapter 1 again, 2026-10-16; ticket
+0738):
+
+> [the sparring, ~1.5 s:] "they can spar for maybe 2s... anyway an issue
+> is that they are yellow outlined? don't think I signed off on that, I
+> want them with no outline."
+>
+> [Dace pacing, ~1.5 s:] "Longer"
+>
+> [the study at night, night light and 40%:] "Darken less in this scene
+> only"
+>
+> [after the win, the empty toll-fort, darkened:] "show who's left
+> standing, and fade to the darkened, rather than being darkened
+> immediately, it looks like early morning not noon."
+
+He kept the yard, the study and battle lines over the darkened live
+battle as they were.
+
+- **The people on a place have no outline.** The characters of an opening,
+  and the party after a battle, are on no side: no outline in any side's
+  colour in the pictures look, their label in the text colour in the glyph
+  look, the letters alone on the Playdate; no HP bar and no marks.
+- **The sparring lasts about 2 seconds; Dace paces about 2.4 seconds** (to
+  the far wall, back, and half way across again).
+- **A scene's place can be darkened less than the rest.** Its `@place`
+  line says how bright (`@place veyne_study 12,7 bright 60%`); without it,
+  the usual 40%. In Chapter 1 only the study is lighter, at 60%.
+- **After a won battle, the field shows who is left standing**, where they
+  stood when it ended. The enemies are gone (the battle was won), and so
+  is anyone who fell. This replaces "the battle map with nobody on it" for
+  the scenes after a battle; before a battle the field is still empty.
+- **After a won battle, the field fades into the darkening:** it shows at
+  full brightness, darkens over 0.5 seconds, then the first line comes up,
+  as after a moving opening. Confirm skips to the line.
+- **The victory at the toll-fort is at noon**, as the beat sheet says
+  (`ch01.md`, *After the fight*). The battle map already had the noon
+  light; it read as early morning because it was darkened at once.
 
 *Claude's starting rules (Nick can veto):*
 
 - The place behind the talk is at **about 40% of its brightness**, a
   little darker than the dimmed listener's portrait, so the faces stand out
-  (tunable).
-- A moving opening lasts **about 1.5 seconds** of movement, then the place
-  darkens over **0.5 seconds** and the first line starts (tunable). A press
-  of Confirm during it skips to the first line.
+  (tunable). The study at Veyne Hall is at 60% (round 3, tunable).
+- A moving opening lasts **about 2 seconds** of movement (round 3: the
+  sparring 2.05 s, Dace's pacing 2.4 s), then the place darkens over **0.5
+  seconds** and the first line starts (tunable). A press of Confirm during
+  it skips to the first line.
 - The opening's characters are their map sprites (their glyphs in the glyph
   look), walking at the battle map's walking speed.
+- Who is left standing after a battle is **the player's units still on the
+  field**: not allies, not a unit down at 0 HP. They face the camera.
+- Every scene played straight after a won battle fades in that way (a
+  chapter's victory scenes, a side quest's), unless it starts on black or
+  with its own moving opening.
 - The intro and victory scenes of a chapter use the battle map only when
   the script names it: a scene like the letter, at dawn away from the
   field, gets its own place. In Chapter 1 that is the table above.

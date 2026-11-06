@@ -23,7 +23,7 @@ fn brigand(id: u32, pos: Pos) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
-        marks: true,
+        sided: true,
     }
 }
 
@@ -366,8 +366,26 @@ fn to_text_names_every_side() {
         let line = format!("  #7 Br {name} brigand (0,-1) hp 20/30 {effects}\n");
         assert!(s.to_text(&looks).contains(&line), "{name}");
     }
-    // One out of a conversation's opening has no marks.
+    // Someone in a conversation's opening is on no side.
     let mut u = brigand(7, p(0, -1));
-    u.marks = false;
-    assert!(unit_text(&u).ends_with(" no-marks"));
+    u.sided = false;
+    assert!(unit_text(&u).ends_with(" no-side"));
+}
+
+/// A unit put on a conversation's place (0738) is on no side, has not
+/// acted and is under no effect; the rest of it stays.
+#[test]
+fn a_unit_on_no_side_keeps_who_and_where_it_is() {
+    let mut u = brigand(7, p(2, 3));
+    u.acted = true;
+    u.effects = UnitEffects {
+        bonus: true,
+        penalty: true,
+    };
+    let placed = u.clone().on_no_side();
+    assert!(!placed.sided && !placed.acted && !placed.has_effect());
+    assert_eq!(
+        (placed.id, placed.pos, &placed.label),
+        (u.id, u.pos, &u.label)
+    );
 }

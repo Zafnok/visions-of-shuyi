@@ -7,7 +7,7 @@
 use crate::prelude::*;
 
 use trpg_content::{Content, MapDef, MapLook};
-use trpg_core::{BattleDef, Grid, Pos, TerrainId};
+use trpg_core::{BattleDef, BattleState, Faction, Grid, Pos, TerrainId};
 
 use super::scene::{MapScene, UnitView};
 use crate::glyph_buffer::Rect;
@@ -20,6 +20,19 @@ pub fn screen_tiles(ctx: &Ctx) -> (i32, i32) {
     let console = ctx.console;
     let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
     ctx.game.map_skin.view_tiles(screen)
+}
+
+/// Who is left standing on the field of a battle that ended as `state`
+/// (Nick, 0738: "show who's left standing"): the player's units still on
+/// it, where they stood, on no side ([`UnitView::sided`]) as everyone on a
+/// conversation's place is, facing the camera. Not the enemies (the
+/// battle was won) and not a unit down at 0 HP.
+pub fn left_standing(state: &BattleState) -> Vec<UnitView> {
+    let player = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player);
+    player.map(|u| UnitView::of(u).on_no_side()).collect()
 }
 
 /// A whole map to show behind something: its terrain, how it looks and the
@@ -45,8 +58,8 @@ impl Place {
     }
 
     /// The map of battle `def` as it looks in `content` (in the battle's
-    /// own light), with nobody on it: the field before the battle or
-    /// after it.
+    /// own light), with nobody on it: the field before the battle (or after
+    /// it, with [`left_standing`] on it).
     pub fn of_battle(content: &Content, def: &BattleDef) -> Self {
         Self {
             tiles: def.map.tiles.clone(),

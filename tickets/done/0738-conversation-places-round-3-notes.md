@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-05
 ---
 
 # 0738 — Conversation places: Nick's round 3 notes
@@ -123,4 +123,67 @@ the script (0737).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done 2026-11-05.
+
+- **Openings retimed.** `ch01_sparring.ron`: one more exchange (Hollis
+  steps in and back again), 2.05 s of movement. `ch01_pacing.ron`: Dace
+  crosses the rug, comes back, and goes half way across again, 2.4 s; he
+  now ends facing right (the way he last walked).
+- **No outline on actors.** `UnitView.marks` became `UnitView.sided`
+  (whether the unit shows as one of a battle's sides): `false` drops the
+  outline in the pictures look, paints the glyph label in the text
+  colour instead of a side's, gives the Playdate's letters alone, and
+  keeps no HP bar or marks as before. The scene text says ` no-side`.
+  Chosen over an `outline: None` on the cast, because the same look is
+  needed for the party after a battle. Opening casts keep
+  `Faction::Neutral`, which no skin reads once `sided` is false.
+- **Per-scene brightness:** `@place <map> <x>,<y> bright <n>%` (also on
+  `@place battle`), a whole percentage from 1% to 100%, parsed into
+  `PlaceLine`'s new `bright: Option<Bright>`; printed back the same way.
+  The dialogue view carries it (`DialogueView.bright`) and the glyph
+  dialogue skin darkens the place (and an opening's darkening) to it.
+  `ch01_tbc` uses `bright 60%`; every other scene is at the usual 40%.
+- **Victory at the toll-fort:**
+  - The flow keeps who was left standing when a battle is won
+    (`map_view::left_standing`: the player's living units, where they
+    stood, on no side) and puts them on the field of the victory scenes'
+    `@place battle`. They are cleared once the victory scenes are over.
+  - Those scenes fade in (`DialogueScreen::fading_in`): the place at full
+    brightness, darkening over `DARKEN_MS` (0.5 s), then the first box.
+    It reuses the opening's playing state with no opening (Confirm skips
+    it, Cancel asks to skip the scene, the voice waits for it).
+  - Lighting: the beat sheet says noon (`ch01.md`, *After the fight*),
+    and `ch01.map` has no light, so it was already `noon`. Nick's "early
+    morning" was the instant 40% darkening; the fade fixes it. No
+    lighting change; a test pins `noon`. (The script's caption says "The
+    toll-fort, before noon": that line is the script's, 0737.)
+- `look-and-feel.md` (*Places behind conversations*, round 3),
+  `assets/dialogue/README.md` and `assets/openings/README.md` updated.
+- The `--scene` preview (`start_on_scene`) plays no battle, so it shows
+  `ch01_victory` on the empty field with no fade, as before.
+
+*The agent's starting rules* (for the Act 1 playtest, 1064):
+
+- Who is left standing is **the player's units still on the field**:
+  not allies, not a unit down at 0 HP; they face the camera, with no
+  outline (like the opening casts).
+- **Every scene played straight after a won battle fades in** (a
+  chapter's victory scenes, a side quest's), unless it starts on black
+  or has its own opening. The study (`ch01_tbc`) has Dace's opening, so
+  it plays as before.
+- The study is at **60%**; the sparring **2.05 s**; Dace's pacing
+  **2.4 s** (three walks). All tunable.
+- On no side, the glyph label is in the **text colour** (the default
+  white); on the Playdate, the letters alone, as allies and neutrals
+  already are.
+
+Left to judge by playing (1064): the lengths, the outline-free look,
+the study's lighting and the party standing at the toll-fort.
+
+Measures: production lines 158 added, 45 removed (`cargo xtask
+code-lines`). The estimate wasn't written before coding (a miss); 0734's
+place-and-opening work is the comparable piece, and this is well under
+it, so no friction review. PR size 854 changed lines. Picture:
+`docs/img/0738-sparring.png` (the opening mid-step in the glyph look; the
+victory and the study are in the text snapshots, as `frame-png` can't win
+a battle from the title).

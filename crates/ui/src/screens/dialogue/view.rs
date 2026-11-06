@@ -31,6 +31,10 @@ pub struct DialogueView {
     /// without the talk, bright while its characters move, then
     /// darkening.
     pub opening: Option<OpeningView>,
+    /// How bright the place is behind the talk, as a share of full
+    /// brightness, if the scene's `@place` line says (`bright 60%`, 0738);
+    /// `None`: as the skin darkens every place.
+    pub bright: Option<f32>,
     /// The place and time, if the scene has said them.
     pub caption: Option<String>,
     /// Who is on the left, if anyone.
@@ -106,6 +110,7 @@ pub(super) fn scene(
         overlay,
         place: None,
         opening: None,
+        bright: None,
         caption: view.caption.as_deref().map(str::to_owned),
         left: view.left.map(|p| face(ctx, lead, p)),
         right: view.right.map(|p| face(ctx, lead, p)),

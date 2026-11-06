@@ -1,8 +1,9 @@
 //! How the glyph skin draws a unit (ADR-0018, `docs/design/look-and-feel.md`):
 //! its two-letter map label in its faction colour on the terrain background,
 //! dimmed once it has acted (the label keeps its case), and a 2-px HP bar
-//! along the bottom of its tile, one pixel in from each side (none for a
-//! unit without [marks](UnitView::marks)).
+//! along the bottom of its tile, one pixel in from each side. A unit on no
+//! side ([`sided`](UnitView::sided) false, someone on a conversation's
+//! place) has its label in the text colour and no HP bar.
 
 use trpg_core::StatValue;
 
@@ -70,7 +71,13 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         return;
     }
     let k = fade * 2.0;
-    let faction = palette.get(faction_color(unit.faction));
+    // On no side (someone on a conversation's place, 0738): the text's
+    // colour, not a side's.
+    let faction = if unit.sided {
+        palette.get(faction_color(unit.faction))
+    } else {
+        palette.get(UiColor::Text)
+    };
     let effect = palette.get(UiColor::Effect);
     let lit = FLASH_BLEND * flash(unit);
     let tile_bg = buf.get(x, y).map_or(faction, |c| c.bg);
@@ -96,7 +103,7 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         let bg = bg.lerp(palette.get(UiColor::Text), lit);
         buf.set(x + i, y, Cell::new(glyph, fg, bg));
     }
-    if !unit.marks {
+    if !unit.sided {
         return;
     }
     let (width, color) = hp_bar(unit.hp.0, unit.hp.1);

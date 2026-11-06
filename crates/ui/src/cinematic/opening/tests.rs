@@ -23,7 +23,7 @@ fn standing(units: &[UnitView]) -> Vec<(UnitId, Pos, Facing)> {
 }
 
 #[test]
-fn the_cast_stand_as_characters_without_marks() {
+fn the_cast_stand_as_characters_on_no_side() {
     let c = ctx();
     let def = &c.game.content.openings["ch01_sparring"];
     let cast = cast_units(&c, def, &lead());
@@ -41,7 +41,7 @@ fn the_cast_stand_as_characters_without_marks() {
     assert_eq!(cast[1].label, "Ho");
     assert!(
         cast.iter()
-            .all(|u| !u.marks && u.faction == Faction::Neutral)
+            .all(|u| !u.sided && u.faction == Faction::Neutral)
     );
     assert_eq!(lead_unit.class.0, "exile");
     // Dace has his class (a Shadowblade since 0850, though he doesn't fight
@@ -99,10 +99,12 @@ fn a_walker_faces_the_way_it_goes_and_keeps_it() {
     // At the far end, before turning back: still the way it went.
     assert_eq!((at(900).pos, at(900).facing), (p(15, 8), Facing::Right));
     assert_eq!(at(1200).facing, Facing::Left);
+    // Back at the near end, then half way across again.
+    assert_eq!((at(1850).pos, at(1850).facing), (p(9, 8), Facing::Left));
     let end = at(u64::from(def.length_ms));
     assert_eq!(
         (end.pos, end.facing, end.frame),
-        (p(12, 8), Facing::Left, STANDING_FRAME)
+        (p(12, 8), Facing::Right, STANDING_FRAME)
     );
     assert!(!end.between_tiles());
 }

@@ -118,7 +118,7 @@ pub(crate) fn unit(faction: Faction, pos: Pos) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
-        marks: true,
+        sided: true,
     }
 }
 

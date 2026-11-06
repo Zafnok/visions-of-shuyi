@@ -4,11 +4,13 @@
 //! screen shows or does (ADR-0054).
 //!
 //! The scene's place, if it names one, is painted first by the map skin
-//! over the whole screen and darkened to [`PLACE_BRIGHTNESS`]; an overlay
-//! with no place darkens the screen below it (the battle map) the same
-//! way. Everything else goes on top at full brightness. While an opening
-//! plays (0734) the place goes from full brightness down to
-//! [`PLACE_BRIGHTNESS`] as it darkens, under the caption alone.
+//! over the whole screen and darkened to [`PLACE_BRIGHTNESS`], or to the
+//! brightness its `@place` line asks for (0738); an overlay with no place
+//! darkens the screen below it (the battle map) the same way. Everything
+//! else goes on top at full brightness. While an opening plays (0734), or
+//! the place fades in after a battle (0738), the place goes from full
+//! brightness down to that brightness as it darkens, under the caption
+//! alone.
 //!
 //! Layout (100×32): 32×16-cell portraits in 34×18 frames at `x = 1` and
 //! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
@@ -63,20 +65,21 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     }
     let c = |u| ctx.palette.get(u);
     let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
+    let dark = view.bright.unwrap_or(PLACE_BRIGHTNESS).clamp(0.0, 1.0);
     if let Some(opening) = &view.opening {
         buf.fill_rect(buf.bounds(), blank);
         if let Some(place) = &view.place {
             ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
         }
         let darkened = opening.darkened.clamp(0.0, 1.0);
-        buf.fade(1.0 + (PLACE_BRIGHTNESS - 1.0) * darkened);
+        buf.fade(1.0 + (dark - 1.0) * darkened);
         paint_caption(ctx, buf, view);
         return;
     }
     if let Some(place) = &view.place {
         buf.fill_rect(buf.bounds(), blank);
         ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
-        buf.fade(PLACE_BRIGHTNESS);
+        buf.fade(dark);
     } else if view.overlay {
         buf.fade(PLACE_BRIGHTNESS);
         // Below the text box is the battle's key help, whose keys do
