@@ -1,0 +1,18 @@
+// `cargo shuyi bench`'s scenarios (ticket 1244; the engine's
+// docs/targets/README.md, the game's docs/targets.md): each is played
+// headless, and its frames' instructions, its heap's peak and the
+// package are gated against the budgets of every target `shuyi.ron`
+// lists. The steps press the game's actions by name, so they hold for
+// any key layout and for the Playdate's buttons.
+//
+// The enemy's turn in the biggest battle, the one where the most units
+// move (five of fifteen on turn 1, against one in Chapter 4): the turn
+// ended and confirmed, then every enemy's choice, walk and attack. The
+// turn takes about 12 seconds; the scenario plays its first 9.9, as many
+// frames as bench keeps (600 in all).
+(
+    format_version: 1,
+    about: "the enemy's turn in the biggest battle",
+    start: [(flag: "--battle", value: "side_company_ledger")],
+    script: (steps: [act("EndTurn"), act("Confirm"), wait(9.9)]),
+)

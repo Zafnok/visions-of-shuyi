@@ -1,0 +1,22 @@
+// `cargo shuyi bench`'s scenarios (ticket 1244; the engine's
+// docs/targets/README.md, the game's docs/targets.md): each is played
+// headless, and its frames' instructions, its heap's peak and the
+// package are gated against the budgets of every target `shuyi.ron`
+// lists. The steps press the game's actions by name, so they hold for
+// any key layout and for the Playdate's buttons.
+//
+// A line of dialogue with a portrait, typing out: Chapter 1's opening
+// scene, through its narration over the yard to the first line beside
+// the lead's portrait (the one portrait in a build without the bought
+// art, which the gates never read), typed out in full.
+(
+    format_version: 1,
+    about: "a line of dialogue with a portrait, typing out",
+    start: [(flag: "--scene", value: "ch01_intro")],
+    script: (steps: [
+        act("Confirm"), wait(0.4), act("Confirm"), wait(0.4), act("Confirm"), wait(0.4),
+        act("Confirm"), wait(0.4), act("Confirm"), wait(0.4), act("Confirm"), wait(0.4),
+        act("Confirm"), wait(0.4), act("Confirm"),
+        wait(2.0),
+    ]),
+)

@@ -1,0 +1,16 @@
+// `cargo shuyi bench`'s scenarios (ticket 1244; the engine's
+// docs/targets/README.md, the game's docs/targets.md): each is played
+// headless, and its frames' instructions, its heap's peak and the
+// package are gated against the budgets of every target `shuyi.ron`
+// lists. The steps press the game's actions by name, so they hold for
+// any key layout and for the Playdate's buttons.
+//
+// The game's biggest battle, the Red Company's ledger (side_company_ledger:
+// seven of the party against fifteen), open at its start with no input:
+// the map, its units and the side panel drawn each frame.
+(
+    format_version: 1,
+    about: "the biggest battle's map, idle",
+    start: [(flag: "--battle", value: "side_company_ledger")],
+    frames: 60,
+)

@@ -306,13 +306,110 @@ jobs:
       - name: Lint the game's shape
         run: cargo shuyi lint
 
+  # The web package as release.yml exports it, without the bought art (the
+  # gates never read it), for the bench job's package budget (ticket 1244).
+  # The package ships the crates' licenses report, made first as release.yml's
+  # `licenses` job makes it.
+  export:
+    name: export
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: export
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-about
+      - run: |
+          mkdir -p dist/licenses
+          cargo about generate -m crates/app/Cargo.toml about.hbs \
+            -o dist/licenses/THIRD_PARTY_LICENSES.html
+      # The export's own cargo commands don't take --locked.
+      - run: cargo metadata --locked --format-version 1 > /dev/null
+      - run: cargo shuyi export web --release --without private-assets
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: export-web
+          path: dist/export/web
+          retention-days: 1
+
+  # `cargo shuyi bench` (ticket 1244, engine ADR-0081): the scenarios in
+  # bench/ played under Callgrind, each frame's instructions, the heap's peak
+  # and the web package gated against the budgets of every target shuyi.ron
+  # lists (docs/targets.md). The table is the job's summary; a number over its
+  # budget fails the job, naming the scenario, the frame and the target.
+  # Until ticket 1250, the five numbers its first run found over budget
+  # (KNOWN_OVER: tickets 1247, 1248, 1249) are warnings instead; any other
+  # number over its budget, or a scenario that doesn't play, still fails it.
+  # It isn't in `ci-result` until 1250 either.
+  bench:
+    name: bench
+    needs: [changes, export]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - name: Install macroquad system libraries and Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libasound2-dev libx11-dev libxi-dev \
+            libgl1-mesa-dev libudev-dev valgrind
+          valgrind --version
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: bench
+      - name: The web package the export job made
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: export-web
+          path: dist/export/web
+      - run: cargo metadata --locked --format-version 1 > /dev/null
+      - name: Bench
+        env:
+          # target/what/scenario, or target/package, of each known finding.
+          KNOWN_OVER: >-
+            playdate/frame-instructions/battle-attack
+            playdate/frame-instructions/battle-cursor-sweep
+            playdate/frame-instructions/battle-enemy-turn
+            playdate/frame-instructions/dialogue-portrait
+            web/package
+        run: |
+          set +e
+          cargo shuyi bench --out dist/bench 2>&1 | tee bench.log
+          code=${PIPESTATUS[0]}
+          set -e
+          bash scripts/bench-known-over.sh "$code" bench.log dist/bench/bench-report.json
+      - name: Post the table
+        if: always()
+        run: |
+          table=dist/bench/bench-report.md
+          if [ -f "$table" ]; then cat "$table" >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: bench-report
+          path: dist/bench
+          retention-days: 14
+
   # Single required check for this workflow. Matrix jobs skipped by `if:`
   # report one check with an unexpanded name, never the per-leg names, so
   # branch protection requires this job instead (ADR-0014).
   ci-result:
     name: ci-result
     if: always()
-    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets]
+    # Not `bench` yet: its first run found numbers over their budgets, which
+    # tickets 1247, 1248 and 1249 bring under; 1250 adds it here. Until
+    # then it runs, posts its table and shows red without blocking.
+    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, export]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled
