@@ -5,7 +5,7 @@ type: infra
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["engine#3008"]
 nick_input: none
 completed:

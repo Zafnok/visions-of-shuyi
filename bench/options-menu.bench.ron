@@ -1,0 +1,24 @@
+// `cargo shuyi bench`'s scenarios (ticket 1244; the engine's
+// docs/targets/README.md, the game's docs/targets.md): each is played
+// headless, and its frames' instructions, its heap's peak and the
+// package are gated against the budgets of every target `shuyi.ron`
+// lists. The steps press the game's actions by name, so they hold for
+// any key layout and for the Playdate's buttons.
+//
+// The game's fullest menu, Options (eighteen rows), opened from the
+// title and walked down to its last row and back up.
+(
+    format_version: 1,
+    about: "the options menu",
+    script: (steps: [
+        act("CursorDown"), act("CursorDown"), act("Confirm"),
+        wait(0.3),
+        act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"),
+        act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"),
+        act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"),
+        act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
+        act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
+        act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
+        wait(0.3),
+    ]),
+)

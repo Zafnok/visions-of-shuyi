@@ -3,19 +3,21 @@
 //! returns; the test `Harness` drives it the same way without a window.
 //!
 //! The frame loop is Shuyi Engine's (`shuyi_ui::Game`, ticket 1109). This
-//! module is how this game starts it: at the title ([`start`]) or on a
-//! dialogue scene ([`start_on_scene`]), with this game's [`hooks`] (the
+//! module is how this game starts it: at the title ([`start`]), on a
+//! dialogue scene ([`start_on_scene`]) or on a battle
+//! ([`start_on_battle`]), with this game's [`hooks`] (the
 //! layout picker on the first key, the debug menu on the Debug key).
 //! [`system_menu`] is what a platform's own menu (the Playdate's) does.
 
 use crate::prelude::*;
 use shuyi_ui::{GameHooks, ScreenHook};
+use trpg_content::battle_campaign;
 use trpg_core::lead::DEFAULT_NAME;
-use trpg_core::{LeadGender, LeadProfile};
+use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
 
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::screen::{Ctx, Keyboard, Screen, ScreenStack, Shuyi};
-use crate::screens::{LayoutPickerScreen, TitleScreen, layout_picker};
+use crate::screens::{BattleScreen, LayoutPickerScreen, TitleScreen, layout_picker};
 
 pub use shuyi_ui::RawInputEvent;
 
@@ -111,6 +113,33 @@ pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<G
         stack.push(Box::new(layout_picker::first(&ctx)));
     }
     Ok(Game::with_stack(ctx, stack, hooks()))
+}
+
+/// A game opened straight on the battle `id` at its start, fought by its
+/// own characters in Classic, with no chapter around it: what `cargo shuyi
+/// bench`'s scenarios measure (ticket 1244). The saved layout is used, as
+/// in [`start`].
+///
+/// # Errors
+///
+/// If there is no such battle: the error lists the battles there are.
+pub fn start_on_battle(mut ctx: Ctx, id: &str) -> Result<Game, String> {
+    let content = &ctx.game.content;
+    let Some(def) = content.battles.get(id) else {
+        let ids: Vec<&str> = content.battles.keys().map(String::as_str).collect();
+        // check-text: not player text (a developer's error)
+        return Err(format!(
+            "no battle \"{id}\" in assets/battles/; the battles are: {}",
+            ids.join(", ")
+        ));
+    };
+    let campaign = battle_campaign(content, def, GameMode::Classic, ctx.game.lead.clone());
+    let state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
+    let battle = BattleScreen::new(state)
+        .with_look(content.battle_look(def))
+        .in_battle(&def.id);
+    use_saved_layout(&mut ctx);
+    Ok(new(ctx, Box::new(battle)))
 }
 
 #[cfg(test)]

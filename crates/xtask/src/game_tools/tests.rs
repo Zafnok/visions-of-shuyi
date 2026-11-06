@@ -43,6 +43,74 @@ fn temp_dir(name: &str) -> PathBuf {
     dir
 }
 
+/// Ticket 1244: `--battle` and `--scene` open the game there, one of them
+/// once, and never with `--prompt`, which is the title's.
+#[test]
+fn the_game_opens_on_a_battle_or_a_scene() {
+    let opens = |args: &[&str]| {
+        let mut all = vec!["a.png"];
+        all.extend(args);
+        Start::of(&parse(&all).unwrap().game).map(|start| start.opens)
+    };
+    assert_eq!(opens(&[]), Ok(Opens::Title));
+    assert_eq!(
+        opens(&["--battle", "ch04"]),
+        Ok(Opens::Battle("ch04".into()))
+    );
+    assert_eq!(opens(&["--scene", "a"]), Ok(Opens::Scene("a".into())));
+    let twice = Err("--battle and --scene: one or the other, once".to_owned());
+    assert_eq!(opens(&["--battle", "a", "--scene", "b"]), twice);
+    assert_eq!(opens(&["--battle", "a", "--battle", "b"]), twice);
+    assert_eq!(
+        opens(&["--prompt", "--scene", "a"]),
+        Err("--prompt: only at the title, not with --battle or --scene".into())
+    );
+}
+
+/// The battle `--battle` opens is that battle at its start, and an
+/// unknown one is refused with the battles there are.
+#[test]
+fn a_session_opens_on_the_battle_asked_for() {
+    let start = |args: &[&str]| {
+        let mut all = vec!["a.png"];
+        all.extend(args);
+        Start::of(&parse(&all).unwrap().game).unwrap()
+    };
+    let h = harness(&start(&["--battle", "ch04"])).unwrap();
+    assert_eq!(h.top_screen(), "battle");
+    let battle = h.battle().unwrap().state();
+    // Its own characters fill all eight slots, Gil's too (1071).
+    assert_eq!((battle.turn(), battle.units().len()), (1, 8 + 13));
+    let Err(unknown) = harness(&start(&["--battle", "nope"])) else {
+        panic!("no battle nope");
+    };
+    assert!(unknown.starts_with("no battle \"nope\" in assets/battles/; the battles are: "));
+    assert!(unknown.contains("ch04"), "{unknown}");
+    let h = harness(&start(&["--scene", "ch04_intro"])).unwrap();
+    assert_eq!(h.top_screen(), "dialogue");
+}
+
+/// `bench` on the Playdate plays the game on its 50 × 15 console, each
+/// frame drawn in one bit; there is no other one-bit target.
+#[test]
+fn the_playdate_session_plays_on_its_console() {
+    let battle = [GameArg {
+        flag: "--battle".into(),
+        value: Some("ch04".into()),
+    }];
+    let mut session = Trpg.session_on("playdate", &battle).unwrap();
+    session.idle(2);
+    assert_eq!(session.frame_count(), 2);
+    assert_eq!(session.screens().last().map(String::as_str), Some("battle"));
+    let snapshot = session.snapshot();
+    let row = snapshot.lines().next().unwrap_or_default();
+    assert_eq!(row.chars().count(), 50, "{snapshot}");
+    let Err(desktop) = Trpg.session_on("desktop", &battle) else {
+        panic!("the desktop isn't one-bit");
+    };
+    assert_eq!(desktop, "desktop: the game's one-bit target is playdate");
+}
+
 #[test]
 fn the_games_options_are_read() {
     let given = parse(&[
@@ -66,6 +134,7 @@ fn the_games_options_are_read() {
             prompt: true,
             light: Some("dusk".into()),
             tips: true,
+            opens: Opens::Title,
             after: Vec::new(),
         })
     );
@@ -970,5 +1039,100 @@ fn the_title_and_options_follow_the_targets_facts() {
         assert_eq!(has_quit, quit, "{id}: Quit");
         let has_row = shown_rows(ctx).contains(&Row::Fullscreen);
         assert_eq!(has_row, fullscreen, "{id}: Fullscreen");
+    }
+}
+
+/// What a test reads of a `bench/*.bench.ron` scenario: how it starts and
+/// what it plays (the engine's own reader is the engine's).
+#[derive(serde::Deserialize)]
+struct BenchScenario {
+    #[serde(default)]
+    start: Vec<GameArg>,
+    #[serde(default)]
+    script: frame_png::Script,
+    #[serde(default)]
+    frames: u32,
+}
+
+/// `scenario` of `bench/` played on the colour targets' session or, with
+/// `playdate`, the Playdate's, as `cargo shuyi bench` plays it.
+fn bench_played(scenario: &str, playdate: bool) -> Box<dyn Session> {
+    let path = crate::repo_root().join(format!("bench/{scenario}.bench.ron"));
+    let text = fs::read_to_string(&path).unwrap();
+    // As the engine reads a scenario: a value's `Some` is implied.
+    let options =
+        ron::Options::default().with_default_extension(ron::extensions::Extensions::IMPLICIT_SOME);
+    let bench: BenchScenario = options
+        .from_str(&text)
+        .unwrap_or_else(|e| panic!("{scenario}: {e}"));
+    let mut session = if playdate {
+        Trpg.session_on("playdate", &bench.start).unwrap()
+    } else {
+        Trpg.session(&bench.start).unwrap()
+    };
+    session.play(&bench.script);
+    session.idle(bench.frames);
+    session
+}
+
+/// The battle's units in `session`, as the scene's data gives them.
+fn bench_units(session: &dyn Session) -> Vec<serde_json::Value> {
+    let scene = session.scene().unwrap();
+    scene.data["units"].as_array().unwrap().clone()
+}
+
+/// The unit playing `character`.
+fn unit_of<'a>(units: &'a [serde_json::Value], character: &str) -> &'a serde_json::Value {
+    let found = units.iter().find(|u| u["character"] == character);
+    found.unwrap_or_else(|| panic!("no {character}"))
+}
+
+/// Ticket 1244: each scenario plays what it says, on the colour targets
+/// and on the Playdate, its actions pressed by its keys or its buttons.
+#[test]
+fn the_bench_scenarios_play_what_they_say() {
+    for playdate in [false, true] {
+        let on = if playdate { "playdate" } else { "desktop" };
+        let session = bench_played("battle-idle", playdate);
+        assert_eq!(bench_units(&*session).len(), 7 + 15, "{on}");
+        // The attack: the rider on the bridge, having fought the swordsman.
+        let session = bench_played("battle-attack", playdate);
+        let units = bench_units(&*session);
+        let rider = unit_of(&units, "sergeant");
+        assert_eq!(rider["pos"], serde_json::json!({"x": 14, "y": 10}), "{on}");
+        assert_eq!(rider["acted"], true, "{on}");
+        assert!(
+            rider["weapon_exp"]["Spear"].as_u64() > Some(0),
+            "{on}: {rider}"
+        );
+        // The enemy's turn, still going when it ends, five of them moved.
+        let start = bench_units(&*bench_played("battle-idle", playdate));
+        let session = bench_played("battle-enemy-turn", playdate);
+        let scene = session.scene().unwrap();
+        assert_eq!(scene.data["phase"], "Enemy", "{on}");
+        let moved = bench_units(&*session)
+            .iter()
+            .filter(|u| u["faction"] == "Enemy" && !start.contains(u))
+            .count();
+        assert!(moved >= 5, "{on}: {moved} moved");
+        // The cursor swept the map round to the lead's row, a tile left
+        // of the lead: the right edge stopped it a tile early.
+        let session = bench_played("battle-cursor-sweep", playdate);
+        assert!(
+            session.scene().unwrap().text.contains("cursor (9,12)"),
+            "{on}"
+        );
+        let options = bench_played("options-menu", playdate);
+        assert_eq!(
+            options.screens().last().map(String::as_str),
+            Some("options"),
+            "{on}"
+        );
+        let dialogue = bench_played("dialogue-portrait", playdate);
+        assert_eq!(
+            dialogue.screens().last().map(String::as_str),
+            Some("dialogue"),
+            "{on}"
+        );
     }
 }

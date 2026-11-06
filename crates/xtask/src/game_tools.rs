@@ -26,9 +26,10 @@ use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin};
 use shuyi_core::bots::playtest::Tries;
 use shuyi_platform::session::{SessionRecord, Stamps};
+use shuyi_platform::{Frame, Show};
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_content::palette::PaletteDef;
-use trpg_core::BattleState;
+use trpg_core::{BattleState, LeadGender};
 use trpg_ui::harness::{self, Core, Harness};
 use trpg_ui::input::fit::{Controls, GameControls};
 use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
@@ -39,12 +40,16 @@ use trpg_ui::screens::BattleScreen;
 use trpg_ui::start::Startup;
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
+/// The target the game's Playdate build is for, its one target in one bit
+/// (`shuyi.ron`'s `targets`).
+const PLAYDATE: &str = "playdate";
+
 /// The loading card's title, as the binary's window has it (`shuyi.ron`'s
 /// `app`).
 const TITLE: &str = "Visions of Shuyi";
 
 /// The game's `frame-png` options.
-const OPTIONS: [GameOption; 7] = [
+const OPTIONS: [GameOption; 9] = [
     GameOption::new("--layout", "the key layout picked before (default right)")
         .with_value(Some("right|left")),
     GameOption::new(
@@ -75,6 +80,19 @@ const OPTIONS: [GameOption; 7] = [
                whatever its map and its battle file say",
     )
     .with_value(Some("NAME")),
+    GameOption::new(
+        "--battle",
+        "open straight on this battle of assets/battles/ at its start,\n\
+               fought by its own characters, with no chapter around it\n\
+               (`cargo shuyi bench`'s scenarios, 1244)",
+    )
+    .with_value(Some("ID")),
+    GameOption::new(
+        "--scene",
+        "open straight on this dialogue scene, as the game's own\n\
+               --scene does (the default lead, male)",
+    )
+    .with_value(Some("ID")),
     // engine-friction: engine#2540
     GameOption::new(
         "--then-pad",
@@ -120,12 +138,25 @@ struct Start {
     /// Show the guide's one-time tips and checklist lessons, as `app`
     /// does.
     tips: bool,
+    /// Where the game opens: the title, a battle or a scene.
+    opens: Opens,
     /// What is done after the script's steps, in turn (`--then-pad`).
     /// Ticket 1039 added it beside a `--crank` of the game's own, before
     /// the engine's script had a crank step; the engine's `--crank` now
     /// takes that flag, and 1182 deletes this.
     // engine-friction: engine#2540
     after: Vec<After>,
+}
+
+/// Where the game opens.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Opens {
+    /// At the title, as players start it.
+    Title,
+    /// On a battle at its start (`--battle`).
+    Battle(String),
+    /// On a dialogue scene (`--scene`).
+    Scene(String),
 }
 
 /// A step played after the script's.
@@ -145,6 +176,7 @@ impl Start {
             prompt: false,
             light: None,
             tips: false,
+            opens: Opens::Title,
             after: Vec::new(),
         };
         for option in options {
@@ -162,9 +194,17 @@ impl Start {
                 "--prompt" => start.prompt = true,
                 "--tips" => start.tips = true,
                 "--light" => start.light = Some(value),
+                "--battle" | "--scene" if start.opens != Opens::Title => {
+                    return Err("--battle and --scene: one or the other, once".into());
+                }
+                "--battle" => start.opens = Opens::Battle(value),
+                "--scene" => start.opens = Opens::Scene(value),
                 "--then-pad" => start.after.push(After::Pad(value)),
                 other => return Err(format!("unknown option: {other}")),
             }
+        }
+        if start.prompt && start.opens != Opens::Title {
+            return Err("--prompt: only at the title, not with --battle or --scene".into());
         }
         Ok(start)
     }
@@ -195,6 +235,31 @@ impl GameTools for Trpg {
     fn session(&self, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
         let start = Start::of(options)?;
         Ok(Box::new(session(harness(&start)?.into_core(), start)))
+    }
+
+    /// `bench` on the Playdate: [`session`](Self::session) on its console
+    /// and buttons (`--playdate`), each frame presented drawn in one bit
+    /// as the Playdate's build draws it, with its pictures (ticket 1244).
+    fn session_on(&self, target: &str, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
+        if target != PLAYDATE {
+            return Err(format!("{target}: the game's one-bit target is {PLAYDATE}"));
+        }
+        let mut start = Start::of(options)?;
+        start.playdate = true;
+        let mut h = harness(&start)?.into_core();
+        // Built once for the session, as the device's are: a session runs
+        // once in a tool program.
+        let atlas = Box::leak(Box::new(h.game().ctx().game.content.font.clone()));
+        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
+        let font = onebit::Font::new(atlas, bits)?;
+        let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
+        let mut frame = Box::new([0; FRAME_BYTES]);
+        h.set_present_hook(Some(Box::new(move |presented: &Frame<'_>| {
+            if let Show::Game { buffer, .. } = presented.show {
+                onebit::render(buffer, &font, &pictures, &mut frame);
+            }
+        })));
+        Ok(Box::new(session(h, start)))
     }
 
     /// `record` played from the game's real start, the one its debug build
@@ -348,10 +413,15 @@ fn harness(start: &Start) -> Result<Harness, String> {
             ctx.use_playdate_skins();
         }
     };
-    let h = if start.prompt {
-        Harness::at_prompt_with_layout_and(start.layout, setup)
-    } else {
-        Harness::with_layout_and(start.layout, setup)
+    let h = match &start.opens {
+        Opens::Title if start.prompt => Harness::at_prompt_with_layout_and(start.layout, setup),
+        Opens::Title => Harness::with_layout_and(start.layout, setup),
+        Opens::Battle(id) => Harness::with_layout_starting(start.layout, setup, |ctx| {
+            trpg_ui::game::start_on_battle(ctx, id)
+        })?,
+        Opens::Scene(id) => Harness::with_layout_starting(start.layout, setup, |ctx| {
+            trpg_ui::game::start_on_scene(ctx, id, LeadGender::Male)
+        })?,
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();

@@ -1,0 +1,29 @@
+// `cargo shuyi bench`'s scenarios (ticket 1244; the engine's
+// docs/targets/README.md, the game's docs/targets.md): each is played
+// headless, and its frames' instructions, its heap's peak and the
+// package are gated against the budgets of every target `shuyi.ron`
+// lists. The steps press the game's actions by name, so they hold for
+// any key layout and for the Playdate's buttons.
+//
+// An attack in the biggest battle: the rider (Tamsin) sent onto the
+// bridge beside the swordsman who guards it, its forecast, then the
+// combat animation (the battle backdrop and both fighters) to its end.
+(
+    format_version: 1,
+    about: "an attack, its forecast and its animation",
+    start: [(flag: "--battle", value: "side_company_ledger")],
+    script: (steps: [
+        // The rider, two tiles right and one down of the lead.
+        act("CursorRight"), act("CursorRight"), act("CursorDown"), act("Confirm"),
+        // The bridge, beside the swordsman; she walks there.
+        act("CursorRight"), act("CursorRight"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
+        act("Confirm"),
+        wait(0.5),
+        // Attack: the forecast.
+        act("Confirm"),
+        wait(0.5),
+        // The attack and its animation.
+        act("Confirm"),
+        wait(5.0),
+    ]),
+)

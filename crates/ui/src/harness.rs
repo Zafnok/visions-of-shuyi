@@ -100,6 +100,23 @@ impl Harness {
     /// the Playdate's console and palette (`cargo shuyi frame-png
     /// --playdate`).
     pub fn with_layout_and(layout: Layout, setup: impl FnOnce(&mut Ctx)) -> Self {
+        let started = Self::with_layout_starting(layout, setup, |ctx| Ok(crate::game::start(ctx)));
+        started.unwrap_or_else(|e| panic!("{e}"))
+    }
+
+    /// [`with_layout_and`](Self::with_layout_and), the game started by
+    /// `start` instead of at the title: on a battle
+    /// ([`start_on_battle`](crate::game::start_on_battle)) or a scene, as
+    /// `cargo shuyi bench`'s scenarios start (ticket 1244).
+    ///
+    /// # Errors
+    ///
+    /// `start`'s.
+    pub fn with_layout_starting(
+        layout: Layout,
+        setup: impl FnOnce(&mut Ctx),
+        start: impl FnOnce(Ctx) -> Result<Game, String>,
+    ) -> Result<Self, String> {
         let mut storage = MemoryStorage::new();
         let settings = Settings::default().with_layout(layout);
         if let Err(e) = storage.write(&ProfileId::FIRST.key(SETTINGS_KEY), &settings.to_ron()) {
@@ -107,7 +124,7 @@ impl Harness {
         }
         let mut ctx = embedded_ctx().with_storage(Box::new(storage));
         setup(&mut ctx);
-        Self::from_game(crate::game::start(ctx))
+        start(ctx).map(Self::from_game)
     }
 
     /// Makes New Game start the story as the game ships it
