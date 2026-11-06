@@ -303,7 +303,7 @@ fn a_brightness_is_a_percentage_from_1_to_100() {
         errors(&scene(
             "@place yard 1,1 bright 0%\n@place yard 1,1 bright 101%\n@place yard 1,1 bright 60\n\
              @place yard 1,1 bright 0.6\n@place yard 1,1 bright\n@place none bright 50%\n\
-             @place bright 50%\n> x"
+             @place bright 50%\n@place yard 1,1 bright +60%\n@place yard 1,1 bright %\n> x"
         )),
         [
             format!("t.dlg:4: {}", not("0%")),
@@ -313,6 +313,8 @@ fn a_brightness_is_a_percentage_from_1_to_100() {
             format!("t.dlg:8: {NEEDS}"),
             format!("t.dlg:9: {NEEDS}"),
             format!("t.dlg:10: {NEEDS}"),
+            format!("t.dlg:11: {}", not("+60%")),
+            format!("t.dlg:12: {}", not("%")),
         ]
     );
     assert_eq!(Bright::new(0), None);

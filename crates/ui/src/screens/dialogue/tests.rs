@@ -1065,3 +1065,53 @@ fn dialogue_declares_its_actions() {
 }
 
 mod voice;
+
+/// After a won battle (0738) a scene whose first box has a place fades
+/// into the darkening; one that starts on black doesn't, and one that
+/// starts with an opening plays its opening.
+#[test]
+fn fading_in_needs_a_place_and_no_opening() {
+    let mut c = ctx();
+    let fort = || {
+        setting(PlaceLine::Battle {
+            at: at(20, 3),
+            bright: None,
+        })
+    };
+    let field = Place::of_battle(&c.game.content, &c.game.content.battles["ch01"]);
+    // On black: straight to the box.
+    let s = full(&scene(vec![
+        narrate("Black."),
+        fort(),
+        narrate("The fort."),
+    ]));
+    assert!(!s.fading_in().is_opening());
+    // On the field: bright, half way, then the box.
+    let mut s = full(&scene(vec![fort(), narrate("The fort.")]))
+        .with_battle(field)
+        .fading_in();
+    assert!(s.is_opening());
+    let darkened = |s: &DialogueScreen, c: &Ctx| s.view(c).opening.map(|o| o.darkened);
+    assert_eq!(darkened(&s, &c), Some(0.0));
+    s.update(&mut c, &frame(&[], 0.25, false));
+    let half = darkened(&s, &c).unwrap_or(0.0);
+    assert!((half - 0.5).abs() < 0.05, "{half}");
+    s.update(&mut c, &frame(&[], 0.3, false));
+    assert!(!s.is_opening());
+    // With an opening: the opening, not a fade (it moves for 2 s).
+    let yard = setting(PlaceLine::Map {
+        map: "harrowby_yard".into(),
+        at: at(12, 8),
+        bright: None,
+    });
+    let mut s = full(&scene(vec![
+        yard,
+        Step::Directive(Stage::Opening("ch01_sparring".into())),
+        narrate("The yard."),
+    ]))
+    .fading_in();
+    let id = s.playing.as_ref().and_then(|p| p.id.clone());
+    assert_eq!(id.as_deref(), Some("ch01_sparring"));
+    s.update(&mut c, &frame(&[], 1.0, false));
+    assert_eq!(darkened(&s, &c), Some(0.0));
+}

@@ -371,3 +371,21 @@ fn to_text_names_every_side() {
     u.sided = false;
     assert!(unit_text(&u).ends_with(" no-side"));
 }
+
+/// A unit put on a conversation's place (0738) is on no side, has not
+/// acted and is under no effect; the rest of it stays.
+#[test]
+fn a_unit_on_no_side_keeps_who_and_where_it_is() {
+    let mut u = brigand(7, p(2, 3));
+    u.acted = true;
+    u.effects = UnitEffects {
+        bonus: true,
+        penalty: true,
+    };
+    let placed = u.clone().on_no_side();
+    assert!(!placed.sided && !placed.acted && !placed.has_effect());
+    assert_eq!(
+        (placed.id, placed.pos, &placed.label),
+        (u.id, u.pos, &u.label)
+    );
+}
