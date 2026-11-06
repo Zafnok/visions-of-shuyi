@@ -143,8 +143,9 @@ and each finding has a ticket (step 4):
   folder is most of it.
 - **1250:** makes `bench` a required check once those land.
 
-Until then the job fails on every pull request but is left out of
-`ci-result`, so it doesn't block other work. The ticket asked for a
+Until then the job reports those five as warnings
+(`scripts/bench-known-over.sh`), still fails on any new one, and is left
+out of `ci-result`, so it doesn't block other work. The ticket asked for a
 failing job, not a required one (the third box). The numbers are in
 `docs/targets.md`.
 

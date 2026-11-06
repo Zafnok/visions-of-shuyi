@@ -19,9 +19,10 @@ Ticket 1244 added CI's `bench` job (`cargo shuyi bench` on every pull
 request, `docs/targets.md`). Its first run found five numbers over their
 budgets: the unit menu's frame (1247), the Playdate's one-bit drawing
 (1248) and the web package (1249). The budgets stay as they are, so the
-job fails on every pull request until those land. It runs, posts its
-table and shows red, but it is left out of `ci-result`, the one required
-check, so that it doesn't block every other pull request meanwhile.
+job would fail on every pull request until those land. Meanwhile it
+reports those five as warnings (`KNOWN_OVER` in the job, read by
+`scripts/bench-known-over.sh`) and fails only on a new one or an error,
+and it is left out of `ci-result`, the one required check.
 
 ## Nick input
 
@@ -30,10 +31,11 @@ None.
 ## Scope
 
 **In:**
-- Once 1247, 1248 and 1249 are done and the `bench` job passes on
-  `main`, add `bench` to `ci-result`'s `needs` in
-  `.github/workflows/ci.yml` and remove the comment that says why it
-  isn't.
+- Once 1247, 1248 and 1249 are done and the `bench` job has no warnings
+  on `main`: delete `scripts/bench-known-over.sh` and `KNOWN_OVER`, so
+  the Bench step is `cargo shuyi bench --out dist/bench` again; add
+  `bench` to `ci-result`'s `needs` in `.github/workflows/ci.yml`; and
+  remove the comments that say why it isn't.
 - Update `docs/targets.md`'s *Over budget* section.
 
 **Out (do not do):**
@@ -42,7 +44,8 @@ None.
 ## Implementation steps
 
 1. Check the latest `bench` run on `main` passes.
-2. Add `bench` to `ci-result`'s `needs`; update the comment and the doc.
+2. Delete the script and `KNOWN_OVER`; add `bench` to `ci-result`'s
+   `needs`; update the comments and the doc.
 
 ## Acceptance criteria
 

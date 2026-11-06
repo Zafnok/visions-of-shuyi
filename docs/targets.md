@@ -102,5 +102,9 @@ covers each one:
   over.
 - **The web package (1249).** The 75 MB `music/` folder ships in it.
 
-Until they land, CI's `bench` job fails on every pull request but isn't
-part of `ci-result`, the required check; ticket 1250 makes it required.
+Until they land, CI's `bench` job reports these five as warnings
+(`KNOWN_OVER` in `.github/workflows/ci.yml`, read by
+`scripts/bench-known-over.sh`). Any other number over its budget, or a
+scenario that doesn't play, still fails the job. The job isn't part of
+`ci-result`, the required check, yet; ticket 1250 makes it required and
+fails on every number again.

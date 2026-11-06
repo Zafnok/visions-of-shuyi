@@ -344,7 +344,10 @@ jobs:
   # and the web package gated against the budgets of every target shuyi.ron
   # lists (docs/targets.md). The table is the job's summary; a number over its
   # budget fails the job, naming the scenario, the frame and the target.
-  # It isn't in `ci-result` until ticket 1250 (see there).
+  # Until ticket 1250, the five numbers its first run found over budget
+  # (KNOWN_OVER: tickets 1247, 1248, 1249) are warnings instead; any other
+  # number over its budget, or a scenario that doesn't play, still fails it.
+  # It isn't in `ci-result` until 1250 either.
   bench:
     name: bench
     needs: [changes, export]
@@ -371,7 +374,20 @@ jobs:
           path: dist/export/web
       - run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Bench
-        run: cargo shuyi bench --out dist/bench
+        env:
+          # target/what/scenario, or target/package, of each known finding.
+          KNOWN_OVER: >-
+            playdate/frame-instructions/battle-attack
+            playdate/frame-instructions/battle-cursor-sweep
+            playdate/frame-instructions/battle-enemy-turn
+            playdate/frame-instructions/dialogue-portrait
+            web/package
+        run: |
+          set +e
+          cargo shuyi bench --out dist/bench 2>&1 | tee bench.log
+          code=${PIPESTATUS[0]}
+          set -e
+          bash scripts/bench-known-over.sh "$code" bench.log dist/bench/bench-report.json
       - name: Post the table
         if: always()
         run: |
