@@ -411,6 +411,47 @@ fn the_games_credits_show_title_author_license_and_link() {
     assert!(!texts(&s).contains(&"Art"), "no bought art in a gate");
 }
 
+/// The voices are credited, as AI-generated and by their tools, after the
+/// art and only when the game found clips (ticket 0722).
+#[test]
+fn the_voices_are_credited_only_when_there_are_clips() {
+    let mut c = ctx_with(vec![
+        entry(CreditGroup::Art, "Pics"),
+        entry(CreditGroup::Fonts, "Font"),
+    ]);
+    let without = CreditsScreen::new(&c);
+    assert!(!texts(&without).contains(&"Voices"));
+    assert!(!texts(&without).join(" ").contains("Qwen3-TTS"));
+    let (manifest, _) = crate::screen::tests::test_voices(&c, &[0]);
+    c.set_voice_manifest(&manifest);
+    assert!(c.has_voices());
+    let with = CreditsScreen::new(&c);
+    let rows = texts(&with);
+    let at = |text: &str| rows.iter().position(|r| *r == text).expect(text);
+    assert!(at("\"Pics\" by Ann") < at("Voices") && at("Voices") < at("Fonts"));
+    assert_eq!(
+        rows[at("Voices")..at("Fonts")],
+        [
+            "Voices",
+            "",
+            "Voices generated with AI: Qwen3-TTS, Chatterbox.",
+            "We hope to replace these with a human cast.",
+            "",
+            "\"Qwen3-TTS\" by the Qwen team, Alibaba Cloud",
+            "Apache-2.0 · https://github.com/QwenLM/Qwen3-TTS",
+            "",
+            "\"Chatterbox\" by Resemble AI",
+            "MIT · https://github.com/resemble-ai/chatterbox",
+            "",
+        ]
+    );
+    // With no art (a build without the bought files), still after where
+    // it would be.
+    let mut plain = ctx_with(vec![entry(CreditGroup::Fonts, "Font")]);
+    plain.set_voice_manifest(&manifest);
+    assert_eq!(texts(&CreditsScreen::new(&plain))[0], "Voices");
+}
+
 #[test]
 fn long_lines_wrap_to_the_width_of_their_kind() {
     let mut long = entry(CreditGroup::Music, &"word ".repeat(30));

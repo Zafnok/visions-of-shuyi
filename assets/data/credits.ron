@@ -64,6 +64,16 @@
          source: "http://hi79.web.fc2.com/", license: "Custom (Shironejiya)",
          private: ["battlers/brigand.", "battlers/raider.", "battlers/red_captain."]),
 
+        // The AI voice tools that made the voice clips (0722, ADR-0107).
+        // Hidden from the list: the credits screen shows them under its
+        // own heading, with the line that the voices are AI-generated,
+        // only when the game found clips (trpg_content::credits::VOICE_TOOLS).
+        // The clips are in the private repository's voice/ folder.
+        (id: "qwen3_tts", group: Software, title: "Qwen3-TTS", author: "the Qwen team, Alibaba Cloud",
+         source: "https://github.com/QwenLM/Qwen3-TTS", license: "Apache-2.0", hidden: true),
+        (id: "chatterbox", group: Software, title: "Chatterbox", author: "Resemble AI",
+         source: "https://github.com/resemble-ai/chatterbox", license: "MIT", hidden: true),
+
         // The web build's JavaScript loaders (web/README.md).
         (id: "mq_js_bundle", group: Software, title: "macroquad JS/WASM loader", author: "not-fl3",
          source: "https://github.com/not-fl3/macroquad/blob/5e9b5ca912ac65962c05c0da842a4a70eaae34b9/js/mq_js_bundle.js",

@@ -645,6 +645,17 @@
     (key: "credits.group.art", source: "Art", text: "ART"),
     (key: "credits.group.fonts", source: "Fonts", text: "FONTS"),
     (key: "credits.group.software", source: "Software", text: "SOFTWARE"),
+    (key: "credits.group.voices", source: "Voices", text: "VOICES"),
+    (
+        key: "credits.voices.ai",
+        source: "Voices generated with AI: Qwen3-TTS, Chatterbox.",
+        text: "VOICES GENERATED WITH AI: QWEN3-TTS, CHATTERBOX.",
+    ),
+    (
+        key: "credits.voices.cast",
+        source: "We hope to replace these with a human cast.",
+        text: "WE HOPE TO REPLACE THESE WITH A HUMAN CAST.",
+    ),
     (key: "credits.entry", source: "\"{title}\" by {author}", text: "\"{title}\" BY {author}"),
     (
         key: "credits.help.rolling",

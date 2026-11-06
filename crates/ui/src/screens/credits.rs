@@ -19,7 +19,7 @@ pub mod view;
 use crate::prelude::*;
 pub use view::{CreditRowKind, CreditRowView, CreditsView};
 
-use trpg_content::{CreditGroup, Credits};
+use trpg_content::{CreditEntry, CreditGroup, Credits};
 
 use super::title::TITLE_MUSIC;
 use crate::audio::MenuSound;
@@ -81,27 +81,45 @@ fn rows(ctx: &Ctx) -> Vec<(CreditRowKind, String)> {
         }
     };
     for group in CreditGroup::ALL {
-        let mut entries = credits.in_group(group).peekable();
-        if entries.peek().is_none() {
-            continue;
+        let entries: Vec<&CreditEntry> = credits.in_group(group).collect();
+        if !entries.is_empty() {
+            add(CreditRowKind::Heading, ctx.text(heading(group)));
+            add(CreditRowKind::Heading, "");
+            for e in entries {
+                entry(ctx, &mut add, e);
+            }
         }
-        add(CreditRowKind::Heading, ctx.text(heading(group)));
-        add(CreditRowKind::Heading, "");
-        for e in entries {
-            let by = ctx.text_with(
-                "credits.entry",
-                &[("title", &e.title), ("author", &e.author)],
-            );
-            add(CreditRowKind::Entry, &by);
-            add(
-                CreditRowKind::Detail,
-                &format!("{}{SEPARATOR}{}", e.license, e.source),
-            );
+        // The voices' credits (ticket 0722; `docs/design/voices-languages-and-script.md`,
+        // "Starting a game, and saying it is AI"), after the art's, only
+        // when the game found voice clips: that they are AI-generated and
+        // by which tools, that we hope for a human cast, then the tools.
+        if group == CreditGroup::Art && ctx.has_voices() {
+            add(CreditRowKind::Heading, ctx.text("credits.group.voices"));
+            add(CreditRowKind::Heading, "");
+            add(CreditRowKind::Entry, ctx.text("credits.voices.ai"));
+            add(CreditRowKind::Entry, ctx.text("credits.voices.cast"));
             add(CreditRowKind::Entry, "");
+            for e in &trpg_content::credits::voice_tools() {
+                entry(ctx, &mut add, e);
+            }
         }
     }
     rows.pop();
     rows
+}
+
+/// `e`'s rows: `"Title" by Author`, then `License · link`, then a blank row.
+fn entry(ctx: &Ctx, add: &mut impl FnMut(CreditRowKind, &str), e: &CreditEntry) {
+    let by = ctx.text_with(
+        "credits.entry",
+        &[("title", &e.title), ("author", &e.author)],
+    );
+    add(CreditRowKind::Entry, &by);
+    add(
+        CreditRowKind::Detail,
+        &format!("{}{SEPARATOR}{}", e.license, e.source),
+    );
+    add(CreditRowKind::Entry, "");
 }
 
 /// The credits screen. The list rolls up a row at a time by itself, rests
