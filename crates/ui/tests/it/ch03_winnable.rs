@@ -13,7 +13,9 @@
 //! cargo test -p trpg-ui --test it ch03_winnable::record -- --ignored
 //! ```
 //!
-//! and read the new fixture's last lines (who fell, how many turns).
+//! and read the new fixture's last lines (who fell, how many turns). A new
+//! Chapter 3 playthrough leaves Chapter 4 another army: record Chapter
+//! 4's again after it (`ch04_winnable`).
 
 use trpg_content::Content;
 use trpg_content::chapter::roster_units;
@@ -26,7 +28,8 @@ use crate::playthrough::{self, battle, lost, skip_scenes};
 
 const FIXTURE: &str = include_str!("fixtures/ch03_winning.ron");
 
-fn winning_commands() -> Vec<trpg_core::Command> {
+/// The player's commands, in order.
+pub fn winning_commands() -> Vec<trpg_core::Command> {
     playthrough::commands("ch03_winning.ron", FIXTURE)
 }
 
@@ -34,7 +37,7 @@ fn winning_commands() -> Vec<trpg_core::Command> {
 /// (every rewind charge unused, as the game counts them; Joss joined in
 /// the scene after the ford), and Chapter 3's battle as it starts with
 /// it, Preparations left as they are.
-fn chapter_3(content: &Content) -> (Campaign, BattleState) {
+pub fn chapter_3(content: &Content) -> (Campaign, BattleState) {
     let tables = content.tables();
     let (mut campaign, mut state) = chapter_2(content);
     playthrough::play(&mut state, content, &chapter_2_commands());
@@ -68,20 +71,16 @@ fn the_recorded_playthrough_seizes_the_scriptorium() {
     );
 }
 
-/// Acceptance: New Game reaches Chapter 3 through Chapters 1 and 2, and
-/// Chapter 3 plays through the real game: the boathouse and the
-/// causeway, Preparations, the battle won with the recorded commands, the
-/// results, the scriptorium, the causeway at night, the kitchen, Veyne
-/// Hall, the save prompt, "To be continued".
-#[test]
-fn chapter_3_plays_from_new_game_to_to_be_continued() {
-    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
-    chapter_2_won(&mut h);
+/// New Game, then Chapters 1 to 3 won with the recorded commands through
+/// the real game (their scenes skipped, Preparations left as they are),
+/// up to Chapter 3's "Save your progress?".
+pub fn chapter_3_won(h: &mut Harness) {
+    chapter_2_won(h);
     // "Save your progress?" No; the boathouse and the causeway.
     h.keys("Down f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch03"));
-    skip_scenes(&mut h);
+    skip_scenes(h);
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "preparations"],
@@ -90,16 +89,26 @@ fn chapter_3_plays_from_new_game_to_to_be_continued() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(&h).units().len(), 7 + 14, "seven and the abbey");
-    playthrough::play_in_game(&mut h, &winning_commands());
-    playthrough::on_to_the_save_prompt(&mut h);
+    assert_eq!(battle(h).units().len(), 7 + 14, "seven and the abbey");
+    playthrough::play_in_game(h, &winning_commands());
+    playthrough::on_to_the_save_prompt(h);
+}
+
+/// Acceptance: New Game reaches Chapter 3 through Chapters 1 and 2, and
+/// Chapter 3 plays through the real game: the boathouse and the
+/// causeway, Preparations, the battle won with the recorded commands, the
+/// results, the scriptorium, the causeway at night, the kitchen, Veyne
+/// Hall, the save prompt, and on to Chapter 4 (0850).
+#[test]
+fn chapter_3_plays_from_new_game_into_chapter_4() {
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    chapter_3_won(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.roster.len(), 7, "nobody was lost");
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
-    h.keys("f");
-    assert_eq!(h.screens(), ["title"]);
+    let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
+    assert_eq!(chapter.as_deref(), Some("ch04"));
 }
 
 /// Records a new `fixtures/ch03_winning.ron` ([`playthrough::record`]).

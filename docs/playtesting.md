@@ -319,6 +319,37 @@ hardcore     69/100  band 50–75% ✓  74/100 ✓
 hardcore turns median 9 (normal 10) lower ✓    8 (normal 10) lower ✓
 ```
 
+Chapter 4 on 2026-11-05 (ticket 0850), Veyne Hall, with the army
+Chapters 1 to 3 leave (Lead lv 5, Hollis lv 8, Tamsin lv 9, Aske lv 6,
+Maud lv 5, Rue lv 12, Joss lv 3), the first story battle won by a boss
+who retreats:
+
+```
+             seeds 1–100            seeds 101–200
+casual       52/100  band 30–55% ✓  40/100 ✓
+normal       61/100  band 50–75% ✓  60/100 ✓
+hardcore     63/100  band 50–75% ✓  56/100 ✓
+hardcore turns median 7 (normal 7) lower ✗    7 (normal 7) lower ✗
+```
+
+As first built (Dace 30 HP, Str 10, Def 6; two riders behind the party
+on turn 4) Casual was too easy, 68/100, with Normal at 53 and Hardcore
+at 63. `cargo shuyi autobalance --stage ch04` (12 evaluations, then its
+time ran out) found no change to the unnamed enemies that helped. The
+three bots fail the same way here, the lead falling to Dace, so their
+rates move together: raising the Hounds' levels left Casual at 68–71,
+and Dace on `Stationary` let every bot through (Casual 75–84). What
+separated them was a Dace hard to put down rather than hard-hitting
+(40 HP, Str 11, Def 8: Normal fails by single deaths to his blows,
+Casual by its army bleeding out before the lead reaches him) and his
+riders back on turn 7 instead of 4. The `lower ✗` is the bots' (ticket
+0525).
+
+0850 also fixed the bots' arrival army: it recruited only for the
+chapter being played, so Chapter 4's army replayed Chapter 3 without
+Joss, who joins after Chapter 2, and failed. Each chapter on the way now
+gets its recruits before its battle (`trpg_bots::arrival`).
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

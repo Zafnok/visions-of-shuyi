@@ -164,6 +164,7 @@ fn world_fight(ctx: &Ctx, campaign: &Campaign) -> Option<(String, ChapterDef)> {
                 id: world.at.clone(),
                 title: current.map(|c| c.title.clone()).unwrap_or_default(),
                 number: current.and_then(|c| c.number),
+                opening_scenes: Vec::new(),
                 intro_scenes: quest.intro_scenes.clone(),
                 battle: quest.battle.clone(),
                 victory_scenes: quest.victory_scenes.clone(),
@@ -223,6 +224,8 @@ enum Stage {
 enum Then {
     /// The chapter's battle (after the intro scenes).
     Battle,
+    /// The world map (after a world-map chapter's opening scenes).
+    WorldMap,
     /// The next chapter (after the victory scenes).
     NextChapter,
 }
@@ -536,7 +539,8 @@ impl FlowScreen {
     }
 
     /// Starts chapter `id` with its intro scenes; a world-map chapter on
-    /// its map instead (its scenes play when the army arrives). A chapter
+    /// its map instead, after its opening scenes (its intro scenes play
+    /// when the army arrives). A chapter
     /// missing from the content (validation rules it out) ends the flow at
     /// "To be continued".
     fn start_chapter(&mut self, ctx: &mut Ctx, id: &str) {
@@ -550,8 +554,10 @@ impl FlowScreen {
                 id.clone_into(&mut campaign.chapter);
                 campaign.enter_world(&map.map);
             }
+            self.scenes = chapter.opening_scenes.iter().cloned().collect();
+            self.then = Then::WorldMap;
             self.chapter = Some(chapter);
-            self.world_map();
+            self.next_scene(ctx);
             return;
         }
         self.scenes = chapter.intro_scenes.iter().cloned().collect();
@@ -574,6 +580,7 @@ impl FlowScreen {
         }
         match self.then {
             Then::Battle => self.start_battle(ctx),
+            Then::WorldMap => self.world_map(),
             // A world-map battle: its place is cleared, and the map again.
             Then::NextChapter if self.world_node.is_some() => {
                 let node = self.world_node.take().unwrap_or_default();

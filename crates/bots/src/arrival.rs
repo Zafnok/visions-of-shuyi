@@ -14,10 +14,10 @@ use trpg_core::{
 use crate::army::{roster_by, story_chapters};
 
 /// The story battles' recorded winning playthroughs, by battle id: the
-/// player's commands, phase by phase (tickets 0803, 0848 and 0849).
-/// `trpg-ui`'s `ch01_winnable`, `ch02_winnable` and `ch03_winnable` tests
-/// play them in the real game and say how to record a new one.
-const PLAYTHROUGHS: [(&str, &str); 3] = [
+/// player's commands, phase by phase (tickets 0803, 0848, 0849 and 0850).
+/// `trpg-ui`'s `ch01_winnable` to `ch04_winnable` tests play them in the
+/// real game and say how to record a new one.
+const PLAYTHROUGHS: [(&str, &str); 4] = [
     (
         "ch01",
         include_str!("../../ui/tests/it/fixtures/ch01_winning.ron"),
@@ -29,6 +29,10 @@ const PLAYTHROUGHS: [(&str, &str); 3] = [
     (
         "ch03",
         include_str!("../../ui/tests/it/fixtures/ch03_winning.ron"),
+    ),
+    (
+        "ch04",
+        include_str!("../../ui/tests/it/fixtures/ch04_winning.ron"),
     ),
 ];
 
@@ -52,8 +56,8 @@ pub fn chapters_before<'a>(content: &'a Content, battle: &str) -> Vec<&'a Chapte
 /// earlier chapter's battle is prepared ([`prepare`]), won by its recorded
 /// playthrough with the enemy playing as in the game, and its result
 /// applied with every rewind charge unused; whoever a scene recruits by
-/// `def`'s chapter joins fresh from the character data. Then `def` is
-/// prepared too.
+/// each chapter joins fresh from the character data before its battle.
+/// Then `def` is prepared too.
 pub fn arrival(
     content: &Content,
     def: &BattleDef,
@@ -67,6 +71,7 @@ pub fn arrival(
     };
     let mut campaign = new_campaign(content, mode, lead);
     for chapter in &chapters[..at] {
+        recruit(&mut campaign, content, &chapter.id);
         let won = content.battles.get(&chapter.battle);
         let won = won.ok_or_else(|| format!("no battle \"{}\"", chapter.battle))?;
         let mut state = BattleState::new(setup(content, &campaign, won, chapter)).0;

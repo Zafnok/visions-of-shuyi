@@ -13,6 +13,7 @@ fn chapter(id: &str) -> ChapterDef {
         id: id.into(),
         title: "T".into(),
         number: None,
+        opening_scenes: Vec::new(),
         intro_scenes: vec!["test".into()],
         battle: "test".into(),
         victory_scenes: vec!["test_victory".into()],
@@ -65,7 +66,16 @@ fn embedded_chapters_and_new_game_load() {
             "ch03_tbc"
         ]
     );
-    assert_eq!(ch03.next, None);
+    assert_eq!(ch03.next.as_deref(), Some("ch04"));
+    // Chapter 4 (0850): the first on the Act 1 world map, opening on the
+    // valley road; the rise and the gate when the army reaches the hall.
+    let ch04 = &c.chapters["ch04"];
+    assert_eq!(ch04.world_map.as_deref(), Some("act1"));
+    assert_eq!(ch04.opening_scenes, ["ch04_intro"]);
+    assert_eq!(ch04.intro_scenes, ["ch04_eve", "ch04_gate"]);
+    assert_eq!(ch04.battle, "ch04");
+    assert_eq!(ch04.victory_scenes, ["ch04_victory", "ch04_tbc"]);
+    assert_eq!(ch04.next, None);
     assert_eq!(c.new_game.first_chapter, "ch01");
     assert_eq!(c.new_game.roster.len(), 6);
     assert_eq!(c.new_game.roster[0].0, LEAD_ID);
@@ -104,6 +114,25 @@ fn chapter_errors() {
             "no dialogue scene \"b\""
         ]
     );
+    // Opening scenes (0850): checked like the others, and only on a
+    // world-map chapter.
+    let opening = ChapterDef {
+        opening_scenes: vec!["o".into()],
+        ..chapter("t")
+    };
+    assert_eq!(
+        check(&opening),
+        [
+            "no dialogue scene \"o\"",
+            "opening_scenes: only a world-map chapter has them"
+        ]
+    );
+    let on_a_map = ChapterDef {
+        opening_scenes: vec!["test".into()],
+        world_map: Some("test_world".into()),
+        ..chapter("t")
+    };
+    assert_eq!(check(&on_a_map), Vec::<String>::new());
 }
 
 #[test]

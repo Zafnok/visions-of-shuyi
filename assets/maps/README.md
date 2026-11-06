@@ -98,6 +98,10 @@ changes.
 | `greywater_causeway.map` | Chapter 3, the causeway at night (`ch03_telling`): the shore end of the causeway, the night after |
 | `greywater_kitchen.map` | Chapter 3, the kitchen (`ch03_confession`): the abbey's kitchen, later that night |
 | `veyne_yard.map` | Chapter 3, to be continued (`ch03_tbc`): the yard at Veyne Hall, at night |
+| `valley_road.map` | Chapter 4, the valley road (`ch04_intro`): the forest road above the heartland, morning |
+| `veyne_rise.map` | Chapter 4, the rise above the hall (`ch04_eve`): the hill above Veyne Hall, at dusk |
+| `veyne_stable.map` | Chapter 4, the stable (`ch04_victory`): Veyne Hall's yard and stable, late morning |
+| `millhaven_post.map` | Chapter 4, to be continued (`ch04_tbc`): a Hound post on the Millhaven road, at night |
 
 ## Rules checked by the loader
 

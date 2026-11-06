@@ -274,13 +274,12 @@ mod tests {
     /// first plays it (`camp` by 1003;
     /// Chapters 2-8's cues from 0071 by their chapter battle tickets,
     /// 0848–0854).
-    const RESERVED: [&str; 15] = [
+    const RESERVED: [&str; 14] = [
         "victory_grand",
         "ceremony_intro",
         "scene_loss",
         "world_map_war",
         "world_map_somber",
-        "battle_rival",
         "battle_night_siege",
         "battle_war",
         "battle_finale",

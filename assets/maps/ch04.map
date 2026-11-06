@@ -1,0 +1,45 @@
+(
+    // Chapter 4 (ticket 0850, docs/story/chapters/ch04.md): Veyne Hall,
+    // the lead's childhood home, at gray dawn. The party stands on the
+    // road south of the gate (13, 12), which Dace has shut behind him; its
+    // guardroom is the two forts inside it (12, 11) and (14, 11). The yard
+    // runs north to the hall's front door (13, 5); the stable is the stalls
+    // on the yard's west side (x 4-7, y 8-9). The hall is the long room
+    // along the north wall (x 4-15, y 2-4), where Dace holds the lord's end;
+    // the kitchen beside it (x 17-20) opens into it by the stair at
+    // (16, 3). The long wall is the east wall (x 21); behind it the river
+    // meadow, the mill pond at the top and the river at the right. The
+    // laundry door at (21, 10) only looks locked: it lets into the
+    // servants' passage (x 20, y 5-10), which climbs to the kitchen. The
+    // river is deep but for the shallows a wader can cross.
+    name: "Veyne Hall",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '~': "sea",
+        'w': "water",
+        '#': "wall",
+        '_': "floor",
+        'F': "fort",
+        'G': "gate",
+    },
+    look: (light: "dawn"),
+)
+---
+TTT..TTTTTTTTTTT..TT..ww..~~~
+TT.###################.www.~~
+T..#____________#____#..w..~~
+...#_________________#....T~~
+...#____________#____#.T...~~
+...##########_######_#...T.w~
+...#.........:.....#_#.....w~
+...#####.....:.....#_#.T...~~
+...#____.....:.....#_#....T~~
+...#____.....:.....#_#.....~~
+...#####.....:.....#__.....w~
+...#........F:F....###..T..~~
+T..##########G########.....~~
+TT...........:...........T.~~
+TTT..........:...TT.......w~~
+TTTT.........:..TTTT......w~~

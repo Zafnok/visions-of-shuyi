@@ -216,10 +216,10 @@ impl Content {
     /// chapter's intro or victory scene, else the battle with a trigger
     /// that plays it. `None` for a scene of no battle.
     pub fn battle_of_scene(&self, scene: &str) -> Option<&BattleDef> {
-        let chapter = self.chapters.values().find(|c| {
-            let mut scenes = c.intro_scenes.iter().chain(&c.victory_scenes);
-            scenes.any(|s| s == scene)
-        });
+        let chapter = self
+            .chapters
+            .values()
+            .find(|c| c.scenes().any(|s| s == scene));
         if let Some(battle) = chapter.and_then(|c| self.battles.get(&c.battle)) {
             return Some(battle);
         }

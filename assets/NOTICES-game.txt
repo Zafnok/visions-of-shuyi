@@ -159,6 +159,12 @@ Woodland Fantasy
   Version: Woodland Fantasy_0.mp3
   License: CC-BY-3.0
 
+A Slave To No One (RPG Orchestral Essentials)
+  Author: Jonathan Shaw (www.jshaw.co.uk)
+  Source: https://opengameart.org/content/a-slave-to-no-one-rpg-orchestral-essentials-boss-music
+  Version: A Slave To No One MP3.mp3 from A Slave To No One MP3.zip (RPG Orchestral Essentials), its first 4:30, faded out
+  License: CC-BY-3.0
+
 The World At Your Door (RPG Orchestral Essentials)
   Author: Jonathan Shaw (InspectorJ)
   Source: https://opengameart.org/node/108343

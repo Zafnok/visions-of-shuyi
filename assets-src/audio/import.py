@@ -78,6 +78,8 @@ DOWNLOADS = [
     ("The_Bards_Tale.mp3", OGA + "The_Bards_Tale.mp3", "6e93e8e8215bea17a209c321c182111058e024c53e3ad775ce1481ca1d1fcfc2"),
     # Ticket 1007: the Act 1 world map's track (0025) and every capital's (0026).
     ("The World At Your Door MP3.zip", OGA + "The%20World%20At%20Your%20Door%20MP3.zip", "8d31cb763e8b70fcbc5a77e94a5a8ed8f2edd24b2559935d79346a0a51d86d06"),
+    # Ticket 0850: Veyne Hall's battle (0071, battle_rival).
+    ("A Slave To No One MP3.zip", OGA + "A%20Slave%20To%20No%20One%20MP3.zip", "ac2c82c7bc10554146764813d2f774a4eda583db599896d354c6a8048accccd4"),
     ("Adventures in Adventureland.mp3",
      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Adventures%20in%20Adventureland.mp3",
      "13cf2a3bed4996331e8dcd8263cbb3a780475f0157889fb16b8e47220f453a2d"),
@@ -134,6 +136,7 @@ MUSIC = [
     ("zhelanov_battle_theme_5.ogg", "Battle Themes.zip", "Battle Theme 5.mp3"),
     ("rpg_battle_theme.ogg", "battle_theme_2.wav", None),
     ("the_fallen.ogg", "The Fallen MP3_0.zip", "The Fallen MP3.mp3"),
+    ("a_slave_to_no_one.ogg", "A Slave To No One MP3.zip", "A Slave To No One MP3.mp3"),
     ("old_tower_inn.ogg", "The_Old_Tower_Inn.mp3", None),
     ("woodland_fantasy.ogg", "Woodland Fantasy_0.mp3", None),
     ("bards_tale.ogg", "The_Bards_Tale.mp3", None),
@@ -162,6 +165,10 @@ MUSIC_CUTS = {
     # rounds (Nick, 0809: "a 10-15s pause between loops"): 12 s of silence
     # (TUNABLE) after the piece, in the file, so the loop carries it.
     "the_fallen.ogg": "apad=pad_dur=12",
+    # 5:51 (5:40 and silence) is over ADR-0026's 4.5 minutes, and the piece
+    # has no quiet place to end on (ticket 0850): its first 4:30, faded out
+    # over the last 6 s (TUNABLE: the Act 1 playtest, 1064).
+    "a_slave_to_no_one.ogg": "atrim=end=270,asetpts=PTS-STARTPTS,afade=t=out:st=264:d=6",
 }
 
 # (game file in assets/audio/sfx/, original, extra ffmpeg filters before
@@ -273,14 +280,16 @@ def convert_music(only):
         if only and out not in only:
             continue
         src = source_path(original, member)
-        if duration(src) > MAX_MUSIC_S:
-            sys.exit(f"{out}: longer than {MAX_MUSIC_S / 60} minutes (ADR-0026 memory budget)")
         base = ",".join(f for f in [MUSIC_CUTS.get(out), "aresample=44100:resampler=soxr"] if f)
         integrated, _, peak = loudness(src, base)
         gain = gain_for(integrated, MUSIC_LUFS, peak)
         dest = os.path.join(MUSIC_OUT, out)
         run(["-y", "-i", src, "-map_metadata", "-1", "-vn", "-af", f"{base},volume={gain:.2f}dB",
              "-ac", "2", "-ar", "44100", "-c:a", "libvorbis", "-q:a", str(MUSIC_QUALITY), dest])
+        # The game file, cut or not, keeps ADR-0026's memory budget.
+        if duration(dest) > MAX_MUSIC_S:
+            os.remove(dest)
+            sys.exit(f"{out}: longer than {MAX_MUSIC_S / 60} minutes (ADR-0026 memory budget)")
         print(f"music {out:32} I {integrated:6.1f} LUFS, peak {peak:5.1f} dBTP, gain {gain:+5.1f} dB")
 
 
