@@ -188,6 +188,44 @@ impl MapZoom {
     }
 }
 
+/// How the Playdate draws the portraits (ticket 1042,
+/// `docs/design/playdate.md`, *One-bit pictures*): one of the four styles
+/// each portrait is converted in, in the converter's order
+/// (`trpg_content::playdate_images::KINDS`). The PC ignores it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PortraitStyle {
+    /// Style A: dots only (Nick's pick, 0062).
+    #[default]
+    Dots,
+    /// A+ lines: lighter dots, the art's dark lines kept.
+    DotsAndLines,
+    /// F+ lines: even patterns of five greys, with lines.
+    Flat,
+    /// G: four greys, with lines, bolder.
+    Bold,
+}
+
+impl PortraitStyle {
+    /// Every style, in the order of the portraits' converted styles.
+    pub const ALL: [Self; 4] = [Self::Dots, Self::DotsAndLines, Self::Flat, Self::Bold];
+
+    /// Which of a portrait's one-bit styles it draws (0 is the first).
+    pub fn index(self) -> usize {
+        Self::ALL.iter().position(|&s| s == self).unwrap_or(0)
+    }
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](shuyi_ui::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Dots => "options.portrait_style.dots",
+            Self::DotsAndLines => "options.portrait_style.dots_and_lines",
+            Self::Flat => "options.portrait_style.flat",
+            Self::Bold => "options.portrait_style.bold",
+        }
+    }
+}
+
 /// What the Options screen sets that is this game's: the battle's speeds
 /// and look. The defaults are how the game behaved before it had options.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -219,6 +257,8 @@ pub struct ShuyiSettings {
     /// voice (ticket 0729, `docs/design/options.md`, *Voices in the
     /// dialogue log*).
     pub log_voice: LogVoice,
+    /// How the Playdate draws the portraits (only its Options show it).
+    pub portrait_style: PortraitStyle,
 }
 
 /// Whether the dialogue log's cursor plays the voice of the line it moves
@@ -255,6 +295,7 @@ impl Default for ShuyiSettings {
             intro: true,
             towns: TownsOpen::OnArrival,
             log_voice: LogVoice::OnHover,
+            portrait_style: PortraitStyle::Dots,
         }
     }
 }
@@ -319,6 +360,10 @@ struct SettingsFile {
     /// out, as `intro`.
     #[serde(skip_serializing_if = "Option::is_none")]
     log_voice: Option<bool>,
+    /// The Playdate's portrait style when not the default, otherwise left
+    /// out, as `intro` (ticket 1042).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    portrait_style: Option<PortraitStyle>,
 }
 
 impl Default for SettingsFile {
@@ -350,6 +395,8 @@ fn file(s: &Settings) -> SettingsFile {
         voices: (!s.voices).then_some(false),
         voice_volume: s.voice_volume,
         log_voice: (game.log_voice == LogVoice::Off).then_some(false),
+        portrait_style: (game.portrait_style != PortraitStyle::default())
+            .then_some(game.portrait_style),
     }
 }
 
@@ -402,6 +449,7 @@ impl GameSettings for ShuyiSettings {
             } else {
                 LogVoice::OnHover
             },
+            portrait_style: file.portrait_style.unwrap_or_default(),
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
             Some(layout) => s.with_layout(layout),
@@ -437,6 +485,8 @@ mod tests {
             towns: TownsOpen::OnArrival,
             // On, as before ticket 0826 (as are the voices).
             log_voice: LogVoice::OnHover,
+            // The default, as before ticket 1042.
+            portrait_style: PortraitStyle::Dots,
         };
         s
     }
@@ -469,6 +519,26 @@ mod tests {
         assert_eq!(old, expected);
         let loud = Settings::from_ron("Settings(version: 2, voice_volume: 250)").unwrap();
         assert_eq!(loud.voice_volume, MAX_VOLUME);
+    }
+
+    /// Ticket 1042: the Playdate's portraits are in style A (dots) by
+    /// default, the style is saved only when another, and each style
+    /// draws its own converted picture, in the converter's order.
+    #[test]
+    fn the_portrait_style_defaults_to_dots_and_round_trips() {
+        let s = Settings::default();
+        assert_eq!(s.game.portrait_style, PortraitStyle::Dots);
+        assert!(!s.to_ron().contains("portrait_style"));
+        for style in PortraitStyle::ALL {
+            let mut changed = Settings::default();
+            changed.game.portrait_style = style;
+            assert_eq!(Settings::from_ron(&changed.to_ron()), Ok(changed));
+        }
+        let mut bold = Settings::default();
+        bold.game.portrait_style = PortraitStyle::Bold;
+        assert!(bold.to_ron().contains("portrait_style: Some(Bold),"));
+        let indices = PortraitStyle::ALL.map(PortraitStyle::index);
+        assert_eq!(indices, [0, 1, 2, 3]);
     }
 
     /// Ticket 0844: the intro is on by default, saved only when off, and an

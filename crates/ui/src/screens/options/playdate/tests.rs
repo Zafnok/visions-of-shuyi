@@ -48,13 +48,18 @@ fn the_rows_fill_a_window_the_focused_name_a_bar_its_value_between_arrows() {
         .position(|r| r.contains("Music volume"))
         .unwrap();
     assert!(shown[music].contains("█"), "{}", shown[music]);
+    // Since Intro (ticket 1044) and Portrait style (1042) the Playdate's
+    // rows are two more than its window holds: the last are below,
+    // marked.
+    assert!(!shown[0].contains(MORE_ABOVE) && shown[13].contains(MORE_BELOW));
+    assert_eq!(shown[14], screen().view(&c).help);
+    // Scrolled to the end: a blank row before Reset tips.
+    let end = drawn(&screen().focused_on(Row::RestoreDefaults.key()), &c);
+    let shown = rows(&end);
+    assert!(shown[0].contains(MORE_ABOVE) && !shown[13].contains(MORE_BELOW));
     let reset = shown.iter().position(|r| r.contains("Reset tips")).unwrap();
     assert_eq!(shown[reset - 1], format!("║{:48}║", ""));
     assert!(shown[reset - 2].contains("Key bindings"));
-    // Since Intro came (ticket 1044) the Playdate's rows are one more
-    // than its window holds: Restore defaults is below, marked.
-    assert!(!shown[0].contains(MORE_ABOVE) && shown[13].contains(MORE_BELOW));
-    assert_eq!(shown[14], screen().view(&c).help);
 }
 
 #[test]
@@ -128,16 +133,17 @@ fn a_long_value_is_cut_and_the_number_box_is_a_bar() {
     let c = playdate();
     let mut view = screen().view(&c);
     let long = "a value far too long for its column".to_owned();
-    view.rows[1].value = ValueView::Text {
-        text: long,
-        adjustable: false,
-    };
     view.rows[0].focused = false;
     let volume = view
         .rows
         .iter()
         .position(|r| matches!(r.value, ValueView::Volume { .. }));
     let volume = volume.unwrap();
+    // The row above the volume, so both show once the window scrolls.
+    view.rows[volume - 1].value = ValueView::Text {
+        text: long,
+        adjustable: false,
+    };
     view.rows[volume].focused = true;
     view.rows[volume].value = ValueView::NumberBox {
         digits: "75".to_owned(),

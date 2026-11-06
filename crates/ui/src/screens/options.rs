@@ -23,7 +23,8 @@
 //! Whatever does something big asks first (`docs/design/options.md`).
 //!
 //! On the Playdate (ticket 1045) the rows that mean nothing there are
-//! left out ([`PC_ONLY`], and `Layout` with no keyboard).
+//! left out ([`PC_ONLY`], and `Layout` with no keyboard), and `Portrait
+//! style` shows only there ([`PLAYDATE_ONLY`], ticket 1042).
 //!
 //! **The look is a skin** (ADR-0054): the engine's [`glyph::paint`] draws
 //! the screen's [`OptionsView`], or on the Playdate [`playdate::paint`]
@@ -44,7 +45,7 @@ use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
-    AnimSpeed, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, Settings, TownsOpen,
+    AnimSpeed, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, Settings, TownsOpen,
 };
 use crate::tips::reset_tips;
 
@@ -98,6 +99,11 @@ pub const PC_ONLY: [Row; 7] = [
     Row::LogVoice,
 ];
 
+/// The rows only the Playdate's screen shows (ticket 1042): `Portrait
+/// style` picks which of its one-bit portraits it draws; the PC's are in
+/// colour.
+pub const PLAYDATE_ONLY: [Row; 1] = [Row::PortraitStyle];
+
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Row {
@@ -121,6 +127,9 @@ pub enum Row {
     /// [`ShuyiSettings::map_zoom`](crate::ShuyiSettings::map_zoom) (only when
     /// the map can be zoomed).
     MapZoom,
+    /// [`ShuyiSettings::portrait_style`](crate::ShuyiSettings::portrait_style)
+    /// (only on the Playdate).
+    PortraitStyle,
     /// [`ShuyiSettings::intro`](crate::ShuyiSettings::intro).
     Intro,
     /// [`ShuyiSettings::towns`](crate::ShuyiSettings::towns): on arrival or not.
@@ -154,7 +163,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 23] = [
+    pub const ALL: [Row; 24] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -164,6 +173,7 @@ impl Row {
         Row::Cursor,
         Row::MapLook,
         Row::MapZoom,
+        Row::PortraitStyle,
         Row::Intro,
         Row::Towns,
         Row::Theme,
@@ -193,6 +203,7 @@ impl Row {
             Row::Cursor => "options.row.cursor",
             Row::MapLook => "options.row.map_look",
             Row::MapZoom => "options.row.map_zoom",
+            Row::PortraitStyle => "options.row.portrait_style",
             Row::Intro => "options.row.intro",
             Row::Towns => "options.row.towns",
             Row::Theme => "options.row.theme",
@@ -238,6 +249,7 @@ impl Row {
             Row::EnemyPhaseSpeed => choice::<EnemyPhaseSpeed>(self),
             Row::MapLook => choice::<MapLook>(self),
             Row::MapZoom => choice::<MapZoom>(self),
+            Row::PortraitStyle => choice::<PortraitStyle>(self),
             Row::Theme => choice::<Theme>(self),
             Row::CombatAnimations => OptionRow::new(
                 self.key(),
@@ -434,7 +446,8 @@ impl From<Row> for &'static str {
 /// mode` and `Tutorial` only with a campaign loaded, `Map look` only when
 /// the game has pictures and `Map zoom` only when it has them or the map
 /// skin in use can zoom; `Layout` only with a keyboard, `Fullscreen`
-/// only in a window, and none of [`PC_ONLY`] on the Playdate.
+/// only in a window, none of [`PC_ONLY`] on the Playdate and
+/// [`PLAYDATE_ONLY`] only there.
 pub fn rows(ctx: &Ctx) -> Vec<OptionRow> {
     shown_rows(ctx).into_iter().map(Row::option).collect()
 }
@@ -456,6 +469,7 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
         .filter(|&r| r != Row::Layout || keyboard)
         .filter(|&r| r != Row::Fullscreen || ctx.platform.windowed)
         .filter(|r| pc || !PC_ONLY.contains(r))
+        .filter(|r| !pc || !PLAYDATE_ONLY.contains(r))
         .collect()
 }
 
@@ -526,6 +540,19 @@ impl Named for MapZoom {
     }
     fn put(self, s: &mut Settings) {
         s.game.map_zoom = self;
+    }
+}
+
+impl Named for PortraitStyle {
+    const ALL: &'static [Self] = &PortraitStyle::ALL;
+    fn key(self) -> &'static str {
+        PortraitStyle::key(self)
+    }
+    fn get(s: &Settings) -> Self {
+        s.game.portrait_style
+    }
+    fn put(self, s: &mut Settings) {
+        s.game.portrait_style = self;
     }
 }
 

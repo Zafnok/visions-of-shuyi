@@ -476,6 +476,12 @@ impl Running {
         }
         let framed = elapsed();
         self.minute.frame.add((framed - start) * 1000.0);
+        // Options' portrait style (ticket 1042): a new one redraws the
+        // whole frame, as the screen's cells may not have changed.
+        let style = self.game.ctx().settings().game.portrait_style.index();
+        if self.pictures.set_style(style) {
+            self.shown = None;
+        }
         let buffer = self.game.buffer();
         if self.shown.as_ref() == Some(buffer) {
             return false;

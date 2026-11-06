@@ -46,10 +46,13 @@ impl Pictures {
     }
 
     /// Draws every picture in style `style` (0 is the first; the
-    /// portraits' are A, A+ lines, F+ lines and G, for 1042's setting); a
-    /// picture with fewer styles is drawn in its first.
-    pub fn set_style(&mut self, style: usize) {
+    /// portraits' are A, A+ lines, F+ lines and G, the order of Options'
+    /// portrait style, ticket 1042); a picture with fewer styles is drawn
+    /// in its first. Whether that changed the style.
+    pub fn set_style(&mut self, style: usize) -> bool {
+        let changed = self.style != style;
         self.style = style;
+        changed
     }
 }
 
@@ -96,7 +99,8 @@ mod tests {
         let mut lined = Pictures::new(&table);
         assert!(lined.is_empty(), "the PC's bundle has no one-bit pictures");
         lined = on_the_playdate(|| Pictures::new(&table));
-        lined.set_style(3);
+        assert!(lined.set_style(3), "a new style redraws the frame");
+        assert!(!lined.set_style(3), "the same style doesn't");
         let g = image(&table, &lined, face).unwrap();
         assert_ne!(a, g);
         // A fighter has only style A, so it is drawn in it.
@@ -109,6 +113,46 @@ mod tests {
         // The logo is a lettering (ticket 1044), found by its PNG's id too.
         assert!(image(&table, &pictures, "title/logo.png").is_some());
         assert!(Pictures::default().is_empty());
+    }
+
+    /// Ticket 1042: every face a portrait sidecar names is a one-bit picture
+    /// in the Playdate's bundle, twice its PNG's size, in every one of
+    /// Options' portrait styles (with `private-assets`, the bought faces
+    /// too: `cargo test -p trpg-playdate --features private-assets`).
+    #[test]
+    fn every_portrait_has_a_one_bit_face_in_each_portrait_style() {
+        use trpg_ui::PortraitStyle;
+
+        let (content, faces) = on_the_playdate(|| {
+            let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+            let faces: Vec<(String, Option<&'static [u8]>)> = content
+                .portraits
+                .values()
+                .flat_map(|p| &p.expressions)
+                .map(|e| e.image.path().to_owned())
+                .map(|path| {
+                    let bytes = bundle::bytes(&path);
+                    (path, bytes)
+                })
+                .collect();
+            (content, faces)
+        });
+        assert!(faces.len() >= 10, "{}", faces.len());
+        let sizes = content
+            .portraits
+            .values()
+            .flat_map(|p| &p.expressions)
+            .map(|e| (e.size.width, e.size.height));
+        for ((path, bytes), (w, h)) in faces.iter().zip(sizes) {
+            let bytes = bytes.unwrap_or_else(|| panic!("{path} isn't in the bundle"));
+            let bitmap = Bitmap::parse(bytes).unwrap_or_else(|e| panic!("{path}: {e}"));
+            let size = (u32::from(bitmap.width()), u32::from(bitmap.height()));
+            assert_eq!(size, (2 * w, 2 * h), "{path}");
+            for style in PortraitStyle::ALL {
+                let image = Image::from_bitmap(&bitmap, style.index());
+                assert!(image.is_some(), "{path} has no {style:?}");
+            }
+        }
     }
 
     /// A converted portrait drawn at twice its image's size covers 64 × 64
