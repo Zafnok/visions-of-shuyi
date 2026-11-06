@@ -197,7 +197,7 @@ fn help_shows_not_mapped_for_an_action_with_no_key() {
         .unwrap();
     assert_eq!(
         s.help(&c),
-        "f select · ! not mapped info · s next unit · r rewind · d menu · Space end turn"
+        "f select · !\u{a0}not\u{a0}mapped info · s next unit · r rewind · d menu · Space end turn"
     );
 }
 

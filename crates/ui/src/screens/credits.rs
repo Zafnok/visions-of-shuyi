@@ -76,7 +76,7 @@ fn rows(ctx: &Ctx) -> Vec<(CreditRowKind, String)> {
         if text.is_empty() {
             rows.push((kind, String::new()));
         }
-        for line in word_wrap(text, width(kind)) {
+        for line in word_wrap(text, width(kind), &shuyi_assets::font::CellWidths::NARROW) {
             rows.push((kind, line));
         }
     };

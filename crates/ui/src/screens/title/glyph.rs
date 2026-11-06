@@ -283,7 +283,9 @@ pub fn note_layout(note: &NoteView, menu: Rect, buf: &GlyphBuffer) -> (Rect, Vec
     let most = i32::from(buf.width()) - 1 - left;
     let room = usize::try_from(most - MARGIN - face_w - MARGIN).unwrap_or(1);
     let paragraphs = core::iter::once(&note.heading).chain(&note.lines);
-    let rows: Vec<String> = paragraphs.flat_map(|p| word_wrap(p, room)).collect();
+    let rows: Vec<String> = paragraphs
+        .flat_map(|p| word_wrap(p, room, &shuyi_assets::font::CellWidths::NARROW))
+        .collect();
     let len = |s: &String| i32::try_from(s.chars().count()).unwrap_or(i32::MAX);
     let text_w = rows.iter().map(len).max().unwrap_or(0);
     let title_w = len(&note.title) + 2;

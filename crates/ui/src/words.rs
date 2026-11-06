@@ -386,7 +386,7 @@ mod tests {
         let content = &c.game.content;
         let english = Words::ENGLISH;
         assert!(english.is_english());
-        assert!(Words::new(&content.lang, &LangCode::english()).is_english());
+        assert!(Words::new(&content.lang, &LangCode::default()).is_english());
         // A code with no pack is English too.
         let zz = LangCode::new("zz").unwrap();
         assert!(Words::new(&content.lang, &zz).is_english());
@@ -561,7 +561,7 @@ mod tests {
         let lang = &c.game.content.lang;
         let english = Language::default();
         assert!(english.words().is_english());
-        assert_eq!(Language::new(lang, &LangCode::english()), english);
+        assert_eq!(Language::new(lang, &LangCode::default()), english);
         assert_eq!(Language::new(lang, &LangCode::new("zz").unwrap()), english);
         let kept = Language::new(lang, &test());
         assert_ne!(kept, english);
@@ -570,9 +570,9 @@ mod tests {
         assert_eq!(kept.clone().words().class(guard), "GUARD");
         // Whether it is already the language asked for.
         assert!(kept.is(lang, &test()));
-        assert!(!kept.is(lang, &LangCode::english()));
+        assert!(!kept.is(lang, &LangCode::default()));
         assert!(!kept.is(lang, &shout()));
-        assert!(english.is(lang, &LangCode::english()));
+        assert!(english.is(lang, &LangCode::default()));
         assert!(english.is(lang, &LangCode::new("zz").unwrap()));
         assert!(!english.is(lang, &test()));
         // The same code of other languages is another language.
@@ -588,14 +588,14 @@ mod tests {
         let guard = c.game.content.classes.classes[&ClassId("guard".to_owned())].clone();
         assert!(c.words().is_english());
         assert_eq!(c.language(), Language::default());
-        assert_eq!(c.effective_lang(), &LangCode::english());
+        assert_eq!(c.effective_lang(), &LangCode::default());
         c.lang = test();
         assert_eq!(c.effective_lang(), &test());
         assert_eq!(c.words().class(&guard), "GUARD");
         assert_eq!(c.language().words().class(&guard), "GUARD");
         // The test pack is only for builds with debug tools.
         c.debug_tools = false;
-        assert_eq!(c.effective_lang(), &LangCode::english());
+        assert_eq!(c.effective_lang(), &LangCode::default());
         assert_eq!(c.words().class(&guard), "Guard");
         assert_eq!(c.language(), Language::default());
         c.game.lead = LeadProfile::new("Mara", LeadGender::Female);

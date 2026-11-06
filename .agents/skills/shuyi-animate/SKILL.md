@@ -1,6 +1,6 @@
 ---
 name: shuyi-animate
-description: Motion in a game on Shuyi Engine, drawn from the time alone by the skin and never by the rules. It covers what exists today (sprites cut from a sheet, a grid walk shown at the player's speed, text typing out, the hurry clock, idle motion, cinematic pans and eases). Animation clips as data and particles aren't built yet. Use when something on screen should move, blink, walk or type out, or when a test needs any moment of a motion. Not for a stage that moves in real time (shuyi-stage-field) or timed shots set to music (shuyi-cinematic).
+description: Motion in a game on Shuyi Engine, drawn from the time alone by the skin and never by the rules. It covers what exists today (sprites cut from a sheet, a grid walk shown at the player's speed, text typing out, the hurry clock, idle motion, ease curves and tweens, cinematic pans). Animation clips as data and particles aren't built yet. Use when something on screen should move, blink, walk or type out, or when a test needs any moment of a motion. Not for a stage that moves in real time (shuyi-stage-field) or timed shots set to music (shuyi-cinematic).
 license: MIT OR Apache-2.0
 metadata:
   version: "1.0"

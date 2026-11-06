@@ -416,7 +416,7 @@ fn texts_name_the_layout_keys() {
     // Cancel with no key of its own (the fixed Esc isn't named).
     assert_eq!(
         TitleScreen::help(&c),
-        "arrows move · f select · ! not mapped back"
+        "arrows move · f select · !\u{a0}not\u{a0}mapped back"
     );
 }
 

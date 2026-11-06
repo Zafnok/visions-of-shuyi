@@ -141,6 +141,7 @@ pub fn from_source(
         placeholder: &placeholder,
         face_problem: &face_problem,
         default_face: DEFAULT_FACE,
+        widths: &shuyi_assets::font::CellWidths::NARROW,
     };
     engine::from_source(file, source, &rules)
 }

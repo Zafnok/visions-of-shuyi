@@ -5,7 +5,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::font::{CellWidths, FontAtlasDef};
 use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
 use shuyi_cli::contract::{bots, check, lint, replay, target};
@@ -295,7 +295,14 @@ fn the_test_pack_has_stale_missing_and_orphaned_text() {
     let lang = lang();
     assert_eq!(lang.variants, ["m", "f"]);
     let options = lang_status::Options::default();
-    let report = lang_status::report(&lang.lang, &lang.variants, "test", &options).unwrap();
+    let report = lang_status::report(
+        &lang.lang,
+        &lang.variants,
+        &CellWidths::NARROW,
+        "test",
+        &options,
+    )
+    .unwrap();
     let first = report.lines().next().unwrap_or_default();
     assert!(
         first.starts_with("lang-status test (TEST, machine-made): "),
@@ -305,11 +312,11 @@ fn the_test_pack_has_stale_missing_and_orphaned_text() {
     assert!(report.contains("missing:\n  title.credits\n"), "{report}");
     // A data name and a dialogue line nobody translated.
     assert!(
-        report.contains("  items.iron_spear.name\n    english: \"Iron Spear\"\n"),
+        report.contains("  items.iron_spear.name\n    source: \"Iron Spear\"\n"),
         "{report}"
     );
     assert!(
-        report.contains("  test_36a692b7\n    english: \"Let's move.\"\n"),
+        report.contains("  test_36a692b7\n    source: \"Let's move.\"\n"),
         "{report}"
     );
     assert!(report.contains("stale:\n  title.continue\n"), "{report}");
@@ -330,7 +337,14 @@ fn the_test_pack_has_stale_missing_and_orphaned_text() {
 fn the_test_pack_keeps_the_test_text_and_lists_a_files_lines() {
     let lang = lang();
     let report = |options: &lang_status::Options| {
-        lang_status::report(&lang.lang, &lang.variants, "test", options).unwrap()
+        lang_status::report(
+            &lang.lang,
+            &lang.variants,
+            &CellWidths::NARROW,
+            "test",
+            options,
+        )
+        .unwrap()
     };
     let dialogue = report(&lang_status::Options {
         only: Some(Part::Dialogue),
@@ -338,7 +352,7 @@ fn the_test_pack_keeps_the_test_text_and_lists_a_files_lines() {
     });
     assert!(!dialogue.contains("left out"), "{dialogue}");
     assert!(
-        dialogue.contains("  test_36a692b7\n    english:"),
+        dialogue.contains("  test_36a692b7\n    source:"),
         "{dialogue}"
     );
     // The test pack lists the test scene, and only the file asked for.
@@ -346,12 +360,12 @@ fn the_test_pack_keeps_the_test_text_and_lists_a_files_lines() {
         only: None,
         file: Some("test".into()),
     });
-    assert!(test.contains("  test_36a692b7\n    english:"), "{test}");
+    assert!(test.contains("  test_36a692b7\n    source:"), "{test}");
     assert!(!test.contains("screen text"), "{test}");
     let lines = &lang.lang.source().lines;
     for (key, line) in lines.iter().filter(|(_, line)| line.file != "test") {
         assert!(
-            !test.contains(&format!("  {key}\n    english:")),
+            !test.contains(&format!("  {key}\n    source:")),
             "{key} is from {}",
             line.file
         );

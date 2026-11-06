@@ -199,7 +199,7 @@ impl Item {
 /// `text` wrapped at `width` cells by words, keeping its own line breaks.
 pub fn wrap(text: &str, width: usize) -> Vec<String> {
     text.lines()
-        .flat_map(|line| word_wrap(line, width))
+        .flat_map(|line| word_wrap(line, width, &shuyi_assets::font::CellWidths::NARROW))
         .collect()
 }
 

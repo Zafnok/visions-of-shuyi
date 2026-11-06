@@ -163,7 +163,7 @@ fn only_whole_capitalised_names_in_text_count() {
 
 #[test]
 fn name_tokens_count_as_the_longest_name() {
-    let longest = names().longest();
+    let longest = names().longest(&shuyi_assets::font::CellWidths::NARROW);
     assert!(longest > "Emeric".len());
     // Every token counts as the longest name, whatever its own name's length.
     let base = "a".repeat(MAX_TEXT_LEN - longest);

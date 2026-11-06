@@ -81,8 +81,8 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 ## Scope
 
 **In:**
-- Move the pin past engine 3090's merge if an open `engine-pin` PR has
-  not (`engine-pin`, with its ledger/adoption review), then verify its
+- ~~Move the pin past engine 3090's merge if an open `engine-pin` PR has
+  not (`engine-pin`, with its ledger/adoption review)~~ (done by the pin move of 2026-11-05); verify its
   report against the game's. The pin move of 2026-11-01 passed the others.
 - `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
   loading card/data setup, one-bit look, saved settings and stack size.
@@ -163,8 +163,7 @@ that call, or the engine backend's own facts; if not, keep whatever
 1. Capture the current device/Simulator package inventory, old save,
    button/chord/menu behavior, audio cues and startup/minute reports.
    Read 1203's bake adapter and engine 3090's `RunReport`.
-2. Move the pin past engine 3090's merge (unless an open `engine-pin` PR
-   did), then wire the engine-backed library/start
+2. ~~Move the pin past engine 3090's merge~~ (done by the pin move of 2026-11-05). Wire the engine-backed library/start
    (`shuyi_playdate::main!(start, stack_bytes = …, report = …)`), context
    and one-bit pictures/pack adapter. Keep SDK ownership in the engine.
    Test after each step; never ship a silent temporary audio backend.

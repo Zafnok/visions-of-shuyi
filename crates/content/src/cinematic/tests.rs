@@ -346,7 +346,13 @@ fn the_boxes_of_a_talk_shot_each_fit_one_page() {
 fn a_page_wraps_as_the_text_box_does_with_tokens_at_their_longest() {
     // The lines the talk shot's check counts for a box.
     let page_lines = |text: &str, longest_name: usize| {
-        lines_at_longest(text, &LeadTokens, Some(longest_name), BOX_WIDTH)
+        lines_at_longest(
+            text,
+            &LeadTokens,
+            Some(longest_name),
+            BOX_WIDTH,
+            &CellWidths::NARROW,
+        )
     };
     assert_eq!(page_lines("", 5), 0);
     assert_eq!(page_lines("one two", 5), 1);

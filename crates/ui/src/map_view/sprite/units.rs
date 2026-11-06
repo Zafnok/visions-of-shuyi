@@ -459,7 +459,7 @@ mod tests {
     fn sprites(items: &[Item]) -> Vec<Sprite> {
         let sprite = |i: &Item| match i {
             Item::Sprite(s) => Some(*s),
-            Item::Rect(_) => None,
+            _ => None,
         };
         items.iter().filter_map(sprite).collect()
     }
@@ -467,7 +467,7 @@ mod tests {
     fn rects(items: &[Item]) -> Vec<(PxRect, Rgb)> {
         let rect = |i: &Item| match i {
             Item::Rect(o) => Some((o.rect, o.color)),
-            Item::Sprite(_) => None,
+            _ => None,
         };
         items.iter().filter_map(rect).collect()
     }
@@ -1071,6 +1071,7 @@ mod tests {
                 Item::Sprite(s) if Some(s.image) == marks => ("mark", s.dest.x),
                 Item::Sprite(s) => ("picture", s.dest.x),
                 Item::Rect(o) => ("bar", o.rect.x),
+                _ => ("other", 0),
             })
             .collect();
         // Five sprites a unit (the outline's left and right copies are

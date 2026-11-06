@@ -167,7 +167,7 @@ fn the_embedded_content_offers_every_kind_of_data_text() {
         ),
     ] {
         assert_eq!(source.data.get(key).map(String::as_str), Some(english));
-        assert_eq!(content.lang.english(key), Some(english), "{key}");
+        assert_eq!(content.lang.source_text(key), Some(english), "{key}");
     }
     assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
     assert_eq!(source.names, content.names);
@@ -180,7 +180,7 @@ fn the_embedded_content_offers_every_kind_of_data_text() {
         LineKind::Caption
     );
     assert_eq!(
-        content.lang.english("test_36a692b7"),
+        content.lang.source_text("test_36a692b7"),
         Some("Let's move."),
         "a line's English is found by its id"
     );
@@ -324,7 +324,7 @@ fn lesson_lookups_use_the_pack_by_key() {
     assert_eq!(lang.lesson_item(&xx, &lesson, 1), "Runter");
     assert_eq!(lang.lesson_item(&xx, &lesson, 2), "");
     // English stays English.
-    let en = LangCode::english();
+    let en = LangCode::default();
     assert_eq!(lang.lesson_text(&en, &lesson), "Go.");
 }
 
@@ -354,7 +354,7 @@ const DATA_RON: &str = r#"[
 #[test]
 fn data_lookups_use_the_pack_while_its_source_is_todays_english() {
     let lang = lang(pack(DATA_RON, &[]).unwrap());
-    let (xx, en, zz) = (code("xx"), LangCode::english(), code("zz"));
+    let (xx, en, zz) = (code("xx"), LangCode::default(), code("zz"));
     let potion = ItemId::new("potion");
     assert_eq!(lang.item_name(&xx, &potion, "Potion"), "Trank");
     // English, and a code with no pack, are English.
@@ -379,7 +379,7 @@ fn data_lookups_use_the_pack_while_its_source_is_todays_english() {
 #[test]
 fn terrain_and_battle_notes_are_found_by_their_english() {
     let lang = lang(pack(DATA_RON, &[]).unwrap());
-    let (xx, en) = (code("xx"), LangCode::english());
+    let (xx, en) = (code("xx"), LangCode::default());
     // The entry was made from "Wood": stale.
     assert_eq!(lang.terrain_name(&xx, "Forest"), "Forest");
     let fresh = DATA_RON.replace("\"Wood\"", "\"Forest\"");
@@ -418,7 +418,7 @@ fn the_names_table_of_a_language_has_the_packs_names() {
     let theirs = lang.names(&code("xx"), &english);
     assert_eq!(theirs.get("king"), Some("der König"));
     assert_eq!(theirs.get("keep"), Some("Heth Keep"));
-    assert_eq!(lang.names(&LangCode::english(), &english), english);
+    assert_eq!(lang.names(&LangCode::default(), &english), english);
     assert_eq!(lang.names(&code("zz"), &english), english);
     // A name the data has renamed since keeps its new English.
     let renamed = names(&[("king", "the Queen")]);
@@ -429,7 +429,7 @@ fn the_names_table_of_a_language_has_the_packs_names() {
 fn the_test_pack_translates_a_little_of_every_kind() {
     let content = crate::load_embedded().unwrap();
     let lang = &content.lang;
-    let (test, en) = (code(TEST), LangCode::english());
+    let (test, en) = (code(TEST), LangCode::default());
     let guard = &content.classes.classes[&ClassId("guard".to_owned())];
     assert_eq!(lang.class_name(&test, &guard.id, &guard.name), "GUARD");
     assert_eq!(lang.class_name(&en, &guard.id, &guard.name), "Guard");
@@ -745,7 +745,7 @@ fn dialogue_pack() -> LangPack {
 #[test]
 fn a_line_is_looked_up_by_its_id_for_the_leads_gender() {
     let lang = lang(dialogue_pack());
-    let (xx, en) = (code("xx"), LangCode::english());
+    let (xx, en) = (code("xx"), LangCode::default());
     let line = |code: &LangCode, english: &'static str, gender| {
         lang.line(code, &id(english), english, gender).to_owned()
     };
@@ -832,7 +832,7 @@ fn a_scene_in_a_language_has_the_packs_text_and_the_same_ids() {
     assert_eq!(translated.steps[2], english.steps[2]);
     // English, and a code with no pack, are the scene itself.
     let male = LeadGender::Male;
-    assert_eq!(lang.scene(&LangCode::english(), &english, male), english);
+    assert_eq!(lang.scene(&LangCode::default(), &english, male), english);
     assert_eq!(lang.scene(&code("zz"), &english, male), english);
 }
 
@@ -866,10 +866,10 @@ fn status_lists_what_a_pack_lacks_of_each_kind() {
         ["classes.guard.name".to_owned(), id("The gate is shut.")]
     );
     assert_eq!(status.orphans, []);
-    assert_eq!(lang.english(&id("Gone.")), Some("Gone."));
-    assert_eq!(lang.english("names.king"), Some("the King"));
-    assert_eq!(lang.english("a.one"), Some("One"));
-    assert_eq!(lang.english("gate_00000000"), None);
+    assert_eq!(lang.source_text(&id("Gone.")), Some("Gone."));
+    assert_eq!(lang.source_text("names.king"), Some("the King"));
+    assert_eq!(lang.source_text("a.one"), Some("One"));
+    assert_eq!(lang.source_text("gate_00000000"), None);
 }
 
 #[test]

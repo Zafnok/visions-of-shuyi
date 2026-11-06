@@ -908,11 +908,14 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
                 line: LineId::default(),
             }
         }),
-        arb_text().prop_map(|text| Step::Narrate {
-            direction: None,
-            text,
-            line: LineId::default(),
-        }),
+        // Narration opening `(…):` would read as `> (direction): text`.
+        arb_text()
+            .prop_filter("a direction", |t| !(t.starts_with('(') && t.contains("):")))
+            .prop_map(|text| Step::Narrate {
+                direction: None,
+                text,
+                line: LineId::default(),
+            }),
         // A cue named "stop" would print as `@music stop`.
         arb_id()
             .prop_filter("reserved", |s| s != MusicLine::STOP)

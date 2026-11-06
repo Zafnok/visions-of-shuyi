@@ -79,7 +79,7 @@ fn faces(buf: &GlyphBuffer) -> Vec<((i32, i32), u8)> {
                 ),
                 s.opacity,
             )),
-            Item::Rect(_) => None,
+            _ => None,
         })
         .collect()
 }

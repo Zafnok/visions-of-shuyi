@@ -396,6 +396,7 @@ pub(crate) mod tests {
         match buf.items()[i] {
             Item::Rect(o) => o,
             Item::Sprite(s) => panic!("item {i} is a sprite: {s:?}"),
+            ref other => panic!("item {i} is not a rectangle: {other:?}"),
         }
     }
 
@@ -553,6 +554,7 @@ pub(crate) mod tests {
                         base: sprite.base.map(double),
                         ..sprite
                     }),
+                    ref other => panic!("an item the sprite skin doesn't paint: {other:?}"),
                 };
                 assert_eq!(*two, expected, "at {clock_ms} ms");
             }
@@ -694,6 +696,7 @@ pub(crate) mod tests {
                 Item::Sprite(_) => "sprite",
                 Item::Rect(o) if o.color == path => "path",
                 Item::Rect(_) => "mark",
+                _ => "other",
             })
             .collect();
         // Four tiles; the line; the unit's outline (four) and picture;
@@ -1091,6 +1094,7 @@ pub(crate) mod tests {
                 Item::Rect(o) if o.color == path => "path",
                 Item::Rect(o) if o.color == cursor => "cursor",
                 Item::Rect(_) => "bar",
+                _ => "other",
             })
             .collect();
         let mut expect = vec!["path"];
