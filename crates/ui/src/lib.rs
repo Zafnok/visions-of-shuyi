@@ -60,7 +60,7 @@ pub use glyph_buffer::{
 pub use screen::{
     Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
 };
-pub use settings::{Settings, ShuyiSettings};
+pub use settings::{PortraitStyle, Settings, ShuyiSettings};
 pub use shuyi_ui::PlatformFacts;
 pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};

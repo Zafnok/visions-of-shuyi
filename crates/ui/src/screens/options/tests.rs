@@ -34,6 +34,14 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
     c.audio.take().into_iter().filter_map(cue).collect()
 }
 
+/// Every row the PC can show: all but [`PLAYDATE_ONLY`].
+fn pc_rows() -> Vec<Row> {
+    Row::ALL
+        .into_iter()
+        .filter(|r| !PLAYDATE_ONLY.contains(r))
+        .collect()
+}
+
 fn saved(c: &Ctx) -> Settings {
     let text = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
     Settings::from_ron(&text).unwrap()
@@ -50,18 +58,18 @@ fn unsaved(c: &Ctx) -> bool {
 fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut c = ctx();
     let rows = shown_rows(&c);
-    assert_eq!(rows.len(), Row::ALL.len() - 4);
+    assert_eq!(rows.len(), Row::ALL.len() - 5);
     assert!(!rows.contains(&Row::GameMode) && !rows.contains(&Row::Tutorial));
     c.game.campaign_mode = Some(GameMode::Casual);
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
-    let without_pictures: Vec<Row> = Row::ALL
+    let without_pictures: Vec<Row> = pc_rows()
         .into_iter()
         .filter(|&r| r != Row::MapLook && r != Row::MapZoom)
         .collect();
     assert_eq!(shown_rows(&c), without_pictures);
     // Map zoom shows under a skin that can zoom (a debug tool's), even
     // without the game's pictures; not under one that can't.
-    let with_zoom: Vec<Row> = Row::ALL
+    let with_zoom: Vec<Row> = pc_rows()
         .into_iter()
         .filter(|&r| r != Row::MapLook)
         .collect();
@@ -73,7 +81,7 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
-    assert_eq!(shown_rows(&c), Row::ALL);
+    assert_eq!(shown_rows(&c), pc_rows());
 }
 
 /// Ticket 1045: with no keyboard there is no layout to pick; on the
@@ -87,9 +95,12 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
-    assert_eq!(shown_rows(&c), Row::ALL);
+    assert_eq!(shown_rows(&c), pc_rows());
     c.platform.keyboard = Keyboard::Absent;
-    let no_layout: Vec<Row> = Row::ALL.into_iter().filter(|&r| r != Row::Layout).collect();
+    let no_layout: Vec<Row> = pc_rows()
+        .into_iter()
+        .filter(|&r| r != Row::Layout)
+        .collect();
     assert_eq!(shown_rows(&c), no_layout);
     c.platform.windowed = false;
     c.use_playdate_skins();
@@ -100,6 +111,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
         Row::EnemyPhaseSpeed,
         Row::AutoEnd,
         Row::Cursor,
+        Row::PortraitStyle,
         Row::Intro,
         Row::MusicVolume,
         Row::SoundVolume,
@@ -117,6 +129,31 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     c.platform.keyboard = Keyboard::Present;
     assert!(shown_rows(&c).contains(&Row::Layout));
     assert!(!shown_rows(&c).contains(&Row::Theme));
+}
+
+/// Ticket 1042: on the Playdate `Portrait style` steps through the four
+/// styles, Dots first, and the PC never shows it.
+#[test]
+fn the_portrait_style_row_steps_through_the_styles_on_the_playdate() {
+    let mut c = ctx();
+    assert!(!shown_rows(&c).contains(&Row::PortraitStyle));
+    c.use_playdate_skins();
+    let mut s = on(Row::PortraitStyle);
+    assert_eq!(focus(&s, &c), Row::PortraitStyle);
+    let shown = |c: &Ctx| match value(c, Row::PortraitStyle) {
+        ValueView::Text { text, .. } => text,
+        other => panic!("{other:?}"),
+    };
+    let mut seen = vec![shown(&c)];
+    for _ in 1..PortraitStyle::ALL.len() {
+        press(&mut s, &mut c, &[Action::CursorRight]);
+        seen.push(shown(&c));
+    }
+    assert_eq!(seen, ["Dots", "Dots and lines", "Flat", "Bold"]);
+    assert_eq!(c.settings().game.portrait_style, PortraitStyle::Bold);
+    assert!(unsaved(&c));
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(c.settings().game.portrait_style, PortraitStyle::Flat);
 }
 
 /// Ticket 0444: while pictures paint the whole map the cursor never
@@ -173,7 +210,7 @@ fn every_setting_row_changes_its_own_setting() {
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
     // The tutorial level is the campaign's, not a setting (below).
-    let rows = Row::ALL
+    let rows = pc_rows()
         .into_iter()
         .filter(|&r| r.is_setting() && r != Row::Tutorial);
     for row in rows {
@@ -203,6 +240,10 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Cursor, s.game.cursor_style != before.game.cursor_style),
             (Row::MapLook, s.game.map_look != before.game.map_look),
             (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
+            (
+                Row::PortraitStyle,
+                s.game.portrait_style != before.game.portrait_style,
+            ),
             (Row::Intro, s.game.intro != before.game.intro),
             (Row::Towns, s.game.towns != before.game.towns),
             (Row::Theme, s.theme != before.theme),
@@ -244,6 +285,7 @@ fn rows_show_their_values() {
             "Corners*",
             "Pictures*",
             "2×*",
+            "Dots*",
             "On*",
             "On*",
             "Earthy painterly*",

@@ -5,10 +5,10 @@ type: content
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["1040", "1061", "0062"]
 nick_input: none
-completed:
+completed: 2026-11-05
 ---
 
 # 1042 — One-bit portraits
@@ -103,5 +103,61 @@ build shows and the PC doesn't, saved with the other options.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done:**
+
+- **The faces.** Chapter 1's script (`ch01.dlg`) shows ten characters:
+  both leads, the retainer, the sergeant, the poacher, the keeper, the
+  heretic, the messenger, the rival and the red captain. It uses 26 of
+  their bought pictures: neutral and sad for the leads, angry, neutral
+  and sad for most of the cast. 1040's tool converted every one of them
+  with 0062's method, in all four styles (`cargo xtask
+  playdate-images`, into the git-ignored
+  `assets-private/generated/playdate-images/`). Each one was looked at
+  at 1× and 2× beside its colour original.
+- **No hand touch-ups.** No conversion loses a face. In every style the
+  outline, hair, eyes and clothes read. Style A loses some mouth
+  detail and makes sad and neutral look alike for some faces (the
+  keeper, the sergeant). Nick knew this when he chose A ("none of the
+  options capture mouth expressions very well"). The three line styles
+  keep the mouths. So the private repository has nothing new, and
+  `assets-private.rev` and the credits stay as they were.
+- **The Portrait style setting.** `ShuyiSettings::portrait_style`
+  (Dots, Dots and lines, Flat, Bold, which are styles A, A+ lines, F+
+  lines and G). Options shows it only on the Playdate
+  (`PLAYDATE_ONLY`, beside 1045's `PC_ONLY`), and it is saved with the
+  other options only when it isn't the default, so older saves don't
+  change. The Playdate front end draws its pictures in that style and
+  redraws the whole frame when the style changes.
+- **The test:** every face a portrait sidecar names is a one-bit picture
+  in the Playdate's bundle, twice its PNG's size, in all four styles.
+  The plain build checks the leads' faces. `cargo test -p trpg-playdate
+  --features private-assets` checks the bought ones too (passed).
+
+**Deviations:**
+
+- The one-bit faces are **not committed to the private repository**.
+  1040 and 1061 made the Playdate's bundle convert the bought PNGs
+  itself when it is built. A `.1bit` file committed beside a PNG counts
+  as a touch-up and wins over the conversion. Committing all 26 would
+  freeze them, so later tuning of the converter's thresholds would
+  never reach them. Only touched-up faces would go there, and none was
+  needed. "Every face has a one-bit version" holds in the bundle, which
+  is what the new test checks.
+
+**the agent's starting rules** (for the Act 1 playtest's checklist,
+1064):
+
+- The setting's names: **Portrait style**, with **Dots**, **Dots and
+  lines**, **Flat** and **Bold** (0062 left the wording *tunable*).
+- It sits after Cursor, with the other looks.
+- The combat picture's fighters stay in style A whatever the setting
+  (0062's starting rule; the setting changes only the portraits).
+
+**Left to judge by playing (1064's checklist):** Nick looks at every
+Chapter 1 face in one-bit at the device's size, in the Simulator or on
+his Playdate, in each portrait style, and names any face that needs
+another pass. Keep an eye on the keeper's and the sergeant's sad faces
+in Dots. The dialogue screen's Playdate layout is 1043's, so until it
+lands the faces show in the PC's layout, cut off.
+
+**Follow-up tickets:** none.
