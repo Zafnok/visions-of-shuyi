@@ -257,6 +257,11 @@ pub struct ShuyiSettings {
     /// voice (ticket 0729, `docs/design/options.md`, *Voices in the
     /// dialogue log*).
     pub log_voice: LogVoice,
+    /// Whether a scene's text box moves on by itself once its voice clip
+    /// (or, silent, its reading time) is over (ticket 0859,
+    /// `docs/design/voices-languages-and-script.md`, *Voices*; off by
+    /// default).
+    pub auto_advance: AutoAdvance,
     /// How the Playdate draws the portraits (only its Options show it).
     pub portrait_style: PortraitStyle,
 }
@@ -270,6 +275,17 @@ pub enum LogVoice {
     OnHover,
     /// It doesn't: a line's voice plays only when its box is shown again.
     Off,
+}
+
+/// Whether a scene's text box waits for a key or moves on by itself
+/// (ticket 0859).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AutoAdvance {
+    /// It waits for a key (the default).
+    #[default]
+    Off,
+    /// It moves on once its voice clip, or its reading time, is over.
+    On,
 }
 
 /// When a town on the world map opens its shops (Nick, ticket 1007).
@@ -295,6 +311,7 @@ impl Default for ShuyiSettings {
             intro: true,
             towns: TownsOpen::OnArrival,
             log_voice: LogVoice::OnHover,
+            auto_advance: AutoAdvance::Off,
             portrait_style: PortraitStyle::Dots,
         }
     }
@@ -360,6 +377,10 @@ struct SettingsFile {
     /// out, as `intro`.
     #[serde(skip_serializing_if = "Option::is_none")]
     log_voice: Option<bool>,
+    /// `Some(true)` when text boxes move on by themselves, otherwise left
+    /// out, as `intro` (ticket 0859): a save from before it loads as off.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    auto_advance: Option<bool>,
     /// The Playdate's portrait style when not the default, otherwise left
     /// out, as `intro` (ticket 1042).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -395,6 +416,7 @@ fn file(s: &Settings) -> SettingsFile {
         voices: (!s.voices).then_some(false),
         voice_volume: s.voice_volume,
         log_voice: (game.log_voice == LogVoice::Off).then_some(false),
+        auto_advance: (game.auto_advance == AutoAdvance::On).then_some(true),
         portrait_style: (game.portrait_style != PortraitStyle::default())
             .then_some(game.portrait_style),
     }
@@ -449,6 +471,11 @@ impl GameSettings for ShuyiSettings {
             } else {
                 LogVoice::OnHover
             },
+            auto_advance: if file.auto_advance == Some(true) {
+                AutoAdvance::On
+            } else {
+                AutoAdvance::Off
+            },
             portrait_style: file.portrait_style.unwrap_or_default(),
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
@@ -485,6 +512,8 @@ mod tests {
             towns: TownsOpen::OnArrival,
             // On, as before ticket 0826 (as are the voices).
             log_voice: LogVoice::OnHover,
+            // Off, as before ticket 0859.
+            auto_advance: AutoAdvance::Off,
             // The default, as before ticket 1042.
             portrait_style: PortraitStyle::Dots,
         };
@@ -519,6 +548,27 @@ mod tests {
         assert_eq!(old, expected);
         let loud = Settings::from_ron("Settings(version: 2, voice_volume: 250)").unwrap();
         assert_eq!(loud.voice_volume, MAX_VOLUME);
+    }
+
+    /// Ticket 0859: auto-advance starts off and is saved only when on, so
+    /// a save from before it (of either version) loads with it off.
+    #[test]
+    fn auto_advance_defaults_off_round_trips_and_migrates() {
+        let s = Settings::default();
+        assert_eq!(s.game.auto_advance, AutoAdvance::Off);
+        assert!(!s.to_ron().contains("auto_advance"));
+        let mut on = Settings::default();
+        on.game.auto_advance = AutoAdvance::On;
+        let text = on.to_ron();
+        assert!(text.contains("auto_advance: Some(true),"), "{text}");
+        assert_eq!(Settings::from_ron(&text), Ok(on));
+        for old in [
+            "Settings(version: 1)",
+            "Settings(version: 2, voices: Some(false))",
+        ] {
+            let s = Settings::from_ron(old).unwrap();
+            assert_eq!(s.game.auto_advance, AutoAdvance::Off, "{old}");
+        }
     }
 
     /// Ticket 1042: the Playdate's portraits are in style A (dots) by

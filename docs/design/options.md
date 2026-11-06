@@ -109,6 +109,17 @@ Nick's.
   like them; until the game has voices there is nothing for it to turn
   off, so it isn't shown.
 
+### Auto-advance
+
+- Ticket 0859 (Nick, 0043: "Same, plus auto-advance";
+  `voices-languages-and-script.md`, *Voices*): a row **Auto-advance: On /
+  Off** under the voice rows, starting **Off**, kept in the player profile.
+  On, a scene's text box moves on by itself when its voice clip ends, after
+  a pause of 0.5 s; a line with no clip (or with voices off) waits as long
+  as reading takes, 1 s plus 0.05 s per character (*Claude's starting
+  rules*, *tunable*). A press still works as usual; a reply choice always
+  waits for the player.
+
 ### Asking first
 
 - **Anything that does something somewhat big asks yes/no first.** On this
