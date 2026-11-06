@@ -386,6 +386,7 @@ fn the_written_manifest_is_one_the_game_accepts() {
     assert_eq!(game.clips, sorted);
     let sent = files::sent_text(&world.sent);
     assert_eq!(files::sent(&sent).unwrap(), world.sent);
+    assert!(!sent.contains('\r'), "{sent:?}");
 }
 
 #[test]
@@ -403,6 +404,40 @@ fn a_take_says_the_words_when_they_are_nearly_the_same() {
     assert!(!synth::says("You are late, sir", "You're late."));
     assert!(!synth::says("", "No."));
     assert!(synth::says("", "..."));
+}
+
+#[test]
+fn a_short_line_passes_when_its_words_sound_the_same() {
+    // 0722: the transcriber spells the lead's "Dace's." its own ways.
+    for heard in ["Dases.", "Daces", "Days."] {
+        assert!(synth::says(heard, "Dace's."), "{heard}");
+    }
+    assert!(synth::says("Kales", "Kael's!"));
+    assert!(!synth::says("Bases.", "Dace's."));
+    assert!(!synth::says("Dace is.", "Dace's."));
+    assert!(!synth::says("Hold the boat.", "Hold the gate."));
+    // Sounding the same is not enough past a few words.
+    let long = "Dace's, Kael's, Tamsin's, Ellis's, Ferro's.";
+    let heard = "Dases, Kales, Tamsens, Elises, Feros.";
+    assert!(!synth::says(heard, long));
+    assert!(synth::says(
+        "Dases, Kales, Tamsens, Elises.",
+        "Dace's, Kael's, Tamsin's, Ellis's."
+    ));
+}
+
+#[test]
+fn a_words_sound_spells_alike_letters_one_way() {
+    assert_eq!(synth::sound("dace's"), "ds");
+    assert_eq!(synth::sound("dases"), "ds");
+    assert_eq!(synth::sound("evan"), "avn");
+    assert_eq!(synth::sound("ivan"), "avn");
+    assert_eq!(synth::sound("phlox"), "flks");
+    assert_eq!(synth::sound("shack"), "xk");
+    assert_eq!(synth::sound("thicket"), "0kt");
+    assert_eq!(synth::sound("quiz"), "ks");
+    assert_eq!(synth::sound("chirp"), "xrp");
+    assert_eq!(synth::sound(""), "");
 }
 
 #[test]

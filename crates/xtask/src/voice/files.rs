@@ -141,9 +141,12 @@ pub fn sent(source: &str) -> Result<SentMap, String> {
     ron::from_str(source).map_err(|e| format!("{SENT_FILE}: {e}"))
 }
 
-/// `sent.ron`'s text.
+/// `sent.ron`'s text, with `\n` line ends on every system (ron's own
+/// default is `\r\n` on Windows).
 pub fn sent_text(sent: &SentMap) -> String {
-    let pretty = ron::ser::PrettyConfig::new().indentor("    ".to_owned());
+    let pretty = ron::ser::PrettyConfig::new()
+        .indentor("    ".to_owned())
+        .new_line("\n".to_owned());
     let body = ron::ser::to_string_pretty(sent, pretty).unwrap_or_default();
     format!(
         "// What `cargo xtask voice` sent to make each clip (docs/voice.md). The game\n\
