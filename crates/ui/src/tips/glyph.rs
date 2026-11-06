@@ -60,7 +60,11 @@ fn wrapped(lines: &[String], room: usize) -> Vec<String> {
         if paragraph.iter().all(|l| l.chars().count() <= room) {
             rows.extend_from_slice(paragraph);
         } else {
-            rows.extend(word_wrap(&paragraph.join(" "), room));
+            rows.extend(word_wrap(
+                &paragraph.join(" "),
+                room,
+                &shuyi_assets::font::CellWidths::NARROW,
+            ));
         }
     }
     rows

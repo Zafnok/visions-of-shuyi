@@ -61,8 +61,9 @@ do (1217 leaves `camera` to this ticket).
 
 ## Implementation steps
 
-1. Move the pin past engine 2109's merge (`engine-change` §7, the
-   `engine-pin` skill), unless an open `engine-pin` PR has done so.
+1. ~~Move the pin past engine 2109's merge (`engine-change` §7, the
+   `engine-pin` skill), unless an open `engine-pin` PR has done so.~~
+   (done by the pin move of 2026-11-05).
 2. Save `cargo shuyi frame-png` pictures of a fight's run-up, a
    critical's wind-up and the striker going back, before the change.
 3. Replace the two eases in `motion.rs`.

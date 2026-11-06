@@ -58,7 +58,7 @@ pub fn set_up(ctx: &Ctx) -> SetUp {
     let renamed = profiles.get(profiles.current()).is_some_and(|p| {
         // Made as the engine names it: in English, whatever the language.
         let lang = &ctx.game.content.lang;
-        let numbered = lang.text(&LangCode::english(), PROFILE_NUMBERED_TEXT);
+        let numbered = lang.text(&LangCode::default(), PROFILE_NUMBERED_TEXT);
         let n = profiles.current().get();
         // check-text: not a data name (the player's own)
         p.name != shuyi_ui::text::fill_values(numbered, &[("n", &n)])

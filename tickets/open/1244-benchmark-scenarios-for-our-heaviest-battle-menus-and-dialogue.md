@@ -37,8 +37,8 @@ None.
 ## Scope
 
 **In:**
-- Move the engine pin to a revision with `shuyi bench` (engine#3008's
-  merge, or later).
+- ~~Move the engine pin to a revision with `shuyi bench` (engine#3008's
+  merge, or later).~~(done by the pin move of 2026-11-05).
 - `bench/*.bench.ron` scenarios over the game's content, at least:
   - the heaviest battle: the map with the most units, idle, the cursor
     sweeping it, and the enemy's turn with the most units moving;
@@ -61,7 +61,7 @@ None.
 
 ## Implementation steps
 
-1. Move the pin; check that `cargo shuyi bench --no-instructions` runs on
+1. ~~Move the pin~~ (done by the pin move of 2026-11-05); check that `cargo shuyi bench --no-instructions` runs on
    the game (on Windows) and lists every scenario.
 2. Write the scenarios; check each plays what it says with the MCP
    session tools (`start`, `step`, `scene`).

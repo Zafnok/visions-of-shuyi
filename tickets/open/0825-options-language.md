@@ -59,8 +59,11 @@ ticket for it.
    name, a one-time notice, or nothing in game).
 4. First launch, as 0042 decided. If "follows the system": `app` reads
    the OS / browser language once and passes it to `Ctx` (only `app` may
-   ask the platform, ADR-0004); a system language with no pack gives
-   English.
+   ask the platform, ADR-0004), and the engine's `best_match` (engine
+   #278, 2253) picks the game's pack that fits the system's languages,
+   by their BCP 47 tags (engine #276, 2226); a system language with no
+   pack gives the source language, English (`LangCode::default()`).
+   Write no matching of the game's own.
 5. A pack that names a language whose glyphs the atlas lacks can't
    happen (0236's atlas test), but until 0236 lands the row hides any
    pack whose own name can't be drawn.

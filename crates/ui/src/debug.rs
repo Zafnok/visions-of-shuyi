@@ -348,7 +348,12 @@ mod tests {
             .flat_map(|y| (2..row_end).step_by(2).map(move |x| (x, y)))
             .map(|(x, y)| b.get(x, y).unwrap().glyph)
             .collect();
-        let expected: String = glyphs.iter().collect();
+        // A no-break space is printed as a space (engine 2302): both are
+        // a blank cell.
+        let expected: String = glyphs
+            .iter()
+            .map(|&g| if g == '\u{a0}' { ' ' } else { g })
+            .collect();
         assert!(
             shown.starts_with(&expected),
             "top half must list every glyph in order"

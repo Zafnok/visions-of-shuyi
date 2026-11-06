@@ -224,3 +224,24 @@ Nothing for the game: 1 PR (#251), the sound gate's retry on Windows timings, in
 | #260 | 2411 | A key or button let go while the game is suspended stays held after the resume: `InputState::release_all`, called on the first frame after `Game::set_resumed` | adopt → 1170 (the desktop and web builds get it through `shuyi_app::run`; the Playdate's shim never forwards `kEventResume`) |
 
 Nothing for the game: 7 PRs (#246, #254, #255, #258, #259, #261, #265). #246, #258, #261 and #265 are the sound gate's and `shuyi-sound`'s mutation testing in the engine's own CI; #254, #255 and #259 are engine tickets only (#259's voice cast and clip plan are 1242's).
+
+## 2026-11-05: b7a4674e → e2697683 (14 engine PRs), #PR
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #267 | 2252 | The text checks measure with the font atlas's wide glyphs: `PackRules` and `TipRules` gain `widths`, `Names::longest` and `lines_at_longest` take them | fixed: `trpg_content`'s pack and tip rules and the talk shot's check pass `CellWidths::NARROW`, as `text_width` already did (the game's font has no wide glyphs); adopt → 0236 |
+| #268 | 3042 | Focus on the desktop and the web: `FocusLost` and `FocusGained`, held keys and pads let go on focus loss, pads ignored without focus; `PadInput::poll` takes the focus | fixed: nothing to change (the game doesn't call `PadInput::poll`); adopt → 1246 |
+| #269 | 3093 | A background policy the game sets: paused or muted while its window has no focus | adopt → 1246 (Nick chooses the policy) |
+| #274 | 2399 | Pictures a skin paints at run time; `glyph_buffer::Item` gains `Painted` and is `#[non_exhaustive]` | fixed: the sprite skin's and the dialogue log's tests match `Item` with a `_` arm; not for the game: ADR-0038 keeps every picture a sprite item from an asset file, and the Playdate's one-bit pictures are baked (1221), never painted at run time |
+| #271 | 2302 | Line breaking for text without spaces (Japanese), and `lang-status`'s report of translated text too long for its place; `word_wrap`, `TextBox::new` and `lang_status::report` take the widths | fixed: every `word_wrap` and `TextBox::new` in `crates/ui` and the xtask's `lang-status` tests pass `CellWidths::NARROW`; adopt → 0237 (its pin step struck) |
+| #275 | 3046 | Crash reports: `shuyi-app`'s panic hook writes a report through the game's storage with the game's record, and the game hears of it at the next start | adopt → 1245 |
+| #276 | 2226 | Language tags in BCP 47, a fallback chain per key, and a source language the game declares; `ENGLISH`, `LangCode::english` and `Lang::english` deprecated | fixed: the game reads its source language as `LangCode::default()` and its text by `source_text`; adopt → 0825 |
+| #273 | 2566 | One input script for the Harness, the contract and the live link, with actions by name | fixed: nothing to change (the game builds no `Step` or `Script`); adopt → 1244 (its bench scenarios play actions by name) |
+| #279 | 3094 | The grid template's crash record through `BasicGame` | not for the game: it isn't on `BasicGame` (its own `Game` and `AppConfig`); its record is 1245's |
+| #278 | 2253 | `best_match`: the game's language that fits the system's languages | adopt → 0825 (its first-launch step uses it) |
+| #266 | 3090 | The Playdate backend's run report | unblocks 1170 (its pin step struck) |
+| #270 | 2398 | Stop music with a fade chosen per request | unblocks 1087 (its pin step struck) |
+| #272 | 2109 | Ease curves in integers in `shuyi_core::ease` | unblocks 1228 (its pin step struck) |
+| #277 | 3008 | `shuyi bench`: scenarios played headless, gated against every target's budgets | unblocks 1244 (its pin step struck) |
+
+Nothing for the game: none.

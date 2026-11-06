@@ -41,7 +41,7 @@ None.
 **In:** every place the game wraps text using the engine's `word_wrap`;
 the widths of the game's fixed-width places in `en/ui.ron`; the game's
 length limits for pack text in cells; layouts sized for one English
-word; moving the engine pin to a commit with engine#2302.
+word; ~~moving the engine pin to a commit with engine#2302~~ (done by the pin move of 2026-11-05).
 
 **Out (do not do):** the engine's half (engine#2302); translating
 (0719); new layouts for Japanese (if a place can't fit, report it; a
@@ -50,8 +50,8 @@ punctuation and its wide quotes (0239).
 
 ## Implementation steps
 
-1. Move the pin to an engine `main` that has engine#2302 (`cargo xtask
-   engine-pin <commit>`, the `engine-change` skill §7).
+1. ~~Move the pin to an engine `main` that has engine#2302 (`cargo xtask
+   engine-pin <commit>`, the `engine-change` skill §7).~~ (done by the pin move of 2026-11-05).
 2. Find every wrapping routine the game still has of its own in
    `crates/ui/src` (`screens/battle/glyph/rewind.rs`'s `wrap`,
    `screens/playdate.rs`'s `wrap`, and any other) and replace each with

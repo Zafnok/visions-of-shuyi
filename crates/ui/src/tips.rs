@@ -115,13 +115,13 @@ mod tests {
         // Unbound and unknown placeholders.
         assert_eq!(
             fill_placeholders("{Rewind} {Nope} {", HelpKeys::keyboard(&km)),
-            format!("{NOT_MAPPED} {{Nope}} {{")
+            format!("{} {{Nope}} {{", NOT_MAPPED.replace(' ', "\u{a0}"))
         );
         // A cursor action with no key: the whole cursor placeholder.
         let no_cursor = keymap(&[("f", Action::Confirm)]);
         assert_eq!(
             fill_placeholders("{Cursor} {Confirm}", HelpKeys::keyboard(&no_cursor)),
-            "! not mapped f"
+            "!\u{a0}not\u{a0}mapped f"
         );
     }
 
@@ -162,16 +162,16 @@ mod tests {
         let on = |kind| fill_placeholders(text, HelpKeys::new(&km, Device::Pad(kind)));
         assert_eq!(
             on(PadKind::Xbox),
-            "A/B D-pad/L-stick A RB {Nope} ! not mapped"
+            "A/B D-pad/L-stick A RB {Nope} !\u{a0}not\u{a0}mapped"
         );
         assert_eq!(on(PadKind::Generic), on(PadKind::Xbox));
         assert_eq!(
             on(PadKind::PlayStation),
-            "✕/◯ D-pad/L-stick ✕ R1 {Nope} ! not mapped"
+            "✕/◯ D-pad/L-stick ✕ R1 {Nope} !\u{a0}not\u{a0}mapped"
         );
         assert_eq!(
             on(PadKind::Nintendo),
-            "A/B D-pad/L-stick A R {Nope} ! not mapped"
+            "A/B D-pad/L-stick A R {Nope} !\u{a0}not\u{a0}mapped"
         );
         assert_eq!(
             fill_placeholders(text, HelpKeys::keyboard(&km)),
@@ -182,7 +182,7 @@ mod tests {
         let pad = HelpKeys::new(&keys_only, Device::Pad(PadKind::Xbox));
         assert_eq!(
             fill_placeholders("{Confirm} {Cursor}", pad),
-            format!("{NOT_MAPPED} {NOT_MAPPED}")
+            "!\u{a0}not\u{a0}mapped !\u{a0}not\u{a0}mapped"
         );
     }
 

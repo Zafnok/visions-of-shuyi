@@ -40,7 +40,11 @@ impl TalkBox {
     fn of(view: &View) -> Self {
         let placed =
             |p: Option<Portrait>| p.map(|p| (p.character.clone(), p.expression.to_owned()));
-        let mut lines = word_wrap(view.text.as_deref().unwrap_or(""), TEXT_W);
+        let mut lines = word_wrap(
+            view.text.as_deref().unwrap_or(""),
+            TEXT_W,
+            &shuyi_assets::font::CellWidths::NARROW,
+        );
         lines.truncate(TEXT_LINES);
         Self {
             left: placed(view.left),

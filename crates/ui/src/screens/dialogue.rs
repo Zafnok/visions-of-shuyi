@@ -174,7 +174,12 @@ impl DialogueScreen {
         let mut screen = Self {
             player: DialoguePlayer::new(scene, lead, names, present),
             overlay: false,
-            text: TextBox::new("", TEXT_W, TEXT_LINES),
+            text: TextBox::new(
+                "",
+                TEXT_W,
+                TEXT_LINES,
+                &shuyi_assets::font::CellWidths::NARROW,
+            ),
             asking_skip: None,
             menu: None,
             history: History::new(),
@@ -319,7 +324,12 @@ impl DialogueScreen {
     fn show_box(&mut self) {
         self.voice_due = true;
         let view = self.player.current();
-        let text = TextBox::new(view.text.as_deref().unwrap_or(""), TEXT_W, TEXT_LINES);
+        let text = TextBox::new(
+            view.text.as_deref().unwrap_or(""),
+            TEXT_W,
+            TEXT_LINES,
+            &shuyi_assets::font::CellWidths::NARROW,
+        );
         let menu = view.choices.map(|choices| {
             let items = choices.into_iter().enumerate();
             let items = items.map(|(i, c)| MenuItem::new(c).with_value(i));

@@ -40,9 +40,9 @@ checklist (1064).
 ## Scope
 
 **In:**
-- Move the pin past engine 2398 (`engine-change` step 7, with the
+- ~~Move the pin past engine 2398 (`engine-change` step 7, with the
   `engine-pin` skill's review and ledger section), or reuse an
-  `engine-pin` PR that has already moved it.
+  `engine-pin` PR that has already moved it.~~(done by the pin move of 2026-11-05).
 - `music::ask` stops with an explicit 3 s fade (`FADE_OUT_MS`) through
   the engine's new stop operation.
 - `CampMusic` starts each fade-out 3 s before the track's end, not the
@@ -59,8 +59,8 @@ checklist (1064).
 
 ## Implementation steps
 
-1. Check engine 2398 is in the engine's `tickets/done/`, then move the
-   pin past it (`cargo xtask engine-pin`) and read its completion notes
+1. ~~Check engine 2398 is in the engine's `tickets/done/`, then move the
+   pin past it (`cargo xtask engine-pin`)~~ (done by the pin move of 2026-11-05); read its completion notes
    for the stop operation's name.
 2. In `crates/ui/src/screens/camp/music.rs`: add
    `pub const FADE_OUT_MS: u32 = 3000;`; make `ask`'s `Stop` arm use the

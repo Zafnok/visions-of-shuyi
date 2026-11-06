@@ -29,8 +29,8 @@ use crate::error::ContentError;
 
 pub use data::{DataText, Tables, from_tables};
 pub use shuyi_assets::lang::{
-    ENGLISH, Entry, LangCode, LangFile, LangInfo, LangPack, LangStatus, LineEntry, LineKind,
-    LineText, MadeBy, Orphan, PackSources, Source, SourceLine, english_from_source,
+    Entry, LangCode, LangFile, LangInfo, LangPack, LangStatus, LineEntry, LineKind, LineText,
+    MadeBy, Orphan, PackSources, Source, SourceLine, english_from_source,
 };
 
 /// The cells `text` takes, every character one cell wide: the game's font
@@ -59,6 +59,7 @@ pub const RULES: PackRules<'static> = PackRules {
     tokens: &LeadTokens,
     limits: LIMITS,
     variants: &[MALE, FEMALE],
+    widths: &shuyi_assets::font::CellWidths::NARROW,
 };
 
 /// The variant of a pack's line said of a lead of `gender`.
@@ -128,7 +129,7 @@ impl Lang {
 pub fn english_ui() -> &'static BTreeMap<String, String> {
     static ENGLISH_UI: OnceBox<BTreeMap<String, String>> = OnceBox::new();
     ENGLISH_UI.get_or_init(|| {
-        let path = format!("{LANG_DIR}/{ENGLISH}/ui.ron");
+        let path = format!("{LANG_DIR}/{}/ui.ron", LangCode::default());
         let english = bundle::file(&path).map(|source| english_from_source(&path, source));
         Box::new(english.and_then(Result::ok).unwrap_or_default())
     })
@@ -205,7 +206,7 @@ mod tests {
         assert!(english.len() > 100, "{}", english.len());
         let lang = load(None).unwrap();
         for (key, text) in english {
-            assert_eq!(lang.english(key), Some(text.as_str()), "{key}");
+            assert_eq!(lang.source_text(key), Some(text.as_str()), "{key}");
         }
         assert!(std::ptr::eq(english, english_ui()));
     }
@@ -213,7 +214,7 @@ mod tests {
     #[test]
     fn the_embedded_languages_load() {
         let lang = load(None).unwrap();
-        assert_eq!(lang.english("title.new_game"), Some("New Game"));
+        assert_eq!(lang.source_text("title.new_game"), Some("New Game"));
         let test = code(TEST);
         assert_eq!(lang.codes().collect::<Vec<_>>(), [&test]);
         assert_eq!(lang.text(&test, "title.new_game"), "NEW GAME");

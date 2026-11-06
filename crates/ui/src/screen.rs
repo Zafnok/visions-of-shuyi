@@ -636,7 +636,7 @@ pub(crate) mod tests {
     #[test]
     fn text_comes_from_the_language_in_use() {
         let mut c = ctx();
-        assert_eq!(c.lang, LangCode::english());
+        assert_eq!(c.lang, LangCode::default());
         assert_eq!(c.text("title.new_game"), "New Game");
         c.lang = LangCode::new(TEST).unwrap();
         assert_eq!(c.text("title.new_game"), "NEW GAME");
@@ -665,12 +665,10 @@ pub(crate) mod tests {
         c.keymap = Keymap::new([], trpg_content::RepeatDef::default());
         let name = crate::widgets::help::key_name(c.help_keys(), Action::Confirm);
         assert_eq!(name, "! NOT MAPPED");
-        assert_eq!(
-            c.text_with("title.help", &[])
-                .matches("! NOT MAPPED")
-                .count(),
-            3
-        );
+        // Filled into text, a key's name keeps its words together with
+        // no-break spaces (engine 2302), which print as spaces.
+        let help = c.text_with("title.help", &[]);
+        assert_eq!(help.matches("!\u{a0}NOT\u{a0}MAPPED").count(), 3);
     }
 
     #[test]
@@ -694,7 +692,7 @@ pub(crate) mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic(expected = "text key not in the English text: \"title.nope\"")]
+    #[should_panic(expected = "text key not in the source text: \"title.nope\"")]
     fn an_unknown_text_key_panics_in_debug_builds() {
         let c = ctx();
         let _ = c.text("title.nope");

@@ -41,7 +41,11 @@ pub fn wrap_notes<'a>(texts: impl IntoIterator<Item = &'a str>, width: usize) ->
     texts
         .into_iter()
         .flat_map(|text| {
-            let lines = word_wrap(text, width.saturating_sub(indent));
+            let lines = word_wrap(
+                text,
+                width.saturating_sub(indent),
+                &shuyi_assets::font::CellWidths::NARROW,
+            );
             lines.into_iter().enumerate().map(move |(i, line)| {
                 if i == 0 {
                     format!("{MARKER}{line}")
