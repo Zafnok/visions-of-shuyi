@@ -225,7 +225,7 @@ Nothing for the game: 1 PR (#251), the sound gate's retry on Windows timings, in
 
 Nothing for the game: 7 PRs (#246, #254, #255, #258, #259, #261, #265). #246, #258, #261 and #265 are the sound gate's and `shuyi-sound`'s mutation testing in the engine's own CI; #254, #255 and #259 are engine tickets only (#259's voice cast and clip plan are 1242's).
 
-## 2026-11-05: b7a4674e → e2697683 (14 engine PRs), #PR
+## 2026-11-05: b7a4674e → e2697683 (14 engine PRs), #557
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
