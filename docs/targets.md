@@ -62,21 +62,45 @@ frame and the target.
 
 ## The numbers
 
-Measured 2026-11-05 (the heap on Windows; the instructions and the web
-package in CI). The Playdate's package isn't measured in CI, which has no
-Playdate SDK to build it.
+Measured 2026-11-06 by the `bench` job of PR #558 (Callgrind on Linux,
+the heap from the tool program's counter, the web package without the
+bought art). The Playdate's package isn't measured: CI has no Playdate
+SDK to build it.
 
-| Scenario | On | Frames | Instructions: most | Mean | Peak heap |
-| --- | --- | ---: | ---: | ---: | ---: |
-| battle-idle | desktop, web | 60 | | | 4.5 MB |
-| battle-idle | playdate | 60 | | | 5.4 MB |
-| battle-cursor-sweep | desktop, web | 106 | | | 4.5 MB |
-| battle-cursor-sweep | playdate | 106 | | | 5.4 MB |
-| battle-enemy-turn | desktop, web | 598 | | | 4.5 MB |
-| battle-enemy-turn | playdate | 598 | | | 5.4 MB |
-| battle-attack | desktop, web | 384 | | | 4.5 MB |
-| battle-attack | playdate | 384 | | | 5.4 MB |
-| options-menu | desktop, web | 110 | | | 4.3 MB |
-| options-menu | playdate | 110 | | | 5.2 MB |
-| dialogue-portrait | desktop, web | 304 | | | 4.3 MB |
-| dialogue-portrait | playdate | 304 | | | 5.2 MB |
+| Scenario | On | Frames | Instructions: most (frame) | p99 | Mean | Peak heap |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| battle-idle | desktop, web | 60 | 1,121,961 (34) | 1,121,961 | 1,116,948 | 4.5 MB |
+| battle-idle | playdate | 60 | 1,890,788 (1) | 1,890,788 | 1,879,100 | 5.4 MB |
+| battle-cursor-sweep | desktop, web | 106 | 2,236,860 (91) | 1,999,255 | 1,097,865 | 4.5 MB |
+| battle-cursor-sweep | playdate | 106 | **3,111,370** (91) | 2,843,669 | 1,905,657 | 5.4 MB |
+| battle-enemy-turn | desktop, web | 598 | 3,698,190 (63) | 3,125,540 | 1,272,784 | 4.5 MB |
+| battle-enemy-turn | playdate | 598 | **4,532,390** (63) | 3,949,376 | 1,967,707 | 5.4 MB |
+| battle-attack | desktop, web | 384 | 16,776,750 (43) | 9,595,367 | 1,524,657 | 4.5 MB |
+| battle-attack | playdate | 384 | **16,984,920** (43) | 9,749,896 | 2,165,082 | 5.4 MB |
+| options-menu | desktop, web | 110 | 532,148 (3) | 506,622 | 439,420 | 4.3 MB |
+| options-menu | playdate | 110 | 1,883,148 (3) | 1,879,405 | 838,930 | 5.2 MB |
+| dialogue-portrait | desktop, web | 304 | 2,084,920 (157) | 1,967,878 | 1,145,114 | 4.3 MB |
+| dialogue-portrait | playdate | 304 | **4,742,652** (157) | 4,542,516 | 2,436,731 | 5.2 MB |
+
+| Package | Size |
+| --- | ---: |
+| `visions-of-shuyi-0.3.0-web.zip` | **76.3 MB** |
+
+## Over budget
+
+The numbers in bold are over their budgets. The budgets stay; a ticket
+covers each one:
+
+- **The unit menu's frame (1247).** `battle-attack`'s frame 43 opens the
+  unit menu after the move. The arts list checks each art against every
+  unit on the map with a full path search each, three times over: 297
+  searches, 17 million instructions on every target.
+- **The Playdate's one-bit drawing (1248).** Drawing a frame in one bit
+  takes about 1 million instructions, half the Playdate's budget, before
+  the game does anything; a portrait drawn in one bit takes 2.7 million
+  more. The cursor sweep's reach and the enemy's choice tip those frames
+  over.
+- **The web package (1249).** The 75 MB `music/` folder ships in it.
+
+Until they land, CI's `bench` job fails on every pull request but isn't
+part of `ci-result`, the required check; ticket 1250 makes it required.

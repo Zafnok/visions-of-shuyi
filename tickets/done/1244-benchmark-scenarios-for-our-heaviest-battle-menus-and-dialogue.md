@@ -128,7 +128,24 @@ its own PR, #557, for engine-pin issue #548; this PR is stacked on it.
 
 **Friction:** estimate 70 production lines, measured 90 (1.3×).
 
-**Follow-ups:** none. A scenario over budget gets a ticket for what is
-slow (step 4).
+**The first CI run** found five numbers over budget, and the job failed
+naming each scenario, frame and target. The budgets stay as they are,
+and each finding has a ticket (step 4):
+
+- **1247:** opening the unit menu checks every art against every unit
+  with a full path search each, three times over. That frame costs 17
+  million instructions on every target.
+- **1248:** the Playdate's one-bit drawing takes about half its 2 million
+  budget on every frame, and a portrait drawn in one bit takes 2.7
+  million on its own. It also tips the cursor sweep (3.1 M) and the
+  enemy turn (4.5 M) over.
+- **1249:** the web package is 76 MB against 25 MB; the 75 MB `music/`
+  folder is most of it.
+- **1250:** makes `bench` a required check once those land.
+
+Until then the job fails on every pull request but is left out of
+`ci-result`, so it doesn't block other work. The ticket asked for a
+failing job, not a required one (the third box). The numbers are in
+`docs/targets.md`.
 
 **For Nick:** nothing to check; no gameplay changed.

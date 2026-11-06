@@ -344,6 +344,7 @@ jobs:
   # and the web package gated against the budgets of every target shuyi.ron
   # lists (docs/targets.md). The table is the job's summary; a number over its
   # budget fails the job, naming the scenario, the frame and the target.
+  # It isn't in `ci-result` until ticket 1250 (see there).
   bench:
     name: bench
     needs: [changes, export]
@@ -389,7 +390,10 @@ jobs:
   ci-result:
     name: ci-result
     if: always()
-    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, export, bench]
+    # Not `bench` yet: its first run found numbers over their budgets, which
+    # tickets 1247, 1248 and 1249 bring under; 1250 adds it here. Until
+    # then it runs, posts its table and shows red without blocking.
+    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, export]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled
