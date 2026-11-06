@@ -154,29 +154,17 @@ from another seller gets its own row and credit.
 | Sound: "Footstep_Grass_5" by GiocoSound | https://freesound.org/s/421135/ | HQ preview | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_foot` cue | 0214 |
 | Sound: "Knight Right Footstep on Gravel 5 (With Chainmail)" by Ali_6868 | https://freesound.org/s/384890/ | HQ preview | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_armored` cue | 0214 |
 | Sound: "Maxheadroom's Galloping Horse" by Podsburgh | https://freesound.org/s/274898/ | HQ preview; one hoof-beat pair cut from 0.895-1.035 s | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_mounted` cue | 0214 |
+| Qwen3-TTS (code `022e286`; weights: Base `fd4b25438912`, VoiceDesign `5ecdb67327fd`, Tokenizer `7dd38ad4`), its output only: **AI-generated** voice clips **(private)** | https://github.com/QwenLM/Qwen3-TTS, https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base | code `022e286` | Apache-2.0 (code and weights): "perpetual, worldwide, non-exclusive, no-charge, royalty-free"; claims nothing over generated output | [`assets-src/audio/voice-refs/Qwen3-TTS-LICENSE.txt`](assets-src/audio/voice-refs/Qwen3-TTS-LICENSE.txt) | Designed every voice (the reference clips in `assets-src/audio/voice-refs/`) and reads most characters' lines: the voice clips of the private repository's `voice/` (Chapter 1), shipped beside the game, never embedded (ADR-0046). The tool itself doesn't ship. Credited only in a build that has clips | 0043, 0721, 0722 |
+| Chatterbox Multilingual V3 (code `5de7a54`; weights `5bb1f6ee58e5`), its output only: **AI-generated** voice clips **(private)** | https://github.com/resemble-ai/chatterbox, https://huggingface.co/ResembleAI/chatterbox | code `5de7a54` | MIT (code and weights): "to deal in the Software without restriction"; claims nothing over generated output | [`assets-src/audio/voice-refs/Chatterbox-LICENSE.txt`](assets-src/audio/voice-refs/Chatterbox-LICENSE.txt) | Reads Hollis and Aske, and converts every directed line to its voice (ADR-0109): voice clips of the private repository's `voice/`, as above. Its clips carry an inaudible watermark, which the license doesn't require and we don't remove. The tool itself doesn't ship. Credited only in a build that has clips | 0043, 0721, 0722 |
 
-## AI voice tools (nothing shipped yet)
+## AI voice tools
 
 Chosen in ticket 0043 ([ADR-0107](docs/adr/0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md)).
-They run on a developer's machine, and neither tool ships. Nothing they generate is
-in the game yet, so they have no row in the table above and no credit. Ticket 0722,
-which ships the first clips, adds both. The reference clips in
-`assets-src/audio/voice-refs/` are development inputs. No voice is cloned from a real
-person (ADR-0046 rule 8). Terms read 2026-11-01; neither license claims anything over
-generated output.
-
-- **Qwen3-TTS.** https://github.com/QwenLM/Qwen3-TTS,
-  https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base. Code `022e286`; Base
-  `fd4b25438912`, VoiceDesign `5ecdb67327fd`, Tokenizer `7dd38ad4`. Apache-2.0, code
-  and weights: "perpetual, worldwide, non-exclusive, no-charge, royalty-free"
-  ([`Qwen3-TTS-LICENSE.txt`](assets-src/audio/voice-refs/Qwen3-TTS-LICENSE.txt)).
-  Designs every voice and reads most characters.
-- **Chatterbox Multilingual V3.** https://github.com/resemble-ai/chatterbox,
-  https://huggingface.co/ResembleAI/chatterbox. Code `5de7a54`; weights
-  `5bb1f6ee58e5`. MIT, code and weights: "to deal in the Software without restriction"
-  ([`Chatterbox-LICENSE.txt`](assets-src/audio/voice-refs/Chatterbox-LICENSE.txt)).
-  Reads Hollis, Aske and Vix. Its clips carry an inaudible watermark, which the license
-  doesn't require and we don't remove.
+They run on a developer's machine, and neither tool ships; what they generate
+does, from ticket 0722 (Chapter 1), so each has a row in the table above and a
+credit, shown only when the game has clips. The reference clips in
+`assets-src/audio/voice-refs/` are development inputs. No voice is cloned from a
+real person (ADR-0046 rule 8). Terms read 2026-11-01.
 
 ## Platform SDKs (not shipped)
 

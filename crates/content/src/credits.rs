@@ -40,6 +40,28 @@ pub fn load(audio: Option<&AudioManifest>) -> Result<Credits, Vec<ContentError>>
     Ok(merge(&file, audio.unwrap_or(&no_audio), &bought))
 }
 
+/// The ids of the AI voice tools' credits (ticket 0722). They are hidden
+/// from the list, and the credits screen shows them under its own heading
+/// only when the game found voice clips.
+pub const VOICE_TOOLS: [&str; 2] = ["qwen3_tts", "chatterbox"];
+
+/// The [`VOICE_TOOLS`]' credits in the embedded credits file, in that
+/// order. Empty if the file doesn't load.
+pub fn voice_tools() -> Vec<CreditEntry> {
+    let file = load_file().unwrap_or_default();
+    VOICE_TOOLS
+        .iter()
+        .filter_map(|id| file.credits.iter().find(|c| c.id == *id))
+        .map(|c| CreditEntry {
+            group: c.group,
+            title: c.title.clone(),
+            author: c.author.clone(),
+            license: c.license.clone(),
+            source: c.source.clone(),
+        })
+        .collect()
+}
+
 /// Parses and validates credits `source`, attributing errors to `file`.
 /// Reports every problem found.
 pub fn from_source(file: &str, source: &str) -> Result<CreditsFile, Vec<ContentError>> {
@@ -178,6 +200,10 @@ mod tests {
             no_row.is_empty(),
             "credited but not in THIRD_PARTY_ASSETS.md: {no_row:?}"
         );
+        // The voice tools are credited, kept off the list and shown by the
+        // credits screen when there are clips (0722).
+        let tools: Vec<String> = voice_tools().into_iter().map(|e| e.title).collect();
+        assert_eq!(tools, ["Qwen3-TTS", "Chatterbox"]);
         // Hidden entries are software only: every font and picture is
         // shown.
         for c in file.credits.iter().filter(|c| c.hidden) {
