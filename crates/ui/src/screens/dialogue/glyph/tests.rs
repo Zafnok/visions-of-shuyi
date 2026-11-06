@@ -55,6 +55,7 @@ fn two_speakers() -> DialogueView {
         overlay: false,
         place: None,
         opening: None,
+        bright: None,
         caption: None,
         left: Some(face("test_lord", "Test Lord")),
         right: Some(face("test_knight", "Test Knight")),
@@ -350,6 +351,31 @@ fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
     assert_eq!(at(0.5).get(40, 10), half.get(40, 10));
     place.fade(PLACE_BRIGHTNESS);
     assert_eq!(at(1.0).get(40, 10), place.get(40, 10));
+}
+
+/// A place whose `@place` line asks for its own brightness (0738) is
+/// darkened to it behind the talk, and an opening on it darkens to it.
+#[test]
+fn a_place_may_be_darkened_less_than_the_rest() {
+    let c = ctx();
+    let scene = harrowby(&c);
+    let black = c.palette.get(UiColor::Black);
+    let mut place = GlyphBuffer::new(100, 32, Cell::new(' ', c.palette.get(UiColor::Text), black));
+    c.game
+        .map_skin
+        .paint(&c, &scene, place.bounds(), &mut place);
+    place.fade(0.6);
+    let view = DialogueView {
+        place: Some(scene),
+        bright: Some(0.6),
+        ..two_speakers()
+    };
+    assert_eq!(painted(&view).get(40, 10), place.get(40, 10));
+    let darkened = DialogueView {
+        opening: Some(OpeningView { darkened: 1.0 }),
+        ..view
+    };
+    assert_eq!(painted(&darkened).get(40, 10), place.get(40, 10));
 }
 
 #[test]

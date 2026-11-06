@@ -308,7 +308,7 @@ pub(crate) mod tests {
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
             flash: 0.0,
-            marks: true,
+            sided: true,
         }
     }
 
@@ -868,7 +868,7 @@ pub(crate) mod tests {
             frame: _,
             offset: _,
             flash: _,
-            marks: _,
+            sided: _,
         } = &scene.units[0];
         let cursor = CursorView::new(p(0, 0), 1.0, CursorStyle::Corners);
         assert_eq!(
@@ -921,7 +921,7 @@ pub(crate) mod tests {
             feature("frame", &unit(|u| u.frame = 0)),
             feature("offset", &unit(|u| u.offset = (-0.5, 0.0))),
             feature("unit flash", &unit(|u| u.flash = 0.5)),
-            feature("marks", &unit(|u| u.marks = false)),
+            feature("sided", &unit(|u| u.sided = false)),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
             feature("threat", &|s| s.threat = Some(threat(p(0, 0), &[p(1, 1)]))),
             feature("more", &|s| s.more.x.before = true),

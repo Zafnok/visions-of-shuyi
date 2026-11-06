@@ -78,4 +78,4 @@ g = fg:forest bg:grass_bg
 h = fg:road bg:road_bg
 i = fg:wood bg:road_bg
 j = fg:stone bg:water_bg
-k = fg:neutral bg:road_bg
+k = fg:text bg:road_bg

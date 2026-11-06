@@ -33,7 +33,7 @@ fn unit(id: UnitId, pos: Pos, hp: (StatValue, StatValue)) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
-        marks: true,
+        sided: true,
     }
 }
 

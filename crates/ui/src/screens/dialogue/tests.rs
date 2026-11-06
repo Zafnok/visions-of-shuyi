@@ -947,16 +947,21 @@ fn the_view_shows_the_place_the_scene_names() {
     let ch01 = || PlaceLine::Map {
         map: "ch01".into(),
         at: at(3, 12),
+        bright: None,
     };
     let steps = vec![
         narrate("Black."),
         setting(ch01()),
         narrate("The green."),
-        setting(PlaceLine::Battle { at: at(20, 3) }),
+        setting(PlaceLine::Battle {
+            at: at(20, 3),
+            bright: None,
+        }),
         narrate("The fort."),
         setting(PlaceLine::Map {
             map: "no_such_map".into(),
             at: at(0, 0),
+            bright: None,
         }),
         narrate("Nowhere."),
         setting(PlaceLine::None),
@@ -998,6 +1003,7 @@ fn a_jump_in_the_log_shows_that_lines_place() {
     let ch01 = PlaceLine::Map {
         map: "ch01".into(),
         at: at(3, 12),
+        bright: None,
     };
     let mut s = full(&scene(vec![
         setting(ch01),
@@ -1029,6 +1035,7 @@ fn the_keys_after_the_one_that_starts_an_opening_wait() {
     let yard = Step::Directive(Stage::Setting(trpg_content::PlaceLine::Map {
         map: "harrowby_yard".into(),
         at: trpg_core::Pos::new(12, 8),
+        bright: None,
     }));
     let mut s = full(&scene(vec![
         narrate("Black."),

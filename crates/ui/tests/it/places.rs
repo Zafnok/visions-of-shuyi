@@ -5,7 +5,7 @@
 //! chapter's places of their own (ticket 0733).
 
 use insta::assert_snapshot;
-use trpg_core::{LeadGender, Pos};
+use trpg_core::{Faction, LeadGender, Pos, UnitId};
 use trpg_ui::Ctx;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::glyph_buffer::Rect;
@@ -14,6 +14,8 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{MapScene, Place};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::glyph::PLACE_BRIGHTNESS;
+
+use crate::playthrough::{battle, play_in_game, skip_scenes};
 
 /// The dialogue screen playing (a battle's, or the game flow's).
 fn dialogue(h: &Harness) -> &DialogueScreen {
@@ -114,7 +116,7 @@ fn the_letter_is_read_in_the_yard_at_harrowby() {
     let yard = map_place(ctx, "harrowby_yard", Pos::new(12, 8));
     assert_eq!(bare(place(&h)), Some(yard));
     assert_eq!(ctx.game.content.maps["harrowby_yard"].look.light, "dawn");
-    h.wait(5.0);
+    h.wait(5.5);
     assert_snapshot!(h.snapshot());
 }
 
@@ -163,4 +165,92 @@ fn the_battle_map_behind_a_battles_scene_is_darkened() {
         assert_eq!((now.fg, now.bg), darkened, "cell {x},{y}");
     }
     assert!(terrain > 10, "only {terrain} terrain cells");
+}
+
+/// The study is darkened less than the other places (Nick, 0738: "Darken
+/// less in this scene only"): its `@place` line asks for 60%; every other
+/// Chapter 1 scene is at the usual brightness. After Dace's pacing, the
+/// first line over it, in the glyph look.
+#[test]
+fn the_study_is_darkened_less_than_the_other_places() {
+    let mut h = preview("ch01_tbc");
+    assert_eq!(dialogue(&h).view(h.game().ctx()).bright, Some(0.6));
+    h.wait(5.0);
+    assert!(!dialogue(&h).is_opening());
+    assert_eq!(dialogue(&h).view(h.game().ctx()).bright, Some(0.6));
+    assert_snapshot!(h.snapshot());
+    for scene in ["ch01_intro", "ch01_prebattle", "ch01_victory"] {
+        let mut h = preview(scene);
+        for _ in 0..4 {
+            assert_eq!(dialogue(&h).view(h.game().ctx()).bright, None, "{scene}");
+            h.wait(3.0).keys("f");
+        }
+    }
+}
+
+/// After Chapter 1 is won (0738): the toll-fort at noon (the beat sheet's
+/// time), with the party standing where the battle left them, on no side,
+/// and no enemy; the field starts bright and darkens over half a second
+/// before the first line comes up. The first line, in the glyph look.
+#[test]
+fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    h.keys("f f f Up f");
+    skip_scenes(&mut h);
+    play_in_game(&mut h, &crate::ch01_winnable::winning_commands());
+    let end = battle(&h);
+    let mut stood: Vec<(UnitId, Pos)> = end
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player)
+        .map(|u| (u.id, u.pos))
+        .collect();
+    stood.sort();
+    assert_eq!(stood.len(), 6, "nobody lost");
+    // Harl's last words, the VICTORY banner and the results.
+    for _ in 0..60 {
+        match h.top_screen() {
+            "dialogue" if dialogue(&h).player().scene_id() == "ch01_victory" => break,
+            "dialogue" => skip_scenes(&mut h),
+            _ => {
+                h.wait(0.5).keys("f");
+            }
+        }
+    }
+    assert_eq!(dialogue(&h).player().scene_id(), "ch01_victory");
+    // Bright, with no talk yet.
+    assert!(dialogue(&h).is_opening());
+    let start = dialogue(&h).view(h.game().ctx());
+    let darkened = start.opening.map_or(1.0, |o| o.darkened);
+    assert!(darkened < 0.1, "{darkened}");
+    let field = start.place.unwrap_or_else(|| panic!("no place"));
+    let mut shown: Vec<(UnitId, Pos)> = field.units.iter().map(|u| (u.id, u.pos)).collect();
+    shown.sort();
+    assert_eq!(shown, stood);
+    assert!(field.units.iter().all(|u| !u.sided));
+    // Noon (the beat sheet: "the toll-fort, noon").
+    let ctx = h.game().ctx();
+    assert_eq!(
+        ctx.game
+            .content
+            .battle_look(&ctx.game.content.battles["ch01"])
+            .light,
+        "noon"
+    );
+    assert_eq!(field.look.light, "noon");
+    // Half way into the darkening, then the talk.
+    h.wait(0.25);
+    let half = dialogue(&h)
+        .view(h.game().ctx())
+        .opening
+        .map_or(1.0, |o| o.darkened);
+    assert!((0.3..0.8).contains(&half), "{half}");
+    h.wait(0.3);
+    assert!(!dialogue(&h).is_opening());
+    let talk = dialogue(&h).view(h.game().ctx());
+    assert!(talk.text.lines[0].starts_with("The gate stands open."));
+    let behind = talk.place.map(|p| p.units.len());
+    assert_eq!(behind, Some(6), "they stay behind the talk");
+    h.wait(5.0);
+    assert_snapshot!(h.snapshot());
 }

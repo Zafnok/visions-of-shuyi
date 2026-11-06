@@ -99,7 +99,7 @@ use trpg_core::{
 };
 
 use crate::glyph_buffer::GlyphBuffer;
-use crate::map_view::Place;
+use crate::map_view::{Place, UnitView, left_standing};
 use crate::save::{self, SUSPEND_KEY, SaveError};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::CampScreen;
@@ -268,6 +268,10 @@ pub struct FlowScreen {
     after_camp: Option<String>,
     /// The world map's place whose battle is being played (1007).
     world_node: Option<String>,
+    /// Who was left standing when the last battle was won, where they
+    /// stood ([`left_standing`]), while its victory scenes play: their
+    /// `@place battle` shows them (0738).
+    survivors: Option<Vec<UnitView>>,
 }
 
 impl FlowScreen {
@@ -292,6 +296,7 @@ impl FlowScreen {
             camped: false,
             after_camp: None,
             world_node: None,
+            survivors: None,
         }
     }
 
@@ -578,6 +583,8 @@ impl FlowScreen {
                 return;
             }
         }
+        // The victory scenes are over: nobody stands on the next field yet.
+        self.survivors = None;
         match self.then {
             Then::Battle => self.start_battle(ctx),
             Then::WorldMap => self.world_map(),
@@ -621,10 +628,19 @@ impl FlowScreen {
             }
         }
         let mut screen = DialogueScreen::told(ctx, scene, lead, &present);
-        // `@place battle` in a chapter's scenes is its battle's field.
+        // `@place battle` in a chapter's scenes is its battle's field; after
+        // the battle, with who was left standing on it, fading into the
+        // darkening (0738).
         let battle = self.chapter.as_ref();
         if let Some(def) = battle.and_then(|c| ctx.game.content.battles.get(&c.battle)) {
-            screen = screen.with_battle(Place::of_battle(&ctx.game.content, def));
+            let mut field = Place::of_battle(&ctx.game.content, def);
+            if let Some(survivors) = &self.survivors {
+                field.units.clone_from(survivors);
+            }
+            screen = screen.with_battle(field);
+        }
+        if self.survivors.is_some() {
+            screen = screen.fading_in();
         }
         let plays = screen.has_text();
         if plays {
@@ -757,6 +773,7 @@ impl FlowScreen {
             let screen = |r| ResultsScreen::new(r, told, charges, campaign.gold);
             results = self.rewards.as_ref().map(screen);
         }
+        self.survivors = Some(left_standing(state));
         self.scenes = self
             .chapter
             .iter()

@@ -63,6 +63,11 @@ fn each_side_has_its_look() {
     };
     assert_eq!(look(Faction::Ally, false), letters);
     assert_eq!(look(Faction::Neutral, false), letters);
+    // On no side, on a conversation's place (0738): the letters alone.
+    for faction in [Faction::Player, Faction::Enemy] {
+        let u = unit(faction, p(0, 0)).on_no_side();
+        assert_eq!(super::look(&u, &inks), letters, "{faction:?}");
+    }
 }
 
 /// Your unit: the letters white in a solid black tile, its HP line white.
@@ -164,9 +169,9 @@ fn allies_and_neutral_units_are_their_letters_alone() {
 fn the_hp_line_is_as_long_as_the_hp_left() {
     use Faction::{Ally, Enemy, Neutral, Player};
     let (black, white, grey) = (c(Ink::Black), c(Ink::White), c(Ink::Grey));
-    let line = |faction, hp: (i32, i32), acted: bool, marks: bool| {
+    let line = |faction, hp: (i32, i32), acted: bool, sided: bool| {
         let mut u = unit(faction, Pos::new(0, 0));
-        (u.hp, u.acted, u.marks) = (hp, acted, marks);
+        (u.hp, u.acted, u.sided) = (hp, acted, sided);
         let buf = on_plains(u);
         buf.overlays()
             .into_iter()

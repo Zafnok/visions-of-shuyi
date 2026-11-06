@@ -80,8 +80,8 @@ pub use cinematic::{
 };
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
-    ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage, Step,
-    deaths, joins,
+    Bright, ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage,
+    Step, deaths, joins,
 };
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;

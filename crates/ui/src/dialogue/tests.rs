@@ -1094,10 +1094,12 @@ fn the_place_lasts_until_the_next_place_line() {
         Step::Directive(Stage::Setting(PlaceLine::Map {
             map: map.into(),
             at: trpg_core::Pos::new(x, y),
+            bright: None,
         }))
     };
     let battle = Step::Directive(Stage::Setting(PlaceLine::Battle {
         at: trpg_core::Pos::new(20, 3),
+        bright: None,
     }));
     let mut p = play(&Scene {
         id: "s".into(),
@@ -1123,6 +1125,7 @@ fn the_place_lasts_until_the_next_place_line() {
     let green = Some(PlaceLine::Map {
         map: "ch01".into(),
         at: trpg_core::Pos::new(3, 12),
+        bright: None,
     });
     assert_eq!(place(&p), green);
     p.advance();
@@ -1134,6 +1137,7 @@ fn the_place_lasts_until_the_next_place_line() {
     p.choose(0);
     let fort = Some(PlaceLine::Battle {
         at: trpg_core::Pos::new(20, 3),
+        bright: None,
     });
     assert_eq!(place(&p), fort);
     p.advance();
@@ -1152,6 +1156,7 @@ fn an_opening_is_due_once_and_lasts_until_the_place_changes() {
     let yard = Step::Directive(Stage::Setting(PlaceLine::Map {
         map: "yard".into(),
         at: trpg_core::Pos::new(1, 1),
+        bright: None,
     }));
     let scene = Scene {
         id: "s".into(),

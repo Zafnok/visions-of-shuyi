@@ -73,8 +73,9 @@ fn letter(gender: LeadGender) -> Harness {
 }
 
 /// The letter opens on the lead and Hollis in the yard at full brightness,
-/// with no talk on screen; the first line comes up after the opening's
-/// 1.55 s and half a second of darkening, and they stay behind it.
+/// with no talk on screen, on no side (no outline, 0738); the first line
+/// comes up after the opening's 2.05 s and half a second of darkening, and
+/// they stay behind it.
 #[test]
 fn the_letter_opens_on_the_lead_and_hollis_sparring() {
     let mut h = letter(LeadGender::Female);
@@ -91,11 +92,16 @@ fn the_letter_opens_on_the_lead_and_hollis_sparring() {
     // The yard's own place, with them on it.
     let mut bare = place(&h);
     bare.units.clear();
-    assert!(!place(&h).units.iter().any(|u| u.marks));
+    assert!(!place(&h).units.iter().any(|u| u.sided));
     // The lead has stepped in.
     h.wait(0.2);
     assert_eq!(standing(&h)[0], at("lead", p(12, 8), Facing::Right));
     h.wait(1.6);
+    assert!(
+        view(&h).opening.is_some_and(|o| o.darkened == 0.0),
+        "still sparring"
+    );
+    h.wait(0.5);
     assert!(dialogue(&h).is_opening(), "still darkening");
     let darkening = view(&h).opening.map_or(0.0, |o| o.darkened);
     assert!(darkening > 0.0 && darkening < 1.0, "{darkening}");
@@ -163,9 +169,16 @@ fn the_last_scene_opens_on_dace_pacing_the_study() {
     h.wait(0.45);
     let pacing = &standing(&h)[0];
     assert!((10..15).contains(&pacing.1.x), "{pacing:?}");
-    h.wait(2.0);
+    // Back across the rug (Nick, 0738: "Longer").
+    h.wait(1.0);
+    let back = &standing(&h)[0];
+    assert!(
+        back.2 == Facing::Left && (9..15).contains(&back.1.x),
+        "{back:?}"
+    );
+    h.wait(1.6);
     assert!(!dialogue(&h).is_opening());
-    assert_eq!(standing(&h), [at("rival", p(12, 8), Facing::Left)]);
+    assert_eq!(standing(&h), [at("rival", p(12, 8), Facing::Right)]);
     assert!(view(&h).text.lines[0].starts_with("Night."));
 }
 

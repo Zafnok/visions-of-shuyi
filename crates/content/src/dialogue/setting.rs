@@ -125,8 +125,8 @@ pub fn check_places(parsed: &ParsedScene, refs: &PlaceRefs) -> Vec<ContentError>
     let mut errors = Vec::new();
     for (line, place) in places {
         let message = match place {
-            PlaceLine::Map { map, at } => map_problem(refs, map, *at),
-            PlaceLine::Battle { at } => battle_problem(refs, &parsed.scene.id, *at),
+            PlaceLine::Map { map, at, .. } => map_problem(refs, map, *at),
+            PlaceLine::Battle { at, .. } => battle_problem(refs, &parsed.scene.id, *at),
             PlaceLine::None => None,
         };
         if let Some(message) = message {

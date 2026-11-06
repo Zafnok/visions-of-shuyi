@@ -114,9 +114,10 @@ impl Scripts {
 /// The game's directives: what is staged around the talk.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Stage {
-    /// `@place <map> <x>,<y>`, `@place battle <x>,<y>` or `@place none`:
-    /// the place drawn behind the talk from this line on, until the next
-    /// one (`docs/design/look-and-feel.md`, *Places behind conversations*).
+    /// `@place <map> <x>,<y>`, `@place battle <x>,<y>` (either followed by
+    /// `bright <n>%`, or not) or `@place none`: the place drawn behind the
+    /// talk from this line on, until the next one
+    /// (`docs/design/look-and-feel.md`, *Places behind conversations*).
     Setting(PlaceLine),
     /// `@opening <id>`: before the next text box, the opening of
     /// `assets/openings/<id>.ron` plays on the place (its characters move
@@ -142,6 +143,8 @@ pub enum PlaceLine {
         map: String,
         /// The tile in the middle.
         at: Pos,
+        /// How bright it is behind the talk, if the line says.
+        bright: Option<Bright>,
     },
     /// `@place battle <x>,<y>`: the map of the battle the scene belongs to
     /// (its chapter's, for a chapter's intro or victory scene; the one
@@ -149,9 +152,39 @@ pub enum PlaceLine {
     Battle {
         /// The tile in the middle.
         at: Pos,
+        /// How bright it is behind the talk, if the line says.
+        bright: Option<Bright>,
     },
     /// `@place none`: no place, black again.
     None,
+}
+
+/// How bright a place is behind the talk when its `@place` line says so
+/// (`bright 60%`; ticket 0738, the study at night, lighter than the rest):
+/// a percentage from 1 to 100. A place without one is darkened as every
+/// place is (`docs/design/look-and-feel.md`, *Places behind
+/// conversations*).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Bright(u8);
+
+impl Bright {
+    /// The word before the percentage.
+    pub const WORD: &'static str = "bright";
+
+    /// `percent`, if it is from 1 to 100.
+    pub fn new(percent: u8) -> Option<Self> {
+        (1..=100).contains(&percent).then_some(Self(percent))
+    }
+
+    /// The percentage.
+    pub fn percent(self) -> u8 {
+        self.0
+    }
+
+    /// The share of full brightness, from `0.01` to `1.0`.
+    pub fn share(self) -> f32 {
+        f32::from(self.0) / 100.0
+    }
 }
 
 impl PlaceLine {
@@ -160,15 +193,35 @@ impl PlaceLine {
     /// What follows `@place` for [`PlaceLine::None`].
     pub const NONE: &'static str = "none";
 
-    /// What follows `@place` in a script: `<map> <x>,<y>`,
-    /// `battle <x>,<y>` or `none`.
+    /// What follows `@place` in a script: `<map> <x>,<y>` or
+    /// `battle <x>,<y>` (either with ` bright <n>%` if it says), or `none`.
     pub fn args(&self) -> String {
+        let (place, at) = match self {
+            PlaceLine::Map { map, at, .. } => (map.as_str(), at),
+            PlaceLine::Battle { at, .. } => (Self::BATTLE, at),
+            PlaceLine::None => return Self::NONE.to_owned(),
+        };
+        let bright = self.bright().map_or_else(String::new, |b| {
+            format!(" {} {}%", Bright::WORD, b.percent())
+        });
+        format!("{place} {},{}{bright}", at.x, at.y)
+    }
+
+    /// How bright the line asks the place to be, if it says.
+    pub fn bright(&self) -> Option<Bright> {
         match self {
-            PlaceLine::Map { map, at } => format!("{map} {},{}", at.x, at.y),
-            PlaceLine::Battle { at } => format!("{} {},{}", Self::BATTLE, at.x, at.y),
-            PlaceLine::None => Self::NONE.to_owned(),
+            PlaceLine::Map { bright, .. } | PlaceLine::Battle { bright, .. } => *bright,
+            PlaceLine::None => None,
         }
     }
+}
+
+/// The brightness `<n>%` (a whole number from 1 to 100, then `%`), if `s`
+/// is one.
+fn percent(s: &str) -> Option<Bright> {
+    let n = s.strip_suffix('%')?;
+    let digits = !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit());
+    Bright::new(digits.then(|| n.parse::<u8>().ok()).flatten()?)
 }
 
 /// The tile `<x>,<y>` (two whole numbers from 0, no spaces), if `s` is one.
@@ -181,12 +234,24 @@ fn tile(s: &str) -> Option<Pos> {
     Some(Pos::new(number(x)?, number(y)?))
 }
 
-/// `@place` with `args`: a map id and a tile (`<x>,<y>`), `battle` and a
-/// tile, or `none`.
+/// `@place` with `args`: a map id and a tile (`<x>,<y>`), or `battle` and
+/// a tile, either followed by `bright <n>%` or not; or `none`.
 fn parse_place(args: &str) -> Parsed<Stage> {
     let args: Vec<&str> = args.split_whitespace().collect();
+    let (args, bright) = match args[..] {
+        [ref place @ .., Bright::WORD, n] => {
+            let Some(bright) = percent(n) else {
+                return Parsed::error(format!(
+                    "\"{n}\" is not a brightness; write it as a percentage from 1% to 100%, \
+                     e.g. \"bright 60%\""
+                ));
+            };
+            (place, Some(bright))
+        }
+        ref place => (place, None),
+    };
     let place = match args[..] {
-        [PlaceLine::NONE] => PlaceLine::None,
+        [PlaceLine::NONE] if bright.is_none() => PlaceLine::None,
         [map, at] if map != PlaceLine::NONE => {
             let Some(at) = tile(at) else {
                 return Parsed::error(format!(
@@ -194,11 +259,12 @@ fn parse_place(args: &str) -> Parsed<Stage> {
                 ));
             };
             if map == PlaceLine::BATTLE {
-                PlaceLine::Battle { at }
+                PlaceLine::Battle { at, bright }
             } else {
                 let mut parsed = Parsed::step(Stage::Setting(PlaceLine::Map {
                     map: map.into(),
                     at,
+                    bright,
                 }));
                 if !is_id(map) {
                     parsed.errors.push(engine::bad_id(map));
@@ -208,8 +274,9 @@ fn parse_place(args: &str) -> Parsed<Stage> {
         }
         _ => {
             return Parsed::error(
-                "@place needs a map id and a tile (\"@place ch01 3,12\"), \"battle\" and a \
-                 tile, or \"none\"",
+                "@place needs a map id and a tile (\"@place ch01 3,12\"), or \"battle\" and \
+                 a tile, either with a brightness after it or not (\"@place ch01 3,12 bright \
+                 60%\"); or \"none\"",
             );
         }
     };

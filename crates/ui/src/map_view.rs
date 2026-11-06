@@ -39,7 +39,7 @@ use trpg_content::Content;
 use crate::screen::SkinSet;
 use crate::settings::MapLook;
 
-pub use place::{Place, screen_tiles};
+pub use place::{Place, left_standing, screen_tiles};
 pub use scene::{
     CursorStyle, CursorView, Facing, MapScene, RangeName, STANDING_FRAME, TerrainLooks, ThreatView,
     TileView, UnitEffects, UnitView, range,

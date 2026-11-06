@@ -30,17 +30,25 @@ pub fn opening_ms(def: &OpeningDef) -> u32 {
 
 /// How far the place has darkened `clock_ms` into `def`: 0 while its
 /// characters move, then up to 1 over [`DARKEN_MS`].
-#[allow(clippy::cast_precision_loss)] // an opening is a few seconds
 pub fn darkened(def: &OpeningDef, clock_ms: u64) -> f32 {
-    let into = clock_ms.saturating_sub(u64::from(def.length_ms));
+    darkened_after(def.length_ms, clock_ms)
+}
+
+/// How far a place that starts darkening `still_ms` milliseconds in has
+/// darkened `clock_ms` in: 0 until then, then up to 1 over [`DARKEN_MS`].
+/// With `still_ms` 0, a place that fades straight into the darkening
+/// (after a battle, 0738).
+#[allow(clippy::cast_precision_loss)] // an opening is a few seconds
+pub fn darkened_after(still_ms: u32, clock_ms: u64) -> f32 {
+    let into = clock_ms.saturating_sub(u64::from(still_ms));
     (into as f32 / DARKEN_MS as f32).min(1.0)
 }
 
 /// The cast of `def` standing where it starts, as the map scene shows
 /// them: by their character, so a skin with pictures draws their map
 /// picture (the lead's by `lead`'s look), and the glyph skin their label
-/// (the lead's from `lead`'s name); in the neutral colour, as they are on
-/// no side here, and without an HP bar or marks.
+/// (the lead's from `lead`'s name); on no side here
+/// ([`sided`](UnitView::sided)): no outline, HP bar or marks (0738).
 pub fn cast_units(ctx: &Ctx, def: &OpeningDef, lead: &LeadProfile) -> Vec<UnitView> {
     def.cast.iter().map(|m| cast_unit(ctx, m, lead)).collect()
 }
@@ -75,7 +83,7 @@ fn cast_unit(ctx: &Ctx, member: &CastMember, lead: &LeadProfile) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
-        marks: false,
+        sided: false,
     }
 }
 

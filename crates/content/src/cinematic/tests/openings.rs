@@ -57,7 +57,7 @@ fn chapter_1_openings_load() {
             member(2, "retainer", p(13, 8), Heading::Left),
         ]
     );
-    assert_eq!(sparring.actions.len(), 6);
+    assert_eq!(sparring.actions.len(), 8);
     let back = ActionDef {
         at_ms: 300,
         act: Act::Walk {
@@ -68,13 +68,15 @@ fn chapter_1_openings_load() {
         },
     };
     assert_eq!(sparring.actions[1], back);
-    // About 1.5 s of movement (Nick: half the mockup's 3 s).
-    assert_eq!(sparring.length_ms, 1550);
+    // About 2 s of movement (Nick, 0738: "they can spar for maybe 2s").
+    assert_eq!(sparring.length_ms, 2050);
     let pacing = &c.openings["ch01_pacing"];
     assert_eq!(
         (pacing.map.as_str(), pacing.length_ms),
-        ("veyne_study", 1450)
+        ("veyne_study", 2400)
     );
+    // Across the rug, back, and half way again (Nick, 0738: "Longer").
+    assert_eq!(pacing.actions.len(), 3);
     assert_eq!(pacing.cast, [member(1, "rival", p(9, 8), Heading::Right)]);
     let Act::Walk { path, facing, .. } = &pacing.actions[0].act else {
         panic!("not a walk: {:?}", pacing.actions[0]);

@@ -371,12 +371,13 @@ retainer[sad]: {n:poacher} drilled worse than any recruit I ever had, and came b
 > Down in {n:place.harrowby}, somebody has found the bell rope. It's ringing again.
 @end
 
-# The old lord's study, at night (veyne_study.map). Two letters written
+# The old lord's study, at night (veyne_study.map), darkened less than
+# the other places behind the talk (Nick, 0738). Two letters written
 # before the news; Dace hands over the lie and locks the other away.
 
 @scene ch01_tbc
 @caption {N:place.veyne_hall}
-@place veyne_study 12,7
+@place veyne_study 12,7 bright 60%
 @music talk_antagonist
 @opening ch01_pacing
 > Night. The old lord's study. Two sealed letters on the desk, written before the news. The news, an hour old: {n:red_captain.nickname} dead in the toll-fort, the exile walking north with five others.

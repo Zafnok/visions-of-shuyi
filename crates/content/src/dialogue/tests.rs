@@ -884,6 +884,11 @@ fn arb_side() -> impl Strategy<Value = Side> {
     prop_oneof![Just(Side::Left), Just(Side::Right)]
 }
 
+/// No brightness, or one from 1% to 100%.
+fn arb_bright() -> impl Strategy<Value = Option<Bright>> {
+    proptest::option::of(1u8..=100).prop_map(|n| n.and_then(Bright::new))
+}
+
 /// Any step but a choice.
 fn arb_simple_step() -> impl Strategy<Value = Step> {
     prop_oneof![
@@ -913,19 +918,24 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
             .prop_filter("reserved", |s| s != MusicLine::STOP)
             .prop_map(|cue| Step::Music(MusicLine::Cue(cue))),
         Just(Step::Music(MusicLine::Stop)),
-        // A map named "battle" or "none" would print as those.
-        (arb_id(), 0..100, 0..100)
+        // A map named "battle", "none" or "bright" would print as those.
+        (arb_id(), 0..100, 0..100, arb_bright())
             .prop_filter("reserved", |(m, ..)| m != PlaceLine::BATTLE
-                && m != PlaceLine::NONE)
+                && m != PlaceLine::NONE
+                && m != Bright::WORD)
             .prop_map(
-                |(map, x, y)| Step::Directive(Stage::Setting(PlaceLine::Map {
+                |(map, x, y, bright)| Step::Directive(Stage::Setting(PlaceLine::Map {
                     map,
-                    at: Pos::new(x, y)
+                    at: Pos::new(x, y),
+                    bright,
                 }))
             ),
-        (0..100, 0..100).prop_map(|(x, y)| Step::Directive(Stage::Setting(PlaceLine::Battle {
-            at: Pos::new(x, y)
-        }))),
+        (0..100, 0..100, arb_bright()).prop_map(|(x, y, bright)| Step::Directive(Stage::Setting(
+            PlaceLine::Battle {
+                at: Pos::new(x, y),
+                bright,
+            }
+        ))),
         Just(Step::Directive(Stage::Setting(PlaceLine::None))),
         arb_id().prop_map(|id| Step::Directive(Stage::Opening(id))),
     ]

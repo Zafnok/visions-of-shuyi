@@ -32,7 +32,8 @@ pub struct Look {
 
 /// How `unit` looks in `inks`. Allies and neutral units (none in Chapter 1)
 /// are their letters alone on the terrain until a chapter that has them
-/// decides (`docs/design/playdate.md`, *Open sub-questions*).
+/// decides (`docs/design/playdate.md`, *Open sub-questions*), and so is
+/// someone on no side, on a conversation's place (0738).
 pub fn look(unit: &UnitView, inks: &Inks) -> Look {
     if unit.acted || unit.is_down() {
         let (tile, letters, outline) = inks.acted;
@@ -48,9 +49,9 @@ pub fn look(unit: &UnitView, inks: &Inks) -> Look {
         outline: None,
     };
     match unit.faction {
-        Faction::Player => solid(inks.player),
-        Faction::Enemy => solid(inks.enemy),
-        Faction::Ally | Faction::Neutral => Look {
+        Faction::Player if unit.sided => solid(inks.player),
+        Faction::Enemy if unit.sided => solid(inks.enemy),
+        _ => Look {
             tile: None,
             letters: inks.other,
             outline: None,
@@ -102,7 +103,7 @@ pub fn draw_unit(
             add(side, outline, Layer::Under);
         }
     }
-    if unit.marks {
+    if unit.sided {
         for (rect, color) in hp_line(unit, &look, tile, palette, inks) {
             add(rect, color, Layer::Over);
         }

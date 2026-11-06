@@ -82,7 +82,7 @@ fn brigand(pos: Pos) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
-        marks: true,
+        sided: true,
     }
 }
 
@@ -109,6 +109,31 @@ fn a_units_facing_frame_and_offset_change_nothing() {
             assert_eq!(paint(&walking), still, "{facing:?} {frame}");
         }
     }
+}
+
+/// Someone on a conversation's place, on no side (0738), has their label
+/// in the text's colour, not a side's, and no HP bar.
+#[test]
+fn a_unit_on_no_side_is_labelled_in_the_text_colour() {
+    let c = ctx();
+    let paint = |unit: UnitView| {
+        let mut scene = MapScene::new(Pos::new(0, 0), (3, 2));
+        scene.push_unit(unit);
+        let mut buf = blank();
+        MapSkin::glyph().paint(&c, &scene, Rect::new(2, 1, 6, 4), &mut buf);
+        buf
+    };
+    // Tile (1, 1): cells (4, 2) and (5, 2). Hurt: both parts of the bar.
+    let hurt = UnitView {
+        hp: (20, 30),
+        ..brigand(Pos::new(1, 1))
+    };
+    let sided = paint(hurt.clone());
+    let label = |buf: &GlyphBuffer| buf.get(4, 2).map(|cell| (cell.glyph, cell.fg));
+    assert_eq!(label(&sided), Some(('B', c.palette.get(UiColor::Enemy))));
+    let none = paint(hurt.on_no_side());
+    assert_eq!(label(&none), Some(('B', c.palette.get(UiColor::Text))));
+    assert_eq!(none.overlays().len() + 2, sided.overlays().len());
 }
 
 /// The threat arrows and marks are the last things painted, over the

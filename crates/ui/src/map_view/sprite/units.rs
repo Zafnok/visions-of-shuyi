@@ -330,7 +330,8 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
 /// Paints the outline and the picture of every unit of `scene` on a tile
 /// of `grid`, the top row first (by the row its feet are in; in a row, a
 /// unit between two tiles after those standing): each in its side's colour
-/// (dimmed, with the picture, once it has acted), turned and stepping as
+/// (dimmed, with the picture, once it has acted), none for a unit on no
+/// side ([`sided`](UnitView::sided), 0738), turned and stepping as
 /// the scene says, moved by its offset, nothing outside the grid, and
 /// nothing over a unit standing above it ([`place`]). A unit a blow just
 /// landed on has its shape in the text colour over its picture
@@ -376,8 +377,10 @@ pub fn paint_pictures(
                 }
             }
         };
-        for outline in outline_dests(art) {
-            add(zoomed(outline), Paint::Solid(color), outline_opacity(unit));
+        if unit.sided {
+            for outline in outline_dests(art) {
+                add(zoomed(outline), Paint::Solid(color), outline_opacity(unit));
+            }
         }
         add(dest, paint, unit_opacity(unit));
         // A blow just landed: its shape in the text colour over it.
@@ -398,7 +401,7 @@ pub fn paint_marks(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuff
         };
         let tile = place.tile;
         let zoomed = |art: PxRect| grid.zoomed((tile.x, tile.y), art);
-        if fade(unit) >= 0.5 || !unit.marks {
+        if fade(unit) >= 0.5 || !unit.sided {
             continue;
         }
         // An empty part (full or zero HP) is dropped by `add_overlay`; a
@@ -1233,6 +1236,28 @@ mod tests {
             }
         }
         assert_ne!(blue.dimmed(), blue);
+    }
+
+    /// Someone on a conversation's place (0738: "I want them with no
+    /// outline"): the picture alone, of any side, and no HP bar.
+    #[test]
+    fn a_unit_on_no_side_has_no_outline() {
+        let c = ctx();
+        for faction in [Faction::Player, Faction::Neutral] {
+            let mut scene = plains(&c);
+            let mut u = brigand(p(1, 1));
+            u.faction = faction;
+            u.hp = (20, 30);
+            scene.push_unit(u.on_no_side());
+            let items = items(&c, &scene);
+            let drawn = sprites(&items);
+            assert_eq!(drawn.len(), 1, "{faction:?}");
+            assert_eq!(
+                (drawn[0].dest, drawn[0].paint),
+                (Rect::new(40, 46, 24, 24), Paint::Image)
+            );
+            assert_eq!(rects(&items), []);
+        }
     }
 
     #[test]
