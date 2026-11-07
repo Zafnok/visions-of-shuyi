@@ -15,9 +15,11 @@
 //! Tests of what happened read the view; only [`glyph`]'s tests read cells.
 //!
 //! **The intro cinematic** (ticket 0819; `docs/design/title-screen.md`,
-//! *Intro cinematic*): left alone, the menu fades out and the cinematic
-//! [`TITLE_CINEMATIC`] plays in time with the title song ([`song`]); a
-//! press skips to its last shot, the logo, where the menu is back.
+//! *Intro cinematic*): left alone, the menu and the title's picture go to
+//! black and the cinematic [`TITLE_CINEMATIC`] fades in from it, in time
+//! with the title song ([`song`]; ticket 0843), playing its fights' sounds
+//! over it; a press skips to its last shot, the logo, where the menu is
+//! back.
 
 pub mod glyph;
 pub mod playdate;
@@ -95,8 +97,13 @@ const NOTE_FACE: &str = "neutral";
 /// (Nick's number; *tunable*).
 pub const IDLE_SECS: f32 = 15.0;
 
-/// Seconds the menu takes to fade out (*tunable*).
-pub const FADE_OUT_SECS: f32 = 1.0;
+/// Seconds the menu and the title's picture take to go to black before
+/// the cinematic (ticket 0843; *the agent's starting rule*).
+pub const TO_BLACK_SECS: f32 = 0.2;
+
+/// Seconds the cinematic takes to fade in from that black (ticket 0843;
+/// *tunable*).
+pub const FROM_BLACK_SECS: f32 = 0.5;
 
 /// Seconds the menu takes to fade in on the cinematic's logo (*tunable*).
 pub const FADE_IN_SECS: f32 = 0.5;
@@ -116,8 +123,14 @@ enum Phase {
         /// fully.
         shown: f32,
     },
-    /// The menu fading out over the cinematic; `f` goes from 0 to 1.
-    FadingOut {
+    /// The menu and the title's picture going to black; `f` goes from 0
+    /// to 1.
+    ToBlack {
+        /// How far the fade is.
+        f: f32,
+    },
+    /// The cinematic alone, coming in from black; `f` goes from 0 to 1.
+    FromBlack {
         /// How far the fade is.
         f: f32,
     },
@@ -376,15 +389,17 @@ impl TitleScreen {
             })
         };
         // While the prompt waits the phase is the menu's, fully shown.
-        let (cinematic, menu_opacity) = match self.phase {
-            Phase::Menu { shown, .. } => (None, of_full(shown)),
-            Phase::FadingOut { f } => (cinematic(of_full(f)), FULL - of_full(f)),
-            Phase::Cinematic => (cinematic(FULL), 0),
+        let (cinematic, picture, menu_opacity) = match self.phase {
+            Phase::Menu { shown, .. } => (None, FULL, of_full(shown)),
+            Phase::ToBlack { f } => (None, FULL - of_full(f), FULL - of_full(f)),
+            Phase::FromBlack { f } => (cinematic(of_full(f)), 0, 0),
+            Phase::Cinematic => (cinematic(FULL), 0, 0),
         };
         // The cinematic alone: no menu, notice or help line.
-        let menu = !waiting && self.phase != Phase::Cinematic;
+        let menu = !waiting && matches!(self.phase, Phase::Menu { .. } | Phase::ToBlack { .. });
         TitleView {
             cinematic,
+            picture,
             menu_opacity,
             backdrop: self.backdrop,
             sparks: (ctx.idle_motion == IdleMotion::On).then_some(sparks_ms),
@@ -478,6 +493,7 @@ impl TitleScreen {
         #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
         let secs = |ms: u32| ms as f32 / 1000.0;
         let length = secs(timeline.length_ms());
+        let before = self.song.t();
         if self.song.advance(Self::song_position(ctx), dt, length) {
             // The silence after a skip is over: the song again, from 0.
             ctx.audio.play_music(TITLE_MUSIC);
@@ -496,7 +512,21 @@ impl TitleScreen {
                 };
                 return false;
             }
+            Phase::FromBlack { .. } if pressed => {
+                // The press brings the menu back, and does nothing else.
+                self.phase = Phase::MENU;
+                return false;
+            }
+            Phase::FromBlack { f } => {
+                *f += share(dt, FROM_BLACK_SECS);
+                if *f >= 1.0 {
+                    self.phase = Phase::Cinematic;
+                }
+                Self::play_sounds(ctx, &player, before, self.song.t());
+                return false;
+            }
             Phase::Cinematic => {
+                Self::play_sounds(ctx, &player, before, self.song.t());
                 if on_logo {
                     // The sparks go on from where the cinematic's were.
                     self.time = self.song.t();
@@ -509,10 +539,10 @@ impl TitleScreen {
                 return false;
             }
             _ if pressed => self.phase = Phase::MENU,
-            Phase::FadingOut { f } => {
-                *f += share(dt, FADE_OUT_SECS);
+            Phase::ToBlack { f } => {
+                *f += share(dt, TO_BLACK_SECS);
                 if *f >= 1.0 {
-                    self.phase = Phase::Cinematic;
+                    self.phase = Phase::FromBlack { f: 0.0 };
                 }
             }
             Phase::Menu {
@@ -525,11 +555,19 @@ impl TitleScreen {
                 // The logo shot always has the menu on it. With the intro
                 // off (Options, ticket 0844) the menu stays whatever the time.
                 if ctx.settings().game.intro && (*with_logo || *idle >= IDLE_SECS) && !on_logo {
-                    self.phase = Phase::FadingOut { f: 0.0 };
+                    self.phase = Phase::ToBlack { f: 0.0 };
                 }
             }
         }
         true
+    }
+
+    /// Plays the sounds of the cinematic's fights between `from` and `to`
+    /// seconds into it (ticket 0843), at the effects' volume as a battle's.
+    fn play_sounds(ctx: &mut Ctx, player: &CinematicPlayer, from: f32, to: f32) {
+        for cue in player.sounds(from, to) {
+            ctx.audio.play_sound(cue);
+        }
     }
 
     /// The bottom help line: the cursor keys `move`, the Confirm key

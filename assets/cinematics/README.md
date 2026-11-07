@@ -28,7 +28,7 @@ combat shot alone.
         (at: 0.0, shot: MapPan(battle: "ch01", from: (4, 9), to: (12, 3.5), zoom: 2)),
         (at: 15.0, shot: Talk(scene: "ch01_intro", first: 0, count: 3)),
         (at: 31.0, shot: Characters(who: ["lead", "retainer"], expression: "neutral")),
-        (at: 117.0, shot: Logo),
+        (at: 115.8, shot: Logo),
     ],
 )
 ```
@@ -232,8 +232,12 @@ the game's own rules, so the numbers, hits, misses and HP are the game's.
   fall). A
   shot longer than its fight holds its last moment; a shorter one is cut
   off at the next shot, like any shot.
-- No sound: a cinematic plays its music alone. The scenes an attack may
-  set off in a battle (a boss's lines, a death quote) are not shown.
+- Its sounds are the battle's: the hit, miss, block and critical sounds
+  the combat scene plays for the same attack, at the same moments, over
+  the music, at the effects' volume (ticket 0843; the screen playing the
+  cinematic asks `CinematicPlayer::sounds` for each frame's). The scenes
+  an attack may set off in a battle (a boss's lines, a death quote) are
+  not shown.
 - The lead's name and picture are the cinematic's lead (below).
 
 ### The lead in `Talk`, `Characters` and `Combat`

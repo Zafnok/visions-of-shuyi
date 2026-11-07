@@ -1,5 +1,6 @@
 ---
 source: crates/ui/tests/it/title_cinematic.rs
+assertion_line: 607
 expression: faces
 ---
                                                                                                     
@@ -8,25 +9,25 @@ expression: faces
                                                                                                     
                                                                                                     
                                                                                                     
-                ╔════════════════════════════════╗                ╔════════════════════════════════╗
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ║                                ║                ║                                ║
-                ╚════════════════════════════════╝                ╚════════════════════════════════╝
-                              Tamsin                                             Aske               
+╔════════════════════════════════╗                ╔════════════════════════════════╗                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+║                                ║                ║                                ║                
+╚════════════════════════════════╝                ╚════════════════════════════════╝                
+              Tamsin                                             Aske                               
                                                                                                     
                                                                                                     
                                                                                                     
@@ -41,25 +42,25 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccc
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaa
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaa
+ccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
