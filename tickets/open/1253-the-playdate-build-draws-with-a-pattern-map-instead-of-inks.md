@@ -1,5 +1,5 @@
 ---
-id: "1251"
+id: "1253"
 title: The Playdate build draws with a pattern map instead of inks
 type: infra
 milestone: "Engine: carve"
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1251 — The Playdate build draws with a pattern map instead of inks
+# 1253 — The Playdate build draws with a pattern map instead of inks
 
 ## Context
 

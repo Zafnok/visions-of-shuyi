@@ -445,7 +445,7 @@ device), with its bounded adoption/cleanup tickets **1203–1206**, and
 the boundary audit's tickets (2026-11-03) **1211**–**1229** (each
 after its engine ticket) and **1230**–**1240** (the game's own
 cleanup);
-**1251** the Playdate build on a pattern map instead of inks (after
+**1253** the Playdate build on a pattern map instead of inks (after
 engine#2388; engine 2389 removes the inks after it);
 **0141** native/browser capture checks, **0142** cross-target game replay
 goldens, and **1202** world-map scene data for the existing CLI/MCP hook;
