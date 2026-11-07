@@ -89,7 +89,7 @@ Expected size: about 60 production lines, judged by the dialogue screen's skip.
 - **Engine layout fix:** the new row made the in-battle Options (with
   Game mode and Tutorial) reach the help line, so its message row (e.g.
   "The game mode can be changed at Preparations…") was painted over.
-  Zafnok/shuyi-engine#294 lets the engine's options panel rise into the
+  Engine ticket 3210 (Zafnok/shuyi-engine#294) lets the engine's options panel rise into the
   blank rows above it; this PR moves the pin past it (the snapshots show
   the panel one or two rows higher in battle).
 - Friction: estimate 60, measured 84 (1.4×); signal: the workaround above,
