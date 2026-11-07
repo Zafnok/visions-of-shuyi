@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/tests.rs
-assertion_line: 568
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..↑...♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣┌────────────────────────────┐

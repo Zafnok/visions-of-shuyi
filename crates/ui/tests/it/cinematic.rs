@@ -22,8 +22,8 @@ use trpg_ui::save;
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 
 /// The title with the test cinematic opened from the debug menu (its last
-/// tool but two: the scene camera, the map skin and the engine's "Debug
-/// view" come after it).
+/// tool but three: the scene camera, the map skin and the engine's debug
+/// view come after it).
 fn opened() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up Up Up f");

@@ -8,8 +8,10 @@
 //! gets, so the UI never decides what is legal itself (ADR-0004).
 
 use crate::prelude::*;
+use trpg_core::legal::attack_reach;
 use trpg_core::{
-    AttackPreview, BattleState, Equipped, Pos, SpellDef, SpellId, UnitAction, UnitId, WEAPON_SLOTS,
+    AttackPreview, BattleState, CommandError, Equipped, PlannedMove, Pos, SpellDef, SpellId, Unit,
+    UnitAction, UnitId, WEAPON_SLOTS,
 };
 
 use super::art_list::{ArtLine, Technique};
@@ -24,6 +26,70 @@ pub fn attack(target: UnitId, slot: usize) -> UnitAction {
     Technique::Attack.action(target, &Equipped::Weapon(slot))
 }
 
+/// The attacks of `unit` moved to `dest`, checked by the core with its move
+/// planned once (1247): a menu checks many weapons, arts and targets from
+/// one tile, and each [`BattleState::preview_attack`] would search the
+/// move's path again.
+pub struct AttackFrom<'a> {
+    /// The battle.
+    pub state: &'a BattleState,
+    /// The attacker.
+    pub unit: UnitId,
+    /// Where it attacks from.
+    pub dest: Pos,
+    /// Its move there, or why the core refuses it.
+    planned: Result<PlannedMove, CommandError>,
+    /// How far any of its attacks reaches ([`attack_reach`]).
+    reach: u32,
+}
+
+impl<'a> AttackFrom<'a> {
+    /// The attacks of `unit` from `dest`.
+    pub fn new(state: &'a BattleState, unit: UnitId, dest: Pos) -> Self {
+        let reach = state.unit(unit).map_or(0, |u| attack_reach(state, u));
+        Self {
+            state,
+            unit,
+            dest,
+            planned: state.plan_move(unit, dest),
+            reach,
+        }
+    }
+
+    /// [`BattleState::preview_attack`] of `action` from there.
+    pub fn preview(&self, action: &UnitAction) -> Result<AttackPreview, CommandError> {
+        let planned = self.planned.as_ref().map_err(Clone::clone)?;
+        self.state.preview_attack_after(planned, action)
+    }
+
+    /// [`BattleState::check`] of the `Act` doing `action` there.
+    pub fn check(&self, action: &UnitAction) -> Result<(), CommandError> {
+        let planned = self.planned.as_ref().map_err(Clone::clone)?;
+        self.state.check_after(planned, action)
+    }
+
+    /// The units near enough for an attack from there to reach (`true`),
+    /// or not (`false`), in the battle's order.
+    pub fn units(&self, near: bool) -> impl Iterator<Item = &'a Unit> {
+        let (dest, reach) = (self.dest, self.reach);
+        let units = self.state.units().iter();
+        units.filter(move |u| (Pos::manhattan(dest, u.pos) <= reach) == near)
+    }
+
+    /// The units it could attack with `with` (a weapon's slot or an attack
+    /// spell) using `technique`, ordered by `(y, x)` of their tiles.
+    pub fn targets(&self, with: &Equipped, technique: &Technique) -> Vec<UnitId> {
+        let hit = |target| self.preview(&technique.action(target, with)).is_ok();
+        let mut found: Vec<(Pos, UnitId)> = self
+            .units(true)
+            .filter(|u| hit(u.id))
+            .map(|u| (u.pos, u.id))
+            .collect();
+        found.sort_by_key(|(p, _)| (p.y, p.x));
+        found.into_iter().map(|(_, id)| id).collect()
+    }
+}
+
 /// The units `unit` could attack from `dest` with `with` (a weapon's slot or
 /// an attack spell) using `technique`, ordered by `(y, x)` of their tiles.
 pub fn reach(
@@ -33,18 +99,7 @@ pub fn reach(
     with: &Equipped,
     technique: &Technique,
 ) -> Vec<UnitId> {
-    let hit = |target| {
-        let action = technique.action(target, with);
-        state.preview_attack(unit, dest, &action).is_ok()
-    };
-    let mut found: Vec<(Pos, UnitId)> = state
-        .units()
-        .iter()
-        .filter(|u| hit(u.id))
-        .map(|u| (u.pos, u.id))
-        .collect();
-    found.sort_by_key(|(p, _)| (p.y, p.x));
-    found.into_iter().map(|(_, id)| id).collect()
+    AttackFrom::new(state, unit, dest).targets(with, technique)
 }
 
 /// The units `unit` could attack plainly from `dest` with the weapon in
@@ -82,10 +137,11 @@ pub fn aimed_options(
     from: Pos,
     target: UnitId,
 ) -> Vec<Equipped> {
+    let attacks = AttackFrom::new(state, unit, from);
     let mut all = arsenal(state, unit);
     all.retain(|with| {
         let action = Technique::Attack.action(target, with);
-        state.preview_attack(unit, from, &action).is_ok()
+        attacks.preview(&action).is_ok()
     });
     all
 }
@@ -150,9 +206,14 @@ pub struct WeaponChoice {
 /// The weapons of `sel`'s unit that can attack someone from its path's
 /// end, in slot order.
 pub fn weapon_choices(state: &BattleState, sel: &Selection) -> Vec<WeaponChoice> {
+    weapons_from(&AttackFrom::new(state, sel.unit, sel.dest()))
+}
+
+/// [`weapon_choices`] for the attacks of a unit from a tile.
+pub fn weapons_from(attacks: &AttackFrom<'_>) -> Vec<WeaponChoice> {
     (0..WEAPON_SLOTS)
         .filter_map(|slot| {
-            let targets = targets(state, sel.unit, sel.dest(), slot);
+            let targets = attacks.targets(&Equipped::Weapon(slot), &Technique::Attack);
             (!targets.is_empty()).then_some(WeaponChoice { slot, targets })
         })
         .collect()

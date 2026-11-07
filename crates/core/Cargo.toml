@@ -13,11 +13,16 @@ workspace = true
 [features]
 default = ["std"]
 std = ["serde/std", "shuyi-core/std"]
+# `movement::searches`, the path searches a thread has run: for tests
+# that count them (1247). Never on in a build that ships.
+search-count = ["std"]
 
 [dependencies]
 serde.workspace = true
 shuyi-core.workspace = true
 
 [dev-dependencies]
+# Its own `search-count`, for the test of the counter (1247).
+trpg-core = { path = ".", features = ["search-count"] }
 proptest.workspace = true
 ron = { workspace = true, features = ["std"] }

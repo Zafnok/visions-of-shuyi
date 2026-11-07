@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/world_map.rs
-assertion_line: 134
 expression: h.snapshot()
 ---
 ≈   ≈  ,.  ,             ..  .  ,  ..  .     ^ ^  ▲^ ^^▲ ^  ▲^   ▲  ^^╔════════ Millbrook ═════════╗

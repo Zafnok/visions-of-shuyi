@@ -991,3 +991,38 @@ fn a_deflected_strike_and_an_overwatch_shot_show_in_the_playback() {
         Some("Overwatch")
     );
 }
+
+/// Opening the unit menu searches the moving unit's paths once (1247):
+/// the rider of `cargo shuyi bench`'s `battle-attack` (Tamsin, in *The
+/// Company Ledger*) walks onto the bridge beside the swordsman, and every
+/// art, weapon and target of the menu is checked against that one move,
+/// not against a fresh search each.
+#[test]
+fn opening_the_unit_menu_searches_the_move_once() {
+    use Action::{Confirm, CursorDown, CursorRight, CursorUp};
+    use trpg_core::movement::searches;
+    use trpg_core::{GameMode, LeadGender, LeadProfile};
+    let mut c = ctx();
+    let content = &c.game.content;
+    let def = &content.battles["side_company_ledger"];
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
+    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    let mut s = BattleScreen::new(state);
+    for action in [CursorRight, CursorRight, CursorDown, Confirm] {
+        step(&mut s, &mut c, &[action]);
+    }
+    for action in [CursorRight, CursorRight, CursorUp, CursorUp, CursorUp] {
+        step(&mut s, &mut c, &[action]);
+    }
+    step(&mut s, &mut c, &[Confirm]);
+    let before = searches();
+    for _ in 0..30 {
+        wait(&mut s, &mut c, 1.0 / 60.0);
+    }
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
+        panic!("no unit menu: {:?}", s.mode());
+    };
+    assert!(menu.values().contains(&MenuEntry::Arts));
+    assert_eq!(searches() - before, 1);
+}

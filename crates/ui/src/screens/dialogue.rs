@@ -18,6 +18,8 @@
 //!
 //! Each text box says its line's voice clip (ticket 0720, ADR-0046) as it
 //! comes up, and tells `app` which lines can come next so it loads them.
+//! With *Auto-advance* on (ticket 0859), a page moves on by itself once
+//! its voice clip, or its reading time, is over.
 
 pub mod glyph;
 pub mod history;
@@ -36,7 +38,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
 use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::settings::LogVoice;
+use crate::settings::{AutoAdvance, LogVoice};
 use crate::widgets::Ask;
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
@@ -58,6 +60,21 @@ pub use shuyi_ui::dialogue::text_box::{FAST_FORWARD, FAST_FORWARD_DELAY};
 /// How many lines past the one on screen `app` is told are coming: the
 /// clips it keeps loaded ahead (ADR-0046).
 const VOICES_AHEAD: usize = 3;
+
+/// Auto-advance (ticket 0859): seconds a voiced line's last page waits
+/// after its clip ends. *Tunable.*
+const AUTO_PAUSE_S: f32 = 0.5;
+/// Auto-advance: seconds any revealed page waits before reading time
+/// ([`READ_PER_CHAR_S`]). *Tunable.*
+const READ_BASE_S: f32 = 1.0;
+/// Auto-advance: reading time per character on a page with no voice left
+/// to say. *Tunable.*
+const READ_PER_CHAR_S: f32 = 0.05;
+/// Auto-advance: how long a clip is taken to say a character, until the
+/// platform reports when a clip ends. Slower than the clips speak, so a
+/// line is never cut short.
+// engine-friction: engine#2255
+const SPEECH_PER_CHAR_S: f32 = 0.08;
 
 /// Whether a line of `kind` has a voice. `docs/design/voices-languages-and-script.md`,
 /// *Voices*: "Every speech line in a story scene has a voice, the lead's
@@ -187,6 +204,12 @@ pub struct DialogueScreen {
     voice_due: bool,
     /// Whether a voice was asked for and not stopped since.
     speaking: bool,
+    /// Seconds the page has been fully revealed with nothing else open,
+    /// for auto-advance.
+    waited_s: f32,
+    /// Seconds left of the text box's voice clip (negative once it has
+    /// ended), for auto-advance; `None` for a silent box.
+    voice_left_s: Option<f32>,
 }
 
 impl DialogueScreen {
@@ -215,6 +238,8 @@ impl DialogueScreen {
             playing: None,
             voice_due: false,
             speaking: false,
+            waited_s: 0.0,
+            voice_left_s: None,
         };
         screen.start_box();
         screen
@@ -369,6 +394,8 @@ impl DialogueScreen {
     /// page), under the replies menu. Its voice is due.
     fn show_box(&mut self) {
         self.voice_due = true;
+        self.waited_s = 0.0;
+        self.voice_left_s = None;
         let view = self.player.current();
         let text = TextBox::new(
             view.text.as_deref().unwrap_or(""),
@@ -391,6 +418,7 @@ impl DialogueScreen {
     /// Confirm: reveals the page, else the next page, else the next box.
     /// Returns `true` once the scene is over.
     fn confirm(&mut self) -> bool {
+        self.waited_s = 0.0;
         if self.text.confirm() == Step::Done {
             self.player.advance();
             self.start_box();
@@ -479,6 +507,9 @@ impl DialogueScreen {
         let in_box = !self.player.is_choosing() && is_voiced(kind);
         if let Some(line) = self.player.line().filter(|_| in_box).cloned() {
             self.speak(ctx, &line);
+            if self.speaking {
+                self.voice_left_s = Some(self.speech_s());
+            }
         }
         ctx.preload_voices(&coming_lines(&self.player));
     }
@@ -601,7 +632,42 @@ impl DialogueScreen {
             let speed = ctx.settings().text_speed.chars_per_s();
             self.text.type_on(input.dt(), speed);
         }
+        if self.auto_advance(ctx, input) && self.confirm() {
+            return Transition::Pop;
+        }
         Transition::None
+    }
+
+    /// Auto-advance (ticket 0859): whether the page on screen moves on by
+    /// itself this frame, as Confirm would. Only with the setting on, the
+    /// page revealed, no key pressed and no choice or question open: a
+    /// voiced line's last page once its clip has ended and
+    /// [`AUTO_PAUSE_S`] passed, any other page after its reading time.
+    fn auto_advance(&mut self, ctx: &Ctx, input: &FrameInput) -> bool {
+        let dt = input.dt();
+        if let Some(left) = &mut self.voice_left_s {
+            *left -= dt;
+        }
+        let waits = self.menu.is_some() || self.is_asking_skip() || !self.is_revealed();
+        let on = ctx.settings().game.auto_advance == AutoAdvance::On;
+        if !on || waits || !input.actions.is_empty() {
+            self.waited_s = 0.0;
+            return false;
+        }
+        self.waited_s += dt;
+        let last_page = !self.text.clone().next_page();
+        match self.voice_left_s.filter(|_| last_page) {
+            Some(left) => left <= -AUTO_PAUSE_S,
+            None => self.waited_s >= READ_BASE_S + READ_PER_CHAR_S * chars(self.page_lines()),
+        }
+    }
+
+    /// How long the text box's clip is taken to last: [`SPEECH_PER_CHAR_S`]
+    /// a character of its line.
+    // engine-friction: engine#2255
+    fn speech_s(&self) -> f32 {
+        let text = self.player.current().text;
+        SPEECH_PER_CHAR_S * chars(&[text.unwrap_or_default()])
     }
 
     /// One frame of an opening: Confirm (or End turn) ends it, Cancel ends
@@ -824,6 +890,15 @@ impl DialogueScreen {
         wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]));
         wait
     }
+}
+
+/// How many characters `lines` hold, as seconds are counted.
+fn chars<S: AsRef<str>>(lines: &[S]) -> f32 {
+    let n: usize = lines.iter().map(|l| l.as_ref().chars().count()).sum();
+    // A text box holds a few hundred characters at most: exact.
+    #[expect(clippy::cast_precision_loss, reason = "at most a few hundred")]
+    let n = n as f32;
+    n
 }
 
 /// A character's or speaker's display name: the name the player gave the

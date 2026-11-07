@@ -48,8 +48,8 @@ fn record_quick_battle() -> SessionRecord {
     // closes the turn's banner.
     h.keys("Down f Left f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    // The debug menu, its last entry but one "Save session" (the engine's
-    // "Debug view" is last), and back.
+    // The debug menu, "Save session" (above the engine's debug view, its
+    // last entry), and back.
     h.keys("F2 Up Up f");
     assert!(h.app_mut().take_session_save());
     h.keys("Escape");

@@ -16,7 +16,7 @@ use trpg_core::{
 };
 
 use super::art_list::{Fit, Technique, cost_label, fit, reason_text};
-use super::attack::{Targeting, aim_tile, reach};
+use super::attack::{AttackFrom, Targeting, aim_tile};
 use super::info::range_text;
 use super::items::heal_preview;
 use super::mode::{Line, Selection};
@@ -104,6 +104,12 @@ pub fn cast_targets(
 /// in id order, with what each could be cast on from there; after an attack
 /// spell, a line for each of the unit's spell actives (`Fire + Overcast`).
 pub fn spell_choices(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<SpellChoice> {
+    spells_from(&AttackFrom::new(state, unit, dest))
+}
+
+/// [`spell_choices`] for the attacks of a unit from a tile.
+pub fn spells_from(attacks: &AttackFrom<'_>) -> Vec<SpellChoice> {
+    let (state, unit, dest) = (attacks.state, attacks.unit, attacks.dest);
     let Some(u) = state.unit(unit) else {
         return vec![];
     };
@@ -122,13 +128,13 @@ pub fn spell_choices(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<SpellC
         let with = Equipped::Spell(def.id.clone());
         for skill in &actives {
             let technique = Technique::Active(skill.id.clone());
-            let blocked = match fit(state, unit, dest, &with, &technique) {
+            let blocked = match fit(attacks, &with, &technique) {
                 // Not a spell active: no line.
                 Fit::No => continue,
                 Fit::Cost(error) => Some(error),
                 Fit::Hits | Fit::Far => None,
             };
-            let targets = reach(state, unit, dest, &with, &technique);
+            let targets = attacks.targets(&with, &technique);
             lines.push(SpellChoice {
                 spell: def.id.clone(),
                 active: Some(skill.id.clone()),

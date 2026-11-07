@@ -4,8 +4,7 @@
 //! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
 //! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
 //!
-//! `check`, the bot run `playtest` plays and `replay` (tickets 1193,
-//! 1240) are [`plays`]'s;
+//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s;
 //! `autobalance` (ticket 0509) is [`balance`]'s.
 //!
 //! The session (ticket 1181) is the game started as `frame-png` starts it,
@@ -297,10 +296,15 @@ impl GameTools for Trpg {
         plays::replay(record)
     }
 
-    /// The bot run (1240): the baseline bot on battle `stage`, the
-    /// story's first if `None`. The options are about the look, which the
-    /// bots never see (ADR-0038 §5): checked, and the same battle played
-    /// whatever they say.
+    /// The battles, by id: what `autobalance --stage` takes.
+    fn playtest_stages(&self) -> Vec<String> {
+        balance::stages()
+    }
+
+    /// The bot run ([`plays::plan`]) on `stage`, else the story's first
+    /// battle; no checks, since a battle's are the game's own `cargo xtask
+    /// playtest`. The options are about the look, which the bots never see
+    /// (ADR-0038 §5): checked, and the same battle played whatever they say.
     fn playtest_plan(
         &self,
         stage: Option<&str>,
@@ -308,11 +312,6 @@ impl GameTools for Trpg {
     ) -> Result<PlaytestPlan, String> {
         Start::of(&input.start)?;
         plays::plan(stage)
-    }
-
-    /// The battles, by id: what `autobalance --stage` takes.
-    fn playtest_stages(&self) -> Vec<String> {
-        balance::stages()
     }
 
     /// 0506's playtest: 100 tries from seed 1, each stopped at turn 60.

@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/magic_tests.rs
-assertion_line: 437
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔════════════════════════════╗

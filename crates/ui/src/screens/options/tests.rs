@@ -252,6 +252,10 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Voices, s.voices != before.voices),
             (Row::VoiceVolume, s.voice_volume != before.voice_volume),
             (Row::LogVoice, s.game.log_voice != before.game.log_voice),
+            (
+                Row::AutoAdvance,
+                s.game.auto_advance != before.game.auto_advance,
+            ),
         ];
         let rows: Vec<Row> = changed.iter().filter(|c| c.1).map(|c| c.0).collect();
         assert_eq!(rows, [row]);
@@ -294,6 +298,7 @@ fn rows_show_their_values() {
             "On*",
             "<80/100>",
             "On*",
+            "Off*",
             "Right-handed",
             "",
             "",

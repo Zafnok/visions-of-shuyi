@@ -8,8 +8,7 @@ use trpg_ui::input::PadKind;
 use trpg_ui::input::RIGHT_HANDED;
 
 /// The title with the scene camera opened from the debug menu (its last
-/// tool but one: the map skin and the engine's "Debug view" come after
-/// it).
+/// tool but two: the map skin and the engine's debug view come after it).
 fn opened() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up Up f");
