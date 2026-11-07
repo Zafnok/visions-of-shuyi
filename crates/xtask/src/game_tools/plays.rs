@@ -1,7 +1,8 @@
 //! The game's content check, bots and replay for Shuyi's tools (ticket
 //! 1193): `check` is every validator of `trpg-content`; `bots` plays the
 //! story's first battle with the baseline bot (`trpg-bots`), each play
-//! written as a [`PlayRecord`]; `replay` re-runs one by the rules.
+//! written as a [`PlayRecord`]; `replay` re-runs one by the rules, or the
+//! battle record a crash report holds (ticket 1245, [`BattleRecord`]).
 
 use serde::{Deserialize, Serialize};
 use shuyi_assets::ContentError;
@@ -13,6 +14,7 @@ use shuyi_core::bots::playtest::Entrant as _;
 use trpg_bots::{BattleEntrant, BattleStage, Player};
 use trpg_content::Content;
 use trpg_core::{BattleState, Command, GameMode};
+use trpg_ui::crash::{self, BattleRecord};
 
 /// The [`PlayRecord`] format's version.
 const VERSION: u32 = 1;
@@ -81,8 +83,12 @@ pub fn bots(input: &BotsInput) -> Result<BotsOutput, String> {
     Ok(tally(plays.collect::<Result<_, String>>()?))
 }
 
-/// `record`, a [`PlayRecord`], re-run by the rules from its battle and seed.
+/// `record`, a [`PlayRecord`], re-run by the rules from its battle and
+/// seed; or a crash report's [`BattleRecord`], from its first state.
 pub fn replay(record: &Record) -> Result<ReplayRun, String> {
+    if let Ok(crashed) = ron::from_str::<BattleRecord>(&record.text) {
+        return replay_crash(&record.file, crashed);
+    }
     let played: PlayRecord =
         ron::from_str(&record.text).map_err(|e| format!("{}: {e}", record.file))?;
     if played.version != VERSION {
@@ -95,6 +101,20 @@ pub fn replay(record: &Record) -> Result<ReplayRun, String> {
     let mut setup = stage(&content, &played.battle)?.setup(played.mode).clone();
     setup.seed = played.seed;
     turns(&record.file, BattleState::new(setup).0, &played.commands)
+}
+
+/// A crash report's battle record re-run from its first state, to the
+/// command the rules were applying when it crashed.
+fn replay_crash(file: &str, mut crashed: BattleRecord) -> Result<ReplayRun, String> {
+    if crashed.version != crash::VERSION {
+        return Err(format!(
+            "{file}: a crash record of version {}, this game reads {}",
+            crashed.version,
+            crash::VERSION
+        ));
+    }
+    crashed.history.restore_tables(&content()?.tables());
+    turns(file, crashed.history.state_at(0), &crashed.commands())
 }
 
 /// The game's content, loaded and checked.

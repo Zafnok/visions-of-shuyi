@@ -14,6 +14,7 @@ mod ch04_winnable;
 mod cinematic;
 mod class_change;
 mod controller;
+mod crash_reports;
 mod credits;
 mod dialogue;
 mod dialogue_log;

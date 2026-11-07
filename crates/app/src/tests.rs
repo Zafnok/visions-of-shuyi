@@ -43,6 +43,12 @@ fn who_the_game_is() {
     assert_eq!(APP.version, env!("CARGO_PKG_VERSION"));
 }
 
+/// Acceptance (1245): a crash report names the game's version.
+#[test]
+fn crash_reports_name_the_games_version() {
+    assert_eq!(config().crash.game_version, APP.version);
+}
+
 /// Acceptance (1110): saves written before the engine's platform shell
 /// are found after it, in the same folder and under the same prefix.
 #[test]

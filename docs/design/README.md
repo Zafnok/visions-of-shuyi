@@ -37,6 +37,7 @@ here.
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
+| After a crash: what the next start shows | [`crash-reports.md`](crash-reports.md) | 1245 | ✅ decided 2026-11-06 (a short notice under the title's menu, once: "The game closed unexpectedly last time. A report was saved.") |
 | Pointing at a hurt ally to heal it | [`turn-structure.md`](turn-structure.md) (*Pointing at an ally*), [`magic.md`](magic.md) | 0451 | ✅ decided 2026-10-14 (closest tile any heal reaches, then a list of the heals) |
 | Threat arrows: which enemies can attack the tile you're moving to | [`turn-structure.md`](turn-structure.md) (*Threat arrows*), [`look-and-feel.md`](look-and-feel.md) (*Threat arrows*) | 0055 (built by 0448) | ✅ decided 2026-10-12 |
 | Arrows at the map's edges where the map goes on past the view | [`look-and-feel.md`](look-and-feel.md) (*Arrows at the map's edges*) | 0449 | ✅ decided 2026-10-21 (a big arrow fading slowly, only while browsing; cursor yellow in the glyph look) |

@@ -19,6 +19,9 @@
     "title.credits": "Credits",
     "title.quit": "Quit",
     "title.help": "{Cursor} move · {Confirm} select · {Cancel} back",
+    // Under the menu once, at the start after a crash (ticket 1245,
+    // `docs/design/crash-reports.md`).
+    "title.crashed": "The game closed unexpectedly last time. A report was saved.",
     // The guide's note beside the menu until the profile in use is
     // renamed, an option kept or a game saved (ticket 0842). `{name}` is
     // the profile's name. In the guide's voice
