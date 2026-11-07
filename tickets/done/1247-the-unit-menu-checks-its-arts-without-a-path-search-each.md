@@ -84,6 +84,9 @@ reasons.
       and snapshots pass unchanged).
 - [ ] `battle-attack`'s costliest frame is under 2,000,000 instructions on
       the colour targets (the `bench` job's table, in `docs/targets.md`).
+      **Not met:** 2,695,971, in frame 11, a cursor move while the rider
+      is selected (the threat arrows, 1251). The unit menu's frame is
+      under the scenario's p99 (2,257,062).
 - [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
@@ -117,6 +120,19 @@ reasons.
   The `art_list` tests and every snapshot pass unchanged.
 - **Deviation.** `menu_entries` takes the menu's `AttackFrom` and art
   lines. Its tests call `entries_at`, a test helper.
-- **Bench.** No Valgrind on this machine. CI's `bench` job measures it,
-  and its numbers are in `docs/targets.md`.
+- **Bench** (CI's `bench` job on PR #568, now in `docs/targets.md`):
+  `battle-attack`'s costliest frame went from 16,776,750 instructions
+  (frame 43, the menu) to 2,695,971 on the desktop, and from 16,984,920
+  to 3,406,850 on the Playdate. The menu's frame is no longer the
+  costliest; it is under the p99 of 2,257,062. The costliest is now
+  frame 11 (13 on the Playdate), a cursor move while the rider is
+  selected. Counting with the search counter showed 14 path searches on
+  each such move, from the threat arrows (`threats_at`, one per enemy).
+  That is outside this ticket, so the 2 million criterion isn't met
+  here. Follow-up **1251** (threat arrows without a path search per
+  enemy each cursor step) covers it; 1250 now waits for it too, and
+  1248 points to it.
+- **Mutation testing.** CI's first run missed `check_after` replaced by
+  `Ok(())` and the counter's mutants. `a_planned_move_answers_like_the_command`
+  (core) and the exact count of 1 in the UI test now catch them.
 - No gameplay rule decided; nothing for the Act 1 playtest.

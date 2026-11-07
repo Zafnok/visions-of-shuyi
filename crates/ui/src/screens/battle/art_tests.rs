@@ -1024,6 +1024,5 @@ fn opening_the_unit_menu_searches_the_move_once() {
         panic!("no unit menu: {:?}", s.mode());
     };
     assert!(menu.values().contains(&MenuEntry::Arts));
-    let searched = searches() - before;
-    assert!(searched <= 1, "{searched} searches");
+    assert_eq!(searches() - before, 1);
 }
