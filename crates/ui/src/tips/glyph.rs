@@ -1,7 +1,8 @@
 //! The glyph look of a tip box: paints a [`TipView`] as a double-line box
 //! near the top of the map view, the guide's name over its top border, the
 //! face (if any) on the left at twice the size of a 64×64 bust, and the
-//! text to its right. A lesson's box ([`LessonView`], 0456) is the same
+//! guide's lines to its right, then the tip's instructions (`how`, 0475)
+//! under a blank row, so what she says and what to press stay apart. A lesson's box ([`LessonView`], 0456) is the same
 //! box against the map's top or bottom edge, its checklist under the text:
 //! `[ ]` before an item to do, `[x]` in the done colour (`hp_high`) with
 //! the label dimmed before one done, then how many are done. Everything
@@ -107,9 +108,16 @@ fn left(w: i32) -> i32 {
     (MAP_VIEW.x + (MAP_VIEW.w - w) / 2).max(0)
 }
 
-/// The rows of `view`'s text: its lines, wrapped to fit beside the face.
+/// The rows of `view`'s text: its lines, wrapped to fit beside the face,
+/// then its instructions (if any) under a blank row, wrapped the same.
 fn tip_lines(view: &TipView) -> Vec<String> {
-    wrapped(&view.lines, text_room(view.face.as_ref()))
+    let room = text_room(view.face.as_ref());
+    let mut rows = wrapped(&view.lines, room);
+    if !view.how.is_empty() {
+        rows.push(String::new());
+        rows.extend(wrapped(&view.how, room));
+    }
+    rows
 }
 
 /// The rows of lesson `view`'s text and of each of its items, wrapped to
@@ -325,6 +333,7 @@ mod tests {
             }),
             heading: "Head".into(),
             lines: lines.iter().map(|&l| l.to_owned()).collect(),
+            how: Vec::new(),
             close: "x".into(),
         }
     }
