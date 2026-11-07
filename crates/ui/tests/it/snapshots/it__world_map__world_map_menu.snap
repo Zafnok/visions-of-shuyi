@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/world_map.rs
-assertion_line: 153
 expression: h.snapshot()
 ---
 ≈   ≈  ,.  ,             ..  .  ,  ..  .     ^ ^  ▲^ ^^▲ ^  ▲^   ▲  ^^╔════════ Crossroads ════════╗

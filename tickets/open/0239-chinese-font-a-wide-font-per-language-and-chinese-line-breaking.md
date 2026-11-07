@@ -64,8 +64,8 @@ that, say so in the completion notes, and keep the other steps.
 
 ## Implementation steps
 
-1. Move the pin to an engine `main` that has engine#2303 (`cargo xtask
-   engine-pin <commit>`, the `engine-change` skill §7).
+1. ~~Move the pin to an engine `main` that has engine#2303~~ (done by
+   the pin move of 2026-11-07).
 2. Add the font's BDF and licence text (`assets-src/fonts/`,
    `assets/fonts/<Name>-LICENSE.txt`), a row in `THIRD_PARTY_ASSETS.md`
    and a section in `assets/fonts/README.md`, as 0236 did for the

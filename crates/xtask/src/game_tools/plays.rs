@@ -1,15 +1,16 @@
 //! The game's content check, bots and replay for Shuyi's tools (ticket
-//! 1193): `check` is every validator of `trpg-content`; `bots` plays the
-//! story's first battle with the baseline bot (`trpg-bots`), each play
-//! written as a [`PlayRecord`]; `replay` re-runs one by the rules.
+//! 1193): `check` is every validator of `trpg-content`; `playtest` with no
+//! checks plays the story's first battle with the baseline bot
+//! (`trpg-bots`), each play written as a [`PlayRecord`]; `replay` re-runs
+//! one by the rules.
 
 use serde::{Deserialize, Serialize};
 use shuyi_assets::ContentError;
-use shuyi_cli::contract::bots::{BotsInput, BotsOutput, Play, UNFINISHED, tally};
+use shuyi_cli::PlaytestPlan;
 use shuyi_cli::contract::replay::{Record, ReplayRun, turns};
 use shuyi_core::Bot;
 use shuyi_core::bots::play_observed;
-use shuyi_core::bots::playtest::Entrant as _;
+use shuyi_core::bots::playtest::{Entrant as _, PlayedTry, Tried};
 use trpg_bots::{BattleEntrant, BattleStage, Player};
 use trpg_content::Content;
 use trpg_core::{BattleState, Command, GameMode};
@@ -40,17 +41,18 @@ pub fn check() -> Vec<ContentError> {
         .map_or_else(Vec::new, |e| e.0)
 }
 
-/// `input`'s games of the story's first battle, the baseline bot on the
-/// player's side in Classic.
-pub fn bots(input: &BotsInput) -> Result<BotsOutput, String> {
+/// The bot run: `battle` (by id), else the story's first battle, the
+/// baseline bot on the player's side in Classic, as one entrant with no
+/// checks.
+pub fn plan(battle: Option<&str>) -> Result<PlaytestPlan, String> {
     let content = content()?;
-    let battle = first_battle(&content)?;
+    let battle = battle.map_or_else(|| first_battle(&content), |b| Ok(b.to_owned()))?;
     let stage = stage(&content, &battle)?;
     let mode = GameMode::Classic;
     let entrant = BattleEntrant::new("baseline", mode, Player::Baseline, content.ai, &stage);
-    let seeds = input.seed..input.seed + u64::from(input.games);
-    let plays = seeds.map(|seed| {
-        // As the engine's `play_tries`, keeping the commands for the record.
+    let title = format!("{battle} · the baseline bot in {mode:?}");
+    let play = Box::new(move |_: usize, seed, turns| {
+        // As the engine's `play_try`, keeping the commands for the record.
         let mut rules = entrant.start(&stage, seed);
         let mut bots = entrant.bots(seed);
         let mut by_side: Vec<_> = bots
@@ -58,16 +60,17 @@ pub fn bots(input: &BotsInput) -> Result<BotsOutput, String> {
             .map(|(side, bot)| (*side, bot.as_mut() as &mut dyn Bot<BattleState>))
             .collect();
         let mut measure = entrant.measure();
-        let report = play_observed(&mut rules, &mut by_side, input.turns, |r, c, e| {
+        let report = play_observed(&mut rules, &mut by_side, turns, |r, c, e| {
             measure.observe(r, c, e);
         })
         .map_err(|e| format!("seed {seed}: {e}"))?;
-        let outcome = report
-            .outcome
-            .map_or(UNFINISHED.to_owned(), |o| format!("{o:?}"));
+        let tried = Tried {
+            seed,
+            outcome: report.outcome.map(|o| format!("{o:?}")),
+            turns: report.turns,
+            measures: measure.finish(&report, &rules),
+        };
         let commands = u32::try_from(report.commands.len()).unwrap_or(u32::MAX);
-        let mut play = Play::new(seed, outcome, report.turns, commands);
-        play.measures = measure.finish(&report, &rules);
         let record = PlayRecord {
             version: VERSION,
             battle: battle.clone(),
@@ -75,10 +78,17 @@ pub fn bots(input: &BotsInput) -> Result<BotsOutput, String> {
             seed,
             commands: report.commands,
         };
-        play.record = Some(ron::ser::to_string(&record).map_err(|e| e.to_string())?);
-        Ok(play)
+        let mut played = PlayedTry::new(tried, commands);
+        played.record = Some(ron::ser::to_string(&record).map_err(|e| e.to_string())?);
+        Ok(played)
     });
-    Ok(tally(plays.collect::<Result<_, String>>()?))
+    let entrants = vec![("baseline".to_owned(), None)];
+    Ok(PlaytestPlan::new(
+        title,
+        entrants,
+        Box::new(|_| Vec::new()),
+        play,
+    ))
 }
 
 /// `record`, a [`PlayRecord`], re-run by the rules from its battle and seed.

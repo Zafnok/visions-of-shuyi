@@ -240,6 +240,7 @@ mod tests {
                 columns: 2,
                 glyphs: [('b', 0), ('a', 1)].into_iter().collect(),
                 wide: BTreeMap::new(),
+                wide_sets: BTreeMap::new(),
             },
             width: 4,
             pixels,

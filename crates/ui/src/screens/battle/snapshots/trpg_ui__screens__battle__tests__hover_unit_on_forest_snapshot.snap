@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/tests.rs
-assertion_line: 490
 expression: "render(&knight_in_forest(), &c).to_snapshot(&c.palette)"
 ---
                                                                       ┌────────────────────────────┐

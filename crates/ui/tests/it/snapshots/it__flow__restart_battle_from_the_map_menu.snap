@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/it/flow.rs
-assertion_line: 465
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
