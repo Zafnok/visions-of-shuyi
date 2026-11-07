@@ -18,6 +18,7 @@ mod credits;
 mod dialogue;
 mod dialogue_log;
 mod flow;
+mod focus;
 mod guides;
 mod key_bindings;
 mod key_bindings_screen;
