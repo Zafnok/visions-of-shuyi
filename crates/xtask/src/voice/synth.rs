@@ -279,32 +279,80 @@ pub fn directed_target(take: Level, voice: Level) -> f64 {
 /// lab's check passed a take at 0.85.
 pub const SAME_WORDS: f64 = 0.85;
 
+/// The most words a line may have to be checked by sound when its spelling
+/// differs (*tunable*; ticket 0761).
+pub const SHORT_LINE_WORDS: usize = 4;
+
 /// Whether `heard` is `words`: their letters and digits, compared
 /// character by character, are at least [`SAME_WORDS`] alike. A word a
-/// transcriber spells otherwise (an invented name) costs a letter or two.
+/// transcriber spells otherwise (an invented name) costs a letter or two,
+/// which a short line can't spare: one of at most [`SHORT_LINE_WORDS`]
+/// words also passes when every word sounds the same ([`sound`]), so
+/// "Dases" says "Dace's.".
 pub fn says(heard: &str, words: &str) -> bool {
-    let plain = |s: &str| -> Vec<char> {
-        let lower = s.to_lowercase().replace('\u{2019}', "'");
-        let kept: String = lower
-            .chars()
-            .map(|c| {
-                if c.is_alphanumeric() || c == '\'' {
-                    c
-                } else {
-                    ' '
-                }
-            })
-            .collect();
-        kept.split_whitespace()
-            .collect::<Vec<_>>()
-            .join(" ")
-            .chars()
-            .collect()
-    };
     let (a, b) = (plain(heard), plain(words));
+    alike(&a, &b) >= SAME_WORDS || {
+        let (a, b): (Vec<&str>, Vec<&str>) = (a.split(' ').collect(), b.split(' ').collect());
+        b.len() <= SHORT_LINE_WORDS
+            && a.len() == b.len()
+            && a.iter().zip(&b).all(|(a, b)| sound(a) == sound(b))
+    }
+}
+
+/// `s` lowercased, with its words of letters, digits and apostrophes
+/// joined by single spaces.
+fn plain(s: &str) -> String {
+    let lower = s.to_lowercase().replace('\u{2019}', "'");
+    let kept: String = lower
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == '\'' {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    kept.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// A word's sound, a Metaphone-like key of a plain word: letters that
+/// sound alike written one way, vowels after the first letter dropped (a
+/// first vowel is `a`), doubled sounds once, apostrophes gone.
+pub fn sound(word: &str) -> String {
+    let w: Vec<char> = word.chars().filter(|c| c.is_alphanumeric()).collect();
+    let mut key = String::new();
+    let mut i = 0;
+    while i < w.len() {
+        let next = w.get(i + 1).copied();
+        let (codes, step): (&[char], usize) = match (w[i], next) {
+            ('p', Some('h')) => (&['f'], 2),
+            ('c' | 's', Some('h')) => (&['x'], 2),
+            ('t', Some('h')) => (&['0'], 2),
+            ('c', Some('e' | 'i' | 'y')) | ('z', _) => (&['s'], 1),
+            ('c' | 'q', _) => (&['k'], 1),
+            ('x', _) => (&['k', 's'], 1),
+            ('a' | 'e' | 'i' | 'o' | 'u' | 'y' | 'w' | 'h', _) if i == 0 => (&['a'], 1),
+            ('a' | 'e' | 'i' | 'o' | 'u' | 'y' | 'w' | 'h', _) => (&[], 1),
+            _ => (std::slice::from_ref(&w[i]), 1),
+        };
+        for &code in codes {
+            if !key.ends_with(code) {
+                key.push(code);
+            }
+        }
+        i += step;
+    }
+    key
+}
+
+/// How alike two plain strings are, 0 to 1: one less their edit distance
+/// over the longer one's length.
+fn alike(a: &str, b: &str) -> f64 {
+    let (a, b): (Vec<char>, Vec<char>) = (a.chars().collect(), b.chars().collect());
     let longest = a.len().max(b.len());
     if longest == 0 {
-        return true;
+        return 1.0;
     }
     let mut row: Vec<usize> = (0..=b.len()).collect();
     for (i, ca) in a.iter().enumerate() {
@@ -318,7 +366,7 @@ pub fn says(heard: &str, words: &str) -> bool {
     }
     // Lines are a few hundred characters at most.
     let float = |n: usize| f64::from(u32::try_from(n).unwrap_or(u32::MAX));
-    1.0 - float(row[b.len()]) / float(longest) >= SAME_WORDS
+    1.0 - float(row[b.len()]) / float(longest)
 }
 
 /// ffmpeg's filters that make a take the game's: mono at 44.1 kHz, with at

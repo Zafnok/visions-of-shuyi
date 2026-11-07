@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Related tickets:** 0721, 0722, 0760, 0757
+- **Related tickets:** 0721, 0722, 0760, 0757, 0761
 - **Extends:** ADR-0046 rule 7, ADR-0107 rules 2 and 3, ADR-0109 rule 3.
 
 ## Context
@@ -70,3 +70,19 @@ half a minute to load their models.
 - **One process per line.** Simple, and a model load per line.
 - **Loudness in Rust.** Testable without ffmpeg, but a second measure that
   could disagree with the music's.
+
+## Follow-ups
+
+- **A short line is also checked by sound** (0761). In 0722 the lead's
+  "Dace's." was read right by both voices, but the transcriber spelled the
+  name "Dases" or "Daces", 0.67 to 0.8 alike, and no take of twelve passed.
+  A line of at most four words (`SHORT_LINE_WORDS`, *tunable*) now also
+  passes when the transcript has as many words and each sounds the same:
+  a Metaphone-like key of the word (`synth::sound`: `c` before `e`, `i`
+  or `y` and `z` are `s`, `ph` is `f`, vowels after the first letter
+  dropped, a doubled sound once). Every other line keeps the 85 % rule.
+  The cost: a short line read as a sound-alike word ("held" for "hold")
+  passes; a person listens to it in the Act 1 playtest (1064). Rejected:
+  `generate --keep <clip>`, which saves an unchecked take for someone who
+  listened: it needs a listener on every such line of every chapter
+  (0757), where the key needs none.

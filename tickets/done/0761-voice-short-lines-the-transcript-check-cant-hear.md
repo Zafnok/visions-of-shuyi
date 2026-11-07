@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0722"]
 nick_input: none
-completed:
+completed: 2026-11-06
 ---
 
 # 0761 — Voice the short lines the transcript check can't hear
@@ -76,4 +76,27 @@ checklist (1064).
   `crates/xtask/src/voice/tests.rs`.
 
 ## Completion notes
+
+- Picked the first option, the check by sound (ADR-0113's new
+  *Follow-ups*): a line of at most four words (`SHORT_LINE_WORDS`,
+  *tunable*) also passes when the transcript has as many words and each
+  word's Metaphone-like key (`synth::sound`) is the same. Every longer line
+  keeps the 85 % rule. `--keep` was rejected: it needs someone to listen
+  to every such line of every later chapter (0757).
+- Tests: "Dases", "Daces" and "Days" say "Dace's."; "Bases", "Dace is"
+  and "Hold the boat" (for "Hold the gate") don't; five names spelled
+  otherwise fail on a five-word line and pass on a four-word one.
+- `cargo xtask voice generate --scene ch01_prebattle` made both clips on
+  the first seed. `voice status` lists nothing to make for any `ch01`
+  scene (the 873 left are later chapters, 0757). Private repository
+  `0665d99`, pinned.
+- Deviation: the tool wrote `sent.ron` with `\r\n` line ends on Windows
+  (ron's default), turning the whole committed file over. One line in
+  `files::sent_text` keeps it `\n`, with a test; needed to commit the
+  clips cleanly, so done here rather than ticketed.
+- For the Act 1 playtest (1064): how the lead says "Dace's." in both
+  voices. The cost of the rule: a short line read as a sound-alike word
+  would pass, so listen for it there.
+- No gameplay rules decided.
+- Friction: estimate 35 production lines, measured 55 (1.6×), under 2×.
 
