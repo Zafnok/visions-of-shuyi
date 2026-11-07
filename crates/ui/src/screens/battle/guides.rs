@@ -2,7 +2,8 @@
 //! opened from the map menu, it lists every lesson (in their order) and
 //! then every tip (in theirs) by title, with the highlighted one's text
 //! beside it, its keys named from the player's keymap. A lesson's
-//! checklist shows as plain lines. Every topic can be read, seen or not,
+//! checklist and a tip's instructions (`how`) show as plain lines after a
+//! blank one, apart from what the guide says (0475). Every topic can be read, seen or not,
 //! at every tutorial level. Back closes it.
 //!
 //! Like the rewind screen it is pushed over the battle, which waits under
@@ -119,7 +120,12 @@ impl GuidesScreen {
             }
             Some(Topic::Tip(t)) => {
                 let text = fill_placeholders(words.tip_text(t), keys);
-                let lines = text.lines().map(str::to_owned).collect();
+                let mut lines: Vec<String> = text.lines().map(str::to_owned).collect();
+                let how = fill_placeholders(words.tip_how(t), keys);
+                if !how.is_empty() {
+                    lines.push(String::new());
+                    lines.extend(how.lines().map(str::to_owned));
+                }
                 (words.tip_title(t).to_owned(), lines)
             }
             None => (String::new(), Vec::new()),

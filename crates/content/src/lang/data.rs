@@ -21,12 +21,13 @@ use crate::dialogue::DialogueTable;
 use crate::lesson::{self, Lesson, LessonTable};
 use crate::names::Names;
 use crate::terrain::TerrainDef;
-use crate::tip::{MAX_LINE_CHARS, MAX_TEXT_LINES, MAX_TITLE_CHARS, Tip, TipTable};
+use crate::tip::{MAX_HOW_LINES, MAX_LINE_CHARS, MAX_TEXT_LINES, MAX_TITLE_CHARS, Tip, TipTable};
 use crate::worldmap::WorldMapDef;
 
 /// Today's English for everything `data.ron` and `dialogue/*.ron` can
 /// translate, by key: data text by key (`<file>.<id>.<field>`,
-/// `names.<id>`, `tips.<id>.title`, `tips.<id>.text`, `lessons.<id>.title`,
+/// `names.<id>`, `tips.<id>.title`, `tips.<id>.text`, `tips.<id>.how`,
+/// `lessons.<id>.title`,
 /// `lessons.<id>.text`, `lessons.<id>.item_<n>` from 1), dialogue lines by
 /// line id and captions by caption key, and the names table.
 pub type DataText = SourceText;
@@ -77,6 +78,11 @@ fn tip_title_key(id: &str) -> String {
 /// The key of tip `id`'s text.
 fn tip_text_key(id: &str) -> String {
     format!("tips.{id}.text")
+}
+
+/// The key of tip `id`'s instructions (`how`, ticket 0475).
+fn tip_how_key(id: &str) -> String {
+    format!("tips.{id}.how")
 }
 
 /// What every key of a lesson's text starts with.
@@ -145,6 +151,11 @@ fn is_tip_text_key(key: &str) -> bool {
     tip_field(key, ".text")
 }
 
+/// Whether `key` is a tip's instructions.
+fn is_tip_how_key(key: &str) -> bool {
+    tip_field(key, ".how")
+}
+
 /// What is wrong with a pack's text `text` for the data key `key`, if
 /// anything: a tip or a lesson keeps to the limits of English ones,
 /// counted in cells. (A name keeps to the engine's rules.)
@@ -160,12 +171,16 @@ pub(super) fn text_problem(key: &str, text: &str) -> Option<String> {
     if is_tip_title_key(key) {
         return title_problem(text);
     }
-    if !is_tip_text_key(key) {
+    let most = if is_tip_text_key(key) {
+        MAX_TEXT_LINES
+    } else if is_tip_how_key(key) {
+        MAX_HOW_LINES
+    } else {
         return None;
-    }
+    };
     let lines: Vec<&str> = text.lines().collect();
-    if lines.is_empty() || lines.len() > MAX_TEXT_LINES {
-        return Some(format!("the text must have 1 to {MAX_TEXT_LINES} lines"));
+    if lines.is_empty() || lines.len() > most {
+        return Some(format!("the text must have 1 to {most} lines"));
     }
     lines
         .iter()
@@ -210,6 +225,9 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
     for tip in &tables.tips.tips {
         data.insert(tip_title_key(&tip.id), tip.title.clone());
         data.insert(tip_text_key(&tip.id), tip.text.clone());
+        if let Some(how) = &tip.how {
+            data.insert(tip_how_key(&tip.id), how.clone());
+        }
     }
     for lesson in &tables.lessons.lessons {
         data.insert(lesson_title_key(&lesson.id), lesson.title.clone());
@@ -297,6 +315,15 @@ impl Lang {
     /// The text of `tip` in language `code`, placeholders and all.
     pub fn tip_text<'a>(&'a self, code: &LangCode, tip: &'a Tip) -> &'a str {
         self.0.data_text(code, || tip_text_key(&tip.id), &tip.text)
+    }
+
+    /// The instructions of `tip` in language `code`, placeholders and all;
+    /// empty if it has none.
+    pub fn tip_how<'a>(&'a self, code: &LangCode, tip: &'a Tip) -> &'a str {
+        let Some(how) = &tip.how else {
+            return "";
+        };
+        self.0.data_text(code, || tip_how_key(&tip.id), how)
     }
 
     /// The title of `lesson` in language `code`.

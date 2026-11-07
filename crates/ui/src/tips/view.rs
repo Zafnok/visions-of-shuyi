@@ -1,5 +1,6 @@
 //! What a tip box shows, as plain data (ADR-0054): the guide's name, their
-//! face, the tip's heading and lines, and the close hint. A skin paints it
+//! face, the tip's heading, her lines, the instructions apart from them
+//! (ticket 0475: her lines are spoken and name no key) and the close hint. A skin paints it
 //! ([`super::glyph::paint`]). A lesson's box (0456) is the same box with a
 //! checklist instead of the close hint ([`LessonView`],
 //! [`super::glyph::paint_lesson`]).
@@ -36,8 +37,11 @@ pub struct TipView {
     pub face: Option<FaceView>,
     /// The tip's own title, the first line.
     pub heading: String,
-    /// The tip's text, its keys named, one entry per line.
+    /// What the guide says, one entry per line. It names no key.
     pub lines: Vec<String>,
+    /// The tip's instructions apart from her lines, its keys named, one
+    /// entry per line; empty if it has none.
+    pub how: Vec<String>,
     /// The close hint, e.g. `f close`.
     pub close: String,
 }
@@ -65,11 +69,13 @@ impl TipView {
                 expression: tip::face(tip).to_owned(),
             });
         let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
+        let how = fill_placeholders(words.tip_how(tip), ctx.help_keys());
         Self {
             title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.tip_title(tip).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),
+            how: how.lines().map(str::to_owned).collect(),
             close: ctx.text_with(CLOSE_HINT, &[]),
         }
     }
@@ -86,7 +92,8 @@ pub struct LessonView {
     pub face: Option<FaceView>,
     /// The lesson's own title, the first line.
     pub heading: String,
-    /// The lesson's text, its keys named, one entry per line.
+    /// What the guide says above the checklist, one entry per line. It
+    /// names no key; the items do.
     pub lines: Vec<String>,
     /// The checklist, in order.
     pub items: Vec<LessonItemView>,

@@ -13,7 +13,7 @@ fn errors(source: &str) -> Vec<String> {
 fn lesson(id: &str, items: &str) -> String {
     format!(
         r#"(id: "{id}", level: Full, trigger: FirstBattleStart, title: "T",
-        text: "Press {{Confirm}}.", items: [{items}])"#
+        text: "Do it.", items: [{items}])"#
     )
 }
 
@@ -237,6 +237,24 @@ fn bad_lessons_are_reported() {
     // The long label, the empty one and the one of two lines.
     let items = all.iter().filter(|m| m.contains("an item must be")).count();
     assert_eq!(items, 3, "{all:?}");
+}
+
+/// Ticket 0475: the guide's line is spoken, so a key in a lesson's text
+/// fails; the same key in an item is fine.
+#[test]
+fn a_key_in_the_spoken_text_fails() {
+    let source = format!(
+        r#"(lessons: [(id: "a", level: Full, trigger: FirstForecast, title: "T",
+        text: "Press {{Cursor}} to move.", items: [{UP}])])"#
+    );
+    assert_eq!(
+        errors(&source),
+        ["lesson \"a\": the text is spoken, so it names no key ({Cursor}): keys go in the items"]
+    );
+    for l in load(Refs::default()).unwrap().lessons {
+        assert!(!l.text.trim().is_empty(), "{}", l.id);
+        assert_eq!(placeholders(&l.text), [] as [&str; 0], "{}", l.id);
+    }
 }
 
 #[test]

@@ -225,6 +225,21 @@ objectives are separate: her line is spoken and never names a key, and what name
 a key or a button is silent text. She has lines all through the tutorial. Tickets
 0475 and 0476.
 
+How the split works (0475):
+
+- **A lesson:** its text is her line; its checklist items are the objectives,
+  and they name the keys.
+- **A tip:** its text is her line; under it, after a blank row, its
+  instructions (`how`, optional) name the keys, e.g. "Rewind: r". A tip with
+  nothing to press has none.
+- **Her line teaches on its own.** Heard without the box, it still says what
+  to do ("Pick up a unit and its reach lights up"); the keys are only how.
+  Every rule a line used to teach is still taught by the line or by the
+  objectives.
+- **Guides** shows the same: her line, then the items or the instructions.
+- The content check fails a lesson or a tip whose text holds a key
+  placeholder.
+
 ## Built by
 
 - **0455** the guide's face in the tip box.

@@ -229,9 +229,10 @@ fn a_tip_in_the_test_language() {
     h.with_tips().keys("Down f Left f f");
     assert_snapshot!(h.snapshot());
     assert!(shows(&h, "YOUR MOVE"));
-    // Key names are still the player's; the word for the arrow keys is
-    // the pack's (ticket 0243).
-    assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR WITH ARROWS; f ON"));
+    assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR ONTO"));
+    // The tip's instructions too (0475). Key names are still the player's;
+    // the word for the arrow keys is the pack's (ticket 0243).
+    assert!(shows(&h, "MOVE THE CURSOR: ARROWS. PICK UP A UNIT: f"));
     assert!(!shows(&h, "Your move"));
 }
 

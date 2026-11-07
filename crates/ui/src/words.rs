@@ -211,6 +211,15 @@ impl<'a> Words<'a> {
         }
     }
 
+    /// The instructions of `tip` (its `how`), placeholders and all; empty
+    /// if it has none.
+    pub fn tip_how(self, tip: &'a Tip) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.tip_how(code, tip),
+            None => tip.how.as_deref().unwrap_or(""),
+        }
+    }
+
     /// The title of `lesson`.
     pub fn lesson_title(self, lesson: &'a Lesson) -> &'a str {
         match self.pack {

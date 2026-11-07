@@ -475,7 +475,16 @@ fn the_test_pack_translates_a_little_of_every_kind() {
     assert_eq!(lang.tip_title(&en, tip), "Your move");
     assert!(
         lang.tip_text(&test, tip)
-            .starts_with("OVER TO YOU. STEER THE CURSOR WITH {Cursor};")
+            .starts_with("OVER TO YOU. STEER THE CURSOR ONTO")
+    );
+    // Its instructions apart from the guide's line (0475).
+    assert!(
+        lang.tip_how(&test, tip)
+            .starts_with("MOVE THE CURSOR: {Cursor}.")
+    );
+    assert!(
+        lang.tip_how(&en, tip)
+            .starts_with("Move the cursor: {Cursor}.")
     );
     assert!(lang.tip_text(&en, tip).starts_with("Over to you."));
     let other = content

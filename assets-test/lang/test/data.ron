@@ -1,4 +1,5 @@
-// The test pack's data text (ticket 0235): a few names, a tip, a lesson's
+// The test pack's data text (ticket 0235): a few names, a tip (its text
+// and its how, 0475), a lesson's
 // title and first item (0456), a chapter title, a battle note and an exit name (0324), each the English in capitals. Everything else
 // in the data is missing here, so it shows in English.
 // Kept on purpose: `items.iron_axe.name` is stale (its `source` is not
@@ -21,8 +22,13 @@
     (key: "tips.battle_start.title", source: "Your move", text: "YOUR MOVE"),
     (
         key: "tips.battle_start.text",
-        source: "Over to you. Steer the cursor with {Cursor}; {Select} on\none of your units picks it up. Press {NextUnit} for whoever\ncan still act, and {Info} for what you're working with.",
-        text: "OVER TO YOU. STEER THE CURSOR WITH {Cursor}; {Select} ON\nONE OF YOUR UNITS PICKS IT UP. PRESS {NextUnit} FOR WHOEVER\nCAN STILL ACT, AND {Info} FOR WHAT YOU'RE WORKING WITH.",
+        source: "Over to you. Steer the cursor onto one of your units and\npick it up. You can jump straight to whoever can still act,\nand look anyone over to see what you're working with.",
+        text: "OVER TO YOU. STEER THE CURSOR ONTO ONE OF YOUR UNITS AND\nPICK IT UP. YOU CAN JUMP STRAIGHT TO WHOEVER CAN STILL ACT,\nAND LOOK ANYONE OVER TO SEE WHAT YOU'RE WORKING WITH.",
+    ),
+    (
+        key: "tips.battle_start.how",
+        source: "Move the cursor: {Cursor}. Pick up a unit: {Select}\nNext unit to act: {NextUnit}. A unit's details: {Info}",
+        text: "MOVE THE CURSOR: {Cursor}. PICK UP A UNIT: {Select}\nNEXT UNIT TO ACT: {NextUnit}. A UNIT'S DETAILS: {Info}",
     ),
     (key: "lessons.test_cursor.title", source: "Moving the cursor", text: "MOVING THE CURSOR"),
     (key: "lessons.test_cursor.item_1", source: "Move it up: {CursorUp}", text: "MOVE IT UP: {CursorUp}"),

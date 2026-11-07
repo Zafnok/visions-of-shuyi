@@ -19,7 +19,7 @@ use crate::portrait::Portrait;
 use crate::ron_loader::parse_ron;
 use crate::tip::{
     CURSOR_PLACEHOLDER, DEFAULT_FACE, GUIDE_PORTRAIT, MAX_LINE_CHARS, MAX_TITLE_CHARS, TipTrigger,
-    placeholders,
+    placeholders, spoken_problem,
 };
 
 /// Path of the lessons file inside the asset bundle.
@@ -182,8 +182,8 @@ pub struct Lesson {
     pub battles: Vec<String>,
     /// Its heading in the box.
     pub title: String,
-    /// What it says above the checklist: lines separated by `\n`, with
-    /// `{Action}` placeholders for key names.
+    /// What the guide says above the checklist: lines separated by `\n`.
+    /// It is spoken, so it names no key (ticket 0475); the items do.
     pub text: String,
     /// The checklist, in the order shown.
     pub items: Vec<LessonItem>,
@@ -376,6 +376,7 @@ fn problems(raw: &RawLesson, refs: Refs<'_>) -> Vec<String> {
         ));
     }
     out.extend(text_problem(&raw.text));
+    out.extend(spoken_problem(&raw.text, "items"));
     if raw.items.is_empty() || raw.items.len() > MAX_ITEMS {
         out.push(format!("a lesson must have 1 to {MAX_ITEMS} items"));
     }

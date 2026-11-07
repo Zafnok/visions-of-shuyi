@@ -101,7 +101,15 @@ fn the_tip_box_is_the_guides() {
     assert_eq!(view.heading, "Your move");
     assert_eq!(view.face, None);
     assert_eq!(view.lines.len(), 3);
-    assert!(view.lines[0].starts_with("Over to you. Steer the cursor with arrows;"));
+    assert!(view.lines[0].starts_with("Over to you. Steer the cursor onto"));
+    // Her line names no key; the instructions under it do (0475).
+    assert_eq!(
+        view.how,
+        [
+            "Move the cursor: arrows. Pick up a unit: f",
+            "Next unit to act: s. A unit's details: e"
+        ]
+    );
     assert_eq!(view.close, "f close");
     // With the guide's portrait (the bought art), the face.
     let mut guide = c.game.content.portraits["test_lord"].clone();
@@ -524,8 +532,7 @@ fn a_tip_names_the_keys_the_player_has_bound() {
     c.use_layout(LEFT_HANDED);
     let mut s = quick();
     press(&mut s, &mut c, &[]);
-    assert!(shows(&s, &c, "Steer the cursor with wasd"));
-    assert!(shows(&s, &c, "with wasd; j on"));
+    assert!(shows(&s, &c, "Move the cursor: wasd. Pick up a unit: j"));
     assert_eq!(s.help(&c), "j close");
 }
 
@@ -537,7 +544,7 @@ fn a_tip_shows_not_mapped_for_an_action_with_no_key() {
     c.set_layout_bindings(RIGHT_HANDED, keys).unwrap();
     let mut s = quick();
     press(&mut s, &mut c, &[]);
-    assert!(shows(&s, &c, "Press ! not mapped for whoever"));
+    assert!(shows(&s, &c, "Next unit to act: ! not mapped."));
 }
 
 #[test]

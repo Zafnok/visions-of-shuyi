@@ -2,19 +2,19 @@
 source: crates/ui/src/screens/battle/lesson_tests.rs
 expression: h.snapshot()
 ---
-         ╔═ Vix ═══════════════════════════════════════════╗          ┌────────────────────────────┐
-         ║                                                 ║          │ Road                       │
-         ║ Moving the cursor                               ║          │ DEF +0  AVO +0             │
-         ║ Move the cursor with arrows, one tile each way. ║          │                            │
-         ║ The turn can't end until the list is done.      ║          │                            │
-         ║                                                 ║          │ Test Archer                │
-         ║ [x] Move it up: Up                              ║          │ Archer  Lv 1               │
-         ║ [ ] Move it down: Down                          ║          │ HP 17/17   ██████████      │
-         ║ [x] Move it left: Left                          ║          │ Player                     │
-         ║ [ ] Move it right: Right                        ║          │                            │
-         ║                                                 ║          │                            │
-         ║ 2 of 4 done                                     ║          │                            │
-         ╚═════════════════════════════════════════════════╝          │                            │
+            ╔═ Vix ══════════════════════════════════════╗            ┌────────────────────────────┐
+            ║                                            ║            │ Road                       │
+            ║ Moving the cursor                          ║            │ DEF +0  AVO +0             │
+            ║ Move the cursor one tile each way.         ║            │                            │
+            ║ The turn can't end until the list is done. ║            │                            │
+            ║                                            ║            │ Test Archer                │
+            ║ [x] Move it up: Up                         ║            │ Archer  Lv 1               │
+            ║ [ ] Move it down: Down                     ║            │ HP 17/17   ██████████      │
+            ║ [x] Move it left: Left                     ║            │ Player                     │
+            ║ [ ] Move it right: Right                   ║            │                            │
+            ║                                            ║            │                            │
+            ║ 2 of 4 done                                ║            │                            │
+            ╚════════════════════════════════════════════╝            │                            │
                     ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │                            │
                     ..≈≈≈≈..··..............╦╦..                      │                            │
                     ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │                            │
@@ -35,19 +35,19 @@ expression: h.snapshot()
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 
 --- colours ---
-aaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabdccccdddddddddddddddddddddddb
-aaaaaaaaabdcccccccccccccccccdddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabdeeeeeeeeeeeddddddddddddddddb
-aaaaaaaaabdfffdggggggggggggggddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddffffffffffddddddb
-aaaaaaaaabdfffdggggggggggggggggggddddddddddddddddddddddddddbaaaaaaaaaabdggggggdddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabdgggggggggggdddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdccccdddddddddddddddddddddddb
+aaaaaaaaaaaabdcccccccccccccccccddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdeeeeeeeeeeeddddddddddddddddb
+aaaaaaaaaaaabdfffdggggggggggggggdddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddffffffffffddddddb
+aaaaaaaaaaaabdfffdggggggggggggggggggdddddddddddddddddddddbaaaaaaaaaaaabdggggggdddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabdgggggggggggddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

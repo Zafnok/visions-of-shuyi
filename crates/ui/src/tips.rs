@@ -205,7 +205,8 @@ mod tests {
         let content = trpg_content::load_embedded().unwrap();
         let tip = |id: &str| {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
-            tip.map(|t| t.text.replace('\n', " ")).unwrap_or_default()
+            let how = tip.and_then(|t| t.how.as_deref());
+            how.map(|h| h.replace('\n', " ")).unwrap_or_default()
         };
         let default = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let mut split = content
@@ -219,9 +220,9 @@ mod tests {
         split.push((Chord::parse("g").unwrap(), Action::Select));
         let split = Keymap::new(split, RepeatDef::default());
         for (id, phrase) in [
-            ("battle_start", "; {} on one of your units"),
-            ("unit_selected", "press {} to send it there"),
-            ("danger_zone", "Press {} on one enemy for just its range"),
+            ("battle_start", "Pick up a unit: {}"),
+            ("unit_selected", "Send it to a blue tile: {}."),
+            ("danger_zone", "One enemy's range: {} on it"),
         ] {
             let text = tip(id);
             let with = |key| phrase.replace("{}", key);
@@ -236,7 +237,7 @@ mod tests {
         }
         // Menu and forecast wording stays on Confirm.
         let forecast = fill_placeholders(&tip("forecast"), HelpKeys::keyboard(&split));
-        assert!(forecast.contains("attack with f."), "{forecast}");
+        assert!(forecast.contains("Attack: f"), "{forecast}");
     }
 
     #[test]

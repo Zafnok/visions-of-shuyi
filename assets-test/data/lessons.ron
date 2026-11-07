@@ -9,7 +9,7 @@
             trigger: FirstBattleStart,
             battles: ["test", "quick"],
             title: "Moving the cursor",
-            text: "Move the cursor with {Cursor}, one tile each way.\nThe turn can't end until the list is done.",
+            text: "Move the cursor one tile each way.\nThe turn can't end until the list is done.",
             items: [
                 (label: "Move it up: {CursorUp}", done_when: Pressed("CursorUp")),
                 (label: "Move it down: {CursorDown}", done_when: Pressed("CursorDown")),
