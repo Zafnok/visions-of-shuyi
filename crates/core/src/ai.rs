@@ -133,9 +133,31 @@
 //! ```
 //!
 //! Line Pierce's strike at the unit behind the target is counted as if the
-//! attacker is still standing after the combat. What an art or active does
-//! beyond the forecast's numbers (a debuff, a stance on later turns, a move
-//! or healing after the attack) scores nothing.
+//! attacker is still standing after the combat.
+//!
+//! ## What the forecast doesn't show (ticket 0511)
+//!
+//! An art or active's effects beyond the forecast's numbers add to that
+//! score, each with its own weight:
+//!
+//! ```text
+//! + debuff    × (debuff points) × P(at least one hit, and the target stands)
+//! + stance    × (Def + Res + Avoid / 10 of the stance)   if in danger
+//! + post_move                                             if in danger
+//! + drain     × min(E[HP dealt] / 2, HP the attacker is missing)
+//! ```
+//!
+//! - **Debuff** (an art's `on_first_hit`): its stats' amounts added up, plus
+//!   the avoid it takes off / 10 (Off Balance). Nothing if the target
+//!   already has this art's debuff (it would only refresh).
+//! - **Stance** (an art's `stance`, an active's stance rider): only if the
+//!   tile it attacks from is in the danger zone (a hostile unit could attack
+//!   it this turn) and the unit doesn't already have it. Its bonus in the
+//!   attack's own combat is in the forecast already; what a reaction does
+//!   (Riposte, Spear Wall…) scores nothing.
+//! - **Move after** (an active's `post_move`): only if the tile it attacks
+//!   from is in the danger zone, so it can step away.
+//! - **Drain**: the HP missing is counted before the combat.
 //!
 //! ## Flow distance
 //!
@@ -159,8 +181,8 @@ use shuyi_core::path;
 
 use crate::art::ArtId;
 use crate::battle::{
-    BattleState, CastTarget, Command, HouseState, Objective, PendingMove, Phase, TileRect,
-    UnitAction, burns,
+    AttackOutlook, BattleState, CastTarget, Command, HouseState, Objective, PendingMove, Phase,
+    TileRect, UnitAction, burns,
 };
 
 use crate::combat::{CombatHp, Forecast, Side, base_damage, strike_order, striker, take};
@@ -170,7 +192,7 @@ use crate::magic::Affinity;
 use crate::movement::{Reach, TileSet, danger_zone, reachable};
 use crate::skill::{ActiveEffect, SkillCost, SkillId, SkillKind};
 use crate::spell::{SpellId, SpellKind};
-use crate::stats::StatValue;
+use crate::stats::{StatKind, StatValue};
 use crate::terrain::MovementTypeId;
 use crate::unit::{Faction, Unit, UnitId};
 
@@ -227,6 +249,16 @@ pub struct AiWeights {
     pub durability: u32,
     /// Score lost for the extra spell use a spell active costs.
     pub spell_use: u32,
+    /// Score per point of debuff an art's first hit puts on a target that
+    /// survives (times the chance).
+    pub debuff: u32,
+    /// Score per point of Def + Res + Avoid / 10 of a stance taken in the
+    /// danger zone.
+    pub stance: u32,
+    /// Score for a move after attacking from the danger zone.
+    pub post_move: u32,
+    /// Score per expected HP drain heals.
+    pub drain: u32,
 }
 
 impl AiWeights {
@@ -239,6 +271,10 @@ impl AiWeights {
         terrain: 5,
         durability: 5,
         spell_use: 15,
+        debuff: 8,
+        stance: 10,
+        post_move: 10,
+        drain: 5,
     };
 }
 
@@ -563,15 +599,15 @@ impl<'a> Planner<'a> {
                             continue;
                         }
                         let action = arm.action(target.id, Some(&extra.technique));
-                        let Some((forecast, pierce)) =
-                            state.attack_forecast(unit, dest, &path, &action)
+                        let Some(outlook) = state.attack_forecast(unit, dest, &path, &action)
                         else {
                             continue;
                         };
-                        let odds = Odds::of(&forecast, own, theirs);
+                        let odds = Odds::of(&outlook.forecast, own, theirs);
                         can_kill |= odds.kill > 0;
                         let score = self.score(&odds, target.is_lord, terrain)
-                            + self.pierce_score(own, pierce)
+                            + self.utility(unit, dest, target, &odds, &outlook)
+                            + self.pierce_score(own, outlook.pierce)
                             - extra.penalty;
                         offer(score, action);
                     }
@@ -617,6 +653,49 @@ impl<'a> Planner<'a> {
             max: victim.stats.hp,
         };
         self.score(&Odds::of(&forecast, own, theirs), victim.is_lord, 0)
+    }
+
+    /// What an art or active does beyond the forecast's numbers adds to the
+    /// score of `unit` attacking `target` from `dest` (see the module docs).
+    fn utility(
+        &self,
+        unit: &Unit,
+        dest: Pos,
+        target: &Unit,
+        odds: &Odds,
+        outlook: &AttackOutlook,
+    ) -> Score {
+        let w = self.weights;
+        let mut score = 0;
+        if let Some((source, mods)) = &outlook.debuff
+            && !target.has_effect(source)
+        {
+            let lowered: StatValue = mods.stats.iter().map(|&(_, v)| -v).sum();
+            let tenths = lowered * 10 + mods.combat.avoid_debuff;
+            score += Score::from(w.debuff) * Score::from(tenths) * odds.debuffed / 10;
+        }
+        let in_danger = self.danger(unit.faction).contains(dest);
+        if let Some((source, mods)) = &outlook.stance
+            && in_danger
+            && !unit.has_effect(source)
+        {
+            let guard: StatValue = mods
+                .stats
+                .iter()
+                .filter(|(stat, _)| matches!(stat, StatKind::Def | StatKind::Res))
+                .map(|&(_, v)| v)
+                .sum();
+            let tenths = guard * 10 + mods.combat.avoid;
+            score += points(w.stance) * Score::from(tenths) / 10;
+        }
+        if outlook.post_move > 0 && in_danger {
+            score += points(w.post_move);
+        }
+        if outlook.drain {
+            let missing = u32::try_from(unit.stats.hp - unit.hp).unwrap_or(0);
+            score += Score::from(w.drain) * (odds.dealt / 2).min(points(missing));
+        }
+        score
     }
 
     /// The non-combat active `unit`, holding its tile, uses instead of
@@ -1019,6 +1098,8 @@ struct Odds {
     taken: Score,
     /// Chance the defender falls.
     kill: Score,
+    /// Chance the attacker hits at least once and the defender stands.
+    debuffed: Score,
 }
 
 impl Odds {
@@ -1081,6 +1162,8 @@ impl Walk<'_> {
             odds.taken += share * Score::from((self.start[0] - hp[0].current).max(0));
             if hp[1].current <= 0 {
                 odds.kill += share;
+            } else if landed[0] > 0 {
+                odds.debuffed += share;
             }
             return;
         };

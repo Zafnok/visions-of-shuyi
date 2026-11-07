@@ -483,7 +483,7 @@ use crate::movement::{AttackRange, MoveError, reachable};
 use crate::progression::{self, CombatResult, StatGains};
 use crate::rng::SimRng;
 use crate::shop::{self, Gold, Loot, Shop, ShopError};
-use crate::skill::{CostError, EffectSource, SkillId, SkillTable, heal_bonus};
+use crate::skill::{CostError, EffectSource, SkillId, SkillTable, TimedMods, heal_bonus};
 use crate::spell::{EffectDuration, SpellDef, SpellId, SpellKind, SpellTable, TerrainEffect};
 use crate::stats::StatValue;
 use crate::support::{SupportBook, SupportTable};
@@ -1834,6 +1834,24 @@ struct AttackStep {
     move_after: u32,
 }
 
+/// An attack as the AI weighs it ([`BattleState::attack_forecast`]): its
+/// numbers and what its art or active does beyond them.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct AttackOutlook {
+    /// The combat's numbers.
+    pub forecast: Forecast,
+    /// Line Pierce's strike: the unit behind the target and its numbers.
+    pub pierce: Option<(UnitId, Forecast)>,
+    /// The art's debuff on the target's first hit, and its source.
+    pub debuff: Option<(EffectSource, TimedMods)>,
+    /// The stance the art or active puts on the attacker, and its source.
+    pub stance: Option<(EffectSource, TimedMods)>,
+    /// Tiles the active lets the attacker move after the attack.
+    pub post_move: u32,
+    /// The active heals the attacker by half the HP its strikes remove.
+    pub drain: bool,
+}
+
 /// What each side of a combat fights with: `[attacker, defender]`.
 struct Arms {
     /// Weapon kinds, for weapon EXP (`None` for spells or no counter).
@@ -2703,21 +2721,41 @@ impl BattleState {
 
     /// The forecast of `unit` walking `path` (its tile first) to `dest` and
     /// making the attack `action` (an `Attack` or an attack spell's `Cast`,
-    /// with its art or active), and Line Pierce's strike if it has one: the
-    /// numbers the `Act` would fight with. For the AI ([`crate::ai`]), like
-    /// [`Self::plain_forecast`]; the action is validated as an `Act`'s is,
-    /// so `None` if the battle would refuse it (or it is no attack).
+    /// with its art or active), with Line Pierce's strike and what the art
+    /// or active does beyond the numbers: what the `Act` would do. For the
+    /// AI ([`crate::ai`]), like [`Self::plain_forecast`]; the action is
+    /// validated as an `Act`'s is, so `None` if the battle would refuse it
+    /// (or it is no attack).
     pub(crate) fn attack_forecast(
         &self,
         unit: &Unit,
         dest: Pos,
         path: &[Pos],
         action: &UnitAction,
-    ) -> Option<(Forecast, Option<(UnitId, Forecast)>)> {
-        match self.plan_step(unit, dest, path, action) {
-            Ok(Step::Attack(step)) => Some((step.forecast, step.pierce)),
-            _ => None,
-        }
+    ) -> Option<AttackOutlook> {
+        let Ok(Step::Attack(step)) = self.plan_step(unit, dest, path, action) else {
+            return None;
+        };
+        let art = step.art.as_ref();
+        let active = step.active.as_ref();
+        let debuff =
+            art.and_then(|a| Some((EffectSource::Art(a.art.clone()), a.effect.first_hit_mods()?)));
+        let art_stance =
+            art.and_then(|a| Some((EffectSource::Art(a.art.clone()), a.effect.stance.clone()?)));
+        let active_stance = active.and_then(|a| {
+            Some((
+                EffectSource::Skill(a.skill.clone()),
+                a.stance.as_ref()?.mods.clone(),
+            ))
+        });
+        Some(AttackOutlook {
+            forecast: step.forecast,
+            pierce: step.pierce,
+            debuff,
+            stance: art_stance.or(active_stance),
+            post_move: active.map_or(0, |a| a.post_move),
+            drain: active.is_some_and(|a| a.drain),
+        })
     }
 
     /// The spell `spell` if `unit` has learned it and has a use left.

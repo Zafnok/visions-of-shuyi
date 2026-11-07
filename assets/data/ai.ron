@@ -17,6 +17,14 @@
 // − spell_use  for a spell active (it costs 1 extra spell use)
 // so they keep them for attacks they really improve.
 //
+// What an art or active does beyond the forecast's numbers adds (ticket 0511):
+// + debuff    × the points an art's first hit lowers (avoid / 10) × the
+//               chance it hits at least once and the target stands
+// + stance    × (Def + Res + Avoid / 10) of a stance it doesn't have yet,
+//               if a hostile unit could attack its tile this turn
+// + post_move   for a move after the attack, from such a tile
+// + drain     × min(expected HP dealt / 2, HP it is missing)
+//
 // Enemies carry no consumables and never drink potions (Nick,
 // docs/design/weapons-and-items.md); only healer units heal.
 (
@@ -27,4 +35,8 @@
     terrain: 5,
     durability: 5,
     spell_use: 15,
+    debuff: 8,
+    stance: 10,
+    post_move: 10,
+    drain: 5,
 )

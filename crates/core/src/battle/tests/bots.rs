@@ -486,7 +486,7 @@ fn threat_forecast_is_the_attackers_forecast_from_in_range() {
     let real = s
         .attack_forecast(s.unit(UnitId(1)).unwrap(), p(0, 0), &[p(0, 0)], &attack(3))
         .unwrap()
-        .0;
+        .forecast;
     assert_eq!(s.threat_forecast(UnitId(1), UnitId(3)), Some(real));
     // Enemy 3 on unit 1: it strikes back the same way.
     let back = s.threat_forecast(UnitId(3), UnitId(1)).unwrap();
