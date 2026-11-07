@@ -262,6 +262,13 @@ fn a_tip_in_a_pack_keeps_to_the_tip_limits_in_cells() {
             "xx/data.ron: \"tips.wait.text\": a text line is over 60 cells: \"{wide}é\""
         )]
     );
+    // A tip's instructions (`how`, 0475) keep to their own lines limit.
+    let how = |text: &str| super::data::text_problem("tips.wait.how", text);
+    assert_eq!(how("1\n2\n3"), None);
+    let lines = Some("the text must have 1 to 3 lines".to_owned());
+    assert_eq!(how("1\n2\n3\n4"), lines);
+    assert_eq!(how(""), lines);
+    assert!(how(&format!("{wide}é")).is_some());
 }
 
 /// Ticket 0456: a lesson's title, text and items keep to the lesson
