@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0503"]
 nick_input: none
-completed:
+completed: 2026-11-07
 ---
 
 # 0511 — Boss AI weighs effects the forecast doesn't show
@@ -90,12 +90,12 @@ None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
 
 ## Acceptance criteria
 
-- [ ] A boss archer in range of a unit it can't kill uses Pinning Shot when the debuff weight makes it worth its durability, and a plain shot when the weight is 0 (tests).
-- [ ] A boss that will be attacked next turn prefers a stance art over a plain attack of the same numbers; one out of every hostile unit's reach doesn't (tests).
-- [ ] With every new weight at 0 the AI chooses exactly as on this PR's
+- [x] A boss archer in range of a unit it can't kill uses Pinning Shot when the debuff weight makes it worth its durability, and a plain shot when the weight is 0 (tests).
+- [x] A boss that will be attacked next turn prefers a stance art over a plain attack of the same numbers; one out of every hostile unit's reach doesn't (tests).
+- [x] With every new weight at 0 the AI chooses exactly as on this PR's
       base revision (test), preserving 0330/0521's fixes if already merged.
-- [ ] Same state → same command (determinism test); every emitted command is valid (0501's property test still passes).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Same state → same command (determinism test); every emitted command is valid (0501's property test still passes).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -104,5 +104,40 @@ None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `BattleState::attack_forecast` now returns an `AttackOutlook`: the
+  forecast, Line Pierce's strike, the art's first-hit debuff and the art's
+  or active's stance (each with its source), the active's `post_move` and
+  `drain`.
+- `core::ai` adds the four scores to a technique's score (`Planner::utility`),
+  documented in the module docs (*What the forecast doesn't show*) and in
+  `assets/data/ai.ron`. `Odds` gained `debuffed`: the chance the attacker
+  hits at least once and the target stands (the property test against
+  `resolve` checks it too).
+- New weights (*tunable*): `debuff: 8`, `stance: 10`, `post_move: 10`,
+  `drain: 5`. With them a boss archer pins a unit it can't kill (Mov −3 on
+  a sure hit: 24 against 15 for 3 durability), a gauntlet boss in reach of
+  the player's units Sidesteps (20 against 15), an archer in danger Vaults
+  (10 against 5), and a wounded caster Siphons only when the spell use is
+  cheap enough (12.5 for 10 HP missing against 15: not at the starting
+  costs).
+- **Chapter 4's recorded playthrough was re-recorded**: Dace now uses his
+  arts, so the old commands no longer finished him on turn 5. The new
+  recording still wins on turn 5 with nobody lost; only turn 5 changed
+  (one more attack needed).
+- The zero-weight criterion is tested on this PR's scenes
+  (`without_the_new_weights_every_scene_plays_as_before`) and by every
+  0501/0503/0521 AI test still passing unchanged with the starting weights
+  (their fixtures have no art or active with these effects).
+- Friction: estimate 80 production lines, measured 92 (1.15×).
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+
+- A debuff counts its stats' amounts added up, plus the avoid it takes off
+  / 10 (Off Balance). It counts nothing on a target that already has that
+  art's debuff (it would only refresh).
+- A stance counts its Def + Res + Avoid / 10 only; a stance's reaction
+  (Riposte, Spear Wall, Deflect…) and other stats score nothing.
+- "In danger" is the AI's danger zone as it stands before the attack (the
+  same one healers use): a hostile unit could attack the tile this turn.
+- Drain counts the HP missing before the combat, not what the combat's
+  counter takes.

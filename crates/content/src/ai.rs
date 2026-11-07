@@ -34,8 +34,8 @@ pub fn from_source(file: &str, source: &str) -> Result<AiWeights, Vec<ContentErr
 mod tests {
     use super::*;
 
-    const VALID: &str =
-        "(damage: 1, kill: 2, lord: 3, risk: 4, terrain: 5, durability: 6, spell_use: 7)";
+    const VALID: &str = "(damage: 1, kill: 2, lord: 3, risk: 4, terrain: 5, durability: 6, \
+        spell_use: 7, debuff: 8, stance: 9, post_move: 10, drain: 11)";
 
     #[test]
     fn valid_source_loads() {
@@ -47,6 +47,10 @@ mod tests {
             terrain: 5,
             durability: 6,
             spell_use: 7,
+            debuff: 8,
+            stance: 9,
+            post_move: 10,
+            drain: 11,
         };
         assert_eq!(from_source("ai.ron", VALID), Ok(expected));
     }
@@ -56,11 +60,14 @@ mod tests {
         assert!(from_source("ai.ron", "(").is_err());
         let extra = VALID.replace("damage: 1", "damage: 1, bravery: 9");
         assert!(from_source("ai.ron", &extra).is_err());
-        let missing = VALID.replace("lord: 3, ", "");
-        assert!(from_source("ai.ron", &missing).is_err());
+        for field in ["lord: 3, ", "debuff: 8, ", ", drain: 11"] {
+            let missing = VALID.replace(field, "");
+            assert!(from_source("ai.ron", &missing).is_err(), "{field}");
+        }
         let negative = "(
  damage: 1, kill: 2, lord: 3,
- risk: -4, terrain: 5, durability: 6, spell_use: 7)";
+ risk: -4, terrain: 5, durability: 6, spell_use: 7,
+ debuff: 8, stance: 9, post_move: 10, drain: 11)";
         let errors = from_source("ai.ron", negative).err().unwrap_or_default();
         assert_eq!(errors.first().map(|e| e.line), Some(Some(3)));
     }

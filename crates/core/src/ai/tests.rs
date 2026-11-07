@@ -19,7 +19,7 @@ use std::time::Instant;
 use proptest::prelude::*;
 
 use super::*;
-use crate::art::{ArtDef, ArtEffect, ArtTable};
+use crate::art::{ArtDef, ArtEffect, ArtTable, Debuff};
 use crate::battle::{BattleSetup, Event, Objective, Reinforcement};
 use crate::class::{ClassDef, ClassId, ClassTable, UnitTags, WeaponProficiency};
 use crate::combat::{CombatMods, DamageType, SideForecast};
@@ -30,7 +30,8 @@ use crate::item::{
 use crate::magic::Element;
 use crate::map::BattleMap;
 use crate::skill::{
-    Area, Condition, PassiveEffect, SkillDef, SkillId, SkillKind, SkillTable, TimedMods, WeaponReq,
+    Area, Condition, EffectSource, PassiveEffect, SkillDef, SkillId, SkillKind, SkillTable,
+    TimedEffect, TimedMods, WeaponReq,
 };
 use crate::spell::{SpellDef, SpellState, SpellTable};
 use crate::stats::{StatKind, Stats};
@@ -124,7 +125,8 @@ fn weapon(name: &str, might: StatValue, hit: StatValue, (min, max): (u32, u32)) 
 /// `javelin` (4, range 1–2), `bow` (a bow: 5, range 2), `potion` (heals 10).
 /// With their own arts: `pike` (5; `line_pierce`), `trick` (5, hit 50;
 /// `bash`, `aim`, `zeal`), `knack` (5, hit 50; `zeal`) and `moonblade` (5;
-/// `moonwave`). Of other kinds, range 1: `spear` and `axe` (5).
+/// `moonwave`). Of other kinds, range 1: `spear` and `axe` (5). Ticket 0511:
+/// `pinner` (a bow with `pinning_shot`) and `dodger` (5; `sidestep`).
 fn items() -> ItemTable {
     let bow = WeaponDef {
         kind: WeaponKind::Bow,
@@ -142,7 +144,13 @@ fn items() -> ItemTable {
             ..weapon(name, 5, 100, (1, 1))
         })
     };
+    let pinner = WeaponDef {
+        arts: vec![ArtId::new("pinning_shot")],
+        ..bow.clone()
+    };
     let entries = [
+        ("pinner", ItemDef::Weapon(pinner)),
+        ("dodger", with_arts("Dodger", 100, &["sidestep"])),
         ("spear", of_kind("Spear", WeaponKind::Spear)),
         ("axe", of_kind("Axe", WeaponKind::Axe)),
         ("moonblade", with_arts("Moonblade", 100, &["moonwave"])),
@@ -225,7 +233,9 @@ fn spells() -> SpellTable {
 /// `line_pierce` (4) and `aim`, `bash` and `zeal` (1: hit +20). As the game
 /// has them: `long_thrust` (spear C) and `hurl` (axe B), which reach 1–2 with
 /// hit −10; `moonwave` (a weapon art), which reaches 2 and hits Res; and
-/// `cascade` (sword A: each hit deals 3 more than the one before).
+/// `cascade` (sword A: each hit deals 3 more than the one before). Weapon
+/// arts for ticket 0511: `pinning_shot` (3: Mov −3 on the first hit) and
+/// `sidestep` (3: a stance of avoid +20).
 fn arts() -> ArtTable {
     let art = |id: &str, kind, rank, cost, effect| ArtDef {
         id: ArtId::new(id),
@@ -270,6 +280,23 @@ fn arts() -> ArtTable {
         cascade: 3,
         ..ArtEffect::default()
     };
+    let pinning_shot = ArtEffect {
+        on_first_hit: vec![Debuff {
+            stat: StatKind::Mov,
+            amount: 3,
+        }],
+        ..ArtEffect::default()
+    };
+    let sidestep = ArtEffect {
+        stance: Some(TimedMods {
+            combat: CombatMods {
+                avoid: 20,
+                ..CombatMods::default()
+            },
+            ..Default::default()
+        }),
+        ..ArtEffect::default()
+    };
     let arts = [
         art(
             "long_thrust",
@@ -287,6 +314,8 @@ fn arts() -> ArtTable {
         art("aim", sword, None, 1, sure()),
         art("bash", sword, None, 1, sure()),
         art("zeal", sword, None, 1, sure()),
+        art("pinning_shot", WeaponKind::Bow, None, 3, pinning_shot),
+        art("sidestep", sword, None, 3, sidestep),
     ];
     ArtTable {
         arts: arts.into_iter().map(|a| (a.id.clone(), a)).collect(),
@@ -314,12 +343,28 @@ fn strike(id: &str, cost: SkillCost, with: WeaponReq, mods: CombatMods, range: u
     }
 }
 
+/// Combat active `def` with a move after the attack of `tiles` and `drain`.
+fn riding(mut def: SkillDef, tiles: u32, drains: bool) -> SkillDef {
+    if let SkillKind::Active {
+        effect: ActiveEffect::Strike {
+            post_move, drain, ..
+        },
+        ..
+    } = &mut def.kind
+    {
+        *post_move = tiles;
+        *drain = drains;
+    }
+    def
+}
+
 /// `skirmish`: after attacking with a bow, move 1 tile. `charge`: might +2
 /// after moving 4 tiles or more. The actives, with their durability cost:
 /// `keen` (3: might +1), `zeal` (1: hit +20), `long_shot` (3: a bow's max
 /// range +1) and `overcast` (an extra spell use: a spell's might +2); and
 /// `brace` (no attack, 2 uses per battle: Def +3 until the user's next
-/// phase).
+/// phase). Ticket 0511: `vault` (1: with a bow, move 1 tile after) and
+/// `siphon` (an extra spell use: heal half the damage dealt).
 fn skills() -> SkillTable {
     let might = |might| CombatMods {
         might,
@@ -364,6 +409,18 @@ fn skills() -> SkillTable {
             0,
         ),
         brace,
+        riding(strike("vault", dur(1), bow, might(0), 0), 1, false),
+        riding(
+            strike(
+                "siphon",
+                SkillCost::ExtraSpellUse,
+                WeaponReq::Spell,
+                might(0),
+                0,
+            ),
+            0,
+            true,
+        ),
     ];
     let skirmish = SkillDef {
         id: SkillId::new("skirmish"),
@@ -1732,12 +1789,16 @@ fn hundredths(n: i32) -> Score {
     Score::from(n) * Score::from(CERTAIN) / 100
 }
 
-/// Odds of whole HP dealt and taken, and a chance of `kill` (0 or 1).
+/// Odds of whole HP dealt and taken, and a chance of `kill` (0 or 1), of a
+/// combat whose every strike hits: a target that took damage and stands
+/// was hit.
 fn whole(dealt: i32, taken: i32, kill: i32) -> Odds {
+    let debuffed = i32::from(kill == 0 && dealt > 0);
     Odds {
         dealt: hundredths(dealt * 100),
         taken: hundredths(taken * 100),
         kill: hundredths(kill * 100),
+        debuffed: hundredths(debuffed * 100),
     }
 }
 
@@ -1828,7 +1889,12 @@ fn absorbed_strikes_heal() {
         after_first_hit: None,
     };
     // Healed up to max: nothing dealt.
-    assert_eq!(Odds::of(&f, hp(10, 10), hp(8, 10)), Odds::default());
+    // A healing hit still lands (a first-hit debuff would stick).
+    let landed = Odds {
+        debuffed: CERTAIN.into(),
+        ..Odds::default()
+    };
+    assert_eq!(Odds::of(&f, hp(10, 10), hp(8, 10)), landed);
     // It heals 3, up to max, then a first-hit debuff turns the next strike
     // into 7 of damage.
     let f = Forecast {
@@ -1966,6 +2032,8 @@ proptest! {
             expected.taken += share * Score::from((a_hp - outcome.attacker_hp).max(0));
             if outcome.defender_hp <= 0 {
                 expected.kill += share;
+            } else if outcome.strikes.iter().any(|s| s.by == Side::Attacker && s.hit) {
+                expected.debuffed += share;
             }
         }
         prop_assert_eq!(Odds::of(&forecast, attacker, defender), expected);
@@ -1983,12 +2051,14 @@ fn scores_add_up_the_weights() {
         terrain: 5,
         durability: 9,
         spell_use: 9,
+        ..AiWeights::default()
     };
     let planner = Planner::new(&state, &weights);
     let odds = Odds {
         dealt: hundredths(400),
         taken: hundredths(150),
         kill: hundredths(50),
+        debuffed: 0,
     };
     // 2×4 + 30×0.5 + 7 − 3×1.5 + 5×3 = 8 + 15 + 7 − 4.5 + 15.
     assert_eq!(planner.score(&odds, true, 30), hundredths(4050));
@@ -2031,6 +2101,7 @@ fn the_longest_combat_counts_its_chances_exactly() {
             dealt: kill,
             taken: fall,
             kill,
+            debuffed: 0,
         }
     );
 }
@@ -2588,4 +2659,247 @@ fn a_healer_moves_out_of_what_a_hostile_art_reaches() {
     };
     assert_eq!(plan(|_| {}), p(6, 0));
     assert_eq!(plan(spear_c), p(8, 0));
+}
+
+// ── Ticket 0511: what the forecast doesn't show ──
+
+/// The starting weights with the four of ticket 0511 at 0.
+const WITHOUT_0511: AiWeights = AiWeights {
+    debuff: 0,
+    stance: 0,
+    post_move: 0,
+    drain: 0,
+    ..AiWeights::STARTING
+};
+
+/// `effects`, lasting past the start of the Enemy phase a scene begins with
+/// (until the Other phase, after it).
+fn lasting(effects: &[TimedEffect]) -> Vec<TimedEffect> {
+    effects
+        .iter()
+        .map(|e| TimedEffect {
+            until: crate::battle::Phase::Other,
+            ..e.clone()
+        })
+        .collect()
+}
+
+/// A boss archer two tiles from unit 1, which can't shoot back, with
+/// `hp` of its 20 HP (the shot deals 5).
+fn pinning(hp: StatValue, effects: Vec<TimedEffect>) -> BattleState {
+    enemy_phase(&["P.E"], |u| {
+        u[0].hp = hp;
+        u[0].effects = effects;
+        u[1] = carrying(u[1].clone(), &["pinner"]);
+        boss(&mut u[1]);
+    })
+}
+
+#[test]
+fn a_boss_archer_pins_a_unit_it_cannot_kill() {
+    let state = pinning(20, vec![]);
+    let (pin, plain) = (
+        art_attack(2, p(2, 0), 1, "pinning_shot"),
+        attack(2, p(2, 0), 1, 0),
+    );
+    // Mov −3 on a sure hit, at 8 a point: 24, for 3 durability (15).
+    assert_eq!(next(&state), pin);
+    let weights = |debuff| AiWeights {
+        debuff,
+        ..AiWeights::STARTING
+    };
+    assert_eq!(next_command(&state, &weights(6)).unwrap(), pin, "18 > 15");
+    assert_eq!(next_command(&state, &weights(5)).unwrap(), plain, "15");
+    assert_eq!(next_command(&state, &weights(0)).unwrap(), plain);
+}
+
+#[test]
+fn no_pin_on_a_unit_that_falls_or_is_already_pinned() {
+    let plain = attack(2, p(2, 0), 1, 0);
+    // The shot kills: nobody is left to pin.
+    assert_eq!(next(&pinning(5, vec![])), plain);
+    // The target already has this art's debuff: it would only refresh.
+    let mut pinned = pinning(20, vec![]);
+    pinned
+        .apply(&art_attack(2, p(2, 0), 1, "pinning_shot"))
+        .unwrap();
+    let target = pinned.unit(UnitId(1)).unwrap();
+    assert!(target.has_effect(&EffectSource::Art(ArtId::new("pinning_shot"))));
+    assert_eq!(next(&pinning(20, lasting(&target.effects))), plain);
+}
+
+/// A stationary boss with a `dodger` next to unit 1, who has no weapon (so
+/// no counter: Sidestep's avoid changes nothing in the combat), and a
+/// swordsman `gap` tiles further on.
+fn sidestepping(gap: usize, effects: Vec<TimedEffect>) -> BattleState {
+    let row = format!("PE{}P", ".".repeat(gap));
+    enemy_phase(&[&row], |u| {
+        u[0] = carrying(u[0].clone(), &[]);
+        u[1] = carrying(u[1].clone(), &["dodger"]);
+        u[1].ai = AiBehavior::Stationary;
+        u[1].effects = effects;
+        boss(&mut u[1]);
+    })
+}
+
+#[test]
+fn a_boss_in_danger_takes_a_stance() {
+    let (stance, plain) = (
+        art_attack(2, p(1, 0), 1, "sidestep"),
+        attack(2, p(1, 0), 1, 0),
+    );
+    // The swordsman (3 tiles off, Mov 4) can reach it: avoid +20, at 10 a
+    // point of Avoid / 10, is 20, for 3 durability (15).
+    let state = sidestepping(2, vec![]);
+    assert_eq!(next(&state), stance);
+    assert_eq!(next_command(&state, &WITHOUT_0511).unwrap(), plain);
+    // Out of every hostile unit's reach (7 tiles off), it doesn't.
+    assert_eq!(next(&sidestepping(6, vec![])), plain);
+    // Nor does it take a stance it already has.
+    let mut stood = state.clone();
+    stood.apply(&stance).unwrap();
+    let effects = lasting(&stood.unit(UnitId(2)).unwrap().effects);
+    assert!(
+        effects
+            .iter()
+            .any(|e| e.source == EffectSource::Art(ArtId::new("sidestep")))
+    );
+    assert_eq!(next(&sidestepping(2, effects)), plain);
+}
+
+/// A stationary boss archer two tiles from unit 1, who has no weapon, and a
+/// swordsman `gap` tiles beyond the archer.
+fn vaulting(gap: usize) -> BattleState {
+    let row = format!("P.E{}P", ".".repeat(gap));
+    enemy_phase(&[&row], |u| {
+        u[0] = carrying(u[0].clone(), &[]);
+        u[1] = carrying(u[1].clone(), &["bow"]);
+        u[1].ai = AiBehavior::Stationary;
+        boss(&mut u[1]);
+        knowing(&mut u[1], &["vault"]);
+    })
+}
+
+#[test]
+fn a_boss_in_danger_shoots_and_steps_away() {
+    let (vault, plain) = (
+        active_attack(2, p(2, 0), 1, "vault"),
+        attack(2, p(2, 0), 1, 0),
+    );
+    // In the swordsman's reach: a move after (10) for 1 durability (5).
+    let state = vaulting(2);
+    assert_eq!(next(&state), vault);
+    assert_eq!(next_command(&state, &WITHOUT_0511).unwrap(), plain);
+    // Out of reach, it stays.
+    assert_eq!(next(&vaulting(6)), plain);
+}
+
+/// A stationary boss casting Fire (5 damage, no counter at 2 tiles) at unit
+/// 1, with `hp` of its 20 HP and Siphon.
+fn siphoning(hp: StatValue) -> BattleState {
+    enemy_phase(&["P.E"], |u| {
+        u[1] = carrying(u[1].clone(), &[]);
+        u[1].ai = AiBehavior::Stationary;
+        u[1].hp = hp;
+        u[1].learned = BTreeSet::from([SpellId::new("fire")]);
+        boss(&mut u[1]);
+        knowing(&mut u[1], &["siphon"]);
+    })
+}
+
+#[test]
+fn a_wounded_boss_drains_what_it_is_missing() {
+    let siphon = act(
+        2,
+        p(2, 0),
+        UnitAction::Cast {
+            spell: SpellId::new("fire"),
+            target: CastTarget::Unit(UnitId(1)),
+            active: Some(SkillId::new("siphon")),
+        },
+    );
+    let plain = cast("fire", 2, p(2, 0), 1, false);
+    // Heals half of 5, at 5 a point: 12.5, for a spell use costing 6.
+    let state = siphoning(10);
+    assert_eq!(next_costing(&state, 5, 6), siphon);
+    assert_eq!(next(&state), plain, "a spell use costs 15");
+    let weights = AiWeights {
+        spell_use: 6,
+        ..WITHOUT_0511
+    };
+    assert_eq!(next_command(&state, &weights).unwrap(), plain);
+    // Missing only 1 HP, it heals 1: 5.
+    assert_eq!(next_costing(&siphoning(19), 5, 6), plain);
+    // Unhurt, it heals nothing: a tie, which goes to the plain cast.
+    assert_eq!(next_costing(&siphoning(20), 5, 0), plain);
+}
+
+#[test]
+fn without_the_new_weights_every_scene_plays_as_before() {
+    // Before ticket 0511 an art or active only beat the plain attack on the
+    // forecast's numbers, which are the same in every scene above.
+    let plain = attack(2, p(2, 0), 1, 0);
+    let without = |state: &BattleState| next_command(state, &WITHOUT_0511).unwrap();
+    assert_eq!(without(&pinning(20, vec![])), plain);
+    assert_eq!(without(&vaulting(2)), plain);
+    assert_eq!(without(&sidestepping(2, vec![])), attack(2, p(1, 0), 1, 0));
+    let weights = AiWeights {
+        spell_use: 0,
+        ..WITHOUT_0511
+    };
+    assert_eq!(
+        next_command(&siphoning(10), &weights).unwrap(),
+        cast("fire", 2, p(2, 0), 1, false)
+    );
+}
+
+#[test]
+fn utility_adds_up_each_effect_in_points() {
+    // The boss of `sidestepping`, in danger, on unit 1, who stands.
+    let state = sidestepping(2, vec![]);
+    let (boss, target) = (
+        state.unit(UnitId(2)).unwrap(),
+        state.unit(UnitId(1)).unwrap(),
+    );
+    let weights = AiWeights {
+        debuff: 2,
+        stance: 3,
+        post_move: 0,
+        drain: 0,
+        ..AiWeights::default()
+    };
+    let planner = Planner::new(&state, &weights);
+    let odds = Odds {
+        debuffed: CERTAIN.into(),
+        ..Odds::default()
+    };
+    // Def −3, Spd −1 and avoid −20: 4 + 2 points.
+    let lowered = TimedMods {
+        stats: vec![(StatKind::Def, -3), (StatKind::Spd, -1)],
+        combat: CombatMods {
+            avoid_debuff: 20,
+            ..CombatMods::default()
+        },
+        ..Default::default()
+    };
+    // Def +2, Res +1 and avoid +20 count, 3 + 2 points; Str +5 doesn't.
+    let guarded = TimedMods {
+        stats: vec![(StatKind::Def, 2), (StatKind::Res, 1), (StatKind::Str, 5)],
+        combat: CombatMods {
+            avoid: 20,
+            ..CombatMods::default()
+        },
+        ..Default::default()
+    };
+    let source = EffectSource::Art(ArtId::new("test"));
+    let outlook = AttackOutlook {
+        forecast: long_combat(1),
+        pierce: None,
+        debuff: Some((source.clone(), lowered)),
+        stance: Some((source, guarded)),
+        post_move: 0,
+        drain: false,
+    };
+    let utility = planner.utility(boss, p(1, 0), target, &odds, &outlook);
+    assert_eq!(utility, points(2 * 6 + 3 * 5));
 }

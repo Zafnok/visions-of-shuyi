@@ -378,7 +378,7 @@ fn a_threat_forecast_counts_a_bosss_harder_active() {
     let guarded = s
         .attack_forecast(&boss, p(2, 0), &[p(2, 0)], &attack_with(1, "guarding"))
         .unwrap()
-        .0;
+        .forecast;
     assert_eq!(guarded.attacker.all_hit(), plain.attacker.all_hit());
     assert_eq!(guarded.attacker.hit, plain.attacker.hit);
     assert_ne!(guarded.defender, plain.defender);
