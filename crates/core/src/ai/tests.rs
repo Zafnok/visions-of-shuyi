@@ -2852,3 +2852,54 @@ fn without_the_new_weights_every_scene_plays_as_before() {
         cast("fire", 2, p(2, 0), 1, false)
     );
 }
+
+#[test]
+fn utility_adds_up_each_effect_in_points() {
+    // The boss of `sidestepping`, in danger, on unit 1, who stands.
+    let state = sidestepping(2, vec![]);
+    let (boss, target) = (
+        state.unit(UnitId(2)).unwrap(),
+        state.unit(UnitId(1)).unwrap(),
+    );
+    let weights = AiWeights {
+        debuff: 2,
+        stance: 3,
+        post_move: 0,
+        drain: 0,
+        ..AiWeights::default()
+    };
+    let planner = Planner::new(&state, &weights);
+    let odds = Odds {
+        debuffed: CERTAIN.into(),
+        ..Odds::default()
+    };
+    // Def −3, Spd −1 and avoid −20: 4 + 2 points.
+    let lowered = TimedMods {
+        stats: vec![(StatKind::Def, -3), (StatKind::Spd, -1)],
+        combat: CombatMods {
+            avoid_debuff: 20,
+            ..CombatMods::default()
+        },
+        ..Default::default()
+    };
+    // Def +2, Res +1 and avoid +20 count, 3 + 2 points; Str +5 doesn't.
+    let guarded = TimedMods {
+        stats: vec![(StatKind::Def, 2), (StatKind::Res, 1), (StatKind::Str, 5)],
+        combat: CombatMods {
+            avoid: 20,
+            ..CombatMods::default()
+        },
+        ..Default::default()
+    };
+    let source = EffectSource::Art(ArtId::new("test"));
+    let outlook = AttackOutlook {
+        forecast: long_combat(1),
+        pierce: None,
+        debuff: Some((source.clone(), lowered)),
+        stance: Some((source, guarded)),
+        post_move: 0,
+        drain: false,
+    };
+    let utility = planner.utility(boss, p(1, 0), target, &odds, &outlook);
+    assert_eq!(utility, points(2 * 6 + 3 * 5));
+}
