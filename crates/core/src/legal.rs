@@ -272,8 +272,10 @@ impl Options {
 /// How far (Manhattan) from its tile `unit` can attack, cast or heal a
 /// unit: its farthest-reaching weapon or learned spell, plus its largest
 /// combat-active range bonus, or the largest range an art gives (Long
-/// Thrust reaches 2 with any spear). 0 if it has neither.
-fn attack_reach(state: &BattleState, unit: &Unit) -> u32 {
+/// Thrust reaches 2 with any spear). 0 if it has neither. No attack or
+/// cast reaches a unit farther away, so a menu checks only those nearer
+/// (1247).
+pub fn attack_reach(state: &BattleState, unit: &Unit) -> u32 {
     let weapons = unit
         .loadout
         .weapons

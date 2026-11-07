@@ -13,6 +13,9 @@ workspace = true
 [features]
 default = ["std"]
 std = ["serde/std", "shuyi-core/std"]
+# `movement::searches`, the path searches a thread has run: for tests
+# that count them (1247). Never on in a build that ships.
+search-count = ["std"]
 
 [dependencies]
 serde.workspace = true

@@ -278,6 +278,19 @@ fn stopping_tiles(units: &[Unit], faction: Faction, width: u16, height: u16) -> 
     stops
 }
 
+#[cfg(feature = "search-count")]
+std::thread_local! {
+    static SEARCHES: core::cell::Cell<u32> = const { core::cell::Cell::new(0) };
+}
+
+/// How many times [`reachable`] has run on this thread. **For tests only**
+/// (the `search-count` feature): the UI's tests count the searches a menu
+/// makes (1247).
+#[cfg(feature = "search-count")]
+pub fn searches() -> u32 {
+    SEARCHES.with(core::cell::Cell::get)
+}
+
 /// Where unit `mover` can move: Dijkstra from its tile with its Mov as
 /// budget, the stopping tiles entered but never left.
 pub fn reachable(
@@ -287,6 +300,8 @@ pub fn reachable(
     units: &[Unit],
     mover: UnitId,
 ) -> Result<Reach, MoveError> {
+    #[cfg(feature = "search-count")]
+    SEARCHES.with(|n| n.set(n.get() + 1));
     let (unit, movement_type, budget) = mover_info(map, classes, units, mover)?;
     let tiles = &map.tiles;
     let (width, height) = (tiles.width(), tiles.height());
