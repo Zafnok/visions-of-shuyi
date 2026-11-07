@@ -134,5 +134,8 @@ reasons.
   1248 points to it.
 - **Mutation testing.** CI's first run missed `check_after` replaced by
   `Ok(())` and the counter's mutants. `a_planned_move_answers_like_the_command`
-  (core) and the exact count of 1 in the UI test now catch them.
+  (core) and the exact count of 1 in the UI test now catch them. CI
+  runs only the mutated crate's tests, so core also turns on its own
+  `search-count` for its tests (a self dev-dependency, as `trpg-ui` does
+  for `harness`), and `each_search_is_counted` checks the counter.
 - No gameplay rule decided; nothing for the Act 1 playtest.

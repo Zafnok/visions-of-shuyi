@@ -22,5 +22,7 @@ serde.workspace = true
 shuyi-core.workspace = true
 
 [dev-dependencies]
+# Its own `search-count`, for the test of the counter (1247).
+trpg-core = { path = ".", features = ["search-count"] }
 proptest.workspace = true
 ron = { workspace = true, features = ["std"] }
