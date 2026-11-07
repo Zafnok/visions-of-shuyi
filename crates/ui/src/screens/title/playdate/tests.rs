@@ -50,6 +50,7 @@ fn view(c: &Ctx) -> TitleView {
         .collect();
     TitleView {
         cinematic: None,
+        picture: FULL,
         menu_opacity: FULL,
         backdrop: Some(backdrop(c)),
         sparks: Some(1234),
@@ -316,7 +317,7 @@ fn the_cinematics_shots_are_painted_in_the_playdates_look() {
         "{frame:?}"
     );
     assert!(draw(1.0).backdrop().is_some(), "the map");
-    // The brigand's attack (68.5 s on): the plates along the bottom.
+    // The brigand's attack (69.95 s on): the plates along the bottom.
     let fight = draw(70.0);
     let corner = fight.get(0, 12).map(|c| c.glyph);
     assert!(matches!(corner, Some('┌' | '╔')), "{corner:?}");

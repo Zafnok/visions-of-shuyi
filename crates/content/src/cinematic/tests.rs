@@ -85,7 +85,7 @@ fn the_test_cinematic_loads() {
 }
 
 /// The title's cinematic is as long as the title song and ends on the
-/// logo, from the song's last note (1:57) to its loop
+/// logo, from the song's last chord (1:55.8, ticket 0843) to its loop
 /// (`docs/design/title-screen.md`, *Intro cinematic*). Its shots before
 /// that are a stand-in until ticket 0820: a pan over a story battle.
 #[test]
@@ -96,7 +96,7 @@ fn the_title_cinematic_is_as_long_as_its_song_and_ends_on_the_logo() {
     assert_eq!(title.length_ms, c.audio.music["title"].length_ms);
     assert_eq!(title.shots[0].at_ms, 0);
     let logo = ShotDef {
-        at_ms: 117_000,
+        at_ms: 115_800,
         shot: Shot::Logo,
     };
     assert_eq!(title.shots.last(), Some(&logo));

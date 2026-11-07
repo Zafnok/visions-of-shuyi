@@ -638,10 +638,10 @@ fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
     }
 }
 
-/// Ticket 0833: a fight of the title is never cut off: each combat shot
-/// lasts at least as long as its fight.
+/// Tickets 0833 and 0843: a fight of the title is never cut off, and its
+/// shot holds its last moment for about half a second before the cut.
 #[test]
-fn the_titles_fights_end_before_their_cuts() {
+fn the_titles_fights_end_half_a_second_before_their_cuts() {
     let ctx = ctx();
     let title = &ctx.game.content.cinematics["title"];
     let lead = LeadProfile::new(
@@ -657,15 +657,34 @@ fn the_titles_fights_end_before_their_cuts() {
         let end = title.shots.get(i + 1).map_or(title.length_ms, |s| s.at_ms);
         #[allow(clippy::cast_precision_loss)]
         let lasts = (end - shot.at_ms) as f32 / 1000.0;
+        // Held about half a second after the last blow (ticket 0843).
+        let hold = lasts - duel.seconds();
         assert!(
-            duel.seconds() <= lasts,
-            "shot {}: {} s",
+            (0.4..=0.6).contains(&hold),
+            "shot {}: {} s of {lasts}",
             i + 1,
             duel.seconds()
         );
         fights += 1;
     }
     assert!(fights >= 1);
+}
+
+/// Ticket 0843: the title's shots start where Nick's round 3 put them:
+/// the talk at 48.5 (7.5 s), the fights at 69.95 and 88.2 (their cuts
+/// after at 74.5 and 91.25 unchanged), the logo on the chord at 115.8.
+#[test]
+fn the_titles_shots_start_on_round_threes_times() {
+    let ctx = ctx();
+    let title = &ctx.game.content.cinematics["title"];
+    let starts: Vec<u32> = title.shots.iter().map(|s| s.at_ms).collect();
+    assert_eq!(
+        starts,
+        [
+            0, 15_000, 30_750, 48_500, 56_000, 69_950, 74_500, 88_200, 91_250, 95_500, 104_500,
+            115_800
+        ]
+    );
 }
 
 /// Ticket 1044: a map shot's zoom on a console half as wide as the PC's

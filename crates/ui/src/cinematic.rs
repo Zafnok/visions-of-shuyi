@@ -479,6 +479,32 @@ impl CinematicPlayer {
         duel.view(ctx, &self.cast.lead, seconds)
     }
 
+    /// The sounds the cinematic plays after `from` seconds from its start
+    /// and up to `to` (wrapped at the length; ticket 0843): the cues of
+    /// the fight on screen at `to` that fall in that time, as the battle's
+    /// combat scene plays them for the same attack. None when `to` isn't
+    /// after `from` or the shot then isn't a fight.
+    pub fn sounds(&self, from: f32, to: f32) -> Vec<&'static str> {
+        let Some((Built::Combat { duel: Some(duel) }, moment)) = self.player.at(to) else {
+            return Vec::new();
+        };
+        if to <= from {
+            return Vec::new();
+        }
+        // In seconds from the shot's start, unrounded: one frame's end is
+        // the next one's start.
+        #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
+        let secs = |ms: u32| ms as f32 / 1000.0;
+        let length = secs(self.timeline().length_ms());
+        let now = to.rem_euclid(length) - secs(moment.t_ms - moment.into_ms);
+        let since = now - (to - from);
+        let due = duel
+            .cues()
+            .iter()
+            .filter(|(at, _)| *at > since && *at <= now);
+        due.map(|(_, cue)| *cue).collect()
+    }
+
     /// Draws the cinematic as it is `t` seconds after its start (wrapped
     /// at the length) over the whole of `buf`, at `brightness` (1 = as it
     /// is, 0 = black: [`GlyphBuffer::fade`]). The same `t` always draws
