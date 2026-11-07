@@ -109,6 +109,17 @@ Nick's.
   like them; until the game has voices there is nothing for it to turn
   off, so it isn't shown.
 
+### Auto-advance
+
+- Ticket 0859 (Nick, 0043: "Same, plus auto-advance";
+  `voices-languages-and-script.md`, *Voices*): a row **Auto-advance: On /
+  Off** under the voice rows, starting **Off**, kept in the player profile.
+  On, a scene's text box moves on by itself when its voice clip ends, after
+  a pause of 0.5 s; a line with no clip (or with voices off) waits as long
+  as reading takes, 1 s plus 0.05 s per character (*Claude's starting
+  rules*, *tunable*). A press still works as usual; a reply choice always
+  waits for the player.
+
 ### Asking first
 
 - **Anything that does something somewhat big asks yes/no first.** On this
@@ -222,6 +233,33 @@ On the pull request (PR #264), 2026-10-14:
   title's Options. It has no yes/no of its own (a value row); like every
   row it is kept or discarded when leaving Options. Lessons already
   skipped stay readable in *Guides*.
+
+### Open sub-questions
+
+- None.
+
+## Another window in front
+
+Decided: 2026-11-06
+Source: ticket 1246
+
+### Nick's words
+
+Asked what the game does when the player switches to another window
+(keep running with sound; keep running muted; pause and mute; a choice in
+Options), Nick picked **"Pause and mute"**.
+
+### Rules
+
+- When the game's window loses the focus (alt-tab, a click on another
+  app, another browser tab), the game **pauses**: the picture stays on
+  its last frame, nothing moves, and keys and buttons do nothing.
+- It is **silent** meanwhile: music, sounds and voices. The music keeps
+  its place.
+- When the window has the focus again, everything continues where it
+  stopped, at the player's volumes; the time away is not caught up.
+- It is the same for every player: **no Options row**.
+- Not on the Playdate, which has its own pause when the system menu opens.
 
 ### Open sub-questions
 

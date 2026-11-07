@@ -107,6 +107,7 @@
     (key: "options.row.voices", source: "Voices (AI-generated)", text: "VOICES (AI-GENERATED)"),
     (key: "options.row.voice_volume", source: "Voice volume", text: "VOICE VOLUME"),
     (key: "options.row.log_voice", source: "Voice on hover in the log", text: "VOICE ON HOVER IN THE LOG"),
+    (key: "options.row.auto_advance", source: "Auto-advance", text: "AUTO-ADVANCE"),
     (key: "options.row.layout", source: "Layout", text: "LAYOUT"),
     (key: "options.row.key_bindings", source: "Key bindings", text: "KEY BINDINGS"),
     (key: "options.row.game_mode", source: "Game mode", text: "GAME MODE"),

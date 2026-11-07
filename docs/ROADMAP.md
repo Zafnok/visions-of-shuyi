@@ -236,7 +236,8 @@ The order:
      (drawing helpers, 2311), **1166** (frame time, 2312), **1167**
      (map skins, 2313), **1168** (option rows, 2314), **1169** (content
      loaders, 2208 and 2209), **1170** (the Playdate front end, 3010,
-     3028 and 3029; now waits only for engine 3090). Ready now, no engine needed: **1161** (one list
+     3028 and 3029; now waits for engine 2388, the inks as
+     patterns, and 3096, the export's package and features). Ready now, no engine needed: **1161** (one list
      mode in the battle), **1171** (one owner for the campaign
      settings), **1172** (`code-lines --tree` for sweeps), and **0470**
      (the forecast's kill mark as a sprite). None is on the Chapter 1
@@ -437,7 +438,7 @@ timing run; after Phases 2 and 3) → **1064** Nick plays Act 1 on the
 web and on his Playdate.
 
 **Off the path** (nothing in Act 1 waits for them): engine 3010, 3028,
-3029, 3090 and game **1170** (the Playdate front end on the engine's
+3029, 3090, 2388, 3096 and game **1170** (the Playdate front end on the engine's
 backend: cleanup, the game's own front end already runs on the
 device), with its bounded adoption/cleanup tickets **1203–1206**, and
 **1180** → **1207** for bot semantics then playtest tooling adoption;

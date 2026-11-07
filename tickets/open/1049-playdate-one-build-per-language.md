@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["1036", "1045", "0719", "0726"]
+blocked_by: ["1036", "1045", "0719", "0726", "1170"]
 nick_input: none
 completed:
 ---
@@ -67,6 +67,12 @@ it):
 **Out (do not do):**
 - Translating anything.
 - Selling and the store page (1052).
+
+**After 1170:** 1170 moves the Playdate build onto the engine's
+`shuyi export playdate` and 1206 deletes the old `cargo xtask playdate`
+exporter, so the per-language option, `.pdx` name and bundle ID go
+through the engine-backed export (its project/bake adapters, or an
+engine ticket if the exporter can't take a language), not the old one.
 
 **Carve (1105):** either order works. If languages moved to the engine,
 the per-language bundle uses the engine's language layers.

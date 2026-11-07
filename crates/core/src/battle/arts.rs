@@ -35,6 +35,20 @@ pub(super) struct ArtUse {
     pub effect: ArtEffect,
 }
 
+/// A ready unit's move to a tile it can stop on, its path searched once
+/// ([`BattleState::plan_move`]), so the attacks it could make there are
+/// previewed without searching again ([`BattleState::preview_attack_after`]).
+/// Only good in the state that planned it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PlannedMove {
+    /// The unit.
+    pub(super) unit: UnitId,
+    /// Where it stops.
+    pub(super) dest: Pos,
+    /// Its path there, its tile first.
+    pub(super) path: Vec<Pos>,
+}
+
 /// What an attack would do, for the UI's forecast panel
 /// ([`BattleState::preview_attack`]): the numbers, the art or active
 /// chosen, what it costs and the effects the numbers don't show.
@@ -445,8 +459,18 @@ impl BattleState {
         dest: Pos,
         action: &UnitAction,
     ) -> Result<AttackPreview, CommandError> {
-        let (_, step) = self.plan(unit, dest, action)?;
-        let Step::Attack(step) = step else {
+        self.preview_attack_after(&self.plan_move(unit, dest)?, action)
+    }
+
+    /// [`Self::preview_attack`] after `planned`, a move planned in this
+    /// state: the same answer, without searching the move's path again.
+    pub fn preview_attack_after(
+        &self,
+        planned: &PlannedMove,
+        action: &UnitAction,
+    ) -> Result<AttackPreview, CommandError> {
+        let unit = planned.unit;
+        let Step::Attack(step) = self.plan_step_after(planned, action)? else {
             return Err(CommandError::NotAnAttack);
         };
         let active_durability = step.active.as_ref().and_then(|a| {

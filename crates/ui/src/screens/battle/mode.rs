@@ -42,15 +42,15 @@ use trpg_core::{
 };
 
 use super::ai_phase::AiAction;
-use super::art_list::{ArtLine, art_lines, arts_menu, can_use_art};
-use super::attack::{Targeting, WeaponChoice, attack_tile, weapon_choices};
+use super::art_list::{ArtLine, art_lines, arts_menu, can_use_art, lines_from};
+use super::attack::{AttackFrom, Targeting, WeaponChoice, attack_tile, weapons_from};
 use super::items::{
     EquipChoice, ItemTargeting, PackGroup, can_equip, can_use_item, equip_choices, equip_command,
     equip_menu, pack_groups, pack_menu,
 };
 use super::magic::{
     CastTargeting, SpellChoice, can_cast, heal_choices, heal_tile, knows_spells, reaches_an_enemy,
-    spell_choices, spell_menu, target_pos,
+    spell_choices, spell_menu, spells_from, target_pos,
 };
 use super::map_menu::{MapEntry, map_menu_with, ready_players, unit_list};
 use super::path::steer;
@@ -208,11 +208,18 @@ impl MenuEntry {
     }
 
     /// Whether the entry can be chosen for `sel`'s unit: `Attack` if a
-    /// weapon reaches someone, a list if a line of it can be chosen
+    /// weapon reaches someone, `Arts` if one of its `arts` can be chosen,
+    /// another list if a line of it can be chosen
     /// ([`ListKind::can_choose`]).
-    fn enabled(self, sel: &Selection, weapons: &[WeaponChoice], state: &BattleState) -> bool {
+    fn enabled(
+        self,
+        sel: &Selection,
+        (weapons, arts): (&[WeaponChoice], &[ArtLine]),
+        state: &BattleState,
+    ) -> bool {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
+            MenuEntry::Arts => can_use_art(arts),
             MenuEntry::Seize
             | MenuEntry::Escape
             | MenuEntry::Shop
@@ -331,9 +338,15 @@ pub fn list_entry(menu: &Menu<Line>) -> MenuEntry {
 /// a standing house (player units only), `Talk` if it has someone next to it to talk to, `Skill` if the
 /// unit knows a non-combat active, `Item` and `Equip` (enabled when
 /// they can do something), `Wait`.
-pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
+/// `attacks` are the unit's from there and `arts` its arts menu's lines,
+/// worked out once for the menu (1247).
+pub fn menu_entries(
+    sel: &Selection,
+    (attacks, arts): (&AttackFrom<'_>, &[ArtLine]),
+) -> Vec<MenuEntry> {
+    let state = attacks.state;
     let mut entries = vec![MenuEntry::Attack];
-    if !art_lines(state, sel.unit, sel.dest()).is_empty() {
+    if !arts.is_empty() {
         entries.push(MenuEntry::Arts);
     }
     if knows_spells(state, sel.unit) {
@@ -351,12 +364,7 @@ pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     if player && state.map().shop(sel.dest()).is_some() {
         entries.push(MenuEntry::Shop);
     }
-    let open = Command::Act {
-        unit: sel.unit,
-        dest: sel.dest(),
-        action: UnitAction::Open,
-    };
-    if state.check(&open).is_ok() {
+    if attacks.check(&UnitAction::Open).is_ok() {
         entries.push(MenuEntry::Open);
     }
     if state.can_evacuate(sel.unit, sel.dest()) {
@@ -370,6 +378,13 @@ pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     }
     entries.extend([MenuEntry::Item, MenuEntry::Equip, MenuEntry::Wait]);
     entries
+}
+
+/// [`menu_entries`] for `sel` in `state`.
+#[cfg(test)]
+pub fn entries_at(state: &BattleState, sel: &Selection) -> Vec<MenuEntry> {
+    let attacks = AttackFrom::new(state, sel.unit, sel.dest());
+    menu_entries(sel, (&attacks, &lines_from(&attacks)))
 }
 
 /// An other-faction unit's threat area shown in the browse mode.
@@ -412,6 +427,9 @@ pub enum Mode {
         /// The weapons that can attack from there (`Attack` is enabled if
         /// there are any).
         weapons: Vec<WeaponChoice>,
+        /// The arts menu's lines there, worked out once when the menu
+        /// opens (1247).
+        arts: Vec<ArtLine>,
     },
     /// A list the action menu opened: the unit's arts (0442), spells
     /// (0410), skills (0412), pack (0407) or weapons to equip (0407).
@@ -815,30 +833,37 @@ fn open_heals(sel: &Selection, state: &BattleState, words: Words<'_>) -> Option<
 
 /// The action menu for `sel`.
 pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
-    let entries = menu_entries(&sel, state);
-    let weapons = weapon_choices(state, &sel);
+    let attacks = AttackFrom::new(state, sel.unit, sel.dest());
+    let arts = lines_from(&attacks);
+    let entries = menu_entries(&sel, (&attacks, &arts));
+    let weapons = weapons_from(&attacks);
     let items: Vec<_> = entries
         .iter()
-        .map(|e| e.item(e.enabled(&sel, &weapons, state)))
+        .map(|e| e.item(e.enabled(&sel, (&weapons, &arts), state)))
         .collect();
     // It opens on the first of Attack, Arts, Magic and Seize that is enabled
     // (Magic only when a spell reaches an enemy: a forest to burn or an ally
     // to heal doesn't make it the default), else Wait: Item, Equip and
     // Escape (leaving the battle, *Claude's starting rule*) are never the
     // default.
-    let spells = spell_choices(state, sel.unit, sel.dest());
+    let spells = spells_from(&attacks);
     let first = entries
         .iter()
         .position(|e| match e {
             MenuEntry::Attack | MenuEntry::Arts | MenuEntry::Seize => {
-                e.enabled(&sel, &weapons, state)
+                e.enabled(&sel, (&weapons, &arts), state)
             }
             MenuEntry::Magic => reaches_an_enemy(state, &spells),
             _ => false,
         })
         .or_else(|| entries.iter().position(|&e| e == MenuEntry::Wait));
     let menu = Menu::new(items).focused(first.unwrap_or(0));
-    Mode::ActionMenu { sel, menu, weapons }
+    Mode::ActionMenu {
+        sel,
+        menu,
+        weapons,
+        arts,
+    }
 }
 
 /// The action menu for `sel`, focused on `entry` (back from what it opened).
@@ -943,9 +968,12 @@ pub fn step_with(
         },
         Mode::Moving { sel, .. } if action == Action::Confirm => walk_ended(sel, state, words),
         moving @ Mode::Moving { .. } => (moving, Effect::None),
-        Mode::ActionMenu { sel, menu, weapons } => {
-            step_action_menu(sel, menu, weapons, action, (state, words))
-        }
+        Mode::ActionMenu {
+            sel,
+            menu,
+            weapons,
+            arts,
+        } => step_action_menu(sel, menu, (weapons, arts), action, (state, words)),
         Mode::List { sel, menu } => step_list(sel, menu, action, state),
         // When several weapons or spells can make the attack, left and
         // right swap between them instead of changing the target (0430,
@@ -1072,7 +1100,7 @@ fn end_turn(state: &BattleState) -> (Mode, Effect) {
 fn step_action_menu(
     sel: Selection,
     mut menu: Menu<MenuEntry>,
-    weapons: Vec<WeaponChoice>,
+    (weapons, arts): (Vec<WeaponChoice>, Vec<ArtLine>),
     action: Action,
     (state, words): (&BattleState, Words<'_>),
 ) -> (Mode, Effect) {
@@ -1086,7 +1114,12 @@ fn step_action_menu(
                 MenuEntry::Evacuate => UnitAction::Evacuate,
                 MenuEntry::Shop => {
                     let (unit, dest) = (sel.unit, sel.dest());
-                    let mode = Mode::ActionMenu { sel, menu, weapons };
+                    let mode = Mode::ActionMenu {
+                        sel,
+                        menu,
+                        weapons,
+                        arts,
+                    };
                     return (mode, Effect::Shop { unit, dest });
                 }
                 MenuEntry::Talk => return choose_talk(sel, state),
@@ -1105,7 +1138,15 @@ fn step_action_menu(
             sel.target = None;
             (Mode::Selected(sel), Effect::None)
         }
-        None => (Mode::ActionMenu { sel, menu, weapons }, Effect::None),
+        None => {
+            let mode = Mode::ActionMenu {
+                sel,
+                menu,
+                weapons,
+                arts,
+            };
+            (mode, Effect::None)
+        }
     }
 }
 
@@ -1940,13 +1981,13 @@ mod tests {
             MenuEntry::Equip,
             MenuEntry::Wait,
         ];
-        assert_eq!(menu_entries(&sel, &s), plain);
+        assert_eq!(entries_at(&s, &sel), plain);
         let mut knight = sel;
         knight.unit = UnitId(2);
         knight.path = vec![p(5, 5)];
-        assert_eq!(menu_entries(&knight, &s), plain);
+        assert_eq!(entries_at(&s, &knight), plain);
         let s = with_objective(seize(false));
-        assert_eq!(menu_entries(&knight, &s), all);
+        assert_eq!(entries_at(&s, &knight), all);
         assert_eq!(
             all.map(|entry| english(&entry.item(true).label)),
             ["Attack", "Arts", "Seize", "Skill", "Item", "Equip", "Wait"]

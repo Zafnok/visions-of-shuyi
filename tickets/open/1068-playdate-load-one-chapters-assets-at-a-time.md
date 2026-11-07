@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: []
+blocked_by: ["1170"]
 nick_input: setup
 completed:
 ---
@@ -39,6 +39,12 @@ Simulator console, as for 1036 and 1055.
 callbacks, so the device's 10-second limit holds): if 1086 is done, load
 a chapter's assets in its steps; if not, keep each load inside one
 callback under 5 seconds on the device, as 1086 asks.
+
+**After 1170** (the Playdate front end on the engine's backend): 1170
+deletes the game's `pd/allocator.rs` and start-up for the engine's
+`SdkAlloc` (already wrapped in `CountingAlloc` in debug builds) and
+`shuyi_playdate::main!` start, so the measurement and any chapter
+loading below go through those, not the retired copies.
 
 ## Scope
 

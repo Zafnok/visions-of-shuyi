@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-06
 ---
 
 # 1246 — Pause or mute while the game's window has no focus
@@ -62,9 +62,9 @@ and any animation playing.
 
 ## Acceptance criteria
 
-- [ ] With Nick's choice, a Harness test sends `FocusLost`: the frame
+- [x] With Nick's choice, a Harness test sends `FocusLost`: the frame
       holds and/or the volumes read 0; `FocusGained` brings them back.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -74,5 +74,17 @@ and any animation playing.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Nick chose **pause and mute** (2026-11-06), with no Options row:
+recorded in `docs/design/options.md`, *Another window in front*.
+`ShuyiSettings` sets `BACKGROUND` to `Background::KEEP_RUNNING.paused().muted()`;
+the engine's `App` does the rest (ADR-0077). No settings file change.
+
+Tests: `crates/ui/tests/it/focus.rs` sends `FocusLost` on the title: the
+app is paused, the snapshot holds over two seconds, a key does nothing,
+the music, sound and voice volumes read 0; `FocusGained` brings back the
+player's volumes and the keys. The title's text snapshot doesn't animate,
+so "the frame holds" is shown by the engine's `is_paused` and the held
+snapshot, not by a moving picture stopping.
+
+No starting rules: the behavior is all Nick's choice and the engine's
+policy. Follow-ups: none.

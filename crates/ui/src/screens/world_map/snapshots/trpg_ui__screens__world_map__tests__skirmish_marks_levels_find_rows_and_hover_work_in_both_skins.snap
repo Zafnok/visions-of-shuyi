@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/world_map/tests.rs
-assertion_line: 1035
 expression: "(fixed.places, fixed.panel, random.panel)"
 ---
 (

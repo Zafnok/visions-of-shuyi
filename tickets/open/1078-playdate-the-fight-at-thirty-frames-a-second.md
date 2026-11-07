@@ -74,6 +74,12 @@ minute reports.
 - Changing the look 0062 and 1041 decided (`docs/design/playdate.md`,
   *The combat picture*), except the tunables named above.
 
+**Either order with 1170:** if its engine-backed frontend has landed,
+measure through engine 3090's `RunReport` phases and the engine export's
+bench build, not the retired `pd/bench.rs` and `cargo xtask playdate
+--bench`. If this ticket lands first, 1170 keeps its measurements and
+any cut it made.
+
 **Either order with 1234:** if 1234 is done, `playdate/stage.rs`'s
 `fighter_sprite`, `reach_px`, `result_row` and `int` are one geometry
 shared with `stage/glyph.rs`: make this ticket's sprite changes there;
