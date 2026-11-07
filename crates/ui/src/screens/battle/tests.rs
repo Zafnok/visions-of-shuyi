@@ -856,3 +856,18 @@ fn battle_declares_its_actions() {
     let screen = quick();
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::BATTLE);
 }
+
+/// Ticket 1245: a command the rules haven't returned from (a panic) is
+/// the screen's `applying`, and the crash report's record ends with it.
+#[test]
+fn a_command_being_applied_is_in_the_crash_record() {
+    let mut s = quick();
+    assert_eq!(s.applying(), None);
+    s.applying = Some(Command::EndPhase);
+    assert_eq!(s.applying(), Some(&Command::EndPhase));
+    let h = Harness::with_screen(Box::new(s));
+    let text = crate::crash::crash_record(h.game()).unwrap();
+    let record: crate::crash::BattleRecord = ron::from_str(&text).unwrap();
+    assert_eq!(record.applying, Some(Command::EndPhase));
+    assert_eq!(record.commands(), [Command::EndPhase]);
+}
