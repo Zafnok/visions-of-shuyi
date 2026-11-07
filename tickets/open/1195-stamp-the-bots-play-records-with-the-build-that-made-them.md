@@ -52,11 +52,10 @@ None.
   is done first and writes this same `PlayRecord`, its records get the
   stamp through this ticket. If 0508 comes later, it fills `made` from
   the same helper.
-- Moving where the record is written: 1240 (after engine#2544) writes
-  it from the engine's `playtest` try instead of `bots`. **Either order
-  with 1240:** if 1240 is done, fill `made` in the plan's record hook it
-  wrote, not in `plays::bots` (gone), and test it through `playtest`; if
-  not, fill it in `plays::bots` as below, and 1240 keeps it.
+- Moving where the record is written: done by 1240, which writes it
+  from the engine's `playtest` try (`Recorded::record` in
+  `crates/xtask/src/game_tools/plays.rs`). Fill `made` there, not in
+  `plays::bots` (gone), and test it through `playtest`.
 - Stamping saves (the engine's save stamps are its own business).
 - Baked packs (the game bakes none).
 
@@ -72,8 +71,8 @@ None.
    on `Trpg`.
 3. Add `#[serde(default)] pub made: Option<Made>` to `PlayRecord`. Older
    records then still parse, and an unstamped record runs, as the
-   engine allows. Fill it with `Some(made())` where `bots` writes the
-   record (`plays.rs`, around line 71). Leave `VERSION` at 1: the field
+   engine allows. Fill it with `Some(made())` where the bot run writes the
+   record (`Recorded::record` in `plays.rs`, 1240). Leave `VERSION` at 1: the field
    is optional.
 4. In `replay`, set the returned `ReplayRun`'s `made` to
    `played.made.clone()` (`turns` leaves it `None`).

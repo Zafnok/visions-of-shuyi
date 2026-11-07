@@ -22,10 +22,11 @@ use trpg_ui::save;
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 
 /// The title with the test cinematic opened from the debug menu (its last
-/// tool but two: the scene camera and the map skin come after it).
+/// tool but two: the scene camera, the map skin and the engine's "Debug
+/// view" come after it).
 fn opened() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("F2 Up Up Up f");
+    h.keys("F2 Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "cinematic"]);
     h
 }
@@ -214,7 +215,7 @@ fn the_debug_key_does_nothing_on_it() {
 fn it_follows_the_map_skin_in_use() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite");
-    h.keys("F2 Up Up Up f");
+    h.keys("F2 Up Up Up Up f");
     let scene = h.game().buffer().backdrop().unwrap().scene();
     // The test tileset: 14 × 8 tiles of 24 px, in whole cells.
     assert_eq!((scene.width(), scene.height()), (42, 12));
@@ -282,7 +283,7 @@ fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
     assert_eq!(in_talk, [face(&h, "lead_f")]);
     assert_eq!(in_faces, [face(&h, "lead_f"), face(&h, "test_lord")]);
     // The debug tool plays it with the default lead whatever is saved.
-    h.keys("F2 Up Up Up f");
+    h.keys("F2 Up Up Up Up f");
     h.wait(9.5);
     assert!(h.snapshot().contains("Ellery! You came back for us."));
 }

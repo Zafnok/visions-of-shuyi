@@ -1,18 +1,18 @@
-//! The game's content check, bots and replay for Shuyi's tools (ticket
-//! 1193): `check` is every validator of `trpg-content`; `bots` plays the
-//! story's first battle with the baseline bot (`trpg-bots`), each play
-//! written as a [`PlayRecord`]; `replay` re-runs one by the rules.
+//! The game's content check, bot run and replay for Shuyi's tools (ticket
+//! 1193): `check` is every validator of `trpg-content`; [`plan`] is the
+//! bot run `playtest` plays (1240): a battle with the baseline bot
+//! (`trpg-bots`), each try written as a [`PlayRecord`]; `replay` re-runs
+//! one by the rules.
 
 use serde::{Deserialize, Serialize};
 use shuyi_assets::ContentError;
-use shuyi_cli::contract::bots::{BotsInput, BotsOutput, Play, UNFINISHED, tally};
+use shuyi_cli::PlaytestPlan;
 use shuyi_cli::contract::replay::{Record, ReplayRun, turns};
 use shuyi_core::Bot;
-use shuyi_core::bots::play_observed;
-use shuyi_core::bots::playtest::Entrant as _;
+use shuyi_core::bots::playtest::{Entrant, Measure, play_try};
 use trpg_bots::{BattleEntrant, BattleStage, Player};
 use trpg_content::Content;
-use trpg_core::{BattleState, Command, GameMode};
+use trpg_core::{BattleState, Command, GameMode, Phase};
 
 /// The [`PlayRecord`] format's version.
 const VERSION: u32 = 1;
@@ -40,45 +40,70 @@ pub fn check() -> Vec<ContentError> {
         .map_or_else(Vec::new, |e| e.0)
 }
 
-/// `input`'s games of the story's first battle, the baseline bot on the
-/// player's side in Classic.
-pub fn bots(input: &BotsInput) -> Result<BotsOutput, String> {
+/// The game's bot run, as `playtest` plays it (ticket 1240, engine#2544):
+/// battle `stage` (the story's first if `None`), the baseline bot on the
+/// player's side in Classic, nothing judged, each try written as a
+/// [`PlayRecord`].
+pub fn plan(stage_id: Option<&str>) -> Result<PlaytestPlan, String> {
     let content = content()?;
-    let battle = first_battle(&content)?;
+    let battle = match stage_id {
+        Some(id) => id.to_owned(),
+        None => first_battle(&content)?,
+    };
     let stage = stage(&content, &battle)?;
     let mode = GameMode::Classic;
-    let entrant = BattleEntrant::new("baseline", mode, Player::Baseline, content.ai, &stage);
-    let seeds = input.seed..input.seed + u64::from(input.games);
-    let plays = seeds.map(|seed| {
-        // As the engine's `play_tries`, keeping the commands for the record.
-        let mut rules = entrant.start(&stage, seed);
-        let mut bots = entrant.bots(seed);
-        let mut by_side: Vec<_> = bots
-            .iter_mut()
-            .map(|(side, bot)| (*side, bot.as_mut() as &mut dyn Bot<BattleState>))
-            .collect();
-        let mut measure = entrant.measure();
-        let report = play_observed(&mut rules, &mut by_side, input.turns, |r, c, e| {
-            measure.observe(r, c, e);
-        })
-        .map_err(|e| format!("seed {seed}: {e}"))?;
-        let outcome = report
-            .outcome
-            .map_or(UNFINISHED.to_owned(), |o| format!("{o:?}"));
-        let commands = u32::try_from(report.commands.len()).unwrap_or(u32::MAX);
-        let mut play = Play::new(seed, outcome, report.turns, commands);
-        play.measures = measure.finish(&report, &rules);
+    let entrant = BattleEntrant::new(BASELINE, mode, Player::Baseline, content.ai, &stage);
+    let recorded = Recorded {
+        entrant,
+        battle: battle.clone(),
+    };
+    Ok(PlaytestPlan::new(
+        format!("{battle} · {BASELINE} bot · {mode:?}"),
+        vec![(BASELINE.to_owned(), Some(format!("{mode:?}")))],
+        Box::new(|_| Vec::new()),
+        Box::new(move |_, seed, turns| {
+            play_try(&stage, &recorded, seed, turns).map_err(|e| format!("seed {seed}: {e}"))
+        }),
+    ))
+}
+
+/// The bot run's one entrant.
+const BASELINE: &str = "baseline";
+
+/// A battle's entrant whose tries are kept as [`PlayRecord`]s of
+/// `battle`.
+struct Recorded {
+    entrant: BattleEntrant,
+    battle: String,
+}
+
+impl Entrant<BattleStage, BattleState> for Recorded {
+    fn name(&self) -> &str {
+        self.entrant.name()
+    }
+
+    fn start(&self, stage: &BattleStage, seed: u64) -> BattleState {
+        self.entrant.start(stage, seed)
+    }
+
+    fn bots(&self, seed: u64) -> Vec<(Phase, Box<dyn Bot<BattleState>>)> {
+        self.entrant.bots(seed)
+    }
+
+    fn measure(&self) -> Box<dyn Measure<BattleState>> {
+        self.entrant.measure()
+    }
+
+    fn record(&self, seed: u64, commands: &[Command]) -> Option<String> {
         let record = PlayRecord {
             version: VERSION,
-            battle: battle.clone(),
-            mode,
+            battle: self.battle.clone(),
+            mode: self.entrant.mode(),
             seed,
-            commands: report.commands,
+            commands: commands.to_vec(),
         };
-        play.record = Some(ron::ser::to_string(&record).map_err(|e| e.to_string())?);
-        Ok(play)
-    });
-    Ok(tally(plays.collect::<Result<_, String>>()?))
+        ron::ser::to_string(&record).ok()
+    }
 }
 
 /// `record`, a [`PlayRecord`], re-run by the rules from its battle and seed.
@@ -98,12 +123,12 @@ pub fn replay(record: &Record) -> Result<ReplayRun, String> {
 }
 
 /// The game's content, loaded and checked.
-fn content() -> Result<Content, String> {
+pub(super) fn content() -> Result<Content, String> {
     trpg_content::load_embedded().map_err(|e| e.to_string())
 }
 
 /// The id of the story's first battle.
-fn first_battle(content: &Content) -> Result<String, String> {
+pub(super) fn first_battle(content: &Content) -> Result<String, String> {
     let first = &content.new_game.first_chapter;
     let chapter = content.chapters.get(first);
     let chapter = chapter.ok_or_else(|| format!("no chapter \"{first}\""))?;

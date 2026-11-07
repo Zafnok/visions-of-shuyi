@@ -39,7 +39,8 @@ Expected size: about 60 production lines, judged by the dialogue screen's skip.
 
 1. Add the setting to `Settings`, migrate, and add the row.
 2. In `crates/ui/src/screens/dialogue.rs`: when on, and the current line's clip
-   has ended (its length is known, ADR-0046 *As built*), wait 0.5 s (*tunable*)
+   has ended (`ctx.voice_playing()` is `None` from the frame after the clip was
+   asked for: engine#2255, at the pin since 2026-11-07), wait 0.5 s (*tunable*)
    and advance as a press would.
 3. A silent line (no clip, or voices off) waits as long as reading takes: about
    1 s plus 0.05 s per character (*tunable*).

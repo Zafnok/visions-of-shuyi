@@ -1028,7 +1028,8 @@ pub(crate) mod tests {
             [
                 "profiles: can't be read: storage error: down",
                 "keybindings: can't be read, using the default keys: storage error: down",
-                "settings: can't be read: storage error: down, using the defaults"
+                "settings: can't be read: storage error: down, using the defaults",
+                "debug_view: can't be read: storage error: down",
             ]
         );
         assert_eq!(*c.settings(), Settings::default());

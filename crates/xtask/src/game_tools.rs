@@ -4,7 +4,8 @@
 //! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
 //! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
 //!
-//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s;
+//! `check`, the bot run `playtest` plays and `replay` (tickets 1193,
+//! 1240) are [`plays`]'s;
 //! `autobalance` (ticket 0509) is [`balance`]'s.
 //!
 //! The session (ticket 1181) is the game started as `frame-png` starts it,
@@ -19,11 +20,13 @@
 use shuyi_assets::ContentError;
 use shuyi_assets::font::FontAtlasDef;
 use shuyi_cli::contract::autobalance::AutobalanceInput;
-use shuyi_cli::contract::bots::{BotsInput, BotsOutput};
+use shuyi_cli::contract::playtest::PlaytestInput;
 use shuyi_cli::contract::replay::{Record, ReplayRun};
 use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
-use shuyi_cli::{AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin};
+use shuyi_cli::{
+    AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin, PlaytestPlan,
+};
 use shuyi_core::bots::playtest::Tries;
 use shuyi_platform::session::{SessionRecord, Stamps};
 use shuyi_platform::{Frame, Show};
@@ -294,12 +297,17 @@ impl GameTools for Trpg {
         plays::replay(record)
     }
 
-    fn bots(&self, input: &BotsInput) -> Result<BotsOutput, String> {
-        // The options are about the look, which the bots never see
-        // (ADR-0038 §5): checked, and the same battle played whatever they
-        // say.
+    /// The bot run (1240): the baseline bot on battle `stage`, the
+    /// story's first if `None`. The options are about the look, which the
+    /// bots never see (ADR-0038 §5): checked, and the same battle played
+    /// whatever they say.
+    fn playtest_plan(
+        &self,
+        stage: Option<&str>,
+        input: &PlaytestInput,
+    ) -> Result<PlaytestPlan, String> {
         Start::of(&input.start)?;
-        plays::bots(input)
+        plays::plan(stage)
     }
 
     /// The battles, by id: what `autobalance --stage` takes.
