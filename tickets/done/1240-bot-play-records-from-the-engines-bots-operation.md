@@ -83,16 +83,18 @@ grows it with the stages, personas, checks and summary.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commit that closed
+- [x] `shuyi-engine.rev` is at or past the commit that closed
       engine#2544; `cargo xtask ticket-lint --check-engine` passes.
 - [x] `grep -rn "contract::bots\|fn bots" crates/xtask/src` finds nothing
       (it finds the engine's `Entrant::bots`, one bot per side, which
       `Recorded` passes on, and an unrelated test name: no `contract::bots`
       and no `GameTools::bots`).
-- [ ] `cargo shuyi playtest --entrant baseline --tries 3 --json` answers
+- [x] `cargo shuyi playtest --entrant baseline --tries 3 --json` answers
       three tries, each with `commands` and a `record` that
       `cargo shuyi replay` plays to the same hashes twice.
-- [ ] All gates in the `run-gates` skill pass.
+      (Checked by the two tests through `playtest`, with `--stage` the
+      story's first battle: see the deviations.)
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 

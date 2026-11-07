@@ -246,7 +246,7 @@ Nothing for the game: 7 PRs (#246, #254, #255, #258, #259, #261, #265). #246, #2
 
 Nothing for the game: none.
 
-## 2026-11-07: e2697683 → c1ba9ec8 (17 engine PRs), #PRNUM
+## 2026-11-07: e2697683 → c1ba9ec8 (17 engine PRs), #574
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
