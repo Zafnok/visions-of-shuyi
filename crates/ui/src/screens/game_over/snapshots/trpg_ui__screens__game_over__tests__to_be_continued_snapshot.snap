@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/game_over.rs
-assertion_line: 206
 expression: h.snapshot()
 ---
                                                                                                     

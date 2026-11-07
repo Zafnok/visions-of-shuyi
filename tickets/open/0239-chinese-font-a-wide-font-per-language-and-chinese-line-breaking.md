@@ -52,7 +52,7 @@ None (the font is 0045's answer).
 
 **In:** the Chinese font's BDF in `assets-src/fonts/` and its licence;
 the game's atlas with both sets; the packs' `lang.ron`; ADR-0045
-amended; ~~moving the engine pin to a commit with engine#2303~~ (done by the pin move of 2026-11-07).
+amended; moving the engine pin to a commit with engine#2303.
 
 **Out (do not do):** the engine's half (engine#2303); translating
 (0726); the language pack's text files other than what a test needs in
@@ -64,9 +64,8 @@ that, say so in the completion notes, and keep the other steps.
 
 ## Implementation steps
 
-1. ~~Move the pin to an engine `main` that has engine#2303 (`cargo xtask
-   engine-pin <commit>`, the `engine-change` skill §7).~~ (done by the pin
-   move of 2026-11-07)
+1. ~~Move the pin to an engine `main` that has engine#2303~~ (done by
+   the pin move of 2026-11-07).
 2. Add the font's BDF and licence text (`assets-src/fonts/`,
    `assets/fonts/<Name>-LICENSE.txt`), a row in `THIRD_PARTY_ASSETS.md`
    and a section in `assets/fonts/README.md`, as 0236 did for the

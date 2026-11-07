@@ -1,6 +1,5 @@
 ---
 source: crates/ui/tests/title.rs
-assertion_line: 44
 expression: h.snapshot()
 ---
                                                                                                     

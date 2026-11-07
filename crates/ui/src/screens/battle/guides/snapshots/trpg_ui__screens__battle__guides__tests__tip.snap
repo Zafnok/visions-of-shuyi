@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-assertion_line: 212
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗

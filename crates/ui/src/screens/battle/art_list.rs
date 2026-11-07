@@ -16,7 +16,7 @@ use trpg_core::{
     UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
 };
 
-use super::attack::{spell_uses, weapon_durability};
+use super::attack::{AttackFrom, spell_uses, weapon_durability};
 use super::info::stat_name;
 use super::mode::Line;
 use super::skills::{effect_text, mods_text, skill_cost, skill_name, timed_text};
@@ -282,52 +282,67 @@ pub enum Fit {
     No,
 }
 
+/// The action that uses the action art `art` (Overwatch) with the weapon
+/// in `slot`.
+fn action_art(art: &ArtId, slot: usize) -> UnitAction {
+    UnitAction::UseArt {
+        art: art.clone(),
+        slot,
+    }
+}
+
 /// The command that uses the action art `art` (Overwatch) with the weapon
 /// in `slot`, for `unit` moved to `dest`.
 pub fn action_art_command(unit: UnitId, dest: Pos, art: &ArtId, slot: usize) -> Command {
     Command::Act {
         unit,
         dest,
-        action: UnitAction::UseArt {
-            art: art.clone(),
-            slot,
-        },
+        action: action_art(art, slot),
     }
 }
 
-/// How `technique` with `with` fits an attack by `unit` from `dest` (an
-/// action art: its use there): every check is the core's
+/// How `technique` with `with` fits an attack from where `attacks` says
+/// (an action art: its use there): every check is the core's
 /// ([`BattleState::preview_attack`] on each unit, or the `Act`'s
 /// [`BattleState::check`]).
-pub fn fit(
-    state: &BattleState,
-    unit: UnitId,
-    dest: Pos,
-    with: &Equipped,
-    technique: &Technique,
-) -> Fit {
+pub fn fit(attacks: &AttackFrom<'_>, with: &Equipped, technique: &Technique) -> Fit {
     if let (Technique::Art(art), Equipped::Weapon(slot)) = (technique, with)
-        && technique.is_action(state)
+        && technique.is_action(attacks.state)
     {
-        return match state.check(&action_art_command(unit, dest, art, *slot)) {
+        return match attacks.check(&action_art(art, *slot)) {
             Ok(()) => Fit::Hits,
             Err(CommandError::CannotPayArt { error, .. }) => Fit::Cost(error),
             Err(_) => Fit::No,
         };
     }
+    let how = |target: &Unit| match attacks.preview(&technique.action(target.id, with)) {
+        Ok(_) => Fit::Hits,
+        Err(CommandError::CannotPayArt { error, .. } | CommandError::CannotPay { error, .. }) => {
+            Fit::Cost(error)
+        }
+        // (The core checks the cost before the range: never both.)
+        Err(CommandError::OutOfRange { .. }) => Fit::Far,
+        Err(_) => Fit::No,
+    };
     let mut found = Fit::No;
-    for target in state.units() {
-        match state.preview_attack(unit, dest, &technique.action(target.id, with)) {
-            Ok(_) => return Fit::Hits,
-            Err(
-                CommandError::CannotPayArt { error, .. } | CommandError::CannotPay { error, .. },
-            ) => found = Fit::Cost(error),
-            // (The core checks the cost before the range: never both.)
-            Err(CommandError::OutOfRange { .. }) => found = Fit::Far,
-            Err(_) => {}
+    for target in attacks.units(true) {
+        match how(target) {
+            Fit::Hits => return Fit::Hits,
+            Fit::No => {}
+            other => found = other,
         }
     }
-    found
+    if found != Fit::No {
+        return found;
+    }
+    // Nobody near enough. The cost is checked before the target, so the
+    // first unit beyond reach the core refuses for its cost or its range
+    // says which for all of them (1247).
+    attacks
+        .units(false)
+        .map(how)
+        .find(|how| *how != Fit::No)
+        .unwrap_or(Fit::No)
 }
 
 /// The techniques `u` may have for the weapon in `slot`: its arts (rank arts
@@ -348,14 +363,20 @@ fn techniques(state: &BattleState, u: &Unit, slot: usize) -> Vec<Technique> {
 /// weapon, each once. A line is dimmed with the reason when no weapon can
 /// use it on anyone from there.
 pub fn art_lines(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<ArtLine> {
-    let Some(u) = state.unit(unit) else {
+    lines_from(&AttackFrom::new(state, unit, dest))
+}
+
+/// [`art_lines`] for the attacks of a unit from a tile.
+pub fn lines_from(attacks: &AttackFrom<'_>) -> Vec<ArtLine> {
+    let state = attacks.state;
+    let Some(u) = state.unit(attacks.unit) else {
         return vec![];
     };
     // Arts before actives, each in the order of the first weapon with it.
     let mut found: Vec<(Technique, Vec<(usize, Fit)>)> = vec![];
     for slot in 0..WEAPON_SLOTS {
         for technique in techniques(state, u, slot) {
-            let how = fit(state, unit, dest, &Equipped::Weapon(slot), &technique);
+            let how = fit(attacks, &Equipped::Weapon(slot), &technique);
             match found.iter_mut().find(|(t, _)| *t == technique) {
                 Some((_, fits)) => fits.push((slot, how)),
                 None => found.push((technique, vec![(slot, how)])),

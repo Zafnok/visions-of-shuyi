@@ -51,7 +51,8 @@ None.
   rows of a frame not drawn again; or what the review finds.
 - The game's own share: the battle's per-frame reach and AI work in the
   cursor-sweep and enemy-turn frames, if it is still over after the
-  drawing's fix (a ticket of its own if it is big).
+  drawing's fix (a ticket of its own if it is big). The cursor's threat
+  arrows, a path search per enemy on each cursor move, are 1251's.
 - Every Playdate scenario's costliest frame under 2,000,000 instructions,
   or a ticket for each that isn't, naming what is slow.
 

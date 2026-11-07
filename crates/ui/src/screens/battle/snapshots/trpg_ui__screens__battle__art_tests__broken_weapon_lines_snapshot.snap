@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/art_tests.rs
-assertion_line: 644
 expression: "format!(\"{list}\\n=== forecast ===\\n{forecast}\")"
 ---
                                                                       ╔════════════════════════════╗

@@ -69,5 +69,7 @@ trpg-ui = { path = ".", features = ["harness", "onebit-reference"] }
 shuyi-assets = { workspace = true, features = ["std", "sample-actions"] }
 # Plays the kept session records (`tests/it/sessions.rs`, ticket 1210).
 shuyi-platform = { workspace = true, features = ["std", "harness"] }
+# Counts the path searches a menu makes (1247).
+trpg-core = { path = "../core", features = ["search-count"] }
 proptest.workspace = true
 insta.workspace = true
