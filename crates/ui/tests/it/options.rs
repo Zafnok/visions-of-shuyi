@@ -37,7 +37,7 @@ const TO_CURSOR: &str = "Down Down Down Down Down Down";
 const TO_THEME: &str = "Down Down Down Down Down Down Down Down Down";
 const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down Down Down";
 const TO_LAYOUT: &str =
-    "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down";
+    "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down";
 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).

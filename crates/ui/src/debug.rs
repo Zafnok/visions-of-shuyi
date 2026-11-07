@@ -560,9 +560,10 @@ mod tests {
             crate::widgets::menu::text_of(label).to_owned()
         };
         assert_eq!(label(&menu), "Map skin: glyph");
-        // Up from the first tool wraps round to it.
+        // Up from the first tool wraps round to the engine's debug view,
+        // and once more to it.
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
-        let stay = menu.update(&mut ctx, &frame(&[CursorUp, Confirm]));
+        let stay = menu.update(&mut ctx, &frame(&[CursorUp, CursorUp, Confirm]));
         assert!(matches!(stay, Transition::None));
         assert_eq!(ctx.game.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test tileset");

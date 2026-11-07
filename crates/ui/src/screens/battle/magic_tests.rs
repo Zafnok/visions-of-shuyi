@@ -18,7 +18,7 @@ use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
     spell_choices, spell_label, spell_menu, target_pos,
 };
-use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
+use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
@@ -415,7 +415,7 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
     // Nothing to cast on from (5, 6): listed, dimmed.
     let mut sel = Selection::new(&quick, MAGE).unwrap();
     sel.path = vec![p(3, 6), p(4, 6), p(5, 6)];
-    assert!(menu_entries(&sel, &quick).contains(&MenuEntry::Magic));
+    assert!(entries_at(&quick, &sel).contains(&MenuEntry::Magic));
     let Mode::ActionMenu { menu: m, .. } = open_menu(sel, &quick) else {
         panic!("no menu");
     };

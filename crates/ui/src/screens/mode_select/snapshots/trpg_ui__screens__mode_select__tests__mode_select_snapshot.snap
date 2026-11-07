@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/mode_select.rs
-assertion_line: 167
 expression: h.snapshot()
 ---
                                                                                                     

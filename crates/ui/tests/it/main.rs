@@ -4,6 +4,7 @@
 //! below. Never add a file directly under `tests/` (an `xtask` test fails).
 //! Run one module with `cargo test -p trpg-ui --test it <name>::`.
 
+mod auto_advance;
 mod battle;
 mod ch01_lessons;
 mod ch01_tips;
@@ -19,6 +20,7 @@ mod credits;
 mod dialogue;
 mod dialogue_log;
 mod flow;
+mod focus;
 mod guides;
 mod key_bindings;
 mod key_bindings_screen;

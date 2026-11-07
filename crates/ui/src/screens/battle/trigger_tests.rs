@@ -9,7 +9,7 @@ use trpg_core::{
     BattleSetup, CharacterId, Faction, Objective, Phase, Pos, Trigger, TriggerWhen, Unit, UnitId,
 };
 
-use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, step};
+use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, step};
 use super::testing::{quick_units, setup, through_ai_phases};
 use super::*;
 use crate::harness::Harness;
@@ -210,9 +210,9 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
     // Nobody to talk to from elsewhere, or for the knight.
     let mut sel = Selection::new(&s, UnitId(1)).unwrap();
     sel.path = vec![Pos::new(3, 5), Pos::new(3, 4)];
-    assert!(!menu_entries(&sel, &s).contains(&MenuEntry::Talk));
+    assert!(!entries_at(&s, &sel).contains(&MenuEntry::Talk));
     let knight = Selection::new(&s, UnitId(2)).unwrap();
-    assert!(!menu_entries(&knight, &s).contains(&MenuEntry::Talk));
+    assert!(!entries_at(&s, &knight).contains(&MenuEntry::Talk));
 }
 
 #[test]

@@ -211,6 +211,7 @@
     "options.row.voices": "Voices (AI-generated)",
     "options.row.voice_volume": "Voice volume",
     "options.row.log_voice": "Voice on hover in the log",
+    "options.row.auto_advance": "Auto-advance",
     "options.row.layout": "Layout",
     "options.row.key_bindings": "Key bindings",
     "options.row.game_mode": "Game mode",

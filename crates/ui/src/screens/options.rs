@@ -45,7 +45,8 @@ use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
-    AnimSpeed, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, Settings, TownsOpen,
+    AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, Settings,
+    TownsOpen,
 };
 use crate::tips::reset_tips;
 
@@ -86,10 +87,10 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
 /// `Open towns on arrival`: it has no world map yet (1007; the row comes
-/// with it). The voices' three rows: it plays no voice yet (1048 brings
+/// with it). The voices' four rows: it plays no voice yet (1048 brings
 /// them back with its clips). (`Intro` is on both since the Playdate's
 /// title has the cinematic, ticket 1044.)
-pub const PC_ONLY: [Row; 7] = [
+pub const PC_ONLY: [Row; 8] = [
     Row::Theme,
     Row::MapLook,
     Row::MapZoom,
@@ -97,6 +98,7 @@ pub const PC_ONLY: [Row; 7] = [
     Row::Voices,
     Row::VoiceVolume,
     Row::LogVoice,
+    Row::AutoAdvance,
 ];
 
 /// The rows only the Playdate's screen shows (ticket 1042): `Portrait
@@ -147,6 +149,9 @@ pub enum Row {
     /// [`ShuyiSettings::log_voice`](crate::ShuyiSettings::log_voice): "Voice on
     /// hover in the log".
     LogVoice,
+    /// [`ShuyiSettings::auto_advance`](crate::ShuyiSettings::auto_advance):
+    /// "Auto-advance".
+    AutoAdvance,
     /// The right- or left-handed layout: opens the layout picker.
     Layout,
     /// Opens the Key bindings screen.
@@ -163,7 +168,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 24] = [
+    pub const ALL: [Row; 25] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -182,6 +187,7 @@ impl Row {
         Row::Voices,
         Row::VoiceVolume,
         Row::LogVoice,
+        Row::AutoAdvance,
         Row::Layout,
         Row::KeyBindings,
         Row::GameMode,
@@ -212,6 +218,7 @@ impl Row {
             Row::Voices => "options.row.voices",
             Row::VoiceVolume => "options.row.voice_volume",
             Row::LogVoice => "options.row.log_voice",
+            Row::AutoAdvance => "options.row.auto_advance",
             Row::Layout => "options.row.layout",
             Row::KeyBindings => "options.row.key_bindings",
             Row::GameMode => "options.row.game_mode",
@@ -272,6 +279,20 @@ impl Row {
                     |ctx, on| {
                         let log = if on { LogVoice::OnHover } else { LogVoice::Off };
                         ctx.preview_settings(|s| s.game.log_voice = log)
+                    },
+                ),
+            ),
+            Row::AutoAdvance => OptionRow::new(
+                self.key(),
+                RowValue::toggle(
+                    |ctx| ctx.settings().game.auto_advance == AutoAdvance::On,
+                    |ctx, on| {
+                        let auto = if on {
+                            AutoAdvance::On
+                        } else {
+                            AutoAdvance::Off
+                        };
+                        ctx.preview_settings(|s| s.game.auto_advance = auto)
                     },
                 ),
             ),

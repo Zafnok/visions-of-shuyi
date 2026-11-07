@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/debug.rs
-assertion_line: 594
 expression: snap
 ---
  Glyphs (557)                                                                                       

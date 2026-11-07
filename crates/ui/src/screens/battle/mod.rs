@@ -926,11 +926,11 @@ impl BattleScreen {
                     fired.push(TipTrigger::FirstTerrain);
                 }
             }
-            Mode::ActionMenu { sel, menu, .. } => {
+            Mode::ActionMenu { menu, arts, .. } => {
                 if menu.items().iter().any(|i| i.value == MenuEntry::Magic) {
                     fired.push(TipTrigger::FirstCaster);
                 }
-                if art_list::can_use_art(&art_list::art_lines(state, sel.unit, sel.dest())) {
+                if art_list::can_use_art(arts) {
                     fired.push(TipTrigger::ArtsAvailable);
                 }
             }
