@@ -238,6 +238,17 @@ fn p(x: i32, y: i32) -> Pos {
 
 // ---------------------------------------------------------------- scenarios
 
+/// Each search adds one to the thread's count (1247).
+#[test]
+fn each_search_is_counted() {
+    let s = scene(&["@.."], "foot", 2);
+    let before = searches();
+    s.reach(MOVER).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(searches() - before, 1);
+    s.reach(MOVER).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(searches() - before, 2);
+}
+
 #[test]
 fn wall_blocks() {
     check(

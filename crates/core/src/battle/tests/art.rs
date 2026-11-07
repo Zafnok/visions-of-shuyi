@@ -1117,6 +1117,43 @@ fn an_art_doubles_the_weapon_exp_base_but_not_the_damage_bonus() {
     );
 }
 
+/// A move planned once checks and previews what `check` and
+/// `preview_attack` would, with the same answers (1247).
+#[test]
+fn a_planned_move_answers_like_the_command() {
+    let s = battle(vec![
+        with_skill_class(artist(1, p(0, 0), "blade"), "keen"),
+        unit(3, Faction::Enemy, p(1, 0)),
+    ]);
+    let planned = s
+        .plan_move(UnitId(1), p(0, 0))
+        .unwrap_or_else(|e| panic!("{e}"));
+    for action in [UnitAction::Wait, UnitAction::Open, art_attack(3, "nope")] {
+        let act = Command::Act {
+            unit: UnitId(1),
+            dest: p(0, 0),
+            action: action.clone(),
+        };
+        assert_eq!(
+            s.check_after(&planned, &action),
+            s.check(&act),
+            "{action:?}"
+        );
+    }
+    assert!(s.check_after(&planned, &UnitAction::Open).is_err());
+    assert_eq!(
+        s.preview_attack_after(&planned, &attack(3)),
+        s.preview_attack(UnitId(1), p(0, 0), &attack(3))
+    );
+    assert_eq!(
+        s.plan_move(UnitId(3), p(1, 0)),
+        Err(CommandError::NotItsPhase {
+            unit: UnitId(3),
+            phase: Phase::Player,
+        })
+    );
+}
+
 #[test]
 fn the_preview_is_validated_like_the_command() {
     let s = battle(vec![

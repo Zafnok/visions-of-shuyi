@@ -5,10 +5,10 @@ type: bug
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-06
 ---
 
 # 1247 — The unit menu checks its arts without a path search for each
@@ -78,13 +78,16 @@ reasons.
 
 ## Acceptance criteria
 
-- [ ] Opening the unit menu runs at most one path search for the moving
+- [x] Opening the unit menu runs at most one path search for the moving
       unit (test).
-- [ ] Every art line and its reason are unchanged (the `art_list` tests
+- [x] Every art line and its reason are unchanged (the `art_list` tests
       and snapshots pass unchanged).
 - [ ] `battle-attack`'s costliest frame is under 2,000,000 instructions on
       the colour targets (the `bench` job's table, in `docs/targets.md`).
-- [ ] All gates in the `run-gates` skill pass.
+      **Not met:** 2,695,971, in frame 11, a cursor move while the rider
+      is selected (the threat arrows, 1251). The unit menu's frame is
+      under the scenario's p99 (2,257,062).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -93,5 +96,46 @@ reasons.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Core.** `BattleState::plan_move` checks a ready unit's move to a
+  tile and searches its path once (`PlannedMove`);
+  `preview_attack_after` and `check_after` check an action against it
+  with the same answers as `preview_attack` and `check`, which now use
+  them. `legal::attack_reach`, the bound `legal` already used, is public.
+  A `search-count` feature (tests only, on in `trpg-ui`'s
+  dev-dependencies) counts `movement::reachable` runs per thread.
+- **UI.** `attack::AttackFrom` holds one planned move and the attacker's
+  reach. `fit`, the weapon choices, the spell list and the menu's `Open`
+  check use it. `fit` previews only the units within reach; when none of
+  them is hit, the first unit beyond reach that the core refuses for its
+  cost or range gives the reason. The core checks the cost before the
+  target, so that reason holds for all of them, and every `Fit` stays
+  the same. `open_menu` builds one `AttackFrom` for the art lines, the
+  entries, the weapons and the spells, and the action menu keeps its art
+  lines (`Mode::ActionMenu::arts`). `triggers_now` and `Arts`' enabled
+  check read those lines.
+- **Test.** `opening_the_unit_menu_searches_the_move_once` plays the
+  bench's steps in *The Company Ledger*. Opening the unit menu now runs
+  1 search. Before this change it ran hundreds: the bench's dump counted
+  298 in that frame, and a midway version of this change still ran 4.
+  The `art_list` tests and every snapshot pass unchanged.
+- **Deviation.** `menu_entries` takes the menu's `AttackFrom` and art
+  lines. Its tests call `entries_at`, a test helper.
+- **Bench** (CI's `bench` job on PR #568, now in `docs/targets.md`):
+  `battle-attack`'s costliest frame went from 16,776,750 instructions
+  (frame 43, the menu) to 2,695,971 on the desktop, and from 16,984,920
+  to 3,406,850 on the Playdate. The menu's frame is no longer the
+  costliest; it is under the p99 of 2,257,062. The costliest is now
+  frame 11 (13 on the Playdate), a cursor move while the rider is
+  selected. Counting with the search counter showed 14 path searches on
+  each such move, from the threat arrows (`threats_at`, one per enemy).
+  That is outside this ticket, so the 2 million criterion isn't met
+  here. Follow-up **1251** (threat arrows without a path search per
+  enemy each cursor step) covers it; 1250 now waits for it too, and
+  1248 points to it.
+- **Mutation testing.** CI's first run missed `check_after` replaced by
+  `Ok(())` and the counter's mutants. `a_planned_move_answers_like_the_command`
+  (core) and the exact count of 1 in the UI test now catch them. CI
+  runs only the mutated crate's tests, so core also turns on its own
+  `search-count` for its tests (a self dev-dependency, as `trpg-ui` does
+  for `harness`), and `each_search_is_counted` checks the counter.
+- No gameplay rule decided; nothing for the Act 1 playtest.

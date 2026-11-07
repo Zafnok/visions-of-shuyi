@@ -65,7 +65,8 @@ frame and the target.
 Measured 2026-11-06 by the `bench` job of PR #558 (Callgrind on Linux,
 the heap from the tool program's counter, the web package without the
 bought art). The Playdate's package isn't measured: CI has no Playdate
-SDK to build it.
+SDK to build it. `battle-attack`'s rows are from PR #568's run
+(2026-11-07, ticket 1247); the others are still PR #558's.
 
 | Scenario | On | Frames | Instructions: most (frame) | p99 | Mean | Peak heap |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -75,8 +76,8 @@ SDK to build it.
 | battle-cursor-sweep | playdate | 106 | **3,111,370** (91) | 2,843,669 | 1,905,657 | 5.4 MB |
 | battle-enemy-turn | desktop, web | 598 | 3,698,190 (63) | 3,125,540 | 1,272,784 | 4.5 MB |
 | battle-enemy-turn | playdate | 598 | **4,532,390** (63) | 3,949,376 | 1,967,707 | 5.4 MB |
-| battle-attack | desktop, web | 384 | 16,776,750 (43) | 9,595,367 | 1,524,657 | 4.5 MB |
-| battle-attack | playdate | 384 | **16,984,920** (43) | 9,749,896 | 2,165,082 | 5.4 MB |
+| battle-attack | desktop, web | 384 | 2,695,971 (11) | 2,257,062 | 1,340,394 | 4.5 MB |
+| battle-attack | playdate | 384 | **3,406,850** (13) | 3,226,561 | 1,979,822 | 5.4 MB |
 | options-menu | desktop, web | 110 | 532,148 (3) | 506,622 | 439,420 | 4.3 MB |
 | options-menu | playdate | 110 | 1,883,148 (3) | 1,879,405 | 838,930 | 5.2 MB |
 | dialogue-portrait | desktop, web | 304 | 2,084,920 (157) | 1,967,878 | 1,145,114 | 4.3 MB |
@@ -91,10 +92,12 @@ SDK to build it.
 The numbers in bold are over their budgets. The budgets stay; a ticket
 covers each one:
 
-- **The unit menu's frame (1247).** `battle-attack`'s frame 43 opens the
-  unit menu after the move. The arts list checks each art against every
-  unit on the map with a full path search each, three times over: 297
-  searches, 17 million instructions on every target.
+- **The threat arrows (1251).** While a unit is selected, each cursor
+  move searches every enemy's moves again (14 searches in
+  `battle-attack`'s battle): `battle-attack`'s frames 11 and 13 and,
+  very likely, `battle-cursor-sweep`'s frame 91. 1247 already took the
+  unit menu's frame (43) from 17 million instructions to under the
+  p99: one path search, not 298.
 - **The Playdate's one-bit drawing (1248).** Drawing a frame in one bit
   takes about 1 million instructions, half the Playdate's budget, before
   the game does anything; a portrait drawn in one bit takes 2.7 million

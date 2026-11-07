@@ -2262,6 +2262,17 @@ impl BattleState {
         self.validate(cmd).map(|_| ())
     }
 
+    /// [`Self::check`] of the `Act` doing `action` after `planned`, a move
+    /// planned in this state, without searching its path again (1247).
+    pub fn check_after(
+        &self,
+        planned: &PlannedMove,
+        action: &UnitAction,
+    ) -> Result<(), CommandError> {
+        self.check_open()?;
+        self.plan_step_after(planned, action).map(|_| ())
+    }
+
     /// The HP `unit` moving to `dest` and doing `action` (a heal spell
     /// cast) would restore, without doing it; `None` if [`Self::apply`]
     /// would refuse the `Act` or it isn't a heal.
@@ -2363,13 +2374,10 @@ impl BattleState {
 
     /// Validates `cmd` (see [`Self::apply`]): what to carry out.
     fn validate(&self, cmd: &Command) -> Result<Planned, CommandError> {
-        if self.outcome.is_some() {
+        if !matches!(cmd, Command::MoveAfter { .. }) {
+            self.check_open()?;
+        } else if self.outcome.is_some() {
             return Err(CommandError::BattleOver);
-        }
-        if let Some(pending) = self.pending_move
-            && !matches!(cmd, Command::MoveAfter { .. })
-        {
-            return Err(CommandError::MoveAfterPending(pending.unit));
         }
         Ok(match cmd {
             Command::MoveAfter { unit, to } => Planned::MoveAfter {
@@ -2406,6 +2414,18 @@ impl BattleState {
         })
     }
 
+    /// Whether the battle takes a command other than a `MoveAfter`: it
+    /// isn't over, and no unit waits to move after its attack.
+    fn check_open(&self) -> Result<(), CommandError> {
+        if self.outcome.is_some() {
+            return Err(CommandError::BattleOver);
+        }
+        match self.pending_move {
+            Some(pending) => Err(CommandError::MoveAfterPending(pending.unit)),
+            None => Ok(()),
+        }
+    }
+
     /// Validates an `Act`: the move's path and the action to carry out.
     fn plan(
         &self,
@@ -2413,7 +2433,17 @@ impl BattleState {
         dest: Pos,
         action: &UnitAction,
     ) -> Result<(Vec<Pos>, Step), CommandError> {
-        let unit = self.check_ready(id)?;
+        let planned = self.plan_move(id, dest)?;
+        let step = self.plan_step_after(&planned, action)?;
+        Ok((planned.path, step))
+    }
+
+    /// The move of ready unit `id` to `dest`, a tile it can stop on, with
+    /// its path searched once: an `Act`'s checks before its action, with
+    /// the same errors. Many actions there are then previewed against it
+    /// ([`Self::preview_attack_after`]) without searching again (1247).
+    pub fn plan_move(&self, id: UnitId, dest: Pos) -> Result<PlannedMove, CommandError> {
+        self.check_ready(id)?;
         let reach = reachable(
             &self.map,
             &self.tables.terrain,
@@ -2425,8 +2455,21 @@ impl BattleState {
             .path_to(dest)
             .filter(|_| reach.is_stoppable(dest))
             .ok_or(CommandError::CannotStop(dest))?;
-        let step = self.plan_step(unit, dest, &path, action)?;
-        Ok((path, step))
+        Ok(PlannedMove {
+            unit: id,
+            dest,
+            path,
+        })
+    }
+
+    /// Validates the action after `planned`, a move planned in this state.
+    fn plan_step_after(
+        &self,
+        planned: &PlannedMove,
+        action: &UnitAction,
+    ) -> Result<Step, CommandError> {
+        let unit = self.check_ready(planned.unit)?;
+        self.plan_step(unit, planned.dest, &planned.path, action)
     }
 
     /// Whether ready `unit`, moving along `path` (its tile first) to `dest`
@@ -3890,8 +3933,8 @@ mod supports;
 mod triggers;
 mod village;
 
-pub use arts::AttackPreview;
 use arts::{ArtUse, check_arts_allowed};
+pub use arts::{AttackPreview, PlannedMove};
 use skills::{ActiveUse, AttackPlan, Fight, SkillStep};
 pub use triggers::{GameMode, TileRect, Trigger, TriggerWhen, Who};
 pub(crate) use village::burns;
