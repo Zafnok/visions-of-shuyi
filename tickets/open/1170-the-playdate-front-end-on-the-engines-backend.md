@@ -5,8 +5,8 @@ type: feature
 milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
-blocked_by: ["engine#3090"]
+status: todo
+blocked_by: []
 nick_input: setup
 completed:
 ---
@@ -128,6 +128,11 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 - Audio converter replacement (1203, done), voice clips (1048),
   sale packaging (1052), AI speed (1051), frame optimization (1057/1059),
   and changing the one-bit skins in `crates/ui`.
+
+**After this ticket:** 1049 (one build per language, the `--lang`
+option goes on `shuyi export playdate`, not the old exporter) and 1068
+(heap measured through the engine's `SdkAlloc` and loading, not the old
+`pd/allocator.rs`) wait on it.
 
 **Either order with 1057 and 1059:** if they land first, verify the engine
 keeps their measurements/behavior before disconnecting the old frontend;
