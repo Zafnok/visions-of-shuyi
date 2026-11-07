@@ -122,6 +122,44 @@ fn a_voiced_line_advances_after_its_clip_and_the_pause() {
     assert_eq!(page(&h), "Two.");
 }
 
+/// The reading time starts once the page is all typed: at Normal speed
+/// (60 characters a second) [`LONG`] takes about 0.67 s to type, then 3 s
+/// to read.
+#[test]
+fn the_reading_time_starts_once_the_page_is_typed() {
+    let mut h = playing(vec![narrate(LONG), narrate("Two.")], true);
+    let normal = |s: &mut trpg_ui::settings::Settings| s.text_speed = TextSpeed::Normal;
+    assert!(h.ctx_mut().change_settings(normal).is_ok());
+    h.wait(3.4);
+    assert_eq!(page(&h), LONG);
+    h.wait(0.5);
+    assert_eq!(page(&h), "Two.");
+}
+
+/// "Skip scene?" holds the page however long it is open, and the wait
+/// starts over once it closes.
+#[test]
+fn the_skip_question_holds_the_page() {
+    let mut h = playing(vec![narrate("One."), narrate("Two.")], true);
+    h.keys("d");
+    let asking = |h: &Harness| {
+        let screen = h.game().screen::<DialogueScreen>();
+        screen.is_some_and(DialogueScreen::is_asking_skip)
+    };
+    assert!(asking(&h));
+    h.wait(30.0);
+    assert!(asking(&h));
+    assert_eq!(page(&h), "One.");
+    // Cancel answers no: back to the page, which waits its reading time
+    // again (1.2 s).
+    h.keys("d");
+    assert!(!asking(&h));
+    h.wait(1.0);
+    assert_eq!(page(&h), "One.");
+    h.wait(0.4);
+    assert_eq!(page(&h), "Two.");
+}
+
 /// A press still works as usual, and starts the wait over on the next
 /// line.
 #[test]
