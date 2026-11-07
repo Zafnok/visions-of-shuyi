@@ -263,3 +263,11 @@ Nothing for the game: none.
 | #294 | 3210 | The options panel rises when its rows leave no room for the message | fixed: the four in-battle Options snapshots show the panel one row higher; the rise is one row early (a panel that fitted moves too), filed as engine#3212 |
 
 Nothing for the game: 5 PRs (#281, #282, #290, #296, #299). #281, #282 and #290 are engine tickets and research only; #296 is the engine's own API listing in CI; #299 gives Hello, Grid and the grid template the debug view's grid channel (1252 does the game's).
+
+## 2026-11-07: 02dbce1d → c1ba9ec8 (1 engine PR), #574
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #302 | 3211 | A tip keeps its instructions apart from its text: `Tip::how`, `TipLimits::how_lines` | fixed: the tips' `LIMITS` sets `how_lines: 0`; adopt → 0475 (Vix's spoken lines name no key, the keys go in a tip's `how`) |
+
+Nothing for the game: none.
