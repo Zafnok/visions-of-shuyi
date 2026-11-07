@@ -141,7 +141,8 @@ fn the_reading_time_starts_once_the_page_is_typed() {
 #[test]
 fn the_skip_question_holds_the_page() {
     let mut h = playing(vec![narrate("One."), narrate("Two.")], true);
-    h.keys("d");
+    // Shown in full first (the question stops the typing), then asked.
+    h.wait(0.5).keys("d");
     let asking = |h: &Harness| {
         let screen = h.game().screen::<DialogueScreen>();
         screen.is_some_and(DialogueScreen::is_asking_skip)
