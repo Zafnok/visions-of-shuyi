@@ -216,7 +216,8 @@ fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
 pub struct TitleScreen {
     /// The menu; each line stands for its [`Item`].
     menu: Menu<Item>,
-    /// Why `Continue` couldn't, shown under the menu until the next key.
+    /// Why `Continue` couldn't, or that the game crashed last time, shown
+    /// under the menu until the next key.
     notice: Option<String>,
     /// Whether the title music was asked for since this screen was last
     /// shown: starting the game flow (whose battles play their own music)
@@ -343,6 +344,12 @@ impl TitleScreen {
     /// The notice under the menu, if any.
     pub fn notice(&self) -> Option<&str> {
         self.notice.as_deref()
+    }
+
+    /// Shows `notice` under the menu until the next key: that the game
+    /// closed unexpectedly last time (ticket 1245).
+    pub fn show_notice(&mut self, notice: String) {
+        self.notice = Some(notice);
     }
 
     /// Opens the game flow over the title; the music changes under it, so
@@ -632,6 +639,10 @@ impl Screen<Shuyi> for TitleScreen {
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
+        Some(self)
+    }
+
+    fn as_any_mut(&mut self) -> Option<&mut dyn core::any::Any> {
         Some(self)
     }
 

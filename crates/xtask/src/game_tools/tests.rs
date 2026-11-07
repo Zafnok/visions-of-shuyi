@@ -1012,6 +1012,43 @@ fn a_bots_record_replays_the_same_twice() {
     assert_eq!(first.outcome, tried.outcome);
 }
 
+/// Acceptance (1245): the battle record a crash report holds replays from
+/// the battle's first state to where it crashed: the commands applied, then
+/// the one the rules were applying.
+#[test]
+fn a_crash_record_replays_to_the_crash() {
+    use trpg_ui::crash::{BattleRecord, crash_record};
+    use trpg_ui::harness::Harness;
+
+    let mut h = Harness::with_layout(trpg_ui::input::RIGHT_HANDED);
+    // Quick Battle, `Fight!`, the banner closed; the lord moves one tile
+    // right and waits.
+    h.keys("Down f Left f f");
+    h.keys("f Right f").wait(1.0).keys("f").wait(1.0);
+    let text = crash_record(h.game()).unwrap();
+    let mut record: BattleRecord = ron::from_str(&text).unwrap();
+    let applied = record.history.len();
+    let dir = std::env::temp_dir().join(format!("xtask-crash-{}", std::process::id()));
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("crash.ron"), &text).unwrap();
+    // As if the rules hadn't returned from ending the phase.
+    record.applying = Some(trpg_core::Command::EndPhase);
+    fs::write(dir.join("applying.ron"), ron::to_string(&record).unwrap()).unwrap();
+    let crashed = replay::replay(&Trpg, &dir, &replay::ReplayInput::new("crash.ron"));
+    let applying = replay::replay(&Trpg, &dir, &replay::ReplayInput::new("applying.ron"));
+    let _ = fs::remove_dir_all(&dir);
+    assert!(crashed.ok, "{:?} {:?}", crashed.error, crashed.limits);
+    let run = &crashed.result.unwrap().runs[0];
+    assert_eq!(run.steps.len(), applied + 1);
+    assert!(run.steps.iter().all(|s| s.refused.is_none()), "{run:?}");
+    let last = run.steps.last().map(|s| s.hash.clone());
+    assert_eq!(last, h.game().state_hash().map(|hash| hash.to_string()));
+    assert!(applying.ok, "{:?}", applying.error);
+    let run = &applying.result.unwrap().runs[0];
+    assert_eq!(run.steps.len(), applied + 2);
+    assert!(run.steps.iter().all(|s| s.refused.is_none()), "{run:?}");
+}
+
 /// Ticket 1193: a record that isn't the game's is an error naming it.
 #[test]
 fn replay_refuses_a_record_that_isnt_one() {

@@ -337,6 +337,10 @@ enum Opened {
 pub struct BattleScreen {
     state: BattleState,
     history: BattleHistory,
+    /// The command the rules are applying, until they return: in a crash
+    /// report's record, so a panic inside the rules replays to the panic
+    /// (ticket 1245).
+    applying: Option<Command>,
     camera: Camera,
     /// The viewport's size in tiles, across and down, that the camera is
     /// kept for: the map skin's, taken at the start of every frame.
@@ -526,6 +530,7 @@ impl BattleScreen {
             cursor: Cursor::new(start),
             mode: Mode::after_command(&state),
             history: BattleHistory::new(state.clone()),
+            applying: None,
             pressed: None,
             outcome_music: OutcomeMusic::Unheard,
             music: None,
@@ -1431,6 +1436,12 @@ impl BattleScreen {
         &self.history
     }
 
+    /// The command the rules were applying when they didn't return (a
+    /// panic): `None` between commands.
+    pub fn applying(&self) -> Option<&Command> {
+        self.applying.as_ref()
+    }
+
     /// What the player is doing.
     pub fn mode(&self) -> &Mode {
         &self.mode
@@ -1565,7 +1576,9 @@ impl BattleScreen {
         let was_player = !self.ai_phase();
         let walked = self.walked.take();
         // Refused: the battle is unchanged and the player browses again.
+        self.applying = Some(cmd.clone());
         let events = self.state.apply(cmd).ok();
+        self.applying = None;
         let playback = events.as_ref().and_then(|events| {
             let words = self.language.words();
             Playback::new(words, events, &before, self.state.fallen(), TIMINGS)

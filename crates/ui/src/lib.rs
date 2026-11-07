@@ -24,6 +24,8 @@ pub mod cinema;
 pub mod cinematic;
 pub mod color;
 pub mod console;
+#[cfg(feature = "std")]
+pub mod crash;
 pub mod debug;
 pub mod dialogue;
 pub mod flow;
