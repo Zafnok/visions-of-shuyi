@@ -20,7 +20,9 @@ use trpg_content::Theme;
 
 use crate::map_view::CursorStyle;
 
-pub use shuyi_ui::settings::{DEFAULT_VOLUME, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed};
+pub use shuyi_ui::settings::{
+    Background, DEFAULT_VOLUME, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed,
+};
 
 /// This game's settings: the engine's, with this game's
 /// ([`Settings::game`](shuyi_ui::settings::Settings::game)).
@@ -402,6 +404,10 @@ fn file(s: &Settings) -> SettingsFile {
 
 impl GameSettings for ShuyiSettings {
     type Theme = Theme;
+
+    /// Paused and silent while the window has no focus (ticket 1246,
+    /// `docs/design/options.md`, *Another window in front*).
+    const BACKGROUND: Background = Background::KEEP_RUNNING.paused().muted();
 
     /// The saved form (RON).
     fn to_ron(settings: &Settings) -> String {

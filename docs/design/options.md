@@ -226,3 +226,30 @@ On the pull request (PR #264), 2026-10-14:
 ### Open sub-questions
 
 - None.
+
+## Another window in front
+
+Decided: 2026-11-06
+Source: ticket 1246
+
+### Nick's words
+
+Asked what the game does when the player switches to another window
+(keep running with sound; keep running muted; pause and mute; a choice in
+Options), Nick picked **"Pause and mute"**.
+
+### Rules
+
+- When the game's window loses the focus (alt-tab, a click on another
+  app, another browser tab), the game **pauses**: the picture stays on
+  its last frame, nothing moves, and keys and buttons do nothing.
+- It is **silent** meanwhile: music, sounds and voices. The music keeps
+  its place.
+- When the window has the focus again, everything continues where it
+  stopped, at the player's volumes; the time away is not caught up.
+- It is the same for every player: **no Options row**.
+- Not on the Playdate, which has its own pause when the system menu opens.
+
+### Open sub-questions
+
+- None.
