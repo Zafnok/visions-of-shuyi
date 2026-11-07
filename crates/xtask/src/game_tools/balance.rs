@@ -12,7 +12,7 @@ use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::game::StageWrite;
 use shuyi_cli::{AutobalancePlan, Tunable};
 use shuyi_core::Knob;
-use shuyi_core::bots::playtest::play_tries;
+use shuyi_core::bots::playtest::play_try;
 use trpg_bots::{BattleEntrant, Persona, Targets, TunedBattle, knobs, personas_from_ron};
 use trpg_content::battle::BATTLES_DIR;
 use trpg_content::battle::tune::BattleText;
@@ -87,9 +87,7 @@ pub fn tuned_plan(
         let stage = stage(&content, &battle.load()?)?;
         let name = ENTRANTS[entrant];
         let persona = BattleEntrant::persona(name, personas[entrant], content.ai, &stage);
-        let mut tries =
-            play_tries(&stage, &persona, seed..seed + 1, turns).map_err(|e| e.to_string())?;
-        tries.pop().ok_or_else(|| "no try".to_owned())
+        play_try(&stage, &persona, seed, turns).map_err(|e| e.to_string())
     });
     Ok(AutobalancePlan::new(
         format!("{id} · {tier:?} tier · {:?}\n{fielded}", def.kind),

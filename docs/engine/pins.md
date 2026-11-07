@@ -245,3 +245,21 @@ Nothing for the game: 7 PRs (#246, #254, #255, #258, #259, #261, #265). #246, #2
 | #277 | 3008 | `shuyi bench`: scenarios played headless, gated against every target's budgets | unblocks 1244 (its pin step struck) |
 
 Nothing for the game: none.
+
+## 2026-11-07: e2697683 → 02dbce1d (16 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #283 | 2303 | Wide glyph sets per language, punctuation wide in one language only, Chinese line breaking; `FontAtlasDef` gains `wide_sets`, `LangInfo` `wide_font` and `wide_punctuation`, `font_atlas::run` takes `&[WideFont]`, packs are version 9 | fixed: the xtask icon test's atlas has `wide_sets`, the up-to-date atlas test passes no wide fonts (`&[]`); 0239's pin step struck |
+| #298 | 2582 | The contract's answers list the sounds a game added at run time (`EventsOutput::sounds_added`) | fixed: nothing to change (the game builds no `EventsOutput`) |
+| #295 | 2391 | One RGBA picture type: `glyph_tiles` and `font_atlas` give `shuyi_assets::image::Image`, `raster::of_painted` is a free function | fixed: nothing to change (the game's tools call none of them) |
+| #291 | 2250 | A voice cast a voice tool can use: `Cast<S>` with `CastVoice<S>`, `cast_from_source` generic over the tool's settings | fixed: nothing to change (the game's voice tool reads its own cast today; 1242 moves it onto this) |
+| #297 | 2544 | `bots` folded into `playtest`: `GameTools::bots` and `contract::bots` gone, a bot run is a `PlaytestPlan` with one entrant and no checks, a try gives `PlayedTry` | fixed: `Trpg::bots` became `Trpg::playtest_plan` (`plays::plan`: the `baseline` entrant in Classic on the stage asked for, else the story's first battle, no checks, each try's `PlayRecord` kept), autobalance's try is `play_try`, and the two 1193 tests run through `playtest`; adopt → 1240 (the record through `Entrant::record`, the copied loop deleted) |
+| #280 | 3095 | A panic the game survives is reported but not offered as a crash: `CrashReport::fatal`, `offer_last_crash` offers only fatal reports | adopt → 1245 (its open PR's crash offer rests on `offer_last_crash`, which now skips a panic on another thread) |
+| #284 | 2315 | The debug view: gizmos from `Screen::debug_draw` in channels, the debug menu's "Debug view", the grid kit's `grid` channel, saved under `debug_view` | fixed: the debug menu's new last entry moves the tests that reach a tool by Up (cinematic, scene camera, sprite test, voice test, map skin, the sessions' "Save session", the xtask camera frame), the debug menu snapshot, the unreadable-storage warnings (`debug_view`) and the kept Quick Battle session (written again: its script presses Up once more); adopt → 1252 |
+| #285 | 2249 | Sounds a game makes at run time: `Samples`, `AudioQueue::add_sound` and `remove_sound` on every backend | not for the game: every sound it plays is an authored file with its credit in `audio.ron` (ADR-0013), and the Playdate's are baked at build time (1221); no design asks for a sound made while it runs |
+| #300 | 2254 | A source language names its wide set and its punctuation's width (`SourceLang::with_wide_font`, `with_wide_punctuation`) | not for the game: its source language is English, which draws no wide glyph; Japanese and Chinese are packs with their own `lang.ron` (0236, 0239) |
+| #301 | 2255 | Screens know when a voice clip has ended | adopt → 0863 (written here: 0859's auto-advance waits for the real end instead of its estimate) |
+| #294 | 3210 | The options panel rises when its rows leave no room for the message | fixed: the four in-battle Options snapshots show the panel one row higher; the rise is one row early (a panel that fitted moves too), filed as engine#3212 |
+
+Nothing for the game: 5 PRs (#281, #282, #290, #296, #299). #281, #282 and #290 are engine tickets and research only; #296 is the engine's own API listing in CI; #299 gives Hello, Grid and the grid template the debug view's grid channel (1252 does the game's).

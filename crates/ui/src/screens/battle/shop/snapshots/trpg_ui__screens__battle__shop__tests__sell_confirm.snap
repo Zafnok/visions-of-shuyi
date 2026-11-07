@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/shop/tests.rs
-assertion_line: 433
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔══ Vendor ══════════════════════════════════════════════════════════════════════════════ Gold 0 ══╗

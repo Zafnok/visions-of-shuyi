@@ -1,6 +1,5 @@
 ---
 source: crates/ui/src/screens/battle/progress_tests.rs
-assertion_line: 147
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐

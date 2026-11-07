@@ -9,13 +9,13 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::PadKind;
 use trpg_ui::input::RIGHT_HANDED;
 
-/// The title with the sprite test opened from the debug menu (its last
-/// tool but six: the class change tools, the voice test, the test
-/// cinematic, the scene camera
-/// and the map skin come after it).
+/// The title with the sprite test opened from the debug menu (eight
+/// entries come after it: the two class change tools, the voice test, the
+/// test world map, the test cinematic, the scene camera, the map skin and
+/// the engine's debug view).
 fn opened() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("F2 Up Up Up Up Up Up Up Up f");
+    h.keys("F2 Up Up Up Up Up Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "sprite_test"]);
     h
 }

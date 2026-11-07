@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use shuyi_assets::font::{CellWidths, FontAtlasDef};
 use shuyi_cli::Project;
 use shuyi_cli::codec::decode_png;
-use shuyi_cli::contract::{bots, check, lint, replay, target};
+use shuyi_cli::contract::{check, lint, playtest, replay, target};
 use shuyi_cli::font_atlas::{ATLAS_RANGES, AtlasChars, ONE_BIT_FILE, read_font};
 use shuyi_cli::frame_png::{self, Options};
 use shuyi_cli::lang_status::{self, Part};
@@ -251,7 +251,7 @@ fn a_light_must_be_one_of_the_lights() {
 #[test]
 fn the_scene_camera_frame_shows_the_map_in_its_window() {
     let dir = temp_dir("frame-png-backdrop");
-    let mut options = parse(&["camera.png", "--keys", "F2 Up Up f f"]).unwrap();
+    let mut options = parse(&["camera.png", "--keys", "F2 Up Up Up f f"]).unwrap();
     options.scale = Some(1);
     let printed = run(&dir, &options).unwrap();
     assert!(printed.contains("scene_camera"), "{printed}");
@@ -797,7 +797,7 @@ fn committed_atlas_is_up_to_date() {
     let chars =
         AtlasChars::of_lang(&lang().lang, &rules.required_glyphs).with_wide(&rules.wide_glyphs);
     let msg =
-        shuyi_cli::font_atlas::run(rules, project.config.command(), &fonts, None, &dir, &chars)
+        shuyi_cli::font_atlas::run(rules, project.config.command(), &fonts, &[], &dir, &chars)
             .unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
@@ -945,33 +945,51 @@ fn check_finds_a_character_the_atlas_cant_draw() {
     assert!(named, "{errors:?}");
 }
 
-/// Ticket 1193: `bots` plays as many games as asked, each with a record.
+/// `playtest` as a plain bot run of the story's first battle: `tries`
+/// tries from seed 1, no history kept.
+fn bot_run(tries: u32) -> playtest::PlaytestOutput {
+    let content = trpg_content::load_embedded().unwrap();
+    let chapter = &content.chapters[&content.new_game.first_chapter];
+    let mut input = playtest::PlaytestInput::default();
+    input.stage = Some(chapter.battle.clone());
+    input.tries = Some(tries);
+    input.seed = Some(1);
+    input.no_history = true;
+    let answer = playtest::playtest(&Trpg, &input);
+    assert!(answer.ok, "{:?}", answer.error);
+    answer.result.unwrap().remove(0)
+}
+
+/// Ticket 1193: the bot run plays as many games as asked, each with a
+/// record (since engine 2544, as `playtest` with no checks).
 #[test]
 fn bots_play_three_games_with_records() {
-    let mut input = bots::BotsInput::default();
-    input.games = 3;
-    input.seed = 1;
-    let answer = bots::bots(&Trpg, &input);
-    assert!(answer.ok, "{:?}", answer.error);
-    let output = answer.result.unwrap();
-    assert_eq!(output.games, 3);
-    assert_eq!(output.outcomes.values().sum::<u32>(), 3);
-    let seeds: Vec<u64> = output.plays.iter().map(|p| p.seed).collect();
+    let output = bot_run(3);
+    let [baseline] = &output.entrants[..] else {
+        panic!("one entrant: {:?}", output.entrants)
+    };
+    assert_eq!(baseline.outcomes.values().sum::<u32>(), 3);
+    let seeds: Vec<u64> = baseline.tries.iter().map(|t| t.seed).collect();
     assert_eq!(seeds, [1, 2, 3]);
-    assert!(output.plays.iter().all(|p| p.record.is_some()));
-    assert!(output.measures.contains_key("won"), "{:?}", output.measures);
+    assert!(baseline.tries.iter().all(|t| t.record.is_some()));
+    assert!(
+        baseline.measures.contains_key("won"),
+        "{:?}",
+        baseline.measures
+    );
+    assert!(output.report.checks.is_empty());
 }
 
 /// Ticket 1193: a record the bots wrote replays to the same hashes twice,
 /// and to the play's own end.
 #[test]
 fn a_bots_record_replays_the_same_twice() {
-    let mut input = bots::BotsInput::default();
-    input.games = 1;
-    let play = bots::bots(&Trpg, &input).result.unwrap().plays.remove(0);
+    let output = bot_run(1);
+    let kept = output.entrants[0].tries[0].clone();
+    let tried = output.report.entrants[0].tries[0].clone();
     let dir = std::env::temp_dir().join(format!("xtask-replay-{}", std::process::id()));
     fs::create_dir_all(&dir).unwrap();
-    fs::write(dir.join("play.ron"), play.record.unwrap()).unwrap();
+    fs::write(dir.join("play.ron"), kept.record.unwrap()).unwrap();
     let answer = replay::replay(&Trpg, &dir, &replay::ReplayInput::new("play.ron"));
     let _ = fs::remove_dir_all(&dir);
     assert!(answer.ok, "{:?} {:?}", answer.error, answer.limits);
@@ -982,12 +1000,11 @@ fn a_bots_record_replays_the_same_twice() {
     assert_eq!(first, second);
     assert_eq!(
         first.steps.len(),
-        usize::try_from(play.commands).unwrap() + 1
+        usize::try_from(kept.commands).unwrap() + 1
     );
     let refused = first.steps.iter().filter(|s| s.refused.is_some()).count();
     assert_eq!(refused, 0);
-    let ended = first.outcome.as_deref().unwrap_or(bots::UNFINISHED);
-    assert_eq!(ended, play.outcome);
+    assert_eq!(first.outcome, tried.outcome);
 }
 
 /// Ticket 1193: a record that isn't the game's is an error naming it.
