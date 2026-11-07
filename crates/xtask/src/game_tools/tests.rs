@@ -977,7 +977,12 @@ fn bots_play_three_games_with_records() {
         "{:?}",
         baseline.measures
     );
-    assert!(output.report.checks.is_empty());
+    assert_eq!(
+        output.report.checks.len(),
+        0,
+        "no checks: {:?}",
+        output.report.checks
+    );
 }
 
 /// Ticket 1193: a record the bots wrote replays to the same hashes twice,
