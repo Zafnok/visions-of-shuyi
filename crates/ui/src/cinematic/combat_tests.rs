@@ -220,6 +220,10 @@ fn the_shot_plays_the_battles_sounds_for_the_fight() {
     let (at, first) = pb.cues()[0];
     assert_eq!(player.sounds(at - 0.1, at - 0.001), [] as [&str; 0]);
     assert_eq!(player.sounds(at - 0.1, at + 0.001), [first]);
+    // A frame ending on it plays it; the next frame, starting there, not
+    // again.
+    assert_eq!(player.sounds(at - 0.1, at), [first]);
+    assert_eq!(player.sounds(at, at + 0.1), [] as [&str; 0]);
     // Time going backwards plays nothing.
     assert_eq!(player.sounds(5.0, 0.5), [] as [&str; 0]);
 }
