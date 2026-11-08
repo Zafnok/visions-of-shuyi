@@ -22,7 +22,8 @@ use std::time::SystemTime;
 
 use trpg_content::Content;
 use trpg_content::dialogue::{self, DIALOGUE_DIR, DIALOGUE_EXTENSION, DialogueTable};
-use trpg_content::voice::{MANIFEST_FILE, MadeBy, SOURCE_LANG, VoiceClip};
+use trpg_content::lesson::{self, LESSONS_PATH, LessonTable};
+use trpg_content::voice::{self, MANIFEST_FILE, MadeBy, SOURCE_LANG, VoiceClip};
 
 use files::{CAST_FILE, Cast, Reader, SAY_FILE, SENT_FILE, Say, Sent, SentMap};
 use plan::{Inputs, Plan, Wanted, Why};
@@ -38,8 +39,8 @@ pub const USAGE: &str = "usage: cargo xtask voice <status | generate | script> [
   for the narrator, or lead_m / lead_f\n\n\
 options:\n  \
   --lang <code>                the language's folder (default en)\n  \
-  --scene <id>                 one scene (a test scene too); default every scene of\n                               \
-  assets/dialogue/\n  \
+  --scene <id>                 one scene (a test scene too, or vix: the guide's lessons\n                               \
+  and tips); default vix and every scene of assets/dialogue/\n  \
   --dir <folder>               the voice folder (default assets-private/voice)\n  \
   --lab <folder>               the voice lab (default $VOICE_LAB, else D:/voice-lab)";
 
@@ -121,7 +122,8 @@ pub struct Folder {
 
 /// The scripts as the tool needs them.
 pub struct Scripts<'a> {
-    /// The lines as written, the stand-ins for the name kept.
+    /// The lines as written, the stand-ins for the name kept, and the
+    /// guide's lines of the lessons and tips (scene `vix`, ticket 0476).
     pub dialogue: DialogueTable,
     /// The scenes to voice.
     pub scenes: BTreeSet<String>,
@@ -133,18 +135,31 @@ impl<'a> Scripts<'a> {
     /// `content`'s scripts, voicing `scenes`.
     pub fn new(content: &'a Content, scenes: BTreeSet<String>) -> Self {
         Self {
-            dialogue: dialogue::written(&content.dialogue, &content.stand_ins),
+            dialogue: voice::with_guide(
+                dialogue::written(&content.dialogue, &content.stand_ins),
+                &shipped_lessons(),
+                &content.tips,
+            ),
             scenes,
             content,
         }
     }
 }
 
-/// The scenes of the story's scripts, `<root>/assets/dialogue/*.dlg`.
+/// The lessons of a build that ships: never the test lesson (ADR-0057),
+/// whose clip would be of a line that build doesn't have, so it would
+/// refuse the whole manifest. Tips have no test files.
+fn shipped_lessons() -> LessonTable {
+    let source = trpg_content::bundle::file(LESSONS_PATH).unwrap_or_default();
+    lesson::from_source(LESSONS_PATH, source, lesson::Refs::default()).unwrap_or_default()
+}
+
+/// The scenes of the story's scripts, `<root>/assets/dialogue/*.dlg`, and
+/// the guide's lines (ticket 0476).
 pub fn story_scenes(root: &Path) -> Result<BTreeSet<String>, String> {
     let dir = root.join("assets").join(DIALOGUE_DIR);
     let entries = fs::read_dir(&dir).map_err(|e| format!("reading {}: {e}", dir.display()))?;
-    let mut scenes = BTreeSet::new();
+    let mut scenes = BTreeSet::from([voice::GUIDE_SCENE.to_owned()]);
     for path in entries.filter_map(|e| Some(e.ok()?.path())) {
         if !path.to_string_lossy().ends_with(DIALOGUE_EXTENSION) {
             continue;
@@ -588,12 +603,12 @@ fn record(loaded: &mut Loaded, w: &Wanted, (tool, model): (&str, &str), date: &s
 /// Runs `args` from the repository at `root`. Returns the report.
 pub fn run(root: &Path, args: &Args) -> Result<String, String> {
     let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
-    let scenes = match &args.scene {
-        Some(id) if content.dialogue.get(id).is_some() => BTreeSet::from([id.clone()]),
+    let mut scripts = Scripts::new(&content, BTreeSet::new());
+    scripts.scenes = match &args.scene {
+        Some(id) if scripts.dialogue.get(id).is_some() => BTreeSet::from([id.clone()]),
         Some(id) => return Err(format!("no scene \"{id}\"")),
         None => story_scenes(root)?,
     };
-    let scripts = Scripts::new(&content, scenes);
     let voice = args
         .dir
         .clone()

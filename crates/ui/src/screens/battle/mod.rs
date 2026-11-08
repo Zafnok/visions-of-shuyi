@@ -37,6 +37,7 @@ pub mod event_sounds;
 pub mod flight;
 pub mod forecast;
 pub mod glyph;
+mod guide_voice;
 pub mod guides;
 pub mod info;
 pub mod items;
@@ -85,6 +86,7 @@ use self::cursor::Cursor;
 use self::doable::Doable;
 use self::event_sounds::CueQueue;
 use self::flight::Flight;
+use self::guide_voice::GuideVoice;
 use self::guides::GuidesScreen;
 use self::layout::{MAP_VIEW, map_area};
 use self::lessons::{EndAnswer, LessonState};
@@ -381,6 +383,8 @@ pub struct BattleScreen {
     tips: TipState,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
+    /// The guide's voice for the box on screen (0476).
+    guide_voice: GuideVoice,
     /// The answer the box at the end of the lessons is on (0465).
     end_focus: usize,
     /// What the units left to act could do, for the lessons (0464): worked
@@ -539,6 +543,7 @@ impl BattleScreen {
             queue: VecDeque::new(),
             tips: TipState::default(),
             lessons: LessonState::default(),
+            guide_voice: GuideVoice::default(),
             end_focus: 0,
             doable: Doable::default(),
             noticed: Vec::new(),
@@ -1022,6 +1027,17 @@ impl BattleScreen {
             t == TipTrigger::FirstEnemyPhase
                 || (self.state.phase() == Phase::Player && self.banner().is_none())
         })
+    }
+
+    /// The id of the line the guide says in the box on screen, the tip's
+    /// or else the lesson's: its `text`, never its items or `how` (0476).
+    fn guide_line(&self, ctx: &Ctx) -> Option<trpg_content::LineId> {
+        let content = &ctx.game.content;
+        let text = match self.shown_tip() {
+            Some(trigger) => &content.tips.for_trigger(trigger)?.text,
+            None => &content.lessons.get(self.shown_lesson()?)?.text,
+        };
+        Some(trpg_content::voice::guide_line(text))
     }
 
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
@@ -2833,9 +2849,13 @@ impl Screen<Shuyi> for BattleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.update_frame(ctx, input);
-        // Still on screen: its tip, if any, is seen (0467).
-        let shown = matches!(transition, Transition::None).then(|| self.shown_tip());
-        self.tips.show(shown.flatten(), ctx);
+        // Still on screen: its tip, if any, is seen (0467), and the guide
+        // says what its box or the lesson's says (0476).
+        let stays = matches!(transition, Transition::None);
+        self.tips
+            .show(stays.then(|| self.shown_tip()).flatten(), ctx);
+        let line = stays.then(|| self.guide_line(ctx)).flatten();
+        self.guide_voice.show(line, ctx);
         transition
     }
 
