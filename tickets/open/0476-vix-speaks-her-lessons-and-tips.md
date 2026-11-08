@@ -21,6 +21,10 @@ in the cast table, read by Chatterbox. 0475 leaves her lines free of keys. Clips
 belong to dialogue line ids (ADR-0046, ADR-0045 §3), and lessons and tips have
 none yet.
 
+**From 0475 (done):** what she says is a lesson's or a tip's `text`, and
+the content check keeps every key out of it. A lesson's items and a tip's
+`how` (its instructions, with the keys) are silent text: voice `text` only.
+
 ## Nick input
 
 None. Verified by tests. What is left to judge by playing goes on the Act 1

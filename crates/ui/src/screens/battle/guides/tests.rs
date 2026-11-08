@@ -65,6 +65,29 @@ fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
     );
 }
 
+/// Ticket 0475: a tip shows the guide's line, then its instructions with
+/// the keys after a blank line, as its box does.
+#[test]
+fn a_tips_instructions_show_after_its_line() {
+    let c = ctx();
+    let mut g = GuidesScreen::new(&c.game.content);
+    let lessons = c.game.content.lessons.lessons.len();
+    let low_hp = c
+        .game
+        .content
+        .tips
+        .tips
+        .iter()
+        .position(|t| t.id == "low_hp");
+    for _ in 0..lessons + low_hp.unwrap() {
+        g.step(Action::CursorDown);
+    }
+    let view = g.list_view(&c);
+    assert_eq!(view.heading, "Low HP");
+    assert_eq!(view.lines[2], "mistake, Rewind can undo it.");
+    assert_eq!(view.lines[3..], ["", "Rewind: r"]);
+}
+
 #[test]
 fn up_and_down_move_through_the_topics_and_wrap() {
     let c = ctx();

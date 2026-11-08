@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0077", "0722", "0754", "0750"]
+blocked_by: ["0077", "0722", "0754", "0750", "0762"]
 nick_input: none
 completed:
 ---
@@ -17,6 +17,11 @@ completed:
 
 0722 voices Chapter 1 and 0077 casts the characters after it. This does the rest
 of the scripts, with 0722's method.
+
+**Waits for 0762** (2026-11-07): a friend's playtest heard long, unnatural
+pauses at ellipses. 0762 changes the text the tool sends and adds a pause and
+pace audit after `generate`; these chapters (about 217 of the 227 lines with
+`...`) are made with both, and none of their clips is left flagged.
 
 ## Nick input
 

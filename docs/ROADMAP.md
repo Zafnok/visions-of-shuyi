@@ -236,7 +236,8 @@ The order:
      (drawing helpers, 2311), **1166** (frame time, 2312), **1167**
      (map skins, 2313), **1168** (option rows, 2314), **1169** (content
      loaders, 2208 and 2209), **1170** (the Playdate front end, 3010,
-     3028 and 3029; now waits only for engine 3090). Ready now, no engine needed: **1161** (one list
+     3028 and 3029; now waits for engine 2388, the inks as
+     patterns, and 3096, the export's package and features). Ready now, no engine needed: **1161** (one list
      mode in the battle), **1171** (one owner for the campaign
      settings), **1172** (`code-lines --tree` for sweeps), and **0470**
      (the forecast's kill mark as a sprite). None is on the Chapter 1
@@ -406,6 +407,18 @@ Candle joins outside battle.
   Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
   **0470**, **0472** (a downed unit's panel; the objective line fits),
   **0735**.
+- **H. A friend's playtest of the Act 1 build** (passed on by Nick,
+  2026-11-07): **0478** Loadouts show each item's numbers → **0479** who
+  holds an item on the swap rows (asks Nick) · **0480** a forecast that is
+  easier to read (asks Nick) → **0463** · **0481** the objective shown
+  when a battle starts, AND / OR highlighted (asks Nick; Chapter 2's rule) ·
+  **0482** an area skill's reach shown while chosen · **0483** Vix
+  explains wading · **0078** → **0484** stats easy to see in battle ·
+  **0609** a spell learned in battle comes with its uses · **0762**
+  voiced lines without long pauses (→ **0757**) · **0763** the dialogue
+  box at the bottom · **0864** Tamsin a little stronger (asks Nick) ·
+  **0865** the music dips under a voiced line (after engine#2511 →
+  engine#2342 → engine#2343).
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -437,13 +450,15 @@ timing run; after Phases 2 and 3) → **1064** Nick plays Act 1 on the
 web and on his Playdate.
 
 **Off the path** (nothing in Act 1 waits for them): engine 3010, 3028,
-3029, 3090 and game **1170** (the Playdate front end on the engine's
+3029, 3090, 2388, 3096 and game **1170** (the Playdate front end on the engine's
 backend: cleanup, the game's own front end already runs on the
 device), with its bounded adoption/cleanup tickets **1203–1206**, and
 **1180** → **1207** for bot semantics then playtest tooling adoption;
 the boundary audit's tickets (2026-11-03) **1211**–**1229** (each
 after its engine ticket) and **1230**–**1240** (the game's own
 cleanup);
+**1253** the Playdate build on a pattern map instead of inks (after
+engine#2388; engine 2389 removes the inks after it);
 **0141** native/browser capture checks, **0142** cross-target game replay
 goldens, and **1202** world-map scene data for the existing CLI/MCP hook;
 languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
@@ -466,6 +481,7 @@ Design answers unblock most of the rules work. Suggested order:
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** Hedda's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
+   · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)

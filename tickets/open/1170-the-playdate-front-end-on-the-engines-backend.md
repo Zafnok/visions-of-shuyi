@@ -5,8 +5,8 @@ type: feature
 milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
-blocked_by: []
+status: blocked
+blocked_by: ["engine#2388", "engine#3096"]
 nick_input: setup
 completed:
 ---
@@ -21,7 +21,8 @@ ADR-0070). The 2026-11-01 audit confirmed that the platform loop,
 storage, audio, stack and exporter have now shipped in the engine:
 3010/3029 are at the game's pin; 3028 (PR #214) and the A/B button names
 2410 (#215) shipped after it. The pin move of 2026-11-01 reached them; no
-new feature implementation is needed for those pieces.
+new feature implementation is needed for those pieces (but see
+*Blocked again* below).
 
 There is one real remaining engine prerequisite: the opt-in report a
 shipped game keeps. Current `shuyi_playdate::Driver` has no replacement
@@ -58,6 +59,48 @@ The same audit found two more things this cutover must carry:
   lacks the engine's null check, and the engine wraps its `SdkAlloc` in
   `shuyi_alloc_count::CountingAlloc` in debug builds (heap counts); one
   more reason not to keep running the copy.
+
+**Blocked again, 2026-11-07** (found when a session started this
+ticket, at pin `e2697683`). Two engine gaps, each with an engine ticket:
+- **The look: engine#2388.** `shuyi_platform::OneBitLook` gives the
+  backend's display a `PatternMap` only (`map: &PatternMap`;
+  `shuyi-playdate`'s `display.rs` draws with `render_with` and
+  `render_changed_with`). The game draws with inks
+  (`onebit::render`, `InkShades`, game ADR-0074), and three of them have
+  no pattern yet: `Dots`, `BlackEdged` (glyphs edged in white) and
+  `Invert` (the cursor's rectangles). On the engine's backend the
+  Playdate would lose them. 2388 adds them and proves a map draws what
+  the inks draw, pixel for pixel; this ticket then builds that map over
+  the Playdate palette for `OneBitLook` (2388's test spells it). No
+  skin in `crates/ui` changes.
+- **The export: engine#3096.** `shuyi export playdate` builds the
+  `game` part's package, here the tool program `xtask`, with only the
+  `playdate` feature, so it can't build `trpg-playdate` or turn on
+  `private-assets` (or `bench`). 3096 adds a per-target `package` and
+  `features` to `shuyi.ron`'s `export` part, and `--with <feature>`.
+  After it this ticket names `trpg-playdate` there, with the features
+  its build still needs: `bench` by `--with` for the measuring build,
+  and `private-assets` only if the library still embeds art instead of
+  reading it from the pack (below).
+
+What else the session checked, so the next one need not:
+- **Storage:** `shuyi_playdate::storage::SdkStorage` keeps the game's
+  format exactly (`<key>.ron`, `.ron.tmp`, `.ron.bak`, the same
+  good-copy rule and the same move fallback), so an old save loads.
+- **The pack:** the exporter always bakes one with the tool program's
+  `GameTools::bake(Some("playdate"))` and moves it into the `.pdx` as
+  `game.pack`; the game implements no `bake` yet, and its Playdate data
+  is embedded by `crates/content/build.rs`. The load must read
+  `shuyi_playdate::pack()` (the "pack adapter" of the steps below), with
+  the one-bit pictures baked in it (`playdate_images`, or 1221's bake),
+  and the bought art from the tool program's bundle.
+- **The audio:** the exporter bakes what `GameTools::audio("playdate")`
+  answers; the game implements no `audio` yet (1203's handoff: move
+  `playdate_audio::jobs`'s selection there).
+- **The disclosure:** `shuyi.ron`'s `allowed_pack_entries` is empty
+  ("no package holds a pack") and `allowed_files` lists no `audio/` or
+  `music/` `.pda`: the Playdate's pack entries and baked files need
+  their lines.
 
 The original ticket also promised deleting 754 lines of audio tooling
 and 1,422 lines of exporter tooling, besides all platform modules/tests.

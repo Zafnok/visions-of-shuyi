@@ -31,11 +31,16 @@ pub const MAX_LINE_CHARS: usize = 60;
 /// Longest tip title, in characters.
 pub const MAX_TITLE_CHARS: usize = 30;
 
+/// Most lines of a tip's `how`, its instructions apart from the guide's
+/// line (ticket 0475).
+pub const MAX_HOW_LINES: usize = 3;
+
 /// The tip box.
 pub const LIMITS: TipLimits = TipLimits {
     text_lines: MAX_TEXT_LINES,
     line_chars: MAX_LINE_CHARS,
     title_chars: MAX_TITLE_CHARS,
+    how_lines: MAX_HOW_LINES,
 };
 
 /// The portrait of the guide, who speaks every tip
@@ -143,7 +148,34 @@ pub fn from_source(
         default_face: DEFAULT_FACE,
         widths: &shuyi_assets::font::CellWidths::NARROW,
     };
-    engine::from_source(file, source, &rules)
+    let table = engine::from_source(file, source, &rules)?;
+    let errors: Vec<ContentError> = table
+        .tips
+        .iter()
+        .filter_map(|tip| {
+            let problem = spoken_problem(&tip.text, "how")?;
+            Some(ContentError::new(
+                file,
+                format!("tip \"{}\": {problem}", tip.id),
+            ))
+        })
+        .collect();
+    if errors.is_empty() {
+        Ok(table)
+    } else {
+        Err(errors)
+    }
+}
+
+/// What is wrong with the guide's line `text`, if anything: it names a
+/// key (a placeholder). The guide is voiced (ticket 0475), and a clip made
+/// ahead of time can't say a key the player rebound, so keys go in
+/// `keys_go` (a tip's `how`, a lesson's items).
+pub fn spoken_problem(text: &str, keys_go: &str) -> Option<String> {
+    let name = placeholders(text).into_iter().next()?;
+    Some(format!(
+        "the text is spoken, so it names no key ({{{name}}}): keys go in the {keys_go}"
+    ))
 }
 
 #[cfg(test)]
@@ -189,7 +221,7 @@ mod tests {
     #[test]
     fn a_good_tip_loads() {
         let source = r#"(tips: [(id: "a", trigger: FirstForecast, title: "T",
-            text: "Press {Confirm}.\n{Cursor}")])"#;
+            text: "Go on.", how: "Press {Confirm}.\n{Cursor}")])"#;
         let table = from_source("t.ron", source, None).unwrap();
         assert_eq!(table.tips.len(), 1);
         assert_eq!(
@@ -290,6 +322,30 @@ mod tests {
         // Another character's portrait is not the guide's.
         let others = BTreeMap::from([("test_lord".to_owned(), guide)]);
         assert!(from_source("t.ron", source, Some(&others)).is_ok());
+    }
+
+    /// Ticket 0475: the guide's line is spoken, so a key in a tip's text
+    /// fails, and the same key in its `how` loads.
+    #[test]
+    fn a_key_in_the_spoken_text_fails() {
+        let source = r#"(tips: [(id: "a", trigger: FirstForecast, title: "T",
+            text: "Press {Confirm} now.")])"#;
+        assert_eq!(
+            errors(source),
+            ["tip \"a\": the text is spoken, so it names no key ({Confirm}): keys go in the how"]
+        );
+        let source = r#"(tips: [(id: "a", trigger: FirstForecast, title: "T",
+            text: "Swing now.", how: "Attack: {Confirm}")])"#;
+        assert_eq!(errors(source), Vec::<String>::new());
+    }
+
+    /// Every shipped tip has a line for the guide, and none names a key.
+    #[test]
+    fn the_shipped_tips_lines_name_no_key() {
+        for tip in load(None).unwrap().tips {
+            assert!(!tip.text.trim().is_empty(), "{}", tip.id);
+            assert_eq!(placeholders(&tip.text), [] as [&str; 0], "{}", tip.id);
+        }
     }
 
     #[test]

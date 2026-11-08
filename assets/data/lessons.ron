@@ -24,14 +24,18 @@
 //             spell that can be cast on a tile from there).
 //   battles   optional: the battle ids it may start in (any if left out).
 //   title     the heading, at most 30 characters.
-//   text      1 or 2 lines of at most 60 characters. The story's keep to 45
-//             (labels to 41), so the box with the guide's face stays over
-//             the map, off the side panel.
-//   items     1 to 6 of (label: "...", done_when: ...); a label is one line
-//             of at most 56 characters. Two items can't share a done_when.
+//   text      what the guide says: 1 or 2 lines of at most 60 characters.
+//             The story's keep to 45 (labels to 41), so the box with the
+//             guide's face stays over the map, off the side panel. She is
+//             voiced (ticket 0475) and a clip can't say a key the player
+//             rebound, so the text names no key: keys go in the items. It
+//             still teaches something on its own.
+//   items     the objectives: 1 to 6 of (label: "...", done_when: ...); a
+//             label is one line of at most 56 characters. Two items can't
+//             share a done_when.
 //   face      optional: the guide's expression, `smile` if left out.
 //
-// {Action} in text and labels is replaced with the key bound to that action
+// {Action} in labels is replaced with the key bound to that action
 // (e.g. {Confirm}), {Cursor} with the keys that move the cursor, {Select}
 // with the key that picks on the map, as in tips.ron.
 //
@@ -81,11 +85,11 @@
             level: Full,
             trigger: FirstBattleStart,
             title: "Finding your units",
-            text: "Press {NextUnit} for anyone who hasn't acted,\nand {Info} on one for its stats and weapons.",
+            text: "No need to hunt for who's left to move. Jump\nstraight to them, and look anyone over.",
             face: "neutral",
             items: [
-                (label: "Jump to the next unit: {NextUnit}", done_when: Pressed("NextUnit")),
-                (label: "Look at a unit's details: {Info}", done_when: Pressed("Info")),
+                (label: "Jump to a unit still to act: {NextUnit}", done_when: Pressed("NextUnit")),
+                (label: "See a unit's stats and weapons: {Info}", done_when: Pressed("Info")),
             ],
         ),
         (
@@ -93,11 +97,11 @@
             level: Full,
             trigger: FirstBattleStart,
             title: "Selecting a unit",
-            text: "Press {Select} on a unit to light its reach.\nPick a lit tile to move; its menu follows.",
+            text: "Pick up a unit and its reach lights up.\nSend it to a lit tile; its menu follows.",
             face: "neutral",
             items: [
                 (label: "Select a unit: {Select}", done_when: UnitSelected),
-                (label: "Pick where it goes: {Select}", done_when: UnitMoved),
+                (label: "Send it to a lit tile: {Select}", done_when: UnitMoved),
                 (label: "See its menu", done_when: ActionMenuOpened),
             ],
         ),
@@ -107,11 +111,11 @@
             level: Full,
             trigger: FirstEnemyInRange,
             title: "Attacking",
-            text: "Point at an enemy in reach for the forecast.\nAttack with {Confirm}; {Cancel} backs out.",
+            text: "Point at an enemy in reach for the forecast.\nAttack if you like the odds, or back out.",
             face: "stern",
             items: [
                 (label: "Open the forecast on an enemy", done_when: ForecastOpened),
-                (label: "Attack: {Confirm}", done_when: Attacked),
+                (label: "Attack: {Confirm}. Back out: {Cancel}", done_when: Attacked),
             ],
         ),
         // When every unit has acted on the first turn, before auto-end
@@ -121,10 +125,10 @@
             level: Full,
             trigger: NoUnitLeft,
             title: "Ending the turn",
-            text: "That's everyone. End the turn with {EndTurn},\nor End turn in the map menu ({Cancel}).",
+            text: "That's everyone. End the turn here, or from\nEnd turn in the map menu.",
             face: "neutral",
             items: [
-                (label: "End the turn: {EndTurn}", done_when: TurnEnded),
+                (label: "End turn: {EndTurn}, or menu: {Cancel}", done_when: TurnEnded),
             ],
         ),
         // Different here. Turn 2: there is a turn to undo.

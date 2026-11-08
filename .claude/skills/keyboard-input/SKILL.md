@@ -120,7 +120,10 @@ Beyond the engine's rules:
 - Tips and other data text: `{ActionName}` / `{Cursor}` placeholders
   (`assets/data/tips.ron`, `assets/data/lessons.ron`,
   `crates/ui/src/tips.rs`). Doc comments name the action ("the End turn
-  key"), not a key.
+  key"), not a key. In a tip or a lesson the placeholders go only in a
+  tip's `how` and a lesson's items, never in `text`: the guide speaks it,
+  and a voice clip can't say a rebound key (0475; the content check fails
+  it).
 - A button's name comes only from `PadKind::button_name` (D-pad
   directions are `↑ ↓ ← →`; the cursor is `D-pad/L-stick`). A new name
   needs its glyphs in the font (`assets/fonts/README.md`, *Our own

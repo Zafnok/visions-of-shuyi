@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-07
 ---
 
 # 1240 — Bot play records from the engine's one bots operation
@@ -86,13 +86,13 @@ grows it with the stages, personas, checks and summary.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commit that closed
+- [x] `shuyi-engine.rev` is at or past the commit that closed
       engine#2544; `cargo xtask ticket-lint --check-engine` passes.
-- [ ] `grep -rn "contract::bots\|fn bots" crates/xtask/src` finds nothing.
-- [ ] `cargo shuyi playtest --entrant baseline --tries 3 --json` answers
+- [x] `grep -rn "contract::bots\|fn bots" crates/xtask/src` finds nothing.
+- [x] `cargo shuyi playtest --entrant baseline --tries 3 --json` answers
       three tries, each with `commands` and a `record` that
       `cargo shuyi replay` plays to the same hashes twice.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -101,5 +101,31 @@ grows it with the stages, personas, checks and summary.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Done 2026-11-07.
+
+- The pin past engine#2544 and the move of the bot run onto `playtest`
+  came first, in the engine-pin PR #572 (e2697683 → 02dbce1d), which kept
+  a copy of the engine's play loop to have each try's commands. This
+  ticket finishes the job: `plays::plan`'s entrant (`Recorded`, wrapping
+  `BattleEntrant`) writes each try's `PlayRecord` through the engine's
+  `Entrant::record`, and the try is the engine's `play_try`, so the
+  copied loop is gone.
+- This PR also moves the pin one more engine PR, 02dbce1d → c1ba9ec8:
+  engine#3211 (#302), a tip's `how`, which game ticket 0475 uses. The
+  tips' `LIMITS` sets `how_lines: 0` until then. Ledger section of
+  2026-11-07 in `docs/engine/pins.md`.
+- The two 1193 tests already ran through `playtest` (#572) and pass
+  unchanged.
+- 1195's and 1207's either-order clauses now say what holds.
+
+Deviations: `playtest` needs `--stage` when the game has several stages,
+and the game's stages are its battles (0509), so the bot run is
+`cargo shuyi playtest --stage <battle> --entrant baseline`; without
+`--stage` the engine refuses before the plan is asked. 1207 decides how
+the stages and defaults are offered.
+
+Engine friction: the wrapper forwards the entrant's four other methods
+only to add the record (friction log, 2026-11-07); 1207 is to move the
+record into `trpg-bots` and drop it.
+
+Nick input: none; nothing a player sees changes.
