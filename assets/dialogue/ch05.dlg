@@ -44,30 +44,27 @@
 #     ch05_tide                     the boat: the Ashfields; Hedda is lent
 #     ch05_tbc                      a Hound post on the north road: Dace
 #
-# Until 0851 and 1071 wire the triggers, the validator can't know which
-# scene plays for whom, so every companion line in a battle scene below
-# sits in an "@if" block for them (ADR-0055). Once a trigger names the
-# companion (a death quote, a retreat line, the officer against Joss),
-# that "@if" can only go one way and the validator reports it: 0851
-# removes those blocks as it wires each trigger. The "@if" in
-# ch05_first_turn and ch05_roof stay: a turn-start scene and an area
-# anyone can enter can't count on anyone.
+# 0851 wired the story battle (battles/ch05.ron, chapters/ch05.ron): a
+# trigger that names a companion (a death quote, a retreat line, the
+# officer against Joss) plays only with them there, so those scenes need
+# no "@if" for them; nor does Hedda's in ch05_first_turn, who is placed
+# there on turn 1. The "@if" in ch05_roof stay: an area anyone can enter
+# can't count on anyone.
+# The skirmishes' scenes are 1071's to wire.
 #
-# Ragna (envoy), Hedda (shieldbearer), the Hound officer and the
-# magistrate are speakers in characters.ron until 0851 makes units of the
-# ones that fight. Hedda is sent down to the street door in
-# ch05_prebattle and fights the hold on the player's side (0851: a player
-# unit, so her lines below can fire); Ragna lends her on the quay, which
-# is when she joins the army. If she fell in the hold (Classic) she never
-# joins, so every line of hers after the battle is in an "@if
-# shieldbearer" block, and the quay reads through without her.
+# Hedda (shieldbearer) and the Hound officer are units (0851); Ragna
+# (envoy) and the magistrate only speak. Hedda joins the army in
+# ch05_prebattle ("@joins"), when Ragna sends her down to the street door,
+# and fights the hold as a player unit; on the quay Ragna lends her for
+# the road. If she fell in the hold (Classic) she is gone, so every line
+# of hers after the battle is in an "@if shieldbearer" block, and the
+# quay reads through without her.
 #
-# No @place directives yet: the maps are 0851's and 1071's. The @music
-# lines are this ticket's picks from the mood cues (0071), except the sea
-# steps: Nick picked scene_confide for the confession (0071), which 0851
-# imports; until then scene_sad stands in there (marked below). The story
-# battle's own cue, battle_night_siege, is Nick's and goes in the battle
-# file; the skirmishes use the skirmish pool (1008).
+# The places are 0851's (assets/maps/README.md); the skirmishes' are
+# 1071's. The @music lines are 0747's picks from the mood cues (0071),
+# except the sea steps: Nick picked scene_confide for the confession
+# (0071). The story battle's own cue, battle_night_siege, is Nick's and is
+# in the battle file; the skirmishes use the skirmish pool (1008).
 #
 # The seven companions and Gil may have died in Chapters 1-4 (Classic),
 # and Gil may never have been beaten, so outside the battles every line
@@ -99,6 +96,7 @@
 @scene ch05_intro
 @caption The road south, first light
 @music talk_calm
+@place south_road 12,8
 > A night's walking out of {n:place.veyne_hall}. The valley is behind them in the dark, and the road bends south toward the salt country. Wet grass, and everyone's breath showing.
 @if sergeant
 @if retainer
@@ -272,11 +270,12 @@ prizefighter: Rule six. You take nothing from a man you have beaten but what he 
 # ---------------------------------------------------------------------------
 
 # The envoy's house on the harbor front. The first of the battle's intro
-# scenes (0851 wires it).
+# scenes.
 
 @scene ch05_envoy
 @caption The envoy's house, {n:place.saltmere}
 @music talk_calm
+@place envoys_house 12,9
 > A tall narrow house on the harbor front, its shutters half shut against the heat. The door opens before anyone has knocked, and the woman in it fills it, with an axe.
 @left lead neutral
 @right shieldbearer neutral
@@ -314,13 +313,12 @@ envoy: The archer sits where I can see her. We'll talk, you and I. Later.
 @right clear
 @end
 
-# The sea steps, night. Hollis tells it.
-# Music: Nick picked scene_confide for this scene (0071). 0851 imports it
-# and changes the line below; scene_sad stands in until then.
+# The sea steps, night. Hollis tells it. Music: Nick's pick (0071).
 
 @scene ch05_eve
 @caption The sea steps, night
-@music scene_sad
+@music scene_confide
+@place battle 13,11
 @if retainer
 > Stairs down from the quay to the water, and the tide coming in loud over the stones. {n:retainer.first} sits on the third step with his knee out straight and his hands empty.
 @left lead neutral
@@ -354,11 +352,14 @@ heretic: Here. Bread. I'm not asking what you're doing down here. I'm sitting, i
 @endif
 @end
 
-# Past midnight. The house is sold.
+# Past midnight. The house is sold. Hedda joins: Ragna sends her down to
+# the street door with the party.
 
 @scene ch05_prebattle
 @caption The envoy's house, past midnight
 @music dungeon_tense
+@place battle 13,6
+@joins shieldbearer
 > Past midnight. A hand goes over the lamp. Boots on the quay, a lot of them, and a roof tile slides off the house next door and breaks in the street.
 @left envoy neutral
 @right shieldbearer neutral
@@ -394,20 +395,13 @@ shieldbearer[surprised]: No. I stand outside your room, I've stood outside it th
 # In the battle
 # ---------------------------------------------------------------------------
 
-# Turn 1. A turn-start scene can't count on anyone: the blocks stay.
+# Turn 1. Hedda joined in the scene before, and the battle places her:
+# she is there as it starts.
 
 @scene ch05_first_turn
-@if shieldbearer
 @left shieldbearer neutral
 shieldbearer: Easy. They want the door, and the door's ours. Outlaw, that's your side, there, where I can reach you. Nobody goes out onto the quay. Nobody.
 @left clear
-@else
-@if retainer
-@left retainer neutral
-retainer: The door. Nobody goes out onto that quay, whatever they shout up at you. Not till it's light.
-@left clear
-@endif
-@endif
 @end
 
 # Somebody is up on the roofs. An area anyone can enter: the blocks stay.
@@ -433,11 +427,9 @@ defector: The top of the stairs. They come down the stairs when the door's held,
 hound_officer: Walk off. You're not on my paper. I'm here for a boy, a {n:faction.brennmark.adj} woman and a house somebody sold me, and the League's halberds come out at first light, so I'm in a hurry. Walk off.
 @end
 
-# The officer and the boy from the river. The @if goes when 0851 wires
-# this as the officer against Joss.
+# The officer and the boy from the river.
 
 @scene ch05_boss_engage_defector
-@if defector
 @left defector neutral
 @right hound_officer neutral
 hound_officer: {N:defector.last}. I know that face. It's on the wall of every post from here to the river, and I knew it before that. {n:hound_lieutenant.first} had you a week before anyone else got a look at you.
@@ -446,7 +438,6 @@ defector[angry]: Don't. You don't-- that was his. You don't get to say that one.
 hound_officer: ...No. He gave that to you.
 @left clear
 @right clear
-@endif
 @end
 
 @scene ch05_boss_half
@@ -471,135 +462,102 @@ hound_officer: Off the quay. Get them off the quay before the halberds-- somebod
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). Last words are about the living;
 # the shapes differ from each other and from the earlier chapters'. They
-# can fire in any order, so none names another companion. The @if blocks
-# go when 0851 wires each one.
+# can fire in any order, so none names another companion.
 
 @scene ch05_death_retainer
-@if retainer
 @left retainer sad
 retainer: The door. Somebody in the door, now, I don't care who. ...I saw it, kid. I did see it.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_retainer
-@if retainer
 @left retainer angry
 retainer: Knee. Of all the nights. ...No, leave me, I'm sat, I'm not going anywhere. Watch the door, not me.
 @left clear
-@endif
 @end
 
 @scene ch05_death_sergeant
-@if sergeant
 @left sergeant sad
 sergeant: Three on the stairs and I got two. ...Don't let them take my boots. They're good boots, I paid for them myself. That's all I want.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_sergeant
-@if sergeant
 @left sergeant angry
 sergeant: Hate a house. Hate a house! No horse, no room to-- fine. I'm on the step. Somebody owes me a horse for this.
 @left clear
-@endif
 @end
 
 @scene ch05_death_poacher
-@if poacher
 @left poacher sad
 poacher: Twelve on the quay, I counted, and there are not twelve now. ...My mor. Tell her I sent it all. Every coin.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_poacher
-@if poacher
 @left poacher angry
 poacher: The bow is cracked. Hear it? It is cracked. Then I am no use, and I know it, and you do not have to say it.
 @left clear
-@endif
 @end
 
 @scene ch05_death_keeper
-@if keeper
 @left keeper sad
 keeper: {N:god.mother.name} keep-- no. No, I know the words, I'll do my own. ...Is anyone else hurt? Is anyone else-- all right. All right, then.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_keeper
-@if keeper
 @left keeper surprised
 keeper: Oh-- no, it's fine, it's the kind that looks worse than-- it isn't. It isn't fine. Someone else will have to do the hands.
 @left clear
-@endif
 @end
 
 @scene ch05_death_heretic
-@if heretic
 @left heretic sad
 heretic: I never learned to cook. Nineteen, and I never-- I burned every pot you gave me, didn't I? ...Didn't I.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_heretic
-@if heretic
 @left heretic angry
 heretic: {N:god.pyre.name} take it-- no. It's the smoke. I can't see who's who, and I'm not throwing fire blind. Don't you dare carry me.
 @left clear
-@endif
 @end
 
 @scene ch05_death_defector
-@if defector
 @left defector sad
 defector: Did she write it down? All of it, both times? Your Grace, make her keep the paper, don't let it get wet. My ma can't read, so. So somebody tell her the good bit.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_defector
-@if defector
 @left defector surprised
 defector: Sorry-- it's the arm again, the same one, I'm-- is that bad? Is it bad that it's the same one? Your Grace, don't answer that.
 @left clear
-@endif
 @end
 
 @scene ch05_death_prizefighter
-@if prizefighter
 @left prizefighter sad
 prizefighter: Rule-- ...there isn't one. Champion. Stand behind the door and don't come out for me, there's no rule says you-- there's no rule. Stay in.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_prizefighter
-@if prizefighter
 @left prizefighter angry
 prizefighter: Down. I am down, Champion, and I know it, and I have been down in better rings than this one. Watch your left.
 @left clear
-@endif
 @end
 
 @scene ch05_death_shieldbearer
-@if shieldbearer
 @left shieldbearer sad
 shieldbearer: Her door. Whoever's nearest, go and stand outside her room. Don't tell her I'm down, just stand there. ...It's nothing. Easy. It's nothing.
 @left clear
-@endif
 @end
 
 @scene ch05_retreat_shieldbearer
-@if shieldbearer
 @left shieldbearer angry
 shieldbearer: One axe did that? ...Outlaw, your hands are shaking. Stop it. I'm the one bleeding, you stop shaking.
 @left clear
-@endif
 @end
 
 # ---------------------------------------------------------------------------
@@ -611,6 +569,7 @@ shieldbearer: One axe did that? ...Outlaw, your hands are shaking. Stop it. I'm 
 @scene ch05_victory
 @caption The envoy's house, first light
 @music scene_sad
+@place envoys_house 12,9
 > First light through the open shutters. Across the way somebody has put washing out, as if nothing had happened. Halberds on the stairs, and a man in a magistrate's chain in the door, not coming in.
 @left envoy neutral
 @right magistrate neutral
@@ -661,6 +620,7 @@ envoy: Then I have the rest of you. The boots, the herald, the lieutenant's word
 @scene ch05_quay
 @caption The quay, evening tide
 @music scene_sad
+@place saltmere_quay 12,8
 > The evening tide. A ship's boat waits at the steps for the envoy, the party's packs are on the stones, and the gulls have found the bread crock.
 @left envoy neutral
 @if poacher
@@ -753,6 +713,7 @@ envoy: I've nobody to send with you. The paper goes alone, then, and so do you. 
 @scene ch05_tbc
 @caption A Hound post, the north road, dusk
 @music talk_antagonist
+@place north_road_post 14,7
 > A post on the north road, days later. {n:rival.first} with his arm still bound to his chest and a report on his knee, reading it twice by a bad lamp.
 @left rival neutral
 rival: "The house held until first light. The League has put the {n:faction.brennmark.adj} woman outside its walls."

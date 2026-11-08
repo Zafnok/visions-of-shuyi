@@ -5,10 +5,11 @@
 // and back to Saltmere's docks for the ship.
 //
 // Every battle here is `NotBuilt` until its ticket makes it (Veyne Hall is
-// 0850's; Aldwater Toll Bridge passes through until 1071): the ticket gives
-// the place its kind and removes `NotBuilt`, and the conditions beside it
-// are the ones it opens by. 0850-0854: the story battles, each with
-// `StoryBattle("chNN")`. 1071: the fixed skirmishes, `guards_path` as noted.
+// 0850's, the Envoy's House 0851's; Aldwater Toll Bridge and the Salt Road
+// pass through until 1071): the ticket gives the place its kind and
+// removes `NotBuilt`, and the conditions beside it are the ones it opens
+// by. 0850-0854: the story battles, each with `StoryBattle("chNN")`. 1071:
+// the fixed skirmishes, `guards_path` as noted.
 // 1083 and 1084: the side quests still to build (1072 built Tamsin's and
 // Aske's).
 //
@@ -58,9 +59,11 @@
          kind: Empty, opens_when: [NotBuilt, Cleared("veyne_hall"), Alive("retainer")]),
 
         // Chapter 5: Salt and Silver.
-        // 1071: guards the path to Saltmere (`guards_path: true`).
+        // 1071: guards the path to Saltmere (`guards_path: true`). Until it
+        // is built, a place to pass through on the way to the Envoy's House
+        // (0851): 1071 gives it its kind.
         (id: "salt_road", name: "The Salt Road", pos: (36, 19), kind: Empty,
-         opens_when: [NotBuilt, Cleared("veyne_hall")]),
+         opens_when: [Cleared("veyne_hall")]),
         // The biggest shop in Act 1, and its last (Chapter 8's Hi-Potion).
         (id: "saltmere", name: "Saltmere", pos: (36, 24), music: Some("city_first_visit"),
          kind: Town(shops: [
@@ -75,10 +78,12 @@
              (kind: Tailor, stock: ["linen_robe", "leather_vest"]),
              (kind: Blacksmith),
          ]),
-         opens_when: [Cleared("salt_road")]),
-        // 0851: Chapter 5's story battle.
-        (id: "envoys_house", name: "The Envoy's House", pos: (43, 26), kind: Empty,
-         opens_when: [NotBuilt, Cleared("salt_road")]),
+         // `Cleared("salt_road")` once 1071 builds it (it can't be cleared
+         // while it is a place to pass through, 0851).
+         opens_when: [Cleared("veyne_hall")]),
+        // Chapter 5's story battle (0851). The same, from 1071 on.
+        (id: "envoys_house", name: "The Envoy's House", pos: (43, 26), kind: StoryBattle("ch05"),
+         opens_when: [Cleared("veyne_hall")]),
         // 1071: optional (`guards_path: false`), with loot.
         (id: "smugglers_cove", name: "Smugglers' Cove", pos: (27, 24), kind: Empty,
          opens_when: [NotBuilt, Cleared("salt_road")]),
