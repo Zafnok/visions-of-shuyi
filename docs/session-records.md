@@ -28,7 +28,32 @@ compile a release build with the engine's debug tools on.
 
 A crash doesn't write one yet (the engine's ticket 3060). After a crash,
 start the game again, do the same, and use **Save session** before it
-crashes.
+crashes; or send its crash report (below), which every build writes.
+
+## Crash reports
+
+Every build, a shipped one too, writes a **crash report** when the game
+panics (ticket 1245, the engine's ADR-0079 and `docs/crash-reports.md`):
+the panic's message and place, the frame and screen, the log's last lines,
+the engine's and the game's versions and, in a battle, the battle's record
+(its first state, the commands since and the one being applied; nothing the
+player typed). The newest five are kept, beside the saves:
+
+- **Windows:** `%APPDATA%\tactical-rpg\crash-<when>.ron`;
+- **macOS:** `~/Library/Application Support/tactical-rpg/crash-<when>.ron`;
+- **Linux and the Steam Deck:** `~/.local/share/tactical-rpg/crash-<when>.ron`;
+- **the web:** the browser's `localStorage`, key `tactical-rpg/crash-<when>`
+  (the newest only, and no battle record).
+
+The next start says once, under the title's menu, that the game closed
+unexpectedly and a report was saved (`docs/design/crash-reports.md`).
+Nothing is sent anywhere: a player reporting a crash sends the newest
+`crash-*.ron`. Its battle record is the report's `record` field; copied to
+a file of its own, it replays to the crash:
+
+```bash
+cargo shuyi replay <file>
+```
 
 ## Sending one
 

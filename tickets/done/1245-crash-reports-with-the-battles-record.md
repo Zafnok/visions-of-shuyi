@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-06
 ---
 
 # 1245 — Crash reports with the game's version and the battle's record
@@ -71,13 +71,13 @@ folder. Wording and look follow his answer.
 
 ## Acceptance criteria
 
-- [ ] A report written in a battle names the game's version and holds a
+- [x] A report written in a battle names the game's version and holds a
       record that `cargo shuyi replay` plays to the frame it crashed on
       (test through the headless backend, as the engine's hello-grid
       test does).
-- [ ] The start after a crash does what Nick chose, once (Harness test
+- [x] The start after a crash does what Nick chose, once (Harness test
       with a storage holding a report).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,44 @@ folder. Wording and look follow his answer.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answer** (asked with title mockups, 2026-11-06): *Short notice*.
+Recorded in `docs/design/crash-reports.md`. The start after a crash shows
+"The game closed unexpectedly last time. A report was saved." under the
+title's menu, once; no path, no menu item.
+
+**What was done**
+
+- `crates/app/src/main.rs`: `config.crash = CrashReports::new(APP.version)`.
+- `trpg_ui::crash`: `BattleRecord` (version, the battle's `BattleHistory`
+  and the command being applied) and `crash_record`, given to the start
+  (`Start::crash_record`). `BattleScreen` keeps `applying` while the rules
+  run a command, so a panic inside the rules replays to it.
+- The game's `replay` (`crates/xtask/src/game_tools/plays.rs`) reads a
+  `BattleRecord` too, restoring the content tables and playing from the
+  battle's first state.
+- `trpg_ui::start` reads `Setup::last_crash` and puts the notice on the
+  title (`title.crashed`; `TitleScreen::show_notice`).
+- `docs/session-records.md`, *Crash reports*: where they are kept and how
+  to replay one's record.
+
+**Deviations**
+
+- The ticket said the record would be the session record of 1210. That
+  record is the engine's (all input from the first frame, debug builds
+  only) and `Start::crash_record` sees only the game, so the record is the
+  battle's own history instead: it replays with `cargo shuyi replay`, as
+  the acceptance asks, in every build.
+- `cargo shuyi replay` reads a file: the record is the report's `record`
+  field, copied into a file of its own (the doc says so).
+- The Harness test of the next start drives the engine's `App` on a
+  `HeadlessPlatform` with a storage: the engine's `Harness::start` takes
+  no storage. Small; no ticket.
+
+**Hand check** (`SHUYI_PANIC_AT_FRAME=20 cargo run -p trpg-app`): exit
+with the panic, a report naming game `0.3.0`, `windows x86_64 debug`,
+frame 20, `title`, record `None` (at the title). Reaching a battle by hand
+needs input, so a battle's record is checked by the tests instead.
+
+**Starting rules** (*Claude's*, for the Act 1 playtest, 1064): the notice
+goes at the next key press like the title's other notices; a start
+straight onto a dialogue scene (`--scene`) shows no notice.

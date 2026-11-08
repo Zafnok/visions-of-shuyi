@@ -11,7 +11,7 @@ mod args;
 mod tests;
 
 use macroquad::window::Conf;
-use shuyi_app::{AppConfig, VoiceFiles, Window};
+use shuyi_app::{AppConfig, CrashReports, VoiceFiles, Window};
 use trpg_content::{bundle, font, voice};
 
 use crate::app_info::APP;
@@ -51,6 +51,8 @@ fn config() -> AppConfig {
         voice::SOURCE_LANG,
         voice::MANIFEST_FILE,
     ));
+    // Each crash report names the game's version (ticket 1245).
+    config.crash = CrashReports::new(APP.version);
     config
 }
 
