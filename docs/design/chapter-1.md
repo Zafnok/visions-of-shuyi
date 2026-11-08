@@ -207,6 +207,31 @@ and Aske doubling those enemies is "Fine"; the difficulty is "Right". But:
 "lead feels a bit weak actually, usually lead is a bit strong", which is
 ticket 0846 (after the objective change, 0845).
 
+### The lead a little stronger (ticket 0846, 2026-11-08)
+
+A sword's second strike does ×1.2 (`weapons-and-items.md`), and the lead
+strikes twice against Brigands, Raiders, the Guard and Harl. With Str 7 the
+Iron Sword did 9 + 10 = **19** to a fresh Brigand (20 HP): one short. The
+Steel Sword (Mt 8) already killed a fresh Brigand or Raider in one fight,
+but hits 81% to the Iron Sword's 96%.
+
+What each option did (level 1 lead, fresh enemies, no terrain) and the bots
+(`cargo xtask playtest ch01 --bot all --runs 100`, seeds 1–100; Casual
+30–55%, Normal and Hardcore 50–75%):
+
+| Option | Brigand (20) | Raider (22) | Harl (30) | Casual | Normal | Hardcore |
+| ------ | ------------ | ----------- | --------- | ------ | ------ | -------- |
+| Before | 19 | 17 | 8 | 47 ✓ | 57 ✓ | 71 ✓ |
+| **A** Str 7 → 8 | **22, killed** | 19 | 11 | 53 ✓ | 60 ✓ | 68 ✓ |
+| B HP 22, Def 5 | 19 | 17 | 8 | 53 ✓ | 67 ✓ | 84 ⚠ |
+| C a personal sword, Mt 7 | 24, killed | 22, killed | 13 | 48 ✓ | 56 ✓ | 72 ✓ |
+| D A + B | 22, killed | 19 | 11 | 63 ⚠ | 70 ✓ | 73 ✓ |
+
+**Nick chose A.** The lead is Str **8** (the Exile's 6 and two talent
+points); nothing else about the lead changed. The Iron Sword now kills a
+fresh Brigand in one fight; Raiders, Archers, the Rider, the Guard and Harl
+still take more than one.
+
 ### Teaching
 
 - **Contextual hints**: the help bar plus one-time tips when something new

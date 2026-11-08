@@ -5,10 +5,10 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0845"]
 nick_input: decision
-completed:
+completed: 2026-11-08
 ---
 
 # 0846 — The lead a little stronger in Chapter 1
@@ -74,10 +74,10 @@ Keep the bot win rate inside the 30–70% target band
 
 ## Acceptance criteria
 
-- [ ] Nick picked; recorded with the bot numbers.
-- [ ] Data changed; content validation and the bot run in the completion
+- [x] Nick picked; recorded with the bot numbers.
+- [x] Data changed; content validation and the bot run in the completion
       notes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,4 +86,42 @@ Keep the bot win rate inside the 30–70% target band
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick chose A: Str 7 → 8.** `characters.ron` gives the lead Str 8; nothing
+else changed. The table and the reasons are in `docs/design/chapter-1.md`
+(*The lead a little stronger*).
+
+- **The ticket's sums were short:** a sword's second strike does ×1.2
+  (`weapons-and-items.md`) and the Leather Vest gives +2 Def, not +1. With
+  them, Str 7's Iron Sword did 9 + 10 = 19 to a fresh Brigand (20 HP), and
+  a Brigand hit the lead for 8, not 9. Str 8 does 10 + 12 = 22: a kill.
+  The Steel Sword already killed a fresh Brigand or Raider in one fight
+  (at 81% to hit); Nick saw this before choosing.
+- **Bots** (`cargo xtask playtest ch01 --bot all --runs 100`, seeds
+  1–100). The ticket asked for 200 tries; one run of 100 took about 42
+  minutes here, so each option ran 100 (±5 is noise):
+
+  | | Casual (30–55%) | Normal (50–75%) | Hardcore (50–75%) |
+  | --- | --- | --- | --- |
+  | Before | 47 ✓ | 57 ✓ | 71 ✓ |
+  | **A Str 8 (chosen)** | **53 ✓** | **60 ✓** | **68 ✓** |
+  | B HP 22, Def 5 | 53 ✓ | 67 ✓ | 84 ⚠ too easy |
+  | C personal sword Mt 7 (simulated as `exile_sword`, lead only) | 48 ✓ | 56 ✓ | 72 ✓ |
+  | D A + B | 63 ⚠ too easy | 70 ✓ | 73 ✓ |
+
+  With A, Hardcore still finishes faster than Normal (turns median 7 vs 8).
+- **Fire Emblem references shown:** Eirika's Rapier (Mt 7, Hit 95, Eirika
+  only) and Lyn's Mani Katti (Mt 8, Crit 20, Lyn only) for C; I
+  recommended C, Nick picked A.
+- **Content validation and tests:** content validation passes; every
+  gate in `run-gates` passes (4,408 tests). No test pinned the lead's
+  stats. What moved, each reviewed: the title cinematic's footbridge
+  fight shows the lead's hit as 10 dmg (was 9) in two snapshots
+  (`combat_first_strike`, `title_cinematic_6_road_fight`), as intended;
+  `ch01_winnable` to `ch03_winnable` still replay. `ch04_winnable`'s
+  recording (played on the army Chapters 1–3 leave) went out of step at
+  command 11 and was re-recorded
+  (`cargo test -p trpg-ui --test it ch04_winnable::record -- --ignored`):
+  still won on turn 5, nobody lost, as before.
+- No gameplay rules decided by the agent. Left for the Act 1 playtest
+  (1064): whether the lead now feels "a bit strong".
+- Engine friction: none, no code (one number in a data file).

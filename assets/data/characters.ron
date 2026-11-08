@@ -35,13 +35,14 @@
     characters: [
         // The lead (ticket 0708): the player picks the gender and first
         // name at New Game, so dialogue shows the chosen name and the
-        // portrait lead_m or lead_f. The Exile's own base, with a point
-        // of the talent stat.
+        // portrait lead_m or lead_f. The Exile's own base, with two points
+        // of the talent stat: Str 8, so the Iron Sword kills a fresh
+        // Brigand in one fight (Nick, 0846: "usually lead is a bit strong").
         (
             id: "lead", class: "exile", level: 1, is_lord: true,
             map_label: Some("El"),
             talent: Str,
-            base: (19, 7, 1, 7, 7, 4, 3),
+            base: (19, 8, 1, 7, 7, 4, 3),
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword", "steel_sword"], armour: Some("leather_vest")),
         ),

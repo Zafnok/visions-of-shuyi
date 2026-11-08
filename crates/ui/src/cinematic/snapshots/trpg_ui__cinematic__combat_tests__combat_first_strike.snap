@@ -1,5 +1,6 @@
 ---
 source: crates/ui/src/cinematic/combat_tests.rs
+assertion_line: 188
 expression: buf.to_snapshot(&ctx.palette)
 ---
                                                                                                     
@@ -9,7 +10,7 @@ expression: buf.to_snapshot(&ctx.palette)
                                                                                                     
                                                                                                     
                                                                                                     
-                                                                 HIT -9                             
+                                                                 HIT -10                            
                                                                                                     
                                                                                                     
                                                                                                     
@@ -30,7 +31,7 @@ expression: buf.to_snapshot(&ctx.palette)
 │ Ellery                                         ││ Brigand                                        │
 │ HP 19 ████████████████████ /19                 ││ HP 11 ███████████░░░░░░░░░ /20                 │
 │                                                ││                                                │
-│ 9 dmg  Hit 96  Crit 3                          ││ 8 dmg  Hit 65  Crit 0                          │
+│ 10 dmg  Hit 96  Crit 3                         ││ 8 dmg  Hit 65  Crit 0                          │
 └────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
                                                                                                     
                                                                                                     
@@ -42,7 +43,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -63,7 +64,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddd
 caccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacdadddddddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad
 caaaaaaaeeeeeeeeeeeeeeeeeeeeafffaaaaaaaaaaaaaaaaacdaaaaaaagggggggggggfffffffffafffaaaaaaaaaaaaaaaaad
 caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad
-cafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaacdafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaad
+caffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaacdafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaad
 ccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddd
 hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
@@ -80,7 +81,7 @@ h = fg:text bg:black
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=64,0 672x112
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=64,128 672x256
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=64,112 448x16
-under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=576,112 160x16
+under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=584,112 152x16
 under sprite 0,0 64x384  battlebacks/fields.png 0,40 32x192 flip
 under sprite 736,0 64x384  battlebacks/fields.png 304,40 32x192 flip
 under sprite 502,132 96x144  battlers/brigand.png 0,0 48x72 flip
