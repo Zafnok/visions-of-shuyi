@@ -262,6 +262,13 @@ fn a_tip_in_a_pack_keeps_to_the_tip_limits_in_cells() {
             "xx/data.ron: \"tips.wait.text\": a text line is over 60 cells: \"{wide}é\""
         )]
     );
+    // A tip's instructions (`how`, 0475) keep to their own lines limit.
+    let how = |text: &str| super::data::text_problem("tips.wait.how", text);
+    assert_eq!(how("1\n2\n3"), None);
+    let lines = Some("the text must have 1 to 3 lines".to_owned());
+    assert_eq!(how("1\n2\n3\n4"), lines);
+    assert_eq!(how(""), lines);
+    assert!(how(&format!("{wide}é")).is_some());
 }
 
 /// Ticket 0456: a lesson's title, text and items keep to the lesson
@@ -475,7 +482,16 @@ fn the_test_pack_translates_a_little_of_every_kind() {
     assert_eq!(lang.tip_title(&en, tip), "Your move");
     assert!(
         lang.tip_text(&test, tip)
-            .starts_with("OVER TO YOU. STEER THE CURSOR WITH {Cursor};")
+            .starts_with("OVER TO YOU. STEER THE CURSOR ONTO")
+    );
+    // Its instructions apart from the guide's line (0475).
+    assert!(
+        lang.tip_how(&test, tip)
+            .starts_with("MOVE THE CURSOR: {Cursor}.")
+    );
+    assert!(
+        lang.tip_how(&en, tip)
+            .starts_with("Move the cursor: {Cursor}.")
     );
     assert!(lang.tip_text(&en, tip).starts_with("Over to you."));
     let other = content

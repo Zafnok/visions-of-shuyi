@@ -1,10 +1,14 @@
 // One-time tips (ticket 0406, docs/design/chapter-1.md "Teaching"): each is
 // shown once per profile, the first time its trigger happens in a battle.
-// Text is at most 3 lines of 60 characters; {Action} is replaced with the
-// key bound to that action (e.g. {Confirm}), {Cursor} with the keys that
-// move the cursor, and {Select} with the key that picks on the map (Confirm's
-// while Select has no key; controls.md, Optional split keys), so rebinding
-// stays correct.
+//
+// `text` is what the guide says: at most 3 lines of 60 characters. She is
+// voiced (ticket 0475) and a clip can't say a key the player rebound, so
+// the text names no key, and still teaches something on its own. `how`
+// (optional) is the instructions shown under it: at most 3 lines of 60
+// characters, where {Action} is replaced with the key bound to that action
+// (e.g. {Confirm}), {Cursor} with the keys that move the cursor, and
+// {Select} with the key that picks on the map (Confirm's while Select has
+// no key; controls.md, Optional split keys), so rebinding stays correct.
 //
 // Triggers: FirstBattleStart, FirstUnitSelected, FirstEnemyInRange,
 // FirstForecast, FirstLowHp, FirstLevelUp, FirstEnemyPhase,
@@ -27,21 +31,24 @@
             id: "battle_start",
             trigger: FirstBattleStart,
             title: "Your move",
-            text: "Over to you. Steer the cursor with {Cursor}; {Select} on\none of your units picks it up. Press {NextUnit} for whoever\ncan still act, and {Info} for what you're working with.",
+            text: "Over to you. Steer the cursor onto one of your units and\npick it up. You can jump straight to whoever can still act,\nand look anyone over to see what you're working with.",
+            how: "Move the cursor: {Cursor}. Pick up a unit: {Select}\nNext unit to act: {NextUnit}. A unit's details: {Info}",
             face: "neutral",
         ),
         (
             id: "zoom",
             trigger: ZoomAvailable,
             title: "Zooming the map",
-            text: "Can't see it all? The view scrolls with your cursor. Press\n{ZoomMap} to zoom the map in or out; again to switch back.",
+            text: "Can't see it all? The view scrolls with your cursor, and\nthe map zooms in or out. Zoom again to switch back.",
+            how: "Zoom the map in or out: {ZoomMap}",
             face: "sly",
         ),
         (
             id: "unit_selected",
             trigger: FirstUnitSelected,
             title: "Moving a unit",
-            text: "Blue is where it can go, red is where it can attack.\nSteer to a blue tile and press {Select} to send it there.\nChanged your mind? {Cancel} backs out.",
+            text: "Blue is where it can go, red is where it can attack.\nSteer to a blue tile and send it there. Changed your\nmind? You can back out.",
+            how: "Send it to a blue tile: {Select}. Back out: {Cancel}",
             face: "neutral",
         ),
         (
@@ -55,49 +62,56 @@
             id: "forecast",
             trigger: FirstForecast,
             title: "Attack forecast",
-            text: "Read this before you swing: damage, hit chance, and who\nstrikes first. Pick the target with {Cursor}, attack with\n{Confirm}. Backing out with {Cancel} doesn't spend the turn.",
+            text: "Read this before you swing: damage, hit chance, and who\nstrikes first. Pick your target and attack, or back out;\nbacking out doesn't spend the turn.",
+            how: "Pick the target: {Cursor}. Attack: {Confirm}\nBack out: {Cancel}",
             face: "thinking",
         ),
         (
             id: "low_hp",
             trigger: FirstLowHp,
             title: "Low HP",
-            text: "One of yours is badly hurt. Pull it back, or have it\ndrink a Potion from its item menu. And if that was a\nmistake, {Rewind} can undo it.",
+            text: "One of yours is badly hurt. Pull it back, or have it\ndrink a Potion from its item menu. And if that was a\nmistake, Rewind can undo it.",
+            how: "Rewind: {Rewind}",
             face: "stern",
         ),
         (
             id: "level_up",
             trigger: FirstLevelUp,
             title: "Level up!",
-            text: "Nice. Fighting earns EXP, and at 100 a unit gains a level\nand its stats can grow. See what changed with {Info}.",
+            text: "Nice. Fighting earns EXP, and at 100 a unit gains a level\nand its stats can grow. Look it over to see what changed.",
+            how: "A unit's details: {Info}",
             face: "smile",
         ),
         (
             id: "enemy_phase",
             trigger: FirstEnemyPhase,
             title: "Enemy phase",
-            text: "Their turn: the enemy moves and attacks. Watch closely,\nit tells you where the danger is. Press {Confirm} to skip\nthe banner.",
+            text: "Their turn: the enemy moves and attacks. Watch closely,\nit tells you where the danger is. The banner can be\nskipped.",
+            how: "Skip the banner: {Confirm}",
             face: "stern",
         ),
         (
             id: "danger_zone",
             trigger: DangerZoneAvailable,
             title: "Danger zone",
-            text: "Want to know where it's safe? Press {DangerZone} to tint\nevery tile the enemy could hit next turn, and again to\nhide it. Press {Select} on one enemy for just its range.",
+            text: "Want to know where it's safe? The danger zone tints every\ntile the enemy could hit next turn. Pick one enemy instead\nfor just its range.",
+            how: "Danger zone on or off: {DangerZone}\nOne enemy's range: {Select} on it",
             face: "sly",
         ),
         (
             id: "skills",
             trigger: FirstSkillUnit,
             title: "Skills",
-            text: "This one has skills. Passive ones just work; an active\none is used from Arts or Skill in the action menu. Press\n{Info} for the full list and what each one does.",
+            text: "This one has skills. Passive ones just work; an active\none is used from Arts or Skill in the action menu. Its\ndetails list them all, and what each one does.",
+            how: "A unit's details: {Info}",
             face: "thinking",
         ),
         (
             id: "magic",
             trigger: FirstCaster,
             title: "Magic",
-            text: "A spellcaster. Pick Magic in the action menu to cast at\nan enemy or heal an ally. Each spell has only a few uses\nper battle; {Info} shows how many are left.",
+            text: "A spellcaster. Pick Magic in the action menu to cast at\nan enemy or heal an ally. Each spell has only a few uses\nper battle; its details show how many are left.",
+            how: "A unit's details: {Info}",
             face: "neutral",
         ),
         (

@@ -66,9 +66,12 @@ herself.
   in extra sentences. Same length limits as plain text.
 - **Talks to "you" about "your units", "one of yours".** Never names a
   character, never a gendered word.
-- **Keys:** only through the player's keymap (`{Action}` placeholders,
-  `keyboard-input` skill). Don't start a sentence with a key: a key name
-  is lowercase ("s finds..."); write "Press {NextUnit} for..." instead.
+- **Keys: never in her line** (0475). She is voiced, and a clip can't say a
+  key the player rebound. Her line says what to do in words ("pick it up",
+  "back out"); the keys go in a lesson's items or a tip's `how`, through
+  the player's keymap (`{Action}` placeholders, `keyboard-input` skill).
+  Don't start an item or a `how` line with a key: a key name is lowercase;
+  write "Rewind: {Rewind}".
 - **Won't say:** her own name (it lives in the names table only), anything
   about the world, the plot, the cast or herself (no backstory, see
   *Role*), anything about a death. No jokes and no teasing the player: the
@@ -83,8 +86,7 @@ spoken lines never name a key (0475).
 
 **Sample lines**
 
-- "Over to you. Steer the cursor with {Cursor}; {Select} on one of your
-  units picks it up."
+- "Over to you. Steer the cursor onto one of your units and pick it up."
 - "Made a mess? Rewind undoes turns, for one of a few charges per map.
   Just looking is free."
 - "One of yours is badly hurt. Pull it back, or have it drink a Potion
