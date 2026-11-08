@@ -6,8 +6,8 @@
 //! them, HP with a bar shading what would be lost, Hit and Crit; the
 //! strikes numbered down the middle, `!` after an effective one, the
 //! skull on the kill and the strikes after it in grey dots; then the
-//! totals and the notes. Too many rows for the screen: the rules go
-//! first, then the last notes.
+//! totals, a row per unit an art strikes and the notes. Too many rows for
+//! the screen: the rules go first, then the last notes.
 
 use crate::prelude::*;
 use trpg_core::Side;
@@ -54,6 +54,7 @@ enum Line {
     Rule,
     Strike(usize),
     Total,
+    Struck(usize),
     Note(usize),
 }
 
@@ -73,6 +74,7 @@ fn lines(view: &ForecastView, room: usize) -> Vec<Line> {
     lines.push(Line::Rule);
     lines.extend((0..view.strikes.len()).map(Line::Strike));
     lines.extend([Line::Rule, Line::Total]);
+    lines.extend((0..view.struck.len()).map(Line::Struck));
     lines.extend((0..view.notes.len()).map(Line::Note));
     if lines.len() > room {
         lines.retain(|&l| l != Line::Rule);
@@ -128,6 +130,7 @@ pub fn paint(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect, buf: 
             }
             Line::Strike(i) => paint_strike(pen, view, i, buf),
             Line::Total => paint_totals(pen, view, buf),
+            Line::Struck(i) => paint_struck(pen, view, i, buf),
             Line::Note(i) => pen.text(buf, 0, TEXT_W, &view.notes[i]),
             side_line => {
                 for (side, dx) in view.sides.iter().zip([0, RIGHT]) {
@@ -251,6 +254,17 @@ fn paint_strike(pen: Pen<'_>, view: &ForecastView, i: usize, buf: &mut GlyphBuff
     {
         pen.text(buf, RIGHT, COLUMN_W, none);
     }
+}
+
+/// Row `i` of the units an art strikes: the name, the hit and the HP
+/// before and after a hit (`Hound     82 11 → 4`).
+fn paint_struck(pen: Pen<'_>, view: &ForecastView, i: usize, buf: &mut GlyphBuffer) {
+    let row = &view.struck[i];
+    // check-text: not a data name (the view's own)
+    pen.text(buf, 0, 9, &row.name);
+    pen.text(buf, 10, 3, &format!("{:>3}", row.hit));
+    let (before, after) = row.hp;
+    pen.text(buf, 14, 7, &format!("{before:>2} → {after}"));
 }
 
 /// The totals: what the row is called in the middle, each side's damage

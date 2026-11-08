@@ -3609,6 +3609,7 @@ mod reactions;
 mod shop;
 mod skill;
 mod spell;
+mod strikes;
 mod support;
 mod terrain;
 mod triggers;

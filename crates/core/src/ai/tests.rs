@@ -2894,7 +2894,7 @@ fn utility_adds_up_each_effect_in_points() {
     let source = EffectSource::Art(ArtId::new("test"));
     let outlook = AttackOutlook {
         forecast: long_combat(1),
-        pierce: None,
+        others: vec![],
         debuff: Some((source.clone(), lowered)),
         stance: Some((source, guarded)),
         post_move: 0,

@@ -607,7 +607,7 @@ impl<'a> Planner<'a> {
                         can_kill |= odds.kill > 0;
                         let score = self.score(&odds, target.is_lord, terrain)
                             + self.utility(unit, dest, target, &odds, &outlook)
-                            + self.pierce_score(own, outlook.pierce)
+                            + self.others_score(own, &outlook.others)
                             - extra.penalty;
                         offer(score, action);
                     }
@@ -640,19 +640,20 @@ impl<'a> Planner<'a> {
             })
     }
 
-    /// What Line Pierce's strike `pierce` (the unit behind the target and
-    /// the strike's forecast) adds to an attack's score (see the module
-    /// docs).
-    fn pierce_score(&self, own: CombatHp, pierce: Option<(UnitId, Forecast)>) -> Score {
-        let Some((forecast, victim)) = pierce.and_then(|(id, f)| Some((f, self.state.unit(id)?)))
-        else {
-            return 0;
+    /// What an art's strikes at units other than the target (`others`:
+    /// each unit and its strike's forecast; Line Pierce's, an area art's)
+    /// add to an attack's score: the sum of each strike's own score (see
+    /// the module docs).
+    fn others_score(&self, own: CombatHp, others: &[(UnitId, Forecast)]) -> Score {
+        let score = |(id, forecast): &(UnitId, Forecast)| {
+            let victim = self.state.unit(*id)?;
+            let theirs = CombatHp {
+                current: victim.hp,
+                max: victim.stats.hp,
+            };
+            Some(self.score(&Odds::of(forecast, own, theirs), victim.is_lord, 0))
         };
-        let theirs = CombatHp {
-            current: victim.hp,
-            max: victim.stats.hp,
-        };
-        self.score(&Odds::of(&forecast, own, theirs), victim.is_lord, 0)
+        others.iter().filter_map(score).sum()
     }
 
     /// What an art or active does beyond the forecast's numbers adds to the
