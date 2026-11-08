@@ -1001,7 +1001,7 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     };
     assert_eq!(zoom, 2);
     one_bit.check(&h);
-    // The brigand attacks the lead (from 68.5 s): the combat picture.
+    // The brigand attacks the lead (from 69.95 s): the combat picture.
     wait_for(&mut h, 15.0, |h| {
         matches!(cinematic_frame(h), Some((Shot::Combat { .. }, _)))
     });
@@ -1012,7 +1012,7 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     let t = shot.t_ms as f32 / 1000.0;
     assert!(shot.player.stage(h.game().ctx(), t).is_some());
     one_bit.frames(&mut h, 3, 0.5);
-    // The logo (from 117 s), with the menu back.
+    // The logo (from 115.8 s), with the menu back.
     wait_for(&mut h, 60.0, |h| title_view(h).cinematic.is_none());
     let view = title_view(&h);
     let menu = view.menu.unwrap_or_else(|| panic!("no menu"));

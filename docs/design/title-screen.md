@@ -49,31 +49,34 @@ screen before the title), web only or Windows too (A web only / B both):
                  Press any key
 ```
 
-**As built (tickets 0820 and 0833, `assets/cinematics/title.ron`).** The
-cuts were moved onto the song's changes, measured in the song file
-(Claude can't hear it; Nick judges them by ear at sign-off). Nick's
-playtest of Chapter 1 (2026-10-14, ticket 0833) asked for a third of the
-talk, units that move as the game moves them, and the combat scene:
+**As built (tickets 0820, 0833 and 0843, `assets/cinematics/title.ron`).**
+The cuts were moved onto the song's changes, measured in the song file
+(the agent can't hear it; Nick judges them by ear in the Act 1
+playtest). Nick's playtest of Chapter 1 (2026-10-14, ticket 0833) asked
+for a third of the talk, units that move as the game moves them, and the
+combat scene; his round 3 (2026-10-16, ticket 0843) for a slightly
+longer talk, a shorter hold after each fight, hit sounds, the logo on
+the chord and a cleaner start:
 
 | Shot | Storyboard | Built | What the song does there |
 | ---- | ---------- | ----- | ------------------------ |
 | The party | 0:00 | 0:00 | Starts |
 | `ch01_intro` lines | 0:15 | 0:15 | Still quiet (the menu's 15 seconds end here) |
 | Six faces | 0:31 | 0:30.75 | Swells into the middle section |
-| `ch01_prebattle` line | 0:50 | 0:50 | A phrase starts |
+| `ch01_prebattle` line | 0:50 | 0:48.5 | A note, the bar before the phrase at 0:50 |
 | Turn 1: the march, 3× | 1:08 | 0:56 | A note comes in after a hush |
-| Combat scene: the brigand attacks the lead | 1:25 | 1:08.5 | A phrase starts |
+| Combat scene: the brigand attacks the lead | 1:25 | 1:09.95 | A note |
 | Turn 2: the party moves up, 3× | | 1:14.5 | On the beat |
-| Combat scene: Tamsin attacks the footbridge's brigand | 1:35 | 1:25.25 | The loud part comes in |
+| Combat scene: Tamsin attacks the footbridge's brigand | 1:35 | 1:28.2 | Inside the loud part (it came in at 1:25.25) |
 | Aske crosses the footbridge, 4× | | 1:31.25 | An accent |
 | Turn 3: the party moves up the road, 3× | | 1:35.5 | Lifts again |
 | The whole field, 2× | 1:45 | 1:44.5 | Lifts again |
-| The logo | 1:57 | 1:57 | The last chord (struck at 1:55.8) has died away |
+| The logo | 1:57 | 1:55.8 | The last chord strikes |
 
 - **The snippets:** the first **three** boxes of `ch01_intro` (the three
   opening captions, about 5 seconds each) and the first **one** box of
-  `ch01_prebattle` (Tamsin's news, three lines, up for **6 seconds**: a
-  third of the 18 it had).
+  `ch01_prebattle` (Tamsin's news, three lines, up for **7.5 seconds**;
+  0833 had cut it from 18 to 6, and Nick asked for 7 to 8).
 - **The battle plays as turns** (one action on the real Chapter 1 map):
   one unit at a time walks, then acts; first the party's phase, then the
   enemy's. A walk goes at the game's own walking speed in a battle with
@@ -81,7 +84,8 @@ talk, units that move as the game moves them, and the combat scene:
   song's beats, about one and a half seconds apart.
   - Turn 1: the party sets off east along the road while Tamsin rides for
     the footbridge and Aske follows. In the enemy's phase the brigand
-    south of the road comes down beside the lead and attacks him.
+    south of the road comes down beside the lead (on the phrase at 1:08.5)
+  and attacks him.
   - Turn 2: the enemy archer by the road falls back to the road bridge.
     The lead, Hollis, Rue and Maud move up the road; Tamsin crosses the
     footbridge and attacks the brigand who guards it; Aske crosses after
@@ -92,9 +96,16 @@ talk, units that move as the game moves them, and the combat scene:
   animations on (the game's default), worked out by the rules
   (ticket 0832): the brigand hits the lead and falls to his counter (the
   lead is left with 10 HP of 19); Tamsin fells the footbridge's brigand
-  (she is left with 13 of 21). Each fight takes about 4 seconds; the
-  shot holds its last moment for the other 2. Back on the map, the HP
-  bars show what the fight left. Two enemies fall, nobody of the party.
+  (she is left with 13 of 21). The road fight takes 4.1 seconds and the
+  footbridge fight 2.55; each shot starts so that it holds the fight's
+  last moment for about **half a second** (*the agent's starting rule*)
+  before the cut, and the map shot before it runs that much longer. Back
+  on the map, the HP bars show what the fight left. Two enemies fall,
+  nobody of the party.
+- **The fights sound as in a battle** (ticket 0843): each combat shot
+  plays the hit, miss, block and critical sounds the combat scene plays
+  for the same attack, at the same moments, over the song, at the
+  effects' volume.
 - **The storyboard's "two party units bring down a second enemy"** is
   now Tamsin alone, with Aske following her across: the combat scene
   starts every fight at the battle's starting HP, so a second fight on
@@ -255,9 +266,10 @@ A setting in Options to turn the cinematic off (yes / no / later): "Later", then
 
 ### The title song
 
-`title`, New Sunrise V1, 133.7 s. Its last note ends at about 1:57 (117 s);
-the rest is silence until it loops. "The silence" below means 1:57 to the
-loop, about 17 seconds.
+`title`, New Sunrise V1, 133.7 s. Its last chord strikes at 1:55.8 and
+has died away by about 1:57 (117 s); the rest is silence until it loops.
+"The silence" below means the logo (1:55.8, ticket 0843) to the loop,
+about 18 seconds.
 
 | Time | What the music does |
 | ---- | ------------------- |
@@ -271,10 +283,12 @@ loop, about 17 seconds.
 1. **One press reaches the menu.** The `Press any key or button` press
    shows the logo and the menu and starts the song from its beginning, as
    the title does today.
-2. **Left alone for 15 seconds, the cinematic takes over.** The menu fades
-   out and the cinematic shows. Example: the player presses a key, reads
-   the menu and puts the controller down; 15 seconds later the menu fades
-   and the battlefield appears.
+2. **Left alone for 15 seconds, the cinematic takes over.** The menu and
+   the title's picture go to black, then the cinematic fades in from black
+   (Nick, round 3, ticket 0843: the menu no longer dissolves over the
+   cinematic). Example: the player presses a key, reads the menu and puts
+   the controller down; 15 seconds later the screen goes black and the
+   cinematic comes up.
 3. **The cinematic follows the song and joins it where it is.** The song
    never restarts for the cinematic. On launch the cinematic therefore
    begins about 15 seconds in, and its first shot is only seen on later
@@ -283,8 +297,8 @@ loop, about 17 seconds.
    sound plays, the song jumps to its silent ending, and the logo and menu
    show. The player can always get back to the menu with one press.
 5. **In the silence the logo and menu show.** If the player does nothing,
-   the menu fades when the song loops (about 17 seconds), and the cinematic
-   plays again from its first shot, with the song.
+   the menu goes to black when the song loops (about 18 seconds), and the
+   cinematic comes in from black at its first shot, with the song.
 6. **The logo is the cinematic's last shot**, held for the whole silence.
    The silent end of the song is not trimmed.
 7. **Coming back to the title from the game** (after a battle, "To be
@@ -295,8 +309,8 @@ loop, about 17 seconds.
 ### The cinematic's look (Nick fixed)
 
 - **Storyboard 2, "Trailer cuts".** Shots change with **hard cuts** on the
-  music's changes. No fades between shots (the menu's own fade in rule 2 is
-  the only one).
+  music's changes. No fades between shots (the title's own fades in rule
+  2 are the only ones).
 - **Zoom is whole steps: 2×, 3× or 4×**, always crisp. **A shot keeps one
   size while it is on screen**; the size only changes at a cut. No gradual
   zoom ("def not B").
@@ -355,27 +369,34 @@ Chapter 1 map by 0820; the mockup's fight was made up.
   the menu cursor or choose New Game.
 - **The timer only runs on the title itself**, not while Load Game, Options
   or another screen is open over it.
-- **Fades:** the menu fades out over about 1 second and in over about half
-  a second (*tunable*). **15 seconds** is Nick's number (*tunable*).
+- **Fades** (ticket 0843): the menu and the title's picture go to black
+  over 0.2 seconds (*the agent's starting rule*), then the cinematic fades
+  in from black over half a second (*tunable*); on the logo the menu
+  fades in over half a second (*tunable*). **15 seconds** is Nick's
+  number (*tunable*).
 - **Before the first press** the title shows the logo and
   `Press any key or button` as today; no cinematic and no music yet.
-- **The cinematic makes no sounds of its own** (no hit or step sounds from
-  its fights). Only the song, and the skip sound.
+- **The cinematic's sounds** (ticket 0843, replacing 0832's "no sounds"):
+  its fights play the combat scene's hit, miss, block and critical sounds,
+  over the song. No step sounds on the map shots.
 - **The skip sound** is the game's sword hit (`hit_sword`) until Nick picks
   one (ticket 0041).
 - **The song fades out on a skip** over the half second every piece of
   music in the game fades over, instead of cutting dead (ticket 0819).
-  The logo and menu show at once; the song starts again 16.7 seconds
-  after the skip, as long as its own silence lasts.
+  The logo and menu show at once; the song starts again 17.9 seconds
+  after the skip, as long as the logo shot lasts.
 - **The logo shot always has the menu** (ticket 0819). If the 15 seconds
   run out while the logo is up, the menu waits for the song to loop.
   Example: the player moves the cursor a moment after the logo appears;
   15 seconds later the logo is still up, so the menu stays until the song
-  starts again, then fades.
-- **A press while the menu is fading out** brings the menu straight back
+  starts again, then goes to black.
+- **A press while the menu goes to black** brings the menu straight back
   and counts as a normal menu press (ticket 0819). Example: the menu
-  starts to fade and the player presses down; the menu is back at once
-  with the cursor one line lower.
+  starts to darken and the player presses down; the menu is back at once
+  with the cursor one line lower. **A press while the cinematic fades in
+  from black** brings the menu back and does nothing else (ticket 0843,
+  *the agent's starting rule*): the menu wasn't showing, so the press
+  can't have meant a line of it.
 - **While the song has not started yet** (its file is still loading), the
   cinematic waits at its first picture for up to 3 seconds, then runs
   without the song (ticket 0819).

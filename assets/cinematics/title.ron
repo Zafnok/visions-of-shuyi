@@ -3,10 +3,15 @@
 // title song by the title screen (0819). Twelve shots with hard cuts.
 //
 // The cuts sit where the song (133.743 s) changes, measured in the file:
-// it swells at 30.75, a phrase starts at 50.0 and at 68.5, a note comes in
-// after a hush at 56.0 and the beat falls at 74.5, the loud part comes in
-// at 85.25 and is accented at 91.25, it lifts again at 95.5 and 104.5, and
-// the last chord has died away by 117.
+// it swells at 30.75, a note comes in at 48.5 (the bar before the phrase
+// at 50.0), a note comes in after a hush at 56.0, a note at 69.95 and the
+// beat falls at 74.5, the loud part comes in at 85.25 (the footbridge
+// fight starts inside it at 88.2) and is accented at 91.25, it lifts
+// again at 95.5 and 104.5, and the last chord strikes at 115.8 (ticket
+// 0843).
+//
+// Each fight's shot starts so that it ends about half a second after the
+// fight's last blow (ticket 0843): the cuts after the fights stay put.
 //
 // The battle (ticket 0833) plays as the game plays it: one unit at a time
 // walks, then acts; the party's phase, then the enemy's. A walk goes at
@@ -36,23 +41,23 @@
             (at: 6.5, do: Walk(unit: "heretic", path: [(4, 13), (4, 12), (7, 12)], secs: 0.667)),
             (at: 7.75, do: Walk(unit: "keeper", path: [(3, 12), (3, 11), (6, 11)], secs: 0.667)),
             (at: 9.25, do: Walk(unit: "poacher", path: [(3, 13), (3, 9)], secs: 0.667)),
-            // Turn 1, the enemy: the brigand comes down to the lead and
-            // attacks (the combat shot, 68.5 to 74.5: the lead is left
-            // with 10 HP of 19, the brigand falls).
-            (at: 11.0, do: Walk(unit: "road_brigand", path: [(10, 10), (10, 11), (9, 11)], secs: 0.333)),
-            (at: 13.0, do: Strike(unit: "road_brigand", target: "lead", hp_left: 53)),
-            (at: 13.6, do: Strike(unit: "lead", target: "road_brigand", hp_left: 0)),
+            // Turn 1, the enemy: the brigand comes down to the lead on the
+            // phrase at 68.5 and attacks (the combat shot, 69.95 to 74.5:
+            // the lead is left with 10 HP of 19, the brigand falls).
+            (at: 12.5, do: Walk(unit: "road_brigand", path: [(10, 10), (10, 11), (9, 11)], secs: 0.333)),
+            (at: 14.0, do: Strike(unit: "road_brigand", target: "lead", hp_left: 53)),
+            (at: 14.6, do: Strike(unit: "lead", target: "road_brigand", hp_left: 0)),
             (at: 20.25, do: Walk(unit: "road_archer", path: [(12, 9), (12, 8), (11, 8), (11, 6)], secs: 0.667)),
-            // Turn 2, the party (77.75 to 83.75); Tamsin attacks (the
-            // combat shot, 85.25 to 91.25: she is left with 13 HP of 21,
+            // Turn 2, the party (77.75 to 87.25); Tamsin attacks (the
+            // combat shot, 88.2 to 91.25: she is left with 13 HP of 21,
             // the brigand falls), then Aske crosses.
             (at: 21.75, do: Walk(unit: "lead", path: [(8, 11), (11, 11), (11, 9)], secs: 0.833)),
             (at: 23.25, do: Walk(unit: "retainer", path: [(7, 11), (10, 11)], secs: 0.5)),
             (at: 24.75, do: Walk(unit: "heretic", path: [(7, 12), (9, 12), (9, 11)], secs: 0.5)),
             (at: 26.25, do: Walk(unit: "keeper", path: [(6, 11), (8, 11)], secs: 0.333)),
-            (at: 27.75, do: Walk(unit: "sergeant", path: [(3, 7), (3, 5), (5, 5)], secs: 0.667)),
-            (at: 29.75, do: Strike(unit: "footbridge_brigand", target: "sergeant", hp_left: 62)),
-            (at: 30.35, do: Strike(unit: "sergeant", target: "footbridge_brigand", hp_left: 0)),
+            (at: 31.25, do: Walk(unit: "sergeant", path: [(3, 7), (3, 5), (5, 5)], secs: 0.667)),
+            (at: 32.25, do: Strike(unit: "footbridge_brigand", target: "sergeant", hp_left: 62)),
+            (at: 32.85, do: Strike(unit: "sergeant", target: "footbridge_brigand", hp_left: 0)),
             (at: 36.0, do: Walk(unit: "poacher", path: [(3, 9), (3, 5), (4, 5)], secs: 0.833)),
             // Turn 3, the party (96.25 to 107.75).
             (at: 40.25, do: Walk(unit: "retainer", path: [(10, 11), (12, 11), (12, 10)], secs: 0.5)),
@@ -74,20 +79,20 @@
             expression: "neutral",
         )),
         // 4. Maud's news of the Red Company: the paper on the chapel door.
-        (at: 50.0, shot: Talk(scene: "ch01_prebattle", first: 0, count: 1)),
+        (at: 48.5, shot: Talk(scene: "ch01_prebattle", first: 0, count: 1)),
         // 5. Turn 1: the party sets off; the brigand comes to meet the lead.
         (at: 56.0, shot: MapPan(battle: "ch01", from: (7.85, 10.15), to: (10, 10.15), zoom: 3,
             action: "field")),
         // 6. The brigand attacks the lead on the road, and falls. The lead
         // stands on the road where the battle starts, as on the map.
-        (at: 68.5, shot: Combat(battle: "ch01", attacker: "road_brigand", target: "lead",
+        (at: 69.95, shot: Combat(battle: "ch01", attacker: "road_brigand", target: "lead",
             from: (4, 11), seed: 10)),
         // 7. Turn 2: the archer falls back; the party moves up the road,
         // then Tamsin crosses the footbridge.
         (at: 74.5, shot: MapPan(battle: "ch01", from: (10, 10.15), to: (5.75, 6), zoom: 3,
             action_from: 18.5, action: "field")),
         // 8. Tamsin attacks the brigand at the footbridge, and he falls.
-        (at: 85.25, shot: Combat(battle: "ch01", attacker: "sergeant", target: "footbridge_brigand",
+        (at: 88.2, shot: Combat(battle: "ch01", attacker: "sergeant", target: "footbridge_brigand",
             from: (5, 5))),
         // 9. Aske crosses after her.
         (at: 91.25, shot: MapPan(battle: "ch01", from: (4.5, 6.5), to: (4.5, 6.5), zoom: 4,
@@ -99,7 +104,7 @@
         // Aske move on along the river.
         (at: 104.5, shot: MapPan(battle: "ch01", from: (11.5, 7.5), to: (11.5, 7.5), zoom: 2,
             action_from: 48.5, action: "field")),
-        // 12. The logo, from the end of the last note to the loop.
-        (at: 117.0, shot: Logo),
+        // 12. The logo, from the last chord to the loop.
+        (at: 115.8, shot: Logo),
     ],
 )

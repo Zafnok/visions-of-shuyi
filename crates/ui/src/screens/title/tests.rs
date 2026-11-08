@@ -823,7 +823,8 @@ fn playing(t: &TitleScreen, c: &Ctx) -> Option<(u32, u8)> {
 fn in_cinematic(c: &mut Ctx, position: f32) -> TitleScreen {
     let mut t = TitleScreen::new(c);
     song_tick(&mut t, c, position, IDLE_SECS);
-    song_tick(&mut t, c, position, FADE_OUT_SECS);
+    song_tick(&mut t, c, position, TO_BLACK_SECS);
+    song_tick(&mut t, c, position, FROM_BLACK_SECS);
     assert_eq!(t.phase, Phase::Cinematic);
     c.audio.take();
     t
@@ -844,7 +845,7 @@ fn a_part_of_full_is_rounded_and_stays_in_range() {
 fn a_frame_is_its_share_of_a_fade() {
     assert!((share(0.25, 0.5) - 0.5).abs() < f32::EPSILON);
     assert!((share(0.5, 2.0) - 0.25).abs() < f32::EPSILON);
-    assert!((share(0.5, FADE_OUT_SECS) - 0.5 / FADE_OUT_SECS).abs() < f32::EPSILON);
+    assert!((share(0.5, FROM_BLACK_SECS) - 0.5 / FROM_BLACK_SECS).abs() < f32::EPSILON);
 }
 
 #[test]
@@ -859,40 +860,58 @@ fn a_key_an_action_or_a_button_is_a_press() {
     assert!(!pressed(&input(&[]).with_typing(vec![], vec!['z'])));
 }
 
-/// The menu for [`IDLE_SECS`], the fade for [`FADE_OUT_SECS`], then the
-/// cinematic alone, at the song's time.
+/// The menu for [`IDLE_SECS`], then the menu and the title's picture go
+/// to black over [`TO_BLACK_SECS`], then the cinematic alone comes in from
+/// black over [`FROM_BLACK_SECS`], at the song's time (ticket 0843).
 #[test]
-fn left_alone_the_menu_fades_out_over_the_cinematic() {
+fn left_alone_the_menu_goes_to_black_and_the_cinematic_comes_in() {
     let mut c = ctx();
     let mut t = TitleScreen::new(&c);
     let first = t.view(&c);
-    assert_eq!((&first.cinematic, first.menu_opacity), (&None, FULL));
+    assert_eq!(
+        (&first.cinematic, first.picture, first.menu_opacity),
+        (&None, FULL, FULL)
+    );
     song_tick(&mut t, &mut c, 0.0, 0.0);
     song_tick(&mut t, &mut c, 14.9, 14.9);
     assert_eq!(playing(&t, &c), None);
     assert_eq!(t.view(&c).menu_opacity, FULL);
-    // The fade starts dark, under the whole title.
+    // To black: the title alone, the menu and its picture fading together.
     song_tick(&mut t, &mut c, 15.0, 0.1);
-    assert_eq!(playing(&t, &c), Some((15_000, 0)));
-    assert_eq!(t.view(&c).menu_opacity, FULL);
-    assert!(t.view(&c).menu.is_some() && t.view(&c).help.is_some());
-    song_tick(&mut t, &mut c, 15.25, 0.25);
-    assert_eq!(playing(&t, &c), Some((15_250, 64)));
-    assert_eq!(t.view(&c).menu_opacity, 191);
-    song_tick(&mut t, &mut c, 15.75, 0.5);
-    assert_eq!(playing(&t, &c), Some((15_750, 191)));
-    assert_eq!(t.view(&c).menu_opacity, 64);
-    assert!(t.view(&c).menu.is_some());
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
+    let view = t.view(&c);
+    assert_eq!(
+        (playing(&t, &c), view.picture, view.menu_opacity),
+        (None, FULL, FULL)
+    );
+    assert!(view.menu.is_some() && view.help.is_some());
+    song_tick(&mut t, &mut c, 15.1, 0.1);
+    let view = t.view(&c);
+    assert_eq!(
+        (playing(&t, &c), view.picture, view.menu_opacity),
+        (None, 127, 127)
+    );
+    assert!(view.menu.is_some());
+    // Black: the cinematic, dark, alone.
+    song_tick(&mut t, &mut c, 15.25, 0.15);
+    assert_eq!(t.phase, Phase::FromBlack { f: 0.0 });
+    let view = t.view(&c);
+    assert_eq!(playing(&t, &c), Some((15_250, 0)));
+    assert_eq!((view.picture, view.menu_opacity), (0, 0));
+    assert_eq!((&view.menu, &view.help), (&None, &None));
+    song_tick(&mut t, &mut c, 15.5, 0.25);
+    assert_eq!(playing(&t, &c), Some((15_500, 128)));
     // Alone: no menu, notice or help line. The debug hint stays.
     t.notice = Some("x".to_owned());
-    song_tick(&mut t, &mut c, 16.0, 0.25);
+    song_tick(&mut t, &mut c, 16.0, 0.3);
+    assert_eq!(t.phase, Phase::Cinematic);
     assert_eq!(playing(&t, &c), Some((16_000, FULL)));
     let view = t.view(&c);
     assert_eq!(
         (&view.menu, &view.help, &view.notice),
         (&None, &None, &None)
     );
-    assert_eq!(view.menu_opacity, 0);
+    assert_eq!((view.picture, view.menu_opacity), (0, 0));
     assert!(view.debug_hint.is_some());
     // It follows the song, wherever that goes.
     song_tick(&mut t, &mut c, 80.5, 0.0);
@@ -916,25 +935,29 @@ fn the_menu_fades_in_on_the_logo_and_out_at_the_loop() {
     let mut c = ctx();
     c.idle_motion = IdleMotion::On;
     let mut t = in_cinematic(&mut c, 20.0);
-    song_tick(&mut t, &mut c, 116.999, 0.1);
-    assert_eq!(playing(&t, &c), Some((116_999, FULL)));
-    song_tick(&mut t, &mut c, 117.0, 0.1);
+    song_tick(&mut t, &mut c, 115.799, 0.1);
+    assert_eq!(playing(&t, &c), Some((115_799, FULL)));
+    song_tick(&mut t, &mut c, 115.8, 0.1);
     let view = t.view(&c);
-    assert_eq!((&view.cinematic, view.menu_opacity), (&None, 0));
+    assert_eq!(
+        (&view.cinematic, view.picture, view.menu_opacity),
+        (&None, FULL, 0)
+    );
     assert!(view.menu.is_some() && view.help.is_some());
-    assert_eq!(view.sparks, Some(117_000));
-    song_tick(&mut t, &mut c, 117.125, 0.125);
+    assert_eq!(view.sparks, Some(115_800));
+    song_tick(&mut t, &mut c, 115.925, 0.125);
     assert_eq!(t.view(&c).menu_opacity, 64);
-    assert_eq!(t.view(&c).sparks, Some(117_125));
-    song_tick(&mut t, &mut c, 117.5, 0.375);
+    assert_eq!(t.view(&c).sparks, Some(115_925));
+    song_tick(&mut t, &mut c, 116.3, 0.375);
     assert_eq!(t.view(&c).menu_opacity, FULL);
     // Far longer than 15 seconds: it waits for the loop.
     song_tick(&mut t, &mut c, 133.7, 40.0);
     assert_eq!(playing(&t, &c), None);
     assert_eq!(t.view(&c).menu_opacity, FULL);
+    // Then to black, as after the 15 seconds.
     song_tick(&mut t, &mut c, 0.01, 0.05);
-    assert_eq!(playing(&t, &c), Some((10, 0)));
-    assert_eq!(t.phase, Phase::FadingOut { f: 0.0 });
+    assert_eq!(playing(&t, &c), None);
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
 }
 
 /// Ticket 0844: with the Intro option off the title never goes idle into
@@ -954,7 +977,7 @@ fn with_the_intro_off_the_menu_stays() {
     // On again: it goes idle into the cinematic as before.
     c.change_settings(|s| s.game.intro = true).unwrap();
     song_tick(&mut t, &mut c, 20.0, 1.0);
-    assert!(matches!(t.phase, Phase::FadingOut { .. }));
+    assert!(matches!(t.phase, Phase::ToBlack { .. }));
 }
 
 /// The press that skips the cinematic plays the skip sound, stops the
@@ -979,9 +1002,9 @@ fn a_press_skips_the_cinematic_and_nothing_else() {
     assert_eq!(t.menu.focus(), 0);
     // The time is the logo's, and runs on the frame clock from there
     // whatever the fading song's clock says.
-    assert!((t.cinematic_time() - 117.0).abs() < 1e-3);
+    assert!((t.cinematic_time() - 115.8).abs() < 1e-3);
     song_tick(&mut t, &mut c, 40.3, 0.25);
-    assert!((t.cinematic_time() - 117.25).abs() < 1e-3);
+    assert!((t.cinematic_time() - 116.05).abs() < 1e-3);
     // Cursor moves skip too, without moving or sounding like a menu.
     let mut t = in_cinematic(&mut c, 40.0);
     let moved = sounds_of(&mut t, &mut c, &[Action::CursorDown, Action::Confirm]);
@@ -1003,7 +1026,7 @@ fn the_song_starts_again_after_the_skips_silence() {
     t.update(&mut c, &input(&[Action::Cancel]));
     c.audio.take();
     c.music_clock = None;
-    t.update(&mut c, &tick(16.7));
+    t.update(&mut c, &tick(17.9));
     assert_eq!(
         c.audio.take(),
         [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
@@ -1017,7 +1040,7 @@ fn the_song_starts_again_after_the_skips_silence() {
         [AudioRequest::play_music(TITLE_MUSIC.to_owned(), None)]
     );
     assert!(t.cinematic_time().abs() < f32::EPSILON);
-    assert_eq!(t.phase, Phase::FadingOut { f: 0.0 });
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
     t.update(&mut c, &tick(0.05));
     assert_eq!(
         c.audio.take(),
@@ -1026,8 +1049,9 @@ fn the_song_starts_again_after_the_skips_silence() {
 }
 
 /// Any press with the menu up starts the 15 seconds again, and takes the
-/// menu off the "until the loop" rule; one during the fade brings the
-/// menu back and acts on it.
+/// menu off the "until the loop" rule; one while the menu goes to black
+/// brings it back and acts on it; one while the cinematic comes in from
+/// black brings the menu back and does nothing else.
 #[test]
 fn a_press_restarts_the_wait_and_ends_the_fade() {
     use Action::CursorDown;
@@ -1040,26 +1064,39 @@ fn a_press_restarts_the_wait_and_ends_the_fade() {
     song_tick(&mut t, &mut c, 28.9, 14.9);
     assert_eq!(playing(&t, &c), None);
     song_tick(&mut t, &mut c, 29.5, 0.6);
-    assert_eq!(playing(&t, &c), Some((29_500, 0)));
-    song_tick(&mut t, &mut c, 30.0, 0.5);
-    assert_eq!(playing(&t, &c), Some((30_000, 128)));
-    // During the fade.
+    song_tick(&mut t, &mut c, 29.6, 0.1);
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.5 });
+    // Going to black.
     t.update(&mut c, &input(&[CursorDown]));
+    assert_eq!(t.phase, Phase::MENU);
+    assert_eq!(t.menu.focus(), 3);
+    assert_eq!(t.view(&c).menu_opacity, FULL);
+    // Coming in from black.
+    song_tick(&mut t, &mut c, 44.6, IDLE_SECS);
+    song_tick(&mut t, &mut c, 44.8, TO_BLACK_SECS);
+    song_tick(&mut t, &mut c, 45.0, 0.2);
+    assert!(matches!(t.phase, Phase::FromBlack { .. }));
+    c.audio.take();
+    t.update(&mut c, &input(&[CursorDown]));
+    assert_eq!(
+        c.audio.take(),
+        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
+    );
     assert_eq!(t.phase, Phase::MENU);
     assert_eq!(t.menu.focus(), 3);
     assert_eq!(t.view(&c).menu_opacity, FULL);
     // On the logo: the 15 seconds, not the loop; and while they run out
     // on the logo, the menu stays.
     let mut t = in_cinematic(&mut c, 20.0);
-    song_tick(&mut t, &mut c, 117.0, 0.1);
-    song_tick(&mut t, &mut c, 117.5, 0.2);
+    song_tick(&mut t, &mut c, 115.8, 0.1);
+    song_tick(&mut t, &mut c, 116.3, 0.2);
     assert_eq!(t.view(&c).menu_opacity, 102);
     t.update(&mut c, &input(&[CursorDown]));
     assert_eq!(t.phase, Phase::MENU);
     song_tick(&mut t, &mut c, 133.0, 15.5);
     assert_eq!(playing(&t, &c), None);
     song_tick(&mut t, &mut c, 0.5, 1.0);
-    assert_eq!(playing(&t, &c), Some((500, 0)));
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
     // Pressed again in the silence: the loop goes by under the menu.
     let mut t = in_cinematic(&mut c, 20.0);
     song_tick(&mut t, &mut c, 125.0, 0.1);
@@ -1067,7 +1104,7 @@ fn a_press_restarts_the_wait_and_ends_the_fade() {
     song_tick(&mut t, &mut c, 5.0, 13.7);
     assert_eq!(playing(&t, &c), None);
     song_tick(&mut t, &mut c, 6.3, 1.3);
-    assert_eq!(playing(&t, &c), Some((6_300, 0)));
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
 }
 
 /// Back from the game the title starts over: the menu, the song asked
@@ -1125,7 +1162,7 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
     let mut t = TitleScreen::new(&c);
     let first = t.player.clone().expect("made with the title");
     assert_eq!(first.timeline().length_ms(), 133_743);
-    assert_eq!(first.timeline().last_start_ms(), 117_000);
+    assert_eq!(first.timeline().last_start_ms(), 115_800);
     // Nothing changed under the title itself: the same one.
     t.update(&mut c, &input(&[]));
     assert!(Rc::ptr_eq(&first, t.player.as_ref().unwrap()));
@@ -1200,7 +1237,7 @@ fn the_prompt_waits_without_a_cinematic() {
     song_tick(&mut t, &mut c, 14.9, 14.9);
     assert_eq!(playing(&t, &c), None);
     song_tick(&mut t, &mut c, 15.0, 0.2);
-    assert_eq!(playing(&t, &c), Some((15_000, 0)));
+    assert_eq!(t.phase, Phase::ToBlack { f: 0.0 });
 }
 
 /// A frame that isn't a time, or goes backwards, moves no timer.
@@ -1215,9 +1252,9 @@ fn a_frame_that_is_not_a_time_moves_nothing() {
         assert_eq!(t.phase, before, "{bad}");
     }
     song_tick(&mut t, &mut c, 15.0, 1.0);
-    song_tick(&mut t, &mut c, 15.5, 0.5);
+    song_tick(&mut t, &mut c, 15.1, 0.1);
     let fading = t.phase;
-    assert_eq!(fading, Phase::FadingOut { f: 0.5 });
+    assert_eq!(fading, Phase::ToBlack { f: 0.5 });
     for bad in [f32::NAN, f32::INFINITY, -5.0] {
         song_tick(&mut t, &mut c, 15.5, bad);
         assert_eq!(t.phase, fading, "{bad}");
