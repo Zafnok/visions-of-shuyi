@@ -81,7 +81,10 @@ fn embedded_chapters_and_new_game_load() {
     let ch05 = &c.chapters["ch05"];
     assert_eq!(ch05.world_map.as_deref(), Some("act1"));
     assert_eq!(ch05.opening_scenes, ["ch05_intro"]);
-    assert_eq!(ch05.intro_scenes, ["ch05_envoy", "ch05_eve", "ch05_prebattle"]);
+    assert_eq!(
+        ch05.intro_scenes,
+        ["ch05_envoy", "ch05_eve", "ch05_prebattle"]
+    );
     assert_eq!(ch05.battle, "ch05");
     assert_eq!(
         ch05.victory_scenes,

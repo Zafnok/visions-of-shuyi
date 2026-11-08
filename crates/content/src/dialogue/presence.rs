@@ -143,7 +143,8 @@ impl Cast {
             let before = chapter.opening_scenes.iter().chain(&chapter.intro_scenes);
             let early = joiners(joins, before.clone());
             let late = joiners(joins, &chapter.victory_scenes);
-            self.may_be_absent.extend(early.iter().chain(&late).cloned());
+            self.may_be_absent
+                .extend(early.iter().chain(&late).cloned());
             let battle = battles.get(&chapter.battle);
             let triggers = battle.into_iter().flat_map(|b| &b.triggers);
             let placed = |c: &CharacterId| {

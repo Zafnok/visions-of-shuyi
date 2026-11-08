@@ -66,6 +66,20 @@
             "hardcore": (min: 55, max: 80),
         },
     },
+    // The Casual bot's band in a hold, a story battle or side quest won by
+    // surviving its turns, by its tier, over `bands` (Nick, 2026-11-08,
+    // ticket 0851: "maybe for casual we can aim for 40-70%"): it guards only
+    // the lead, who can wait out a hold indoors, so it wins more of them.
+    // Nick fixed the Normal row; the other rows move the same way (+10 and
+    // +15 points), Claude's starting values, tunable. A skirmish keeps its
+    // own bands. A hold has no faster check: it lasts its turns however it
+    // is played.
+    hold_bands: {
+        Easy: {"casual": (min: 55, max: 85)},
+        Normal: {"casual": (min: 40, max: 70)},
+        Hard: {"casual": (min: 35, max: 65)},
+        Finale: {"casual": (min: 30, max: 60)},
+    },
     // Casual succeeding in under 20% of tries blocks the change: the battle
     // is basically unwinnable (starting value, tunable).
     floors: {"casual": 20},
