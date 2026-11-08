@@ -19,8 +19,11 @@ completed:
 `docs/engine/pins.md`: typos split it as "c1", "ba" and "9ec8". It passed
 by adding `ba = "ba"` to `_typos.toml`'s words, so a real `ba` typo now
 passes anywhere in the repository. That weakens a gate, which
-`AGENTS.md` forbids. #514 hit a hash too. The engine ignores hashes with
-a regex instead. Found by the retro of 2026-11-08.
+`AGENTS.md` forbids. #514 hit a hash too, and so did the retro's own
+engine PR (Zafnok/shuyi-engine#314, on a pin hash written short). The
+engine's `_typos.toml` ignores only 16-digit snapshot hashes
+(`extend-ignore-re = ['\b[0-9a-f]{16}\b']`), so neither repository yet
+handles a commit hash. Found by the retro of 2026-11-08.
 
 ## Nick input
 
@@ -30,8 +33,10 @@ None.
 
 **In:**
 - `_typos.toml` gets an `extend-ignore-re` for hex hashes of 7 to 40
-  characters (for example `\b[0-9a-f]{7,40}\b`), as the engine's
-  typos config does.
+  characters that contain a digit (for example
+  `\b(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}\b`, so a hex-only word like
+  `deadbeef` is still read). Tell the engine about the pattern in a
+  `Game NNNN:` note so it can do the same.
 - Remove `ba = "ba"` and any other word allowed only for a hash.
 - A line in `run-gates`' typos section: never allow a word that is a
   fragment of a hash.
@@ -41,8 +46,8 @@ None.
 
 ## Implementation steps
 
-1. Read the engine's typos config (`_typos.toml` or `typos.toml` in
-   `Zafnok/shuyi-engine`) for the pattern.
+1. Check that the typos version CI pins supports look-ahead in
+   `extend-ignore-re`. If it doesn't, list the pattern without it.
 2. Edit `_typos.toml` (lines around 43–44) and run `typos`.
 3. Add the `run-gates` line, then run `pwsh -File
    scripts/sync-agent-skills.ps1`.
