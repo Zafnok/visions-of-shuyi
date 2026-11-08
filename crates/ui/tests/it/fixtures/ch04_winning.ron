@@ -37,10 +37,11 @@
     Act(unit:(1),dest:(x:15,y:6),action:Wait),
     EndPhase,
     // Turn 5
-    Act(unit:(6),dest:(x:11,y:2),action:Cast(spell:("cinder_oath"),target:Unit((19)),active:Some(("overcast")))),
-    Act(unit:(4),dest:(x:10,y:2),action:Attack(target:(19),slot:0,active:None,art:Some(("rending_arrow")))),
-    Act(unit:(1),dest:(x:11,y:7),action:Wait),
-    Act(unit:(2),dest:(x:9,y:6),action:UseSkill(skill:("brace"),target:None)),
-    Act(unit:(7),dest:(x:11,y:4),action:Attack(target:(19),slot:0,active:Some(("keen_edge")),art:None)),
+    Act(unit:(5),dest:(x:15,y:11),action:Wait),
+    Act(unit:(6),dest:(x:10,y:2),action:Cast(spell:("frost"),target:Unit((19)),active:Some(("overcast")))),
+    Act(unit:(4),dest:(x:12,y:2),action:Attack(target:(19),slot:0,active:None,art:Some(("rending_arrow")))),
+    Act(unit:(2),dest:(x:9,y:9),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(7),dest:(x:11,y:4),action:Attack(target:(19),slot:0,active:None,art:Some(("flowing_cut")))),
+    Act(unit:(3),dest:(x:11,y:2),action:Attack(target:(19),slot:0,active:None,art:None)),
     // Some(Victory) on turn 5; lost: []
 ]
