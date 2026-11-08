@@ -39,6 +39,10 @@ mor = "mor"
 # Ned Tolley, the Chapter 3 boss (docs/story/names.md, ticket 0743).
 ned = "ned"
 
+# A fragment of the engine commit c1ba9ec8 in the pin ledger and ticket
+# 1240 (docs/engine/pins.md), split by typos as "c1" "ba" "9ec8".
+ba = "ba"
+
 [files]
 # Vendored third-party font data (hex bitmaps, codepoint names) and the atlas
 # generated from it: not our prose, and never edited by hand.

@@ -86,11 +86,14 @@ command, not by a new gameplay sign-off.
 - Reimplementing shipped engine APIs, a new engine feature, or a ticket
   only to move the engine pin.
 
-**Either order with 1240** (the tools' `bots` folded into `playtest`,
-after engine#2544): if 1240 is done, `Trpg::playtest_plan` exists with
-the plain `baseline` run and its play record: grow that plan with the
-stages, personas, checks and summary here, keeping its record; if not,
-nothing to do (1240 adds the record to this plan when it lands).
+**From 1240 (done):** `Trpg::playtest_plan` exists (`plays::plan` in
+`crates/xtask/src/game_tools/plays.rs`) with the plain `baseline` run in
+Classic, no checks, and its play record written by the `Recorded`
+entrant's `record`: grow that plan with the stages, personas, checks and
+summary here, keeping its record. The `Recorded` wrapper forwards four
+methods only to add the record (friction log, 2026-11-07): when the plan
+grows, write the record from `trpg_bots::BattleEntrant` itself (its
+battle and `PlayRecord` moved into `trpg-bots`) and drop the wrapper.
 
 **Either order with 0507, 0508, 0512 and 1021:** if one is done, migrate
 its command/report use to `cargo shuyi playtest` here, preserving its

@@ -36,6 +36,7 @@ pub const LIMITS: TipLimits = TipLimits {
     text_lines: MAX_TEXT_LINES,
     line_chars: MAX_LINE_CHARS,
     title_chars: MAX_TITLE_CHARS,
+    how_lines: 0,
 };
 
 /// The portrait of the guide, who speaks every tip
