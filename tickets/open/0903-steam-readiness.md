@@ -50,6 +50,14 @@ Until then this ticket can do everything with Valve's test App ID 480.
 
 ## Implementation steps
 
+0. **The release toolchain is GNU** ([ADR-0108](../../docs/adr/0108-windows-release-builds-with-the-gnu-toolchain.md),
+   from 0910): check that the `steamworks` crate and its `steam_api64`
+   import library link with `x86_64-pc-windows-gnu` before the steps
+   below. If they don't, the ticket says what changes (a separate MSVC
+   build for the Steam depot only, or an import library made with
+   `dlltool`) and asks Nick if it costs anything. #521 noted this and no
+   ticket held it (the retro of 2026-11-08).
+
 1. Add optional Cargo feature `steam` to `trpg-app` using the `steamworks`
    crate: init on startup (fail gracefully → run without Steam), run callbacks
    each frame, show overlay-compatibility check. App ID 480 for development.

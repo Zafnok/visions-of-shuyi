@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["engine#2256"]
 nick_input: none
 completed:
 ---
@@ -34,6 +34,12 @@ cc 550d4aa78a16178e28897005f4406b8c09f9b9c4236ec55397aa2e1cb45aa89d # shrinks to
 The engine's own round-trip test never puts `(` in text (its `arb_text` is
 letters and `,.!?`), so only the game's wider `arb_text` (any printable
 ASCII) can hit it.
+
+The engine's half is engine#2256 (2026-11-08, from the retro of the last
+60 PRs). Meanwhile pin PR #557 (commit b8e413d0) narrowed this crate's
+`arb_text` with `prop_filter("a direction", …)`
+(`crates/content/src/dialogue/tests.rs`), which this ticket's *Out*
+forbids. This ticket removes that filter once the pin brings 2256.
 
 ## Nick input
 
@@ -69,6 +75,9 @@ None. Verified by the property test; nothing to judge by playing.
    for a line's text starting with `(`.
 
 ## Acceptance criteria
+
+- [ ] The `prop_filter("a direction", …)` #557 added is gone from
+      `crates/content/src/dialogue/tests.rs`.
 
 - [ ] `print_parse_round_trip` passes with the regression file holding the
       case above.
