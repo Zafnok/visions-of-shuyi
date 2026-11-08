@@ -16,6 +16,12 @@ fn aid(id: &str) -> ArtId {
     ArtId::new(id)
 }
 
+/// The first of a preview's strikes at units (Line Pierce's): the unit
+/// struck and the strike's numbers.
+fn pierce(shown: &AttackPreview) -> Option<(UnitId, SideForecast)> {
+    shown.strikes.first().map(|s| (s.at, s.numbers))
+}
+
 /// A test weapon of `kind`: might `might`, hit 100, crit 0, weight 0,
 /// range `min..=max`, durability 20.
 fn typed(kind: WeaponKind, min: u32, max: u32, might: StatValue) -> WeaponDef {
@@ -322,7 +328,7 @@ fn line_pierce_strikes_the_unit_behind_the_target() {
     let shown = preview(&s, 1, p(1, 0), &action);
     assert_eq!(shown.notes, [ArtNote::Pierces]);
     assert_eq!(
-        shown.pierce.map(|(id, f)| (id, f.damage, f.strikes)),
+        pierce(&shown).map(|(id, f)| (id, f.damage, f.strikes)),
         Some((UnitId(4), 5, 1))
     );
     let events = act(&mut s, 1, p(1, 0), action);
@@ -394,7 +400,7 @@ fn only_line_pierce_pierces() {
         unit(4, Faction::Enemy, p(2, 0)),
     ]);
     let action = art_attack(3, "guard_break");
-    assert_eq!(preview(&s, 1, p(0, 0), &action).pierce, None);
+    assert_eq!(preview(&s, 1, p(0, 0), &action).strikes, []);
     let events = act(&mut s, 1, p(0, 0), action);
     assert_eq!(combats(&events).len(), 1);
     assert_eq!(hp(&s, 4), 10);
@@ -409,9 +415,13 @@ fn pierced(weapon: &str, target: Pos, others: &[Pos]) -> Option<UnitId> {
             .zip(others)
             .map(|(id, &pos)| unit(id, Faction::Enemy, pos)),
     );
-    preview(&battle(units), 1, p(0, 0), &art_attack(3, "line_pierce"))
-        .pierce
-        .map(|(id, _)| id)
+    pierce(&preview(
+        &battle(units),
+        1,
+        p(0, 0),
+        &art_attack(3, "line_pierce"),
+    ))
+    .map(|(id, _)| id)
 }
 
 #[test]
@@ -453,7 +463,7 @@ fn line_pierce_needs_a_hostile_unit_behind() {
         unit(3, Faction::Enemy, p(1, 0)),
     ]);
     assert_eq!(
-        preview(&ally, 1, p(0, 0), &art_attack(3, "line_pierce")).pierce,
+        pierce(&preview(&ally, 1, p(0, 0), &art_attack(3, "line_pierce"))),
         None
     );
     let empty = battle(vec![
@@ -468,7 +478,7 @@ fn line_pierce_needs_a_hostile_unit_behind() {
     runner.stats.mov = 5;
     let moved = battle(vec![runner, unit(3, Faction::Enemy, p(1, 0))]);
     assert_eq!(
-        preview(&moved, 1, p(0, 0), &art_attack(3, "line_pierce")).pierce,
+        pierce(&preview(&moved, 1, p(0, 0), &art_attack(3, "line_pierce"))),
         None
     );
 }
@@ -1182,9 +1192,9 @@ fn the_preview_is_validated_like_the_command() {
             plain.active,
             plain.durability,
             plain.notes,
-            plain.pierce
+            plain.strikes
         ),
-        (None, None, None, vec![], None)
+        (None, None, None, vec![], vec![])
     );
     // A combat active's durability shows too.
     let keen = UnitAction::Attack {

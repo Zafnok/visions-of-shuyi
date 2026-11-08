@@ -1089,6 +1089,8 @@
     (key: "battle.art.ends_action", source: "ends action", text: "ENDS ACTION"),
     (key: "battle.art.note.no_counter", source: "no counter", text: "NO COUNTER"),
     (key: "battle.art.note.pierces", source: "pierces", text: "PIERCES"),
+    (key: "battle.art.note.area", source: "one strike each", text: "ONE STRIKE EACH"),
+    (key: "battle.art.note.chain", source: "allies join in", text: "ALLIES JOIN IN"),
     (key: "battle.art.note.pins", source: "pins: {stat} −{amount}", text: "PINS: {stat} −{amount}"),
     (
         key: "battle.art.note.slows",
@@ -1123,6 +1125,26 @@
         key: "battle.art.desc.pierces",
         source: "then strikes the unit behind",
         text: "THEN STRIKES THE UNIT BEHIND",
+    ),
+    (
+        key: "battle.art.desc.cleave",
+        source: "hits front and both sides, no counter",
+        text: "HITS FRONT AND BOTH SIDES, NO COUNTER",
+    ),
+    (
+        key: "battle.art.desc.line",
+        source: "hits a line of {n}, no counter",
+        text: "HITS A LINE OF {n}, NO COUNTER",
+    ),
+    (
+        key: "battle.art.desc.burst",
+        source: "at {min}–{max}: hits target and all beside it",
+        text: "AT {min}–{max}: HITS TARGET AND ALL BESIDE IT",
+    ),
+    (
+        key: "battle.art.desc.chain",
+        source: "allies beside target strike it too",
+        text: "ALLIES BESIDE TARGET STRIKE IT TOO",
     ),
     (
         key: "battle.art.desc.pack",

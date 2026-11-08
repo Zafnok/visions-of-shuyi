@@ -3,8 +3,8 @@
 // Every number is TUNABLE (FE-sized until ticket 0013). Ranks C-S (ticket
 // 0018's list, "Ranks C-S" in the design doc) arrive in parts: the arts that
 // change one combat's numbers or put a debuff on the target are here (0325);
-// the stances that react are here too (0326); area strikes and special
-// weapons' own arts come with 0327-0329;
+// the stances that react are here too (0326); so are the arts that strike
+// several units (0327); the rest of 0328 comes later;
 // the special weapons' arts (0329) are at the end.
 // Loaded by trpg_content::art; the rules are in trpg_core::art and
 // trpg_core::battle.
@@ -39,6 +39,17 @@
 //                                start of its next phase
 //   line_pierce: true            after the combat, one strike at the unit
 //                                directly behind the target
+//   area: Some(Cleave | Line(n) | Burst)
+//                                no combat: one strike, no counter, at each
+//                                enemy of the area. Cleave: the adjacent
+//                                target, then the tiles left and right of
+//                                the user; Line(n): n tiles in the
+//                                target's row or column, nearest first;
+//                                Burst: the target, then the four tiles
+//                                next to it, clockwise from the north
+//   chain: true                  after the combat, each ally next to the
+//                                target whose weapon reaches it strikes it
+//                                once (no durability, no EXP for them)
 //   pack_might: (per, max)       might +per for each other unit of the
 //                                user's side next to the target, up to +max
 //   power: Some(Str | Mag | Higher)
@@ -98,6 +109,10 @@
             id: "line_pierce", name: "Line Pierce", kind: Spear, rank: Some(D), cost: 4,
             effect: (line_pierce: true),
         ),
+        (
+            id: "comet_lance", name: "Comet Lance", kind: Spear, rank: Some(S), cost: 8,
+            effect: (area: Some(Line(3)), min_range: Some(1), max_range: Some(3)),
+        ),
         // Axe
         (
             id: "crushing_swing", name: "Crushing Swing", kind: Axe, rank: Some(E), cost: 2,
@@ -106,6 +121,10 @@
         (
             id: "armor_cleave", name: "Armor Cleave", kind: Axe, rank: Some(D), cost: 4,
             effect: (effective: [(Armored, 2)]),
+        ),
+        (
+            id: "wide_swing", name: "Wide Swing", kind: Axe, rank: Some(C), cost: 4,
+            effect: (area: Some(Cleave), min_range: Some(1), max_range: Some(1)),
         ),
         (
             id: "hurl", name: "Hurl", kind: Axe, rank: Some(B), cost: 4,
@@ -136,6 +155,10 @@
             id: "overwatch", name: "Overwatch", kind: Bow, rank: Some(B), cost: 5,
             effect: (stance: Some((reaction: Some(Overwatch)))),
         ),
+        (
+            id: "arrow_rain", name: "Arrow Rain", kind: Bow, rank: Some(S), cost: 8,
+            effect: (area: Some(Burst), min_range: Some(2), max_range: Some(3)),
+        ),
         // Gauntlet
         (
             id: "pressure_point", name: "Pressure Point", kind: Gauntlet, rank: Some(E), cost: 2,
@@ -152,6 +175,10 @@
         (
             id: "sidestep", name: "Sidestep", kind: Gauntlet, rank: Some(D), cost: 3,
             effect: (stance: Some((combat: (avoid: 20)))),
+        ),
+        (
+            id: "chain_strike", name: "Chain Strike", kind: Gauntlet, rank: Some(A), cost: 6,
+            effect: (chain: true),
         ),
         (
             id: "vital_point", name: "Vital Point", kind: Gauntlet, rank: Some(S), cost: 8,

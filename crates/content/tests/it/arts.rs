@@ -205,7 +205,7 @@ fn every_art_can_be_used_with_its_iron_weapon() {
         WeaponKind::Gauntlet => ("brawler", "iron_gauntlets"),
     };
     let (arts, items) = (&content().arts, &content().items);
-    assert_eq!(arts.arts.len(), 27);
+    assert_eq!(arts.arts.len(), 31);
     for (id, art) in &arts.arts {
         let (class, iron) = weapon(art.kind);
         let own = items.items.iter().find_map(|(item, def)| match def {
@@ -304,6 +304,11 @@ fn rank_arts_c_to_s_are_taught_by_their_rank() {
     assert_eq!(by_rank(Bow, C), ["rending_arrow"]);
     assert_eq!(by_rank(Gauntlet, C), ["off_balance"]);
     assert_eq!(by_rank(Gauntlet, S), ["vital_point"]);
+    // The arts that strike several units (0327).
+    assert_eq!(by_rank(Axe, C), ["wide_swing"]);
+    assert_eq!(by_rank(Spear, S), ["comet_lance"]);
+    assert_eq!(by_rank(Bow, S), ["arrow_rain"]);
+    assert_eq!(by_rank(Gauntlet, A), ["chain_strike"]);
     // The data loads the old one-debuff form for the older arts.
     let pin = &content().arts.arts[&ArtId("pinning_shot".into())];
     assert_eq!(pin.effect.on_first_hit.len(), 1);

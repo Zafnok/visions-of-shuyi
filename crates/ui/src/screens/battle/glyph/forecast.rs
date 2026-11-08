@@ -4,7 +4,8 @@
 //! bar shading what would be lost); the strikes numbered in the middle,
 //! the attacker's on the left and the target's on the right, `!` after an
 //! effective one, a skull on the kill and the strikes after it dimmed;
-//! then the totals and the notes.
+//! then the totals, a row per unit an art strikes (`Hound  Hit 82  11 →
+//! 4`, the name in its faction colour) and the notes.
 
 use crate::prelude::*;
 use trpg_core::{Side, StatValue};
@@ -16,7 +17,9 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PanelLook
 use crate::screen::Ctx;
 use crate::screens::battle::layout::SIDE_PANEL;
 use crate::screens::battle::units::{faction_color, hp_fill, meter_cells};
-use crate::screens::battle::view::{ForecastSideView, ForecastView, LeftView, SkillLineView};
+use crate::screens::battle::view::{
+    ForecastSideView, ForecastView, LeftView, SkillLineView, StruckView,
+};
 
 /// Left column (the attacker).
 pub const LEFT_X: i32 = TEXT_X;
@@ -106,7 +109,34 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
         paint_skill(ctx, skill, buf);
     }
     let total_row = paint_strikes(ctx, view, buf);
-    paint_notes(ctx, &view.notes, total_row + 2, buf);
+    let rows = i32::try_from(view.struck.len()).unwrap_or(0);
+    for (y, row) in (total_row + 2..).zip(&view.struck) {
+        paint_struck(ctx, view, row, y, buf);
+    }
+    let gap = i32::from(rows > 0);
+    paint_notes(ctx, &view.notes, total_row + 2 + rows + gap, buf);
+}
+
+/// Widest name in a row of the units an art strikes.
+const STRUCK_NAME_W: usize = 9;
+
+/// A row of a unit an art strikes, at row `y`: its name, the hit and its
+/// HP before and after a hit (`Hound  Hit 82  11 → 4`), `!` after an
+/// effective strike.
+fn paint_struck(ctx: &Ctx, view: &ForecastView, row: &StruckView, y: i32, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
+    let name_fg = c(faction_color(row.faction));
+    // check-text: not a data name (the view's own)
+    print_clipped(buf, (LEFT_X, y), STRUCK_NAME_W, &row.name, name_fg);
+    print_clipped(buf, (LEFT_X + 10, y), 3, &view.hit_name, dim);
+    print_clipped(buf, (LEFT_X + 13, y), 4, &format!("{:>4}", row.hit), text);
+    let (before, after) = row.hp;
+    let hp = format!("{before:>2} → {after}");
+    print_clipped(buf, (LEFT_X + 19, y), 7, &hp, text);
+    if row.effective {
+        print_clipped(buf, (LEFT_X + 17, y), 1, "!", c(UiColor::TextHighlight));
+    }
 }
 
 /// The notes, one per row from `row`, stopping above the bottom border.

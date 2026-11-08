@@ -6,7 +6,8 @@ use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{
-    ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, StanceReaction, WeaponKind, WeaponRank,
+    ArtArea, ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, StanceReaction, WeaponKind,
+    WeaponRank,
 };
 
 use crate::bundle;
@@ -130,6 +131,13 @@ fn problems(kind: WeaponKind, effect: &ArtEffect) -> Vec<String> {
     }
     if effect.effective.iter().any(|&(_, mult)| mult < 1) {
         out.push("an effectiveness multiplier must be at least 1".into());
+    }
+    if effect.area == Some(ArtArea::Line(0)) {
+        out.push("a Line area must be at least 1 tile long".into());
+    }
+    // An area art has no combat to strike after.
+    if effect.area.is_some() && (effect.line_pierce || effect.chain) {
+        out.push("an area art can't also pierce or chain".into());
     }
     if let Some(stance) = &effect.stance {
         if let Some((0, _)) = stance.counters() {

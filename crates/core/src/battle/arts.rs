@@ -1,12 +1,13 @@
 //! The battle's Combat Art rules (ticket 0312): validating an art for an
-//! attack, paying for it, its stance and debuff, Line Pierce's strike, the
-//! boss check and the attack preview. The rules are in the parent module's
+//! attack, paying for it, its stance and debuff, the strikes at other units
+//! (Line Pierce's, an area art's, Chain Strike's allies'; 0327), the boss
+//! check and the attack preview. The rules are in the parent module's
 //! docs.
 
 use crate::prelude::*;
 
 use super::{BattleState, CommandError, Event, Fight, Phase, Pos, Step, UnitAction};
-use crate::art::{ArtEffect, ArtId, ArtNote};
+use crate::art::{ArtArea, ArtEffect, ArtId, ArtNote};
 use crate::combat::{
     CombatHp, CombatOutcome, Forecast, Reactions, Side, SideForecast, StrikePlan, StrikeReaction,
     forecast as combat_forecast, if_all_hit,
@@ -16,7 +17,76 @@ use crate::skill::{
     CostSource, EffectSource, SkillCost, SkillId, StanceReaction, TimedEffect, TimedMods,
     check_cost, pay_cost,
 };
-use crate::unit::{Unit, UnitId};
+use crate::stats::StatValue;
+use crate::unit::{Role, Unit, UnitId};
+
+/// The four tiles next to a tile, clockwise from the north: `(dx, dy)`, `y`
+/// growing south.
+const AROUND: [(i32, i32); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+
+/// One strike of an art at a unit, after the combat (Line Pierce's, Chain
+/// Strike's allies') or instead of it (an [`ArtArea`]'s): by unit `by` at
+/// unit `at`, with no counter and no extra strikes. Its numbers are worked
+/// out when the attack is validated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ArtStrike {
+    /// Who strikes: the art's user, or an ally of it (Chain Strike).
+    pub by: UnitId,
+    /// The unit struck.
+    pub at: UnitId,
+    /// The strike's numbers (attacker side only, 1 strike).
+    pub forecast: Forecast,
+}
+
+/// One row of the forecast's strikes at units ([`AttackPreview::strikes`]):
+/// one strike by `by` at `at`, and `at`'s HP before it and after it if it
+/// hits (no crit), after the rows before it (and the combat, if every
+/// strike of it hit).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StrikePreview {
+    /// Who strikes.
+    pub by: UnitId,
+    /// The unit struck.
+    pub at: UnitId,
+    /// The strike's numbers.
+    pub numbers: SideForecast,
+    /// `at`'s HP before the strike and after it if it hits.
+    pub hp: (StatValue, StatValue),
+}
+
+/// The tiles `area` strikes for a user at `from` aiming at `target`, in
+/// strike order; `None` if `target` isn't where the area can aim (Wide
+/// Swing: not next to the user; Comet Lance: not on its row or column).
+pub(crate) fn area_tiles(area: ArtArea, from: Pos, target: Pos) -> Option<Vec<Pos>> {
+    let (dx, dy) = (target.x - from.x, target.y - from.y);
+    let at = |p: Pos, (x, y): (i32, i32)| Pos::new(p.x + x, p.y + y);
+    match area {
+        // Facing `(dx, dy)`: left is `(dy, -dx)`, right `(-dy, dx)`.
+        ArtArea::Cleave if dx.abs() + dy.abs() == 1 => {
+            Some(vec![target, at(from, (dy, -dx)), at(from, (-dy, dx))])
+        }
+        ArtArea::Line(length) if (dx == 0) != (dy == 0) => {
+            let step = (dx.signum(), dy.signum());
+            let steps = 1..=i32::try_from(length).unwrap_or(i32::MAX);
+            Some(steps.map(|k| at(from, (step.0 * k, step.1 * k))).collect())
+        }
+        ArtArea::Burst => {
+            let around = AROUND.iter().map(|&d| at(target, d));
+            Some(core::iter::once(target).chain(around).collect())
+        }
+        ArtArea::Cleave | ArtArea::Line(_) => None,
+    }
+}
+
+/// The tile directly behind `target` for Line Pierce from `from`: one step
+/// past it on the straight or diagonal line; any other angle has none.
+fn behind(from: Pos, target: Pos) -> Option<Pos> {
+    let (dx, dy) = (target.x - from.x, target.y - from.y);
+    if dx != 0 && dy != 0 && dx.abs() != dy.abs() {
+        return None;
+    }
+    Some(Pos::new(target.x + dx.signum(), target.y + dy.signum()))
+}
 
 /// A validated use of a Combat Art in an attack.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,9 +135,10 @@ pub struct AttackPreview {
     pub durability: Option<(u32, u32)>,
     /// The art's effects that aren't numbers (`no counter`, `pierces`…).
     pub notes: Vec<ArtNote>,
-    /// Line Pierce's strike: the unit behind the target and the strike's
-    /// numbers, if there is one to hit.
-    pub pierce: Option<(UnitId, SideForecast)>,
+    /// The art's strikes at units, in strike order: Line Pierce's and Chain
+    /// Strike's after the combat, or an area art's (the target's among
+    /// them) instead of it; one row each. Empty for any other attack.
+    pub strikes: Vec<StrikePreview>,
     /// The combat if every strike hit and none crit, from both units'
     /// current HP (the forecast's strike list and kill mark).
     pub plan: StrikePlan,
@@ -196,39 +267,121 @@ impl BattleState {
         })
     }
 
-    /// Line Pierce's strike for `unit` attacking `defender` as `fight` says,
-    /// from `distance` tiles: the hostile unit on the tile directly behind
-    /// the target (one step past it, on a straight or diagonal line from
-    /// `dest`; any other angle has none) and the numbers of one strike at
-    /// it, with no counter. The strike ignores range, so its forecast is
-    /// worked out at the target's distance.
-    pub(super) fn plan_pierce(
+    /// The strikes at units of `fight`'s art for `unit` attacking
+    /// `defender` from `distance` tiles, in strike order: Line Pierce's at
+    /// the hostile unit directly behind the target, an area's at each
+    /// hostile unit on its tiles ([`area_tiles`]; [`CommandError::OutOfRange`]
+    /// if the target isn't where it aims), then Chain Strike's by each ally
+    /// next to the target. None without an art.
+    pub(super) fn plan_strikes(
         &self,
         unit: &Unit,
         defender: &Unit,
         fight: &Fight,
         distance: u32,
-    ) -> Result<Option<(UnitId, Forecast)>, CommandError> {
-        let (dx, dy) = (defender.pos.x - fight.dest.x, defender.pos.y - fight.dest.y);
-        if dx != 0 && dy != 0 && dx.abs() != dy.abs() {
-            return Ok(None);
-        }
-        let behind = Pos::new(defender.pos.x + dx.signum(), defender.pos.y + dy.signum());
-        // The attacker has left its own tile, and is never hostile to itself.
-        let Some(victim) = self
-            .units
-            .iter()
-            .find(|u| u.pos == behind && unit.faction.is_hostile_to(u.faction))
-        else {
-            return Ok(None);
+    ) -> Result<Vec<ArtStrike>, CommandError> {
+        let Some(art) = fight.art else {
+            return Ok(Vec::new());
         };
+        let effect = &art.effect;
+        let mut tiles = Vec::new();
+        if effect.line_pierce {
+            tiles.extend(behind(fight.dest, defender.pos));
+        }
+        if let Some(area) = effect.area {
+            let aimed = area_tiles(area, fight.dest, defender.pos);
+            tiles.extend(aimed.ok_or(CommandError::OutOfRange {
+                target: defender.id,
+                distance,
+            })?);
+        }
+        let mut out = Vec::new();
+        for tile in tiles {
+            // The attacker has left its own tile, and is never hostile to itself.
+            let hostile = |u: &&Unit| u.pos == tile && unit.faction.is_hostile_to(u.faction);
+            if let Some(victim) = self.units.iter().find(hostile)
+                && let Some(forecast) = self.one_strike(unit, victim, fight, distance)?
+            {
+                out.push(ArtStrike {
+                    by: unit.id,
+                    at: victim.id,
+                    forecast,
+                });
+            }
+        }
+        if effect.chain {
+            out.extend(self.chain_strikes(unit, defender));
+        }
+        Ok(out)
+    }
+
+    /// The numbers of one strike by `unit` at `victim` as `fight` says, with
+    /// no counter. The strikes at units other than the target ignore range,
+    /// so all are worked out at the target's `distance`.
+    fn one_strike(
+        &self,
+        unit: &Unit,
+        victim: &Unit,
+        fight: &Fight,
+        distance: u32,
+    ) -> Result<Option<Forecast>, CommandError> {
         let (a, v, _) = self.fighters(unit, victim, fight)?;
         let rules = self.tables.items.combat_rules();
         Ok(combat_forecast(&rules, &a, &v, distance).map(|mut f| {
             f.defender = None;
             f.attacker.strikes = 1;
-            (victim.id, f)
+            f
         }))
+    }
+
+    /// Chain Strike's strikes at `target` after `user`'s combat: one by each
+    /// ally of `user` on a tile next to `target`, clockwise from the north,
+    /// whose equipped weapon reaches it (green combat units too, never a
+    /// non-combat one), with its own weapon and stats where it stands.
+    fn chain_strikes(&self, user: &Unit, target: &Unit) -> Vec<ArtStrike> {
+        let rules = self.tables.items.combat_rules();
+        let ally = |tile: Pos| {
+            self.units.iter().find(|u| {
+                u.pos == tile
+                    && u.id != user.id
+                    && !user.faction.is_hostile_to(u.faction)
+                    && u.faction.is_hostile_to(target.faction)
+                    && u.role != Role::Noncombatant
+            })
+        };
+        let mut out = Vec::new();
+        for (dx, dy) in AROUND {
+            let Some(ally) = ally(Pos::new(target.pos.x + dx, target.pos.y + dy)) else {
+                continue;
+            };
+            let Some(with @ Equipped::Weapon(_)) = ally.loadout.equipped.clone() else {
+                continue;
+            };
+            let fight = Fight {
+                dest: ally.pos,
+                moved: 0,
+                with: &with,
+                active: None,
+                art: None,
+            };
+            let Ok((a, d, _)) = self.fighters(ally, target, &fight) else {
+                continue;
+            };
+            let Some(mut forecast) = combat_forecast(&rules, &a, &d, 1) else {
+                continue;
+            };
+            if forecast.attacker.broken {
+                continue;
+            }
+            forecast.defender = None;
+            forecast.attacker.strikes = 1;
+            out.push(ArtStrike {
+                by: ally.id,
+                at: target.id,
+                forecast,
+            });
+        }
+        out
     }
 
     /// Emits [`Event::ArtUsed`], pays for `art` (validated) by unit `id` and
@@ -488,8 +641,34 @@ impl BattleState {
                     max: u.stats.hp,
                 })
         };
+        let plan = if_all_hit(&step.forecast, hp(unit), hp(step.target));
+        // Each struck unit's HP as the rows go: the target's after the
+        // combat, if there is one.
+        let mut left: Vec<(UnitId, StatValue)> = Vec::new();
+        if step.fights() {
+            left.push((step.target, plan.defender_hp));
+        }
+        let strikes = step
+            .strikes
+            .iter()
+            .map(|s| {
+                let before = left
+                    .iter()
+                    .rev()
+                    .find(|(id, _)| *id == s.at)
+                    .map_or_else(|| hp(s.at).current, |&(_, hp)| hp);
+                let after = (before - s.forecast.attacker.damage).max(0);
+                left.push((s.at, after));
+                StrikePreview {
+                    by: s.by,
+                    at: s.at,
+                    numbers: s.forecast.attacker,
+                    hp: (before, after),
+                }
+            })
+            .collect();
         Ok(AttackPreview {
-            plan: if_all_hit(&step.forecast, hp(unit), hp(step.target)),
+            plan,
             forecast: step.forecast,
             art: step.art.as_ref().map(|a| a.art.clone()),
             active: step.active.as_ref().map(|a| a.skill.clone()),
@@ -503,7 +682,7 @@ impl BattleState {
                 .as_ref()
                 .map(|a| a.effect.notes())
                 .unwrap_or_default(),
-            pierce: step.pierce.map(|(victim, f)| (victim, f.attacker)),
+            strikes,
         })
     }
 }

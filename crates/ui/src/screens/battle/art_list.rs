@@ -11,9 +11,9 @@
 
 use crate::prelude::*;
 use trpg_core::{
-    ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, Command, CommandError, CostError,
-    Equipped, Event, Faction, MitigationStat, Pos, PowerStat, SkillCost, SkillId, StatKind, Unit,
-    UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
+    ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, BattleState, CastTarget, CombatMods, Command,
+    CommandError, CostError, Equipped, Event, Faction, MitigationStat, Pos, PowerStat, SkillCost,
+    SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
 };
 
 use super::attack::{AttackFrom, spell_uses, weapon_durability};
@@ -136,10 +136,11 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
     if let Some(n) = e.axe_min_damage {
         parts.push(words.text_with("battle.art.desc.axe_min", &[("n", &n)]));
     }
-    if let Some(n) = e.min_range {
+    // An area's own words say where it reaches.
+    if let Some(n) = e.min_range.filter(|_| e.area.is_none()) {
         parts.push(words.text_with("battle.art.desc.min_range", &[("n", &n)]));
     }
-    if let Some(n) = e.max_range {
+    if let Some(n) = e.max_range.filter(|_| e.area.is_none()) {
         parts.push(words.text_with("battle.art.desc.max_range", &[("n", &n)]));
     }
     if e.crit != 0 {
@@ -183,10 +184,26 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
     }
     parts.extend(notes.iter().filter_map(|note| match note {
         ArtNote::Pierces => Some(words.text("battle.art.desc.pierces").to_owned()),
+        ArtNote::Area(area) => Some(area_text(words, *area, e)),
+        ArtNote::Chain => Some(words.text("battle.art.desc.chain").to_owned()),
         ArtNote::Debuff(_) if grouped => None,
         _ => Some(note_text(words, note)),
     }));
     parts.join("; ")
+}
+
+/// What an area art strikes, for its description: `hits front and both
+/// sides, no counter`, `hits a line of 3, no counter`, `at 2–3: hits
+/// target and all beside it`.
+fn area_text(words: Words<'_>, area: ArtArea, e: &ArtEffect) -> String {
+    match area {
+        ArtArea::Cleave => words.text("battle.art.desc.cleave").to_owned(),
+        ArtArea::Line(n) => words.text_with("battle.art.desc.line", &[("n", &n)]),
+        ArtArea::Burst => {
+            let (min, max) = (e.min_range.unwrap_or(1), e.max_range.unwrap_or(1));
+            words.text_with("battle.art.desc.burst", &[("min", &min), ("max", &max)])
+        }
+    }
 }
 
 /// `uses Str`, or `higher of Str/Mag`: the stat the power uses.
@@ -539,6 +556,8 @@ pub fn note_text(words: Words<'_>, note: &ArtNote) -> String {
     match note {
         ArtNote::NoCounter => words.text("battle.art.note.no_counter").to_owned(),
         ArtNote::Pierces => words.text("battle.art.note.pierces").to_owned(),
+        ArtNote::Area(_) => words.text("battle.art.note.area").to_owned(),
+        ArtNote::Chain => words.text("battle.art.note.chain").to_owned(),
         ArtNote::Debuff(d) => {
             let key = match d.stat {
                 StatKind::Mov => "battle.art.note.pins",
@@ -708,6 +727,11 @@ mod tests {
         assert_eq!(text("rending_arrow"), "rends: Def −5");
         assert_eq!(text("off_balance"), "off balance: avoid −20");
         assert_eq!(text("vital_point"), "lowers: Str, Mag, Def, Res, Spd −4");
+        // The arts that strike several units (0327).
+        assert_eq!(text("wide_swing"), "hits front and both sides, no counter");
+        assert_eq!(text("comet_lance"), "hits a line of 3, no counter");
+        assert_eq!(text("arrow_rain"), "at 2–3: hits target and all beside it");
+        assert_eq!(text("chain_strike"), "allies beside target strike it too");
     }
 
     #[test]

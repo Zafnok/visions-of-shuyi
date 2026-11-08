@@ -24,7 +24,8 @@ use trpg_core::{Faction, Pos, StatValue};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};
 pub use self::forecast::{
-    ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, TotalView,
+    ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, StruckView,
+    TotalView,
 };
 pub use self::guides::{GuidesScreenView, GuidesView};
 pub use self::info::{

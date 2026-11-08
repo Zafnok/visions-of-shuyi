@@ -46,12 +46,12 @@ pub use shuyi_core::grid as geom;
 pub use shuyi_core::rng;
 
 pub use ai::{AiBehavior, AiWeights, next_command};
-pub use art::{ArtDef, ArtEffect, ArtId, ArtNote, ArtTable, Debuff};
+pub use art::{ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, ArtTable, Debuff};
 pub use battle::{
     AttackPreview, BattleNote, BattleSetup, BattleState, Burning, CastTarget, Command,
     CommandError, Destination, Event, GameMode, HouseState, Leftovers, Objective, Outcome,
-    PendingMove, Phase, PlannedMove, Reinforcement, SellFrom, ShopTxn, TileRect, Trigger,
-    TriggerWhen, Turn, UnitAction, Village, VillageGoal, Who,
+    PendingMove, Phase, PlannedMove, Reinforcement, SellFrom, ShopTxn, StrikePreview, TileRect,
+    Trigger, TriggerWhen, Turn, UnitAction, Village, VillageGoal, Who,
 };
 pub use camp::CampEvent;
 pub use campaign::{
