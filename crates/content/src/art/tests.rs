@@ -1,7 +1,7 @@
 //! Tests of the art file: the embedded data matches `combat-arts.md`, and
 //! every validation rule reports its error.
 
-use trpg_core::{CombatMods, Debuff, StanceReaction, StatKind, TimedMods, UnitTag};
+use trpg_core::{ArtArea, CombatMods, Debuff, StanceReaction, StatKind, TimedMods, UnitTag};
 
 use super::*;
 
@@ -57,6 +57,11 @@ fn the_embedded_arts_match_the_design_table() {
         ("spear_wall", "Spear Wall", Spear, B, 4),
         ("overwatch", "Overwatch", Bow, B, 5),
         ("deflect", "Deflect", Gauntlet, B, 5),
+        // The arts that strike several units (ticket 0327).
+        ("wide_swing", "Wide Swing", Axe, C, 4),
+        ("comet_lance", "Comet Lance", Spear, S, 8),
+        ("arrow_rain", "Arrow Rain", Bow, S, 8),
+        ("chain_strike", "Chain Strike", Gauntlet, A, 6),
     ];
     let rows: Vec<_> = rows
         .into_iter()
@@ -239,6 +244,29 @@ fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
     }
 }
 
+/// `combat-arts.md`, *Ranks C-S* (ticket 0327): the arts that strike
+/// several units.
+#[test]
+fn the_embedded_several_unit_arts_match_the_design_table() {
+    let area = |area, min, max| {
+        with(move |e| {
+            e.area = Some(area);
+            e.min_range = Some(min);
+            e.max_range = Some(max);
+        })
+    };
+    let rows = [
+        ("wide_swing", area(ArtArea::Cleave, 1, 1)),
+        ("comet_lance", area(ArtArea::Line(3), 1, 3)),
+        ("arrow_rain", area(ArtArea::Burst, 2, 3)),
+        ("chain_strike", with(|e| e.chain = true)),
+    ];
+    let t = embedded();
+    for (id, effect) in rows {
+        assert_eq!(get(&t, id).effect, effect, "{id}");
+    }
+}
+
 /// `combat-arts.md`, *Ranks C-S* (ticket 0326): the stances that react.
 #[test]
 fn the_embedded_reacting_stances_match_the_design_table() {
@@ -363,6 +391,18 @@ fn every_rule_reports_its_error() {
         (
             r#"id: "a", name: "A", kind: Bow, rank: None, cost: 1, effect: (effective: [(Flying, 0)])"#,
             "an effectiveness multiplier must be at least 1",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Spear, rank: None, cost: 1, effect: (area: Some(Line(0)))"#,
+            "a Line area must be at least 1 tile long",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Axe, rank: None, cost: 1, effect: (area: Some(Cleave), chain: true)"#,
+            "an area art can't also pierce or chain",
+        ),
+        (
+            r#"id: "a", name: "A", kind: Spear, rank: None, cost: 1, effect: (area: Some(Burst), line_pierce: true)"#,
+            "an area art can't also pierce or chain",
         ),
         (
             r#"id: "a", name: "A", kind: Spear, rank: None, cost: 1, effect: (stance: Some((reaction: Some(Counters(reach: 0, hit: 0)))))"#,

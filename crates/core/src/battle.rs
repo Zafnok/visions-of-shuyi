@@ -240,12 +240,30 @@
 //!     extra strikes, rolled after the combat's strikes. It is its own
 //!     [`Event::CombatResolved`] (a second combat for unit EXP and class
 //!     points, 0601), with numbers worked out when the attack is validated.
+//!   - **Chain Strike** (0327): if the target and the attacker still stand,
+//!     each ally of the attacker next to the target whose equipped weapon
+//!     reaches it, clockwise from the north, strikes it once with its own
+//!     weapon and stats ([`Event::CombatResolved`] with the ally as the
+//!     attacker): no counter, no durability, no EXP for the ally. The chain
+//!     ends when the target falls.
 //!
-//!   Weapon EXP then counts both (one award; the pierce's damage adds to
-//!   `dealt`), with the base doubled for the art's user. A weapon the
-//!   payment brought to 0 fought unbroken and breaks after
-//!   ([`Event::ItemBroke`]), before anyone falls (target, the pierced
-//!   unit, then the attacker). [`BattleState::preview_attack`] gives the UI
+//!   An **area art** (0327; [`ArtArea`](crate::art::ArtArea): Wide Swing,
+//!   Comet Lance, Arrow Rain) has **no combat**: one strike at each unit
+//!   hostile to the attacker on its tiles, in the area's order, each its
+//!   own [`Event::CombatResolved`] with no counter and no extra strikes. A
+//!   target the area can't aim at (Comet Lance off its row or column) is
+//!   [`CommandError::OutOfRange`]. The art's strikes at units after or
+//!   instead of the combat (all three kinds) use the normal formulas
+//!   against the unit struck and roll the 2RN hit and the crit in strike
+//!   order; each needs the attacker, the striker and the unit struck still
+//!   standing, and each strike of the attacker's is its own combat for unit
+//!   EXP and class points.
+//!
+//!   Weapon EXP then counts them all (one award; their damage, an ally's
+//!   too, adds to `dealt`), with the base doubled for the art's user. A
+//!   weapon the payment brought to 0 fought unbroken and breaks after
+//!   ([`Event::ItemBroke`]), before anyone falls (target, the units struck,
+//!   then the attacker). [`BattleState::preview_attack`] gives the UI
 //!   the forecast, the durability change and the art's
 //!   [notes](crate::art::ArtNote) before committing.
 //!
@@ -1827,11 +1845,19 @@ struct AttackStep {
     active: Option<ActiveUse>,
     /// The Combat Art used, if any.
     art: Option<ArtUse>,
-    /// Line Pierce's strike after the combat: the unit behind the target
-    /// and the strike's numbers (attacker side only, 1 strike).
-    pierce: Option<(UnitId, Forecast)>,
+    /// The art's strikes at units after the combat, or instead of it for
+    /// an area art ([`AttackStep::fights`]), in strike order.
+    strikes: Vec<ArtStrike>,
     /// Tiles the attacker may move after the combat.
     move_after: u32,
+}
+
+impl AttackStep {
+    /// Whether the attack fights a combat with its target: every attack
+    /// but an area art's, which only strikes ([`AttackStep::strikes`]).
+    fn fights(&self) -> bool {
+        self.art.as_ref().is_none_or(|a| a.effect.area.is_none())
+    }
 }
 
 /// An attack as the AI weighs it ([`BattleState::attack_forecast`]): its
@@ -1840,8 +1866,10 @@ struct AttackStep {
 pub(crate) struct AttackOutlook {
     /// The combat's numbers.
     pub forecast: Forecast,
-    /// Line Pierce's strike: the unit behind the target and its numbers.
-    pub pierce: Option<(UnitId, Forecast)>,
+    /// The art's strikes at units other than the target (Line Pierce's,
+    /// an area art's) and their numbers; Chain Strike's allies' aren't
+    /// counted.
+    pub others: Vec<(UnitId, Forecast)>,
     /// The art's debuff on the target's first hit, and its source.
     pub debuff: Option<(EffectSource, TimedMods)>,
     /// The stance the art or active puts on the attacker, and its source.
@@ -2676,15 +2704,16 @@ impl BattleState {
         {
             forecast.defender = None;
         }
+        let area = art.as_ref().is_some_and(|a| a.effect.area.is_some());
+        if area {
+            // No combat: the target's one strike, as the forecast shows it.
+            forecast.defender = None;
+            forecast.attacker.strikes = 1;
+        }
         self.plan_first_hit(unit, defender, &fight, &mut forecast)?;
         forecast.reactions =
             arts::reactions(unit, defender, arts::new_stance(unit, &fight), &forecast);
-        let pierce = match &art {
-            Some(a) if a.effect.line_pierce => {
-                self.plan_pierce(unit, defender, &fight, distance)?
-            }
-            _ => None,
-        };
+        let strikes = self.plan_strikes(unit, defender, &fight, distance)?;
         let kind = |c: &CombatantInput| c.weapon.as_ref().and_then(|w| w.kind);
         let counter_spell = forecast
             .defender
@@ -2707,7 +2736,7 @@ impl BattleState {
             arms,
             active,
             art,
-            pierce,
+            strikes,
             move_after: post_move,
         })))
     }
@@ -2791,9 +2820,15 @@ impl BattleState {
                 a.stance.as_ref()?.mods.clone(),
             ))
         });
+        let others = step
+            .strikes
+            .iter()
+            .filter(|s| s.by == unit.id && s.at != step.target)
+            .map(|s| (s.at, s.forecast))
+            .collect();
         Some(AttackOutlook {
             forecast: step.forecast,
-            pierce: step.pierce,
+            others,
             debuff,
             stance: art_stance.or(active_stance),
             post_move: active.map_or(0, |a| a.post_move),
@@ -3215,13 +3250,15 @@ impl BattleState {
             self.after_strike(id, active, dealt, events);
         }
         events.extend(broke);
-        let victim = attack.pierce.map(|(victim, _)| victim);
-        let order: Vec<UnitId> = core::iter::once(target).chain(victim).chain([id]).collect();
+        // The art's strikes have no counter, so only the units they strike
+        // can fall to them.
+        let struck = attack.strikes.iter().map(|s| s.at);
+        let order: Vec<UnitId> = core::iter::once(target).chain(struck).chain([id]).collect();
         self.remove_fallen(&order, events);
         for clash in &clashes {
             self.award_combat(clash, events);
         }
-        // Whoever was attacked: the target, then a Line Pierce's victim.
+        // Whoever was attacked: the target, then each unit an art struck.
         let attacked = clashes.iter().map(|clash| clash.units[1]);
         let fighters: Vec<UnitId> = core::iter::once(id).chain(attacked).collect();
         self.support_fighters(&fighters, events);
@@ -3418,10 +3455,11 @@ impl BattleState {
         self.give_support(id, target, points, events);
     }
 
-    /// Plays out `attacker`'s validated combat: the combat, spell uses, an
-    /// art's debuff, Line Pierce's strike, then weapon EXP. Returns the HP
-    /// each side's strikes removed: `[attacker, defender]` (the pierce's
-    /// damage included), and each combat's tally (the pierce's second).
+    /// Plays out `attacker`'s validated combat: the combat (none for an
+    /// area art), spell uses, an art's debuff, the art's strikes at units,
+    /// then weapon EXP. Returns the HP each side's strikes removed:
+    /// `[attacker, defender]` (the art's strikes included), and the tally
+    /// of each combat of the attacker's (one per strike at a unit).
     /// Whoever fell is still on the map (see [`Self::remove_fallen`]).
     fn fight(
         &mut self,
@@ -3430,29 +3468,39 @@ impl BattleState {
         events: &mut Vec<Event>,
     ) -> ([StatValue; 2], Vec<Tally>) {
         let defender = step.target;
-        let first = self.clash(attacker, defender, step.forecast, events);
-        let mut clashes = vec![first];
-        let mut tally = first;
-        for ((id, spell), struck) in [attacker, defender]
-            .into_iter()
-            .zip(&step.arms.spells)
-            .zip(tally.struck)
-        {
-            if let Some(spell) = spell.as_ref().filter(|_| struck > 0) {
-                self.spend_spell(id, spell, events);
+        let mut clashes = Vec::new();
+        let mut tally = Tally::none([attacker, defender]);
+        if step.fights() {
+            tally = self.clash(attacker, defender, step.forecast, events);
+            clashes.push(tally);
+            for ((id, spell), struck) in [attacker, defender]
+                .into_iter()
+                .zip(&step.arms.spells)
+                .zip(tally.struck)
+            {
+                if let Some(spell) = spell.as_ref().filter(|_| struck > 0) {
+                    self.spend_spell(id, spell, events);
+                }
             }
-        }
-        if let Some(art) = &step.art {
-            if tally.hits[0] > 0 {
+            if let Some(art) = step.art.as_ref().filter(|_| tally.hits[0] > 0) {
                 self.debuff(defender, art, events);
             }
-            let standing = self.unit(attacker).is_some_and(|u| u.hp > 0);
-            if let Some((victim, pierce)) = step.pierce.filter(|_| standing) {
-                // The attacker always struck in the combat, so only its hits
-                // and damage change.
-                let t = self.clash(attacker, victim, pierce, events);
+        }
+        let standing = |s: &Self, id| s.unit(id).is_some_and(|u| u.hp > 0);
+        for strike in &step.strikes {
+            if ![attacker, strike.by, strike.at]
+                .iter()
+                .all(|&id| standing(self, id))
+            {
+                continue;
+            }
+            let t = self.clash(strike.by, strike.at, strike.forecast, events);
+            // An ally's strike (Chain Strike) is no combat of the attacker's:
+            // only its damage counts, for the attacker's weapon EXP.
+            tally.dealt[0] += t.dealt[0];
+            if strike.by == attacker {
+                tally.struck[0] += t.struck[0];
                 tally.hits[0] += t.hits[0];
-                tally.dealt[0] += t.dealt[0];
                 clashes.push(t);
             }
         }
@@ -3935,17 +3983,22 @@ struct Tally {
 }
 
 impl Tally {
-    /// The tally of `outcome` between `units`, given their HP going in.
-    fn of(outcome: &CombatOutcome, units: [UnitId; 2], hp_before: [StatValue; 2]) -> Tally {
-        // HP before each strike: [attacker, defender].
-        let mut hp = hp_before;
-        let mut t = Tally {
+    /// No strikes between `units`.
+    fn none(units: [UnitId; 2]) -> Tally {
+        Tally {
             units,
             struck: [0; 2],
             hits: [0; 2],
             dealt: [0; 2],
             killed: [false; 2],
-        };
+        }
+    }
+
+    /// The tally of `outcome` between `units`, given their HP going in.
+    fn of(outcome: &CombatOutcome, units: [UnitId; 2], hp_before: [StatValue; 2]) -> Tally {
+        // HP before each strike: [attacker, defender].
+        let mut hp = hp_before;
+        let mut t = Tally::none(units);
         for s in &outcome.strikes {
             let (me, target) = match s.by {
                 Side::Attacker => (0, 1),
@@ -3971,8 +4024,8 @@ mod supports;
 mod triggers;
 mod village;
 
-use arts::{ArtUse, check_arts_allowed};
-pub use arts::{AttackPreview, PlannedMove};
+use arts::{ArtStrike, ArtUse, check_arts_allowed};
+pub use arts::{AttackPreview, PlannedMove, StrikePreview};
 use skills::{ActiveUse, AttackPlan, Fight, SkillStep};
 pub use triggers::{GameMode, TileRect, Trigger, TriggerWhen, Who};
 pub(crate) use village::burns;

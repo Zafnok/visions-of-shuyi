@@ -13,7 +13,7 @@ use crate::tips::view::FaceView;
 use crate::widgets::MenuView;
 
 /// As solid or as bright as can be ([`TitleView::menu_opacity`],
-/// [`CinematicView::brightness`]).
+/// [`TitleView::picture`], [`CinematicView::brightness`]).
 pub const FULL: u8 = 255;
 
 /// The intro cinematic as the title shows it this frame (ticket 0819).
@@ -23,9 +23,7 @@ pub struct CinematicView {
     pub player: Rc<CinematicPlayer>,
     /// The moment, in milliseconds from the cinematic's start.
     pub t_ms: u32,
-    /// How bright it is, up to [`FULL`]. The title's own picture (the
-    /// backdrop, the sparks, the logo) shows over it as solid as the
-    /// cinematic is dark: at [`FULL`] not at all.
+    /// How bright it is, up to [`FULL`]: 0 is black.
     pub brightness: u8,
 }
 
@@ -35,9 +33,13 @@ pub struct TitleView {
     /// The cinematic behind everything; `None` while the title shows its
     /// own picture alone.
     pub cinematic: Option<CinematicView>,
+    /// How solid the title's own picture (the backdrop, the sparks, the
+    /// logo) is, up to [`FULL`], over the cinematic if one shows, else
+    /// over black: it goes to black before the cinematic (ticket 0843).
+    pub picture: u8,
     /// How solid the menu, its notice, the prompt and the help line are,
-    /// up to [`FULL`]: they fade out before the cinematic and in on its
-    /// logo.
+    /// up to [`FULL`]: they go to black with the title's picture before
+    /// the cinematic and fade in on its logo.
     pub menu_opacity: u8,
     /// The picture behind the logo this launch; `None` when the game has
     /// none.

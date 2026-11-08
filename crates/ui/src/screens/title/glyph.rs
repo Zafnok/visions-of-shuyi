@@ -155,7 +155,7 @@ pub fn paint_logo(
 ) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
-    buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
+    paint_black(ctx, buf);
     for sprite in backdrop.into_iter().flat_map(backdrop_sprites) {
         buf.add_sprite(sprite);
     }
@@ -168,6 +168,15 @@ pub fn paint_logo(
     if let Some((image, size)) = ctx.game.content.title.logo {
         buf.add_sprite(logo_sprite(image, size));
     }
+}
+
+/// Paints the whole of `buf` black.
+fn paint_black(ctx: &Ctx, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    buf.fill_rect(
+        buf.bounds(),
+        Cell::new(' ', c(UiColor::Text), c(UiColor::Black)),
+    );
 }
 
 /// Adds the title's picture over what `buf` already shows, `opacity` (up
@@ -204,22 +213,25 @@ pub fn paint_logo_over(
     }
 }
 
-/// Paints `view` over the whole of `buf`: the cinematic, if it shows one,
-/// with the title's picture over it as solid as the cinematic is dark
-/// (else the title's picture alone), then the prompt or the menu, as
-/// bright as the view's `menu_opacity`.
+/// Paints `view` over the whole of `buf`: the cinematic as bright as it
+/// is, or black, with the title's picture over it as solid as the view's
+/// `picture`, then the prompt or the menu, as bright as the view's
+/// `menu_opacity`.
 pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (dim, panel) = (c(UiColor::TextDim), c(UiColor::PanelBg));
-    if let Some(shot) = &view.cinematic {
-        #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
-        let t = shot.t_ms as f32 / 1000.0;
-        let brightness = f32::from(shot.brightness) / f32::from(FULL);
-        shot.player.draw(ctx, t, brightness, buf);
-        let rest = FULL - shot.brightness;
-        paint_logo_over(ctx, view.backdrop, view.sparks, rest, buf);
-    } else {
-        paint_logo(ctx, view.backdrop, view.sparks, buf);
+    match &view.cinematic {
+        Some(shot) => {
+            #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
+            let t = shot.t_ms as f32 / 1000.0;
+            let brightness = f32::from(shot.brightness) / f32::from(FULL);
+            shot.player.draw(ctx, t, brightness, buf);
+        }
+        None if view.picture == FULL => paint_logo(ctx, view.backdrop, view.sparks, buf),
+        None => paint_black(ctx, buf),
+    }
+    if view.cinematic.is_some() || view.picture < FULL {
+        paint_logo_over(ctx, view.backdrop, view.sparks, view.picture, buf);
     }
     // What is painted from here on fades with the menu.
     let solid = f32::from(view.menu_opacity) / f32::from(FULL);
@@ -350,6 +362,7 @@ mod tests {
     fn view() -> TitleView {
         TitleView {
             cinematic: None,
+            picture: FULL,
             menu_opacity: FULL,
             backdrop: None,
             sparks: None,
@@ -846,6 +859,7 @@ mod tests {
         v.menu = None;
         v.help = None;
         v.menu_opacity = 0;
+        v.picture = 0;
         v.backdrop = Some(c.game.content.title.backdrops[0]);
         v.sparks = Some(500);
         // The pan, half way; then the logo shot.
@@ -861,8 +875,8 @@ mod tests {
         assert!(painted(&c, &v).backdrop().is_none(), "the logo shot");
     }
 
-    /// While the menu fades out the cinematic is drawn as bright as the
-    /// fade is far, and the title's pictures over it as solid as the rest.
+    /// The cinematic is drawn as bright as the view says, and the title's
+    /// pictures over it as solid as the view's `picture`.
     #[test]
     fn the_titles_picture_fades_over_the_cinematic() {
         let c = ctx();
@@ -876,6 +890,7 @@ mod tests {
         let playing = shot(&c, 3000, 64);
         v.cinematic = Some(playing.clone());
         v.menu_opacity = 191;
+        v.picture = 191;
         let buf = painted(&c, &v);
         // The cinematic, a quarter bright.
         let under = drawn(&c, &playing, 3.0, 64.0 / 255.0);
@@ -913,6 +928,7 @@ mod tests {
         // Fully bright, nothing of the title is.
         v.sparks = Some(0);
         v.backdrop = Some(image);
+        v.picture = 0;
         v.cinematic = Some(shot(&c, 3000, FULL));
         assert_eq!(painted(&c, &v), drawn(&c, &playing, 3.0, 1.0));
         let mut buf = drawn(&c, &playing, 3.0, 1.0);
@@ -921,6 +937,34 @@ mod tests {
         // Fully solid, the pictures are as on the title.
         paint_logo_over(&c, Some(image), None, FULL, &mut buf);
         assert_eq!(buf.sprites(), logo_painted(&c, Some(image), None).sprites());
+    }
+
+    /// Going to black before the cinematic (ticket 0843): with no
+    /// cinematic the title's pictures are as solid as the view's `picture`
+    /// over black, and at 0 the screen is black alone.
+    #[test]
+    fn the_titles_picture_goes_to_black() {
+        let c = ctx();
+        let image = c.game.content.title.backdrops[0];
+        let mut v = view();
+        v.menu = None;
+        v.help = None;
+        v.backdrop = Some(image);
+        v.sparks = None;
+        v.picture = 128;
+        let buf = painted(&c, &v);
+        assert_ne!(buf.sprites().len(), 0);
+        assert!(buf.sprites().iter().all(|s| s.opacity == 128));
+        v.picture = 0;
+        let buf = painted(&c, &v);
+        assert_eq!(buf.sprites().len(), 0);
+        let black = c.palette.get(UiColor::Black);
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
+                let cell = buf.get(x, y).unwrap();
+                assert_eq!((cell.glyph, cell.bg), (' ', black), "({x}, {y})");
+            }
+        }
     }
 
     /// The menu, the notice and the help line are as bright as the view's
@@ -968,6 +1012,7 @@ mod tests {
         let playing = shot(&c, 3000, 128);
         v.cinematic = Some(playing.clone());
         v.menu_opacity = 127;
+        v.picture = 0;
         let buf = painted(&c, &v);
         let under = drawn(&c, &playing, 3.0, 128.0 / 255.0);
         let bottom = i32::from(ConsoleSpec::PC.rows) - 1;

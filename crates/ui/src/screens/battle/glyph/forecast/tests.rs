@@ -216,3 +216,30 @@ fn notes_stop_above_the_bottom_border() {
     let totals = STRIKE_ROW + i32::try_from(view(20, |_| {}).strikes.len()).unwrap() + 1;
     assert_eq!(text(&buf, LEFT_X, totals + 2, 7), "pierces");
 }
+
+#[test]
+fn a_unit_an_art_strikes_is_a_row_under_the_totals() {
+    let row = |effective| crate::screens::battle::view::StruckView {
+        name: "Raider".into(),
+        faction: trpg_core::Faction::Enemy,
+        hit: 82,
+        hp: (11, 4),
+        effective,
+    };
+    let totals = STRIKE_ROW + i32::try_from(view(20, |_| {}).strikes.len()).unwrap() + 1;
+    let buf = render(&view(20, |v| {
+        v.struck = vec![row(false), row(true)];
+        v.notes = vec!["pierces".into()];
+    }));
+    assert_eq!(
+        text(&buf, LEFT_X, totals + 2, 25),
+        "Raider    Hit  82  11 → 4"
+    );
+    // `!` after the hit of an effective strike only.
+    assert_eq!(text(&buf, LEFT_X + 17, totals + 2, 1), " ");
+    assert_eq!(text(&buf, LEFT_X + 17, totals + 3, 1), "!");
+    let fg = buf.get(LEFT_X + 17, totals + 3).unwrap().fg;
+    assert_eq!(fg, ctx().palette.get(UiColor::TextHighlight));
+    // The notes after a blank row.
+    assert_eq!(text(&buf, LEFT_X, totals + 5, 7), "pierces");
+}

@@ -92,9 +92,9 @@ there as a box already.
   (`ebur128`): 18 at −17.9 to −19.4 LUFS, 4 at −20.5 to −22.5, held under
   the target by the −1 dBTP peak ceiling, the same rule as the music.
   `cargo xtask voice status --scene vix`: nothing to make. Committed to the
-  private repository (`2f843fe`) and pinned in `assets-private.rev`. That
-  commit is on top of 0468's (the guide's busts re-cut, pictures only),
-  already on the private `main`, so this pin brings that crop too.
+  private repository (`2f843fe`), between two of 0468's commits. 0468
+  merged first and pinned its later commit (`db3e808`), which has these
+  clips, so this PR keeps that pin.
 - **A stop only when she spoke:** `ctx.stop_voice` is asked for only when
   her clip was asked for; a stop with nothing playing changed the kept
   Quick Battle session's record (`sessions::`), which has no clips.

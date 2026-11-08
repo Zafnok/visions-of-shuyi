@@ -183,6 +183,23 @@ fn too_many_rows_for_the_screen_lose_the_rules_then_the_last_notes() {
 }
 
 #[test]
+fn a_unit_an_art_strikes_is_a_row_after_the_totals() {
+    let v = view(20, |v| {
+        v.struck = vec![crate::screens::battle::view::StruckView {
+            name: "Raider".into(),
+            faction: trpg_core::Faction::Enemy,
+            hit: 82,
+            hp: (11, 4),
+            effective: false,
+        }];
+    });
+    let (buf, at) = painted(&v);
+    assert_eq!(at.h, 15);
+    assert_eq!(find(&buf, 12, "Total"), Some(at.x + 2 + NUMBER - 4));
+    assert_eq!(find(&buf, 13, "Raider     82 11 → 4"), Some(at.x + 2));
+}
+
+#[test]
 fn two_rects_overlap_only_where_they_share_a_cell() {
     let a = Rect::new(2, 2, 3, 3);
     assert!(overlap(a, Rect::new(4, 4, 2, 2)));

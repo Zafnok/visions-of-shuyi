@@ -24,8 +24,10 @@
 //!   attacker's numbers for the whole combat ([`ArtEffect::apply`], so the
 //!   forecast shows them), debuffs on the target's first hit, a stance on
 //!   the user (Hold the Ford's stops enemies next to it), Line Pierce's
-//!   extra strike, Pack Hunt's might per ally next to the target, and
-//!   Moonwave's power and mitigation stats. The battle applies them.
+//!   extra strike, the strikes at several units of Wide Swing, Comet Lance
+//!   and Arrow Rain ([`ArtArea`]) and Chain Strike's allies, Pack Hunt's
+//!   might per ally next to the target, and Moonwave's power and
+//!   mitigation stats. The battle applies them.
 
 use crate::prelude::*;
 
@@ -111,6 +113,23 @@ fn debuffs<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Debuff>, D::Err
     d.deserialize_any(Debuffs)
 }
 
+/// The units an art strikes **instead of a combat**: one strike each, no
+/// counters, no extra strikes (`combat-arts.md`, *Ranks C–S*). The target
+/// sets where; [`crate::battle`] finds the units hostile to the user there.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ArtArea {
+    /// Wide Swing: the tile in front of the user (the adjacent target),
+    /// then the tiles left and right of it; never the one behind.
+    Cleave,
+    /// Comet Lance: this many tiles from the user in a straight line (row
+    /// or column) towards the target, nearest first. The target must be on
+    /// a row or column.
+    Line(u32),
+    /// Arrow Rain: the target, then the four tiles next to it, clockwise
+    /// from the north.
+    Burst,
+}
+
 /// What an art does. Every field is optional in data; the default does
 /// nothing. Written in `arts.ron` as e.g. `(hit: 10, no_counter: true)`.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
@@ -153,6 +172,13 @@ pub struct ArtEffect {
     /// After the combat, one strike at the unit directly behind the target
     /// (Line Pierce; see [`crate::battle`]).
     pub line_pierce: bool,
+    /// Strikes at the units of an area instead of a combat (Wide Swing,
+    /// Comet Lance, Arrow Rain).
+    pub area: Option<ArtArea>,
+    /// After the combat, each ally of the user next to the target whose
+    /// weapon reaches it strikes it once (Chain Strike; see
+    /// [`crate::battle`]).
+    pub chain: bool,
     /// `(per, max)`: might `+per` for each other unit of the user's side
     /// next to the target, up to `+max` (Pack Hunt: `(2, 6)`). The battle
     /// counts them ([`crate::battle`]).
@@ -171,6 +197,10 @@ pub enum ArtNote {
     NoCounter,
     /// A strike at the unit behind the target follows.
     Pierces,
+    /// One strike at each unit of the area instead of a combat.
+    Area(ArtArea),
+    /// The allies next to the target strike it after the combat.
+    Chain,
     /// The target's first hit puts this debuff on it (`pins: Mov −3`,
     /// `slows: Spd −3`).
     Debuff(Debuff),
@@ -258,6 +288,12 @@ impl ArtEffect {
         }
         if self.line_pierce {
             out.push(ArtNote::Pierces);
+        }
+        if let Some(area) = self.area {
+            out.push(ArtNote::Area(area));
+        }
+        if self.chain {
+            out.push(ArtNote::Chain);
         }
         out.extend(self.on_first_hit.iter().map(|&d| ArtNote::Debuff(d)));
         if self.on_first_hit_avoid > 0 {

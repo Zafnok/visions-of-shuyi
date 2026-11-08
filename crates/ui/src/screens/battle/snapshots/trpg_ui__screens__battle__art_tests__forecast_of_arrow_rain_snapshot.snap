@@ -1,0 +1,116 @@
+---
+source: crates/ui/src/screens/battle/art_tests.rs
+expression: "render(&s, &c).to_snapshot(&c.palette)"
+---
+                                                                      ╔═════════ Forecast ═════════╗
+                                                                      ║ Arrow Rain (20 → 12)       ║
+                                                                      ║ Test Archer   Brigand      ║
+                                                                      ║ Iron Bow      Iron Axe     ║
+                                                                      ║ 20/20         20/20        ║
+                                                                      ║ HP 17 █████   HP 20 ███▒▒  ║
+                                                                      ║ Hit  91       Hit  --      ║
+                                                                      ║ Crit 3        Crit --      ║
+                                                                      ║                            ║
+                                                                      ║ ────────────────────────── ║
+                                                                      ║  8 dmg   →  1   no counter ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ ────────────────────────── ║
+                    ≈≈≈≈≈≈≈≈....····Ra♣♣♣♣^^^^^^                      ║  8 ×1     Total            ║
+                    ≈≈≈≈≈≈====····LoBrBr♣♣♣♣....                      ║                            ║
+                    ..≈≈≈≈..··..............╦╦..                      ║ Brigand   Hit  91  20 → 12 ║
+                    ....······......Ar▓▓▓▓▓▓▓▓..                      ║ Raider    Hit  91  22 → 15 ║
+                    ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║ Brigand   Hit  91  20 → 12 ║
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║ one strike each            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ╚════════════════════════════╝
+                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+ arrows next target · f attack · d back                                                    F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdccccccccccccccccccccdddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeeeedddfffffffddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggddddddggggggggdddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiijjddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
+aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrrrssnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkllllttttrrrruuvvvvnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmmmxxyyyyyyyymmaaaaaaaaaaaaaaaaaaaaaabdffffffddddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmyyzzwwyymmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnrrxxxxmmmmmmmmyyzzzzyymmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmvvyyyyAAyymmaaaaaaaaaaaaaaaaaaaaaabdBBBBBBBBBBBBBBBddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
+aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:player bg:panel_bg
+f = fg:enemy bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:hp_high bg:panel_bg
+i = fg:hp_mid bg:panel_bg
+j = fg:hp_low bg:panel_bg
+k = fg:water bg:sea
+l = fg:water bg:water_bg
+m = fg:grass bg:grass_bg
+n = fg:forest bg:forest_bg
+o = fg:thicket bg:thicket_bg
+p = fg:mountain bg:mountain_bg
+q = fg:peak bg:peak_bg
+r = fg:road bg:road_bg
+s = fg:enemy bg:#50281d
+t = fg:wood bg:water_bg
+u = fg:player bg:road_bg
+v = fg:enemy bg:#4c271c
+w = fg:fort bg:fort_bg
+x = fg:player bg:grass_bg
+y = fg:stone bg:stone_bg
+z = fg:floor bg:floor_bg
+A = fg:wood bg:stone_bg
+B = fg:effect bg:panel_bg
+C = fg:text_dim bg:black
+--- overlays ---
+over  273,222 14x2  hp_high
+over  225,286 14x2  hp_high
+over  289,254 14x2  hp_high
+over  289,222 14x2  hp_high
+over  305,222 14x2  hp_high
+over  289,206 14x2  hp_high
+over  289,302 14x2  hp_high
+over  209,286 14x2  hp_high
+over  287,208 3x1  cursor
+over  287,208 1x3  cursor
+over  301,208 3x1  cursor
+over  303,208 1x3  cursor
+over  287,221 3x1  cursor
+over  287,219 1x3  cursor
+over  301,221 3x1  cursor
+over  303,219 1x3  cursor

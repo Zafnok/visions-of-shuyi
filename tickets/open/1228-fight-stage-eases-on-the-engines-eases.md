@@ -5,7 +5,7 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: blocked
+status: todo
 blocked_by: ["engine#2109"]
 nick_input: none
 completed:

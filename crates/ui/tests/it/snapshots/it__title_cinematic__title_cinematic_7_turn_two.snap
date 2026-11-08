@@ -1,5 +1,6 @@
 ---
 source: crates/ui/tests/it/title_cinematic.rs
+assertion_line: 704
 expression: h.snapshot()
 ---
                                                                                                     
@@ -70,7 +71,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:see-through
 b = fg:text_dim bg:black
---- backdrop: clip 0,0 100x32  origin 0.0,50.7  zoom 3 ---
+--- backdrop: clip 0,0 100x32  origin 10.6,61.6  zoom 3 ---
 ♣♣♣♣♣♣♣♣........♣♣♣♣♣♣..............^^^^▲▲▲▲▲▲▲▲
 ♣♣♣♣♣♣♣♣......♣♣♣♣♣♣♣♣..............▓▓▓▓▓▓▓▓▓▓▲▲
 ..♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣........············░░Ha░░▓▓^^

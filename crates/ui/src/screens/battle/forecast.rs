@@ -2,7 +2,9 @@
 //! *Attack forecast*): while a target is chosen it replaces the side panel.
 //! Both sides' names, weapons, HP (and what each would have left if every
 //! strike hit), hit and crit; then every strike in the order it happens,
-//! the strike that kills, and each side's total. A spell's element against
+//! the strike that kills, and each side's total; then one row per strike
+//! of the art at a unit (Line Pierce's, an area art's, Chain Strike's
+//! allies'; ticket 0327). A spell's element against
 //! the target's affinity (0410) is marked: as effective on the strikes for
 //! Weak (as any effective attack), `(resist)` or `heals N` for the
 //! striker. All numbers come from [`AttackPreview`]; nothing is computed
@@ -12,7 +14,7 @@
 use crate::prelude::*;
 use trpg_core::{
     Affinity, ArtNote, AttackPreview, BattleState, Equipped, PlannedStrike, Side, SideForecast,
-    StatKind, StatValue, Unit,
+    StatKind, StatValue, Unit, UnitId,
 };
 
 use super::art_list::{art_name, hits_text, note_text};
@@ -20,7 +22,8 @@ use super::attack::{Targeting, spell_uses, weapon_durability};
 use super::info::stat_name;
 use super::skills::skill_name;
 use super::view::{
-    ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, TotalView,
+    ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, StruckView,
+    TotalView,
 };
 use crate::words::Words;
 
@@ -109,9 +112,34 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         strikes: strikes(words, p),
         no_counter,
         total_name: words.text("battle.forecast.total").to_owned(),
+        struck: struck((state, words), attacker.id, p),
         notes,
         tiles: [t.sel.dest(), target.pos],
     })
+}
+
+/// The rows of the art's strikes at units: the unit struck (an ally's
+/// strike shows the ally), the hit and the struck unit's HP before and
+/// after a hit.
+fn struck(
+    (state, words): (&BattleState, Words<'_>),
+    attacker: UnitId,
+    p: &AttackPreview,
+) -> Vec<StruckView> {
+    p.strikes
+        .iter()
+        .filter_map(|s| {
+            let shown = if s.by == attacker { s.at } else { s.by };
+            let unit = state.unit(shown)?;
+            Some(StruckView {
+                name: words.unit(unit).to_owned(),
+                faction: unit.faction,
+                hit: s.numbers.hit,
+                hp: s.hp,
+                effective: s.numbers.effective,
+            })
+        })
+        .collect()
 }
 
 /// The art's effects that aren't numbers (`pierces`, `pins: Mov −3`…).

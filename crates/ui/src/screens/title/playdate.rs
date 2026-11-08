@@ -13,8 +13,9 @@
 //!   the help line; the "press any button" line is a window there too. The
 //!   bottom row is white, with the help line (or the notice) on it.
 //! - **One bit has no fades**: the menu shows while it is at least half
-//!   solid, and the cinematic once it is at least half bright, so each
-//!   cuts in at the middle of its fade. No sparks: dots are lost in the
+//!   solid, the title's picture while it is, and the cinematic once it is
+//!   at least half bright, so each cuts in or out at the middle of its
+//!   fade; between the picture and the cinematic the screen is black. No sparks: dots are lost in the
 //!   backdrop's dither.
 //!
 //! A sprite is drawn over the cells' backgrounds, so the backdrop and the
@@ -24,7 +25,7 @@ use trpg_content::ImageId;
 use trpg_content::battler::BACKDROP_PX;
 
 use super::view::{FULL, TitleView};
-use crate::glyph_buffer::{GlyphBuffer, Layer, PxRect, Rect, Sprite};
+use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::map_view::grid::px_rect;
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -142,7 +143,8 @@ fn window_of(ctx: &Ctx, buf: &GlyphBuffer, shown: &Shown<'_>) -> Rect {
 }
 
 /// Paints `view` over the whole of `buf`: the cinematic while it is at
-/// least half bright, else the title's picture, then (while it is at least
+/// least half bright, else the title's picture while it is at least half
+/// solid, else black, then (while it is at least
 /// half solid) the menu or the prompt over the backdrop and the help line
 /// or the notice on the bottom row.
 pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
@@ -159,7 +161,11 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
             let t = shot.t_ms as f32 / 1000.0;
             shot.player.draw(ctx, t, 1.0, buf);
         }
-        _ => paint_logo(ctx, view.backdrop, window.map(px_rect), buf),
+        _ if view.picture > half => paint_logo(ctx, view.backdrop, window.map(px_rect), buf),
+        _ => {
+            let ink = pd::inks(ctx);
+            buf.fill_rect(buf.bounds(), Cell::new(' ', ink.ground, ink.text));
+        }
     }
     match (shown, window) {
         (Some(Shown::Menu(m)), Some(rect)) => pd::menu(ctx, buf, (rect.x, rect.y), m),

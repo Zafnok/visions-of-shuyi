@@ -10,6 +10,7 @@ use trpg_core::{Event, Faction, Side, UnitId};
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
+use crate::screens::battle::event_sounds;
 use crate::screens::battle::playback::{Playback, TIMINGS};
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
@@ -185,4 +186,44 @@ fn a_frame_of_the_fight() {
     stage::glyph::paint(&ctx, &view, &mut battle);
     assert_eq!(buf, battle);
     assert_snapshot!("combat_first_strike", buf.to_snapshot(&ctx.palette));
+}
+
+/// Ticket 0843: the shot plays the sounds the battle's combat scene plays
+/// for the same attack, each once and at its moment, as the frames go by.
+#[test]
+fn the_shot_plays_the_battles_sounds_for_the_fight() {
+    let ctx = ctx();
+    let player = player(&ctx);
+    let pb = playback(&ctx);
+    let fight =
+        trpg_content::cinematic::fight(&ctx.game.content, &shot(&ctx), player.lead().clone())
+            .unwrap();
+    let attacks = event_sounds::combat_attacks(&fight.events, &fight.before, &fight.after);
+    let pb = pb.with_sounds(&attacks, event_sounds::heals(&fight.events));
+    let want: Vec<&str> = pb.cues().iter().map(|(_, cue)| *cue).collect();
+    assert_ne!(want, [] as [&str; 0]);
+    assert!(
+        want.iter()
+            .all(|c| c.starts_with("hit_") || c.starts_with("crit_") || *c == "miss"),
+        "{want:?}"
+    );
+    // Frame by frame at 60 a second: every cue once, in order.
+    let mut heard = Vec::new();
+    let mut t = 0.0_f32;
+    while t < 6.0 {
+        let next = t + 1.0 / 60.0;
+        heard.extend(player.sounds(t, next));
+        t = next;
+    }
+    assert_eq!(heard, want);
+    // The first at its time, not a frame early.
+    let (at, first) = pb.cues()[0];
+    assert_eq!(player.sounds(at - 0.1, at - 0.001), [] as [&str; 0]);
+    assert_eq!(player.sounds(at - 0.1, at + 0.001), [first]);
+    // A frame ending on it plays it; the next frame, starting there, not
+    // again.
+    assert_eq!(player.sounds(at - 0.1, at), [first]);
+    assert_eq!(player.sounds(at, at + 0.1), [] as [&str; 0]);
+    // Time going backwards plays nothing.
+    assert_eq!(player.sounds(5.0, 0.5), [] as [&str; 0]);
 }

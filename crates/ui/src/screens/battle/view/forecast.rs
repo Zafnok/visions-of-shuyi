@@ -27,6 +27,9 @@ pub struct ForecastView {
     pub no_counter: Option<String>,
     /// What the totals' row is called.
     pub total_name: String,
+    /// One row per strike of the art at a unit (Line Pierce's, an area
+    /// art's, Chain Strike's allies'), in strike order (ticket 0327).
+    pub struck: Vec<StruckView>,
     /// The art's effects that aren't numbers (`pierces`, `pins: Mov −3`),
     /// one per line; `no counter` is left out (the target's column says
     /// it).
@@ -109,6 +112,23 @@ pub struct StrikeView {
     pub after_a_fall: bool,
 }
 
+/// One strike of an art at a unit, as a row of the forecast: `Hound  Hit
+/// 82  11 → 4`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StruckView {
+    /// The name of the unit struck, or of the ally that strikes for Chain
+    /// Strike.
+    pub name: String,
+    /// That unit's faction.
+    pub faction: Faction,
+    /// The strike's hit chance.
+    pub hit: u8,
+    /// The struck unit's HP before the strike and after it if it hits.
+    pub hp: (StatValue, StatValue),
+    /// Whether it is effective.
+    pub effective: bool,
+}
+
 /// A side's strikes, added up.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TotalView {
@@ -133,6 +153,7 @@ impl ForecastView {
         }
         texts.extend(self.strikes.iter().map(|s| s.text.clone()));
         texts.extend(self.no_counter.clone());
+        texts.extend(self.struck.iter().map(|s| s.name.clone()));
         texts.extend(self.notes.iter().cloned());
         texts
     }

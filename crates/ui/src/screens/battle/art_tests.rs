@@ -8,7 +8,7 @@ use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
 use trpg_core::{
     ArtId, BattleState, ClassId, Command, EffectSource, Equipped, Event, Faction, Objective, Pos,
-    SkillId, Unit, UnitId,
+    SkillId, Unit, UnitId, WeaponKind, WeaponRank,
 };
 
 use super::BattleScreen;
@@ -620,6 +620,37 @@ fn forecast_with_pinning_shot_snapshot() {
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
+/// The archer at bow rank S with Arrow Rain on the brigand, the raider
+/// north of it, another enemy east and the lord west of it (ticket 0327):
+/// a row per unit the
+/// art strikes, target first, never the lord.
+#[test]
+fn forecast_of_arrow_rain_snapshot() {
+    let mut c = ctx();
+    let state = battle(&c, |units| {
+        let mut move_to =
+            |id, pos| units.iter_mut().find(|u| u.id == UnitId(id)).unwrap().pos = pos;
+        move_to(6, p(8, 1));
+        move_to(1, p(7, 2));
+        // Another enemy east of the brigand.
+        let other = units
+            .iter()
+            .find(|u| u.faction == Faction::Enemy && ![4, 6].contains(&u.id.0))
+            .map(|u| u.id.0)
+            .unwrap();
+        let mut move_to =
+            |id, pos| units.iter_mut().find(|u| u.id == UnitId(id)).unwrap().pos = pos;
+        move_to(other, p(9, 2));
+        let archer = units.iter_mut().find(|u| u.id == UnitId(3)).unwrap();
+        archer.weapon_ranks.insert(WeaponKind::Bow, WeaponRank::S);
+    });
+    let s = archer_on_brigand(&mut c, state, "Arrow Rain");
+    let shown = forecast_of(&s, &c);
+    let rows: Vec<_> = shown.struck.iter().map(|r| r.name.as_str()).collect();
+    assert_eq!(rows, ["Brigand", "Raider", "Brigand"]);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
 /// The lord's only sword broken: every line of the arts menu dimmed with
 /// `broken`, and `(broken)` in the forecast of a plain attack.
 #[test]
@@ -739,6 +770,54 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
     .with_banner(Some("Guard Break".to_owned()));
     let shown = box_view(Words::ENGLISH, &pb).expect("the box");
     assert_eq!(shown.banner.as_deref(), Some("Guard Break"));
+}
+
+/// Arrow Rain plays back one bout per unit struck, target first, each a
+/// single shot with no counter (ticket 0327).
+#[test]
+fn arrow_rain_plays_a_bout_per_unit_struck() {
+    let c = ctx();
+    let state = battle(&c, |units| {
+        units.iter_mut().find(|u| u.id == UnitId(6)).unwrap().pos = p(8, 1);
+        let archer = units.iter_mut().find(|u| u.id == UnitId(3)).unwrap();
+        archer.weapon_ranks.insert(WeaponKind::Bow, WeaponRank::S);
+    });
+    let mut after = state.clone();
+    let events = after
+        .apply(&Command::Act {
+            unit: UnitId(3),
+            dest: p(8, 4),
+            action: Technique::Art(ArtId::new("arrow_rain"))
+                .action(UnitId(4), &Equipped::Weapon(0)),
+        })
+        .unwrap();
+    let pb = Playback::new(
+        Words::ENGLISH,
+        &events,
+        state.units(),
+        after.fallen(),
+        TIMINGS,
+    )
+    .unwrap();
+    let bouts: Vec<_> = pb
+        .bouts()
+        .iter()
+        .map(|b| {
+            (
+                b.attacker.unit,
+                b.defender.unit,
+                b.strikes.len(),
+                b.numbers[1],
+            )
+        })
+        .collect();
+    assert_eq!(
+        bouts,
+        [
+            (UnitId(3), UnitId(4), 1, None),
+            (UnitId(3), UnitId(6), 1, None)
+        ]
+    );
 }
 
 #[test]

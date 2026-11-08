@@ -5,13 +5,15 @@
 //! moment of it, as it does in a battle with combat animations on. A
 //! [`Duel`] keeps the playback at its start and plays a copy to the
 //! moment asked: nothing is carried from one frame to the next
-//! (ADR-0060 §2).
+//! (ADR-0060 §2). Its sound cues are the battle's own
+//! ([`Playback::with_sounds`], ticket 0843).
 
 use crate::prelude::*;
 use trpg_content::CombatShot;
 use trpg_core::{Event, LeadProfile};
 
 use crate::screen::Ctx;
+use crate::screens::battle::event_sounds;
 use crate::screens::battle::playback::{Playback, SceneCue, TIMINGS};
 use crate::screens::battle::stage::{self, view::StageView};
 
@@ -32,7 +34,8 @@ impl Duel {
     /// player's language as it is now), or `None` if the rules allow it
     /// no longer (the content check refuses a file whose fight they don't
     /// allow) or its battle isn't there. The scenes the attack may set off
-    /// are left out: a cinematic plays only its own shots.
+    /// are left out: a cinematic plays only its own shots. Its sounds are
+    /// the ones the battle's combat scene plays for the same attack.
     pub fn new(ctx: &Ctx, shot: &CombatShot, lead: &LeadProfile) -> Option<Self> {
         let def = ctx.game.content.battles.get(&shot.battle)?;
         let fight = trpg_content::cinematic::fight(&ctx.game.content, shot, lead.clone()).ok()?;
@@ -42,7 +45,9 @@ impl Duel {
             .filter(|e| SceneCue::of(e).is_none())
             .collect();
         let (before, fallen) = (&fight.before, fight.after.fallen());
-        let playback = Playback::new(ctx.words(), &events, before, fallen, TIMINGS)?;
+        let attacks = event_sounds::combat_attacks(&events, before, &fight.after);
+        let playback = Playback::new(ctx.words(), &events, before, fallen, TIMINGS)?
+            .with_sounds(&attacks, event_sounds::heals(&events));
         let ground = playback
             .bouts()
             .first()
@@ -60,6 +65,12 @@ impl Duel {
     /// it plays in a battle.
     pub fn seconds(&self) -> f32 {
         self.playback.total()
+    }
+
+    /// The fight's sound cues, each with its time in seconds from the
+    /// fight's start, in order.
+    pub fn cues(&self) -> &[(f32, &'static str)] {
+        self.playback.cues()
     }
 
     /// The stage `seconds` into the fight (at its end from then on), with

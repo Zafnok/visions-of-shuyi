@@ -46,7 +46,7 @@ use trpg_content::WorldMapDef;
 use trpg_core::{Campaign, LEAD_ID, NodeKind, Pos, WorldCommand, WorldEvent, WorldMap};
 pub use view::{ListView, PanelView, PlaceMark, PlaceView, WorldMapView};
 
-use super::camp::music::{CampMusic, ask};
+use super::camp::music::{CampMusic, FADE_OUT_MS, ask};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
@@ -637,7 +637,7 @@ impl WorldMapScreen {
                 .music
                 .get(&map_cue)
                 .map(|t| f64::from(t.length_ms) / 1000.0);
-            let fade_s = f64::from(manifest.music_fade_ms) / 1000.0;
+            let fade_s = f64::from(FADE_OUT_MS) / 1000.0;
             let tracks = length.map(|l| vec![(map_cue, l)]).unwrap_or_default();
             if let Some((music, cue)) = CampMusic::start(tracks, 0, fade_s, ctx.clock_s) {
                 self.music = Some(music.with_quiet(QUIET_S));

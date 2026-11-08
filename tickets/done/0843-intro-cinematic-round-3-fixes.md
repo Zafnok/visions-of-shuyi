@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-07
 ---
 
 # 0843 — Intro cinematic: Nick's round 3 fixes
@@ -126,4 +126,96 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done 2026-11-07.**
+
+**Estimate** (ADR-0092): about 80 production lines, judged by 0819's
+fade phases and 0424's battle sound cues: two new title phases, a
+`picture` field the two skins paint, and a `sounds(from, to)` over the
+combat shot's existing `Playback` cues. PR size estimated at about 700
+changed lines (tests and snapshots of 0833's size).
+
+**What changed** (`assets/cinematics/title.ron`):
+
+| # | Shot | Was | Now |
+| - | ---- | --- | --- |
+| 4 | Tamsin's news | 0:50 (6 s) | **0:48.5 (7.5 s)** |
+| 6 | Combat: the brigand attacks the lead | 1:08.5 | **1:09.95** |
+| 8 | Combat: Tamsin at the footbridge | 1:25.25 | **1:28.2** |
+| 12 | The logo | 1:57 | **1:55.8** |
+
+1. **Tamsin's news, 7.5 s: the start moved, not the cut after it.** The
+   song was measured again (a throwaway loudness meter on the ogg in 50 ms
+   windows, as 0833 did). 48.5 has a clear note (+7 dB onset, -37.6 to
+   -30.5 dB), the bar before the phrase at 50.0; the cut at 56.0 is the
+   strongest one around (a note after a second of hush) and the field
+   action's clock hangs on it. Moving 56.0 to 57.5 would have put the cut
+   between notes (the next ones are at 57.7 and 57.85). Shot 3, the
+   faces, is 1.5 s shorter, so they cross a little faster.
+2. **Half a second after the last blow.** The fights last 4.1 s (road) and
+   2.55 s (footbridge), so the shots start at 69.95 (a note, +9.4 dB;
+   0.45 s hold) and 88.2 (inside the sustained loud part, no onset near;
+   0.5 s hold). The cuts after them (74.5, 91.25) are unchanged. The
+   map shots before run longer; the field action was re-timed so nothing
+   happens in the wrong shot: the road brigand now walks on the phrase at
+   68.5 (was 67.0), Tamsin walks to the footbridge at 87.25 (was 83.75, on
+   a note at 87.3), and the four `Strike`s that set the map's HP moved
+   into their combat shots.
+3. **Hit sounds.** A combat shot's `Duel` now builds its playback with
+   `Playback::with_sounds` exactly as the battle does
+   (`event_sounds::combat_attacks`, `heals`): the same hit, miss, block,
+   critical and spell sounds at the same moments. `CinematicPlayer::sounds
+   (from, to)` gives the cues a stretch of time crosses; the title plays
+   them through `ctx.audio.play_sound` (the effects' volume, as a
+   battle's) while the cinematic shows. The battle's sound table isn't
+   duplicated. The scene cues an attack can set off stay out, as in 0832.
+   The battle's own combat scene plays no separate "fall" sound, so
+   neither does the shot.
+4. **The logo at 1:55.8**, on the chord's onset (measured: it strikes at
+   115.6 to 115.85). The skip's silence is now 17.9 s (the logo shot's
+   length).
+5. **Menu to intro through black.** New title phases `ToBlack` (menu and
+   title picture to black, 0.2 s, `TO_BLACK_SECS`) and `FromBlack` (the
+   cinematic alone from black, 0.5 s, `FROM_BLACK_SECS`); `FADE_OUT_SECS`
+   is gone. `TitleView` gained `picture` (how solid the title's own
+   picture is) instead of tying it to the cinematic's brightness; the
+   glyph skin paints black under it, the Playdate skin shows black
+   between the picture and the cinematic (one bit, cut at half). The same
+   path runs when the song loops under the logo. The way back (the menu
+   fading in on the logo) is unchanged.
+- `title-screen.md` (*As built*, the song, rules 2 and 5, the starting
+  rules) and `assets/cinematics/README.md` updated.
+
+**Tests:** `the_titles_shots_start_on_round_threes_times`,
+`the_titles_fights_end_half_a_second_before_their_cuts` (each hold 0.4 to
+0.6 s), `the_shot_plays_the_battles_sounds_for_the_fight` (frame by frame
+at 60 a second: every battle cue once, in order, at its moment), the
+title unit tests for both new phases and presses during each,
+`the_titles_picture_goes_to_black` (glyph skin), and in the harness
+`going_idle_the_frames_go_through_black` (frame by frame: menu, to black,
+from black, cinematic; the cinematic's first frame is black; no frame has
+the menu or the title's picture over a shot) and the loop test now
+asserting the sounds the title asked for are the two fights' cues.
+Snapshots changed: `title_cinematic_3_faces` (faces further along in
+the shorter shot), `_5_turn_one` and `_7_turn_two` (the camera's pan
+point at the same second of a longer pan). The fight snapshots are
+unchanged (same moment of each fight).
+
+**Deviations**
+
+- A press while the cinematic fades in from black brings the menu back
+  and does nothing else (the menu wasn't showing). A press while going
+  to black still acts on the menu, as during 0819's fade.
+- Not watched with sound (the agent can't hear); the cuts and the logo
+  were placed by measuring.
+
+**the agent's starting rules** (Nick can veto): 0.2 s to black; the hold
+of about half a second; the footbridge fight starting at 88.2 where the
+song has no onset; the brigand's and Tamsin's walks re-timed onto notes;
+a press during the fade-in from black only brings back the menu.
+
+**Follow-up tickets:** none.
+
+**For the Act 1 playtest (1064)**, sound on, one loop: is the news long
+enough at 7.5 s? Is half a second after each fight right? Do the hit
+sounds sit well over the song? Does the switch from menu to intro look
+clean through black?
