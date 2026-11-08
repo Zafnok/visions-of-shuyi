@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-08
 ---
 
 # 0468 — Vix's face: are her ears cut off?
@@ -62,10 +62,10 @@ it):
 
 ## Acceptance criteria
 
-- [ ] The cause is in the completion notes, with game screenshots.
-- [ ] If fixed: the whole head shows; the box still fits beside the side
+- [x] The cause is in the completion notes, with game screenshots.
+- [x] If fixed: the whole head shows; the box still fits beside the side
       panel (0459's rule); `private_assets::` tests pass.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -74,4 +74,26 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Cause: the import's cut, not the art and not the box.** The bought
+bust (80×80, `Heroes 2: Rebellious Souls`, Fox Miko) has her whole
+head: the ear tips start at row 6. `cargo xtask portrait-import` keeps
+the bottom 64 rows (16..80) for every bust, so it dropped rows 6..15,
+the top of both ears; the tip box draws the 64×64 cut at 2× as it is.
+
+**Fix:** `portrait-import` takes `--shift-y <pixels>` (−16..=0), which
+moves the cut up the way `--shift-x` moves it sideways. The guide's
+eight busts were cut again with `--shift-y -10` (rows 6..70: ear tips
+to shoulders) in the private repository (`544a45e`, its sidecar notes
+the flag) and `assets-private.rev` points at it. The picture is still
+64×64, so the box is the same size and still fits beside the side panel
+(0459's rule); only the bottom 10 rows of her shoulders are gone.
+
+Screenshots of the game (bought art, allowed as game screenshots):
+before `docs/img/0468-tip-before.png` (ears sliced flat), after
+`docs/img/0468-tip-after.png` (whole ears).
+
+- Other characters' busts may have the same cut; out of scope here
+  ("other faces"), not checked.
+- Engine friction: estimate 20, measured 34 (1.7×), under 2×.
+- No gameplay rules decided. No follow-up tickets.
+- For the Act 1 playtest (1064): the tip box before/after above.

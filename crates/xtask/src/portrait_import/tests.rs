@@ -54,6 +54,7 @@ fn options(source: &Path, character: &str, shift_x: i32) -> Options {
         source: source.to_path_buf(),
         character: character.to_owned(),
         shift_x,
+        shift_y: 0,
         generator: false,
     }
 }
@@ -90,6 +91,15 @@ fn parse_args_reads_the_source_the_id_and_the_shift() {
         parse_args(&args(&["sheet.png", "k2", "--generator"])),
         Ok(generator_options(Path::new("sheet.png"), "k2", 0))
     );
+    for (text, shift) in [("-10", -10), ("-16", -16), ("0", 0)] {
+        assert_eq!(
+            parse_args(&args(&["b", "k", "--shift-y", text, "--shift-x", "2"])),
+            Ok(Options {
+                shift_y: shift,
+                ..options(Path::new("b"), "k", 2)
+            })
+        );
+    }
 }
 
 #[test]
@@ -118,6 +128,18 @@ fn parse_args_rejects_what_it_cannot_use() {
             format!("--shift-x must be a whole number from -8 to 8, not \"{shift}\"")
         );
     }
+    // The cut is already at the bottom, so it only moves up.
+    for shift in ["1", "-17", "x", ""] {
+        assert_eq!(
+            err(&["busts", "k", "--shift-y", shift]),
+            format!("--shift-y must be a whole number from -16 to 0, not \"{shift}\"")
+        );
+    }
+    assert_eq!(err(&["busts", "k", "--shift-y"]), usage);
+    assert_eq!(
+        err(&["busts", "k", "--shift-y", "-1", "--shift-y", "-2"]),
+        usage
+    );
 }
 
 #[test]
@@ -136,7 +158,7 @@ fn crop_takes_the_named_part() {
 
 #[test]
 fn a_bust_is_cut_to_its_middle_64_columns_and_bottom_64_rows() {
-    let cut = portrait_image("b", &made_up(80, 80, 7), 0).unwrap();
+    let cut = portrait_image("b", &made_up(80, 80, 7), 0, 0).unwrap();
     assert_eq!((cut.width, cut.height), (64, 64));
     // Columns 8..72, rows 16..80.
     assert_eq!(pixel(&cut, 0, 0), [8, 16, 7, 255]);
@@ -148,7 +170,7 @@ fn a_bust_is_cut_to_its_middle_64_columns_and_bottom_64_rows() {
 #[test]
 fn shift_x_moves_the_cut_sideways_only() {
     for (shift, left) in [(3, 11), (-3, 5), (8, 16), (-8, 0), (1, 9)] {
-        let cut = portrait_image("b", &made_up(80, 80, 0), shift).unwrap();
+        let cut = portrait_image("b", &made_up(80, 80, 0), shift, 0).unwrap();
         assert_eq!((cut.width, cut.height), (64, 64), "{shift}");
         assert_eq!(pixel(&cut, 0, 0), [left, 16, 0, 255], "{shift}");
         assert_eq!(pixel(&cut, 63, 63), [left + 63, 79, 0, 255], "{shift}");
@@ -159,17 +181,30 @@ fn shift_x_moves_the_cut_sideways_only() {
 }
 
 #[test]
+fn shift_y_moves_the_cut_up_only() {
+    for (shift, top) in [(-10, 6), (-16, 0), (-1, 15)] {
+        let cut = portrait_image("b", &made_up(80, 80, 0), 2, shift).unwrap();
+        assert_eq!((cut.width, cut.height), (64, 64), "{shift}");
+        assert_eq!(pixel(&cut, 0, 0), [10, top, 0, 255], "{shift}");
+        assert_eq!(pixel(&cut, 63, 63), [73, top + 63, 0, 255], "{shift}");
+    }
+    // Past the range it stops at the bust's edge instead of reading outside.
+    assert_eq!(cut_top(-100), 0);
+    assert_eq!(cut_top(100), 16);
+}
+
+#[test]
 fn a_face_is_kept_whole_whatever_the_shift() {
     let face = made_up(48, 48, 1);
-    assert_eq!(portrait_image("f", &face, 0), Ok(face.clone()));
-    assert_eq!(portrait_image("f", &face, 5), Ok(face));
+    assert_eq!(portrait_image("f", &face, 0, 0), Ok(face.clone()));
+    assert_eq!(portrait_image("f", &face, 5, 0), Ok(face));
 }
 
 #[test]
 fn any_other_size_is_an_error_that_names_the_file() {
     for (w, h) in [(64, 64), (80, 48), (48, 80), (144, 144), (81, 80)] {
         assert_eq!(
-            portrait_image("x/bust_odd.png", &made_up(w, h, 0), 0),
+            portrait_image("x/bust_odd.png", &made_up(w, h, 0), 0, 0),
             Err(format!(
                 "x/bust_odd.png is {w}×{h} px; a bust is 80×80 and a face 48×48"
             ))

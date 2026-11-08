@@ -16,13 +16,15 @@ use std::path::{Path, PathBuf};
 use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
-pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>] [--generator]\n\n\
+pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>] [--shift-y <pixels>] [--generator]\n\n\
 <bust-folder-or-sheet>  a folder of single bust files (bust_<expression>.png, 80×80 each),\n                        \
 or one bust sheet (320×160: 4×2 busts). A folder without bust_ files\n                        \
 gives its face_ files, or else all its PNGs; 48×48 faces and a\n                        \
 192×96 face sheet are written as they are\n\
 <character-id>          lower-case letters, digits and _ (the portrait's file name)\n\
 --shift-x <pixels>      move the cut sideways, -8 to 8 (default 0: the middle 64 columns)\n\
+--shift-y <pixels>      move the cut up, -16 to 0 (default 0: the bottom 64 rows), for a\n                        \
+head whose top the bottom rows cut off\n\
 --generator             the sheet is one the Character Generator EX exported: its eight\n                        \
 expressions are in another order than a bought hero's sheet\n\n\
 Writes assets-private/game/portraits/<character-id>/<expression>.png (64×64) and, if it\n\
@@ -39,6 +41,8 @@ pub const CUT_X: u32 = (BUST - CUT) / 2;
 pub const CUT_Y: u32 = BUST - CUT;
 /// The furthest `--shift-x` may move the cut either way.
 pub const MAX_SHIFT: i32 = 8;
+/// The furthest `--shift-y` may move the cut up: to the bust's top row.
+pub const MAX_SHIFT_UP: i32 = CUT_Y.cast_signed();
 /// Side of a bought face in pixels.
 pub const FACE: u32 = 48;
 /// Columns and rows of a sheet.
@@ -75,6 +79,8 @@ pub struct Options {
     pub character: String,
     /// How far the cut is moved to the right, in pixels.
     pub shift_x: i32,
+    /// How far the cut is moved down, in pixels (only up: zero or less).
+    pub shift_y: i32,
     /// Whether a sheet is in the Character Generator's order
     /// ([`GENERATOR_SHEET_EXPRESSIONS`]) rather than a bought hero's.
     pub generator: bool,
@@ -86,11 +92,12 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
     let [source, character, flags @ ..] = args else {
         return Err(usage());
     };
-    let (mut shift, mut generator) = (None, false);
+    let (mut shift_x, mut shift_y, mut generator) = (None, None, false);
     let mut flags = flags.iter();
     while let Some(flag) = flags.next() {
         match flag.as_str() {
-            "--shift-x" if shift.is_none() => shift = Some(flags.next().ok_or_else(usage)?),
+            "--shift-x" if shift_x.is_none() => shift_x = Some(flags.next().ok_or_else(usage)?),
+            "--shift-y" if shift_y.is_none() => shift_y = Some(flags.next().ok_or_else(usage)?),
             "--generator" if !generator => generator = true,
             _ => return Err(usage()),
         }
@@ -101,22 +108,25 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
             "character id \"{character}\" must be lower-case letters, digits and _"
         ));
     }
-    let shift_x = match shift {
-        None => 0,
-        Some(text) => text
-            .parse::<i32>()
-            .ok()
-            .filter(|s| (-MAX_SHIFT..=MAX_SHIFT).contains(s))
-            .ok_or(format!(
-                "--shift-x must be a whole number from -{MAX_SHIFT} to {MAX_SHIFT}, not \"{text}\""
-            ))?,
-    };
     Ok(Options {
         source: PathBuf::from(source),
         character: character.clone(),
-        shift_x,
+        shift_x: parse_shift("--shift-x", shift_x, -MAX_SHIFT, MAX_SHIFT)?,
+        shift_y: parse_shift("--shift-y", shift_y, -MAX_SHIFT_UP, 0)?,
         generator,
     })
+}
+
+/// The value of shift flag `flag` (0 if it wasn't given), which must be a
+/// whole number from `min` to `max`.
+fn parse_shift(flag: &str, text: Option<&String>, min: i32, max: i32) -> Result<i32, String> {
+    let Some(text) = text else { return Ok(0) };
+    text.parse::<i32>()
+        .ok()
+        .filter(|s| (min..=max).contains(s))
+        .ok_or(format!(
+            "{flag} must be a whole number from {min} to {max}, not \"{text}\""
+        ))
 }
 
 /// An RGBA8 image, row-major.
@@ -152,12 +162,23 @@ fn cut_left(shift_x: i32) -> u32 {
     CUT_X.saturating_add_signed(shift_x).min(BUST - CUT)
 }
 
+/// The top edge of the cut moved by `shift_y` (up to [`MAX_SHIFT_UP`]).
+fn cut_top(shift_y: i32) -> u32 {
+    CUT_Y.saturating_add_signed(shift_y).min(CUT_Y)
+}
+
 /// The portrait image made from `picture` (named `name` in errors): a bust
 /// is cut to its middle [`CUT`] columns, moved by `shift_x`, and bottom
-/// [`CUT`] rows; a face is kept whole. Any other size is an error.
-pub fn portrait_image(name: &str, picture: &Picture, shift_x: i32) -> Result<Picture, String> {
+/// [`CUT`] rows, moved by `shift_y`; a face is kept whole. Any other size
+/// is an error.
+pub fn portrait_image(
+    name: &str,
+    picture: &Picture,
+    shift_x: i32,
+    shift_y: i32,
+) -> Result<Picture, String> {
     match (picture.width, picture.height) {
-        (BUST, BUST) => Ok(picture.crop(cut_left(shift_x), CUT_Y, CUT, CUT)),
+        (BUST, BUST) => Ok(picture.crop(cut_left(shift_x), cut_top(shift_y), CUT, CUT)),
         (FACE, FACE) => Ok(picture.clone()),
         (w, h) => Err(format!(
             "{name} is {w}×{h} px; a bust is {BUST}×{BUST} and a face {FACE}×{FACE}"
@@ -309,6 +330,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         source,
         character,
         shift_x,
+        shift_y,
         generator,
     } = options;
     if !root.join(OUT_DIR).parent().is_some_and(Path::is_dir) {
@@ -322,7 +344,10 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     let mut images = Vec::new();
     for (expression, picture) in &pictures {
         let name = format!("{} ({expression})", source.display());
-        images.push((expression, portrait_image(&name, picture, *shift_x)?));
+        images.push((
+            expression,
+            portrait_image(&name, picture, *shift_x, *shift_y)?,
+        ));
     }
     let dir = root.join(OUT_DIR).join(character);
     fs::create_dir_all(&dir).map_err(|e| format!("creating {}: {e}", dir.display()))?;
