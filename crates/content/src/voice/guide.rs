@@ -120,4 +120,23 @@ mod tests {
         assert_ne!(id, guide_line("Pick up a unit.\nSend it off."));
         assert_eq!(id.scene_id(), GUIDE_SCENE);
     }
+
+    /// The table a clip may belong to keeps every script scene and adds
+    /// the guide's.
+    #[test]
+    fn with_guide_adds_her_scene_to_the_scripts() {
+        let content = crate::load_embedded().unwrap();
+        let table = with_guide(content.dialogue.clone(), &content.lessons, &content.tips);
+        assert_eq!(table.scenes.len(), content.dialogue.scenes.len() + 1);
+        assert!(
+            content
+                .dialogue
+                .scenes
+                .keys()
+                .all(|id| table.get(id).is_some())
+        );
+        let scene = table.get(GUIDE_SCENE).map(Scene::lines).unwrap_or_default();
+        let expected = guide_scene(&content.lessons, &content.tips);
+        assert_eq!(scene, expected.lines());
+    }
 }
