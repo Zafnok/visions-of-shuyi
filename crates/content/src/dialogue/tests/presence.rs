@@ -910,7 +910,12 @@ fn a_scene_recruit_before_the_battle_may_be_gone_after_it() {
         once: true,
     };
     battle.triggers = vec![turn(1, "test_turn_1"), turn(2, "test_turn_2")];
-    let joins = [("test_intro".to_owned(), vec![id("test_mage")])].into();
+    // The archer joins too, but no slot places her.
+    let joins = [(
+        "test_intro".to_owned(),
+        vec![id("test_mage"), id("test_archer")],
+    )]
+    .into();
     let cast = cast_of(&content).with_joins(&joins, &content.battles, &content.chapters);
     assert!(cast.may_be_absent.contains(&id("test_mage")));
     let certain = |scene: &str| cast.certain.get(scene).cloned().unwrap_or_default();
@@ -920,6 +925,8 @@ fn a_scene_recruit_before_the_battle_may_be_gone_after_it() {
     for scene in ["test_turn_2", "test_victory"] {
         assert!(!certain(scene).contains(&id("test_mage")), "{scene}");
     }
+    assert!(certain("test_intro").contains(&id("test_archer")));
+    assert!(!certain("test_turn_1").contains(&id("test_archer")));
 }
 
 // --- Properties -----------------------------------------------------------------
