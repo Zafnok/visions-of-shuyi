@@ -873,9 +873,10 @@ fn the_maps_track_rests_between_rounds() {
     ctx.audio.take();
     let manifest = &ctx.game.content.audio;
     let length = f64::from(manifest.music["world_map"].length_ms) / 1000.0;
-    let fade = f64::from(manifest.music_fade_ms) / 1000.0;
+    let fade = f64::from(FADE_OUT_MS) / 1000.0;
     frame(&mut s, &mut ctx, &[], length - fade);
-    assert_eq!(ctx.audio.take(), [AudioRequest::StopMusic]);
+    let stop = AudioRequest::stop_music_with(FADE_OUT_MS);
+    assert_eq!(ctx.audio.take(), [stop]);
     frame(&mut s, &mut ctx, &[], fade + QUIET_S - 1.0);
     assert_eq!(ctx.audio.take(), []);
     frame(&mut s, &mut ctx, &[], 1.0);
@@ -900,8 +901,8 @@ fn starts(speaker: &Speaker) -> usize {
 }
 
 /// The whole cycle by the clock (ticket 1080, `audio.md`, *Starting
-/// values*): the map's track fades in over 3 s, fades out as it ends, the
-/// map is silent 30 s, then it starts again at zero gain and reaches full
+/// values*): the map's track fades in over 3 s, fades out over the 3 s
+/// that end it (not the manifest's 500 ms), the map is silent 30 s, then it starts again at zero gain and reaches full
 /// gain over 3 s.
 #[test]
 fn the_maps_track_fades_in_again_after_thirty_seconds_of_quiet() {
@@ -912,17 +913,22 @@ fn the_maps_track_fades_in_again_after_thirty_seconds_of_quiet() {
     speaker.play(&mut ctx, 0.0);
     let audio = &ctx.game.content.audio;
     let length = f64::from(audio.music["world_map"].length_ms) / 1000.0;
-    let fade = f64::from(audio.music_fade_ms) / 1000.0;
+    let fade = f64::from(FADE_OUT_MS) / 1000.0;
     assert_eq!(starts(&speaker), 1, "{:?}", speaker.commands());
     play(&mut s, &mut ctx, &mut speaker, 1.5);
     assert!((speaker.gain("world_map") - 0.5).abs() < 0.05);
     play(&mut s, &mut ctx, &mut speaker, 1.6);
     assert!(speaker.gain("world_map") > 0.99);
-    play(&mut s, &mut ctx, &mut speaker, length - fade - 3.1 - 0.2);
+    // Full gain until 3 s before the end, half way down 1.5 s before it,
+    // silent at it.
+    play(&mut s, &mut ctx, &mut speaker, length - fade - 3.1 - 0.1);
     assert!(speaker.gain("world_map") > 0.99);
-    play(&mut s, &mut ctx, &mut speaker, fade + 0.4);
+    play(&mut s, &mut ctx, &mut speaker, fade / 2.0 + 0.1);
+    let gain = speaker.gain("world_map");
+    assert!((gain - 0.5).abs() < 0.05, "{gain}");
+    play(&mut s, &mut ctx, &mut speaker, fade / 2.0 + 0.1);
     assert_eq!(speaker.gain("world_map"), 0.0);
-    play(&mut s, &mut ctx, &mut speaker, QUIET_S - 0.4);
+    play(&mut s, &mut ctx, &mut speaker, QUIET_S - 0.3);
     assert_eq!(starts(&speaker), 1, "the quiet is silent");
     play(&mut s, &mut ctx, &mut speaker, 0.3);
     assert_eq!(starts(&speaker), 2, "{:?}", speaker.commands());

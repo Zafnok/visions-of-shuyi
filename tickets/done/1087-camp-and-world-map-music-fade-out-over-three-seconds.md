@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["1080", "engine#2398"]
 nick_input: none
-completed:
+completed: 2026-11-08
 ---
 
 # 1087 — Camp and world-map music fade out over 3 s
@@ -82,13 +82,13 @@ checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] With controlled time, camp's and the world map's track fade from
+- [x] With controlled time, camp's and the world map's track fade from
       full gain to zero over 3 s ending with the track, not over 500 ms.
-- [ ] The quiet (5 s camp, 30 s map) and the 3 s fade-in are unchanged.
-- [ ] The town's music switch and every other screen's stop keep the
+- [x] The quiet (5 s camp, 30 s map) and the 3 s fade-in are unchanged.
+- [x] The town's music switch and every other screen's stop keep the
       manifest's 500 ms (the existing `a_towns_music_while_it_is_open_then_the_maps`).
-- [ ] No `engine-friction: engine#2398` marker remains.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No `engine-friction: engine#2398` marker remains.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,5 +99,23 @@ checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- `music::FADE_OUT_MS` (3000) and `ask`'s stop now goes through the
+  engine's `AudioQueue::stop_music_with(FADE_OUT_MS)` (engine 2398, already
+  at the pin since the 2026-11-05 move). Camp's `start_music` and the
+  world map's `tick_music` pass the 3 s as `CampMusic`'s `fade_s`, so each
+  fade-out starts 3 s before the track's end and the quiet counts from
+  the fade's end. The `engine#2398` marker and the module docs'
+  workaround paragraph are gone.
+- Tests: `music.rs`'s schedule tests use a 3 s fade; the two gain traces
+  (camp and the world map) check full gain 3.1 s before the end, about
+  0.5 at 1.5 s before, and 0 at the end, then the quiet and fade-in as
+  before; `camp_plays_the_camp_pool_in_turn`,
+  `camp_takes_its_track_back_after_a_conversations_music` and
+  `the_maps_track_rests_between_rounds` expect the 3 s stop request.
+  Regression checked by hand: with the old `stop_music()` the camp trace
+  fails.
+- The town's switch and every other screen's stop still use the
+  manifest's 500 ms (the title cinematic's `StopMusic` is untouched).
+- Deviations: none. No starting rules: the timings come from audio.md.
+- To judge by playing (Act 1 playtest, 1064): whether the 3 s fade-out
+  sounds right against each track's own ending.
