@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["0480"]
 nick_input: decision
 completed:
 ---
@@ -33,6 +33,10 @@ so `blocked_by` has 1118 and 1050.
 **Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
 into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 `blocked_by` any more.
+
+**Waits for 0480** (2026-11-07): a friend's playtest found the forecast
+hard to read, and 0480 asks Nick for a new layout. The swap arrows or
+hint go on that layout, so this ticket's mockups start from it.
 
 ## Nick input
 
