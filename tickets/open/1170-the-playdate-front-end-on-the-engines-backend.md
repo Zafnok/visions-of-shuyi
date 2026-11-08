@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
-blocked_by: ["engine#2388", "engine#3096"]
+blocked_by: ["engine#2388", "engine#3096", "engine#3097"]
 nick_input: setup
 completed:
 ---
@@ -82,6 +82,14 @@ ticket, at pin `e2697683`). Two engine gaps, each with an engine ticket:
   its build still needs: `bench` by `--with` for the measuring build,
   and `private-assets` only if the library still embeds art instead of
   reading it from the pack (below).
+
+- **The load: engine#3097** (added by the retro of 2026-11-08, from
+  reading the code). The engine's `Load<G>` is one `FnOnce`, and
+  `shuyi-playdate`'s driver runs it in one update callback. This game's
+  data alone took 15,351 ms on the device (1086), which is why its own
+  front end loads in steps (`Boot`, ADR-0111). On the engine's backend
+  the 10-second watchdog would end it again. 3097 lets a load run in
+  steps over several callbacks; this ticket then gives it `Boot`'s steps.
 
 What else the session checked, so the next one need not:
 - **Storage:** `shuyi_playdate::storage::SdkStorage` keeps the game's
