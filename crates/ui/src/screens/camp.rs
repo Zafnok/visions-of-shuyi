@@ -38,7 +38,7 @@ use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::DialogueScreen;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem, SuffixKind};
-use music::{CampMusic, ask};
+use music::{CampMusic, FADE_OUT_MS, ask};
 
 /// The music pool camp plays (`assets/audio/audio.ron`).
 pub const POOL: &str = "camp";
@@ -342,7 +342,7 @@ impl CampScreen {
                 Some((cue.clone(), f64::from(track.length_ms) / 1000.0))
             })
             .collect();
-        let fade_s = f64::from(manifest.music_fade_ms) / 1000.0;
+        let fade_s = f64::from(FADE_OUT_MS) / 1000.0;
         let first = ctx.pick_music(POOL);
         let first = tracks
             .iter()

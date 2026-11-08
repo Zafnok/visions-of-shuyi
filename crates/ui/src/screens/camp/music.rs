@@ -7,12 +7,8 @@
 //! [`CampMusic`] is the schedule, by the game's clock: what to ask for,
 //! and when. It plays nothing itself: camp and the world map pass what it
 //! asks for to [`ask`], which asks [`Ctx::audio`](crate::screen::Ctx).
-//! Each track fades in over audio.md's 3 s ([`FADE_IN_MS`]).
-//!
-//! The engine stops music only over the manifest's one fade
-//! (`music_fade_ms`), so a track here starts to fade that long before its
-//! end, not audio.md's 3 s: a workaround until the engine can stop with a
-//! fade of its own.
+//! Each track fades in over audio.md's 3 s ([`FADE_IN_MS`]) and fades
+//! out over its 3 s ([`FADE_OUT_MS`]), ending with the track.
 
 use crate::audio::MusicSwitch;
 use crate::prelude::*;
@@ -57,9 +53,14 @@ pub const QUIET_S: f64 = 5.0;
 /// values*: 3 s, camp and the world map alike).
 pub const FADE_IN_MS: u32 = 3000;
 
+/// How long each track fades out, in milliseconds (audio.md, *Starting
+/// values*: 3 s, camp and the world map alike).
+pub const FADE_OUT_MS: u32 = 3000;
+
 /// Asks `ctx`'s audio for `cue`. A track fades in over [`FADE_IN_MS`]; a
 /// track it interrupts (a conversation's, a town's) fades out over the
-/// manifest's fade first, the two never overlapping.
+/// manifest's fade first, the two never overlapping. A stop fades out over
+/// [`FADE_OUT_MS`].
 pub fn ask(ctx: &mut Ctx, cue: &MusicCue) {
     match cue {
         MusicCue::Play(cue) => {
@@ -67,9 +68,7 @@ pub fn ask(ctx: &mut Ctx, cue: &MusicCue) {
             let switch = MusicSwitch::new(out_ms, FADE_IN_MS, false);
             ctx.audio.play_music_with(cue, switch);
         }
-        // engine-friction: engine#2398 (the fade-out is the manifest's one
-        // fade, not audio.md's 3 s)
-        MusicCue::Stop => ctx.audio.stop_music(),
+        MusicCue::Stop => ctx.audio.stop_music_with(FADE_OUT_MS),
     }
 }
 
@@ -247,14 +246,14 @@ mod tests {
 
     #[test]
     fn camp_starts_with_the_track_picked() {
-        let (music, cue) = CampMusic::start(pool(), 1, 0.5, 10.0).unwrap();
+        let (music, cue) = CampMusic::start(pool(), 1, 3.0, 10.0).unwrap();
         assert_eq!(cue, MusicCue::Play("b".into()));
         assert_eq!(music.track(), "b");
         assert!(music.is_playing());
         // A pick past the pool wraps onto it; an empty pool has no music.
-        let (music, _) = CampMusic::start(pool(), 4, 0.5, 0.0).unwrap();
+        let (music, _) = CampMusic::start(pool(), 4, 3.0, 0.0).unwrap();
         assert_eq!(music.track(), "b");
-        assert!(CampMusic::start(vec![], 0, 0.5, 0.0).is_none());
+        assert!(CampMusic::start(vec![], 0, 3.0, 0.0).is_none());
     }
 
     /// A track plays until its fade ends with it, then camp is quiet for
@@ -262,14 +261,14 @@ mod tests {
     /// first after the last.
     #[test]
     fn the_tracks_rotate_with_a_fade_and_a_quiet_between() {
-        let (mut music, _) = CampMusic::start(pool(), 1, 0.5, 0.0).unwrap();
-        assert_eq!(music.tick(59.0), None);
-        assert_eq!(music.tick(59.5), Some(MusicCue::Stop));
+        let (mut music, _) = CampMusic::start(pool(), 1, 3.0, 0.0).unwrap();
+        assert_eq!(music.tick(56.9), None);
+        assert_eq!(music.tick(57.0), Some(MusicCue::Stop));
         assert!(!music.is_playing());
         assert_eq!(music.track(), "c");
         assert_eq!(music.tick(64.9), None);
         assert_eq!(music.tick(65.0), Some(play("c")));
-        assert_eq!(music.tick(94.5), Some(MusicCue::Stop));
+        assert_eq!(music.tick(92.0), Some(MusicCue::Stop));
         assert_eq!(music.tick(100.0), Some(play("a")));
         assert_eq!(music.track(), "a");
     }
@@ -278,7 +277,7 @@ mod tests {
     /// one step per tick, never skipping a track.
     #[test]
     fn a_late_tick_moves_on_one_step() {
-        let (mut music, _) = CampMusic::start(pool(), 2, 0.5, 0.0).unwrap();
+        let (mut music, _) = CampMusic::start(pool(), 2, 3.0, 0.0).unwrap();
         assert_eq!(music.tick(500.0), Some(MusicCue::Stop));
         assert_eq!(music.tick(500.0), Some(play("a")));
         assert_eq!(music.tick(500.0), None);
@@ -286,10 +285,10 @@ mod tests {
 
     #[test]
     fn resuming_restarts_the_track_but_not_the_quiet() {
-        let (mut music, _) = CampMusic::start(pool(), 0, 0.5, 0.0).unwrap();
+        let (mut music, _) = CampMusic::start(pool(), 0, 3.0, 0.0).unwrap();
         assert_eq!(music.resume(50.0), Some(play("a")));
-        assert_eq!(music.tick(149.0), None, "the track's whole length again");
-        assert_eq!(music.tick(149.5), Some(MusicCue::Stop));
+        assert_eq!(music.tick(146.9), None, "the track's whole length again");
+        assert_eq!(music.tick(147.0), Some(MusicCue::Stop));
         assert_eq!(music.resume(150.0), None);
     }
 }
