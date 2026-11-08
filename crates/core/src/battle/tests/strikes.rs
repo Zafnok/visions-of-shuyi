@@ -432,3 +432,48 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn the_ai_counts_only_the_users_strikes_at_other_units() {
+    // Wide Swing: the target's own strike is the forecast, not one of the
+    // others.
+    let s = battle(vec![
+        artist(1, p(4, 2), "heavy_axe"),
+        enemy(3, p(5, 2)),
+        enemy(4, p(4, 1)),
+        enemy(5, p(4, 3)),
+    ]);
+    let user = s.unit(UnitId(1)).unwrap();
+    let action = art_attack(3, "wide_swing");
+    let outlook = s
+        .attack_forecast(user, p(4, 2), &[p(4, 2)], &action)
+        .unwrap();
+    let others: Vec<UnitId> = outlook.others.iter().map(|(id, _)| *id).collect();
+    assert_eq!(others, [UnitId(4), UnitId(5)]);
+    // Chain Strike: the allies' strikes aren't the user's.
+    let s = battle(vec![
+        artist(1, p(0, 1), "knuckles"),
+        unit(2, Faction::Player, p(1, 0)),
+        tuned(enemy(3, p(1, 1)), 30, 0),
+    ]);
+    let user = s.unit(UnitId(1)).unwrap();
+    let action = art_attack(3, "chain_strike");
+    let outlook = s
+        .attack_forecast(user, p(0, 1), &[p(0, 1)], &action)
+        .unwrap();
+    assert_eq!(outlook.others, []);
+}
+
+#[test]
+fn chain_strike_goes_clockwise_from_the_north() {
+    // The user north of the target at (2, 2); allies west, south and east.
+    let mut s = battle(vec![
+        artist(1, p(2, 1), "knuckles"),
+        unit(2, Faction::Player, p(1, 2)),
+        unit(4, Faction::Player, p(2, 3)),
+        unit(5, Faction::Player, p(3, 2)),
+        tuned(enemy(3, p(2, 2)), 30, 0),
+    ]);
+    let events = act(&mut s, 1, p(2, 1), art_attack(3, "chain_strike"));
+    assert_eq!(struck(&events), [(1, 3), (5, 3), (4, 3), (2, 3)]);
+}

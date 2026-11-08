@@ -263,7 +263,7 @@
 //!   too, adds to `dealt`), with the base doubled for the art's user. A
 //!   weapon the payment brought to 0 fought unbroken and breaks after
 //!   ([`Event::ItemBroke`]), before anyone falls (target, the units struck,
-//!   the allies, then the attacker). [`BattleState::preview_attack`] gives the UI
+//!   then the attacker). [`BattleState::preview_attack`] gives the UI
 //!   the forecast, the durability change and the art's
 //!   [notes](crate::art::ArtNote) before committing.
 //!
@@ -3250,13 +3250,10 @@ impl BattleState {
             self.after_strike(id, active, dealt, events);
         }
         events.extend(broke);
+        // The art's strikes have no counter, so only the units they strike
+        // can fall to them.
         let struck = attack.strikes.iter().map(|s| s.at);
-        let allies = attack.strikes.iter().map(|s| s.by).filter(|&by| by != id);
-        let order: Vec<UnitId> = core::iter::once(target)
-            .chain(struck)
-            .chain(allies)
-            .chain([id])
-            .collect();
+        let order: Vec<UnitId> = core::iter::once(target).chain(struck).chain([id]).collect();
         self.remove_fallen(&order, events);
         for clash in &clashes {
             self.award_combat(clash, events);

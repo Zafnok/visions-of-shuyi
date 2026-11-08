@@ -112,9 +112,9 @@ Starting rules (*the agent's starting rules*, for the Act 1 playtest, 1064):
 - The strikes at units other than the target use the numbers at the
   target's distance (as Line Pierce already did). For example, Arrow
   Rain's strike at an enemy right next to the archer still lands.
-- A struck unit's Deflect still turns the first hit into a miss and
-  strikes back, as it does against Line Pierce. If that strike-back fells
-  the user, the rest of the strikes don't happen.
+- A struck unit's Deflect turns the strike into a miss but doesn't strike
+  back: the strike has no counter, as Line Pierce's already worked (0326).
+  So nobody who strikes can be hurt by these strikes.
 - Chain Strike: an ally strikes whether or not it has acted this turn. It
   must have a weapon equipped that reaches 1 and isn't broken. Its damage
   counts toward the user's weapon EXP, but its hits don't count as the
