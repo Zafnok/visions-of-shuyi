@@ -80,20 +80,30 @@ head: the ear tips start at row 6. `cargo xtask portrait-import` keeps
 the bottom 64 rows (16..80) for every bust, so it dropped rows 6..15,
 the top of both ears; the tip box draws the 64×64 cut at 2× as it is.
 
-**Fix:** `portrait-import` takes `--shift-y <pixels>` (−16..=0), which
-moves the cut up the way `--shift-x` moves it sideways. The guide's
-eight busts were cut again with `--shift-y -10` (rows 6..70: ear tips
-to shoulders) in the private repository (`544a45e`, its sidecar notes
-the flag) and `assets-private.rev` points at it. The picture is still
-64×64, so the box is the same size and still fits beside the side panel
-(0459's rule); only the bottom 10 rows of her shoulders are gone.
+**Fix: her ears are shortened in the art (Nick's call), not the cut.**
+A first try moved the cut up 10 rows to show the whole ears; Nick
+didn't like it ("her whole ears are so long and that's the problem")
+and asked for the ears to be shortened to fit the frame instead. This
+goes past the ticket's "Out: editing the art" at his request; it is a
+small pixel edit of the bought bust (`ascii-art`'s allowed edits), not
+redrawing. From several rendered options he picked "A2": on each of the
+eight 80×80 busts, the ear on the right of the picture (it leans out
+and read as longer) is pulled in towards her head, up to 6 px at the
+tip and none at row 30; then both ears are squashed in height between
+their tip and row 32 so the tips sit at rows 17 and 20, just inside the
+usual cut (rows 16..80). The cut and the box are as before: still
+64×64, the face and shoulders where they were, the box the same size
+beside the side panel (0459's rule). The busts are in the private
+repository (`db3e808`, its sidecar describes the edit) and
+`assets-private.rev` points at it. That commit also brings 0476's voice
+clips, pushed to the private main meanwhile (voice files only).
 
 Screenshots of the game (bought art, allowed as game screenshots):
 before `docs/img/0468-tip-before.png` (ears sliced flat), after
-`docs/img/0468-tip-after.png` (whole ears).
+`docs/img/0468-tip-after.png` (shorter ears, whole).
 
 - Other characters' busts may have the same cut; out of scope here
   ("other faces"), not checked.
-- Engine friction: estimate 20, measured 34 (1.7×), under 2×.
+- No code: the `--shift-y` import option of the first try was taken out.
 - No gameplay rules decided. No follow-up tickets.
 - For the Act 1 playtest (1064): the tip box before/after above.
