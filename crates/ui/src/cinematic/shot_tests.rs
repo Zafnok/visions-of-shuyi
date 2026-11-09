@@ -8,7 +8,7 @@ use proptest::prelude::*;
 use trpg_content::{LangCode, Present, Side};
 use trpg_core::CharacterId;
 
-use super::faces::{FACE_SPACING, faces, first_x};
+use super::faces::{FACE_SPACING, FaceLook, faces, first_x};
 use super::talk::{HOLD_SHARE, boxes, talk_at};
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -166,12 +166,12 @@ proptest! {
         width in 20i32..200,
     ) {
         let (early, late) = if a <= b { (a, b) } else { (b, a) };
-        let (x0, step) = first_x(early, count, Side::Right, width);
-        let (x1, _) = first_x(late, count, Side::Right, width);
+        let (x0, step) = first_x(early, count, Side::Right, width, FaceLook::GLYPH);
+        let (x1, _) = first_x(late, count, Side::Right, width, FaceLook::GLYPH);
         prop_assert_eq!(step, FACE_SPACING);
         prop_assert!(x1 <= x0 && x0 <= width);
         // From the left it is the mirror picture.
-        let (m0, back) = first_x(early, count, Side::Left, width);
+        let (m0, back) = first_x(early, count, Side::Left, width, FaceLook::GLYPH);
         prop_assert_eq!(back, -FACE_SPACING);
         prop_assert_eq!(m0 + FRAME.0, width - x0);
     }
@@ -355,7 +355,7 @@ fn a_talk_shot_without_its_scene_or_its_boxes_is_blank() {
 #[test]
 fn faces_cross_from_just_off_one_edge_to_just_off_the_other() {
     // Three faces on 100 columns: 100 + 2 × 50 + 34 columns to go.
-    let right = |p: f32| first_x(p, 3, Side::Right, 100);
+    let right = |p: f32| first_x(p, 3, Side::Right, 100, FaceLook::GLYPH);
     assert_eq!(right(0.0), (100, 50));
     assert_eq!(right(0.5), (-17, 50));
     assert_eq!(right(1.0), (-134, 50));
@@ -364,21 +364,30 @@ fn faces_cross_from_just_off_one_edge_to_just_off_the_other() {
     // In whole cells: 0.29 of 234 is 67.86 columns gone.
     assert_eq!(right(0.29), (33, 50));
     // From the left, the mirror picture: the others follow on its left.
-    let left = |p: f32| first_x(p, 3, Side::Left, 100);
+    let left = |p: f32| first_x(p, 3, Side::Left, 100, FaceLook::GLYPH);
     assert_eq!(left(0.0), (-34, -50));
     assert_eq!(left(0.5), (83, -50));
     assert_eq!(left(1.0), (200, -50));
     assert_eq!(left(1.0).0 - 2 * 50, 100);
     // One face, or none, has only the screen and itself to cross.
-    assert_eq!(first_x(1.0, 1, Side::Right, 100), (-34, 50));
-    assert_eq!(first_x(1.0, 0, Side::Right, 100), (-34, 50));
-    assert_eq!(first_x(0.5, 1, Side::Right, 100), (33, 50));
+    assert_eq!(
+        first_x(1.0, 1, Side::Right, 100, FaceLook::GLYPH),
+        (-34, 50)
+    );
+    assert_eq!(
+        first_x(1.0, 0, Side::Right, 100, FaceLook::GLYPH),
+        (-34, 50)
+    );
+    assert_eq!(first_x(0.5, 1, Side::Right, 100, FaceLook::GLYPH), (33, 50));
     // A progress that isn't one is the start; past an end, that end.
     assert_eq!(right(f32::NAN), (100, 50));
     assert_eq!(right(-2.0), (100, 50));
     assert_eq!(right(2.0), (-134, 50));
     // A crowd beyond counting doesn't overflow.
-    assert_eq!(first_x(0.0, usize::MAX, Side::Right, 100), (100, 50));
+    assert_eq!(
+        first_x(0.0, usize::MAX, Side::Right, 100, FaceLook::GLYPH),
+        (100, 50)
+    );
 }
 
 #[test]

@@ -3,9 +3,11 @@
 //! speaker's face as it was there. The dialogue screen builds a
 //! [`LogView`] from its [`History`] while the log is open
 //! ([`DialogueScreen::log_view`](super::DialogueScreen::log_view)) and a
-//! skin paints it ([`glyph::paint`] today); see ADR-0054.
+//! skin paints it ([`glyph::paint`] on the PC, [`playdate::paint`] on the
+//! Playdate); see ADR-0054.
 
 pub mod glyph;
+pub mod playdate;
 
 use crate::prelude::*;
 use trpg_content::{LineId, Side};

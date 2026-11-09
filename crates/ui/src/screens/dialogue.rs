@@ -3,11 +3,12 @@
 //! or as an overlay that leaves the battle map visible behind it.
 //!
 //! What it shows is a [`view::DialogueView`] (ADR-0054); [`glyph`] paints
-//! it.
+//! it on the PC and [`playdate`] on the Playdate ([`SKINS`], ticket 1043),
+//! whose pages are [`PLAYDATE_TEXT_W`] letters a line.
 //!
 //! The dialogue log (ticket 0729) lists the lines seen so far over the
 //! whole screen: [`history`] keeps them, [`log`] is what it shows and
-//! [`log::glyph`] paints it.
+//! [`log::glyph`] and [`log::playdate`] paint it.
 //!
 //! Where the script asks (`@opening`, ticket 0734), a short moving opening
 //! plays before a line: the opening's characters walk on the place at
@@ -24,6 +25,7 @@
 pub mod glyph;
 pub mod history;
 pub mod log;
+pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
@@ -37,7 +39,8 @@ use crate::dialogue::{DialoguePlayer, Portrait};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
 use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, SkinSet, Transition};
+use crate::screens::Skins;
 use crate::settings::{AutoAdvance, LogVoice};
 use crate::widgets::Ask;
 use crate::widgets::help::key_name;
@@ -52,6 +55,24 @@ use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
 pub const TEXT_W: usize = trpg_content::dialogue::BOX_WIDTH;
 /// Text lines per box; longer text pages.
 pub const TEXT_LINES: usize = trpg_content::dialogue::BOX_LINES;
+/// Characters per text line on the Playdate (`docs/design/playdate.md`,
+/// *Portraits*: a 3-line text box of 47 letters a line): its pages are
+/// shorter than the PC's, so a box turns more of them.
+pub const PLAYDATE_TEXT_W: usize = 47;
+
+/// The dialogue screen's skins (ADR-0083).
+pub const SKINS: Skins<DialogueView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
+
+/// Characters per text line with `ctx`'s skins.
+pub fn text_w(ctx: &Ctx) -> usize {
+    match ctx.game.skin_set {
+        SkinSet::Glyph => TEXT_W,
+        SkinSet::Playdate => PLAYDATE_TEXT_W,
+    }
+}
 /// Reveal speed multiplier while Confirm is held, and the seconds it must
 /// be held on a page before it reveals faster (so the tap that turned the
 /// page doesn't speed the next one up): the engine's text box's.
@@ -182,6 +203,8 @@ pub struct DialogueScreen {
     /// The current text box: its pages ([`TEXT_LINES`] lines each) and how
     /// much is revealed.
     text: TextBox,
+    /// Characters per line of its pages ([`text_w`]).
+    width: usize,
     /// "Skip scene?", while it is open.
     asking_skip: Option<Ask<bool>>,
     /// The lead's replies, while a choice is open.
@@ -228,6 +251,7 @@ impl DialogueScreen {
                 TEXT_LINES,
                 &shuyi_assets::font::CellWidths::NARROW,
             ),
+            width: TEXT_W,
             asking_skip: None,
             menu: None,
             history: History::new(),
@@ -247,11 +271,23 @@ impl DialogueScreen {
 
     /// [`new`](Self::new) in the player's language ([`Ctx::words`]): the
     /// lines, replies and captions its pack translates, with the names of
-    /// the story as the pack has them.
+    /// the story as the pack has them; its pages as wide as `ctx`'s skins
+    /// show them ([`text_w`]).
     pub fn told(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
         let words = ctx.words();
         let names = words.names(&ctx.game.content.names);
-        Self::new(&words.scene(scene, lead.gender), lead, names, present)
+        Self::new(&words.scene(scene, lead.gender), lead, names, present).wrapped_for(ctx)
+    }
+
+    /// The same screen with its pages as wide as `ctx`'s skins show them
+    /// ([`text_w`]): the Playdate's are narrower. Before it has played.
+    #[must_use]
+    pub fn wrapped_for(mut self, ctx: &Ctx) -> Self {
+        if self.width != text_w(ctx) {
+            self.width = text_w(ctx);
+            self.show_box();
+        }
+        self
     }
 
     /// [`told`](Self::told), drawn over the screen below (the battle map).
@@ -399,7 +435,7 @@ impl DialogueScreen {
         let view = self.player.current();
         let text = TextBox::new(
             view.text.as_deref().unwrap_or(""),
-            TEXT_W,
+            self.width,
             TEXT_LINES,
             &shuyi_assets::font::CellWidths::NARROW,
         );
@@ -470,7 +506,7 @@ impl Screen<Shuyi> for DialogueScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn is_overlay(&self) -> bool {
