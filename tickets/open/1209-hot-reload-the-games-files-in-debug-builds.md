@@ -30,6 +30,11 @@ content is loaded once. The polling only sees folders read with
 `read_folder`, so the game's embedded bundle needs a debug path to the disk
 first. A changed PNG isn't redrawn yet (engine 2242).
 
+**Either order with 0764:** 0764 builds a script preview program for
+writers that reads the scripts from a folder and reloads them. If 0764
+is done, reuse its folder reading for the debug build where it fits; if
+not, nothing to do.
+
 ## Nick input
 
 None.

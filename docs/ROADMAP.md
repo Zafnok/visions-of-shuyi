@@ -419,6 +419,39 @@ Candle joins outside battle.
   box at the bottom · **0864** Tamsin a little stronger (asks Nick) ·
   **0865** the music dips under a voiced line (after engine#2511 →
   engine#2342 → engine#2343).
+- **I. Nick's playtest of the Act 1 build** (2026-11-08). Decisions
+  first, each building in its own ticket: **0079** who wields the
+  Houndmaster's Axe → **0332** · **0080** how the army gets through
+  armour → **0333** · **0081** a bigger EXP cut for a level gap →
+  **0610** · **0082** Chapter 2's houses within reach → **0867** ·
+  **0083** getting off and back on a horse → **0334** · **0084**
+  Chapter 3's throne and its guards → **0868**. Without a decision:
+  **0527** the bots report units that can't hurt the enemy or fall
+  behind (first, so the balance tickets show per-unit numbers before
+  and after) · **0526** enemies close in instead of waiting · **0866**
+  Joss a little weaker (asks Nick) · **0485** the end-of-lessons box
+  only in Chapter 1 · **0486** shop lines show every number · **0487**
+  previous and next unit in Loadouts · **0488** the seize point stays
+  visible under a unit · **0489** Vix explains weapon effectiveness ·
+  **0490** the Arts lesson shows an art is an attack · **0491**
+  Chapter 4's doorways look like doors · **0869** a save after the last
+  chapter's win (→ **1065**) · **1088** the world map's cursor follows
+  the roads · **1089** Cairnford's world-map picture cut right ·
+  **0453** (Lane G) gives Cinder Oath its "no counter" note. The
+  balance tickets (0332, 0333, 0610, 0866, 0526, 0867, 0868) each
+  re-record the bots' winning playthroughs, so they run one at a time:
+  0333 → 0610 → 0866 → 0526 → 0867 → 0868, 0332 after 0079.
+- **J. A human writer** (Nick, 2026-11-08: the dialogue reads robotic
+  after three or four rewrites; AI writing of dialogue is paused until
+  a writer is hired). **0153** the game's repository goes private ·
+  **0152** a private mirror of the scripts a writer can propose
+  changes to · engine#2585 a dialogue preview → **0764** a
+  script preview program for writers · **0765** the writer's guide for
+  an outside writer → **0766** find a writer (the ad, the trial scene,
+  the pick). While 0766 is open no dialogue is written by an agent:
+  **1073**, **1083** and **1084** wait for it. Short instructional tips
+  (0483, 0489, 0490, 1081) go ahead in plain words; the writer may
+  redo Vix's wording later.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -482,6 +515,7 @@ Design answers unblock most of the rules work. Suggested order:
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** Hedda's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
+   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0866**. Lane J's setup: **0153** the repository private, **0152** the scripts repository, **0766** the ad and the pick
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)

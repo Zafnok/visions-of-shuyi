@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["1007"]
+blocked_by: ["1007", "0869"]
 nick_input: none
 completed:
 ---
@@ -50,7 +50,8 @@ checklist.
   `{n:...}` tokens as usual), then the title. The look stays the "To be
   continued" screen's; no new art.
 - **The army carried over:** the save written at the end of the act (the
-  0802 "Save your progress?" prompt after the final victory) records
+  "Save your progress?" prompt after the final world-map victory,
+  which 0869 adds: a world-map save of the cleared state) records
   that Act 1 is complete, with the whole army, stock, gold and support
   points (the `Campaign` already holds them; this adds the act-complete
   mark and keeps it through save and load). `Load Game` on such a save

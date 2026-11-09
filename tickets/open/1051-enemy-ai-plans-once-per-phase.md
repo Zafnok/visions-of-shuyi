@@ -31,6 +31,12 @@ costs about n² decisions. Planning the phase once and replaying the plan
 speed-up. ADR-0004: `core` is deterministic, and **the AI's choices must
 stay identical** (the bots, play records and replays depend on it).
 
+**Either order with 0526:** 0526 lets a `Guard` wake when an enemy
+comes within a walking distance of it, measured on the flow field from
+its tile. If 0526 is done, that test is part of the plan made once per
+phase and must be worked out again when a unit moves; if not, nothing
+to do (0526 adds it to whichever planner is there).
+
 ## Nick input
 
 **Setup** (a measurement, not a check): Nick sideloads the before and
