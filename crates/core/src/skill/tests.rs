@@ -598,6 +598,26 @@ fn preparing_for_battle_refills_the_uses_of_the_usable_actives() {
 }
 
 #[test]
+fn an_active_learned_in_battle_has_its_full_uses_at_once() {
+    let (classes, skills) = (classes(), table());
+    let fill = |u: &mut Unit| {
+        u.fill_new_uses(&classes, &crate::spell::SpellTable::default(), &skills);
+    };
+    // A Guard with 1 Brace left masters Exile: Rally is new and full (0609),
+    // Brace keeps its 1.
+    let mut u = unit_in("guard");
+    u.skill_uses.uses_left.insert(sid("brace"), 1);
+    fill(&mut u);
+    assert_eq!(u.skill_uses.uses_left, [(sid("brace"), 1)].into());
+    record(&mut u, "exile", 10);
+    fill(&mut u);
+    assert_eq!(
+        u.skill_uses.uses_left,
+        [(sid("brace"), 1), (sid("rally"), 1)].into()
+    );
+}
+
+#[test]
 fn pay_cost_spends_durability_and_breaks_at_zero() {
     // More than is left: the rest is spent and the weapon breaks.
     let mut short = armed(2);

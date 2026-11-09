@@ -935,3 +935,53 @@ fn with_the_real_net_averages_are_at_least_the_growths() {
         assert!(total > 2.8 + 0.02, "tier {tier}: {total}");
     }
 }
+
+/// The Swordsman's `spark` (5 uses) and `frost` (10 uses).
+fn spell_table() -> crate::spell::SpellTable {
+    let spell = |id: &str, uses| crate::spell::SpellDef {
+        id: SpellId::new(id),
+        name: id.into(),
+        kind: crate::spell::SpellKind::Heal { heal_power: 1 },
+        element: crate::magic::Element::None,
+        min_range: 1,
+        max_range: 1,
+        uses,
+        terrain_effect: None,
+        no_counter: false,
+    };
+    let all = [spell("spark", 5), spell("frost", 10)];
+    crate::spell::SpellTable {
+        spells: all.into_iter().map(|s| (s.id.clone(), s)).collect(),
+    }
+}
+
+proptest! {
+    /// Level ups and class level ups in a battle, with casts between them:
+    /// every spell's uses stay within its maximum, and a spell learned in
+    /// the battle starts full (0609).
+    #[test]
+    fn a_spell_learned_in_battle_starts_full(
+        steps in prop::collection::vec((0..=150u32, 0..=20u32, 0..=3u8), 1..12),
+    ) {
+        let (t, sk, sp) = (table(), skills(), spell_table());
+        let mut u = fresh();
+        u.prepare_for_battle(&t, &crate::item::ItemTable::default(), &sp, &sk);
+        let mut rng = SimRng::new(7);
+        for (exp, cp, casts) in steps {
+            let mut events = grant_exp(&mut u, exp, &t, &mut rng);
+            events.extend(grant_class_points(&mut u, cp, &t, &sk));
+            u.fill_new_uses(&t, &sp, &sk);
+            for e in &events {
+                if let Event::SpellLearned { spell, .. } = e {
+                    prop_assert_eq!(u.spells.uses_left(spell), sp.get(spell).unwrap().uses);
+                }
+            }
+            for spell in u.learned.clone() {
+                for _ in 0..casts {
+                    u.spells.spend(&spell);
+                }
+                prop_assert!(u.spells.uses_left(&spell) <= sp.get(&spell).unwrap().uses);
+            }
+        }
+    }
+}

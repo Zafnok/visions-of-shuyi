@@ -356,6 +356,33 @@ fn a_spell_at_zero_uses_cant_be_cast_or_counter() {
 }
 
 #[test]
+fn a_spell_learned_on_a_level_up_has_its_full_uses_at_once() {
+    let mut units = cast();
+    units[1] = mage(2, Faction::Player, p(0, 3), &["bolt"]);
+    units[1].personal_spells = vec![(2, sid("frost"))];
+    units[1].exp = 90;
+    units[3].pos = p(2, 3);
+    units[3].stats.hp = 40;
+    units[3].hp = 40;
+    let mut s = start(BattleSetup {
+        classes: Arc::new(leveling(classes())),
+        ..setup(units)
+    });
+    let events = act(&mut s, 2, p(0, 3), cast_on("bolt", 4));
+    let learned = Event::SpellLearned {
+        unit: UnitId(2),
+        spell: sid("frost"),
+    };
+    assert!(events.contains(&learned), "{events:?}");
+    // Nick, 2026-11-07 (0609): the new spell is full; the old one keeps
+    // what is left.
+    assert_eq!((uses(&s, 2, "frost"), uses(&s, 2, "bolt")), (10, 1));
+    next_turn(&mut s);
+    let events = act(&mut s, 2, p(0, 3), cast_on("frost", 4));
+    assert!(events.contains(&spell_used(2, "frost", 9)), "{events:?}");
+}
+
+#[test]
 fn a_defender_that_falls_before_striking_spends_nothing() {
     let mut units = cast();
     units[1] = mage(2, Faction::Player, p(0, 3), &["bolt"]);

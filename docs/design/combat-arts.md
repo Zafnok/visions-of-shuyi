@@ -674,9 +674,8 @@ one. At 0 the Shove is greyed out until the next battle.
   A skill with none left is dimmed, with `no uses left` after it. Picking
   who to Shove shows `Shove on Brigand (8 → 7 uses)`.
 - A unit that comes to know a non-attack active in the middle of a battle
-  has no uses of it until the next battle, like a spell learned in battle
-  (*Claude's starting rule*; nothing in the game teaches an active
-  mid-battle yet).
+  has its full uses of it at once, like a spell learned in battle (Nick,
+  2026-11-07, ticket 0609). One it already had keeps the uses it has left.
 
 ### Durability costs (*tunable*: 2/battle actives cost 3, 1/battle actives cost 5)
 
