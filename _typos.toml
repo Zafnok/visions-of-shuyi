@@ -39,9 +39,14 @@ mor = "mor"
 # Ned Tolley, the Chapter 3 boss (docs/story/names.md, ticket 0743).
 ned = "ned"
 
-# A fragment of the engine commit c1ba9ec8 in the pin ledger and ticket
-# 1240 (docs/engine/pins.md), split by typos as "c1" "ba" "9ec8".
-ba = "ba"
+[default]
+# Commit hashes (e.g. the engine pin c1ba9ec8 in docs/engine/pins.md):
+# typos splits them into fragments like "ba". A hex run is skipped only when
+# it holds a digit, so a hex-only word like "deadbeef" is still read. Never
+# allow a hash fragment as a word (ticket 0149). Typos's regex has no
+# look-ahead, so the 7-40 length can't be required too; a short hex run with
+# a digit is never a word anyway.
+extend-ignore-re = ['\b[0-9a-f]*[0-9][0-9a-f]*\b']
 
 [files]
 # Vendored third-party font data (hex bitmaps, codepoint names) and the atlas
@@ -53,4 +58,6 @@ extend-exclude = [
     # Creative Commons' legal text, verbatim (ticket 0809): its own
     # spelling ("MERCHANTIBILITY") stays.
     "assets/audio/licenses/CC-BY-3.0.txt",
+    # The ticket about the hash fragment "ba" names the word itself.
+    "tickets/*/0149-typos-ignores-commit-hashes-by-pattern-not-by-allowing-ba-everywhere.md",
 ]
