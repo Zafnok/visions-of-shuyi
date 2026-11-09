@@ -1,5 +1,5 @@
 ---
-id: "0526"
+id: "0528"
 title: "Enemies close in instead of waiting, except on good ground"
 type: tuning
 milestone: M4 Enemy AI
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0526 — Enemies close in instead of waiting
+# 0528 — Enemies close in instead of waiting
 
 ## Context
 
@@ -127,7 +127,7 @@ Completion notes and on the Act 1 playtest's checklist (1064).
   facts are; if not, 1051's equality tests include this rule.
 - 0525 (Hardcore no faster at Veyne Hall). Either order; whichever lands
   second re-runs Chapter 4's bands with the other in.
-- Chapter 3's seize (0868), Chapter 2's houses (0867), Joss (0866),
+- Chapter 3's seize (0868), Chapter 2's houses (0867), Joss (0870),
   armour (0333), EXP (0610): either order; whichever lands second
   re-records the playthroughs and re-runs the bands with the first in.
 - Random skirmishes (`assets/skirmishes/`, the `act1_random_*` battles):

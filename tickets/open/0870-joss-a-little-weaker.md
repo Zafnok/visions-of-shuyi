@@ -1,5 +1,5 @@
 ---
-id: "0866"
+id: "0870"
 title: "Joss a little weaker"
 type: tuning
 milestone: M7 Chapter 1 & game flow
@@ -11,7 +11,7 @@ nick_input: decision
 completed:
 ---
 
-# 0866 — Joss a little weaker
+# 0870 — Joss a little weaker
 
 ## Context
 
@@ -98,7 +98,7 @@ return to an ordinary swordsman.
   changes every unit's damage, Joss's included. If 0333 is done first,
   the tables and the bots' numbers include it; if not, 0333 re-runs them
   with this change in.
-- **0610** (EXP for a level gap) and **0526** (the AI): either order, the
+- **0610** (EXP for a level gap) and **0528** (the AI): either order, the
   same way.
 - Tamsin (0864) and the lead (0846).
 

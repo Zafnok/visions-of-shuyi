@@ -98,7 +98,7 @@ the Act 1 playtest's checklist (1064).
   either order. It reads the minimum and the objective from the battle
   file, so a new minimum shows by itself; if 0481 is done first, check
   its Chapter 2 snapshot and refresh it on purpose.
-- **0526** (enemies close in): either order; whichever lands second
+- **0528** (enemies close in): either order; whichever lands second
   re-runs Chapter 2's bands with the other in.
 - The house's look in the picture look (0471, art Nick buys).
 

@@ -101,7 +101,7 @@ Chapter 3 guard for the unit who would hold it.
   loses swords while a Raider; Str 6: 5 a hit, 11 with Armor Cleave) or
   Hollis (gains Mov 5 but loses his spears, the Armored tag and the
   right to wear Plate later; he keeps his Chain Mail). Nick also finds
-  Joss "a bit too strong" (0866): the axe on Joss adds to that. Like
+  Joss "a bit too strong" (0870): the axe on Joss adds to that. Like
   Fire Emblem's Second Seal (Awakening, Fates), an item that changes a
   unit's class. Downside: a Reclass Seal in Chapter 2 is far
   earlier than "rare".
@@ -141,8 +141,8 @@ README.md` row; 0332's text updated with what to build.
 - Promotion and reclass in the between-battle menu (0606). If Nick picks
   a reclass (C) and 0606 isn't done, 0332 gives the class change in data
   or a scene step instead of the menu; say so in 0332's text.
-- Joss's tuning (0866). Either order: show Joss's numbers as they are
-  when asked; if 0866 is done, use its values.
+- Joss's tuning (0870). Either order: show Joss's numbers as they are
+  when asked; if 0870 is done, use its values.
 
 ## Implementation steps
 

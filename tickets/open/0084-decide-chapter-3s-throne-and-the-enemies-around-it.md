@@ -78,7 +78,7 @@ staging change to check against that; new or changed dialogue waits for
 the writer (Nick paused AI story writing on 2026-11-08 until one is
 hired, ticket 0766).
 
-**Not this ticket:** how the AI decides to advance in general is 0526's
+**Not this ticket:** how the AI decides to advance in general is 0528's
 (Nick's "overall they should advance toward the player more often").
 This ticket decides Chapter 3's own map: where the seat is, who stands
 where, and which units here hold or come.
@@ -131,9 +131,9 @@ the `docs/design/README.md` row; 0868's text updated with what to build.
 
 **Out (do not do):**
 - Building it (map, battle file, bots): ticket **0868**.
-- The general AI rule for advancing: ticket **0526**. Either order: if
-  0526 is decided first, show its rule here; if not, this ticket's
-  choices per unit stand and 0526 must not undo them.
+- The general AI rule for advancing: ticket **0528**. Either order: if
+  0528 is decided first, show its rule here; if not, this ticket's
+  choices per unit stand and 0528 must not undo them.
 - The throne's picture (0471) and the seize objective's name (0331).
 - New or changed dialogue: waits for the writer (0766).
 
@@ -146,7 +146,7 @@ the `docs/design/README.md` row; 0868's text updated with what to build.
    option (never committed), `cargo shuyi frame-png` in both looks;
    optionally a bots run per option to show turns and win rates.
 3. Ask Nick; iterate; record his words and the result.
-4. Update 0868's text (and tell 0526 what this map decided).
+4. Update 0868's text (and tell 0528 what this map decided).
 
 ## Acceptance criteria
 

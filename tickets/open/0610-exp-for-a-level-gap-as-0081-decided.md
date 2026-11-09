@@ -85,7 +85,7 @@ goes on the Act 1 playtest's checklist (1064).
 - **0527** (the bots' per-unit report): either order. If it is done
   first, its per-unit EXP shares before and after go in the PR; if not,
   the arrival army's levels are enough.
-- **0333** (armour), **0866** (Joss), **0526** (the AI): either order;
+- **0333** (armour), **0870** (Joss), **0528** (the AI): either order;
   whichever lands second re-records the playthroughs and re-runs the
   bands with the first in.
 

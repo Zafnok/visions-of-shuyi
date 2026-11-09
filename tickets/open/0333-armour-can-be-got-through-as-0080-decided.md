@@ -120,7 +120,7 @@ goes (the session builds the one Nick picked, or the combination):
     go in `docs/playtesting.md`.
 
 **Out (do not do):**
-- The EXP cut for a level gap (0610), Joss's stats (0866) and who wields
+- The EXP cut for a level gap (0610), Joss's stats (0870) and who wields
   the Houndmaster's Axe (0332). **Either order with each:** whichever
   lands second re-records the playthroughs and re-runs the bands with the
   first in.

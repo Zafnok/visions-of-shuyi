@@ -43,7 +43,7 @@ the **recorded playthroughs** (`crates/bots/src/arrival.rs`,
 `PLAYTHROUGHS`, the `ch0N_winning.ron` fixtures), not from the bots.
 
 This ticket adds a report per playable unit, so that a balance change
-(0333 armour, 0610 EXP for a level gap, 0866 Joss) can show what it did
+(0333 armour, 0610 EXP for a level gap, 0870 Joss) can show what it did
 to each unit, and so a unit falling behind is seen before Nick plays.
 
 **The report proposes; it never tunes.** Player units, classes and

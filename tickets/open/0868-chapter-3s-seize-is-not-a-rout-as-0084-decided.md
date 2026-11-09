@@ -105,10 +105,10 @@ by playing goes on the Act 1 playtest's checklist (1064).
     after the new arrival army. Tables in `docs/playtesting.md`.
 
 **Out (do not do):**
-- **0526** (enemies close in instead of waiting): **either order.** If
-  0526 is done first, its rule (open-ground `Guard`s wake, bodyguards
+- **0528** (enemies close in instead of waiting): **either order.** If
+  0528 is done first, its rule (open-ground `Guard`s wake, bodyguards
   `Hold`) applies to the new placements: give the prior's guards `Hold`
-  if they still guard him. If not, 0526's pass reads this ticket's
+  if they still guard him. If not, 0528's pass reads this ticket's
   placements.
 - **0331** (the Seize objective names its place, "the scriptorium"):
   either order; it adds a name field and doesn't care where the tile is.
