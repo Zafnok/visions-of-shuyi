@@ -49,7 +49,7 @@ The three reports, one by one:
    (`screens/battle/shop.rs`, `stat_line`) already share one format,
    `battle.info.weapon_numbers` ("Mt {might}  Hit {hit}  Crit {crit}  Rng
    {range}  Wt {weight}"); `stat_line` also covers armour and accessory
-   bonuses.
+   bonuses (bonuses only, no weight: 0486 adds it).
 2. **Armour shows weapon info.** Not a fall-through: 0408 specified it.
    On an armour or accessory slot the speed line uses the weapon in hand
    (`AS 5 → 6 with Iron Sword`), because armour weight changes attack
@@ -83,8 +83,12 @@ Act 1 playtest's checklist (1064).
 - A **highlighted-item line** in `GearView` (one `Option<String>`, e.g.
   `item_detail`): the numbers of the item under the cursor, wherever the
   cursor is (a slot, a stock row, a swap row), built with the shop's
-  `stat_line` so weapons read `Mt 5  Hit 90  Crit 0  Rng 1  Wt 2` and
-  armour and accessories read their bonuses and weight, as in the shop.
+  `stat_line` so weapons read `Mt 5  Hit 90  Crit 0  Rng 1  Wt 2`;
+  armour reads its bonuses and weight, and accessories (which have no
+  weight) their bonuses. `stat_line` shows no armour weight today.
+  **Either order with 0486:** if 0486 is done, `stat_line` already has
+  armour's weight; if not, armour's line is `prep.armour_detail`
+  (`{bonus}  Wt {weight}`) and 0486 moves it onto `stat_line`.
   An empty slot has no line.
 - **The speed line names no item when the change is armour or an
   accessory:** `AS 5 → 6` alone (a new key, e.g. `prep.speed_change_gear`),

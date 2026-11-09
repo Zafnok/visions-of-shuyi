@@ -22,6 +22,16 @@ Nick made it the rule for every list where you choose what a unit does
 yet. 0429's *Scope* said to add the requirement to 0410, or write this
 ticket if 0410 was already done.
 
+Nick's playtest of the Act 1 build (2026-11-08) asked for it again:
+
+> "Cinder Oath's no counter is not explciitly shown on the skill
+> selection screen"
+
+Cinder Oath is Rue's personal spell (`assets/data/spells.ron` ~:55,
+`no_counter: true`), so it is listed in the spell list, which shows no
+note today. This ticket's "no counter" note answers him; the
+acceptance criteria below cover Cinder Oath by name.
+
 What exists after 0429 (in `crates/ui`, apart from the menu widget):
 
 - `MenuItem::with_note(text)` and `Menu::browsing_disabled()`: Shuyi
@@ -88,7 +98,8 @@ it):
 ## Acceptance criteria
 
 - [ ] Unit test: `spell_effect_text` for every spell, non-empty, ≤ 40
-      characters; two exact strings spot-checked.
+      characters; two exact strings spot-checked, one of them Cinder
+      Oath's, which says "no counter".
 - [ ] Harness test: moving Down in the spell list changes the focused
       line's note (`menu.view().focused()`), onto a dimmed line too, and
       Confirm on the dimmed line leaves the list open.

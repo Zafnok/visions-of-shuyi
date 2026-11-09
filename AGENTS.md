@@ -54,6 +54,9 @@ make a shared instruction work.
 3. **Never invent game-design answers.** They come from `docs/design/` (decided
    by `00xx` tickets) and `docs/story/beats.md`. If one is missing, the ticket
    is blocked; say so.
+   **Dialogue writing is paused** (Nick, 2026-11-08) until a human writer
+   is hired (ticket 0766): no agent writes or rewords script lines; the
+   `story-writing` skill says what is still allowed.
 4. **Respect crate boundaries** (ADR-0004): `core` is pure and deterministic
    (no I/O, no clock, no macroquad); state changes only via `Command` → `Event`s;
    only `app` touches macroquad, files, clock, keyboard.

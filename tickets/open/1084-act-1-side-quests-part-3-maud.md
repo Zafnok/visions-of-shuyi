@@ -5,7 +5,7 @@ type: content
 milestone: Post–Chapter 1
 model: fable-5.1 / gpt-6-astra
 effort: high
-status: todo
+status: blocked
 blocked_by: ["1083", "1070", "0018", "0069", "0749", "0509", "0013", "0323", "0608", "0329"]
 nick_input: none
 completed:
@@ -22,6 +22,12 @@ and 1083 built theirs.
 | Quest | Whose | Unlocked | What it is |
 | --- | --- | --- | --- |
 | *Unwritten* | Maud | once Ossary is reached, Maud alive | she brings the register's names back to their families |
+
+**Writing is paused** (Nick, 2026-11-08: the dialogue reads robotic
+after three or four rewrites, and he is hiring a human writer). No agent
+writes this ticket's scenes or words. Its scenes wait for the writer
+0766 finds; the code, maps and battle parts may go ahead only if they
+need no new lines. Nick unblocks it, once a writer is hired (0766).
 
 ## Nick input
 
