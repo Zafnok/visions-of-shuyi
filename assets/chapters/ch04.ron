@@ -4,9 +4,8 @@
 // begins, then the Act 1 map shows; the rise and the gate play when the
 // army arrives at Veyne Hall (worldmaps/act1.ron, `veyne_hall`), then its
 // battle. The skirmishes' scenes are their battles' (1071). Gil joins on
-// Millhaven Road (1071), not in a scene of this file.
-// `next` becomes Some("ch05") with Chapter 5's battle (ticket 0851): a
-// chapter that doesn't exist yet can't be named.
+// Millhaven Road (1071), not in a scene of this file. Chapter 5 (ticket
+// 0851) goes on from here.
 (
     id: "ch04",
     title: "Chapter 4: The Hound's Country",
@@ -15,6 +14,6 @@
     intro_scenes: ["ch04_eve", "ch04_gate"],
     battle: "ch04",
     victory_scenes: ["ch04_victory", "ch04_tbc"],
-    next: None,
+    next: Some("ch05"),
     world_map: Some("act1"),
 )

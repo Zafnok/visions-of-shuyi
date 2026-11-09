@@ -43,7 +43,7 @@ pub use measures::BattleMeasures;
 pub use persona::{
     Persona, PersonaBot, PersonaOrder, Personas, Scoring, Tally, Weights, order, personas_from_ron,
 };
-pub use playtest::{BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets};
+pub use playtest::{BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets, is_hold};
 pub use skirmish::{Generated, Kind, Request, Units, add_place, add_to_pool, generate};
 
 #[cfg(test)]

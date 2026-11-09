@@ -1,0 +1,41 @@
+(
+    // Chapter 5 (ticket 0851, docs/story/chapters/ch05.md): the envoy's
+    // house on Saltmere's harbor front, past midnight. The house is the
+    // tall narrow block in the middle (x 10-17, y 2-8): the street room
+    // below (y 6-7) with the street door onto the quay at (13, 8), the
+    // stair at (13, 5) up to the room at the top of the stairs (y 3-4),
+    // Ragna's floor, and the roof hatch over it at (14, 2). The back door
+    // is barred: the house has no other way in. The land side is the flat
+    // roofs of the houses round it (y 0-7, low parapets between them),
+    // with a stair down to the quay at each end, (1, 8) and (26, 8). The
+    // water side is the quay (y 9-11), casks stacked at (5, 10) and
+    // (22, 10), and the docks: three piers out over the harbor, the sea
+    // steps the wide one in front of the door (x 13-14).
+    name: "The Envoy's House",
+    legend: {
+        ':': "road",
+        '~': "sea",
+        '=': "bridge",
+        '#': "wall",
+        '_': "floor",
+        'G': "gate",
+    },
+    look: (light: "night"),
+)
+---
+____________________________
+____#__________________#____
+____#_____####_###_____#____
+__________#______#__________
+_####_____#______#_____####_
+__________###_####__________
+____#_____#______#_____#____
+____#_____#______#_____#____
+#:###########G############:#
+::::::::::::::::::::::::::::
+:::::#::::::::::::::::#:::::
+::::::::::::::::::::::::::::
+~~~~~=~~~~~~~==~~~~~~~=~~~~~
+~~~~~=~~~~~~~==~~~~~~~=~~~~~
+~~~~~=~~~~~~~==~~~~~~~=~~~~~
+~~~~~=~~~~~~~==~~~~~~~=~~~~~

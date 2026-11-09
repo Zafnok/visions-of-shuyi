@@ -75,7 +75,7 @@ Checked: the first chapter exists; every roster character exists, once,
 and the lead (`"lead"`) is among them; every stock item exists. The lead's
 unit takes the name the player gives it at New Game.
 
-`ch01.ron` is Chapter 1, where New Game starts, `ch02.ron` Chapter 2, `ch03.ron` Chapter 3 and `ch04.ron` Chapter 4, the first on the Act 1 world map. `test.ron` (the test
+`ch01.ron` is Chapter 1, where New Game starts, `ch02.ron` Chapter 2, `ch03.ron` Chapter 3, `ch04.ron` Chapter 4, the first on the Act 1 world map, and `ch05.ron` Chapter 5. `test.ron` (the test
 chapter: the tests of the game flow start a new game there,
 `NewGameDef::test_chapter`) and `quick.ron` (the debug Quick Battle, no
 scenes) are test files, never part of the story: they are in

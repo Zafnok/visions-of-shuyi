@@ -1,0 +1,41 @@
+(
+    // A Hound post on the north road, at dusk, days after the Envoy's
+    // House (ticket 0851, docs/story/chapters/ch05.md, "To be continued"):
+    // the road north up the middle, the post's hut beside it, its door at
+    // (17, 6), the black pennant at (19, 7), and the brazier at (14, 8) for
+    // the bad lamp Dace reads by; a rack of spears across the road, the
+    // hedged horse lines, the downs falling away south. A place behind a
+    // conversation, never a battle's map.
+    name: "The North Road",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '^': "mountain",
+        'h': "hedge",
+        'R': "roof",
+        'H': "house_wall",
+        'D': "house_door",
+        'r': "rack",
+        'B': "banner",
+        '*': "burning",
+    },
+    look: (light: "dusk"),
+)
+---
+^^^TTTTTT...:...TTTTTT^^^
+^^TTTTT.....:.....TTTTT^^
+^TTT........:........TTT^
+TT..........:..........TT
+T...........:..RRRRR....T
+.....r......:..RRRRR.....
+............:..HHDHH.....
+............:......B.....
+............:.*..........
+............:............
+..hhhhhhhh..:..hhhhhhhh..
+............:............
+T...........:...........T
+^^..........:..........^^
+^^^.........:.........^^^
+^^^^........:........^^^^

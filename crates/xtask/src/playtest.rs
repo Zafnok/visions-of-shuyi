@@ -21,7 +21,7 @@ use shuyi_core::bots::playtest::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
 use trpg_bots::{
-    BattleEntrant, BattleStage, Player, Targets, arrival, chapters_before, field_army,
+    BattleEntrant, BattleStage, Player, Targets, arrival, chapters_before, field_army, is_hold,
     personas_from_ron, reference_pack,
 };
 use trpg_content::{Content, battle_campaign};
@@ -400,7 +400,7 @@ pub fn play(
         })
         .collect::<Result<Vec<_>, String>>()?;
     let names: Vec<&str> = entrants.iter().map(BattleEntrant::name).collect();
-    let checks = targets.checks_of(def.difficulty, def.kind, &names);
+    let checks = targets.checks_of(def.difficulty, def.kind, is_hold(def), &names);
 
     let (tries, took) = play_on_threads(&stage, &entrants, options)?;
     let report = judge(tries, &checks).map_err(|e| e.to_string())?;

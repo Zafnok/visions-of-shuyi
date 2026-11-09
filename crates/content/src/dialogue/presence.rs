@@ -125,9 +125,13 @@ impl Cast {
     /// The same, with the scenes' recruits: `joins` has, by scene id, the
     /// characters each scene's `@joins` lines add to the army (0848). The
     /// army can lose them once they are in it, but not in the chapter that
-    /// recruits them: before the join they aren't in the army (a script
-    /// that names them there, as Joss on the far bank, says lines that
-    /// play anyway), and after it no battle comes before the next chapter.
+    /// recruits them before its battle is fought: before the join they
+    /// aren't in the army (a script that names them there, as Joss on the
+    /// far bank, says lines that play anyway). One who joins after the
+    /// battle (Joss) is certain in all the chapter's scenes and its
+    /// battle's; one who joins before it (Hedda, 0851) only in the scenes
+    /// before it and, if the battle places them, as turn 1's player phase
+    /// starts: they can fall in the battle.
     #[must_use]
     pub fn with_joins(
         mut self,
@@ -136,26 +140,45 @@ impl Cast {
         chapters: &BTreeMap<String, ChapterDef>,
     ) -> Self {
         for chapter in chapters.values() {
-            let scenes = chapter.scenes();
-            let joiners: BTreeSet<CharacterId> = scenes
-                .clone()
-                .filter_map(|scene| joins.get(scene))
-                .flatten()
-                .cloned()
-                .collect();
-            if joiners.is_empty() {
-                continue;
+            let before = chapter.opening_scenes.iter().chain(&chapter.intro_scenes);
+            let early = joiners(joins, before.clone());
+            let late = joiners(joins, &chapter.victory_scenes);
+            self.may_be_absent
+                .extend(early.iter().chain(&late).cloned());
+            let battle = battles.get(&chapter.battle);
+            let triggers = battle.into_iter().flat_map(|b| &b.triggers);
+            let placed = |c: &CharacterId| {
+                battle.is_some_and(|b| b.player_slots.iter().any(|s| s.character == *c))
+            };
+            for scene in chapter.scenes().chain(triggers.clone().map(|t| &t.scene)) {
+                self.also_certain(scene, &late);
             }
-            self.may_be_absent.extend(joiners.iter().cloned());
-            let battle = battles.get(&chapter.battle).into_iter();
-            let triggers = battle.flat_map(|b| &b.triggers).map(|t| &t.scene);
-            for scene in scenes.chain(triggers) {
-                if let Some(certain) = self.certain.get_mut(scene) {
-                    certain.extend(joiners.iter().cloned());
-                }
+            for scene in before {
+                self.also_certain(scene, &early);
+            }
+            let first_turn = triggers.filter(|t| {
+                matches!(
+                    t.when,
+                    TriggerWhen::TurnStart {
+                        turn: 1,
+                        phase: Phase::Player
+                    }
+                )
+            });
+            let on_the_map: BTreeSet<CharacterId> = early.into_iter().filter(placed).collect();
+            for trigger in first_turn {
+                self.also_certain(&trigger.scene, &on_the_map);
             }
         }
         self
+    }
+
+    /// Adds `who` to those certain in `scene`, if a chapter or a battle
+    /// plays it.
+    fn also_certain(&mut self, scene: &str, who: &BTreeSet<CharacterId>) {
+        if let Some(certain) = self.certain.get_mut(scene) {
+            certain.extend(who.iter().cloned());
+        }
     }
 
     /// Records that `scene` is played somewhere `there` are certain to be.
@@ -167,6 +190,15 @@ impl Cast {
             }
         }
     }
+}
+
+/// The characters the `@joins` lines of `scenes` add to the army.
+fn joiners<'a>(
+    joins: &BTreeMap<String, Vec<CharacterId>>,
+    scenes: impl IntoIterator<Item = &'a String>,
+) -> BTreeSet<CharacterId> {
+    let joined = scenes.into_iter().filter_map(|scene| joins.get(scene));
+    joined.flatten().cloned().collect()
 }
 
 /// The characters a trigger is about: on the map when its scene plays.

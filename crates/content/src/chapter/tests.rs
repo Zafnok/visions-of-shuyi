@@ -75,7 +75,22 @@ fn embedded_chapters_and_new_game_load() {
     assert_eq!(ch04.intro_scenes, ["ch04_eve", "ch04_gate"]);
     assert_eq!(ch04.battle, "ch04");
     assert_eq!(ch04.victory_scenes, ["ch04_victory", "ch04_tbc"]);
-    assert_eq!(ch04.next, None);
+    assert_eq!(ch04.next.as_deref(), Some("ch05"));
+    // Chapter 5 (0851): on the world map, opening on the road south; the
+    // house, the sea steps and the attack at the Envoy's House.
+    let ch05 = &c.chapters["ch05"];
+    assert_eq!(ch05.world_map.as_deref(), Some("act1"));
+    assert_eq!(ch05.opening_scenes, ["ch05_intro"]);
+    assert_eq!(
+        ch05.intro_scenes,
+        ["ch05_envoy", "ch05_eve", "ch05_prebattle"]
+    );
+    assert_eq!(ch05.battle, "ch05");
+    assert_eq!(
+        ch05.victory_scenes,
+        ["ch05_victory", "ch05_quay", "ch05_tide", "ch05_tbc"]
+    );
+    assert_eq!(ch05.next, None);
     assert_eq!(c.new_game.first_chapter, "ch01");
     assert_eq!(c.new_game.roster.len(), 6);
     assert_eq!(c.new_game.roster[0].0, LEAD_ID);
