@@ -1694,14 +1694,6 @@ const HOUSE: &str = r#"(
 /// keeps him off the lord: the guard just inside the door (3, 3), the one
 /// tile it opens onto, on the door (4, 3), or in front of it (5, 3).
 fn house_with_a_door(objective: Objective) -> BattleState {
-    let content = content();
-    let map = trpg_content::map::parse_map("house", HOUSE, &content.terrain.display)
-        .unwrap_or_else(|e| panic!("{e:?}"))
-        .map;
-    let at = |mut unit: Unit, x, y| {
-        unit.pos = Pos::new(x, y);
-        unit
-    };
     let mut guard = at(player(2, 0), 2, 3);
     guard.stats.def = 99;
     guard.stats.res = 99;
@@ -1711,10 +1703,68 @@ fn house_with_a_door(objective: Objective) -> BattleState {
         guard,
         at(rigged(enemy(9, 0)), 7, 3),
     ];
+    house(objective, units)
+}
+
+/// A battle of `objective` with `units` on [`HOUSE`]'s map.
+fn house(objective: Objective, units: Vec<Unit>) -> BattleState {
+    let content = content();
+    let map = trpg_content::map::parse_map("house", HOUSE, &content.terrain.display)
+        .unwrap_or_else(|e| panic!("{e:?}"))
+        .map;
     let mut setup = setup(units);
     setup.map = map;
     setup.objective = objective;
     BattleState::new(setup).0
+}
+
+/// `unit` at (`x`, `y`).
+fn at(mut unit: Unit, x: i32, y: i32) -> Unit {
+    unit.pos = Pos::new(x, y);
+    unit
+}
+
+/// Unit `id` waiting at (`x`, `y`), as [`covers`] takes it.
+fn wait_at(id: u32, x: i32, y: i32) -> (UnitId, Pos, Command) {
+    let dest = Pos::new(x, y);
+    let command = Command::Act {
+        unit: UnitId(id),
+        dest,
+        action: UnitAction::Wait,
+    };
+    (UnitId(id), dest, command)
+}
+
+#[test]
+fn a_cover_keeps_an_enemy_off_a_lord_and_only_a_lord() {
+    let hold = Objective::Survive { turns: 1 };
+    let cover = |s: &BattleState, waits: Vec<(UnitId, Pos, Command)>| covers(s, &threats(s), waits);
+    let s = house_with_a_door(hold);
+    let (inside, yard) = (wait_at(2, 3, 3), wait_at(2, 5, 3));
+    // The nearer the lord of two that keep him off, wherever it comes.
+    let both = vec![yard.clone(), inside.clone()];
+    assert_eq!(cover(&s, both), vec![inside.2.clone()]);
+    // The first of two alike.
+    let twice = vec![inside.clone(), (inside.0, inside.1, Command::EndPhase)];
+    assert_eq!(cover(&s, twice), vec![inside.2.clone()]);
+    // A tile in his reach that keeps him off nothing is no cover.
+    assert_eq!(cover(&s, vec![wait_at(2, 6, 2)]), Vec::<Command>::new());
+    // An enemy that can't reach the lord isn't kept off by standing in
+    // its way.
+    let mut far = s.units().to_vec();
+    far.push(at(enemy(10, 0), 9, 0));
+    let far = house(hold, far);
+    assert_eq!(cover(&far, vec![wait_at(2, 9, 1)]), Vec::<Command>::new());
+    // Only a lord is covered: with the lord out of reach, nobody stands
+    // in the door for the guard inside.
+    let units = vec![
+        at(lord(player(1, 0)), 0, 0),
+        at(player(2, 0), 2, 3),
+        at(player(3, 0), 5, 1),
+        at(rigged(enemy(9, 0)), 7, 3),
+    ];
+    let away = house(hold, units);
+    assert_eq!(cover(&away, vec![wait_at(3, 4, 3)]), Vec::<Command>::new());
 }
 
 #[test]
