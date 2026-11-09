@@ -66,6 +66,9 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     );
     h.keys("Up Up");
     let screen = h.snapshot();
+    assert!(screen.contains("Foot units can wade a river"), "{screen}");
+    h.keys("Up");
+    let screen = h.snapshot();
     assert!(screen.contains("Mind the ground."), "{screen}");
     // Back to the map menu, then to the map.
     h.keys("d");

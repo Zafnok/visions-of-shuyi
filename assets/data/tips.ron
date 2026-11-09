@@ -15,7 +15,9 @@
 // DangerZoneAvailable, FirstSkillUnit (a unit with a skill is selected),
 // FirstCaster (the action menu opens for a unit that knows a spell),
 // FirstTerrain (the cursor rests on a tile that isn't plain ground),
-// ZoomAvailable (browsing a map whose look can zoom, with no lesson in play).
+// ZoomAvailable (browsing a map whose look can zoom, with no lesson in play),
+// FirstWadeInReach (a selected unit's move range has a `water` tile: a foot
+// or flying unit, never a mounted or armored one).
 // At most one tip per trigger.
 //
 // The battle menu's Guides lists every tip, in this order, after the
@@ -119,6 +121,13 @@
             trigger: FirstTerrain,
             title: "Terrain",
             text: "Mind the ground. The side panel shows the DEF and AVO a\nunit gets standing here. Some tiles cost more movement\nto cross, and some can't be crossed at all.",
+            face: "thinking",
+        ),
+        (
+            id: "wading",
+            trigger: FirstWadeInReach,
+            title: "Wading",
+            text: "Foot units can wade a river, but each tile of water costs\n5 Mov, most of a turn. Riders and armor can't go in.\nIn the water, a unit gets +10 AVO and no DEF bonus.",
             face: "thinking",
         ),
     ],

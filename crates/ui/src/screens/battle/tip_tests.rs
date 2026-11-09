@@ -736,3 +736,61 @@ fn any_one_bonus_or_cost_makes_terrain_not_plain() {
     assert!(with(|t| t.move_cost[1] = Some(2)));
     assert!(with(|t| t.move_cost[0] = None));
 }
+
+// ---- Wading (ticket 0483) ------------------------------------------------------
+
+/// The Quick Battle's archer, beside the test map's river at (2, 3), as
+/// a unit of `class`.
+fn archer_as(c: &Ctx, class: &str) -> BattleScreen {
+    let s = edited(c, |units| {
+        units[2].class = trpg_core::ClassId(class.to_owned());
+    });
+    assert_eq!(s.state().units()[2].pos, Pos::new(2, 4));
+    s
+}
+
+/// A foot or flying unit beside a river could step into it; a mounted or
+/// armored one can't.
+#[test]
+fn only_foot_and_flying_units_have_water_in_reach() {
+    let c = ctx();
+    let water = c.game.content.terrain.display.id_of(WATER).unwrap();
+    for (class, wades) in [
+        ("archer", true),
+        ("flier", true),
+        ("rider", false),
+        ("guard", false),
+    ] {
+        let s = archer_as(&c, class);
+        let id = s.state().units()[2].id;
+        let sel = Selection::new(s.state(), id).unwrap();
+        assert_eq!(
+            doable::wades_in_reach(s.state(), &sel, water),
+            wades,
+            "{class}"
+        );
+    }
+}
+
+/// Selecting the archer shows the Wading tip, once; a mounted unit in
+/// its place shows none.
+#[test]
+fn selecting_a_unit_that_could_wade_shows_the_wading_tip() {
+    for (class, shown) in [("archer", true), ("rider", false)] {
+        let mut c = tipped();
+        let mut s = archer_as(&c, class);
+        dismiss_all(&mut s, &mut c);
+        press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorUp]);
+        press(&mut s, &mut c, &[Action::Confirm]);
+        assert!(matches!(s.mode(), Mode::Selected(_)), "{class}");
+        let seen = dismiss_all(&mut s, &mut c);
+        assert_eq!(
+            seen.contains(&TipTrigger::FirstWadeInReach),
+            shown,
+            "{class}: {seen:?}"
+        );
+        press(&mut s, &mut c, &[Action::Cancel]);
+        press(&mut s, &mut c, &[Action::Confirm]);
+        assert!(!dismiss_all(&mut s, &mut c).contains(&TipTrigger::FirstWadeInReach));
+    }
+}

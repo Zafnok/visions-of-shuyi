@@ -191,6 +191,10 @@ pub const VICTORY_MUSIC_POOL: &str = "victory";
 /// The music cue of a lost battle, from its banner on (`audio.md`, 0023).
 pub const DEFEAT_MUSIC: &str = "defeat";
 
+/// The terrain a foot unit wades (`terrain.ron`): a river, for the Wading
+/// tip (0483).
+pub const WATER: &str = "water";
+
 /// How long a tile flashes when its terrain changes, in seconds. *Tunable.*
 pub const TERRAIN_FLASH_S: f32 = 0.4;
 
@@ -890,10 +894,11 @@ impl BattleScreen {
 
     /// Fires the triggers that show in the battle's current state (the
     /// ones that come from a command's events are fired as it applies).
-    fn detect_tips(&mut self) {
+    fn detect_tips(&mut self, ctx: &Ctx) {
         for trigger in self.triggers_now() {
             self.fire(trigger);
         }
+        self.detect_wade_tip(ctx);
     }
 
     /// Fires [`TipTrigger::ZoomAvailable`] while the map, under a skin that
@@ -904,6 +909,19 @@ impl BattleScreen {
         let browsing = matches!(self.mode, Mode::Idle { .. });
         if browsing && !self.lessons.in_play() && ctx.game.map_skin.zoom().is_some() {
             self.tips.fire(TipTrigger::ZoomAvailable);
+        }
+    }
+
+    /// Fires [`TipTrigger::FirstWadeInReach`] while the selected unit could
+    /// step into a river (0483): `water` is the content's terrain, so it is
+    /// looked up here.
+    fn detect_wade_tip(&mut self, ctx: &Ctx) {
+        let Mode::Selected(sel) = &self.mode else {
+            return;
+        };
+        let water = ctx.game.content.terrain.display.id_of(WATER);
+        if water.is_some_and(|w| doable::wades_in_reach(&self.state, sel, w)) {
+            self.fire(TipTrigger::FirstWadeInReach);
         }
     }
 
@@ -2775,7 +2793,7 @@ impl BattleScreen {
             0.0
         };
         self.tick_popups(dt);
-        self.detect_tips();
+        self.detect_tips(ctx);
         self.absorb_lessons(ctx);
         self.detect_zoom_tip(ctx);
         self.tips.absorb(ctx);
