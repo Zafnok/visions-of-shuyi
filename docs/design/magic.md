@@ -129,6 +129,10 @@ scale.
 - Each spell has `uses` (its maximum). A unit tracks `uses_left` for every
   spell it knows. **All spells refill to full at the start of every battle.**
   Uses left over never carry between battles.
+- A spell learned in the middle of a battle (a level up or a class level
+  up) has its **full uses at once** and can be cast in that battle (Nick,
+  2026-11-07, ticket 0609). Spells the unit already knew keep the uses
+  they have left: a level up refills nothing.
 - Casting spends **1 use per combat or cast**, no matter how many strikes the
   combat has (*Claude's starting rule*: a mage who doubles doesn't burn two
   uses). That covers attacking, countering, healing, and casting on a tile.

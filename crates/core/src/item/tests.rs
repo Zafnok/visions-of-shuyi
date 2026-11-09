@@ -810,6 +810,25 @@ fn default_equip_prefers_a_weapon_then_the_first_attack_spell() {
 }
 
 #[test]
+fn fill_new_uses_fills_only_spells_with_no_entry() {
+    let (sp, cs) = (spells(), classes());
+    let mut u = knowing(equipped(&["axe"], None, None), &["fire", "heal", "ghost"]);
+    u.spells.uses_left = [(SpellId::new("fire"), 2), (SpellId::new("mend"), 0)].into();
+    u.fill_new_uses(&cs, &sp, &SkillTable::default());
+    // Heal is new: full. Fire keeps its 2 and a spent spell stays spent;
+    // a spell missing from the table gets nothing.
+    assert_eq!(
+        u.spells.uses_left,
+        [
+            (SpellId::new("fire"), 2),
+            (SpellId::new("heal"), 10),
+            (SpellId::new("mend"), 0)
+        ]
+        .into()
+    );
+}
+
+#[test]
 fn prepare_for_battle_refills_uses_and_equips_when_nothing_is() {
     let (t, sp, cs) = (items(), spells(), classes());
     let mut u = knowing(equipped(&["axe"], None, None), &["fire", "heal"]);

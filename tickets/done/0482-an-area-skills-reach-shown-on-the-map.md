@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0482 — An area skill's reach is shown on the map while it is chosen
@@ -90,15 +90,15 @@ pictures in the PR.
 
 ## Acceptance criteria
 
-- [ ] With Inspire highlighted in the Skill menu, the scene's HEAL range
+- [x] With Inspire highlighted in the Skill menu, the scene's HEAL range
       is exactly the tiles within Manhattan distance 2 of the user, not
       the user's tile (test reading the scene).
-- [ ] Highlighting a skill with no area shows no HEAL range (test).
-- [ ] The tiles come from the same core helper the effect uses (test:
+- [x] Highlighting a skill with no area shows no HEAL range (test).
+- [x] The tiles come from the same core helper the effect uses (test:
       every ally in the shown area gets the buff after Confirm).
-- [ ] `frame-png` pictures of Inspire highlighted, glyph and picture
+- [x] `frame-png` pictures of Inspire highlighted, glyph and picture
       looks, in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -109,4 +109,44 @@ pictures in the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done.**
+- Core: `area_tiles(width, height, center, radius)` (`movement.rs`) gives
+  the tiles within Manhattan `radius` of a tile, not the tile itself,
+  clipped to the map. `BattleState::ally_area` wraps it for the battle's
+  map, and `allies_near` (the buffs and the area heals) now uses it, so
+  the preview and the effect share one helper.
+  `ActiveEffect::ally_radius` says how far an active reaches: a `Buff` on
+  `Allies(radius)` or a `Heal(radius)`.
+- UI: `SkillChoice` has an `area` (those tiles from the unit's path end,
+  empty for a skill with no area). `add_ranges` tints the focused Skill
+  line's area with the HEAL range, so every map skin paints it (glyph,
+  picture, Playdate).
+- Docs: one line in `look-and-feel.md` (Colour, next to the range tints)
+  and one in `progression.md` next to the auras rule.
+- Tests: `area_tiles` unit and property tests (core); four scene tests in
+  `skill_tests.rs`: Inspire's reach in the open and at the map edge, none
+  for Brace (no area) and back again, and every ally standing in the shown
+  reach gets the buff after Confirm (nobody else does).
+- Pictures: `docs/img/0482-inspire-glyphs.png` and
+  `docs/img/0482-inspire-pictures.png` (the bought tiles; a game
+  screenshot).
+
+**Area spells and items:** none. `spells.ron` has no area spell, and
+consumables (`ConsumableEffect`) only heal one unit. Nothing else to show.
+
+**Starting rule** (*the agent's starting rule*, for the Act 1 playtest
+(1064)): while an area skill (Inspire, Rally, Sanctuary, Benediction, the
+Str buff) is focused in the Skill menu, the tiles it reaches around the
+unit's path end take the heal tint. It shows whether or not the skill can
+be used right now (a dimmed line too), so the player can see why no ally
+is in reach.
+
+**Follow-up:** the pictures show the Skill list window, placed beside
+the unit by 0454's rule, covering about half of the reach. Where the list
+goes is a look question, so it is ticket 0492 (asks Nick, with pictures),
+added to 1064's `blocked_by` and the roadmap.
+
+**Engine friction:** estimate 40 production lines (a diamond helper like
+`attack_tiles` plus a tint case like `ItemTarget`'s), measured 50 added
+(1.25×): under 2×.
+**PR size:** estimate 400, measured about 350 (`cargo xtask pr-size`).

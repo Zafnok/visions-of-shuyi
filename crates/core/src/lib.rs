@@ -46,7 +46,7 @@ pub use shuyi_core::grid as geom;
 pub use shuyi_core::rng;
 
 pub use ai::{AiBehavior, AiWeights, next_command};
-pub use art::{ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, ArtTable, Debuff};
+pub use art::{ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, ArtStatus, ArtTable, Debuff, OnKill};
 pub use battle::{
     AttackPreview, BattleNote, BattleSetup, BattleState, Burning, CastTarget, Command,
     CommandError, Destination, Event, GameMode, HouseState, Leftovers, Objective, Outcome,
@@ -80,8 +80,8 @@ pub use legal::legal_commands;
 pub use magic::{Affinity, Element};
 pub use map::{BattleMap, TileFeature};
 pub use movement::{
-    AttackRange, MoveError, PathError, Reach, ThreatPlanner, TileSet, attack_tiles, danger_zone,
-    path_cost, reachable, threat_area, threats_at,
+    AttackRange, MoveError, PathError, Reach, ThreatPlanner, TileSet, area_tiles, attack_tiles,
+    danger_zone, path_cost, reachable, threat_area, threats_at,
 };
 pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable, WeaponAt};
 pub use progression::{

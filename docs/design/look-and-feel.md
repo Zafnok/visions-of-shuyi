@@ -219,6 +219,11 @@ D the side panel):
   **The same 75% on the bought tiles** (decided 2026-10-04, ticket 0437:
   Nick was shown a selected unit's ranges over the picture tiles at 75%,
   50% and 35%: "75% looks ok").
+- **An area skill's reach** (Inspire, Rally, Sanctuary…; ticket 0482):
+  while its line is focused in the Skill menu, the tiles it reaches around
+  the unit's path end (not its own tile) take the **heal** tint; moving the
+  focus off it clears them (*the agent's starting rule*: a friend's
+  playtest asked for a range indicator; Act 1 playtest, 1064).
 - **Colour themes** (ticket 0806): Options has a **Colors** row with four
   palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
   parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
