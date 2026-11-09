@@ -4,9 +4,11 @@
 //! place under it in the panel, and the map's menu.
 //!
 //! - **The cursor** is always on a shown place ([`WorldMap::is_shown`]:
-//!   open, or one road from an open one, greyed). The cursor's keys jump to
-//!   the nearest place that way; Previous and Next unit go through the
-//!   places in the map's order; Your army jumps to the army.
+//!   open, or one road from an open one, greyed). The cursor's keys follow
+//!   the roads (1088): to the place a road from here leads closest to that
+//!   way, and the opposite key right after goes back; Previous and Next
+//!   unit go through the places in the map's order; Your army jumps to the
+//!   army.
 //! - **Travel**: Confirm on another place sends the army there along open
 //!   roads ([`WorldCommand::TravelTo`]); it walks one place every
 //!   [`STEP_S`] (Confirm finishes the walk at once). Arriving at a battle
@@ -185,6 +187,9 @@ pub struct WorldMapScreen {
     cursor: String,
     /// When the cursor last moved (its pulse starts bright).
     moved_at: f64,
+    /// The cursor's last move, if a cursor key made it: from where, and
+    /// which way. The opposite key right after goes back there.
+    last_step: Option<(String, (i32, i32))>,
     walk: Option<Walk>,
     open: Open,
     /// The map's track, as it rotates; `None` until it starts (or while a
@@ -212,6 +217,7 @@ impl WorldMapScreen {
             campaign,
             cursor,
             moved_at: 0.0,
+            last_step: None,
             walk: None,
             open: Open::Nothing,
             music: None,
@@ -249,15 +255,27 @@ impl WorldMapScreen {
         self.campaign.world.as_ref().map_or("", |w| w.at.as_str())
     }
 
-    /// The shown places of `map`, in its order.
-    fn open_places<'a>(&'a self, map: &'a WorldMap) -> Vec<&'a str> {
-        map.shown_nodes(&self.campaign)
-            .map(|n| n.id.as_str())
+    /// The places joined to place `id` by a road the screen draws (open,
+    /// or not open yet), in the map's order.
+    fn road_neighbours<'a>(&'a self, map: &'a WorldMap, id: &str) -> Vec<&'a str> {
+        let roads = map.open_roads(&self.campaign);
+        roads
+            .chain(map.locked_roads(&self.campaign))
+            .filter_map(|(a, b)| {
+                if a == id {
+                    Some(b.as_str())
+                } else if b == id {
+                    Some(a.as_str())
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
     /// Puts the cursor on place `id`.
     fn point(&mut self, ctx: &mut Ctx, id: &str) {
+        self.last_step = None;
         if self.cursor != id {
             id.clone_into(&mut self.cursor);
             self.moved_at = ctx.clock_s;
@@ -265,30 +283,39 @@ impl WorldMapScreen {
         }
     }
 
-    /// Moves the cursor to the nearest open place in direction `(dx, dy)`:
-    /// one ahead of it within a 60° cone or so, nearest first, in pixels
-    /// (a cell is twice as tall as it is wide).
-    fn step_cursor(&mut self, ctx: &mut Ctx, (dx, dy): (i32, i32)) {
+    /// Moves the cursor along a road in direction `way` (1088): back where
+    /// it came from if the last key was the opposite one, else to the place
+    /// a road from here leads to whose straight line is closest in angle to
+    /// `way` and under 90° from it (the first in the map's order on a tie).
+    /// None that way: it stays, and Denied sounds.
+    fn step_cursor(&mut self, ctx: &mut Ctx, way: (i32, i32)) {
         let Some(def) = self.def(ctx) else {
             return;
         };
         let Some(&from) = def.places.get(&self.cursor) else {
             return;
         };
-        let score = |to: Pos| {
-            let (x, y) = ((to.x - from.x) * 8, (to.y - from.y) * 16);
-            let along = x * dx + y * dy;
-            let across = (x * dy).abs() + (y * dx).abs();
-            (along > 0 && across <= along * 2).then_some(along + across * 2)
-        };
-        let best = self
-            .open_places(&def.map)
-            .into_iter()
-            .filter_map(|id| Some((score(*def.places.get(id)?)?, id)))
-            .min_by_key(|(s, _)| *s)
-            .map(|(_, id)| id.to_owned());
-        match best {
-            Some(id) => self.point(ctx, &id),
+        let next = self.road_neighbours(&def.map, &self.cursor);
+        let back = self
+            .last_step
+            .as_ref()
+            .filter(|(at, last)| *last == (-way.0, -way.1) && next.contains(&at.as_str()));
+        let mut best: Option<((i64, i64), &str)> = None;
+        for id in &next {
+            let Some(close) = def.places.get(*id).and_then(|&to| closeness(from, to, way)) else {
+                continue;
+            };
+            if best.is_none_or(|(b, _)| close.0 * b.1 > b.0 * close.1) {
+                best = Some((close, id));
+            }
+        }
+        let to = back.map(|(at, _)| at.clone());
+        match to.or_else(|| best.map(|(_, id)| id.to_owned())) {
+            Some(id) => {
+                let here = self.cursor.clone();
+                self.point(ctx, &id);
+                self.last_step = Some((here, way));
+            }
             None => ctx.audio.menu(MenuSound::Denied),
         }
     }
@@ -585,6 +612,7 @@ impl WorldMapScreen {
         let walk = self.walk.take()?;
         let end = walk.route.last().cloned().unwrap_or_default();
         self.cursor.clone_from(&end);
+        self.last_step = None;
         self.moved_at = ctx.clock_s;
         if let Some(node) = walk.battle {
             return Some(self.fight(node));
@@ -843,6 +871,16 @@ impl WorldMapScreen {
     }
 }
 
+/// How close in angle the straight line from cell `from` to cell `to` is
+/// to direction `(dx, dy)`, in pixels (a cell is 8 wide and 16 tall): its
+/// cosine squared, as `(top, bottom)`; `None` at 90° or more.
+fn closeness(from: Pos, to: Pos, (dx, dy): (i32, i32)) -> Option<(i64, i64)> {
+    let x = i64::from(to.x - from.x) * 8;
+    let y = i64::from(to.y - from.y) * 16;
+    let along = x * i64::from(dx) + y * i64::from(dy);
+    (along > 0).then_some((along * along, x * x + y * y))
+}
+
 /// How far apart cells `a` and `b` are on screen, across plus down, in
 /// pixels (a cell is 8 wide and 16 tall).
 fn distance(a: Pos, b: Pos) -> i32 {
@@ -913,6 +951,7 @@ impl Screen<Shuyi> for WorldMapScreen {
             self.campaign = campaign;
         }
         self.open = Open::Nothing;
+        self.last_step = None;
         self.music = None;
         self.place_cue = None;
         Transition::None

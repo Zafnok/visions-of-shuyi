@@ -97,8 +97,9 @@ buttons. It just can't reuse in same context."
 - They are in a **key group of their own** (World map), so they may share
   a key or button with the battle's actions (North is Unit info, West is
   Danger zone in battle): the world map is never on screen with a battle.
-- **On the world map**, the battle's keys mean: the cursor's keys jump to
-  the nearest open place that way; Confirm sends the army to the place
+- **On the world map**, the battle's keys mean: the cursor's keys follow
+  the roads to the next place that way, and the opposite key right after
+  goes back (*the agent's starting rule*, 1088, `world-structure.md`); Confirm sends the army to the place
   under the cursor, or enters the army's own (a town); Previous / Next
   ready unit go through the places in the map's order; Cancel opens the
   menu (Save, Camp, Options).

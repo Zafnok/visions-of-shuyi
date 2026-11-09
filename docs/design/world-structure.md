@@ -221,8 +221,18 @@ world map*; the keys: `controls.md`, *World map*):
 - **A town's shop trades with the convoy** (the stock): it sells only
   what is in the stock, not what the army holds; its Blacksmith also
   mends the weapons the army holds.
-- **The cursor's keys jump to the nearest place in that direction**
-  (within about 60° of it); nothing that way, the cursor stays.
+- **The cursor follows the roads** (1088, replacing 1007's "nearest
+  place that way", which Nick found "kinda just goes wherever it
+  wants"). A direction key looks only at the places a road the map draws
+  joins to the cursor's place (open or not open yet), and picks the one
+  whose straight line from here is closest to that direction, if it is
+  less than 90° from it; none that way, the cursor stays and the Denied
+  sound plays. The opposite key, pressed right after a step, goes back
+  where the cursor came from. Greyed places are stops like any other.
+  Example, Act 1 at Chapter 4: on Millhaven, Right stays (no road east)
+  and Down goes to The Valley Road; on Aldwater, Right and Up go to Veyne
+  Hall, Left to The Valley Road, and Down stays; on Veyne Hall, Left goes
+  back to Aldwater, Up to The Captain's Oath, Down to The Salt Road.
 - **Find's nearest place** is the nearest to the army, so Towns starts on
   the town the army is in, if it is in one.
 - **"Save your progress?" when the map won't come back** (0869): after a
