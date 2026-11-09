@@ -350,6 +350,36 @@ chapter being played, so Chapter 4's army replayed Chapter 3 without
 Joss, who joins after Chapter 2, and failed. Each chapter on the way now
 gets its recruits before its battle (`trpg_bots::arrival`).
 
+Chapter 5 on 2026-11-08 (ticket 0851), the Envoy's House, the first hold
+(Survive 6 turns), with the army Chapters 1 to 4 leave and Hedda (Lead
+lv 7, Hedda lv 8, Hollis lv 10, Tamsin lv 10, Aske lv 7, Maud lv 5, Rue
+lv 14, Joss lv 3). A hold has its own Casual band (Nick, 0851) and no
+faster check (`playtest-bots.md`, *Holds have their own Casual band*):
+
+```
+             seeds 1–100            seeds 101–200
+casual       86/100  band 40–70% ⚠  80/100 ⚠
+normal       65/100  band 50–75% ✓  70/100 ✓
+hardcore     62/100  band 50–75% ✓  57/100 ✓
+```
+
+As first built (7 turns, a wave over the roofs on turn 5, the officer
+32 HP, Str 10 on the near pier, Tamsin by the street door) Casual won
+78, Normal 27 and Hardcore 11: Classic deaths, Joss's most, and
+Hardcore's potions. `cargo shuyi autobalance --stage ch05` (47
+evaluations in 40 minutes) found only every starting Hound at level 1,
+which left Casual at 78: the pressure is the reinforcements', which it
+doesn't change. By hand: 6 turns and no turn-5 wave; the officer harder
+(40 HP, Str 13, Def 8) and at the far end of the wide pier, so he
+reaches the door on turn 2 (careful bots meet him; on the near pier he
+killed the lead on turn 1 in 94–97 tries of every bot at Str 12, and in
+11–15 at Str 11); Tamsin's slot upstairs (she rode onto the quay on
+turn 2 and fell there most). What didn't separate the bots: more Hounds,
+more turns, quay archers (they kill Rue), unbarred ground-floor
+shutters. Casual's lead waits indoors and falls only to the officer, so
+nothing tried moved it under 78 without sinking Normal; no bot holds the
+door against him (ticket 0526).
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

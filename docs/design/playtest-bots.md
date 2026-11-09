@@ -132,6 +132,29 @@ slightly easier for skirmishes".
 as 5 points. Every fixed and random skirmish uses this table; a skirmish of
 a higher tier keeps the table above, as do story battles and side quests.
 
+**Holds have their own Casual band** (Nick, 2026-11-08, ticket 0851). A
+hold is a battle won by surviving its turns (the Survive objective;
+Chapter 5's Envoy's House is the first). The Casual bot guards only the
+lead, who can wait out a hold indoors while the others fall, so as first
+built it won 80–86% of Chapter 5's tries while Normal and Hardcore were in
+their bands; every change that made it lose got companions killed first.
+Asked which Casual target a hold should have, Nick answered:
+
+> "lower band by a bit but also make harder. maybe for casual we can aim
+> for 40-70% band which would also necessitate making it harder"
+
+| Hold tier | Casual | Normal | Hardcore |
+| --------- | ------ | ------ | -------- |
+| Easy | 55–85% | as the tier's row | as the tier's row |
+| **Normal** | **40–70%** | as the tier's row | as the tier's row |
+| Hard | 35–65% | as the tier's row | as the tier's row |
+| Finale | 30–60% | as the tier's row | as the tier's row |
+
+Nick fixed the Normal row; the others move the same way (+10 and +15
+points), *Claude's starting values, tunable*. A skirmish that is a hold
+keeps the skirmish bands. A hold has **no "Hardcore faster" check**: it
+lasts its turns however it is played (*Claude's reading*, 0851).
+
 **Hardcore is faster than Normal (no par numbers).** Nick doesn't want to set
 a turn target per map by hand. The report compares the two bots
 automatically: Hardcore's median turns must be **lower than Normal's**,

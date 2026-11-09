@@ -1,0 +1,39 @@
+(
+    // The road south out of Veyne Hall, first light (ticket 0851,
+    // docs/story/chapters/ch05.md, "The road south"): the valley and its
+    // woods behind, at the top, a night's walk back; the road comes down
+    // through the hedged fields and bends south at (12, 8), where the
+    // party walks, the ditch along its west side; the open downs below,
+    // climbing toward the salt country. A place behind a conversation,
+    // never a battle's map.
+    name: "The Road South",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '^': "mountain",
+        'w': "water",
+        'h': "hedge",
+        'R': "roof",
+        'H': "house_wall",
+        'D': "house_door",
+    },
+    look: (light: "dawn"),
+)
+---
+TTTTTTTTTT::TTTTTTTTTTTTT
+TTTTTTT...::....TTTTTTTTT
+TTTT......::.......TTTTTT
+.hhhhhh...::..hhhhhh..TTT
+.h....h...::..h....h.....
+.h....h...::..h....h.RRR.
+.hhhhhh...::..hhhhhh.HDH.
+.........w::.............
+.........w:::............
+..hhhhh..w..::...hhhhhh..
+..h...h..w...::..h....h..
+..hhhhh..w....::.hhhhhh..
+.....^^..w.....::........
+...^^^^^^......::....^^..
+.^^^^^^^^^^....::..^^^^^^
+^^^^^^^^^^^^...::.^^^^^^^

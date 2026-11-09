@@ -11,8 +11,8 @@ use serde::Deserialize;
 use shuyi_core::bots::playtest::{Band, Check, Condition, Entrant, Measure, Measures, Want};
 use shuyi_core::{Bot, Report};
 use trpg_core::{
-    AiWeights, BattleKind, BattleSetup, BattleState, Command, Difficulty, Event, GameMode, Outcome,
-    Phase, UnitId,
+    AiWeights, BattleDef, BattleKind, BattleSetup, BattleState, Command, Difficulty, Event,
+    GameMode, Objective, Outcome, Phase, UnitId,
 };
 
 use crate::{BaselineBot, BattleMeasures, Persona, PersonaBot};
@@ -213,6 +213,11 @@ pub struct Targets {
     /// A skirmish's bands, per tier and persona; a tier it doesn't list has
     /// [`bands`](Self::bands)' (Nick, ticket 0510).
     pub skirmish_bands: HashMap<Difficulty, BTreeMap<String, Band>>,
+    /// A hold's bands (a story battle or side quest won by surviving), per
+    /// tier and persona, over [`bands`](Self::bands)': a persona it doesn't
+    /// list keeps those (Nick, ticket 0851). A skirmish keeps its own.
+    #[serde(default)]
+    pub hold_bands: HashMap<Difficulty, BTreeMap<String, Band>>,
     /// The share of successes under which the change is blocked, per
     /// persona that has one.
     pub floors: BTreeMap<String, u32>,
@@ -244,18 +249,36 @@ impl Targets {
     /// success band, with its floor, then the faster check when both of its
     /// personas play. An entrant with no target (the baseline) gets none.
     pub fn checks(&self, tier: Difficulty, entrants: &[&str]) -> Vec<Check> {
-        self.checks_with(self.bands.get(&tier), entrants)
+        self.checks_with(self.bands.get(&tier), true, entrants)
     }
 
-    /// [`checks`](Self::checks) for a battle of `kind`: a skirmish is judged
-    /// by its own bands.
-    pub fn checks_of(&self, tier: Difficulty, kind: BattleKind, entrants: &[&str]) -> Vec<Check> {
+    /// [`checks`](Self::checks) for a battle of `kind`, a hold or not
+    /// ([`is_hold`]): a skirmish is judged by its own bands, and any other
+    /// hold by its own where it has them. A hold lasts its turns however it
+    /// is played, so it has no faster check (*the agent's reading*, 0851).
+    pub fn checks_of(
+        &self,
+        tier: Difficulty,
+        kind: BattleKind,
+        hold: bool,
+        entrants: &[&str],
+    ) -> Vec<Check> {
         let skirmish = matches!(kind, BattleKind::FixedSkirmish | BattleKind::RandomSkirmish);
         let own = self.skirmish_bands.get(&tier).filter(|_| skirmish);
-        self.checks_with(own.or_else(|| self.bands.get(&tier)), entrants)
+        let mut bands = own.or_else(|| self.bands.get(&tier)).cloned();
+        let hold_bands = self.hold_bands.get(&tier).filter(|_| hold && own.is_none());
+        if let (Some(bands), Some(over)) = (&mut bands, hold_bands) {
+            bands.extend(over.iter().map(|(name, band)| (name.clone(), *band)));
+        }
+        self.checks_with(bands.as_ref(), !hold, entrants)
     }
 
-    fn checks_with(&self, bands: Option<&BTreeMap<String, Band>>, entrants: &[&str]) -> Vec<Check> {
+    fn checks_with(
+        &self,
+        bands: Option<&BTreeMap<String, Band>>,
+        faster_check: bool,
+        entrants: &[&str],
+    ) -> Vec<Check> {
         let mut checks: Vec<Check> = entrants
             .iter()
             .filter_map(|&name| {
@@ -266,7 +289,9 @@ impl Targets {
             })
             .collect();
         let faster = &self.faster;
-        if entrants.contains(&faster.entrant.as_str()) && entrants.contains(&faster.than.as_str()) {
+        let both =
+            entrants.contains(&faster.entrant.as_str()) && entrants.contains(&faster.than.as_str());
+        if faster_check && both {
             checks.push(
                 Check::median(&faster.entrant, &faster.measure, Want::Lower, &faster.than)
                     .with_among(faster.among.clone()),
@@ -274,6 +299,11 @@ impl Targets {
         }
         checks
     }
+}
+
+/// Whether `def` is a hold: a battle won by surviving its turns.
+pub fn is_hold(def: &BattleDef) -> bool {
+    matches!(def.objective, Objective::Survive { .. })
 }
 
 #[cfg(test)]

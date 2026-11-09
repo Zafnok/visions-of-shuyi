@@ -3,7 +3,7 @@
 
 use std::collections::BTreeSet;
 
-use trpg_core::{Phase, Trigger, TriggerWhen, Who};
+use trpg_core::{Phase, Pos, Trigger, TriggerWhen, Who};
 
 use super::*;
 
@@ -888,6 +888,45 @@ fn a_scene_recruit_may_be_gone_after_the_chapter_that_recruits_them() {
     for scene in ["second_intro", "second_victory", "test_engage"] {
         assert!(!certain(scene).contains(&id("test_mage")), "{scene}");
     }
+}
+
+/// A recruit who joins before the chapter's battle (Hedda, 0851) can fall
+/// in it: certain in the scenes before it and, placed by a slot, as turn
+/// 1's player phase starts, but not later in the battle or after it.
+#[test]
+fn a_scene_recruit_before_the_battle_may_be_gone_after_it() {
+    let mut content = embedded();
+    let battle = content.battles.get_mut("test").unwrap();
+    let mut slot = battle.player_slots[0].clone();
+    slot.character = id("test_mage");
+    slot.pos = Pos::new(0, 0);
+    battle.player_slots.push(slot);
+    let turn = |turn, scene: &str| Trigger {
+        when: TriggerWhen::TurnStart {
+            turn,
+            phase: Phase::Player,
+        },
+        scene: scene.into(),
+        once: true,
+    };
+    battle.triggers = vec![turn(1, "test_turn_1"), turn(2, "test_turn_2")];
+    // The archer joins too, but no slot places her.
+    let joins = [(
+        "test_intro".to_owned(),
+        vec![id("test_mage"), id("test_archer")],
+    )]
+    .into();
+    let cast = cast_of(&content).with_joins(&joins, &content.battles, &content.chapters);
+    assert!(cast.may_be_absent.contains(&id("test_mage")));
+    let certain = |scene: &str| cast.certain.get(scene).cloned().unwrap_or_default();
+    for scene in ["test_intro", "test_turn_1"] {
+        assert!(certain(scene).contains(&id("test_mage")), "{scene}");
+    }
+    for scene in ["test_turn_2", "test_victory"] {
+        assert!(!certain(scene).contains(&id("test_mage")), "{scene}");
+    }
+    assert!(certain("test_intro").contains(&id("test_archer")));
+    assert!(!certain("test_turn_1").contains(&id("test_archer")));
 }
 
 // --- Properties -----------------------------------------------------------------

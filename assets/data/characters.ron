@@ -165,6 +165,29 @@
             weapon_ranks: [(Gauntlet, D)],
             loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
         ),
+        // Chapter 5 (ticket 0851; docs/story/chapters/ch05.md).
+        // Hedda Ravn (shieldbearer.md): Ragna's bodyguard, ten years in a
+        // Brennish shield company, a Raider who joins as the house is
+        // attacked (`@joins` in ch05_prebattle). A veteran, so a little
+        // ahead of the party's front line; a bodyguard's talent is Def.
+        (
+            id: "shieldbearer", class: "raider", level: 8,
+            talent: Def,
+            base: (31, 11, 0, 6, 7, 8, 2),
+            weapon_ranks: [(Axe, C)],
+            loadout: (weapons: ["steel_axe", "iron_axe"], armour: Some("chain_mail")),
+        ),
+        // The Hound officer, the boss of the Envoy's House (ch05.md): a
+        // sergeant of Hendry's old company, nameless like the herald. He
+        // comes with the docks; in a Survive he need not fall. Hard to stop
+        // at the door: the bots' Chapter 5 runs (playtesting.md).
+        (
+            id: "hound_officer", class: "swordsman", level: 9,
+            talent: Str,
+            base: (40, 13, 0, 11, 11, 8, 3),
+            weapon_ranks: [(Sword, D)],
+            loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
+        ),
         // Act 1's side quests (ticket 1072; docs/story/chapters/side-*.md).
         // Ambrose Tull, the crown paymaster: a clerk in a borrowed vest who
         // retreats out the barn's back door at 0 HP (The Company Ledger).
@@ -272,8 +295,8 @@
     // Chapter 2 (ticket 0744): the herald only ever speaks (Joss and the
     // Hound lieutenant became characters in 0848; the Hound sergeant and
     // the prior of Greywater in 0849).
-    // Chapter 5 (ticket 0747): the envoy, Hedda, the Hound officer and the
-    // magistrate speak before 0851 makes units of those that fight.
+    // Chapter 5 (ticket 0747): the envoy and the magistrate only ever
+    // speak (Hedda and the Hound officer became characters in 0851).
     // Chapter 6 (ticket 0748): Oriel, the Brennish commander and the
     // king's knight speak before 0852 makes units of those that fight.
     // Chapter 7 (ticket 0749): the warden of the Candles' barracks speaks
@@ -282,5 +305,5 @@
     // never fights in Act 1.
     // Letters Home (ticket 1072): the hill people's boat master only speaks.
     // The guide, Vix, speaks the lessons' and tips' lines (ticket 0476).
-    speakers: ["guide", "vowmaster", "messenger", "herald", "envoy", "shieldbearer", "hound_officer", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
+    speakers: ["guide", "vowmaster", "messenger", "herald", "envoy", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
 )

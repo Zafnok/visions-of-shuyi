@@ -41,7 +41,9 @@ For each **music** track (`MUSIC` in `import.py`):
    `the_fallen` gains 12 s of silence at its end (`apad=pad_dur=12`), the pause
    between two rounds of the looped `defeat` cue (0809); `a_slave_to_no_one`
    (5:51) keeps its first 4:30, faded out over the last 6 s
-   (`atrim=end=270,asetpts=PTS-STARTPTS,afade=t=out:st=264:d=6`, 0850).
+   (`atrim=end=270,asetpts=PTS-STARTPTS,afade=t=out:st=264:d=6`, 0850);
+   `battle_music` is the stretch its source page gives as the loop,
+   0:04.6 to 1:28.6 (`atrim=start=4.6:end=88.6,asetpts=PTS-STARTPTS`, 0851).
 3. Refuses a game file over 4.5 minutes (ADR-0026's memory budget), after the cut.
 4. Measures its loudness with `ffmpeg -af [<cut>,]aresample=44100:resampler=soxr,apad=whole_dur=0.5,ebur128=peak=true:framelog=info -f null -`.
 5. Encodes: `ffmpeg -i <src> -map_metadata -1 -vn -af [<cut>,]aresample=44100:resampler=soxr,volume=<gain>dB -ac 2 -ar 44100 -c:a libvorbis -q:a 5 music/<name>.ogg`.

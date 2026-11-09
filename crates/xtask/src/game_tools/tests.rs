@@ -645,21 +645,41 @@ fn the_project_checks_the_credits_the_content_reads() {
 
 /// Ticket 1208: every track and audio license `export.beside` ships is on the
 /// `disclosure` list, as each target names it, so a new one fails here and not
-/// when a release is cut.
+/// when a release is cut. Ticket 0911: so is every file of `voice/` (the clips,
+/// their manifest and the voice tool's files beside it), when the private
+/// repository's copy is here (`cargo shuyi private-assets`).
 #[test]
-fn the_disclosure_list_names_the_music_and_licenses_a_package_ships() {
+fn the_disclosure_list_names_the_music_voices_and_licenses_a_package_ships() {
     let root = repo_root();
     let allowed = project().config.disclosure.unwrap().allowed_files;
+    let mut shipped = Vec::new();
     for (folder, shipped_as) in [
         ("music", "music"),
         ("assets/audio/licenses", "audio-licenses"),
+        ("voice", "voice"),
     ] {
-        for entry in fs::read_dir(root.join(folder)).unwrap() {
-            let name = entry.unwrap().file_name();
-            let path = format!("{shipped_as}/{}", name.to_string_lossy());
-            let in_app = format!("visions-of-shuyi.app/Contents/Resources/{path}");
-            assert!(allowed.contains(&path), "{path}");
-            assert!(allowed.contains(&in_app), "{in_app}");
+        if folder == "voice" && !root.join(folder).is_dir() {
+            continue;
+        }
+        files_under(&root.join(folder), shipped_as, &mut shipped);
+    }
+    assert!(shipped.len() > 40, "the music wasn't found: {shipped:?}");
+    for path in shipped {
+        let in_app = format!("visions-of-shuyi.app/Contents/Resources/{path}");
+        assert!(allowed.contains(&path), "{path}");
+        assert!(allowed.contains(&in_app), "{in_app}");
+    }
+}
+
+/// Every file under `dir`, at any depth, as `prefix/<path>` with `/`.
+fn files_under(dir: &Path, prefix: &str, out: &mut Vec<String>) {
+    for entry in fs::read_dir(dir).unwrap() {
+        let entry = entry.unwrap();
+        let path = format!("{prefix}/{}", entry.file_name().to_string_lossy());
+        if entry.file_type().unwrap().is_dir() {
+            files_under(&entry.path(), &path, out);
+        } else {
+            out.push(path);
         }
     }
 }

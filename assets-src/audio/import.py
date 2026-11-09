@@ -80,6 +80,10 @@ DOWNLOADS = [
     ("The World At Your Door MP3.zip", OGA + "The%20World%20At%20Your%20Door%20MP3.zip", "8d31cb763e8b70fcbc5a77e94a5a8ed8f2edd24b2559935d79346a0a51d86d06"),
     # Ticket 0850: Veyne Hall's battle (0071, battle_rival).
     ("A Slave To No One MP3.zip", OGA + "A%20Slave%20To%20No%20One%20MP3.zip", "ac2c82c7bc10554146764813d2f774a4eda583db599896d354c6a8048accccd4"),
+    # Ticket 0851: the Envoy's House (0071, battle_night_siege) and Hollis's
+    # confession (0071, scene_confide).
+    ("Battle_1.ogg", OGA + "Battle_1.ogg", "173cb7b68287f757865871cec201b9e82fb2a5fecd17a316c7ea3ae5543d9205"),
+    ("Soliloquy_1.mp3", OGA + "Soliloquy_1.mp3", "480aa2ae1211e217cf7506704a73d223747942ed1dfaa4e296f2c2ef592830a4"),
     ("Adventures in Adventureland.mp3",
      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Adventures%20in%20Adventureland.mp3",
      "13cf2a3bed4996331e8dcd8263cbb3a780475f0157889fb16b8e47220f453a2d"),
@@ -137,6 +141,8 @@ MUSIC = [
     ("rpg_battle_theme.ogg", "battle_theme_2.wav", None),
     ("the_fallen.ogg", "The Fallen MP3_0.zip", "The Fallen MP3.mp3"),
     ("a_slave_to_no_one.ogg", "A Slave To No One MP3.zip", "A Slave To No One MP3.mp3"),
+    ("battle_music.ogg", "Battle_1.ogg", None),
+    ("soliloquy.ogg", "Soliloquy_1.mp3", None),
     ("old_tower_inn.ogg", "The_Old_Tower_Inn.mp3", None),
     ("woodland_fantasy.ogg", "Woodland Fantasy_0.mp3", None),
     ("bards_tale.ogg", "The_Bards_Tale.mp3", None),
@@ -169,6 +175,9 @@ MUSIC_CUTS = {
     # has no quiet place to end on (ticket 0850): its first 4:30, faded out
     # over the last 6 s (TUNABLE: the Act 1 playtest, 1064).
     "a_slave_to_no_one.ogg": "atrim=end=270,asetpts=PTS-STARTPTS,afade=t=out:st=264:d=6",
+    # The source page gives the loop: at 1:28.6 back to 0:04.6 (ticket
+    # 0851). The game loops whole files, so the file is that stretch.
+    "battle_music.ogg": "atrim=start=4.6:end=88.6,asetpts=PTS-STARTPTS",
 }
 
 # (game file in assets/audio/sfx/, original, extra ffmpeg filters before

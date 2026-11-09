@@ -42,6 +42,14 @@ Road* and may retune him; his art is 0862. *Aldwater Toll Bridge* is an
 through it to Veyne Hall: give it its kind (`guards_path: true`) here,
 and Tamsin's side quest (`Cleared("aldwater")`) opens with it.
 
+**From 0851:** *The Salt Road* is the same: an `Empty` place the army
+walks through to Saltmere and the Envoy's House. Give it its kind
+(`guards_path: true`), and put back `Cleared("salt_road")` as the
+`opens_when` of Saltmere and the Envoy's House (both open on
+`Cleared("veyne_hall")` until then, since a place to pass through can't
+be cleared). The Salt Road's and the cove's scenes in `ch05.dlg` are
+written and wait for their battles' triggers.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21): `frame-png` pictures of

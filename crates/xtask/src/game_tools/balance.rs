@@ -13,7 +13,7 @@ use shuyi_cli::game::StageWrite;
 use shuyi_cli::{AutobalancePlan, Tunable};
 use shuyi_core::Knob;
 use shuyi_core::bots::playtest::play_try;
-use trpg_bots::{BattleEntrant, Persona, Targets, TunedBattle, knobs, personas_from_ron};
+use trpg_bots::{BattleEntrant, Persona, Targets, TunedBattle, is_hold, knobs, personas_from_ron};
 use trpg_content::battle::BATTLES_DIR;
 use trpg_content::battle::tune::BattleText;
 use trpg_content::bundle;
@@ -79,7 +79,7 @@ pub fn tuned_plan(
         .collect::<Result<Vec<Persona>, _>>()
         .map_err(|name| format!("no persona \"{name}\" in {PERSONAS_FILE}"))?;
     let targets = Targets::from_ron(&read(TARGETS_FILE)?)?;
-    let (tier, kind) = (def.difficulty, def.kind);
+    let (tier, kind, hold) = (def.difficulty, def.kind, is_hold(&def));
     // The army is the battle's as authored: a knob changes only enemies.
     let fielded = army(&content, &def, &stage(&content, &def)?).line();
 
@@ -92,7 +92,7 @@ pub fn tuned_plan(
     Ok(AutobalancePlan::new(
         format!("{id} · {tier:?} tier · {:?}\n{fielded}", def.kind),
         ENTRANTS.iter().map(|&n| (n.to_owned(), None)).collect(),
-        Box::new(move |names| targets.checks_of(tier, kind, names)),
+        Box::new(move |names| targets.checks_of(tier, kind, hold, names)),
         Box::new(Tunable::new(battle, knobs, play, write)),
     ))
 }

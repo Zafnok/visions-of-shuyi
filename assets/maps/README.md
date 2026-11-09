@@ -102,6 +102,10 @@ changes.
 | `veyne_rise.map` | Chapter 4, the rise above the hall (`ch04_eve`): the hill above Veyne Hall, at dusk |
 | `veyne_stable.map` | Chapter 4, the stable (`ch04_victory`): Veyne Hall's yard and stable, late morning |
 | `millhaven_post.map` | Chapter 4, to be continued (`ch04_tbc`): a Hound post on the Millhaven road, at night |
+| `south_road.map` | Chapter 5, the road south (`ch05_intro`): the road out of the valley toward the salt country, first light |
+| `envoys_house.map` | Chapter 5, the envoy's house (`ch05_envoy`, `ch05_victory`): the room at the top of the stairs, Ragna's table |
+| `saltmere_quay.map` | Chapter 5, the quay and the boat (`ch05_quay`, `ch05_tide`): Saltmere's harbor front, the evening tide |
+| `north_road_post.map` | Chapter 5, to be continued (`ch05_tbc`): a Hound post on the north road, at dusk |
 
 ## Rules checked by the loader
 
