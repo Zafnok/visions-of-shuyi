@@ -3777,6 +3777,7 @@ impl BattleState {
                 events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
                 let skills = &self.tables.skills;
                 events.extend(progression::grant_class_points(unit, cp, classes, skills));
+                unit.fill_new_uses(classes, &self.tables.spells, skills);
             }
             Faction::Ally => self.exp_pool = self.exp_pool.saturating_add(exp),
             Faction::Enemy | Faction::Neutral => {}
@@ -3874,6 +3875,7 @@ impl BattleState {
         for unit in standing.filter(|u| eligible(u)) {
             let exp = progression::paced_exp(classes, unit.level, share);
             events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
+            unit.fill_new_uses(classes, &self.tables.spells, &self.tables.skills);
         }
     }
 }

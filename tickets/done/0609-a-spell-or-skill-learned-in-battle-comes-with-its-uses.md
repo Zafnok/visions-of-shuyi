@@ -5,10 +5,10 @@ type: bug
 milestone: M5 Progression
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0609 — A spell or skill learned in battle comes with its full uses
@@ -82,16 +82,16 @@ None: decided in his message above. Verified by core tests.
 
 ## Acceptance criteria
 
-- [ ] A unit that learns Frost from a level-up in battle has Frost's full
+- [x] A unit that learns Frost from a level-up in battle has Frost's full
       uses at once and can cast it the same battle (core test, Rue-like
       test mage).
-- [ ] A spell the unit already knew keeps its uses left across the
+- [x] A spell the unit already knew keeps its uses left across the
       level-up (test).
-- [ ] An active skill with `Uses(n)` learned in battle has `n` (test), if
+- [x] An active skill with `Uses(n)` learned in battle has `n` (test), if
       any class teaches one by level; if none does, a unit test on the
       learning function.
-- [ ] `magic.md` and `combat-arts.md` say the new rule with Nick's date.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `magic.md` and `combat-arts.md` say the new rule with Nick's date.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -103,4 +103,28 @@ None: decided in his message above. Verified by core tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- New `Unit::fill_new_uses` (`crates/core/src/item.rs`): every learned
+  spell and usable non-attack active with no uses entry yet gets its full
+  uses; one with an entry (even 0) keeps it. The battle calls it after
+  each EXP / CP award (`award`) and after the EXP pool is shared.
+- Deviation from step 2: `learn_spells` and `grant_exp` are unchanged.
+  They also run between battles (the campaign's bonus EXP), where uses
+  don't matter, so the battle fills the uses after the award instead of
+  progression taking the spell table. A missing entry means "learned since
+  the battle started", since `prepare_for_battle` gives every spell and
+  active one.
+- `refresh_spells` runs only between battles (the camp's class change
+  screen and the bots' army builder), so it only got a doc comment.
+- No class teaches an active by level in battle (mastering the current
+  class makes nothing new usable), so the skill side is a unit test on
+  `fill_new_uses` (a Guard that masters Exile gets Rally full, Brace
+  keeps 1 use).
+- Tests: a battle where a test mage learns Frost on a level up, has 10
+  uses at once while Bolt keeps 1, and casts Frost the next turn; unit
+  tests for spells and actives; a property test over level ups, class
+  level ups and casts.
+- Replay and golden hashes: none changed (no recorded battle has a unit
+  learning a spell mid-battle).
+- Docs: `magic.md` and `combat-arts.md` state Nick's rule (2026-11-07);
+  the old starting rule in `combat-arts.md` is gone.
+- Starting rules decided: none.
