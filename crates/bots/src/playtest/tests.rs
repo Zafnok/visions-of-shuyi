@@ -141,7 +141,7 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
         [] as [shuyi_core::bots::playtest::Check; 0]
     );
     assert!(Targets::from_ron("(success: {})").is_err());
-    let band = |kind, tier, name: &str| match &targets.checks_of(tier, kind, &[name])[0] {
+    let band = |kind, tier, name: &str| match &targets.checks_of(tier, kind, false, &[name])[0] {
         Check::Rate { band, .. } => (band.min, band.max),
         _ => unreachable!(),
     };
@@ -158,6 +158,49 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
         (65, 90)
     );
     assert_eq!(band(fixed, Difficulty::Hard, "normal"), (40, 65));
+}
+
+/// The Envoy's House is a hold (Survive); Veyne Hall (defeat Dace) isn't.
+#[test]
+fn a_hold_is_a_battle_won_by_surviving() {
+    let content = content();
+    assert!(is_hold(&content.battles["ch05"]));
+    assert!(!is_hold(&content.battles["ch04"]));
+}
+
+/// A hold (a Survive battle, 0851): the Casual bot's own band, the others'
+/// as the story's; a skirmish keeps its own; no faster check.
+#[test]
+fn a_hold_has_its_own_casual_band_and_no_faster_check() {
+    let targets = targets();
+    let entrants = ["casual", "normal", "hardcore"];
+    let bands = |kind, tier| -> Vec<(u32, u32)> {
+        let checks = targets.checks_of(tier, kind, true, &entrants);
+        assert_eq!(checks.len(), 3, "no faster check in a hold");
+        checks
+            .iter()
+            .map(|c| match c {
+                Check::Rate { band, .. } => (band.min, band.max),
+                _ => unreachable!(),
+            })
+            .collect()
+    };
+    let story = BattleKind::Story;
+    assert_eq!(
+        bands(story, Difficulty::Normal),
+        [(40, 70), (50, 75), (50, 75)]
+    );
+    assert_eq!(
+        bands(story, Difficulty::Hard),
+        [(35, 65), (40, 65), (40, 65)]
+    );
+    let fixed = BattleKind::FixedSkirmish;
+    assert_eq!(
+        bands(fixed, Difficulty::Normal),
+        [(70, 100), (55, 80), (55, 80)]
+    );
+    let not_held = targets.checks_of(Difficulty::Normal, story, false, &entrants);
+    assert_eq!(not_held.len(), 4, "the faster check");
 }
 
 #[test]

@@ -61,6 +61,12 @@
         (id: "battle_church_3", file: "fantasy_choir_3.ogg", volume: 100, length_ms: 91241, credit: Credit("fantasy_choir")),
         // Veyne Hall (Chapter 4, ticket 0850): Nick's pick for Dace (0071).
         (id: "battle_rival", file: "a_slave_to_no_one.ogg", volume: 100, length_ms: 270000, credit: Credit("a_slave_to_no_one")),
+        // The Envoy's House (Chapter 5, ticket 0851): Nick's pick for holding a
+        // house at night (0071). The source's loop, 0:04.6 to 1:28.6.
+        (id: "battle_night_siege", file: "battle_music.ogg", volume: 100, length_ms: 84000, credit: Credit("battle_music")),
+        // Hollis's confession on the sea steps (Chapter 5, ticket 0851): Nick's
+        // pick for a long-kept secret told at last (0071).
+        (id: "scene_confide", file: "soliloquy.ogg", volume: 100, length_ms: 224340, credit: Credit("soliloquy")),
         // The skirmish pool's tracks (pools below).
         (id: "skirmish_zhelanov_1", file: "zhelanov_battle_theme_1.ogg", volume: 100, length_ms: 100415, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_2", file: "zhelanov_battle_theme_2.ogg", volume: 100, length_ms: 88790, credit: Credit("zhelanov_battle_themes")),
@@ -223,6 +229,14 @@
          license: "CC-BY-3.0",
          tags: ["music", "battle_rival", "battle", "boss", "orchestral"],
          note: "A Slave To No One MP3.mp3 from A Slave To No One MP3.zip (RPG Orchestral Essentials), its first 4:30, faded out"),
+        (id: "battle_music", title: "Battle Music", author: "Peter Eastman (peastman)",
+         source: "https://opengameart.org/content/battle-music-0", license: "CC-BY-3.0",
+         tags: ["music", "battle_night_siege", "battle", "night", "orchestral"],
+         note: "Battle_1.ogg, the source's loop (0:04.6 to 1:28.6)"),
+        (id: "soliloquy", title: "Soliloquy", author: "Matthew Pablo",
+         source: "https://opengameart.org/content/soliloquy", license: "CC-BY-3.0",
+         tags: ["music", "scene_confide", "sad", "calm", "orchestral"],
+         note: "Soliloquy_1.mp3; www.matthewpablo.com"),
         (id: "the_world_at_your_door", title: "The World At Your Door (RPG Orchestral Essentials)", author: "Jonathan Shaw (InspectorJ)",
          source: "https://opengameart.org/node/108343", license: "CC-BY-3.0",
          tags: ["music", "world_map", "calm", "adventurous", "orchestral"],

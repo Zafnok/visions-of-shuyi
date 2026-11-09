@@ -165,6 +165,18 @@ A Slave To No One (RPG Orchestral Essentials)
   Version: A Slave To No One MP3.mp3 from A Slave To No One MP3.zip (RPG Orchestral Essentials), its first 4:30, faded out
   License: CC-BY-3.0
 
+Battle Music
+  Author: Peter Eastman (peastman)
+  Source: https://opengameart.org/content/battle-music-0
+  Version: Battle_1.ogg, the source's loop (0:04.6 to 1:28.6)
+  License: CC-BY-3.0
+
+Soliloquy
+  Author: Matthew Pablo
+  Source: https://opengameart.org/content/soliloquy
+  Version: Soliloquy_1.mp3; www.matthewpablo.com
+  License: CC-BY-3.0
+
 The World At Your Door (RPG Orchestral Essentials)
   Author: Jonathan Shaw (InspectorJ)
   Source: https://opengameart.org/node/108343

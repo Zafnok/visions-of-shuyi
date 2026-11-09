@@ -13,7 +13,9 @@
 //! cargo test -p trpg-ui --test it ch04_winnable::record -- --ignored
 //! ```
 //!
-//! and read the new fixture's last lines (who fell, how many turns).
+//! and read the new fixture's last lines (who fell, how many turns). A new
+//! Chapter 4 playthrough leaves Chapter 5 another army: record Chapter
+//! 5's again after it (`ch05_winnable`).
 
 use trpg_content::Content;
 use trpg_core::{BattleState, Campaign, CharacterId, Defeat, Outcome};
@@ -25,7 +27,8 @@ use crate::playthrough::{self, battle, lost, skip_scenes};
 
 const FIXTURE: &str = include_str!("fixtures/ch04_winning.ron");
 
-fn winning_commands() -> Vec<trpg_core::Command> {
+/// The player's commands, in order.
+pub fn winning_commands() -> Vec<trpg_core::Command> {
     playthrough::commands("ch04_winning.ron", FIXTURE)
 }
 
@@ -33,7 +36,7 @@ fn winning_commands() -> Vec<trpg_core::Command> {
 /// (every rewind charge unused, as the game counts them), and Chapter 4's
 /// battle as it starts with it, Preparations left as they are. Gil isn't
 /// in it: he joins only on Millhaven Road (1071).
-fn chapter_4(content: &Content) -> (Campaign, BattleState) {
+pub fn chapter_4(content: &Content) -> (Campaign, BattleState) {
     let tables = content.tables();
     let (mut campaign, mut state) = chapter_3(content);
     playthrough::play(&mut state, content, &chapter_3_commands());
@@ -62,19 +65,15 @@ fn the_recorded_playthrough_drives_dace_from_the_hall() {
     assert_eq!(dace.map(|u| u.defeat), Some(Defeat::Retreats));
 }
 
-/// Acceptance: New Game reaches Chapter 4 through Chapters 1 to 3, and
-/// Chapter 4 plays through the real game: the valley road, the Act 1
-/// world map, the march to Veyne Hall, the rise and the gate,
-/// Preparations, the battle won with the recorded commands, the results,
-/// the stable, the Hound post, "To be continued".
-#[test]
-fn chapter_4_plays_from_new_game_to_to_be_continued() {
-    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
-    chapter_3_won(&mut h);
+/// New Game, then Chapters 1 to 4 won with the recorded commands through
+/// the real game (their scenes skipped, Preparations left as they are),
+/// up to the Act 1 world map as Chapter 5 begins, after its road south.
+pub fn chapter_4_won(h: &mut Harness) {
+    chapter_3_won(h);
     // "Save your progress?" No; the valley road, then the map.
     h.keys("Down f");
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
-    skip_scenes(&mut h);
+    skip_scenes(h);
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "world_map"],
@@ -86,7 +85,7 @@ fn chapter_4_plays_from_new_game_to_to_be_continued() {
     h.keys("x Down Down f f");
     h.wait(3.0);
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
-    skip_scenes(&mut h);
+    skip_scenes(h);
     assert_eq!(
         h.screens(),
         ["title", "game_flow", "preparations"],
@@ -95,12 +94,12 @@ fn chapter_4_plays_from_new_game_to_to_be_continued() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(&h).units().len(), 7 + 13, "seven and the hall");
-    playthrough::play_in_game(&mut h, &winning_commands());
+    assert_eq!(battle(h).units().len(), 7 + 13, "seven and the hall");
+    playthrough::play_in_game(h, &winning_commands());
     for _ in 0..150 {
         match h.top_screen() {
-            "dialogue" => skip_scenes(&mut h),
-            "to_be_continued" => break,
+            "dialogue" => skip_scenes(h),
+            "world_map" => break,
             // Dace runs and his Hounds after him; banners and the results
             // (a page for each level gained) take a press.
             _ => {
@@ -110,11 +109,25 @@ fn chapter_4_plays_from_new_game_to_to_be_continued() {
     }
     assert_eq!(
         h.screens(),
-        ["title", "game_flow", "to_be_continued"],
+        ["title", "game_flow", "world_map"],
         "{}",
         h.snapshot()
     );
+}
+
+/// Acceptance: New Game reaches Chapter 4 through Chapters 1 to 3, and
+/// Chapter 4 plays through the real game: the valley road, the Act 1
+/// world map, the march to Veyne Hall, the rise and the gate,
+/// Preparations, the battle won with the recorded commands, the results,
+/// the stable, the Hound post, and on to Chapter 5 (0851): its road
+/// south, and the map again.
+#[test]
+fn chapter_4_plays_from_new_game_into_chapter_5() {
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    chapter_4_won(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
+    let chapter = flow.chapter().map(|c| c.id.clone());
+    assert_eq!(chapter.as_deref(), Some("ch05"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.roster.len(), 7, "nobody was lost");
     let world = campaign.world.as_ref();

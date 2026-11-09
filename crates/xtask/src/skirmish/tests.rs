@@ -138,7 +138,7 @@ fn a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again() {
     }
     let battle = fs::read_to_string(one.join(format!("assets-test/battles/{id}.ron"))).expect("it");
     assert!(
-        battle.contains("bots_army: (chapter: \"ch04\", level: 5)"),
+        battle.contains("bots_army: (chapter: \"ch05\", level: 5)"),
         "{battle}"
     );
     assert!(

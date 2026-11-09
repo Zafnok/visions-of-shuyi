@@ -114,7 +114,7 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
   more than 5 notes; a note unit that is neither an `id` nor a character in
   the battle, or that is listed twice.
 
-`ch01.ron` to `ch04.ron` are Chapters 1 to 4's battles. `test.ron` (the test chapter's battle),
+`ch01.ron` to `ch05.ron` are Chapters 1 to 5's battles. `test.ron` (the test chapter's battle),
 `quick.ron` (the debug Quick Battle) and `test_escape.ron`,
 `test_retreat.ron` and `test_hold.ron` (one of Act 1's battle rules each,
 0319) and `test_village.ron` (save the village, 0313) are test files, never part of the story: they are in `assets-test/battles/`, which a build that ships doesn't
