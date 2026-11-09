@@ -28,7 +28,7 @@ use trpg_core::{
 use super::battle::glyph::shop as glyph;
 use super::battle::shop::{
     HELP, HELP_ONE_TAB, HELP_SELL, HELP_SPECIAL, SELL_SPECIAL, SellConfirm, Tab, gold_text,
-    kind_key, stat_line, wont_take_key,
+    kind_key, new_uses, stat_line, wont_take_key,
 };
 use super::battle::view::{SellConfirmView, ShopLineView, ShopScreenView};
 use crate::audio::MenuSound;
@@ -109,7 +109,13 @@ impl TownScreen {
                 .shop
                 .stock
                 .iter()
-                .filter_map(|id| Some(deal(TownTrade::Buy(id.clone()), id, items.get(id)?.price())))
+                .filter_map(|id| {
+                    let def = items.get(id)?;
+                    Some(Deal {
+                        durability: new_uses(def),
+                        ..deal(TownTrade::Buy(id.clone()), id, def.price())
+                    })
+                })
                 .collect(),
             Tab::Sell => self.sales(ctx),
             Tab::Repair => self.repairs(ctx),

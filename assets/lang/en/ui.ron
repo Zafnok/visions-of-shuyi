@@ -723,6 +723,11 @@
     "battle.info.mark.active": "A",
     "battle.info.mark.passive": "P",
     "battle.info.weapon_numbers": "Mt {might}  Hit {hit}  Crit {crit}  Rng {range}  Wt {weight}",
+    "battle.info.armour_weight": "Wt {weight}",
+    "battle.info.armour_class.cloth": "Cloth",
+    "battle.info.armour_class.leather": "Leather",
+    "battle.info.armour_class.chain": "Chain",
+    "battle.info.armour_class.plate": "Plate",
 
     // The battle: EXP, level up, promotion and class pages (the results
     // and the class change screen show them too).

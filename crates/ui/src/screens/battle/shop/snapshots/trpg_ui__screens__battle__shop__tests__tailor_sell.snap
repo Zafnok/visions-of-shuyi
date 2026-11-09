@@ -8,7 +8,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║                                                                                                  ║
 ║  Iron Sword                        The Tailor buys only cloth and leather armor.                 ║
 ║  Steel Sword                       The Tailor buys only cloth and leather armor.                 ║
-║  Leather Vest                400   Def +2  Res +2                                                ║
+║  Leather Vest                400   Leather  Def +2  Res +2  Wt 1                                 ║
 ║  Potion ×2                         The Tailor buys only cloth and leather armor.                 ║
 ║                                                                                                  ║
 ║                                                                                                  ║

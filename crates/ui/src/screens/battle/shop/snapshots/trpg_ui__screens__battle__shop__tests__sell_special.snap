@@ -6,9 +6,9 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║                                                                                                  ║
 ║  Test Lord                      Buy   Sell                                                       ║
 ║                                                                                                  ║
-║  Iron Sword                  230   Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                             ║
-║  Moonblade                 1 500   Mt 10  Hit 85  Crit 0  Rng 1  Wt 4                            ║
-║  Leather Vest                200   Def +2  Res +2                                                ║
+║  Iron Sword                  230   E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                          ║
+║  Moonblade                 1 500   C  Mt 10  Hit 85  Crit 0  Rng 1  Wt 4                         ║
+║  Leather Vest                200   Leather  Def +2  Res +2  Wt 1                                 ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║
