@@ -21,6 +21,12 @@ everything a player reads through Chapter 1, machine-translated with
 0718's pipeline. 0716 finishes Chapter 1's English scenes, so this waits
 for it.
 
+**After the writer's rewrite** (Nick, 2026-11-08; Lane J of *Act 1
+critical path*): a human writer is being hired (0766) and may reword
+every line. A line's id is a hash of its words, so a clip or a
+translation made before the rewrite is redone after it. Don't start
+this ticket while 0766 is open without asking Nick.
+
 ## Nick input
 
 None. Nick can't read Japanese; he can open the game in Japanese to see

@@ -48,6 +48,11 @@ The snapshot that shows it:
 Nick, 0404: "I like the bar representing HP in the forecast." Keep the
 bar unless he drops it.
 
+**Either order with 0333:** 0333 builds 0080's answer on armour (for
+example a minimum hit) and may add a mark to the forecast for it. If
+0333 is done, keep its mark in the new layout; if not, leave room for
+one line and 0333 adds it.
+
 ## Nick input
 
 **Decision** (`ask-nick`, before building), on `frame-png` pictures of the
