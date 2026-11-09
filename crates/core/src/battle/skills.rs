@@ -12,7 +12,7 @@ use crate::art::ArtId;
 use crate::combat::{CombatMods, CombatantInput};
 use crate::geom::Pos;
 use crate::item::Equipped;
-use crate::movement::TileSet;
+use crate::movement::{TileSet, area_tiles};
 use crate::skill::{
     ActiveEffect, Area, Bonuses, CostError, CostSource, EffectSource, SkillContext, SkillCost,
     SkillDef, SkillId, SkillKind, Stance, TimedEffect, TimedMods, auras, check_cost,
@@ -401,15 +401,22 @@ impl BattleState {
         }
     }
 
+    /// The tiles an area of allies within `radius` of `dest` covers (not
+    /// `dest`): what a skill used there reaches, shown on the map while it
+    /// is chosen (ticket 0482).
+    pub fn ally_area(&self, dest: Pos, radius: u32) -> TileSet {
+        let map = &self.map.tiles;
+        area_tiles(map.width(), map.height(), dest, radius)
+    }
+
     /// The other units allied to `unit` within `radius` tiles of `dest`, in
     /// unit order.
     fn allies_near(&self, unit: &Unit, dest: Pos, radius: u32) -> Vec<&Unit> {
+        let area = self.ally_area(dest, radius);
         self.units
             .iter()
             .filter(|u| {
-                u.id != unit.id
-                    && unit.faction.is_allied_to(u.faction)
-                    && Pos::manhattan(dest, u.pos) <= radius
+                u.id != unit.id && unit.faction.is_allied_to(u.faction) && area.contains(u.pos)
             })
             .collect()
     }

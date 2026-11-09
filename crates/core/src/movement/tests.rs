@@ -899,6 +899,50 @@ impl Scene {
     }
 }
 
+// --------------------------------------------------------------- area tiles
+
+fn area_picture(rows: &[&str], radius: u32) -> Vec<String> {
+    let s = scene(rows, "foot", 0);
+    let (w, h) = (s.map.tiles.width(), s.map.tiles.height());
+    s.draw(&area_tiles(w, h, s.mover().pos, radius))
+}
+
+#[test]
+fn area_tiles_are_a_diamond_without_the_centre() {
+    assert_eq!(
+        area_picture(&OPEN_5, 2),
+        ["..*..", ".***.", "**@**", ".***.", "..*.."]
+    );
+    assert_eq!(
+        area_picture(&OPEN_5, 1),
+        [".....", "..*..", ".*@*.", "..*..", "....."]
+    );
+    assert_eq!(area_picture(&OPEN_5, 0), OPEN_5);
+}
+
+#[test]
+fn area_tiles_clip_at_the_map_edge() {
+    assert_eq!(
+        area_picture(&["@....", ".....", "....."], 2),
+        ["@**..", "**...", "*...."]
+    );
+}
+
+proptest! {
+    #[test]
+    fn area_tiles_are_exactly_the_tiles_within_the_radius(
+        w in 1u16..12, h in 1u16..12, cx in 0i32..12, cy in 0i32..12, radius in 0u32..30,
+    ) {
+        let center = Pos::new(cx % i32::from(w), cy % i32::from(h));
+        let area = area_tiles(w, h, center, radius);
+        let grid = Grid::filled(w, h, ());
+        for pos in grid.positions() {
+            let within = pos != center && Pos::manhattan(pos, center) <= radius;
+            prop_assert_eq!(area.contains(pos), within, "{:?}", pos);
+        }
+    }
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(1000))]
 
