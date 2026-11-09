@@ -551,7 +551,8 @@ pub fn playback_banner(
 }
 
 /// One of the art's non-number effects as text: `no counter`, `pierces`,
-/// `pins: Mov −3`, `slows: Spd −3`, `stance: +20 avo`.
+/// `pins: Mov −3`, `slows: Spd −3`, `stance: +20 avo`, `disarms on hit`,
+/// `marks: hit +20, crit +10`, `if it falls: act again`.
 pub fn note_text(words: Words<'_>, note: &ArtNote) -> String {
     match note {
         ArtNote::NoCounter => words.text("battle.art.note.no_counter").to_owned(),
@@ -575,6 +576,11 @@ pub fn note_text(words: Words<'_>, note: &ArtNote) -> String {
             "battle.art.note.stance",
             &[("mods", &timed_text(words, mods))],
         ),
+        ArtNote::Disarms => words.text("battle.art.note.disarms").to_owned(),
+        ArtNote::Marks { hit, crit } => {
+            words.text_with("battle.art.note.marks", &[("hit", hit), ("crit", crit)])
+        }
+        ArtNote::ActsAgain => words.text("battle.art.note.acts_again").to_owned(),
     }
 }
 
@@ -643,6 +649,18 @@ mod tests {
         assert_eq!(
             note_text(Words::ENGLISH, &ArtNote::Debuff(rend)),
             "rends: Def −5"
+        );
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Disarms),
+            "disarms on hit"
+        );
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Marks { hit: 20, crit: 10 }),
+            "marks: hit +20, crit +10"
+        );
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::ActsAgain),
+            "if it falls: act again"
         );
         assert_eq!(
             note_text(Words::ENGLISH, &ArtNote::AvoidDebuff(20)),

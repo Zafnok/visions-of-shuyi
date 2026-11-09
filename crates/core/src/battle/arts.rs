@@ -7,7 +7,7 @@
 use crate::prelude::*;
 
 use super::{BattleState, CommandError, Event, Fight, Phase, Pos, Step, UnitAction};
-use crate::art::{ArtArea, ArtEffect, ArtId, ArtNote};
+use crate::art::{ArtArea, ArtEffect, ArtId, ArtNote, ArtStatus, OnKill};
 use crate::combat::{
     CombatHp, CombatOutcome, Forecast, Reactions, Side, SideForecast, StrikePlan, StrikeReaction,
     forecast as combat_forecast, if_all_hit,
@@ -185,6 +185,22 @@ pub(super) fn reactions(
     }
 }
 
+/// Disarm whose first strike is sure to hit (hit 100, before any counter,
+/// not deflected): the defender never counters, so `forecast` shows none.
+pub(super) fn sure_disarm(fight: &Fight, forecast: &mut Forecast) {
+    let disarms = fight
+        .art
+        .is_some_and(|a| a.effect.on_first_hit_status.contains(&ArtStatus::Disarmed));
+    let reactions = forecast.reactions;
+    if disarms
+        && forecast.attacker.hit >= 100
+        && !reactions.defender_first
+        && !reactions.deflects[1]
+    {
+        forecast.defender = None;
+    }
+}
+
 /// The stance `fight`'s art puts on `unit` in this combat, if `unit`
 /// doesn't have it yet.
 pub(super) fn new_stance<'a>(unit: &Unit, fight: &Fight<'a>) -> Option<&'a TimedMods> {
@@ -242,6 +258,7 @@ impl BattleState {
             return Err(not_usable());
         };
         let fits = def.effect.is_action() == action
+            && !unit.art_spent(def)
             && unit
                 .arts_for(slot, &tables.classes, &tables.items, &tables.arts)
                 .contains(&def);
@@ -600,6 +617,35 @@ impl BattleState {
             source,
             until,
         });
+    }
+
+    /// Unbroken Stride's art, if `art` was used in unit `id`'s attack on
+    /// `target` and the target fell to it while the user still stands.
+    pub(super) fn strode(&self, id: UnitId, target: UnitId, art: Option<&ArtUse>) -> Option<ArtId> {
+        let art = art.filter(|a| a.effect.on_kill == Some(OnKill::ActAgain))?;
+        (self.unit(target).is_none() && self.unit(id).is_some()).then(|| art.art.clone())
+    }
+
+    /// Unit `id`, whose target fell to its Unbroken Stride `art`, is ready
+    /// again instead of done: the art's mark on it until the start of the
+    /// next phase (no second one this phase), then [`Event::ActsAgain`].
+    pub(super) fn act_again(&mut self, id: UnitId, art: ArtId, events: &mut Vec<Event>) {
+        let until = self.phase.next();
+        let Some(unit) = self.unit_mut(id) else {
+            return;
+        };
+        let source = EffectSource::Art(art);
+        unit.add_effect(TimedEffect {
+            source: source.clone(),
+            mods: TimedMods::default(),
+            until,
+        });
+        events.push(Event::EffectApplied {
+            unit: id,
+            source,
+            until,
+        });
+        events.push(Event::ActsAgain { unit: id });
     }
 
     /// What `unit` moving to `dest` and doing `action` (an attack, or an

@@ -179,6 +179,12 @@ impl BattleState {
     ) -> Result<(CombatantInput<'_>, CombatantInput<'_>, u32), CommandError> {
         let mut a = self.combatant(attacker, fight.dest, Some(fight.with))?;
         let mut d = self.combatant(defender, defender.pos, None)?;
+        // Disarm: a disarmed unit's weapon neither attacks nor counters.
+        for (c, u) in [(&mut a, attacker), (&mut d, defender)] {
+            if u.is_disarmed() && c.weapon.as_ref().is_some_and(|w| w.kind.is_some()) {
+                c.weapon = None;
+            }
+        }
         let kind = |c: &CombatantInput| c.weapon.as_ref().and_then(|w| w.kind);
         let (a_kind, d_kind) = (kind(&a), kind(&d));
         let a_ctx = SkillContext {

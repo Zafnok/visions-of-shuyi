@@ -22,7 +22,9 @@
 //!   cost (it then breaks after the combat; [`check_cost`]).
 //! - **Effects** ([`ArtEffect`]) are data: bonuses and changes to the
 //!   attacker's numbers for the whole combat ([`ArtEffect::apply`], so the
-//!   forecast shows them), debuffs on the target's first hit, a stance on
+//!   forecast shows them), debuffs on the target's first hit (stats,
+//!   avoid, Disarm's and Marked Shot's), Unbroken Stride's second action
+//!   after a kill (once per phase, [`Unit::art_spent`]), a stance on
 //!   the user (Hold the Ford's stops enemies next to it), Line Pierce's
 //!   extra strike, the strikes at several units of Wide Swing, Comet Lance
 //!   and Arrow Rain ([`ArtArea`]) and Chain Strike's allies, Pack Hunt's
@@ -40,8 +42,8 @@ use crate::combat::{CombatMods, MitigationStat, PowerStat, WeaponStats, WeaponTr
 use crate::item::{ItemTable, WEAPON_SLOTS};
 use crate::movement::AttackRange;
 use crate::skill::{
-    ActiveEffect, CostSource, SkillCost, SkillKind, SkillTable, StanceReaction, TimedMods,
-    check_cost,
+    ActiveEffect, CostSource, EffectSource, SkillCost, SkillKind, SkillTable, StanceReaction,
+    TimedMods, check_cost,
 };
 use crate::spell::SpellTable;
 use crate::stats::{StatKind, StatValue};
@@ -130,6 +132,31 @@ pub enum ArtArea {
     Burst,
 }
 
+/// A state an art's first hit puts on the target until the end of its next
+/// phase, besides its numbers (`combat-arts.md`, *Exact rules*).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ArtStatus {
+    /// Disarm: from then on the target can't counter, and it can't attack
+    /// or counter with a weapon (spells are fine).
+    Disarmed,
+    /// Marked Shot: every strike at the target gets this much more hit and
+    /// crit.
+    Marked {
+        /// Added to hit.
+        hit: StatValue,
+        /// Added to crit.
+        crit: StatValue,
+    },
+}
+
+/// What an art does when its target falls to the user's strikes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum OnKill {
+    /// Unbroken Stride: the user acts again (a full move and another
+    /// action), once per phase.
+    ActAgain,
+}
+
 /// What an art does. Every field is optional in data; the default does
 /// nothing. Written in `arts.ron` as e.g. `(hit: 10, no_counter: true)`.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
@@ -166,6 +193,11 @@ pub struct ArtEffect {
     /// The first hit also lowers the target's avoid by this much (Off
     /// Balance); avoid isn't a stat, so it isn't a [`Debuff`].
     pub on_first_hit_avoid: StatValue,
+    /// States the first hit also puts on the target (Disarm, Marked Shot).
+    pub on_first_hit_status: Vec<ArtStatus>,
+    /// What happens if the target falls to the user's strikes (Unbroken
+    /// Stride; see [`crate::battle`]).
+    pub on_kill: Option<OnKill>,
     /// A stance on the user, from this combat (it counts in it) until the
     /// start of the user's next phase (Sidestep).
     pub stance: Option<TimedMods>,
@@ -209,6 +241,18 @@ pub enum ArtNote {
     AvoidDebuff(StatValue),
     /// The user takes this stance.
     Stance(TimedMods),
+    /// The target's first hit disarms it (`disarms on hit`).
+    Disarms,
+    /// The target's first hit marks it: strikes at it get this much more
+    /// hit and crit (`marks: hit +20, crit +10`).
+    Marks {
+        /// Added to hit.
+        hit: StatValue,
+        /// Added to crit.
+        crit: StatValue,
+    },
+    /// The user acts again if the target falls (`if it falls: act again`).
+    ActsAgain,
 }
 
 impl ArtEffect {
@@ -263,8 +307,18 @@ impl ArtEffect {
     /// What the first hit puts on the target, to last until the end of its
     /// next phase; `None` if the art has no debuff.
     pub fn first_hit_mods(&self) -> Option<TimedMods> {
-        if self.on_first_hit.is_empty() && self.on_first_hit_avoid == 0 {
+        if self.on_first_hit.is_empty()
+            && self.on_first_hit_avoid == 0
+            && self.on_first_hit_status.is_empty()
+        {
             return None;
+        }
+        let (mut hit_taken, mut crit_taken) = (0, 0);
+        for status in &self.on_first_hit_status {
+            if let ArtStatus::Marked { hit, crit } = *status {
+                hit_taken += hit;
+                crit_taken += crit;
+            }
         }
         Some(TimedMods {
             stats: self
@@ -274,8 +328,11 @@ impl ArtEffect {
                 .collect(),
             combat: CombatMods {
                 avoid_debuff: self.on_first_hit_avoid,
+                hit_taken,
+                crit_taken,
                 ..CombatMods::default()
             },
+            disarmed: self.on_first_hit_status.contains(&ArtStatus::Disarmed),
             ..Default::default()
         })
     }
@@ -298,6 +355,13 @@ impl ArtEffect {
         out.extend(self.on_first_hit.iter().map(|&d| ArtNote::Debuff(d)));
         if self.on_first_hit_avoid > 0 {
             out.push(ArtNote::AvoidDebuff(self.on_first_hit_avoid));
+        }
+        out.extend(self.on_first_hit_status.iter().map(|s| match *s {
+            ArtStatus::Disarmed => ArtNote::Disarms,
+            ArtStatus::Marked { hit, crit } => ArtNote::Marks { hit, crit },
+        }));
+        if self.on_kill == Some(OnKill::ActAgain) {
+            out.push(ArtNote::ActsAgain);
         }
         if let Some(stance) = &self.stance {
             out.push(ArtNote::Stance(stance.clone()));
@@ -403,7 +467,8 @@ impl Unit {
     }
 
     /// [`Unit::arts_for`] the weapon in `slot`, keeping those it can pay for
-    /// now (the weapon isn't broken; less left than the cost is fine).
+    /// now (the weapon isn't broken; less left than the cost is fine) and
+    /// hasn't [spent this phase](Unit::art_spent).
     pub fn usable_arts<'a>(
         &self,
         slot: usize,
@@ -414,11 +479,21 @@ impl Unit {
         self.arts_for(slot, classes, items, arts)
             .into_iter()
             .filter(|a| check_cost(self, a.skill_cost(), &CostSource::Weapon(slot)).is_ok())
+            .filter(|a| !self.art_spent(a))
             .collect()
     }
 
+    /// Whether `art` acts again ([`OnKill::ActAgain`]) and already
+    /// gave the unit its second action this phase: its mark stays on the
+    /// unit until the start of the next phase.
+    pub fn art_spent(&self, art: &ArtDef) -> bool {
+        art.effect.on_kill == Some(OnKill::ActAgain)
+            && self.has_effect(&EffectSource::Art(art.id.clone()))
+    }
+
     /// Every range the unit could attack at now, without duplicates: its
-    /// [`Unit::attack_ranges`], and with each of those weapons and spells
+    /// [`Unit::attack_ranges`] (only its spells' while it is
+    /// [disarmed](Unit::is_disarmed)), and with each of those weapons and spells
     /// the combat actives that fit it and the arts ([`Unit::usable_arts`])
     /// it can pay for, if it [may use them](Unit::may_use_arts). An art
     /// replaces the range it names; an active adds to the maximum. What the
@@ -457,7 +532,9 @@ impl Unit {
             strikes.collect()
         };
         let mut ranges = Vec::new();
-        for slot in 0..WEAPON_SLOTS {
+        // A disarmed unit attacks with spells only.
+        let weapon_slots = if self.is_disarmed() { 0 } else { WEAPON_SLOTS };
+        for slot in 0..weapon_slots {
             let Some((_, def)) = self.usable_weapon(slot, class, items) else {
                 continue;
             };
