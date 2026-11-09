@@ -606,6 +606,23 @@ fn unreachable(map: &WorldMap) -> Vec<String> {
         .collect()
 }
 
+/// The battles of every world map's side quests and fixed skirmishes with
+/// their scenes, for the dialogue's presence checks, which run before the
+/// maps can load (ticket 1071). A file that doesn't parse gives none: its
+/// errors are [`load_all`]'s to report.
+pub fn place_scenes() -> Vec<SideQuest> {
+    let loaded = bundle::load_each(WORLDMAPS_DIR, "ron", |file| {
+        Ok(parse_ron::<RawWorldMap>(file.path, file.text).ok())
+    });
+    let maps = loaded.into_iter().flat_map(BTreeMap::into_values).flatten();
+    maps.flat_map(|map| map.nodes)
+        .filter_map(|node| match node.kind {
+            RawKind::SideQuest(quest) | RawKind::FixedSkirmish { battle: quest, .. } => Some(quest),
+            _ => None,
+        })
+        .collect()
+}
+
 /// Loads every world map in the bundle, keyed by id (the file stem),
 /// checking each against `refs` and the maps against each other (`next`
 /// names a map, a chapter's `world_map` names one with its story battle).

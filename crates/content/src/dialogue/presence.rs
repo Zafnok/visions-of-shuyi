@@ -17,7 +17,7 @@ use crate::prelude::*;
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use trpg_core::{
-    BattleDef, CampEvent, CharacterId, LEAD_ID, Phase, SupportTable, TriggerWhen, Who,
+    BattleDef, CampEvent, CharacterId, LEAD_ID, Phase, SideQuest, SupportTable, TriggerWhen, Who,
 };
 
 use super::{Lines, ParsedScene, Step};
@@ -168,6 +168,35 @@ impl Cast {
             let on_the_map: BTreeSet<CharacterId> = early.into_iter().filter(placed).collect();
             for trigger in first_turn {
                 self.also_certain(&trigger.scene, &on_the_map);
+            }
+        }
+        self
+    }
+
+    /// The same, with the world maps' battles (`places`, their scenes):
+    /// a place's intro scenes play before its battle, which is won once,
+    /// so they can count on the characters it fields as enemies, as Gil
+    /// before he is beaten on Millhaven Road (1071). Its victory scenes
+    /// count on nobody.
+    #[must_use]
+    pub fn with_places(
+        mut self,
+        places: &[SideQuest],
+        battles: &BTreeMap<String, BattleDef>,
+    ) -> Self {
+        for place in places {
+            let enemies = battles.get(&place.battle).into_iter().flat_map(|b| {
+                b.enemies
+                    .iter()
+                    .chain(b.reinforcements.iter().map(|r| &r.unit))
+                    .filter_map(|e| e.character.clone())
+            });
+            let enemies: BTreeSet<CharacterId> = enemies.collect();
+            for scene in &place.intro_scenes {
+                self.played(scene, enemies.clone());
+            }
+            for scene in &place.victory_scenes {
+                self.played(scene, BTreeSet::new());
             }
         }
         self

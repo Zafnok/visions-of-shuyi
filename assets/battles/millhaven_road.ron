@@ -1,0 +1,66 @@
+// Millhaven Road (ticket 1071; ch04.dlg, ch04_millhaven_road_intro and
+// _victory): an optional fixed skirmish of Chapter 4. A Hound patrol rings
+// Gil Parrow, the prize-fighter, on the road into Millhaven; he means to
+// beat every man on it, the party too. Beat the patrol's leader to win;
+// the Hounds still standing run, and so does Gil if he is still standing.
+// Beat Gil first and he joins after the fight (battle-scenes-and-
+// recruitment.md, *Recruitment*: "Win without beating him and he is
+// missed").
+//
+// The danger is Gil and the Corporal: the autobalance took the ring's
+// Hounds down to level 1 and added a swordsman, so a careful player can
+// beat Gil without losing anyone.
+//
+// Reached from the world map (worldmaps/act1.ron, `millhaven_road`).
+// Every number here is *the agent's starting value*, set by the bots
+// (`cargo shuyi autobalance --stage millhaven_road`) and judged in the Act
+// 1 playtest (1064).
+(
+    id: "millhaven_road",
+    map: "millhaven_road",
+    // The road from the west.
+    player_slots: [
+        (character: "lead", pos: (2, 6)),
+        (character: "retainer", pos: (3, 6)),
+        (character: "sergeant", pos: (1, 6)),
+        (character: "poacher", pos: (1, 5)),
+        (character: "keeper", pos: (1, 7)),
+        (character: "heretic", pos: (2, 5)),
+        (character: "defector", pos: (2, 7)),
+    ],
+    enemies: [
+        // Gil, in the ring, coming at the party.
+        (character: "prizefighter", pos: (9, 6)),
+        // The ring.
+        (template: "hound_swordsman", pos: (8, 5), level: Some(1)),
+        (template: "hound_swordsman", pos: (8, 4), level: Some(1)),
+        (template: "hound_archer", pos: (10, 5), level: Some(1)),
+        (template: "hound_swordsman", pos: (8, 7), level: Some(1)),
+        (template: "hound_raider", pos: (10, 7), level: Some(1)),
+        // The patrol's leader and his rider, toward the town.
+        (character: "patrol_leader", pos: (13, 6), ai: Guard, boss: true),
+        (template: "hound_rider", pos: (14, 7), ai: Guard, level: Some(1)),
+    ],
+    preparations: true,
+    pack_cap: 3,
+    bots_army: (chapter: "ch04", level: 6),
+    clear_gold: 300,
+    objective: DefeatUnit(unit: "patrol_leader", leftovers: Flee),
+    // Scene ids and what each is written for: the top of dialogue/ch04.dlg.
+    triggers: [
+        (when: CombatStart(unit: "prizefighter"), scene: "ch04_prizefighter_engage", once: true),
+        (
+            when: UnitFell(unit: "prizefighter", recruit: true),
+            scene: "ch04_prizefighter_fell",
+            once: true,
+        ),
+    ],
+    battle_notes: [
+        (text: "Beat the Corporal to win. Those still standing run.", units: ["patrol_leader"]),
+        (text: "Beat Gil before the leader falls, and he joins you.", units: ["prizefighter"]),
+    ],
+    difficulty: Normal,
+    kind: FixedSkirmish,
+    music: Pool("skirmish"),
+    seed: 1072,
+)

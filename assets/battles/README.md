@@ -114,7 +114,11 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
   more than 5 notes; a note unit that is neither an `id` nor a character in
   the battle, or that is listed twice.
 
-`ch01.ron` to `ch05.ron` are Chapters 1 to 5's battles. `test.ron` (the test chapter's battle),
+`ch01.ron` to `ch05.ron` are Chapters 1 to 5's battles. Act 1's fixed
+skirmishes (1071) are named after their places on its world map
+(`aldwater.ron`, `millhaven_road.ron`, `salt_road.ron`,
+`smugglers_cove.ron`), its random skirmishes' pool `act1_random_*.ron`
+(1070) and its side quests `side_*.ron` (1072). `test.ron` (the test chapter's battle),
 `quick.ron` (the debug Quick Battle) and `test_escape.ron`,
 `test_retreat.ron` and `test_hold.ron` (one of Act 1's battle rules each,
 0319) and `test_village.ron` (save the village, 0313) are test files, never part of the story: they are in `assets-test/battles/`, which a build that ships doesn't

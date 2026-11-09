@@ -5,7 +5,7 @@ type: content
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["1008", "1070", "0746", "0747", "0748", "0749", "0509", "0013", "0070", "0323", "0608"]
 nick_input: none
 completed:
@@ -26,6 +26,11 @@ to pass):
 | 5 | *The Salt Road* (to Saltmere) | *Smugglers' Cove*, with loot |
 | 6 | *The Burnt Mill* (to the plain; the first echoes) | *Brennish Outriders* |
 | 7 | *Pilgrims' Road* (into Ossary) | *The Ossuary Gate* |
+
+**Split (2026-11-09, ADR-0101):** this ticket builds Chapters 4 and 5's
+four and makes a guarding skirmish part of the army a chapter arrives
+with (the chapter tests' and the bots'); Chapters 6 and 7's four are
+**1090**. The eight were well over 2,000 changed lines with that work.
 
 1008 builds fixed skirmishes; 1070 places their nodes on the Act 1 map,
 locked; the chapter scripts (0746–0749) write their short scenes,

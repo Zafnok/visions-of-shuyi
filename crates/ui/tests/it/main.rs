@@ -43,6 +43,7 @@ mod scene_camera;
 mod scene_preview;
 mod sessions;
 mod side_quests;
+mod skirmishes;
 mod split_keys;
 mod sprite_test;
 mod threat;

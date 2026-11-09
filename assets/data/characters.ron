@@ -166,6 +166,16 @@
             weapon_ranks: [(Gauntlet, D)],
             loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
         ),
+        // The leader of the Hound patrol on Millhaven Road (1071), nameless
+        // like the Officer: beating him wins the fight, so Gil can be
+        // beaten first or missed (battle-scenes-and-recruitment.md).
+        (
+            id: "patrol_leader", class: "swordsman", level: 6,
+            talent: Def,
+            base: (28, 9, 0, 8, 7, 7, 2),
+            weapon_ranks: [(Sword, D)],
+            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
+        ),
         // Chapter 5 (ticket 0851; docs/story/chapters/ch05.md).
         // Hedda Ravn (shieldbearer.md): Ragna's bodyguard, ten years in a
         // Brennish shield company, a Raider who joins as the house is
