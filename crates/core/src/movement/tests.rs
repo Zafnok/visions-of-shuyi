@@ -830,6 +830,30 @@ fn the_planner_settles_a_tile_out_of_reach_without_a_search() {
 }
 
 #[test]
+fn the_planner_settles_a_tile_by_a_clear_path_without_a_search() {
+    // Holding the ford on x 3, the enemy's path to x 2 goes on only from
+    // x 1, two tiles away: it isn't stopped.
+    let mut s = scene(&["e..@"], "foot", 2);
+    hold(&mut s, 0);
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    let expected = s.threats(p(3, 0), &[(1, 1)]);
+    let before = searches();
+    assert_eq!(s.planned(&planner, p(3, 0)), expected);
+    assert_eq!(expected, [1]);
+    assert_eq!(searches() - before, 0);
+    // Without the stance, a path that goes on from a tile next to the
+    // mover is clear: the enemy at (0, 0) walks past its friend at (1, 0)
+    // and (2, 0) to (2, 1).
+    let s = scene(&["ee.", "#@."], "foot", 3);
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    let expected = s.threats(p(1, 1), &[(1, 1)]);
+    let before = searches();
+    assert_eq!(s.planned(&planner, p(1, 1)), expected);
+    assert_eq!(expected, [1, 2]);
+    assert_eq!(searches() - before, 0);
+}
+
+#[test]
 fn the_planner_never_counts_a_path_through_the_unit() {
     // The enemy at x 0 walks past its friend at x 1 to x 3 only through
     // the mover's tile x 2, and its friend's tile is no tile to stop on:
