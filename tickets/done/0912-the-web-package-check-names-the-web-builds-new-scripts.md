@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-08
 ---
 
 # 0912 — The web package check names the web build's new scripts
@@ -66,10 +66,10 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A Release dry run's `package (web)` job passes (run id in the notes).
-- [ ] The notes say where `download.js` and `sound.js` come from and why
+- [x] A Release dry run's `package (web)` job passes (run id in the notes).
+- [x] The notes say where `download.js` and `sound.js` come from and why
       they ship.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -77,5 +77,27 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `scripts/check-release-package.sh`'s web list now names `sound.js` and
+  `download.js`. Release dry run
+  [42551112067](https://github.com/Zafnok/visions-of-shuyi/actions/runs/42551112067):
+  `package (web)` passed.
+- **Where they come from:** both are Shuyi Engine's own web-shell scripts
+  (`crates/cli/web/`, listed in `SHELL` in `web.rs`). They are the engine's
+  code under its MIT OR Apache-2.0 license, not vendored, so they need no row
+  in `THIRD_PARTY_ASSETS.md`. `NOTICES.txt` covers them under the engine's
+  licenses.
+  - `download.js`: engine PR #239 (engine ticket 2519, game pin row in
+    `docs/engine/pins.md`). It offers the browser a file for the debug menu's
+    "Save session". `index.html` always loads it, but only a build with debug
+    tools calls it.
+  - `sound.js`: engine PR #240 (engine ticket 3031). It is the Web Audio
+    bridge for `shuyi-app`'s `in-house-sound` feature. `index.html` always
+    loads it, and a build without the feature never calls it.
+- **No engine report to read:** `export-report.json` (`ExportOutput`) lists
+  the package, its sizes and `beside`, not the shell's files. So the two
+  names are written into the script, with a comment pointing at the engine's
+  `SHELL`. A future engine script still needs a line here.
+- Only a shell script changed. Gates run: skill sync, `ticket-lint`,
+  `check-mentions`, `typos` and `pr-size`. The Rust gates have nothing to
+  check.
+- Engine friction: none (two names).
