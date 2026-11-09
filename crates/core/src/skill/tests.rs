@@ -901,3 +901,25 @@ fn effect_sources_come_from_skill_and_art_ids() {
         EffectSource::Art(ArtId::new("sidestep"))
     );
 }
+
+/// The reach of an active on the allies around its user (ticket 0482):
+/// a buff on allies or a heal has one; a buff on the user or a push has
+/// none.
+#[test]
+fn ally_radius_is_the_reach_of_an_area_buff_or_heal() {
+    let buff = |area| ActiveEffect::Buff {
+        area,
+        mods: TimedMods::default(),
+    };
+    assert_eq!(buff(Area::Allies { radius: 2 }).ally_radius(), Some(2));
+    assert_eq!(
+        ActiveEffect::Heal {
+            radius: 3,
+            power: 5
+        }
+        .ally_radius(),
+        Some(3)
+    );
+    assert_eq!(buff(Area::Own).ally_radius(), None);
+    assert_eq!(ActiveEffect::Push { collision: 4 }.ally_radius(), None);
+}

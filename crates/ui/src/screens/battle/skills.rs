@@ -299,6 +299,10 @@ pub struct SkillChoice {
     /// Why it can't be paid for (no uses left), when that is what stops
     /// it: shown after its dimmed line.
     pub reason: Option<CostError>,
+    /// The tiles an area skill reaches around the user's path end (not
+    /// its own tile), in row order; empty for a skill with no area. Shown
+    /// on the map while the line is focused (ticket 0482).
+    pub area: Vec<Pos>,
 }
 
 /// The command that uses `skill` from `sel`'s path end on `target`.
@@ -351,12 +355,20 @@ pub fn skill_choices(state: &BattleState, sel: &Selection) -> Vec<SkillChoice> {
                 Err(CommandError::CannotPay { error, .. }) => Some(error),
                 _ => None,
             };
+            // The core's own tiles, so the shown area is the one it uses.
+            let area = match &def.kind {
+                SkillKind::Active { effect, .. } => effect
+                    .ally_radius()
+                    .map(|r| state.ally_area(sel.dest(), r).iter().collect()),
+                SkillKind::Passive(_) => None,
+            };
             SkillChoice {
                 skill: def.id.clone(),
                 needs_target,
                 targets,
                 usable,
                 reason,
+                area: area.unwrap_or_default(),
             }
         })
         .collect()
@@ -704,6 +716,7 @@ mod tests {
             targets: vec![UnitId(4), UnitId(5), UnitId(6)],
             usable: true,
             reason: None,
+            area: vec![],
         };
         let menu = Menu::new(vec![]);
         let mut t = SkillTargeting::new(sel, menu, choice).unwrap();

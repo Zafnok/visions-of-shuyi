@@ -337,6 +337,21 @@ pub enum ActiveEffect {
     },
 }
 
+impl ActiveEffect {
+    /// How far around its user the effect reaches allies: a buff on
+    /// [`Area::Allies`] or a heal. `None` for an effect with no area.
+    pub fn ally_radius(&self) -> Option<u32> {
+        match self {
+            ActiveEffect::Buff {
+                area: Area::Allies { radius },
+                ..
+            }
+            | ActiveEffect::Heal { radius, .. } => Some(*radius),
+            _ => None,
+        }
+    }
+}
+
 /// Passive or active, with its effects.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SkillKind {

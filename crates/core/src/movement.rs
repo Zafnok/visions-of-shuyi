@@ -452,6 +452,31 @@ pub fn attack_tiles(reach: &Reach, min: u32, max: u32) -> TileSet {
     out
 }
 
+/// The tiles of a `width` × `height` map within Manhattan `radius` of
+/// `center`, except `center` itself: where an area skill used from
+/// `center` reaches (ticket 0482). The skill's effect and its preview on
+/// the map both use it.
+pub fn area_tiles(width: u16, height: u16, center: Pos, radius: u32) -> TileSet {
+    let mut out = TileSet::new(width, height);
+    let (cols, rows) = (i64::from(width), i64::from(height));
+    let (cx, cy, reach) = (i64::from(center.x), i64::from(center.y), i64::from(radius));
+    // The diamond, clipped to the map's rows and columns.
+    for y in (cy - reach).max(0)..(cy + reach + 1).min(rows) {
+        let rest = reach - (y - cy).abs();
+        for x in (cx - rest).max(0)..(cx + rest + 1).min(cols) {
+            // Inside the map, so both fit.
+            let (Ok(x), Ok(y)) = (i32::try_from(x), i32::try_from(y)) else {
+                continue;
+            };
+            let to = Pos::new(x, y);
+            if to != center {
+                out.insert(to);
+            }
+        }
+    }
+    out
+}
+
 /// The tiles unit `unit` threatens this turn with attacks of the given
 /// ranges (in a battle: [`Unit::threat_ranges`], its weapons, castable
 /// attack spells, arts and actives): its stoppable tiles plus their attack tiles. Empty if

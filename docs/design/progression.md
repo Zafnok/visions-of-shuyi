@@ -681,6 +681,9 @@ The lord's classes carry the lord's **signature abilities** (Nick: "nothing
 else on top"), so their skills lean towards leading the army. Like every
 skill here, they are placeholders to tune after the playtest. Ally auras
 ("within 2 tiles") count Manhattan distance and don't include the lord.
+An active with an area (Inspire, Rally, the area heals) shows those tiles
+on the map while it is focused in the Skill menu (ticket 0482,
+`look-and-feel.md`); passive auras like Leadership aren't shown.
 
 ### Flying line skills (tiers 3–4)
 
