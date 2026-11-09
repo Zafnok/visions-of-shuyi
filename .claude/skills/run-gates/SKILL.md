@@ -69,6 +69,11 @@ cargo machete
 typos
 ```
 
+When `typos` flags a fragment of a commit hash (the middle of
+`c1ba9ec8`), never allow the fragment as a word in `_typos.toml`: that lets the typo
+through everywhere. `extend-ignore-re` already skips hex runs with a
+digit; fix the pattern, or write the hash in full (0149).
+
 A change to the engine pin also runs `cargo xtask skill-pack` (after the
 pin has moved: it builds with the new pin) and commits what it writes in
 `.claude/skills/`; then run `pwsh -File scripts/sync-agent-skills.ps1`

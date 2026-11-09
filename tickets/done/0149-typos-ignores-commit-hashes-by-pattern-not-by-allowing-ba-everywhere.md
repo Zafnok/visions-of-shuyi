@@ -5,10 +5,10 @@ type: bug
 milestone: M0 Foundation
 model: haiku-4.5 / gpt-6-luna
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-08
 ---
 
 # 0149 — Typos ignores commit hashes by pattern, not by allowing `ba` everywhere
@@ -54,9 +54,9 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `_typos.toml` has no `ba` entry, and `typos` passes on the tree.
-- [ ] A file with the word `ba` alone, not in a hash, fails `typos`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `_typos.toml` has no `ba` entry, and `typos` passes on the tree.
+- [x] A file with the word `ba` alone, not in a hash, fails `typos`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -64,5 +64,22 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `_typos.toml` skips any hex run that holds a digit:
+  `extend-ignore-re = ['[0-9a-f]*[0-9][0-9a-f]*']`. The `ba` word is
+  gone; it was the only word allowed for a hash.
+- **Deviation:** typos's regex has no look-ahead (typos 1.50.3 here, CI
+  pins 1.51.1, same `regex` crate): the ticket's pattern fails with
+  "look-around, including look-ahead and look-behind, is not supported".
+  Without it a 7–40 length and "holds a digit" can't both be required,
+  so the pattern keeps the digit (so `deadbeef` is still read) and drops
+  the length; a short hex run with a digit is never a word.
+- This ticket's own file names the word, in its file name too, so
+  `_typos.toml` excludes that one file rather than allow the word.
+- `run-gates` gets the rule: never allow a hash fragment as a word.
+- The engine: ticket 2068 makes the same change there, written and
+  closed in one engine PR (branch `game-0149-typos-commit-hashes`).
+- Manual runs (typos 1.50.3): `typos` on the tree passes (it holds
+  `c1ba9ec8` in `docs/engine/pins.md` and ticket 1240); a file with
+  `a ba word` fails with "`ba` should be `by`, `be`"; a file with
+  `c1ba9ec8` and a 40-digit hash passes; `deadbeef` is not skipped by
+  the pattern.
