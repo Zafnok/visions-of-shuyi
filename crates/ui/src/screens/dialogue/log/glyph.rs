@@ -27,12 +27,13 @@ const AHEAD_DIM: f32 = 0.6;
 /// rows fill the rest.
 const AFTER_FOCUS: usize = 2;
 
-/// One row of the list as placed: its lines and how tall it is.
-struct Laid {
+/// One row of the list as placed: its lines and how tall it is (the
+/// Playdate's look places its rows the same way, [`super::playdate`]).
+pub(super) struct Laid {
     /// The name (if any), then the text's lines.
-    lines: Vec<String>,
+    pub(super) lines: Vec<String>,
     /// Console rows it takes, not counting the blank row after it.
-    height: i32,
+    pub(super) height: i32,
 }
 
 /// Paints `view` over the whole of `buf`.
@@ -143,7 +144,7 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
 /// The rows `first..last` of `laid` shown in `inner` console rows: the
 /// one at `focus` whole, up to [`AFTER_FOCUS`] after it, then as many
 /// before it as fit, then more after if there is still room.
-fn window(laid: &[Laid], focus: usize, inner: i32) -> (usize, usize) {
+pub(super) fn window(laid: &[Laid], focus: usize, inner: i32) -> (usize, usize) {
     let focus = focus.min(laid.len().saturating_sub(1));
     let Some(row) = laid.get(focus) else {
         return (0, 0);

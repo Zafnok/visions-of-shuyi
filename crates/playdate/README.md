@@ -9,7 +9,8 @@ in the game's font (ticket 1036, `src/card.rs`); then it loads the game
 on the game's own stack, a step per update (see *The start*), and runs
 it (ticket 1033). The screens are drawn
 into a 50 × 15 console, each in its Playdate skin where it has one (the
-map, 1037; New Game, Options, Key bindings and Profile, 1045); the others
+map, 1037; New Game, Options, Key bindings and Profile, 1045; the
+dialogue screen and its log, 1043); the others
 still wear the PC's skins and are cut off until theirs land (1038 on).
 
 Its pictures are one-bit ones (ticket 1040, ADR-0085): `trpg-content`'s

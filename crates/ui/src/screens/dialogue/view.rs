@@ -2,15 +2,16 @@
 //! or positions (ADR-0054). The screen builds a [`DialogueView`] each frame
 //! ([`DialogueScreen::view`](super::DialogueScreen::view)), a cinematic's
 //! talk shot builds one for each of its text boxes ([`told`]), and a skin
-//! paints it ([`super::glyph::paint`] today). Swapping the look (a bought
-//! UI pack) means another painter of the same view.
+//! paints it ([`super::glyph::paint`] on the PC, [`super::playdate::paint`]
+//! on the Playdate). Swapping the look (a bought UI pack) means another
+//! painter of the same view.
 
 use crate::prelude::*;
 use trpg_content::Side;
 use trpg_core::LeadProfile;
 
+use super::display_name;
 use super::log::LogView;
-use super::{TEXT_LINES, display_name};
 use crate::dialogue::{Portrait, View};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
@@ -122,8 +123,9 @@ pub(super) fn scene(
 
 /// A text box of a scene playing by itself (a cinematic's talk shot,
 /// ticket 0818): what the full-screen dialogue screen shows of `view`,
-/// with the first `shown` characters of the first page of `lines`, and
-/// none of the things that wait for a key.
+/// with the first `shown` characters of `lines` (a page on the PC; on the
+/// Playdate, the same text in its narrower lines), and none of the things
+/// that wait for a key.
 pub fn told(
     ctx: &Ctx,
     lead: &LeadProfile,
@@ -131,7 +133,7 @@ pub fn told(
     lines: &[String],
     shown: usize,
 ) -> DialogueView {
-    let mut text = TextView::new(lines[..lines.len().min(TEXT_LINES)].to_vec(), shown);
+    let mut text = TextView::new(lines.to_vec(), shown);
     text.narration = view.narration;
     scene(ctx, lead, view, text, false)
 }

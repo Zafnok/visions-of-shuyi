@@ -432,6 +432,10 @@ fn harness(start: &Start) -> Result<Harness, String> {
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();
+    if start.playdate {
+        // `--pad` presses the Playdate's buttons, and text names them.
+        h.use_pad(PadKind::Playdate);
+    }
     // And as `app` shows it: with the idle motion on.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
     if start.tips {

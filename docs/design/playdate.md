@@ -625,7 +625,61 @@ logo shot, the menu back), [`1044-simulator-fight.png`](playdate/1044-simulator-
 - **The light:** the backdrops are already one picture per time of day;
   the map and the combat picture have no tints on the Playdate.
 - **The talk and faces shots** are drawn by the dialogue screen's
-  Playdate look, which ticket 1043 makes; until then they are blank.
+  Playdate look (1043, below): the captions in its text box, the faces
+  in its frames, half as far apart as on the PC.
+
+#### The dialogue screen (1043)
+
+As built by ticket 1043 (`cargo shuyi frame-png --playdate`, shown at
+×2, the public placeholder faces): Chapter 1's opening scene,
+[`1043-narration.png`](playdate/1043-narration.png),
+[`1043-listener-speaks.png`](playdate/1043-listener-speaks.png),
+[`1043-lead-speaks.png`](playdate/1043-lead-speaks.png),
+[`1043-choice.png`](playdate/1043-choice.png),
+[`1043-log.png`](playdate/1043-log.png); the title cinematic's
+[`1043-cinematic-talk.png`](playdate/1043-cinematic-talk.png) and
+[`1043-cinematic-faces.png`](playdate/1043-cinematic-faces.png).
+
+*Claude's starting rules (ticket 1043, Nick can veto; on the Act 1
+playtest's list, 1064):*
+
+- **The layout** is *Portraits* above at the full height: the two faces
+  at 2× in 18 × 10 frames along the top (whoever speaks in a double
+  frame, the other in a single one, faded), **each name in the bottom of
+  its frame**, and the 3-line text box of 47 letters a line in a window
+  across the bottom five rows. The screen has no row for name plates
+  under the frames as well as the box.
+- **The caption** goes on the top row, across the frames' tops.
+- **A page holds 3 lines of 47 letters**, so a text box turns about twice
+  as many pages as on the PC. The script's text is the same.
+- **Narration** is in the same black letters as speech, from the same
+  column (the PC's is dimmer; dimmed letters on one bit are grey dots,
+  hard to read).
+- **The key that goes on** (`A`) and the blinking `▼` are in the bottom of
+  the box's frame, at the right.
+- **A choice** grows the box upward over the faces, the replies under
+  the line being answered, the focused one the bar. **The question
+  before skipping** is asked in the box, as on the PC.
+- **The place behind the talk is darkened in one bit by dotting its
+  white ground** (light dots, one pixel in eight); its glyphs and units
+  stay as the map shows them. One bit has no brightness, so the study's
+  "darkened less" (60%) looks like the rest. An opening shows the place
+  undarkened and cuts to the darkened look halfway through the PC's
+  fade, as the cinematic cuts. A battle's scene darkens the battle
+  below it the same way.
+- **The dialogue log** is a window over the whole screen, its title in
+  the top of the frame and its help in the bottom: a row per line, the
+  speaker's name, then the text two cells in; the cursor's row the bar;
+  lines seen past the one on screen in grey dots. **No faces in the
+  log**: at 2× one would take 8 of its 13 rows.
+- **The talk shots** wrap their text to the Playdate's 47 letters, and
+  the box grows upward to hold it all (a cinematic turns no pages).
+
+**Left to judge by playing (1064):** whether 47 letters a line in the
+8 × 16 font reads well at arm's length; whether names in the frames'
+bottoms are easy to find; whether the dotted place behind the talk is
+too busy beside the faces; whether twice as many pages feels slow;
+whether the log without faces is easy to follow.
 
 ## Open sub-questions
 

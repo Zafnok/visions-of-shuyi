@@ -51,10 +51,11 @@ impl ScenePreviewScreen {
     /// The scene from its first line, full-screen, with everyone there and
     /// `ctx`'s lead. `@place battle` shows the field of the scene's battle
     /// ([`Content::battle_of_scene`](trpg_content::Content::battle_of_scene)),
-    /// with nobody on it.
+    /// with nobody on it. Its pages are as wide as `ctx`'s skins show them.
     pub fn play(&self, ctx: &Ctx) -> DialogueScreen {
         let (lead, names) = (ctx.game.lead.clone(), ctx.game.content.names.clone());
         let screen = DialogueScreen::new(&self.scene, lead, names, &Present::Everyone);
+        let screen = screen.wrapped_for(ctx);
         match ctx.game.content.battle_of_scene(&self.scene.id) {
             Some(def) => screen.with_battle(Place::of_battle(&ctx.game.content, def)),
             None => screen,
