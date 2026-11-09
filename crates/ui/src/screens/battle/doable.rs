@@ -5,7 +5,7 @@
 //! the screen's cells.
 
 use trpg_content::DoneWhen;
-use trpg_core::{BattleState, CastTarget, Faction, Phase, Unit};
+use trpg_core::{BattleState, CastTarget, Faction, Phase, TerrainId, Unit};
 
 use super::art_list::{art_lines, can_use_art};
 use super::magic::{knows_spells, spell_choices};
@@ -66,6 +66,14 @@ pub fn reaches_enemy(state: &BattleState, sel: &Selection) -> bool {
         u.faction != Faction::Player && (sel.moves.contains(u.pos) || sel.attack.contains(u.pos))
     };
     state.units().iter().any(reached)
+}
+
+/// Whether `sel` could step into terrain `water`: a tile of it in its
+/// move range, which a unit that can't enter it never has (the Wading
+/// tip's trigger, ticket 0483).
+pub fn wades_in_reach(state: &BattleState, sel: &Selection, water: TerrainId) -> bool {
+    let tiles = &state.map().tiles;
+    sel.moves.iter().any(|p| tiles.get(p) == Some(&water))
 }
 
 /// Whether `sel` has an art its menu would let it use from some tile it

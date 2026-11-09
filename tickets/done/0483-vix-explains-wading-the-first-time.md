@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0483 — Vix explains wading the first time a unit could step into water
@@ -86,13 +86,13 @@ written in `tutorial.md`).
 
 ## Acceptance criteria
 
-- [ ] Selecting a foot unit whose move range reaches a water tile fires
+- [x] Selecting a foot unit whose move range reaches a water tile fires
       `FirstWadeInReach` once, and the `wading` tip shows (Harness test
       on a test map with a river).
-- [ ] Selecting a mounted unit next to water doesn't fire it (test).
-- [ ] The tip's text fits the tip rules (the existing tip-text checks
+- [x] Selecting a mounted unit next to water doesn't fire it (test).
+- [x] The tip's text fits the tip rules (the existing tip-text checks
       pass) and names no key.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,4 +102,38 @@ written in `tutorial.md`).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `TipTrigger::FirstWadeInReach` (`crates/content/src/tip.rs`, and the
+  header of `tips.ron`). It fires from `BattleScreen::detect_wade_tip`,
+  right after the state's triggers, when the selected unit's move range
+  (`Selection::moves`) has a `water` tile (`doable::wades_in_reach`). It
+  is a tip only: no lesson listens. The range already leaves out a tile
+  the unit can't enter or can't afford, so a mounted or armored unit never
+  fires it, and neither does a foot unit too far from the river to reach
+  it this turn. A flying unit fires it (the ticket's "foot or flying").
+  `water` is looked up by the terrain's id in the content, so the check
+  lives in `ui` (where `FirstTerrain` is), not in `triggers_now`, which
+  has no `Ctx`.
+- The tip `wading` (face `thinking`, no `how`: nothing to press):
+  "Foot units can wade a river, but each tile of water costs 5 Mov, most
+  of a turn. Riders and armor can't go in. In the water, a unit gets +10
+  AVO and no DEF bonus." True to `terrain.ron` (foot 5, mounted and
+  armored none, Def 0, Avoid 10). Fliers (cost 1) aren't mentioned.
+- Vix's clip for it (0476 is done): `vix/vix_49c9b883.ogg`, made with
+  `cargo xtask voice generate --scene vix`, committed to the private
+  repository, pinned. The pin also takes in the private repository's
+  commit for 1089 (world map pictures) made before it.
+- `tutorial.md`: the tip in its list, and the starting rule below.
+- Tests: the condition for foot, flying, mounted and armored
+  (`tip_tests.rs`), the screen showing it once for a foot unit and never
+  for a mounted one, and a Harness test on the Quick Battle's test map,
+  whose archer stands beside its river (`tests/it/battle.rs`). The
+  Guides snapshots and two Guides tests that took Terrain for the last
+  topic now end on Wading.
+- Engine friction: estimate about 20 production lines (like
+  `FirstTerrain`'s firing in 0458), measured 19: under 2×. PR size:
+  198 changed lines.
+
+**Starting rules (for the Act 1 playtest, 1064):**
+- *the agent's starting rule:* one fact with nothing to tick off is a tip,
+  not a lesson.
+- The tip's wording (Vix's voice; the writer may redo it).
