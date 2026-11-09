@@ -23,6 +23,12 @@ pauses at ellipses. 0762 changes the text the tool sends and adds a pause and
 pace audit after `generate`; these chapters (about 217 of the 227 lines with
 `...`) are made with both, and none of their clips is left flagged.
 
+**After the writer's rewrite** (Nick, 2026-11-08; Lane J of *Act 1
+critical path*): a human writer is being hired (0766) and may reword
+every line. A line's id is a hash of its words, so a clip or a
+translation made before the rewrite is redone after it. Don't start
+this ticket while 0766 is open without asking Nick.
+
 ## Nick input
 
 None. What is left to judge by playing goes on the Act 1 playtest's checklist

@@ -7,6 +7,16 @@ metadata:
 
 # Story writing
 
+> **Dialogue writing is paused** (Nick, 2026-11-08): the lines read
+> robotic after three or four rewrites, and Nick is hiring a human
+> writer (ticket 0766, Lane J of *Act 1 critical path* in
+> `docs/ROADMAP.md`). Until Nick says otherwise, no agent writes or
+> rewords `.dlg` lines, beat sheets or character sheets. Allowed: short
+> instructional tips and lessons in plain words (the writer may redo
+> Vix's wording later), and changes to a script that touch no words
+> (`@music`, `@place`, triggers). If a ticket needs new lines, stop and
+> say so.
+
 Read `docs/adr/0011-story-authoring-pipeline.md` first. The quality comes from
 the process; do not skip steps.
 
