@@ -138,17 +138,24 @@ fn places_one_road_away_show_greyed_and_cant_be_reached() {
     assert_eq!(at(&s), "ford");
 }
 
-/// The cursor's keys jump to the nearest place that way.
+/// The cursor's keys follow the roads (1088): to the place a road from
+/// here leads closest to that way, and the opposite key right after goes
+/// back.
 #[test]
-fn the_cursor_jumps_to_the_nearest_place_that_way() {
+fn the_cursor_follows_the_roads_that_way() {
     let mut ctx = ctx();
     let mut s = screen(&ctx);
     for (action, to) in [
+        // Millbrook's roads: the lighthouse up, the crossroads right, and
+        // Kingsgate down.
         (Action::CursorUp, "camp"),
-        (Action::CursorRight, "farm"),
-        (Action::CursorDown, "cross"),
-        (Action::CursorDown, "city"),
-        (Action::CursorUp, "cross"),
+        // Back the way it came, though the road runs down and right.
+        (Action::CursorDown, "home"),
+        (Action::CursorRight, "cross"),
+        // The farm, up and left, is closer to up than Stone Mill, right.
+        (Action::CursorUp, "farm"),
+        // The farm's one road, down and right.
+        (Action::CursorRight, "cross"),
         (Action::CursorRight, "ford"),
     ] {
         press(&mut s, &mut ctx, &[action]);
@@ -157,13 +164,146 @@ fn the_cursor_jumps_to_the_nearest_place_that_way() {
     let view = s.view(&ctx);
     assert_eq!(view.panel.title, "Stone Mill");
     assert_eq!(view.panel.lines, ["Enemy level 5"]);
-    // Old Bridge, not open yet, then nothing further right: it stays.
-    press(&mut s, &mut ctx, &[Action::CursorRight]);
-    assert_eq!(s.cursor(), "bridge");
+    // Old Bridge, not open yet, along its greyed road.
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert_eq!(s.cursor(), "bridge");
     press(&mut s, &mut ctx, &[Action::CursorLeft]);
     assert_eq!(s.cursor(), "ford");
+    // From Millbrook, Left takes the lighthouse's road (up and left), Down
+    // Kingsgate's.
+    press(&mut s, &mut ctx, &[Action::WorldArmy, Action::CursorLeft]);
+    assert_eq!(s.cursor(), "camp");
+    press(&mut s, &mut ctx, &[Action::WorldArmy, Action::CursorDown]);
+    assert_eq!(s.cursor(), "city");
+}
+
+/// The menu sounds the screen played since the last call.
+fn sounds(ctx: &mut Ctx) -> Vec<String> {
+    ctx.audio
+        .take()
+        .iter()
+        .filter(|r| matches!(r, AudioRequest::PlaySound { .. }))
+        .filter_map(|r| r.cue().map(str::to_owned))
+        .collect()
+}
+
+/// A key with no road that way leaves the cursor where it is, and plays
+/// Denied: on Old Bridge, whose one shown road runs left and a little up.
+#[test]
+fn no_road_that_way_leaves_the_cursor_with_denied() {
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    s.cursor = "bridge".into();
+    let denied = crate::audio::AUDIO.cue(MenuSound::Denied);
+    for action in [Action::CursorRight, Action::CursorDown] {
+        press(&mut s, &mut ctx, &[]);
+        sounds(&mut ctx);
+        press(&mut s, &mut ctx, &[action]);
+        assert_eq!(s.cursor(), "bridge", "{action:?}");
+        assert_eq!(sounds(&mut ctx), [denied], "{action:?}");
+    }
+}
+
+/// The cursor's four keys and their opposites.
+const STEPS: [(Action, Action); 4] = [
+    (Action::CursorUp, Action::CursorDown),
+    (Action::CursorDown, Action::CursorUp),
+    (Action::CursorLeft, Action::CursorRight),
+    (Action::CursorRight, Action::CursorLeft),
+];
+
+/// On `campaign`'s map: from every shown place, a key that moves the
+/// cursor and then the opposite key bring it back; and from the army's
+/// place, the cursor's keys alone reach every shown place.
+fn the_keys_undo_and_reach_everywhere(ctx: &mut Ctx, campaign: Campaign) {
+    let map = campaign.world.as_ref().expect("on a map").map.clone();
+    let def = ctx.game.content.worldmaps[&map].clone();
+    let shown: Vec<String> = def
+        .map
+        .shown_nodes(&campaign)
+        .map(|n| n.id.clone())
+        .collect();
+    let mut s = WorldMapScreen::new(campaign, 0.0);
+    for place in &shown {
+        for (key, back) in STEPS {
+            s.cursor.clone_from(place);
+            s.last_step = None;
+            press(&mut s, ctx, &[key]);
+            if s.cursor() != place {
+                let to = s.cursor().to_owned();
+                press(&mut s, ctx, &[back]);
+                assert_eq!(s.cursor(), place, "{map}: {place} {key:?} to {to}, back");
+            }
+        }
+    }
+    s.cursor = s.army_at().to_owned();
+    s.last_step = None;
+    let mut seen = vec![(s.cursor.clone(), s.last_step.clone())];
+    let mut queue = vec![s];
+    while let Some(s) = queue.pop() {
+        for (key, _) in STEPS {
+            let mut next = s.clone();
+            press(&mut next, ctx, &[key]);
+            let state = (next.cursor.clone(), next.last_step.clone());
+            if !seen.contains(&state) {
+                seen.push(state);
+                queue.push(next);
+            }
+        }
+    }
+    for place in &shown {
+        assert!(
+            seen.iter().any(|(at, _)| at == place),
+            "{map}: {place} can't be reached"
+        );
+    }
+}
+
+/// A campaign on Act 1's map at chapter `chapter`, the army at `at`,
+/// `cleared` won.
+fn on_act1(ctx: &Ctx, chapter: &str, at: &str, cleared: &[&str]) -> Campaign {
+    let mut c = army(ctx);
+    c.chapter = chapter.into();
+    c.world = Some(trpg_core::WorldState {
+        map: "act1".into(),
+        at: at.into(),
+        cleared: cleared.iter().map(|&s| s.to_owned()).collect(),
+        ..trpg_core::WorldState::default()
+    });
+    c
+}
+
+/// The cursor's keys undo each other and reach every shown place, on the
+/// test maps and on Act 1's at Chapter 4's start, after Veyne Hall, and
+/// with every place shown.
+#[test]
+fn the_cursors_keys_undo_each_other_and_reach_every_place() {
+    let mut ctx = ctx();
+    let start = army(&ctx);
+    the_keys_undo_and_reach_everywhere(&mut ctx, start.clone());
+    let mut won = start.clone();
+    let def = ctx.game.content.worldmaps["test_world"].map.clone();
+    won.clear_node(&def, "ford", Some("test_wm2"), None);
+    the_keys_undo_and_reach_everywhere(&mut ctx, won);
+    let mut second = start;
+    second.chapter = "test_wm3".into();
+    second.world = None;
+    second.enter_world(&ctx.game.content.worldmaps["test_world_2"].map);
+    the_keys_undo_and_reach_everywhere(&mut ctx, second);
+
+    let act1 = on_act1(&ctx, "ch04", "greywater", &[]);
+    the_keys_undo_and_reach_everywhere(&mut ctx, act1);
+    let act1 = on_act1(&ctx, "ch05", "veyne_hall", &["aldwater", "veyne_hall"]);
+    the_keys_undo_and_reach_everywhere(&mut ctx, act1);
+    let every: Vec<String> = ctx.game.content.worldmaps["act1"]
+        .map
+        .nodes
+        .iter()
+        .map(|n| n.id.clone())
+        .collect();
+    let every: Vec<&str> = every.iter().map(String::as_str).collect();
+    let act1 = on_act1(&ctx, "ch05", "greywater", &every);
+    the_keys_undo_and_reach_everywhere(&mut ctx, act1);
 }
 
 /// Previous and Next unit go through the places in the map's order; Your
