@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0871 — Chapter 5's recorded win after the lead's strength change
@@ -63,11 +63,11 @@ None. Verified by the test; nothing for the Act 1 playtest.
 
 ## Acceptance criteria
 
-- [ ] `cargo test -p trpg-ui --test it ch05_winnable` passes on the
+- [x] `cargo test -p trpg-ui --test it ch05_winnable` passes on the
       branch.
-- [ ] The completion notes name the merge that broke it and the new
+- [x] The completion notes name the merge that broke it and the new
       fixture's result (who fell, how many turns).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -75,5 +75,35 @@ None. Verified by the test; nothing for the Act 1 playtest.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**The merge that broke it: #587 (0846, `305687bb`).** With 0846's two
+data files (`characters.ron`, `ch04_winning.ron`) put back as they were
+at `8ca9afce`, `ch05_winnable` passes on `main`. #588 (0851) was green
+on its own.
+
+**Why, and the deviation from step 2: the fixture was not re-recorded,
+because it still wins.** 0846 made the lead stronger and re-recorded
+Chapter 4's win, so Chapter 5 starts with a different army. Played side
+by side, the rules alone and the real game agree on every command, and
+the fixture's commands still win (`the_recorded_playthrough_holds_the_house_till_light`
+passed on `main` the whole time). What changed is *how* they win:
+
+- before 0846: all nine Hounds fall by the player's last command, so
+  the battle ended as the player ended turn 6;
+- after 0846: one Hound is still standing at that point, and the win
+  comes as turn 6's last phase ends: the hold till first light, the
+  battle's own objective.
+
+`playthrough::play_in_game` stopped right after the last recorded
+command, so it only worked for a battle won on the player's own move.
+`playthrough::play` (the rules-only playback) and the recorder both play
+the others' phases after the last command. `play_in_game` now does too
+(`play_others_in_game`, the same loop it already ran before each
+command). A fresh recording would have just been a different
+playthrough that hit the same gap, so the fixture stays as it is.
+
+**The fixture's result now:** Victory as turn 6 ends, nobody lost (all
+eight, Hedda included, reach "To be continued"); one Hound left alive
+when the house is held. Turn count unchanged from 0851 (6).
+
+No balance change. All `ch0*_winnable` tests pass, through the rules and
+through the game. Nothing for the Act 1 playtest.
