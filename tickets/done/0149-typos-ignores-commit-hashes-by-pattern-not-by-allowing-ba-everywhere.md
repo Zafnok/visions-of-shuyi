@@ -76,7 +76,7 @@ None.
 - This ticket's own file names the word, in its file name too, so
   `_typos.toml` excludes that one file rather than allow the word.
 - `run-gates` gets the rule: never allow a hash fragment as a word.
-- The engine: ticket 2068 makes the same change there, written and
+- The engine: ticket 2069 makes the same change there, written and
   closed in one engine PR (branch `game-0149-typos-commit-hashes`).
 - Manual runs (typos 1.50.3): `typos` on the tree passes (it holds
   `c1ba9ec8` in `docs/engine/pins.md` and ticket 1240); a file with
