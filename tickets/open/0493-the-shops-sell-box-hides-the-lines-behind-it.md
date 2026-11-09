@@ -1,5 +1,5 @@
 ---
-id: "0492"
+id: "0493"
 title: "The shop's sell box hides the lines behind it"
 type: bug
 milestone: M3 Battle UI
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0492 — The shop's sell box hides the lines behind it
+# 0493 — The shop's sell box hides the lines behind it
 
 ## Context
 

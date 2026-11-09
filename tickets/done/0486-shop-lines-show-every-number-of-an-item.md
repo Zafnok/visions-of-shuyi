@@ -144,7 +144,7 @@ Act 1 playtest's checklist (1064).
   confirmation and the special sale).
 - Picture: `docs/img/0486-prep-shop-buy.png` (Quick Battle,
   Preparations, Shop, Buy).
-- Follow-up: 0492. The sell box doesn't hide the list behind it, so the
+- Follow-up: 0493. The sell box doesn't hide the list behind it, so the
   end of the longer Leather Vest line now shows as a stray `1` beside the
   box's corner in the sell confirmation.
 - 0478 (Loadouts) is still open: it can use `stat_line` as written.
