@@ -225,6 +225,15 @@ world map*; the keys: `controls.md`, *World map*):
   (within about 60° of it); nothing that way, the cursor stays.
 - **Find's nearest place** is the nearest to the army, so Towns starts on
   the town the army is in, if it is in one.
+- **"Save your progress?" when the map won't come back** (0869): after a
+  won story battle whose map doesn't return (no chapter follows yet, or
+  the next chapter isn't on a world map), the victory scenes end with
+  "Save your progress?", as at the end of a chapter off the map. A save
+  made there loads on the map with that battle won, or, when the next
+  chapter isn't on a map, at the start of that chapter. Nick's rule above still holds whenever the map
+  comes back. Example: the last chapter built so far is won; the
+  question comes before "To be continued", and Load Game later finds the
+  army on the map where it won.
 
 ## Saving and camp
 

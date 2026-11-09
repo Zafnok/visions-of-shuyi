@@ -5,10 +5,10 @@ type: bug
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0869 — A save after the last chapter's win
@@ -105,19 +105,19 @@ checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] Winning the test map's last story battle with no next chapter shows
+- [x] Winning the test map's last story battle with no next chapter shows
       `save_prompt`; Yes → slot picker → saved → `to_be_continued`
       (Harness test in `crates/ui/tests/it/world_map.rs`).
-- [ ] The file written has `point == SavePoint::WorldMap`, the place in
+- [x] The file written has `point == SavePoint::WorldMap`, the place in
       `cleared`, and the army's roster, stock and gold (test).
-- [ ] Loading it from the title shows the world map with the place cleared
+- [x] Loading it from the title shows the world map with the place cleared
       (test).
-- [ ] No → `to_be_continued`; nothing written (test).
-- [ ] A win whose map comes back still goes straight to the map, no prompt
+- [x] No → `to_be_continued`; nothing written (test).
+- [x] A win whose map comes back still goes straight to the map, no prompt
       (`win_a_story_battle_then_the_acts_final_one` passes unchanged).
-- [ ] Chapter 4 from New Game reaches the prompt and then "To be
+- [x] Chapter 4 from New Game reaches the prompt and then "To be
       continued" (`ch04_winnable.rs`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -127,4 +127,29 @@ checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `world_won` (`crates/ui/src/flow.rs`) now asks "Save your progress?"
+  when the map won't come back after a story battle: no next chapter, or
+  a next chapter with no world map. A new `AfterSave` field says what
+  the prompt saves and where the flow goes after it. Back from the slot
+  picker asks again, as before.
+- **Deviation: Chapter 5 is the last chapter now** (0851 landed after
+  this ticket was written), so the New Game test that reaches the
+  prompt is `ch05_winnable.rs`'s
+  `chapter_5_plays_from_new_game_to_to_be_continued`, not Chapter 4's.
+  It saves at the prompt and checks the file is a world-map save with
+  the Envoy's House cleared.
+- **Deviation: before an off-map chapter the save is a chapter save**,
+  not a world-map save. A world-map save there would load onto a map
+  with nothing left to do. Instead the campaign stays on the chapter it
+  just won, and the prompt goes the usual way for the end of a chapter
+  off the map (a chapter save, then `next_chapter`, which may offer
+  camp first). Loading it starts the next chapter. No shipped chapter
+  does this today; the test map's
+  `a_win_whose_next_chapter_has_no_map_starts_it` covers it. After the
+  act's last story battle (no next chapter) it is a world-map save, as
+  the ticket says.
+- `world-structure.md` has the rule beside Nick's "Straight to the map".
+- *The agent's starting rule*: after a won story battle whose map
+  doesn't come back, "Save your progress?" comes first, as at the end
+  of a chapter off the map; the save loads on the map with that battle
+  won. For the Act 1 playtest (1064).
