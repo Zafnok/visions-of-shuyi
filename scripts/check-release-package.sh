@@ -57,7 +57,10 @@ case "$target" in
   web)
     expected=$({
       beside ""
-      printf '%s\n' index.html "$bin.wasm" mq_js_bundle.js sapp_jsutils.js quad-storage.js gamepad.js
+      # The engine's web shell (its `crates/cli/web/`, `SHELL` in `web.rs`). The
+      # export report doesn't list it, so a script the engine adds is named here.
+      printf '%s\n' index.html "$bin.wasm" mq_js_bundle.js sapp_jsutils.js quad-storage.js \
+        gamepad.js sound.js download.js
     })
     ;;
   *) fail "no such target: $target" ;;
@@ -112,7 +115,12 @@ case "$target" in
   linux)
     program="$out/$folder/$bin"
     sections "$program"
-    tar tvzf "$out/$package" | grep -q "^-rwx.* $folder/$bin\$" || fail "the program isn't executable"
+    # Not piped into `grep -q`: it stops reading at the program, and the tar
+    # still writing the entries after it (`voice/`) dies of SIGPIPE, which
+    # pipefail reports as a failure (ticket 0913).
+    modes=$(tar tvzf "$out/$package")
+    line=$(grep "^-rwx.* $folder/$bin\$" <<<"$modes") || fail "the program isn't executable"
+    echo "check: $line"
     floor=2.31
     newest=$(objdump -T "$program" | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -Vu | tail -n 1)
     echo "check: the newest glibc it asks for is $newest (the floor: $floor)"

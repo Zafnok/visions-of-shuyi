@@ -228,6 +228,9 @@ pub struct TimedMods {
     pub stops_enemies: bool,
     /// How the stance reacts to later combats and moves (ticket 0326).
     pub reaction: Option<StanceReaction>,
+    /// The unit can't attack or counter with a weapon (Disarm's debuff).
+    /// It can still move, cast and use non-attack actives.
+    pub disarmed: bool,
 }
 
 /// A stance that changes how later combats or moves go, not just numbers
@@ -335,6 +338,21 @@ pub enum ActiveEffect {
         /// Collision damage (not reduced by Def or Res).
         collision: StatValue,
     },
+}
+
+impl ActiveEffect {
+    /// How far around its user the effect reaches allies: a buff on
+    /// [`Area::Allies`] or a heal. `None` for an effect with no area.
+    pub fn ally_radius(&self) -> Option<u32> {
+        match self {
+            ActiveEffect::Buff {
+                area: Area::Allies { radius },
+                ..
+            }
+            | ActiveEffect::Heal { radius, .. } => Some(*radius),
+            _ => None,
+        }
+    }
 }
 
 /// Passive or active, with its effects.
@@ -817,6 +835,12 @@ impl Unit {
     /// Whether an effect from `source` is on the unit.
     pub fn has_effect(&self, source: &EffectSource) -> bool {
         self.effects.iter().any(|e| e.source == *source)
+    }
+
+    /// Whether a timed effect disarms the unit (Disarm): it can't attack
+    /// or counter with a weapon.
+    pub fn is_disarmed(&self) -> bool {
+        self.effects.iter().any(|e| e.mods.disarmed)
     }
 
     /// The unit's Mov with its timed effects (a Pinning Shot's Mov −3),

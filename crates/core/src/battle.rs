@@ -232,7 +232,20 @@
 //!     used it since that first hit
 //!     ([`Forecast::after_first_hit`](crate::combat::Forecast::after_first_hit)),
 //!     without changing its strike list. Mov and Spd debuffs feed movement,
-//!     the danger zone and attack speed from then on;
+//!     the danger zone and attack speed from then on. A **disarmed** unit
+//!     (Disarm) has no weapon in any combat: it doesn't counter (from that
+//!     first hit on, so the forecast shows no counter when the first strike
+//!     is sure to hit), its weapon attacks are refused
+//!     ([`CommandError::Disarmed`]; spells are fine) and its weapons leave
+//!     its danger zone. A **marked** unit (Marked Shot) gives every strike
+//!     at it more hit and crit
+//!     ([`CombatMods::hit_taken`](crate::combat::CombatMods::hit_taken));
+//!   - **Unbroken Stride**: if the target fell to the combat, the user still
+//!     stands and the battle goes on, the user is ready again instead of
+//!     done (no move after its attack): [`Event::EffectApplied`] (the art
+//!     on the user until the start of the next phase, which refuses it
+//!     again until then), then [`Event::ActsAgain`] instead of
+//!     [`Event::UnitActed`];
 //!   - **Line Pierce**: if the attacker still stands and the tile one step
 //!     past the target, on the straight or diagonal line from `dest`, holds
 //!     a unit hostile to it (any other angle has no such tile), one strike at that unit, even if the
@@ -454,7 +467,8 @@
 //! # Extending
 //!
 //! Every [`Event`] sequence of an `Act` ends with [`Event::UnitActed`] (unless
-//! the unit fell, or is offered a move after its attack:
+//! the unit fell, acts again ([`Event::ActsAgain`], Unbroken Stride) or is
+//! offered a move after its attack:
 //! [`Event::MoveAfterOffered`], then `UnitActed` comes with the
 //! [`Command::MoveAfter`]), optionally followed by [`Event::BattleEnded`]
 //! (after the EXP pool's shares, on a victory).
@@ -1332,6 +1346,13 @@ pub enum Event {
         /// The unit.
         unit: UnitId,
     },
+    /// A unit's target fell to its Unbroken Stride: instead of
+    /// [`Event::UnitActed`], it may move its full Mov again and take
+    /// another action (it is ready again).
+    ActsAgain {
+        /// The unit.
+        unit: UnitId,
+    },
     /// The battle was won and the enemies still on the map ran
     /// ([`Leftovers::Flee`]): they left it, into [`BattleState::fled`].
     /// Just before [`Event::BattleEnded`].
@@ -1538,6 +1559,9 @@ pub enum CommandError {
     /// The unit may not use arts and active skills: among enemies only
     /// bosses do, and non-combat green units never do.
     ArtsNotAllowed(UnitId),
+    /// The unit is disarmed (Disarm): it can't attack with a weapon until
+    /// the end of its next phase.
+    Disarmed(UnitId),
     /// The action isn't an attack (for [`BattleState::preview_attack`]).
     NotAnAttack,
     /// The unit has nothing to say to this one: no
@@ -1680,6 +1704,9 @@ impl CommandError {
             }
             CommandError::ArtsNotAllowed(id) => {
                 write!(f, "unit {} doesn't use arts or actives", id.0)
+            }
+            CommandError::Disarmed(id) => {
+                write!(f, "unit {} is disarmed: no weapon attacks", id.0)
             }
             CommandError::NotAnAttack => f.write_str("the action isn't an attack"),
             CommandError::CannotTalk(id) => write!(f, "nothing to say to unit {}", id.0),
@@ -2679,6 +2706,9 @@ impl BattleState {
         if !unit.faction.is_hostile_to(defender.faction) {
             return Err(CommandError::NotHostile(target));
         }
+        if matches!(with, Equipped::Weapon(_)) && unit.is_disarmed() {
+            return Err(CommandError::Disarmed(unit.id));
+        }
         if active.is_some() && art.is_some() {
             return Err(CommandError::ArtWithActive);
         }
@@ -2713,6 +2743,7 @@ impl BattleState {
         self.plan_first_hit(unit, defender, &fight, &mut forecast)?;
         forecast.reactions =
             arts::reactions(unit, defender, arts::new_stance(unit, &fight), &forecast);
+        arts::sure_disarm(&fight, &mut forecast);
         let strikes = self.plan_strikes(unit, defender, &fight, distance)?;
         let kind = |c: &CombatantInput| c.weapon.as_ref().and_then(|w| w.kind);
         let counter_spell = forecast
@@ -3124,9 +3155,10 @@ impl BattleState {
         }
         let mut seized = false;
         let mut move_after = 0;
+        let mut again = None;
         match step {
             Step::Wait => {}
-            Step::Attack(attack) => move_after = self.attack(id, &attack, events),
+            Step::Attack(attack) => (move_after, again) = self.attack(id, &attack, events),
             Step::Art(art) => self.use_action_art(id, &art, events),
             Step::Skill { active, effect } => {
                 let award = SkillAward::of(&effect);
@@ -3190,6 +3222,8 @@ impl BattleState {
             Step::Open { pos, loot } => self.open(id, pos, loot, events),
             Step::Evacuate(pos) => self.evacuate(id, pos, events),
         }
+        // Unbroken Stride: the target fell to the user's strikes, so the
+        // user acts again instead of moving after its attack.
         // A raider offered a move after its attack burns where that move
         // ends instead (its action ends there).
         let moves_on = self
@@ -3207,7 +3241,9 @@ impl BattleState {
             self.offer_move_after(id, move_after, events);
         }
         let waits = self.pending_move.is_some();
-        if let Some(u) = self.unit_mut(id) {
+        if let Some(art) = again.filter(|_| outcome.is_none()) {
+            self.act_again(id, art, events);
+        } else if let Some(u) = self.unit_mut(id) {
             u.acted = true;
             if !waits {
                 events.push(Event::UnitActed { unit: id });
@@ -3223,8 +3259,14 @@ impl BattleState {
     }
 
     /// Carries out unit `id`'s validated combat (see the module docs for the
-    /// order of events). Returns how far it may move after it.
-    fn attack(&mut self, id: UnitId, attack: &AttackStep, events: &mut Vec<Event>) -> u32 {
+    /// order of events). Returns how far it may move after it, and
+    /// Unbroken Stride's art if the unit acts again instead.
+    fn attack(
+        &mut self,
+        id: UnitId,
+        attack: &AttackStep,
+        events: &mut Vec<Event>,
+    ) -> (u32, Option<ArtId>) {
         let target = attack.target;
         let with = attack.with.clone();
         if self
@@ -3262,7 +3304,10 @@ impl BattleState {
         let attacked = clashes.iter().map(|clash| clash.units[1]);
         let fighters: Vec<UnitId> = core::iter::once(id).chain(attacked).collect();
         self.support_fighters(&fighters, events);
-        attack.move_after
+        match self.strode(id, target, attack.art.as_ref()) {
+            Some(art) => (0, Some(art)),
+            None => (attack.move_after, None),
+        }
     }
 
     /// Carries out unit `id`'s validated heal of `target` by `amount` with
@@ -3777,6 +3822,7 @@ impl BattleState {
                 events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
                 let skills = &self.tables.skills;
                 events.extend(progression::grant_class_points(unit, cp, classes, skills));
+                unit.fill_new_uses(classes, &self.tables.spells, skills);
             }
             Faction::Ally => self.exp_pool = self.exp_pool.saturating_add(exp),
             Faction::Enemy | Faction::Neutral => {}
@@ -3874,6 +3920,7 @@ impl BattleState {
         for unit in standing.filter(|u| eligible(u)) {
             let exp = progression::paced_exp(classes, unit.level, share);
             events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
+            unit.fill_new_uses(classes, &self.tables.spells, &self.tables.skills);
         }
     }
 }

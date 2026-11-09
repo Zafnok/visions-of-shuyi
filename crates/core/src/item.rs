@@ -949,6 +949,27 @@ impl Unit {
         }
     }
 
+    /// Gives every learned spell and usable non-attack active that has no
+    /// uses entry yet (one learned since the battle started) its full uses
+    /// (Nick, 2026-11-07, ticket 0609). One the unit already had keeps what
+    /// is left: [`prepare_for_battle`](Unit::prepare_for_battle) gives every
+    /// one an entry, and spending keeps it at 0. Called after a level up or
+    /// a class level up in battle.
+    pub fn fill_new_uses(
+        &mut self,
+        classes: &ClassTable,
+        spells: &SpellTable,
+        skills: &SkillTable,
+    ) {
+        for (spell, uses) in SpellState::full(&self.learned, spells).uses_left {
+            self.spells.uses_left.entry(spell).or_insert(uses);
+        }
+        let usable = SkillUses::full(&self.usable_skills(classes, skills));
+        for (skill, uses) in usable.uses_left {
+            self.skill_uses.uses_left.entry(skill).or_insert(uses);
+        }
+    }
+
     /// Moves worn armour of a weight `class` (the unit's new class) can't
     /// wear to `stock` and returns its id (*Claude's starting rule*, as for
     /// the weapons of [`Unit::fit_weapon_slots`]). Promotion and reclass call

@@ -669,3 +669,130 @@ fn the_scene_marks_who_a_skill_can_target() {
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(7, 1)));
     assert_eq!(scene.path, [] as [trpg_core::Pos; 0]);
 }
+
+/// The lord (knowing Brace too) moved one tile right from `from`, its
+/// `Skill` menu open and the focus on `skill`; `edit` applied to the units
+/// first.
+fn lord_skill_focused(
+    c: &mut Ctx,
+    from: Pos,
+    skill: &str,
+    edit: impl FnOnce(&mut Vec<trpg_core::Unit>),
+) -> BattleScreen {
+    let state = battle(c, |units| {
+        units[0].pos = from;
+        learn(c, &mut units[0], "brace");
+        edit(units);
+    });
+    let mut s = lord_menu(c, state);
+    focus_entry(&mut s, c, MenuEntry::Skill);
+    step(&mut s, c, &[Action::Confirm]);
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let i = menu.skills().iter().position(|l| l.skill.0 == skill);
+    focus_line(&mut s, c, i.expect("the lord knows the skill"));
+    s
+}
+
+/// Every tile of `s`'s map within 2 tiles of `dest`, not `dest`, in row
+/// order: worked out here, not by the core's helper.
+fn within_2(s: &BattleScreen, dest: Pos) -> Vec<Pos> {
+    let mut tiles: Vec<Pos> = s
+        .state()
+        .map()
+        .tiles
+        .positions()
+        .filter(|&t| t != dest && Pos::manhattan(t, dest) <= 2)
+        .collect();
+    tiles.sort_by_key(|t| (t.y, t.x));
+    tiles
+}
+
+/// The scene's heal range, in row order.
+fn heal_range(s: &BattleScreen, c: &Ctx) -> Vec<Pos> {
+    let mut tiles = s.scene(c).tinted(range::HEAL);
+    tiles.sort_by_key(|t| (t.y, t.x));
+    tiles
+}
+
+/// Inspire focused in the `Skill` menu shows its reach on the map (ticket
+/// 0482): the 12 tiles within 2 of the lord's path end, not its own tile.
+#[test]
+fn a_focused_area_skill_shows_its_reach() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(3, 5), "inspire", |_| {});
+    let shown = heal_range(&s, &c);
+    assert_eq!(shown, within_2(&s, p(4, 5)));
+    assert_eq!(shown.len(), 12);
+    assert!(!shown.contains(&p(4, 5)));
+    for kind in [range::MOVE, range::ATTACK] {
+        assert!(s.scene(&c).tinted(kind).is_empty(), "{kind:?}");
+    }
+}
+
+/// At the map's edge the reach stops at it: from (1, 6), on an 8-row map,
+/// the column left of the map and the row below it are left out.
+#[test]
+fn an_area_skills_reach_stops_at_the_map_edge() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(0, 6), "inspire", |_| {});
+    let shown = heal_range(&s, &c);
+    assert_eq!(shown, within_2(&s, p(1, 6)));
+    assert_eq!(shown.len(), 10);
+}
+
+/// Moving the focus to a skill with no area (Brace, on the user only)
+/// clears the reach; moving back shows it again.
+#[test]
+fn a_skill_with_no_area_shows_no_reach() {
+    let mut c = ctx();
+    let mut s = lord_skill_focused(&mut c, p(3, 5), "brace", |_| {});
+    assert_eq!(heal_range(&s, &c), [] as [Pos; 0]);
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let i = menu.skills().iter().position(|l| l.skill.0 == "inspire");
+    focus_line(&mut s, &mut c, i.unwrap());
+    assert_eq!(heal_range(&s, &c).len(), 12);
+}
+
+/// The reach shown is the one the skill uses: after Confirm every ally
+/// standing in it is inspired, and nobody else.
+#[test]
+fn every_ally_in_the_shown_reach_gets_the_buff() {
+    let mut c = ctx();
+    // The lord ends at (4, 5): the knight (4, 6) and the archer, moved to
+    // (5, 4), are within 2; the mage, moved to (0, 4), is not.
+    let mut s = lord_skill_focused(&mut c, p(3, 5), "inspire", |units| {
+        units[2].pos = p(5, 4);
+        let mage = units.len() - 1;
+        units[mage].pos = p(0, 4);
+    });
+    let shown = heal_range(&s, &c);
+    // The other player units (the lord, not moved yet in the state, still
+    // stands at (3, 5)).
+    let player =
+        |u: &&trpg_core::Unit| u.faction == trpg_core::Faction::Player && u.id != UnitId(1);
+    let mut reached: Vec<UnitId> = s
+        .state()
+        .units()
+        .iter()
+        .filter(player)
+        .filter(|u| shown.contains(&u.pos))
+        .map(|u| u.id)
+        .collect();
+    reached.sort();
+    assert_eq!(reached, [UnitId(2), UnitId(3)]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let source = trpg_core::EffectSource::Skill(SkillId::new("inspire"));
+    let mut inspired: Vec<UnitId> = s
+        .state()
+        .units()
+        .iter()
+        .filter(|u| u.effects.iter().any(|e| e.source == source))
+        .map(|u| u.id)
+        .collect();
+    inspired.sort();
+    assert_eq!(inspired, reached);
+}

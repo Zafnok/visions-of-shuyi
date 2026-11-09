@@ -412,7 +412,7 @@ Candle joins outside battle.
   holds an item on the swap rows (asks Nick) · **0480** a forecast that is
   easier to read (asks Nick) → **0463** · **0481** the objective shown
   when a battle starts, AND / OR highlighted (asks Nick; Chapter 2's rule) ·
-  **0482** an area skill's reach shown while chosen · **0483** Vix
+  **0482** an area skill's reach shown while chosen → **0492** the Skill list leaves it in view (asks Nick) · **0483** Vix
   explains wading · **0078** → **0484** stats easy to see in battle ·
   **0609** a spell learned in battle comes with its uses · **0762**
   voiced lines without long pauses (→ **0757**) · **0763** the dialogue

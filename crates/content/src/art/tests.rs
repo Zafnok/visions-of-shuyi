@@ -1,7 +1,9 @@
 //! Tests of the art file: the embedded data matches `combat-arts.md`, and
 //! every validation rule reports its error.
 
-use trpg_core::{ArtArea, CombatMods, Debuff, StanceReaction, StatKind, TimedMods, UnitTag};
+use trpg_core::{
+    ArtArea, ArtStatus, CombatMods, Debuff, OnKill, StanceReaction, StatKind, TimedMods, UnitTag,
+};
 
 use super::*;
 
@@ -62,6 +64,10 @@ fn the_embedded_arts_match_the_design_table() {
         ("comet_lance", "Comet Lance", Spear, S, 8),
         ("arrow_rain", "Arrow Rain", Bow, S, 8),
         ("chain_strike", "Chain Strike", Gauntlet, A, 6),
+        // The arts that change what units may do (ticket 0328).
+        ("disarm", "Disarm", Sword, B, 5),
+        ("unbroken_stride", "Unbroken Stride", Sword, S, 8),
+        ("marked_shot", "Marked Shot", Bow, A, 6),
     ];
     let rows: Vec<_> = rows
         .into_iter()
@@ -223,6 +229,19 @@ fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
             with(|e| e.on_first_hit = debuff(StatKind::Def, 5)),
         ),
         ("off_balance", with(|e| e.on_first_hit_avoid = 20)),
+        // Ticket 0328.
+        (
+            "disarm",
+            with(|e| e.on_first_hit_status = vec![ArtStatus::Disarmed]),
+        ),
+        (
+            "marked_shot",
+            with(|e| e.on_first_hit_status = vec![ArtStatus::Marked { hit: 20, crit: 10 }]),
+        ),
+        (
+            "unbroken_stride",
+            with(|e| e.on_kill = Some(OnKill::ActAgain)),
+        ),
         (
             "vital_point",
             with(|e| {

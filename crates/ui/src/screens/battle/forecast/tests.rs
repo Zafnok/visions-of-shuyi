@@ -187,6 +187,26 @@ fn debuff_notes_spell_out_the_stat_and_the_avoid() {
 }
 
 #[test]
+fn disarm_mark_and_act_again_notes_read_as_the_design_says() {
+    let c = ctx();
+    let state = skirmish(&c, 20);
+    let mut t = targeting(&state);
+    t.preview.notes = vec![
+        ArtNote::Disarms,
+        ArtNote::Marks { hit: 20, crit: 10 },
+        ArtNote::ActsAgain,
+    ];
+    assert_eq!(
+        shown(&state, &t).notes,
+        [
+            "disarms on hit",
+            "marks: hit +20, crit +10",
+            "if it falls: act again"
+        ]
+    );
+}
+
+#[test]
 fn a_spell_or_nothing_equipped_names_the_counter_weapon_that_way() {
     let c = ctx();
     let state = skirmish(&c, 20);

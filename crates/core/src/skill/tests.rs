@@ -598,6 +598,26 @@ fn preparing_for_battle_refills_the_uses_of_the_usable_actives() {
 }
 
 #[test]
+fn an_active_learned_in_battle_has_its_full_uses_at_once() {
+    let (classes, skills) = (classes(), table());
+    let fill = |u: &mut Unit| {
+        u.fill_new_uses(&classes, &crate::spell::SpellTable::default(), &skills);
+    };
+    // A Guard with 1 Brace left masters Exile: Rally is new and full (0609),
+    // Brace keeps its 1.
+    let mut u = unit_in("guard");
+    u.skill_uses.uses_left.insert(sid("brace"), 1);
+    fill(&mut u);
+    assert_eq!(u.skill_uses.uses_left, [(sid("brace"), 1)].into());
+    record(&mut u, "exile", 10);
+    fill(&mut u);
+    assert_eq!(
+        u.skill_uses.uses_left,
+        [(sid("brace"), 1), (sid("rally"), 1)].into()
+    );
+}
+
+#[test]
 fn pay_cost_spends_durability_and_breaks_at_zero() {
     // More than is left: the rest is spent and the weapon breaks.
     let mut short = armed(2);
@@ -900,4 +920,26 @@ fn effect_sources_come_from_skill_and_art_ids() {
         EffectSource::from(ArtId::new("sidestep")),
         EffectSource::Art(ArtId::new("sidestep"))
     );
+}
+
+/// The reach of an active on the allies around its user (ticket 0482):
+/// a buff on allies or a heal has one; a buff on the user or a push has
+/// none.
+#[test]
+fn ally_radius_is_the_reach_of_an_area_buff_or_heal() {
+    let buff = |area| ActiveEffect::Buff {
+        area,
+        mods: TimedMods::default(),
+    };
+    assert_eq!(buff(Area::Allies { radius: 2 }).ally_radius(), Some(2));
+    assert_eq!(
+        ActiveEffect::Heal {
+            radius: 3,
+            power: 5
+        }
+        .ally_radius(),
+        Some(3)
+    );
+    assert_eq!(buff(Area::Own).ally_radius(), None);
+    assert_eq!(ActiveEffect::Push { collision: 4 }.ally_radius(), None);
 }

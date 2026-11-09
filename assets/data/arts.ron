@@ -4,8 +4,8 @@
 // 0018's list, "Ranks C-S" in the design doc) arrive in parts: the arts that
 // change one combat's numbers or put a debuff on the target are here (0325);
 // the stances that react are here too (0326); so are the arts that strike
-// several units (0327); the rest of 0328 comes later;
-// the special weapons' arts (0329) are at the end.
+// several units (0327); so are Disarm, Marked Shot and Unbroken Stride
+// (0328); the special weapons' arts (0329) are at the end.
 // Loaded by trpg_content::art; the rules are in trpg_core::art and
 // trpg_core::battle.
 //
@@ -34,6 +34,14 @@
 //                                phase (one `Some((stat: .., amount: ..))`
 //                                still loads)
 //   on_first_hit_avoid: n        and lowers its avoid by n (not below 0)
+//   on_first_hit_status: [Disarmed | Marked(hit: n, crit: n), ...]
+//                                and puts these on it until the end of its
+//                                next phase. Disarmed: no more counters this
+//                                combat, and no weapon attacks or counters;
+//                                Marked: every strike at it gets +hit, +crit
+//   on_kill: Some(ActAgain)      if the target falls to the user's strikes,
+//                                the user may move and act again (once per
+//                                phase)
 //   stance: Some((stats: [...], combat: (avoid: n, ...)))
 //                                on the user from this combat until the
 //                                start of its next phase
@@ -83,6 +91,14 @@
         (
             id: "cascade", name: "Cascade", kind: Sword, rank: Some(A), cost: 6,
             effect: (cascade: 3),
+        ),
+        (
+            id: "disarm", name: "Disarm", kind: Sword, rank: Some(B), cost: 5,
+            effect: (on_first_hit_status: [Disarmed]),
+        ),
+        (
+            id: "unbroken_stride", name: "Unbroken Stride", kind: Sword, rank: Some(S), cost: 8,
+            effect: (on_kill: Some(ActAgain)),
         ),
         (
             id: "riposte", name: "Riposte", kind: Sword, rank: Some(C), cost: 4,
@@ -154,6 +170,10 @@
         (
             id: "overwatch", name: "Overwatch", kind: Bow, rank: Some(B), cost: 5,
             effect: (stance: Some((reaction: Some(Overwatch)))),
+        ),
+        (
+            id: "marked_shot", name: "Marked Shot", kind: Bow, rank: Some(A), cost: 6,
+            effect: (on_first_hit_status: [Marked(hit: 20, crit: 10)]),
         ),
         (
             id: "arrow_rain", name: "Arrow Rain", kind: Bow, rank: Some(S), cost: 8,

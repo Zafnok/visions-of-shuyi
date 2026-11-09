@@ -3606,6 +3606,7 @@ mod art;
 mod bots;
 mod progression;
 mod reactions;
+mod rule_arts;
 mod shop;
 mod skill;
 mod spell;

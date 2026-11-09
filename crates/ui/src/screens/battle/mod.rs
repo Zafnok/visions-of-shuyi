@@ -2351,6 +2351,13 @@ impl BattleScreen {
                 let tiles = at.map(|u| if u.id == t.sel.unit { dest } else { u.pos });
                 scene.tint(tiles, range::HEAL);
             }
+            // The focused area skill's reach (0482): the allies standing in
+            // it are the ones it would reach.
+            Mode::List { menu, .. } => {
+                if let Some(Line::Skill(c)) = menu.value(menu.focus()) {
+                    scene.tint(c.area.iter().copied(), range::HEAL);
+                }
+            }
             _ => {}
         }
     }
