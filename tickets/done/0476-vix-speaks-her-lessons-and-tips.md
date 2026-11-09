@@ -128,13 +128,3 @@ lesson's (closing a tip stops her, then the lesson speaks) feels right.
 (1.2×), under 2×. PR size: estimate 400, measured 479.
 
 **Follow-ups.** None.
-
-**Main's own break, fixed here to go green.** 0846 (the lead's Str 7 to 8)
-and 0851 (Chapter 5) merged together, and Chapter 5's recorded
-playthrough no longer held the house with the stronger lead: `main`
-failed `ch05_winnable::chapter_5_plays_from_new_game_to_to_be_continued`
-on its own. Re-recorded as the test says (`ch05_winnable::record`): still
-won on turn 6, nobody lost. The new record wins as the enemy's last phase
-ends, which `playthrough::play_in_game` never played after the last
-command (the rules' `play` did), so it now plays the others' phases after
-it too.

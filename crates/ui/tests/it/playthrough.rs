@@ -9,7 +9,7 @@
 use shuyi_core::path::flow_field;
 use trpg_content::Content;
 use trpg_core::{
-    BattleState, Command, Faction, Objective, Outcome, Phase, Pos, SimRng, UnitAction,
+    AiWeights, BattleState, Command, Faction, Objective, Outcome, Phase, Pos, SimRng, UnitAction,
     legal_commands, next_command,
 };
 use trpg_ui::harness::Harness;
@@ -71,29 +71,30 @@ fn send(h: &mut Harness, command: &Command) {
 
 /// Plays `commands` in the battle on screen, through the real game: the
 /// story scenes skipped as they come up, the others' phases as the game
-/// plays them, after the last command too (a battle held until a turn
-/// ends is won as the enemy's phase ends). Ends with the battle won.
+/// plays them, those after the last command too (a battle held to a turn
+/// is won as that turn's last phase ends, as [`play`] plays it). Ends
+/// with the battle won.
 pub fn play_in_game(h: &mut Harness, commands: &[Command]) {
+    let ai = h.game().ctx().game.content.ai;
     for command in commands {
-        play_others_in_game(h);
+        play_others_in_game(h, &ai);
         assert_eq!(battle(h).outcome(), None);
         send(h, command);
     }
-    play_others_in_game(h);
+    play_others_in_game(h, &ai);
     assert_eq!(battle(h).outcome(), Some(Outcome::Victory));
 }
 
-/// Plays the phases that aren't the player's in the battle on screen, as
-/// [`play_others`] does, until the player's phase or the battle's end.
-fn play_others_in_game(h: &mut Harness) {
-    let ai = h.game().ctx().game.content.ai;
+/// Plays the phases on screen that aren't the player's, as the game does,
+/// to the player's next phase or the battle's end.
+fn play_others_in_game(h: &mut Harness, ai: &AiWeights) {
     loop {
         skip_scenes(h);
         let state = battle(h);
         if state.outcome().is_some() || state.phase() == Phase::Player {
             return;
         }
-        let theirs = next_command(&state, &ai).unwrap_or(Command::EndPhase);
+        let theirs = next_command(&state, ai).unwrap_or(Command::EndPhase);
         send(h, &theirs);
     }
 }

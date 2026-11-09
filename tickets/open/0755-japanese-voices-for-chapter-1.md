@@ -20,6 +20,12 @@ Nick chose "Japanese voices too" in 0043
 Japanese. Nobody here can check spoken Japanese, which Nick accepted when
 choosing. 0719 makes Chapter 1's Japanese text, and 0722 the English voices.
 
+**After the writer's rewrite** (Nick, 2026-11-08; Lane J of *Act 1
+critical path*): a human writer is being hired (0766) and may reword
+every line. A line's id is a hash of its words, so a clip or a
+translation made before the rewrite is redone after it. Don't start
+this ticket while 0766 is open without asking Nick.
+
 ## Nick input
 
 **Decision:** one listening round before generating: each Chapter 1 speaker's
