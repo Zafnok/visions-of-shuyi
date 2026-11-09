@@ -433,7 +433,8 @@ and **0520** the bots play a chapter with the army the chapters before
 it leave → **0523** Hardcore stops stalling in front of a guarded
 chokepoint (then **0524** Chapters 1 and 2 back inside their bands)
 → **0849** Chapter 3 (also 0037, 0069), **0850**–**0854**
-Chapters 4–8 (also 1007, 1008, 0319, 1070). The world map's content: **1070** nodes,
+Chapters 4–8 (also 1007, 1008, 0319, 1070); **0867** records Chapter 5's
+win again after 0846 made the lead stronger. The world map's content: **1070** nodes,
 towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
 eight fixed skirmishes, with Gil (after 0746–0749) and **1072**, **1083** and **1084** the five
 side quests (after 0018, 0329, 0069 and their chapters' scripts). The

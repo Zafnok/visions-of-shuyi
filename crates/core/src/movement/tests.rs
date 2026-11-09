@@ -769,6 +769,120 @@ fn threats_report_bad_units() {
     );
 }
 
+// ---------------------------------------------------- the threat planner
+
+impl Scene {
+    /// A [`ThreatPlanner`] for unit `id`, every unit with `ranges`.
+    fn planner(&self, id: UnitId, ranges: &[AttackRange]) -> Result<ThreatPlanner, MoveError> {
+        ThreatPlanner::new(
+            &self.map,
+            &self.terrain,
+            &self.classes,
+            &self.units,
+            id,
+            |_| ranges.to_vec(),
+        )
+    }
+
+    /// Who threatens the planner's unit on `at`, by its answer.
+    fn planned(&self, planner: &ThreatPlanner, at: Pos) -> Vec<u32> {
+        let ids = planner.threats_at(&self.map, &self.terrain, &self.classes, &self.units, at);
+        ids.unwrap().into_iter().map(|id| id.0).collect()
+    }
+}
+
+#[test]
+fn the_planner_searches_each_hostile_unit_once_then_rarely() {
+    // The mover blocks the corridor where it stands; two enemies east.
+    let s = scene(&["#######", ".@.e.e.", "#######"], "foot", 3);
+    let before = searches();
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    assert_eq!(planner.unit(), MOVER);
+    assert_eq!(searches() - before, 2);
+    // Tiles out of reach, and tiles an enemy attacks from the near side:
+    // no search.
+    let expected: Vec<_> = (0..7).map(|x| s.threats(p(x, 1), &[(1, 1)])).collect();
+    let before = searches();
+    let answers: Vec<_> = (0..2).map(|x| s.planned(&planner, p(x, 1))).collect();
+    assert_eq!(searches() - before, 0);
+    assert_eq!(answers, expected[..2]);
+    assert_eq!(answers[0], [1]);
+    // Beside the near enemy, the far one's every path to a tile beside it
+    // goes through it, and east of the far enemy the near one's: each
+    // searched again.
+    for x in [2, 6] {
+        let before = searches();
+        assert_eq!(s.planned(&planner, p(at(x), 1)), expected[x]);
+        assert_eq!(searches() - before, 1);
+    }
+}
+
+#[test]
+fn the_planner_settles_a_tile_out_of_reach_without_a_search() {
+    // An archer (range 2) with Mov 1 that walks to x 1 can shoot x 3,
+    // which it never walks onto; x 5 is beyond it.
+    let s = scene(&["e....@"], "foot", 1);
+    let planner = s.planner(MOVER, &[(2, 2)]).unwrap();
+    let before = searches();
+    assert_eq!(s.planned(&planner, p(3, 0)), [1]);
+    assert_eq!(s.planned(&planner, p(5, 0)), [] as [u32; 0]);
+    assert_eq!(searches() - before, 0);
+}
+
+#[test]
+fn the_planner_never_counts_a_path_through_the_unit() {
+    // The enemy at x 0 walks past its friend at x 1 to x 3 only through
+    // the mover's tile x 2, and its friend's tile is no tile to stop on:
+    // with the mover on x 2, only the friend reaches it.
+    let s = scene(&["ee..@"], "foot", 3);
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    assert_eq!(s.planned(&planner, p(2, 0)), [2]);
+    assert_eq!(s.threats(p(2, 0), &[(1, 1)]), [2]);
+}
+
+#[test]
+fn the_planner_counts_a_hold_the_ford_user_on_the_tile() {
+    // The enemy at (0, 1) walks past its friend at (1, 1) and round the
+    // corner to (2, 2), next to (1, 2); with the mover holding the ford on
+    // (1, 2), its friend's tile stops it and it can't stop there.
+    let mut s = scene(&["###@", "ee.#", "#..#", "####"], "foot", 3);
+    hold(&mut s, 0);
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    assert_eq!(s.planned(&planner, p(1, 2)), [2]);
+    assert_eq!(s.threats(p(1, 2), &[(1, 1)]), [2]);
+    // An archer (range 2) the same way can't walk onto the sea at (3, 1)
+    // the mover stands on, but would shoot it from (2, 0), round the tile
+    // next to it.
+    let mut s = scene(&["##.##", "ee.=@", "#####"], "foot", 3);
+    hold(&mut s, 0);
+    let planner = s.planner(MOVER, &[(2, 2)]).unwrap();
+    assert_eq!(s.planned(&planner, p(3, 1)), [2]);
+    assert_eq!(s.threats(p(3, 1), &[(2, 2)]), [2]);
+}
+
+#[test]
+fn the_planner_counts_a_hold_the_ford_user_in_a_corridor() {
+    // The mover holds the ford: an enemy can't walk past the tiles next
+    // to it, so the far side of the corridor is safe.
+    let mut s = scene(&["#######", ".@...e.", "#######"], "foot", 5);
+    hold(&mut s, 0);
+    let planner = s.planner(MOVER, &[(1, 1)]).unwrap();
+    for x in 0..7 {
+        let at = p(x, 1);
+        assert_eq!(s.planned(&planner, at), s.threats(at, &[(1, 1)]), "{at:?}");
+    }
+}
+
+#[test]
+fn the_planner_reports_bad_units() {
+    let mut s = scene(&["@.e"], "foot", 1);
+    let err = s.planner(UnitId(9), &[(1, 1)]).unwrap_err();
+    assert_eq!(err, MoveError::UnknownUnit(UnitId(9)));
+    s.units[1].class = ClassId("boat".into());
+    let err = s.planner(MOVER, &[(1, 1)]).unwrap_err();
+    assert_eq!(err, MoveError::UnknownClass(ClassId("boat".into())));
+}
+
 // ------------------------------------------------------------------ perf
 
 /// `cargo test -p trpg-core --release -- --ignored reachable_is_fast`
@@ -1021,6 +1135,59 @@ proptest! {
             }
         }
         prop_assert_eq!(listed, Ok(expected));
+    }
+
+    /// The planner answers as [`threats_at`] does, for any unit and tile,
+    /// with stances that stop enemies, units that never move, blocked
+    /// tiles and each unit's own Mov and ranges.
+    #[test]
+    fn the_planner_answers_as_threats_at_does(
+        s in arb_scene(),
+        pick in 0usize..8,
+        tiles in prop::collection::vec((-1i32..11, -1i32..11), 1..6),
+        units in prop::collection::vec(
+            (any::<bool>(), any::<bool>(), -1i32..=8, prop::option::of((0u32..3, 0u32..3))),
+            8,
+        ),
+        blocked in prop::collection::vec((0i32..10, 0i32..10), 0..3),
+    ) {
+        let mut s = s;
+        let mut ranges = BTreeMap::new();
+        for (u, &(_, still, mov, range)) in s.units.iter_mut().zip(&units) {
+            u.stats.mov = mov;
+            if still {
+                u.ai = crate::ai::AiBehavior::Stationary;
+            }
+            let range = range.map(|(min, len)| vec![(min, min + len)]);
+            ranges.insert(u.id, range.unwrap_or_default());
+        }
+        let holders: Vec<u32> = s
+            .units
+            .iter()
+            .zip(&units)
+            .filter(|(_, (holds, ..))| *holds)
+            .map(|(u, _)| u.id.0)
+            .collect();
+        for id in holders {
+            hold(&mut s, id);
+        }
+        s.map.blocked = blocked
+            .into_iter()
+            .map(|(x, y)| p(x, y))
+            .filter(|&pos| s.units.iter().all(|u| u.pos != pos))
+            .collect();
+        let id = s.units[pick % s.units.len()].id;
+        let range = |u: &Unit| ranges[&u.id].clone();
+        let planner = ThreatPlanner::new(&s.map, &s.terrain, &s.classes, &s.units, id, range);
+        for (x, y) in tiles {
+            let at = p(x, y);
+            let expected =
+                threats_at(&s.map, &s.terrain, &s.classes, &s.units, id, at, range);
+            let planned = planner
+                .clone()
+                .and_then(|pl| pl.threats_at(&s.map, &s.terrain, &s.classes, &s.units, at));
+            prop_assert_eq!(planned, expected, "{:?} at {:?}", id, at);
+        }
     }
 }
 

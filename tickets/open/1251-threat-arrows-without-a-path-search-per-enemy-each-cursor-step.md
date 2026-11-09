@@ -5,7 +5,7 @@ type: bug
 milestone: Later
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["1247"]
 nick_input: none
 completed:
@@ -109,5 +109,31 @@ None. No rule or look changes: the same arrows on the same tiles.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Core.** `movement::ThreatPlanner` is made once for a unit: it
+  searches every hostile unit's moves with that unit off the map and
+  keeps them with their threat areas. The unit standing on a tile only
+  takes moves away (no step enters its tile; with a stance that stops
+  enemies, none goes on from a tile next to it), so a hostile unit's
+  threat then is a part of the kept one. For a tile, a hostile unit is
+  settled without a search when the tile is outside its kept threat
+  area (no threat), when its moves never reach the tile and the unit
+  holds no such stance (the kept answer), or when a tile in range has a
+  kept path clear of the unit (a threat). Otherwise it is searched again
+  with the unit on the tile, as `threats_at` does. Units that never move
+  are checked by distance, as before. `threat_area`'s set-building moved
+  to `area_of`, shared by both.
+- **UI.** The battle screen keeps the planner beside `KeptThreat` (which
+  stays, keyed by unit and tile) and drops both when the battle changes.
+  A new unit makes a new planner: hovering a unit still costs one search
+  per enemy, as before; another tile for the same unit costs almost
+  nothing.
+- **Tests.** `a_cursor_move_while_a_unit_is_selected_hardly_searches`
+  plays the bench's moves in *The Company Ledger*: before, each of the
+  five moves ran 14 searches; now `[0, 0, 0, 2, 2]`. The two are the
+  bridge tiles, where some enemies' only paths to her go through her
+  tile. `the_planner_answers_as_threats_at_does` (proptest: random maps,
+  units, Mov, ranges, stances, units that never move, blocked tiles,
+  tiles off the map) compares every answer with `threats_at`. Random
+  maps rarely build the shapes where a path through the unit or past a
+  stance matters, so hand-made scenes check each case and its search
+  count. Every existing threat test and snapshot passes unchanged.
