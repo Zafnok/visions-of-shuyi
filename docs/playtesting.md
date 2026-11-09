@@ -380,6 +380,43 @@ shutters. Casual's lead waits indoors and falls only to the officer, so
 nothing tried moved it under 78 without sinking Normal; no bot holds the
 door against him (ticket 0526).
 
+After 0526 (2026-11-08). The bots now stand a unit in the door: in a
+survive the order had no advances or holds to offer (no goals), so every
+place it tried went to attacks, and with the officer on the near pier he
+walked onto the door tile and killed the lead on turn 1. The order now
+offers each ready unit its cover, the tile that keeps the enemies off a
+lord they can reach (ADR-0114). That lets the officer be dangerous to a
+careless guard only: the Envoy's House now has the officer on the near
+pier, (13, 13), at the door on turn 1; Str 15 instead of 13; and Survive
+8 instead of 6. The army: Lead lv 8, Hedda lv 8, Hollis lv 9, Tamsin lv
+10, Aske lv 8, Maud lv 5, Rue lv 14, Joss lv 3.
+
+```
+             seeds 1–100            seeds 101–200
+casual       58/100  band 40–70% ✓  63/100 ✓
+normal       58/100  band 50–75% ✓  62/100 ✓
+hardcore     69/100  band 50–75% ✓  68/100 ✓
+```
+
+Casual now loses the way a careless player would: its guard in the door
+(Hedda, mostly) falls to the officer on turns 2–3, the rest thin out
+(three or more retreats in 87 tries of 100), and the lead falls on turns
+4 to 8. The steps, Casual and Normal on seeds 1–100 then 101–200:
+
+| Change (each on the one before) | Casual | Normal |
+| ------------------------------- | ------ | ------ |
+| The cover alone (officer a turn away, Str 13, Survive 6) | 89 | 70 |
+| Officer on the near pier | 87 | 62 |
+| Officer Str 15 | 71, 76 | 62, 62 |
+| Survive 7 | 63, 72 | 59, 61 |
+| **Survive 8** | **58, 63** | **58, 62** |
+
+Tried and not kept (each with the officer on the near pier): Str 16 (77,
+75; Normal 66, 75), Str 17 (76), Str 15 with Dex 14 (88, 79) or Spd 12
+(80, 74) or Spd 13 (72), 50 HP and Def 11 (75; Normal 52); with Str 15,
+the turn-4 boat at level 10 (72, 74), and with Survive 7 too (61, 68;
+Normal 64, 60); Survive 7 with Str 16 (67, 67; Normal 65, 75).
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

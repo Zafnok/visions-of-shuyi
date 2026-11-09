@@ -53,6 +53,16 @@ and keep the same one notch; if not, tune the Swordsman as below and
 
 ## Nick input
 
+**Chapters 3 and 4 already miss their bands on `main`** (0526 ran them
+on 2026-11-08, commit `c6ee97b8`, 100 tries a range): Chapter 3 is too
+easy (Casual 60 and 64, Normal 81 on seeds 1–100; Hardcore 55 and 61),
+Chapter 4 too hard for Normal (44 and 46; Casual 39 and 48, Hardcore 60
+and 64). 0846 (the lead Str 7 → 8) checked only Chapter 1, and every
+later army comes from it. So "before" is out of band, and putting
+Chapters 3 and 4 back in it (autobalance, then by hand: 0849's and
+0850's notes in `docs/playtesting.md`) is this ticket's, after Nick's
+pick, whichever option moves them.
+
 **Decision (tuning)**, with the `ask-nick` skill, as 0864 is asked:
 first the table of whom Joss doubles and how often he can crit in
 Chapters 3 and 4 today (his attack speed and crit against each enemy's),

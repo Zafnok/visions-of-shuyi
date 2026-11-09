@@ -1670,3 +1670,90 @@ fn hardcore_walks_its_sturdy_unit_up_a_guarded_ford() {
     };
     assert!(ordered.contains(&advance), "{ordered:?}");
 }
+
+/// [`house_with_a_door`]'s map: a room (x 2-3, y 2-3) behind a door (4, 3)
+/// onto a yard.
+const HOUSE: &str = r#"(
+    name: "House",
+    legend: { '.': "plain", '#': "wall", '_': "floor", 'G': "gate" },
+)
+---
+..........
+.####.....
+.#__#.....
+.#__G.....
+.####.....
+..........
+"#;
+
+/// A battle of `objective` (a hold of one turn, say): the lord (unit 1,
+/// 1 HP) in the room's far corner, a swordsman with no weapon (unit 2) who
+/// can't be hurt beside it, and outside a swordsman (enemy 9) who fells
+/// anything it strikes and can walk through the door to every tile in the
+/// room, and to every tile the lord can reach. Only a unit in his way
+/// keeps him off the lord: the guard just inside the door (3, 3), the one
+/// tile it opens onto, on the door (4, 3), or in front of it (5, 3).
+fn house_with_a_door(objective: Objective) -> BattleState {
+    let content = content();
+    let map = trpg_content::map::parse_map("house", HOUSE, &content.terrain.display)
+        .unwrap_or_else(|e| panic!("{e:?}"))
+        .map;
+    let at = |mut unit: Unit, x, y| {
+        unit.pos = Pos::new(x, y);
+        unit
+    };
+    let mut guard = at(player(2, 0), 2, 3);
+    guard.stats.def = 99;
+    guard.stats.res = 99;
+    guard.loadout = trpg_core::Loadout::default();
+    let units = vec![
+        at(lord(weak(player(1, 0))), 2, 2),
+        guard,
+        at(rigged(enemy(9, 0)), 7, 3),
+    ];
+    let mut setup = setup(units);
+    setup.map = map;
+    setup.objective = objective;
+    BattleState::new(setup).0
+}
+
+#[test]
+fn a_persona_stands_in_the_door_between_the_lord_and_the_enemy() {
+    // A hold has no goals, so no unit had an advance or a hold to try:
+    // the places went to the lord's own waits, in the legal order, and
+    // nobody ever stood in the door (0526).
+    let hold = Objective::Survive { turns: 1 };
+    for name in ["casual", "normal", "hardcore"] {
+        let end = play_out(house_with_a_door(hold), &mut bot(name, 1), 1);
+        assert_eq!(end.outcome(), Some(Outcome::Victory), "{name}");
+    }
+    let s = house_with_a_door(hold);
+    assert_eq!(danger(&s).lord_at_risk, 1);
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    // Inside the door, not out in the yard (it keeps him off as well, and
+    // more could strike the guard there), comes first of the waits.
+    let door = Command::Act {
+        unit: UnitId(2),
+        dest: Pos::new(3, 3),
+        action: UnitAction::Wait,
+    };
+    let first_wait = ordered.iter().position(|c| {
+        matches!(
+            c,
+            Command::Act {
+                action: UnitAction::Wait,
+                ..
+            }
+        )
+    });
+    assert_eq!(
+        first_wait.map(|at| &ordered[at]),
+        Some(&door),
+        "{ordered:?}"
+    );
+    // Where the units have goals to advance on, the advances and holds are
+    // their moves: no cover.
+    let rout = house_with_a_door(Objective::Rout { turn_limit: None });
+    let waits = vec![(UnitId(2), Pos::new(3, 3), door)];
+    assert_eq!(covers(&rout, &threats(&rout), waits), Vec::<Command>::new());
+}

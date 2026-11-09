@@ -503,22 +503,25 @@ impl Order<BattleState> for PersonaOrder {
 /// 4. each ready unit's escape, once, on an escape map (0517), and its
 ///    seize on a seize map: in the rest the cap cut it, and a lord
 ///    standing on the tile never took it (0849);
-/// 5. each ready unit's advance: waiting on the tile it can reach that is
+/// 5. in a survive, each ready unit's cover, while an enemy can reach a
+///    lord: waiting on the tile that keeps the most of those enemies off
+///    the lord, the most first (0526);
+/// 6. each ready unit's advance: waiting on the tile it can reach that is
 ///    nearest the objective's goals, walking (the engine's flow field), if that is
 ///    nearer than where it stands;
-/// 6. each ready unit's hold: waiting on the tile it can reach that no
+/// 7. each ready unit's hold: waiting on the tile it can reach that no
 ///    enemy can strike next phase (the danger zone), nearest the
 ///    objective's goals, if it isn't its advance;
-/// 7. each unit's best attack on each of its other targets, the best
+/// 8. each unit's best attack on each of its other targets, the best
 ///    first: after every unit's move, so that units with several targets
 ///    each don't fill the places tried with blows and leave a sturdier
 ///    unit's advance out (0523);
-/// 8. the other attacks: each other way of striking (weapon, art or
+/// 9. the other attacks: each other way of striking (weapon, art or
 ///    active) once, from its best tile, the best first;
-/// 9. the rest in the legal order, but for its unit actions when no enemy
-///    of the player is left on the map: a player with nothing left to
-///    fear doesn't wander, it walks to the goal (0517);
-/// 10. ending the phase last, in place of the last of the first `cap` if
+/// 10. the rest in the legal order, but for its unit actions when no
+///     enemy of the player is left on the map: a player with nothing left
+///     to fear doesn't wander, it walks to the goal (0517);
+/// 11. ending the phase last, in place of the last of the first `cap` if
 ///     there are that many, so the cap never cuts it.
 ///
 /// `Equip` is dropped (an attack equips its weapon) and so is `Talk` (the
@@ -547,6 +550,7 @@ pub fn order(
     let threats = threats(state);
     let safe = |at: Pos| !threats.iter().any(|(_, strikes)| strikes(at));
     let mut holds: Vec<(UnitId, i64, Command)> = Vec::new();
+    let mut waits: Vec<(UnitId, Pos, Command)> = Vec::new();
     for command in commands {
         match &command {
             Command::Equip { .. } | Command::Talk { .. } => {}
@@ -562,6 +566,9 @@ pub fn order(
                 } else if matches!(action, UnitAction::Escape | UnitAction::Seize) {
                     escapes.push(command);
                 } else {
+                    if *action == UnitAction::Wait {
+                        waits.push((*unit, *dest, command.clone()));
+                    }
                     if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {
                         advance(state, goals, *unit, *dest, &command, &mut advances);
                         if safe(*dest) {
@@ -595,13 +602,21 @@ pub fn order(
             .into_iter()
             .filter(not_pick),
     );
-    let advances: Vec<Command> = advances.into_iter().map(|(_, _, c)| c).collect();
+    let covers = covers(state, &threats, waits);
+    let advances: Vec<Command> = advances
+        .into_iter()
+        .map(|(_, _, c)| c)
+        .filter(|c| !covers.contains(c))
+        .collect();
     let holds: Vec<Command> = holds
         .into_iter()
         .map(|(_, _, c)| c)
-        .filter(|c| !advances.contains(c))
+        .filter(|c| !advances.contains(c) && !covers.contains(c))
         .collect();
-    let not_listed = |c: &Command| not_pick(c) && !advances.contains(c) && !holds.contains(c);
+    let not_listed = |c: &Command| {
+        not_pick(c) && !covers.contains(c) && !advances.contains(c) && !holds.contains(c)
+    };
+    out.extend(covers.iter().filter(|c| not_pick(c)).cloned());
     out.extend(advances.iter().filter(|c| not_pick(c)).cloned());
     out.extend(holds.iter().filter(|c| not_pick(c)).cloned());
     out.extend(targets.into_iter().filter(not_pick));
@@ -645,6 +660,92 @@ fn split_attacks(
         first
     });
     (best, targets, others)
+}
+
+/// Each ready unit's cover, the most covering first: of `waits` (each
+/// unit waiting on each tile it can reach), the one that keeps the most
+/// enemies off the lords they can strike now, their reach worked out again
+/// with the unit standing there, if it keeps any off: a unit in the
+/// doorway they must come through. Of two alike, the one nearer the lord:
+/// in the doorway, not on the quay in front of it, where more can strike
+/// it. A lord isn't its own cover, and an enemy that never moves can't be
+/// kept off.
+///
+/// Only in a survive: without it a hold, which has no goals to advance on,
+/// weighed only attacks, and no unit ever stood in the door between the
+/// lead and the enemy that killed it (0526). Where there are goals, the
+/// advances and holds are the units' moves, and covers before them filled
+/// the places tried: Normal won Kell's Ford with nobody dying 13 to 18
+/// times in 100 less.
+fn covers(
+    state: &BattleState,
+    threats: &[Threat<'_>],
+    waits: Vec<(UnitId, Pos, Command)>,
+) -> Vec<Command> {
+    if !matches!(state.objective(), Objective::Survive { .. }) {
+        return Vec::new();
+    }
+    // Each lord in reach, and the enemies that move and can strike it.
+    let lords: Vec<(Pos, Vec<&Threat<'_>>)> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player && u.is_lord)
+        .map(|lord| {
+            let moves = |id: UnitId| {
+                state
+                    .unit(id)
+                    .is_some_and(|e| e.ai != AiBehavior::Stationary)
+            };
+            let foes = threats
+                .iter()
+                .filter(|(id, strikes)| moves(*id) && strikes(lord.pos));
+            (lord.pos, foes.collect::<Vec<_>>())
+        })
+        .filter(|(_, foes)| !foes.is_empty())
+        .collect();
+    let mut units = state.units().to_vec();
+    // Each unit's best yet: the enemies kept off, the tile's distance to
+    // the nearest lord, the command.
+    let mut best: Vec<(usize, u32, UnitId, Command)> = Vec::new();
+    for (id, dest, command) in waits {
+        let Some(at) = units.iter().position(|u| u.id == id && !u.is_lord) else {
+            continue;
+        };
+        // A tile none of them can step on can't keep them off.
+        let in_way = |(_, foes): &(Pos, Vec<&Threat<'_>>)| foes.iter().any(|(_, s)| s(dest));
+        if !lords.iter().any(in_way) {
+            continue;
+        }
+        let from = std::mem::replace(&mut units[at].pos, dest);
+        let reaches = |enemy: UnitId, lord: Pos| {
+            let Some(e) = state.unit(enemy) else {
+                return false;
+            };
+            let ranges = state.threat_ranges(e);
+            let (map, terrain, classes) = (state.map(), state.terrain(), state.classes());
+            threat_area(map, terrain, classes, &units, enemy, &ranges)
+                .is_ok_and(|area| area.contains(lord))
+        };
+        let kept_off: usize = lords
+            .iter()
+            .map(|(lord, foes)| foes.iter().filter(|(e, _)| !reaches(*e, *lord)).count())
+            .sum();
+        units[at].pos = from;
+        let near = lords
+            .iter()
+            .map(|(lord, _)| Pos::manhattan(*lord, dest))
+            .min();
+        let near = near.unwrap_or(u32::MAX);
+        match best.iter_mut().find(|b| b.2 == id) {
+            Some(b) if (kept_off, Reverse(near)) > (b.0, Reverse(b.1)) => {
+                *b = (kept_off, near, id, command);
+            }
+            None if kept_off > 0 => best.push((kept_off, near, id, command)),
+            _ => {}
+        }
+    }
+    best.sort_by_key(|b| (Reverse(b.0), b.1));
+    best.into_iter().map(|(_, _, _, c)| c).collect()
 }
 
 /// Keeps `command` (unit `id` waiting on `dest`, a tile out of every
