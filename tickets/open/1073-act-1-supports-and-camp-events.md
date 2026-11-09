@@ -5,7 +5,7 @@ type: content
 milestone: Post–Chapter 1
 model: fable-5.1 / gpt-6-astra
 effort: high
-status: todo
+status: blocked
 blocked_by: ["1003", "0743", "0750"]
 nick_input: none
 completed:
@@ -27,6 +27,12 @@ Personal arcs live in the main script and the supports, never in camp
 events alone (Nick: "Supports everywhere, camp for extras"). The
 supports must fit what has happened, so this ticket comes after the
 last Act 1 script (0750) as well as the new cast's sheets (0743).
+
+**Writing is paused** (Nick, 2026-11-08: the dialogue reads robotic
+after three or four rewrites, and he is hiring a human writer). No agent
+writes this ticket's scenes or words. Its scenes wait for the writer
+0766 finds; the code, maps and battle parts may go ahead only if they
+need no new lines. Nick unblocks it, once a writer is hired (0766).
 
 ## Nick input
 

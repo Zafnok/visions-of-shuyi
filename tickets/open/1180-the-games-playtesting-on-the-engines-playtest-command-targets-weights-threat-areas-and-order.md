@@ -44,6 +44,11 @@ past them, so this ticket is ready now. It found two more things here:
   is `GoalDistance`'s rule. The escape exit and `raid_flow` charge
   terrain on the goal tile, so they stay on `path::flow_field`.
 
+**Either order with 0527:** 0527 adds per-unit measures to the bots'
+report (damage dealt, kills, EXP and level for each playable unit, and a
+per-unit table). If 0527 is done, carry those measures over in the move;
+if not, nothing to do (0527 builds them on whichever runner is there).
+
 ## Nick input
 
 None. Persona choices and reports remain unchanged, verified by tests and

@@ -5,7 +5,7 @@ type: content
 milestone: Post–Chapter 1
 model: fable-5.1 / gpt-6-astra
 effort: high
-status: todo
+status: blocked
 blocked_by: ["1072", "1070", "0018", "0069", "0746", "0748", "0509", "0013", "0323", "0608", "0329"]
 nick_input: decision
 completed:
@@ -25,6 +25,12 @@ stay in order; the stories are independent.
 | --- | --- | --- | --- |
 | *The Captain's Oath* | Hollis | after Chapter 4's story battle, Hollis alive | his wife's grave near Veyne Hall; his goodbye to the life before exile (his confession stays in the main story) |
 | *The Other Cart* | Rue | after Chapter 6's story battle, Rue alive | a Candle who escaped with her runs a hideout for runaways |
+
+**Writing is paused** (Nick, 2026-11-08: the dialogue reads robotic
+after three or four rewrites, and he is hiring a human writer). No agent
+writes this ticket's scenes or words. Its scenes wait for the writer
+0766 finds; the code, maps and battle parts may go ahead only if they
+need no new lines. Nick unblocks it, once a writer is hired (0766).
 
 ## Nick input
 

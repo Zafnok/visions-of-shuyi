@@ -1,5 +1,5 @@
 ---
-id: "0867"
+id: "0871"
 title: Chapter 5's recorded win after the lead's strength change
 type: bug
 milestone: Post–Chapter 1
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0867 — Chapter 5's recorded win after the lead's strength change
+# 0871 — Chapter 5's recorded win after the lead's strength change
 
 ## Context
 

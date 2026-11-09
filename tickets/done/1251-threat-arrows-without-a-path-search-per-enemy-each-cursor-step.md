@@ -101,7 +101,7 @@ None. No rule or look changes: the same arrows on the same tiles.
       its ticket. **Not under:** 2,306,174 in frame 43, the unit menu;
       what is left and its ticket (1259) are in the notes.
 - [x] All gates in the `run-gates` skill pass, except `ch05_winnable`,
-      which fails on `main` without this change (0867).
+      which fails on `main` without this change (0871).
 
 ## Tests required
 
@@ -162,6 +162,6 @@ None. No rule or look changes: the same arrows on the same tiles.
 - **Also found.** `main` fails `ch05_winnable` (Chapter 5's recorded win
   no longer wins), on every OS, without this change: very likely #587
   (0846, the lead's Str 7 to 8) merged beside #588 (0851). Ticket
-  **0867**, added to 1064 and the roadmap. This PR's test, coverage and
+  **0871**, added to 1064 and the roadmap. This PR's test, coverage and
   mutants baseline jobs fail on it until it lands.
 - No gameplay rule decided; nothing for the Act 1 playtest.
