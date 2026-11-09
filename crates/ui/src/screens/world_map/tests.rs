@@ -177,6 +177,25 @@ fn the_cursor_follows_the_roads_that_way() {
     assert_eq!(s.cursor(), "city");
 }
 
+/// Two roads exactly as close to the key: the first in the map's order
+/// wins (here the crossroads and Kingsgate, moved to either side of
+/// Millbrook's east).
+#[test]
+fn on_a_tie_the_first_road_in_the_maps_order_wins() {
+    let mut ctx = ctx();
+    let def = ctx
+        .game
+        .content
+        .worldmaps
+        .get_mut("test_world")
+        .expect("a map");
+    def.places.insert("cross".into(), Pos::new(18, 18));
+    def.places.insert("city".into(), Pos::new(18, 22));
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[Action::CursorRight]);
+    assert_eq!(s.cursor(), "cross");
+}
+
 /// The menu sounds the screen played since the last call.
 fn sounds(ctx: &mut Ctx) -> Vec<String> {
     ctx.audio
