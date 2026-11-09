@@ -458,16 +458,18 @@ pub fn attack_tiles(reach: &Reach, min: u32, max: u32) -> TileSet {
 /// the map both use it.
 pub fn area_tiles(width: u16, height: u16, center: Pos, radius: u32) -> TileSet {
     let mut out = TileSet::new(width, height);
-    // No farther than across the map.
-    let r = i32::try_from(radius)
-        .unwrap_or(i32::MAX)
-        .min(i32::from(width) + i32::from(height));
-    for dy in -r..=r {
-        let rest = r - dy.abs();
-        for dx in -rest..=rest {
-            let to = Pos::new(center.x.saturating_add(dx), center.y.saturating_add(dy));
+    let (cols, rows) = (i64::from(width), i64::from(height));
+    let (cx, cy, reach) = (i64::from(center.x), i64::from(center.y), i64::from(radius));
+    // The diamond, clipped to the map's rows and columns.
+    for y in (cy - reach).max(0)..(cy + reach + 1).min(rows) {
+        let rest = reach - (y - cy).abs();
+        for x in (cx - rest).max(0)..(cx + rest + 1).min(cols) {
+            // Inside the map, so both fit.
+            let (Ok(x), Ok(y)) = (i32::try_from(x), i32::try_from(y)) else {
+                continue;
+            };
+            let to = Pos::new(x, y);
             if to != center {
-                // Off the map: not inserted.
                 out.insert(to);
             }
         }
