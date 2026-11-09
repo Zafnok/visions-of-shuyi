@@ -2,9 +2,12 @@
 //! game: New Game on the test chapter at each familiarity answer, the test
 //! lesson (`assets-test/data/lessons.ron`: the cursor's four directions on
 //! the first turn), the turn waiting for it, and a done lesson staying
-//! done after the battle is suspended and continued.
+//! done after the battle is suspended and continued. The guide says a
+//! lesson's and a tip's line as its box opens (ticket 0476).
 
+use trpg_content::{TipTrigger, Variant};
 use trpg_core::{Phase, TutorialLevel};
+use trpg_ui::AudioRequest;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -43,7 +46,23 @@ fn launch(storage: Box<dyn Storage>) -> Harness {
 /// rows below "Not familiar", the default lead, the intro scene skipped,
 /// the battle notes and turn 1's banner closed.
 fn to_battle(h: &mut Harness, downs: &str) {
-    h.keys("f f").keys(downs).keys("f Up f");
+    h.keys("f f").keys(downs).keys("f");
+    from_the_lead(h);
+}
+
+/// From the title with voice clips found, at "Not familiar": the voices
+/// question (0826) given `answer`'s keys, then on as [`to_battle`].
+fn to_battle_answering_voices(h: &mut Harness, answer: &str) {
+    h.keys("f f f");
+    assert_eq!(h.top_screen(), "voices_question");
+    h.keys(answer);
+    from_the_lead(h);
+}
+
+/// From the lead screen: the default lead, the intro scene skipped, the
+/// battle notes and turn 1's banner closed.
+fn from_the_lead(h: &mut Harness) {
+    h.keys("Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -155,4 +174,101 @@ fn a_lesson_left_open_opens_again_after_continue() {
     assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
     assert_eq!(battle(&h).lesson_ticks(), [false; 4]);
     assert_eq!(lessons_done(&h), [] as [std::string::String; 0]);
+}
+
+/// A voice manifest with a clip for every line the guide says (0476).
+fn guide_manifest(h: &Harness) -> String {
+    let content = &h.game().ctx().game.content;
+    let scene = trpg_content::voice::guide_scene(&content.lessons, &content.tips);
+    let clip = |l: &trpg_content::dialogue::Line| {
+        format!(
+            "(line: \"{}\", spoken: \"{}\", voice: \"guide\", \
+             made_by: Generated(tool: \"t\", model: \"m\", date: \"2026-11-08\")),\n",
+            l.id, l.text
+        )
+    };
+    let clips: String = scene.lines().iter().map(clip).collect();
+    format!("(clips: [\n{clips}])")
+}
+
+/// The voice requests of the run so far: what was asked for and stopped.
+fn voice_requests(h: &Harness) -> Vec<AudioRequest> {
+    let voice =
+        |r: &AudioRequest| matches!(r, AudioRequest::PlayVoice { .. } | AudioRequest::StopVoice);
+    h.audio_requests().into_iter().filter(voice).collect()
+}
+
+fn play(text: &str) -> AudioRequest {
+    AudioRequest::PlayVoice {
+        line: trpg_content::voice::guide_line(text),
+        variant: Variant::None,
+    }
+}
+
+/// Acceptance (0476): the lesson opening, with a clip in the manifest,
+/// queues one `PlayVoice` of its text; ticking its last item closes it
+/// and queues `StopVoice`.
+#[test]
+fn the_lesson_box_says_her_line_and_closing_it_stops_her() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    let manifest = guide_manifest(&h);
+    h.ctx_mut().set_voice_manifest(&manifest);
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    let text = h.game().ctx().game.content.lessons.lessons[0].text.clone();
+    to_battle_answering_voices(&mut h, "f");
+    assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
+    let asked: Vec<AudioRequest> = voice_requests(&h)
+        .into_iter()
+        .filter(|r| matches!(r, AudioRequest::PlayVoice { .. }))
+        .collect();
+    assert_eq!(asked, [play(&text)]);
+    // Moving on the map with the box up says nothing more.
+    h.clear_audio().keys("Down Right Left");
+    assert_eq!(voice_requests(&h), [] as [AudioRequest; 0]);
+    h.keys("Up");
+    assert_eq!(battle(&h).shown_lesson(), None);
+    assert_eq!(voice_requests(&h), [AudioRequest::StopVoice]);
+}
+
+/// Acceptance (0476): a tip's box says its line; closing it stops her and
+/// the lesson's box that comes next says its own.
+#[test]
+fn a_tip_says_its_line_and_the_next_box_takes_over() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    h.with_tips();
+    let manifest = guide_manifest(&h);
+    h.ctx_mut().set_voice_manifest(&manifest);
+    let content = &h.game().ctx().game.content;
+    let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
+    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let lesson = content.lessons.lessons[0].text.clone();
+    to_battle_answering_voices(&mut h, "f");
+    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstBattleStart));
+    let asked = voice_requests(&h);
+    assert_eq!(asked.last(), Some(&play(&tip)));
+    h.clear_audio().keys("f");
+    assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
+    assert_eq!(voice_requests(&h), [AudioRequest::StopVoice, play(&lesson)]);
+}
+
+/// Acceptance (0476): with voices off (No to the voices question), no
+/// box asks for her voice.
+#[test]
+fn with_voices_off_no_box_asks_for_her() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    h.with_tips();
+    let manifest = guide_manifest(&h);
+    h.ctx_mut().set_voice_manifest(&manifest);
+    to_battle_answering_voices(&mut h, "Down f");
+    assert!(!h.game().ctx().settings().voices);
+    assert!(battle(&h).shown_tip().is_some());
+    h.keys("f");
+    assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
+    let asked = h.audio_requests().into_iter().filter(|r| {
+        matches!(
+            r,
+            AudioRequest::PlayVoice { .. } | AudioRequest::PreloadVoices { .. }
+        )
+    });
+    assert_eq!(asked.count(), 0);
 }

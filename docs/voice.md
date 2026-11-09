@@ -35,6 +35,13 @@ voice/
   box shows the name and the clip says the stand-in, so the clip's `spoken`
   has "the exile" where the box has the name. A bare `{lead}` can't have a
   clip; the content checks allow one only in a reply, which is silent.
+- What the guide says in a lesson's or a tip's box (its `text`, ticket
+  0476) is a line of scene **`vix`**, said by `guide`: the game builds that
+  scene from `assets/data/lessons.ron` and `tips.ron`, with ids made as a
+  script line's are, the text's line breaks read as spaces. Rewording a
+  `text` gives a new id. A lesson's items and a tip's `how` are silent.
+  `cargo xtask voice` voices the shipped lessons only: the test lesson has
+  no clip, since a build that ships has no such line.
 
 ## `voice.ron`
 
@@ -241,6 +248,11 @@ preloads the next 3, and at a choice the first line of each reply's
 reaction. The dialogue log's cursor says the line it moves onto unless
 *Voice on hover in the log* is off. The debug menu's **Voice test** says
 the test scene's voiced lines, one per press, without the screen.
+
+The battle screen (ticket 0476) says the guide's line as a lesson's or a
+tip's box comes on screen; the box going, or another taking its place,
+stops it. A box back on screen after a pause (a combat playing over an
+open lesson) doesn't say it again. The Guides list says nothing.
 
 ## Trying it with the test clips
 

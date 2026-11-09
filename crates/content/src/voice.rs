@@ -23,6 +23,9 @@ use crate::names::Names;
 
 pub use shuyi_assets::voice::MadeBy;
 
+mod guide;
+pub use guide::{GUIDE_SCENE, GUIDE_SPEAKER, guide_line, guide_scene, with_guide};
+
 /// Folder, next to the game, that holds one folder of clips per language.
 /// Not embedded (ADR-0046 rule 4).
 pub const VOICE_DIR: &str = "voice";

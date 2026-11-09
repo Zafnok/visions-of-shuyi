@@ -305,5 +305,6 @@
     // Chapter 8 (ticket 0750): the king speaks in the closing scene and
     // never fights in Act 1.
     // Letters Home (ticket 1072): the hill people's boat master only speaks.
-    speakers: ["vowmaster", "messenger", "herald", "envoy", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
+    // The guide, Vix, speaks the lessons' and tips' lines (ticket 0476).
+    speakers: ["guide", "vowmaster", "messenger", "herald", "envoy", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
 )

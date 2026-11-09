@@ -773,5 +773,45 @@ fn without_a_cast_the_tool_says_so() {
 fn the_story_scenes_are_the_scenes_of_assets_dialogue() {
     let scenes = story_scenes(&root()).unwrap();
     assert!(scenes.contains("ch01_intro"));
+    assert!(scenes.contains("vix"), "the guide's lessons and tips");
     assert!(!scenes.contains("test"));
+}
+
+/// Acceptance (0476): `status` reads the lessons' and tips' text as the
+/// guide's lines, scene `vix`, in her cast voice; made, none is left.
+#[test]
+fn status_and_generate_cover_the_guides_lessons_and_tips() {
+    let content = content();
+    let scripts = Scripts::new(&content, BTreeSet::from(["vix".to_owned()]));
+    let folder = folder("vix");
+    let cast = "(voices: {\"guide\": (clip: \"guide\", reader: Chatterbox)})";
+    fs::write(folder.dir.join(files::CAST_FILE), cast).unwrap();
+    let lines = trpg_content::voice::guide_scene(&shipped_lessons(), &content.tips)
+        .lines()
+        .len();
+    // Never the test lesson's: a build that ships has no such line.
+    let test = content.lessons.get("test_cursor").map(|l| l.text.as_str());
+    let test = trpg_content::voice::guide_line(test.unwrap_or_default());
+    assert_eq!(
+        lines + 1,
+        content.lessons.lessons.len() + content.tips.tips.len()
+    );
+    let tools = Tools::fake(&[]);
+    let report = status(&folder, &scripts, &tools).unwrap();
+    assert!(
+        report.starts_with(
+            "vix
+  make       vix/vix_"
+        ),
+        "{report}"
+    );
+    assert!(!report.contains(test.as_str()), "{report}");
+    let counts =
+        format!("{lines} clips to make, 0 to re-record, 0 to remove, 0 lines with no voice");
+    assert!(report.ends_with(&counts), "{report}");
+    let mut tools = Tools::fake(&[]);
+    generate(&folder, &scripts, &mut tools, false, "2026-11-08").unwrap();
+    let report = status(&folder, &scripts, &tools).unwrap();
+    assert!(report.starts_with("0 clips to make"), "{report}");
+    let _ = fs::remove_dir_all(&folder.dir);
 }

@@ -244,8 +244,9 @@ impl GameData for Shuyi {
     }
 
     /// Validates the voice manifest `app` read (`voice/<lang>/voice.ron`,
-    /// ADR-0046) against the dialogue, and keeps the clips that still say
-    /// what their line says with today's names.
+    /// ADR-0046) against the dialogue and the guide's lines (0476), and
+    /// keeps the clips that still say what their line says with today's
+    /// names.
     fn voices(&self, source: &str) -> Result<Playable, String> {
         let file = format!(
             "{}/{SOURCE_LANG}/{}",
@@ -253,10 +254,11 @@ impl GameData for Shuyi {
             voice::MANIFEST_FILE
         );
         let content = &self.content;
-        match voice::from_source(&file, source, &content.dialogue) {
+        let guide = |table| voice::with_guide(table, &content.lessons, &content.tips);
+        match voice::from_source(&file, source, &guide(content.dialogue.clone())) {
             Ok(manifest) => {
                 // The lines as written: what the voice says for the name.
-                let written = dialogue::written(&content.dialogue, &content.stand_ins);
+                let written = guide(dialogue::written(&content.dialogue, &content.stand_ins));
                 Ok(voice::playable(&manifest, &written, &content.names))
             }
             Err(errors) => {
