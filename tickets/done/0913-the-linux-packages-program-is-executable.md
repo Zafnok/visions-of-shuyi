@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-08
 ---
 
 # 0913 — The Linux package's program is executable
@@ -72,5 +72,29 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+The check was wrong, not the export. The engine writes the program at
+`0755` (`crates/cli/src/export/archive.rs`, `tar_gz`). The check piped
+`tar tvzf` into `grep -q`, which exits at its first match. The entries are
+sorted by name. Since 0911 shipped `voice/`, those entries come after
+`visions-of-shuyi`, so tar was still writing when grep exited. Tar died of
+SIGPIPE, and `pipefail` turned that into "isn't executable". Reproduced
+locally with a 0755 program followed by 3,000 entries: the pipe fails, and
+a check on the captured listing passes. The script now captures the listing
+first, greps it and prints the program's line.
+
+- Deviation: the failed run uploaded no `package-linux` artifact (the upload
+  comes after the check), so step 1 read the engine's tar writer instead of
+  the tarball.
+- Release dry run on the branch:
+  [run 42551186766](https://github.com/Zafnok/visions-of-shuyi/actions/runs/42551186766),
+  `package (linux)` green; its line:
+  `-rwxr-xr-x root/root  15057712 1970-01-01 00:00 visions-of-shuyi-0.3.0-linux/visions-of-shuyi`.
+  `package (web)` still fails, which is 0912's job.
+- No engine change, so no engine test.
+- The other `| grep -q` checks in the script read `objdump -h` and
+  `codesign` output, which is short enough to be written before grep exits.
+  They were left as they are.
+
+Acceptance: [x] dry run's `package (linux)` passes · [x] mode `0755` shown
+above · [x] gates: no Rust changed; ticket-lint, check-mentions,
+sync-agent-skills and pr-size passed locally, and CI runs the rest.
