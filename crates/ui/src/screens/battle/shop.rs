@@ -31,8 +31,8 @@
 use crate::prelude::*;
 
 use trpg_core::{
-    BattleState, Command, Gold, ItemDef, ItemId, Pos, SellFrom, Shop, ShopKind, ShopTxn,
-    UnitAction, UnitId, WEAPON_SLOTS, WeaponDef, repair_cost, sell_price,
+    ArmourWeight, BattleState, Command, Gold, ItemDef, ItemId, Pos, SellFrom, Shop, ShopKind,
+    ShopTxn, UnitAction, UnitId, WEAPON_SLOTS, WeaponDef, repair_cost, sell_price,
 };
 
 use super::glyph::shop as glyph;
@@ -312,11 +312,10 @@ impl ShopScreen {
         stock
             .filter_map(|item| {
                 let def = items.get(item)?;
-                Some(offer(
-                    ShopTxn::Buy { item: item.clone() },
-                    item,
-                    def.price(),
-                ))
+                Some(Offer {
+                    durability: new_uses(def),
+                    ..offer(ShopTxn::Buy { item: item.clone() }, item, def.price())
+                })
             })
             .collect()
     }
@@ -602,9 +601,11 @@ impl ShopScreen {
                 enabled: false,
             };
         }
-        let detail = match offer.durability {
-            Some((left, max)) => format!("{left}/{max} → {max}/{max}"),
-            None => def.map(|def| stat_line(words, def)).unwrap_or_default(),
+        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let detail = match (&offer.txn, offer.durability) {
+            (ShopTxn::Repair { .. }, Some((left, max))) => format!("{left}/{max} → {max}/{max}"),
+            (_, Some((left, max))) => format!("{left}/{max}  {stats}"),
+            (_, None) => stats,
         };
         ShopLineView {
             name,
@@ -665,24 +666,55 @@ fn is_seal(def: &ItemDef) -> bool {
     matches!(def, ItemDef::Seal(_))
 }
 
-/// A line of what `def` is: a weapon's numbers, an armour's or an
-/// accessory's bonuses, what a consumable does.
+/// The uses a new copy of `def` has, `(max, max)`, if it is a weapon.
+pub fn new_uses(def: &ItemDef) -> Option<(u32, u32)> {
+    match def {
+        ItemDef::Weapon(w) => Some((w.durability, w.durability)),
+        _ => None,
+    }
+}
+
+/// A line of what `def` is (ticket 0486): a weapon's rank and numbers
+/// (`E  Mt 5  Hit 90 …  Wt 2`), an armour's weight class, bonuses and
+/// weight (`Leather  Def +2  Res +2  Wt 1`), an accessory's bonuses,
+/// what a consumable does.
 pub fn stat_line(words: Words<'_>, def: &ItemDef) -> String {
     match def {
-        ItemDef::Weapon(w) => words.text_with(
-            "battle.info.weapon_numbers",
-            &[
-                ("might", &w.might),
-                ("hit", &w.hit),
-                ("crit", &w.crit),
-                ("range", &range_text(w.min_range, w.max_range)),
-                ("weight", &w.weight),
-            ],
-        ),
-        ItemDef::Armour(a) => bonus_text(words, &a.bonus),
+        ItemDef::Weapon(w) => {
+            let numbers = words.text_with(
+                "battle.info.weapon_numbers",
+                &[
+                    ("might", &w.might),
+                    ("hit", &w.hit),
+                    ("crit", &w.crit),
+                    ("range", &range_text(w.min_range, w.max_range)),
+                    ("weight", &w.weight),
+                ],
+            );
+            format!("{:?}  {numbers}", w.rank)
+        }
+        ItemDef::Armour(a) => [
+            words.text(armour_class_key(a.weight_class)).to_owned(),
+            bonus_text(words, &a.bonus),
+            words.text_with("battle.info.armour_weight", &[("weight", &a.weight)]),
+        ]
+        .into_iter()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("  "),
         ItemDef::Accessory(a) => bonus_text(words, &a.bonus),
         ItemDef::Consumable(c) => effect_text(words, c.effect),
         ItemDef::Seal(_) => String::new(),
+    }
+}
+
+/// Text key of an armour weight class's name (`Leather`).
+fn armour_class_key(class: ArmourWeight) -> &'static str {
+    match class {
+        ArmourWeight::Cloth => "battle.info.armour_class.cloth",
+        ArmourWeight::Leather => "battle.info.armour_class.leather",
+        ArmourWeight::Chain => "battle.info.armour_class.chain",
+        ArmourWeight::Plate => "battle.info.armour_class.plate",
     }
 }
 

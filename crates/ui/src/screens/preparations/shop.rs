@@ -22,7 +22,7 @@ use crate::audio::MenuSound;
 use crate::input::Action;
 use crate::screen::Ctx;
 use crate::screens::battle::shop::{
-    SELL_SPECIAL, SellConfirm, Tab as ShopTab, gold_text, kind_key, stat_line,
+    SELL_SPECIAL, SellConfirm, Tab as ShopTab, gold_text, kind_key, new_uses, stat_line,
 };
 use crate::screens::battle::view::{SellConfirmView, ShopLineView, ShopScreenView};
 use crate::widgets::{Ask, AskView, wrap_step};
@@ -119,11 +119,11 @@ impl PreparationsScreen {
                 .stock
                 .iter()
                 .filter_map(|id| {
-                    Some(Deal::new(
-                        Trade::Buy(id.clone()),
-                        id,
-                        items.get(id)?.price(),
-                    ))
+                    let def = items.get(id)?;
+                    Some(Deal {
+                        durability: new_uses(def),
+                        ..Deal::new(Trade::Buy(id.clone()), id, def.price())
+                    })
                 })
                 .collect(),
             ShopTab::Sell => self.sales(),

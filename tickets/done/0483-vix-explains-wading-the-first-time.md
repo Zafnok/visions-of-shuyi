@@ -120,7 +120,8 @@ written in `tutorial.md`).
   armored none, Def 0, Avoid 10). Fliers (cost 1) aren't mentioned.
 - Vix's clip for it (0476 is done): `vix/vix_49c9b883.ogg`, made with
   `cargo xtask voice generate --scene vix`, committed to the private
-  repository, pinned. The pin also takes in the private repository's
+  repository, pinned, and on the release disclosure list in `shuyi.ron`
+  (0911's two lines per clip). The pin also takes in the private repository's
   commit for 1089 (world map pictures) made before it.
 - `tutorial.md`: the tip in its list, and the starting rule below.
 - Tests: the condition for foot, flying, mounted and armored

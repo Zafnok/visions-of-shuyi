@@ -214,7 +214,11 @@ fn what_the_party_cant_afford_is_dimmed_and_refused() {
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.shop().unwrap().visit().txns, Vec::<ShopTxn>::new());
     // Each item's numbers or bonuses.
-    assert!(view.lines[0].detail.starts_with("Mt "), "{:?}", view.lines);
+    assert!(
+        view.lines[0].detail.starts_with("20/20  E  Mt "),
+        "{:?}",
+        view.lines
+    );
 }
 
 #[test]
@@ -780,4 +784,77 @@ fn each_specialty_store_says_what_it_buys() {
 fn shop_declares_its_actions() {
     let screen = ShopScreen::new(&battle_at(VENDOR, 0), LORD, VENDOR).unwrap();
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::SHOP);
+}
+
+/// Ticket 0486: the Armoury's Buy lines show a weapon's rank and the uses
+/// a new one has, and an armour's weight class and weight.
+#[test]
+fn an_armoury_buy_line_shows_every_number_of_its_item() {
+    let mut c = ctx();
+    let s = shop_open(&mut c, ARMOURY, 1250);
+    let view = s.shop().unwrap().view(&c);
+    let detail = |name: &str| {
+        let line = view.lines.iter().find(|l| l.name == name);
+        line.map(|l| l.detail.clone())
+    };
+    assert_eq!(
+        detail("Iron Sword").as_deref(),
+        Some("20/20  E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2")
+    );
+    assert_eq!(
+        detail("Leather Vest").as_deref(),
+        Some("Leather  Def +2  Res +2  Wt 1")
+    );
+    assert_eq!(detail("Speed Ring").as_deref(), Some("Spd +2"));
+}
+
+fn item(c: &Ctx, id: &str) -> ItemDef {
+    c.game.content.items.get(&ItemId::new(id)).unwrap().clone()
+}
+
+/// `stat_line` of a weapon, each armour weight class and an accessory.
+#[test]
+fn stat_line_names_every_number_of_an_item() {
+    let c = ctx();
+    let line = |id: &str| stat_line(c.words(), &item(&c, id));
+    assert_eq!(line("steel_bow"), "D  Mt 9  Hit 70  Crit 0  Rng 2  Wt 5");
+    assert_eq!(line("linen_robe"), "Cloth  Res +4  Wt 0");
+    assert_eq!(line("leather_vest"), "Leather  Def +2  Res +2  Wt 1");
+    assert_eq!(line("chain_mail"), "Chain  Def +4  Res +1  Wt 3");
+    assert_eq!(line("iron_plate"), "Plate  Def +8  Res -3  Wt 6");
+    assert_eq!(line("speed_ring"), "Spd +2");
+    assert_eq!(line("potion"), "Restore 20 HP");
+}
+
+/// Every item's longest line, a weapon with its uses, fits the detail
+/// column: painted, it ends before the box's right border.
+#[test]
+fn every_items_line_fits_the_detail_column() {
+    let mut c = ctx();
+    let s = shop_open(&mut c, ARMOURY, 1250);
+    let items = &c.game.content.items;
+    let longest = items
+        .items
+        .values()
+        .map(|def| {
+            let stats = stat_line(c.words(), def);
+            match new_uses(def) {
+                Some((left, max)) => format!("{left}/{max}  {stats}"),
+                None => stats,
+            }
+        })
+        .max_by_key(|line| line.chars().count())
+        .unwrap();
+    let mut view = s.shop().unwrap().view(&c);
+    view.lines[0].detail.clone_from(&longest);
+    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+    glyph::paint(&c, &view, &mut buf);
+    let text = buf.to_snapshot(&c.palette);
+    let row = text
+        .lines()
+        .find(|row| row.contains(&view.lines[0].name))
+        .unwrap();
+    assert!(row.contains(&longest), "{longest:?} clipped in {row:?}");
+    assert!(row.trim_end().ends_with('║'), "{row:?}");
 }

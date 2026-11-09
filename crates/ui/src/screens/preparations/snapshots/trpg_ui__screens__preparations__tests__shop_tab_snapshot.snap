@@ -10,20 +10,20 @@ expression: h.snapshot()
 ║                                 Buy   Sell   Repair                                              ║
 ║                                                                                                  ║
 ║  Potion                      300   Restore 20 HP                                                 ║
-║  Iron Sword                  460   Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                             ║
-║  Steel Sword                 600   Mt 8  Hit 75  Crit 0  Rng 1  Wt 4                             ║
-║  Iron Spear                  360   Mt 7  Hit 80  Crit 0  Rng 1  Wt 4                             ║
-║  Steel Spear                 480   Mt 10  Hit 70  Crit 0  Rng 1  Wt 6                            ║
-║  Iron Axe                    270   Mt 8  Hit 75  Crit 0  Rng 1  Wt 6                             ║
-║  Steel Axe                   360   Mt 11  Hit 65  Crit 0  Rng 1  Wt 8                            ║
-║  Iron Bow                    540   Mt 6  Hit 85  Crit 0  Rng 2  Wt 3                             ║
-║  Steel Bow                   720   Mt 9  Hit 70  Crit 0  Rng 2  Wt 5                             ║
-║  Iron Gauntlets              400   Mt 3  Hit 95  Crit 5  Rng 1  Wt 1                             ║
-║  Steel Gauntlets             560   Mt 5  Hit 85  Crit 5  Rng 1  Wt 2                             ║
-║  Linen Robe                  300   Res +4                                                        ║
-║  Leather Vest                400   Def +2  Res +2                                                ║
-║  Chain Mail                  800   Def +4  Res +1                                                ║
-║  Iron Plate                1 500   Def +8  Res -3                                                ║
+║  Iron Sword                  460   20/20  E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                   ║
+║  Steel Sword                 600   25/25  D  Mt 8  Hit 75  Crit 0  Rng 1  Wt 4                   ║
+║  Iron Spear                  360   20/20  E  Mt 7  Hit 80  Crit 0  Rng 1  Wt 4                   ║
+║  Steel Spear                 480   25/25  D  Mt 10  Hit 70  Crit 0  Rng 1  Wt 6                  ║
+║  Iron Axe                    270   20/20  E  Mt 8  Hit 75  Crit 0  Rng 1  Wt 6                   ║
+║  Steel Axe                   360   25/25  D  Mt 11  Hit 65  Crit 0  Rng 1  Wt 8                  ║
+║  Iron Bow                    540   20/20  E  Mt 6  Hit 85  Crit 0  Rng 2  Wt 3                   ║
+║  Steel Bow                   720   25/25  D  Mt 9  Hit 70  Crit 0  Rng 2  Wt 5                   ║
+║  Iron Gauntlets              400   20/20  E  Mt 3  Hit 95  Crit 5  Rng 1  Wt 1                   ║
+║  Steel Gauntlets             560   25/25  D  Mt 5  Hit 85  Crit 5  Rng 1  Wt 2                   ║
+║  Linen Robe                  300   Cloth  Res +4  Wt 0                                           ║
+║  Leather Vest                400   Leather  Def +2  Res +2  Wt 1                                 ║
+║  Chain Mail                  800   Chain  Def +4  Res +1  Wt 3                                   ║
+║  Iron Plate                1 500   Plate  Def +8  Res -3  Wt 6                                   ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║

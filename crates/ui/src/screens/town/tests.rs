@@ -141,12 +141,35 @@ fn a_weapon_sells_with_its_durability() {
     assert_eq!(s.tab(), Tab::Sell);
     let view = s.view(&ctx);
     assert!(
-        view.lines[0].detail.starts_with("20/20  Mt 5"),
+        view.lines[0].detail.starts_with("20/20  E  Mt 5"),
         "{}",
         view.lines[0].detail
     );
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert_eq!(s.tab(), Tab::Buy);
+}
+
+/// Ticket 0486: an Armory's Buy lines show a weapon's rank and new uses,
+/// and an armour's weight class and weight.
+#[test]
+fn an_armory_buy_line_shows_every_number_of_its_item() {
+    let ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let s = TownScreen::new(army(&ctx), armory, "Millbrook".into());
+    assert_eq!(s.tab(), Tab::Buy);
+    let view = s.view(&ctx);
+    let detail = |name: &str| {
+        let line = view.lines.iter().find(|l| l.name == name);
+        line.map(|l| l.detail.clone())
+    };
+    assert_eq!(
+        detail("Iron Sword").as_deref(),
+        Some("20/20  E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2")
+    );
+    assert_eq!(
+        detail("Leather Vest").as_deref(),
+        Some("Leather  Def +2  Res +2  Wt 1")
+    );
 }
 
 /// A Tailor won't take what isn't cloth or leather: the line says why,
