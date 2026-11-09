@@ -56,8 +56,8 @@
 //! might      = weapon.might + A.might      (then halved if broken, × eff_mult)
 //! mitigation  = max(0, stat - A.pierce) + (A.ignore_terrain ? 0 : terrain)
 //! avoid_B    += B.avoid                    (and no terrain avoid if A.ignore_terrain)
-//! hit        += A.hit
-//! crit        = (crit + A.crit) * (A.double_crit ? 2 : 1)   then clamped
+//! hit        += A.hit + B.hit_taken
+//! crit        = (crit + A.crit + B.crit_taken) * (A.double_crit ? 2 : 1)   then clamped
 //! AS         += A.attack_speed
 //! strikes     = A.single_strike ? 1 : min(strikes + A.extra_strikes, max)
 //! follow-up   = Sword ? damage * A.sword_followup (else 6/5) : damage
@@ -309,6 +309,10 @@ pub struct CombatMods {
     pub avoid: StatValue,
     /// Taken off this side's avoid, but not below 0 (Off Balance).
     pub avoid_debuff: StatValue,
+    /// Added to the hit of every strike at this side (Marked Shot's mark).
+    pub hit_taken: StatValue,
+    /// Added to the crit of every strike at this side (Marked Shot's mark).
+    pub crit_taken: StatValue,
     /// Added to attack speed.
     pub attack_speed: StatValue,
     /// Strikes added after the attack-speed count (never above the maximum).
@@ -343,6 +347,8 @@ impl CombatMods {
         self.might += other.might;
         self.avoid += other.avoid;
         self.avoid_debuff += other.avoid_debuff;
+        self.hit_taken += other.hit_taken;
+        self.crit_taken += other.crit_taken;
         self.attack_speed += other.attack_speed;
         self.extra_strikes = self.extra_strikes.saturating_add(other.extra_strikes);
         self.single_strike |= other.single_strike;
@@ -637,14 +643,18 @@ fn side(
     } else {
         0
     };
-    let hit = weapon.hit - broken_penalty + a.stats.dex * rules.hit_per_dex + a.mods.hit
+    let hit = weapon.hit - broken_penalty
+        + a.stats.dex * rules.hit_per_dex
+        + a.mods.hit
+        + b.mods.hit_taken
         - b.avoid(rules, a.mods.ignore_terrain);
     let crit = if affinity == Some(Affinity::Absorb) {
         0
     } else {
         let crit = weapon.crit + a.stats.dex / rules.crit_dex_divisor
             - b.stats.dex / rules.crit_avoid_dex_divisor
-            + a.mods.crit;
+            + a.mods.crit
+            + b.mods.crit_taken;
         if a.mods.double_crit { crit * 2 } else { crit }
     };
     let strikes = if a.mods.single_strike {
@@ -813,8 +823,9 @@ pub fn resolve(
         if hp[0].current <= 0 || hp[1].current <= 0 {
             break;
         }
+        // A defender disarmed by the first hit has no counters left.
         let Some((me, target, numbers)) = striker(forecast, by, landed[0] > 0) else {
-            break;
+            continue;
         };
         struck[me] += 1;
         let base = base_damage(&numbers, struck[me], landed[me]);

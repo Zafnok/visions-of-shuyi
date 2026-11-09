@@ -228,6 +228,9 @@ pub struct TimedMods {
     pub stops_enemies: bool,
     /// How the stance reacts to later combats and moves (ticket 0326).
     pub reaction: Option<StanceReaction>,
+    /// The unit can't attack or counter with a weapon (Disarm's debuff).
+    /// It can still move, cast and use non-attack actives.
+    pub disarmed: bool,
 }
 
 /// A stance that changes how later combats or moves go, not just numbers
@@ -832,6 +835,12 @@ impl Unit {
     /// Whether an effect from `source` is on the unit.
     pub fn has_effect(&self, source: &EffectSource) -> bool {
         self.effects.iter().any(|e| e.source == *source)
+    }
+
+    /// Whether a timed effect disarms the unit (Disarm): it can't attack
+    /// or counter with a weapon.
+    pub fn is_disarmed(&self) -> bool {
+        self.effects.iter().any(|e| e.mods.disarmed)
     }
 
     /// The unit's Mov with its timed effects (a Pinning Shot's Mov −3),

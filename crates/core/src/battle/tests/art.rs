@@ -123,7 +123,7 @@ pub(super) fn artist(id: u32, pos: Pos, weapon: &str) -> Unit {
 }
 
 /// `u` with these stats (HP, Str, Mag, Dex, Spd, Def, Res; Mov 3).
-fn stats(u: Unit, v: [StatValue; 7]) -> Unit {
+pub(super) fn stats(u: Unit, v: [StatValue; 7]) -> Unit {
     Unit {
         stats: Stats::from_growable(v, 3),
         hp: v[0],
@@ -165,7 +165,7 @@ fn names(events: &[Event]) -> Vec<String> {
 }
 
 /// Every combat in `events`: `(defender, forecast, outcome)`.
-fn combats(events: &[Event]) -> Vec<(UnitId, Forecast, CombatOutcome)> {
+pub(super) fn combats(events: &[Event]) -> Vec<(UnitId, Forecast, CombatOutcome)> {
     events
         .iter()
         .filter_map(|e| match e {
@@ -180,7 +180,7 @@ fn combats(events: &[Event]) -> Vec<(UnitId, Forecast, CombatOutcome)> {
         .collect()
 }
 
-fn preview(s: &BattleState, id: u32, dest: Pos, action: &UnitAction) -> AttackPreview {
+pub(super) fn preview(s: &BattleState, id: u32, dest: Pos, action: &UnitAction) -> AttackPreview {
     s.preview_attack(UnitId(id), dest, action)
         .unwrap_or_else(|e| panic!("{e}"))
 }
@@ -1373,7 +1373,7 @@ fn plain_damage(outcome: &CombatOutcome, side: Side) -> Vec<StatValue> {
         .collect()
 }
 
-fn landed(outcome: &CombatOutcome) -> Vec<bool> {
+pub(super) fn landed(outcome: &CombatOutcome) -> Vec<bool> {
     outcome.strikes.iter().map(|s| s.hit).collect()
 }
 
@@ -1491,7 +1491,7 @@ fn hit_rolls(seed: u64, hits: &[u32]) -> Vec<u32> {
 }
 
 /// The first seed whose [`hit_rolls`] pass `wanted`.
-fn seed_where(hits: &[u32], wanted: impl Fn(&[u32]) -> bool) -> u64 {
+pub(super) fn seed_where(hits: &[u32], wanted: impl Fn(&[u32]) -> bool) -> u64 {
     (0..100_000)
         .find(|&seed| wanted(&hit_rolls(seed, hits)))
         .unwrap()
