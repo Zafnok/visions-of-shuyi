@@ -181,11 +181,12 @@
         // The Hound officer, the boss of the Envoy's House (ch05.md): a
         // sergeant of Hendry's old company, nameless like the herald. He
         // comes with the docks; in a Survive he need not fall. Hard to stop
-        // at the door: the bots' Chapter 5 runs (playtesting.md).
+        // at the door: the bots' Chapter 5 runs (playtesting.md), where a
+        // careless guard in the door falls to him (0526).
         (
             id: "hound_officer", class: "swordsman", level: 9,
             talent: Str,
-            base: (40, 13, 0, 11, 11, 8, 3),
+            base: (40, 15, 0, 11, 11, 8, 3),
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
         ),
