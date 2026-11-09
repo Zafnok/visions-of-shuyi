@@ -5,10 +5,13 @@
 //! open; win the act's final battle and land on the next act's map.
 
 use insta::assert_snapshot;
-use trpg_core::{Campaign, CharacterId, Command, ItemId, LEAD_ID, Pos, UnitAction, UnitId};
+use trpg_core::{
+    Campaign, CharacterId, Command, ItemId, LEAD_ID, Pos, SaveFile, SavePoint, UnitAction, UnitId,
+};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::save::slot_key;
 use trpg_ui::screens::{TownScreen, WorldMapScreen};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
@@ -229,22 +232,112 @@ fn win_a_story_battle_then_the_acts_final_one() {
     assert!(world.cleared.is_empty());
 }
 
-/// A story battle whose next chapter has no world map: winning it starts
-/// that chapter, its intro scene first, instead of going back to the map.
+/// A story battle whose next chapter has no world map: winning it asks
+/// "Save your progress?" (0869), then starts that chapter, its intro scene
+/// first, instead of going back to the map. The save made there is a
+/// chapter save, as at the end of a chapter off the map, and loads into
+/// that chapter too.
 #[test]
 fn a_win_whose_next_chapter_has_no_map_starts_it() {
-    let mut h = launch_with(Box::new(MemoryStorage::new()), |ctx| {
+    let next_off_map = |ctx: &mut Ctx| {
         let chapter = ctx.game.content.chapters.get_mut("test_wm1");
         chapter.unwrap_or_else(|| panic!("no test_wm1")).next = Some("test".into());
-    });
+    };
+    let mut h = launch_with(Box::new(MemoryStorage::new()), next_off_map);
     new_game(&mut h);
     h.keys("x Down Down f f");
     walk(&mut h);
     skip_scene(&mut h);
     win(&mut h);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
+    // Yes, into the first empty slot.
+    h.keys("f f");
     assert_eq!(h.top_screen(), "dialogue");
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
+    let saved = saved(&h);
+    assert_eq!(saved.point, SavePoint::ChapterCleared);
+    assert_eq!(saved.campaign.chapter, "test_wm1", "the chapter just won");
+
+    let mut h = launch_with(h.into_storage(), next_off_map);
+    h.keys("Down f f");
+    assert_eq!(h.top_screen(), "dialogue");
+    let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
+    assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
+}
+
+/// [`launch`], with no chapter after Stone Mill's (as Act 1's last is).
+fn launch_last(storage: Box<dyn Storage>) -> Harness {
+    launch_with(storage, |ctx| {
+        let chapter = ctx.game.content.chapters.get_mut("test_wm1");
+        chapter.unwrap_or_else(|| panic!("no test_wm1")).next = None;
+    })
+}
+
+/// From New Game, Stone Mill won with no chapter after it: "Save your
+/// progress?".
+fn win_the_last(h: &mut Harness) {
+    new_game(h);
+    h.keys("x Down Down f f");
+    walk(h);
+    skip_scene(h);
+    win(h);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
+}
+
+/// The save in the first slot.
+fn saved(h: &Harness) -> SaveFile {
+    let read = trpg_ui::save::read(&h.game().ctx().storage, &slot_key(1));
+    let read = read.unwrap_or_else(|e| panic!("{e:?}"));
+    read.unwrap_or_else(|| panic!("nothing saved"))
+}
+
+/// The last story battle won (0869): "Save your progress?"; Yes, the
+/// slots, saved, "To be continued". The save is the map with Stone Mill
+/// cleared and the army as it won, and loads there.
+#[test]
+fn win_the_last_story_battle_then_save_on_the_map() {
+    let mut h = launch_last(Box::new(MemoryStorage::new()));
+    win_the_last(&mut h);
+    let won = h
+        .flow()
+        .and_then(|f| f.campaign().cloned())
+        .unwrap_or_else(|| panic!("no campaign"));
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
+    let saved = saved(&h);
+    assert_eq!(saved.point, SavePoint::WorldMap);
+    let world = saved.campaign.world.clone();
+    let world = world.unwrap_or_else(|| panic!("not on a map"));
+    assert!(world.cleared.contains("ford"));
+    assert_eq!(world.at, "ford");
+    assert_eq!(saved.campaign.roster, won.roster);
+    assert_eq!(saved.campaign.stock, won.stock);
+    assert_eq!(saved.campaign.gold, won.gold);
+
+    // Load it from the title: the map, Stone Mill cleared, its places open.
+    let mut h = launch_last(h.into_storage());
+    h.keys("Down f f");
+    assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
+    let loaded = campaign(&h);
+    assert_eq!(loaded.world, saved.campaign.world);
+    let content = &h.game().ctx().game.content;
+    let def = &content.worldmaps["test_world"].map;
+    assert!(def.is_open("pass", &loaded), "Wolf Pass opened");
+}
+
+/// The last story battle won, "Save your progress?" No: "To be continued",
+/// nothing saved.
+#[test]
+fn win_the_last_story_battle_then_decline_the_save() {
+    let mut h = launch_last(Box::new(MemoryStorage::new()));
+    win_the_last(&mut h);
+    h.keys("Down f");
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
+    let read = trpg_ui::save::read(&h.game().ctx().storage, &slot_key(1));
+    assert!(matches!(read, Ok(None)), "nothing saved");
 }
 
 /// Act 1's real map (ticket 1070), from a save at `at` with `cleared` won

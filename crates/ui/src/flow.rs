@@ -230,6 +230,17 @@ enum Then {
     NextChapter,
 }
 
+/// What "Save your progress?" saves, and where the flow goes after it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+enum AfterSave {
+    /// A chapter save, then the chapter's next one.
+    #[default]
+    NextChapter,
+    /// A world-map save (the act's last story battle won, 0869), then "To
+    /// be continued".
+    TheEnd,
+}
+
 /// The chapter's battle, as it started (as last prepared, if it has
 /// Preparations).
 #[derive(Debug, Clone)]
@@ -268,6 +279,8 @@ pub struct FlowScreen {
     after_camp: Option<String>,
     /// The world map's place whose battle is being played (1007).
     world_node: Option<String>,
+    /// What the save prompt being asked saves, and what follows it.
+    after_save: AfterSave,
     /// Who was left standing when the last battle was won, where they
     /// stood ([`left_standing`]), while its victory scenes play: their
     /// `@place battle` shows them (0738).
@@ -296,6 +309,7 @@ impl FlowScreen {
             camped: false,
             after_camp: None,
             world_node: None,
+            after_save: AfterSave::NextChapter,
             survivors: None,
         }
     }
@@ -511,7 +525,10 @@ impl FlowScreen {
     /// After a world-map battle's victory scenes: its place is cleared,
     /// then the map again (the next act's after its final battle), or, after
     /// a story battle whose next chapter isn't on a world map, that
-    /// chapter; "To be continued" when none follows the act's last.
+    /// chapter; "To be continued" when none follows the act's last. When
+    /// the map doesn't come back, "Save your progress?" first (0869): a
+    /// chapter save before an off-map chapter, as at the end of a chapter
+    /// off the map; a save on the map before "To be continued".
     fn world_won(&mut self, ctx: &mut Ctx, node: &str) {
         let content = &ctx.game.content;
         let Some(campaign) = &mut self.campaign else {
@@ -529,17 +546,37 @@ impl FlowScreen {
             && def.map.random_at(node, campaign).is_none();
         let story = self.chapter.as_ref().filter(|_| is_story);
         let next = story.and_then(|c| c.next.clone());
+        let chapters = &content.chapters;
+        let off_map = next
+            .as_deref()
+            .and_then(|id| chapters.get(id))
+            .is_some_and(|c| c.world_map.is_none());
+        // Off the map, the campaign stays on the chapter just won until
+        // `next_chapter` moves it on, as off the map it always does.
+        let moved_to = next.as_deref().filter(|_| !off_map);
         let after = def.map.next.as_ref().and_then(|n| content.worldmaps.get(n));
-        campaign.clear_node(&def.map, node, next.as_deref(), after.map(|d| &d.map));
+        campaign.clear_node(&def.map, node, moved_to, after.map(|d| &d.map));
         if !is_story {
             self.world_map();
             return;
         }
-        // The next chapter: on its map (the one the army is on, or the
-        // next act's, `clear_node` moved it there), or its scenes first.
-        match next {
-            Some(id) => self.start_chapter(ctx, &id),
-            None => self.the_end(ctx),
+        // The next chapter on a map (the one the army is on, or the next
+        // act's, `clear_node` moved it there): straight there (Nick).
+        // Off the map, or the end: the save prompt first.
+        self.after_save = match next {
+            Some(id) if !off_map => return self.start_chapter(ctx, &id),
+            Some(_) => AfterSave::NextChapter,
+            None => AfterSave::TheEnd,
+        };
+        self.show(Stage::SavePrompt, Box::new(SavePromptScreen::new(ctx)));
+    }
+
+    /// After "Save your progress?" (saved or not): where the flow was
+    /// going.
+    fn after_save(&mut self, ctx: &mut Ctx) {
+        match core::mem::take(&mut self.after_save) {
+            AfterSave::NextChapter => self.next_chapter(ctx),
+            AfterSave::TheEnd => self.the_end(ctx),
         }
     }
 
@@ -877,13 +914,16 @@ impl FlowScreen {
             },
             Stage::SavePrompt => match (result.and_then(ScreenResult::take), &self.campaign) {
                 (Some(true), Some(campaign)) => {
-                    let picker = SlotPickerScreen::save(ctx, campaign.clone());
+                    let picker = match self.after_save {
+                        AfterSave::NextChapter => SlotPickerScreen::save(ctx, campaign.clone()),
+                        AfterSave::TheEnd => SlotPickerScreen::save_world(ctx, campaign.clone()),
+                    };
                     self.show(Stage::Slots(true), Box::new(picker));
                 }
-                _ => self.next_chapter(ctx),
+                _ => self.after_save(ctx),
             },
             Stage::Slots(saving) => match result.and_then(ScreenResult::take) {
-                Some(SlotOutcome::Saved(_)) => self.next_chapter(ctx),
+                Some(SlotOutcome::Saved(_)) => self.after_save(ctx),
                 Some(SlotOutcome::Loaded(_, file)) if file.point == SavePoint::WorldMap => {
                     self.begin_world(ctx, file.campaign);
                 }

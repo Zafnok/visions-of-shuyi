@@ -17,7 +17,7 @@
 
 use trpg_content::Content;
 use trpg_content::chapter::roster_units;
-use trpg_core::{BattleState, Campaign, CharacterId, Outcome};
+use trpg_core::{BattleState, Campaign, CharacterId, Outcome, SavePoint};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 
@@ -68,7 +68,8 @@ fn the_recorded_playthrough_holds_the_house_till_light() {
 /// world map, the road to Saltmere and the Envoy's House, the house, the
 /// sea steps and the attack (where Hedda joins), Preparations, the hold
 /// won with the recorded commands, the results, the morning, the quay,
-/// the boat, the Hound post, "To be continued".
+/// the boat, the Hound post, "Save your progress?" (0869: the map won't
+/// come back), a world-map save, "To be continued".
 #[test]
 fn chapter_5_plays_from_new_game_to_to_be_continued() {
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
@@ -94,7 +95,7 @@ fn chapter_5_plays_from_new_game_to_to_be_continued() {
     for _ in 0..150 {
         match h.top_screen() {
             "dialogue" => skip_scenes(&mut h),
-            "to_be_continued" => break,
+            "save_prompt" => break,
             // The banners and the results (a page for each level gained)
             // take a press.
             _ => {
@@ -104,10 +105,21 @@ fn chapter_5_plays_from_new_game_to_to_be_continued() {
     }
     assert_eq!(
         h.screens(),
-        ["title", "game_flow", "to_be_continued"],
+        ["title", "game_flow", "save_prompt"],
         "{}",
         h.snapshot()
     );
+    // Yes, into the first empty slot: a save on the map, the house held.
+    h.keys("f f");
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
+    let saved = trpg_ui::save::read(&h.game().ctx().storage, &trpg_ui::save::slot_key(1));
+    let saved = saved
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| panic!("nothing saved"));
+    assert_eq!(saved.point, SavePoint::WorldMap);
+    let world = saved.campaign.world.as_ref();
+    assert!(world.is_some_and(|w| w.cleared.contains("envoys_house")));
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     let hedda = CharacterId("shieldbearer".into());
