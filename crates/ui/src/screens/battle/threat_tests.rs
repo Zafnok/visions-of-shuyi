@@ -196,3 +196,35 @@ fn a_tile_only_an_art_reaches_is_in_the_danger_zone_the_arrows_and_the_shown_ran
     press(&mut ordinary, &mut c, &pick);
     assert!(!ordinary.scene(&c).tinted(range::ATTACK).contains(&two_away));
 }
+
+/// The cursor moves of `bench/battle-attack.bench.ron` while the rider is
+/// selected in *The Company Ledger*: the threat arrows reuse the enemies'
+/// searches made for her, so a move runs at most 2 path searches, and most
+/// none (ticket 1251; each ran one per enemy before).
+#[test]
+fn a_cursor_move_while_a_unit_is_selected_hardly_searches() {
+    use Action::{Confirm, CursorDown, CursorRight, CursorUp};
+    use trpg_core::movement::searches;
+    use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
+    let mut c = ctx();
+    let content = &c.game.content;
+    let def = &content.battles["side_company_ledger"];
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
+    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    let mut s = BattleScreen::new(state);
+    for action in [CursorRight, CursorRight, CursorDown, Confirm] {
+        press(&mut s, &mut c, &[action]);
+        s.scene(&c);
+    }
+    let mut counts = Vec::new();
+    for action in [CursorRight, CursorRight, CursorUp, CursorUp, CursorUp] {
+        let before = searches();
+        press(&mut s, &mut c, &[action]);
+        assert!(s.scene(&c).threat.is_some(), "no arrows after {action:?}");
+        counts.push(searches() - before);
+    }
+    assert!(counts.iter().all(|&n| n <= 2), "{counts:?}");
+    let none = counts.iter().filter(|&&n| n == 0).count();
+    assert!(none * 2 > counts.len(), "{counts:?}");
+}

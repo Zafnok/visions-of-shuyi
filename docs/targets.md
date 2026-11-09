@@ -62,42 +62,45 @@ frame and the target.
 
 ## The numbers
 
-Measured 2026-11-06 by the `bench` job of PR #558 (Callgrind on Linux,
-the heap from the tool program's counter, the web package without the
-bought art). The Playdate's package isn't measured: CI has no Playdate
-SDK to build it. `battle-attack`'s rows are from PR #568's run
-(2026-11-07, ticket 1247); the others are still PR #558's.
+Measured 2026-11-09 by the `bench` job of PR #593 (ticket 1251;
+Callgrind on Linux, the heap from the tool program's counter, the web
+package without the bought art). The Playdate's package isn't measured:
+CI has no Playdate SDK to build it.
 
 | Scenario | On | Frames | Instructions: most (frame) | p99 | Mean | Peak heap |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| battle-idle | desktop, web | 60 | 1,121,961 (34) | 1,121,961 | 1,116,948 | 4.5 MB |
-| battle-idle | playdate | 60 | 1,890,788 (1) | 1,890,788 | 1,879,100 | 5.4 MB |
-| battle-cursor-sweep | desktop, web | 106 | 2,236,860 (91) | 1,999,255 | 1,097,865 | 4.5 MB |
-| battle-cursor-sweep | playdate | 106 | **3,111,370** (91) | 2,843,669 | 1,905,657 | 5.4 MB |
-| battle-enemy-turn | desktop, web | 598 | 3,698,190 (63) | 3,125,540 | 1,272,784 | 4.5 MB |
-| battle-enemy-turn | playdate | 598 | **4,532,390** (63) | 3,949,376 | 1,967,707 | 5.4 MB |
-| battle-attack | desktop, web | 384 | 2,695,971 (11) | 2,257,062 | 1,340,394 | 4.5 MB |
-| battle-attack | playdate | 384 | **3,406,850** (13) | 3,226,561 | 1,979,822 | 5.4 MB |
-| options-menu | desktop, web | 110 | 532,148 (3) | 506,622 | 439,420 | 4.3 MB |
-| options-menu | playdate | 110 | 1,883,148 (3) | 1,879,405 | 838,930 | 5.2 MB |
-| dialogue-portrait | desktop, web | 304 | 2,084,920 (157) | 1,967,878 | 1,145,114 | 4.3 MB |
-| dialogue-portrait | playdate | 304 | **4,742,652** (157) | 4,542,516 | 2,436,731 | 5.2 MB |
+| battle-idle | desktop, web | 60 | 1,130,008 (34) | 1,130,008 | 1,124,788 | 4.7 MB |
+| battle-idle | playdate | 60 | 1,919,198 (18) | 1,919,198 | 1,917,012 | 5.5 MB |
+| battle-cursor-sweep | desktop, web | 106 | 2,272,099 (91) | 2,062,264 | 1,109,722 | 4.7 MB |
+| battle-cursor-sweep | playdate | 106 | **3,046,030** (91) | 2,878,375 | 1,930,975 | 5.5 MB |
+| battle-enemy-turn | desktop, web | 598 | 3,711,855 (63) | 3,134,533 | 1,280,160 | 4.7 MB |
+| battle-enemy-turn | playdate | 598 | **4,553,186** (63) | 3,965,410 | 1,979,726 | 5.5 MB |
+| battle-attack | desktop, web | 384 | 2,306,174 (43) | 2,017,259 | 1,346,840 | 4.7 MB |
+| battle-attack | playdate | 384 | **3,047,225** (1) | 2,606,297 | 1,989,540 | 5.5 MB |
+| options-menu | desktop, web | 110 | 555,337 (3) | 519,133 | 454,017 | 4.4 MB |
+| options-menu | playdate | 110 | 1,889,413 (3) | 1,885,029 | 867,611 | 5.3 MB |
+| dialogue-portrait | desktop, web | 304 | 2,091,670 (157) | 1,976,451 | 1,150,571 | 4.4 MB |
+| dialogue-portrait | playdate | 304 | **4,758,295** (157) | 4,559,449 | 2,447,795 | 5.2 MB |
 
 | Package | Size |
 | --- | ---: |
-| `visions-of-shuyi-0.3.0-web.zip` | **76.3 MB** |
+| `visions-of-shuyi-0.3.0-web.zip` | **81.8 MB** |
 
 ## Over budget
 
 The numbers in bold are over their budgets. The budgets stay; a ticket
 covers each one:
 
-- **The threat arrows (1251).** While a unit is selected, each cursor
-  move searches every enemy's moves again (14 searches in
-  `battle-attack`'s battle): `battle-attack`'s frames 11 and 13 and,
-  very likely, `battle-cursor-sweep`'s frame 91. 1247 already took the
-  unit menu's frame (43) from 17 million instructions to under the
-  p99: one path search, not 298.
+- **The threat arrows of a hovered unit (1259).** 1251 keeps each
+  enemy's moves for a selected unit, so a cursor move while it is
+  selected searches almost never (14 searches a move before, in
+  `battle-attack`'s battle, whose frame 11 at 2.70 million instructions
+  is no longer its costliest). With no unit selected, each new unit
+  under the cursor still searches every enemy's moves:
+  `battle-attack`'s frame 1 on the Playdate and, very likely,
+  `battle-cursor-sweep`'s frame 91. 1259 also looks at
+  `battle-attack`'s frame 43, the unit menu, now its costliest on the
+  colour targets (2.31 million).
 - **The Playdate's one-bit drawing (1248).** Drawing a frame in one bit
   takes about 1 million instructions, half the Playdate's budget, before
   the game does anything; a portrait drawn in one bit takes 2.7 million

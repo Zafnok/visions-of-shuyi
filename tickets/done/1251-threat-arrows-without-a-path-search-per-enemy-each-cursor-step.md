@@ -5,10 +5,10 @@ type: bug
 milestone: Later
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["1247"]
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 1251 — Threat arrows without a path search per enemy each cursor step
@@ -91,15 +91,17 @@ None. No rule or look changes: the same arrows on the same tiles.
 
 ## Acceptance criteria
 
-- [ ] A cursor move while a unit is selected runs at most 2 path
+- [x] A cursor move while a unit is selected runs at most 2 path
       searches in the test of step 1 (most moves: none).
-- [ ] The planner's answers equal `threats_at`'s (property test).
-- [ ] Every existing threat-arrow test and snapshot passes unchanged.
+- [x] The planner's answers equal `threats_at`'s (property test).
+- [x] Every existing threat-arrow test and snapshot passes unchanged.
 - [ ] `battle-attack`'s costliest frame on the colour targets is under
       2,000,000 instructions (the `bench` job's table, in
       `docs/targets.md`), or the completion notes name what is left and
-      its ticket.
-- [ ] All gates in the `run-gates` skill pass.
+      its ticket. **Not under:** 2,306,174 in frame 43, the unit menu;
+      what is left and its ticket (1259) are in the notes.
+- [x] All gates in the `run-gates` skill pass, except `ch05_winnable`,
+      which fails on `main` without this change (0871).
 
 ## Tests required
 
@@ -109,5 +111,57 @@ None. No rule or look changes: the same arrows on the same tiles.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Core.** `movement::ThreatPlanner` is made once for a unit: it
+  searches every hostile unit's moves with that unit off the map and
+  keeps them with their threat areas. The unit standing on a tile only
+  takes moves away (no step enters its tile; with a stance that stops
+  enemies, none goes on from a tile next to it), so a hostile unit's
+  threat then is a part of the kept one. For a tile, a hostile unit is
+  settled without a search when the tile is outside its kept threat
+  area (no threat), when its moves never reach the tile and the unit
+  holds no such stance (the kept answer), or when a tile in range has a
+  kept path clear of the unit (a threat). Otherwise it is searched again
+  with the unit on the tile, as `threats_at` does. Units that never move
+  are checked by distance, as before. `threat_area`'s set-building moved
+  to `area_of`, shared by both.
+- **UI.** The battle screen keeps the planner beside `KeptThreat` (which
+  stays, keyed by unit and tile) and drops both when the battle changes.
+  A new unit makes a new planner: hovering a unit still costs one search
+  per enemy, as before; another tile for the same unit costs almost
+  nothing.
+- **Tests.** `a_cursor_move_while_a_unit_is_selected_hardly_searches`
+  plays the bench's moves in *The Company Ledger*: before, each of the
+  five moves ran 14 searches; now `[0, 0, 0, 2, 2]`. The two are the
+  bridge tiles, where some enemies' only paths to her go through her
+  tile. `the_planner_answers_as_threats_at_does` (proptest: random maps,
+  units, Mov, ranges, stances, units that never move, blocked tiles,
+  tiles off the map) compares every answer with `threats_at`. Random
+  maps rarely build the shapes where a path through the unit or past a
+  stance matters, so hand-made scenes check each case and its search
+  count. Every existing threat test and snapshot passes unchanged.
+- **Mutation testing.** CI's first run missed two mutants of the
+  clear-path check (`== 1` to `!= 1`, `&&` to `||`). Both only make the
+  planner search again more often, and a search is always exact, so no
+  answer changed. `the_planner_settles_a_tile_by_a_clear_path_without_a_search`
+  now counts the searches in a scene for each.
+- **Bench** (CI's `bench` job on PR #593, in `docs/targets.md`):
+  `battle-attack`'s costliest frame went from 2,695,971 instructions
+  (frame 11, a cursor move with the rider selected) to 2,306,174 on the
+  desktop, and from 3,406,850 (frame 13) to 3,047,225 on the Playdate.
+  Frame 11 is no longer the costliest. Now it is frame 43 on the colour
+  targets (the unit menu opening) and frame 1 on the Playdate (the first
+  cursor move, onto a unit). `battle-cursor-sweep` is unchanged (frame
+  91: 2,272,099 and 3,046,030): it never selects a unit.
+- **What is left.** The planner serves a selected unit only. With none
+  selected, the arrows show for the unit under the cursor, and each new
+  unit still searches every enemy's moves. A unit on its own tile is
+  where the battle has it, so one search per enemy kept for the battle
+  could answer them all. Follow-up **1259** does that and measures the
+  unit menu's frame. 1250 (the `bench` job required) now waits for it
+  too, and 1248 names it.
+- **Also found.** `main` fails `ch05_winnable` (Chapter 5's recorded win
+  no longer wins), on every OS, without this change: very likely #587
+  (0846, the lead's Str 7 to 8) merged beside #588 (0851). Ticket
+  **0871**, added to 1064 and the roadmap. This PR's test, coverage and
+  mutants baseline jobs fail on it until it lands.
+- No gameplay rule decided; nothing for the Act 1 playtest.
