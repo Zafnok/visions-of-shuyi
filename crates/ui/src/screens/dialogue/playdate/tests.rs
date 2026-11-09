@@ -109,6 +109,18 @@ fn the_faces_at_2x_their_names_under_them_and_a_three_line_box_below() {
 }
 
 #[test]
+fn a_name_too_long_for_its_frame_is_cut_inside_the_corners() {
+    let mut view = two_speakers(&["Hi."]);
+    view.left = Some(face("test_lord", "Lord Aldric Fairweather"));
+    let buf = painted(&view);
+    assert_eq!(cell(&buf, 1, 9).glyph, '╚');
+    assert_eq!(cell(&buf, 18, 9).glyph, '╝');
+    assert_eq!(find(&buf, 9, "Lord Aldric"), Some(3));
+    // The bust in the frame fills it: 16 × 8 cells.
+    assert_eq!(BUST, (FRAME.0 - 2, FRAME.1 - 2));
+}
+
+#[test]
 fn narration_lights_neither_face_and_reads_as_speech() {
     let mut view = two_speakers(&["The rain stops."]);
     view.speaker = None;

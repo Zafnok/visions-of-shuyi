@@ -33,8 +33,9 @@ use crate::screens::playdate::{
     Item, MORE_BELOW, cells, clear, cut, inks, item, to_i32, to_usize, window,
 };
 
-/// A portrait's frame: the 2× bust (16 × 8 cells) and its border, as on
-/// the lead screen.
+/// The 2× bust, in cells (128 × 128 pixels).
+const BUST: (i32, i32) = (16, 8);
+/// A portrait's frame: the 2× bust and its border, as on the lead screen.
 pub const FRAME: (i32, i32) = (18, 10);
 /// Top row of the frames.
 const FRAME_Y: i32 = 0;
@@ -141,9 +142,8 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
     };
     buf.draw_box(frame, style, ink.frame, ink.inside);
     if let Some(art) = ctx.game.content.portraits.get(face.portrait) {
-        let inside = (FRAME.0 - 2, FRAME.1 - 2);
         let at = (x + 1, y + 1);
-        draw_portrait_in(buf, at, inside, art, face.expression, dim, face.mirror);
+        draw_portrait_in(buf, at, BUST, art, face.expression, dim, face.mirror);
     }
     // check-text: not a data name (the view's own)
     let name = cut(&format!(" {} ", face.name), to_usize(FRAME.0 - 2));
