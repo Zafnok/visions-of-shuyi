@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0070", "1042", "1041", "0076"]
+blocked_by: ["0070", "1042", "1041", "0076", "0858", "0861", "0862", "0866", "0852", "0853", "0854"]
 nick_input: none
 completed:
 ---
@@ -22,6 +22,21 @@ simple combat picture). 0070 picks the faces and combat pictures of
 Act 1's new cast (Joss, Gil, Hedda, Ragna, Oriel, Dace in person, Crane,
 the bosses) from the bought art. Nick plays Act 1 on his Playdate in
 1064, so they need one-bit versions too.
+
+The chapter tickets (0848–0851) left their art to follow-ups: 0858
+(Joss, Hendry), 0861 (the prior, Ned), 0862 (Gil, Dace), 0866 (Hedda,
+Ragna), each waiting for Nick to build faces in the generator and buy
+or download pictures. Crane and the champion come with Chapters 6–8
+(0852–0854). Until those land there is nothing in the private
+repository to convert (checked 2026-11-10 at `assets-private.rev`
+`2df02b8f`), so they block this ticket.
+
+Since 1042 the Playdate's bundle converts every PNG under
+`assets-private/game/` itself when it is built, and 1042's test
+(`crates/playdate/src/pictures.rs`, every face a portrait sidecar names)
+already covers new faces. What is left here once the art lands: look at
+each conversion in every style, touch up where it loses the face, extend
+the test to the combat pictures (`battlers/`), and the screenshots.
 
 ## Nick input
 

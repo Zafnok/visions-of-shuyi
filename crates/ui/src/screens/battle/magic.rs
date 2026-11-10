@@ -11,13 +11,13 @@
 
 use crate::prelude::*;
 use trpg_core::{
-    BattleState, CastTarget, Command, CostError, EffectDuration, Equipped, Pos, SkillId, SpellDef,
-    SpellId, SpellKind, TerrainId, UnitAction, UnitId,
+    BattleState, CastTarget, Command, CostError, EffectDuration, Element, Equipped, Pos, SkillId,
+    SpellDef, SpellId, SpellKind, StatKind, TerrainId, TerrainTable, UnitAction, UnitId,
 };
 
-use super::art_list::{Fit, Technique, cost_label, fit, reason_text};
+use super::art_list::{Fit, Technique, cost_label, effective_text, fit, reason_text};
 use super::attack::{AttackFrom, Targeting, aim_tile};
-use super::info::range_text;
+use super::info::{range_text, stat_name};
 use super::items::heal_preview;
 use super::mode::{Line, Selection};
 use super::skills::skill_name;
@@ -257,11 +257,64 @@ pub fn spell_label(
     )
 }
 
+/// A plain spell line's description (ticket 0453), built from its data:
+/// what its line's numbers don't say. An attack: its element, crit,
+/// `×3 vs Mounted`, `no counter`, what its tile cast does (`Forest →
+/// Burning`), apart by `; `. A heal: how much it restores
+/// (`restores Mag+10 HP to an ally`).
+pub fn spell_effect_text(words: Words<'_>, terrain: &TerrainTable, def: &SpellDef) -> String {
+    let (crit, effective) = match &def.kind {
+        SpellKind::Attack {
+            crit, effective, ..
+        } => (*crit, effective),
+        SpellKind::Heal { heal_power } => {
+            let stat = stat_name(words, StatKind::Mag);
+            return words.text_with(
+                "battle.spell.desc.heal",
+                &[("stat", &stat), ("power", heal_power)],
+            );
+        }
+    };
+    let mut parts = vec![
+        words
+            .text(match def.element {
+                Element::Fire => "battle.spell.desc.fire",
+                Element::Ice => "battle.spell.desc.ice",
+                Element::None => "battle.spell.desc.no_element",
+            })
+            .to_owned(),
+    ];
+    if crit != 0 {
+        parts.push(words.text_with("battle.spell.desc.crit", &[("n", &crit)]));
+    }
+    parts.extend(
+        effective
+            .iter()
+            .map(|&(tag, mult)| effective_text(words, tag, mult)),
+    );
+    if def.no_counter {
+        parts.push(words.text("battle.art.note.no_counter").to_owned());
+    }
+    if let Some(effect) = &def.terrain_effect {
+        let name = |id| terrain.get(id).map_or("", |t| words.terrain(t));
+        let from: Vec<&str> = effect.from.iter().map(|&id| name(id)).collect();
+        let keys = [
+            ("from", &from.join("/") as &dyn Display),
+            ("to", &name(effect.to)),
+        ];
+        parts.push(words.text_with("battle.spell.desc.terrain", &keys));
+    }
+    parts.join("; ")
+}
+
 /// The spell list: one line per choice, dimmed when it has nothing to be
 /// cast on (always so at 0 uses), focused on the equipped spell if it can
 /// be cast. A line with a spell active reads just `Fire + Overcast`, with
 /// what the active costs after it (`+1 use`), or why that can't be paid:
-/// the spell's uses and numbers are on its own line, above.
+/// the spell's uses and numbers are on its own line, above. The focused
+/// line's description shows under the list (0453): a plain spell's
+/// [`spell_effect_text`], a spell active's effect. The focus stops on
+/// dimmed lines too, so they can be read.
 pub fn spell_menu(
     state: &BattleState,
     words: Words<'_>,
@@ -291,9 +344,14 @@ pub fn spell_menu(
                     words.text_with("battle.spell.with_active", &keys)
                 }
             };
+            let note = match &c.active {
+                None => spell_effect_text(words, state.terrain(), def),
+                Some(_) => c.technique().effect_text(state, words),
+            };
             let item = MenuItem::new(label)
                 .with_value(Line::Spell(c.clone()))
-                .with_enabled(!c.targets.is_empty());
+                .with_enabled(!c.targets.is_empty())
+                .with_note(note);
             match (&c.blocked, &c.active) {
                 (Some(error), _) => item.with_suffix(
                     format!(" {}", reason_text(words, error)),
@@ -313,10 +371,12 @@ pub fn spell_menu(
         Line::Spell(c) => Some(&c.spell) == equipped && c.active.is_none(),
         _ => false,
     });
-    match focus {
+    // Focused before browsing is on, so it opens on a line that can be cast.
+    let menu = match focus {
         Some(i) => menu.focused(i),
         None => menu,
-    }
+    };
+    menu.browsing_disabled()
 }
 
 /// Picking what a spell is cast on.

@@ -109,6 +109,15 @@ fn tag_name(words: Words<'_>, tag: UnitTag) -> &str {
     })
 }
 
+/// `×3 vs Mounted`: `mult` times the might against units tagged `tag`.
+pub fn effective_text(words: Words<'_>, tag: UnitTag, mult: u8) -> String {
+    let tag = tag_name(words, tag);
+    words.text_with(
+        "battle.art.desc.effective",
+        &[("mult", &mult), ("tag", &tag)],
+    )
+}
+
 /// What a weapon kind's trait does, in a few words (ticket 0489):
 /// `follow-up ×6/5`, `×2 vs Mounted`, `min damage 5`, `+15 avo`; `None`
 /// for no trait. The sword's ratio comes from `rules`.
@@ -119,13 +128,7 @@ pub fn trait_text(words: Words<'_>, rules: &CombatRules, trait_: WeaponTrait) ->
             let (num, den) = rules.sword_followup;
             words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)])
         }
-        WeaponTrait::Effective(tag, mult) => {
-            let tag = tag_name(words, tag);
-            words.text_with(
-                "battle.art.desc.effective",
-                &[("mult", &mult), ("tag", &tag)],
-            )
-        }
+        WeaponTrait::Effective(tag, mult) => effective_text(words, tag, mult),
         WeaponTrait::AxeMinDamage(n) => words.text_with("battle.art.desc.axe_min", &[("n", &n)]),
         WeaponTrait::GauntletAvoid(n) => mods_text(
             words,
@@ -155,11 +158,7 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
         parts.push(words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)]));
     }
     for &(tag, mult) in &e.effective {
-        let tag = tag_name(words, tag);
-        parts.push(words.text_with(
-            "battle.art.desc.effective",
-            &[("mult", &mult), ("tag", &tag)],
-        ));
+        parts.push(effective_text(words, tag, mult));
     }
     if let Some(n) = e.axe_min_damage {
         parts.push(words.text_with("battle.art.desc.axe_min", &[("n", &n)]));

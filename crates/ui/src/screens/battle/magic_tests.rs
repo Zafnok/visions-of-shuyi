@@ -16,7 +16,7 @@ use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
 use super::items::{can_equip, equip_choices, equip_menu};
 use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
-    spell_choices, spell_label, spell_menu, target_pos,
+    spell_choices, spell_effect_text, spell_label, spell_menu, target_pos,
 };
 use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, open_menu};
 use super::playback::TIMINGS;
@@ -198,7 +198,8 @@ fn casting_with(
         .iter()
         .position(|c| c.spell == *spell && c.active == active)
         .unwrap_or_else(|| panic!("no line {line} with {active:?}: {choices:?}"));
-    // The list opens on Fire, the equipped spell; Down skips dimmed lines.
+    // The list opens on Fire, the equipped spell; Down stops on dimmed
+    // lines too (0453), so this walks the lines in order.
     for _ in 0..choices.len() {
         let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
@@ -438,6 +439,67 @@ fn spell_list_snapshot() {
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
+/// Every spell says what its line doesn't, in a few words (0453).
+#[test]
+fn every_spell_says_what_it_does() {
+    let c = ctx();
+    let spells = &c.game.content.spells;
+    let terrain = &c.game.content.terrain.rules;
+    let text = |def| spell_effect_text(Words::ENGLISH, terrain, def);
+    for def in spells.spells.values() {
+        let said = text(def);
+        assert!(!said.is_empty(), "{} has no text", def.id.0);
+        assert!(said.chars().count() <= 40, "{}: {said}", def.id.0);
+    }
+    let of = |id: &str| text(spells.get(&sid(id)).unwrap());
+    assert_eq!(of("cinder_oath"), "fire; no counter; Forest → Burning");
+    assert_eq!(of("frost"), "ice; Water/Sea → Ice");
+    assert_eq!(of("force"), "no element; crit 5");
+    assert_eq!(of("heal"), "restores Mag+10 HP to an ally");
+}
+
+/// What the focused line of the spell list says it does.
+fn focused_note(s: &BattleScreen) -> Option<String> {
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert_ne!(menu.spells(), [] as [SpellChoice; 0]);
+    menu.view().focused().and_then(|i| i.note.clone())
+}
+
+/// Moving down the spell list changes the description under it to the
+/// next line's, onto the dimmed Heal too, where Confirm does nothing.
+#[test]
+fn the_spell_list_describes_the_focused_line_dimmed_ones_too() {
+    let mut c = ctx();
+    let state = field(&c, 0);
+    let mut s = spell_list(&mut c, state);
+    let mut seen = vec![];
+    for _ in 0..5 {
+        seen.push(focused_note(&s).unwrap());
+        step(&mut s, &mut c, &[Action::CursorDown]);
+    }
+    assert_eq!(
+        seen,
+        [
+            "fire; Forest → Burning",
+            "Spell: +5 might",
+            "ice; Water/Sea → Ice",
+            "Spell: +5 might",
+            "restores Mag+10 HP to an ally",
+        ]
+    );
+    // Back up onto Heal, dimmed: Confirm leaves the list open on it.
+    step(&mut s, &mut c, &[Action::CursorUp]);
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert_eq!((menu.focus(), menu.items()[4].enabled), (4, false));
+    let before = s.mode().clone();
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.mode(), &before);
+}
+
 // ---- Casting at an enemy ---------------------------------------------------------
 
 #[test]
@@ -640,9 +702,12 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
         menu.items()[1].suffix,
         Some((" 1 uses left".to_owned(), SuffixKind::Warning))
     );
-    // On screen, and Down from Fire skips it to Frost.
+    // On screen; Down from Fire stops on it (0453), where Confirm does
+    // nothing, and one more Down is Frost.
     let mut s = spell_list(&mut c, state);
     assert!(shows(&render(&s, &c), "1 uses left"));
+    step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::List { .. }), "{:?}", s.mode());
     step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
     assert_eq!(targeting(&s).spell(), &sid("frost"));
     // Chosen anyway, it has nothing to be cast on.
@@ -1407,9 +1472,9 @@ fn harness_heal_on_the_ally_beside_raises_its_hp_and_spends_a_use() {
     let state = battle_with(&c, map, units, rout);
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
     h.keys("Down f f");
-    // Magic (past Equip; the pack is empty, so Item is dimmed), then down
-    // from Fire past Frost (nothing to freeze) to Heal.
-    h.keys("Up Up f Down f");
+    // Magic (past Equip; the pack is empty, so Item is dimmed), then up
+    // from Fire round to Heal, the last line.
+    h.keys("Up Up f Up f");
     assert!(shows(h.game().buffer(), "Heal on Test Knight: HP 2 → 18"));
     h.keys("f");
     assert!(shows(h.game().buffer(), "+16"));
