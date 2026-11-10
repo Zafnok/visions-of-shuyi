@@ -21,6 +21,7 @@ pub mod forecast;
 pub mod info;
 pub mod progress;
 pub mod rewind;
+pub mod shop;
 pub mod stage;
 
 use crate::prelude::*;

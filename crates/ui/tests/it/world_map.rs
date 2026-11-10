@@ -10,8 +10,9 @@ use trpg_core::{
 };
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::input::{PadKind, RIGHT_HANDED};
 use trpg_ui::save::slot_key;
+use trpg_ui::screen::SkinSet;
 use trpg_ui::screens::{TownScreen, WorldMapScreen};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
@@ -477,4 +478,76 @@ fn act1_the_cursor_goes_where_the_roads_go() {
     assert_eq!(cursor(&h), "veyne_hall", "the road east and north");
     h.keys("Up");
     assert_eq!(cursor(&h), "captains_oath");
+}
+
+/// Ticket 1066, on the Playdate (its console, inks, skins and buttons):
+/// New Game to the map; A on the army's town lists its shops, the Vendor,
+/// a potion bought, B leaves; the D-pad and A travel to the crossroads;
+/// B's menu (Find and Your army first, they have no button) saves; the
+/// next launch loads the same place, gold and stock. Every screen on the
+/// way is painted by its Playdate skin.
+#[test]
+fn on_the_playdate_shop_in_a_town_then_save_on_the_map_and_load_it_again() {
+    let playdate = crate::playdate::playdate_skins;
+    let mut h = launch_with(Box::new(MemoryStorage::new()), playdate);
+    h.use_pad(PadKind::Playdate);
+    // The title's wait, New Game, Classic, the familiarity answer; Start.
+    h.pad("East East East East DpadUp East");
+    assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
+    let ctx = h.game().ctx();
+    assert_eq!(ctx.game.skin_set, SkinSet::Playdate);
+    // The place's window: at the bottom here, which hides no place.
+    let start = h.game().buffer();
+    assert!((0..15).any(|y| row_of(start, y).contains("╔═ Millbrook")));
+    h.pad("East");
+    let list = map(&h).view(h.game().ctx()).list;
+    assert_eq!(list.map(|l| l.title).as_deref(), Some("Millbrook"));
+    assert!(row_of(h.game().buffer(), 0).contains("╔═ Millbrook"));
+    h.pad("DpadDown East");
+    assert_eq!(h.top_screen(), "town_shop");
+    assert!(row_of(h.game().buffer(), 0).starts_with("╔═ Vendor"));
+    h.pad("East");
+    let shop = h.game().screen::<TownScreen>();
+    let shop = shop.unwrap_or_else(|| panic!("no town shop"));
+    assert_eq!(shop.campaign().gold, 1700, "the potion bought");
+    h.pad("West");
+    assert_eq!(h.top_screen(), "world_map");
+    assert_eq!(campaign(&h).gold, 1700);
+    // Right follows the road to the crossroads; A travels there.
+    h.pad("DpadRight East");
+    walk(&mut h);
+    assert_eq!(at(&h), "cross");
+    h.pad("West");
+    let menu = map(&h).view(h.game().ctx()).list;
+    let menu = menu.unwrap_or_else(|| panic!("no menu")).menu;
+    let labels: Vec<String> = menu
+        .items
+        .iter()
+        .map(|i| h.game().ctx().label(&i.label))
+        .collect();
+    assert_eq!(labels, ["Find", "Your army", "Save", "Camp", "Options"]);
+    h.pad("DpadDown DpadDown East East");
+    assert_eq!(h.top_screen(), "world_map");
+    let saved = campaign(&h);
+
+    let mut h = launch_with(h.into_storage(), playdate);
+    h.use_pad(PadKind::Playdate);
+    // The title's wait, Load Game, the first slot.
+    h.pad("East DpadDown East");
+    assert_eq!(h.top_screen(), "save_slots");
+    h.pad("East");
+    assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
+    let loaded = campaign(&h);
+    assert_eq!(loaded.world, saved.world);
+    assert_eq!(loaded.gold, 1700);
+    assert_eq!(loaded.stock, saved.stock);
+    let loaded_map = h.game().buffer();
+    assert!((0..15).any(|y| row_of(loaded_map, y).contains("╔═ Crossroads")));
+}
+
+/// Row `y` of `buf`'s glyphs.
+fn row_of(buf: &trpg_ui::GlyphBuffer, y: i32) -> String {
+    (0..i32::from(buf.width()))
+        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+        .collect()
 }

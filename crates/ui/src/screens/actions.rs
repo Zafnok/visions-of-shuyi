@@ -148,6 +148,7 @@ pub const WORLD_MAP: &[Action] = &[
     NextUnit,
     WorldArmy,
     WorldFind,
+    Options,
 ];
 
 /// Every screen the game can show, for `check --target`: the game's by the

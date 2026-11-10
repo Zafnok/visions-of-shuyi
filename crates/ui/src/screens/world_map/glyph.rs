@@ -56,7 +56,7 @@ fn speckle(x: i32, y: i32) -> u32 {
 
 // check-text: not player text (palette colour names)
 /// The glyph, color and background names of ground `name` at `(x, y)`.
-fn ground(name: &str, x: i32, y: i32) -> (char, &'static str, &'static str) {
+pub(super) fn ground(name: &str, x: i32, y: i32) -> (char, &'static str, &'static str) {
     let s = speckle(x, y);
     match name {
         "forest" => (if s < 75 { '♣' } else { ' ' }, "forest", "forest_bg"),
@@ -115,6 +115,13 @@ pub(super) fn plate_px(pos: Pos, w: i32) -> PxRect {
     )
 }
 
+/// The army's plate with its two letters' first cell at `army`: round
+/// both letters, the cell beside its own.
+pub(super) fn army_px(army: Pos) -> PxRect {
+    let rect = plate_px(army, ARMY_PX);
+    PxRect::new(rect.x + CELL.0 / 2, rect.y, rect.w, rect.h)
+}
+
 /// The cells a road `cells` (its turns) runs through, end to end.
 pub(super) fn road_cells(cells: &[Pos]) -> Vec<Pos> {
     let mut out = Vec::new();
@@ -131,7 +138,7 @@ pub(super) fn road_cells(cells: &[Pos]) -> Vec<Pos> {
 
 /// The band of a road's run from `a` to `b` (screen cells), `grow` pixels
 /// bigger all round.
-fn run_px(a: Pos, b: Pos, grow: i32) -> PxRect {
+pub(super) fn run_px(a: Pos, b: Pos, grow: i32) -> PxRect {
     let (cw, ch) = CELL;
     let centre = |p: Pos| (p.x * cw + cw / 2, p.y * ch + ch / 2);
     let ((ax, ay), (bx, by)) = (centre(a), centre(b));
@@ -257,14 +264,7 @@ fn paint_map(
         let rect = plate_px(on_screen(place.pos), PLATE_PX.0);
         buf.add_overlay(Overlay::new(rect, named(color), Layer::Under));
     }
-    // The army's plate is round its two letters, the cell beside its own.
-    let army_rect = plate_px(Pos::new(army.x, army.y), ARMY_PX);
-    let army_rect = PxRect::new(
-        army_rect.x + CELL.0 / 2,
-        army_rect.y,
-        army_rect.w,
-        army_rect.h,
-    );
+    let army_rect = army_px(army);
     buf.add_overlay(Overlay::new(army_rect, player, Layer::Under));
     let cursor = if view.cursor_on_army {
         army_rect
@@ -288,7 +288,7 @@ fn paint_cursor(ctx: &Ctx, rect: PxRect, brightness: f32, buf: &mut GlyphBuffer)
 
 /// Writes `glyph` into the cell at `p`, in `fg` (or the cell's own
 /// colour), keeping the cell's background; nothing off the buffer.
-fn put(buf: &mut GlyphBuffer, p: Pos, glyph: char, fg: Option<Rgb>) {
+pub(super) fn put(buf: &mut GlyphBuffer, p: Pos, glyph: char, fg: Option<Rgb>) {
     if let Some(cell) = buf.get(p.x, p.y).copied() {
         let fg = fg.unwrap_or(cell.fg);
         buf.set(p.x, p.y, Cell { glyph, fg, ..cell });
@@ -323,7 +323,7 @@ fn paint_bands(buf: &mut GlyphBuffer, runs: &[(Pos, Pos)], edge: Rgb, band: Rgb)
 }
 
 /// The eight 1 px arms of corner marks just outside `rect`.
-fn corner_arms(rect: PxRect) -> [PxRect; 8] {
+pub(super) fn corner_arms(rect: PxRect) -> [PxRect; 8] {
     let (l, t) = (rect.x - 1, rect.y);
     let (r, b) = (rect.x + rect.w, rect.y + rect.h - 1);
     let across = |x, y| PxRect::new(x, y, ARM, 1);

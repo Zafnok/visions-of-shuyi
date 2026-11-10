@@ -33,12 +33,15 @@
 //! **The look is a skin** (ADR-0054): this module decides what the screen
 //! shows and does, and says it as a [`WorldMapView`]; [`glyph::paint`]
 //! paints it, or [`picture::paint`] when the player's map look is pictures
-//! and the map has a picture.
+//! and the map has a picture, or [`playdate::paint`] on the Playdate
+//! (ticket 1066), whose menu also lists Find and Your army while their
+//! keys have no button ([`MenuEntry::entries`]).
 //!
 //! [`ShuyiSettings::towns`]: crate::ShuyiSettings::towns
 
 pub mod glyph;
 pub mod picture;
+pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
@@ -52,7 +55,7 @@ use super::camp::music::{CampMusic, FADE_OUT_MS, ask};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
 use crate::screens::town::TownScreen;
 use crate::screens::{CampScreen, SlotPickerScreen};
 use crate::settings::{MapLook, TownsOpen};
@@ -85,11 +88,38 @@ pub enum MenuEntry {
     Camp,
     /// The Options screen.
     Options,
+    /// A shortcut with no button (ticket 1066): opens the Find list, as
+    /// its key does.
+    Find,
+    /// A shortcut with no button: the cursor to the army, as its key does.
+    Army,
 }
 
 impl MenuEntry {
     /// Every entry, in the menu's order.
     pub const ALL: [MenuEntry; 3] = [MenuEntry::Save, MenuEntry::Camp, MenuEntry::Options];
+
+    /// The shortcuts the menu lists first where their keys have no button
+    /// ([`MenuEntry::entries`]), in that order.
+    pub const SHORTCUTS: [MenuEntry; 2] = [MenuEntry::Find, MenuEntry::Army];
+
+    /// The menu's entries on `ctx`'s platform: [`ALL`](Self::ALL), after
+    /// the [`SHORTCUTS`](Self::SHORTCUTS) whose action has no button or
+    /// button chord in the player's bindings on a platform with no
+    /// keyboard (the Playdate, `docs/design/playdate.md`: the map menu
+    /// holds "every shortcut the Playdate has no button for"). The PC's
+    /// menu is the same as ever.
+    pub fn entries(ctx: &Ctx) -> Vec<MenuEntry> {
+        let keyboard = ctx.platform.keyboard == crate::screen::Keyboard::Present;
+        let shortcuts = Self::SHORTCUTS.into_iter().filter(|e| {
+            let action = match e {
+                MenuEntry::Find => Action::WorldFind,
+                _ => Action::WorldArmy,
+            };
+            !keyboard && ctx.keymap.buttons_for(action).is_empty()
+        });
+        shortcuts.chain(Self::ALL).collect()
+    }
 
     /// Its label's text key.
     fn key(self) -> &'static str {
@@ -97,6 +127,8 @@ impl MenuEntry {
             MenuEntry::Save => "world_map.menu.save",
             MenuEntry::Camp => "world_map.menu.camp",
             MenuEntry::Options => "world_map.menu.options",
+            MenuEntry::Find => "world_map.find.title",
+            MenuEntry::Army => "world_map.find.army",
         }
     }
 }
@@ -478,25 +510,35 @@ impl WorldMapScreen {
             Action::PrevUnit => self.next_place(ctx, None, false),
             Action::NextUnit => self.next_place(ctx, None, true),
             Action::WorldArmy => self.find(ctx, FindKind::Army),
-            Action::WorldFind => {
-                let items = FindKind::ALL
-                    .map(|k| MenuItem::new(ctx.text(k.key())).with_value(k))
-                    .into();
-                self.open = Open::Find(Menu::new(items));
-                self.find(ctx, FindKind::Army);
-                ctx.audio.menu(MenuSound::Select);
-            }
+            Action::WorldFind => self.open_find(ctx),
             Action::Confirm => return self.confirm(ctx),
+            // The Playdate's system menu (ticket 1035): as the menu's
+            // Options.
+            Action::Options => {
+                ctx.audio.menu(MenuSound::Select);
+                return Transition::Push(Box::new(super::options::screen()));
+            }
             Action::Cancel => {
-                let items = MenuEntry::ALL
+                let items = MenuEntry::entries(ctx)
+                    .into_iter()
                     .map(|e| MenuItem::new(ctx.text(e.key())).with_value(e))
-                    .into();
+                    .collect();
                 self.open = Open::Menu(Menu::new(items));
                 ctx.audio.menu(MenuSound::Select);
             }
             _ => {}
         }
         Transition::None
+    }
+
+    /// Opens the Find list, the cursor on the army.
+    fn open_find(&mut self, ctx: &mut Ctx) {
+        let items = FindKind::ALL
+            .map(|k| MenuItem::new(ctx.text(k.key())).with_value(k))
+            .into();
+        self.open = Open::Find(Menu::new(items));
+        self.find(ctx, FindKind::Army);
+        ctx.audio.menu(MenuSound::Select);
     }
 
     /// One action in the map's menu.
@@ -508,6 +550,14 @@ impl WorldMapScreen {
             Some(MenuEvent::Chosen(entry)) => {
                 self.open = Open::Nothing;
                 let screen: Box<dyn Screen<Shuyi>> = match entry {
+                    MenuEntry::Find => {
+                        self.open_find(ctx);
+                        return Transition::None;
+                    }
+                    MenuEntry::Army => {
+                        self.find(ctx, FindKind::Army);
+                        return Transition::None;
+                    }
                     MenuEntry::Save => {
                         Box::new(SlotPickerScreen::save_world(ctx, self.campaign_now(ctx)))
                     }
@@ -895,9 +945,13 @@ fn pulse(t: f32) -> f32 {
     cursor.brightness()
 }
 
-/// Paints `view`: with pictures when the player's map look is pictures and
-/// the map has a picture, else with glyphs.
+/// Paints `view`: on the Playdate in one bit; with pictures when the
+/// player's map look is pictures and the map has a picture, else with
+/// glyphs.
 fn paint(ctx: &Ctx, view: &WorldMapView, buf: &mut GlyphBuffer) {
+    if ctx.game.skin_set == SkinSet::Playdate {
+        return playdate::paint(ctx, view, buf);
+    }
     let pictures = ctx.settings().game.map_look == MapLook::Pictures;
     let def = ctx.game.content.worldmaps.get(&view.map);
     match def.and_then(|d| d.picture.as_deref()) {
