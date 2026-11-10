@@ -345,3 +345,212 @@ fn the_system_menus_options_opens_options_on_the_map() {
         _ => panic!("Options didn't open"),
     }
 }
+
+/// With no keyboard, a shortcut is listed only while its own key has no
+/// button: Find bound and Your army not lists Your army alone; the
+/// player's pad on a platform with no keyboard, which binds both, none.
+#[test]
+fn a_shortcut_is_listed_only_while_its_own_key_has_no_button() {
+    use crate::input::{Button, Keymap};
+    let mut ctx = buttonless();
+    let repeat = ctx.keymap.repeat();
+    ctx.keymap = Keymap::new([], repeat).with_pad([(Button::North, Action::WorldFind)]);
+    let entries = MenuEntry::entries(&ctx);
+    assert_eq!(entries[..2], [MenuEntry::Army, MenuEntry::Save]);
+    let mut pc = crate::screen::tests::ctx();
+    pc.platform.keyboard = Keyboard::Absent;
+    assert_eq!(MenuEntry::entries(&pc), MenuEntry::ALL);
+}
+
+/// The ground glyph of the map's cell `p`.
+fn ground_glyph(ctx: &Ctx, map: &str, p: Pos) -> char {
+    let def = &ctx.game.content.worldmaps[map];
+    ground(def.ground_at(p), p.x, p.y).0
+}
+
+/// A map smaller than the screen: its ground in its own cells, where it
+/// is centred, and nothing round it.
+#[test]
+fn a_small_maps_ground_is_where_it_is_centred_and_nothing_round_it() {
+    let ctx = pd_ctx();
+    let mut small = view(Vec::new(), (3, 3));
+    small.map = "test_world_2".into();
+    small.army = Pos::new(-10, -10);
+    let buf = painted(&ctx, &small);
+    // 40 × 12 in 50 × 15: cell (0, 0) at (5, 1).
+    for y in 0..15 {
+        for x in 0..50 {
+            let p = Pos::new(x - 5, y - 1);
+            let inside = (0..40).contains(&p.x) && (0..12).contains(&p.y);
+            let expected = if inside {
+                ground_glyph(&ctx, "test_world_2", p)
+            } else {
+                ' '
+            };
+            // The place's window is over the right of the top rows.
+            if x < 28 || y > 5 {
+                assert_eq!(cell(&buf, x, y).glyph, expected, "({x}, {y})");
+            }
+        }
+    }
+}
+
+/// A cell of the test world map whose neighbours, from two left to two
+/// right and the row above, all show a ground glyph: where a cleared
+/// cell shows.
+fn busy_ground(ctx: &Ctx) -> Pos {
+    let busy = |x: i32, y: i32| ground_glyph(ctx, "test_world", Pos::new(x, y)) != ' ';
+    (2..29)
+        .flat_map(|y| (2..66).map(move |x| (x, y)))
+        .find(|&(x, y)| (x - 2..=x + 2).all(|x| busy(x, y) && busy(x, y - 1)))
+        .map(|(x, y)| Pos::new(x, y))
+        .expect("a busy cell")
+}
+
+/// The ground gives way beside the army's plate and a place's: the cell
+/// before the army's letters and the one after them (its plate is three
+/// cells wide); the cells either side of a place.
+#[test]
+fn the_ground_gives_way_beside_the_army_and_a_place() {
+    let ctx = pd_ctx();
+    let p = busy_ground(&ctx);
+    let o = origin((70, 30), (50, 15), p);
+    let row_at = |buf: &GlyphBuffer| -> String {
+        (p.x - 2..=p.x + 2)
+            .map(|x| cell(buf, x + o.0, p.y + o.1).glyph)
+            .collect()
+    };
+    let edge = |x| ground_glyph(&ctx, "test_world", Pos::new(x, p.y));
+    let mut army = view(Vec::new(), (p.x, p.y));
+    army.army = Pos::new(p.x - 1, p.y);
+    let expected = format!(" Ma {}", edge(p.x + 2));
+    assert_eq!(row_at(&painted(&ctx, &army)), expected);
+    let town = view(vec![place(PlaceMark::Town, (p.x, p.y), false)], (p.x, p.y));
+    let expected = format!("{} ⌂ {}", edge(p.x - 2), edge(p.x + 2));
+    assert_eq!(row_at(&painted(&ctx, &town)), expected);
+}
+
+/// A level marker of four cells is centred one cell to the left.
+#[test]
+fn a_four_cell_level_marker_starts_a_cell_left() {
+    let ctx = pd_ctx();
+    let mut battle = place(PlaceMark::StoryBattle, (20, 20), false);
+    battle.level = Some("Lv10".into());
+    let buf = painted(&ctx, &view(vec![battle], (20, 20)));
+    assert_eq!(find(&buf, 6, "Lv10"), Some(19));
+}
+
+/// An outlined plate has all four sides, a pixel wide, on its edges.
+#[test]
+fn an_outlined_plate_has_four_sides_on_its_edges() {
+    let ctx = pd_ctx();
+    let town = vec![place(PlaceMark::Town, (20, 20), false)];
+    let buf = painted(&ctx, &view(town, (20, 20)));
+    let rect = plate_px(Pos::new(20, 7), PLATE_PX.0);
+    let (x, y, w, h) = (rect.x, rect.y, rect.w, rect.h);
+    for side in [
+        PxRect::new(x, y, w, 1),
+        PxRect::new(x, y + h - 1, w, 1),
+        PxRect::new(x, y, 1, h),
+        PxRect::new(x + w - 1, y, 1, h),
+    ] {
+        assert_eq!(at(&buf, side), [c(Ink::Black)], "{side:?}");
+    }
+}
+
+/// The cursor on the screen's middle column is in its right half.
+#[test]
+fn the_middle_column_is_the_right_half() {
+    let ctx = pd_ctx();
+    // The map at its left edge: its (25, 15) on the screen's (25, 7).
+    let buf = painted(&ctx, &view(Vec::new(), (25, 15)));
+    assert_eq!(find(&buf, 0, "╔═ Stone Mill"), Some(0));
+    // A cell left of the middle: in the left half.
+    let buf = painted(&ctx, &view(Vec::new(), (24, 15)));
+    assert_eq!(find(&buf, 0, "╔═ Stone Mill"), Some(28));
+}
+
+/// A list with `n` items, the first focused.
+fn list(n: usize) -> ListView {
+    let item = |i: usize| MenuItemView {
+        label: format!("Item {i}").as_str().into(),
+        suffix: None,
+        note: None,
+        enabled: true,
+        focused: i == 0,
+    };
+    ListView {
+        title: "Find".into(),
+        menu: MenuView {
+            items: (0..n).map(item).collect(),
+            first_shown: 0,
+            shown: n,
+        },
+    }
+}
+
+/// Under a list, the place's window shows when it fits the screen to its
+/// last row, and not when it would go one past.
+#[test]
+fn the_places_window_shows_under_a_list_only_when_it_fits() {
+    let ctx = pd_ctx();
+    // The place's window is 4 rows: under a list of 11 rows (9 items) it
+    // ends on the last row; under one of 12, past it.
+    let mut open = view(Vec::new(), (14, 20));
+    open.list = Some(list(9));
+    let buf = painted(&ctx, &open);
+    assert_eq!(find(&buf, 11, "╔═ Stone Mill"), Some(28));
+    open.list = Some(list(10));
+    let buf = painted(&ctx, &open);
+    assert!((0..15).all(|y| find(&buf, y, "Stone Mill").is_none()));
+}
+
+/// What a window hides: a place on its cell, or one whose level marker
+/// or flag row (the row above) is in it; not one beside it or below it.
+#[test]
+fn what_a_window_hides() {
+    let mut v = view(Vec::new(), (14, 20));
+    v.army = Pos::new(-50, -50);
+    let rect = Rect::new(10, 2, 5, 3);
+    let count = |pos: (i32, i32), origin: (i32, i32)| {
+        let mut v = v.clone();
+        v.places = vec![place(PlaceMark::Town, pos, false)];
+        hidden(&v, origin, rect)
+    };
+    // Its corners, on the map's cells at origin (0, 0).
+    assert_eq!(count((10, 2), (0, 0)), 1);
+    assert_eq!(count((14, 4), (0, 0)), 1);
+    // Just past them.
+    assert_eq!(count((9, 2), (0, 0)), 0);
+    assert_eq!(count((15, 2), (0, 0)), 0);
+    assert_eq!(count((10, 1), (0, 0)), 0);
+    // The row under: its row above is the window's last.
+    assert_eq!(count((12, 5), (0, 0)), 1);
+    assert_eq!(count((12, 6), (0, 0)), 0);
+    // The map moved by the origin.
+    assert_eq!(count((7, 13), (3, -10)), 1);
+    assert_eq!(count((7, 13), (2, -10)), 0);
+    assert_eq!(count((7, 13), (3, -7)), 0);
+    // The army counts too.
+    v.army = Pos::new(12, 3);
+    assert_eq!(hidden(&v, (0, 0), rect), 1);
+}
+
+/// The place's window is as wide as its widest line, title or act needs
+/// (each with its frame), up to the widest; a line too long is cut.
+#[test]
+fn the_places_window_is_as_wide_as_it_needs() {
+    let panel = |title: &str, kind: &str| PanelView {
+        title: title.into(),
+        act: String::new(),
+        kind: kind.into(),
+        lines: Vec::new(),
+    };
+    // The title and its frame: 10 and 6.
+    assert_eq!(place_lines(&panel("Stone Mill", "Town")).0, 16);
+    // A line and its frame: 13 and 4.
+    assert_eq!(place_lines(&panel("A", "Enemy level 2")).0, 17);
+    // A line too long: cut to the widest window's inside.
+    let (w, lines) = place_lines(&panel("A", "A very long line of words here"));
+    assert_eq!((w, lines[0].as_str()), (PLACE_W, "A very long line …"));
+}

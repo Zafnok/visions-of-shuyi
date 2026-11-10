@@ -146,3 +146,30 @@ fn selling_a_special_weapon_asks_in_the_question_window() {
     let all = rows(&buf).join("\n");
     assert!(all.contains("No    Yes"), "{all}");
 }
+
+/// Eight lines fill the list with nothing below; a ninth puts `▼` on
+/// the rule.
+#[test]
+fn more_below_shows_from_the_ninth_line() {
+    let eight = painted(&view(8, 0));
+    assert!(row(&eight, RULE_2).ends_with("──╢"));
+    let nine = painted(&view(9, 0));
+    assert!(row(&nine, RULE_2).ends_with("▼─╢"));
+}
+
+/// A sale's question too long for the screen is cut inside its window.
+#[test]
+fn a_long_sale_question_is_cut_inside_its_window() {
+    let mut v = view(1, 0);
+    v.selling = Some(SellConfirmView {
+        question: "Sell a weapon with a name far too long to fit on the screen?".into(),
+        count: 1,
+        max: 1,
+        gold: "For 1 gold".into(),
+    });
+    let buf = painted(&v);
+    assert_eq!(
+        row(&buf, 5),
+        "║Sell a weapon with a name far too long to fit o…║"
+    );
+}
