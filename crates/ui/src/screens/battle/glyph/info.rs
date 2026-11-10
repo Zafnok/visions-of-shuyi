@@ -25,9 +25,6 @@ const LEFT_X: i32 = 3;
 /// Where a weapon rank starts, from the left column.
 const RANK_X: i32 = 9;
 
-/// Where a weapon kind's trait starts, from the left column.
-const TRAIT_X: i32 = 11;
-
 /// The column the left column's text stops before: one cell clear of the
 /// middle column.
 const LEFT_END: i32 = MID_X - 1;
@@ -140,7 +137,7 @@ fn paint_left(pen: &mut Pen<'_>, view: &InfoView) {
         };
         // After the rank if it fits before the middle column, else on a
         // row of its own under it.
-        let at = (x + 1).max(LEFT_X + TRAIT_X);
+        let at = x + 1;
         if at + text_cells(trait_) <= LEFT_END {
             pen.text(at, y, trait_, UiColor::TextDim);
         } else {

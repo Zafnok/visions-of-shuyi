@@ -159,7 +159,7 @@ fn a_ranks_trait_follows_it_or_goes_under_it() {
     assert_eq!(LEFT_X + 25, MID_X - 1);
     assert_eq!(text(&buf, MID_X - 1, y + 4, 1), " ");
     let dim = ctx().palette.get(UiColor::TextDim);
-    assert_eq!(buf.get(LEFT_X + TRAIT_X, y + 4).unwrap().fg, dim);
+    assert_eq!(buf.get(LEFT_X + RANK_X + 2, y + 4).unwrap().fg, dim);
     assert_eq!(text(&buf, LEFT_X, y + 5, 10), "Gauntlet D");
     assert_eq!(text(&buf, LEFT_X + 10, y + 5, 3), "   ");
     assert_eq!(text(&buf, LEFT_X, y + 6, 17), format!("  {long}"));

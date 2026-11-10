@@ -617,6 +617,31 @@ mod tests {
 
     use super::*;
 
+    /// Ticket 0489: each weapon kind's trait in a few words, the sword's
+    /// ratio from the rules.
+    #[test]
+    fn each_kinds_trait_has_its_words() {
+        let rules = CombatRules::default();
+        let text = |t| trait_text(Words::ENGLISH, &rules, t);
+        assert_eq!(
+            text(WeaponTrait::SwordFollowUp).as_deref(),
+            Some("follow-up ×6/5")
+        );
+        assert_eq!(
+            text(WeaponTrait::Effective(UnitTag::Mounted, 2)).as_deref(),
+            Some("×2 vs Mounted")
+        );
+        assert_eq!(
+            text(WeaponTrait::AxeMinDamage(5)).as_deref(),
+            Some("min damage 5")
+        );
+        assert_eq!(
+            text(WeaponTrait::GauntletAvoid(15)).as_deref(),
+            Some("+15 avo")
+        );
+        assert_eq!(text(WeaponTrait::None), None);
+    }
+
     #[test]
     fn reasons_say_what_is_missing() {
         assert_eq!(
