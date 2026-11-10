@@ -32,11 +32,12 @@ not be reused. The credits screen has it in Latin letters (the font has no
 kanji); the text file bundled with a release must carry it too, with the
 name in kanji.
 
-**Either order with 0153:** 0153 is research on keeping the story
-private (cheaper private CI, or the story in the private assets
-repository). If its pick took the full game off GitHub Pages, the
-itch.io page is where the browser build is played, so publish the web
-package there too; if not, nothing to do.
+**Either order with 0158:** 0153 picked moving the story and the game's
+content into the private assets repository, and 0158 takes the full game
+off GitHub Pages and public GitHub Releases: Nick's full web build goes
+to a restricted itch.io project. If 0158 is done, reuse its butler step
+and `BUTLER_API_KEY`, and publish the release packages (web included)
+here; if not, this ticket sets butler up and 0158 reuses it.
 
 **Either order with 0915:** 0915 puts the Chapter 1 demo on its own
 password-protected itch.io page with butler and `BUTLER_API_KEY`. If it

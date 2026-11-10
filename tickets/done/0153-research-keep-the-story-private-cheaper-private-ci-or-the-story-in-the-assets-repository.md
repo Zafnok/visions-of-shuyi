@@ -5,10 +5,10 @@ type: research
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-10
 ---
 
 # 0153 — Research: keep the story private, by cheaper private CI or by the story in the assets repository
@@ -220,16 +220,16 @@ goes to Nick.
 
 ## Acceptance criteria
 
-- [ ] `docs/research/0153-keeping-the-story-private.md` prices Options
+- [x] `docs/research/0153-keeping-the-story-private.md` prices Options
       A, B and C, each against "under $30 a month, same velocity", with a
       source and date for every price.
-- [ ] The velocity numbers (push to green, PRs a day, concurrency) come
+- [x] The velocity numbers (push to green, PRs a day, concurrency) come
       from this repository's last 30 days, and the report gives the
       sample's dates.
-- [ ] Nick's choice is quoted in the report.
-- [ ] The follow-up tickets exist, and 0152, 0766 and 0915 name them
+- [x] Nick's choice is quoted in the report.
+- [x] The follow-up tickets exist, and 0152, 0766 and 0915 name them
       where they depend on them.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -237,5 +237,66 @@ goes to Nick.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done.** The research ran as a multi-agent workflow (Ultracode),
+capped at 20 agents by Nick's request. 18 ran: 8 researchers (minutes,
+velocity, Linux runners, macOS and Windows, cheaper GitHub minutes, what
+going private loses, the move's effect on code, the move's process), one
+adversarial verifier for each that fetched every price again and counted
+every number again, a cost modeller and a completeness critic. Its
+corrections are folded into the report:
+`docs/research/0153-keeping-the-story-private.md`. Window measured:
+2026-10-11 to 11-10.
+
+**Findings in short:**
+
+- GitHub-hosted CI on a private repository: about $1,071 a month at
+  today's minutes, on half-size runners. Same speed and checks: about
+  $1,800.
+- The cheapest private setup that keeps every check: about $370–600.
+  With seven checks weakened: $35–60 on untested machines, $115–155 on
+  tested ones.
+- No GitHub plan changes that (§8: Enterprise, with $300 of CI included,
+  still lands at about $100 at the lightest weakening).
+- Moving the story out (B) costs $0 and keeps every check.
+
+**Nick's decision** (2026-11-10, quoted in the report §9): after a
+B-against-A comparison (§7) he asked whether a better GitHub plan exists
+("Otherwise B+ seems reasonable"); none does, so **B+**: the story and the
+game's data move into the private assets repository.
+
+**Deviations.**
+
+- Nick asked for a second round: the comparison of B against A with
+  checks weakened (§7), which measured what each check caught, and the
+  GitHub plans (§8). That round was measured by hand, not by more agents,
+  to stay under the 20-agent cap.
+- The report is about 600 lines, not 400, because of those two sections.
+- No engine ticket: A didn't win, and B+ needs no engine change (the
+  content goes in a folder outside `game/`, so ADR-0051's credit check
+  doesn't apply).
+
+**Follow-up tickets:**
+
+- 0155: the weekly full mutation run finishes. Found by the measurement:
+  5 of 5 runs hit the 6-hour limit.
+- 0156: the private content layer, the `content-change` skill, the
+  Dependabot secret.
+- 0157: tests ready for private content.
+- 0158: the public web build and releases without it; Nick's full build
+  on a restricted itch.io page.
+- 0159: the story documents move.
+- 0160: the game's content and scripts move.
+
+The chain was checked both ways:
+
+- 0152 is now blocked by 0159 and 0160 and says what changes in it;
+- 0766 is blocked by 0159 and 0160 instead of 0153;
+- 0914, 0915, 0901, 0765, 1064 and ROADMAP Lane J name the new tickets.
+
+**For Nick:** two setup steps come later, both small: a Dependabot copy of
+the deploy key (0156), and a restricted itch.io project for your
+full-game web build (0158). 0158 also asks whether to delete the old
+public releases' downloads (v0.1.0–v0.3.0), which carry the scripts and
+data of their day. Everything pushed so far stays readable in this
+repository's public history; B+ protects what is written from the move
+on.
