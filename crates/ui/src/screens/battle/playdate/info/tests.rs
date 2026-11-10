@@ -164,6 +164,17 @@ fn the_third_page_is_the_ranks_with_their_traits_and_the_affinities() {
         "║   --                                           ║"
     );
     assert_eq!(none[4], BLANK);
+    // No ranks but affinities: the affinities under the dashes, a row
+    // between.
+    let none = rows(&view(1, 2, |v| {
+        v.ranks.clear();
+        v.affinities = vec![("Fire".into(), "Weak".into())];
+    }));
+    assert_eq!(none[3], BLANK);
+    assert_eq!(
+        none[4],
+        "║ Affinities                                     ║"
+    );
 }
 
 #[test]

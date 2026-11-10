@@ -163,6 +163,18 @@ fn a_ranks_trait_follows_it_or_goes_under_it() {
     assert_eq!(text(&buf, LEFT_X, y + 5, 10), "Gauntlet D");
     assert_eq!(text(&buf, LEFT_X + 10, y + 5, 3), "   ");
     assert_eq!(text(&buf, LEFT_X, y + 6, 17), format!("  {long}"));
+    // A long kind pushes its rank and trait along, a cell apart; a trait
+    // too long for its own row is cut a cell before the middle column.
+    let cut = "x".repeat(30);
+    let buf = painted(|v| {
+        v.ranks = vec![rank("Longblades", Some("+1")), rank("Axe", Some(&cut))];
+        v.affinities.clear();
+    });
+    assert_eq!(text(&buf, LEFT_X, y + 4, 15), "Longblades D +1");
+    assert_eq!(
+        text(&buf, LEFT_X + 2, y + 6, 24),
+        format!("{} ", "x".repeat(23))
+    );
 }
 
 /// 1003: the supports under the affinities (or the ranks), cut at the
