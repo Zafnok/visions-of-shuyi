@@ -51,6 +51,7 @@ use trpg_core::{
 
 use super::battle::info::bonus_text;
 use super::battle::items::effect_text;
+use super::battle::shop::stat_line;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
@@ -442,11 +443,7 @@ impl PreparationsScreen {
             }
             let slots = self.prep.gear_slots(holder);
             for theirs in slots.into_iter().filter(|s| same_kind(*s)) {
-                let id = match theirs {
-                    GearSlot::Weapon(s) => unit.loadout.weapon(s).map(|w| &w.def),
-                    GearSlot::Armour => unit.loadout.armour.as_ref(),
-                    GearSlot::Accessory => unit.loadout.accessory.as_ref(),
-                };
+                let id = Self::slot_item(unit, theirs);
                 let held = self.held(ctx.words(), unit, theirs);
                 let (Some(id), Some((name, wear))) = (id, held) else {
                     continue;
@@ -536,13 +533,13 @@ impl PreparationsScreen {
     }
 
     /// The name of the weapon `unit` attacks with from `slot` (`None`: its
-    /// equipped weapon or spell); `no weapon` without one.
-    fn in_hand(ctx: &Ctx, setup: &BattleSetup, unit: &Unit, slot: Option<usize>) -> String {
+    /// equipped weapon or spell); `None` without one.
+    fn in_hand(ctx: &Ctx, setup: &BattleSetup, unit: &Unit, slot: Option<usize>) -> Option<String> {
         let words = ctx.words();
         let equipped = slot
             .map(Equipped::Weapon)
             .or_else(|| unit.loadout.equipped.clone());
-        let name = match equipped {
+        match equipped {
             Some(Equipped::Weapon(s)) => unit
                 .loadout
                 .weapon(s)
@@ -553,35 +550,90 @@ impl PreparationsScreen {
                 spell.map(|s| words.spell(s).to_owned())
             }
             None => None,
-        };
-        name.unwrap_or_else(|| ctx.text("prep.no_weapon").to_owned())
+        }
     }
 
     /// The chosen unit's attack speed line: `AS 6 with Iron Sword`, and
     /// while a stock row is highlighted the change taking it would make,
     /// `AS 6 → 4 with Steel Sword`. The speed is with the weapon of the
-    /// highlighted weapon slot in hand, else with the equipped weapon.
+    /// highlighted weapon slot in hand, else with the equipped weapon. On
+    /// an armour or accessory slot it names no weapon (`AS 6 → 5`), so the
+    /// only item named is the highlighted one (0478). `None` when no weapon
+    /// or spell would be in hand: a unit without one can't attack.
     pub fn speed_line(&self, ctx: &Ctx) -> Option<String> {
         let (who, unit) = (self.who()?, self.unit()?);
         let slot = self.speed_slot();
         let now: StatValue = self.prep.attack_speed(who, slot)?;
-        let highlighted = self.stock_rows(ctx).into_iter().nth(self.stock);
-        let after = (self.focus == Focus::Stock)
-            .then_some(highlighted)
-            .flatten()
-            .and_then(|row| self.after(&row));
-        let Some(after) = after else {
-            let with = Self::in_hand(ctx, &self.prep.setup, unit, slot);
-            let args: [(&str, &dyn Display); 2] = [("now", &now), ("weapon", &with)];
-            return Some(ctx.text_with("prep.speed", &args));
+        let held_now = Self::in_hand(ctx, &self.prep.setup, unit, slot);
+        let highlighted = (self.focus == Focus::Stock)
+            .then(|| self.stock_rows(ctx).into_iter().nth(self.stock))
+            .flatten();
+        // The speed and weapon after the change (or now), and the speed
+        // before it when there is a change and a weapon in hand before it.
+        let (then, weapon, before) = match highlighted.and_then(|row| self.after(&row)) {
+            Some(after) => {
+                let then = after.attack_speed(who, slot).unwrap_or(now);
+                let held = after.unit(who);
+                let held = held.and_then(|u| Self::in_hand(ctx, &after.setup, u, slot));
+                (then, held, held_now.is_some().then_some(now))
+            }
+            None => (now, held_now, None),
         };
-        let then = after.attack_speed(who, slot).unwrap_or(now);
-        let with = after
-            .unit(who)
-            .map(|u| Self::in_hand(ctx, &after.setup, u, slot))
-            .unwrap_or_default();
-        let args: [(&str, &dyn Display); 3] = [("now", &now), ("then", &then), ("weapon", &with)];
-        Some(ctx.text_with("prep.speed_change", &args))
+        let weapon = weapon?;
+        let gear = matches!(self.focus, Focus::Slots | Focus::Stock)
+            && matches!(
+                self.gear_slot(),
+                Some(GearSlot::Armour | GearSlot::Accessory)
+            );
+        let line = match (before, gear) {
+            (Some(now), false) => {
+                let args: [(&str, &dyn Display); 3] =
+                    [("now", &now), ("then", &then), ("weapon", &weapon)];
+                ctx.text_with("prep.speed_change", &args)
+            }
+            (Some(now), true) => {
+                let args: [(&str, &dyn Display); 2] = [("now", &now), ("then", &then)];
+                ctx.text_with("prep.speed_change_gear", &args)
+            }
+            (None, false) => {
+                let args: [(&str, &dyn Display); 2] = [("now", &then), ("weapon", &weapon)];
+                ctx.text_with("prep.speed", &args)
+            }
+            (None, true) => ctx.text_with("prep.speed_gear", &[("now", &then)]),
+        };
+        Some(line)
+    }
+
+    /// What `slot` of `unit` holds, by id.
+    fn slot_item(unit: &Unit, slot: GearSlot) -> Option<&ItemId> {
+        match slot {
+            GearSlot::Weapon(s) => unit.loadout.weapon(s).map(|w| &w.def),
+            GearSlot::Armour => unit.loadout.armour.as_ref(),
+            GearSlot::Accessory => unit.loadout.accessory.as_ref(),
+        }
+    }
+
+    /// The numbers of the item under the cursor (a slot's, a stock row's,
+    /// another unit's), as the shop and the info screen say them
+    /// (`E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2`); `None` for an empty slot,
+    /// the put-back row, or the cursor elsewhere (0478).
+    pub fn item_detail(&self, ctx: &Ctx) -> Option<String> {
+        let id = match self.focus {
+            Focus::Slots => Self::slot_item(self.unit()?, self.gear_slot()?)?.clone(),
+            Focus::Stock => match self.stock_rows(ctx).into_iter().nth(self.stock)?.from {
+                Source::PutBack => return None,
+                Source::Stock(StockItem::Weapon(i)) => {
+                    self.prep.setup.stock.weapons.get(i)?.def.clone()
+                }
+                Source::Stock(StockItem::Item(id)) => id,
+                Source::Unit(holder, theirs) => {
+                    Self::slot_item(self.prep.unit(holder)?, theirs)?.clone()
+                }
+            },
+            _ => return None,
+        };
+        let def = self.prep.setup.items.get(&id)?;
+        Some(stat_line(ctx.words(), def))
     }
 
     /// The bottom help line.
@@ -908,8 +960,7 @@ impl PreparationsScreen {
         };
         let speed = self.speed_line(ctx);
         let benched = matches!(self.who(), Some(PrepUnit::Benched(_)));
-        let benched_note =
-            (speed.is_some() && benched).then(|| ctx.text("prep.not_in_battle").to_owned());
+        let benched_note = benched.then(|| ctx.text("prep.not_in_battle").to_owned());
         let title = ctx.text(match self.gear_slot() {
             Some(GearSlot::Weapon(_)) => "prep.stock.weapons",
             Some(GearSlot::Armour) => "prep.stock.armour",
@@ -929,6 +980,7 @@ impl PreparationsScreen {
         };
         GearView {
             slots,
+            item_detail: self.item_detail(ctx),
             speed,
             benched_note,
             stock,

@@ -161,14 +161,15 @@ fn a_stock_weapon_goes_into_an_empty_slot() {
         ]
     );
     assert_eq!(
-        s.speed_line(&c).as_deref(),
-        Some("AS 7 with no weapon"),
-        "a row he can't take changes nothing"
+        s.speed_line(&c),
+        None,
+        "a row he can't take changes nothing, and an empty slot has no speed"
     );
     update(&mut s, &mut c, &[CursorUp]);
     assert_eq!(
         s.speed_line(&c).as_deref(),
-        Some("AS 7 → 5 with Iron Sword")
+        Some("AS 5 with Iron Sword"),
+        "no speed before it to change from"
     );
     assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     assert_eq!(s.focus(), Focus::Slots);
@@ -181,7 +182,7 @@ fn a_stock_weapon_goes_into_an_empty_slot() {
     // The slot now offers to put it back.
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(stock_texts(&s, &c)[0], PUT_BACK);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 5 → 7 with no weapon"));
+    assert_eq!(s.speed_line(&c), None, "no weapon would be in hand");
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(lord_weapons(&s)[2], None);
     assert_eq!(s.setup().stock.weapons.len(), 3);
@@ -256,17 +257,14 @@ fn armour_and_accessories_come_from_the_stock_with_their_counts() {
         ]
     );
     // With no weapon slot highlighted, the speed is the equipped weapon's:
-    // the robe weighs nothing, the vest 1.
+    // the robe weighs nothing, the vest 1. It names no weapon (0478).
     update(&mut s, &mut c, &[CursorDown, CursorDown, CursorDown]);
-    assert_eq!(
-        s.speed_line(&c).as_deref(),
-        Some("AS 5 → 6 with Iron Sword")
-    );
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 5 → 6"));
     update(&mut s, &mut c, &[Confirm]);
     let lord = &s.setup().units[0];
     assert_eq!(lord.loadout.armour, Some(ItemId::new("linen_robe")));
     assert_eq!(s.setup().stock.count(&ItemId::new("leather_vest")), 1);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6 with Iron Sword"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6"));
     // The accessory slot: empty, so nothing to put back.
     update(&mut s, &mut c, &[CursorDown, Confirm]);
     assert_eq!(
@@ -278,10 +276,7 @@ fn armour_and_accessories_come_from_the_stock_with_their_counts() {
         ]
     );
     update(&mut s, &mut c, &[CursorUp]);
-    assert_eq!(
-        s.speed_line(&c).as_deref(),
-        Some("AS 6 → 8 with Iron Sword")
-    );
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6 → 8"));
     update(&mut s, &mut c, &[Confirm]);
     let lord = &s.setup().units[0];
     assert_eq!(lord.loadout.accessory, Some(ItemId::new("speed_ring")));
@@ -755,9 +750,9 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
     assert_eq!((slots.cursor, slots.state), (2, ListState::Focused));
     assert_eq!(gear(&view).stock.state, ListState::Idle);
     assert_eq!(
-        gear(&view).speed.as_deref(),
-        Some("AS 7 with no weapon"),
-        "the speed is with the highlighted slot's weapon"
+        gear(&view).speed,
+        None,
+        "the speed is with the highlighted slot's weapon, and it has none"
     );
 
     // Its stock, on the Iron Sword: the slot is the chosen one too, and
@@ -788,7 +783,7 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
             &row("Iron Sword", "Mt 5 Hit 90 Wt 2 Rng1 20/20", true),
         ]
     );
-    assert_eq!(gear.speed.as_deref(), Some("AS 7 → 5 with Iron Sword"));
+    assert_eq!(gear.speed.as_deref(), Some("AS 5 with Iron Sword"));
 
     // A refused item's reason is the message.
     update(&mut s, &mut c, &[CursorDown, Confirm]);
@@ -1303,4 +1298,83 @@ fn selling_a_special_weapon_asks_first() {
 fn preparations_declares_its_actions() {
     let screen = screen(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::PREPARATIONS);
+}
+
+/// Ticket 0478: the item under the cursor shows its numbers, wherever the
+/// cursor is.
+#[test]
+fn the_item_line_shows_the_highlighted_items_numbers() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    let detail = |s: &PreparationsScreen, c: &Ctx| gear(&s.view(c)).item_detail.clone();
+    let sword = "E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2";
+    // On the units: no item is highlighted.
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(detail(&s, &c), None);
+    // The lord's first slot: his Iron Sword.
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(detail(&s, &c).as_deref(), Some(sword));
+    // His empty third slot: nothing.
+    update(&mut s, &mut c, &[CursorDown, CursorDown]);
+    assert_eq!(detail(&s, &c), None);
+    // Its stock: the Iron Sword, and a spear he can't use.
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    assert_eq!(detail(&s, &c).as_deref(), Some(sword));
+    update(&mut s, &mut c, &[CursorDown]);
+    assert!(detail(&s, &c).is_some_and(|d| d.contains("Mt ")));
+    // His armour: the vest, and the speed names no weapon.
+    update(&mut s, &mut c, &[Cancel, CursorDown]);
+    let vest = detail(&s, &c).unwrap_or_default();
+    assert!(
+        vest.starts_with("Leather  ") && vest.ends_with("Wt 1"),
+        "{vest}"
+    );
+    assert_eq!(gear(&s.view(&c)).speed.as_deref(), Some("AS 5"));
+    // Its stock: the put-back row has no numbers, the robe in stock and
+    // the mage's robe have the robe's.
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(detail(&s, &c), None);
+    let robe = "Cloth  Res +4  Wt 0";
+    update(&mut s, &mut c, &[CursorDown, CursorDown, CursorDown]);
+    assert_eq!(detail(&s, &c).as_deref(), Some(robe));
+    assert_eq!(gear(&s.view(&c)).speed.as_deref(), Some("AS 5 → 6"));
+    update(&mut s, &mut c, &[CursorDown]);
+    let view = s.view(&c);
+    assert_eq!(gear(&view).stock.rows[4].detail, "from Test Mage");
+    assert_eq!(detail(&s, &c).as_deref(), Some(robe));
+}
+
+#[test]
+fn the_item_line_of_another_units_weapon_is_that_weapons() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The archer's first slot, then the scout's Steel Bow in its list.
+    update(&mut s, &mut c, &[Confirm, CursorDown, CursorDown, Confirm]);
+    let bow = gear(&s.view(&c)).item_detail.clone().unwrap_or_default();
+    assert!(bow.contains("Mt ") && bow.contains("Crit "), "{bow}");
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    let view = s.view(&c);
+    let last = gear(&view).stock.rows.last().cloned();
+    assert_eq!(
+        last.expect("the scout's bow").detail,
+        "25/25  from Test Scout"
+    );
+    let steel = gear(&view).item_detail.clone().unwrap_or_default();
+    assert!(steel.contains("Crit ") && steel != bow, "{steel}");
+}
+
+#[test]
+fn a_unit_with_no_weapon_or_spell_has_no_speed_line() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    let lord = &mut s.prep.setup.units[0].loadout;
+    lord.weapons = Default::default();
+    lord.equipped = None;
+    update(&mut s, &mut c, &[Confirm]);
+    assert_eq!(gear(&s.view(&c)).speed, None, "on the units");
+    // On his armour too: no weapon in hand, so no speed to change.
+    update(&mut s, &mut c, &[Confirm, CursorUp, CursorUp, Confirm]);
+    let view = s.view(&c);
+    assert_eq!(gear(&view).speed, None, "on the armour's stock");
+    assert!(gear(&view).item_detail.is_none(), "the put-back row");
 }

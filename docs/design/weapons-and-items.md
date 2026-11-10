@@ -375,6 +375,16 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
   slot in hand, and the change a highlighted stock item would make
   (`AS 6 → 4 with Steel Sword`), by the formula above. Skill bonuses that
   only apply in a fight aren't counted.
+- The item under the cursor (a slot's, a stock item, another unit's)
+  shows its numbers as the shop and the unit info screen say them
+  (`E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2`; armor its class, bonuses and
+  weight). (Ticket 0478.)
+- On an armor or accessory slot the speed line names no weapon
+  (`AS 5 → 6`), so the only item named is the one under the cursor.
+  (Ticket 0478.)
+- With no weapon or spell in hand (an empty weapon slot highlighted, or
+  a unit holding none) there is no speed line: a unit without one can't
+  attack. (Ticket 0478.)
 
 ### Armour (*tunable*)
 
