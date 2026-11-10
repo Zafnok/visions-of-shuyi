@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0478 — Loadouts show each item's numbers, and no attack speed without a weapon
@@ -129,18 +129,18 @@ Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] With the cursor on a weapon slot, a stock weapon or a swap row
+- [x] With the cursor on a weapon slot, a stock weapon or a swap row
       weapon, the view's `item_detail` is that weapon's
       `Mt … Hit … Crit … Rng … Wt …` (a test for each place).
-- [ ] With the cursor on armour (slot, stock or swap row), `item_detail`
+- [x] With the cursor on armour (slot, stock or swap row), `item_detail`
       is its bonus and weight, and the speed line is `AS a → b` with no
       weapon name (test).
-- [ ] With the highlighted weapon slot empty, or a unit holding no
+- [x] With the highlighted weapon slot empty, or a unit holding no
       weapon or spell, `speed` is `None` (test); no frame says "no
       weapon" next to AS.
-- [ ] `frame-png` pictures of the Loadouts screen on a weapon, on armour
+- [x] `frame-png` pictures of the Loadouts screen on a weapon, on armour
       and on an empty slot are in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,4 +150,31 @@ Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `GearView` has `item_detail`: the numbers of the item under the cursor
+  (a slot's, a stock row's, another unit's), from the shop's
+  `stat_line` (0486 was done, so armour already reads its class, bonuses
+  and weight: `Cloth  Res +4  Wt 0`). `None` on the units list, an empty
+  slot and the put-back row. A weapon's line is 36 characters and the
+  slots box has 32, so the glyph skin cuts it at a two-space gap
+  (`E  Mt 5  Hit 90  Crit 0  Rng 1` / `Wt 2`) rather than mid-number.
+- `speed_line` returns `None` when no weapon or spell would be in hand;
+  `prep.no_weapon` is gone. On an armour or accessory slot (and its
+  stock) the line is `AS 5 → 6` / `AS 5` (new keys `prep.speed_gear`,
+  `prep.speed_change_gear`).
+- **Deviation:** the ticket names only the *change* on armour without a
+  weapon; the armour slot itself (no change highlighted) also drops the
+  weapon name (`AS 5`), for the same reason: the only item named is the
+  highlighted one.
+- **Deviation:** a weapon going into an empty slot used to read
+  `AS 7 → 5 with Iron Sword`, where 7 was the speed with nothing in hand.
+  With no weapon before the change there is no speed to change from, so
+  it reads `AS 5 with Iron Sword`.
+- The "Not in this battle" note no longer hangs off the speed line, so a
+  benched unit with no weapon still shows it.
+- 1046 (Playdate Preparations) isn't done: a line in its Scope says the
+  view has `item_detail`. 1238 isn't done either; nothing to do there.
+- `weapons-and-items.md`, *On the Preparations screen*: one sentence per
+  rule.
+- Pictures: `docs/img/0478-loadout-{weapon,armour,empty-slot}.png`.
+- For the Act 1 playtest (1064): whether the item line reads well,
+  including the weapon line wrapping onto a second row.

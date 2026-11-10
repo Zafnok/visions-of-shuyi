@@ -47,7 +47,7 @@ fn row(buf: &GlyphBuffer, y: i32) -> String {
 
 /// The first text row of `buf`'s text box, without the box's border.
 fn text_row(buf: &GlyphBuffer) -> String {
-    let row = row(buf, 23);
+    let row = row(buf, 27);
     row.trim_matches(|c: char| c == '│' || c == ' ').to_owned()
 }
 
@@ -222,13 +222,13 @@ fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
     // Under the caption; one line of narration is dim, on the first row
     // of the text box from the speech column.
     assert_eq!(row(&buf, 0).trim(), "Village of Heth, dusk");
-    let typed = row(&buf, 23);
+    let typed = row(&buf, 27);
     assert_eq!(typed.chars().position(|c| c == 'T'), Some(4));
     assert_eq!(text_row(&buf), "The rain had");
-    assert_eq!(buf.get(4, 23).unwrap().fg, p.get(UiColor::TextDim));
+    assert_eq!(buf.get(4, 27).unwrap().fg, p.get(UiColor::TextDim));
     // Nobody is up yet.
     assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
-    assert_eq!(row(&buf, 19).trim(), "");
+    assert_eq!(row(&buf, 23).trim(), "");
 }
 
 #[test]
@@ -283,8 +283,8 @@ fn a_talk_shot_looks_like_the_dialogue_screen_without_what_waits_for_a_key() {
         let got = draw(&ctx, &player, t);
         // The dialogue screen's `▼` and the key that goes on, at the
         // right of the text box's last row, are not in the shot.
-        let marker = |x: i32, y: i32| y == 26 && (80..98).contains(&x);
-        let blank = got.get(4, 26).copied();
+        let marker = |x: i32, y: i32| y == 30 && (80..98).contains(&x);
+        let blank = got.get(4, 30).copied();
         for y in 0..i32::from(ConsoleSpec::PC.rows) {
             for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 if marker(x, y) {
@@ -294,8 +294,8 @@ fn a_talk_shot_looks_like_the_dialogue_screen_without_what_waits_for_a_key() {
                 }
             }
         }
-        assert!(row(&expected, 26).contains('▼'));
-        assert!(!row(&got, 26).contains('▼'));
+        assert!(row(&expected, 30).contains('▼'));
+        assert!(!row(&got, 30).contains('▼'));
         assert_eq!(got.sprites(), expected.sprites(), "{t}");
         assert!(got.backdrop().is_none());
         screen.update(&mut ctx, &confirm);
@@ -319,7 +319,7 @@ fn a_talk_shot_shows_the_lead_it_was_given() {
         let buf = draw(&ctx, &player, 9.5);
         let images: Vec<_> = buf.sprites().iter().map(|s| s.image).collect();
         let lead = player.lead().clone();
-        (text_row(&buf), row(&buf, 19), images, lead)
+        (text_row(&buf), row(&buf, 23), images, lead)
     };
     // The archer who speaks has no portrait: the lead's is the only one.
     let (text, plates, images, lead) = shown(None);

@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0763 — The dialogue text box sits at the bottom of the screen
@@ -91,14 +91,14 @@ sizes in the PR.
 
 ## Acceptance criteria
 
-- [ ] The text box's bottom row is the last usable row of the grid
+- [x] The text box's bottom row is the last usable row of the grid
       (a test on the painted buffer: the box's border is on that row).
-- [ ] With reply choices the box still fits (it grows upward) and
+- [x] With reply choices the box still fits (it grows upward) and
       nothing overlaps the portraits (snapshot).
-- [ ] The overlay over the battle map still paints as before, or the
+- [x] The overlay over the battle map still paints as before, or the
       Completion notes say why it differs.
-- [ ] Before/after `frame-png` pictures at 2560×1440 are in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Before/after `frame-png` pictures at 2560×1440 are in the PR.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -108,4 +108,33 @@ sizes in the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- The text box moved from rows 21–27 to rows 25–31 (its bottom border on
+  the grid's last row; no frame border needs a row below it), `TEXT_Y`
+  and `BOX_PLACE` with it. The portrait frames moved from row 1 to row 5,
+  the name plates from 19 to 23, keeping the one empty row between the
+  plates and the box. With reply choices the box still grows upward from
+  its bottom row, as before, now from row 31.
+- The cinematic talk shots draw with the dialogue screen's layout, so
+  they moved too (their tests compare them with the dialogue screen).
+- **Overlay** (a battle's scene over the map): the box now covers the
+  battle's help bar (rows 30–31), so the code that blanked the rows below
+  the box is gone. One visible difference: the one empty row between the
+  plates and the box (row 24) shows the screen below, darkened, as it
+  already does between the frames; in the combat trigger snapshots that
+  is the top border of the fight boxes. Nothing that matters is hidden.
+- Two debug-build-only hints on the last row meet the box during talk
+  shots: the debug cinematic viewer's `back` line now sits on the box's
+  bottom border, and the title's `F2 debug` hint is covered while the
+  title cinematic shows a talk. Neither is in a build that ships; left
+  as is.
+- The scene camera's debug layout doesn't copy the box's rows: untouched.
+- In full screen at 2560×1440 (still 2×, the engine's black bars, engine
+  2333/2376) the box now ends at about 86 % of the screen's height instead
+  of 77 %. Pictures, before and after at 2560×1440:
+  `docs/screenshots/0763-{narration,two-portraits,reply-choice}-{before,after}-2560x1440.png`.
+- *The agent's starting rule* (written in `look-and-feel.md`): the
+  portraits move down with the box so they still stand on it, leaving four
+  empty rows between the caption and the frames. For the Act 1 playtest
+  (1064).
+- Engine friction: estimate 10, measured 6 added (under 2×).
+- Follow-up tickets: none.

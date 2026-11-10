@@ -3,11 +3,11 @@ source: crates/ui/tests/it/places.rs
 expression: h.snapshot()
 ---
                                       Harrowby, by the chapel                                       
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
  ┌────────────────────────────────┐                              ╔════════════════════════════════╗ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
- │                                │                              ║                                ║ 
  │                                │                              ║                                ║ 
  │                                │                              ║                                ║ 
  │                                │.......♣♣♣♣♣♣..............^^^║                                ║ 
@@ -20,9 +20,13 @@ expression: h.snapshot()
  │                                │.............··........≈≈≈≈≈≈≈║                                ║ 
  │                                │.............··......♣♣♣♣.....║                                ║ 
  │                                │.............··....♣♣♣♣♣♣♣♣...║                                ║ 
- └────────────────────────────────┘·............··......♣♣♣♣.....╚════════════════════════════════╝ 
-               Ellery              ······························               Maud                
-                          ....╦╦..··................................^^^^^^                          
+ │                                │·............··......♣♣♣♣.....║                                ║ 
+ │                                │······························║                                ║ 
+ │                                │·.............................║                                ║ 
+ │                                │·....^^^^.....................║                                ║ 
+ └────────────────────────────────┘.....^^^^^^...................╚════════════════════════════════╝ 
+               Ellery              .......^^.....................               Maud                
+                                                                                                    
 ┌── Maud ──────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                  │
 │   This was nailed to the chapel door. I took it down before anyone-- I took it down, and I       │
@@ -30,17 +34,13 @@ expression: h.snapshot()
 │   toll-fort.                                                                                     │
 │                                                                                     b log   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffggggggffffffffffffffhhhdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
@@ -53,20 +53,20 @@ aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeclllllllllllllmmllllllllllfffffdeeeeeeeeeeeeee
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffffllllllldeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffggggfffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffggggggggfffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
-accccccccccccccccccccccccccccccccccjffffffffffffjjffffffggggfffffdddddddddddddddddddddddddddddddddda
-aeeeeeeeeeeeeeennnnnneeeeeeeeeeeeeejjjjjjjjjjjjjjjjjjjjjjjjjjjjjjeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
-aaaaaaaaaaaaaaaaaaaaaaaaaaffffooffjjffffffffffffffffffffffffffffffffhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaa
-cccppppppccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecjffffffffffffjjffffffggggfffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecjfffffffffffffffffffffffffffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecjffffhhhhfffffffffffffffffffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+accccccccccccccccccccccccccccccccccfffffhhhhhhfffffffffffffffffffdddddddddddddddddddddddddddddddddda
+aeeeeeeeeeeeeeennnnnneeeeeeeeeeeeeefffffffhhfffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+cccooooooccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
 ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
 ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
 ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
-ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeennnnneeenepeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeennnnneeeneoeec
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:#534e43 bg:black
 b = fg:text_highlight bg:black
@@ -82,7 +82,6 @@ k = fg:#2a2723 bg:#0a0a09
 l = fg:#2a3e4a bg:#080e13
 m = fg:#3e2a17 bg:#080e13
 n = fg:text_dim bg:panel_bg
-o = fg:#534326 bg:#120e0a
-p = fg:text_highlight bg:panel_bg
+o = fg:text_highlight bg:panel_bg
 --- overlays ---
-under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140
+under sprite 16,96 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

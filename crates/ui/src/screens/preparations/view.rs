@@ -105,8 +105,13 @@ pub struct UnitRowView {
 pub struct GearView {
     /// The unit's slots, titled with its name and class.
     pub slots: ListView<SlotRowView>,
+    /// The numbers of the item under the cursor (a slot's, a stock row's,
+    /// another unit's), e.g. `E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2`;
+    /// `None` for an empty slot or with the cursor elsewhere.
+    pub item_detail: Option<String>,
     /// The unit's attack speed, and the change the highlighted stock row
-    /// would make, e.g. `AS 7 → 6 with Iron Sword`.
+    /// would make, e.g. `AS 7 → 6 with Iron Sword` (`AS 7 → 6` on armour
+    /// or an accessory); `None` with no weapon or spell in hand.
     pub speed: Option<String>,
     /// That the unit is left out of this battle, if it is.
     pub benched_note: Option<String>,
