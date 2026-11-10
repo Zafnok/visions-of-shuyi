@@ -8,7 +8,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║                                                                                                  ║
 ║  Iron Sword                  230   E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2                          ║
 ║  Steel Sword                 300   D  Mt 8  Hit 75  Crit 0  Rng 1  Wt 4                          ║
-║  Leather Vest                200 ╔════════════════════════════╗1                                 ║
+║  Leather Vest                200 ╔════════════════════════════╗                                  ║
 ║  Potion ×3                   150 ║                            ║                                  ║
 ║                                  ║        Sell Potion?        ║                                  ║
 ║                                  ║             ▲              ║                                  ║
@@ -42,7 +42,7 @@ accccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 accccccccccccccccccccccccccccccccccffffffffffffffffffffffffffffffcccccccccccccccccccccccccccccccccca
-aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefccccccccccccccccccccccccccccfeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeca
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
 accccccccccccccccccccccccccccccccccfccccccccbbbbbbbbbbbbccccccccfcccccccccccccccccccccccccccccccccca
 accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca
 accccccccccccccccccccccccccccccccccfccccccccccccccccccccccccccccfcccccccccccccccccccccccccccccccccca

@@ -777,6 +777,11 @@ sprites.
   - **Conversations:** two full portraits, speaker on the left at full
     brightness with a double-line frame, listener dimmed on the right, name
     plates underneath, 3-line text box below.
+    The text box sits at the bottom of the screen, its bottom border on
+    the last row, also in full screen (a playtester, 2026-11-07, ticket
+    0763); the portraits stand on it one row above, so they move down
+    with it (*the agent's starting rule*; on the Act 1 playtest's
+    checklist, 1064).
     Narration (no face, no name) sits in the same box from the same
     column as speech, on the first text row, in the dim narration colour
     (ticket 0740; it was centred before).

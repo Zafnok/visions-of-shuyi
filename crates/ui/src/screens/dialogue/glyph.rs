@@ -13,7 +13,8 @@
 //! alone.
 //!
 //! Layout (100×32): 32×16-cell portraits in 34×18 frames at `x = 1` and
-//! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
+//! `x = 65` from row 5, name plates on row 23, the text box on rows 25–31
+//! (its bottom on the last row, so in full screen it sits low, 0763).
 //! While the lead's replies are up, the text box grows upward to list them
 //! under the line being answered (Nick, 0708: like Stardew Valley).
 
@@ -33,7 +34,7 @@ use shuyi_ui::dialogue::text_box::{
 };
 
 /// Top row of the portrait frames.
-const FRAME_Y: i32 = 1;
+const FRAME_Y: i32 = 5;
 /// Portrait frame size: a 32×16-cell portrait plus its border.
 pub const FRAME: (i32, i32) = (34, 18);
 /// Left column of the left frame.
@@ -41,11 +42,11 @@ const LEFT_X: i32 = 1;
 /// Left column of the right frame.
 const RIGHT_X: i32 = 65;
 /// The text box.
-const TEXT_BOX: Rect = Rect::new(0, 21, 100, 7);
+const TEXT_BOX: Rect = Rect::new(0, 25, 100, 7);
 /// Left column of the text.
 const TEXT_X: i32 = 4;
 /// First text row.
-const TEXT_Y: i32 = 23;
+const TEXT_Y: i32 = 27;
 /// How much the listener (and both portraits during narration) is dimmed.
 pub const LISTENER_DIM: f32 = 0.45;
 /// How bright the place behind the talk is, and the battle map behind a
@@ -81,13 +82,9 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
         ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
         buf.fade(dark);
     } else if view.overlay {
+        // The text box, on the bottom rows, covers the battle's key help,
+        // whose keys do nothing while the scene plays.
         buf.fade(PLACE_BRIGHTNESS);
-        // Below the text box is the battle's key help, whose keys do
-        // nothing while the scene plays.
-        // (Clipped to the buffer.)
-        let below = TEXT_BOX.y + TEXT_BOX.h;
-        let rest = Rect::new(0, below, i32::from(buf.width()), i32::from(buf.height()));
-        buf.fill_rect(rest, blank);
     } else {
         buf.fill_rect(buf.bounds(), blank);
     }
@@ -183,7 +180,7 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
     buf.print_centred(plate, face.name, c(name_fg));
 }
 
-/// Where the text box goes: rows 21–27, the text from column 4 of row 23,
+/// Where the text box goes: rows 25–31, the text from column 4 of row 27,
 /// narration from there too, like speech.
 pub const BOX_PLACE: BoxPlace =
     BoxPlace::new(TEXT_BOX, TEXT_X, TEXT_Y).with_narration(NarrationAlign::Left);

@@ -144,8 +144,8 @@ fn paint_loadouts(ctx: &Ctx, view: &LoadoutsView, buf: &mut GlyphBuffer) {
     }
 }
 
-/// The chosen unit's slots, with its attack speed under them, and the
-/// stock.
+/// The chosen unit's slots, with the highlighted item's numbers and its
+/// attack speed under them, and the stock.
 fn paint_gear(ctx: &Ctx, gear: &GearView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
@@ -154,12 +154,20 @@ fn paint_gear(ctx: &Ctx, gear: &GearView, buf: &mut GlyphBuffer) {
         let name = slot.item.as_deref().unwrap_or(EMPTY);
         (format!("{label:<9}  {name:<15} {wear}"), true)
     });
-    if let Some(speed) = &gear.speed {
-        let y = SLOTS_BOX.y + 2 + i32::try_from(gear.slots.rows.len()).unwrap_or(0);
-        buf.print(SLOTS_BOX.x + 2, y, speed, c(UiColor::Text), bg);
-        if let Some(note) = &gear.benched_note {
-            buf.print(SLOTS_BOX.x + 2, y + 2, note, c(UiColor::TextDim), bg);
+    let mut y = SLOTS_BOX.y + 2 + i32::try_from(gear.slots.rows.len()).unwrap_or(0);
+    if let Some(detail) = &gear.item_detail {
+        let width = usize::try_from(SLOTS_BOX.w - 4).unwrap_or(0);
+        for line in split_at_gaps(detail, width) {
+            buf.print(SLOTS_BOX.x + 2, y, &line, c(UiColor::TextHighlight), bg);
+            y += 1;
         }
+    }
+    if let Some(speed) = &gear.speed {
+        buf.print(SLOTS_BOX.x + 2, y, speed, c(UiColor::Text), bg);
+        y += 1;
+    }
+    if let Some(note) = &gear.benched_note {
+        buf.print(SLOTS_BOX.x + 2, y + 1, note, c(UiColor::TextDim), bg);
     }
     paint_list(ctx, buf, STOCK_BOX, &gear.stock, |item: &ItemRowView| {
         // check-text: not a data name (the view's own)
@@ -167,7 +175,23 @@ fn paint_gear(ctx: &Ctx, gear: &GearView, buf: &mut GlyphBuffer) {
     });
 }
 
-/// One consumable row: `Potion ×4  Restore 10 HP`.
+/// `line` cut into lines of at most `width` characters at its two-space
+/// gaps (`Mt 5  Hit 90  …`), so no number is split from its label.
+fn split_at_gaps(line: &str, width: usize) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    for part in line.split("  ") {
+        match lines.last_mut() {
+            Some(last) if last.chars().count() + 2 + part.chars().count() <= width => {
+                last.push_str("  ");
+                last.push_str(part);
+            }
+            _ => lines.push(part.to_owned()),
+        }
+    }
+    lines
+}
+
+/// One consumable row:`Potion ×4  Restore 10 HP`.
 fn consumable_row(row: &ConsumableRowView) -> (String, bool) {
     // check-text: not a data name (the view's own)
     let (name, count, effect) = (&row.name, row.count, &row.effect);

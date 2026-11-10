@@ -12,9 +12,9 @@ expression: h.snapshot()
 │ Test Mage    ││ Armor      Leather Vest          ││                                              │
 │ Test Scout   ││ Accessory  -                     ││                                              │
 │              ││                                  ││                                              │
-│              ││ AS 7 → 5 with Iron Sword         ││                                              │
-│              ││                                  ││                                              │
-│              ││                                  ││                                              │
+│              ││ E  Mt 5  Hit 90  Crit 0  Rng 1   ││                                              │
+│              ││ Wt 2                             ││                                              │
+│              ││ AS 5 with Iron Sword             ││                                              │
 │              ││                                  ││                                              │
 │              ││                                  ││                                              │
 │              ││                                  ││                                              │
@@ -45,8 +45,8 @@ cffffffffffffffccddddddddddddddddddddddddddddddddddcehhhhhhhhhhhhhhhhhhhhhhhhhhh
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cggggggggggggggccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
-cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
-cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
+cffffffffffffffccfddddddddddddddddddddddddddddddfffceffffffffffffffffffffffffffffffffffffffffffffffe
+cffffffffffffffccfddddfffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
