@@ -6,7 +6,7 @@ milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0153"]
+blocked_by: ["0159", "0160"]
 nick_input: setup
 completed:
 ---
@@ -121,6 +121,31 @@ holds only if the scripts stay in this repository. If 0153's pick moves
 them, the mirror copies from wherever they live and `story-import`
 opens its PR there; 0153's follow-up tickets say what changes, and this
 ticket is rewritten to match before it starts.
+
+**Update, 2026-11-10: 0153 picked B+.** The story documents and the
+game's content, every `.dlg` script included, move into the private
+assets repository: `story/` (0159) and `content/` (0160), on the content
+layer of 0156. The mirror is still needed: a writer can never join the
+assets repository (the bought art's licence), and a collaborator on a
+personal account's repository can write to all of it. The paragraphs
+above about "a mirror and not a move", "no pin, no key in any build" and
+"nothing moves" no longer hold. **Before starting, the session rewrites
+this ticket to match** (0153's report, §3.4, route (c)):
+
+- **The sync** runs on a push to `main` that moves `assets-private.rev`
+  (and on the public files it still copies). It checks out the assets
+  repository at the pin with `PRIVATE_ASSETS_KEY`, sparse: `content/dialogue/`
+  and `story/`.
+- **The files list:** `dialogue/` comes from
+  `assets-private/content/dialogue/`, `story/` from `assets-private/story/`,
+  and `design/` from `assets-private/story/design/` plus the public design
+  notes left. The commit trailers gain `Assets-Commit:` (the pin).
+- **`story-import`** applies the writer's change in `assets-private/` on
+  a branch, opens the assets PR, and after it merges runs `--pin` and
+  opens the game PR, through the `content-change` skill (0156), with a
+  `Story-PR:` trailer on both. The three-way base comes from the assets
+  repository at the pin.
+- **Size:** about 150 lines more than the estimate below.
 
 Links: ADR-0040 (the private art repository, the pattern this departs
 from), ADR-0011 (story pipeline), ADR-0057 (test files), ADR-0101 (PR
@@ -239,8 +264,8 @@ applicants never get access: they get a packet (0766).
 
 **Out (do not do):**
 - Moving `music/`, sound effects or any other asset (see Context).
-- Making this repository private or moving the story (0153 decides;
-  its follow-up tickets do it).
+- Moving the story or the content (0159, 0160) or the content layer
+  (0156).
 - The preview program (0764); the guide's rewrite and the cheat sheet
   (0765); the mirror README's real text (0765; this ticket writes a stub
   that says what the repository is and how to propose a change); the ad,

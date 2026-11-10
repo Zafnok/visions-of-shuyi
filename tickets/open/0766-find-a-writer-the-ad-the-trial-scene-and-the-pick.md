@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0152", "0153", "0764", "0765", "0915"]
+blocked_by: ["0152", "0159", "0160", "0764", "0765", "0915"]
 nick_input: setup
 completed:
 ---
@@ -32,9 +32,15 @@ Nick, 2026-11-08, after playing the Act 1 build:
 
 This ticket is the ad, the trial and the pick. It waits for the parts
 Nick listed: the writer's mirror repository (0152), keeping the story
-private (0153's research and the work it picks), the preview program
-(0764), the guide and cheat sheet (0765); and the Chapter 1 web demo
-(0914) on a page only applicants with its password can open (0915).
+private (0153 picked moving the story and the game's content into the
+private assets repository: 0159, 0160), the preview program (0764), the
+guide and cheat sheet (0765); and the Chapter 1 web demo (0914) on a page
+only applicants with its password can open (0915).
+
+After 0159 and 0160, the paths below have moved: `docs/story/…` is
+`assets-private/story/…` and `assets/dialogue/…` is
+`assets-private/content/dialogue/…`. The packet command reads them from
+the private checkout (`cargo shuyi private-assets`).
 
 ### The writing pause
 

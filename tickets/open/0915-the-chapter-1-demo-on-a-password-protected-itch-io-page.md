@@ -82,7 +82,9 @@ how applicants get in.
 
 **Out (do not do):**
 - The demo's contents (0914).
-- The full game on itch.io (0901), and what GitHub Pages serves (0153).
+- The full game on itch.io (0901), what GitHub Pages serves, and Nick's
+  restricted full-game web page (0158; if 0158 is done, reuse its butler
+  step and `BUTLER_API_KEY`).
 - A public demo page: a public demo is Nick's call later, as its own
   ticket.
 

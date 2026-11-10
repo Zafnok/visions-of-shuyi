@@ -56,9 +56,10 @@ What exists to build on:
   battle `ch01`, then `ch01_victory` and `ch01_tbc`, then `next:
   Some("ch02")`).
 
-**This holds the demo, not the repository.** While the repository is
-public (0153 is the research on that), anyone who finds it reads every
-chapter. The demo makes sure a *player* of the demo, and anyone who
+**This holds the demo, not the repository.** 0153 picked moving the
+story and the game's content into the private assets repository (0156,
+0159, 0160); until 0160 lands, anyone who finds the repository reads every
+chapter, and the history before the move stays public after it. The demo makes sure a *player* of the demo, and anyone who
 pulls its files apart, gets Chapter 1 and nothing later.
 
 **Either order with 1249** (the web package within 25 MB): if 1249 is
@@ -66,9 +67,11 @@ done, use what it built; if not, the demo ships only the music its files
 name, which should bring it under the budget by itself (the 46 tracks
 are 75 MB of the 76 MB).
 
-**Either order with 0153's pick:** if 0153's follow-up moves the scripts
-into the private assets repository, the demo's content comes from there
-like the bought art; the edition's list of what is left out stays the
+**Either order with 0160:** once 0160 moves the content into the private
+assets repository, the demo's content comes from there (the
+`private-content` feature, 0156) like the bought art, and a demo export
+without the key has the test game, not Chapter 1, so it must fail
+(`required: true`). The edition's list of what is left out stays the
 same.
 
 ## Nick input
@@ -121,8 +124,8 @@ Nick asks for it.
 - **The disclosure part for the demo**: canaries that are found in the
   full game and must not be in the demo. Use ids and file names (a
   Chapter 2 scene id, `ch02.map`, a character id first met in Chapter
-  3), not script lines: `shuyi.ron` is public, and if 0153 moves the
-  scripts private their lines must not sit in a public file.
+  3), not script lines: `shuyi.ron` is public, and once 0160 moves the
+  scripts private their lines must not sit in a public file (0157's rule).
 - **CI**: a job that exports the demo edition for the web without the
   bought art on PRs that change `assets/`, `crates/content/` or
   `shuyi.ron`, so a later change that pulls Chapter 2 into a shared file
@@ -134,12 +137,12 @@ Nick asks for it.
   edition and not a menu lock.
 
 **Out (do not do):**
-- Hosting or publishing the demo (0915), or changing GitHub Pages (0153
-  decides what Pages shows; Nick's Act 1 playtest, 1064, plays the full
-  game there).
+- Hosting or publishing the demo (0915), or changing GitHub Pages (0158
+  decides what Pages shows and moves Nick's full web build to a
+  restricted itch.io page).
 - Any change to a script's words (the writing pause, 0766). Changing
   `ch01.ron`'s `next` for the demo only is wiring, not writing.
-- Making the repository or the scripts private (0153).
+- Moving the scripts or content private (0156, 0159, 0160).
 - Marks, watermarks or capture limits (engine 3083, parked).
 - A pack of baked files instead of embedded text (engine 3300): it hides
   nothing, by its own ticket's word.

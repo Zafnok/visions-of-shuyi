@@ -47,13 +47,14 @@ army proof (0520) and chosen art (0858) remain existing blockers.
 Nick's own play of the Act 1 build (2026-11-08) added the tickets of
 Lane I in *Act 1 critical path* (0332–0334, 0453, 0485–0491, 0528,
 0527, 0610, 0867–0870, 1088, 1089; the decisions 0079–0084 come in
-through them). Lane J, the human writer (0152, 0153, 0764–0766, 0914, 0915), is
+through them). Lane J, the human writer (0152, 0155–0160, 0764–0766, 0914, 0915), is
 not a blocker: the playtest runs on the scripts that exist.
 
 ## Nick input
 
 **Playtest:** Nick plays Act 1 from New Game to "Act 1 ends" on the
-Pages build, and Chapter 1 at least (all of Act 1 if he wants) on his
+Pages build (once 0158 is done: the full web build on the restricted
+itch.io page it makes, as Pages then carries no private content), and Chapter 1 at least (all of Act 1 if he wants) on his
 Playdate (sideload: Simulator, *Device → Upload Game to Device*). He
 answers the checklist and reports anything else in plain words: bugs,
 feel, difficulty, story, looks, controls, sounds, pauses that feel long.
