@@ -22,9 +22,9 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                     ♣♣♣│ Frost  10/10  Mt4 Hit95 Rng1-2 │             ║                            ║
                     ♣♣♠│ Frost + Overcast  +1 use       │             ║                            ║
                        │ Heal    8/8   HP+10 Rng1       │             ║                            ║
+                       ├────────────────────────────────┤             ║                            ║
+                       │ fire; Forest → Burning         │             ║                            ║
                        └────────────────────────────────┘             ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -56,8 +56,8 @@ aaaaaaaaaaaaaaaaaaaakkkbccccccccccccccccccccccccccccccccbaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaakklbccccccccccccccccccgggggggcccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaabggggggggggggggggggggggggggggggggbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb

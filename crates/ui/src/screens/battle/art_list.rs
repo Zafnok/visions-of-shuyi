@@ -109,6 +109,15 @@ fn tag_name(words: Words<'_>, tag: UnitTag) -> &str {
     })
 }
 
+/// `×3 vs Mounted`: `mult` times the might against units tagged `tag`.
+pub fn effective_text(words: Words<'_>, tag: UnitTag, mult: u8) -> String {
+    let tag = tag_name(words, tag);
+    words.text_with(
+        "battle.art.desc.effective",
+        &[("mult", &mult), ("tag", &tag)],
+    )
+}
+
 /// An art's effect in a few words, built from its data: the number
 /// changes first (`+10 hit`, `×3 vs Mounted`, `min range 1`), then what the
 /// forecast's numbers don't show ([`note_text`], but `then strikes the
@@ -127,11 +136,7 @@ pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
         parts.push(words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)]));
     }
     for &(tag, mult) in &e.effective {
-        let tag = tag_name(words, tag);
-        parts.push(words.text_with(
-            "battle.art.desc.effective",
-            &[("mult", &mult), ("tag", &tag)],
-        ));
+        parts.push(effective_text(words, tag, mult));
     }
     if let Some(n) = e.axe_min_damage {
         parts.push(words.text_with("battle.art.desc.axe_min", &[("n", &n)]));

@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0453 — Show what a spell does while choosing it
@@ -97,14 +97,14 @@ it):
 
 ## Acceptance criteria
 
-- [ ] Unit test: `spell_effect_text` for every spell, non-empty, ≤ 40
+- [x] Unit test: `spell_effect_text` for every spell, non-empty, ≤ 40
       characters; two exact strings spot-checked, one of them Cinder
       Oath's, which says "no counter".
-- [ ] Harness test: moving Down in the spell list changes the focused
+- [x] Harness test: moving Down in the spell list changes the focused
       line's note (`menu.view().focused()`), onto a dimmed line too, and
       Confirm on the dimmed line leaves the list open.
-- [ ] Spell list snapshots show the note row.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Spell list snapshots show the note row.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -113,5 +113,31 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- The spell list (`Magic`, and the heal list opened by pointing at a hurt
+  ally, which shares `spell_menu`) now shows the focused line's
+  description under the list, and the focus stops on dimmed lines.
+  Confirm on a dimmed line still does nothing (the menu never chooses
+  one, and `CastTargeting::new` refuses a line with no targets).
+- Plain spell lines: `spell_effect_text` (`magic.rs`), from the data: an
+  attack's element (`fire`, `ice`, `no element`), its crit when not 0
+  (the line shows only might and hit), `×N vs Tag`, `no counter`, then
+  its tile cast (`Forest → Burning`, `Water/Sea → Ice`); a heal says
+  `restores Mag+10 HP to an ally` (the heal adds the caster's Mag).
+  Examples: Fire `fire; Forest → Burning`, Cinder Oath `fire; no
+  counter; Forest → Burning`, Force `no element; crit 5`.
+- Lines with a spell active show the active's effect
+  (`Spell: +5 might` for Overcast).
+- Deviation: `spell_effect_text` takes the terrain table too
+  (`spell_effect_text(words, terrain, def)`): the tile cast's terrain
+  ids need it for their names. The `×N vs Tag` text was factored out of
+  `art_effect_text` as `effective_text` so both lists share it.
+- The list still opens on the equipped spell only if it can be cast:
+  the focus is set before browsing is turned on.
+- Two tests' key presses relied on Down skipping dimmed lines; they now
+  step onto the dimmed line (and check Confirm does nothing there) or
+  go Up round to the last line.
+- Starting choice for the playtest (1064), not a rule: the tile cast's
+  note leaves out its duration (`(1 round)`), which the target preview
+  shows, so Cinder Oath's note fits in 40 characters.
+- Friction: estimate 45, measured 65 (1.4×), under 2×.
+- No follow-up tickets.
