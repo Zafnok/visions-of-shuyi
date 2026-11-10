@@ -699,6 +699,22 @@ impl PreparationsScreen {
         next
     }
 
+    /// Previous or Next unit on the Loadouts tab (ticket 0487): the unit
+    /// before or after the chosen one, wrapping, with the move sound. The
+    /// focus and the rows stay (clamped to the new unit's lists); in the
+    /// stock, a slot with nothing to take goes back to the slots.
+    fn step_unit(&mut self, forward: bool, ctx: &mut Ctx) {
+        self.message = None;
+        self.unit = Self::moved(self.unit, self.units().len(), forward, ctx);
+        self.slot = self.slot.min(self.slots().len().saturating_sub(1));
+        if self.focus == Focus::Stock {
+            match self.stock_rows(ctx).len() {
+                0 => (self.focus, self.stock) = (Focus::Slots, 0),
+                rows => self.stock = self.stock.min(rows - 1),
+            }
+        }
+    }
+
     /// Goes back to `focus` with the cancel sound.
     fn back(&mut self, focus: Focus, ctx: &mut Ctx) {
         self.focus = focus;
@@ -834,6 +850,9 @@ impl PreparationsScreen {
                 ctx.audio.menu(MenuSound::Select);
             }
             (Focus::Units | Focus::Spare | Focus::Pack, Cancel) => self.back(Focus::Tabs, ctx),
+            (Focus::Units | Focus::Slots | Focus::Stock, Action::PrevUnit | Action::NextUnit) => {
+                self.step_unit(action == Action::NextUnit, ctx);
+            }
 
             (Focus::Slots, CursorUp | CursorDown) => {
                 self.slot = Self::moved(self.slot, self.slots().len(), down, ctx);

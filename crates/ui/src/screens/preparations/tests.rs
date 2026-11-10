@@ -429,11 +429,14 @@ fn help_names_the_players_keys() {
     let mut s = screen(&c);
     assert_eq!(s.help(&c), "arrows choose · f open · d leave");
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "arrows choose · f change gear · d back");
+    assert_eq!(
+        s.help(&c),
+        "arrows choose · a s unit · f change gear · d back"
+    );
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "arrows choose · f stock · d back");
+    assert_eq!(s.help(&c), "arrows choose · a s unit · f stock · d back");
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "arrows choose · f take · d back");
+    assert_eq!(s.help(&c), "arrows choose · a s unit · f take · d back");
     update(
         &mut s,
         &mut c,
@@ -740,7 +743,10 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
     assert!(!view.on_tabs);
     assert_eq!(loadouts(&view).units.state, ListState::Focused);
     assert_eq!(gear(&view).slots.state, ListState::Idle);
-    assert_eq!(view.help, "arrows choose · f change gear · d back");
+    assert_eq!(
+        view.help,
+        "arrows choose · a s unit · f change gear · d back"
+    );
 
     // The lord's third slot: the unit is the chosen one.
     update(&mut s, &mut c, &[Confirm, CursorDown, CursorDown]);
@@ -1387,4 +1393,137 @@ fn a_unit_with_no_weapon_or_spell_has_no_speed_line() {
     let view = s.view(&c);
     assert_eq!(gear(&view).speed, None, "on the armour's stock");
     assert!(gear(&view).item_detail.is_none(), "the put-back row");
+}
+
+/// The chosen unit's name (the slots' title), its slot row and the stock
+/// row, with the focus.
+fn on(s: &PreparationsScreen, c: &Ctx) -> (String, usize, usize, Focus) {
+    let view = s.view(c);
+    let gear = gear(&view);
+    let name = gear.slots.title.split(" · ").next().unwrap_or_default();
+    (
+        name.to_owned(),
+        gear.slots.cursor,
+        gear.stock.cursor,
+        s.focus(),
+    )
+}
+
+/// Ticket 0487: in the slots, Next unit shows the next unit with the same
+/// slot row highlighted, and Previous unit goes back, with the move sound.
+#[test]
+fn next_and_previous_unit_in_the_slots_keep_the_slot_row() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The lord's armour, the fourth row.
+    update(&mut s, &mut c, &[Confirm, Confirm, CursorDown, CursorDown]);
+    update(&mut s, &mut c, &[CursorDown]);
+    assert_eq!(gear_title(&s, &c), "Stock: armor");
+    assert_eq!(sounds(&mut s, &mut c, &[Action::NextUnit]), ["menu_move"]);
+    assert_eq!(on(&s, &c), ("Test Knight".to_owned(), 3, 0, Focus::Slots));
+    assert_eq!(gear_title(&s, &c), "Stock: armor");
+    update(&mut s, &mut c, &[Action::PrevUnit]);
+    assert_eq!(on(&s, &c), ("Test Lord".to_owned(), 3, 0, Focus::Slots));
+    assert_eq!(loadouts(&s.view(&c)).units.state, ListState::Chosen);
+}
+
+/// Ticket 0487: from the last unit Next unit wraps to the first, and
+/// Previous from the first to the last.
+#[test]
+fn next_and_previous_unit_wrap_at_both_ends() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    update(&mut s, &mut c, &[Confirm, Action::PrevUnit]);
+    assert_eq!(on(&s, &c), ("Test Scout".to_owned(), 0, 0, Focus::Units));
+    update(&mut s, &mut c, &[Action::NextUnit]);
+    assert_eq!(on(&s, &c), ("Test Lord".to_owned(), 0, 0, Focus::Units));
+    // And in the slots.
+    update(&mut s, &mut c, &[Confirm, Action::PrevUnit]);
+    assert_eq!(on(&s, &c), ("Test Scout".to_owned(), 0, 0, Focus::Slots));
+    update(&mut s, &mut c, &[Action::NextUnit]);
+    assert_eq!(on(&s, &c), ("Test Lord".to_owned(), 0, 0, Focus::Slots));
+    // Not on the tabs, nor on the Pack tab.
+    update(&mut s, &mut c, &[Cancel, Cancel, Action::NextUnit]);
+    assert_eq!((s.focus(), s.unit), (Focus::Tabs, 0));
+}
+
+/// Ticket 0487: in the stock, Next unit keeps the stock and its row,
+/// clamped to the new list; with nothing to take for the new unit's slot
+/// it lands on the slots. The message clears.
+#[test]
+fn next_unit_in_the_stock_keeps_the_row_or_lands_on_the_slots() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // No armour in the stock and none on the mage: the lord's armour slot
+    // lists only the put-back row, and the mage's has nothing to take.
+    let items = s.prep.setup.items.clone();
+    let stock = &mut s.prep.setup.stock.items;
+    stock.retain(|id, _| !matches!(items.get(id), Some(ItemDef::Armour(_))));
+    let mage = s
+        .prep
+        .setup
+        .units
+        .iter_mut()
+        .find(|u| u.name == "Test Mage");
+    mage.expect("the mage").loadout.armour = None;
+    // The lord's weapons' stock, on its last row.
+    update(&mut s, &mut c, &[Confirm, Confirm, Confirm, CursorUp]);
+    let (_, _, row, focus) = on(&s, &c);
+    assert_eq!((row, focus), (3, Focus::Stock));
+    update(&mut s, &mut c, &[CursorUp, Confirm]);
+    assert!(s.message().is_some(), "a refused item says why");
+    update(&mut s, &mut c, &[CursorDown, Action::NextUnit]);
+    assert_eq!(s.message(), None);
+    let rows = s.stock_rows(&c).len();
+    let (name, slot, row, focus) = on(&s, &c);
+    assert_eq!((&*name, slot, focus), ("Test Knight", 0, Focus::Stock));
+    assert_eq!(row, 3.min(rows - 1), "{rows} rows");
+    // The armour slot's stock: the units who wear armour have the
+    // put-back row; the mage has nothing, so it's back to her slots.
+    update(
+        &mut s,
+        &mut c,
+        &[Cancel, CursorDown, CursorDown, CursorDown],
+    );
+    update(&mut s, &mut c, &[Action::PrevUnit, Confirm]);
+    assert_eq!(on(&s, &c), ("Test Lord".to_owned(), 3, 0, Focus::Stock));
+    for _ in 0..3 {
+        update(&mut s, &mut c, &[Action::NextUnit]);
+        if s.focus() == Focus::Slots {
+            break;
+        }
+    }
+    assert_eq!(on(&s, &c), ("Test Mage".to_owned(), 3, 0, Focus::Slots));
+    assert_eq!(stock_texts(&s, &c), [] as [String; 0]);
+}
+
+/// Ticket 0487: a stock row past the end of the next unit's list lands on
+/// its last row.
+#[test]
+fn previous_unit_clamps_the_stock_row_to_a_shorter_list() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The knight's armour stock, on its last row.
+    update(
+        &mut s,
+        &mut c,
+        &[Confirm, CursorDown, Confirm, CursorUp, CursorUp],
+    );
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    let before = s.stock_rows(&c).len();
+    assert_eq!(
+        on(&s, &c),
+        ("Test Knight".to_owned(), 3, before - 1, Focus::Stock)
+    );
+    // With the stock's armour gone the lord's list is shorter.
+    let items = s.prep.setup.items.clone();
+    let stock = &mut s.prep.setup.stock.items;
+    stock.retain(|id, _| !matches!(items.get(id), Some(ItemDef::Armour(_))));
+    update(&mut s, &mut c, &[Action::PrevUnit]);
+    let rows = s.stock_rows(&c).len();
+    assert!(0 < rows && rows < before, "{rows} of {before}");
+    assert_eq!(
+        on(&s, &c),
+        ("Test Lord".to_owned(), 3, rows - 1, Focus::Stock)
+    );
 }

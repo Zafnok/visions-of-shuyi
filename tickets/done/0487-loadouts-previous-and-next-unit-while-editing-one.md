@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0487 — Loadouts: previous and next unit while editing one
@@ -93,20 +93,20 @@ right goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] In Slots, Next unit moves to the next unit with the same slot row
+- [x] In Slots, Next unit moves to the next unit with the same slot row
       highlighted; Previous unit back (Harness test with the default
       right-handed keys, `crates/ui/tests/it/`, or a view test in
       `crates/ui/src/screens/preparations/tests.rs`).
-- [ ] In Stock, Next unit keeps Stock and the row (clamped); with no stock
+- [x] In Stock, Next unit keeps Stock and the row (clamped); with no stock
       rows for the new unit it lands on Slots (test).
-- [ ] From the last unit Next unit wraps to the first, and Previous from
+- [x] From the last unit Next unit wraps to the first, and Previous from
       the first to the last (test).
-- [ ] Rebound keys work: with `PrevUnit` bound to another key, that key
+- [x] Rebound keys work: with `PrevUnit` bound to another key, that key
       steps the unit and the help bar names it (test).
-- [ ] The Playdate's B + right steps the unit and doesn't back out of
+- [x] The Playdate's B + right steps the unit and doesn't back out of
       Slots (test with `use_playdate_buttons`).
-- [ ] `cargo shuyi check-keys` passes; no key is named in code or text.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo shuyi check-keys` passes; no key is named in code or text.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -116,4 +116,24 @@ right goes on the Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `PrevUnit` / `NextUnit` are in `PREPARATIONS` and handled on the
+  Loadouts tab in the Units, Slots and Stock focus by
+  `PreparationsScreen::step_unit`: wraps at both ends, move sound, the
+  message clears, the focus stays; the slot row is kept (clamped), the
+  stock row too (clamped), and an empty stock for the new unit's slot
+  lands on Slots. In Units the slot row is kept (clamped) too, unlike Up
+  and Down there, which put it back to the first.
+- Help lines `prep.help.units/slots/stock` (and the test pack) read
+  `{Cursor} choose · {PrevUnit} {NextUnit} unit · …`; snapshots updated.
+- `docs/design/weapons-and-items.md`: one bullet under *On the
+  Preparations screen*.
+- Tests: four view tests in `preparations/tests.rs` (slot row kept,
+  wrapping, stock row kept / fallback, stock row clamped), two Harness tests in
+  `tests/it/preparations.rs` (default keys with the help lines, a rebound
+  Next unit key), and a Playdate test (`B+→` / `B+←` step the unit in
+  Slots without backing out; B alone still backs out; the help line fits
+  50 columns).
+- The battle map's `the_longest_help_bar_fits_on_every_pad` is unchanged:
+  the Preparations help lines stay well under it.
+- No gameplay rule was decided. For the Act 1 playtest (1064): whether
+  stepping the unit feels right in the gear lists.

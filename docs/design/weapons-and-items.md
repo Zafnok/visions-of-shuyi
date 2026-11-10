@@ -356,6 +356,10 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
 - Pick a unit, then one of its slots, then an item from the stock: the item
   goes in the slot and what was there goes back to the stock. A weapon
   keeps its durability either way.
+- **Previous unit** and **Next unit** (Nick's playtest, ticket 0487)
+  change to the unit before or after while its slots or a slot's stock
+  are open, keeping the same slot row, so the next unit's gear is one key
+  away.
 - **Direct swaps** (Nick, PR #140): the list beside a slot also shows what
   the other units hold in such a slot (`Steel Bow 25/25 from Test Scout`).
   Taking one swaps the two units' items in one step: the archer gets the

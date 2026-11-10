@@ -394,18 +394,18 @@
     ),
     (
         key: "prep.help.units",
-        source: "{Cursor} choose · {Confirm} change gear · {Cancel} back",
-        text: "{Cursor} CHOOSE · {Confirm} CHANGE GEAR · {Cancel} BACK",
+        source: "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} change gear · {Cancel} back",
+        text: "{Cursor} CHOOSE · {PrevUnit} {NextUnit} UNIT · {Confirm} CHANGE GEAR · {Cancel} BACK",
     ),
     (
         key: "prep.help.slots",
-        source: "{Cursor} choose · {Confirm} stock · {Cancel} back",
-        text: "{Cursor} CHOOSE · {Confirm} STOCK · {Cancel} BACK",
+        source: "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} stock · {Cancel} back",
+        text: "{Cursor} CHOOSE · {PrevUnit} {NextUnit} UNIT · {Confirm} STOCK · {Cancel} BACK",
     ),
     (
         key: "prep.help.stock",
-        source: "{Cursor} choose · {Confirm} take · {Cancel} back",
-        text: "{Cursor} CHOOSE · {Confirm} TAKE · {Cancel} BACK",
+        source: "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} take · {Cancel} back",
+        text: "{Cursor} CHOOSE · {PrevUnit} {NextUnit} UNIT · {Confirm} TAKE · {Cancel} BACK",
     ),
     (
         key: "prep.help.spare",

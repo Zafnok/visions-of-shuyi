@@ -5,7 +5,8 @@
 
 use trpg_core::{BattleState, ItemId, UnitId};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
+use trpg_ui::input::{Action, Chord, LEFT_HANDED, RIGHT_HANDED};
+use trpg_ui::screens::preparations::PrepBody;
 
 /// The lord's unit (the first slot).
 const LORD: UnitId = UnitId(1);
@@ -277,4 +278,62 @@ fn the_archer_swaps_bows_with_the_benched_scout() {
         roster[4].loadout.weapon(0).map(|w| w.def.0.as_str()),
         Some("iron_bow")
     );
+}
+
+/// The Preparations screen's help line and chosen unit (the title of its
+/// slots: name · class).
+fn help_and_unit(h: &Harness) -> (String, String) {
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
+    let prep = prep.unwrap_or_else(|| panic!("no preparations: {:?}", h.screens()));
+    let view = prep.view(h.game().ctx());
+    let unit = match &view.body {
+        PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
+        _ => None,
+    };
+    (view.help, unit.unwrap_or_default())
+}
+
+/// Ticket 0487: in a unit's slots, Next unit (`s`, right-handed) changes
+/// to the next unit, keeping the slots, and Previous unit (`a`) goes back;
+/// the help lines name both keys.
+#[test]
+fn previous_and_next_unit_step_the_unit_whose_gear_is_shown() {
+    let mut h = preparations();
+    h.keys("f");
+    let (help, _) = help_and_unit(&h);
+    assert_eq!(help, "arrows choose · a s unit · f change gear · d back");
+    h.keys("f Down Down Down");
+    let (help, unit) = help_and_unit(&h);
+    assert_eq!(help, "arrows choose · a s unit · f stock · d back");
+    assert!(unit.starts_with("Test Lord"), "{unit}");
+    h.keys("s");
+    let (_, unit) = help_and_unit(&h);
+    assert!(unit.starts_with("Test Knight"), "{unit}");
+    h.keys("a a");
+    let (_, unit) = help_and_unit(&h);
+    assert!(unit.starts_with("Test Scout"), "wraps to the last: {unit}");
+    h.keys("s f");
+    let (help, unit) = help_and_unit(&h);
+    assert_eq!(help, "arrows choose · a s unit · f take · d back");
+    assert!(unit.starts_with("Test Lord"), "wraps to the first: {unit}");
+}
+
+/// Ticket 0487: with Next unit rebound, the new key steps the unit and the
+/// help line names it.
+#[test]
+fn a_rebound_next_unit_key_steps_the_unit_and_is_on_the_help_line() {
+    let mut h = preparations();
+    let mut b = h.game().ctx().layout_bindings(RIGHT_HANDED);
+    let x = Chord::parse("x").unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(b.bind(Action::NextUnit, 0, x), Ok(None));
+    if let Err(e) = h.ctx_mut().set_layout_bindings(RIGHT_HANDED, b) {
+        panic!("saving key bindings: {e}");
+    }
+    h.keys("f f");
+    let (help, unit) = help_and_unit(&h);
+    assert_eq!(help, "arrows choose · a x unit · f stock · d back");
+    assert!(unit.starts_with("Test Lord"), "{unit}");
+    h.keys("x");
+    let (_, unit) = help_and_unit(&h);
+    assert!(unit.starts_with("Test Knight"), "{unit}");
 }
