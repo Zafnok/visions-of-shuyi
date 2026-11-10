@@ -18,7 +18,7 @@ fn text_box(text: &TextView) -> (Rect, i32) {
 }
 
 /// Row of the name plates: the one under the portrait frames.
-const PLATE_Y: i32 = 19;
+const PLATE_Y: i32 = 23;
 
 fn face(portrait: &str, name: &str) -> FaceView {
     FaceView {
@@ -125,6 +125,20 @@ fn speaker_frame_is_double_and_bright() {
     assert_eq!(glyph(&buf, LEFT_X, FRAME_Y), Some('┌'));
     assert_eq!(glyph(&buf, RIGHT_X, FRAME_Y), Some('╔'));
     assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Test Knight ─"));
+}
+
+/// The text box's bottom border is on the screen's last row, so in full
+/// screen it sits near the bottom (0763), and the plates still stand one
+/// row above it.
+#[test]
+fn the_text_box_sits_on_the_last_row() {
+    let buf = painted(&two_speakers());
+    let last = i32::from(buf.height()) - 1;
+    assert!(row(&buf, last).starts_with('└'), "{}", row(&buf, last));
+    assert!(row(&buf, last).ends_with('┘'), "{}", row(&buf, last));
+    assert!(row(&buf, last - 1).starts_with('│'));
+    assert_eq!(PLATE_Y + 2, TEXT_BOX.y);
+    assert_eq!(row(&buf, PLATE_Y + 1).trim(), "");
 }
 
 /// The sprite of the portrait in the frame at column `x`.
@@ -235,16 +249,16 @@ fn the_overlay_leaves_the_rest_of_the_screen() {
         ..two_speakers()
     };
     let buf = painted(&view);
-    // Between the frames the screen below shows, darkened; below the text
-    // box (the battle's key help) is blanked.
+    // Between the frames the screen below shows, darkened; the text box
+    // covers the bottom rows (the battle's key help).
     let c = ctx();
     let below = c.palette.get(UiColor::Text).scale(PLACE_BRIGHTNESS);
-    for (x, y) in [(50, 5), (50, 20)] {
+    for (x, y) in [(50, 5), (50, 20), (50, PLATE_Y + 1)] {
         let cell = buf.get(x, y).map(|c| (c.glyph, c.fg));
         assert_eq!(cell, Some(('x', below)), "cell {x},{y}");
     }
-    for y in 28..32 {
-        assert_eq!(row(&buf, y).trim(), "", "row {y}");
+    for y in TEXT_BOX.y..32 {
+        assert!(!row(&buf, y).contains('x'), "row {y}");
     }
     let full = painted(&two_speakers());
     assert_eq!(glyph(&full, 50, 5), Some(' '));
@@ -291,8 +305,9 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
         buf.get(40, 10).map(|c| c.bg),
         Some(black.scale(PLACE_BRIGHTNESS))
     );
-    // The place covers the whole screen, below the text box too.
-    assert_eq!(buf.get(50, 31), place.get(50, 31));
+    // The place covers the whole screen, between the plates and the box
+    // too.
+    assert_eq!(buf.get(50, PLATE_Y + 1), place.get(50, PLATE_Y + 1));
     // Portraits, plates, box and caption go on top at full brightness.
     let lit = c.palette.get(UiColor::PanelBorderFocus);
     assert_eq!(buf.get(LEFT_X, FRAME_Y).map(|c| c.fg), Some(lit));
@@ -310,7 +325,7 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
         ..view
     });
     assert_eq!(over.get(40, 10), place.get(40, 10));
-    assert_eq!(over.get(50, 31), place.get(50, 31));
+    assert_eq!(over.get(50, PLATE_Y + 1), place.get(50, PLATE_Y + 1));
 }
 
 /// While an opening plays (0734) the place shows bright under the caption
@@ -492,15 +507,15 @@ fn the_text_box_grows_to_fit_the_replies() {
         &[line.trim(), line.trim(), line.trim()],
         replies(&["A.", "B.", "C."], 0),
     );
-    // 3 question rows, a blank one and 3 replies: 7 rows from row 20.
+    // 3 question rows, a blank one and 3 replies: 7 rows from row 24.
     let (rect, text_y) = text_box(&view.text);
-    assert_eq!(text_y, 20);
-    assert_eq!(rect, Rect::new(0, 18, 100, 10));
+    assert_eq!(text_y, 24);
+    assert_eq!(rect, Rect::new(0, 22, 100, 10));
     let buf = painted(&view);
-    assert!(row(&buf, 18).starts_with("┌── Test Knight ─"));
-    assert!(row(&buf, 20).starts_with("│   word word"));
-    assert!(row(&buf, 26).starts_with("│     C.  "));
-    assert!(row(&buf, 27).starts_with("└──"));
+    assert!(row(&buf, 22).starts_with("┌── Test Knight ─"));
+    assert!(row(&buf, 24).starts_with("│   word word"));
+    assert!(row(&buf, 30).starts_with("│     C.  "));
+    assert!(row(&buf, 31).starts_with("└──"));
 }
 
 /// Replies with no line before them get no blank row above them.

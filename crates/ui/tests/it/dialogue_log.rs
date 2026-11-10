@@ -294,7 +294,7 @@ fn the_text_box_names_the_log_key_only_while_it_has_one() {
     let bottom = |h: &Harness| {
         let buf = h.game().buffer();
         (0..100)
-            .map(|x| buf.get(x, 26).map_or(' ', |c| c.glyph))
+            .map(|x| buf.get(x, 30).map_or(' ', |c| c.glyph))
             .collect::<String>()
     };
     assert!(bottom(&h).contains("b log   f ▼"), "{}", bottom(&h));
