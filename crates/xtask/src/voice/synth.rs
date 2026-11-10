@@ -12,6 +12,7 @@ use std::process::Command;
 
 use serde::Serialize;
 
+use super::audit::{self, Measure};
 use super::files::Reader;
 #[cfg(test)]
 use crate::sfx;
@@ -68,6 +69,10 @@ pub trait Audio {
     /// Writes `wav`, trimmed and `gain` dB louder, as the game's clip
     /// `ogg`: OGG Vorbis, mono, 44.1 kHz (ADR-0046 rule 2).
     fn finish(&self, wav: &Path, gain: f64, ogg: &Path) -> Result<(), String>;
+
+    /// The length of the game's clip `ogg` and the pauses inside it
+    /// (ticket 0762).
+    fn measure(&self, ogg: &Path) -> Result<Measure, String>;
 }
 
 /// Everything `generate` runs.
@@ -140,7 +145,7 @@ impl Tools {
     /// Stand-ins for tests: a tone per line, heard as the words it was
     /// asked to say unless its key is in `mumbled`, and leveled by copying.
     pub fn fake(mumbled: &[&str]) -> Self {
-        let fake = || Box::new(Fake);
+        let fake = || Box::new(Fake(Vec::new()));
         Self {
             qwen3: fake(),
             chatterbox: fake(),
@@ -148,6 +153,15 @@ impl Tools {
             ear: Box::new(FakeEar(mumbled.iter().map(|&k| k.to_owned()).collect())),
             audio: fake(),
         }
+    }
+
+    #[cfg(test)]
+    /// [`fake`](Self::fake)'s tools, with the clips of `halting` measured
+    /// with a second's pause inside: a key, or `<key>@<seed>` for that
+    /// seed's take only.
+    pub fn halting(mut self, halting: &[&str]) -> Self {
+        self.audio = Box::new(Fake(halting.iter().map(|&k| k.to_owned()).collect()));
+        self
     }
 }
 
@@ -464,11 +478,34 @@ impl Audio for Ffmpeg {
         ])
         .map(drop)
     }
+
+    #[mutants::skip]
+    fn measure(&self, ogg: &Path) -> Result<Measure, String> {
+        let bytes = fs::read(ogg).map_err(|e| format!("reading {}: {e}", ogg.display()))?;
+        let millis = trpg_content::audio::ogg_length_ms(&bytes)
+            .ok_or_else(|| format!("{} is not an OGG Vorbis file", ogg.display()))?;
+        let length_s = f64::from(millis) / 1000.0;
+        let log = Self::run(&[
+            "-i".as_ref(),
+            ogg.as_os_str(),
+            "-af".as_ref(),
+            audit::silence_filter().as_ref(),
+            "-f".as_ref(),
+            "null".as_ref(),
+            "-".as_ref(),
+        ])?;
+        Ok(Measure {
+            length_s,
+            pauses: audit::inner_pauses(&log, length_s),
+        })
+    }
 }
 
-/// A reader for tests: a short phrase of tones per line.
+/// A reader and audio for tests: a short phrase of tones per line, each
+/// measured a second long, with a second's pause inside if its key is
+/// listed.
 #[cfg(test)]
-struct Fake;
+struct Fake(Vec<String>);
 
 #[cfg(test)]
 impl Synth for Fake {
@@ -499,6 +536,17 @@ impl Audio for Fake {
         fs::copy(wav, ogg)
             .map(drop)
             .map_err(|e| format!("copying to {}: {e}", ogg.display()))
+    }
+
+    fn measure(&self, ogg: &Path) -> Result<Measure, String> {
+        let name = |p: Option<&std::ffi::OsStr>| p.map(|s| s.to_string_lossy().into_owned());
+        let key = name(ogg.file_stem()).unwrap_or_default();
+        let seed = name(ogg.parent().and_then(Path::file_name)).unwrap_or_default();
+        let halting = self.0.contains(&key) || self.0.contains(&format!("{key}@{seed}"));
+        Ok(Measure {
+            length_s: 1.0,
+            pauses: if halting { vec![1.0] } else { Vec::new() },
+        })
     }
 }
 

@@ -8,7 +8,11 @@
 //! - `generate` makes them with the voice lab's readers, levels them and
 //!   writes the manifest; `--dry-run` only counts.
 //! - `script --character <id>` prints what an actor records.
+//! - `audit` lists each clip's length, pace and longest pause inside, and
+//!   flags those over the limits (ticket 0762); `generate` warns of each
+//!   clip it made over them.
 
+mod audit;
 mod files;
 mod plan;
 mod synth;
@@ -30,13 +34,15 @@ use plan::{Inputs, Plan, Wanted, Why};
 pub use synth::Tools;
 use synth::{Level, Request};
 
-pub const USAGE: &str = "usage: cargo xtask voice <status | generate | script> [options]\n\n\
+pub const USAGE: &str = "usage: cargo xtask voice <status | generate | script | audit> [options]\n\n\
   status                       per scene, the clips to make and why, the recorded clips\n                               \
   to record again and the clips to remove\n  \
   generate [--dry-run]         make them with the voice lab's readers and write the\n                               \
   manifest; --dry-run counts the lines and characters and makes nothing\n  \
   script --character <id>      a recording script for an actor: a character id, \">\"\n                               \
-  for the narrator, or lead_m / lead_f\n\n\
+  for the narrator, or lead_m / lead_f\n  \
+  audit                        each clip's length, pace and longest pause inside; flags\n                               \
+  those over the limits\n\n\
 options:\n  \
   --lang <code>                the language's folder (default en)\n  \
   --scene <id>                 one scene (a test scene too, or vix: the guide's lessons\n                               \
@@ -69,6 +75,7 @@ pub enum Command {
     Status,
     Generate { dry_run: bool },
     Script { character: String },
+    Audit,
 }
 
 /// Parses the arguments after `voice`.
@@ -79,6 +86,7 @@ pub fn parse(args: &[String]) -> Result<Args, String> {
         Some("script") => Command::Script {
             character: String::new(),
         },
+        Some("audit") => Command::Audit,
         _ => return Err(USAGE.to_owned()),
     };
     let mut parsed = Args {
@@ -410,6 +418,7 @@ pub fn generate(
     loaded.clips.retain(|c| !plan.remove.contains(c));
     save(folder, &loaded)?;
     let mut failed = Vec::new();
+    let mut flagged = Vec::new();
     let mut made = 0;
     // Every directed line goes to the one directed reader, whoever reads
     // the rest of its voice's lines (ADR-0109 rule 3).
@@ -428,9 +437,10 @@ pub fn generate(
         if group.is_empty() {
             continue;
         }
-        let (ok, bad) = make(folder, &mut loaded, tools, (reader, directed), &group, date)?;
-        made += ok;
-        failed.extend(bad);
+        let batch = make(folder, &mut loaded, tools, (reader, directed), &group, date)?;
+        made += batch.made;
+        failed.extend(batch.failed);
+        flagged.extend(batch.flagged);
     }
     let mut out = format!(
         "voice: made {made} clips, removed {}, in {}",
@@ -445,6 +455,9 @@ pub fn generate(
             SEEDS.len(),
             failed.join("\n  ")
         );
+    }
+    for row in &flagged {
+        let _ = write!(out, "\nwarning: {}: {}", row.file, row.flags());
     }
     Ok(out)
 }
@@ -487,9 +500,20 @@ fn save(folder: &Folder, loaded: &Loaded) -> Result<(), String> {
 /// its own.
 static RUNS: AtomicUsize = AtomicUsize::new(0);
 
+/// What a batch of [`make`] did.
+struct Batch {
+    /// How many clips it made.
+    made: usize,
+    /// The files of the lines no take said right.
+    failed: Vec<String>,
+    /// The clips it made that are over the audit's limits.
+    flagged: Vec<audit::Row>,
+}
+
 /// Makes `group`'s clips, all read by one reader (`by`: the cast's reader
-/// and whether they are directed). Returns how many were made and the
-/// files of those no take said right.
+/// and whether they are directed). A take that doesn't say the words is
+/// tried again with the next seed; so is one over the audit's limits
+/// (ticket 0762), and the line keeps its best take, the one least over.
 fn make(
     folder: &Folder,
     loaded: &mut Loaded,
@@ -497,12 +521,13 @@ fn make(
     by: (Reader, bool),
     group: &[&Wanted],
     date: &str,
-) -> Result<(usize, Vec<String>), String> {
+) -> Result<Batch, String> {
     let (tool, model) = tools.synth(by.0, by.1).made_by();
     let run = RUNS.fetch_add(1, Ordering::Relaxed);
     let scratch = std::env::temp_dir().join(format!("trpg-voice-{}-{run}", std::process::id()));
     let mut pending: Vec<&Wanted> = group.to_vec();
-    let mut made = 0;
+    // Each line's best take so far, by file.
+    let mut best: BTreeMap<String, audit::Row> = BTreeMap::new();
     let mut voice_levels: BTreeMap<String, Level> = BTreeMap::new();
     for seed in SEEDS {
         if pending.is_empty() {
@@ -535,17 +560,26 @@ fn make(
             } else {
                 synth::VOICE_LUFS
             };
+            let finished = out.join(format!("{}.ogg", request.key));
+            tools
+                .audio
+                .finish(&take, synth::gain_for(level, target), &finished)?;
             let file = w.file();
+            let row = audit::judge(&file, &w.spoken, &tools.audio.measure(&finished)?);
+            if row.flagged() {
+                missed.push(w);
+            }
+            if best.get(&file).is_some_and(|b| b.over() <= row.over()) {
+                continue;
+            }
             let ogg = folder.dir.join(&file);
             if let Some(parent) = ogg.parent() {
                 fs::create_dir_all(parent)
                     .map_err(|e| format!("creating {}: {e}", parent.display()))?;
             }
-            tools
-                .audio
-                .finish(&take, synth::gain_for(level, target), &ogg)?;
+            fs::copy(&finished, &ogg).map_err(|e| format!("writing {}: {e}", ogg.display()))?;
             record(loaded, w, (&tool, &model), date);
-            made += 1;
+            best.insert(file, row);
         }
         save(folder, loaded)?;
         pending = missed;
@@ -553,7 +587,15 @@ fn make(
     // Scratch files in the system's temporary folder: failing to tidy up
     // is not a failure of the command.
     let _ = fs::remove_dir_all(&scratch);
-    Ok((made, pending.iter().map(|w| w.file()).collect()))
+    Ok(Batch {
+        made: best.len(),
+        failed: pending
+            .iter()
+            .map(|w| w.file())
+            .filter(|file| !best.contains_key(file))
+            .collect(),
+        flagged: best.into_values().filter(audit::Row::flagged).collect(),
+    })
 }
 
 /// The request for `w`'s take.
@@ -600,6 +642,24 @@ fn record(loaded: &mut Loaded, w: &Wanted, (tool, model): (&str, &str), date: &s
     );
 }
 
+/// `audit`: every clip of the manifest in `scripts`' scenes, judged by its
+/// length, pace and pauses (the [`audit`](mod@audit) module). Returns the report.
+pub fn audit(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> Result<String, String> {
+    let clips = read_optional(&folder.dir, MANIFEST_FILE)?
+        .map_or(Ok(Vec::new()), |t| files::manifest(&t))?;
+    let mut rows = Vec::new();
+    let ours = clips
+        .iter()
+        .filter(|c| scripts.scenes.contains(c.line.scene_id()));
+    for clip in ours {
+        let file = trpg_content::voice::clip_file(&clip.line, clip.variant);
+        let measure = tools.audio.measure(&folder.dir.join(&file))?;
+        rows.push(audit::judge(&file, &clip.spoken, &measure));
+    }
+    rows.sort_by(|a, b| a.file.cmp(&b.file));
+    Ok(audit::report(&rows))
+}
+
 /// Runs `args` from the repository at `root`. Returns the report.
 pub fn run(root: &Path, args: &Args) -> Result<String, String> {
     let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
@@ -627,6 +687,7 @@ pub fn run(root: &Path, args: &Args) -> Result<String, String> {
             generate(&folder, &scripts, &mut tools, *dry_run, &today())
         }
         Command::Script { character } => script(&folder, &scripts, &tools, character),
+        Command::Audit => audit(&folder, &scripts, &tools),
     }
 }
 
