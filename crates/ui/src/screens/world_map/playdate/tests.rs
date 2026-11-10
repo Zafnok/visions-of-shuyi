@@ -531,6 +531,10 @@ fn what_a_window_hides() {
     assert_eq!(count((7, 13), (3, -10)), 1);
     assert_eq!(count((7, 13), (2, -10)), 0);
     assert_eq!(count((7, 13), (3, -7)), 0);
+    // Moved, on the window's top row (its row above out of it), and on the
+    // row under it (only its row above in it).
+    assert_eq!(count((7, 12), (3, -10)), 1);
+    assert_eq!(count((7, 15), (3, -10)), 1);
     // The army counts too.
     v.army = Pos::new(12, 3);
     assert_eq!(hidden(&v, (0, 0), rect), 1);
