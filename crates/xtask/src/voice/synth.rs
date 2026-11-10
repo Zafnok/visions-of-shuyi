@@ -156,8 +156,9 @@ impl Tools {
     }
 
     #[cfg(test)]
-    /// [`fake`](Self::fake)'s tools, with the clips of `halting` (their
-    /// keys) measured with a second's pause inside.
+    /// [`fake`](Self::fake)'s tools, with the clips of `halting` measured
+    /// with a second's pause inside: a key, or `<key>@<seed>` for that
+    /// seed's take only.
     pub fn halting(mut self, halting: &[&str]) -> Self {
         self.audio = Box::new(Fake(halting.iter().map(|&k| k.to_owned()).collect()));
         self
@@ -538,8 +539,10 @@ impl Audio for Fake {
     }
 
     fn measure(&self, ogg: &Path) -> Result<Measure, String> {
-        let key = ogg.file_stem().map(|s| s.to_string_lossy().into_owned());
-        let halting = key.is_some_and(|k| self.0.contains(&k));
+        let name = |p: Option<&std::ffi::OsStr>| p.map(|s| s.to_string_lossy().into_owned());
+        let key = name(ogg.file_stem()).unwrap_or_default();
+        let seed = name(ogg.parent().and_then(Path::file_name)).unwrap_or_default();
+        let halting = self.0.contains(&key) || self.0.contains(&format!("{key}@{seed}"));
         Ok(Measure {
             length_s: 1.0,
             pauses: if halting { vec![1.0] } else { Vec::new() },

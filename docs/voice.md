@@ -158,8 +158,15 @@ with the spaces around it, is sent as plain punctuation
 | After a sentence's end, or at the line's start | nothing | `Aye. ...Burn it.` → `Aye. Burn it.` |
 | Before other punctuation | nothing | `What...?` → `What?` |
 | At the line's end | `.` | `Should've waited for--` → `Should've waited for.` |
-| Before a new sentence (a capital word that isn't "I") | `.` | `waited for-- Come on` → `waited for. Come on` |
-| Anywhere else | `,` | `Wait... no.` → `Wait, no.` |
+| A break (`--`) anywhere else | `—` | `that's all they-- Your Grace.` → `that's all they— Your Grace.` |
+| A trailing-off before a new sentence (a capital word that isn't "I") | `.` | `Wait... Aske!` → `Wait. Aske!` |
+| A trailing-off anywhere else | `,` | `Wait... no.` → `Wait, no.` |
+
+A run of marks (`danger-- ...No.`) is read as one, a break if it has a
+`--`. The table is from a trial on Chapter 1's fourteen worst lines
+(ticket 0762's Completion notes): sent this way they took 15 % less time
+than as written; one `…` saved 6 %; a full stop at a break read the
+cut-off as a sentence of its own and was slower than the em dash.
 
 The text box shows the line as written, and the manifest's `spoken` keeps
 it; only what the reader is sent changes. A beat the script wants is a
@@ -217,8 +224,10 @@ in `crates/xtask/src/voice/synth.rs`, marked *tunable*. The manifest and
 `sent.ron` are written after every batch, so a stopped run keeps what it
 made. A `Recorded` clip is never made or replaced. `--dry-run` counts the
 clips and characters it would send, directed ones apart, and makes nothing.
-Every clip made is audited (below), and the report ends with a warning for
-each over a limit: `warning: <file>: pause 0.92 s, pace 0.190 s/letter`.
+Every take that says the words is also audited (below): one over a limit
+is tried again with the next seed too, and the line keeps its best take,
+the one least over. The report ends with a warning for each clip kept over
+a limit: `warning: <file>: pause 0.92 s, pace 0.190 s/letter`.
 
 A clip that transcribes right but sounds wrong is made again by removing its
 entry from `voice.ron` (and its file) and running `generate`: the next take
@@ -241,9 +250,11 @@ length, its letters (of `spoken`), its pace in seconds per letter, and its
 longest pause inside it (ffmpeg's `silencedetect`: every sample under
 −40 dB for 0.15 s or more, stretches 0.05 s apart joined, the silence at
 either end left out). A `!` marks a clip over a limit: a pause longer than
-0.6 s, or, for a line of 20 letters or more, a pace slower than 0.17 s a
-letter (the 90th percentile of Chapter 1's and the guide's clips before
-ticket 0762, 0.157, plus a margin; their median was 0.095). The last lines
+0.8 s (the 90th percentile of Chapter 1's and the guide's lines with no
+direction and no `...` or `--` before ticket 0762, 0.64, plus a margin),
+or, for a line of 20 letters or more, a pace slower than 0.17 s a letter
+(the 90th percentile of all their clips then, 0.157, plus a margin; the
+median was 0.095). The last lines
 give the pace's median and 90th percentile and the counts over each limit.
 The limits are in `crates/xtask/src/voice/audit.rs`, marked *tunable*;
 the Act 1 playtest (1064) judges them. A clip flagged that sounds wrong is

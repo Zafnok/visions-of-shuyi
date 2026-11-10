@@ -511,7 +511,9 @@ struct Batch {
 }
 
 /// Makes `group`'s clips, all read by one reader (`by`: the cast's reader
-/// and whether they are directed), and audits each.
+/// and whether they are directed). A take that doesn't say the words is
+/// tried again with the next seed; so is one over the audit's limits
+/// (ticket 0762), and the line keeps its best take, the one least over.
 fn make(
     folder: &Folder,
     loaded: &mut Loaded,
@@ -524,8 +526,8 @@ fn make(
     let run = RUNS.fetch_add(1, Ordering::Relaxed);
     let scratch = std::env::temp_dir().join(format!("trpg-voice-{}-{run}", std::process::id()));
     let mut pending: Vec<&Wanted> = group.to_vec();
-    let mut made = 0;
-    let mut flagged = Vec::new();
+    // Each line's best take so far, by file.
+    let mut best: BTreeMap<String, audit::Row> = BTreeMap::new();
     let mut voice_levels: BTreeMap<String, Level> = BTreeMap::new();
     for seed in SEEDS {
         if pending.is_empty() {
@@ -558,21 +560,26 @@ fn make(
             } else {
                 synth::VOICE_LUFS
             };
+            let finished = out.join(format!("{}.ogg", request.key));
+            tools
+                .audio
+                .finish(&take, synth::gain_for(level, target), &finished)?;
             let file = w.file();
+            let row = audit::judge(&file, &w.spoken, &tools.audio.measure(&finished)?);
+            if row.flagged() {
+                missed.push(w);
+            }
+            if best.get(&file).is_some_and(|b| b.over() <= row.over()) {
+                continue;
+            }
             let ogg = folder.dir.join(&file);
             if let Some(parent) = ogg.parent() {
                 fs::create_dir_all(parent)
                     .map_err(|e| format!("creating {}: {e}", parent.display()))?;
             }
-            tools
-                .audio
-                .finish(&take, synth::gain_for(level, target), &ogg)?;
-            let row = audit::judge(&file, &w.spoken, &tools.audio.measure(&ogg)?);
-            if row.flagged() {
-                flagged.push(row);
-            }
+            fs::copy(&finished, &ogg).map_err(|e| format!("writing {}: {e}", ogg.display()))?;
             record(loaded, w, (&tool, &model), date);
-            made += 1;
+            best.insert(file, row);
         }
         save(folder, loaded)?;
         pending = missed;
@@ -581,9 +588,13 @@ fn make(
     // is not a failure of the command.
     let _ = fs::remove_dir_all(&scratch);
     Ok(Batch {
-        made,
-        failed: pending.iter().map(|w| w.file()).collect(),
-        flagged,
+        made: best.len(),
+        failed: pending
+            .iter()
+            .map(|w| w.file())
+            .filter(|file| !best.contains_key(file))
+            .collect(),
+        flagged: best.into_values().filter(audit::Row::flagged).collect(),
     })
 }
 

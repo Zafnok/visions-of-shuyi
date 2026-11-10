@@ -119,12 +119,15 @@ fn break_mark(text: &str) -> Option<usize> {
     }
 }
 
-/// What a break mark between `before` and `after` is read as (ticket
+/// What a run of marks between `before` and `after` is read as (ticket
 /// 0762): the readers hold a long silence at every `...` and `--`, and
-/// longer at several, so a mark after a sentence's end or before other
-/// punctuation goes, one at the end is a full stop, one before a new
-/// sentence (a capital that isn't "I") a full stop, and any other a comma.
-fn break_as(before: &str, after: &str) -> &'static str {
+/// longer at several. A run after a sentence's end or before other
+/// punctuation goes; one at the end is a full stop. Any other is an em
+/// dash if it has a break (`--`, `broken`): the readers cut off at it as a
+/// person does. A trailing-off is a full stop before a new sentence (a
+/// capital that isn't "I"), else a comma. The trial that
+/// chose these is in ticket 0762's Completion notes.
+fn break_as(before: &str, after: &str, broken: bool) -> &'static str {
     let ended = before.trim_end_matches(['"', '\u{201d}', '\'', ' ']);
     let next = after.trim_start_matches(['"', '\u{201d}', ' ']);
     let word: String = next
@@ -137,15 +140,16 @@ fn break_as(before: &str, after: &str) -> &'static str {
     match (ended.chars().next_back(), next.chars().next()) {
         (Some(last), Some(_)) if ends(last) => " ",
         (Some(last), None) if !ends(last) => ".",
+        (Some(_), Some(first)) if !ends(first) && broken => "\u{2014} ",
         (Some(_), Some(first)) if !ends(first) && new_sentence => ". ",
         (Some(_), Some(first)) if !ends(first) => ", ",
         _ => "",
     }
 }
 
-/// `text` as it is sent to a reader (ticket 0762): every trailing-off
-/// (`...`, `…`) and break (`--`), with the spaces around it, read as
-/// [`break_as`] says. The words and every other mark stay.
+/// `text` as it is sent to a reader (ticket 0762): every run of
+/// trailing-offs (`...`, `…`) and breaks (`--`), with the spaces around
+/// it, read as [`break_as`] says. The words and every other mark stay.
 pub fn for_reader(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
@@ -156,16 +160,20 @@ pub fn for_reader(text: &str) -> String {
             continue;
         }
         // The run of marks and the spaces between them.
+        let mut broken = false;
         loop {
             let spaces = rest.len() - rest.trim_start().len();
             match break_mark(&rest[spaces..]) {
-                Some(len) => rest = &rest[spaces + len..],
+                Some(len) => {
+                    broken |= rest[spaces..].starts_with('-');
+                    rest = &rest[spaces + len..];
+                }
                 None => break,
             }
         }
         rest = rest.trim_start();
         out.truncate(out.trim_end().len());
-        out.push_str(break_as(&out, rest));
+        out.push_str(break_as(&out, rest, broken));
     }
     out
 }

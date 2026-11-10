@@ -12,8 +12,11 @@ pub const PAUSE_NOISE_DB: i32 = -40;
 /// The shortest stretch of quiet `silencedetect` reports, seconds.
 pub const PAUSE_SHORTEST_S: f64 = 0.15;
 /// The longest pause a clip may have inside it, seconds (*tunable*, the
-/// agent's starting value, judged in the Act 1 playtest).
-pub const LONGEST_PAUSE_S: f64 = 0.6;
+/// agent's starting value, judged in the Act 1 playtest): the 90th
+/// percentile of Chapter 1's and the guide's lines with no direction and
+/// no `...` or `--` before ticket 0762 (0.64) plus a margin. The ticket
+/// started at 0.6, which flagged 13 of those 75 plain lines.
+pub const LONGEST_PAUSE_S: f64 = 0.8;
 /// The slowest pace a clip may have, seconds per letter (*tunable*): the
 /// 90th percentile of Chapter 1's and the guide's clips before ticket 0762
 /// (0.157) plus a margin. Their median was 0.095.
@@ -107,6 +110,17 @@ impl Row {
     /// Whether it is over a limit.
     pub const fn flagged(&self) -> bool {
         self.slow || self.halting
+    }
+
+    /// How far over the limits it is: its pause and its pace (when
+    /// judged) over their limits, the larger; over 1 is flagged.
+    pub fn over(&self) -> f64 {
+        let pace = if self.letters >= PACE_LETTERS {
+            self.pace / SLOWEST_PACE_S
+        } else {
+            0.0
+        };
+        (self.longest_pause / LONGEST_PAUSE_S).max(pace)
     }
 
     /// What is wrong with it, for a report.

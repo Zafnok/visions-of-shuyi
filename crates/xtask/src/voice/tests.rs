@@ -286,7 +286,7 @@ fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
             ("Wait... no. Not yet.", "Wait, no. Not yet."),
             (
                 "Aye. ...Burn it. I burned it and he didn't even-- never mind.",
-                "Aye. Burn it. I burned it and he didn't even, never mind."
+                "Aye. Burn it. I burned it and he didn't even\u{2014} never mind."
             ),
         ]
     );
@@ -323,22 +323,21 @@ fn a_reader_is_sent_trailing_offs_and_breaks_as_punctuation() {
         ("...Aye. Well.", "Aye. Well."),
         ("Should've waited for--", "Should've waited for."),
         ("\"I never--\"", "\"I never.\""),
-        // Mid-sentence: a comma, or a full stop before a new sentence.
+        // A trailing-off mid-line: a comma, or a full stop before a new
+        // sentence.
         ("Wait... no. Not yet.", "Wait, no. Not yet."),
-        ("Kid-- no. Don't.", "Kid, no. Don't."),
-        ("No-- I mean-- yes.", "No, I mean, yes."),
-        ("waited for-- Come on, then!", "waited for. Come on, then!"),
+        ("Wait... Aske!", "Wait. Aske!"),
+        ("Wait... I'll go.", "Wait, I'll go."),
+        ("Go. ...", "Go."),
+        // A break mid-line is an em dash, whatever follows.
+        ("Kid-- no. Don't.", "Kid\u{2014} no. Don't."),
+        ("No-- I mean-- yes.", "No\u{2014} I mean\u{2014} yes."),
+        ("all they-- Your Grace.", "all they\u{2014} Your Grace."),
         (
             "she's no danger-- ...No. I can't.",
-            "she's no danger. No. I can't.",
+            "she's no danger\u{2014} No. I can't.",
         ),
-        ("Help me up -- no, don't.", "Help me up, no, don't."),
-        (
-            "Don't-- I'll be in the ditch.",
-            "Don't, I'll be in the ditch.",
-        ),
-        ("Go. ...", "Go."),
-        ("Not yet-- Aske!", "Not yet. Aske!"),
+        ("Help me up -- no, don't.", "Help me up\u{2014} no, don't."),
         // Before other punctuation, and the one-character ellipsis.
         ("What...? Now?", "What? Now?"),
         ("Wait\u{2026} no.", "Wait, no."),
@@ -965,23 +964,31 @@ fn a_clip_is_flagged_for_a_long_pause_or_a_slow_pace_of_a_long_enough_line() {
     assert!((fine.longest_pause - 0.55).abs() < 1e-9);
     assert!((fine.pace - 0.08).abs() < 1e-9);
 
-    let halting = audit::judge("a/a_1.ogg", words, &measure(3.2, &[0.2, 0.7]));
+    let halting = audit::judge("a/a_1.ogg", words, &measure(3.2, &[0.2, 0.9]));
     assert!(halting.halting && !halting.slow);
-    assert_eq!(halting.flags(), "pause 0.70 s");
+    assert_eq!(halting.flags(), "pause 0.90 s");
+    // How far over: the larger of the pause's and the pace's shares.
+    assert!((halting.over() - 0.9 / audit::LONGEST_PAUSE_S).abs() < 1e-9);
+    assert!((fine.over() - 0.55 / audit::LONGEST_PAUSE_S).abs() < 1e-9);
     let slow = audit::judge("a/a_1.ogg", words, &measure(8.0, &[]));
     assert!(slow.slow && !slow.halting);
     assert_eq!(slow.flags(), "pace 0.200 s/letter");
+    assert!((slow.over() - 0.2 / audit::SLOWEST_PACE_S).abs() < 1e-9);
     // At the limits exactly, nothing is flagged; a line of 20 letters is
     // judged, of 19 not.
     let twenty = "Hold the gates, watchman.";
     assert_eq!(audit::letters(twenty), 20);
     assert!((3.4_f64 / 20.0 - audit::SLOWEST_PACE_S).abs() < f64::EPSILON);
-    assert!(!audit::judge("a/a_1.ogg", twenty, &measure(3.4, &[0.6])).flagged());
+    assert!(!audit::judge("a/a_1.ogg", twenty, &measure(3.4, &[0.8])).flagged());
     assert!(audit::judge("a/a_1.ogg", twenty, &measure(3.5, &[])).slow);
     assert!(!audit::judge("a/a_1.ogg", "Hold the gate, watchman.", &measure(3.5, &[])).slow);
     // A word or two is mostly breath: its pace isn't judged.
     let short = audit::judge("a/a_1.ogg", "Not alone.", &measure(1.5, &[]));
     assert!(!short.flagged(), "{short:?}");
+    assert!(
+        short.over().abs() < 1e-9,
+        "a short line's pace counts for nothing"
+    );
     let both = audit::judge("a/a_1.ogg", words, &measure(9.0, &[1.2]));
     assert_eq!(both.flags(), "pause 1.20 s, pace 0.225 s/letter");
 }
@@ -1011,7 +1018,7 @@ fn the_audit_report_marks_the_flagged_clips_and_counts_them() {
     );
     assert_eq!(
         lines[6],
-        "2 flagged: 1 with a pause over 0.6 s, 1 slower than 0.17 s/letter"
+        "2 flagged: 1 with a pause over 0.8 s, 1 slower than 0.17 s/letter"
     );
 }
 
@@ -1027,9 +1034,13 @@ fn generate_warns_of_a_halting_clip_and_audit_lists_every_clip() {
         &load(&folder, &scripts).unwrap(),
         &Tools::fake(&[]),
     );
+    // The first line halts at every seed; the second only at the first,
+    // so its next take is kept.
     let halting = plan.wanted[0].key();
-    let mut tools = Tools::fake(&[]).halting(&[&halting]);
+    let first_take = format!("{}@{}", plan.wanted[1].key(), SEEDS[0]);
+    let mut tools = Tools::fake(&[]).halting(&[&halting, &first_take]);
     let report = generate(&folder, &scripts, &mut tools, false, "2026-11-09").unwrap();
+    assert!(report.starts_with("voice: made 16 clips"), "{report}");
     let warning = format!("\nwarning: {}: pause 1.00 s", plan.wanted[0].file());
     assert!(report.ends_with(&warning), "{report}");
     assert_eq!(report.matches("warning:").count(), 1, "{report}");
@@ -1040,7 +1051,7 @@ fn generate_warns_of_a_halting_clip_and_audit_lists_every_clip() {
         audit.contains(&format!("! {}", plan.wanted[0].file())),
         "{audit}"
     );
-    assert!(audit.ends_with("1 flagged: 1 with a pause over 0.6 s, 0 slower than 0.17 s/letter"));
+    assert!(audit.ends_with("1 flagged: 1 with a pause over 0.8 s, 0 slower than 0.17 s/letter"));
     // Another scene's clips aren't this audit's.
     let other = Scripts::new(&content, BTreeSet::from(["vix".to_owned()]));
     assert!(audit_of_none(&folder, &other, &tools));
