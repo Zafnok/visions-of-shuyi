@@ -768,7 +768,8 @@ fn check_presence(
         .collect();
     let cast = dialogue::Cast::new(new_game, battles, chapters, supports)
         .with_camp(camp)
-        .with_joins(&joins, battles, chapters);
+        .with_joins(&joins, battles, chapters)
+        .with_places(&worldmap::place_scenes(), battles);
     let errors: Vec<ContentError> = scripts
         .parsed
         .iter()

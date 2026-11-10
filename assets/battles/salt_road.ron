@@ -1,0 +1,47 @@
+// The Salt Road (ticket 1071; ch05.dlg, ch05_salt_road_intro and
+// _victory): a fixed skirmish of Chapter 5 that guards the road from the
+// heartland to Saltmere, so every player wins it on the way to the
+// Envoy's House (world-structure.md). Rout the Hound post at the march
+// stone: one at the stone, the rest by the hut behind it, who come out
+// when the party is close enough to count. (Built with two at the stone;
+// the autobalance took the guard off it.)
+//
+// Reached from the world map (worldmaps/act1.ron, `salt_road`). Every
+// number here is *the agent's starting value*, set by the bots (`cargo
+// shuyi autobalance --stage salt_road`) and judged in the Act 1 playtest
+// (1064). The army is the one Chapters 1 to 4 leave, so no `bots_army`:
+// the bots' arrival army and the chapter tests fight here before the
+// Envoy's House (1071).
+(
+    id: "salt_road",
+    map: "salt_road",
+    // The road down from the north. Hedda joins only at the Envoy's
+    // House, past this.
+    player_slots: [
+        (character: "lead", pos: (8, 1)),
+        (character: "retainer", pos: (8, 2)),
+        (character: "sergeant", pos: (9, 0)),
+        (character: "poacher", pos: (6, 0)),
+        (character: "keeper", pos: (7, 0)),
+        (character: "heretic", pos: (9, 1)),
+        (character: "defector", pos: (7, 1)),
+        (character: "prizefighter", pos: (7, 2)),
+    ],
+    enemies: [
+        // The march stone.
+        (template: "hound_swordsman", pos: (7, 7), level: Some(11)),
+        // The hut.
+        (template: "hound_archer", pos: (11, 7), ai: Guard, level: Some(12)),
+        (template: "hound_raider", pos: (10, 8), ai: Guard, level: Some(11)),
+        (template: "hound_archer", pos: (12, 8), ai: Guard, level: Some(11)),
+        (template: "hound_rider", pos: (11, 9), ai: Guard, level: Some(11)),
+    ],
+    preparations: true,
+    pack_cap: 3,
+    clear_gold: 500,
+    objective: Rout(),
+    difficulty: Easy,
+    kind: FixedSkirmish,
+    music: Pool("skirmish"),
+    seed: 1073,
+)

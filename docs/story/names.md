@@ -209,6 +209,7 @@ just as it does a full name.
 | `brother_tor` | Tor | Aske's older brother, burned at the Ashfields |
 | `messenger` | Messenger | A Vigil messenger with no name of his own: the name plate in Chapter 1's last scene |
 | `herald` | Herald | A crown herald with no name of his own: the name plate in Chapter 2's scene after the battle |
+| `patrol_leader` | Corporal | The leader of the Hound patrol on Millhaven Road, with no name of his own: the name plate in Chapter 4's optional fight, where beating him wins (1071) |
 | `hound_officer` | Officer | The Hound sergeant who leads the attack on the envoy's house, with no name of his own: the Chapter 5 boss's name plate |
 | `magistrate` | Magistrate | The Saltmere League magistrate who sold the envoy's house, with no name of his own: the name plate in Chapter 5's scene after the battle |
 | `brennish_commander` | Commander | The Brennish commander at the Ashfields, who believes the envoy's proof, with no name of his own: the name plate in Chapter 6's scene after the battle |

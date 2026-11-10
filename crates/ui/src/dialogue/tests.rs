@@ -986,7 +986,8 @@ fn a_scene_with_nothing_to_say_for_those_there_starts_finished() {
 proptest! {
     /// Every scene of the game, played for any army: nobody the army can
     /// lose is on screen unless they are there, whichever replies are
-    /// picked. (Those a scene can't play without are always there.)
+    /// picked. (Those a scene can't play without are always there: Gil in
+    /// the scene before his fight on Millhaven Road, 1071.)
     #[test]
     fn no_embedded_scene_shows_someone_who_is_gone(
         there in proptest::collection::vec(any::<bool>(), 8),
@@ -999,7 +1000,8 @@ proptest! {
             &content.battles,
             &content.chapters,
             &content.supports,
-        );
+        )
+        .with_places(&trpg_content::worldmap::place_scenes(), &content.battles);
         prop_assert!(!cast.may_be_absent.is_empty());
         let army = cast.may_be_absent.iter().zip(&there).filter(|(_, t)| **t);
         let army: Vec<CharacterId> = army.map(|(c, _)| c.clone()).collect();

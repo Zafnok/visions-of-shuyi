@@ -15,32 +15,137 @@
     EndPhase,
     // Turn 2
     Act(unit:(6),dest:(x:14,y:10),action:Cast(spell:("fire"),target:Unit((15)),active:None)),
-    Act(unit:(2),dest:(x:12,y:8),action:Attack(target:(13),slot:1,active:None,art:Some(("line_pierce")))),
-    Act(unit:(1),dest:(x:12,y:10),action:Attack(target:(14),slot:0,active:None,art:Some(("guard_break")))),
-    Act(unit:(5),dest:(x:13,y:13),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
-    Act(unit:(4),dest:(x:20,y:13),action:Wait),
+    Act(unit:(4),dest:(x:12,y:13),action:Attack(target:(14),slot:0,active:Some(("vault")),art:None)),
+    MoveAfter(unit:(4),to:Some((x:13,y:13))),
+    Act(unit:(7),dest:(x:12,y:8),action:Attack(target:(13),slot:0,active:Some(("keen_edge")),art:None)),
+    Act(unit:(2),dest:(x:11,y:11),action:Attack(target:(14),slot:0,active:None,art:Some(("unhorse")))),
+    Act(unit:(5),dest:(x:14,y:13),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
     Act(unit:(3),dest:(x:13,y:3),action:Wait),
-    Act(unit:(7),dest:(x:17,y:13),action:Wait),
+    Act(unit:(1),dest:(x:13,y:6),action:Wait),
     EndPhase,
     // Turn 3
-    Act(unit:(5),dest:(x:13,y:10),action:UseSkill(skill:("sanctuary"),target:None)),
-    Act(unit:(3),dest:(x:14,y:2),action:Attack(target:(18),slot:0,active:None,art:None)),
-    Act(unit:(2),dest:(x:13,y:5),action:Wait),
-    Act(unit:(1),dest:(x:12,y:10),action:UseSkill(skill:("inspire"),target:None)),
-    Act(unit:(4),dest:(x:22,y:10),action:Wait),
-    Act(unit:(6),dest:(x:13,y:6),action:Wait),
-    Act(unit:(7),dest:(x:22,y:13),action:Wait),
+    Act(unit:(2),dest:(x:8,y:10),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(1),dest:(x:13,y:2),action:Attack(target:(21),slot:0,active:None,art:Some(("guard_break")))),
+    Act(unit:(3),dest:(x:9,y:6),action:Wait),
+    Act(unit:(5),dest:(x:14,y:11),action:UseSkill(skill:("sanctuary"),target:None)),
+    Act(unit:(4),dest:(x:18,y:13),action:Wait),
+    Act(unit:(6),dest:(x:17,y:8),action:Wait),
+    Act(unit:(7),dest:(x:13,y:4),action:Wait),
     EndPhase,
     // Turn 4
-    Act(unit:(3),dest:(x:12,y:3),action:Attack(target:(21),slot:0,active:None,art:None)),
-    Act(unit:(6),dest:(x:13,y:2),action:Cast(spell:("frost"),target:Unit((21)),active:Some(("overcast")))),
-    Act(unit:(4),dest:(x:22,y:7),action:Attack(target:(16),slot:0,active:None,art:Some(("rending_arrow")))),
-    Act(unit:(2),dest:(x:11,y:3),action:Wait),
-    Act(unit:(5),dest:(x:13,y:5),action:Wait),
-    Act(unit:(1),dest:(x:13,y:6),action:Wait),
-    Act(unit:(7),dest:(x:20,y:10),action:Wait),
+    Act(unit:(1),dest:(x:14,y:2),action:Wait),
+    Act(unit:(4),dest:(x:18,y:13),action:Attack(target:(17),slot:0,active:None,art:Some(("rending_arrow")))),
+    Act(unit:(6),dest:(x:17,y:7),action:Wait),
+    Act(unit:(7),dest:(x:13,y:3),action:Wait),
+    Act(unit:(2),dest:(x:7,y:11),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(5),dest:(x:18,y:11),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
+    Act(unit:(3),dest:(x:12,y:4),action:Wait),
     EndPhase,
     // Turn 5
-    Act(unit:(6),dest:(x:9,y:2),action:Cast(spell:("frost"),target:Unit((19)),active:Some(("overcast")))),
-    // Some(Victory) on turn 5; lost: []
+    Act(unit:(2),dest:(x:8,y:8),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(1),dest:(x:12,y:2),action:UseSkill(skill:("inspire"),target:None)),
+    EndPhase,
+    // Turn 6
+    EndPhase,
+    // Turn 7
+    EndPhase,
+    // Turn 8
+    Act(unit:(5),dest:(x:18,y:11),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
+    EndPhase,
+    // Turn 9
+    Act(unit:(7),dest:(x:12,y:6),action:Wait),
+    Act(unit:(1),dest:(x:13,y:4),action:UseSkill(skill:("inspire"),target:None)),
+    Act(unit:(6),dest:(x:17,y:11),action:Cast(spell:("fire"),target:Unit((22)),active:None)),
+    Act(unit:(3),dest:(x:15,y:4),action:Wait),
+    Act(unit:(4),dest:(x:18,y:13),action:Attack(target:(24),slot:0,active:None,art:Some(("close_shot")))),
+    Act(unit:(5),dest:(x:14,y:10),action:Wait),
+    Act(unit:(2),dest:(x:12,y:8),action:Wait),
+    EndPhase,
+    // Turn 10
+    Act(unit:(6),dest:(x:14,y:9),action:Cast(spell:("frost"),target:Unit((24)),active:None)),
+    Act(unit:(4),dest:(x:17,y:13),action:Attack(target:(23),slot:0,active:None,art:None)),
+    Act(unit:(5),dest:(x:17,y:11),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
+    EndPhase,
+    // Turn 11
+    Act(unit:(3),dest:(x:13,y:2),action:Wait),
+    Act(unit:(5),dest:(x:17,y:11),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
+    EndPhase,
+    // Turn 12
+    Act(unit:(4),dest:(x:16,y:15),action:Attack(target:(23),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 13
+    Act(unit:(4),dest:(x:18,y:14),action:Attack(target:(23),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 14
+    Act(unit:(6),dest:(x:16,y:9),action:Wait),
+    EndPhase,
+    // Turn 15
+    Act(unit:(2),dest:(x:10,y:7),action:Wait),
+    EndPhase,
+    // Turn 16
+    Act(unit:(4),dest:(x:18,y:15),action:Attack(target:(23),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 17
+    Act(unit:(4),dest:(x:17,y:15),action:Attack(target:(23),slot:0,active:None,art:None)),
+    Act(unit:(3),dest:(x:15,y:7),action:Wait),
+    Act(unit:(5),dest:(x:15,y:8),action:Cast(spell:("heal"),target:Unit((3)),active:None)),
+    Act(unit:(2),dest:(x:10,y:7),action:Wait),
+    Act(unit:(6),dest:(x:13,y:9),action:Wait),
+    Act(unit:(7),dest:(x:14,y:8),action:Wait),
+    EndPhase,
+    // Turn 18
+    Act(unit:(4),dest:(x:15,y:14),action:Attack(target:(23),slot:0,active:None,art:None)),
+    Act(unit:(5),dest:(x:13,y:5),action:UseSkill(skill:("sanctuary"),target:None)),
+    EndPhase,
+    // Turn 19
+    Act(unit:(5),dest:(x:12,y:4),action:Cast(spell:("heal"),target:Unit((1)),active:None)),
+    Act(unit:(6),dest:(x:15,y:11),action:Cast(spell:("fire"),target:Unit((23)),active:Some(("overcast")))),
+    EndPhase,
+    // Turn 20
+    Act(unit:(7),dest:(x:18,y:7),action:Wait),
+    EndPhase,
+    // Turn 21
+    Act(unit:(4),dest:(x:19,y:13),action:Wait),
+    EndPhase,
+    // Turn 22
+    Act(unit:(1),dest:(x:13,y:3),action:Wait),
+    EndPhase,
+    // Turn 23
+    Act(unit:(2),dest:(x:9,y:7),action:Wait),
+    EndPhase,
+    // Turn 24
+    Act(unit:(3),dest:(x:14,y:3),action:Wait),
+    EndPhase,
+    // Turn 25
+    Act(unit:(4),dest:(x:21,y:13),action:Wait),
+    EndPhase,
+    // Turn 26
+    Act(unit:(4),dest:(x:22,y:9),action:Attack(target:(16),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 27
+    Act(unit:(3),dest:(x:8,y:3),action:Wait),
+    Act(unit:(4),dest:(x:23,y:7),action:Attack(target:(16),slot:0,active:None,art:None)),
+    EndPhase,
+    // Turn 28
+    Act(unit:(1),dest:(x:9,y:2),action:Attack(target:(20),slot:0,active:None,art:Some(("riposte")))),
+    Act(unit:(5),dest:(x:8,y:4),action:Cast(spell:("heal"),target:Unit((3)),active:None)),
+    Act(unit:(4),dest:(x:22,y:5),action:Attack(target:(16),slot:0,active:None,art:None)),
+    Act(unit:(3),dest:(x:7,y:2),action:Attack(target:(19),slot:0,active:None,art:None)),
+    Act(unit:(2),dest:(x:12,y:6),action:Wait),
+    Act(unit:(7),dest:(x:14,y:6),action:Wait),
+    Act(unit:(6),dest:(x:15,y:6),action:Wait),
+    EndPhase,
+    // Turn 29
+    Act(unit:(1),dest:(x:10,y:3),action:Attack(target:(19),slot:1,active:None,art:Some(("guard_break")))),
+    Act(unit:(5),dest:(x:9,y:3),action:UseSkill(skill:("sanctuary"),target:None)),
+    Act(unit:(4),dest:(x:23,y:3),action:Attack(target:(16),slot:0,active:None,art:None)),
+    Act(unit:(3),dest:(x:4,y:3),action:Wait),
+    Act(unit:(6),dest:(x:15,y:9),action:Wait),
+    Act(unit:(2),dest:(x:13,y:3),action:Wait),
+    Act(unit:(7),dest:(x:13,y:2),action:Wait),
+    EndPhase,
+    // Turn 30
+    Act(unit:(2),dest:(x:11,y:2),action:Attack(target:(19),slot:1,active:None,art:Some(("unhorse")))),
+    Act(unit:(1),dest:(x:12,y:3),action:Attack(target:(19),slot:0,active:None,art:Some(("guard_break")))),
+    // Some(Victory) on turn 30; lost: []
 ]

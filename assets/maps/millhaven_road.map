@@ -1,0 +1,28 @@
+(
+    // Millhaven Road (ticket 1071; ch04.dlg, ch04_millhaven_road_intro):
+    // the road into Millhaven across the middle, the town's first houses
+    // at the east edge, fields and copses either side. The pie cart lies
+    // across the road where the patrol rings the prize-fighter, (9, 6);
+    // the party comes in from the west.
+    name: "Millhaven Road",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        't': "thicket",
+        'H': "house",
+    },
+)
+---
+TTT.......TT....HH
+TT.......TTT....HH
+................H.
+..T....t..........
+..TT..............
+..................
+::::::::::::::::::
+..................
+...T........t.....
+.TTT..........H...
+TT.....tt.....HH..
+TTT....tt....HHHH.

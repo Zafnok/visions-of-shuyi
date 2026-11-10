@@ -1,0 +1,40 @@
+// A winning playthrough of Smugglers' Cove (ticket 1071): the player's
+// commands, phase by phase, with the army the battle's bots_army describes.
+// Played back by skirmishes.rs, which says how to record a new one. Units
+// 1-9: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss, Gil, Hedda.
+[
+    // Turn 1
+    Act(unit:(6),dest:(x:1,y:1),action:Cast(spell:("fire"),target:Tile((x:2,y:2)),active:None)),
+    Act(unit:(1),dest:(x:9,y:2),action:UseSkill(skill:("inspire"),target:None)),
+    Act(unit:(2),dest:(x:10,y:0),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(9),dest:(x:9,y:4),action:Attack(target:(10),slot:1,active:None,art:Some(("crushing_swing")))),
+    Act(unit:(7),dest:(x:9,y:3),action:Wait),
+    Act(unit:(8),dest:(x:8,y:4),action:Wait),
+    Act(unit:(3),dest:(x:9,y:1),action:Wait),
+    Act(unit:(5),dest:(x:8,y:1),action:Wait),
+    Act(unit:(4),dest:(x:4,y:1),action:Wait),
+    EndPhase,
+    // Turn 2
+    Act(unit:(9),dest:(x:9,y:4),action:Attack(target:(12),slot:1,active:Some(("heavy_blow")),art:None)),
+    Act(unit:(3),dest:(x:7,y:6),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+    Act(unit:(1),dest:(x:10,y:5),action:Attack(target:(15),slot:0,active:None,art:Some(("guard_break")))),
+    Act(unit:(8),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:Some(("flurry")),art:None)),
+    Act(unit:(7),dest:(x:8,y:5),action:Attack(target:(13),slot:0,active:None,art:Some(("guard_break")))),
+    Act(unit:(6),dest:(x:1,y:0),action:Cast(spell:("fire"),target:Tile((x:0,y:1)),active:None)),
+    Act(unit:(5),dest:(x:9,y:5),action:Wait),
+    EndPhase,
+    // Turn 3
+    Act(unit:(8),dest:(x:6,y:6),action:Attack(target:(14),slot:0,active:None,art:Some(("sidestep")))),
+    Act(unit:(3),dest:(x:4,y:6),action:Attack(target:(14),slot:0,active:Some(("lance_rush")),art:None)),
+    Act(unit:(7),dest:(x:5,y:7),action:Attack(target:(14),slot:0,active:None,art:None)),
+    Act(unit:(1),dest:(x:13,y:7),action:Wait),
+    Act(unit:(5),dest:(x:10,y:4),action:Cast(spell:("vigil_light"),target:Unit((9)),active:None)),
+    Act(unit:(2),dest:(x:9,y:3),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(4),dest:(x:7,y:0),action:Wait),
+    Act(unit:(6),dest:(x:2,y:0),action:Cast(spell:("fire"),target:Tile((x:0,y:0)),active:None)),
+    Act(unit:(9),dest:(x:13,y:5),action:Wait),
+    EndPhase,
+    // Turn 4
+    Act(unit:(1),dest:(x:12,y:6),action:Attack(target:(16),slot:0,active:None,art:None)),
+    // Some(Victory) on turn 4; lost: []
+]

@@ -11,14 +11,14 @@ expression: h.snapshot()
  ≈   ^^ ^ ^          ≈≈ ♠          .       ♣ ♠♣        , ^▲ ^^▲^^^^^^,║                            ║
   .   .     .     .. ♣≈≈         .       ♠  ♣♠♣♣ .     . ^   ▲  . ^^^^║                            ║
 ≈      .,       ,     ≈≈ .                 ♣♣♠♠♠♣          ^▲ ^ ^^ ^,^║                            ║
-≈≈   .     ,     . , .≈≈      ,          ♣♣..♣ ,     .         ^^  ▲^ ║                            ║
-   ♣  ●       ⌂ .     ≈≈           .         ♣♣           ,  .▲ .▲^▲  ║                            ║
+≈≈   Lv2   ,     . , .≈≈      ,          ♣♣..♣ ,     .         ^^  ▲^ ║                            ║
+   ♣  !       ⌂ .     ≈≈           .         ♣♣           ,  .▲ .▲^▲  ║                            ║
 ≈ ♣♣       ,.     .   ≈≈.           ‼        ♣  ,  .            ,    .║                            ║
       ..   ,     .  , ≈≈..     ,  ,   .           . , .         .   . ║                            ║
  ≈♣♣♣♣♣..        .    ≈≈          ♣...             .       .  .   .,  ║                            ║
  ≈♣ ♣♣♣          .    ≈≈.     ♣   ♣,                           .      ║                            ║
-   ♣  ♣.               ≈≈         ♣♣♣                . .    .  .   , .║                            ║
-≈    ♣        ●       ●       .♣ ,♣ ..      ..                 ,     .║                            ║
+   ♣  ♣.             Lv9≈         ♣♣♣                . .    .  .   , .║                            ║
+≈    ♣        ●       !       .♣ ,♣ ..      ..                 ,     .║                            ║
               . ..   ≈≈ .    ,♣♣           .       .       ..       , ║                            ║
 ≈ .♣ .       ,    . . ≈≈     .     ,.                       .    .    ║                            ║
     ♠    ,    ♣ ♠   . ≈≈   ,   .  .         ,  .     ,            .   ║                            ║
@@ -44,20 +44,20 @@ adabdbbbbbedbbbbbbhhhcchihhhbbbbbbbbbbbbbbibhibbbbbbbbbbdbdddbbbedddeefjjjjjjjjj
 aabddddddddbbbbbbbbbbccbihbbbbbbbbbbbbbbbhhhbihbbbbbbbbbbdedeeeddeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbhccbbbbbbbbbbbbbbbbbibbhihhbbbbbbbbbdbddeddbdddddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhbhhiiihbbbbbbbbbbdedddedddbdfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aabbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhhbbhhbbbbbbbbbbbbddddedddeddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aaahbhmbbbbbbblbbbbbbbccbbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbebbeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbbmmmbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbhhbbhhbbbbbbbbbbbbddddedddeddfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaahbhlbbbbbbblbbbbbbbccbbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbebbeeedbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbblbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbhbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhhhhbbbbbbbbbbbbbbbccbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahbhhhbbbbbbbbbbbbbbbccbbbbbbhbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aaahhbhbbbbbbbbbbbbbbbbccbbbhbbbbbhhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aabhbhbbbbbbbbnbbbbbbbncbbbbbbbhbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaahhbhbbbbbbbbbbbbbbmmncbbbhbbbbbhhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabhbhbbbbbbbbobbbbbbblcbbbbbbbhbbhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbbbbbbbbbbbbbbbbbbccbbbbbbbhhbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabhbbhbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahhibibbbbbbbhbibbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aahibhibbbhhhhiibhhbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aaiiihbobbhihihiiihhbbccbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
-aabbihblphhibbhihhbbibccbbbbbbbbbbbbbbbhhhbbhhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aaiiihbpbbhihihiiihhbbccbbbbbbbbbbbbbbbbbbhhhhhbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
+aabbihblqhhibbhihhbbibccbbbbbbbbbbbbbbbhhhbbhhbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aabbaccccbhhhhbiiihbbbccbbbbbbbbbbbbbbbbbhhbhbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaccccccchiihbhbhhibbccbbbbbbbbbbbbbbbbbbbhbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaccccccccchihihbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
@@ -65,8 +65,8 @@ aaaaccccccccbbhbbbbbbbccaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjj
 aaaaacccbbbbbbbbbbbbbbbbaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaaaaaaabbbbbbbbbaaaaaaaaaaaaaabbbbaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbfjjjjjjjjjjjjjjjjjjjjjjjjjjjjf
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffffffffffffffffffffffff
-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 --- legend ---
 a = fg:water bg:sea
 b = fg:grass bg:grass_bg
@@ -80,18 +80,17 @@ i = fg:thicket bg:thicket_bg
 j = fg:text bg:panel_bg
 k = fg:text_dim bg:panel_bg
 l = fg:panel_bg bg:grass_bg
-m = fg:text_dim bg:grass_bg
-n = fg:path bg:grass_bg
-o = fg:player bg:grass_bg
-p = fg:panel_bg bg:thicket_bg
-q = fg:text bg:black
+m = fg:enemy bg:grass_bg
+n = fg:enemy bg:water_bg
+o = fg:path bg:grass_bg
+p = fg:player bg:grass_bg
+q = fg:panel_bg bg:thicket_bg
+r = fg:text bg:black
 --- overlays ---
-under 45,161 78x14  text_dim
 under 109,65 14x110  text_dim
 under 173,257 54x14  text_dim
 under 213,177 14x94  text_dim
 under 213,177 86x14  text_dim
-under 46,162 76x12  road_bg
 under 110,66 12x108  road_bg
 under 174,258 52x12  road_bg
 under 214,178 12x92  road_bg
@@ -99,13 +98,17 @@ under 214,178 84x12  road_bg
 under 53,257 14x110  path
 under 53,257 70x14  path
 under 109,161 14x110  path
+under 45,161 78x14  path
 under 109,257 78x14  path
 under 54,258 12x108  #4e422b
 under 54,258 68x12  #4e422b
 under 110,162 12x108  #4e422b
+under 46,162 76x12  #4e422b
 under 110,258 76x12  #4e422b
 under 108,160 16x16  wood
+under 44,160 16x16  enemy
 under 108,64 16x16  text_dim
+under 172,256 16x16  enemy
 under 284,176 16x16  text_dim
 under 52,352 24x16  player
 over  51,352 3x1  #e5d198

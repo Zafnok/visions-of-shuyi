@@ -31,11 +31,11 @@ use crate::playthrough::{self, battle, lost, skip_scenes};
 const LEDGER: &str = include_str!("fixtures/side_company_ledger_winning.ron");
 const LETTERS: &str = include_str!("fixtures/side_letters_home_winning.ron");
 
-fn lead() -> LeadProfile {
+pub fn lead() -> LeadProfile {
     LeadProfile::new("Mara", LeadGender::Female)
 }
 
-fn content() -> Content {
+pub fn content() -> Content {
     trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"))
 }
 
@@ -45,7 +45,7 @@ fn content() -> Content {
 /// army*; the bots crate is dev tooling the game's crates never depend
 /// on, ADR-0033, so the raising is repeated here), with the character
 /// data's gear and the battle's own stock and gold.
-fn army_for<'a>(content: &'a Content, battle: &str) -> (Campaign, &'a BattleDef) {
+pub fn army_for<'a>(content: &'a Content, battle: &str) -> (Campaign, &'a BattleDef) {
     let def = &content.battles[battle];
     let mut campaign = battle_campaign(content, def, GameMode::Classic, lead());
     let army = def
@@ -95,7 +95,7 @@ fn raise(unit: &mut Unit, content: &Content, level: Level) {
 }
 
 /// Puts `campaign` on the Act 1 map at `at`, with `cleared` won.
-fn on_act1(campaign: &mut Campaign, at: &str, cleared: &[&str]) {
+pub fn on_act1(campaign: &mut Campaign, at: &str, cleared: &[&str]) {
     campaign.chapter = "ch02".into();
     campaign.world = Some(WorldState {
         map: "act1".into(),
@@ -202,7 +202,7 @@ fn the_recorded_playthrough_frees_the_boat() {
 
 /// A launch from a save on the Act 1 map at `at` with `cleared` won and
 /// the army of quest `battle`, loaded from the title.
-fn act1_from_a_save(at: &str, cleared: &[&str], battle: &str) -> Harness {
+pub fn act1_from_a_save(at: &str, cleared: &[&str], battle: &str) -> Harness {
     let mut storage: Box<dyn Storage> = Box::new(MemoryStorage::new());
     if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
         panic!("saving the layout: {e}");
@@ -221,7 +221,7 @@ fn act1_from_a_save(at: &str, cleared: &[&str], battle: &str) -> Harness {
     h
 }
 
-fn campaign(h: &Harness) -> Campaign {
+pub fn campaign(h: &Harness) -> Campaign {
     let map = h.game().screen::<WorldMapScreen>();
     map.unwrap_or_else(|| panic!("no world map"))
         .campaign()

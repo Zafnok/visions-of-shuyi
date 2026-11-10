@@ -132,10 +132,14 @@ pub fn lost(state: &BattleState) -> Vec<&str> {
 
 // --- Recording a playthrough ---------------------------------------------------
 
-/// How good `state` is for the player, for [`record`]'s search.
-fn worth(state: &BattleState) -> i64 {
+/// A win that counts for [`record_where`]'s search.
+type Wanted<'a> = &'a dyn Fn(&BattleState) -> bool;
+
+/// How good `state` is for the player, for [`record`]'s search: a win
+/// that isn't `wanted` is as bad as a defeat.
+fn worth(state: &BattleState, wanted: Wanted<'_>) -> i64 {
     match state.outcome() {
-        Some(Outcome::Victory) => return 1_000_000,
+        Some(Outcome::Victory) if wanted(state) => return 1_000_000,
         Some(_) => return -1_000_000,
         None => {}
     }
@@ -242,7 +246,12 @@ fn try_phase(
 type Plan = (Vec<Command>, BattleState);
 
 /// The best few of many tries at `state`'s Player phase, best first.
-fn plans(state: &BattleState, content: &Content, rng: &mut SimRng) -> Vec<Plan> {
+fn plans(
+    state: &BattleState,
+    content: &Content,
+    rng: &mut SimRng,
+    wanted: Wanted<'_>,
+) -> Vec<Plan> {
     const TRIES: u32 = 300;
     const KEPT: usize = 4;
     let mut plans: Vec<(i64, Plan)> = Vec::new();
@@ -250,7 +259,7 @@ fn plans(state: &BattleState, content: &Content, rng: &mut SimRng) -> Vec<Plan> 
         let mut after = state.clone();
         let commands = try_phase(&mut after, content, rng, attempt == 0);
         play_others(&mut after, content);
-        let worth = worth(&after);
+        let worth = worth(&after, wanted);
         if plans.iter().all(|(_, (c, _))| *c != commands) {
             plans.push((worth, (commands, after)));
             plans.sort_by_key(|(w, _)| std::cmp::Reverse(*w));
@@ -269,7 +278,26 @@ fn plans(state: &BattleState, content: &Content, rng: &mut SimRng) -> Vec<Plan> 
 /// *can* be won, not how hard it is (that is the bots', `cargo xtask
 /// playtest`).
 pub fn record(start: BattleState, content: &Content, seed: u64, header: &[&str], path: &str) {
+    record_where(start, content, seed, header, path, &|_| true);
+}
+
+/// [`record`], with only the wins that are `wanted` counted as wins (Gil
+/// beaten before Millhaven Road is won, 1071).
+pub fn record_where(
+    start: BattleState,
+    content: &Content,
+    seed: u64,
+    header: &[&str],
+    path: &str,
+    wanted: Wanted<'_>,
+) {
     let mut rng = SimRng::new(seed);
+    let good = |after: &BattleState| {
+        lost(after).is_empty()
+            && after
+                .outcome()
+                .is_none_or(|o| o == Outcome::Victory && wanted(after))
+    };
     // Each turn played: the plans for it that are left, best first. The
     // first of each is the one being played.
     let mut turns: Vec<Vec<Plan>> = Vec::new();
@@ -278,17 +306,14 @@ pub fn record(start: BattleState, content: &Content, seed: u64, header: &[&str],
     while state.outcome().is_none() {
         steps += 1;
         assert!(steps <= 200 && state.turn() <= 60, "no end in sight");
-        let found = plans(&state, content, &mut rng);
-        let safe = found.first().is_some_and(|(_, after)| {
-            lost(after).is_empty() && after.outcome().is_none_or(|o| o == Outcome::Victory)
-        });
+        let found = plans(&state, content, &mut rng, wanted);
+        let safe = found.first().is_some_and(|(_, after)| good(after));
         turns.push(if safe { found } else { Vec::new() });
         // Back to the last turn with another plan to try.
-        while turns.last().is_some_and(|plans| {
-            plans.first().is_none_or(|(_, after)| {
-                !lost(after).is_empty() || after.outcome().is_some_and(|o| o != Outcome::Victory)
-            })
-        }) {
+        while turns
+            .last()
+            .is_some_and(|plans| plans.first().is_none_or(|(_, after)| !good(after)))
+        {
             turns.pop();
             let Some(earlier) = turns.last_mut() else {
                 panic!("every way to play turn 1 loses someone");
@@ -322,6 +347,7 @@ pub fn record(start: BattleState, content: &Content, seed: u64, header: &[&str],
     let out = out.join("\n");
     assert_eq!(outcome, Some(Outcome::Victory), "{out}");
     assert!(lost(&state).is_empty(), "{out}");
+    assert!(wanted(&state), "{out}");
     let path = format!("{}/{path}", env!("CARGO_MANIFEST_DIR"));
     std::fs::write(&path, out).unwrap_or_else(|e| panic!("{path}: {e}"));
 }

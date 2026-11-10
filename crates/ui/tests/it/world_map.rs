@@ -377,10 +377,10 @@ fn act1_at_chapter(chapter: &str, at: &str, cleared: &[&str]) -> Harness {
     h
 }
 
-/// Travel between Chapter 4's open places; what isn't built yet shows and
-/// can't be reached. Aldwater Toll Bridge is a place to pass through until
-/// 1071 builds its fight (0850); Veyne Hall, Chapter 4's story battle,
-/// waits for its chapter.
+/// Travel between Chapter 4's open places; what isn't open yet shows and
+/// can't be reached. Its two fixed skirmishes are open from the start
+/// (1071); The Company Ledger waits for the toll bridge, and Veyne Hall,
+/// Chapter 4's story battle, for its chapter.
 #[test]
 fn act1_the_army_walks_chapter_4s_open_places() {
     let mut h = act1_from_a_save("greywater", &[]);
@@ -388,8 +388,17 @@ fn act1_the_army_walks_chapter_4s_open_places() {
     let content = &h.game().ctx().game.content;
     let def = &content.worldmaps["act1"].map;
     let open: Vec<&str> = def.open_nodes(&start).map(|n| n.id.as_str()).collect();
-    assert_eq!(open, ["greywater", "valley_road", "millhaven", "aldwater"]);
-    for shown in ["millhaven_road", "company_ledger", "veyne_hall"] {
+    assert_eq!(
+        open,
+        [
+            "greywater",
+            "valley_road",
+            "millhaven",
+            "millhaven_road",
+            "aldwater"
+        ]
+    );
+    for shown in ["company_ledger", "veyne_hall"] {
         assert!(def.is_shown(shown, &start), "{shown} shows, greyed");
         assert!(!def.is_open(shown, &start), "{shown} isn't open");
     }
