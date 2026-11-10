@@ -205,8 +205,8 @@ None. No rule or look changes: the same arrows on the same tiles.
   unit menu, at 2,305,299: **left for 1260**, as above. On the
   Playdate every scenario's costliest frame but the idle battle's and
   the options' stays over 2,000,000 with the one-bit drawing (1248).
-- **Friction:** estimate 70, measured 143 (2.0×), accepted: the
-  estimate was for the areas alone, before the planner's reuse was
-  added; game-side rules and a screen's cache, no engine piece missing
+- **Friction:** estimate 70, measured 170 (2.4×), accepted: the
+  estimate was for the areas alone, before the planner's reuse and the
+  search that leaves a unit out were added; game-side rules and a screen's cache, no engine piece missing
   (`docs/engine/friction.md`).
 - No gameplay rule decided; nothing for the Act 1 playtest.
