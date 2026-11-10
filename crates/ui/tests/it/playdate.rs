@@ -117,7 +117,7 @@ fn playdate_with_inks(ctx: &mut Ctx) {
 
 /// The context as `crates/playdate` sets it up, with its inks and its
 /// screens' skins (ticket 1045).
-fn playdate_skins(ctx: &mut Ctx) {
+pub(crate) fn playdate_skins(ctx: &mut Ctx) {
     playdate_with_inks(ctx);
     ctx.use_playdate_skins();
 }

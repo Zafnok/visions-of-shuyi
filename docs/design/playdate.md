@@ -22,6 +22,7 @@ numbers and the forecast in them are placeholders.
 | `1038-*.png` | **As built** (ticket 1038, `cargo shuyi frame-png --playdate`, shown at ×2): Harrowby Ford's battle screen browsing, with the pop-ups moved down, the action menu, a skill list with its note, the map menu, the unit list, the objective page, the end-turn question, a phase banner |
 | `1039-*.png` | **As built** (ticket 1039, `cargo shuyi frame-png --playdate`, shown at ×2): the forecast (Quick Battle) on the half away from its units, with the kill skull, the EXP bar, Unit info's three pages for Ellery and a brigand in Harrowby Ford, the map menu with the turn and charges, the rewind list and its question |
 | `1044-*.png` | **As built** (ticket 1044, `cargo shuyi frame-png --playdate`, shown at ×2): the title with its menu and with "Press any button", and the cinematic's march, fight and whole-field shots |
+| `1066-*.png` | **As built** (ticket 1066, shown at ×2): the test world map at its start, every kind of place (a view edited to hold them all), a town's shops, the menu, Find, the shop's Buy tab and a sale |
 | `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words
@@ -389,6 +390,64 @@ the game's own placeholder faces (a build without the bought art).
   when either is let go (the other then does nothing when it is let go).
   One button held alone for a second still backs out, as on the PC's
   controller side.
+
+### The world map, towns and the shop (1066)
+
+As built by ticket 1066 (`cargo shuyi frame-png --playdate`, shown at ×2):
+[`1066-world-map-start.png`](playdate/1066-world-map-start.png),
+[`1066-world-map-every-kind.png`](playdate/1066-world-map-every-kind.png)
+(drawn from a view edited to hold every kind at once: the test map shows
+no random skirmish or won battle at its start),
+[`1066-town.png`](playdate/1066-town.png),
+[`1066-menu.png`](playdate/1066-menu.png),
+[`1066-find.png`](playdate/1066-find.png),
+[`1066-shop-buy.png`](playdate/1066-shop-buy.png),
+[`1066-shop-sell.png`](playdate/1066-shop-sell.png).
+
+*Claude's starting rules (Nick can veto; judged in the Act 1 playtest,
+1064):*
+
+- **The map fills the screen** and scrolls with the cursor, kept in the
+  middle where it can be; a map smaller than the screen is centred. No
+  side panel and no help line, as on the battle screen.
+- **The world map's glyph look in black on white**: the ground's glyphs,
+  each road the same band as on the PC, white, outlined in black; a road
+  to a place not open yet outlined in grey dots.
+- **A place's kind is its symbol, as on the PC, and its plate's fill**,
+  the battle map's three (*Telling things apart without colour*):
+  - **black** (white symbol): a story battle `‼`, a side quest `♥`, a
+    capital `⌂` (the places the story goes through);
+  - **grey** (the symbol edged in white): a fixed skirmish `!`, a random
+    skirmish `?` (fights you may take, as enemies are grey);
+  - **outlined**: a town `⌂`, a battle won `·`;
+  - **grey dots** for the outline and the symbol: a place not open yet
+    (a town and a capital not open yet look the same, as on the PC);
+  - a plain dot `●`: a place to pass through.
+  The level marker (`Lv7`) is black above its place.
+- **The army** is the lead's two letters white on a black plate under a
+  black `▼` flag; **the cursor** the battle map's corner marks, which flip
+  what they cover and don't pulse.
+- **The place under the cursor** is a window on the side away from the
+  cursor, in the top corner, or the bottom one when that hides fewer
+  places: its name in the top of the frame, its kind and what the PC's
+  panel says under it, the act and chapter in the bottom of the frame (cut
+  with `…` past 22 cells).
+- **A list** (the menu, Find, a town's shops) is a window at the top of
+  that side, its title in its frame; the place's window goes under it when
+  both fit.
+- **The menu lists Find and Your army first** while their keys have no
+  button (as the battle's map menu gains its shortcuts, 1035): Find,
+  Your army, Save, Camp, Options. The system menu's Options opens Options
+  on the map, as the menu's does.
+- **The shop** is a window the screen's width: the shop's name and the
+  gold in the top of the frame, the town (or the unit) and the tabs under
+  it, the shown tab the bar; the lines (the item and its gold) between two
+  rules, 8 at once, scrolling with the focus (`▲`/`▼` on the rules); **what
+  the focused item is** (its numbers, the repair, or why the shop won't
+  take it) under the second rule, since the PC's line has no room for it;
+  the help on the bottom row. A sale's count is a window in the middle,
+  its arrows in grey dots at their ends. A village's shop in battle looks
+  the same.
 
 ### What the first version keeps (Q5)
 

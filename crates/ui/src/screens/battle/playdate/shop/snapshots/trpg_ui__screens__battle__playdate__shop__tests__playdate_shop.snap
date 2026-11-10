@@ -1,0 +1,19 @@
+---
+source: crates/ui/src/screens/battle/playdate/shop/tests.rs
+expression: "rows(&buf).join(\"\\n\")"
+---
+╔═ Armory ══════════════════════════ Gold 2 000 ═╗
+║ Millbrook                          Buy   Sell  ║
+╟────────────────────────────────────────────────╢
+║ Item 0                                   1 250 ║
+║ Item 1                                   1 250 ║
+║ Item 2                                   1 250 ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+╟────────────────────────────────────────────────╢
+║ Mt 2  Hit 90                                   ║
+╚════════════════════════════════════════════════╝
+↑ ↓ choose · ← → tab · A confirm · B leave

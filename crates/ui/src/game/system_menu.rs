@@ -8,7 +8,7 @@
 //! with [`Game::act`](shuyi_ui::Game::act), which toggles the danger zone
 //! on the battle map, opens the dialogue log while a scene plays, and opens
 //! Options where a menu has an Options entry (the title, the battle map,
-//! Preparations). Where the screen has no such
+//! Preparations, the world map). Where the screen has no such
 //! thing, nothing happens. The front end only adds the entries and
 //! forwards the choice.
 
