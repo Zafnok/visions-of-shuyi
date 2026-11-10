@@ -1,6 +1,8 @@
 //! The talk shot (ticket 0818): text boxes of a dialogue scene playing by
-//! themselves in the dialogue screen's look. Which box is up and how much
-//! of its text is typed out come from the time alone ([`talk_at`]).
+//! themselves in the dialogue screen's look (its skins: on the Playdate,
+//! ticket 1043, the text wrapped to its narrower box, which grows upward
+//! to hold it all). Which box is up and how much of its text is typed out
+//! come from the time alone ([`talk_at`]).
 
 use crate::prelude::*;
 use trpg_content::{Present, Scene, Side};
@@ -9,8 +11,9 @@ use trpg_core::{CharacterId, LeadProfile};
 use crate::dialogue::{DialoguePlayer, Portrait, View};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::Ctx;
+use crate::screen::SkinSet;
 use crate::screens::dialogue::view::told;
-use crate::screens::dialogue::{TEXT_LINES, TEXT_W, glyph};
+use crate::screens::dialogue::{PLAYDATE_TEXT_W, SKINS, TEXT_LINES, TEXT_W};
 use crate::widgets::word_wrap;
 
 /// The part of a box's time, at its end, for which all of its text is
@@ -33,6 +36,8 @@ pub struct TalkBox {
     /// The text, wrapped: its first page (a cinematic turns no pages; the
     /// validator refuses a box that could need a second).
     lines: Vec<String>,
+    /// The text whole, for the Playdate's narrower box.
+    text: String,
 }
 
 impl TalkBox {
@@ -40,11 +45,8 @@ impl TalkBox {
     fn of(view: &View) -> Self {
         let placed =
             |p: Option<Portrait>| p.map(|p| (p.character.clone(), p.expression.to_owned()));
-        let mut lines = word_wrap(
-            view.text.as_deref().unwrap_or(""),
-            TEXT_W,
-            &shuyi_assets::font::CellWidths::NARROW,
-        );
+        let text = view.text.as_deref().unwrap_or("");
+        let mut lines = word_wrap(text, TEXT_W, &shuyi_assets::font::CellWidths::NARROW);
         lines.truncate(TEXT_LINES);
         Self {
             left: placed(view.left),
@@ -53,6 +55,7 @@ impl TalkBox {
             caption: view.caption.as_deref().map(str::to_owned),
             narration: view.narration,
             lines,
+            text: text.to_owned(),
         }
     }
 
@@ -84,7 +87,15 @@ impl TalkBox {
             narration: self.narration,
             ..View::default()
         };
-        glyph::paint(ctx, &told(ctx, lead, &view, &self.lines, shown), buf);
+        let lines = match ctx.game.skin_set {
+            SkinSet::Glyph => self.lines.clone(),
+            SkinSet::Playdate => word_wrap(
+                &self.text,
+                PLAYDATE_TEXT_W,
+                &shuyi_assets::font::CellWidths::NARROW,
+            ),
+        };
+        SKINS.paint(ctx, &told(ctx, lead, &view, &lines, shown), buf);
     }
 }
 

@@ -85,6 +85,10 @@ pub enum TipTrigger {
     /// The player is browsing a map whose look can zoom, with no lesson in
     /// play (ticket 0466).
     ZoomAvailable,
+    /// A selected unit's move range has a `water` tile: a foot or flying
+    /// unit could step into it, a mounted or armored one never can
+    /// (ticket 0483).
+    FirstWadeInReach,
     // The triggers below start lessons only (ticket 0457): no tip uses them
     // yet.
     /// In the player's phase, every unit of the player's has acted.
@@ -207,6 +211,7 @@ mod tests {
             TipTrigger::FirstCaster,
             TipTrigger::FirstTerrain,
             TipTrigger::ZoomAvailable,
+            TipTrigger::FirstWadeInReach,
         ] {
             assert!(table.for_trigger(trigger).is_some(), "{trigger:?}");
         }

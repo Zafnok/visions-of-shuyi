@@ -4,11 +4,11 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Moving the cursor               │  Terrain                                                       ║
+║ Moving the cursor               │  Wading                                                        ║
 ║ Played on the keys              │                                                                ║
-║ Finding your units              │  Mind the ground. The side panel shows the DEF and AVO a       ║
-║ Selecting a unit                │  unit gets standing here. Some tiles cost more movement        ║
-║ Attacking                       │  to cross, and some can't be crossed at all.                   ║
+║ Finding your units              │  Foot units can wade a river, but each tile of water costs     ║
+║ Selecting a unit                │  5 Mov, most of a turn. Riders and armor can't go in.          ║
+║ Attacking                       │  In the water, a unit gets +10 AVO and no DEF bonus.           ║
 ║ Ending the turn                 │                                                                ║
 ║ Rewind                          │                                                                ║
 ║ Threat arrows                   │                                                                ║
@@ -27,7 +27,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Skills                          │                                                                ║
 ║ Magic                           │                                                                ║
 ║ Terrain                         │                                                                ║
-║                                 │                                                                ║
+║ Wading                          │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
@@ -37,7 +37,8 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 --- colours ---
 aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccaccbbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccaccbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -60,7 +61,6 @@ acccccccccccccccccccccccccccccccccaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 addddddddddddddddddddddddddddddddcacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca

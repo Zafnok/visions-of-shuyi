@@ -173,6 +173,15 @@ for Nick to veto.
   It shows the first time the player is back on the map with no lesson in
   play: normally turn 1, after the turn-1 lessons. With glyphs it waits until
   pictures are on. *Claude's starting rule.*
+- **Wading** (0483; a friend's Act 1 playtest, passed on by Nick
+  2026-11-07: wading is "a bit unintuitive"), at Full, the first time a
+  selected unit's move range reaches a river (`water`): a foot or flying
+  unit, never a mounted or armored one. It says foot units can wade at 5
+  Mov a tile, riders and armor can't, and the water gives +10 AVO and no
+  DEF.
+- **A tip or a lesson:** one fact with nothing to tick off is a tip; a
+  lesson is for something the player does, step by step. *Claude's
+  starting rule* (0483).
 
 ### Guides (in the menu)
 

@@ -73,8 +73,8 @@ use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campa
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, TileSet,
-    Unit, UnitId, danger_zone, next_command, threats_at,
+    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules,
+    ThreatPlanner, TileSet, Unit, UnitId, danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -191,6 +191,10 @@ pub const VICTORY_MUSIC_POOL: &str = "victory";
 /// The music cue of a lost battle, from its banner on (`audio.md`, 0023).
 pub const DEFEAT_MUSIC: &str = "defeat";
 
+/// The terrain a foot unit wades (`terrain.ron`): a river, for the Wading
+/// tip (0483).
+pub const WATER: &str = "water";
+
 /// How long a tile flashes when its terrain changes, in seconds. *Tunable.*
 pub const TERRAIN_FLASH_S: f32 = 0.4;
 
@@ -275,6 +279,11 @@ pub fn threat_enemies(state: &BattleState, unit: UnitId, tile: Pos) -> Vec<Pos> 
         |u| state.threat_ranges(u),
     )
     .unwrap_or_default();
+    enemy_tiles(state, ids)
+}
+
+/// Where the units `ids` stand, in that order.
+fn enemy_tiles(state: &BattleState, ids: Vec<UnitId>) -> Vec<Pos> {
     let at = ids.into_iter().filter_map(|id| state.unit(id));
     at.map(|u| u.pos).collect()
 }
@@ -356,6 +365,10 @@ pub struct BattleScreen {
     /// ([`threat_enemies`]). Kept until the scene asks about another unit
     /// or tile, and dropped whenever the battle changes.
     threats: RefCell<Option<KeptThreat>>,
+    /// The enemies' moves searched for the unit the threat arrows were
+    /// last worked out for ([`ThreatPlanner`], ticket 1251), so another
+    /// tile for it doesn't search them all again. Dropped with `threats`.
+    planner: RefCell<Option<ThreatPlanner>>,
     /// Auto-end: end the player phase when its last unit has acted. Off by
     /// default (`docs/design/turn-structure.md`, ticket 0420). The
     /// player's setting ([`Settings::auto_end_turn`]), read at the start
@@ -541,6 +554,7 @@ impl BattleScreen {
             state,
             danger: None,
             threats: RefCell::new(None),
+            planner: RefCell::new(None),
             auto_end: false,
             show_fights: true,
             end_armed: false,
@@ -880,10 +894,11 @@ impl BattleScreen {
 
     /// Fires the triggers that show in the battle's current state (the
     /// ones that come from a command's events are fired as it applies).
-    fn detect_tips(&mut self) {
+    fn detect_tips(&mut self, ctx: &Ctx) {
         for trigger in self.triggers_now() {
             self.fire(trigger);
         }
+        self.detect_wade_tip(ctx);
     }
 
     /// Fires [`TipTrigger::ZoomAvailable`] while the map, under a skin that
@@ -894,6 +909,19 @@ impl BattleScreen {
         let browsing = matches!(self.mode, Mode::Idle { .. });
         if browsing && !self.lessons.in_play() && ctx.game.map_skin.zoom().is_some() {
             self.tips.fire(TipTrigger::ZoomAvailable);
+        }
+    }
+
+    /// Fires [`TipTrigger::FirstWadeInReach`] while the selected unit could
+    /// step into a river (0483): `water` is the content's terrain, so it is
+    /// looked up here.
+    fn detect_wade_tip(&mut self, ctx: &Ctx) {
+        let Mode::Selected(sel) = &self.mode else {
+            return;
+        };
+        let water = ctx.game.content.terrain.display.id_of(WATER);
+        if water.is_some_and(|w| doable::wades_in_reach(&self.state, sel, w)) {
+            self.fire(TipTrigger::FirstWadeInReach);
         }
     }
 
@@ -1640,6 +1668,7 @@ impl BattleScreen {
                 self.danger = Some(danger_tiles(&self.state));
             }
             self.threats.take();
+            self.planner.take();
             self.doable = Doable::default();
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
@@ -1807,6 +1836,7 @@ impl BattleScreen {
                 if let Ok(state) = self.history.rewind_to(point) {
                     self.state = state;
                     self.threats.take();
+                    self.planner.take();
                     self.doable = Doable::default();
                     self.mode = Mode::after_command(&self.state);
                     self.queue.clear();
@@ -2297,7 +2327,7 @@ impl BattleScreen {
         let enemies = match &*kept {
             Some(k) if (k.unit, k.tile) == (unit, tile) => k.enemies.clone(),
             _ => {
-                let enemies = threat_enemies(&self.state, unit, tile);
+                let enemies = self.planned_threats(unit, tile);
                 *kept = Some(KeptThreat {
                     unit,
                     tile,
@@ -2307,6 +2337,24 @@ impl BattleScreen {
             }
         };
         (!enemies.is_empty()).then_some(ThreatView { tile, enemies })
+    }
+
+    /// [`threat_enemies`] for `unit` on `tile`, by the planner kept for
+    /// `unit`: made now if the one kept is for another unit.
+    fn planned_threats(&self, unit: UnitId, tile: Pos) -> Vec<Pos> {
+        let state = &self.state;
+        let (map, terrain, classes, units) =
+            (state.map(), state.terrain(), state.classes(), state.units());
+        let mut kept = self.planner.borrow_mut();
+        if kept.as_ref().is_none_or(|p| p.unit() != unit) {
+            let ranges = |u: &Unit| state.threat_ranges(u);
+            *kept = ThreatPlanner::new(map, terrain, classes, units, unit, ranges).ok();
+        }
+        let Some(planner) = kept.as_ref() else {
+            return Vec::new();
+        };
+        let ids = planner.threats_at(map, terrain, classes, units, tile);
+        enemy_tiles(state, ids.unwrap_or_default())
     }
 
     /// Lays an escape map's exit area on `scene` (always), the danger zone
@@ -2745,7 +2793,7 @@ impl BattleScreen {
             0.0
         };
         self.tick_popups(dt);
-        self.detect_tips();
+        self.detect_tips(ctx);
         self.absorb_lessons(ctx);
         self.detect_zoom_tip(ctx);
         self.tips.absorb(ctx);

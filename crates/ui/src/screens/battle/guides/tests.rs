@@ -96,7 +96,7 @@ fn up_and_down_move_through_the_topics_and_wrap() {
     assert_eq!(g.step(Action::CursorUp), GuidesEffect::Moved);
     assert_eq!(g.focus(), n - 1);
     let view = g.list_view(&c);
-    assert_eq!(view.heading, "Terrain");
+    assert_eq!(view.heading, "Wading");
     assert_eq!(view.lines.len(), 3);
     assert_eq!(g.step(Action::CursorDown), GuidesEffect::Moved);
     assert_eq!(g.focus(), 0);

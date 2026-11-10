@@ -1045,6 +1045,32 @@ fn the_shop_sells_chapter_fives_basics_and_shows_the_gold() {
     assert_eq!(s.focus(), Focus::Tabs);
 }
 
+/// Ticket 0486: a Buy line shows every number of its item, an armour's
+/// weight class and weight, a weapon's rank and the uses a new one has.
+#[test]
+fn a_buy_line_shows_every_number_of_its_item() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    in_shop(&mut c, &mut s, 0);
+    let view = s.view(&c);
+    let detail = |name: &str| {
+        let lines = &shop_of(&view).lines;
+        lines
+            .iter()
+            .find(|l| l.name == name)
+            .unwrap()
+            .detail
+            .clone()
+    };
+    assert_eq!(detail("Leather Vest"), "Leather  Def +2  Res +2  Wt 1");
+    assert_eq!(detail("Iron Plate"), "Plate  Def +8  Res -3  Wt 6");
+    assert_eq!(
+        detail("Iron Sword"),
+        "20/20  E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2"
+    );
+    assert!(detail("Steel Bow").starts_with("25/25  D  Mt 9"));
+}
+
 #[test]
 fn buying_takes_the_gold_and_the_item_goes_to_the_pack_tabs_stock() {
     let mut c = ctx();
@@ -1097,7 +1123,7 @@ fn selling_asks_how_many_then_pays_half_price() {
     assert_eq!(lines[0].0, "Steel Spear");
     let view = s.view(&c);
     let first = &shop_of(&view).lines[0].detail;
-    assert!(first.starts_with("25/25  Mt 10"), "{first}");
+    assert!(first.starts_with("25/25  D  Mt 10"), "{first}");
     let at = lines.iter().position(|l| l.0 == "Potion ×6").unwrap();
     assert_eq!(lines[at].1, "150");
     for _ in 0..at {

@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0486 — Shop lines show every number of an item
@@ -101,19 +101,19 @@ Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] On the Preparations Shop tab, Buy, the Leather Vest's line reads
+- [x] On the Preparations Shop tab, Buy, the Leather Vest's line reads
       `Leather  Def +2  Res +2  Wt 1` after its price (view test in
       `crates/ui/src/screens/preparations/tests.rs`).
-- [ ] The battle map's Armoury and a town's Armory show the same armour
+- [x] The battle map's Armoury and a town's Armory show the same armour
       line (tests in `screens/battle/shop/tests.rs` and the town's tests).
-- [ ] A weapon's Buy line has its rank and `20/20` (or its own max) in
+- [x] A weapon's Buy line has its rank and `20/20` (or its own max) in
       all three shops (tests).
-- [ ] Every line fits the detail column: a test paints the longest item of
+- [x] Every line fits the detail column: a test paints the longest item of
       `items.ron` (e.g. Houndmaster's Axe on Sell) and finds no clipped
       text.
-- [ ] `frame-png` pictures of the Preparations Shop tab on Buy are in the
+- [x] `frame-png` pictures of the Preparations Shop tab on Buy are in the
       PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -122,4 +122,33 @@ Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `stat_line` (`crates/ui/src/screens/battle/shop.rs`) now writes a
+  weapon's rank first (`E  Mt 5  Hit 90  Crit 0  Rng 1  Wt 2`) and an
+  armour's weight class, bonuses and weight (`Leather  Def +2  Res +2
+  Wt 1`). New keys: `battle.info.armour_class.{cloth,leather,chain,plate}`
+  and `battle.info.armour_weight` (`Wt {weight}`), in English and the
+  test pack. The parts of an armour line are joined so an armour with no
+  bonus still reads cleanly.
+- Buy lines of weapons carry `(max, max)` uses (`new_uses`) in the
+  battle map's, the town's and Preparations' shops, shown as
+  `20/20  E  Mt 5 …`. The battle map's shop now tells a repair line from
+  a line with uses by its transaction, not by having uses.
+- The rank goes in the detail column, not before the name: the info
+  screen does not prefix the rank today (the ticket's Context was wrong
+  about that), and the detail column has the room. Same form in all
+  three shops; Sell lines get the rank too, since they share `stat_line`.
+- Tests: `stat_line` for a weapon, each armour class, an accessory and a
+  consumable; the Buy lines in each of the three shops; the longest
+  line of `items.ron` (a weapon with its uses) painted into the shop box
+  without clipping. Snapshots refreshed (the three shops, the sell
+  confirmation and the special sale).
+- Picture: `docs/img/0486-prep-shop-buy.png` (Quick Battle,
+  Preparations, Shop, Buy).
+- Follow-up: 0493. The sell box doesn't hide the list behind it, so the
+  end of the longer Leather Vest line now shows as a stray `1` beside the
+  box's corner in the sell confirmation.
+- 0478 (Loadouts) is still open: it can use `stat_line` as written.
+
+**For the Act 1 playtest (1064), *the agent's starting rules*:** the
+order of a shop line is uses (Buy and Sell weapons), rank, numbers; for
+armour, weight class, bonuses, weight.

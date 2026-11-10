@@ -46,7 +46,7 @@ pub mod talk;
 
 pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state, facing_of};
 use combat::Duel;
-use faces::{Face, draw_faces, first_x};
+use faces::{Face, FaceLook, draw_faces, first_x};
 pub use shuyi_ui::cinematic::{Moment, Pan, ShotAt, Timeline, ease_in_out, millis};
 use talk::{TalkBox, talk_at};
 
@@ -262,7 +262,8 @@ impl ShotPainter for Built {
                 }
             }
             Built::Characters { faces, from, .. } if !faces.is_empty() => {
-                let (x, step) = first_x(moment.progress, faces.len(), *from, screen.w);
+                let look = FaceLook::of(ctx);
+                let (x, step) = first_x(moment.progress, faces.len(), *from, screen.w, look);
                 Frame::Characters { x, step }
             }
             Built::Combat { duel: Some(duel) } => {

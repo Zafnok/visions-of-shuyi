@@ -815,3 +815,35 @@ fn battle_menus_sound() {
     h.clear_audio().keys("f");
     assert!(h.sounds().is_empty(), "{:?}", h.sounds());
 }
+
+/// Ticket 0483: in the Quick Battle, selecting the archer, a foot unit
+/// beside the test map's river at (2, 3), shows the Wading tip once.
+#[test]
+fn a_foot_unit_beside_a_river_shows_the_wading_tip_once() {
+    let mut h = quick_battle_banner();
+    h.with_tips();
+    h.keys("f");
+    let close = |h: &mut Harness| {
+        let mut seen = Vec::new();
+        for _ in 0..10 {
+            h.wait(0.1);
+            let Some(tip) = h.battle().and_then(BattleScreen::shown_tip) else {
+                return seen;
+            };
+            if tip == TipTrigger::FirstWadeInReach {
+                assert!(shows(h, "Wading"));
+                assert!(shows(h, "Foot units can wade a river"));
+            }
+            seen.push(tip);
+            h.keys("f");
+        }
+        panic!("the tips never ran out: {seen:?}");
+    };
+    close(&mut h);
+    h.keys("Left Up");
+    assert_eq!(h.cursor_tile(), Some(Pos::new(2, 4)));
+    h.keys("f");
+    assert!(close(&mut h).contains(&TipTrigger::FirstWadeInReach));
+    h.keys("d f");
+    assert!(!close(&mut h).contains(&TipTrigger::FirstWadeInReach));
+}

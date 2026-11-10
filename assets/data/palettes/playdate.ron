@@ -83,6 +83,10 @@
     // PC dims because it can't be chosen is grey dots in a window.
     "window_text_off": "grey",
 
+    // The dialogue screen's own (1043): the ground of a place behind the
+    // talk, darkened (one bit has no darker white).
+    "place_ground": "dots",
+
     // The combat picture's own (1041): a fighter that is hit shows as a
     // black shape (the PC's white one would vanish on the white ground),
     // and a critical flips the whole picture, as a flashing map tile does.

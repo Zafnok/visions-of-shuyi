@@ -218,8 +218,9 @@ fn win_a_story_battle_then_the_acts_final_one() {
         .unwrap_or_else(|| panic!("not on a map"));
     assert!(world.cleared.contains("pass"));
     assert_eq!(quest.chapter, "test_wm2");
-    // On to Old Bridge, the act's final battle.
-    h.keys("Right f");
+    // On to Old Bridge, the act's final battle: Wolf Pass's road back to
+    // Stone Mill, then Stone Mill's road east.
+    h.keys("Right Right f");
     walk(&mut h);
     skip_scene(&mut h);
     win(&mut h);
@@ -343,6 +344,11 @@ fn win_the_last_story_battle_then_decline_the_save() {
 /// Act 1's real map (ticket 1070), from a save at `at` with `cleared` won
 /// and the given chapter's roster: the map as a player finds it.
 fn act1_from_a_save(at: &str, cleared: &[&str]) -> Harness {
+    act1_at_chapter("test_wm1", at, cleared)
+}
+
+/// [`act1_from_a_save`], the campaign at chapter `chapter`.
+fn act1_at_chapter(chapter: &str, at: &str, cleared: &[&str]) -> Harness {
     let mut storage: Box<dyn Storage> = Box::new(MemoryStorage::new());
     let ctx = Ctx::embedded().unwrap_or_else(|e| panic!("{e}"));
     let content = &ctx.game.content;
@@ -353,7 +359,7 @@ fn act1_from_a_save(at: &str, cleared: &[&str]) -> Harness {
         trpg_core::GameMode::Classic,
         lead,
     );
-    c.chapter = "test_wm1".into();
+    c.chapter = chapter.into();
     c.world = Some(trpg_core::WorldState {
         map: "act1".into(),
         at: at.into(),
@@ -454,4 +460,30 @@ fn act1_each_towns_shops_open_with_their_stock() {
 
     let mut h = act1_from_a_save("ossary", &["pilgrims_road"]);
     assert!(town_stock(&mut h, 3)[2].contains(&"linen_robe".to_owned()));
+}
+
+/// The cursor follows the roads on Act 1's map at Chapter 4 (1088, Nick's
+/// playtest: it "kinda just goes wherever it wants"): Millhaven has no
+/// road east; Aldwater's road east goes to Veyne Hall, and Left from there
+/// goes back to Aldwater, not to The Captain's Oath.
+#[test]
+fn act1_the_cursor_goes_where_the_roads_go() {
+    let mut h = act1_at_chapter("ch04", "millhaven", &[]);
+    let cursor = |h: &Harness| map(h).cursor().to_owned();
+    h.keys("Right");
+    assert_eq!(cursor(&h), "millhaven", "no road east of Millhaven");
+    h.keys("Down");
+    assert_eq!(cursor(&h), "valley_road");
+    h.keys("Right");
+    assert_eq!(cursor(&h), "aldwater");
+    h.keys("Down");
+    assert_eq!(cursor(&h), "aldwater", "no road south of Aldwater");
+    h.keys("Right");
+    assert_eq!(cursor(&h), "veyne_hall");
+    h.keys("Left");
+    assert_eq!(cursor(&h), "aldwater");
+    h.keys("Up");
+    assert_eq!(cursor(&h), "veyne_hall", "the road east and north");
+    h.keys("Up");
+    assert_eq!(cursor(&h), "captains_oath");
 }

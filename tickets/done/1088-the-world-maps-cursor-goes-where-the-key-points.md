@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 1088 — The world map's cursor goes where the key points
@@ -116,16 +116,16 @@ Previous / Next unit keep going through every place in the map's order
 
 ## Acceptance criteria
 
-- [ ] On Act 1's map at Chapter 4, Millhaven Right stays; Aldwater Right
+- [x] On Act 1's map at Chapter 4, Millhaven Right stays; Aldwater Right
       → Veyne Hall; Veyne Hall Left → Aldwater (Harness test).
-- [ ] For every shown place and direction that moves the cursor, the
+- [x] For every shown place and direction that moves the cursor, the
       opposite key right after goes back (property test over the test
       maps and Act 1's map at two states).
-- [ ] From the army's place, every shown place can be reached with the
+- [x] From the army's place, every shown place can be reached with the
       direction keys alone (test on the same maps).
-- [ ] A direction with no road that way leaves the cursor and plays
+- [x] A direction with no road that way leaves the cursor and plays
       Denied (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -135,4 +135,40 @@ Previous / Next unit keep going through every place in the map's order
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done game-side: engine#2355 is still open, so `WorldMapScreen::step_cursor`
+picks the place itself, and `docs/engine/friction.md` has a row saying the
+world map can hand engine#2355 its road neighbours once it lands.
+
+- **The pick**: the places joined to the cursor's by a road the screen
+  draws (`WorldMap::open_roads` and `locked_roads`); the one whose straight
+  line is closest in angle to the key (compared as the cosine squared, in
+  whole numbers, so the Playdate's build needs no square root), under 90°;
+  on a tie, the first road in the map's order. None: the cursor stays and
+  Denied plays.
+- **The way back**: the screen remembers the last step a cursor key made
+  (from where, which way); the opposite key right after goes back there.
+  Any other move forgets it: Previous / Next unit, Your army, Find, the
+  end of a walk, and coming back from a screen above.
+- **Tests**: `the_cursor_follows_the_roads_that_way` replaces
+  `the_cursor_jumps_to_the_nearest_place_that_way`;
+  `no_road_that_way_leaves_the_cursor_with_denied`;
+  `the_cursors_keys_undo_each_other_and_reach_every_place` tries every
+  shown place and key (exhaustive, not sampled) and searches every place
+  the keys reach, on both test maps (the first at its start and after
+  Stone Mill) and on Act 1's map at Chapter 4's start, after Veyne Hall,
+  and with every place shown; `act1_the_cursor_goes_where_the_roads_go`
+  plays the repro on Act 1 at Chapter 4 through the Harness (a new
+  `act1_at_chapter` helper; `act1_from_a_save` keeps the test chapter).
+- **Deviation**: `win_a_story_battle_then_the_acts_final_one` now presses
+  Right twice from Wolf Pass to reach Old Bridge (Wolf Pass's one road
+  goes back to Stone Mill); before, Right jumped there across no road.
+- On Old Bridge in the test map, Up goes to Stone Mill: its road leans a
+  little up, which is under 90° from Up.
+
+*The agent's starting rule* (for the Act 1 playtest, 1064; in
+`world-structure.md` and `controls.md`): the cursor follows the roads,
+as written in this ticket's *Nick input*. One detail the ticket didn't
+say: when two roads are exactly as close to the key, the first in the
+map file's order wins. Left to judge by playing: whether the roads feel
+right where a road bends far from its straight line (Aldwater's road to
+Veyne Hall runs east, then north; Up and Right both take it).

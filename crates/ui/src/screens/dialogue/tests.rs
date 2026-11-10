@@ -306,6 +306,20 @@ fn long_text_pages_three_lines_at_a_time() {
 }
 
 #[test]
+fn on_the_playdates_skins_a_line_has_47_letters_so_pages_are_shorter() {
+    use crate::screen::ShuyiCtx;
+    // 54 words: three lines of 18 on the PC, six of 9 on the Playdate.
+    let scene = two_speakers(&"word ".repeat(54));
+    let (mut c, lead) = (ctx(), ctx().game.lead);
+    let mut s = DialogueScreen::told(&c, &scene, lead.clone(), &Present::Everyone);
+    assert_eq!(page_sizes(&mut s, &mut c), [3]);
+    c.use_playdate_skins();
+    let mut s = DialogueScreen::told(&c, &scene, lead, &Present::Everyone);
+    assert_eq!(s.page_lines()[0].chars().count(), 44);
+    assert_eq!(page_sizes(&mut s, &mut c), [3, 3]);
+}
+
+#[test]
 fn text_filling_whole_pages_has_no_empty_page_after() {
     let mut c = ctx();
     let line = format!("{} ", "x".repeat(90));

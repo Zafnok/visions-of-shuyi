@@ -992,8 +992,40 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     h.pad("East");
     assert!(title_view(&h).menu.is_some());
     one_bit.check(&h);
+    // The opening captions (from 15 s) in the dialogue's Playdate look
+    // (ticket 1043): the text box across the bottom of the screen.
+    wait_for(
+        &mut h,
+        60.0,
+        |h| matches!(cinematic_frame(h), Some((Shot::Talk { shown, .. }, _)) if shown > 10),
+    );
+    let rows = screen_rows(&h);
+    assert!(
+        rows[14].starts_with('╚') && rows[14].ends_with('╝'),
+        "{rows:#?}"
+    );
+    assert!(rows[11].chars().any(char::is_alphabetic), "{rows:#?}");
+    one_bit.check(&h);
+    // The characters (from 30.75 s): in the Playdate's dialogue frames, 18
+    // cells wide, half as far apart as on the PC; a face (the lead's, in a
+    // build without the bought art) at 2×.
+    wait_for(
+        &mut h,
+        30.0,
+        |h| matches!(cinematic_frame(h), Some((Shot::Characters { .. }, t)) if t > 38.0),
+    );
+    let Some((Shot::Characters { step, .. }, _)) = cinematic_frame(&h) else {
+        panic!("no faces: {:?}", cinematic_frame(&h));
+    };
+    assert_eq!(step.abs(), 25);
+    let rows = screen_rows(&h);
+    let frame = format!("╔{}╗", "═".repeat(16));
+    assert!(rows.iter().any(|r| r.contains(&frame)), "{rows:#?}");
+    let sprites = h.game().buffer().sprites();
+    assert!(sprites.iter().all(|s| s.dest.h == 128), "{sprites:?}");
+    one_bit.check(&h);
     // The first turn's march (from 56 s).
-    wait_for(&mut h, 80.0, |h| {
+    wait_for(&mut h, 40.0, |h| {
         cinematic_frame(h).is_some_and(|(_, t)| t > 60.0)
     });
     let Some((Shot::MapPan { zoom, .. }, _)) = cinematic_frame(&h) else {
@@ -1027,4 +1059,56 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
         "{:?}",
         h.screens()
     );
+}
+
+/// The Playdate's screen, a row of glyphs a line.
+fn screen_rows(h: &Harness) -> Vec<String> {
+    let buffer = h.game().buffer();
+    (0..i32::from(buffer.height()))
+        .map(|y| {
+            (0..i32::from(buffer.width()))
+                .map(|x| buffer.get(x, y).map_or(' ', |c| c.glyph))
+                .collect()
+        })
+        .collect()
+}
+
+/// Ticket 1043: Chapter 1's scenes before its first battle, on the
+/// Playdate's skins, played to their end with A: every page fits the
+/// Playdate's text box (47 letters a line), the faces are at 2×, and the
+/// log opens from the system menu and closes with B. Frames are drawn
+/// one-bit as the front end draws them.
+#[test]
+fn chapter_ones_scenes_play_to_their_end_on_the_playdates_skins() {
+    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    let mut one_bit = OneBit::new(&h);
+    h.pad("East East East East DpadDown DpadDown East");
+    wait_for(&mut h, 10.0, |h| h.top_screen() == "dialogue");
+    let dialogue = |h: &Harness| view_of(h, trpg_ui::screens::DialogueScreen::view);
+    let (mut presses, mut logged) = (0, false);
+    while h.top_screen() == "dialogue" {
+        assert!(presses < 600, "the scenes never end");
+        let view = dialogue(&h);
+        for line in &view.text.lines {
+            assert!(line.chars().count() <= 47, "{line:?}");
+        }
+        if !logged && view.opening.is_none() && view.speaker.is_some() {
+            let sprites = h.game().buffer().sprites();
+            assert!(sprites.iter().any(|s| s.dest.h == 128), "{sprites:?}");
+            one_bit.check(&h);
+            h.system_menu(SystemMenuEntry::DialogueLog);
+            let log = dialogue(&h).log.unwrap_or_else(|| panic!("no log"));
+            assert_ne!(log.rows.len(), 0);
+            assert!(screen_rows(&h)[0].contains(&log.title));
+            one_bit.check(&h);
+            h.pad("West");
+            assert!(dialogue(&h).log.is_none());
+            logged = true;
+        }
+        h.pad("East");
+        presses += 1;
+    }
+    assert!(logged, "no line was spoken");
+    assert!(h.screens().contains(&"battle"), "{:?}", h.screens());
 }
