@@ -57,6 +57,10 @@ it):
   `CreditsView` with a `CreditsLayout` for 50 × 15; if not, paint the
   game's `CreditsView`, and 1211 moves the painter onto `painted_by`.
 - Look tests with each skin; behaviour tests read the views.
+- Preparations' `GearView` has `item_detail` (0478): the numbers of the
+  item under the cursor, one line on the PC (cut at its two-space gaps
+  when too wide). Paint it under the slots, above the speed line, cut to
+  fit the Playdate's width by its own rule.
 
 **Out (do not do):**
 - Screens 1044 and 1045 cover.

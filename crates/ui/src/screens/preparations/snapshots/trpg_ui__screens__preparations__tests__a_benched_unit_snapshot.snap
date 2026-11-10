@@ -12,11 +12,11 @@ expression: h.snapshot()
 │ Test Mage    ││ Armor      Leather Vest          ││ Iron Sword      can't use swords             │
 │ Test Scout   ││ Accessory  -                     ││ Iron Bow        20/20  from Test Archer      │
 │              ││                                  ││                                              │
+│              ││ E  Mt 6  Hit 85  Crit 0  Rng 2   ││                                              │
+│              ││ Wt 3                             ││                                              │
 │              ││ AS 1 → 3 with Iron Bow           ││                                              │
 │              ││                                  ││                                              │
 │              ││ Not in this battle               ││                                              │
-│              ││                                  ││                                              │
-│              ││                                  ││                                              │
 │              ││                                  ││                                              │
 │              ││                                  ││                                              │
 │              ││                                  ││                                              │
@@ -45,11 +45,11 @@ cffffffffffffffccffffffffffffffffffffffffffffffffffceggggggggggggggggggggggggggg
 cffffffffffffffccffffffffffffffffffffffffffffffffffcegggggggggggggggggggggggggggggggggggggggggggggge
 cggggggggggggggccffffffffffffffffffffffffffffffffffcehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
+cffffffffffffffccfddddddddddddddddddddddddddddddfffceffffffffffffffffffffffffffffffffffffffffffffffe
+cffffffffffffffccfddddfffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccfggggggggggggggggggfffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
-cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
-cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe
 cffffffffffffffccffffffffffffffffffffffffffffffffffceffffffffffffffffffffffffffffffffffffffffffffffe

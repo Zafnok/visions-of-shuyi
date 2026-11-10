@@ -99,6 +99,7 @@ fn view() -> PreparationsView {
             units: list("Units", units, 1, ListState::Chosen),
             gear: Some(GearView {
                 slots: list("Bob · Guard", slots, 1, ListState::Chosen),
+                item_detail: Some("E  Mt 12  Hit 75  Crit 10  Rng 1-2  Wt 12".to_owned()),
                 speed: Some("AS 5".to_owned()),
                 benched_note: Some("Not in this battle".to_owned()),
                 stock: list("Stock: armor", stock, 0, ListState::Focused),
@@ -167,9 +168,12 @@ fn the_lists_sit_side_by_side_under_the_tabs() {
         "{second}"
     );
     assert!(second.contains("││ Iron Plate      too heavy "), "{second}");
-    // The speed is one row under the slots, the note two under it.
-    assert!(row(&buf, 7).contains("││ AS 5 "));
-    assert!(row(&buf, 9).contains("││ Not in this battle "));
+    // The highlighted item's numbers are one row under the slots, cut at
+    // a gap to fit the box; the speed under them, the note two under it.
+    assert!(row(&buf, 7).contains("││ E  Mt 12  Hit 75  Crit 10 "));
+    assert!(row(&buf, 8).contains("││ Rng 1-2  Wt 12 "));
+    assert!(row(&buf, 9).contains("││ AS 5 "));
+    assert!(row(&buf, 11).contains("││ Not in this battle "));
     assert_eq!(row(&buf, 29).trim(), "No.");
     assert_eq!(row(&buf, 31).trim(), "help");
 }
