@@ -1393,6 +1393,27 @@ fn a_planner_started_from_the_battle_threat_areas_searches_only_enemies_near_the
     for x in 0..13 {
         assert_eq!(s.planned(&planner, p(x, 0)), s.threats(p(x, 0), &[(1, 1)]));
     }
+    // A planner whose ranges aren't those of the areas keeps their moves
+    // but works out its own threat areas: from x 6 the enemy on x 8 shoots
+    // x 4 two tiles away, which the areas' swords don't reach.
+    let areas = ThreatAreas::new(
+        &s.map,
+        &s.terrain,
+        &s.classes,
+        &s.units,
+        Faction::Player,
+        ranges,
+    )
+    .unwrap();
+    let bows = |_: &Unit| vec![(1, 2)];
+    let planner = ThreatPlanner::with_areas(
+        &s.map, &s.terrain, &s.classes, &s.units, MOVER, bows, &areas,
+    )
+    .unwrap();
+    assert_eq!(s.planned(&planner, p(4, 0)), [1, 2]);
+    for x in 0..13 {
+        assert_eq!(s.planned(&planner, p(x, 0)), s.threats(p(x, 0), &[(1, 2)]));
+    }
     // The mover on x 4: the enemies on x 0 and x 8 walk to two tiles from
     // it, never next to it. Neither is searched again...
     s.units[0].pos = p(4, 0);

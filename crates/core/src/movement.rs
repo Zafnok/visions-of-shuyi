@@ -265,9 +265,14 @@ fn hostile_at(units: &[Unit], faction: Faction, pos: Pos) -> bool {
 
 /// The stopping tiles for a unit of `faction` (see the module docs): every
 /// tile next to a hostile unit holding a stance that stops enemies.
-fn stopping_tiles(units: &[Unit], faction: Faction, width: u16, height: u16) -> TileSet {
+fn stopping_tiles<'a>(
+    units: impl IntoIterator<Item = &'a Unit>,
+    faction: Faction,
+    width: u16,
+    height: u16,
+) -> TileSet {
     let mut stops = TileSet::new(width, height);
-    let holders = units.iter().filter(|u| {
+    let holders = units.into_iter().filter(|u| {
         u.faction.is_hostile_to(faction) && u.effects.iter().any(|e| e.mods.stops_enemies)
     });
     for holder in holders {
@@ -300,15 +305,29 @@ pub fn reachable(
     units: &[Unit],
     mover: UnitId,
 ) -> Result<Reach, MoveError> {
+    search(map, terrain, classes, units, mover, None)
+}
+
+/// [`reachable`] with unit `absent`, if any, off the map: what a copy of
+/// `units` without it would give, without the copy.
+fn search(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    mover: UnitId,
+    absent: Option<UnitId>,
+) -> Result<Reach, MoveError> {
     #[cfg(feature = "search-count")]
     SEARCHES.with(|n| n.set(n.get() + 1));
     let (unit, movement_type, budget) = mover_info(map, classes, units, mover)?;
     let tiles = &map.tiles;
     let (width, height) = (tiles.width(), tiles.height());
+    let present = |u: &&Unit| Some(u.id) != absent;
     let mut occupied = TileSet::new(width, height);
     // Tiles no step may enter: hostile units' and blocked ones.
     let mut closed = TileSet::new(width, height);
-    for other in units.iter().filter(|u| u.id != mover) {
+    for other in units.iter().filter(present).filter(|u| u.id != mover) {
         occupied.insert(other.pos);
         if other.faction.is_hostile_to(unit.faction) {
             closed.insert(other.pos);
@@ -326,7 +345,7 @@ pub fn reachable(
             .and_then(|&t| terrain.move_cost(t, movement_type))?;
         Some(u32::from(step))
     };
-    let stopping = stopping_tiles(units, unit.faction, width, height);
+    let stopping = stopping_tiles(units.iter().filter(present), unit.faction, width, height);
 
     // The walk goes on from every tile but the stopping ones; each of
     // those is then entered from its cheapest neighbour of the walk (the
@@ -395,7 +414,8 @@ pub fn path_cost(
     if first != unit.pos {
         return Err(PathError::WrongStart);
     }
-    let stopping = stopping_tiles(units, unit.faction, map.tiles.width(), map.tiles.height());
+    let (width, height) = (map.tiles.width(), map.tiles.height());
+    let stopping = stopping_tiles(units, unit.faction, width, height);
     let mut total: u32 = 0;
     for (i, pair) in path.windows(2).enumerate() {
         let (from, to) = (pair[0], pair[1]);
@@ -659,12 +679,9 @@ impl ThreatPlanner {
             return Err(MoveError::UnknownUnit(unit));
         };
         let stops = target.effects.iter().any(|e| e.mods.stops_enemies);
-        let without: Vec<Unit> = units.iter().filter(|u| u.id != unit).cloned().collect();
         let mut threats = Vec::new();
-        for u in without
-            .iter()
-            .filter(|u| u.faction.is_hostile_to(target.faction))
-        {
+        let hostile = |u: &&Unit| u.faction.is_hostile_to(target.faction);
+        for u in units.iter().filter(hostile) {
             let ranges = ranges(u);
             let kept = areas.and_then(|a| a.moves_clear_of(u.id, target.pos, stops));
             let kind = if u.ai == AiBehavior::Stationary {
@@ -680,7 +697,7 @@ impl ThreatPlanner {
                     stops,
                 }
             } else {
-                let reach = reachable(map, terrain, classes, &without, u.id)?;
+                let reach = search(map, terrain, classes, units, u.id, Some(unit))?;
                 ThreatKind::Moves {
                     area: area_of(&reach, &ranges),
                     reach,
@@ -813,11 +830,14 @@ impl ThreatAreas {
         let ThreatKind::Moves { reach, area, .. } = &threat.kind else {
             return None;
         };
-        let gap = if stops { 3 } else { 2 };
-        let clear = reach
-            .passable()
-            .iter()
-            .all(|t| Pos::manhattan(t, pos) >= gap);
+        // The tiles next to `pos`, and with `stops` the tiles next to them.
+        let around = |p: Pos| Dir::ALL.into_iter().map(move |dir| p.step(dir));
+        let mut near: Vec<Pos> = around(pos).collect();
+        if stops {
+            let next = near.clone();
+            near.extend(next.into_iter().flat_map(around));
+        }
+        let clear = !near.into_iter().any(|t| reach.is_passable(t));
         clear.then_some((reach, &threat.ranges, area))
     }
 }

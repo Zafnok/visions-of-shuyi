@@ -153,6 +153,23 @@ None. No rule or look changes: the same arrows on the same tiles.
   `a_planner_started_from_the_battle_threat_areas_searches_only_enemies_near_the_unit`,
   stance included). Every existing threat-arrow test and snapshot
   passes unchanged.
+- **Mutation testing.** CI's first run missed one mutant: `==` to `!=`
+  where the planner reuses the kept threat area only if its ranges are
+  the areas' (otherwise it works it out from the kept moves). Every test
+  had built both with the same ranges, so both branches gave the same
+  area. The hand-made scene now starts a planner with bows from areas
+  made with swords.
+- **The selection's frame.** The first `bench` run on this PR moved the
+  planner's making to the frame the rider is selected (`battle-attack`'s
+  frame 7): 1,381,779 to 1,698,925 on the colour targets, while frames 1
+  and 5 (the cursor onto a unit) fell by about 940,000 each. Callgrind
+  on that frame: of the planner's 318,198, the check that an enemy's
+  moves keep clear of her built each enemy's whole passable set
+  (82,275), and the copy of every unit but her, for the one search,
+  cost 102,627 to clone and drop. Now the check looks at the few tiles
+  next to her (and next to those, with a stance), and the search leaves
+  her out itself (`movement::search`, behind `reachable`), with no copy;
+  `ThreatPlanner::new` gains the same.
 - **The danger zone isn't shared.** `danger_zone` also searches the
   enemies that never move (it shows where they could walk); the arrows
   only measure their reach. Sharing would add those searches to every
