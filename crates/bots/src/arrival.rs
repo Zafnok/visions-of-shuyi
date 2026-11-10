@@ -167,7 +167,9 @@ fn guards_on_the_way(
         return Vec::new();
     };
     let mut won = Vec::new();
-    loop {
+    // Each turn wins a place, so a way longer than the map has places
+    // never ends: stop there.
+    for _ in 0..map.nodes.len() {
         let at = campaign
             .world
             .as_ref()
@@ -196,6 +198,7 @@ fn guards_on_the_way(
             None => return won,
         }
     }
+    won
 }
 
 /// Battle `battle`, fought in `chapter`, won by its recorded playthrough
