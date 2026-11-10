@@ -110,34 +110,19 @@ pub fn arrival(
     }
     let guards = guards_by_chapter(content, &chapters);
     let mut campaign = new_campaign(content, mode, lead);
+    // The army's place on the map changes no battle: which guards it
+    // fights is the plan's, so only the wins are played here.
     for (i, chapter) in chapters.iter().enumerate().take(at + 1) {
         recruit(&mut campaign, content, &chapter.id);
-        let map = chapter
-            .world_map
-            .as_ref()
-            .and_then(|m| content.worldmaps.get(m));
-        if let Some(map) = map {
-            chapter.id.clone_into(&mut campaign.chapter);
-            campaign.enter_world(&map.map);
-        }
         let before = if i == at { guard } else { None };
         let on_the_way = &guards[i][..before.unwrap_or(guards[i].len())];
-        for (place, battle) in on_the_way {
+        for (_, battle) in on_the_way {
             win(&mut campaign, content, battle, chapter)?;
-            if let Some(map) = map {
-                campaign.clear_node(&map.map, place, None, None);
-            }
         }
         if i == at {
             break;
         }
         win(&mut campaign, content, &chapter.battle, chapter)?;
-        let story = NodeKind::StoryBattle(chapter.id.clone());
-        if let Some(map) = map
-            && let Some(node) = map.map.nodes.iter().find(|n| n.kind == story)
-        {
-            campaign.clear_node(&map.map, &node.id, None, None);
-        }
     }
     Ok(Some(setup(content, &campaign, def, chapters[at])))
 }
