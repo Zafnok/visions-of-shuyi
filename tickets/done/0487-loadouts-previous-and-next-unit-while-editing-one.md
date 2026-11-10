@@ -121,14 +121,14 @@ right goes on the Act 1 playtest's checklist (1064).
   `PreparationsScreen::step_unit`: wraps at both ends, move sound, the
   message clears, the focus stays; the slot row is kept (clamped), the
   stock row too (clamped), and an empty stock for the new unit's slot
-  lands on Slots. In Units the slot row goes back to the first, as Up and
-  Down there already do.
+  lands on Slots. In Units the slot row is kept (clamped) too, unlike Up
+  and Down there, which put it back to the first.
 - Help lines `prep.help.units/slots/stock` (and the test pack) read
   `{Cursor} choose · {PrevUnit} {NextUnit} unit · …`; snapshots updated.
 - `docs/design/weapons-and-items.md`: one bullet under *On the
   Preparations screen*.
-- Tests: three view tests in `preparations/tests.rs` (slot row kept,
-  wrapping, stock clamp / fallback), two Harness tests in
+- Tests: four view tests in `preparations/tests.rs` (slot row kept,
+  wrapping, stock row kept / fallback, stock row clamped), two Harness tests in
   `tests/it/preparations.rs` (default keys with the help lines, a rebound
   Next unit key), and a Playdate test (`B+→` / `B+←` step the unit in
   Slots without backing out; B alone still backs out; the help line fits

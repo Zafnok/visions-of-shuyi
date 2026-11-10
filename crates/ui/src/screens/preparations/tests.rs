@@ -1428,8 +1428,7 @@ fn next_and_previous_unit_in_the_slots_keep_the_slot_row() {
 }
 
 /// Ticket 0487: from the last unit Next unit wraps to the first, and
-/// Previous from the first to the last; on the units the slot row goes
-/// back to the first, as Up and Down do.
+/// Previous from the first to the last.
 #[test]
 fn next_and_previous_unit_wrap_at_both_ends() {
     let mut c = ctx();
@@ -1496,4 +1495,35 @@ fn next_unit_in_the_stock_keeps_the_row_or_lands_on_the_slots() {
     }
     assert_eq!(on(&s, &c), ("Test Mage".to_owned(), 3, 0, Focus::Slots));
     assert_eq!(stock_texts(&s, &c), [] as [String; 0]);
+}
+
+/// Ticket 0487: a stock row past the end of the next unit's list lands on
+/// its last row.
+#[test]
+fn previous_unit_clamps_the_stock_row_to_a_shorter_list() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The knight's armour stock, on its last row.
+    update(
+        &mut s,
+        &mut c,
+        &[Confirm, CursorDown, Confirm, CursorUp, CursorUp],
+    );
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    let before = s.stock_rows(&c).len();
+    assert_eq!(
+        on(&s, &c),
+        ("Test Knight".to_owned(), 3, before - 1, Focus::Stock)
+    );
+    // With the stock's armour gone the lord's list is shorter.
+    let items = s.prep.setup.items.clone();
+    let stock = &mut s.prep.setup.stock.items;
+    stock.retain(|id, _| !matches!(items.get(id), Some(ItemDef::Armour(_))));
+    update(&mut s, &mut c, &[Action::PrevUnit]);
+    let rows = s.stock_rows(&c).len();
+    assert!(0 < rows && rows < before, "{rows} of {before}");
+    assert_eq!(
+        on(&s, &c),
+        ("Test Lord".to_owned(), 3, rows - 1, Focus::Stock)
+    );
 }

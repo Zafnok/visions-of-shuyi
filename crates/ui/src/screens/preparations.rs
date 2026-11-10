@@ -706,10 +706,7 @@ impl PreparationsScreen {
     fn step_unit(&mut self, forward: bool, ctx: &mut Ctx) {
         self.message = None;
         self.unit = Self::moved(self.unit, self.units().len(), forward, ctx);
-        self.slot = match self.focus {
-            Focus::Units => 0,
-            _ => self.slot.min(self.slots().len().saturating_sub(1)),
-        };
+        self.slot = self.slot.min(self.slots().len().saturating_sub(1));
         if self.focus == Focus::Stock {
             match self.stock_rows(ctx).len() {
                 0 => (self.focus, self.stock) = (Focus::Slots, 0),
