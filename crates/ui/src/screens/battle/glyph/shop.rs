@@ -154,12 +154,8 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
         // a long line or the highlight would poke out beside its border.
         let sell_box = sell_box(area);
         let right = sell_box.x + sell_box.w;
-        let past = Rect::new(
-            right,
-            sell_box.y,
-            list_x - 1 + row_w(area) - right,
-            sell_box.h,
-        );
+        let border = area.x + area.w - 1;
+        let past = Rect::new(right, sell_box.y, border - right, sell_box.h);
         buf.fill_rect(past, Cell::new(' ', text, bg));
         paint_sell(ctx, sell, sell_box, buf);
     }
@@ -381,6 +377,8 @@ mod tests {
             for x in right..inner {
                 assert_eq!(buf.get(x, y).map(|c| c.bg), Some(bg), "({x}, {y})");
             }
+            // Up to the shop's right border, which stays.
+            assert_eq!(text(&buf, inner, y, 1), "║", "row {y}");
         }
         // The lines above and below the box keep their text.
         assert_ne!(text(&buf, right, SELL_BOX.y - 1, inner - right).trim(), "");
