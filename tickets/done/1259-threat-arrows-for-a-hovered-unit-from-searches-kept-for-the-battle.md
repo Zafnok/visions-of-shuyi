@@ -98,7 +98,7 @@ None. No rule or look changes: the same arrows on the same tiles.
       search once the battle's areas are kept (test of step 1).
 - [x] The battle-wide answers equal `threats_at`'s (property test).
 - [x] Every existing threat-arrow test and snapshot passes unchanged.
-- [ ] `battle-attack`'s and `battle-cursor-sweep`'s costliest frames on
+- [x] `battle-attack`'s and `battle-cursor-sweep`'s costliest frames on
       the colour targets are under 2,000,000 instructions, or the
       completion notes name what is left and its ticket.
 - [x] All gates in the `run-gates` skill pass.
@@ -187,8 +187,24 @@ None. No rule or look changes: the same arrows on the same tiles.
   fills a rectangle per row. Every frame with the menu open costs about
   2,013,000. Ticket **1260** (an engine change, `engine-change`
   skill), added to 1250's `blocked_by`.
-- **Bench:** the numbers of CI's `bench` job on this PR are in
-  `docs/targets.md` (*The numbers*, *Over budget*).
+- **Bench** (CI's `bench` job on this PR at 54a63494, in
+  `docs/targets.md`), instructions, `main` → this PR:
+
+  | Frame | Colour targets | Playdate |
+  | --- | ---: | ---: |
+  | `battle-cursor-sweep` 91 (the cursor onto units) | 2,275,409 → 1,330,645 | 3,054,468 → 2,116,791 |
+  | `battle-cursor-sweep` 93 | 2,037,553 → 1,093,513 | 2,887,342 → 1,967,208 |
+  | `battle-attack` 1 (the cursor onto a unit) | 2,275,502 → 1,337,641 | 3,052,554 → 2,117,804 |
+  | `battle-attack` 5 (onto the rider) | 2,212,967 → 1,270,498 | 3,006,079 → 2,068,652 |
+  | `battle-attack` 7 (the rider selected) | 1,381,779 → 1,498,721 | 2,548,918 → 2,672,948 |
+
+  Frame 7 now makes the rider's planner, which `main` made on frame 5;
+  it costs one enemy's search and the kept ones' copies. The cursor
+  sweep's costliest frame on the colour targets is 1,371,007 (frame 92,
+  unchanged), under 2,000,000. `battle-attack`'s is still frame 43, the
+  unit menu, at 2,305,299: **left for 1260**, as above. On the
+  Playdate every scenario's costliest frame but the idle battle's and
+  the options' stays over 2,000,000 with the one-bit drawing (1248).
 - **Friction:** estimate 70, measured 143 (2.0×), accepted: the
   estimate was for the areas alone, before the planner's reuse was
   added; game-side rules and a screen's cache, no engine piece missing
