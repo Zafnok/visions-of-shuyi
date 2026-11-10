@@ -192,7 +192,10 @@ pub fn win_on_the_way(h: &mut Harness, place: &str, commands: &[trpg_core::Comma
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     let world = campaign.world.as_ref();
-    assert!(world.is_some_and(|w| w.cleared.contains(place)), "{place} won");
+    assert!(
+        world.is_some_and(|w| w.cleared.contains(place)),
+        "{place} won"
+    );
 }
 
 /// Acceptance: New Game reaches Chapter 4 through Chapters 1 to 3, and

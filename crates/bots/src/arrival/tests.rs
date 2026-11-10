@@ -87,7 +87,12 @@ fn the_guards_on_the_way_are_won_first() {
         .zip(&guards)
         .map(|(c, g)| (c.id.as_str(), g.iter().map(|(_, b)| b.as_str()).collect()))
         .collect();
-    let of = |id: &str| by_chapter.iter().find(|(c, _)| *c == id).map(|(_, g)| g.clone());
+    let of = |id: &str| {
+        by_chapter
+            .iter()
+            .find(|(c, _)| *c == id)
+            .map(|(_, g)| g.clone())
+    };
     assert_eq!(of("ch03"), Some(vec![]));
     assert_eq!(of("ch04"), Some(vec!["aldwater"]));
     assert_eq!(of("ch05"), Some(vec!["salt_road"]));
@@ -96,7 +101,11 @@ fn the_guards_on_the_way_are_won_first() {
         .map(|c| c.id.as_str())
         .collect();
     assert_eq!(before, ["ch01", "ch02", "ch03", "ch04"]);
-    assert!(chapters_before(&content, "millhaven_road").is_empty());
+    assert_eq!(
+        chapters_before(&content, "millhaven_road").len(),
+        0,
+        "optional"
+    );
     // The toll bridge's army is Chapter 3's, and the hall's has won it too.
     let bridge = arrive(&content, "aldwater", GameMode::Classic);
     let hall = arrive(&content, "ch04", GameMode::Classic);

@@ -93,7 +93,7 @@ pub fn chapters_before<'a>(content: &'a Content, battle: &str) -> Vec<&'a Chapte
 /// applied with every rewind charge unused; whoever a scene recruits by
 /// each chapter joins fresh from the character data before its battle; on
 /// a world map, the guards on the way are won first, in the same way
-/// ([`guards_by_chapter`]). Then `def` is prepared too: a chapter's story
+/// (`guards_by_chapter`). Then `def` is prepared too: a chapter's story
 /// battle, or a guard on its way, after the guards before it.
 pub fn arrival(
     content: &Content,
@@ -112,7 +112,10 @@ pub fn arrival(
     let mut campaign = new_campaign(content, mode, lead);
     for (i, chapter) in chapters.iter().enumerate().take(at + 1) {
         recruit(&mut campaign, content, &chapter.id);
-        let map = chapter.world_map.as_ref().and_then(|m| content.worldmaps.get(m));
+        let map = chapter
+            .world_map
+            .as_ref()
+            .and_then(|m| content.worldmaps.get(m));
         if let Some(map) = map {
             chapter.id.clone_into(&mut campaign.chapter);
             campaign.enter_world(&map.map);
@@ -145,14 +148,17 @@ pub fn arrival(
 /// unwon battle, the first open guard of the map's places. The way
 /// depends only on the places won, so this wins nothing; [`arrival`]
 /// plays it. Empty for a chapter off the map.
-pub fn guards_by_chapter(content: &Content, chapters: &[&ChapterDef]) -> Vec<Vec<(String, String)>> {
+fn guards_by_chapter(content: &Content, chapters: &[&ChapterDef]) -> Vec<Vec<(String, String)>> {
     // Who leads changes nothing on the map.
     let lead = LeadProfile::new("Lead", LeadGender::Male);
     let mut campaign = new_campaign(content, GameMode::Classic, lead);
     chapters
         .iter()
         .map(|chapter| {
-            let Some(map) = chapter.world_map.as_ref().and_then(|m| content.worldmaps.get(m))
+            let Some(map) = chapter
+                .world_map
+                .as_ref()
+                .and_then(|m| content.worldmaps.get(m))
             else {
                 return Vec::new();
             };
@@ -164,7 +170,11 @@ pub fn guards_by_chapter(content: &Content, chapters: &[&ChapterDef]) -> Vec<Vec
 /// The guards [`guards_by_chapter`] finds for chapter `chapter` on `map`,
 /// with `campaign` where the chapters before left it; then its story
 /// battle is won too.
-fn guards_on_the_way(campaign: &mut Campaign, map: &WorldMap, chapter: &str) -> Vec<(String, String)> {
+fn guards_on_the_way(
+    campaign: &mut Campaign,
+    map: &WorldMap,
+    chapter: &str,
+) -> Vec<(String, String)> {
     chapter.clone_into(&mut campaign.chapter);
     campaign.enter_world(map);
     let story = NodeKind::StoryBattle(chapter.to_owned());
@@ -173,7 +183,11 @@ fn guards_on_the_way(campaign: &mut Campaign, map: &WorldMap, chapter: &str) -> 
     };
     let mut won = Vec::new();
     loop {
-        let at = campaign.world.as_ref().map(|w| w.at.clone()).unwrap_or_default();
+        let at = campaign
+            .world
+            .as_ref()
+            .map(|w| w.at.clone())
+            .unwrap_or_default();
         let route = map.route(&at, &node.id, campaign);
         let guard = map.nodes.iter().find_map(|n| match &n.kind {
             NodeKind::FixedSkirmish {
@@ -218,7 +232,6 @@ fn win(
         .map_err(|e| format!("{}'s recorded playthrough: {e}", won.id))?;
     Ok(())
 }
-
 
 /// `campaign`'s battle `def` of `chapter`, prepared.
 fn setup(

@@ -16,9 +16,7 @@
 //!
 //! and read the new fixture's last lines (who fell, how many turns).
 
-use trpg_core::{
-    BattleState, CharacterId, ItemId, NodeKind, Outcome, WorldCommand, WorldEvent,
-};
+use trpg_core::{BattleState, CharacterId, ItemId, NodeKind, Outcome, WorldCommand, WorldEvent};
 
 use crate::playthrough::{self, lost, skip_scenes};
 use crate::side_quests::{act1_from_a_save, army_for, campaign, content, on_act1};
@@ -61,19 +59,26 @@ fn the_four_places_are_their_fixed_skirmishes() {
 fn a_guard_blocks_the_way_until_won() {
     let content = content();
     let map = &content.worldmaps["act1"].map;
-    let (mut c, _) = army_for(&content, "aldwater");
+    // Any army will do: the map reads only what is won.
+    let (mut c, _) = army_for(&content, "millhaven_road");
     // `on_act1` puts the campaign in Chapter 2; the hall waits for 4.
     on_act1(&mut c, "valley_road", &[]);
     c.chapter = "ch04".into();
     let to_hall = WorldCommand::TravelTo("veyne_hall".into());
     let events = c.world_command(map, &to_hall);
     let events = events.unwrap_or_else(|e| panic!("{e:?}"));
-    assert_eq!(events.last(), Some(&WorldEvent::BattleAhead("aldwater".into())));
+    assert_eq!(
+        events.last(),
+        Some(&WorldEvent::BattleAhead("aldwater".into()))
+    );
     on_act1(&mut c, "valley_road", &["aldwater"]);
     c.chapter = "ch04".into();
     let events = c.world_command(map, &to_hall);
     let events = events.unwrap_or_else(|e| panic!("{e:?}"));
-    assert_eq!(events.last(), Some(&WorldEvent::BattleAhead("veyne_hall".into())));
+    assert_eq!(
+        events.last(),
+        Some(&WorldEvent::BattleAhead("veyne_hall".into()))
+    );
 
     on_act1(&mut c, "veyne_hall", &["aldwater", "veyne_hall"]);
     c.chapter = "ch05".into();
@@ -81,7 +86,11 @@ fn a_guard_blocks_the_way_until_won() {
         assert!(!map.is_open(closed, &c), "{closed} before the Salt Road");
     }
     assert!(map.blocks_path("salt_road", &c));
-    on_act1(&mut c, "salt_road", &["aldwater", "veyne_hall", "salt_road"]);
+    on_act1(
+        &mut c,
+        "salt_road",
+        &["aldwater", "veyne_hall", "salt_road"],
+    );
     c.chapter = "ch05".into();
     for open in ["saltmere", "envoys_house", "smugglers_cove"] {
         assert!(map.is_open(open, &c), "{open} after the Salt Road");
@@ -107,7 +116,7 @@ fn the_recorded_playthrough_beats_gil_and_he_joins() {
     let gil = CharacterId("prizefighter".into());
     let recruited = state.recruited().iter();
     let recruited: Vec<_> = recruited.filter_map(|u| u.character.clone()).collect();
-    assert_eq!(recruited, [gil.clone()]);
+    assert_eq!(recruited, std::slice::from_ref(&gil));
     campaign
         .apply_result(def, &state, 0)
         .unwrap_or_else(|e| panic!("{e:?}"));
