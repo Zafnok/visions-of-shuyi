@@ -5,7 +5,7 @@ type: bug
 milestone: Later
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["1251"]
 nick_input: none
 completed:

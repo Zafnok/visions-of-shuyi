@@ -6,7 +6,7 @@ milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["1247", "1248", "1249", "1251", "1259"]
+blocked_by: ["1247", "1248", "1249", "1251", "1259", "1260"]
 nick_input: none
 completed:
 ---
@@ -31,7 +31,7 @@ None.
 ## Scope
 
 **In:**
-- Once 1247, 1248, 1249, 1251 and 1259 are done and the `bench` job has no warnings
+- Once 1247, 1248, 1249, 1251, 1259 and 1260 (the unit menu's frame) are done and the `bench` job has no warnings
   on `main`: delete `scripts/bench-known-over.sh` and `KNOWN_OVER`, so
   the Bench step is `cargo shuyi bench --out dist/bench` again; add
   `bench` to `ci-result`'s `needs` in `.github/workflows/ci.yml`; and

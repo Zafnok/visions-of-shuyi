@@ -1247,16 +1247,188 @@ proptest! {
         let id = s.units[pick % s.units.len()].id;
         let range = |u: &Unit| ranges[&u.id].clone();
         let planner = ThreatPlanner::new(&s.map, &s.terrain, &s.classes, &s.units, id, range);
+        // Started from the battle's threat areas (1259), of either side.
+        let from_areas = |faction| {
+            let areas =
+                ThreatAreas::new(&s.map, &s.terrain, &s.classes, &s.units, faction, range)?;
+            ThreatPlanner::with_areas(&s.map, &s.terrain, &s.classes, &s.units, id, range, &areas)
+        };
+        let planners = [planner, from_areas(Faction::Player), from_areas(Faction::Enemy)];
         for (x, y) in tiles {
             let at = p(x, y);
             let expected =
                 threats_at(&s.map, &s.terrain, &s.classes, &s.units, id, at, range);
-            let planned = planner
-                .clone()
-                .and_then(|pl| pl.threats_at(&s.map, &s.terrain, &s.classes, &s.units, at));
-            prop_assert_eq!(planned, expected, "{:?} at {:?}", id, at);
+            for (i, planner) in planners.iter().enumerate() {
+                // A battle that fails fails the same with or without areas.
+                let planned = planner
+                    .clone()
+                    .and_then(|pl| pl.threats_at(&s.map, &s.terrain, &s.classes, &s.units, at));
+                prop_assert_eq!(&planned, &expected, "planner {} for {:?} at {:?}", i, id, at);
+            }
         }
     }
+
+    /// The battle's threat areas answer as [`threats_at`] does for every
+    /// unit of their faction on its own tile, with stances that stop
+    /// enemies, units that never move, blocked tiles and each unit's own
+    /// Mov and ranges; for a unit of another faction, nothing.
+    #[test]
+    fn the_battle_threat_areas_answer_as_threats_at_does(
+        s in arb_scene(),
+        units in prop::collection::vec(
+            (any::<bool>(), any::<bool>(), -1i32..=8, prop::option::of((0u32..3, 0u32..3))),
+            8,
+        ),
+        blocked in prop::collection::vec((0i32..10, 0i32..10), 0..3),
+        enemy_side in any::<bool>(),
+    ) {
+        let mut s = s;
+        let mut ranges = BTreeMap::new();
+        for (u, &(holds, still, mov, range)) in s.units.iter_mut().zip(&units) {
+            u.stats.mov = mov;
+            if still {
+                u.ai = crate::ai::AiBehavior::Stationary;
+            }
+            if holds {
+                u.add_effect(crate::skill::TimedEffect {
+                    source: crate::skill::EffectSource::Art(crate::art::ArtId::new("hold")),
+                    mods: crate::skill::TimedMods {
+                        stops_enemies: true,
+                        ..crate::skill::TimedMods::default()
+                    },
+                    until: crate::battle::Phase::Player,
+                });
+            }
+            let range = range.map(|(min, len)| vec![(min, min + len)]);
+            ranges.insert(u.id, range.unwrap_or_default());
+        }
+        s.map.blocked = blocked
+            .into_iter()
+            .map(|(x, y)| p(x, y))
+            .filter(|&pos| s.units.iter().all(|u| u.pos != pos))
+            .collect();
+        let faction = if enemy_side { Faction::Enemy } else { Faction::Player };
+        let range = |u: &Unit| ranges[&u.id].clone();
+        let areas = ThreatAreas::new(&s.map, &s.terrain, &s.classes, &s.units, faction, range);
+        for u in &s.units {
+            let answer = areas.clone().map(|a| a.threats_to(u));
+            if u.faction == faction {
+                let expected =
+                    threats_at(&s.map, &s.terrain, &s.classes, &s.units, u.id, u.pos, range);
+                prop_assert_eq!(answer, expected.map(Some), "{:?}", u.id);
+            } else if let Ok(answer) = answer {
+                prop_assert_eq!(answer, None, "{:?}", u.id);
+            }
+        }
+    }
+}
+
+// ------------------------------------------- the battle's threat areas
+
+#[test]
+fn the_battle_threat_areas_search_each_moving_enemy_once_then_never() {
+    use crate::ai::AiBehavior;
+    // Two players, an ally, and three enemies: one never moves.
+    let mut s = scene(&["@..e..p.e.a.e"], "foot", 2);
+    s.units[5].ai = AiBehavior::Stationary;
+    let ranges = |_: &Unit| vec![(1, 2)];
+    let before = searches();
+    let areas = ThreatAreas::new(
+        &s.map,
+        &s.terrain,
+        &s.classes,
+        &s.units,
+        Faction::Player,
+        ranges,
+    )
+    .unwrap();
+    assert_eq!(searches() - before, 2);
+    let before = searches();
+    // The mover: the first enemy walks next to it. The other player sits
+    // between the first two enemies.
+    assert_eq!(ids_of(&areas, &s.units[0]), Some(vec![1]));
+    assert_eq!(ids_of(&areas, &s.units[2]), Some(vec![1, 3]));
+    // An enemy, an ally: not the side these were made for.
+    assert_eq!(ids_of(&areas, &s.units[1]), None);
+    assert_eq!(ids_of(&areas, &s.units[4]), None);
+    assert_eq!(searches() - before, 0);
+    // The one that never moves reaches two tiles from its own: the ally.
+    let areas = ThreatAreas::new(
+        &s.map,
+        &s.terrain,
+        &s.classes,
+        &s.units,
+        Faction::Ally,
+        ranges,
+    )
+    .unwrap();
+    assert_eq!(ids_of(&areas, &s.units[4]), Some(vec![3, 5]));
+}
+
+#[test]
+fn a_planner_started_from_the_battle_threat_areas_searches_only_enemies_near_the_unit() {
+    // Mov 2: the enemy at x 3 walks to x 1, next to the mover; the one at
+    // x 8 never comes within two tiles of it, nor the one at x 12.
+    let mut s = scene(&["@..e....e...e"], "foot", 2);
+    let ranges = |_: &Unit| vec![(1, 1)];
+    // The planner from the areas of `s`, and the searches it ran.
+    let plan = |s: &Scene| {
+        let areas = ThreatAreas::new(
+            &s.map,
+            &s.terrain,
+            &s.classes,
+            &s.units,
+            Faction::Player,
+            ranges,
+        )
+        .unwrap();
+        let before = searches();
+        let planner = ThreatPlanner::with_areas(
+            &s.map, &s.terrain, &s.classes, &s.units, MOVER, ranges, &areas,
+        );
+        (planner.unwrap(), searches() - before)
+    };
+    let (planner, searched) = plan(&s);
+    assert_eq!(searched, 1);
+    for x in 0..13 {
+        assert_eq!(s.planned(&planner, p(x, 0)), s.threats(p(x, 0), &[(1, 1)]));
+    }
+    // The mover on x 4: the enemies on x 0 and x 8 walk to two tiles from
+    // it, never next to it. Neither is searched again...
+    s.units[0].pos = p(4, 0);
+    s.units[1].pos = p(0, 0);
+    assert_eq!(plan(&s).1, 0);
+    // ...unless it holds the ford, stopping enemies next to it: both are.
+    hold(&mut s, 0);
+    let (planner, searched) = plan(&s);
+    assert_eq!(searched, 2);
+    for x in 0..13 {
+        assert_eq!(s.planned(&planner, p(x, 0)), s.threats(p(x, 0), &[(1, 1)]));
+    }
+}
+
+/// Who threatens `unit` on its own tile, by `areas`.
+fn ids_of(areas: &ThreatAreas, unit: &Unit) -> Option<Vec<u32>> {
+    let ids = areas.threats_to(unit)?;
+    Some(ids.into_iter().map(|id| id.0).collect())
+}
+
+#[test]
+fn the_battle_threat_areas_report_bad_units() {
+    let mut s = scene(&["@.e"], "foot", 1);
+    s.units[1].class = ClassId("boat".into());
+    let made = ThreatAreas::new(
+        &s.map,
+        &s.terrain,
+        &s.classes,
+        &s.units,
+        Faction::Player,
+        |_| vec![(1, 1)],
+    );
+    assert_eq!(
+        made.map(|_| ()),
+        Err(MoveError::UnknownClass(ClassId("boat".into())))
+    );
 }
 
 // ------------------------------------------------- Hold the Ford (0329)
