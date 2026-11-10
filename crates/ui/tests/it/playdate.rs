@@ -1112,3 +1112,44 @@ fn chapter_ones_scenes_play_to_their_end_on_the_playdates_skins() {
     assert!(logged, "no line was spoken");
     assert!(h.screens().contains(&"battle"), "{:?}", h.screens());
 }
+
+/// Ticket 0487: in Preparations' Loadouts, B + right steps to the next
+/// unit and B + left back, keeping a unit's slots; the chord's B doesn't
+/// back out. The help line names the chords and fits the Playdate's width.
+#[test]
+fn b_with_left_or_right_steps_the_unit_in_the_loadouts() {
+    use trpg_ui::screens::PreparationsScreen;
+    use trpg_ui::screens::preparations::{Focus, PrepBody};
+    let mut h = Harness::first_launch_and(playdate_skins);
+    h.use_pad(PadKind::Playdate);
+    h.pad("East DpadDown East").wait(trpg_ui::harness::FRAME_DT);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    // Loadouts, the lord's slots.
+    h.pad("East East");
+    let shown = |h: &Harness| {
+        view_of(h, |s: &PreparationsScreen, c: &Ctx| {
+            let v = s.view(c);
+            let unit = match &v.body {
+                PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
+                _ => None,
+            };
+            (s.focus(), unit.unwrap_or_default(), v.help)
+        })
+    };
+    let (focus, unit, help) = shown(&h);
+    assert_eq!(focus, Focus::Slots);
+    assert!(unit.starts_with("Test Lord"), "{unit}");
+    assert!(help.contains("B+← B+→ unit"), "{help}");
+    assert!(help.chars().count() <= 50, "{help}");
+    h.pad("West+DpadRight");
+    let (focus, unit, _) = shown(&h);
+    assert_eq!(focus, Focus::Slots, "B in the chord doesn't back out");
+    assert!(unit.starts_with("Test Knight"), "{unit}");
+    h.pad("West+DpadLeft");
+    let (focus, unit, _) = shown(&h);
+    assert_eq!(focus, Focus::Slots);
+    assert!(unit.starts_with("Test Lord"), "{unit}");
+    // B alone still backs out.
+    h.pad("West");
+    assert_eq!(shown(&h).0, Focus::Units);
+}

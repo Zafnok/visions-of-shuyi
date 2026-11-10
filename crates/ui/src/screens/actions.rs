@@ -121,6 +121,8 @@ pub const PREPARATIONS: &[Action] = &[
     CursorDown,
     CursorLeft,
     CursorRight,
+    PrevUnit,
+    NextUnit,
     Confirm,
     Cancel,
     Options,
