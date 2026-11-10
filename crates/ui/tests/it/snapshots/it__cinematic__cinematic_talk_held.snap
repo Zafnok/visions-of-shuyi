@@ -3,6 +3,10 @@ source: crates/ui/tests/it/cinematic.rs
 expression: held
 ---
                                        Village of Heth, dusk                                        
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
  ╔════════════════════════════════╗                              ┌────────────────────────────────┐ 
  ║                                ║                              │                                │ 
  ║                                ║                              │                                │ 
@@ -29,13 +33,13 @@ expression: held
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                               d back                                               
+└──────────────────────────────────────────────d back──────────────────────────────────────────────┘
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
 aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
@@ -62,11 +66,7 @@ deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed
 deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed
 deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed
-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+dddddddddddddddddddddddddddddddddddddddddddddddhhhhhhddddddddddddddddddddddddddddddddddddddddddddddd
 --- legend ---
 a = fg:text bg:black
 b = fg:text_highlight bg:black
@@ -77,4 +77,4 @@ f = fg:text_dim bg:panel_bg
 g = fg:text_highlight bg:panel_bg
 h = fg:text_dim bg:black
 --- overlays ---
-under sprite 16,32 256x256  portraits/test_lord/sad.png 0,0 32x32
+under sprite 16,96 256x256  portraits/test_lord/sad.png 0,0 32x32
