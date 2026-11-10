@@ -794,3 +794,207 @@ fn selecting_a_unit_that_could_wade_shows_the_wading_tip() {
         assert!(!dismiss_all(&mut s, &mut c).contains(&TipTrigger::FirstWadeInReach));
     }
 }
+
+// ---- Weapon kinds (ticket 0489) ------------------------------------------------
+
+/// Gives `unit` a class of `class` and `weapon`, a `kind`, equipped.
+fn arm(unit: &mut Unit, class: &str, kind: trpg_core::WeaponKind, weapon: &str) {
+    unit.class = trpg_core::ClassId(class.to_owned());
+    unit.weapon_ranks.insert(kind, trpg_core::WeaponRank::D);
+    unit.loadout.weapons[0] = Some(trpg_core::WeaponInstance {
+        def: trpg_core::ItemId::new(weapon),
+        durability_left: 20,
+    });
+    unit.loadout.equipped = Some(trpg_core::Equipped::Weapon(0));
+}
+
+/// The skirmish (the lord at (6, 2), the raider at (7, 1) and a brigand at
+/// (8, 2), the archer at (8, 4)) with `edit` applied to its units.
+fn kinds(c: &Ctx, edit: impl FnOnce(&mut Vec<Unit>)) -> BattleScreen {
+    let quick = quick_battle(&c.game.content).unwrap();
+    let mut units = quick.units().to_vec();
+    units[0].pos = Pos::new(6, 2);
+    units[2].pos = Pos::new(8, 4);
+    edit(&mut units);
+    let rout = Objective::Rout { turn_limit: None };
+    BattleScreen::new(battle_with(c, quick.map().clone(), units, rout))
+}
+
+/// The lord armed with an Iron Spear (as a Guard).
+fn spear_lord(units: &mut [Unit]) {
+    arm(
+        &mut units[0],
+        "guard",
+        trpg_core::WeaponKind::Spear,
+        "iron_spear",
+    );
+}
+
+/// The raider made a Rider (Mounted) with an Iron Sword.
+fn rider_raider(units: &mut [Unit]) {
+    arm(
+        &mut units[5],
+        "rider",
+        trpg_core::WeaponKind::Sword,
+        "iron_sword",
+    );
+}
+
+/// The lord steps right and attacks: the forecast opens on the raider.
+/// Returns the tips that showed on the way, dismissed.
+fn attack_raider(s: &mut BattleScreen, c: &mut Ctx) -> Vec<TipTrigger> {
+    let mut seen = dismiss_all(s, c);
+    press(s, c, &[Action::Confirm]);
+    seen.extend(dismiss_all(s, c));
+    press(s, c, &[Action::CursorRight, Action::Confirm]);
+    frame(s, c, &[], 1.0);
+    press(s, c, &[Action::Confirm]);
+    let Mode::Targeting(t) = s.mode() else {
+        panic!("no forecast: {:?}", s.mode());
+    };
+    assert_eq!(t.target(), s.state().units()[5].id);
+    seen.extend(dismiss_all(s, c));
+    seen
+}
+
+/// The notes of the forecast on screen.
+fn forecast_notes(s: &BattleScreen, c: &Ctx) -> Vec<String> {
+    s.view(c).forecast.expect("a forecast").notes
+}
+
+/// The forecast `s` shows, as its kinds' traits make it effective.
+fn effects(s: &BattleScreen) -> Vec<forecast::KindEffect> {
+    let Mode::Targeting(t) = s.mode() else {
+        panic!("no forecast: {:?}", s.mode());
+    };
+    forecast::kind_effects(s.state(), t)
+}
+
+/// A spear on a Mounted unit, a bow on a Flying one: effective by its
+/// kind. A spear on a foot unit, or a bow on a mounted one, isn't.
+#[test]
+fn a_kinds_trait_is_effective_on_its_tag_only() {
+    use trpg_core::{UnitTag, WeaponKind};
+    let c = ctx();
+    let aimed = |s: &BattleScreen, unit: usize, target: usize| {
+        let state = s.state();
+        let mut sel = Selection::new(state, state.units()[unit].id).unwrap();
+        sel.target = Some(state.units()[target].id);
+        let t = Targeting::aimed(state, sel).expect("in reach");
+        forecast::kind_effects(state, &t)
+    };
+    // The lord's spear on the raider (a Rider, then a Raider).
+    let s = kinds(&c, |u| {
+        spear_lord(u);
+        u[0].pos = Pos::new(7, 2);
+        rider_raider(u);
+    });
+    let spear = forecast::KindEffect {
+        kind: WeaponKind::Spear,
+        tag: UnitTag::Mounted,
+        mult: 2,
+    };
+    assert_eq!(aimed(&s, 0, 5), [spear]);
+    let s = kinds(&c, |u| {
+        spear_lord(u);
+        u[0].pos = Pos::new(7, 2);
+    });
+    assert_eq!(aimed(&s, 0, 5), []);
+    // The archer's bow on the brigand two tiles up (a Flier, then a Rider).
+    let flier = |class: &'static str| {
+        kinds(&c, move |u| {
+            u[3].class = trpg_core::ClassId(class.to_owned());
+        })
+    };
+    let bow = forecast::KindEffect {
+        kind: WeaponKind::Bow,
+        tag: UnitTag::Flying,
+        mult: 3,
+    };
+    assert_eq!(aimed(&flier("flier"), 2, 3), [bow]);
+    assert_eq!(aimed(&flier("rider"), 2, 3), []);
+}
+
+/// Opening the forecast of a spear on a Rider shows the Weapon kinds tip,
+/// once; the forecast says why the strike is effective.
+#[test]
+fn a_spear_on_a_rider_shows_the_weapon_kinds_tip_once() {
+    let mut c = tipped();
+    let mut s = kinds(&c, |u| {
+        spear_lord(u);
+        rider_raider(u);
+    });
+    let seen = attack_raider(&mut s, &mut c);
+    assert!(seen.contains(&TipTrigger::FirstEffective), "{seen:?}");
+    assert_eq!(forecast_notes(&s, &c), ["Spear ×2 vs Mounted"]);
+    // Back out and in again: not twice.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(dismiss_all(&mut s, &mut c), []);
+    let tips = &c.game.content.tips;
+    let tip = tips.for_trigger(TipTrigger::FirstEffective).unwrap();
+    assert_eq!(tip.id, "weapon_kinds");
+}
+
+/// A Rider attacking a spear: the counter is effective, so it shows too.
+#[test]
+fn a_spear_countering_a_rider_shows_the_tip_too() {
+    let mut c = tipped();
+    let mut s = kinds(&c, |u| {
+        arm(
+            &mut u[0],
+            "rider",
+            trpg_core::WeaponKind::Sword,
+            "iron_sword",
+        );
+        arm(
+            &mut u[5],
+            "guard",
+            trpg_core::WeaponKind::Spear,
+            "iron_spear",
+        );
+    });
+    let seen = attack_raider(&mut s, &mut c);
+    assert!(seen.contains(&TipTrigger::FirstEffective), "{seen:?}");
+    assert_eq!(effects(&s).len(), 1);
+    assert_eq!(forecast_notes(&s, &c), ["Spear ×2 vs Mounted"]);
+}
+
+/// A plain strike: no tip, no note.
+#[test]
+fn a_plain_strike_has_no_weapon_kinds_tip_or_note() {
+    let mut c = tipped();
+    let mut s = kinds(&c, |_| {});
+    let seen = attack_raider(&mut s, &mut c);
+    assert!(!seen.contains(&TipTrigger::FirstEffective), "{seen:?}");
+    assert!(seen.contains(&TipTrigger::FirstForecast), "{seen:?}");
+    assert_eq!(forecast_notes(&s, &c), [] as [&str; 0]);
+}
+
+/// At Short, no tip; the forecast's note still says why.
+#[test]
+fn at_short_the_note_shows_without_the_tip() {
+    let mut c = tipped();
+    c.game.campaign_tutorial = Some(trpg_core::TutorialLevel::Short);
+    let mut s = kinds(&c, |u| {
+        spear_lord(u);
+        rider_raider(u);
+    });
+    assert_eq!(attack_raider(&mut s, &mut c), []);
+    assert_eq!(effects(&s).len(), 1);
+    assert_eq!(forecast_notes(&s, &c), ["Spear ×2 vs Mounted"]);
+}
+
+/// The forecast of the lord's spear on the Rider: the `!` on its strikes
+/// and the note that says why.
+#[test]
+fn effective_spear_forecast_snapshot() {
+    let mut c = ctx();
+    let mut s = kinds(&c, |u| {
+        spear_lord(u);
+        rider_raider(u);
+    });
+    attack_raider(&mut s, &mut c);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}

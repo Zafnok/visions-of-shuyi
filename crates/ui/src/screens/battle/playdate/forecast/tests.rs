@@ -14,6 +14,7 @@ use crate::screens::battle::view::SkillLineView;
 use crate::screens::playdate::tests::{blank, c as ink, cell, find, row, rows};
 use crate::words::Words;
 use crate::{ConsoleSizes, ConsoleSpec};
+use insta::assert_snapshot;
 
 /// The lord's forecast against the brigand at `brigand_hp` (two strikes
 /// of the lord's, one of the brigand's between them), changed by
@@ -258,4 +259,20 @@ fn the_rules_stay_inside_the_window() {
     assert_eq!(at.x, 0);
     assert_eq!(cell(&buf, at.x + at.w - 1, 7).glyph, '╢');
     assert_ne!(cell(&buf, at.x + at.w, 7).glyph, '─');
+}
+
+/// Ticket 0489: an effective spear strike, its `!` and the note that says
+/// why.
+#[test]
+fn effective_spear_forecast_snapshot() {
+    let v = view(20, |v| {
+        v.strikes[0].effective = true;
+        v.notes = vec!["Spear ×2 vs Mounted".into()];
+    });
+    let (buf, _) = painted(&v);
+    assert!(rows(&buf).iter().any(|r| r.contains("Spear ×2 vs Mounted")));
+    assert_snapshot!(rows(&buf).join(
+        "
+"
+    ));
 }

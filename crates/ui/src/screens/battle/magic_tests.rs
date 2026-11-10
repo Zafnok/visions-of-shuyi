@@ -36,6 +36,7 @@ use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
 use crate::words::Words;
+use trpg_content::TipTrigger;
 
 /// The Quick Battle's mage.
 const MAGE: UnitId = UnitId(8);
@@ -660,6 +661,20 @@ fn forecast_snapshot(c: &mut Ctx, state: BattleState, line: usize) -> String {
     let s = casting(c, state, line);
     assert_eq!(targeting(&s).target(), on_unit(7));
     render(&s, c).to_snapshot(&c.palette)
+}
+
+/// Ticket 0489: Fire on a target Weak to it is effective, but not by a
+/// weapon kind's trait: no Weapon kinds tip, no note.
+#[test]
+fn fire_on_a_weak_target_is_not_a_weapon_kinds_effect() {
+    let mut c = ctx();
+    let state = field(&c, 0);
+    let s = casting(&mut c, state, 0);
+    let t = targeting(&s).forecast().expect("a forecast");
+    assert!(t.preview.forecast.attacker.effective);
+    assert_eq!(super::forecast::kind_effects(s.state(), t), []);
+    assert!(!s.triggers_now().contains(&TipTrigger::FirstEffective));
+    assert!(!forecast_of(&s, &c).notes.iter().any(|n| n.contains(" vs ")));
 }
 
 #[test]

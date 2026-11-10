@@ -7,20 +7,21 @@
 //! allies'; ticket 0327). A spell's element against
 //! the target's affinity (0410) is marked: as effective on the strikes for
 //! Weak (as any effective attack), `(resist)` or `heals N` for the
-//! striker. All numbers come from [`AttackPreview`]; nothing is computed
+//! striker. A strike effective by its weapon kind's trait gets a note that
+//! says why (`Spear ×2 vs Mounted`, ticket 0489). All numbers come from [`AttackPreview`]; nothing is computed
 //! here. [`view`] says what it shows; the battle skin paints it
 //! (ADR-0054).
 
 use crate::prelude::*;
 use trpg_core::{
     Affinity, ArtNote, AttackPreview, BattleState, Equipped, PlannedStrike, Side, SideForecast,
-    StatKind, StatValue, Unit, UnitId,
+    StatKind, StatValue, Unit, UnitId, UnitTag, WeaponKind, WeaponTrait,
 };
 
-use super::art_list::{art_name, hits_text, note_text};
+use super::art_list::{art_name, hits_text, note_text, trait_text};
 use super::attack::{Targeting, spell_uses, weapon_durability};
 use super::info::stat_name;
-use super::skills::skill_name;
+use super::skills::{kind_name, skill_name};
 use super::view::{
     ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, StruckView,
     TotalView,
@@ -94,6 +95,12 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         .is_none()
         .then(|| words.text("battle.forecast.no_counter").to_owned());
     let mut notes = notes(words, p);
+    for effect in kind_effects(state, t) {
+        let note = effect_note((state, words), effect);
+        if !notes.contains(&note) {
+            notes.push(note);
+        }
+    }
     notes.extend(passive_note((state, words), attacker, Some(&t.with)));
     if p.forecast.defender.is_some() {
         let with = target.loadout.equipped.as_ref();
@@ -116,6 +123,64 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         notes,
         tiles: [t.sel.dest(), target.pos],
     })
+}
+
+/// A weapon kind's trait making a strike effective (ticket 0489): the
+/// kind, and the tag and multiplier of its trait.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct KindEffect {
+    /// The weapon kind.
+    pub kind: WeaponKind,
+    /// The tag the target has.
+    pub tag: UnitTag,
+    /// What the weapon's might is multiplied by.
+    pub mult: u8,
+}
+
+/// The strikes of `t`'s forecast made effective by their weapon kind's
+/// trait (a spear on a mounted unit, a bow on a flying one): the
+/// attacker's, then the target's counter if it has one. A spell's element
+/// is not a weapon kind, so a Weak target adds none.
+pub fn kind_effects(state: &BattleState, t: &Targeting) -> Vec<KindEffect> {
+    let (Some(attacker), Some(target)) = (state.unit(t.sel.unit), state.unit(t.target())) else {
+        return Vec::new();
+    };
+    let mut effects = Vec::new();
+    effects.extend(kind_effect(state, attacker, Some(&t.with), target));
+    if t.preview.forecast.defender.is_some() {
+        let with = target.loadout.equipped.as_ref();
+        effects.extend(kind_effect(state, target, with, attacker));
+    }
+    effects
+}
+
+/// The trait of the kind of weapon `unit` strikes `target` with (`with`),
+/// if it is effective against `target`'s class.
+fn kind_effect(
+    state: &BattleState,
+    unit: &Unit,
+    with: Option<&Equipped>,
+    target: &Unit,
+) -> Option<KindEffect> {
+    let Some(Equipped::Weapon(slot)) = with else {
+        return None;
+    };
+    let kind = state.items().weapon(&unit.loadout.weapon(*slot)?.def)?.kind;
+    let WeaponTrait::Effective(tag, mult) = state.items().trait_of(kind) else {
+        return None;
+    };
+    let tags = state.classes().get(&target.class)?.tags;
+    tags.has(tag).then_some(KindEffect { kind, tag, mult })
+}
+
+/// The note of `effect`: `Spear ×2 vs Mounted`.
+fn effect_note((state, words): (&BattleState, Words<'_>), effect: KindEffect) -> String {
+    let what = WeaponTrait::Effective(effect.tag, effect.mult);
+    let trait_ = trait_text(words, &state.items().combat_rules(), what).unwrap_or_default();
+    words.text_with(
+        "battle.forecast.kind_trait",
+        &[("kind", &kind_name(words, effect.kind)), ("trait", &trait_)],
+    )
 }
 
 /// The rows of the art's strikes at units: the unit struck (an ally's

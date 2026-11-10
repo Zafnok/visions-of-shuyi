@@ -6,6 +6,18 @@
 use crate::prelude::*;
 use trpg_core::{Faction, StatValue};
 
+/// A weapon kind on the info screen (ticket 0489): `Spear  D  ×2 vs
+/// Mounted`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InfoRankView {
+    /// The kind's name.
+    pub kind: String,
+    /// The unit's rank in it.
+    pub rank: String,
+    /// What the kind's trait does; `None` for none.
+    pub trait_: Option<String>,
+}
+
 /// The unit info screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InfoView {
@@ -50,8 +62,8 @@ pub struct InfoView {
     pub tags: Vec<String>,
     /// The heading over the weapon ranks.
     pub ranks_title: String,
-    /// Each weapon kind it can wield and its rank.
-    pub ranks: Vec<(String, String)>,
+    /// Each weapon kind it can wield, its rank and its trait.
+    pub ranks: Vec<InfoRankView>,
     /// The heading over the affinities.
     pub affinities_title: String,
     /// What its class makes of each element (`Fire`, `Weak`); empty if
@@ -190,7 +202,11 @@ impl InfoView {
             texts.extend([s.name.clone(), s.effect.clone()]);
             texts.extend(s.cost.clone());
         }
-        for (kind, rank) in self.ranks.iter().chain(&self.affinities) {
+        for r in &self.ranks {
+            texts.extend([r.kind.clone(), r.rank.clone()]);
+            texts.extend(r.trait_.clone());
+        }
+        for (kind, rank) in &self.affinities {
             texts.extend([kind.clone(), rank.clone()]);
         }
         if !self.affinities.is_empty() {

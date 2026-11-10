@@ -15,12 +15,13 @@ use trpg_core::{
 };
 
 use super::art_list::art_name;
-use super::art_list::durability_text;
+use super::art_list::{durability_text, trait_text};
 use super::skills::{
     cost_text, effect_text, kind_name, skill_cost, skill_name, timed_text, until_text,
 };
 use super::view::{
-    GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
+    GearView, InfoEffectView, InfoRankView, InfoSkillView, InfoSpellView, InfoStatView, InfoView,
+    InfoWeaponView,
 };
 use crate::input::Action;
 use crate::words::Words;
@@ -132,6 +133,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
         })
         .collect();
     let text = |key| words.text(key).to_owned();
+    let rules = state.items().combat_rules();
     InfoView {
         portrait: text("battle.portrait"),
         name: words.unit(unit).to_owned(),
@@ -159,7 +161,11 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
         ranks: unit
             .weapon_ranks
             .iter()
-            .map(|(kind, rank)| (kind_name(words, *kind).to_owned(), format!("{rank:?}")))
+            .map(|(kind, rank)| InfoRankView {
+                kind: kind_name(words, *kind).to_owned(),
+                rank: format!("{rank:?}"),
+                trait_: trait_text(words, &rules, state.items().trait_of(*kind)),
+            })
             .collect(),
         affinities_title: text("battle.info.affinities"),
         affinities: affinities

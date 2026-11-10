@@ -89,6 +89,10 @@ pub enum TipTrigger {
     /// unit could step into it, a mounted or armored one never can
     /// (ticket 0483).
     FirstWadeInReach,
+    /// The forecast is open and a strike of either side is effective by
+    /// its weapon kind's trait (a spear on a mounted unit, a bow on a
+    /// flying one), not by a spell's element (ticket 0489).
+    FirstEffective,
     // The triggers below start lessons only (ticket 0457): no tip uses them
     // yet.
     /// In the player's phase, every unit of the player's has acted.
@@ -212,6 +216,7 @@ mod tests {
             TipTrigger::FirstTerrain,
             TipTrigger::ZoomAvailable,
             TipTrigger::FirstWadeInReach,
+            TipTrigger::FirstEffective,
         ] {
             assert!(table.for_trigger(trigger).is_some(), "{trigger:?}");
         }

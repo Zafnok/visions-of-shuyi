@@ -169,6 +169,11 @@ from facing another weapon type.
 | Gauntlet | Evasive, light | While a gauntlet is **equipped**, the wielder's avoid is **+15**. Gauntlets are the lightest weapons (easiest to strike 2/3/4 times). |
 | Magic | Hits Res | Not a weapon: magic is **innate spells** with uses per battle, outside the loadout. See `magic.md` (0004). |
 
+The screens name the traits (ticket 0489): the unit info screen shows
+each weapon kind's trait beside its rank (`Spear  D  ×2 vs Mounted`), and
+an attack's forecast notes a strike effective by its kind's trait
+(`Spear ×2 vs Mounted`) under its `!`.
+
 **Armoured units** have no special weapon rule: armoured *classes* have high
 Def and low Res (Nick: "encouraged to use magic users on those enemies").
 That is class data for ticket 0005.

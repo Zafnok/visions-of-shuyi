@@ -17,7 +17,10 @@
 // FirstTerrain (the cursor rests on a tile that isn't plain ground),
 // ZoomAvailable (browsing a map whose look can zoom, with no lesson in play),
 // FirstWadeInReach (a selected unit's move range has a `water` tile: a foot
-// or flying unit, never a mounted or armored one).
+// or flying unit, never a mounted or armored one), FirstEffective (the
+// forecast is open and a strike of either side is effective by its weapon
+// kind: a spear on a mounted unit, a bow on a flying one; not a spell on an
+// element its target is Weak to).
 // At most one tip per trigger.
 //
 // The battle menu's Guides lists every tip, in this order, after the
@@ -129,6 +132,15 @@
             title: "Wading",
             text: "Foot units can wade a river, but each tile of water costs\n5 Mov, most of a turn. Riders and armor can't go in.\nIn the water, a unit gets +10 AVO and no DEF bonus.",
             face: "thinking",
+        ),
+        (
+            id: "weapon_kinds",
+            trigger: FirstEffective,
+            title: "Weapon kinds",
+            text: "A spear's might counts double against riders, a bow's
+triple against fliers, yours and theirs alike. A ! in
+the forecast means it's working; a unit's details say more.",
+            face: "sly",
         ),
     ],
 )

@@ -10,7 +10,7 @@ use crate::map_view::playdate::tests::SCREEN;
 use crate::screens::battle::info::{self as logic, turn_page};
 use crate::screens::battle::playdate::tests::ctx;
 use crate::screens::battle::testing::skirmish;
-use crate::screens::battle::view::{InfoEffectView, InfoSpellView};
+use crate::screens::battle::view::{InfoEffectView, InfoRankView, InfoSpellView};
 use crate::screens::playdate::tests::{blank, c as ink, cell, row};
 use crate::words::Words;
 
@@ -61,7 +61,7 @@ fn the_first_page_is_the_unit_its_stats_and_its_effects() {
             BLANK,
             BLANK,
             BLANK,
-            "╚═══════════════════ ◀ 1/3 ▶ ════════════════════╝",
+            "╚═══════════════════ ◀ 1/4 ▶ ════════════════════╝",
         ]
     );
     // A timed effect beside the stats, and the stat it raises the bar.
@@ -101,11 +101,8 @@ fn the_first_page_is_the_unit_its_stats_and_its_effects() {
 }
 
 #[test]
-fn the_second_page_is_the_weapons_the_gear_and_the_ranks() {
-    let shown = rows(&view(1, 1, |v| {
-        v.affinities = vec![("Fire".into(), "Weak".into())];
-        v.ranks.push(("Lance".into(), "E".into()));
-    }));
+fn the_second_page_is_the_weapons_and_the_gear() {
+    let shown = rows(&view(1, 1, |_| {}));
     assert_eq!(
         shown,
         [
@@ -121,16 +118,57 @@ fn the_second_page_is_the_weapons_the_gear_and_the_ranks() {
             "║ Armor                   Accessory              ║",
             "║   Leather Vest            --                   ║",
             "║   Def +2  Res +2                               ║",
-            "║ Weapon ranks            Affinities             ║",
-            "║   Sword D  Lance E        Fire Weak            ║",
-            "╚═══════════════════ ◀ 2/3 ▶ ════════════════════╝",
+            BLANK,
+            BLANK,
+            "╚═══════════════════ ◀ 2/4 ▶ ════════════════════╝",
         ]
     );
 }
 
+/// Ticket 0489: the third page is each weapon kind, its rank and its
+/// trait on a row, then the affinities.
+#[test]
+fn the_third_page_is_the_ranks_with_their_traits_and_the_affinities() {
+    let shown = rows(&view(1, 2, |v| {
+        v.affinities = vec![("Fire".into(), "Weak".into())];
+        v.ranks.push(InfoRankView {
+            kind: "Spear".into(),
+            rank: "E".into(),
+            trait_: Some("×2 vs Mounted".into()),
+        });
+    }));
+    assert_eq!(
+        shown[..7],
+        [
+            "╔═ Test Lord ════════════════════════════════════╗",
+            "║ Weapon ranks                                   ║",
+            "║   Sword    D follow-up ×6/5                    ║",
+            "║   Spear    E ×2 vs Mounted                     ║",
+            BLANK,
+            "║ Affinities                                     ║",
+            "║   Fire Weak                                    ║",
+        ]
+    );
+    assert_eq!(
+        shown[14],
+        "╚═══════════════════ ◀ 3/4 ▶ ════════════════════╝"
+    );
+    insta::assert_snapshot!(shown.join(
+        "
+"
+    ));
+    // None: dashes, and no affinities heading.
+    let none = rows(&view(1, 2, |v| v.ranks.clear()));
+    assert_eq!(
+        none[2],
+        "║   --                                           ║"
+    );
+    assert_eq!(none[4], BLANK);
+}
+
 #[test]
 fn the_last_page_is_the_skills_then_the_spells_two_to_a_row_cut_at_the_frame() {
-    let v = view(1, 2, |v| {
+    let v = view(1, 3, |v| {
         let skill = v.skills[0].clone();
         v.skills = vec![skill; 3];
         v.spells = (1..=6)
@@ -171,7 +209,7 @@ fn the_last_page_is_the_skills_then_the_spells_two_to_a_row_cut_at_the_frame() {
     assert_eq!(shown[13], BLANK);
     // A fourth skill pushes the last spells past the frame: they are left
     // out, and nothing is painted over it.
-    let more = view(1, 2, |w| {
+    let more = view(1, 3, |w| {
         w.skills = vec![v.skills[0].clone(); 4];
         w.spells.clone_from(&v.spells);
     });
@@ -182,13 +220,13 @@ fn the_last_page_is_the_skills_then_the_spells_two_to_a_row_cut_at_the_frame() {
     );
     assert_eq!(
         shown[14],
-        "╚═══════════════════ ◀ 3/3 ▶ ════════════════════╝"
+        "╚═══════════════════ ◀ 4/4 ▶ ════════════════════╝"
     );
 }
 
 #[test]
 fn an_enemy_has_its_own_name_in_the_frame_and_dashes_for_what_it_lacks() {
-    let shown = rows(&view(4, 2, |_| {}));
+    let shown = rows(&view(4, 3, |_| {}));
     assert_eq!(
         shown[0],
         "╔═ Brigand ══════════════════════════════════════╗"
@@ -230,7 +268,8 @@ fn long_names_are_cut_where_their_column_or_their_numbers_start() {
                 w.name = long("Sword");
             }
             v.armour.item = Some((long("Vest"), long("Def")));
-            v.ranks = vec![(long("Sword"), "D".into())];
+            v.ranks[0].kind = long("Sword");
+            v.ranks[0].trait_ = Some(long("follow-up"));
             v.affinities = vec![(long("Fire"), "Weak".into())];
             v.skills[0].name = long("Inspire");
             v.skills[0].effect = long("ally");
@@ -253,11 +292,11 @@ fn long_names_are_cut_where_their_column_or_their_numbers_start() {
         format!("║   Vest {}…    --{}║", x(14), " ".repeat(19))
     );
     assert_eq!(arms[11], format!("║   Def {}…{}║", x(15), " ".repeat(25)));
-    assert_eq!(
-        arms[13],
-        format!("║   Sword {}…    Fire {}… ║", x(13), x(14))
-    );
-    let rest = rows(&v(2));
+    // A kind up to a cell before its rank; its trait to the frame.
+    let ranks = rows(&v(2));
+    assert_eq!(ranks[2], format!("║   Sword x… D follow-up {}… ║", x(22)));
+    assert_eq!(ranks[5], format!("║   Fire {}… ║", x(38)));
+    let rest = rows(&v(3));
     // A skill's name up to a cell before its cost; its effect to the frame.
     assert_eq!(rest[2], format!("║ A Inspire {}… 2/2 ║", x(31)));
     assert_eq!(rest[3], format!("║   ally {}… ║", x(38)));

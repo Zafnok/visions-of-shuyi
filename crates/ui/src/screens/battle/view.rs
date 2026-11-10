@@ -29,7 +29,8 @@ pub use self::forecast::{
 };
 pub use self::guides::{GuidesScreenView, GuidesView};
 pub use self::info::{
-    GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
+    GearView, InfoEffectView, InfoRankView, InfoSkillView, InfoSpellView, InfoStatView, InfoView,
+    InfoWeaponView,
 };
 pub use self::progress::{ClassProgressView, ExpView, GainsView, ProgressView, StatGainView};
 pub use self::rewind::{RewindScreenView, RewindView};

@@ -11,9 +11,9 @@
 
 use crate::prelude::*;
 use trpg_core::{
-    ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, BattleState, CastTarget, CombatMods, Command,
-    CommandError, CostError, Equipped, Event, Faction, MitigationStat, Pos, PowerStat, SkillCost,
-    SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
+    ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CombatRules,
+    Command, CommandError, CostError, Equipped, Event, Faction, MitigationStat, Pos, PowerStat,
+    SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS, WeaponTrait,
 };
 
 use super::attack::{AttackFrom, spell_uses, weapon_durability};
@@ -106,6 +106,34 @@ fn tag_name(words: Words<'_>, tag: UnitTag) -> &str {
         UnitTag::Mounted => "class.tag.mounted",
         UnitTag::Flying => "class.tag.flying",
         UnitTag::Armored => "class.tag.armored",
+    })
+}
+
+/// What a weapon kind's trait does, in a few words (ticket 0489):
+/// `follow-up ×6/5`, `×2 vs Mounted`, `min damage 5`, `+15 avo`; `None`
+/// for no trait. The sword's ratio comes from `rules`.
+pub fn trait_text(words: Words<'_>, rules: &CombatRules, trait_: WeaponTrait) -> Option<String> {
+    Some(match trait_ {
+        WeaponTrait::None => return None,
+        WeaponTrait::SwordFollowUp => {
+            let (num, den) = rules.sword_followup;
+            words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)])
+        }
+        WeaponTrait::Effective(tag, mult) => {
+            let tag = tag_name(words, tag);
+            words.text_with(
+                "battle.art.desc.effective",
+                &[("mult", &mult), ("tag", &tag)],
+            )
+        }
+        WeaponTrait::AxeMinDamage(n) => words.text_with("battle.art.desc.axe_min", &[("n", &n)]),
+        WeaponTrait::GauntletAvoid(n) => mods_text(
+            words,
+            &CombatMods {
+                avoid: n,
+                ..CombatMods::default()
+            },
+        ),
     })
 }
 

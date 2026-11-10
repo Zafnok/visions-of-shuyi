@@ -949,7 +949,12 @@ impl BattleScreen {
                     fired.push(TipTrigger::FirstEnemyInRange);
                 }
             }
-            Mode::Targeting(_) => fired.push(TipTrigger::FirstForecast),
+            Mode::Targeting(t) => {
+                fired.push(TipTrigger::FirstForecast);
+                if !forecast::kind_effects(state, t).is_empty() {
+                    fired.push(TipTrigger::FirstEffective);
+                }
+            }
             Mode::Idle { .. } => {
                 let on_enemy = self.hovered().is_some_and(|u| u.faction == Faction::Enemy);
                 if on_enemy && self.danger.is_none() {

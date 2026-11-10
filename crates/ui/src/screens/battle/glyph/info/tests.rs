@@ -9,7 +9,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 use crate::screens::battle::info;
 use crate::screens::battle::quick_battle;
-use crate::screens::battle::view::{InfoEffectView, InfoSkillView, InfoSpellView};
+use crate::screens::battle::view::{InfoEffectView, InfoRankView, InfoSkillView, InfoSpellView};
 use crate::words::Words;
 
 /// The quick battle's lord's info screen, changed by `change`, painted.
@@ -23,6 +23,15 @@ fn painted(change: impl FnOnce(&mut InfoView)) -> GlyphBuffer {
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     paint(&c, &view, &mut buf);
     buf
+}
+
+/// A rank row: `kind`, rank `D`, `trait_`.
+fn rank(kind: &str, trait_: Option<&str>) -> InfoRankView {
+    InfoRankView {
+        kind: kind.into(),
+        rank: "D".into(),
+        trait_: trait_.map(Into::into),
+    }
 }
 
 fn text(buf: &GlyphBuffer, x: i32, y: i32, n: i32) -> String {
@@ -117,22 +126,43 @@ fn the_left_column_lists_mov_tags_ranks_and_affinities() {
         v.mov = 5;
         v.movement = Some("foot".into());
         v.tags = vec!["Mounted".into(), "Flying".into()];
-        v.ranks = vec![("Sword".into(), "D".into())];
+        v.ranks = vec![rank("Sword", None)];
         v.affinities = vec![("Ice".into(), "Absorb".into())];
     });
     let y = PORTRAIT.y + PORTRAIT.h + 1;
     assert_eq!(text(&buf, LEFT_X, y, 11), "Mov 5  foot");
     assert_eq!(text(&buf, LEFT_X, y + 1, 14), "Mounted Flying");
     assert_eq!(text(&buf, LEFT_X, y + 3, 12), "Weapon ranks");
-    assert_eq!(text(&buf, LEFT_X, y + 4, 11), "Sword     D");
+    assert_eq!(text(&buf, LEFT_X, y + 4, 11), "Sword    D ");
     assert_eq!(text(&buf, LEFT_X, y + 6, 10), "Affinities");
     assert_eq!(text(&buf, LEFT_X, y + 7, 16), "Ice       Absorb");
     // No affinities: no heading.
     let buf = painted(|v| {
-        v.ranks = vec![("Sword".into(), "D".into())];
+        v.ranks = vec![rank("Sword", None)];
         v.affinities.clear();
     });
     assert_eq!(text(&buf, LEFT_X, y + 6, 10), "          ");
+}
+
+/// Ticket 0489: each rank's trait after it, dim, ending a cell before the
+/// middle column; one too long for that goes on a row under it.
+#[test]
+fn a_ranks_trait_follows_it_or_goes_under_it() {
+    let y = PORTRAIT.y + PORTRAIT.h + 1;
+    let fits = "follow-up ×6/5";
+    let long = "follow-up ×6/5!";
+    let buf = painted(|v| {
+        v.ranks = vec![rank("Sword", Some(fits)), rank("Gauntlet", Some(long))];
+        v.affinities.clear();
+    });
+    assert_eq!(text(&buf, LEFT_X, y + 4, 25), format!("Sword    D {fits}"));
+    assert_eq!(LEFT_X + 25, MID_X - 1);
+    assert_eq!(text(&buf, MID_X - 1, y + 4, 1), " ");
+    let dim = ctx().palette.get(UiColor::TextDim);
+    assert_eq!(buf.get(LEFT_X + TRAIT_X, y + 4).unwrap().fg, dim);
+    assert_eq!(text(&buf, LEFT_X, y + 5, 10), "Gauntlet D");
+    assert_eq!(text(&buf, LEFT_X + 10, y + 5, 3), "   ");
+    assert_eq!(text(&buf, LEFT_X, y + 6, 17), format!("  {long}"));
 }
 
 /// 1003: the supports under the affinities (or the ranks), cut at the
@@ -141,7 +171,7 @@ fn the_left_column_lists_mov_tags_ranks_and_affinities() {
 fn the_left_column_lists_the_supports_last() {
     let y = PORTRAIT.y + PORTRAIT.h + 1;
     let buf = painted(|v| {
-        v.ranks = vec![("Sword".into(), "D".into())];
+        v.ranks = vec![rank("Sword", None)];
         v.affinities.clear();
         v.supports_title = "Supports".into();
         v.supports = vec![("Mira".into(), "B".into())];
@@ -158,14 +188,14 @@ fn the_left_column_lists_the_supports_last() {
     // Ranks to the box's last row: no room for the heading.
     let full = painted(|v| {
         v.affinities.clear();
-        v.ranks = vec![("Sword".into(), "D".into()); 11];
+        v.ranks = vec![rank("Sword", None); 11];
         v.supports_title = "Supports".into();
         v.supports = vec![("Mira".into(), "B".into())];
     });
     assert_eq!(text(&full, LEFT_X, bottom, 4), "════");
     assert_eq!(text(&full, LEFT_X, bottom - 1, 5), "Sword");
     let none = painted(|v| {
-        v.ranks = vec![("Sword".into(), "D".into())];
+        v.ranks = vec![rank("Sword", None)];
         v.affinities.clear();
         v.supports.clear();
     });
