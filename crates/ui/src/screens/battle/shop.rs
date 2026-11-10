@@ -718,6 +718,12 @@ fn armour_class_key(class: ArmourWeight) -> &'static str {
     }
 }
 
+/// The shop's skins (ADR-0083): the PC's, and the Playdate's (1066).
+const SKINS: crate::screens::Skins<ShopScreenView> = crate::screens::Skins {
+    glyph: glyph::paint,
+    playdate: crate::screens::battle::playdate::shop::paint,
+};
+
 impl Screen<Shuyi> for ShopScreen {
     fn name(&self) -> &'static str {
         Self::NAME
@@ -748,7 +754,7 @@ impl Screen<Shuyi> for ShopScreen {
 
     /// Paints the whole screen: the battle under it isn't drawn.
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

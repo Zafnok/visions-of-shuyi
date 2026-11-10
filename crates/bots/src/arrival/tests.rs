@@ -72,6 +72,49 @@ fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
     }
 }
 
+/// On the Act 1 map the fixed skirmishes that guard the way to a story
+/// battle are won before it, and only those (1071): the toll bridge before
+/// Veyne Hall, the Salt Road before the Envoy's House; never the optional
+/// Millhaven Road or Smugglers' Cove. A guard is fought with the army its
+/// chapter brings.
+#[test]
+fn the_guards_on_the_way_are_won_first() {
+    let content = content();
+    let chapters = story_chapters(&content);
+    let guards = guards_by_chapter(&content, &chapters);
+    let by_chapter: Vec<(&str, Vec<&str>)> = chapters
+        .iter()
+        .zip(&guards)
+        .map(|(c, g)| (c.id.as_str(), g.iter().map(|(_, b)| b.as_str()).collect()))
+        .collect();
+    let of = |id: &str| {
+        by_chapter
+            .iter()
+            .find(|(c, _)| *c == id)
+            .map(|(_, g)| g.clone())
+    };
+    assert_eq!(of("ch03"), Some(vec![]));
+    assert_eq!(of("ch04"), Some(vec!["aldwater"]));
+    assert_eq!(of("ch05"), Some(vec!["salt_road"]));
+    let before: Vec<&str> = chapters_before(&content, "salt_road")
+        .iter()
+        .map(|c| c.id.as_str())
+        .collect();
+    assert_eq!(before, ["ch01", "ch02", "ch03", "ch04"]);
+    assert_eq!(
+        chapters_before(&content, "millhaven_road").len(),
+        0,
+        "optional"
+    );
+    // The toll bridge's army is Chapter 3's, and the hall's has won it too.
+    let bridge = arrive(&content, "aldwater", GameMode::Classic);
+    let hall = arrive(&content, "ch04", GameMode::Classic);
+    let bridge = bridge.unwrap_or_else(|| panic!("no army"));
+    let hall = hall.unwrap_or_else(|| panic!("no army"));
+    let levels = |s: &BattleSetup| players(s).iter().map(|(_, u)| u.level).sum::<u32>();
+    assert!(levels(&hall) > levels(&bridge), "EXP from the bridge");
+}
+
 #[test]
 fn the_army_is_the_same_every_time() {
     let content = content();

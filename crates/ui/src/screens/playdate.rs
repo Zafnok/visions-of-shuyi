@@ -235,9 +235,33 @@ fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
 /// focused one a bar across the window, one that can't be chosen in grey
 /// dots.
 pub fn menu(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), menu: &MenuView) {
+    titled_menu(ctx, buf, at, menu, "");
+}
+
+/// The size of `menu`'s window with `title` in its frame: [`menu_size`],
+/// wide enough for the title too.
+pub fn titled_menu_size(ctx: &Ctx, menu: &MenuView, title: &str) -> (i32, i32) {
     let (w, h) = menu_size(ctx, menu);
+    let title_w = if title.is_empty() {
+        0
+    } else {
+        cells(title) + 6
+    };
+    (w.max(title_w), h)
+}
+
+/// [`menu`] with `title` in the top of its frame, [`titled_menu_size`]
+/// big. Returns the window.
+pub fn titled_menu(
+    ctx: &Ctx,
+    buf: &mut GlyphBuffer,
+    at: (i32, i32),
+    menu: &MenuView,
+    title: &str,
+) -> Rect {
+    let (w, h) = titled_menu_size(ctx, menu, title);
     let rect = Rect::new(at.0, at.1, w, h);
-    window(ctx, buf, rect, "");
+    window(ctx, buf, rect, title);
     for (row, it) in (rect.y + 1..).zip(&menu.items) {
         let state = Item::of(it.focused, it.enabled);
         item(
@@ -249,6 +273,7 @@ pub fn menu(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), menu: &MenuView) {
             state,
         );
     }
+    rect
 }
 
 /// Cells a question's text takes across at most, in its window.

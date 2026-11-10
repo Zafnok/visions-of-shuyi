@@ -1,0 +1,30 @@
+(
+    // Aldwater Toll Bridge (ticket 1071; ch04.dlg, ch04_aldwater_intro):
+    // the crown's bridge over the Aldwater on the road from the valley to
+    // Veyne Hall, with a Hound bar across it at (9, 5). The near (west)
+    // bank, where the carts wait and the party comes in along the road;
+    // the river runs north to south, too deep for a horse but waded on
+    // foot; the toll house on the far bank at (12, 4).
+    name: "Aldwater Toll Bridge",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '~': "water",
+        '=': "bridge",
+        'H': "house",
+    },
+)
+---
+TT.......~~....TTT
+T........~~......T
+...T.....~~...T...
+..TT.....~~.......
+.........~~.H.....
+:::::::::==:::::::
+.........~~.......
+..T......~~...TT..
+.TT......~~....T..
+.........~~.......
+T........~~.....TT
+TT.......~~....TTT

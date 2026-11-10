@@ -36,6 +36,13 @@ The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
 0070 picked **Oriel**: a generator face with greying hair and stubble, and Shironejiya's court mage `m_s_mage_middle_m01` at 1.25× with his hair recoloured grey. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
+**From 1071 (2026-11-09):** a guarding fixed skirmish on the way to a
+story battle is fought by every player, so the chapter tests and the
+bots' arrival army fight it first (`crates/bots/src/arrival.rs`, 1071's
+Completion notes). If 1090 has built *The Burnt Mill* by then, Chapter 6's
+recorded playthrough is made with the army that won it; if not, 1090 does
+that part.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and
@@ -62,7 +69,7 @@ before building.
 - **The world-map chapter** (1007's format): the chapter file says which
   nodes open and that this story battle ends it; the story-battle node
   1070 placed for Chapter 6 points at this battle (replacing 1070's
-  stand-in). Nodes, towns and skirmishes themselves are 1070 and 1071's.
+  stand-in). Nodes, towns and skirmishes themselves are 1070's, 1071's and 1090's.
 - **New units** in `characters.ron` (class, level, stats, loadout) for
   the recruits and named enemies; their faces, busts and combat pictures
   imported from the private repository with `cargo xtask
@@ -80,7 +87,7 @@ before building.
 - A winning-replay test and the content checks, as 0803 had.
 
 **Out (do not do):**
-- The script's words (0748); fixed skirmishes and towns (1071, 1070);
+- The script's words (0748); fixed skirmishes and towns (1090, 1070);
   side quests (1072, 1083, 1084); supports and camp events (1073).
 - New rules in `core` (file a ticket; 0319 has the Act 1 ones).
 - Changing earlier chapters' balance.

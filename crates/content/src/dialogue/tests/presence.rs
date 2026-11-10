@@ -707,13 +707,40 @@ fn chapter_1s_cast_is_the_new_game_roster_and_its_triggers() {
     assert_eq!(certain("ch01_tbc"), Some(ids(&[])));
 }
 
+/// A world-map place's intro scenes can count on the enemies its battle
+/// fields (Gil before Millhaven Road's fight, 1071); its victory scenes
+/// on nobody (he may not have been beaten).
+#[test]
+fn a_places_intro_counts_on_its_battles_named_enemies() {
+    let content = embedded();
+    let places = [trpg_core::SideQuest {
+        battle: "millhaven_road".into(),
+        intro_scenes: vec!["ch04_millhaven_road_intro".into()],
+        victory_scenes: vec!["ch04_millhaven_road_victory".into()],
+    }];
+    let cast = cast_of(&content).with_places(&places, &content.battles);
+    let certain = |scene: &str| cast.certain.get(scene).cloned();
+    assert_eq!(
+        certain("ch04_millhaven_road_intro"),
+        Some(ids(&["patrol_leader", "prizefighter"]))
+    );
+    assert_eq!(certain("ch04_millhaven_road_victory"), Some(ids(&[])));
+    // The shipped maps list it.
+    let shipped = crate::worldmap::place_scenes();
+    assert!(shipped.iter().any(|p| p.battle == "millhaven_road"));
+}
+
 /// The test game: the army can lose the knight (in the New Game
-/// roster) and the rogue (joins if defeated), not the lead.
+/// roster) and the rogue (joins if defeated), not the lead; and the
+/// story's Gil, who joins if beaten on Millhaven Road (1071).
 #[test]
 fn the_cast_comes_from_the_roster_the_battles_the_chapters_and_the_supports() {
     let content = embedded();
     let cast = cast_of(&content);
-    assert_eq!(cast.may_be_absent, ids(&["test_knight", "test_rogue"]));
+    assert_eq!(
+        cast.may_be_absent,
+        ids(&["prizefighter", "test_knight", "test_rogue"])
+    );
     let certain = |scene: &str| cast.certain.get(scene).cloned();
     // A trigger's scene can't play without those the trigger is about.
     assert_eq!(certain("test_turn_3"), Some(ids(&[])));
@@ -834,7 +861,10 @@ fn every_kind_of_trigger_names_who_its_scene_cant_play_without() {
     assert_eq!(certain("new_1"), Some(ids(&["test_mage", "test_rogue"])));
     assert_eq!(certain("new_2"), Some(ids(&["test_archer"])));
     // A fall that doesn't recruit adds nobody the army can lose.
-    assert_eq!(cast.may_be_absent, ids(&["test_knight", "test_rogue"]));
+    assert_eq!(
+        cast.may_be_absent,
+        ids(&["prizefighter", "test_knight", "test_rogue"])
+    );
 }
 
 #[test]

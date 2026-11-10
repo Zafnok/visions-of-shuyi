@@ -1257,6 +1257,7 @@ mod tests {
                 "hound_sergeant",
                 "keeper",
                 "lead",
+                "patrol_leader",
                 "paymaster",
                 "poacher",
                 "privateer",

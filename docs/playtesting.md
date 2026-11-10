@@ -40,10 +40,11 @@ Bots:
 The army a bot fields (`crates/xtask/src/playtest.rs`, `stage`: the
 playtest and the autobalance build it the same way) is, for a battle:
 
-- **with a `bots_army`** (a generated skirmish): the reference army
-  (*Generating skirmishes*);
-- **of a story chapter after the first:** the army the chapters before it
-  leave (ticket 0520, `crates/bots/src/arrival.rs`). The campaign starts
+- **with a `bots_army`** (a generated skirmish, a side quest, an optional
+  fixed skirmish): the reference army (*Generating skirmishes*);
+- **of a story chapter after the first, or a fixed skirmish that guards
+  the way to one:** the army the chapters before it leave (ticket 0520,
+  `crates/bots/src/arrival.rs`; the guards, 1071). The campaign starts
   as New Game; each earlier chapter's battle is won by its **recorded
   playthrough** (the player's commands in
   `crates/ui/tests/it/fixtures/<battle>_winning.ron`, which `trpg-ui`'s
@@ -51,7 +52,12 @@ playtest and the autobalance build it the same way) is, for a battle:
   the game, and its result applied as the game applies it: the EXP, every
   rewind charge unused (their bonus EXP), the clear gold and items, the
   pack's leftovers back in the stock, everyone rested. Whoever a scene
-  recruits by the chapter joins fresh from the character data. Then the
+  recruits by the chapter joins fresh from the character data. On a
+  world map, the fixed skirmishes that guard the way to a chapter's story
+  battle are won first, each by its recorded playthrough in the same way
+  (ticket 1071: every player wins them; Aldwater Toll Bridge before
+  Chapter 4, the Salt Road before Chapter 5), so a guard is played with
+  the army its chapter brings, after the guards before it. Then the
   battle's Preparations: the pack (below), nothing else (weapons and
   armour stay where they are);
 - **else** (Chapter 1, the debug Quick Battle, the test battles): the

@@ -469,7 +469,9 @@ chokepoint (then **0524** Chapters 1 and 2 back inside their bands)
 Chapters 4–8 (also 1007, 1008, 0319, 1070); **0871** records Chapter 5's
 win again after 0846 made the lead stronger. The world map's content: **1070** nodes,
 towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
-eight fixed skirmishes, with Gil (after 0746–0749) and **1072**, **1083** and **1084** the five
+fixed skirmishes of Chapters 4 and 5, with Gil (after 0746, 0747; then **0529**
+Chapters 4 and 5 back in their bands) → **1090** those of
+Chapters 6 and 7 (after 0748, 0749) and **1072**, **1083** and **1084** the five
 side quests (after 0018, 0329, 0069 and their chapters' scripts). The
 arts for ranks C–S and the special weapons (0018 decided them): **0325**
 the arts that change numbers → **0326** stances that react, **0327**

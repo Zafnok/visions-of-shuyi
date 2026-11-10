@@ -1,0 +1,19 @@
+---
+source: crates/ui/src/screens/world_map/playdate/tests.rs
+expression: "shown.join(\"\\n\")"
+---
+ ≈≈    ..      . .                ‼              ≈
+ ≈≈  ,  ●        .        .        ,           ‼ ≈
+              .                    .         ♠♣♠≈≈
+≈           ,           ●     .. ,  ..      ♣♣ ♣≈≈
+    ≈ .         ..   ,. .    ,             ♣ ♠ ≈≈♣
+≈ ≈≈≈≈            . .        .     ,.       ♣ ♠≈≈♠
+              ▼     . .    ,♣♠ ♣♣ .        ♠♠♠♣♣≈≈
+≈≈≈           Ma          ♣♣ ♣♣♣♣♣♣       ..♣♣♣♣♠≈
+                    .  ,♣♣♣♣♣♣♣♣♣♣♠♣♣        ♠♣♣≈≈
+     ≈   ,       ,,    .♣♣  ╔═ Millbrook ════════╗
+       ≈ ≈.       .  .  ♠♣♣♣║ Town               ║
+    ≈      ≈         .   ♣♠♠║ Armory             ║
+ ≈  ≈ ≈ ≈        .        . ║ Vendor             ║
+    ≈                    ⌂  ║ Your army is here  ║
+≈  ≈≈   ≈  ≈≈ ≈ ≈≈  ≈ ≈  ≈  ╚═ Act 1 · Test Wor…═╝

@@ -24,3 +24,12 @@ talk_antagonist
 battle_bright
 victory
 defeat
+
+# The world map (ticket 1066): its own track, and the tracks its towns
+# play while they are open (`music` of a town in
+# `assets/worldmaps/act1.ron`). Chapters 2 to 8's battles and scenes are
+# still silent here (ticket 1260).
+world_map
+village
+city_first_visit
+graveyard_desert
