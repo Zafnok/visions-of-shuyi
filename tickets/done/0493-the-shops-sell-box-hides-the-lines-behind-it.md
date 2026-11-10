@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 0493 — The shop's sell box hides the lines behind it
@@ -49,8 +49,8 @@ None.
 
 ## Acceptance criteria
 
-- [ ] No list text shows beside the sell box (look test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No list text shows beside the sell box (look test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -58,4 +58,17 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `paint_box` (`glyph/shop.rs`) blanks the rows the sell box spans from
+  its right border to the end of the line before painting the box, so no
+  text and no highlight shows beside it. Left of the box is untouched:
+  the names and gold of the lines behind it still show, as before. One
+  fill in the shared `paint_box`, so the battle, Preparations and town
+  shops all get it.
+- Look test: `nothing_of_the_lines_shows_beside_the_sale_box`.
+- Snapshots: the battle shop's `sell_confirm` changed (the stray `1` and
+  the Potion highlight right of the box are gone). The Preparations and
+  town shops had no sell-confirm snapshot; this adds
+  `shop_sell_confirm_snapshot` and `town_sell_confirm_snapshot`.
+- Friction: 2.0× (estimate 5, measured 10), accepted because the fill is
+  one call that rustfmt wraps plus a two-line comment.
+- No gameplay rules decided.

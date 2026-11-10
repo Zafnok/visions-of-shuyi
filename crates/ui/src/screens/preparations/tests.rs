@@ -1212,6 +1212,16 @@ fn shop_tab_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// The Sell tab asking how many of its first line to sell: nothing of
+/// the lines behind the question shows beside it (0493).
+#[test]
+fn shop_sell_confirm_snapshot() {
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |_| {});
+    h.keys("Down f");
+    h.keys("Right Right f Right f");
+    assert_snapshot!(h.snapshot());
+}
+
 /// Ticket 0443's harness flow: a Potion bought on the Quick Battle's
 /// Preparations is packed and fought with, and a win leaves the campaign
 /// the gold left after it.

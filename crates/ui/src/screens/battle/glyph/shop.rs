@@ -150,7 +150,18 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
         buf.print(detail_x(list_x), y, &line.detail, fg, row_bg);
     }
     if let Some(sell) = &view.selling {
-        paint_sell(ctx, sell, sell_box(area), buf);
+        // The rows under the sale's box show nothing right of it (0493):
+        // a long line or the highlight would poke out beside its border.
+        let sell_box = sell_box(area);
+        let right = sell_box.x + sell_box.w;
+        let past = Rect::new(
+            right,
+            sell_box.y,
+            list_x - 1 + row_w(area) - right,
+            sell_box.h,
+        );
+        buf.fill_rect(past, Cell::new(' ', text, bg));
+        paint_sell(ctx, sell, sell_box, buf);
     }
     if let Some(ask) = &view.special {
         ask_glyph::paint(&ctx.palette, ask, buf);
@@ -339,6 +350,40 @@ mod tests {
         assert_eq!(arrows(1), (Some(('▲', false)), Some(('▼', true))));
         assert_eq!(arrows(2), (Some(('▲', false)), Some(('▼', false))));
         assert_eq!(arrows(3), (Some(('▲', true)), Some(('▼', false))));
+    }
+
+    /// No text of a line under the sale's box shows right of it, and the
+    /// highlight stops at its border too (0493).
+    #[test]
+    fn nothing_of_the_lines_shows_beside_the_sale_box() {
+        let c = crate::screen::tests::ctx();
+        let bg = c.palette.get(UiColor::PanelBg);
+        let mut v = view(9, 3);
+        for line in &mut v.lines {
+            line.detail = "Mt 10  Hit 100  Crit 10  Rng 1-2  Wt 10".into();
+        }
+        v.selling = Some(SellConfirmView {
+            question: "Sell?".into(),
+            count: 1,
+            max: 3,
+            gold: "For 1 gold".into(),
+        });
+        let buf = painted(&v);
+        let right = SELL_BOX.x + SELL_BOX.w;
+        let inner = AREA.x + AREA.w - 1;
+        // Without the sale, the lines run past where the box's right edge is.
+        let mut open = v.clone();
+        open.selling = None;
+        let open = painted(&open);
+        assert_ne!(text(&open, right, SELL_BOX.y, inner - right).trim(), "");
+        for y in SELL_BOX.y..SELL_BOX.y + SELL_BOX.h {
+            assert_eq!(text(&buf, right, y, inner - right).trim(), "", "row {y}");
+            for x in right..inner {
+                assert_eq!(buf.get(x, y).map(|c| c.bg), Some(bg), "({x}, {y})");
+            }
+        }
+        // The lines above and below the box keep their text.
+        assert_ne!(text(&buf, right, SELL_BOX.y - 1, inner - right).trim(), "");
     }
 
     #[test]
