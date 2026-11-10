@@ -443,12 +443,15 @@ Candle joins outside battle.
   0333 → 0610 → 0870 → 0528 → 0867 → 0868, 0332 after 0079.
 - **J. A human writer** (Nick, 2026-11-08: the dialogue reads robotic
   after three or four rewrites; AI writing of dialogue is paused until
-  a writer is hired). **0153** the game's repository goes private ·
+  a writer is hired). **0153** research: keep the story private
+  (cheaper private CI, or the story in the private assets repository;
+  private GitHub-hosted CI was measured at about $1,000 a month) →
   **0152** a private mirror of the scripts a writer can propose
-  changes to · engine#2585 a dialogue preview → **0764** a
+  changes to · engine#2586 the dialogue preview screen → **0764** a
   script preview program for writers · **0765** the writer's guide for
-  an outside writer → **0766** find a writer (the ad, the trial scene,
-  the pick). While 0766 is open no dialogue is written by an agent:
+  an outside writer · engine#3082 demo editions → **0914** the Chapter
+  1 web demo → **0915** the demo on a password-protected page → **0766**
+  find a writer (the ad, the trial scene, the pick). While 0766 is open no dialogue is written by an agent:
   **1073**, **1083** and **1084** wait for it. Short instructional tips
   (0483, 0489, 0490, 1081) go ahead in plain words; the writer may
   redo Vix's wording later.
@@ -518,7 +521,7 @@ Design answers unblock most of the rules work. Suggested order:
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** Hedda's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
-   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: **0153** the repository private, **0152** the scripts repository, **0766** the ad and the pick
+   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: **0153** research: keeping the story private, **0152** the scripts repository, **0766** the ad and the pick
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)

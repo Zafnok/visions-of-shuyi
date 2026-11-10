@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0152", "engine#2585"]
+blocked_by: ["0152", "engine#2586"]
 nick_input: none
 completed:
 ---
@@ -65,11 +65,16 @@ writer works in, the checker `story-check`, the `kit` release), 0765
 So the program shows those, says plainly that there are no flags, and
 makes the `@if` conditions the switches a writer flips.
 
-**The engine half** is engine#2585: a dialogue preview any game on Shuyi
-Engine builds (a list of the scenes read from a folder on disk, playing
-one in the game's own text box and faces, switches for the conditions a
-scene tests, a jump to any line, a reload when the file is saved, and the
-problems shown in the window). This ticket is the game's half: its
+**The engine half** is engine#2585 and engine#2586: a dialogue preview
+any game on Shuyi Engine builds (a list of the scenes read from a folder
+on disk, playing one in the game's own text box and faces, switches for
+the conditions a scene tests, a jump to any line, a reload when the file
+is saved, and the problems shown in the window). 2585 is done and split
+(its completion notes): it gave the pieces (`Scene::conditions`,
+`ParsedScene::text_boxes` and `text_box_at`,
+`DialoguePlayer::from_text_box` and `direction`, the watched folder,
+`shuyi_app::read_watched_folder`); **engine#2586** builds the preview
+screen itself, so this ticket waits for it. This ticket is the game's half: its
 dialogue screen, its checks, its names and lead, and a program a writer
 downloads.
 
@@ -148,7 +153,7 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 - Controls by action, never a key (`keyboard-input` skill): the
   preview's controls are the game's existing actions (the cursor,
   Confirm, Cancel, Options, PrevUnit/NextUnit in
-  `crates/content/src/keymap.rs`), mapped onto engine#2585's, with a
+  `crates/content/src/keymap.rs`), mapped onto engine#2586's, with a
   help line naming the player's keys. No new default key: the defaults
   are Nick's (`docs/design/controls.md`). If the screens can't be driven
   with those, say so in the notes rather than add one.
@@ -168,11 +173,12 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 
 ## Implementation steps
 
-1. Read engine#2585's completion notes (its trait, screen and folder
-   watch), ADR-0040, ADR-0054, ADR-0057, `scene_preview.rs` and
+1. Read engine#2585's and engine#2586's completion notes (the pieces,
+   the trait, the screen and the folder watch), move the engine pin past
+   2586 if it isn't yet (`engine-pin` skill), then read ADR-0040, ADR-0054, ADR-0057, `scene_preview.rs` and
    `game.rs`'s `start_on_scene` (`crates/ui/src/game.rs:90`).
 2. Write the size estimate first (rule 9). **Expected size: about 400
-   production lines**: the game's side of engine#2585's preview (about
+   production lines**: the game's side of engine#2586's preview (about
    150: build a `DialogueScreen` for a scene, who is there, the lead and
    a first line), the lenient content load (about 80), the build without
    scripts (about 40 in `crates/content/build.rs`), the binary's start

@@ -42,8 +42,9 @@ pages).
 someone working **inside this repository**, and it shows:
 
 - §10 *Setting up* has the writer install Rust and
-  `git clone https://github.com/Zafnok/visions-of-shuyi`, which will be
-  private (0153); §8 and §9 check and watch scenes with `cargo xtask
+  `git clone https://github.com/Zafnok/visions-of-shuyi`, which a writer
+  won't use: they work in the mirror (0152), and the scripts may leave
+  this repository (0153's research); §8 and §9 check and watch scenes with `cargo xtask
   check-script` and `cargo run -p trpg-app -- --scene`.
 - "Claude maintains" the wiring, and "ask Claude" for a new character
   or name (§2, §4, §5): an outside writer can't ask Claude.

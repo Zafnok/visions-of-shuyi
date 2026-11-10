@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0152", "0153", "0764", "0765"]
+blocked_by: ["0152", "0153", "0764", "0765", "0915"]
 nick_input: setup
 completed:
 ---
@@ -31,9 +31,10 @@ Nick, 2026-11-08, after playing the Act 1 build:
 >       * Basically, I want to show off the game in an extremely limited manner, without risking outright cloning, and to trial run some writers by asking for i.e. the pre-ch1 battle script to be rewritten as a trial run. This should be able to asked to many writers and pick best one. Without risking us getting copied
 
 This ticket is the ad, the trial and the pick. It waits for the parts
-Nick listed: the writer's mirror repository (0152), the game repository
-private (0153), the preview program (0764), the guide and cheat sheet
-(0765).
+Nick listed: the writer's mirror repository (0152), keeping the story
+private (0153's research and the work it picks), the preview program
+(0764), the guide and cheat sheet (0765); and the Chapter 1 web demo
+(0914) on a page only applicants with its password can open (0915).
 
 ### The writing pause
 
@@ -87,10 +88,12 @@ About 85 script lines together. On screen: the lead, Hollis
 What an applicant gets is a **packet**, never access to a repository:
 the preview program (0764, which holds no script of its own), the two
 scenes as they are now (marked as the AI draft to rewrite or discard),
-the cheat sheet (0765), a one-page brief, a one-page world note with no
-spoiler past Chapter 1, the beats of the two scenes, the sheets of the
-six on screen (a line each for the two off screen), and the names they
-use. Each packet carries the applicant's mark (a line at the top of its
+the cheat sheet (0765), the link and password of the Chapter 1 web demo
+(0914, 0915: the title, the opening, the options and Chapter 1, so they
+can play what they are writing for), a one-page brief, a world note as
+deep as Nick's decision 6 says, the beats of the two scenes, the sheets
+of the six on screen (a line each for the two off screen), and the names
+they use. Each packet carries the applicant's mark (a line at the top of its
 `.dlg` file and in the zip's name), so a leaked packet can be traced.
 
 ### Terms
@@ -112,7 +115,8 @@ And the mirror (0152) copies no `LICENSE`. So:
 Paid or unpaid, and what the hired writer is offered, are Nick's.
 
 Related: engine 3083 (parked, marks and capture limits in a closed
-preview program) is Out; 0901 (itch.io) is not needed for this.
+preview program) is Out. The demo is hosted by 0915, not 0901 (which
+publishes the full game).
 
 ## Nick input
 
@@ -129,6 +133,13 @@ question at a time, options plus "describe your own"):
    hours of work; Nick sets it.
 5. Where packets are shared from (a link from Nick's own cloud drive,
    or sent as a file in a message) and how entries come back.
+6. How much of the story an applicant sees. Nick, 2026-11-10: "I want
+   to show them the overall story beats and such but not expose ALL code
+   / assets to them." Options: Chapter 1's knowledge only (the first
+   plan); Chapter 1 plus a one-page summary of the whole story's arc
+   from `docs/story/beats.md`; Act 1's outline (`docs/story/outline.md`,
+   Chapters 1–8); the whole beats file. More story helps an applicant
+   write toward it; every page in a packet can leak with it.
 
 **Setup** (Nick's, in this order):
 
@@ -164,7 +175,8 @@ question at a time, options plus "describe your own"):
   the repository for Nick to attach.
 - **The packet's pages**, in `docs/writer-trial/`: `brief.md` (what to
   do, the time box, how to send, what is judged), `world.md` (one page
-  from `docs/story/bible.md`, Chapter 1's knowledge only), `terms.md`
+  from `docs/story/bible.md`, Chapter 1's knowledge only, plus the story
+  summary or outline decision 6 picks, copied at build time), `terms.md`
   (Nick's terms). The beats and sheets are copied from `docs/story/` at
   build time, not duplicated.
 - **`cargo xtask trial-packet --for <handle>`**: builds
@@ -201,7 +213,7 @@ question at a time, options plus "describe your own"):
 - Posting the ad or messaging anyone: Nick does (it is posted from his
   account and in his name).
 - Marks inside the program or limits on capture (engine 3083, parked).
-- A public demo build (engine#3082 and a game ticket, if Nick wants one).
+- Building or hosting the demo (0914, 0915).
 - Giving applicants any repository access.
 
 ## Implementation steps
@@ -209,7 +221,7 @@ question at a time, options plus "describe your own"):
 1. Size first (rule 9): about 1,100 changed lines (the pages 350,
    `trial-packet` 150 and its tests 80, `trial-compare` 120 and its
    tests 60, the other tickets' lines 30, this ticket 350).
-2. Ask the five questions. Record the answers in the completion notes
+2. Ask the six questions. Record the answers in the completion notes
    (Nick's words quoted).
 3. The pages, the two commands, the files-list line, the waiting
    tickets' lines. Build one packet for a made-up handle and open it on

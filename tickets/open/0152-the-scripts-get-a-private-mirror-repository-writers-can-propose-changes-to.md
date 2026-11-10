@@ -6,7 +6,7 @@ milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: []
+blocked_by: ["0153"]
 nick_input: setup
 completed:
 ---
@@ -31,7 +31,7 @@ Nick, 2026-11-08, after playing the Act 1 build:
 >       * Basically, I want to show off the game in an extremely limited manner, without risking outright cloning, and to trial run some writers by asking for i.e. the pre-ch1 battle script to be rewritten as a trial run. This should be able to asked to many writers and pick best one. Without risking us getting copied
 
 This ticket is the bullet "They need limited access to github repo".
-The other bullets: 0153 (the repository goes private), 0764 (a preview
+The other bullets: 0153 (research: how to keep the story private), 0764 (a preview
 program), 0765 (the guide), 0766 (the ad and the trial).
 
 **GitHub can't limit a collaborator to one folder.** A collaborator on a
@@ -110,6 +110,18 @@ CC0/CC-BY tracks) and the sound effects are free to share anyway; they
 stay. The bought art stays where it is (ADR-0040), and the writer never
 gets access to that repository: its licence forbids passing the files on.
 
+**Update, 2026-11-10: why this waits for 0153.** The paragraph above
+assumed the game repository goes private. It may not: private CI was
+measured at about $1,000 a month, and Nick won't pay that unless it can
+be done for under $30 at the same speed. 0153 is now research comparing
+cheaper private CI with moving the scripts and story documents into the
+private assets repository (`Zafnok/visions-of-shuyi-assets`) and a
+skill for PRs across the two repositories (Nick's idea). The plan here
+holds only if the scripts stay in this repository. If 0153's pick moves
+them, the mirror copies from wherever they live and `story-import`
+opens its PR there; 0153's follow-up tickets say what changes, and this
+ticket is rewritten to match before it starts.
+
 Links: ADR-0040 (the private art repository, the pattern this departs
 from), ADR-0011 (story pipeline), ADR-0057 (test files), ADR-0101 (PR
 size), ticket 0723 (`cargo xtask check-script`, the guide, `--scene`).
@@ -139,16 +151,14 @@ these steps when it starts, waits for "done", then builds.
 4. **Hand it to this repository.** `visions-of-shuyi` → **Settings** →
    **Secrets and variables** → **Actions** → **New repository secret**.
    Name: `STORY_MIRROR_TOKEN`. Secret: paste. **Add secret**.
-5. **Only if the account has GitHub Pro** (0153 asks Nick whether to
-   buy it; branch rules on a private repository need it): in the mirror,
+5. **Branch rules** (Nick has GitHub Pro, which branch rules on a
+   private repository need): in the mirror,
    **Settings** → **Rules** → **Rulesets** → **New ruleset** → **New
    branch ruleset**. Name: `main`. Enforcement status: **Active**. Bypass
    list: **Add bypass** → **Repository admin**. Target branches: **Add
    target** → **Include default branch**. Tick **Restrict deletions**,
    **Block force pushes** and **Require a pull request before merging**.
-   Click **Create**. Without Pro skip this: writers could push to the
-   mirror's `main`, but the next sync replaces its files with the game's,
-   and nothing reaches the game except through step 3 of the plan.
+   Click **Create**.
 
 Adding a writer as a collaborator is 0766's (after the pick). The trial
 applicants never get access: they get a packet (0766).
@@ -229,7 +239,8 @@ applicants never get access: they get a packet (0766).
 
 **Out (do not do):**
 - Moving `music/`, sound effects or any other asset (see Context).
-- Making this repository private (0153).
+- Making this repository private or moving the story (0153 decides;
+  its follow-up tickets do it).
 - The preview program (0764); the guide's rewrite and the cheat sheet
   (0765); the mirror README's real text (0765; this ticket writes a stub
   that says what the repository is and how to propose a change); the ad,
