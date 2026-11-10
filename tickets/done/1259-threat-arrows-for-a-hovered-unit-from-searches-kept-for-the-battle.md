@@ -5,10 +5,10 @@ type: bug
 milestone: Later
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: in-progress
+status: done
 blocked_by: ["1251"]
 nick_input: none
-completed:
+completed: 2026-11-09
 ---
 
 # 1259 — Threat arrows for a hovered unit from searches kept for the battle
@@ -94,14 +94,14 @@ None. No rule or look changes: the same arrows on the same tiles.
 
 ## Acceptance criteria
 
-- [ ] The cursor reaching a player unit with none selected runs no path
+- [x] The cursor reaching a player unit with none selected runs no path
       search once the battle's areas are kept (test of step 1).
-- [ ] The battle-wide answers equal `threats_at`'s (property test).
-- [ ] Every existing threat-arrow test and snapshot passes unchanged.
+- [x] The battle-wide answers equal `threats_at`'s (property test).
+- [x] Every existing threat-arrow test and snapshot passes unchanged.
 - [ ] `battle-attack`'s and `battle-cursor-sweep`'s costliest frames on
       the colour targets are under 2,000,000 instructions, or the
       completion notes name what is left and its ticket.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -111,5 +111,69 @@ None. No rule or look changes: the same arrows on the same tiles.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **The count first.** `the_cursor_reaching_a_player_unit_runs_no_path_search`
+  plays `battle-cursor-sweep`'s 48 steps and `battle-attack`'s first
+  three in *The Company Ledger*. Before the change, the sweep's last
+  three steps, onto units 2, 1 and 4 (its frame 91), ran 14 searches
+  each, one per enemy; every other step ran none. Now every step runs
+  none.
+- **Core.** `movement::ThreatAreas` searches each unit hostile to a
+  faction once, with every unit in place, and keeps it as
+  `ThreatPlanner` keeps one (`Threat`: its moves and threat area, or its
+  tile if it never moves). `threats_to(unit)` answers `threats_at` for
+  a unit of that faction on its own tile, with no search, and `None`
+  for a unit of another faction. `Threat::in_range` is shared with the
+  planner.
+- **Deviation: the planner starts from the areas.** With only the
+  areas, selecting the rider found her threat arrows already kept from
+  the hover, so her planner was made on the first cursor move instead:
+  the 14 searches moved from the hover to that move (`[14, 0, 0, 2, 2]`).
+  The ticket allows the planner to start from the kept searches if the
+  answers stay the same, and they do: a hostile unit's search with
+  everyone in place is the very search with the selected unit off the
+  map when none of its passable tiles is next to her (or within two
+  tiles of her, if she holds a stance that stops enemies), as the
+  search never tries the tiles that change. `ThreatPlanner::with_areas`
+  reuses those and searches only the others. The battle screen makes
+  the selected unit's planner as it is selected, from the kept areas:
+  selecting the rider now runs 2 searches (her own moves and the one
+  enemy whose moves come next to her) where it ran 15, and the moves
+  after it stay `[0, 0, 0, 2, 2]`, so 1251's test passes unchanged.
+- **UI.** `BattleScreen` keeps the areas beside `threats` and `planner`
+  and drops them where they are dropped (a command, a rewind).
+  `planned_threats` answers a unit on its own tile from the areas, in
+  any mode, and every other tile from the planner.
+- **Tests.** `the_battle_threat_areas_answer_as_threats_at_does`
+  (proptest: random maps, units, Mov, ranges, stances, units that
+  never move, blocked tiles, either side) compares every unit's answer
+  with `threats_at`; `the_planner_answers_as_threats_at_does` now also
+  checks planners started from either side's areas. Both passed 20,000
+  cases locally. Hand-made scenes count the searches
+  (`the_battle_threat_areas_search_each_moving_enemy_once_then_never`,
+  `a_planner_started_from_the_battle_threat_areas_searches_only_enemies_near_the_unit`,
+  stance included). Every existing threat-arrow test and snapshot
+  passes unchanged.
+- **The danger zone isn't shared.** `danger_zone` also searches the
+  enemies that never move (it shows where they could walk); the arrows
+  only measure their reach. Sharing would add those searches to every
+  hover, and the danger zone is only worked out while shown, so it
+  keeps its own.
+- **The unit menu (frame 43).** Callgrind's dump of `battle-attack`'s
+  frame 43 on `main` (2,305,584 instructions; the frame before,
+  1,205,126): the battle screen's `draw` is 1.81 million, of which the
+  engine's `GlyphBuffer::fill_rect` is 1.03 million (`cut_items`
+  0.91 million), the menu widget's paint 0.64 million and the map
+  skin's 0.57 million; opening the menu (the attack preview, fitting
+  the art list) 0.31 million. The threat arrows aren't among them.
+  `cut_items` rebuilds every item drawn so far on each `fill_rect`,
+  with new `Vec`s, also those the rectangle doesn't meet, and the menu
+  fills a rectangle per row. Every frame with the menu open costs about
+  2,013,000. Ticket **1260** (an engine change, `engine-change`
+  skill), added to 1250's `blocked_by`.
+- **Bench:** the numbers of CI's `bench` job on this PR are in
+  `docs/targets.md` (*The numbers*, *Over budget*).
+- **Friction:** estimate 70, measured 143 (2.0×), accepted: the
+  estimate was for the areas alone, before the planner's reuse was
+  added; game-side rules and a screen's cache, no engine piece missing
+  (`docs/engine/friction.md`).
+- No gameplay rule decided; nothing for the Act 1 playtest.
