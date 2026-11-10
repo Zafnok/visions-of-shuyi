@@ -356,6 +356,18 @@ fn town_shop_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// The Armory's Sell tab asking how many of its first line to sell:
+/// nothing of the lines behind the question shows beside it (0493).
+#[test]
+fn town_sell_confirm_snapshot() {
+    let ctx = ctx();
+    let armory = shop(&ctx, "home", ShopKind::Armoury);
+    let s = TownScreen::new(army(&ctx), armory, "Millbrook".into());
+    let mut h = Harness::with_screen(Box::new(s));
+    h.keys("Right f");
+    assert_snapshot!(h.snapshot());
+}
+
 #[test]
 fn town_declares_its_actions() {
     let screen = TownScreen::new(
