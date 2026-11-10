@@ -643,7 +643,7 @@ fn record(loaded: &mut Loaded, w: &Wanted, (tool, model): (&str, &str), date: &s
 }
 
 /// `audit`: every clip of the manifest in `scripts`' scenes, judged by its
-/// length, pace and pauses ([`audit`]). Returns the report.
+/// length, pace and pauses (the [`audit`](mod@audit) module). Returns the report.
 pub fn audit(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> Result<String, String> {
     let clips = read_optional(&folder.dir, MANIFEST_FILE)?
         .map_or(Ok(Vec::new()), |t| files::manifest(&t))?;
