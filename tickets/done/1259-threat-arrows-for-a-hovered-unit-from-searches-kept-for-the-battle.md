@@ -185,7 +185,7 @@ None. No rule or look changes: the same arrows on the same tiles.
   `cut_items` rebuilds every item drawn so far on each `fill_rect`,
   with new `Vec`s, also those the rectangle doesn't meet, and the menu
   fills a rectangle per row. Every frame with the menu open costs about
-  2,013,000. Ticket **1260** (an engine change, `engine-change`
+  2,013,000. Ticket **1261** (an engine change, `engine-change`
   skill), added to 1250's `blocked_by`.
 - **Bench** (CI's `bench` job on this PR at 54a63494, in
   `docs/targets.md`), instructions, `main` → this PR:
@@ -202,7 +202,7 @@ None. No rule or look changes: the same arrows on the same tiles.
   it costs one enemy's search and the kept ones' copies. The cursor
   sweep's costliest frame on the colour targets is 1,371,007 (frame 92,
   unchanged), under 2,000,000. `battle-attack`'s is still frame 43, the
-  unit menu, at 2,305,299: **left for 1260**, as above. On the
+  unit menu, at 2,305,299: **left for 1261**, as above. On the
   Playdate every scenario's costliest frame but the idle battle's and
   the options' stays over 2,000,000 with the one-bit drawing (1248).
 - **Friction:** estimate 70, measured 170 (2.4×), accepted: the

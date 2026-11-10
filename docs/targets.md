@@ -91,7 +91,7 @@ CI has no Playdate SDK to build it.
 The numbers in bold are over their budgets. The budgets stay; a ticket
 covers each one:
 
-- **The unit menu's frame (1260).** `battle-attack`'s costliest frame
+- **The unit menu's frame (1261).** `battle-attack`'s costliest frame
   on the colour targets is frame 43, where the unit menu opens (2.31
   million instructions; every frame with it open, about 2.01 million).
   Most of it is the engine's `GlyphBuffer::fill_rect`, which rebuilds

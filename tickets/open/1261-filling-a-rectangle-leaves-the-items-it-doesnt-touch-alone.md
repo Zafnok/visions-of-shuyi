@@ -1,5 +1,5 @@
 ---
-id: "1260"
+id: "1261"
 title: Filling a rectangle leaves the items it doesn't touch alone
 type: bug
 milestone: Later
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1260 — Filling a rectangle leaves the items it doesn't touch alone
+# 1261 — Filling a rectangle leaves the items it doesn't touch alone
 
 ## Context
 
