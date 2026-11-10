@@ -10,7 +10,7 @@ use trpg_content::names::Names;
 use trpg_content::voice::{self, MadeBy, Variant, VoiceClip};
 use trpg_core::lead::{LEAD_ID, LeadGender};
 
-use super::files::{Cast, Reader, Say, SentMap, respell};
+use super::files::{Cast, Reader, Say, SentMap, for_reader, respell};
 
 /// Why a clip is to be made.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -23,7 +23,9 @@ pub enum Why {
     Direction,
     /// The speaker's voice or its reader changed.
     Voice,
-    /// `say.ron` spells a word of it another way.
+    /// The words would be sent another way: `say.ron` spells a word of
+    /// them another way, or the tool reads their punctuation another way
+    /// (ticket 0762).
     Spelling,
 }
 
@@ -35,7 +37,7 @@ impl Why {
             Self::Words => "the words changed",
             Self::Direction => "the direction changed",
             Self::Voice => "the voice changed",
-            Self::Spelling => "say.ron spells it differently",
+            Self::Spelling => "it would be sent differently (say.ron, punctuation)",
         }
     }
 }
@@ -53,7 +55,8 @@ pub struct Wanted {
     pub entry: String,
     /// The words it says (the manifest's `spoken`).
     pub spoken: String,
-    /// The words sent to the reader: `spoken` respelled by `say.ron`.
+    /// The words sent to the reader: `spoken` respelled by `say.ron`, its
+    /// trailing-offs and breaks read as [`for_reader`] says.
     pub sent: String,
     /// How it is said.
     pub direction: Option<String>,
@@ -166,7 +169,8 @@ pub fn plan(inputs: &Inputs<'_>) -> Plan {
                     plan.uncast.push((line.id.clone(), entry));
                     continue;
                 }
-                let sent = respell(&words, inputs.say, |id| names.get(id).map(str::to_owned));
+                let respelled = respell(&words, inputs.say, |id| names.get(id).map(str::to_owned));
+                let sent = for_reader(&respelled);
                 plan.wanted.push(Wanted {
                     line: line.id.clone(),
                     variant,

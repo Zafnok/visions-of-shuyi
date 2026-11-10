@@ -6,6 +6,7 @@ use trpg_content::dialogue::{self as dlg, DialogueTable};
 use trpg_content::names::Names;
 use trpg_content::voice::{MadeBy, Variant, VoiceClip};
 
+use super::audit;
 use super::files::{self, Cast, Reader, Say, Sent, SentMap, Voice};
 use super::plan::{Inputs, Plan, Why, plan};
 use super::synth::{self, Level, Tools};
@@ -262,6 +263,93 @@ fn a_new_spelling_in_say_ron_remakes_the_lines_with_that_word_and_keeps_the_word
         (w.spoken.as_str(), w.sent.as_str()),
         ("The rain fell on Heth.", "The rain fell on Hayth.")
     );
+}
+
+/// Acceptance (0762): a line's trailing-offs and breaks reach the reader
+/// as commas and full stops; the line on screen and the manifest's words
+/// keep them. A clip made before the change is made again.
+#[test]
+fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
+    let script = "@scene a\n@left test_lord neutral\ntest_lord: Wait... no. Not yet.\n\
+                  test_lord: Aye. ...Burn it. I burned it and he didn't even-- never mind.\n@end\n";
+    let mut world = World::new();
+    world.dialogue = dialogue(script);
+    let plan = world.plan();
+    let said: Vec<(&str, &str)> = plan
+        .wanted
+        .iter()
+        .map(|w| (w.spoken.as_str(), w.sent.as_str()))
+        .collect();
+    assert_eq!(
+        said,
+        [
+            ("Wait... no. Not yet.", "Wait, no. Not yet."),
+            (
+                "Aye. ...Burn it. I burned it and he didn't even-- never mind.",
+                "Aye. Burn it. I burned it and he didn't even, never mind."
+            ),
+        ]
+    );
+    let shown = world.dialogue.get("a").unwrap().lines()[0].text;
+    assert_eq!(shown, "Wait... no. Not yet.");
+
+    // Made when the words were sent as written: made again, same words.
+    let mut world = world.made();
+    assert_eq!(world.plan().make, []);
+    for clip in &world.clips {
+        let file = trpg_content::voice::clip_file(&clip.line, clip.variant);
+        world.sent.get_mut(&file).unwrap().text = clip.spoken.clone();
+    }
+    let plan = world.plan();
+    assert_eq!(plan.make.len(), 2);
+    assert!(plan.make.iter().all(|&(_, why)| why == Why::Spelling));
+}
+
+#[test]
+fn a_reader_is_sent_trailing_offs_and_breaks_as_punctuation() {
+    let cases = [
+        // After a sentence's end the mark goes: the full stop pauses.
+        ("Aye. ...Burn it.", "Aye. Burn it."),
+        (
+            "Whose hand? ...It's the boy's.",
+            "Whose hand? It's the boy's.",
+        ),
+        (
+            "\"Go home.\" ...That's not it.",
+            "\"Go home.\" That's not it.",
+        ),
+        ("Keeper: ...the bell.", "Keeper: the bell."),
+        // At the start or the end of the line.
+        ("...Aye. Well.", "Aye. Well."),
+        ("Should've waited for--", "Should've waited for."),
+        ("\"I never--\"", "\"I never.\""),
+        // Mid-sentence: a comma, or a full stop before a new sentence.
+        ("Wait... no. Not yet.", "Wait, no. Not yet."),
+        ("Kid-- no. Don't.", "Kid, no. Don't."),
+        ("No-- I mean-- yes.", "No, I mean, yes."),
+        ("waited for-- Come on, then!", "waited for. Come on, then!"),
+        (
+            "she's no danger-- ...No. I can't.",
+            "she's no danger. No. I can't.",
+        ),
+        ("Help me up -- no, don't.", "Help me up, no, don't."),
+        (
+            "Don't-- I'll be in the ditch.",
+            "Don't, I'll be in the ditch.",
+        ),
+        ("Go. ...", "Go."),
+        ("Not yet-- Aske!", "Not yet. Aske!"),
+        // Before other punctuation, and the one-character ellipsis.
+        ("What...? Now?", "What? Now?"),
+        ("Wait\u{2026} no.", "Wait, no."),
+        ("Well\u{2026}", "Well."),
+        // Nothing else changes.
+        ("The toll-fort, at noon. Go!", "The toll-fort, at noon. Go!"),
+        ("", ""),
+    ];
+    for (written, sent) in cases {
+        assert_eq!(files::for_reader(written), sent, "{written}");
+    }
 }
 
 #[test]
@@ -624,8 +712,9 @@ fn a_dry_run_counts_and_writes_nothing() {
         report.starts_with("voice --dry-run: would make 16 clips: 14 undirected ("),
         "{report}"
     );
+    // "Better late than... well." is sent as "Better late than, well."
     assert!(
-        report.contains("and 2 directed (65 characters)"),
+        report.contains("and 2 directed (63 characters)"),
         "{report}"
     );
     assert!(report.ends_with("would remove 0; made nothing"), "{report}");
@@ -814,4 +903,153 @@ fn status_and_generate_cover_the_guides_lessons_and_tips() {
     let report = status(&folder, &scripts, &tools).unwrap();
     assert!(report.starts_with("0 clips to make"), "{report}");
     let _ = fs::remove_dir_all(&folder.dir);
+}
+
+// ---- The audit (ticket 0762) ----
+
+/// A piece of `silencedetect`'s log: quiet at the start, one pause ffmpeg
+/// split in two, a short one, and quiet to the end it never closed.
+const SILENCES: &str = "\
+[silencedetect @ 0x1] silence_start: 0
+[silencedetect @ 0x1] silence_end: 0.21 | silence_duration: 0.21
+size=N/A time=00:00:01.00
+[silencedetect @ 0x1] silence_start: 1.226644
+[silencedetect @ 0x1] silence_end: 1.73127 | silence_duration: 0.504626
+[silencedetect @ 0x1] silence_start: 1.731338
+[silencedetect @ 0x1] silence_end: 1.968639 | silence_duration: 0.237302
+[silencedetect @ 0x1] silence_start: 2.681315
+[silencedetect @ 0x1] silence_end: 2.972177 | silence_duration: 0.290862
+[silencedetect @ 0x1] silence_start: 4.8
+";
+
+#[test]
+fn pauses_inside_a_clip_are_read_from_silencedetect_joined_and_without_its_ends() {
+    let pauses = audit::inner_pauses(SILENCES, 5.0);
+    let expected = [1.968_639 - 1.226_644, 2.972_177 - 2.681_315];
+    assert_eq!(pauses.len(), expected.len(), "{pauses:?}");
+    for (got, want) in pauses.iter().zip(expected) {
+        assert!((got - want).abs() < 1e-9, "{pauses:?}");
+    }
+    // Closed at the very end, the last stretch is still the end's.
+    let closed =
+        format!("{SILENCES}[silencedetect @ 0x1] silence_end: 5 | silence_duration: 0.2\n");
+    assert_eq!(audit::inner_pauses(&closed, 5.0).len(), 2);
+    assert_eq!(audit::inner_pauses("no silence here", 3.0), [0.0_f64; 0]);
+    // A stretch starting 0.02 s in, or ending 0.02 s before the end, is
+    // the end's; one a hair further in is a pause.
+    assert!((0.52_f64 - 0.02 - 0.5).abs() < f64::EPSILON);
+    let at = |start: f64, end: f64| {
+        let log = format!(
+            "silence_start: {start}
+silence_end: {end} | x
+"
+        );
+        audit::inner_pauses(&log, 0.52).len()
+    };
+    assert_eq!((at(0.02, 0.3), at(0.021, 0.3)), (0, 1));
+    assert_eq!((at(0.2, 0.5), at(0.2, 0.499)), (0, 1));
+    assert!(audit::silence_filter().starts_with("silencedetect=noise=-40dB:d=0.15"));
+}
+
+#[test]
+fn a_clip_is_flagged_for_a_long_pause_or_a_slow_pace_of_a_long_enough_line() {
+    let measure = |length_s, pauses: &[f64]| audit::Measure {
+        length_s,
+        pauses: pauses.to_vec(),
+    };
+    // 40 letters in 3.2 s: 0.08 s a letter.
+    let words = "Hold the gate and watch the river road until dawn.";
+    assert_eq!(audit::letters(words), 40);
+    let fine = audit::judge("a/a_1.ogg", words, &measure(3.2, &[0.4, 0.55]));
+    assert!(!fine.flagged(), "{fine:?}");
+    assert!((fine.longest_pause - 0.55).abs() < 1e-9);
+    assert!((fine.pace - 0.08).abs() < 1e-9);
+
+    let halting = audit::judge("a/a_1.ogg", words, &measure(3.2, &[0.2, 0.7]));
+    assert!(halting.halting && !halting.slow);
+    assert_eq!(halting.flags(), "pause 0.70 s");
+    let slow = audit::judge("a/a_1.ogg", words, &measure(8.0, &[]));
+    assert!(slow.slow && !slow.halting);
+    assert_eq!(slow.flags(), "pace 0.200 s/letter");
+    // At the limits exactly, nothing is flagged; a line of 20 letters is
+    // judged, of 19 not.
+    let twenty = "Hold the gates, watchman.";
+    assert_eq!(audit::letters(twenty), 20);
+    assert!((3.4_f64 / 20.0 - audit::SLOWEST_PACE_S).abs() < f64::EPSILON);
+    assert!(!audit::judge("a/a_1.ogg", twenty, &measure(3.4, &[0.6])).flagged());
+    assert!(audit::judge("a/a_1.ogg", twenty, &measure(3.5, &[])).slow);
+    assert!(!audit::judge("a/a_1.ogg", "Hold the gate, watchman.", &measure(3.5, &[])).slow);
+    // A word or two is mostly breath: its pace isn't judged.
+    let short = audit::judge("a/a_1.ogg", "Not alone.", &measure(1.5, &[]));
+    assert!(!short.flagged(), "{short:?}");
+    let both = audit::judge("a/a_1.ogg", words, &measure(9.0, &[1.2]));
+    assert_eq!(both.flags(), "pause 1.20 s, pace 0.225 s/letter");
+}
+
+#[test]
+fn the_audit_report_marks_the_flagged_clips_and_counts_them() {
+    let measure = |length_s, pauses: Vec<f64>| audit::Measure { length_s, pauses };
+    let words = "Hold the gate and watch the river road until dawn.";
+    let rows = [
+        audit::judge("a/a_1.ogg", words, &measure(3.2, vec![0.3])),
+        audit::judge("a/a_2.ogg", words, &measure(3.6, vec![0.9])),
+        audit::judge("a/a_3.ogg", words, &measure(9.0, Vec::new())),
+        audit::judge("a/a_4.ogg", "Go.", &measure(2.0, Vec::new())),
+    ];
+    let report = audit::report(&rows);
+    let lines: Vec<&str> = report.lines().collect();
+    assert!(lines[1].starts_with("  a/a_1.ogg"), "{report}");
+    assert!(lines[2].starts_with("! a/a_2.ogg"), "{report}");
+    assert!(lines[2].ends_with("  pause 0.90 s"), "{report}");
+    assert!(lines[3].starts_with("! a/a_3.ogg"), "{report}");
+    assert!(lines[4].starts_with("  a/a_4.ogg"), "{report}");
+    assert!(
+        lines[5].starts_with(
+            "4 clips; pace of lines of 20+ letters: median 0.090, 90th percentile 0.225"
+        ),
+        "{report}"
+    );
+    assert_eq!(
+        lines[6],
+        "2 flagged: 1 with a pause over 0.6 s, 1 slower than 0.17 s/letter"
+    );
+}
+
+/// Acceptance (0762): `audit` lists every clip of the scenes asked for,
+/// and `generate` warns of each clip it made over a limit.
+#[test]
+fn generate_warns_of_a_halting_clip_and_audit_lists_every_clip() {
+    let content = content();
+    let scripts = test_scene(&content);
+    let folder = folder("audit");
+    let plan = plan_of(
+        &scripts,
+        &load(&folder, &scripts).unwrap(),
+        &Tools::fake(&[]),
+    );
+    let halting = plan.wanted[0].key();
+    let mut tools = Tools::fake(&[]).halting(&[&halting]);
+    let report = generate(&folder, &scripts, &mut tools, false, "2026-11-09").unwrap();
+    let warning = format!("\nwarning: {}: pause 1.00 s", plan.wanted[0].file());
+    assert!(report.ends_with(&warning), "{report}");
+    assert_eq!(report.matches("warning:").count(), 1, "{report}");
+
+    let audit = audit(&folder, &scripts, &tools).unwrap();
+    assert_eq!(audit.lines().filter(|l| l.contains(".ogg")).count(), 16);
+    assert!(
+        audit.contains(&format!("! {}", plan.wanted[0].file())),
+        "{audit}"
+    );
+    assert!(audit.ends_with("1 flagged: 1 with a pause over 0.6 s, 0 slower than 0.17 s/letter"));
+    // Another scene's clips aren't this audit's.
+    let other = Scripts::new(&content, BTreeSet::from(["vix".to_owned()]));
+    assert!(audit_of_none(&folder, &other, &tools));
+    let _ = fs::remove_dir_all(&folder.dir);
+}
+
+fn audit_of_none(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> bool {
+    audit(folder, scripts, tools).unwrap().starts_with("  clip")
+        && audit(folder, scripts, tools)
+            .unwrap()
+            .contains("\n0 clips;")
 }

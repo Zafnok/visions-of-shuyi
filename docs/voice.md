@@ -145,12 +145,34 @@ The manifest's `spoken` keeps the real words; the respelling is only what
 the reader is sent. Changing an entry makes the clips of the lines that use
 it again. Optional.
 
+### Punctuation the readers are sent
+
+The readers hold a long silence at every `...` and `--`, longer than a
+person would, and longer still at several in one line (ticket 0762). So
+after the respelling, every trailing-off (`...`, `…`) and break (`--`),
+with the spaces around it, is sent as plain punctuation
+(`for_reader`, `crates/xtask/src/voice/files.rs`):
+
+| Where the mark is | Sent as | Example, written → sent |
+| ----------------- | ------- | ----------------------- |
+| After a sentence's end, or at the line's start | nothing | `Aye. ...Burn it.` → `Aye. Burn it.` |
+| Before other punctuation | nothing | `What...?` → `What?` |
+| At the line's end | `.` | `Should've waited for--` → `Should've waited for.` |
+| Before a new sentence (a capital word that isn't "I") | `.` | `waited for-- Come on` → `waited for. Come on` |
+| Anywhere else | `,` | `Wait... no.` → `Wait, no.` |
+
+The text box shows the line as written, and the manifest's `spoken` keeps
+it; only what the reader is sent changes. A beat the script wants is a
+direction (`(slowly)`, `(after a long pause)`), which the directed recipe
+hears.
+
 ## `sent.ron`
 
 What the tool sent to make each clip, by clip file: the words as spelled
 for the reader, and a fingerprint of the voice's reference clip. The tool
 writes it; nothing else reads it. A clip is made again when the tool would
-send other words (`say.ron` changed) or the reference clip was replaced.
+send other words (`say.ron` changed, or how punctuation is sent) or the
+reference clip was replaced.
 
 ## Making the clips: `cargo xtask voice`
 
@@ -166,7 +188,8 @@ cargo xtask voice status
 ```
 
 Per scene: the clips to make and why (no clip, the words changed, the
-direction changed, the voice changed, `say.ron` spells it differently), the
+direction changed, the voice changed, it would be sent differently: `say.ron`
+or the punctuation sent changed), the
 recorded clips a person must record again, the clips to remove (their line
 is gone, or it now needs a gendered pair instead of one clip or the other
 way round), and the lines whose speaker has no voice in `cast.ron`.
@@ -194,6 +217,8 @@ in `crates/xtask/src/voice/synth.rs`, marked *tunable*. The manifest and
 `sent.ron` are written after every batch, so a stopped run keeps what it
 made. A `Recorded` clip is never made or replaced. `--dry-run` counts the
 clips and characters it would send, directed ones apart, and makes nothing.
+Every clip made is audited (below), and the report ends with a warning for
+each over a limit: `warning: <file>: pause 0.92 s, pace 0.190 s/letter`.
 
 A clip that transcribes right but sounds wrong is made again by removing its
 entry from `voice.ron` (and its file) and running `generate`: the next take
@@ -206,6 +231,23 @@ cargo xtask voice script --character retainer
 A recording script for an actor (ADR-0046 rule 10): per line, the file to
 deliver, the scene, the line before it, the direction and the words. A
 character id, `>` for the narrator, or `lead_m` / `lead_f`.
+
+```bash
+cargo xtask voice audit
+```
+
+Every clip of the manifest in the scenes asked for, one row each: its
+length, its letters (of `spoken`), its pace in seconds per letter, and its
+longest pause inside it (ffmpeg's `silencedetect`: every sample under
+−40 dB for 0.15 s or more, stretches 0.05 s apart joined, the silence at
+either end left out). A `!` marks a clip over a limit: a pause longer than
+0.6 s, or, for a line of 20 letters or more, a pace slower than 0.17 s a
+letter (the 90th percentile of Chapter 1's and the guide's clips before
+ticket 0762, 0.157, plus a margin; their median was 0.095). The last lines
+give the pace's median and 90th percentile and the counts over each limit.
+The limits are in `crates/xtask/src/voice/audit.rs`, marked *tunable*;
+the Act 1 playtest (1064) judges them. A clip flagged that sounds wrong is
+made again as above.
 
 Every command takes `--lang <code>` (default `en`), `--scene <id>` (one
 scene, a test scene too; by default every scene of `assets/dialogue/`) and

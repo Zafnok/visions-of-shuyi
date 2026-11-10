@@ -106,6 +106,70 @@ pub fn respell(text: &str, say: &Say, name: impl Fn(&str) -> Option<String>) -> 
     out
 }
 
+/// Whether `text` starts with a mark of a trailing-off or a break: `..`
+/// or more dots, `…`, or `--`. Returns the mark's length in bytes.
+fn break_mark(text: &str) -> Option<usize> {
+    if text.starts_with('\u{2026}') {
+        Some('\u{2026}'.len_utf8())
+    } else if text.starts_with("..") || text.starts_with("--") {
+        let first = text.as_bytes()[0];
+        Some(text.bytes().take_while(|&b| b == first).count())
+    } else {
+        None
+    }
+}
+
+/// What a break mark between `before` and `after` is read as (ticket
+/// 0762): the readers hold a long silence at every `...` and `--`, and
+/// longer at several, so a mark after a sentence's end or before other
+/// punctuation goes, one at the end is a full stop, one before a new
+/// sentence (a capital that isn't "I") a full stop, and any other a comma.
+fn break_as(before: &str, after: &str) -> &'static str {
+    let ended = before.trim_end_matches(['"', '\u{201d}', '\'', ' ']);
+    let next = after.trim_start_matches(['"', '\u{201d}', ' ']);
+    let word: String = next
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '\'')
+        .collect();
+    let new_sentence =
+        word.starts_with(char::is_uppercase) && word != "I" && !word.starts_with("I'");
+    let ends = |c: char| matches!(c, '.' | '?' | '!' | ',' | ';' | ':');
+    match (ended.chars().next_back(), next.chars().next()) {
+        (Some(last), Some(_)) if ends(last) => " ",
+        (Some(last), None) if !ends(last) => ".",
+        (Some(_), Some(first)) if !ends(first) && new_sentence => ". ",
+        (Some(_), Some(first)) if !ends(first) => ", ",
+        _ => "",
+    }
+}
+
+/// `text` as it is sent to a reader (ticket 0762): every trailing-off
+/// (`...`, `…`) and break (`--`), with the spaces around it, read as
+/// [`break_as`] says. The words and every other mark stay.
+pub fn for_reader(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(c) = rest.chars().next() {
+        if break_mark(rest).is_none() {
+            out.push(c);
+            rest = &rest[c.len_utf8()..];
+            continue;
+        }
+        // The run of marks and the spaces between them.
+        loop {
+            let spaces = rest.len() - rest.trim_start().len();
+            match break_mark(&rest[spaces..]) {
+                Some(len) => rest = &rest[spaces + len..],
+                None => break,
+            }
+        }
+        rest = rest.trim_start();
+        out.truncate(out.trim_end().len());
+        out.push_str(break_as(&out, rest));
+    }
+    out
+}
+
 /// `text` with each `word` that isn't part of a longer word replaced by
 /// `with`.
 fn replace_word(text: &str, word: &str, with: &str) -> String {
