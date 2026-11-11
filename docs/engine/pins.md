@@ -303,3 +303,11 @@ Nothing for the game: none.
 | #313 | 3212 | The options panel rises only when its message wouldn't fit | fixed: the four in-battle Options snapshots show the panel one row lower again, where it was before #294 (the engine ticket the pin move of 2026-11-07 filed) |
 
 Nothing for the game: 25 PRs (#305, #312, #311, #310, #308, #314, #316, #315, #317, #324, #325, #327, #328, #321, #320, #323, #334, #338, #339, #340, #341, #343, #342, #347, #354). #305 and #327 are engine tickets only; #308, #316, #317, #334, #339, #341 and #347 are the engine's book, tutorial and site; #310 is the templates' web build; #311, #312, #315, #320, #321, #323 and #325 are the engine's own CI and tooling; #314, #324, #328 and #338 are tickets and research; #340, #342 and #343 are Sonar fixes in the web shell's scripts with no change in what they do; #354 stops a folder dropped on the Windows window from crashing, which the game reaches only through #352's drops (0767).
+
+## 2026-11-10: ab593bb9 → edb6c888 (1 engine PR), #627
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #356 | 2071 | No tracked path over 150 characters, so a Windows checkout of the engine stays under 260; `cargo xtask check-paths` fails a new one | unblocks 1262 (this PR: the short `CARGO_HOME` on Windows CI is gone) |
+
+Nothing for the game: none.

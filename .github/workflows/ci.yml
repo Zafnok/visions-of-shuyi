@@ -63,14 +63,6 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup show
-      # Cargo's checkout of the engine under C:\Users\runneradmin\.cargo has a
-      # path over Windows' 260 characters (an engine ticket's long file name:
-      # 276 with that prefix), which libgit2 refuses. A short CARGO_HOME
-      # brings it under; set before rust-cache, which caches CARGO_HOME.
-      - name: A short CARGO_HOME on Windows
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo 'CARGO_HOME=C:\c' >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install macroquad system libraries
         if: matrix.os == 'ubuntu-latest'
