@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0253 — The language files' key placeholders are checked against the game's actions
@@ -82,11 +82,11 @@ None. Verified by tests.
 
 ## Acceptance criteria
 
-- [ ] A UI text with `{Confirn}` fails the game's load or test with the
+- [x] A UI text with `{Confirn}` fails the game's load or test with the
       engine's `SH2008` message naming the file and line.
-- [ ] `{Cursor}`, every `Action` name and a lowercase `{name}` pass.
-- [ ] Every shipped and test pack passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `{Cursor}`, every `Action` name and a lowercase `{name}` pass.
+- [x] Every shipped and test pack passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -95,5 +95,23 @@ None. Verified by tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `crates/ui/src/lang_keys.rs`: `check_ui_text_keys(bundle)` reads every
+  `lang/<code>/ui.ron` in the bundle (English's map; each pack's entries by
+  their translated text) and runs the engine's
+  `check_key_placeholders::<Action>` on it. A file that doesn't parse is
+  left to the language loader, which already reports it.
+- Called by `Ctx::embedded` (the game's start, `start.rs`), so a bad key
+  name fails the load with the other content errors, and by the game
+  tool's `check` (`crates/xtask/src/game_tools/plays.rs`), so `cargo
+  shuyi check` fails on it too.
+- Tests: a misspelled `{Confirn}` in English and an unknown `{Abort}` in a pack fail
+  with `SH2008`, file and line; `{Cursor}`, every `Action` and a
+  lowercase `{name}` pass; every embedded pack (English and `test`)
+  passes.
+- The real packs had no misspelled key name: nothing to fix.
+- **Lessons left alone**: `lesson.rs`'s own placeholder loop is in
+  `trpg-content`, which depends on `shuyi-assets` only; the engine's
+  check is in `shuyi-ui`, so calling it there would add a new dependency
+  to the content crate (the ticket's condition for leaving it).
+- Engine friction: estimate 40, measured in the PR (see the PR body).
+- No gameplay rules decided.

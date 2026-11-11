@@ -341,7 +341,16 @@ pub trait ShuyiCtx: Sized {
 
 impl ShuyiCtx for Ctx {
     fn embedded() -> Result<Self, LoadError> {
-        Self::from_content(trpg_content::load_embedded().map_err(LoadError::Content)?)
+        let content = trpg_content::load_embedded();
+        let keys = crate::lang_keys::check_ui_text_keys(trpg_content::bundle::install());
+        match (content, keys) {
+            (Ok(content), Ok(())) => Self::from_content(content),
+            (content, keys) => {
+                let mut errors = content.err().map_or_else(Vec::new, |e| e.0);
+                errors.extend(keys.err().unwrap_or_default());
+                Err(LoadError::Content(ContentErrors(errors)))
+            }
+        }
     }
 
     fn from_content(content: Content) -> Result<Self, LoadError> {
