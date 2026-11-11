@@ -60,7 +60,7 @@ case "$target" in
       # The engine's web shell (its `crates/cli/web/`, `SHELL` in `web.rs`). The
       # export report doesn't list it, so a script the engine adds is named here.
       printf '%s\n' index.html "$bin.wasm" mq_js_bundle.js sapp_jsutils.js quad-storage.js \
-        gamepad.js sound.js download.js
+        gamepad.js sound.js player-files.js page-files.js
     })
     ;;
   *) fail "no such target: $target" ;;

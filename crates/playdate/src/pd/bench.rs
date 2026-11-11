@@ -66,7 +66,7 @@ impl Bench {
         shown: &Frame,
     ) {
         time(&mut self.slow_phases, |mut mark| {
-            onebit::reference::render_marked_with(
+            onebit::reference::render_marked(
                 buffer,
                 font,
                 pictures,
@@ -76,7 +76,7 @@ impl Bench {
             );
         });
         time(&mut self.fast_phases, |mut mark| {
-            onebit::render_marked_with(buffer, font, pictures, shades, &mut self.fast, &mut mark);
+            onebit::render_marked(buffer, font, pictures, shades, &mut self.fast, &mut mark);
         });
         if self.fast != self.slow {
             self.unlike_reference += 1;

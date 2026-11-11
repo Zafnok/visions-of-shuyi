@@ -293,15 +293,16 @@ impl OneBit {
         let Some(font) = bits.and_then(|bits| onebit::Font::new(&self.atlas, bits).ok()) else {
             panic!("no one-bit font");
         };
+        let map = onebit::playdate_map().unwrap_or_else(|e| panic!("{e}"));
         let buffer = h.game().buffer();
         match &self.shown {
-            Some(old) => onebit::render_changed(old, buffer, &font, &(), &mut self.frame),
-            None => onebit::render(buffer, &font, &(), &mut self.frame),
+            Some(old) => onebit::render_changed(old, buffer, &font, &(), &map, &mut self.frame),
+            None => onebit::render(buffer, &font, &(), &map, &mut self.frame),
         }
         let mut whole = Box::new([0; FRAME_BYTES]);
-        onebit::render(buffer, &font, &(), &mut whole);
+        onebit::render(buffer, &font, &(), &map, &mut whole);
         let mut reference = Box::new([0; FRAME_BYTES]);
-        onebit::reference::render(buffer, &font, &(), &mut reference);
+        onebit::reference::render(buffer, &font, &(), &map, &mut reference);
         let screen = h.top_screen();
         assert!(whole == reference, "{screen}: not as the reference drew it");
         assert!(self.frame == whole, "{screen}: what changed, drawn wrong");

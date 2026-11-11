@@ -37,8 +37,10 @@ Neither look is in `playdate.md`. Nick's rule (Q3 E) is that the
 one-bit map tells these things apart without colour; Chapter 6 (0852)
 is an escape map, so both show in Act 1 on the device Nick plays it on.
 
-The inks are the engine's (`shuyi_assets` `ink.rs`: white, black,
-black_edged, grey, dots, diagonals, dashes, invert), and dots,
+The inks are the game's (`trpg_content::ink`, since engine ADR-0107
+took them out of the engine: white, black, black_edged, grey, dots,
+diagonals, dashes, invert, each drawn by its patterns in
+`playdate@onebit.ron`), and dots,
 diagonals, dashes and grey are taken by the ranges, the danger zone and
 the enemy tiles.
 
@@ -57,9 +59,10 @@ sees them on his Playdate.
   order of preference: (a) a mark that isn't a fill, e.g. a border
   drawn round the area's edge in a style no range uses, or a glyph in
   each exit tile's corner, like the map's other marks in
-  `map_view/playdate/marks.rs`; (b) a new ink, if the engine's inks
-  have room for one (a small engine change: the `engine-change` skill,
-  §3, done in this ticket). Pick the one that reads at 1× on the
+  `map_view/playdate/marks.rs`; (b) a new look in the pattern map
+  (`playdate@onebit.ron`: any of the engine's patterns, edged or
+  inverted), with a new ink in `trpg_content::ink` while the palette
+  still names inks (1263 takes them out; either order works). Pick the one that reads at 1× on the
   device's 400 × 240 screen.
 - A look for a **downed unit** that keeps its side: a downed enemy keeps
   the grey tile (or its letters' edge) and adds what says "down" (the

@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
-blocked_by: ["engine#3309", "engine#2138"]
+blocked_by: ["engine#2138"]
 nick_input: decision
 completed:
 ---
@@ -114,9 +114,10 @@ is left to judge by playing goes on the Act 1 playtest's checklist
 
 ## Implementation steps
 
-1. **First step: move the pin** past the merge of engine#3309 and
-   engine#2138 (`engine-change` §7 and the `engine-pin` skill's review),
-   unless an open `engine-pin` PR already does.
+1. **First step: move the pin** past the merge of engine#2138
+   (`engine-change` §7 and the `engine-pin` skill's review), unless an
+   open `engine-pin` PR already does. ~~Past engine#3309~~: done by the
+   pin move of 2026-11-11.
 2. Ask Nick (above); write `docs/design/options.md`'s section.
 3. `crates/ui/src/save_files.rs` (new): `export_keys(answer) -> impl Fn(&str) -> bool`,
    `export_name(profile) -> String`, `place_text(ctx) -> String`.

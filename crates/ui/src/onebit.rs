@@ -12,7 +12,7 @@ use crate::color::Rgb;
 /// The Playdate's pattern map (ticket 1253): its palette's roles
 /// (`trpg_content::ink::PLAYDATE_PALETTE_PATH`) drawn by their patterns
 /// in `trpg_content::ink::PLAYDATE_MAP_PATH`. The front end builds it once
-/// and draws every frame with it ([`render_with`]). It reads the palette
+/// and draws every frame with it ([`render`]). It reads the palette
 /// alone, as the loading card needs it before the rest of the data: the
 /// game checks the palette has every colour when it loads it.
 pub fn playdate_map() -> Result<PatternMap, String> {
@@ -44,9 +44,9 @@ mod tests {
         Rgb::from(ink.code())
     }
 
-    /// The Playdate's map draws each ink's code as the inks do: its
+    /// The Playdate's map draws each ink's code as the ink says: its
     /// patterns, a `black_edged` glyph's edge and an `invert` rectangle's
-    /// flip.
+    /// flip, and `Ink::is_white`'s pixels.
     #[test]
     fn the_playdate_map_draws_each_ink_as_the_inks_do() {
         let map = playdate_map().unwrap();
@@ -54,19 +54,21 @@ mod tests {
             let rgb = c(ink);
             assert!(map.role_of(rgb).is_some(), "{ink:?}");
             // Only a glyph is edged, and only a shape flips.
-            assert_eq!(map.ground(rgb).rows, InkShades.ground(rgb).rows, "{ink:?}");
-            let glyph = |s: Shade| (s.rows, s.edged);
+            let p = ink.patterns();
+            assert_eq!(map.ground(rgb).rows, p.background().rows(), "{ink:?}");
+            let glyph = map.glyph(rgb);
+            assert_eq!((glyph.rows, glyph.edged), (p.fg.rows(), p.edge), "{ink:?}");
+            let shape = map.shape(rgb);
             assert_eq!(
-                glyph(map.glyph(rgb)),
-                glyph(InkShades.glyph(rgb)),
+                (shape.rows, shape.flips),
+                (p.fg.rows(), p.invert),
                 "{ink:?}"
             );
-            let shape = |s: Shade| (s.rows, s.flips);
-            assert_eq!(
-                shape(map.shape(rgb)),
-                shape(InkShades.shape(rgb)),
-                "{ink:?}"
-            );
+            for (x, y) in [(0_i32, 0_usize), (1, 0), (2, 1), (5, 6)] {
+                let white = shape.rows[y] >> (7 - x) & 1 == 1;
+                let y = i32::try_from(y).unwrap_or_default();
+                assert_eq!(white, ink.is_white(x, y), "{ink:?}");
+            }
         }
         assert_eq!(map.role_of(c(Ink::Invert)), Some("cursor"));
     }
@@ -83,7 +85,7 @@ mod tests {
         );
         b.print(49, 14, "A", c(Ink::Black), c(Ink::White));
         let mut frame = Box::new([0u8; FRAME_BYTES]);
-        render(&b, &font, &(), &mut frame);
+        render(&b, &font, &(), &playdate_map().unwrap(), &mut frame);
         let rows = font.rows('A').unwrap();
         for (y, &row) in (224..).zip(rows) {
             for x in 0..8 {

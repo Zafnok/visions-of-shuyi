@@ -15,7 +15,7 @@ use crate::map_view::scene::{
 use crate::map_view::scene::{RangeName, range};
 use crate::map_view::skin::{MapSkin, with_looks};
 use crate::map_view::{path, threat};
-use crate::onebit::{FRAME_BYTES, Font, Frame, ink_is_white, is_white, render};
+use crate::onebit::{FRAME_BYTES, Font, Frame, is_white, render};
 use crate::prelude::*;
 use crate::screen::ShuyiCtx;
 use crate::screen::tests::ctx;
@@ -64,7 +64,13 @@ pub(crate) fn font() -> Font<'static> {
 /// `buf` as the Playdate shows it.
 pub(crate) fn shown(buf: &GlyphBuffer) -> Box<Frame> {
     let mut frame = Box::new([0; FRAME_BYTES]);
-    render(buf, &font(), &(), &mut frame);
+    render(
+        buf,
+        &font(),
+        &(),
+        &crate::onebit::playdate_map().unwrap(),
+        &mut frame,
+    );
     frame
 }
 
@@ -318,7 +324,7 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
             let white = match fill {
                 _ if ink => false,
                 Some(_) if near => true,
-                Some(ink) => ink_is_white(*ink, px, py),
+                Some(ink) => ink.is_white(px, py),
                 None => true,
             };
             // The danger zone's edge (dashes) is checked with the marks.

@@ -276,7 +276,8 @@ impl Images for Pictures {
 /// `buf` as the Playdate shows it, with the test pictures.
 fn shown(c: &Ctx, buf: &GlyphBuffer) -> Box<Frame> {
     let mut frame = Box::new([0; FRAME_BYTES]);
-    render(buf, &font(), &Pictures::of(c), &mut frame);
+    let map = crate::onebit::playdate_map().unwrap();
+    render(buf, &font(), &Pictures::of(c), &map, &mut frame);
     frame
 }
 

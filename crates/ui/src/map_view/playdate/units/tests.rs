@@ -7,7 +7,7 @@ use super::*;
 use crate::map_view::playdate::tests::{
     blank, c, p, painted, pd_ctx, plains, shown, tile_pixels, unit,
 };
-use crate::onebit::{ink_is_white, is_white};
+use crate::onebit::is_white;
 
 /// `u` painted on plains, on tile (1, 1): cells (3, 1) and (4, 1), pixels
 /// 24..40 × 16..32.
@@ -99,7 +99,7 @@ fn an_enemy_is_white_edged_letters_on_a_grey_tile() {
     let frame = shown(&buf);
     for ((x, y), ink, near) in tile_pixels(['B', 'r'], CELL) {
         let hp = y >= 30 && (25..39).contains(&x);
-        let white = !ink && !hp && (near || ink_is_white(Ink::Grey, x, y));
+        let white = !ink && !hp && (near || Ink::Grey.is_white(x, y));
         assert_eq!(is_white(&frame, x, y), white, "({x}, {y})");
     }
 }
@@ -219,7 +219,7 @@ fn the_hp_line_is_as_long_as_the_hp_left() {
     let frame = shown(&on_plains(hurt));
     assert!(is_white(&frame, 31, 31) && is_white(&frame, 25, 30));
     for (x, y) in [(32, 30), (33, 30), (38, 31), (39, 31)] {
-        let dots = x < 39 && ink_is_white(Ink::Grey, x, y);
+        let dots = x < 39 && Ink::Grey.is_white(x, y);
         assert_eq!(is_white(&frame, x, y), dots, "({x}, {y})");
     }
 }

@@ -9,7 +9,7 @@ use crate::map_view::glyph::cursor::{CORNER_ARM, LARGE_CORNER_ARM, corner_arms};
 use crate::map_view::glyph::units::HP_BAR_H;
 use crate::map_view::playdate::tests::{c, p, painted, pd_ctx, plains, shown, unit};
 use crate::map_view::scene::{CursorStyle, CursorView};
-use crate::onebit::{ink_is_white, is_white};
+use crate::onebit::is_white;
 use trpg_core::Faction;
 
 /// The danger zone's edge painted for `danger` on plains: its rectangles.
@@ -84,7 +84,7 @@ fn the_danger_edge_shows_as_dashes_over_ranges_and_units() {
     let frame = shown(&painted(&ctx, &scene));
     for x in 40..72 {
         for y in [16, 17] {
-            let dash = ink_is_white(Ink::Dashes, x, y);
+            let dash = Ink::Dashes.is_white(x, y);
             assert_eq!(is_white(&frame, x, y), dash, "({x}, {y})");
         }
     }
