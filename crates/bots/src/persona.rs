@@ -511,7 +511,9 @@ impl Order<BattleState> for PersonaOrder {
 ///    nearer than where it stands;
 /// 7. each ready unit's hold: waiting on the tile it can reach that no
 ///    enemy can strike next phase (the danger zone), nearest the
-///    objective's goals, if it isn't its advance;
+///    objective's goals, if it isn't its advance; in a survive, which has
+///    no goals, only for a unit in an enemy's reach, nearest where it
+///    stands (ADR-0115, 0529);
 /// 8. each unit's best attack on each of its other targets, the best
 ///    first: after every unit's move, so that units with several targets
 ///    each don't fill the places tried with blows and leave a sturdier
@@ -568,11 +570,12 @@ pub fn order(
                 } else {
                     if *action == UnitAction::Wait {
                         waits.push((*unit, *dest, command.clone()));
-                    }
-                    if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {
-                        advance(state, goals, *unit, *dest, &command, &mut advances);
+                        if let Some(goals) = goals.as_mut() {
+                            advance(state, goals, *unit, *dest, &command, &mut advances);
+                        }
                         if safe(*dest) {
-                            hold(state, goals, *unit, *dest, &command, &mut holds);
+                            let goals = goals.as_mut();
+                            hold(state, goals, &safe, *unit, *dest, &command, &mut holds);
                         }
                     }
                     rest.push(command);
@@ -749,16 +752,32 @@ fn covers(
 }
 
 /// Keeps `command` (unit `id` waiting on `dest`, a tile out of every
-/// enemy's reach) in `holds` if it is the unit's nearest yet to the goals.
+/// enemy's reach) in `holds` if it is the unit's nearest yet to the
+/// goals. With no goals (a survive), nearest where the unit stands, and
+/// only for a unit standing where an enemy can strike it: a hold is its
+/// way out of reach.
+///
+/// Without that a wounded unit in a survive had no way out to try but a
+/// potion, a cover, or the enemy AI's own charge: Hardcore left units in
+/// reach that its scoring knew could fall (Chapter 5, 35 of its 58 deaths
+/// over 100 tries) and drank every potion it had (0529, ADR-0115).
 fn hold(
     state: &BattleState,
-    goals: &mut Goals<'_>,
+    goals: Option<&mut Goals<'_>>,
+    safe: &dyn Fn(Pos) -> bool,
     id: UnitId,
     dest: Pos,
     command: &Command,
     holds: &mut Vec<(UnitId, i64, Command)>,
 ) {
-    let Some(there) = state.unit(id).and_then(|unit| goals.distance(unit, dest)) else {
+    let Some(unit) = state.unit(id) else {
+        return;
+    };
+    let there = match goals {
+        Some(goals) => goals.distance(unit, dest),
+        None => (!safe(unit.pos)).then(|| i64::from(Pos::manhattan(unit.pos, dest))),
+    };
+    let Some(there) = there else {
         return;
     };
     match holds.iter_mut().find(|h| h.0 == id) {

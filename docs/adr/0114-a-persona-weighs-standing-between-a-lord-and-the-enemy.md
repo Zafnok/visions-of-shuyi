@@ -1,6 +1,6 @@
 # ADR-0114: A persona weighs standing between a lord and the enemy that can reach it
 
-- **Status:** Accepted
+- **Status:** Accepted; amended by ADR-0115
 - **Date:** 2026-11-08
 - **Related tickets:** 0526 (this decision), 0851 (found it), 0523
 - **Amends:** ADR-0095 §2 and ADR-0112 (the order)

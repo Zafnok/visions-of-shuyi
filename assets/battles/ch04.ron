@@ -34,30 +34,30 @@
     ],
     enemies: [
         // The gate, and an archer in each fort of the guardroom.
-        (template: "hound_guard", pos: (13, 12), ai: Guard, level: Some(7)),
-        (template: "hound_archer", pos: (12, 11), ai: Stationary, level: Some(7)),
-        (template: "hound_archer", pos: (14, 11), ai: Stationary, level: Some(7)),
+        (template: "hound_guard", pos: (13, 12), ai: Guard, level: Some(9)),
+        (template: "hound_archer", pos: (12, 11), ai: Stationary, level: Some(9)),
+        (template: "hound_archer", pos: (14, 11), ai: Stationary, level: Some(9)),
         // The yard, and the hall's front door.
-        (template: "hound_raider", pos: (9, 8), ai: Guard, level: Some(7)),
-        (template: "hound_swordsman", pos: (16, 8), ai: Guard, level: Some(7)),
-        (template: "hound_rider", pos: (11, 6), ai: Guard, level: Some(7)),
-        (template: "hound_guard", pos: (13, 6), ai: Guard, level: Some(7)),
+        (template: "hound_raider", pos: (9, 8), ai: Guard, level: Some(9)),
+        (template: "hound_swordsman", pos: (16, 8), ai: Guard, level: Some(9)),
+        (template: "hound_rider", pos: (11, 6), ai: Guard, level: Some(9)),
+        (template: "hound_guard", pos: (13, 6), ai: Guard, level: Some(9)),
         // The sentries outside the long wall, in the river meadow.
-        (template: "hound_swordsman", pos: (23, 8), ai: Guard, level: Some(7)),
-        (template: "hound_archer", pos: (24, 12), ai: Guard, level: Some(7)),
+        (template: "hound_swordsman", pos: (23, 8), ai: Guard, level: Some(9)),
+        (template: "hound_archer", pos: (24, 12), ai: Guard, level: Some(9)),
         // The kitchen.
-        (template: "hound_raider", pos: (18, 3), ai: Guard, level: Some(7)),
+        (template: "hound_raider", pos: (18, 3), ai: Guard, level: Some(9)),
         // The hall: Dace at the lord's end, two of his Hounds.
         (character: "rival", pos: (5, 3), ai: Guard, boss: true, defeat: Retreats),
-        (template: "hound_guard", pos: (7, 3), ai: Guard, level: Some(7)),
-        (template: "hound_archer", pos: (9, 2), ai: Guard, level: Some(7)),
+        (template: "hound_guard", pos: (7, 3), ai: Guard, level: Some(9)),
+        (template: "hound_archer", pos: (9, 2), ai: Guard, level: Some(9)),
     ],
     reinforcements: [
         // His riders, back up the road behind the party: a fight that drags
         // meets them (playtesting.md, Chapter 4).
-        (turn: 7, unit: (template: "hound_rider", pos: (12, 15), level: Some(7))),
-        (turn: 7, unit: (template: "hound_rider", pos: (13, 15), level: Some(7))),
-        (turn: 7, unit: (template: "hound_rider", pos: (14, 15), level: Some(7))),
+        (turn: 7, unit: (template: "hound_rider", pos: (12, 15), level: Some(9))),
+        (turn: 7, unit: (template: "hound_rider", pos: (13, 15), level: Some(9))),
+        (turn: 7, unit: (template: "hound_rider", pos: (14, 15), level: Some(9))),
     ],
     preparations: true,
     pack_cap: 3,
