@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
-blocked_by: ["0872", "engine#2138"]
+blocked_by: ["0872"]
 nick_input: none
 completed:
 ---
@@ -90,8 +90,8 @@ None: 0872 asks where Import lives and what it does over existing saves.
 
 ## Implementation steps
 
-1. Pin: if 0872 moved it past engine#2138, nothing to do (past
-   engine#3309: done by the pin move of 2026-11-11).
+1. ~~Pin: move it past engine#2138~~: done by the pin move of
+   2026-11-11 to `85e8d5c5` (past engine#3309: the pin move before it).
 2. The checker list in `save_files.rs`, with a unit test per key kind.
 3. `crates/ui/src/screens/save_import.rs` (new): the screen's logic
    (waiting for the file, the plan, the question), its view (plain data,
