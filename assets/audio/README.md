@@ -24,6 +24,13 @@ crashes it, so the checks below read every file's header.
 ```ron
 (
     music_fade_ms: 500,           // old track fades out this long, then the new one starts
+    ducks: [
+        // While a voice clip plays, lower a sound group to `to` on the
+        // loudness curve (each step 0.6 dB: 90 is 6 dB under) over
+        // attack_ms, and bring it back over release_ms after (engine
+        // ADR-0099; ticket 0865). Optional.
+        (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
+    ],
     sounds: [
         // files: relative to assets/audio/. Several files = variants, one
         // picked at random each time. volume: percent, 0-100.
