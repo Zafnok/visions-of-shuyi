@@ -5,9 +5,9 @@ type: feature
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
-blocked_by: ["engine#3082"]
-nick_input: decision
+status: blocked
+blocked_by: ["engine#3082", "0872"]
+nick_input: none
 completed:
 ---
 
@@ -74,20 +74,32 @@ without the key has the test game, not Chapter 1, so it must fail
 (`required: true`). The edition's list of what is left out stays the
 same.
 
+**Waits for 0872** (save export; Nick, 2026-11-11, below): the demo
+ends on "Export save?", which hands the player a file through 0872's
+export, so 0872 must be done first. 0872 itself waits for engine#3309
+(Zafnok/shuyi-engine PR #359 was open on 2026-11-11) and for Nick's
+answers on where Export lives in the full game.
+
 ## Nick input
 
-**Decision**, asked before building, with the question pop-up, one
-question at a time, each with "describe your own":
+**Decided 2026-11-11** (the session that first picked this ticket up),
+recorded in [`docs/design/demo.md`](../../docs/design/demo.md) with
+Nick's words:
 
-1. **What the player sees after winning Chapter 1.** The full game plays
-   `ch01_victory` and `ch01_tbc` and goes on to Chapter 2. Options: an
-   end card ("Thanks for playing", as many demos have; *Octopath
-   Traveler*'s 2018 demo ended after three hours and let the save carry
-   over to the full game), then back to the title; straight back to the title;
-   or the credits, then the title.
-2. **Whether `ch01_tbc` stays.** It is the scene after the win where the
-   villains talk about what comes next: it is Chapter 1's, but it points
-   at later chapters. Keep it, or end the demo on `ch01_victory`.
+1. **After winning Chapter 1:** all of Chapter 1's scenes, then **no**
+   "Save your progress?" ("given saving the game does nothing to a
+   chapter specified demo, I would prefer only having Export option on
+   demos, NOT the save option on demos"), then an end card **"Thanks for
+   playing, {the lead's name}"**, then **"Export save?" Yes / No**, which
+   works through 0872's export and makes a file the full game imports
+   (0873) and continues into Chapter 2 from. Then the title.
+2. **`ch01_tbc` stays** ("if it's a ch1 ending scene and not a ch2 intro
+   scene we can keep it"): it is in `ch01.ron`'s `victory_scenes` and
+   `ch01.dlg`, so it is Chapter 1's ending.
+
+`docs/design/demo.md` also lists the agent's starting rules for the end
+(the question's cursor on *Yes*, the card's look borrowed from "To be
+continued").
 
 Nothing else here is Nick's: which files leave and how is technical.
 Verification is the tests and the export's own check, and a
@@ -115,10 +127,22 @@ Nick asks for it.
   never meets is cut from the demo's copy at build time or the file is
   split, the session's call, recorded in an ADR. The demo must not need
   a second hand-kept copy of any data file.
-- **The flow**: Chapter 1's `next` goes to what Nick picked (decision 1)
-  in the demo only; the title shows no entry that reaches a later
-  chapter, the skirmishes or the debug tools (`Item::QuickBattle` is
-  already debug-only). A save the demo makes loads in the demo.
+- **The flow** (`docs/design/demo.md`), in the demo only: after
+  Chapter 1's last scene (`ch01_tbc`), no "Save your progress?" (0869's
+  prompt stays in the full game); the end card "Thanks for playing,
+  {lead}" (a new text key; the "To be continued" card's look, in
+  silence); then "Export save?" Yes / No. *Yes* writes the campaign as
+  the full game's chapter save after Chapter 1 would hold it into a
+  bundle through 0872's export (the demo has no save of its own to
+  export) and offers the file; then the title. The title shows no entry
+  that reaches a later chapter, the skirmishes or the debug tools
+  (`Item::QuickBattle` is already debug-only). The battle's suspend save
+  the demo makes loads in the demo.
+- **Importable into the full game:** the exported file holds a save the
+  full game's import (0873) takes, and loading it there continues into
+  Chapter 2. The demo's build must not change the save format, and the
+  file names no Chapter 2 content (the full game's own `ch01.ron` names
+  `next`).
 - **No debug tools**: the demo is a release export (engine 3099 refuses
   debug features). Since the pin move of 2026-11-10 the refusal reads the
   build Cargo resolves (engine #322 and #344): a debug feature, or the
@@ -163,11 +187,15 @@ Nick asks for it.
    `crates/content/src/bundle.rs`'s `left_out`.
 2. Size first (rule 9): **about 1,200 changed lines**: the edition and
    left-out list 80, the shared files' cut at build time 250 (judge by
-   `build.rs`'s Playdate table, about that size), the demo's flow end and
-   title entries 150 (judge by `title.rs`'s debug-only `QuickBattle`),
+   `build.rs`'s Playdate table, about that size), the demo's flow end
+   (the card, the export question, no save prompt) and title entries
+   250 (judge by `title.rs`'s debug-only `QuickBattle` and
+   `screens/save_prompt.rs`),
    the disclosure part 60, the CI job 60, tests 250, the ADR 120, this
    ticket 300. At 3× the production estimate, run `engine-friction`.
-3. Ask Nick the two questions.
+3. ~~Ask Nick the two questions.~~ (done 2026-11-11:
+   `docs/design/demo.md`.) Read 0872's completion notes: its export
+   function, the bundle's keys and file name.
 4. Export the full web build and read its `exposure-report.json` and
    `strings` for what names a later chapter; write the left-out list and
    the canaries from that.
@@ -186,8 +214,14 @@ Nick asks for it.
 - [ ] `strings` on the demo's Wasm finds no Chapter 2–8 scene id, map
       name or the ids of characters first met after Chapter 1 (a CI step).
 - [ ] A Harness test plays the demo from New Game through Chapter 1's
-      win to what Nick picked, and the title shows no entry past
-      Chapter 1.
+      win: both victory scenes, no "Save your progress?", "Thanks for
+      playing, {lead}", "Export save?"; *Yes* offers one file and returns
+      to the title, *No* returns to the title with none. The title shows
+      no entry past Chapter 1.
+- [ ] A test: the demo's exported file, imported into the full game's
+      content (0873's import, or its checker when the screen isn't
+      needed), gives a save that loads and starts Chapter 2.
+- [ ] The full game still asks "Save your progress?" after Chapter 1.
 - [ ] The full game's build and tests are unchanged.
 - [ ] The CI job runs on a PR that touches `assets/`.
 - [ ] All gates in the `run-gates` skill pass.
@@ -198,8 +232,8 @@ Nick asks for it.
   names a later chapter and keeps what Chapter 1 reads.
 - Integration: the Harness play-through of the demo; the canary test;
   the demo export in CI.
-- Pictures: `cargo shuyi frame-png` of the title and of the demo's end in
-  the PR.
+- Pictures: `cargo shuyi frame-png` of the title, the end card and the
+  "Export save?" question in the PR.
 
 ## Completion notes
 

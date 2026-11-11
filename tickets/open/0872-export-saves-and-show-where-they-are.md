@@ -43,6 +43,16 @@ The engine pieces:
 This ticket is the export half; 0873 is the import half and its version
 check.
 
+**0914 waits for this ticket** (Nick, 2026-11-11, `docs/design/demo.md`):
+the Chapter 1 web demo has no "Save your progress?" and ends on "Export
+save?" Yes / No, which offers a file of the game after Chapter 1 that
+the full game imports (0873) and continues into Chapter 2 from. The demo
+has no save in storage to export there: it bundles the campaign as the
+chapter save would hold it. So build the export so that 0914 can hand it
+entries that aren't in the profile's storage (a slot's key and the
+encoded save), not only a filter over the stored keys, and keep the file
+importable by 0873 whatever Nick answers here about what a file holds.
+
 ## Nick input
 
 **Decision**, asked with `ask-nick` at the start of the ticket, before

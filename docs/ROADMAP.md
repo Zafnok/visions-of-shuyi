@@ -455,7 +455,8 @@ Candle joins outside battle.
   → **0152** a private mirror of the scripts a writer can propose
   changes to (copied from the assets repository) · engine#2586 the dialogue preview screen → **0764** a
   script preview program for writers · **0765** the writer's guide for
-  an outside writer · engine#3082 demo editions → **0914** the Chapter
+  an outside writer · engine#3082 demo editions and **0872** save
+  export (the demo ends on "Export save?") → **0914** the Chapter
   1 web demo → **0915** the demo on a password-protected page → **0766**
   find a writer (the ad, the trial scene, the pick). While 0766 is open no dialogue is written by an agent:
   **1073**, **1083** and **1084** wait for it. Short instructional tips
