@@ -83,6 +83,16 @@ in 30 slots, and a one-time suspend save of a battle in progress. Forces:
   bump. Ticket 0821 adds a golden-file test for that, before saves reach
   players (0901).
 - Steam Cloud (0903) can sync the same keys as files.
+- **Saves outside the game** (ticket 0872): a profile's keys, or one slot
+  with or without `settings`, `keybindings` and `layout`, leave the game
+  as one file, Shuyi Engine's save bundle (`shuyi_ui::storage::bundle`,
+  engine#2138): RON, each entry under its key **without** the profile's
+  `p<n>-` prefix, stamped with the game's version and the content's
+  fingerprint (`Made`). `crates/ui/src/save_files.rs` builds it
+  (`export`, or `offer` for entries a screen never stored, as the demo's
+  end does, 0914); the name is `visions-of-shuyi-<name>-<n>[-slot-NN].ron`.
+  Import (0873) reads the same file; each entry's own version is still
+  what decides whether it loads.
 
 ## Alternatives considered
 

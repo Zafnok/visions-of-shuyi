@@ -10,7 +10,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::{centre_x, print_centred};
+use crate::screens::{centre_x, files, print_centred};
 use crate::widgets::ask::glyph as ask_glyph;
 use crate::widgets::menu::glyph as menu_glyph;
 
@@ -80,8 +80,13 @@ pub fn paint_slots(ctx: &Ctx, view: &SlotPickerView, buf: &mut GlyphBuffer) {
     }
     if let Some(message) = &view.message {
         print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
+    } else if let Some(notice) = &view.notice {
+        print_centred(buf, MESSAGE_ROW, notice, c(UiColor::TextHighlight), black);
     }
-    if let Some(question) = &view.question {
+    if let Some(place) = &view.place {
+        files::paint_place(ctx, place, buf);
+    }
+    if let Some(question) = view.question.as_ref().or(view.export_question.as_ref()) {
         ask_glyph::paint(&ctx.palette, question, buf);
     }
     let bottom = i32::from(buf.height()) - 1;

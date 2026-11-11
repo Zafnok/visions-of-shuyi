@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: blocked
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-11
 ---
 
 # 0872 — Export saves to a file, and show the player where saves are kept
@@ -134,16 +134,17 @@ its skin, the export function), plus tests.
 
 ## Acceptance criteria
 
-- [ ] `docs/design/options.md` records Nick's three answers.
-- [ ] A Harness test: Export on a profile with two slots and settings
+- [x] `docs/design/options.md` records Nick's three answers.
+- [x] A Harness test: Export on a profile with two slots and settings
       offers one file named `visions-of-shuyi-…-1.ron` that holds exactly
       the keys of Nick's answer, without the `p<n>-` prefix.
-- [ ] A Harness test: the place line reads the folder on a desktop
-      `storage_place` and the browser text on a web one.
-- [ ] Snapshot of the screen with the new rows (desktop and web facts);
+- [x] A Harness test: the place line reads the folder on a desktop
+      `storage_place`, and the web shows none (Nick: its export is a
+      download).
+- [x] Snapshot of the screen with the new rows (desktop and web facts);
       `cargo shuyi frame-png` pictures of both in the PR.
-- [ ] No key named in code or text (`cargo shuyi check-keys`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No key named in code or text (`cargo shuyi check-keys`).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -154,5 +155,48 @@ its skin, the export function), plus tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+**Nick's answers** (2026-11-11, recorded in `docs/design/options.md`,
+*Saves outside the game*): export lives on **both** the Profile screen
+(the whole profile) and the Load Game list (the save under the cursor,
+after "Export your options and key bindings too?", cursor on No); an
+import always makes a new profile, except a one-save file through Load
+Game (first empty slot, else the slot under the cursor after a yes/no on
+No); the place line shows **on the desktop only** (the web's export is a
+download); the desktop's saves belong in Documents/My Games, not AppData;
+Vix should point at export (a tip per screen and a note on the title).
+
+**Done:**
+- `crates/ui/src/save_files.rs`: `Export` (profile / one slot with or
+  without the options), `export_keys`, `export_name`, `export` (the
+  profile's keys without their `p<n>-` prefix, through the engine's
+  `SaveBundle`, stamped with the version and content fingerprint), `offer`
+  (entries never stored, for 0914), `place`, the notice, and `hear` (the
+  system hook, in `start::start` and the Harness).
+- The Profile screen is now this game's `ProfileScreen`, wrapping the
+  engine's list: the export key on a profile, the notice, the place line
+  and the open-folder key on a desktop. Load Game got the export key, the
+  question, the notice and the place line. Shared bits in
+  `screens/files.rs` (and its glyph skin, which shortens a long path from
+  the left).
+- ADR-0039 *Consequences* names the bundle and the file name (no new ADR:
+  only these two screens use it).
+
+**Deviations:** "where saves are" is not shown on the web (Nick), so the
+acceptance line about "the browser text" became "no line on the web".
+Both screens instead of one (Nick).
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+- The export key is **Unit info** (`E` / `I`, pad top face); the
+  open-folder key is the world map's **Find** key (`X` / `.`, pad West).
+  Both are named in the help lines.
+- The file is `visions-of-shuyi-<name>-<n>.ron`, `…-<n>-slot-NN.ron` for
+  one save (`<n>` the profile's number).
+- After an export the line under the panel says where it went
+  ("Downloaded …" / "Exported … to the exports folder") until the cursor
+  moves.
+
+**Follow-ups:** 0874 (Vix's notes and tips about export), 0875 (desktop
+saves to Documents/My Games, moving the old ones); 0873 updated with
+Nick's import rules.
+
+**Engine friction:** estimate 400, measured 479 (1.2×), under 2×.

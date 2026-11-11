@@ -49,6 +49,8 @@
     "profile.message.too_many": "There can be at most {n} profiles.",
     "profile.message.not_saved": "The profiles couldn't be saved.",
     "profile.help.list": "{Cursor} move · {Confirm} choose · {Cancel} back",
+    "profile.help.list_export": "{Cursor} move · {Confirm} choose · {Info} export · {Cancel} back",
+    "profile.help.list_export_folder": "{Cursor} move · {Confirm} choose · {Info} export · {WorldFind} open folder · {Cancel} back",
     "profile.help.add": "{Cursor} move · {Confirm} add · {Cancel} back",
     "profile.help.none": "{Cursor} move · {Cancel} back",
     "profile.help.actions": "{Cursor} move · {Confirm} select · {Cancel} back",
@@ -167,6 +169,19 @@
     "save.help.overwrite": "{Cursor} choose · {Confirm} overwrite · {Cancel} back",
     "save.help.save_here": "{Cursor} choose · {Confirm} save here · {Cancel} back",
     "save.help.load": "{Cursor} choose · {Confirm} load · {Cancel} back",
+    "save.help.load_folder": "{Cursor} choose · {Confirm} load · {WorldFind} open folder · {Cancel} back",
+    "save.help.load_export": "{Cursor} choose · {Confirm} load · {Info} export · {Cancel} back",
+    "save.help.load_export_folder": "{Cursor} choose · {Confirm} load · {Info} export · {WorldFind} open folder · {Cancel} back",
+    "save.help.export_question": "{Cursor} choose · {Confirm} export · {Cancel} back",
+    "save.export_question": "Export your options and key bindings too?",
+    "save.answer.yes": "Yes",
+    "save.answer.no": "No",
+
+    // Saves outside the game (0872): where they are, and where an export went.
+    "save_files.place": "Saves are kept in",
+    "save_files.downloaded": "Downloaded {file}",
+    "save_files.written": "Exported {file} to the exports folder",
+    "save_files.failed": "The file couldn't be exported.",
 
     // Game Over, and "To be continued" after the last chapter there is.
     "game_over.heading": "GAME OVER",

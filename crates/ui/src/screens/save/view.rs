@@ -7,6 +7,7 @@
 use crate::prelude::*;
 use trpg_core::GameMode;
 
+use crate::screens::files::PlaceView;
 use crate::widgets::{AskView, MenuView};
 
 /// "Save your progress?" with its answers, as it is this frame.
@@ -34,8 +35,14 @@ pub struct SlotPickerView {
     pub range: String,
     /// Why something didn't work, until the next key.
     pub message: Option<String>,
+    /// Where the last export went, until the cursor moves (0872).
+    pub notice: Option<String>,
     /// The "Overwrite slot N?" question, while it is open.
     pub question: Option<AskView<bool>>,
+    /// "Export your options and key bindings too?", while it is open.
+    pub export_question: Option<AskView<bool>>,
+    /// Where the saves are: on a desktop, loading (0872).
+    pub place: Option<PlaceView>,
     /// The help line: what the keys do here.
     pub help: String,
 }
