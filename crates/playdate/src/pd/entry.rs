@@ -463,8 +463,7 @@ impl Running {
         self.game
             .set_music_playing(self.audio.music_playing(&mut self.speaker));
         let out = self.game.frame(events, dt);
-        self.audio
-            .set_volumes(&mut self.speaker, out.music_volume, out.sound_volume);
+        self.audio.set_gains(&mut self.speaker, &out.gains);
         self.audio.play(&mut self.speaker, out.audio, out.music);
         // A game that has quit keeps its last frame (the Playdate's own
         // Menu button leaves it), in silence.

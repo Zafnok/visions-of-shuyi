@@ -35,6 +35,10 @@ pub type AudioQueue = shuyi_ui::audio::AudioQueue<Variant>;
 
 pub use shuyi_ui::audio::{AudioConfig, MenuSound};
 
+/// The sound groups and a frame's gains (engine #318, ADR-0091 there):
+/// what a platform crate plays each cue at.
+pub use shuyi_ui::audio::{Gain, Gains, GroupGains, SoundGroups, groups};
+
 /// The map cursor's tick, once per tile it moves (the manifest plays it
 /// quieter than `menu_move`).
 pub const CURSOR_MOVE: &str = "cursor_move";

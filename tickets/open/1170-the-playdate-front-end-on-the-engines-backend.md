@@ -5,7 +5,7 @@ type: feature
 milestone: "Engine: carve"
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["engine#2388", "engine#3096", "engine#3097"]
 nick_input: setup
 completed:
@@ -61,7 +61,9 @@ The same audit found two more things this cutover must carry:
   more reason not to keep running the copy.
 
 **Blocked again, 2026-11-07** (found when a session started this
-ticket, at pin `e2697683`). Two engine gaps, each with an engine ticket:
+ticket, at pin `e2697683`); all three gaps below are closed and pinned
+by the pin move of 2026-11-10 (engine #307 for 2388, #309 for 3096,
+#335 for 3097). Two engine gaps, each with an engine ticket:
 - **The look: engine#2388.** `shuyi_platform::OneBitLook` gives the
   backend's display a `PatternMap` only (`map: &PatternMap`;
   `shuyi-playdate`'s `display.rs` draws with `render_with` and
@@ -104,7 +106,18 @@ What else the session checked, so the next one need not:
   and the bought art from the tool program's bundle.
 - **The audio:** the exporter bakes what `GameTools::audio("playdate")`
   answers; the game implements no `audio` yet (1203's handoff: move
-  `playdate_audio::jobs`'s selection there).
+  `playdate_audio::jobs`'s selection there). Since engine #351 (3306,
+  pinned 2026-11-10) the exporter asks for it through `bake`
+  (`BakeInput::audio`), in the same run of the tool program that bakes
+  the pack, and its own audio bake is gone; the baked-sound cache is the
+  project's `target/shuyi/audio-v1`.
+- **What the Playdate leaves out:** engine #350 (3304, pinned
+  2026-11-10) lets the bake take an edition's content root, so a
+  Playdate edition ships only its own files. If the Playdate's data
+  comes from the baked pack after this cutover, leave out what
+  `crates/content/playdate-bundle.txt` leaves out by a content root
+  rather than a second list, or say in the completion notes why the
+  list stays (ADR-0082).
 - **The disclosure:** `shuyi.ron`'s `allowed_pack_entries` is empty
   ("no package holds a pack") and `allowed_files` lists no `audio/` or
   `music/` `.pda`: the Playdate's pack entries and baked files need

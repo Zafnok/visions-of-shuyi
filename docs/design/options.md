@@ -90,7 +90,10 @@ Nick's.
 ### Volumes
 
 - Music and sound volume each go from **0 (silent) to 100**, starting at 80
-  (*tunable*).
+  (*tunable*). Since the engine pin move of 2026-11-10 (engine #318) the
+  numbers are steps of loudness (0.6 dB each) rather than a share of full
+  volume: the same starting loudness is **97**, which the row shows, and a
+  save from before is read where it sounds the same.
 - **A slider:** left and right move it 5 at a time (*tunable*).
 - **A box for the exact number:** Confirm on the row opens it; type the
   number, Enter keeps it, Backspace deletes, Escape leaves the volume as it

@@ -3,6 +3,7 @@ source: crates/ui/tests/it/options.rs
 expression: h.snapshot()
 ---
                                                                                                     
+                                                                                                    
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
                     │   Text speed              ◄ Normal ►                     │                    
@@ -15,10 +16,10 @@ expression: h.snapshot()
                     │   Intro                     On                           │                    
                     │   Open towns on arrival     On                           │                    
                     │   Colors                    Earthy painterly             │                    
-                    │   Music volume              ████████░░  80               │                    
-                    │   Sound volume              ████████░░  80               │                    
+                    │   Music volume              █████████▒  97               │                    
+                    │   Sound volume              █████████▒  97               │                    
                     │   Voices (AI-generated)     On                           │                    
-                    │   Voice volume              ████████░░  80               │                    
+                    │   Voice volume              █████████▒  97               │                    
                     │   Voice on hover in the log On                           │                    
                     │   Auto-advance              Off                          │                    
                     │                                                          │                    
@@ -32,9 +33,9 @@ expression: h.snapshot()
                     └──────────────────────────────────────────────────────────┘                    
                                                                                                     
                                                                                                     
-                                                                                                    
                                   arrows move · f change · d back                                   
 --- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
@@ -63,7 +64,6 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaagggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

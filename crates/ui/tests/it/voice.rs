@@ -4,9 +4,12 @@
 //! stands in for one. The voices' settings, their Options rows and the
 //! New Game question (0826) are here too.
 
+use shuyi_ui::audio::loudness::loudness;
 use trpg_content::{LineId, Variant};
 use trpg_ui::AudioRequest;
 use trpg_ui::ShuyiCtx;
+use trpg_ui::audio::Gain;
+use trpg_ui::audio::groups::VOICE;
 use trpg_ui::debug::TEST_SCENE;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -120,16 +123,17 @@ fn stop_voice_reaches_the_frame_output() {
     );
 }
 
-/// Each frame carries the voice volume setting for `app` (ticket 0826):
-/// 0 is silent.
+/// Each frame carries the voice volume setting for `app` (ticket 0826),
+/// on the engine's loudness curve (engine #318): 0 is silent.
 #[test]
 fn frames_carry_the_voice_volume() {
-    for (setting, volume) in [(50, 0.5), (0, 0.0), (100, 1.0)] {
+    for (setting, gain) in [(50, loudness(50)), (0, Gain::SILENT), (100, Gain::FULL)] {
         let mut ctx = trpg_ui::Ctx::embedded().unwrap();
-        ctx.change_settings(|s| s.voice_volume = setting).unwrap();
+        ctx.change_settings(|s| s.volumes.set(VOICE, setting))
+            .unwrap();
         let mut game = trpg_ui::game::start(ctx);
-        let out = game.frame(&[], 0.0).voice_volume;
-        assert!((out - volume).abs() < f32::EPSILON, "{setting}: {out}");
+        let out = game.frame(&[], 0.0).gains.voice();
+        assert_eq!(out, gain, "{setting}");
     }
 }
 
@@ -208,8 +212,8 @@ fn options_on(row: Row) -> Harness {
 fn the_voice_rows_switch_set_the_volume_and_persist() {
     let mut h = options_on(Row::Voices);
     let line = with_a_voice(&mut h);
-    let close = |a: f32, b: f32| (a - b).abs() < 1e-6;
-    assert!(close(h.voice_volume(), 0.8), "{}", h.voice_volume());
+    // The old 80, on the engine's loudness curve (engine #318).
+    assert_eq!(h.gain(VOICE), loudness(97));
     // Off: the voice playing stops, and nothing plays.
     h.ctx_mut().play_voice(&line);
     h.wait(0.0).clear_audio().keys("Left");
@@ -221,9 +225,9 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
     assert_eq!(voice_requests(&h), [] as [AudioRequest; 0]);
     // The volume: the slider, then 0 by the box.
     h.keys("Down Left Left");
-    assert!(close(h.voice_volume(), 0.7), "{}", h.voice_volume());
+    assert_eq!(h.gain(VOICE), loudness(87));
     h.keys("f").type_text("0").keys("Enter");
-    assert!(close(h.voice_volume(), 0.0), "{}", h.voice_volume());
+    assert_eq!(h.gain(VOICE), Gain::SILENT);
     // Voice on hover in the log, under the volume: off.
     h.keys("Down Left");
     assert_eq!(h.game().ctx().settings().game.log_voice, LogVoice::Off);
@@ -233,8 +237,8 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
     h.wait(trpg_ui::harness::FRAME_DT);
     let s = h.game().ctx().settings().clone();
     assert_eq!(
-        (s.voices, s.voice_volume, s.game.log_voice),
-        (false, 0, LogVoice::Off)
+        (s.voices, s.volumes.get(VOICE), s.game.log_voice),
+        (false, Some(0), LogVoice::Off)
     );
-    assert!(close(h.voice_volume(), 0.0), "{}", h.voice_volume());
+    assert_eq!(h.gain(VOICE), Gain::SILENT);
 }

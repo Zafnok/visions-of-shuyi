@@ -142,6 +142,10 @@
             (path: "music"),
             (path: "voice", optional: true),
         ],
+        // A release web export ships the Wasm as built when Binaryen's
+        // `wasm-opt` isn't installed, with a warning, as it did before engine
+        // #331 refused that: no runner installs it yet (ticket 0916).
+        wasm_opt: optional,
     ),
 
     // What a release package may hold (ticket 1208): an export that breaks

@@ -49,7 +49,7 @@ fn map_of(palette: &PaletteDef) -> PatternMapDef {
             .iter()
             .filter_map(|(role, &rgb)| {
                 let fg = pattern(Ink::from_code(rgb)?);
-                Some((role.clone(), RolePatterns { fg, bg: None }))
+                Some((role.clone(), RolePatterns::of(fg)))
             })
             .collect(),
         distinct: DISTINCT
