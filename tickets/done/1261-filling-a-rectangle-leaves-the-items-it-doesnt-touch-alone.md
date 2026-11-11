@@ -5,10 +5,10 @@ type: bug
 milestone: Later
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 1261 — Filling a rectangle leaves the items it doesn't touch alone
@@ -87,13 +87,13 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] An item away from a filled rectangle is kept as it was (engine
+- [x] An item away from a filled rectangle is kept as it was (engine
       test), and every existing `GlyphBuffer` test passes unchanged.
-- [ ] `battle-attack`'s frame 43 on the colour targets is under
+- [x] `battle-attack`'s frame 43 on the colour targets is under
       2,000,000 instructions in CI's `bench` job, or the completion notes
       name what is left and its ticket.
-- [ ] Every snapshot passes unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every snapshot passes unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -103,5 +103,29 @@ None. Nothing a player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Engine:** engine ticket 3308, PR Zafnok/shuyi-engine#353 (merged
+  as `ab593bb9`): `GlyphBuffer::cut_items` returns at once when the hole
+  and the items' overhangs meet no item, copies the items it misses as
+  they were and cuts only the ones it meets. New unit test
+  `a_fill_keeps_the_items_it_misses_as_they_were`; every existing
+  `GlyphBuffer` and property test passed unchanged there.
+- **Pin:** moved by the engine-pin PR #624 (not by this ticket), so this
+  PR has no code change in the game, only the numbers.
+- **Measured** (the `bench` job of PR #624, before it: `main` at
+  3506f16f), `battle-attack` frame 43 (the unit menu opens):
+  colour 2,305,583 → **1,506,755**; Playdate 2,470,697 → 2,383,075.
+  Every frame with the menu open: colour about 2,017,000 → 1,217,000,
+  Playdate about 2,149,000 → 2,061,000. In that frame `cut_items` went
+  from 913,020 to 116,106 instructions (`fill_rect` 1,027,170 →
+  230,256). Frame 43 is no longer the costliest colour frame: frame 83
+  is (1,561,368), so no further Callgrind look was needed.
+- **A number under its budget:** the Playdate's cursor sweep went from
+  2,136,503 to 1,958,173 (frame 92), under the 2,000,000 budget, so it
+  left `KNOWN_OVER` in `ci.yml`: a regression there fails the `bench`
+  job again. The Playdate's menu frames are still over, with the one-bit
+  drawing (1248).
+- `docs/targets.md`: *The numbers* from PR #624's run; *Over budget*
+  says what 1261 and 1259 brought down.
+- Snapshots: unchanged (no game code changed; #624's CI passed them with
+  the fix).
+- No gameplay rules decided.
