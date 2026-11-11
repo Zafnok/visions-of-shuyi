@@ -4,7 +4,7 @@
 //! It warns; it never fails a build.
 
 use std::fmt::Write as _;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::code_lines::git;
 
@@ -17,7 +17,10 @@ engine's skill pack). Past 2,000 lines it says to plan the split, past 3,000 to 
 (ADR-0101). It never fails: the exit code is 0 unless git or the arguments\n\
 are wrong. An engine-pin/ or sonar/ branch is reported with no warning.\n\
 --branch names the branch (default: the current one; CI passes the PR's).\n\
---hook prints only a warning, as a Claude Code hook's JSON, or nothing.";
+--hook prints only a warning, as a Claude Code hook's JSON, or nothing. It reads\n\
+the hook's input on stdin: it measures the repository of the session's cwd\n\
+(a worktree, not the main checkout the hook runs in) and speaks only before\n\
+git commit, git push or gh pr create.";
 
 /// A ticket is planned at about this many changed lines or fewer.
 pub const PLAN: usize = 2_000;
@@ -226,6 +229,78 @@ pub fn changed_files(
     Ok((files, from.chars().take(10).collect()))
 }
 
+/// What a Claude Code `PreToolUse` hook is given on stdin, as far as
+/// `pr-size` needs it: the session's directory and the shell command.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct HookInput {
+    pub cwd: Option<PathBuf>,
+    pub command: String,
+}
+
+/// Reads the hook's input; a missing field (or no JSON at all, from a
+/// person running `--hook` by hand) is left empty.
+pub fn hook_input(json: &str) -> HookInput {
+    let value: serde_json::Value = serde_json::from_str(json).unwrap_or_default();
+    HookInput {
+        cwd: value["cwd"]
+            .as_str()
+            .filter(|cwd| !cwd.is_empty())
+            .map(PathBuf::from),
+        command: value["tool_input"]["command"]
+            .as_str()
+            .unwrap_or_default()
+            .to_owned(),
+    }
+}
+
+/// Whether a shell command runs `git commit`, `git push` or `gh pr
+/// create`. The hooks' `if` rules also fire on commands Claude Code can't
+/// analyze (a `$VAR`, a `$(...)`), so the hook checks for itself.
+pub fn runs_a_pr_step(command: &str) -> bool {
+    let words: Vec<&str> = command
+        .split(|c: char| c.is_whitespace() || ";&|(){}".contains(c))
+        .filter(|word| !word.is_empty())
+        .collect();
+    words
+        .windows(2)
+        .any(|pair| matches!(pair, ["git", "commit" | "push"]))
+        || words
+            .windows(3)
+            .any(|three| three == ["gh", "pr", "create"])
+}
+
+/// The top of the git working tree that holds `dir`.
+pub fn repo_of(dir: &Path) -> Result<PathBuf, String> {
+    Ok(PathBuf::from(
+        git(dir, &["rev-parse", "--show-toplevel"])?.trim(),
+    ))
+}
+
+/// The hook's answer for its input `stdin`: nothing unless the command is a
+/// PR step, else the warning for the repository and branch of the session's
+/// `cwd` (ticket 0161: the hook process itself runs in the main checkout).
+/// `fallback` is measured when the input names no directory. Any git error
+/// is silence: the hook never gets in the way.
+pub fn hook_answer(stdin: &str, fallback: &Path, base: &str, branch: Option<&str>) -> String {
+    let input = hook_input(stdin);
+    if !input.command.is_empty() && !runs_a_pr_step(&input.command) {
+        return String::new();
+    }
+    let measured = input
+        .cwd
+        .as_deref()
+        .map_or_else(|| Ok(fallback.to_path_buf()), repo_of)
+        .and_then(|root| {
+            let (files, from) = changed_files(&root, base)?;
+            let branch = branch.map_or_else(|| current_branch(&root), |b| Ok(b.to_owned()))?;
+            Ok((files, from, branch))
+        });
+    measured.map_or_else(
+        |_| String::new(),
+        |(files, from, branch)| output(&files, &branch, &from, true, None),
+    )
+}
+
 /// The current branch's name (`HEAD` when detached).
 pub fn current_branch(repo_root: &Path) -> Result<String, String> {
     Ok(git(repo_root, &["rev-parse", "--abbrev-ref", "HEAD"])?
@@ -408,6 +483,124 @@ mod tests {
             kept.iter()
                 .any(|p| p.starts_with(".claude/skills/work-ticket/"))
         );
+    }
+
+    #[test]
+    fn the_hook_input_names_the_directory_and_the_command() {
+        let json = r#"{"cwd":"D:\\w\\t1","tool_input":{"command":"git push -u origin HEAD"}}"#;
+        assert_eq!(
+            hook_input(json),
+            HookInput {
+                cwd: Some(PathBuf::from(r"D:\w\t1")),
+                command: "git push -u origin HEAD".to_owned(),
+            }
+        );
+        assert_eq!(hook_input(r#"{"cwd":""}"#), HookInput::default());
+        assert_eq!(hook_input(""), HookInput::default());
+        assert_eq!(hook_input("not json"), HookInput::default());
+    }
+
+    #[test]
+    fn only_a_commit_a_push_or_a_new_pr_is_a_pr_step() {
+        for command in [
+            "git commit -m x",
+            "cd /d/w && git commit -F msg.txt",
+            "git add . ; git push",
+            "echo \"$X\" | (git push)",
+            "gh pr create --title t",
+        ] {
+            assert!(runs_a_pr_step(command), "{command}");
+        }
+        for command in [
+            "",
+            "git status",
+            "cd x; echo \"$VAR\"; git log",
+            "git commit-tree abc",
+            "gh pr view 641",
+            "cat .claude/settings.json",
+        ] {
+            assert!(!runs_a_pr_step(command), "{command}");
+        }
+    }
+
+    /// Ticket 0161: the hook process runs in the main checkout, whose
+    /// untracked files were counted (4,127 lines on a 64-line engine pin PR)
+    /// and whose branch is never an exempt one. Measured from the session's
+    /// `cwd`, a worktree counts its own lines and keeps its exemption.
+    #[test]
+    fn the_hook_measures_the_sessions_worktree() {
+        let root = std::env::temp_dir().join(format!("trpg-pr-size-wt-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let main = root.join("main");
+        std::fs::create_dir_all(main.join("src")).unwrap();
+        let run = |dir: &Path, args: &[&str]| git(dir, args).unwrap();
+        run(&main, &["init", "-q", "-b", "trunk"]);
+        run(&main, &["config", "user.email", "test@example.com"]);
+        run(&main, &["config", "user.name", "Test"]);
+        std::fs::write(main.join("src/a.rs"), "a\nb\n").unwrap();
+        run(&main, &["add", "."]);
+        run(&main, &["commit", "-q", "-m", "first"]);
+        // The main checkout's leftovers: a big untracked log.
+        std::fs::write(main.join("test.log"), "line\n".repeat(LIMIT + 1)).unwrap();
+        let input = |dir: &Path, command: &str| {
+            serde_json::json!({ "cwd": dir, "tool_input": { "command": command } }).to_string()
+        };
+
+        // The miscount: with no directory named, the main checkout is measured.
+        let before = hook_answer("", &main, "trunk", None);
+        assert!(before.contains("3,001 changed lines"), "{before}");
+
+        for (name, branch) in [("wt-pin", "engine-pin/85e8d5c5"), ("wt-ticket", "t1-x")] {
+            let worktree = root.join(name);
+            let path = worktree.to_str().unwrap();
+            run(
+                &main,
+                &["worktree", "add", "-q", "-b", branch, path, "trunk"],
+            );
+            std::fs::write(worktree.join("src/a.rs"), "a\nc\nd\n").unwrap();
+            let top = repo_of(&worktree.join("src")).unwrap();
+            assert_eq!(
+                changed_files(&top, "trunk").unwrap().0,
+                [("src/a.rs".to_owned(), 3)]
+            );
+            assert_eq!(current_branch(&top).unwrap(), branch);
+            let answer = hook_answer(
+                &input(&worktree.join("src"), "git commit -m x"),
+                &main,
+                "trunk",
+                None,
+            );
+            assert_eq!(answer, "", "{name}");
+        }
+
+        // A big worktree warns before a PR step, unless its branch is exempt.
+        for name in ["wt-pin", "wt-ticket"] {
+            std::fs::write(root.join(name).join("big.md"), "line\n".repeat(LIMIT)).unwrap();
+        }
+        let ask = |name: &str, command: &str, base: &str| {
+            hook_answer(&input(&root.join(name), command), &main, base, None)
+        };
+        assert_eq!(ask("wt-pin", "git push", "trunk"), "");
+        let warned = ask("wt-ticket", "git push", "trunk");
+        assert!(warned.contains("3,003 changed lines"), "{warned}");
+        assert_eq!(ask("wt-ticket", "git status", "trunk"), "");
+        assert_eq!(ask("wt-ticket", "git push", "no-such-ref-0161"), "");
+        // A directory outside any repository: silence.
+        let outside = input(&std::env::temp_dir(), "git push");
+        assert_eq!(hook_answer(&outside, &main, "trunk", None), "");
+
+        for name in ["wt-pin", "wt-ticket"] {
+            run(
+                &main,
+                &[
+                    "worktree",
+                    "remove",
+                    "--force",
+                    root.join(name).to_str().unwrap(),
+                ],
+            );
+        }
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     /// A throwaway repository: an edit, a rename, a generated file, a binary
