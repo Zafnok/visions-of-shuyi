@@ -357,7 +357,8 @@ Candle joins outside battle.
   measures and targets; done 2026-10-22, all three in their bands on
   Chapter 1) → **0516** the personas score an escape and a downed boss
   right (before Chapter 6's escape map, 0852) · **0515** playtest CI on
-  `main` plays every balance change
+  `main` plays every balance change · **0530** it plays one battle per
+  job (it ran out of time once Act 1 had 14 battles)
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
   engine#2541 (`shuyi autobalance`, pinned by **1188**): 0509
