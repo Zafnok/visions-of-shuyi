@@ -523,7 +523,7 @@ fn playdate_palette() -> Result<Palette, String> {
 /// The Playdate's palette file, as loaded.
 fn playdate_palette_def() -> Result<PaletteDef, String> {
     let base = trpg_content::palette::load().map_err(|errors| shown(&errors))?;
-    trpg_content::ink::load_playdate(&base).map_err(|errors| shown(&errors))
+    trpg_content::playdate_palette::load_playdate(&base).map_err(|errors| shown(&errors))
 }
 
 /// `errors` on one line.

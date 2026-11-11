@@ -4,7 +4,7 @@
 //! keyboard.
 
 use insta::assert_snapshot;
-use trpg_content::{Ink, battle_campaign};
+use trpg_content::battle_campaign;
 use trpg_core::{Campaign, GameMode, LeadGender, LeadProfile};
 
 use super::super::{MenuEntry, WorldMapScreen};
@@ -160,7 +160,7 @@ fn each_plate_is_painted_in_its_inks() {
     let buf = painted(&ctx, &view(places, (34, 13)));
     assert_eq!(origin((70, 30), (50, 15), Pos::new(34, 13)), (-9, -6));
     let screen = |x: i32, y: i32| Pos::new(x - 9, y - 6);
-    let check = |p: Pos, glyph: char, fg: Ink, fill: &[Ink], top: &[Ink]| {
+    let check = |p: Pos, glyph: char, fg: &str, fill: &[&str], top: &[&str]| {
         let at_cell = cell(&buf, p.x, p.y);
         assert_eq!((at_cell.glyph, at_cell.fg), (glyph, c(fg)), "{p:?}");
         let rect = plate_px(p, PLATE_PX.0);
@@ -174,11 +174,23 @@ fn each_plate_is_painted_in_its_inks() {
             top.iter().map(|&i| c(i)).collect::<Vec<_>>()
         );
     };
-    check(screen(34, 13), '‼', Ink::White, &[Ink::Black], &[]);
-    check(screen(30, 10), '!', Ink::BlackEdged, &[Ink::Grey], &[]);
-    check(screen(40, 10), '⌂', Ink::Black, &[], &[Ink::Black]);
-    check(screen(30, 16), '♥', Ink::Grey, &[], &[Ink::Grey]);
-    check(screen(40, 16), '●', Ink::Black, &[], &[]);
+    check(screen(34, 13), '‼', "panel_bg", &["text"], &[]);
+    check(
+        screen(30, 10),
+        '!',
+        "map_enemy_letters",
+        &["window_text_off"],
+        &[],
+    );
+    check(screen(40, 10), '⌂', "text", &[], &["text"]);
+    check(
+        screen(30, 16),
+        '♥',
+        "window_text_off",
+        &[],
+        &["window_text_off"],
+    );
+    check(screen(40, 16), '●', "text", &[], &[]);
 }
 
 /// The level marker is black above its place; the army is its two
@@ -191,13 +203,13 @@ fn the_level_marker_army_and_cursor() {
     battle.level = Some("Lv2".into());
     let buf = painted(&ctx, &view(vec![battle], (20, 20)));
     // The map's cell (0, 0) at (0, -13): row 7 is the map's row 20.
-    let (y, black) = (7, c(Ink::Black));
+    let (y, black) = (7, c("text"));
     let lv = find(&buf, y - 1, "Lv2").expect("the level marker");
     assert_eq!(lv, 19);
     assert_eq!(cell(&buf, lv, y - 1).fg, black);
     let letters = (cell(&buf, 14, y), cell(&buf, 15, y));
     assert_eq!((letters.0.glyph, letters.1.glyph), ('M', 'a'));
-    assert_eq!(letters.0.fg, c(Ink::White));
+    assert_eq!(letters.0.fg, c("panel_bg"));
     assert_eq!(at(&buf, army_px(Pos::new(14, y))), [black]);
     assert_eq!(cell(&buf, 14, y - 1).glyph, '▼');
     let cursor: Vec<_> = buf
@@ -206,7 +218,7 @@ fn the_level_marker_army_and_cursor() {
         .filter(|o| o.layer == Layer::Over)
         .map(|o| o.color)
         .collect();
-    assert_eq!(cursor, [c(Ink::Invert); 8]);
+    assert_eq!(cursor, [c("cursor"); 8]);
 }
 
 /// The place under the cursor is a window in the top corner away from
@@ -454,7 +466,7 @@ fn an_outlined_plate_has_four_sides_on_its_edges() {
         PxRect::new(x, y, 1, h),
         PxRect::new(x + w - 1, y, 1, h),
     ] {
-        assert_eq!(at(&buf, side), [c(Ink::Black)], "{side:?}");
+        assert_eq!(at(&buf, side), [c("text")], "{side:?}");
     }
 }
 

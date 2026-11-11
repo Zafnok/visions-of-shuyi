@@ -2,7 +2,6 @@
 //! its 50 × 15 screen.
 
 use insta::assert_snapshot;
-use trpg_content::Ink;
 
 use super::*;
 use crate::screens::battle::view::ShopLineView;
@@ -51,11 +50,11 @@ fn the_shop_on_the_playdate() {
     assert!(is_bar(&buf, TABS, "Sell"));
     assert!(!is_bar(&buf, TABS, "Buy"));
     assert!(is_bar(&buf, FIRST + 2, "Item 2"));
-    assert_eq!(cell(&buf, 1, FIRST + 2).bg, c(Ink::Black));
-    assert_eq!(cell(&buf, 48, FIRST + 2).bg, c(Ink::Black));
+    assert_eq!(cell(&buf, 1, FIRST + 2).bg, c("text"));
+    assert_eq!(cell(&buf, 48, FIRST + 2).bg, c("text"));
     // A line that can't be chosen is grey dots.
     let off = find(&buf, FIRST + 1, "Item 1").expect("the line");
-    assert_eq!(cell(&buf, off, FIRST + 1).fg, c(Ink::Grey));
+    assert_eq!(cell(&buf, off, FIRST + 1).fg, c("window_text_off"));
     // The gold right-aligned by the frame.
     assert!(row(&buf, FIRST).ends_with("1 250 ║"));
     assert_eq!(
@@ -69,7 +68,7 @@ fn the_shop_on_the_playdate() {
 fn an_empty_tab_says_so() {
     let buf = painted(&view(0, 0));
     assert_eq!(find(&buf, FIRST, "Nothing here."), Some(2));
-    assert_eq!(cell(&buf, 2, FIRST).fg, c(Ink::Grey));
+    assert_eq!(cell(&buf, 2, FIRST).fg, c("window_text_off"));
     assert_eq!(
         row(&buf, DETAIL),
         "║                                                ║"
@@ -111,7 +110,7 @@ fn a_sale_counts_between_arrows_grey_at_the_ends() {
         assert_eq!(find(&buf, 7, &format!("{count} / 3")), Some(x - 2));
         (cell(&buf, x, 6).fg, cell(&buf, x, 8).fg)
     };
-    let (black, grey) = (c(Ink::Black), c(Ink::Grey));
+    let (black, grey) = (c("text"), c("window_text_off"));
     assert_eq!(arrows(1), (black, grey));
     assert_eq!(arrows(2), (black, black));
     assert_eq!(arrows(3), (grey, black));

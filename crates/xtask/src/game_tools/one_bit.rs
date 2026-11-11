@@ -7,12 +7,13 @@
 //! undithered instead.
 
 use shuyi_cli::OneBitSkin;
-use trpg_content::ink::{PLAYDATE_MAP_PATH, PLAYDATE_PALETTE_PATH};
 use trpg_content::palette::PaletteDef;
+use trpg_content::playdate_palette::{PLAYDATE_MAP_PATH, PLAYDATE_PALETTE_PATH};
 
 /// The Playdate's skin, `palette` being its palette.
 pub(super) fn skin(palette: PaletteDef) -> Result<OneBitSkin, String> {
-    let map = trpg_content::ink::load_playdate_map().map_err(|errors| super::shown(&errors))?;
+    let map = trpg_content::playdate_palette::load_playdate_map()
+        .map_err(|errors| super::shown(&errors))?;
     let file = trpg_content::bundle::display_path(PLAYDATE_PALETTE_PATH);
     let map_file = trpg_content::bundle::display_path(PLAYDATE_MAP_PATH);
     Ok(OneBitSkin::new(file, palette, map_file, map))

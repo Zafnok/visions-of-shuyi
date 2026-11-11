@@ -13,8 +13,8 @@ use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
+use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
-use trpg_content::{FontAtlasDef, Ink};
 use trpg_ui::glyph_buffer::Cell;
 use trpg_ui::onebit;
 use trpg_ui::{ConsoleSpec, GlyphBuffer, Rgb};
@@ -37,10 +37,15 @@ pub fn font() -> Result<onebit::Font<'static>, String> {
     Ok(onebit::Font::new(atlas, bits)?)
 }
 
+/// The card's letters and ground, black and white: the Playdate palette's
+/// `text` and `black` (its ground), which the pattern map draws so. The
+/// card is drawn before the palette loads; a test checks they match.
+const INK: (Rgb, Rgb) = (Rgb::new(0, 0, 0), Rgb::new(0xff, 0xff, 0xff));
+
 /// The card on a console of `spec`: the white ground, and the game's name
 /// in black on the middle row, centred.
 pub fn buffer(spec: ConsoleSpec) -> GlyphBuffer {
-    let (black, white) = (Rgb::from(Ink::Black.code()), Rgb::from(Ink::White.code()));
+    let (black, white) = INK;
     let mut buffer = GlyphBuffer::with_spec(spec, Cell::new(' ', black, white));
     let len = i32::try_from(GAME_NAME.chars().count()).unwrap_or(0);
     let x = (i32::from(spec.cols) - len) / 2;
@@ -61,7 +66,12 @@ mod tests {
     #[test]
     fn the_card_is_the_games_name_centred_on_white() {
         let card = buffer(ConsoleSpec::PLAYDATE);
-        let (black, white) = (Rgb::from(Ink::Black.code()), Rgb::from(Ink::White.code()));
+        let palette =
+            trpg_content::playdate_palette::load_playdate(&trpg_content::PaletteDef::default());
+        let palette = palette.unwrap_or_else(|e| panic!("{e:?}"));
+        let role = |name| palette.get(name).map(Rgb::from);
+        let (black, white) = INK;
+        assert_eq!((role("text"), role("black")), (Some(black), Some(white)));
         let rows: Vec<String> = (0..15)
             .map(|y| {
                 (0..50)

@@ -88,7 +88,7 @@ fn the_start_bar_is_its_button_and_a_cell_either_side() {
     let mut s = LeadSelectScreen::new();
     update(&mut s, &mut c, &[CursorDown, CursorDown]);
     let buf = painted(&c, &s);
-    let black = crate::screens::playdate::tests::c(trpg_content::Ink::Black);
+    let black = crate::screens::playdate::tests::c("text");
     let x = find(&buf, START_ROW, "[ Start ]").unwrap();
     // Centred: nine cells on fifty.
     assert_eq!(x, 20);

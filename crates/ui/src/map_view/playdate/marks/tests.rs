@@ -1,13 +1,11 @@
 //! The danger zone's edge and the cursor on the Playdate's map, through the
 //! one-bit renderer.
 
-use trpg_content::Ink;
-
 use super::*;
 use crate::glyph_buffer::Layer;
 use crate::map_view::glyph::cursor::{CORNER_ARM, LARGE_CORNER_ARM, corner_arms};
 use crate::map_view::glyph::units::HP_BAR_H;
-use crate::map_view::playdate::tests::{c, p, painted, pd_ctx, plains, shown, unit};
+use crate::map_view::playdate::tests::{c, p, painted, pd_ctx, plains, shown, unit, white_at};
 use crate::map_view::scene::{CursorStyle, CursorView};
 use crate::onebit::is_white;
 use trpg_core::Faction;
@@ -19,7 +17,7 @@ fn edges(danger: &[(i32, i32)]) -> Vec<Rect> {
     scene.tint(danger.iter().map(|&(x, y)| p(x, y)), range::DANGER);
     let buf = painted(&ctx, &scene);
     for o in buf.overlays() {
-        assert_eq!((o.color, o.layer), (c(Ink::Dashes), Layer::Under));
+        assert_eq!((o.color, o.layer), (c("danger_zone"), Layer::Under));
     }
     buf.overlays().iter().map(|o| o.rect).collect()
 }
@@ -84,7 +82,7 @@ fn the_danger_edge_shows_as_dashes_over_ranges_and_units() {
     let frame = shown(&painted(&ctx, &scene));
     for x in 40..72 {
         for y in [16, 17] {
-            let dash = Ink::Dashes.is_white(x, y);
+            let dash = white_at("danger_zone", x, y);
             assert_eq!(is_white(&frame, x, y), dash, "({x}, {y})");
         }
     }
@@ -109,7 +107,7 @@ fn the_cursor_is_the_pcs_corner_marks_flipping_what_they_cover() {
         let flips: Vec<Rect> = buf
             .overlays()
             .iter()
-            .filter(|o| o.color == c(Ink::Invert))
+            .filter(|o| o.color == c("cursor"))
             .map(|o| o.rect)
             .collect();
         (flips, shown(&buf))

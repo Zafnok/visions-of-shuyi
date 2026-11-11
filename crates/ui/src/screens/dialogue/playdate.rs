@@ -20,11 +20,12 @@
 //!
 //! Nothing here decides what the screen shows or does (ADR-0054).
 
-use trpg_content::{Ink, Side};
+use trpg_content::Side;
 
 use super::glyph::{FaceFrame, LISTENER_DIM};
 use super::log;
 use super::view::{DialogueView, FaceView, TextView, WaitView};
+use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
@@ -94,7 +95,7 @@ pub fn darken(ctx: &Ctx, buf: &mut GlyphBuffer) {
     let dots = ctx
         .palette
         .lookup("place_ground")
-        .unwrap_or_else(|| Ink::Dots.code().into());
+        .unwrap_or_else(|| ctx.palette.get(UiColor::MoveRange));
     for y in 0..i32::from(buf.height()) {
         for x in 0..i32::from(buf.width()) {
             if let Some(&cell) = buf.get(x, y).filter(|c| c.bg == ground) {

@@ -112,7 +112,6 @@ mod tests {
     use crate::screens::playdate::tests::{blank, cell, find, is_bar, pd_ctx, rows};
     use crate::screens::profile::{ActionsView, DeleteChoice};
     use shuyi_ui::widgets::{AnswerView, AskView, Menu, MenuItem};
-    use trpg_content::Ink;
 
     fn profile(label: &str, current: bool, focused: bool) -> RowView {
         RowView {
@@ -175,7 +174,7 @@ mod tests {
         // The add row that does nothing is grey.
         assert_eq!(
             cell(&buf, PANEL_X.0 + LABEL_DX, 6).fg,
-            crate::screens::playdate::tests::c(Ink::Grey)
+            crate::screens::playdate::tests::c("window_text_off")
         );
         assert!(shown[8].starts_with('╚'));
         assert_eq!(shown[9], "No more profiles");
@@ -186,7 +185,7 @@ mod tests {
     fn the_mark_of_the_profile_in_use_sits_clear_of_the_bar() {
         let v = view(vec![profile("Player 1", true, true), add(true)]);
         let buf = painted(&v);
-        let bar = |x| cell(&buf, x, 3).bg == crate::screens::playdate::tests::c(Ink::Black);
+        let bar = |x| cell(&buf, x, 3).bg == crate::screens::playdate::tests::c("text");
         let label = PANEL_X.0 + LABEL_DX;
         assert!(bar(label - 1) && bar(PANEL_X.0 + MARK_DX - 2));
         assert!(!bar(PANEL_X.0 + MARK_DX - 1) && !bar(PANEL_X.0 + MARK_DX));

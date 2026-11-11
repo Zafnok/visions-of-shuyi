@@ -34,7 +34,6 @@ pub mod error;
 pub mod font;
 pub mod formats;
 pub mod image;
-pub mod ink;
 pub mod item;
 pub mod keymap;
 pub mod lang;
@@ -45,6 +44,7 @@ pub mod names;
 pub mod palette;
 #[cfg(feature = "std")]
 pub mod playdate_images;
+pub mod playdate_palette;
 pub mod portrait;
 pub mod ron_loader;
 pub mod skill;
@@ -86,7 +86,6 @@ pub use dialogue::{
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
-pub use ink::Ink;
 pub use keymap::{
     Action, ActionSet, Bindings, Button, ButtonChord, Chord, ChordDef, Key, KeyGroup, KeymapDef,
     LEFT_HANDED, Layout, LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction,

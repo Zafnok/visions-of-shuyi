@@ -63,7 +63,7 @@ pub fn with_storage(ctx: Ctx, storage: Box<dyn Storage>) -> Result<Ctx, String> 
 
 /// The Playdate's palette (ADR-0074), over the default theme's names.
 fn palette(base: &PaletteDef) -> Result<Palette, String> {
-    let def = trpg_content::ink::load_playdate(base).map_err(|errors| {
+    let def = trpg_content::playdate_palette::load_playdate(base).map_err(|errors| {
         let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
         errors.join("; ")
     })?;
@@ -74,14 +74,14 @@ fn palette(base: &PaletteDef) -> Result<Palette, String> {
 
 #[cfg(test)]
 mod tests {
-    use trpg_content::Ink;
+    use trpg_ui::MemoryStorage;
     use trpg_ui::screen::Keyboard;
     use trpg_ui::screen::SkinSet;
-    use trpg_ui::{MemoryStorage, Rgb};
 
     use super::*;
 
-    /// The Playdate's console, buttons and guide, its palette of inks only,
+    /// The Playdate's console, buttons and guide, its palette, each colour
+    /// drawn by the pattern map,
     /// and the title waiting for a press.
     #[test]
     fn the_context_is_the_playdates() {
@@ -102,9 +102,9 @@ mod tests {
         assert_eq!(ctx.game.skin_set, SkinSet::Playdate);
         assert_eq!(ctx.game.map_skin.name(), "playdate");
         assert!(ctx.palette.iter().count() > 10);
-        for (name, rgb) in ctx.palette.iter() {
-            let ink = Ink::ALL.iter().find(|ink| Rgb::from(ink.code()) == rgb);
-            assert!(ink.is_some(), "{name} is no ink: {rgb:?}");
+        let map = trpg_content::playdate_palette::load_playdate_map().unwrap_or_default();
+        for (name, _) in ctx.palette.iter() {
+            assert!(map.get(name).is_some(), "{name} has no patterns");
         }
     }
 }

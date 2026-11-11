@@ -10,8 +10,8 @@ use crate::prelude::*;
 use crate::color::Rgb;
 
 /// The Playdate's pattern map (ticket 1253): its palette's roles
-/// (`trpg_content::ink::PLAYDATE_PALETTE_PATH`) drawn by their patterns
-/// in `trpg_content::ink::PLAYDATE_MAP_PATH`. The front end builds it once
+/// (`trpg_content::playdate_palette::PLAYDATE_PALETTE_PATH`) drawn by their patterns
+/// in `trpg_content::playdate_palette::PLAYDATE_MAP_PATH`. The front end builds it once
 /// and draws every frame with it ([`render`]). It reads the palette
 /// alone, as the loading card needs it before the rest of the data: the
 /// game checks the palette has every colour when it loads it.
@@ -21,8 +21,9 @@ pub fn playdate_map() -> Result<PatternMap, String> {
         errors.join("; ")
     };
     let palette =
-        trpg_content::ink::load_playdate(&trpg_content::PaletteDef::default()).map_err(shown)?;
-    let map = trpg_content::ink::load_playdate_map().map_err(shown)?;
+        trpg_content::playdate_palette::load_playdate(&trpg_content::PaletteDef::default())
+            .map_err(shown)?;
+    let map = trpg_content::playdate_palette::load_playdate_map().map_err(shown)?;
     let roles = palette
         .colors
         .iter()
@@ -32,45 +33,28 @@ pub fn playdate_map() -> Result<PatternMap, String> {
 
 #[cfg(test)]
 mod tests {
-    use trpg_content::Ink;
-
     use super::*;
-    use crate::color::Rgb;
     use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::glyph_buffer::{Cell, GlyphBuffer};
+    use crate::map_view::playdate::tests::c;
 
-    /// The colour that is `ink`'s code.
-    fn c(ink: Ink) -> Rgb {
-        Rgb::from(ink.code())
-    }
-
-    /// The Playdate's map draws each ink's code as the ink says: its
-    /// patterns, a `black_edged` glyph's edge and an `invert` rectangle's
-    /// flip, and `Ink::is_white`'s pixels.
+    /// The Playdate's map draws each role's colour by the role's
+    /// patterns: its ground, a glyph's edge and a shape's flip.
     #[test]
-    fn the_playdate_map_draws_each_ink_as_the_inks_do() {
+    fn the_playdate_map_draws_each_role_by_its_patterns() {
         let map = playdate_map().unwrap();
-        for ink in Ink::ALL {
-            let rgb = c(ink);
-            assert!(map.role_of(rgb).is_some(), "{ink:?}");
+        let def = trpg_content::playdate_palette::load_playdate_map().unwrap();
+        for (role, p) in &def.roles {
+            let rgb = c(role);
+            assert!(map.role_of(rgb).is_some(), "{role}");
             // Only a glyph is edged, and only a shape flips.
-            let p = ink.patterns();
-            assert_eq!(map.ground(rgb).rows, p.background().rows(), "{ink:?}");
+            assert_eq!(map.ground(rgb).rows, p.background().rows(), "{role}");
             let glyph = map.glyph(rgb);
-            assert_eq!((glyph.rows, glyph.edged), (p.fg.rows(), p.edge), "{ink:?}");
+            assert_eq!((glyph.rows, glyph.edged), (p.fg.rows(), p.edge), "{role}");
             let shape = map.shape(rgb);
-            assert_eq!(
-                (shape.rows, shape.flips),
-                (p.fg.rows(), p.invert),
-                "{ink:?}"
-            );
-            for (x, y) in [(0_i32, 0_usize), (1, 0), (2, 1), (5, 6)] {
-                let white = shape.rows[y] >> (7 - x) & 1 == 1;
-                let y = i32::try_from(y).unwrap_or_default();
-                assert_eq!(white, ink.is_white(x, y), "{ink:?}");
-            }
+            assert_eq!((shape.rows, shape.flips), (p.fg.rows(), p.invert), "{role}");
         }
-        assert_eq!(map.role_of(c(Ink::Invert)), Some("cursor"));
+        assert_eq!(map.role_of(c("cursor")), Some("cursor"));
     }
 
     /// The game's own font: a glyph's pixels are the one-bit atlas's.
@@ -81,9 +65,9 @@ mod tests {
         let font = Font::new(&atlas, bits).unwrap();
         let mut b = GlyphBuffer::with_spec(
             ConsoleSpec::PLAYDATE,
-            Cell::new(' ', c(Ink::Black), c(Ink::White)),
+            Cell::new(' ', c("text"), c("panel_bg")),
         );
-        b.print(49, 14, "A", c(Ink::Black), c(Ink::White));
+        b.print(49, 14, "A", c("text"), c("panel_bg"));
         let mut frame = Box::new([0u8; FRAME_BYTES]);
         render(&b, &font, &(), &playdate_map().unwrap(), &mut frame);
         let rows = font.rows('A').unwrap();

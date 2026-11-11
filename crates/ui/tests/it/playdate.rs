@@ -106,7 +106,7 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
 fn playdate_with_inks(ctx: &mut Ctx) {
     playdate(ctx);
     let palette = trpg_content::palette::load()
-        .and_then(|base| trpg_content::ink::load_playdate(&base))
+        .and_then(|base| trpg_content::playdate_palette::load_playdate(&base))
         .ok()
         .and_then(|inks| Palette::new::<UiColor>(&inks).ok());
     let Some(palette) = palette else {

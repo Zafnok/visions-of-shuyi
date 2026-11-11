@@ -18,7 +18,6 @@ use shuyi_ui::grid::glyph::{
     CursorLook, FlashLook, GlyphSkin, GlyphStyle, RangeLook, ThreatLook, cell_of,
 };
 use shuyi_ui::grid::skin::{MapColors, UnitPainter};
-use trpg_content::Ink;
 
 use super::glyph::{GLYPH, MAP_COLORS};
 use super::grid::{Grid, px_rect};
@@ -97,9 +96,9 @@ impl UnitPainter<UnitView> for OneBitUnits<'_> {
 }
 
 /// The inks the skin's units are painted with besides the default
-/// palette's: the Playdate palette's colours of these names, or the
-/// design's ink where a palette lacks one (the PC's, in a test). The
-/// ranges' glyphs and the threat arrows are [`ONE_BIT`]'s, by name.
+/// palette's: the Playdate palette's colours of these names, or a colour
+/// of the default theme's where a palette lacks one (the PC's, in a test).
+/// The ranges' glyphs and the threat arrows are [`ONE_BIT`]'s, by name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Inks {
     /// Your unit's tile, and its letters.
@@ -119,28 +118,28 @@ pub struct Inks {
 impl Inks {
     /// The inks of `palette`.
     pub fn of(palette: &Palette) -> Self {
-        let ink = |name: &str, fallback: Ink| {
+        let ink = |name: &str, fallback: UiColor| {
             palette
                 .lookup(name)
-                .unwrap_or_else(|| Rgb::from(fallback.code()))
+                .unwrap_or_else(|| palette.get(fallback))
         };
         Self {
             player: (
-                ink("map_player_tile", Ink::Black),
-                ink("map_player_letters", Ink::White),
+                ink("map_player_tile", UiColor::Player),
+                ink("map_player_letters", UiColor::Black),
             ),
             enemy: (
-                ink("map_enemy_tile", Ink::Grey),
-                ink("map_enemy_letters", Ink::BlackEdged),
+                ink("map_enemy_tile", UiColor::Enemy),
+                ink("map_enemy_letters", UiColor::Black),
             ),
             acted: (
-                ink("map_acted_tile", Ink::White),
-                ink("map_acted_letters", Ink::Black),
-                ink("map_acted_outline", Ink::Black),
+                ink("map_acted_tile", UiColor::PanelBg),
+                ink("map_acted_letters", UiColor::TextDim),
+                ink("map_acted_outline", UiColor::PanelBorder),
             ),
-            other: ink("map_other_letters", Ink::BlackEdged),
-            highlight: ink("map_highlight", Ink::Invert),
-            hp_lost: ink("map_hp_lost", Ink::Grey),
+            other: ink("map_other_letters", UiColor::Neutral),
+            highlight: ink("map_highlight", UiColor::Cursor),
+            hp_lost: ink("map_hp_lost", UiColor::HpLow),
         }
     }
 }
