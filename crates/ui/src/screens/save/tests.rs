@@ -512,3 +512,108 @@ fn save_slots_declares_its_actions() {
     let screen = SlotPickerScreen::load(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::SAVE_SLOTS);
 }
+
+/// The context with [`saves`], on a desktop whose saves are in `/saves`
+/// (0872).
+fn saves_on_a_desktop() -> Ctx {
+    let mut c = saves();
+    c.platform.storage_place = shuyi_ui::StoragePlace::Folder("/saves".into());
+    c
+}
+
+/// The names of the files the screen offered, and the folders it opened,
+/// since the last call.
+fn file_requests(c: &mut Ctx) -> Vec<String> {
+    use shuyi_ui::player_files::FileRequest;
+    c.take_file_requests()
+        .into_iter()
+        .map(|r| match r {
+            FileRequest::Offer { name, .. } => name,
+            FileRequest::OpenFolder(folder) => format!("{folder:?}"),
+            other => format!("{other:?}"),
+        })
+        .collect()
+}
+
+/// Load Game's export key asks first (focus on No); the answer offers the
+/// save; the platform's answer becomes the notice, which a move puts away.
+#[test]
+fn export_asks_then_offers_the_save_and_hears_where_it_went() {
+    let mut c = saves_on_a_desktop();
+    let mut s = SlotPickerScreen::load(&c);
+    assert_eq!(s.focused_slot(), 2);
+    assert!(s.view(&c).place.is_some());
+    assert_eq!(s.help(&c), c.text_with("save.help.load_export_folder", &[]));
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(s.is_asking_export());
+    assert!(s.view(&c).export_question.is_some());
+    assert_eq!(s.help(&c), c.text_with("save.help.export_question", &[]));
+    // The key that asked isn't the answer, even pressed again.
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(s.is_asking_export());
+    assert_eq!(file_requests(&mut c), [] as [String; 0]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(!s.is_asking_export());
+    assert_eq!(
+        file_requests(&mut c),
+        ["visions-of-shuyi-player-1-1-slot-02.ron"]
+    );
+    assert_eq!(s.view(&c).notice, None);
+    s.heard(Some(Exported::Written("a.ron".into())));
+    let notice = s.view(&c).notice;
+    assert_eq!(
+        notice,
+        Some(c.text_with("save_files.written", &[("file", &"a.ron")]))
+    );
+    // The folder key now opens the exports folder.
+    press(&mut s, &mut c, &[Action::WorldFind]);
+    assert_eq!(file_requests(&mut c), ["Exports"]);
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(s.view(&c).notice, None);
+    press(&mut s, &mut c, &[Action::WorldFind]);
+    assert_eq!(file_requests(&mut c), ["Storage"]);
+    // Cancel closes the question and offers nothing.
+    press(&mut s, &mut c, &[Action::CursorUp, Action::Info]);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert!(!s.is_asking_export());
+    assert_eq!(s.focused_slot(), 2);
+    assert_eq!(file_requests(&mut c), [] as [String; 0]);
+}
+
+/// Saving never exports or opens a folder; an empty slot has nothing to
+/// export; the web has no folder to open and no place line.
+#[test]
+fn export_is_only_for_a_save_that_loads() {
+    let mut c = saves_on_a_desktop();
+    let campaign = campaign(&c, "Mara", 1);
+    let mut s = SlotPickerScreen::save(&c, campaign);
+    press(&mut s, &mut c, &[Action::Info, Action::WorldFind]);
+    assert!(!s.is_asking_export());
+    assert_eq!(s.view(&c).place, None);
+    assert_eq!(file_requests(&mut c), [] as [String; 0]);
+
+    let mut s = SlotPickerScreen::load(&c).at(3);
+    assert_eq!(s.help(&c), c.text_with("save.help.load_folder", &[]));
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(!s.is_asking_export());
+
+    c.platform.storage_place = shuyi_ui::StoragePlace::Browser {
+        prefix: "x/".into(),
+    };
+    let mut s = SlotPickerScreen::load(&c);
+    assert_eq!(s.view(&c).place, None);
+    assert_eq!(s.help(&c), c.text_with("save.help.load_export", &[]));
+    press(&mut s, &mut c, &[Action::WorldFind]);
+    assert_eq!(file_requests(&mut c), [] as [String; 0]);
+}
+
+/// The system hook finds the picker on the stack ([`save_files::hear`]).
+#[test]
+fn the_picker_can_be_reached_to_hear_where_a_file_went() {
+    let c = saves();
+    let mut s: Box<dyn Screen<Shuyi>> = Box::new(SlotPickerScreen::load(&c));
+    let any = s
+        .as_any_mut()
+        .and_then(|a| a.downcast_mut::<SlotPickerScreen>());
+    assert!(any.is_some());
+}

@@ -9,12 +9,12 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 
-/// Cells kept clear at each end of the line.
-const MARGIN: usize = 2;
+/// Cells kept clear, both ends of the line together.
+const SIDES: usize = 4;
 
 /// Paints `place` two rows over the bottom (help) row of `buf`.
 pub fn paint_place(ctx: &Ctx, place: &PlaceView, buf: &mut GlyphBuffer) {
-    let width = usize::from(buf.width()).saturating_sub(2 * MARGIN);
+    let width = usize::from(buf.width()).saturating_sub(SIDES);
     let line = place_line(&place.label, &place.path, width);
     let y = i32::from(buf.height()) - 3;
     let (dim, black) = (
