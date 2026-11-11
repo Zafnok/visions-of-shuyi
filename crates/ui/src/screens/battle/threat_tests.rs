@@ -197,6 +197,69 @@ fn a_tile_only_an_art_reaches_is_in_the_danger_zone_the_arrows_and_the_shown_ran
     assert!(!ordinary.scene(&c).tinted(range::ATTACK).contains(&two_away));
 }
 
+/// *The Company Ledger*, the biggest battle, as `cargo shuyi bench` starts
+/// it: the cursor on the lead.
+fn company_ledger(c: &Ctx) -> BattleScreen {
+    use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
+    let content = &c.game.content;
+    let def = &content.battles["side_company_ledger"];
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
+    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    BattleScreen::new(state)
+}
+
+/// The path searches each of `actions` runs, the scene drawn after it as
+/// a frame draws it, and the player's unit then under the cursor, if any.
+fn searches_per_step(
+    s: &mut BattleScreen,
+    c: &mut Ctx,
+    actions: &[Action],
+) -> Vec<(u32, Option<UnitId>)> {
+    use trpg_core::Faction;
+    use trpg_core::movement::searches;
+    let mut out = Vec::new();
+    for &action in actions {
+        let before = searches();
+        press(s, c, &[action]);
+        s.scene(c);
+        let hovered = s.hovered().filter(|u| u.faction == Faction::Player);
+        out.push((searches() - before, hovered.map(|u| u.id)));
+    }
+    out
+}
+
+/// `bench/battle-cursor-sweep.bench.ron`'s steps and `battle-attack`'s
+/// first, with no unit selected: the cursor reaching a player unit runs no
+/// path search, as each enemy's threat area is kept for the battle (ticket
+/// 1259; before, each new unit searched every enemy's moves again).
+#[test]
+fn the_cursor_reaching_a_player_unit_runs_no_path_search() {
+    use Action::{CursorDown, CursorLeft, CursorRight, CursorUp};
+    let mut c = ctx();
+    let sweep: Vec<Action> = [CursorUp, CursorRight, CursorDown, CursorLeft]
+        .into_iter()
+        .flat_map(|a| [a; 12])
+        .collect();
+    let attack = [CursorRight, CursorRight, CursorDown];
+    for (actions, then_select) in [(&sweep[..], false), (&attack[..], true)] {
+        let mut s = company_ledger(&c);
+        // The first frame, on the lead, keeps the battle's areas.
+        s.scene(&c);
+        let counts = searches_per_step(&mut s, &mut c, actions);
+        let units = counts.iter().filter(|(_, unit)| unit.is_some()).count();
+        assert!(units >= 2, "the cursor met {units} units: {counts:?}");
+        assert!(counts.iter().all(|&(n, _)| n == 0), "{counts:?}");
+        if then_select {
+            // Selecting the rider: her own moves, and her planner from the
+            // kept areas, which searches again only the one enemy whose
+            // moves come next to her (each enemy before).
+            let counts = searches_per_step(&mut s, &mut c, &[Action::Confirm]);
+            assert_eq!(counts[0].0, 2, "{counts:?}");
+        }
+    }
+}
+
 /// The cursor moves of `bench/battle-attack.bench.ron` while the rider is
 /// selected in *The Company Ledger*: the threat arrows reuse the enemies'
 /// searches made for her, so a move runs at most 2 path searches, and most
@@ -205,14 +268,8 @@ fn a_tile_only_an_art_reaches_is_in_the_danger_zone_the_arrows_and_the_shown_ran
 fn a_cursor_move_while_a_unit_is_selected_hardly_searches() {
     use Action::{Confirm, CursorDown, CursorRight, CursorUp};
     use trpg_core::movement::searches;
-    use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
     let mut c = ctx();
-    let content = &c.game.content;
-    let def = &content.battles["side_company_ledger"];
-    let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
-    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
-    let mut s = BattleScreen::new(state);
+    let mut s = company_ledger(&c);
     for action in [CursorRight, CursorRight, CursorDown, Confirm] {
         press(&mut s, &mut c, &[action]);
         s.scene(&c);

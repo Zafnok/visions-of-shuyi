@@ -66,14 +66,14 @@ pub mod walk;
 
 use crate::prelude::*;
 use alloc::collections::VecDeque;
-use core::cell::RefCell;
+use core::cell::{RefCell, RefMut};
 use core::fmt::Display;
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules,
+    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, ThreatAreas,
     ThreatPlanner, TileSet, Unit, UnitId, danger_zone, next_command, threats_at,
 };
 
@@ -369,6 +369,10 @@ pub struct BattleScreen {
     /// last worked out for ([`ThreatPlanner`], ticket 1251), so another
     /// tile for it doesn't search them all again. Dropped with `threats`.
     planner: RefCell<Option<ThreatPlanner>>,
+    /// Every enemy's threat area with every unit in place
+    /// ([`ThreatAreas`], ticket 1259): the threat arrows of any unit on its
+    /// own tile without a search. Dropped with `threats`.
+    areas: RefCell<Option<ThreatAreas>>,
     /// Auto-end: end the player phase when its last unit has acted. Off by
     /// default (`docs/design/turn-structure.md`, ticket 0420). The
     /// player's setting ([`Settings::auto_end_turn`]), read at the start
@@ -555,6 +559,7 @@ impl BattleScreen {
             danger: None,
             threats: RefCell::new(None),
             planner: RefCell::new(None),
+            areas: RefCell::new(None),
             auto_end: false,
             show_fights: true,
             end_armed: false,
@@ -1674,6 +1679,7 @@ impl BattleScreen {
             }
             self.threats.take();
             self.planner.take();
+            self.areas.take();
             self.doable = Doable::default();
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
@@ -1842,6 +1848,7 @@ impl BattleScreen {
                     self.state = state;
                     self.threats.take();
                     self.planner.take();
+                    self.areas.take();
                     self.doable = Doable::default();
                     self.mode = Mode::after_command(&self.state);
                     self.queue.clear();
@@ -2328,6 +2335,11 @@ impl BattleScreen {
     /// [`threat_target`]: Self::threat_target
     fn threat_view(&self) -> Option<ThreatView> {
         let (unit, tile) = self.threat_target()?;
+        // A unit selected: its planner is made at once, so the cursor's
+        // moves after cost almost nothing (1251).
+        if !matches!(self.mode, Mode::Idle { .. }) {
+            self.kept_planner(unit);
+        }
         let mut kept = self.threats.borrow_mut();
         let enemies = match &*kept {
             Some(k) if (k.unit, k.tile) == (unit, tile) => k.enemies.clone(),
@@ -2344,22 +2356,53 @@ impl BattleScreen {
         (!enemies.is_empty()).then_some(ThreatView { tile, enemies })
     }
 
-    /// [`threat_enemies`] for `unit` on `tile`, by the planner kept for
-    /// `unit`: made now if the one kept is for another unit.
+    /// [`threat_enemies`] for `unit` on `tile`: on its own tile by the
+    /// battle's threat areas, made now if none are kept for its side;
+    /// elsewhere by the planner kept for `unit` ([`kept_planner`]).
+    ///
+    /// [`kept_planner`]: Self::kept_planner
     fn planned_threats(&self, unit: UnitId, tile: Pos) -> Vec<Pos> {
         let state = &self.state;
         let (map, terrain, classes, units) =
             (state.map(), state.terrain(), state.classes(), state.units());
-        let mut kept = self.planner.borrow_mut();
-        if kept.as_ref().is_none_or(|p| p.unit() != unit) {
-            let ranges = |u: &Unit| state.threat_ranges(u);
-            *kept = ThreatPlanner::new(map, terrain, classes, units, unit, ranges).ok();
+        let ranges = |u: &Unit| state.threat_ranges(u);
+        if let Some(standing) = state.unit(unit).filter(|u| u.pos == tile) {
+            let mut kept = self.areas.borrow_mut();
+            let mut ids = kept.as_ref().and_then(|a| a.threats_to(standing));
+            if ids.is_none() {
+                let faction = standing.faction;
+                *kept = ThreatAreas::new(map, terrain, classes, units, faction, ranges).ok();
+                ids = kept.as_ref().and_then(|a| a.threats_to(standing));
+            }
+            return enemy_tiles(state, ids.unwrap_or_default());
         }
+        let kept = self.kept_planner(unit);
         let Some(planner) = kept.as_ref() else {
             return Vec::new();
         };
         let ids = planner.threats_at(map, terrain, classes, units, tile);
         enemy_tiles(state, ids.unwrap_or_default())
+    }
+
+    /// The planner kept for `unit`: made now if the one kept is for
+    /// another unit, from the battle's threat areas if they are kept;
+    /// `None` if it can't be made.
+    fn kept_planner(&self, unit: UnitId) -> RefMut<'_, Option<ThreatPlanner>> {
+        let state = &self.state;
+        let (map, terrain, classes, units) =
+            (state.map(), state.terrain(), state.classes(), state.units());
+        let ranges = |u: &Unit| state.threat_ranges(u);
+        let mut kept = self.planner.borrow_mut();
+        if kept.as_ref().is_none_or(|p| p.unit() != unit) {
+            *kept = match &*self.areas.borrow() {
+                Some(areas) => {
+                    ThreatPlanner::with_areas(map, terrain, classes, units, unit, ranges, areas)
+                }
+                None => ThreatPlanner::new(map, terrain, classes, units, unit, ranges),
+            }
+            .ok();
+        }
+        kept
     }
 
     /// Lays an escape map's exit area on `scene` (always), the danger zone

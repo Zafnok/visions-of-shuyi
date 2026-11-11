@@ -265,9 +265,14 @@ fn hostile_at(units: &[Unit], faction: Faction, pos: Pos) -> bool {
 
 /// The stopping tiles for a unit of `faction` (see the module docs): every
 /// tile next to a hostile unit holding a stance that stops enemies.
-fn stopping_tiles(units: &[Unit], faction: Faction, width: u16, height: u16) -> TileSet {
+fn stopping_tiles<'a>(
+    units: impl IntoIterator<Item = &'a Unit>,
+    faction: Faction,
+    width: u16,
+    height: u16,
+) -> TileSet {
     let mut stops = TileSet::new(width, height);
-    let holders = units.iter().filter(|u| {
+    let holders = units.into_iter().filter(|u| {
         u.faction.is_hostile_to(faction) && u.effects.iter().any(|e| e.mods.stops_enemies)
     });
     for holder in holders {
@@ -300,15 +305,29 @@ pub fn reachable(
     units: &[Unit],
     mover: UnitId,
 ) -> Result<Reach, MoveError> {
+    search(map, terrain, classes, units, mover, None)
+}
+
+/// [`reachable`] with unit `absent`, if any, off the map: what a copy of
+/// `units` without it would give, without the copy.
+fn search(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    mover: UnitId,
+    absent: Option<UnitId>,
+) -> Result<Reach, MoveError> {
     #[cfg(feature = "search-count")]
     SEARCHES.with(|n| n.set(n.get() + 1));
     let (unit, movement_type, budget) = mover_info(map, classes, units, mover)?;
     let tiles = &map.tiles;
     let (width, height) = (tiles.width(), tiles.height());
+    let present = |u: &&Unit| Some(u.id) != absent;
     let mut occupied = TileSet::new(width, height);
     // Tiles no step may enter: hostile units' and blocked ones.
     let mut closed = TileSet::new(width, height);
-    for other in units.iter().filter(|u| u.id != mover) {
+    for other in units.iter().filter(present).filter(|u| u.id != mover) {
         occupied.insert(other.pos);
         if other.faction.is_hostile_to(unit.faction) {
             closed.insert(other.pos);
@@ -326,7 +345,7 @@ pub fn reachable(
             .and_then(|&t| terrain.move_cost(t, movement_type))?;
         Some(u32::from(step))
     };
-    let stopping = stopping_tiles(units, unit.faction, width, height);
+    let stopping = stopping_tiles(units.iter().filter(present), unit.faction, width, height);
 
     // The walk goes on from every tile but the stopping ones; each of
     // those is then entered from its cheapest neighbour of the walk (the
@@ -395,7 +414,8 @@ pub fn path_cost(
     if first != unit.pos {
         return Err(PathError::WrongStart);
     }
-    let stopping = stopping_tiles(units, unit.faction, map.tiles.width(), map.tiles.height());
+    let (width, height) = (map.tiles.width(), map.tiles.height());
+    let stopping = stopping_tiles(units, unit.faction, width, height);
     let mut total: u32 = 0;
     for (i, pair) in path.windows(2).enumerate() {
         let (from, to) = (pair[0], pair[1]);
@@ -625,21 +645,59 @@ impl ThreatPlanner {
         unit: UnitId,
         ranges: impl Fn(&Unit) -> Vec<AttackRange>,
     ) -> Result<Self, MoveError> {
+        Self::made(map, terrain, classes, units, unit, ranges, None)
+    }
+
+    /// [`new`](Self::new), starting from the battle's threat areas
+    /// `areas`, made for this same battle (ticket 1259): a hostile unit
+    /// whose kept moves never come next to `unit` (nor within two tiles of
+    /// it, if it holds a stance that stops enemies) moves just the same
+    /// with `unit` off the map, as its search never tries the tiles that
+    /// change, so it isn't searched again.
+    pub fn with_areas(
+        map: &BattleMap,
+        terrain: &TerrainTable,
+        classes: &ClassTable,
+        units: &[Unit],
+        unit: UnitId,
+        ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+        areas: &ThreatAreas,
+    ) -> Result<Self, MoveError> {
+        Self::made(map, terrain, classes, units, unit, ranges, Some(areas))
+    }
+
+    fn made(
+        map: &BattleMap,
+        terrain: &TerrainTable,
+        classes: &ClassTable,
+        units: &[Unit],
+        unit: UnitId,
+        ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+        areas: Option<&ThreatAreas>,
+    ) -> Result<Self, MoveError> {
         let Some(target) = units.iter().find(|u| u.id == unit) else {
             return Err(MoveError::UnknownUnit(unit));
         };
         let stops = target.effects.iter().any(|e| e.mods.stops_enemies);
-        let without: Vec<Unit> = units.iter().filter(|u| u.id != unit).cloned().collect();
         let mut threats = Vec::new();
-        for u in without
-            .iter()
-            .filter(|u| u.faction.is_hostile_to(target.faction))
-        {
+        let hostile = |u: &&Unit| u.faction.is_hostile_to(target.faction);
+        for u in units.iter().filter(hostile) {
             let ranges = ranges(u);
+            let kept = areas.and_then(|a| a.moves_clear_of(u.id, target.pos, stops));
             let kind = if u.ai == AiBehavior::Stationary {
                 ThreatKind::Stationary(u.pos)
+            } else if let Some((reach, kept_ranges, area)) = kept {
+                ThreatKind::Moves {
+                    area: if *kept_ranges == ranges {
+                        area.clone()
+                    } else {
+                        area_of(reach, &ranges)
+                    },
+                    reach: reach.clone(),
+                    stops,
+                }
             } else {
-                let reach = reachable(map, terrain, classes, &without, u.id)?;
+                let reach = search(map, terrain, classes, units, u.id, Some(unit))?;
                 ThreatKind::Moves {
                     area: area_of(&reach, &ranges),
                     reach,
@@ -695,16 +753,108 @@ impl ThreatPlanner {
     }
 }
 
+/// [`threats_at`] for every unit of one faction on its own tile, with each
+/// hostile unit's moves searched once for the battle (ticket 1259). A unit
+/// on its own tile is where the battle has it, so its threats are the
+/// hostile units whose threat area, worked out with every unit in place,
+/// holds that tile: the same areas [`danger_zone`] unions. Made for a
+/// battle as it stands, it answers for that battle only.
+///
+/// Each hostile unit is kept as a [`ThreatPlanner`] keeps it, its moves
+/// searched with every unit in place.
+#[derive(Debug, Clone)]
+pub struct ThreatAreas {
+    faction: Faction,
+    threats: Vec<Threat>,
+}
+
+impl ThreatAreas {
+    /// Searches the moves of every unit hostile to `faction` that may
+    /// move. `ranges` gives each unit's attack ranges, as for
+    /// [`threats_at`]. Fails as `threats_at` would.
+    pub fn new(
+        map: &BattleMap,
+        terrain: &TerrainTable,
+        classes: &ClassTable,
+        units: &[Unit],
+        faction: Faction,
+        ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+    ) -> Result<Self, MoveError> {
+        let mut threats = Vec::new();
+        for u in units.iter().filter(|u| u.faction.is_hostile_to(faction)) {
+            let ranges = ranges(u);
+            let kind = if u.ai == AiBehavior::Stationary {
+                ThreatKind::Stationary(u.pos)
+            } else {
+                let reach = reachable(map, terrain, classes, units, u.id)?;
+                ThreatKind::Moves {
+                    area: area_of(&reach, &ranges),
+                    reach,
+                    stops: false,
+                }
+            };
+            threats.push(Threat {
+                id: u.id,
+                ranges,
+                kind,
+            });
+        }
+        Ok(Self { faction, threats })
+    }
+
+    /// [`threats_at`]'s answer for `unit` on its own tile, in the battle
+    /// these were made for; `None` if it isn't of their faction.
+    pub fn threats_to(&self, unit: &Unit) -> Option<Vec<UnitId>> {
+        if unit.faction != self.faction {
+            return None;
+        }
+        let reaches = |threat: &&Threat| match &threat.kind {
+            ThreatKind::Stationary(pos) => threat.in_range(*pos, unit.pos),
+            ThreatKind::Moves { area, .. } => area.contains(unit.pos),
+        };
+        let threats = self.threats.iter().filter(reaches);
+        Some(threats.map(|t| t.id).collect())
+    }
+
+    /// Hostile unit `id`'s kept moves, its ranges and threat area, if its
+    /// search with a unit off `pos` is the same: none of its passable
+    /// tiles is next to `pos`, nor, with `stops` (the unit there stops
+    /// enemies next to it), within two tiles of it.
+    fn moves_clear_of(
+        &self,
+        id: UnitId,
+        pos: Pos,
+        stops: bool,
+    ) -> Option<(&Reach, &Vec<AttackRange>, &TileSet)> {
+        let threat = self.threats.iter().find(|t| t.id == id)?;
+        let ThreatKind::Moves { reach, area, .. } = &threat.kind else {
+            return None;
+        };
+        // The tiles next to `pos`, and with `stops` the tiles next to them.
+        let around = |p: Pos| Dir::ALL.into_iter().map(move |dir| p.step(dir));
+        let mut near: Vec<Pos> = around(pos).collect();
+        if stops {
+            let next = near.clone();
+            near.extend(next.into_iter().flat_map(around));
+        }
+        let clear = !near.into_iter().any(|t| reach.is_passable(t));
+        clear.then_some((reach, &threat.ranges, area))
+    }
+}
+
 impl Threat {
+    /// Whether one of its ranges reaches `at` from `from`.
+    fn in_range(&self, from: Pos, at: Pos) -> bool {
+        let distance = Pos::manhattan(from, at);
+        self.ranges
+            .iter()
+            .any(|&(min, max)| (min..=max).contains(&distance))
+    }
+
     /// Whether it threatens the planner's unit on `at`, when that is
     /// settled without searching its moves again (see [`ThreatPlanner`]).
     fn settles(&self, at: Pos) -> Option<bool> {
-        let in_range = |from: Pos| {
-            let distance = Pos::manhattan(from, at);
-            self.ranges
-                .iter()
-                .any(|&(min, max)| (min..=max).contains(&distance))
-        };
+        let in_range = |from: Pos| self.in_range(from, at);
         let (reach, area, stops) = match &self.kind {
             ThreatKind::Stationary(pos) => return Some(in_range(*pos)),
             ThreatKind::Moves { reach, area, stops } => (reach, area, *stops),
