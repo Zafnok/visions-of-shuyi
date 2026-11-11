@@ -344,7 +344,7 @@ jobs:
   # and the web package gated against the budgets of every target shuyi.ron
   # lists (docs/targets.md). The table is the job's summary; a number over its
   # budget fails the job, naming the scenario, the frame and the target.
-  # Until ticket 1250, the five numbers its first run found over budget
+  # Until ticket 1250, the numbers its first run found over budget
   # (KNOWN_OVER: tickets 1247, 1248, 1249) are warnings instead; any other
   # number over its budget, or a scenario that doesn't play, still fails it.
   # It isn't in `ci-result` until 1250 either.
@@ -378,7 +378,6 @@ jobs:
           # target/what/scenario, or target/package, of each known finding.
           KNOWN_OVER: >-
             playdate/frame-instructions/battle-attack
-            playdate/frame-instructions/battle-cursor-sweep
             playdate/frame-instructions/battle-enemy-turn
             playdate/frame-instructions/dialogue-portrait
             web/package
