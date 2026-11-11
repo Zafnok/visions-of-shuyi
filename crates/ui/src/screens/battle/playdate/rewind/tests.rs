@@ -2,8 +2,6 @@
 //! it says is tested on its view (`battle/rewind/tests.rs`,
 //! `battle/rewind_tests.rs`).
 
-use trpg_content::Ink;
-
 use super::*;
 use crate::map_view::playdate::tests::{SCREEN, plains};
 use crate::screens::battle::playdate::tests::ctx;
@@ -74,7 +72,7 @@ fn the_list_is_a_window_down_the_right_side_over_the_map() {
     assert!(!is_bar(&buf, 3, "Turn 2"));
     assert_eq!(cell(&buf, 25, 14).glyph, '╚');
     let ground = cell(&buf, 0, 7);
-    assert_eq!(ground.bg, ink(Ink::White));
+    assert_eq!(ground.bg, ink("panel_bg"));
 }
 
 #[test]

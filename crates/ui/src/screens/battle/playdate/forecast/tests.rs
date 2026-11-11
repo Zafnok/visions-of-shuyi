@@ -1,7 +1,6 @@
 //! Where the Playdate's forecast goes and how its rows look, in cells and
 //! pixels. What it says is tested on its view (`battle/forecast/tests.rs`).
 
-use trpg_content::Ink;
 use trpg_core::{Pos, StatValue};
 
 use super::*;
@@ -95,7 +94,7 @@ fn the_rows_are_the_pcs_two_columns_strikes_and_totals() {
     );
     // Black on the white inside.
     let name = cell(&buf, at.x + 2, 1);
-    assert_eq!((name.fg, name.bg), (ink(Ink::Black), ink(Ink::White)));
+    assert_eq!((name.fg, name.bg), (ink("text"), ink("panel_bg")));
 }
 
 #[test]
@@ -111,11 +110,14 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
         .collect();
     assert_ne!(skulls, [] as [(i32, i32); 0]);
     assert!(skulls.iter().all(|&s| s == (x + 7, 8)), "{skulls:?}");
-    assert!(buf.overlays().iter().all(|o| o.color == ink(Ink::Black)));
+    assert!(buf.overlays().iter().all(|o| o.color == ink("text")));
     // The brigand's counter and the lord's second strike, after the fall.
-    assert_eq!(cell(&buf, at.x + 2 + RIGHT + 2, 9).fg, ink(Ink::Grey));
-    assert_eq!(cell(&buf, x, 10).fg, ink(Ink::Grey));
-    assert_eq!(cell(&buf, x, 8).fg, ink(Ink::Black));
+    assert_eq!(
+        cell(&buf, at.x + 2 + RIGHT + 2, 9).fg,
+        ink("window_text_off")
+    );
+    assert_eq!(cell(&buf, x, 10).fg, ink("window_text_off"));
+    assert_eq!(cell(&buf, x, 8).fg, ink("text"));
     // The brigand's 3 of 20 HP: one cell, all of it lost.
     assert_eq!(find(&buf, 4, "HP  3 ▒   "), Some(x + RIGHT));
     // In pixels: the skull is drawn black over the white inside.

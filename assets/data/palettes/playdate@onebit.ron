@@ -1,12 +1,11 @@
 // The Playdate's pattern map (engine ADR-0026, ticket 1253): how each
 // colour of its palette (playdate.ron, beside this file) is drawn on the
-// one-bit screen. The palette's colours are still the inks' codes
-// (ADR-0074); each role here has its ink's patterns, so the screens draw
-// as the inks did (a content test keeps the two files in step):
-//   white: (fg: White)        black: (fg: Black)
-//   black_edged: (fg: Black, edge: true)   grey: (fg: Dither50)
-//   dots: (fg: Dots)          diagonals: (fg: DiagonalDown)
-//   dashes: (fg: Checker2)    invert: (fg: Black, invert: true)
+// one-bit screen. Every role of the palette has a row here (a content test
+// checks it), and roles of one colour have the same patterns:
+//   #ffffff (fg: White)       #000000 (fg: Black)
+//   #010101 (fg: Black, edge: true)   #808080 (fg: Dither50)
+//   #e0e0e0 (fg: Dots)        #c0c0c0 (fg: DiagonalDown)
+//   #404040 (fg: Checker2)    #ff00ff (fg: Black, invert: true)
 // `text` stays empty: roles of one colour share their patterns, and the
 // text's colour is shared with roles drawn black on black (the test
 // `the_text_roles_are_solid_black` keeps text undithered instead).

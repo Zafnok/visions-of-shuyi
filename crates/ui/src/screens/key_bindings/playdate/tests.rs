@@ -182,15 +182,9 @@ fn the_not_mapped_note_follows_the_bar_on_an_empty_slot() {
     let select = line_of(&buf, "Select");
     let bar = |x| cell(&buf, x, select);
     let ink = |i| crate::screens::playdate::tests::c(i);
-    assert_eq!(bar(SLOTS[0].0).bg, ink(trpg_content::Ink::Black));
-    assert_eq!(
-        bar(SLOTS[0].0 + SLOTS[0].1 - 1).bg,
-        ink(trpg_content::Ink::Black)
-    );
-    assert_eq!(
-        bar(SLOTS[0].0 + SLOTS[0].1).bg,
-        ink(trpg_content::Ink::White)
-    );
+    assert_eq!(bar(SLOTS[0].0).bg, ink("text"));
+    assert_eq!(bar(SLOTS[0].0 + SLOTS[0].1 - 1).bg, ink("text"));
+    assert_eq!(bar(SLOTS[0].0 + SLOTS[0].1).bg, ink("panel_bg"));
     let note = c.help_keys().not_mapped().to_owned();
     assert_eq!(find(&buf, select, &note), Some(SLOTS[0].0 + SLOTS[0].1 + 1));
 }
@@ -258,8 +252,8 @@ fn the_switch_names_the_shown_side_plainly_and_the_other_in_grey() {
     let ink = |i| crate::screens::playdate::tests::c(i);
     let keyboard = find(&buf, 1, "Keyboard").unwrap();
     let controller = find(&buf, 1, "Controller").unwrap();
-    assert_eq!(cell(&buf, keyboard, 1).fg, ink(trpg_content::Ink::Black));
-    assert_eq!(cell(&buf, controller, 1).fg, ink(trpg_content::Ink::Grey));
+    assert_eq!(cell(&buf, keyboard, 1).fg, ink("text"));
+    assert_eq!(cell(&buf, controller, 1).fg, ink("window_text_off"));
     // Three cells apart.
     let switch = screen(&c).view(&c).switch.unwrap();
     assert_eq!(controller, keyboard + cells(&switch.keyboard) + 3);

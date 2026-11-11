@@ -168,7 +168,7 @@ fn the_backdrop_shows_only_above_the_horizon_line() {
     let buf = painted(&c, &view);
     assert_eq!(buf.sprites()[0], sprite);
     // The horizon: a black line a pixel high across the screen.
-    let line = Overlay::new(PxRect::new(0, 110, 400, 1), ink(Ink::Black), Layer::Under);
+    let line = Overlay::new(PxRect::new(0, 110, 400, 1), ink("text"), Layer::Under);
     assert!(buf.overlays().contains(&line));
 }
 
@@ -176,7 +176,7 @@ fn the_backdrop_shows_only_above_the_horizon_line() {
 fn each_fighter_stands_on_the_ground_at_double_size_facing_the_other() {
     let c = pd_ctx();
     let view = stage(&c);
-    let white = ink(Ink::White);
+    let white = ink("panel_bg");
     let lord = fighter_sprite(&view, 0, SCENE_PX, white).unwrap();
     assert_eq!((lord.src, lord.dest, lord.clip), (LORD.0, LORD.1, LORD.1));
     let brigand = fighter_sprite(&view, 1, SCENE_PX, white).unwrap();
@@ -210,12 +210,12 @@ fn the_motions_are_the_pcs_in_pixels() {
     // 176 apart, less half of 96 + 160, plus 24.
     assert_eq!(reach_px(&view, 0), 176 - 128 + OVERLAP_PX);
     view.fighters[0].pose.lunge = 1.0;
-    let lord = fighter_sprite(&view, 0, SCENE_PX, ink(Ink::White)).unwrap();
+    let lord = fighter_sprite(&view, 0, SCENE_PX, ink("panel_bg")).unwrap();
     assert_eq!(lord.dest.x, LORD.1.x + 72);
     // The brigand on the right goes left to reach the lord.
     view.fighters[0].pose.lunge = 0.0;
     view.fighters[1].pose.lunge = 1.0;
-    let brigand = fighter_sprite(&view, 1, SCENE_PX, ink(Ink::White)).unwrap();
+    let brigand = fighter_sprite(&view, 1, SCENE_PX, ink("panel_bg")).unwrap();
     assert_eq!(brigand.dest.x, BRIGAND.1.x - 72);
     // From afar it only steps forward.
     view.melee = false;
@@ -225,7 +225,7 @@ fn the_motions_are_the_pcs_in_pixels() {
         fade: 1.0,
         ..Pose::default()
     };
-    let gone = fighter_sprite(&view, 1, SCENE_PX, ink(Ink::White)).unwrap();
+    let gone = fighter_sprite(&view, 1, SCENE_PX, ink("panel_bg")).unwrap();
     assert_eq!(gone.dest.y, BRIGAND.1.y + 12);
     assert_eq!(gone.opacity, dim_opacity(1.0));
 }
@@ -295,17 +295,13 @@ fn one_frame_of_a_strike() {
     let (lord, brigand) = images(&c);
     assert_eq!((target.image, striker.image), (brigand, lord));
     assert_eq!(striker.dest.x, LORD.1.x + 72);
-    assert_eq!(target.paint, Paint::Solid(ink(Ink::Black)));
+    assert_eq!(target.paint, Paint::Solid(ink("text")));
     // The result over the brigand's head, in a white box on row 0 with a
     // black edge a pixel wide round it.
     let at = find(&buf, 0, "HIT -8").unwrap();
     assert_eq!(at, 288 / 8 - 3);
-    assert_eq!(cell(&buf, at - 1, 0).bg, ink(Ink::White));
-    let edge = Overlay::new(
-        PxRect::new(8 * at - 9, 16, 66, 1),
-        ink(Ink::Black),
-        Layer::Over,
-    );
+    assert_eq!(cell(&buf, at - 1, 0).bg, ink("panel_bg"));
+    let edge = Overlay::new(PxRect::new(8 * at - 9, 16, 66, 1), ink("text"), Layer::Over);
     assert!(buf.overlays().contains(&edge), "{:?}", buf.overlays());
     // The plates: the striker's double, its name the bar; the HP and the
     // numbers as on the PC.
@@ -316,7 +312,7 @@ fn one_frame_of_a_strike() {
     assert_eq!(cell(&buf, 0, 14).glyph, '╚');
     assert!(is_bar(&buf, 12, "Ellery"));
     // The bar is the name and a cell either side, no more.
-    let bar = |x| cell(&buf, x, 12).bg == ink(Ink::Black);
+    let bar = |x| cell(&buf, x, 12).bg == ink("text");
     assert!(bar(2) && bar(9) && !bar(10));
     assert!(!is_bar(&buf, 12, "Brigand"));
     assert!(row(&buf, 12).contains("HP 13/20"), "{}", row(&buf, 12));
@@ -346,7 +342,7 @@ fn a_critical_flips_the_whole_picture_but_not_the_plates() {
     let mut view = stage(&c);
     view.veil = true;
     let buf = painted(&c, &view);
-    let veil = Overlay::new(SCENE_PX, ink(Ink::Invert), Layer::Over);
+    let veil = Overlay::new(SCENE_PX, ink("cursor"), Layer::Over);
     assert!(buf.overlays().contains(&veil));
     let frame = shown(&c, &buf);
     // The ground is black and the backdrop white, the plates as they were.
@@ -370,7 +366,7 @@ fn a_banner_and_no_counter() {
     // Each box's black edge a pixel outside its cells, cut at the screen's
     // top: the banner's 8 cells from cell 21 on row 0, the result's 6 from
     // cell 33 on row 1.
-    let black = ink(Ink::Black);
+    let black = ink("text");
     let edge = |x, y, w, h| Overlay::new(PxRect::new(x, y, w, h), black, Layer::Over);
     let edges: Vec<Overlay> = buf
         .overlays()

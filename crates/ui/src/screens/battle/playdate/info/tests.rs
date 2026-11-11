@@ -1,7 +1,6 @@
 //! The Playdate's info screen: its pages, in cells. What it says is tested
 //! on its view (`battle/turn_tests.rs`, `art_tests.rs`).
 
-use trpg_content::Ink;
 use trpg_core::UnitId;
 
 use super::*;
@@ -95,9 +94,9 @@ fn the_first_page_is_the_unit_its_stats_and_its_effects() {
     let lit = cell(&buf, 8, 7);
     assert_eq!(
         (lit.glyph, lit.fg, lit.bg),
-        ('8', ink(Ink::White), ink(Ink::Black))
+        ('8', ink("panel_bg"), ink("text"))
     );
-    assert_eq!(cell(&buf, 8, 8).bg, ink(Ink::White));
+    assert_eq!(cell(&buf, 8, 8).bg, ink("panel_bg"));
 }
 
 #[test]

@@ -2,8 +2,6 @@
 //! look, in cells. What they say is tested on their view
 //! (`battle/progress/tests.rs`).
 
-use trpg_content::Ink;
-
 use super::*;
 use crate::map_view::playdate::tests::SCREEN;
 use crate::screens::battle::glyph::progress::shows_face_of;
@@ -70,7 +68,7 @@ fn the_exp_bar_is_a_window_across_the_top_a_cell_per_five_exp() {
     let bar = cell(&buf, 22, 1);
     assert_eq!(
         (bar.glyph, bar.fg, bar.bg),
-        ('█', ink(Ink::Black), ink(Ink::White))
+        ('█', ink("text"), ink("panel_bg"))
     );
 }
 

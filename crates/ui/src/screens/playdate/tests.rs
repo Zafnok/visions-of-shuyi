@@ -1,8 +1,6 @@
 //! The shared one-bit look, and what the screens' Playdate skins' tests
 //! use: the Playdate's context and screen, and a row's text.
 
-use trpg_content::Ink;
-
 use super::*;
 pub(crate) use crate::map_view::playdate::tests::{blank, c, pd_ctx};
 use crate::widgets::MenuItemView;
@@ -44,7 +42,7 @@ pub(crate) fn is_bar(buf: &GlyphBuffer, y: i32, text: &str) -> bool {
         return false;
     };
     let at = cell(buf, x, y);
-    (at.fg, at.bg) == (c(Ink::White), c(Ink::Black))
+    (at.fg, at.bg) == (c("panel_bg"), c("text"))
 }
 
 fn item(label: &str, focused: bool, enabled: bool) -> MenuItemView {
@@ -60,10 +58,10 @@ fn item(label: &str, focused: bool, enabled: bool) -> MenuItemView {
 #[test]
 fn the_playdate_palettes_inks_are_black_on_white_and_a_white_on_black_bar() {
     let ink = inks(&pd_ctx());
-    assert_eq!((ink.ground, ink.inside), (c(Ink::White), c(Ink::White)));
-    assert_eq!((ink.text, ink.frame), (c(Ink::Black), c(Ink::Black)));
-    assert_eq!(ink.bar, (c(Ink::Black), c(Ink::White)));
-    assert_eq!(ink.off, c(Ink::Grey));
+    assert_eq!((ink.ground, ink.inside), (c("panel_bg"), c("panel_bg")));
+    assert_eq!((ink.text, ink.frame), (c("text"), c("text")));
+    assert_eq!(ink.bar, (c("text"), c("panel_bg")));
+    assert_eq!(ink.off, c("window_text_off"));
 }
 
 #[test]
@@ -76,7 +74,7 @@ fn a_window_is_a_double_frame_with_its_title_and_footer_in_it() {
     assert_eq!(row(&buf, 1), "╔═ Title ══════════╗");
     assert_eq!(row(&buf, 2), "║                  ║");
     assert_eq!(row(&buf, 5), "╚══════ more ══════╝");
-    assert_eq!(cell(&buf, 3, 3).bg, c(Ink::White));
+    assert_eq!(cell(&buf, 3, 3).bg, c("panel_bg"));
     // A title or footer too long for the frame is cut inside the corners.
     window(&ctx, &mut buf, rect, "A title far too long to fit");
     footer(&ctx, &mut buf, rect, "a footer far too long to fit");
@@ -112,10 +110,10 @@ fn a_menu_is_a_window_an_item_a_row_the_focus_a_bar_across_it() {
     // The focus is a bar across the inside; what can't be chosen is grey.
     assert!(is_bar(&buf, 2, "Second"));
     for x in 2..=9 {
-        assert_eq!(cell(&buf, x, 2).bg, c(Ink::Black), "{x}");
+        assert_eq!(cell(&buf, x, 2).bg, c("text"), "{x}");
     }
     assert!(!is_bar(&buf, 1, "One"));
-    assert_eq!(cell(&buf, 3, 3).fg, c(Ink::Grey));
+    assert_eq!(cell(&buf, 3, 3).fg, c("window_text_off"));
 }
 
 #[test]
@@ -154,7 +152,7 @@ fn the_more_marks_sit_at_the_frames_right_end() {
 
 /// Whether the cell at `(x, y)` is the bar's.
 fn bar_at(buf: &GlyphBuffer, x: i32, y: i32) -> bool {
-    cell(buf, x, y).bg == c(Ink::Black)
+    cell(buf, x, y).bg == c("text")
 }
 
 #[test]

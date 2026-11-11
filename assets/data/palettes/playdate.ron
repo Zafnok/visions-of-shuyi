@@ -1,60 +1,65 @@
 // The Playdate's palette (ADR-0074): not a colour theme, the colours of the
-// one-bit screen. Each name gets an ink, not an RGB value:
-//   white, black, black_edged (black, and a glyph gets a white edge),
-//   grey (a 50% checker), dots, diagonals, dashes,
-//   invert (a rectangle flips the pixels under it).
+// one-bit screen. Each name gets an RGB colour as in palette.ron, but the
+// colour is only a name for a look: the pattern map beside this file
+// (playdate@onebit.ron, engine ADR-0026) says how each one is drawn, and
+// the roles drawn alike share one colour:
+//   #ffffff white, #000000 black, #010101 black with a white edge round
+//   a glyph, #808080 grey (a 50% checker), #e0e0e0 dots, #c0c0c0
+//   diagonals, #404040 dashes, #ff00ff a rectangle that flips the pixels
+//   under it.
 // It must have every name of assets/data/palette.ron (a content test checks
-// it) and may add names of its own for the Playdate's skins.
+// it) and may add names of its own for the Playdate's skins; the map must
+// have a row for each.
 // The ground is white and the glyphs black (docs/design/playdate.md). Where
-// the design doesn't say, the ink is a placeholder until the skin's ticket
+// the design doesn't say, the look is a placeholder until the skin's ticket
 // (map: 1037; screens: 1038 and later).
 {
     // Basics. `black` is the console background: the white ground.
-    "black": "white",
-    "white": "black",
+    "black": "#ffffff",
+    "white": "#000000",
 
     // Text. Dim and highlighted words: placeholders (1038 and later).
-    "text": "black",
-    "text_dim": "black",
-    "text_highlight": "black",
+    "text": "#000000",
+    "text_dim": "#000000",
+    "text_highlight": "#000000",
 
     // Panels (UI chrome)
-    "panel_bg": "white",
-    "panel_border": "black",
-    "panel_border_focus": "black",
+    "panel_bg": "#ffffff",
+    "panel_border": "#000000",
+    "panel_border_focus": "#000000",
 
     // Factions: the names' colour in text. The map skin draws units with
     // its own names (map_*, below).
-    "player": "black",
-    "enemy": "black",
-    "ally": "black",
-    "neutral": "black",
-    "player_outline": "black",
+    "player": "#000000",
+    "enemy": "#000000",
+    "ally": "#000000",
+    "neutral": "#000000",
+    "player_outline": "#000000",
 
     // Ranges: dots, diagonal lines, a dashed edge (docs/design/playdate.md).
     // The heal range is the attack range's lines (the design doesn't say).
-    "move_range": "dots",
-    "attack_range": "diagonals",
-    "heal_range": "diagonals",
-    "danger_zone": "dashes",
+    "move_range": "#e0e0e0",
+    "attack_range": "#c0c0c0",
+    "heal_range": "#c0c0c0",
+    "danger_zone": "#404040",
     // The exit area of an escape map (0319; *Claude's starting look*).
-    "exit_area": "grey",
+    "exit_area": "#808080",
 
     // A unit under a timed effect: not shown on the Playdate's map (1037;
     // the design doesn't say), so these are unused there.
-    "effect": "grey",
-    "effect_bonus": "black",
-    "effect_penalty": "black",
+    "effect": "#808080",
+    "effect_bonus": "#000000",
+    "effect_penalty": "#000000",
 
     // The cursor's corner marks flip what they cover.
-    "cursor": "invert",
-    "path": "black",
+    "cursor": "#ff00ff",
+    "path": "#000000",
 
     // Bars
-    "hp_high": "black",
-    "hp_mid": "black",
-    "hp_low": "black",
-    "exp_bar": "black",
+    "hp_high": "#000000",
+    "hp_mid": "#000000",
+    "hp_low": "#000000",
+    "exp_bar": "#000000",
 
     // The map skin's own (1037, docs/design/playdate.md): your units white
     // letters in a black tile; enemies white-edged letters on a grey tile;
@@ -65,62 +70,62 @@
     // tile flashing, is flipped. The threat arrows: black, edged in white.
     // The HP lost on your units' (and allies') HP line is dithered grey;
     // on enemies' it is the ground, as hp_* and black say (Nick, 1037).
-    "map_player_tile": "black",
-    "map_player_letters": "white",
-    "map_enemy_tile": "grey",
-    "map_enemy_letters": "black_edged",
-    "map_acted_tile": "white",
-    "map_acted_letters": "black",
-    "map_acted_outline": "black",
-    "map_other_letters": "black_edged",
-    "map_marked_glyph": "black_edged",
-    "map_highlight": "invert",
-    "map_threat": "black",
-    "map_threat_edge": "white",
-    "map_hp_lost": "grey",
+    "map_player_tile": "#000000",
+    "map_player_letters": "#ffffff",
+    "map_enemy_tile": "#808080",
+    "map_enemy_letters": "#010101",
+    "map_acted_tile": "#ffffff",
+    "map_acted_letters": "#000000",
+    "map_acted_outline": "#000000",
+    "map_other_letters": "#010101",
+    "map_marked_glyph": "#010101",
+    "map_highlight": "#ff00ff",
+    "map_threat": "#000000",
+    "map_threat_edge": "#ffffff",
+    "map_hp_lost": "#808080",
 
     // The screens' own (1045, crates/ui/src/screens/playdate.rs): what the
     // PC dims because it can't be chosen is grey dots in a window.
-    "window_text_off": "grey",
+    "window_text_off": "#808080",
 
     // The dialogue screen's own (1043): the ground of a place behind the
     // talk, darkened (one bit has no darker white).
-    "place_ground": "dots",
+    "place_ground": "#e0e0e0",
 
     // The combat picture's own (1041): a fighter that is hit shows as a
     // black shape (the PC's white one would vanish on the white ground),
     // and a critical flips the whole picture, as a flashing map tile does.
-    "stage_flash": "black",
-    "stage_veil": "invert",
+    "stage_flash": "#000000",
+    "stage_veil": "#ff00ff",
 
     // Terrain: black glyphs on the white ground.
-    "grass": "black",
-    "grass_bg": "white",
-    "road": "black",
-    "road_bg": "white",
-    "wood": "black",
-    "wood_bg": "white",
-    "floor": "black",
-    "floor_bg": "white",
-    "forest": "black",
-    "forest_bg": "white",
-    "thicket": "black",
-    "thicket_bg": "white",
-    "mountain": "black",
-    "mountain_bg": "white",
-    "peak": "black",
-    "peak_bg": "white",
-    "water": "black",
-    "water_bg": "white",
-    "sea": "white",
-    "stone": "black",
-    "stone_bg": "white",
-    "fort": "black",
-    "fort_bg": "white",
-    "fire": "black",
-    "fire_bg": "white",
-    "ash": "black",
-    "ash_bg": "white",
-    "ice": "black",
-    "ice_bg": "white",
+    "grass": "#000000",
+    "grass_bg": "#ffffff",
+    "road": "#000000",
+    "road_bg": "#ffffff",
+    "wood": "#000000",
+    "wood_bg": "#ffffff",
+    "floor": "#000000",
+    "floor_bg": "#ffffff",
+    "forest": "#000000",
+    "forest_bg": "#ffffff",
+    "thicket": "#000000",
+    "thicket_bg": "#ffffff",
+    "mountain": "#000000",
+    "mountain_bg": "#ffffff",
+    "peak": "#000000",
+    "peak_bg": "#ffffff",
+    "water": "#000000",
+    "water_bg": "#ffffff",
+    "sea": "#ffffff",
+    "stone": "#000000",
+    "stone_bg": "#ffffff",
+    "fort": "#000000",
+    "fort_bg": "#ffffff",
+    "fire": "#000000",
+    "fire_bg": "#ffffff",
+    "ash": "#000000",
+    "ash_bg": "#ffffff",
+    "ice": "#000000",
+    "ice_bg": "#ffffff",
 }

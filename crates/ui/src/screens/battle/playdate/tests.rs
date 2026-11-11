@@ -3,7 +3,6 @@
 //! through the one-bit renderer in pixels. What is shown is tested on the
 //! view (`battle/view_tests.rs`).
 
-use trpg_content::Ink;
 use trpg_core::{Phase, Pos};
 
 use super::*;
@@ -103,7 +102,7 @@ fn browsing_shows_the_unit_top_left_and_the_terrain_top_right_and_no_help_bar() 
     assert_eq!(cell(&buf, 49, 3).glyph, '╝');
     // Black letters on the white inside.
     let name = cell(&buf, 2, 1);
-    assert_eq!((name.fg, name.bg), (ink(Ink::Black), ink(Ink::White)));
+    assert_eq!((name.fg, name.bg), (ink("text"), ink("panel_bg")));
     // No help bar, no toggles: the map goes to the bottom row.
     let all = rows(&buf).concat();
     assert!(!all.contains(view.help.trim()) && !all.contains(view.status.trim()));
@@ -213,7 +212,7 @@ fn a_menu_shows_its_header_suffixes_grey_items_and_the_focused_note() {
     assert_eq!(row(&buf, 2), "╔═ Iron Sword 20/20 ══╗");
     assert!(is_bar(&buf, 3, "Flowing Cut -2 dur"));
     assert_eq!(row(&buf, 4), "║ Guard Break         ║");
-    assert_eq!(cell(&buf, 7, 4).fg, ink(Ink::Grey));
+    assert_eq!(cell(&buf, 7, 4).fg, ink("window_text_off"));
     assert_eq!(row(&buf, 5), "╟─────────────────────╢");
     assert_eq!(row(&buf, 6), "║ +10 hit; no counter ║");
     assert_eq!(row(&buf, 7), "╚═════════════════════╝");
@@ -473,7 +472,7 @@ fn the_focus_bar_header_note_and_long_lines_stay_inside_the_frame() {
     // The note too, under its rule.
     assert_eq!(row(&buf, 3), format!("║ {}… ║", "n".repeat(45)));
     // The bar from the cell after the frame to the cell before it.
-    let bar = ink(Ink::Black);
+    let bar = ink("text");
     assert_eq!(cell(&buf, 1, 1).bg, bar);
     assert_eq!(cell(&buf, 48, 1).bg, bar);
 }
@@ -555,10 +554,10 @@ fn the_fight_box_is_a_window_across_the_top_its_striker_the_bar() {
     assert_eq!((left, right), (5, 27));
     assert!(is_bar(&buf, 1, "Alda"));
     // The bar runs from a cell before the name to a cell after it.
-    assert_eq!(cell(&buf, left - 1, 1).bg, ink(Ink::Black));
-    assert_eq!(cell(&buf, left + 4, 1).bg, ink(Ink::Black));
-    assert_eq!(cell(&buf, left - 2, 1).bg, ink(Ink::White));
-    assert_eq!(cell(&buf, left + 5, 1).bg, ink(Ink::White));
+    assert_eq!(cell(&buf, left - 1, 1).bg, ink("text"));
+    assert_eq!(cell(&buf, left + 4, 1).bg, ink("text"));
+    assert_eq!(cell(&buf, left - 2, 1).bg, ink("panel_bg"));
+    assert_eq!(cell(&buf, left + 5, 1).bg, ink("panel_bg"));
     assert_eq!(find(&buf, 1, "Brom"), Some(right));
     assert!(!is_bar(&buf, 1, "Brom"));
     // HP and a bar: 10 of 20 is half its 10 cells.

@@ -3,7 +3,6 @@
 //! (ADR-0074) where a mark is a pixel pattern.
 
 use proptest::prelude::*;
-use trpg_content::Ink;
 use trpg_core::{ClassId, Faction, Pos, TerrainId, UnitId};
 
 use super::*;
@@ -28,15 +27,36 @@ pub(crate) fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
 }
 
-/// The colour that is `ink`'s code.
-pub(crate) fn c(ink: Ink) -> Rgb {
-    Rgb::from(ink.code())
+/// The Playdate's palette, loaded once.
+static PLAYDATE: std::sync::LazyLock<trpg_content::PaletteDef> = std::sync::LazyLock::new(|| {
+    trpg_content::playdate_palette::load_playdate(&trpg_content::PaletteDef::default()).unwrap()
+});
+
+/// The colour of `role` in the Playdate's palette. The tests name one role
+/// for each look: `text` black, `panel_bg` white, `map_enemy_letters`
+/// black with a white edge, `window_text_off` grey, `move_range` dots,
+/// `attack_range` diagonals, `danger_zone` dashes and `cursor` a flip.
+pub(crate) fn c(role: &str) -> Rgb {
+    let rgb = PLAYDATE.get(role);
+    Rgb::from(rgb.unwrap_or_else(|| panic!("no colour {role} in the Playdate's palette")))
+}
+
+/// Whether a shape in `role`'s colour makes screen pixel `(x, y)` white,
+/// by the pattern map. A flip and an edged glyph are black here: only
+/// rectangles flip, and the edge is drawn around glyphs.
+pub(crate) fn white_at(role: &str, x: i32, y: i32) -> bool {
+    use crate::onebit::Shades;
+    static MAP: std::sync::LazyLock<crate::onebit::PatternMap> =
+        std::sync::LazyLock::new(|| crate::onebit::playdate_map().unwrap());
+    let rows = MAP.shape(c(role)).rows;
+    let row = rows[y.rem_euclid(8).unsigned_abs() as usize];
+    row >> (7 - x.rem_euclid(8)) & 1 == 1
 }
 
 /// The test context in the Playdate's palette and skins.
 pub(crate) fn pd_ctx() -> Ctx {
     let mut ctx = ctx();
-    let def = trpg_content::ink::load_playdate(&ctx.game.content.palette).unwrap();
+    let def = trpg_content::playdate_palette::load_playdate(&ctx.game.content.palette).unwrap();
     ctx.palette = Palette::new::<UiColor>(&def).unwrap();
     ctx.use_playdate_skins();
     ctx
@@ -44,7 +64,7 @@ pub(crate) fn pd_ctx() -> Ctx {
 
 /// The Playdate's screen, blank: the white ground.
 pub(crate) fn blank() -> GlyphBuffer {
-    GlyphBuffer::new(50, 15, Cell::new(' ', c(Ink::Black), c(Ink::White)))
+    GlyphBuffer::new(50, 15, Cell::new(' ', c("text"), c("panel_bg")))
 }
 
 /// `scene` painted on the whole screen.
@@ -183,21 +203,37 @@ fn the_tiles_are_16_px_squares_in_the_middle_of_the_area() {
 }
 
 #[test]
-fn the_inks_are_the_palettes_names_or_the_designs() {
+fn the_inks_are_the_palettes_names_or_the_default_themes() {
     let design = Inks {
-        player: (c(Ink::Black), c(Ink::White)),
-        enemy: (c(Ink::Grey), c(Ink::BlackEdged)),
-        acted: (c(Ink::White), c(Ink::Black), c(Ink::Black)),
-        other: c(Ink::BlackEdged),
-        highlight: c(Ink::Invert),
-        hp_lost: c(Ink::Grey),
+        player: (c("text"), c("panel_bg")),
+        enemy: (c("window_text_off"), c("map_enemy_letters")),
+        acted: (c("panel_bg"), c("text"), c("text")),
+        other: c("map_enemy_letters"),
+        highlight: c("cursor"),
+        hp_lost: c("window_text_off"),
     };
-    // The Playdate's palette names them; the PC's doesn't.
+    // The Playdate's palette names them; the PC's doesn't, so its own
+    // colours stand in.
     assert_eq!(Inks::of(&pd_ctx().palette), design);
-    assert_eq!(Inks::of(&ctx().palette), design);
+    let pc = ctx().palette;
+    assert_eq!(
+        Inks::of(&pc),
+        Inks {
+            player: (pc.get(UiColor::Player), pc.get(UiColor::Black)),
+            enemy: (pc.get(UiColor::Enemy), pc.get(UiColor::Black)),
+            acted: (
+                pc.get(UiColor::PanelBg),
+                pc.get(UiColor::TextDim),
+                pc.get(UiColor::PanelBorder)
+            ),
+            other: pc.get(UiColor::Neutral),
+            highlight: pc.get(UiColor::Cursor),
+            hp_lost: pc.get(UiColor::HpLow),
+        }
+    );
     // A palette that says otherwise wins.
     let base = ctx().game.content.palette;
-    let mut def = trpg_content::ink::load_playdate(&base).unwrap();
+    let mut def = trpg_content::playdate_palette::load_playdate(&base).unwrap();
     let names = [
         "map_player_tile",
         "map_player_letters",
@@ -211,9 +247,10 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         "map_hp_lost",
     ];
     for name in names {
-        def.colors.insert(name.to_owned(), Ink::Dots.code());
+        def.colors
+            .insert(name.to_owned(), PLAYDATE.colors["move_range"]);
     }
-    let dots = c(Ink::Dots);
+    let dots = c("move_range");
     let all = Inks::of(&Palette::new::<UiColor>(&def).unwrap());
     assert_eq!(
         all,
@@ -233,13 +270,16 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
     });
     assert_eq!(
         (threat.arrow, threat.mark, threat.edge),
-        (c(Ink::Black), c(Ink::Black), c(Ink::White))
+        (c("text"), c("text"), c("panel_bg"))
     );
     // Its own names, not the enemy's colour: a palette that says
     // otherwise for them wins.
-    def.colors.insert("map_threat".to_owned(), Ink::Dots.code());
     def.colors
-        .insert("map_threat_edge".to_owned(), Ink::Diagonals.code());
+        .insert("map_threat".to_owned(), PLAYDATE.colors["move_range"]);
+    def.colors.insert(
+        "map_threat_edge".to_owned(),
+        PLAYDATE.colors["attack_range"],
+    );
     let mut ctx = pd_ctx();
     ctx.palette = Palette::new::<UiColor>(&def).unwrap();
     assert_ne!(ctx.palette.get(UiColor::Enemy), dots);
@@ -248,7 +288,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
     });
     assert_eq!(
         (threat.arrow, threat.mark, threat.edge),
-        (dots, dots, c(Ink::Diagonals))
+        (dots, dots, c("attack_range"))
     );
 }
 
@@ -268,7 +308,7 @@ fn terrain_is_its_glyphs_black_on_white() {
         let glyphs = display.get(display.id_of(name).unwrap()).unwrap().glyphs;
         assert_eq!(
             buf.get(cx, 0),
-            Some(&Cell::new(glyphs[0], c(Ink::Black), c(Ink::White)))
+            Some(&Cell::new(glyphs[0], c("text"), c("panel_bg")))
         );
         assert_eq!(buf.get(cx + 1, 0).unwrap().glyph, glyphs[1]);
         let frame = shown(&buf);
@@ -290,12 +330,12 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
     use range::{ATTACK, DANGER, HEAL, MOVE};
     let ctx = pd_ctx();
     let mut scene = plains(&ctx);
-    let tiles: [(&[RangeName], Option<Ink>); 6] = [
-        (&[MOVE], Some(Ink::Dots)),
-        (&[ATTACK], Some(Ink::Diagonals)),
-        (&[HEAL], Some(Ink::Diagonals)),
-        (&[MOVE, ATTACK], Some(Ink::Diagonals)),
-        (&[ATTACK, MOVE, DANGER], Some(Ink::Dots)),
+    let tiles: [(&[RangeName], Option<&str>); 6] = [
+        (&[MOVE], Some("move_range")),
+        (&[ATTACK], Some("attack_range")),
+        (&[HEAL], Some("attack_range")),
+        (&[MOVE, ATTACK], Some("attack_range")),
+        (&[ATTACK, MOVE, DANGER], Some("move_range")),
         (&[DANGER], None),
     ];
     for (x, (kinds, _)) in (0..).zip(&tiles) {
@@ -310,8 +350,8 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
     for (x, (kinds, fill)) in (0..).zip(&tiles) {
         let cx = 1 + 2 * x;
         let (fg, bg) = match fill {
-            Some(ink) => (c(Ink::BlackEdged), c(*ink)),
-            None => (c(Ink::Black), c(Ink::White)),
+            Some(role) => (c("map_enemy_letters"), c(role)),
+            None => (c("text"), c("panel_bg")),
         };
         for (i, glyph) in (0..).zip(glyphs) {
             assert_eq!(
@@ -324,7 +364,7 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
             let white = match fill {
                 _ if ink => false,
                 Some(_) if near => true,
-                Some(ink) => ink.is_white(px, py),
+                Some(role) => white_at(role, px, py),
                 None => true,
             };
             // The danger zone's edge (dashes) is checked with the marks.
@@ -340,9 +380,9 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
     let mut off = MapScene::new(p(0, 0), (24, 15));
     off.tint([p(3, 2)], MOVE);
     let buf = painted(&ctx, &off);
-    assert_eq!(buf.get(7, 2).unwrap().bg, c(Ink::Dots));
-    assert_eq!(buf.get(8, 2).unwrap().bg, c(Ink::Dots));
-    assert_eq!(buf.get(9, 2).unwrap().bg, c(Ink::White));
+    assert_eq!(buf.get(7, 2).unwrap().bg, c("move_range"));
+    assert_eq!(buf.get(8, 2).unwrap().bg, c("move_range"));
+    assert_eq!(buf.get(9, 2).unwrap().bg, c("panel_bg"));
 }
 
 /// A tile a spell would change shows what it would become, range and all
@@ -363,17 +403,17 @@ fn a_tile_shows_what_it_becomes_and_flips_while_it_flashes() {
         scene.tile_mut(p(x, 0)).unwrap().flashes = strengths.to_vec();
     }
     let buf = painted(&ctx, &scene);
-    let black = c(Ink::Black);
+    let black = c("text");
     assert_eq!(
         buf.get(1, 0),
-        Some(&Cell::new(forest.glyphs[0], black, c(Ink::White)))
+        Some(&Cell::new(forest.glyphs[0], black, c("panel_bg")))
     );
     assert_eq!(buf.get(2, 0).unwrap().glyph, forest.glyphs[1]);
-    assert_eq!(buf.get(3, 0).unwrap().bg, c(Ink::Diagonals));
+    assert_eq!(buf.get(3, 0).unwrap().bg, c("attack_range"));
     let flipped: Vec<Rect> = buf.overlays().iter().map(|o| o.rect).collect();
     let tile = |x: i32| Rect::new(8 + 16 * x, 0, 16, 16);
     assert_eq!(flipped, [tile(2), tile(3), tile(6)]);
-    assert!(buf.overlays().iter().all(|o| o.color == c(Ink::Invert)));
+    assert!(buf.overlays().iter().all(|o| o.color == c("cursor")));
     // On the screen, the flipped tile is black where a plain tile is white.
     let frame = shown(&buf);
     assert!(!is_white(&frame, 8 + 32 + 15, 15));
@@ -404,7 +444,7 @@ fn threat_arrows_are_black_edged_in_white_over_everything() {
     assert_eq!(&after[before.len()..], expect);
     assert_ne!(expect, [] as [shuyi_ui::frame::Overlay; 0]);
     let colors: Vec<Rgb> = expect.iter().map(|o| o.color).collect();
-    assert!(colors.contains(&c(Ink::Black)) && colors.contains(&c(Ink::White)));
+    assert!(colors.contains(&c("text")) && colors.contains(&c("panel_bg")));
 }
 
 /// The path is the shared arrow, in the palette's path ink (black).
@@ -415,7 +455,7 @@ fn the_path_is_the_shared_arrow_in_black() {
     scene.path = vec![p(1, 1), p(2, 1), p(2, 2)];
     let buf = painted(&ctx, &scene);
     let grid = MapSkin::playdate().grid(&scene, SCREEN);
-    let expect = path::path_overlays(&scene.path, &grid, c(Ink::Black));
+    let expect = path::path_overlays(&scene.path, &grid, c("text"));
     assert_eq!(buf.overlays(), expect);
     assert_ne!(expect, [] as [shuyi_ui::frame::Overlay; 0]);
 }
@@ -435,7 +475,7 @@ fn nothing_off_the_view_is_drawn() {
 /// harness plays it in the Playdate's palette and skins.
 pub(crate) fn harrowby_ford() -> crate::harness::Harness {
     let setup = |ctx: &mut Ctx| {
-        let def = trpg_content::ink::load_playdate(&ctx.game.content.palette).unwrap();
+        let def = trpg_content::playdate_palette::load_playdate(&ctx.game.content.palette).unwrap();
         ctx.palette = Palette::new::<UiColor>(&def).unwrap();
         ctx.console = <crate::console::ConsoleSpec as crate::console::ConsoleSizes>::PLAYDATE;
         ctx.use_playdate_skins();

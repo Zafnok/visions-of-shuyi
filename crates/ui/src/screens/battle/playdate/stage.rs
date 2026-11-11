@@ -11,11 +11,11 @@
 //! here as on the PC's console.
 
 use crate::prelude::*;
+use trpg_content::Battler;
 use trpg_content::battler::{BACKDROP_PX, Facing};
-use trpg_content::{Battler, Ink};
 use trpg_core::StatKind;
 
-use crate::color::Rgb;
+use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{
     BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Paint, PxRect, Rect, Sprite,
@@ -152,10 +152,10 @@ pub fn result_row(view: &StageView, i: usize, scene: Rect, first: i32) -> i32 {
 
 /// The ink of the palette's colour `name`, or `fallback`'s (in a test on
 /// the PC's palette).
-fn named_ink(ctx: &Ctx, name: &str, fallback: Ink) -> Rgb {
+fn named_ink(ctx: &Ctx, name: &str, fallback: UiColor) -> Rgb {
     ctx.palette
         .lookup(name)
-        .unwrap_or_else(|| Rgb::from(fallback.code()))
+        .unwrap_or_else(|| ctx.palette.get(fallback))
 }
 
 /// `text` in a box one row tall on row `y` of `scene`, centred on pixel
@@ -253,7 +253,7 @@ pub fn paint(ctx: &Ctx, view: &StageView, area: Rect, buf: &mut GlyphBuffer) {
     let horizon = PxRect::new(scene.x, scene.y + HORIZON_Y, scene.w, 1);
     buf.add_overlay(Overlay::new(horizon, ink.frame, Layer::Under));
     // The striker last: in front of its target when they meet.
-    let flash = named_ink(ctx, "stage_flash", Ink::Black);
+    let flash = named_ink(ctx, "stage_flash", UiColor::Text);
     let behind = view.striker.map_or(0, |s| 1 - s);
     for i in [behind, 1 - behind] {
         if let Some(sprite) = fighter_sprite(view, i, scene, flash) {
@@ -261,7 +261,7 @@ pub fn paint(ctx: &Ctx, view: &StageView, area: Rect, buf: &mut GlyphBuffer) {
         }
     }
     if view.veil {
-        let veil = named_ink(ctx, "stage_veil", Ink::Invert);
+        let veil = named_ink(ctx, "stage_veil", UiColor::Cursor);
         buf.add_overlay(Overlay::new(scene, veil, Layer::Over));
     }
     if let Some(name) = &view.banner {

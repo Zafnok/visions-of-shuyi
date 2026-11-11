@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 1263 — The Playdate's palette drops the inks; its pattern map alone says how each colour is drawn
@@ -79,11 +79,11 @@ after are compared pixel for pixel.
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "\bInk\b" crates` finds nothing.
-- [ ] The Playdate frames of step 1 are byte for byte the same.
-- [ ] `cargo xtask code-lines` shows the game's production code smaller
+- [x] `grep -rn "\bInk\b" crates` finds nothing.
+- [x] The Playdate frames of step 1 are byte for byte the same.
+- [x] `cargo xtask code-lines` shows the game's production code smaller
       by about 100 lines.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -95,5 +95,36 @@ after are compared pixel for pixel.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `assets/data/palettes/playdate.ron` is an ordinary palette: each role
+  an RGB colour, loaded with `PaletteDef::from_source` and the default
+  theme's names as required. The colours are the old inks' codes, so the
+  roles drawn alike share one (`#000000` black, `#ffffff` white,
+  `#010101` edged black, `#808080` grey, `#e0e0e0` dots, `#c0c0c0`
+  diagonals, `#404040` dashes, `#ff00ff` flip); both files' headers say
+  the map draws them.
+- `trpg_content::ink` is now `trpg_content::playdate_palette`: the two
+  loaders only. `Ink`, its codes, `from_ink_source` and `Ink::patterns`
+  are gone. Its tests: the palette loads with every default-theme name,
+  the map has a row for every role (and `onebit::check` finds nothing),
+  a missing colour is an error.
+- Production call sites: the map skin's `Inks::of`, the combat picture's
+  `named_ink` and the dialogue's `place_ground` fall back to a default
+  theme colour (`UiColor`) when a palette lacks the Playdate's name
+  (only the PC's palette in a test), instead of an ink's code. The
+  loading card draws in plain black and white, and a test checks they
+  are the palette's `text` and `black`.
+- Tests name a role (`c("text")`, `c("move_range")`, …) instead of an
+  ink, and read a pattern's pixel through the map (`white_at`).
+- ADR-0074 §1 and §3 marked superseded by the pattern map (engine
+  ADR-0026, ADR-0107); `crates/ui/README.md`'s `onebit` row and the ADR
+  index say the same.
+- Frames: title, title prompt, title menu, options, a battle, its map
+  alone, its menu, a move and a dialogue, recorded with `cargo shuyi
+  frame-png --playdate` before and after: all nine byte for byte the
+  same.
+- `cargo xtask code-lines`: production 59 added, 172 removed (113
+  smaller). Friction: 2.4× (estimate 25 added), accepted because a
+  changed line counts as added (the skins' fallbacks rewritten from
+  `Ink::X` to `UiColor::X`); row in `docs/engine/friction.md`.
+- PR size: estimate 900, measured about 1,130.
+- No gameplay rules decided. Nothing on the Playdate's screen changes.

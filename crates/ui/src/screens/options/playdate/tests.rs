@@ -165,7 +165,7 @@ fn a_long_value_is_cut_and_the_number_box_is_a_bar() {
     assert!(is_bar(&buf, y, " 75_"));
     assert_eq!(find(&buf, y, " 75_"), Some(VALUE_X - 1));
     // The box: four cells and one either side.
-    let black = crate::screens::playdate::tests::c(trpg_content::Ink::Black);
+    let black = crate::screens::playdate::tests::c("text");
     let bar = |x| cell(&buf, x, y).bg == black;
     assert!(bar(VALUE_X + 4) && !bar(VALUE_X + 5));
 }

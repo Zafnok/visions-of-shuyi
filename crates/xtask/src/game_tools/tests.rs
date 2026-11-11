@@ -559,17 +559,24 @@ fn the_one_bit_skin_reads_the_map_file() {
         "{}",
         skin.map_file
     );
-    assert_eq!(Some(skin.map), trpg_content::ink::load_playdate_map().ok());
+    assert_eq!(
+        Some(skin.map),
+        trpg_content::playdate_palette::load_playdate_map().ok()
+    );
 }
 
 /// Text is never dithered on the Playdate (`one_bit.rs` says why the map's
 /// `text` is empty).
 #[test]
 fn the_text_roles_are_solid_black() {
-    use trpg_content::ink::Ink;
     let skin = Trpg.one_bit("playdate").unwrap().unwrap();
     for role in ["text", "text_dim", "text_highlight"] {
-        assert_eq!(skin.palette.get(role), Some(Ink::Black.code()), "{role}");
+        let pattern = skin.map.get(role).map(|r| r.fg);
+        assert_eq!(
+            pattern,
+            Some(shuyi_assets::onebit::Pattern::BLACK),
+            "{role}"
+        );
     }
 }
 

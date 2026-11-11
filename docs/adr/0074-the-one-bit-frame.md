@@ -1,6 +1,10 @@
 # ADR-0074: The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer
 
-- **Status:** Accepted
+- **Status:** Accepted; §1 (inks are reserved colours) and §3 (a palette
+  file of ink names) superseded by the Playdate's pattern map (engine
+  ADR-0026 and ADR-0107; tickets 1253 and 1263): `playdate.ron` is an
+  ordinary palette of RGB colours and `playdate@onebit.ron` alone says how
+  each role is drawn
 - **Date:** 2026-10-15
 - **Related tickets:** 1032 (this), 0061 and 0062 (Nick's Playdate look),
   1033 (the front end that shows it), 1037 and 1038+ (the Playdate skins),
@@ -37,6 +41,8 @@ think.
 ## Decision
 
 ### 1. Inks are reserved colours: the frame doesn't change
+
+*Superseded (1263): the pattern map draws each role; see Status.*
 
 A one-bit pixel is coloured by an **ink** (`trpg_content::Ink`):
 
@@ -83,6 +89,8 @@ Two exceptions, both drawn plain black elsewhere: the white edge exists
 only on glyphs, and only rectangles invert.
 
 ### 3. The Playdate's palette is a palette file of ink names
+
+*Superseded (1263): the palette holds RGB colours; see Status.*
 
 `assets/data/palettes/playdate.ron` names an ink, not a hex value, for
 every colour of the default palette (`"enemy": "grey"`), and may add names

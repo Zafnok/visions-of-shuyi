@@ -3,8 +3,6 @@
 //! place darkened in one bit. What the screen shows is tested on its view
 //! in `../tests.rs`.
 
-use trpg_content::Ink;
-
 use super::*;
 use crate::glyph_buffer::Item as BufItem;
 use crate::screens::dialogue::view::{OpeningView, SkipView};
@@ -104,8 +102,8 @@ fn the_faces_at_2x_their_names_under_them_and_a_three_line_box_below() {
     assert_eq!(find(&buf, 12, "Two."), Some(TEXT_X));
     assert_eq!(cell(&buf, 48, 13).glyph, 'x');
     assert_eq!(cell(&buf, 49, 13).glyph, '║');
-    assert_eq!(cell(&buf, TEXT_X, 11).fg, c(Ink::Black));
-    assert_eq!(cell(&buf, TEXT_X, 11).bg, c(Ink::White));
+    assert_eq!(cell(&buf, TEXT_X, 11).fg, c("text"));
+    assert_eq!(cell(&buf, TEXT_X, 11).bg, c("panel_bg"));
 }
 
 #[test]
@@ -130,7 +128,7 @@ fn narration_lights_neither_face_and_reads_as_speech() {
     assert_eq!(cell(&buf, 31, 0).glyph, '┌');
     assert!(sprites(&buf).iter().all(|&(_, opacity)| opacity < 255));
     assert_eq!(find(&buf, 11, "The rain stops."), Some(TEXT_X));
-    assert_eq!(cell(&buf, TEXT_X, 11).fg, c(Ink::Black));
+    assert_eq!(cell(&buf, TEXT_X, 11).fg, c("text"));
 }
 
 #[test]
@@ -152,7 +150,7 @@ fn the_caption_goes_across_the_top_row() {
     let buf = painted(&view);
     let x = find(&buf, 0, "Harrowby, dawn").unwrap();
     assert_eq!(x, (50 - 14) / 2);
-    assert_eq!(cell(&buf, x, 0).bg, c(Ink::White));
+    assert_eq!(cell(&buf, x, 0).bg, c("panel_bg"));
 }
 
 #[test]
@@ -171,7 +169,7 @@ fn a_choice_grows_the_box_over_the_faces_and_bars_the_focused_reply() {
     assert!(!is_bar(&buf, 12, "Yes."));
     assert!(is_bar(&buf, 13, "No."));
     // The bar runs across the box, inside its frame.
-    assert_eq!(cell(&buf, 48, 13).bg, c(Ink::Black));
+    assert_eq!(cell(&buf, 48, 13).bg, c("text"));
     assert_eq!(cell(&buf, 49, 13).glyph, '║');
     // Replies with no line before them: no blank row either.
     let mut view = two_speakers(&[]);
@@ -255,8 +253,8 @@ fn the_place_shows_around_the_talk_its_white_ground_dotted() {
         for x in 19..31 {
             let (was, now) = (cell(&alone, x, y), cell(&buf, x, y));
             assert_eq!((now.glyph, now.fg), (was.glyph, was.fg), "{x},{y}");
-            if was.bg == c(Ink::White) {
-                assert_eq!(now.bg, c(Ink::Dots), "{x},{y}");
+            if was.bg == c("panel_bg") {
+                assert_eq!(now.bg, c("move_range"), "{x},{y}");
                 dotted += 1;
             } else {
                 assert_eq!(now.bg, was.bg, "{x},{y}");
@@ -265,7 +263,7 @@ fn the_place_shows_around_the_talk_its_white_ground_dotted() {
     }
     assert!(dotted > 0);
     // The faces and the box are on white, over it.
-    assert_eq!(cell(&buf, 5, 12).bg, c(Ink::White));
+    assert_eq!(cell(&buf, 5, 12).bg, c("panel_bg"));
 }
 
 #[test]
@@ -286,9 +284,9 @@ fn an_opening_shows_the_place_undarkened_then_cuts_to_dark_halfway() {
     view.opening = Some(OpeningView { darkened: 0.5 });
     let mut buf = blank();
     paint(&ctx, &view, &mut buf);
-    let white = (0..50).find(|&x| cell(&alone, x, 12).bg == c(Ink::White));
+    let white = (0..50).find(|&x| cell(&alone, x, 12).bg == c("panel_bg"));
     let x = white.expect("a white tile on row 12");
-    assert_eq!(cell(&buf, x, 12).bg, c(Ink::Dots));
+    assert_eq!(cell(&buf, x, 12).bg, c("move_range"));
 }
 
 #[test]
@@ -299,8 +297,8 @@ fn a_battles_scene_darkens_the_battle_below_it() {
     let mut view = two_speakers(&["Hi."]);
     view.overlay = true;
     paint(&ctx, &view, &mut buf);
-    let white = (0..10).find(|&y| cell(&below, 25, y).bg == c(Ink::White));
+    let white = (0..10).find(|&y| cell(&below, 25, y).bg == c("panel_bg"));
     let y = white.expect("a white tile between the frames");
-    assert_eq!(cell(&buf, 25, y).bg, c(Ink::Dots));
+    assert_eq!(cell(&buf, 25, y).bg, c("move_range"));
     assert_eq!(cell(&buf, 25, y).glyph, cell(&below, 25, y).glyph);
 }

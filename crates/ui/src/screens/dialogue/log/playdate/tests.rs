@@ -1,8 +1,6 @@
 //! Tests of the dialogue log's Playdate look: the window, a row's name and
 //! text, the cursor's bar, lines seen ahead and the scrolling.
 
-use trpg_content::Ink;
-
 use super::*;
 use crate::screens::dialogue::log::{BackRow, Face, LogRow};
 use crate::screens::playdate::tests::{blank, c, cell, find, is_bar, pd_ctx, row};
@@ -64,8 +62,8 @@ fn a_window_of_names_and_their_lines_with_no_faces() {
     // The cursor's row is the bar across the window, every line of it.
     assert!(is_bar(&buf, 3, "Ellery"));
     assert!(is_bar(&buf, 5, "word"));
-    assert_eq!(cell(&buf, 1, 4).bg, c(Ink::Black));
-    assert_eq!(cell(&buf, 48, 4).bg, c(Ink::Black));
+    assert_eq!(cell(&buf, 1, 4).bg, c("text"));
+    assert_eq!(cell(&buf, 48, 4).bg, c("text"));
     assert_eq!(cell(&buf, 49, 4).glyph, '║');
     assert!(!is_bar(&buf, 1, "Dawn."));
 }
@@ -81,8 +79,8 @@ fn lines_seen_ahead_are_grey_and_back_to_latest_comes_last() {
         focused: false,
     });
     let buf = painted(&view);
-    assert_eq!(cell(&buf, 2, 3).fg, c(Ink::Grey));
-    assert_eq!(cell(&buf, 2, 1).fg, c(Ink::White));
+    assert_eq!(cell(&buf, 2, 3).fg, c("window_text_off"));
+    assert_eq!(cell(&buf, 2, 1).fg, c("panel_bg"));
     assert_eq!(find(&buf, 5, "Back to latest"), Some(2));
     view.rows[0].focused = false;
     view.back_to_latest = Some(BackRow {

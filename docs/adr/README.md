@@ -81,7 +81,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0071](0071-sonar-backlog-becomes-batched-github-issues.md) | SonarCloud's backlog becomes batched GitHub issues, filtered by a checked-in policy | Accepted (0126) |
 | [0072](0072-options-changes-previewed-then-kept-or-put-back.md) | Options changes are previewed, then kept or put back on leaving | Accepted (0839); amends ADR-0050 and ADR-0069 |
 | [0073](0073-mutation-shards-build-incrementally-and-run-slow-tests-last.md) | Mutation shards build incrementally, run the slow tests last, and share one baseline | Accepted; its shard rule and shard time limit superseded by ADR-0100 |
-| [0074](0074-the-one-bit-frame.md) | The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer | Accepted (1032) |
+| [0074](0074-the-one-bit-frame.md) | The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer | Accepted (1032); §1 and §3 (inks) superseded by the pattern map (engine ADR-0026, ADR-0107; 1263) |
 | [0075](0075-sprites-fade-by-brightness-not-opacity.md) | Sprites fade by brightness, not opacity | Accepted (0732); amends ADR-0060 §4 |
 | [0076](0076-conversation-openings-a-cast-on-a-place-and-the-cinematic-walks.md) | Conversation openings: a cast on a place, and the cinematic walks | Accepted (0734); extends ADR-0061 |
 | [0077](0077-the-one-bit-render-redraws-what-changed.md) | The one-bit render redraws only what changed, against a kept reference | Accepted (1055); extends ADR-0074 §4 |

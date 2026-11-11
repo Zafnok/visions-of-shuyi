@@ -1,11 +1,10 @@
 //! How a unit looks on the Playdate's map, through the one-bit renderer.
 
-use trpg_content::Ink;
 use trpg_core::{Faction, Pos};
 
 use super::*;
 use crate::map_view::playdate::tests::{
-    blank, c, p, painted, pd_ctx, plains, shown, tile_pixels, unit,
+    blank, c, p, painted, pd_ctx, plains, shown, tile_pixels, unit, white_at,
 };
 use crate::onebit::is_white;
 
@@ -38,15 +37,15 @@ fn each_side_has_its_look() {
         letters: c(letters),
         outline: None,
     };
-    assert_eq!(look(Faction::Player, false), solid(Ink::Black, Ink::White));
+    assert_eq!(look(Faction::Player, false), solid("text", "panel_bg"));
     assert_eq!(
         look(Faction::Enemy, false),
-        solid(Ink::Grey, Ink::BlackEdged)
+        solid("window_text_off", "map_enemy_letters")
     );
     let acted = Look {
-        tile: Some(c(Ink::White)),
-        letters: c(Ink::Black),
-        outline: Some(c(Ink::Black)),
+        tile: Some(c("panel_bg")),
+        letters: c("text"),
+        outline: Some(c("text")),
     };
     for faction in [
         Faction::Player,
@@ -58,7 +57,7 @@ fn each_side_has_its_look() {
     }
     let letters = Look {
         tile: None,
-        letters: c(Ink::BlackEdged),
+        letters: c("map_enemy_letters"),
         outline: None,
     };
     assert_eq!(look(Faction::Ally, false), letters);
@@ -74,7 +73,7 @@ fn each_side_has_its_look() {
 #[test]
 fn your_unit_is_white_letters_in_a_black_tile() {
     let buf = on_plains(unit(Faction::Player, Pos::new(0, 0)));
-    let (white, black) = (c(Ink::White), c(Ink::Black));
+    let (white, black) = (c("panel_bg"), c("text"));
     assert_eq!(
         cells(&buf),
         (Cell::new('B', white, black), Cell::new('r', white, black))
@@ -91,7 +90,7 @@ fn your_unit_is_white_letters_in_a_black_tile() {
 #[test]
 fn an_enemy_is_white_edged_letters_on_a_grey_tile() {
     let buf = on_plains(unit(Faction::Enemy, Pos::new(0, 0)));
-    let (edged, grey) = (c(Ink::BlackEdged), c(Ink::Grey));
+    let (edged, grey) = (c("map_enemy_letters"), c("window_text_off"));
     assert_eq!(
         cells(&buf),
         (Cell::new('B', edged, grey), Cell::new('r', edged, grey))
@@ -99,7 +98,7 @@ fn an_enemy_is_white_edged_letters_on_a_grey_tile() {
     let frame = shown(&buf);
     for ((x, y), ink, near) in tile_pixels(['B', 'r'], CELL) {
         let hp = y >= 30 && (25..39).contains(&x);
-        let white = !ink && !hp && (near || Ink::Grey.is_white(x, y));
+        let white = !ink && !hp && (near || white_at("window_text_off", x, y));
         assert_eq!(is_white(&frame, x, y), white, "({x}, {y})");
     }
 }
@@ -111,7 +110,7 @@ fn a_unit_that_has_acted_is_outlined() {
         let mut u = unit(faction, Pos::new(0, 0));
         u.acted = true;
         let buf = on_plains(u);
-        let (white, black) = (c(Ink::White), c(Ink::Black));
+        let (white, black) = (c("panel_bg"), c("text"));
         assert_eq!(
             cells(&buf),
             (Cell::new('B', black, white), Cell::new('r', black, white))
@@ -153,7 +152,7 @@ fn allies_and_neutral_units_are_their_letters_alone() {
         scene.tint([p(1, 1)], crate::map_view::range::MOVE);
         scene.push_unit(unit(faction, p(1, 1)));
         let buf = painted(&ctx, &scene);
-        let (edged, dots) = (c(Ink::BlackEdged), c(Ink::Dots));
+        let (edged, dots) = (c("map_enemy_letters"), c("move_range"));
         assert_eq!(
             cells(&buf),
             (Cell::new('B', edged, dots), Cell::new('r', edged, dots))
@@ -168,7 +167,7 @@ fn allies_and_neutral_units_are_their_letters_alone() {
 #[test]
 fn the_hp_line_is_as_long_as_the_hp_left() {
     use Faction::{Ally, Enemy, Neutral, Player};
-    let (black, white, grey) = (c(Ink::Black), c(Ink::White), c(Ink::Grey));
+    let (black, white, grey) = (c("text"), c("panel_bg"), c("window_text_off"));
     let line = |faction, hp: (i32, i32), acted: bool, sided: bool| {
         let mut u = unit(faction, Pos::new(0, 0));
         (u.hp, u.acted, u.sided) = (hp, acted, sided);
@@ -208,7 +207,7 @@ fn the_hp_line_is_as_long_as_the_hp_left() {
         [bar(25, 7, black), bar(32, 7, grey)]
     );
     // An ally (none in Chapter 1): as yours, in its letters' ink.
-    let edged = c(Ink::BlackEdged);
+    let edged = c("map_enemy_letters");
     assert_eq!(
         line(Ally, (15, 30), false, true),
         [bar(25, 7, edged), bar(32, 7, grey)]
@@ -219,7 +218,7 @@ fn the_hp_line_is_as_long_as_the_hp_left() {
     let frame = shown(&on_plains(hurt));
     assert!(is_white(&frame, 31, 31) && is_white(&frame, 25, 30));
     for (x, y) in [(32, 30), (33, 30), (38, 31), (39, 31)] {
-        let dots = x < 39 && Ink::Grey.is_white(x, y);
+        let dots = x < 39 && white_at("window_text_off", x, y);
         assert_eq!(is_white(&frame, x, y), dots, "({x}, {y})");
     }
 }
@@ -232,7 +231,7 @@ fn a_picked_out_or_struck_unit_is_flipped_and_a_fallen_one_gone() {
         on_plains(u)
             .overlays()
             .into_iter()
-            .filter(|o| o.color == c(Ink::Invert))
+            .filter(|o| o.color == c("cursor"))
             .map(|o| o.rect)
             .collect::<Vec<_>>()
     };
@@ -259,7 +258,7 @@ fn a_picked_out_or_struck_unit_is_flipped_and_a_fallen_one_gone() {
 fn a_short_label_still_fills_its_tile() {
     let mut u = unit(Faction::Player, Pos::new(0, 0));
     u.label = "B".into();
-    let (white, black) = (c(Ink::White), c(Ink::Black));
+    let (white, black) = (c("panel_bg"), c("text"));
     assert_eq!(cells(&on_plains(u.clone())).1, Cell::new(' ', white, black));
     u.label = "Bri".into();
     assert_eq!(cells(&on_plains(u)).1, Cell::new('r', white, black));
