@@ -541,9 +541,10 @@ fn the_controls_list_each_screen_once_and_see_a_missing_chord() {
     );
 }
 
-/// The map follows the palette's inks, and what must read apart does.
+/// The map is the file the Playdate's build draws with, and what must
+/// read apart does.
 #[test]
-fn the_one_bit_skin_reads_the_inks() {
+fn the_one_bit_skin_reads_the_map_file() {
     use shuyi_assets::onebit::{self, Pattern};
     let skin = Trpg.one_bit("playdate").unwrap().unwrap();
     assert_eq!(onebit::check(&skin.palette, &skin.map), Vec::new());
@@ -553,10 +554,16 @@ fn the_one_bit_skin_reads_the_inks() {
     assert_ne!(fg("move_range"), fg("attack_range"));
     assert_eq!(skin.map.roles.len(), skin.palette.colors.len());
     assert_eq!(skin.map.distinct.len(), 2);
+    assert!(
+        skin.map_file.ends_with("playdate@onebit.ron"),
+        "{}",
+        skin.map_file
+    );
+    assert_eq!(Some(skin.map), trpg_content::ink::load_playdate_map().ok());
 }
 
-/// Text is never dithered on the Playdate (`one_bit.rs` says why this isn't
-/// the map's `text`).
+/// Text is never dithered on the Playdate (`one_bit.rs` says why the map's
+/// `text` is empty).
 #[test]
 fn the_text_roles_are_solid_black() {
     use trpg_content::ink::Ink;

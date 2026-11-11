@@ -15,7 +15,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use trpg_ui::GlyphBuffer;
-use trpg_ui::onebit::{self, FRAME_BYTES, Frame, Phase};
+use trpg_ui::onebit::{self, FRAME_BYTES, Frame, PatternMap, Phase};
 
 use super::elapsed;
 use crate::pictures::Pictures;
@@ -54,20 +54,29 @@ impl Bench {
         self.music_paused
     }
 
-    /// Renders `buffer` whole with both renderers, timing them, and
-    /// checks both against `shown`, the frame the front end drew of it.
+    /// Renders `buffer` whole with both renderers in `shades`, timing
+    /// them, and checks both against `shown`, the frame the front end drew
+    /// of it.
     pub fn measure(
         &mut self,
         buffer: &GlyphBuffer,
         font: &onebit::Font<'_>,
         pictures: &Pictures,
+        shades: &PatternMap,
         shown: &Frame,
     ) {
         time(&mut self.slow_phases, |mut mark| {
-            onebit::reference::render_marked(buffer, font, pictures, &mut self.slow, &mut mark);
+            onebit::reference::render_marked_with(
+                buffer,
+                font,
+                pictures,
+                shades,
+                &mut self.slow,
+                &mut mark,
+            );
         });
         time(&mut self.fast_phases, |mut mark| {
-            onebit::render_marked(buffer, font, pictures, &mut self.fast, &mut mark);
+            onebit::render_marked_with(buffer, font, pictures, shades, &mut self.fast, &mut mark);
         });
         if self.fast != self.slow {
             self.unlike_reference += 1;

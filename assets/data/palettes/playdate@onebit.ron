@@ -1,0 +1,137 @@
+// The Playdate's pattern map (engine ADR-0026, ticket 1253): how each
+// colour of its palette (playdate.ron, beside this file) is drawn on the
+// one-bit screen. The palette's colours are still the inks' codes
+// (ADR-0074); each role here has its ink's patterns, so the screens draw
+// as the inks did (a content test keeps the two files in step):
+//   white: (fg: White)        black: (fg: Black)
+//   black_edged: (fg: Black, edge: true)   grey: (fg: Dither50)
+//   dots: (fg: Dots)          diagonals: (fg: DiagonalDown)
+//   dashes: (fg: Checker2)    invert: (fg: Black, invert: true)
+// `text` stays empty: roles of one colour share their patterns, and the
+// text's colour is shared with roles drawn black on black (the test
+// `the_text_roles_are_solid_black` keeps text undithered instead).
+(
+    roles: {
+        // Basics. `black` is the console background: the white ground.
+        "black": (fg: White),
+        "white": (fg: Black),
+
+        // Text. Dim and highlighted words: placeholders (1038 and later).
+        "text": (fg: Black),
+        "text_dim": (fg: Black),
+        "text_highlight": (fg: Black),
+
+        // Panels (UI chrome)
+        "panel_bg": (fg: White),
+        "panel_border": (fg: Black),
+        "panel_border_focus": (fg: Black),
+
+        // Factions: the names' colour in text. The map skin draws units with
+        // its own names (map_*, below).
+        "player": (fg: Black),
+        "enemy": (fg: Black),
+        "ally": (fg: Black),
+        "neutral": (fg: Black),
+        "player_outline": (fg: Black),
+
+        // Ranges: dots, diagonal lines, a dashed edge (docs/design/playdate.md).
+        // The heal range is the attack range's lines (the design doesn't say).
+        "move_range": (fg: Dots),
+        "attack_range": (fg: DiagonalDown),
+        "heal_range": (fg: DiagonalDown),
+        "danger_zone": (fg: Checker2),
+        // The exit area of an escape map (0319; *Claude's starting look*).
+        "exit_area": (fg: Dither50),
+
+        // A unit under a timed effect: not shown on the Playdate's map (1037;
+        // the design doesn't say), so these are unused there.
+        "effect": (fg: Dither50),
+        "effect_bonus": (fg: Black),
+        "effect_penalty": (fg: Black),
+
+        // The cursor's corner marks flip what they cover.
+        "cursor": (fg: Black, invert: true),
+        "path": (fg: Black),
+
+        // Bars
+        "hp_high": (fg: Black),
+        "hp_mid": (fg: Black),
+        "hp_low": (fg: Black),
+        "exp_bar": (fg: Black),
+
+        // The map skin's own (1037, docs/design/playdate.md): your units white
+        // letters in a black tile; enemies white-edged letters on a grey tile;
+        // a unit that has acted black letters in an outlined white tile.
+        // Allies and neutral units (none in Chapter 1): their letters alone,
+        // until a chapter that has them decides. A terrain glyph on a tile a
+        // range fills keeps a white edge. A unit a battle note is about, and a
+        // tile flashing, is flipped. The threat arrows: black, edged in white.
+        // The HP lost on your units' (and allies') HP line is dithered grey;
+        // on enemies' it is the ground, as hp_* and black say (Nick, 1037).
+        "map_player_tile": (fg: Black),
+        "map_player_letters": (fg: White),
+        "map_enemy_tile": (fg: Dither50),
+        "map_enemy_letters": (fg: Black, edge: true),
+        "map_acted_tile": (fg: White),
+        "map_acted_letters": (fg: Black),
+        "map_acted_outline": (fg: Black),
+        "map_other_letters": (fg: Black, edge: true),
+        "map_marked_glyph": (fg: Black, edge: true),
+        "map_highlight": (fg: Black, invert: true),
+        "map_threat": (fg: Black),
+        "map_threat_edge": (fg: White),
+        "map_hp_lost": (fg: Dither50),
+
+        // The screens' own (1045, crates/ui/src/screens/playdate.rs): what the
+        // PC dims because it can't be chosen is grey dots in a window.
+        "window_text_off": (fg: Dither50),
+
+        // The dialogue screen's own (1043): the ground of a place behind the
+        // talk, darkened (one bit has no darker white).
+        "place_ground": (fg: Dots),
+
+        // The combat picture's own (1041): a fighter that is hit shows as a
+        // black shape (the PC's white one would vanish on the white ground),
+        // and a critical flips the whole picture, as a flashing map tile does.
+        "stage_flash": (fg: Black),
+        "stage_veil": (fg: Black, invert: true),
+
+        // Terrain: black glyphs on the white ground.
+        "grass": (fg: Black),
+        "grass_bg": (fg: White),
+        "road": (fg: Black),
+        "road_bg": (fg: White),
+        "wood": (fg: Black),
+        "wood_bg": (fg: White),
+        "floor": (fg: Black),
+        "floor_bg": (fg: White),
+        "forest": (fg: Black),
+        "forest_bg": (fg: White),
+        "thicket": (fg: Black),
+        "thicket_bg": (fg: White),
+        "mountain": (fg: Black),
+        "mountain_bg": (fg: White),
+        "peak": (fg: Black),
+        "peak_bg": (fg: White),
+        "water": (fg: Black),
+        "water_bg": (fg: White),
+        "sea": (fg: White),
+        "stone": (fg: Black),
+        "stone_bg": (fg: White),
+        "fort": (fg: Black),
+        "fort_bg": (fg: White),
+        "fire": (fg: Black),
+        "fire_bg": (fg: White),
+        "ash": (fg: Black),
+        "ash_bg": (fg: White),
+        "ice": (fg: Black),
+        "ice_bg": (fg: White),
+    },
+    // What must read apart on the Playdate's map (docs/design/playdate.md):
+    // the three states of a unit's tile, and the ranges. The heal range
+    // isn't here: it is the attack range's lines.
+    distinct: [
+        ["map_player_tile", "map_enemy_tile", "map_acted_tile"],
+        ["move_range", "attack_range", "danger_zone"],
+    ],
+)

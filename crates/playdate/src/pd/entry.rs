@@ -23,7 +23,7 @@ use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::input::{Crank, PadKind};
-use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
+use trpg_ui::onebit::{self, FRAME_BYTES, Frame, PatternMap};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent, Storage};
 
 use super::files::SdkFiles;
@@ -71,6 +71,9 @@ struct Loading {
 struct Card {
     /// The game's font, read before the rest of the data.
     font: onebit::Font<'static>,
+    /// How the palette's colours are drawn (ticket 1253), read with the
+    /// font.
+    shades: PatternMap,
     /// The frame the card was drawn into.
     frame: Box<Frame>,
     /// The report's first line: when the card was shown.
@@ -89,6 +92,8 @@ struct Running {
     audio: Audio<Sdk>,
     speaker: Sdk,
     font: onebit::Font<'static>,
+    /// How the palette's colours are drawn.
+    shades: PatternMap,
     /// The one-bit pictures sprites show.
     pictures: Pictures,
     /// The picture last drawn to the screen, `None` before the first.
@@ -208,16 +213,24 @@ fn update(step: &mut Step) -> bool {
     match step {
         Step::ShowCard => {
             let mut frame = Box::new([0; FRAME_BYTES]);
-            let font = game_stack::run(|| {
+            let (font, shades) = game_stack::run(|| {
                 let font = card::font().unwrap_or_else(|e| panic!("no font for the card: {e}"));
-                onebit::render(&card::buffer(ConsoleSpec::PLAYDATE), &font, &(), &mut frame);
-                font
+                let shades = onebit::playdate_map()
+                    .unwrap_or_else(|e| panic!("no pattern map for the card: {e}"));
+                let card = card::buffer(ConsoleSpec::PLAYDATE);
+                onebit::render_with(&card, &font, &(), &shades, &mut frame);
+                (font, shades)
             });
             let changed = show(&frame);
             let shown = report::card_shown(since_start());
             log(&shown);
             *step = Step::Load(Box::new(Loading {
-                card: Card { font, frame, shown },
+                card: Card {
+                    font,
+                    shades,
+                    frame,
+                    shown,
+                },
                 boot: Boot::Data,
             }));
             changed
@@ -322,7 +335,12 @@ fn load(loading: Box<Loading>) -> Step {
 
 /// The game started behind the `card`.
 fn running(card: Card, started: Started<Sdk>) -> Box<Running> {
-    let Card { font, frame, shown } = card;
+    let Card {
+        font,
+        shades,
+        frame,
+        shown,
+    } = card;
     let Started {
         game,
         audio,
@@ -341,6 +359,7 @@ fn running(card: Card, started: Started<Sdk>) -> Box<Running> {
         audio,
         speaker,
         font,
+        shades,
         pictures,
         shown: None,
         frame,
@@ -486,17 +505,35 @@ impl Running {
             return false;
         }
         if let Some(shown) = &mut self.shown {
-            onebit::render_changed(shown, buffer, &self.font, &self.pictures, &mut self.frame);
+            onebit::render_changed_with(
+                shown,
+                buffer,
+                &self.font,
+                &self.pictures,
+                &self.shades,
+                &mut self.frame,
+            );
             shown.clone_from(buffer);
         } else {
-            onebit::render(buffer, &self.font, &self.pictures, &mut self.frame);
+            onebit::render_with(
+                buffer,
+                &self.font,
+                &self.pictures,
+                &self.shades,
+                &mut self.frame,
+            );
             self.shown = Some(buffer.clone());
         }
         let changed = show(&self.frame);
         self.minute.render.add((elapsed() - framed) * 1000.0);
         #[cfg(feature = "bench")]
-        self.bench
-            .measure(buffer, &self.font, &self.pictures, &self.frame);
+        self.bench.measure(
+            buffer,
+            &self.font,
+            &self.pictures,
+            &self.shades,
+            &self.frame,
+        );
         changed
     }
 }

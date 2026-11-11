@@ -52,7 +52,7 @@ pub fn buffer(spec: ConsoleSpec) -> GlyphBuffer {
 #[cfg(test)]
 mod tests {
     use trpg_ui::ConsoleSizes;
-    use trpg_ui::onebit::{FRAME_BYTES, ROW_BYTES, render};
+    use trpg_ui::onebit::{FRAME_BYTES, ROW_BYTES, playdate_map, render_with};
 
     use super::*;
 
@@ -88,7 +88,14 @@ mod tests {
     fn the_card_draws_black_letters_on_white_with_the_games_font() {
         let font = font().unwrap_or_else(|e| panic!("{e}"));
         let mut frame = Box::new([0; FRAME_BYTES]);
-        render(&buffer(ConsoleSpec::PLAYDATE), &font, &(), &mut frame);
+        let shades = playdate_map().unwrap_or_else(|e| panic!("{e}"));
+        render_with(
+            &buffer(ConsoleSpec::PLAYDATE),
+            &font,
+            &(),
+            &shades,
+            &mut frame,
+        );
         let (rows, _) = frame.as_chunks::<ROW_BYTES>();
         let inked = |row: &[u8; ROW_BYTES]| row[..50].iter().any(|&b| b != u8::MAX);
         let inked_rows: Vec<usize> = (0..240).filter(|&y| inked(&rows[y])).collect();

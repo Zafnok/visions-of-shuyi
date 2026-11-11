@@ -69,8 +69,9 @@ fn send(h: &mut Harness, command: &Command) {
 /// The front end's start, then Chapter 1 from New Game into Chapter 2;
 /// returns the music cues Chapter 1 started and those its scenes name.
 fn play_chapter_1() -> Vec<String> {
-    // The card's font comes first, as on the device.
+    // The card's font and pattern map come first, as on the device.
     card::font().unwrap_or_else(|e| panic!("{e}"));
+    trpg_ui::onebit::playdate_map().unwrap_or_else(|e| panic!("{e}"));
     // Then the start's steps, one call each.
     let (mut started, _) = boot::tests::boot(&mut boot::tests::TestHost::default());
     // The guide's tips and lessons are read once a game begins; off, they
