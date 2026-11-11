@@ -91,9 +91,12 @@ Each SDK update once the game runs (`src/pd/entry.rs`):
    (the file player's position), and its sounds and music commands are
    played (`src/audio.rs`). The "Game::frame" time counts both.
 4. Only when the frame's `GlyphBuffer` differs from the last one drawn,
-   `trpg_ui::onebit` redraws the parts that differ (`render_changed`,
-   ADR-0077; the first frame whole) and the rows that changed are copied
-   into the SDK's frame buffer (`getFrame`, `markUpdatedRows`).
+   `trpg_ui::onebit` redraws the parts that differ (`render_changed_with`,
+   ADR-0077; the first frame whole), its colours drawn by the palette's
+   pattern map (`assets/data/palettes/playdate@onebit.ron`, built once
+   with the loading card's font: ticket 1253), and the rows that changed
+   are copied into the SDK's frame buffer (`getFrame`,
+   `markUpdatedRows`).
 
 **Frame rate: 30.** `setRefreshRate(30)`, the SDK's own default, to
 start: the game's animations are timed by `dt`, not by frames. The

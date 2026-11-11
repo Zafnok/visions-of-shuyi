@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#2388"]
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 1253 — The Playdate build draws with a pattern map instead of inks
@@ -114,16 +114,16 @@ one-bit snapshots and the bench's frames must not change.
 
 ## Acceptance criteria
 
-- [ ] `assets/data/palettes/playdate@onebit.ron` gives every role of
+- [x] `assets/data/palettes/playdate@onebit.ron` gives every role of
       the Playdate's palette its ink's patterns (a content test).
-- [ ] No call in `crates/playdate` draws with `InkShades`: `rg
+- [x] No call in `crates/playdate` draws with `InkShades`: `rg
       "onebit::render\(|render_marked\(|render_changed\(" crates/playdate`
       finds only `_with` calls.
-- [ ] Every one-bit snapshot and bench frame is unchanged (no snapshot
+- [x] Every one-bit snapshot and bench frame is unchanged (no snapshot
       file in the diff).
-- [ ] `cargo shuyi check --target playdate` reads the map file and
+- [x] `cargo shuyi check --target playdate` reads the map file and
       reports no new problem.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -133,5 +133,42 @@ one-bit snapshots and the bench's frames must not change.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Pin:** already past engine#2388 (`edb6c888`, moved by the pin bump
+  #624 and after), so step 1 was only the `RolePatterns::of` migration,
+  which `main` had too; nothing to move.
+- **The map:** `assets/data/palettes/playdate@onebit.ron`, every role of
+  `playdate.ron` with its ink's patterns from the table, the palette's
+  comments kept, and the two `distinct` groups. `trpg_content::ink`
+  loads it (`load_playdate_map`, `PLAYDATE_MAP_PATH`); the content test
+  `the_pattern_map_gives_each_role_its_inks_patterns` checks every role
+  against its ink, that the map names no other role, that
+  `onebit::check` finds nothing, and that the path is `map_path`'s.
+- **Drawing:** `trpg_ui::onebit::playdate_map()` builds the
+  `PatternMap` from the palette file and the map. The front end builds it
+  once with the loading card's font (the card draws with it) and keeps it
+  beside the font; the frame loop draws with `render_with` /
+  `render_changed_with`, the bench with `render_marked_with` and
+  `reference::render_marked_with`. It reads the palette without the
+  default theme's names (the card comes before the rest of the data);
+  `start.rs` still checks the palette has them when the game loads it.
+  The Chapter 1 bundle test reads the map with the card's font, as the
+  device does, so the bundle holds no file it never reads.
+- **Check and tools:** `check --target playdate` reads the file
+  (`one_bit.rs` lost `pattern` and `map_of`); the tools' one-bit pictures
+  (`frame-png --playdate`, the bench's Playdate session) draw with the
+  same map.
+- **Same frames:** no snapshot file changed (the one-bit snapshots are
+  glyph-buffer text). As a throwaway check, not committed, every one-bit
+  pixel test of `trpg-ui` (2,200+) ran with the map instead of the inks,
+  and the Playdate walk-through test (title, menus, a typing scene, the
+  battle, the cursor: 60+ frames) compared the map's frame with the
+  inks' byte for byte: all the same with the Playdate's skins. Without
+  them (the PC's dialogue skin on the Playdate palette, which no build
+  does) a darkened place is a 40% grey that is no ink: the inks draw it
+  black, the map dithers it. Engine 2389's pin bump should expect that
+  if a test draws the PC skins in one bit.
+- **Deviation:** `tickets/open/1262-…` was left behind on `main` beside
+  `tickets/done/1262-…` (#626 and #627 merged in that order), which
+  fails `ticket-lint` on every branch. This PR deletes the stale open
+  copy, in its own commit.
+- No gameplay rule decided; nothing for the Act 1 playtest.

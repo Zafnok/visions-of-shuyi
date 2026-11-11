@@ -67,7 +67,7 @@ impl Images for Pictures {
 mod tests {
     use trpg_content::bundle::{self, Bundle};
     use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Layer, Rect, Sprite};
-    use trpg_ui::onebit::{FRAME_BYTES, Font, is_white, render};
+    use trpg_ui::onebit::{FRAME_BYTES, Font, is_white, playdate_map, render_with};
     use trpg_ui::{ConsoleSizes, ConsoleSpec, Rgb};
 
     use super::*;
@@ -179,7 +179,8 @@ mod tests {
         let font_bits = bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
         let font = Font::new(&atlas, font_bits).unwrap();
         let mut frame = Box::new([0u8; FRAME_BYTES]);
-        render(&buf, &font, &pictures, &mut frame);
+        let shades = playdate_map().unwrap();
+        render_with(&buf, &font, &pictures, &shades, &mut frame);
         for y in 0..64u16 {
             for x in 0..64u16 {
                 let shown = is_white(&frame, 8 + i32::from(x), 16 + i32::from(y));

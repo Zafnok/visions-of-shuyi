@@ -255,10 +255,11 @@ impl GameTools for Trpg {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
         let font = onebit::Font::new(atlas, bits)?;
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
+        let shades = onebit::playdate_map()?;
         let mut frame = Box::new([0; FRAME_BYTES]);
         h.set_present_hook(Some(Box::new(move |presented: &Frame<'_>| {
             if let Show::Game { buffer, .. } = presented.show {
-                onebit::render(buffer, &font, &pictures, &mut frame);
+                onebit::render_with(buffer, &font, &pictures, &shades, &mut frame);
             }
         })));
         Ok(Box::new(session(h, start)))
@@ -346,7 +347,7 @@ impl GameTools for Trpg {
 
     /// The Playdate is the one one-bit target (`shuyi.ron`).
     fn one_bit(&self, _target: &str) -> Option<Result<OneBitSkin, String>> {
-        Some(playdate_palette_def().map(one_bit::skin))
+        Some(playdate_palette_def().and_then(one_bit::skin))
     }
 }
 
@@ -473,7 +474,8 @@ fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String>
         let mut frame = Box::new([0; FRAME_BYTES]);
         // The pictures the Playdate's build makes (ticket 1040).
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
-        onebit::render(buffer, &font, &pictures, &mut frame);
+        let shades = onebit::playdate_map()?;
+        onebit::render_with(buffer, &font, &pictures, &shades, &mut frame);
         Ok(one_bit_picture(&frame, scale.unwrap_or(1)))
     } else {
         painted(ctx, buffer, scale.unwrap_or(2))
