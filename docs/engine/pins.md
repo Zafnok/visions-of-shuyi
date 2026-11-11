@@ -312,7 +312,7 @@ Nothing for the game: 25 PRs (#305, #312, #311, #310, #308, #314, #316, #315, #3
 
 Nothing for the game: none.
 
-## 2026-11-11: edb6c888 → efb624bd (4 engine PRs), #PRNUM
+## 2026-11-11: edb6c888 → efb624bd (4 engine PRs), #638
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
