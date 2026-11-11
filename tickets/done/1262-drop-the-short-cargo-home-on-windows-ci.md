@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: haiku-4.5 / gpt-6-luna
 effort: low
-status: todo
+status: done
 blocked_by: ["engine#2071"]
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 1262 — Drop the short CARGO_HOME on Windows CI once the engine's paths are short
@@ -66,9 +66,9 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "CARGO_HOME" .github/workflows` finds no `C:\c`.
-- [ ] CI's Windows jobs pass on the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `grep -rn "CARGO_HOME" .github/workflows` finds no `C:\c`.
+- [x] CI's Windows jobs pass on the PR.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -77,5 +77,12 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+The engine-pin PR #624 (c1ba9ec8 → ab593bb9) was still open and its pin
+is one engine PR short of engine#2071 (#356, `edb6c888`), so this PR is
+stacked on it and moves the pin that one step (`engine-change` §7), with
+its ledger section in `docs/engine/pins.md`. The skill pack didn't
+change. Then it deletes the workaround #624 added: `ci.yml` and
+`release.yml` are again byte for byte what they were on `main` before
+#624.
+
+No follow-up tickets. Nothing for Nick.

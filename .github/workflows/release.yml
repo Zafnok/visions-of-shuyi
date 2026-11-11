@@ -167,10 +167,6 @@ jobs:
       - name: Set up the Windows GNU target
         if: matrix.target == 'windows'
         run: |
-          # Cargo's checkout of the engine under the runner's home has a path
-          # over Windows' 260 characters (an engine ticket's long file name),
-          # which libgit2 refuses: a short CARGO_HOME brings it under.
-          echo 'CARGO_HOME=C:\c' >> "$GITHUB_ENV"
           /c/msys64/usr/bin/pacman.exe -Sy --noconfirm --needed mingw-w64-x86_64-gcc
           echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
           rustup target add x86_64-pc-windows-gnu
