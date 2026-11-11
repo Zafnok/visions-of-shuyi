@@ -320,3 +320,11 @@ Nothing for the game: none.
 | #362 | 2389 | The inks removed: one-bit screens draw only by roles' patterns; `shuyi_assets::ink` and `PaletteDef::from_ink_source` gone, the renderer's `_with` forms are its only forms | fixed: `Ink` and the Playdate palette's loader move into `trpg_content::ink` (the game's palette file names inks; `Ink::patterns` and `Ink::is_white` read the engine's patterns), the `render*_with` calls are `render*`, and the tests that drew with inks alone draw with the Playdate's pattern map; no frame or snapshot changed; adopt → 1263 (the palette drops the inks and the map alone draws it, about 110 lines removed) |
 
 Nothing for the game: 3 PRs (#358, #360, #361). #358 is engine tickets only; #360 and #361 are the engine's tutorial tries and book.
+
+## 2026-11-11: 97313b9e → 85e8d5c5 (2 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #367 | 2138 | Save bundles: a storage's keys written as one checked text file, read back with a verdict per entry, and applied all or nothing | unblocks 0872 and 0873 (engine#2138 out of their `blocked_by`, their pin steps struck) |
+
+Nothing for the game: 1 PR (#363), the engine's own ticket skills.
