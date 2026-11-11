@@ -35,11 +35,15 @@ pub struct PlayRecord {
     pub commands: Vec<Command>,
 }
 
-/// Every error of every validator of the game's content.
+/// Every error of every validator of the game's content, and of the
+/// key placeholders in its screen text (ticket 0253).
 pub fn check() -> Vec<ContentError> {
-    trpg_content::load_embedded()
+    let mut errors = trpg_content::load_embedded()
         .err()
-        .map_or_else(Vec::new, |e| e.0)
+        .map_or_else(Vec::new, |e| e.0);
+    let keys = trpg_ui::lang_keys::check_ui_text_keys(trpg_content::bundle::install());
+    errors.extend(keys.err().unwrap_or_default());
+    errors
 }
 
 /// The game's bot run, as `playtest` plays it (ticket 1240, engine#2544):

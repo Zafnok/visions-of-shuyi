@@ -35,6 +35,7 @@ pub mod glyph_buffer;
 #[cfg(any(test, feature = "harness"))]
 pub mod harness;
 pub mod input;
+pub mod lang_keys;
 pub mod map_view;
 pub mod onebit;
 pub mod platform;
