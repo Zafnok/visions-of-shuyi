@@ -7,9 +7,9 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
 use serde::{Deserialize, Serialize};
-use trpg_content::dialogue::{LineId, NARRATION_SPEAKER};
+use shuyi_assets::voice;
+use trpg_content::dialogue::LineId;
 use trpg_content::voice::{MadeBy, Variant, VoiceClip};
-use trpg_core::lead::LEAD_ID;
 
 /// The cast's file name inside a language's folder. The game never reads it.
 pub const CAST_FILE: &str = "cast.ron";
@@ -17,8 +17,6 @@ pub const CAST_FILE: &str = "cast.ron";
 pub const SAY_FILE: &str = "say.ron";
 /// What the tool sent to make each clip.
 pub const SENT_FILE: &str = "sent.ron";
-/// The cast entries of the lead's two voices (a man's and a woman's).
-pub const LEAD_VOICES: [&str; 2] = ["lead_m", "lead_f"];
 
 /// The program that reads a cast entry's lines (ADR-0107 rule 2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
@@ -29,60 +27,19 @@ pub enum Reader {
     Chatterbox,
 }
 
-/// One cast entry: the voice a speaker's lines are said in.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Voice {
-    /// Its reference clip: `assets-src/audio/voice-refs/<clip>.flac`. The
-    /// manifest names a clip's voice by it.
-    pub clip: String,
-    /// Who reads its undirected lines.
-    pub reader: Reader,
-}
-
 /// `cast.ron`: the voice of each speaker, by character id, `>` for
-/// narration, and `lead_m` and `lead_f` for the lead.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Cast {
-    /// Voices by cast entry.
-    pub voices: BTreeMap<String, Voice>,
-}
+/// narration, and `lead.m` and `lead.f` for the lead's two voices (the
+/// engine's cast, with the reader as each voice's settings).
+pub type Cast = voice::Cast<Reader>;
 
-impl Cast {
-    /// The cast entry that says `speaker`'s line as `variant`: the lead's
-    /// by gender, everyone else's by speaker.
-    pub fn entry(speaker: &str, variant: Variant) -> &str {
-        match (speaker, variant) {
-            (LEAD_ID, Variant::F) => LEAD_VOICES[1],
-            (LEAD_ID, _) => LEAD_VOICES[0],
-            _ => speaker,
-        }
-    }
-}
-
-/// Reads `cast.ron` from `source`: every entry is narration, one of the
-/// lead's voices or a character that `can_speak`, with a clip.
+/// Reads `cast.ron` from `source` with the engine's reader: every key is
+/// narration or a character that `can_speak`, alone or with a variant's
+/// suffix.
 pub fn cast(source: &str, can_speak: impl Fn(&str) -> bool) -> Result<Cast, String> {
-    let cast: Cast = ron::from_str(source).map_err(|e| format!("{CAST_FILE}: {e}"))?;
-    let mut errors = Vec::new();
-    for (entry, voice) in &cast.voices {
-        let known = entry == NARRATION_SPEAKER || LEAD_VOICES.contains(&entry.as_str());
-        if !known && (entry == LEAD_ID || !can_speak(entry)) {
-            errors.push(format!(
-                "{CAST_FILE}: \"{entry}\" is not a character that speaks (the lead's voices are \
-                 \"lead_m\" and \"lead_f\", narration's \">\")"
-            ));
-        }
-        if voice.clip.trim().is_empty() {
-            errors.push(format!("{CAST_FILE}: \"{entry}\" has no clip"));
-        }
-    }
-    if errors.is_empty() {
-        Ok(cast)
-    } else {
-        Err(errors.join("\n"))
-    }
+    voice::cast_from_source::<Reader, Variant>(CAST_FILE, source, can_speak).map_err(|errors| {
+        let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
+        lines.join("\n")
+    })
 }
 
 /// `say.ron`: a name id or a word, and how to spell it for the readers.

@@ -112,22 +112,24 @@ aloud, is [ADR-0109](adr/0109-voice-directions-reach-the-voice-design-model-apar
 ```ron
 (
     voices: {
-        ">": (clip: "narrator", reader: Qwen3),
-        "lead_m": (clip: "lead_m", reader: Qwen3),
-        "lead_f": (clip: "lead_f", reader: Qwen3),
-        "retainer": (clip: "retainer", reader: Chatterbox),
+        ">": (voice: "narrator", settings: Qwen3),
+        "lead.m": (voice: "lead_m", settings: Qwen3),
+        "lead.f": (voice: "lead_f", settings: Qwen3),
+        "retainer": (voice: "retainer", settings: Chatterbox),
     },
 )
 ```
 
 Each speaker's voice ([ADR-0107](adr/0107-free-local-voice-tools-with-designed-voices-and-a-reader-per-character.md)
 rule 2), from the cast table of `docs/design/voices-languages-and-script.md`:
-a character id, `>` for narration, and `lead_m` and `lead_f` for the lead's
-two voices. `clip` is the voice's reference clip,
-`assets-src/audio/voice-refs/<clip>.flac`, and the manifest's `voice` names
-it. `reader` reads its undirected lines: `Qwen3` or `Chatterbox`. Every
-directed line takes ADR-0109's recipe, whoever the reader. The game doesn't
-read this file; `cargo xtask voice` does.
+a character id, `>` for narration, and `lead.m` and `lead.f` for the lead's
+two voices (a speaker and a clip variant's suffix: the engine's cast,
+`shuyi_assets::voice::cast_from_source`, ticket 1242). `voice` is the
+voice's reference clip, `assets-src/audio/voice-refs/<voice>.flac`, and the
+manifest's `voice` names it. `settings` is the reader of its undirected
+lines: `Qwen3` or `Chatterbox`. Every directed line takes ADR-0109's recipe,
+whoever the reader. The game doesn't read this file; `cargo xtask voice`
+does, and plans its clips with the engine's `voice::plan`.
 
 ## `say.ron`
 
@@ -195,8 +197,9 @@ cargo xtask voice status
 ```
 
 Per scene: the clips to make and why (no clip, the words changed, the
-direction changed, the voice changed, it would be sent differently: `say.ron`
-or the punctuation sent changed), the
+direction changed, the cast names another voice, the reference clip changed,
+the reader changed, it would be sent differently: `say.ron` or the
+punctuation sent changed), the
 recorded clips a person must record again, the clips to remove (their line
 is gone, or it now needs a gendered pair instead of one clip or the other
 way round), and the lines whose speaker has no voice in `cast.ron`.
@@ -239,7 +242,7 @@ cargo xtask voice script --character retainer
 
 A recording script for an actor (ADR-0046 rule 10): per line, the file to
 deliver, the scene, the line before it, the direction and the words. A
-character id, `>` for the narrator, or `lead_m` / `lead_f`.
+cast key: a character id, `>` for the narrator, or `lead.m` / `lead.f`.
 
 ```bash
 cargo xtask voice audit

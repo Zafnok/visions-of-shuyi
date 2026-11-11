@@ -30,7 +30,7 @@ use trpg_content::lesson::{self, LESSONS_PATH, LessonTable};
 use trpg_content::voice::{self, MANIFEST_FILE, MadeBy, SOURCE_LANG, VoiceClip};
 
 use files::{CAST_FILE, Cast, Reader, SAY_FILE, SENT_FILE, Say, Sent, SentMap};
-use plan::{Inputs, Plan, Wanted, Why};
+use plan::{Inputs, Plan, Wanted};
 pub use synth::Tools;
 use synth::{Level, Request};
 
@@ -40,7 +40,7 @@ pub const USAGE: &str = "usage: cargo xtask voice <status | generate | script | 
   generate [--dry-run]         make them with the voice lab's readers and write the\n                               \
   manifest; --dry-run counts the lines and characters and makes nothing\n  \
   script --character <id>      a recording script for an actor: a character id, \">\"\n                               \
-  for the narrator, or lead_m / lead_f\n  \
+  for the narrator, or lead.m / lead.f\n  \
   audit                        each clip's length, pace and longest pause inside; flags\n                               \
   those over the limits\n\n\
 options:\n  \
@@ -218,10 +218,10 @@ fn load(folder: &Folder, scripts: &Scripts<'_>) -> Result<Loaded, String> {
         read_optional(&folder.dir, SENT_FILE)?.map_or(Ok(SentMap::new()), |t| files::sent(&t))?;
     let mut references = BTreeMap::new();
     for voice in cast.voices.values() {
-        let path = reference(folder, &voice.clip);
+        let path = reference(folder, &voice.voice);
         let bytes =
             fs::read(&path).map_err(|e| format!("{CAST_FILE}: reading {}: {e}", path.display()))?;
-        references.insert(voice.clip.clone(), files::fingerprint(&bytes));
+        references.insert(voice.voice.clone(), files::fingerprint(&bytes));
     }
     Ok(Loaded {
         cast,
@@ -262,28 +262,18 @@ pub fn status(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> Result<S
             .or_default()
             .push(text);
     };
-    for &(i, why) in &plan.make {
-        let w = &plan.wanted[i];
+    for (i, why) in &plan.make {
+        let w = &plan.wanted[*i];
         row(
             &w.line,
-            format!(
-                "  make       {:<34} {:<12} {}",
-                w.file(),
-                w.entry,
-                why.says()
-            ),
+            format!("  make       {:<34} {:<12} {}", w.file(), w.key, why.says()),
         );
     }
-    for &(i, why) in &plan.record {
-        let w = &plan.wanted[i];
+    for (i, why) in &plan.record {
+        let w = &plan.wanted[*i];
         row(
             &w.line,
-            format!(
-                "  re-record  {:<34} {:<12} {}",
-                w.file(),
-                w.entry,
-                why.says()
-            ),
+            format!("  re-record  {:<34} {:<12} {}", w.file(), w.key, why.says()),
         );
     }
     for clip in &plan.remove {
@@ -298,10 +288,11 @@ pub fn status(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> Result<S
             ),
         );
     }
-    for (line, entry) in &plan.uncast {
+    for uncast in &plan.uncast {
+        let (line, speaker) = (&uncast.line, &uncast.speaker);
         row(
             line,
-            format!("  no voice   {line:<34} {entry:<12} not in {CAST_FILE}"),
+            format!("  no voice   {line:<34} {speaker:<12} not in {CAST_FILE}"),
         );
     }
     let mut out = String::new();
@@ -322,9 +313,9 @@ pub fn status(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> Result<S
     Ok(out)
 }
 
-/// `script --character <id>`: every clip of the lines `character` says
-/// (a character id, `>`, or a cast entry such as `lead_m`), in scene and
-/// script order.
+/// `script --character <id>`: every clip the voice under cast key
+/// `character` says (a character id, `>`, or a key such as `lead.m`), in
+/// scene and script order.
 pub fn script(
     folder: &Folder,
     scripts: &Scripts<'_>,
@@ -338,13 +329,8 @@ pub fn script(
          Deliver each line as OGG Vorbis, mono, 44.1 kHz, under the file name shown,\n\
          in the voice folder's language folder (docs/voice.md).\n"
     );
-    let mine = plan
-        .wanted
-        .iter()
-        .filter(|w| w.speaker == character || w.entry == character);
-    let mut count = 0;
-    for w in mine {
-        count += 1;
+    let mine = shuyi_assets::voice::plan::recording_script(&plan, character);
+    for w in &mine {
         let _ = write!(out, "\n{}\n  scene:  {}\n", w.file(), w.line.scene_id());
         if let Some((speaker, words)) = &w.before {
             let speaker = match speaker.as_str() {
@@ -359,7 +345,7 @@ pub fn script(
         }
         let _ = writeln!(out, "  say:    {}", w.spoken);
     }
-    let _ = write!(out, "\n{count} lines");
+    let _ = write!(out, "\n{} lines", mine.len());
     Ok(out)
 }
 
@@ -397,10 +383,11 @@ pub fn generate(
 ) -> Result<String, String> {
     let mut loaded = load(folder, scripts)?;
     let plan = plan_of(scripts, &loaded, tools);
-    let jobs: Vec<(&Wanted, Why)> = plan
+    let names = &scripts.content.names;
+    let jobs: Vec<Job<'_>> = plan
         .make
         .iter()
-        .map(|&(i, why)| (&plan.wanted[i], why))
+        .map(|&(i, _)| Job::new(&plan.wanted[i], &loaded.say, names))
         .collect();
     if dry_run {
         return Ok(counts(&jobs, plan.remove.len()));
@@ -428,11 +415,10 @@ pub fn generate(
         (Reader::Qwen3, true),
     ];
     for (reader, directed) in by {
-        let group: Vec<&Wanted> = jobs
+        let group: Vec<&Job<'_>> = jobs
             .iter()
-            .map(|(w, _)| *w)
             .filter(|w| w.direction.is_some() == directed)
-            .filter(|w| directed || loaded.cast.voices[&w.entry].reader == reader)
+            .filter(|w| directed || loaded.cast.voices[&w.key].settings == reader)
             .collect();
         if group.is_empty() {
             continue;
@@ -464,12 +450,10 @@ pub fn generate(
 
 /// `--dry-run`'s report: how many clips and characters `jobs` sends, the
 /// directed ones apart (each costs more).
-fn counts(jobs: &[(&Wanted, Why)], removed: usize) -> String {
+fn counts(jobs: &[Job<'_>], removed: usize) -> String {
     let count = |directed: bool| {
-        let these = jobs
-            .iter()
-            .filter(|(w, _)| w.direction.is_some() == directed);
-        these.fold((0, 0), |(n, chars), (w, _)| {
+        let these = jobs.iter().filter(|w| w.direction.is_some() == directed);
+        these.fold((0, 0), |(n, chars), w| {
             (n + 1, chars + w.sent.chars().count())
         })
     };
@@ -480,6 +464,29 @@ fn counts(jobs: &[(&Wanted, Why)], removed: usize) -> String {
          {directed} directed ({directed_chars} characters); would remove {removed}; made nothing",
         plain + directed
     )
+}
+
+/// A clip to make, with the words its reader is sent.
+struct Job<'a> {
+    /// The clip.
+    wanted: &'a Wanted,
+    /// Its words as sent to the reader ([`plan::sent`]).
+    sent: String,
+}
+
+impl<'a> Job<'a> {
+    fn new(wanted: &'a Wanted, say: &Say, names: &trpg_content::names::Names) -> Self {
+        let sent = plan::sent(&wanted.spoken, say, names);
+        Self { wanted, sent }
+    }
+}
+
+impl std::ops::Deref for Job<'_> {
+    type Target = Wanted;
+
+    fn deref(&self) -> &Wanted {
+        self.wanted
+    }
 }
 
 /// Writes the manifest and `sent.ron`.
@@ -519,13 +526,13 @@ fn make(
     loaded: &mut Loaded,
     tools: &mut Tools,
     by: (Reader, bool),
-    group: &[&Wanted],
+    group: &[&Job<'_>],
     date: &str,
 ) -> Result<Batch, String> {
     let (tool, model) = tools.synth(by.0, by.1).made_by();
     let run = RUNS.fetch_add(1, Ordering::Relaxed);
     let scratch = std::env::temp_dir().join(format!("trpg-voice-{}-{run}", std::process::id()));
-    let mut pending: Vec<&Wanted> = group.to_vec();
+    let mut pending: Vec<&Job<'_>> = group.to_vec();
     // Each line's best take so far, by file.
     let mut best: BTreeMap<String, audit::Row> = BTreeMap::new();
     let mut voice_levels: BTreeMap<String, Level> = BTreeMap::new();
@@ -599,19 +606,19 @@ fn make(
 }
 
 /// The request for `w`'s take.
-fn request(folder: &Folder, loaded: &Loaded, w: &Wanted) -> Request {
+fn request(folder: &Folder, loaded: &Loaded, w: &Job<'_>) -> Request {
     Request {
-        key: w.key(),
+        key: plan::key(w),
         text: w.sent.clone(),
         direction: w.direction.clone(),
-        reference: reference(folder, &loaded.cast.voices[&w.entry].clip),
+        reference: reference(folder, &loaded.cast.voices[&w.key].voice),
         reference_text: REFERENCE_TEXT.to_owned(),
     }
 }
 
 /// Writes `w`'s new clip into the manifest and `sent.ron`.
-fn record(loaded: &mut Loaded, w: &Wanted, (tool, model): (&str, &str), date: &str) {
-    let clip_name = loaded.cast.voices[&w.entry].clip.clone();
+fn record(loaded: &mut Loaded, w: &Job<'_>, (tool, model): (&str, &str), date: &str) {
+    let clip_name = loaded.cast.voices[&w.key].voice.clone();
     let clip = VoiceClip {
         line: w.line.clone(),
         variant: w.variant,

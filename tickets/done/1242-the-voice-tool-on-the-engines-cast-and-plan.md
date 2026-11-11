@@ -5,10 +5,10 @@ type: infra
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#2250", "engine#2251"]
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 1242 — The voice tool on the engine's cast and clip plan
@@ -70,18 +70,46 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `crates/xtask/src/voice/` has no cast reader and no clip planning of
+- [x] `crates/xtask/src/voice/` has no cast reader and no clip planning of
       its own.
-- [ ] `cargo xtask voice status` on the test scene prints what it printed
+- [x] `cargo xtask voice status` on the test scene prints what it printed
       before (the xtask tests' expected output, with the lead's keys
       renamed).
-- [ ] Every `cast.ron` in the repository and the private repository uses
+- [x] Every `cast.ron` in the repository and the private repository uses
       the engine's form.
-- [ ] Production lines fall (`cargo xtask code-lines`); the friction row
+- [x] Production lines fall (`cargo xtask code-lines`); the friction row
       in `docs/engine/friction.md` says by how much.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: the existing xtask voice tests, updated for the renames; the
   test folder's cast parses with the engine's reader.
+
+## Completion notes
+
+- `files.rs` reads `cast.ron` with the engine's `cast_from_source`,
+  `Reader` as each voice's `settings` (`settings: Qwen3`); `Cast` is now
+  `shuyi_assets::voice::Cast<Reader>`. The game's `Cast`, `Voice`,
+  `Cast::entry` and `LEAD_VOICES` are gone. The lead's keys are `lead.m`
+  and `lead.f`; the reference clips keep their names (`lead_m`, `lead_f`).
+- `plan.rs` holds only the hooks: the variants a line needs, the words a
+  variant says, and why a generated clip's voice changed. `status`,
+  `generate` and `script` read the engine's `VoicePlan`; `script` uses
+  `recording_script`, so `--character` takes a cast key (`lead.m`, not
+  `lead`). The words sent to a reader (`plan::sent`) are worked out when a
+  clip is made, since the engine's wanted clip doesn't carry them.
+- `status` now gives a finer reason where it said "the voice changed":
+  "the cast names another voice" (the engine's `Recast`), "the reference
+  clip changed" or "the reader changed". Everything else it prints is
+  unchanged; the recording-script snapshot is the same.
+- The private repository's `voice/en/cast.ron` is in the engine's form
+  (commit `f8a9c43106437758be6685b0ff20db2a9c94a6fb`, pinned in
+  `assets-private.rev`). `status` on the real voice folder flags none of
+  its clips and removes none.
+- The cast test now checks only the game's use of the engine's reader
+  (its settings and an error naming `cast.ron`), not the engine's own
+  cases.
+- Engine friction: estimate 90, measured 93 (1.0×); production lines fell
+  by 138 (`docs/engine/friction.md`).
+- No gameplay rules decided.
