@@ -99,7 +99,9 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("skill-pack") => skill_pack(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
-        Some("pr-size") => pr_size(&args.collect::<Vec<_>>()),
+        Some("pr-size") => pr_size(&args.collect::<Vec<_>>(), || {
+            std::io::read_to_string(std::io::stdin()).unwrap_or_default()
+        }),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -729,7 +731,8 @@ fn parse_pr_size_args(args: &[String]) -> Result<(String, Option<String>, bool),
     Ok((base, branch, hook))
 }
 
-fn pr_size(args: &[String]) -> u8 {
+/// `pr-size`; `hook_stdin` reads the hook's input, only with `--hook`.
+fn pr_size(args: &[String], hook_stdin: impl FnOnce() -> String) -> u8 {
     if args.iter().any(|a| a == "--help") {
         println!("{}", pr_size::USAGE);
         return 0;
@@ -742,6 +745,11 @@ fn pr_size(args: &[String]) -> u8 {
         }
     };
     let root = repo_root();
+    if hook {
+        let answer = pr_size::hook_answer(&hook_stdin(), &root, &base, branch.as_deref());
+        print!("{answer}");
+        return 0;
+    }
     let measured = pr_size::changed_files(&root, &base).and_then(|(files, from)| {
         let branch = branch.map_or_else(|| pr_size::current_branch(&root), Ok)?;
         Ok((files, from, branch))
@@ -759,7 +767,7 @@ fn pr_size(args: &[String]) -> u8 {
             &files,
             &branch,
             &format!("{base} (from {from})"),
-            hook,
+            false,
             env::var("GITHUB_ACTIONS").ok().as_deref(),
         )
     );
@@ -1180,15 +1188,21 @@ mod tests {
             dispatch(args(&["pr-size", "--base", "HEAD"]).into_iter()),
             0
         );
+        let pr_size = |a: &[&str]| {
+            pr_size(&args(a), || {
+                r#"{"tool_input":{"command":"git push"}}"#.to_owned()
+            })
+        };
         assert_eq!(
-            pr_size(&args(&["--base", "HEAD", "--branch", "sonar/x", "--hook"])),
+            pr_size(&["--base", "HEAD", "--branch", "sonar/x", "--hook"]),
             0
         );
-        assert_eq!(pr_size(&args(&["--help"])), 0);
-        assert_eq!(pr_size(&args(&["--base"])), 2);
-        assert_eq!(pr_size(&args(&["--branch"])), 2);
-        assert_eq!(pr_size(&args(&["--size"])), 2);
-        assert_eq!(pr_size(&args(&["--base", "no-such-ref-0135"])), 1);
+        assert_eq!(pr_size(&["--base", "no-such-ref-0135", "--hook"]), 0);
+        assert_eq!(pr_size(&["--help"]), 0);
+        assert_eq!(pr_size(&["--base"]), 2);
+        assert_eq!(pr_size(&["--branch"]), 2);
+        assert_eq!(pr_size(&["--size"]), 2);
+        assert_eq!(pr_size(&["--base", "no-such-ref-0135"]), 1);
         assert_eq!(
             parse_pr_size_args(&args(&["--hook", "--branch", "t1-a", "--base", "HEAD^1"])),
             Ok(("HEAD^1".to_owned(), Some("t1-a".to_owned()), true))
