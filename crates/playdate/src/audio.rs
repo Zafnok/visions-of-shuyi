@@ -786,6 +786,33 @@ mod tests {
         );
     }
 
+    /// Engine #318: a frame's gains set the music's and the sounds'
+    /// volumes, each its group's gain as a share of full.
+    #[test]
+    fn a_frames_gains_set_the_music_and_sound_volumes() {
+        use trpg_ui::audio::{GroupGains, SoundGroups};
+        let (mut speaker, mut audio) = loaded();
+        frame(
+            &mut speaker,
+            &mut audio,
+            &[],
+            &[load("theme"), start("theme")],
+        );
+        speaker.calls.clear();
+        let groups = SoundGroups::default();
+        let gains = GroupGains::full(&groups)
+            .with(&groups, MUSIC, Gain::new(2048))
+            .with(&groups, SFX, Gain::new(1024));
+        audio.set_gains(&mut speaker, &Gains::new(&groups, &gains));
+        // The cue's 0.8 times the music group's half.
+        assert_eq!(speaker.calls, [Call::Volume("music/theme".into(), 0.4)]);
+        // The click's 0.5 times the sound group's quarter.
+        assert_eq!(
+            frame(&mut speaker, &mut audio, &[sound("click", 1.0)], &[]),
+            [Call::Play(0, "audio/sfx/click".into(), 0.125)]
+        );
+    }
+
     #[test]
     fn the_music_option_reaches_the_track_playing() {
         let (mut speaker, mut audio) = loaded();
