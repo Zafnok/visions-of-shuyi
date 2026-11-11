@@ -44,6 +44,33 @@ mod tests {
         Rgb::from(ink.code())
     }
 
+    /// The Playdate's map draws each ink's code as the inks do: its
+    /// patterns, a `black_edged` glyph's edge and an `invert` rectangle's
+    /// flip.
+    #[test]
+    fn the_playdate_map_draws_each_ink_as_the_inks_do() {
+        let map = playdate_map().unwrap();
+        for ink in Ink::ALL {
+            let rgb = c(ink);
+            assert!(map.role_of(rgb).is_some(), "{ink:?}");
+            // Only a glyph is edged, and only a shape flips.
+            assert_eq!(map.ground(rgb).rows, InkShades.ground(rgb).rows, "{ink:?}");
+            let glyph = |s: Shade| (s.rows, s.edged);
+            assert_eq!(
+                glyph(map.glyph(rgb)),
+                glyph(InkShades.glyph(rgb)),
+                "{ink:?}"
+            );
+            let shape = |s: Shade| (s.rows, s.flips);
+            assert_eq!(
+                shape(map.shape(rgb)),
+                shape(InkShades.shape(rgb)),
+                "{ink:?}"
+            );
+        }
+        assert_eq!(map.role_of(c(Ink::Invert)), Some("cursor"));
+    }
+
     /// The game's own font: a glyph's pixels are the one-bit atlas's.
     #[test]
     fn the_games_font_draws_its_glyphs() {
