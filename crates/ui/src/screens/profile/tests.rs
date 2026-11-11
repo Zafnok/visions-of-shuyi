@@ -109,3 +109,25 @@ fn the_screen_declares_its_file_keys() {
     }
     assert!(actions.contains(&crate::input::Action::Confirm));
 }
+
+/// The folder key opens the saves' folder on a desktop, and nothing on the
+/// web.
+#[test]
+fn the_folder_key_opens_the_saves_folder_on_a_desktop() {
+    use crate::screen::{FrameInput, Screen};
+    use shuyi_ui::player_files::{FileRequest, Folder};
+    let mut c = crate::screen::tests::ctx();
+    c.platform.storage_place = shuyi_ui::StoragePlace::Folder("/saves".into());
+    let mut s = super::screen(&c);
+    let input = FrameInput::new(vec![crate::input::Action::WorldFind], 0.0, vec![]);
+    let _ = s.update(&mut c, &input);
+    assert_eq!(
+        c.take_file_requests(),
+        [FileRequest::OpenFolder(Folder::Storage)]
+    );
+    c.platform.storage_place = shuyi_ui::StoragePlace::Browser {
+        prefix: "x/".into(),
+    };
+    let _ = s.update(&mut c, &input);
+    assert_eq!(c.take_file_requests(), []);
+}

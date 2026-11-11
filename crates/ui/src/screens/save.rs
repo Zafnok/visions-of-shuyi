@@ -518,7 +518,8 @@ impl Screen<Shuyi> for SlotPickerScreen {
                         None
                     }
                     Action::Confirm => self.confirm(ctx),
-                    Action::Info if !self.is_saving() => {
+                    Action::Info => {
+                        // Only a save that loads: `can_export`.
                         self.ask_export(ctx);
                         None
                     }

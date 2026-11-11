@@ -236,21 +236,28 @@ fn file_name(path: &str) -> &str {
     path.rsplit(['/', '\\']).next().unwrap_or(path)
 }
 
+/// Where the platform says an offered file went, as a screen's notice
+/// takes it: `None` for a download (the screen names the file it offered).
+#[cfg(feature = "std")]
+fn exported_of(offered: &shuyi_platform::player_files::Offered) -> Option<Exported> {
+    use shuyi_platform::player_files::Offered;
+    match offered {
+        Offered::Downloaded => None,
+        Offered::Written(path) => Some(Exported::Written(file_name(path).to_owned())),
+        _ => Some(Exported::Failed),
+    }
+}
+
 /// The game's system hook: hands the Profile screen or the Load Game list
 /// where the file it offered went.
 #[cfg(feature = "std")]
 pub fn hear(game: &mut crate::game::Game, event: shuyi_platform::SystemEvent) {
     use crate::screens::{ProfileScreen, SlotPickerScreen};
-    use shuyi_platform::player_files::Offered;
 
     let shuyi_platform::SystemEvent::FileOffered(offered) = event else {
         return;
     };
-    let exported = match offered {
-        Offered::Downloaded => None,
-        Offered::Written(path) => Some(Exported::Written(file_name(&path).to_owned())),
-        _ => Some(Exported::Failed),
-    };
+    let exported = exported_of(&offered);
     if let Some(screen) = game.screen_mut::<SlotPickerScreen>() {
         screen.heard(exported);
     } else if let Some(screen) = game.screen_mut::<ProfileScreen>() {

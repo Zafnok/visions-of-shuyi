@@ -154,3 +154,16 @@ fn the_entries_of_another_profile_lose_its_prefix() {
         .collect();
     assert_eq!(entries, [("settings", "c"), ("slot_01", "b")]);
 }
+
+#[test]
+fn the_platforms_answer_becomes_a_notice() {
+    use shuyi_platform::player_files::Offered;
+    assert_eq!(exported_of(&Offered::Downloaded), None);
+    let written = Offered::Written("/x/exports/a (2).ron".into());
+    assert_eq!(
+        exported_of(&written),
+        Some(Exported::Written("a (2).ron".into()))
+    );
+    let failed = Offered::Failed("no".into());
+    assert_eq!(exported_of(&failed), Some(Exported::Failed));
+}
