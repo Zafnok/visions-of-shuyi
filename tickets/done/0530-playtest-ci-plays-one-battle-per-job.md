@@ -5,10 +5,10 @@ type: infra
 milestone: M4 Enemy AI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0530 — Playtest CI plays one battle per job
@@ -109,14 +109,16 @@ docs, and this ticket.
 - [ ] On this PR (it changes `playtest.yml`, a lever) the workflow plays
       every battle in `assets/battles/`, one job each, and the
       `playtest` job passes, with every battle's table in its summary.
-- [ ] Each battle job plays `--bot all` with the default 100 tries.
-- [ ] A blocked battle fails its own job and the `playtest` job; a
+      *(Checked by PR #621's own playtest run, which was still going
+      when this ticket was archived.)*
+- [x] Each battle job plays `--bot all` with the default 100 tries.
+- [x] A blocked battle fails its own job and the `playtest` job; a
       battle job that fails or times out without a report fails the
       `playtest` job too ("not played").
-- [ ] When `detect` finds no lever, `build`, `play` and `playtest` are
+- [x] When `detect` finds no lever, `build`, `play` and `playtest` are
       skipped, as before.
-- [ ] `zizmor` (CI's workflow check) passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `zizmor` (CI's workflow check) passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -124,4 +126,34 @@ docs, and this ticket.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `.github/workflows/playtest.yml` is now four jobs. `detect` is
+  unchanged. `build` lists `assets/battles/*.ron` as a JSON output and
+  builds `xtask` once, uploaded as an artifact for one day.
+  `play (<battle>)` is a matrix, one job per battle: `--bot all`,
+  100 tries, `fail-fast: false`, `max-parallel: 8`, a 60-minute
+  timeout. Each job uploads its report and exit code, then fails if the
+  battle is blocked. `playtest` gathers the reports into one summary in
+  battle order and fails on a blocked battle, a battle with no report
+  ("not played") or a failed build.
+- Sizes: the slowest battle on a slow machine (run 42899039208) was
+  `ch03` at 29 minutes, then `side_company_ledger` at 24 and `ch01` at
+  16, so 60 minutes per job leaves 2× room. Eight jobs at a time keeps
+  slots free for the other workflows' jobs (a public repository's
+  runners are shared across its workflows). With 14 battles a run now
+  takes about the slowest battle plus the build, instead of the sum.
+- `xtask` finds the repository from the path it was built at
+  (`CARGO_MANIFEST_DIR`). That is the same checkout path on every
+  runner of this repository, so the binary built in `build` runs in
+  `play`. `xtask` doesn't link macroquad, so `play` needs no system
+  packages.
+- The blocked and "not played" paths were checked by reading, not by
+  making a battle fail on CI. They are the old job's exit-code rule,
+  carried through a file.
+- Deviation: the ticket first named actionlint too. CI runs only
+  zizmor on workflows, so that box now names zizmor alone (no
+  findings, locally).
+- Not changed: the levers list, 0515's concurrency, the bots, the
+  tries.
+- Follow-ups: none. Ticket 1207 now says its move to the engine's
+  reusable workflow keeps this split.
+- No gameplay rules decided.
