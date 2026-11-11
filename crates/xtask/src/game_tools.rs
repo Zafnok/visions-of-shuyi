@@ -259,7 +259,7 @@ impl GameTools for Trpg {
         let mut frame = Box::new([0; FRAME_BYTES]);
         h.set_present_hook(Some(Box::new(move |presented: &Frame<'_>| {
             if let Show::Game { buffer, .. } = presented.show {
-                onebit::render_with(buffer, &font, &pictures, &shades, &mut frame);
+                onebit::render(buffer, &font, &pictures, &shades, &mut frame);
             }
         })));
         Ok(Box::new(session(h, start)))
@@ -475,7 +475,7 @@ fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String>
         // The pictures the Playdate's build makes (ticket 1040).
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
         let shades = onebit::playdate_map()?;
-        onebit::render_with(buffer, &font, &pictures, &shades, &mut frame);
+        onebit::render(buffer, &font, &pictures, &shades, &mut frame);
         Ok(one_bit_picture(&frame, scale.unwrap_or(1)))
     } else {
         painted(ctx, buffer, scale.unwrap_or(2))

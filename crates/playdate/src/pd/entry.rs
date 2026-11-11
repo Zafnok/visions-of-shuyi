@@ -218,7 +218,7 @@ fn update(step: &mut Step) -> bool {
                 let shades = onebit::playdate_map()
                     .unwrap_or_else(|e| panic!("no pattern map for the card: {e}"));
                 let card = card::buffer(ConsoleSpec::PLAYDATE);
-                onebit::render_with(&card, &font, &(), &shades, &mut frame);
+                onebit::render(&card, &font, &(), &shades, &mut frame);
                 (font, shades)
             });
             let changed = show(&frame);
@@ -505,7 +505,7 @@ impl Running {
             return false;
         }
         if let Some(shown) = &mut self.shown {
-            onebit::render_changed_with(
+            onebit::render_changed(
                 shown,
                 buffer,
                 &self.font,
@@ -515,7 +515,7 @@ impl Running {
             );
             shown.clone_from(buffer);
         } else {
-            onebit::render_with(
+            onebit::render(
                 buffer,
                 &self.font,
                 &self.pictures,

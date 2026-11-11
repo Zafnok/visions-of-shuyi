@@ -52,7 +52,7 @@ pub fn buffer(spec: ConsoleSpec) -> GlyphBuffer {
 #[cfg(test)]
 mod tests {
     use trpg_ui::ConsoleSizes;
-    use trpg_ui::onebit::{FRAME_BYTES, ROW_BYTES, playdate_map, render_with};
+    use trpg_ui::onebit::{FRAME_BYTES, ROW_BYTES, playdate_map, render};
 
     use super::*;
 
@@ -89,7 +89,7 @@ mod tests {
         let font = font().unwrap_or_else(|e| panic!("{e}"));
         let mut frame = Box::new([0; FRAME_BYTES]);
         let shades = playdate_map().unwrap_or_else(|e| panic!("{e}"));
-        render_with(
+        render(
             &buffer(ConsoleSpec::PLAYDATE),
             &font,
             &(),
