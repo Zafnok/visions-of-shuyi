@@ -4,7 +4,13 @@ name: Playtest
 # in assets/battles 100 times each. The job fails only when a battle is
 # blocked: the Casual persona succeeds in under 20% of tries
 # (docs/design/playtest-bots.md, "What a miss does"). A band missed (✗ too
-# hard, ⚠ too easy) is only reported, in the job summary.
+# hard, ⚠ too easy) is only reported, in the summary of the `playtest`
+# job.
+#
+# Each battle is played in a job of its own (ticket 0530): `build` makes
+# xtask once and lists the battles, `play` plays one battle per job, and
+# `playtest` gathers their reports into one summary. It fails when a
+# battle is blocked or was not played (its job failed or ran out of time).
 #
 # It plays only when a balance lever changed (ticket 0514): the battles and
 # maps, the number tables in assets/data, the rules, how content becomes a
@@ -78,41 +84,138 @@ jobs:
           git diff --name-only --no-renames $range | bash .github/playtest-levers.sh | tee levers.txt
           grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
 
-  playtest:
-    name: playtest
+  # Builds xtask once for every battle job, and lists the battles: every
+  # file in assets/battles, so a new battle is played without editing
+  # this workflow (ticket 0530).
+  build:
+    name: build
     needs: detect
     if: needs.detect.outputs.play == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 30
+    outputs:
+      battles: ${{ steps.battles.outputs.battles }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: List the battles
+        id: battles
+        run: |
+          set -euo pipefail
+          battles=$(for file in assets/battles/*.ron; do basename "$file" .ron; done | jq -R . | jq -sc .)
+          echo "$battles"
+          echo "battles=$battles" >> "$GITHUB_OUTPUT"
       - run: rustup show
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo build --release --locked -p xtask
-      - name: Play every battle
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playtest-xtask
+          path: target/release/xtask
+          retention-days: 1
+          if-no-files-found: error
+
+  # One job per battle (ticket 0530): one job playing them all in turn ran
+  # past its 150 minutes once the Act 1 skirmishes came (14 battles, and a
+  # CI machine's speed varies about 2x). A battle's three personas stay in
+  # one `--bot all` run: the targets' "faster" check compares two of them.
+  # The slowest battle (ch03) took 29 minutes on a slow machine.
+  # max-parallel leaves room for the other workflows' jobs.
+  play:
+    name: play (${{ matrix.battle }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        battle: ${{ fromJSON(needs.build.outputs.battles) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # xtask finds the repository from the path it was built at, which is
+      # this same checkout path on every runner.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: playtest-xtask
+          path: target/release
+      - name: Play the battle
+        env:
+          BATTLE: ${{ matrix.battle }}
         run: |
           set -uo pipefail
-          blocked=0
-          for file in assets/battles/*.ron; do
-            battle=$(basename "$file" .ron)
-            echo "::group::$battle"
-            target/release/xtask playtest "$battle" --bot all | tee "report-$battle.txt"
-            status=${PIPESTATUS[0]}
-            echo "::endgroup::"
+          # An artifact loses the file's mode.
+          chmod +x target/release/xtask
+          mkdir -p reports
+          target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt"
+          echo "${PIPESTATUS[0]}" > "reports/$BATTLE.status"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playtest-report-${{ matrix.battle }}
+          path: reports/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Fail if the battle is blocked
+        env:
+          BATTLE: ${{ matrix.battle }}
+        run: |
+          status=$(cat "reports/$BATTLE.status")
+          if [ "$status" -ne 0 ]; then
+            echo "::error::$BATTLE: blocked (or the playtest failed), exit $status"
+            exit 1
+          fi
+
+  # Gathers every battle's report into one summary, in the battles'
+  # order, and fails when a battle is blocked or was not played.
+  playtest:
+    name: playtest
+    needs: [detect, build, play]
+    if: ${{ !cancelled() && needs.detect.outputs.play == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # No report at all (every battle job failed) is told below, battle
+      # by battle, as "not played".
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          pattern: playtest-report-*
+          path: reports
+          merge-multiple: true
+      - name: Gather the reports
+        env:
+          BUILD: ${{ needs.build.result }}
+          BATTLES: ${{ needs.build.outputs.battles }}
+        run: |
+          set -euo pipefail
+          if [ "$BUILD" != success ] || [ -z "$BATTLES" ]; then
+            echo "::error::the build of xtask failed: no battle was played"
+            exit 1
+          fi
+          failed=0
+          for battle in $(jq -r '.[]' <<< "$BATTLES"); do
+            echo "### $battle" >> "$GITHUB_STEP_SUMMARY"
+            if [ ! -f "reports/$battle.status" ]; then
+              echo "::error::$battle: not played (its job failed or ran out of time)"
+              echo "Not played: its job failed or ran out of time." >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+              continue
+            fi
             {
-              echo "### $battle"
               echo '```'
               # The table and the game's lines, without one line per try.
-              grep -v '^try ' "report-$battle.txt"
+              grep -v '^try ' "reports/$battle.txt" || true
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
+            status=$(cat "reports/$battle.status")
             if [ "$status" -ne 0 ]; then
               echo "::error::$battle: blocked (or the playtest failed), exit $status"
-              blocked=1
+              failed=1
             fi
           done
-          exit $blocked
+          exit $failed

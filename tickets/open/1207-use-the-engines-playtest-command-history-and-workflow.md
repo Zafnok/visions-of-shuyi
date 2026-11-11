@@ -68,6 +68,11 @@ command, not by a new gameplay sign-off.
   all --brief`. Missing plans are errors, not `allow-no-plan` successes.
   Preserve 0514's lever filtering and 0515's concurrency: each push runs
   to completion; a newer PR commit may cancel its previous run.
+  Preserve 0530's split too: one job per battle (all its personas in
+  one run) and a job that gathers their summaries, since one job
+  playing every stage in turn runs out of time. If the engine's
+  reusable workflow can't split by stage, that is an engine ticket
+  first.
 - Replace the deleted wrapper's path in `.github/playtest-levers.sh`
   with the plan's new paths. Ensure `engine-pin` moves the reusable
   workflow's engine SHA with the dependency pin, using its existing
