@@ -16,9 +16,12 @@
 //! glyph look.
 
 use insta::assert_snapshot;
+use shuyi_ui::audio::loudness::loudness;
 use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
 use trpg_ui::ShuyiCtx;
+use trpg_ui::audio::Gain;
+use trpg_ui::audio::groups::{MUSIC, SFX};
 use trpg_ui::color::UiColor;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord};
@@ -290,20 +293,30 @@ fn the_cursor_row_changes_the_battle_cursor() {
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
 }
 
+/// The gains the last frame played the music and the sounds at.
+fn heard(h: &Harness) -> (Gain, Gain) {
+    (h.gain(MUSIC), h.gain(SFX))
+}
+
+/// The gains of a music and a sound volume, on the engine's loudness
+/// curve (engine #318).
+fn at(music: u8, sound: u8) -> (Gain, Gain) {
+    (loudness(music), loudness(sound))
+}
+
 /// Acceptance: the volumes change what `app` is told to play at, 0
 /// silences, and they persist across a restart. Nick: 0 to 100, a slider
 /// and a box for the exact number.
 #[test]
 fn volumes_reach_the_mixer_and_persist() {
-    let close = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
     let mut h = options();
-    // The defaults: 80 of 100 each.
-    assert!(close(h.volumes(), (0.8, 0.8)), "{:?}", h.volumes());
+    // The defaults: 97 of 100 each, where the old 80 was (engine #318).
+    assert_eq!(heard(&h), at(97, 97));
     // The slider: five at a time.
     h.keys(TO_MUSIC).keys("Left Left Left");
-    assert!(close(h.volumes(), (0.65, 0.8)), "{:?}", h.volumes());
+    assert_eq!(heard(&h), at(82, 97));
     let slider = ValueView::Volume {
-        level: 65,
+        level: 82,
         max: 100,
     };
     assert_eq!(value(&h, Row::MusicVolume), slider);
@@ -320,30 +333,30 @@ fn volumes_reach_the_mixer_and_persist() {
     // The game's keys do nothing while it is open; nothing changes yet.
     h.keys("Down d");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert!(close(h.volumes(), (0.65, 0.8)), "{:?}", h.volumes());
+    assert_eq!(heard(&h), at(82, 97));
     h.keys("Enter");
-    assert!(close(h.volumes(), (0.07, 0.8)), "{:?}", h.volumes());
-    assert_eq!(settings(&h).music_volume, 7);
+    assert_eq!(heard(&h), at(7, 97));
+    assert_eq!(settings(&h).volumes.get(MUSIC), Some(7));
     // 0 is silent, by the box or by the slider (which stops there).
     h.keys("f").type_text("0").keys("Enter");
-    assert!(close(h.volumes(), (0.0, 0.8)), "{:?}", h.volumes());
+    assert_eq!(heard(&h), (Gain::SILENT, loudness(97)));
     h.keys("Left");
-    assert_eq!(settings(&h).music_volume, 0);
+    assert_eq!(settings(&h).volumes.get(MUSIC), Some(0));
     // Escape leaves the volume as it was.
     h.keys("f").type_text("55").keys("Escape");
-    assert_eq!(settings(&h).music_volume, 0);
+    assert_eq!(settings(&h).volumes.get(MUSIC), Some(0));
     assert_eq!(h.screens(), ["title", "options"]);
     // The sound volume, up to its loudest and no further.
     h.keys("Down Right Right Right Right Right");
-    assert!(close(h.volumes(), (0.0, 1.0)), "{:?}", h.volumes());
-    assert_eq!(settings(&h).sound_volume, 100);
+    assert_eq!(heard(&h), (Gain::SILENT, Gain::FULL));
+    assert_eq!(settings(&h).volumes.get(SFX), Some(100));
     // Each step that changed it ticks (at the new volume); the second
     // Right changed nothing.
     h.clear_audio().keys("Left Right Right");
     assert_eq!(h.sounds(), ["menu_move", "menu_move"]);
     h.keys(KEEP);
     let h = relaunch(h);
-    assert!(close(h.volumes(), (0.0, 1.0)), "{:?}", h.volumes());
+    assert_eq!(heard(&h), (Gain::SILENT, Gain::FULL));
 }
 
 /// Acceptance: the layout switches from Options, both ways, as often as
@@ -874,7 +887,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     h.keys("Right").keys("Down Down Down Down Down Right");
     h.keys("Down Down Down Down Down Left");
     assert!(h.fullscreen());
-    assert!((h.volumes().0 - 0.75).abs() < 1e-6, "{:?}", h.volumes());
+    assert_eq!(h.gain(MUSIC), loudness(92));
     assert_eq!(stored(&h), saved_before, "nothing saved yet");
     // Leaving asks, on Back.
     h.keys("d");
@@ -894,7 +907,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     assert_eq!(h.screens(), under);
     assert_eq!(settings(&h), before);
     assert!(!h.fullscreen());
-    assert!((h.volumes().0 - 0.8).abs() < 1e-6, "{:?}", h.volumes());
+    assert_eq!(h.gain(MUSIC), loudness(97));
     assert_eq!(stored(&h), saved_before);
     // Again, and Keep: saved.
     h.keys("f Right d Left Left f");

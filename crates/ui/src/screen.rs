@@ -403,6 +403,7 @@ pub(crate) mod tests {
     };
 
     use super::*;
+    use crate::audio::groups::{MUSIC, SFX, VOICE};
     use crate::settings::SETTINGS_KEY;
     use crate::storage::{MemoryStorage, Storage, StorageError};
     use crate::{AudioRequest, Rgb};
@@ -570,17 +571,17 @@ pub(crate) mod tests {
         );
     }
 
-    /// Ticket 0826: the voices are settings, on at 80 until changed, and
-    /// the volume is a factor from silent to full.
+    /// Ticket 0826: the voices are settings, on at the old 80 until
+    /// changed: 97 on the engine's loudness curve (engine #318), which
+    /// sounds the same.
     #[test]
-    fn the_voice_settings_start_on_and_the_volume_is_a_factor() {
+    fn the_voice_settings_start_on_at_the_old_volume() {
         let mut c = ctx();
         assert!(c.settings().voices);
-        assert!((c.settings().voice_factor() - 0.8).abs() < f32::EPSILON);
-        for (volume, gain) in [(0, 0.0), (50, 0.5), (100, 1.0)] {
-            c.change_settings(|s| s.voice_volume = volume).unwrap();
-            let factor = c.settings().voice_factor();
-            assert!((factor - gain).abs() < f32::EPSILON, "{volume}");
+        assert_eq!(c.volume(VOICE), 97);
+        for volume in [0, 50, 100] {
+            c.change_settings(|s| s.volumes.set(VOICE, volume)).unwrap();
+            assert_eq!(c.volume(VOICE), volume);
         }
     }
 
@@ -614,6 +615,7 @@ pub(crate) mod tests {
                 looped: true,
                 length_ms: 10_000,
                 credit: CreditRef::Own,
+                group: None,
             };
             audio.music.insert(cue.to_owned(), track);
         }
@@ -795,11 +797,11 @@ pub(crate) mod tests {
         assert_eq!(c.change_settings(|_| {}), Ok(()));
         assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
         c.change_settings(|s| {
-            s.music_volume = 3;
+            s.volumes.set(MUSIC, 3);
             s.game.combat_animations = false;
         })
         .unwrap();
-        assert_eq!(c.settings().music_volume, 3);
+        assert_eq!(c.settings().volumes.get(MUSIC), Some(3));
         let storage = std::mem::take(&mut c.storage).into_computer();
         let mut again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.settings(), c.settings());
@@ -830,19 +832,21 @@ pub(crate) mod tests {
         assert_ne!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
         assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
         // Kept: written; keeping again writes nothing new.
-        c.preview_settings(|s| s.music_volume = 3);
+        c.preview_settings(|s| s.volumes.set(MUSIC, 3));
         c.keep_settings().unwrap();
         let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
-        assert_eq!(Settings::from_ron(&saved).unwrap().music_volume, 3);
+        let music = Settings::from_ron(&saved).unwrap().volumes.get(MUSIC);
+        assert_eq!(music, Some(3));
         c.storage.write(SETTINGS_KEY, "marker").unwrap();
         c.keep_settings().unwrap();
         assert_eq!(c.storage.read(SETTINGS_KEY).unwrap().unwrap(), "marker");
         // A layout picked meanwhile saves only the layout.
-        c.preview_settings(|s| s.music_volume = 9);
+        c.preview_settings(|s| s.volumes.set(MUSIC, 9));
         c.choose_layout(LEFT_HANDED).unwrap();
         let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
         let saved = Settings::from_ron(&saved).unwrap();
-        assert_eq!((saved.music_volume, saved.layout()), (3, Some(LEFT_HANDED)));
+        let saved = (saved.volumes.get(MUSIC), saved.layout());
+        assert_eq!(saved, (Some(3), Some(LEFT_HANDED)));
     }
 
     #[test]
@@ -959,8 +963,8 @@ pub(crate) mod tests {
     #[test]
     fn a_failed_save_still_changes_the_settings() {
         let mut c = Ctx::embedded().unwrap().with_storage(Box::new(Failing));
-        assert!(c.change_settings(|s| s.sound_volume = 1).is_err());
-        assert_eq!(c.settings().sound_volume, 1);
+        assert!(c.change_settings(|s| s.volumes.set(SFX, 1)).is_err());
+        assert_eq!(c.settings().volumes.get(SFX), Some(1));
     }
 
     #[test]

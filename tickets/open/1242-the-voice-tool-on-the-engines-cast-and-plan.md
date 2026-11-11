@@ -36,8 +36,8 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past engine 2250 and 2251 (`engine-change` skill, step 7;
-  `engine-pin` skill's review for the engine PRs it passes).
+- ~~Move the pin past engine 2250 and 2251 (`engine-change` skill, step 7;
+  `engine-pin` skill's review for the engine PRs it passes).~~ (done by the pin move of 2026-11-10).
 - The tool reads `cast.ron` with the engine's `cast_from_source`, with
   `Reader` as its settings. The lead's two voices become the engine's
   speaker-and-variant keys (`lead.m`, `lead.f` in place of `lead_m`,
@@ -57,8 +57,8 @@ None.
 
 ## Implementation steps
 
-1. Move the pin (`cargo xtask engine-pin`), with the review and the
-   ledger section.
+1. ~~Move the pin (`cargo xtask engine-pin`), with the review and the
+   ledger section.~~ (done by the pin move of 2026-11-10).
 2. `files.rs`: drop `Cast`, `Voice`, `cast` and `Cast::entry`; read the
    cast with the engine's, `Reader` as `S`. Rename the lead's keys
    everywhere listed above.

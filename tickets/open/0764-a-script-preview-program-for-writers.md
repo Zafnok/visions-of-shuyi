@@ -85,7 +85,8 @@ its folder through engine#2585's watched folder, and 1209 may reuse the
 preview's code when it lands.
 
 **Either order with engine#3082** (demo editions: a program built with
-only some content): if it is done and pinned, build the preview as an
+only some content; done and pinned by the pin move of 2026-11-10, engine
+#346): if it is done and pinned, build the preview as an
 edition whose content root leaves out `dialogue/`; if not, leave the
 scripts out with a `trpg-content` feature (step 3).
 
@@ -163,7 +164,7 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
   starting the game at a chapter, battle or scene from the debug menu.
   The preview draws a trigger's scene over its battle's map, as the game
   does. If a writer asks for more, write a ticket then.
-- A web build (it needs files dropped on the page, engine#3092) and a
+- A web build (0767, now that engine#3092 and #2588 are pinned) and a
   Linux build.
 - Voice clips (Nick's machine only, `docs/voice.md`).
 - Changing `--scene` or `ScenePreviewScreen`; they stay the developers'
@@ -174,8 +175,8 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 ## Implementation steps
 
 1. Read engine#2585's and engine#2586's completion notes (the pieces,
-   the trait, the screen and the folder watch), move the engine pin past
-   2586 if it isn't yet (`engine-pin` skill), then read ADR-0040, ADR-0054, ADR-0057, `scene_preview.rs` and
+   the trait, the screen and the folder watch), ~~move the engine pin past
+   2586 if it isn't yet (`engine-pin` skill)~~ (done by the pin move of 2026-11-10), then read ADR-0040, ADR-0054, ADR-0057, `scene_preview.rs` and
    `game.rs`'s `start_on_scene` (`crates/ui/src/game.rs:90`).
 2. Write the size estimate first (rule 9). **Expected size: about 400
    production lines**: the game's side of engine#2586's preview (about

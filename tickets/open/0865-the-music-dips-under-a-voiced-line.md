@@ -5,7 +5,7 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: blocked
+status: todo
 blocked_by: ["engine#2343"]
 nick_input: none
 completed:
@@ -55,8 +55,9 @@ playtest (1064's checklist).
 ## Scope
 
 **In:**
-- The pin moved past engine 2343 (its first step, `engine-change` §7, or
-  the open `engine-pin` PR that passes it).
+- ~~The pin moved past engine 2343 (its first step, `engine-change` §7, or
+  the open `engine-pin` PR that passes it).~~ (done by the pin move of 2026-11-10): engine
+  #332, with sound groups (#318) and the groups in the manifest (#326).
 - One rule in `assets/audio/audio.ron`'s `ducks`:
   `(when: "voice", lower: "music", to: <about −6 dB>, attack_ms: 150, release_ms: 600)`,
   `to` read off 2342's curve.
@@ -74,7 +75,7 @@ playtest (1064's checklist).
 
 ## Implementation steps
 
-1. Check engine 2343 is done and the pin is past it.
+1. ~~Check engine 2343 is done and the pin is past it.~~ (done by the pin move of 2026-11-10).
 2. Add the rule to `audio.ron`.
 3. The Harness tests above (the engine's `Harness::voice_length` sets how
    long the headless voice plays).

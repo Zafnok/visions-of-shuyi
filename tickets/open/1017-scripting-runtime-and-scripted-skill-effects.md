@@ -49,8 +49,8 @@ None.
 ## Scope
 
 **In:**
-- Move the pin to an engine `main` that has engine#2101 (`cargo xtask
-  engine-pin <commit>`, the `engine-change` skill §7), and add the
+- ~~Move the pin to an engine `main` that has engine#2101 (`cargo xtask
+  engine-pin <commit>`, the `engine-change` skill §7)~~ (done by the pin move of 2026-11-10), and add the
   engine's `shuyi-script` module to the root `Cargo.toml`'s
   `[workspace.dependencies]` beside the other engine crates (same git
   URL and `rev`) and to `trpg-core` (or the crate 1011's ADR says).
@@ -86,7 +86,7 @@ skills stay data, per ADR-0021's reasoning about tests); the editor (1019).
 
 1. Read ADR-0004, 0019, 0021, 1011's ADR, `crates/core/src/skill*` and
    where the battle gathers passives into `CombatMods`.
-2. Move the pin and add the engine's module (Scope); confirm the WASM
+2. ~~Move the pin~~ (done by the pin move of 2026-11-10) and add the engine's module (Scope); confirm the WASM
    build (`cargo build -p trpg-app --target wasm32-unknown-unknown`) and
    `cargo deny check` still pass.
 3. Build the view type and the conversion from the script's return value

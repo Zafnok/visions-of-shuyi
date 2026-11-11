@@ -25,7 +25,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use trpg_content::audio::{self, AudioManifest};
-use trpg_ui::audio::{AudioRequest, MusicCommand, splitmix64};
+use trpg_ui::audio::groups::{MUSIC, SFX};
+use trpg_ui::audio::{AudioRequest, Gain, Gains, MusicCommand, splitmix64};
 
 /// How many sounds can play at once: one sample player each. A sound
 /// asked for while all play stops one of them, each in turn.
@@ -200,6 +201,14 @@ impl<S: Speaker> Audio<S> {
                 speaker.set_track_volume(file, track.volume * track.gain * music);
             }
         }
+    }
+
+    /// Sets the player's volumes from one frame's `gains` (engine #318):
+    /// the music group's and the sound group's, as [`Self::set_volumes`].
+    pub fn set_gains(&mut self, speaker: &mut S, gains: &Gains<'_>) {
+        let unit = |gain: Gain| f32::from(gain.get()) / f32::from(Gain::UNIT);
+        let (music, sound) = (unit(gains.group(MUSIC)), unit(gains.group(SFX)));
+        self.set_volumes(speaker, music, sound);
     }
 
     /// Plays one frame's sound `requests` (the music requests are already
@@ -489,6 +498,7 @@ mod tests {
             looped,
             length_ms: 10_000,
             credit: CreditRef::Own,
+            group: None,
         };
         m.music.insert("theme".into(), track("theme.ogg", 80, true));
         m.music

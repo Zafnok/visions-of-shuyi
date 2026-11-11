@@ -271,3 +271,35 @@ Nothing for the game: 5 PRs (#281, #282, #290, #296, #299). #281, #282 and #290 
 | #302 | 3211 | A tip keeps its instructions apart from its text: `Tip::how`, `TipLimits::how_lines` | fixed: the tips' `LIMITS` sets `how_lines: 0`; adopt → 0475 (Vix's spoken lines name no key, the keys go in a tip's `how`) |
 
 Nothing for the game: none.
+
+## 2026-11-10: c1ba9ec8 → ab593bb9 (50 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #306 | 2581 | Scene data derived from the game's state; `contract::run::SceneOutput` is `#[non_exhaustive]` with `value` and `shape` | fixed: nothing to change (the game builds no `SceneOutput`) |
+| #304 | 2576 | A misspelled action in a language file fails `shuyi check` (`text::check_key_placeholders`, `SH2008`) | fixed: nothing to change (the game isn't on `BasicData`, so its language files load as before); adopt → 0253 (the UI text's 126 key placeholders are checked by nothing today) |
+| #307 | 2388 | One-bit roles learn what the inks do: `RolePatterns` is `#[non_exhaustive]` with `edge` and `invert`, `Base` gains `Dots`, packs are version 10 | fixed: the xtask's Playdate skin builds its roles with `RolePatterns::of`; unblocks 1170 |
+| #318 | 2342 | Sound groups: a master volume and a volume per group on a loudness curve; `Settings`' three volumes, `FrameOutput`'s and the Harness's are gone | fixed: the settings' saved form is version 3 with `volumes`, and a version 1 or 2 save's linear volumes load where they sound the same (its 80, the old default, as the group's default); the Playdate front end plays at the frame's music and sound gains (`Audio::set_gains`); the tests read the gains (`Harness::gain`). The Options rows show a default volume as 97 where they showed 80, the same loudness, so their snapshots moved |
+| #326 | 2258 | A game's own sound groups in the audio manifest; `MusicCue` gains `group`, packs are version 11 | fixed: the two test `MusicCue`s add `group: None` |
+| #335 | 3097 | A game's load runs over several update callbacks on the Playdate; `Start::load` is a `Loader`, packs are version 13 | fixed: nothing to change (the game's `Start` is built with `Start::new`); unblocks 1170 |
+| #331 | 3099 | Release exports strip their symbols, refuse the debug features, keep the crash record only when asked and never skip `wasm-opt` silently | fixed: `shuyi.ron`'s `export` says `wasm_opt: optional` (no runner installs Binaryen, and before it was skipped), and the crash reports keep the battle's record in a release build (`CrashReports::with_record_in_release`, as 1245 shipped them); adopt → 0916 (Binaryen on CI's and the release's runners, `optional` gone) |
+| #332 | 2343 | Ducking: a sound group lowered while a voice plays, as rules in the audio manifest; packs are version 14 | fixed: nothing to change (the game bakes no pack); adopt → 0865 (its pin step struck) |
+| #344 | 3303 | Every debug feature refused in the resolved export build; `live_link::FEATURE` and `ENGINE` gone, `Violation` gains `feature` | fixed: nothing to change (the game names neither constant and builds no `Violation`); 0914 says what it gives the demo |
+| #345 | 2586 | The dialogue preview screen: a game's scenes from a watched folder, with switches, lines, problems and reload | fixed: nothing to change (only Hello, Grid's golden rows moved); adopt → 0764 (its pin step struck) |
+| #346 | 3082 | Named demo editions from separate code and content roots; `ExportCx`, `ExportOutput`, `BuildInputs` and `web::Options` gain fields | fixed: nothing to change (the game builds none of them field by field); unblocks 0914 (its pin step struck) and 0764's edition clause |
+| #352 | 3092 | Files dropped on the window, handed to the game as a bundle layer; `SystemEvent` is no longer `Copy` | fixed: nothing to change (the game copies no `SystemEvent`); adopt → 0767 |
+| #303 | 2251 | Plan a language's voice clips and each voice's recording script | unblocks 1242 (its pin step struck) |
+| #309 | 3096 | `shuyi export playdate` builds the game's Playdate package, with its features | unblocks 1170 (now `todo`: 2388, 3096 and 3097 are all pinned) |
+| #329 | 2101 | A deterministic, sandboxed script runtime: `shuyi-script` | unblocks 1017 (its pin step struck) |
+| #293 | 3069 | Files from the page: a web build lays the page's files over its own and sends its problems back | adopt → 0767 (the page can hand the web preview a writer's files) |
+| #322 | 3085 | Live-link features refused in the resolved export build | adopt → 0914 (the demo's export is refused if a debug feature or the live link reaches it by any path) |
+| #333 | 2585 | A dialogue preview's pieces: a scene's conditions, a player from any text box, a line's direction, a folder watched in every build | adopt → 0764 |
+| #350 | 3304 | The bake takes an edition's content root, so a Playdate edition ships only its own files | adopt → 1170 (what the Playdate leaves out, by a content root rather than `playdate-bundle.txt`, if its data comes from the pack) |
+| #349 | 2587 | A dialogue preview on the short path: a `BasicGame`'s preview binary in one call | not for the game: it isn't on `BasicGame` (its own `Game` and `AppConfig`); 0764 builds its preview on the pieces (#333, #345) |
+| #348 | 3305 | `NOTICES.txt` lists the crates of the build as Cargo resolves it | adopt → 0914 (a demo without the default features names none of their crates) |
+| #351 | 3306 | A Playdate edition's sounds and music come from its content root; the exporter's audio goes through `bake` | adopt → 1170 (the exporter asks `GameTools::audio` through `bake`) |
+| #355 | 2588 | A dialogue preview on the web: `.dlg` files dropped on the page | adopt → 0767 |
+| #353 | 3308 | Filling a rectangle keeps the items it misses as they were | unblocks 1261 (its pin step struck; the `bench` numbers are its) |
+| #313 | 3212 | The options panel rises only when its message wouldn't fit | fixed: the four in-battle Options snapshots show the panel one row lower again, where it was before #294 (the engine ticket the pin move of 2026-11-07 filed) |
+
+Nothing for the game: 25 PRs (#305, #312, #311, #310, #308, #314, #316, #315, #317, #324, #325, #327, #328, #321, #320, #323, #334, #338, #339, #340, #341, #343, #342, #347, #354). #305 and #327 are engine tickets only; #308, #316, #317, #334, #339, #341 and #347 are the engine's book, tutorial and site; #310 is the templates' web build; #311, #312, #315, #320, #321, #323 and #325 are the engine's own CI and tooling; #314, #324, #328 and #338 are tickets and research; #340, #342 and #343 are Sonar fixes in the web shell's scripts with no change in what they do; #354 stops a folder dropped on the Windows window from crashing, which the game reaches only through #352's drops (0767).

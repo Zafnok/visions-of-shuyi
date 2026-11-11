@@ -120,7 +120,14 @@ Nick asks for it.
   chapter, the skirmishes or the debug tools (`Item::QuickBattle` is
   already debug-only). A save the demo makes loads in the demo.
 - **No debug tools**: the demo is a release export (engine 3099 refuses
-  debug features).
+  debug features). Since the pin move of 2026-11-10 the refusal reads the
+  build Cargo resolves (engine #322 and #344): a debug feature, or the
+  live link, reached through a default or a dependency is refused too,
+  so the demo edition's features need no list of what to keep off.
+- **Its notices**: `NOTICES.txt` lists the crates of the build as Cargo
+  resolves it (engine #348), so a demo built with
+  `default_features: false` names no crate only the full game's default
+  features bring, and a canary can't trip on them.
 - **The disclosure part for the demo**: canaries that are found in the
   full game and must not be in the demo. Use ids and file names (a
   Chapter 2 scene id, `ch02.map`, a character id first met in Chapter
@@ -150,8 +157,9 @@ Nick asks for it.
 
 ## Implementation steps
 
-1. Move the engine pin past engine#3082 (`engine-pin` skill, its review
-   and ledger section). Read 3082's completion notes, ADR-0082 and
+1. ~~Move the engine pin past engine#3082 (`engine-pin` skill, its review
+   and ledger section).~~ (done by the pin move of 2026-11-10): engine #346, with the bake's
+   content root (#350) and an edition's notices (#348). Read 3082's completion notes, ADR-0082 and
    `crates/content/src/bundle.rs`'s `left_out`.
 2. Size first (rule 9): **about 1,200 changed lines**: the edition and
    left-out list 80, the shared files' cut at build time 250 (judge by

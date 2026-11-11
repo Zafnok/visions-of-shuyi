@@ -51,8 +51,10 @@ fn config() -> AppConfig {
         voice::SOURCE_LANG,
         voice::MANIFEST_FILE,
     ));
-    // Each crash report names the game's version (ticket 1245).
-    config.crash = CrashReports::new(APP.version);
+    // Each crash report names the game's version and holds the open
+    // battle's record, in a release build too (ticket 1245; engine #331
+    // keeps it to debug builds unless asked).
+    config.crash = CrashReports::new(APP.version).with_record_in_release();
     config
 }
 

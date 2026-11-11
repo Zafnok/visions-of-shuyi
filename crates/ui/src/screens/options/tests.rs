@@ -5,6 +5,7 @@
 
 use super::*;
 use crate::audio::AudioRequest;
+use crate::audio::groups::{MUSIC, SFX, VOICE};
 use crate::input::{Action, LEFT_HANDED};
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, ShuyiCtx};
@@ -247,10 +248,19 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Intro, s.game.intro != before.game.intro),
             (Row::Towns, s.game.towns != before.game.towns),
             (Row::Theme, s.theme != before.theme),
-            (Row::MusicVolume, s.music_volume != before.music_volume),
-            (Row::SoundVolume, s.sound_volume != before.sound_volume),
+            (
+                Row::MusicVolume,
+                s.volumes.get(MUSIC) != before.volumes.get(MUSIC),
+            ),
+            (
+                Row::SoundVolume,
+                s.volumes.get(SFX) != before.volumes.get(SFX),
+            ),
             (Row::Voices, s.voices != before.voices),
-            (Row::VoiceVolume, s.voice_volume != before.voice_volume),
+            (
+                Row::VoiceVolume,
+                s.volumes.get(VOICE) != before.volumes.get(VOICE),
+            ),
             (Row::LogVoice, s.game.log_voice != before.game.log_voice),
             (
                 Row::AutoAdvance,
@@ -293,10 +303,11 @@ fn rows_show_their_values() {
             "On*",
             "On*",
             "Earthy painterly*",
-            "<80/100>",
-            "<80/100>",
+            // The old 80 on the engine's loudness curve (engine #318).
+            "<97/100>",
+            "<97/100>",
             "On*",
-            "<80/100>",
+            "<97/100>",
             "On*",
             "Off*",
             "Right-handed",
@@ -309,8 +320,8 @@ fn rows_show_their_values() {
     );
     c.change_settings(|s| {
         s.game.cursor_style = CursorStyle::LargeCorners;
-        s.music_volume = 0;
-        s.sound_volume = 100;
+        s.volumes.set(MUSIC, 0);
+        s.volumes.set(SFX, 100);
         s.game.auto_end_turn = true;
         s.game.anim_speed = AnimSpeed::Fast;
         s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
@@ -528,7 +539,7 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     c.change_settings(|s| {
         s.text_speed = TextSpeed::Slow;
         s.fullscreen = true;
-        s.music_volume = 2;
+        s.volumes.set(MUSIC, 2);
     })
     .unwrap();
     let changed = c.settings().clone();
@@ -602,7 +613,7 @@ fn discard_puts_every_setting_back_and_saves_nothing() {
             press(&mut s, &mut c, &[Action::CursorRight]);
         }
     }
-    assert!(s.changed(&c) && c.settings().fullscreen && c.settings().music_volume != 80);
+    assert!(s.changed(&c) && c.settings().fullscreen && c.volume(MUSIC) != 97);
     press(&mut s, &mut c, &[Action::Cancel]);
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert_eq!(s.leaving(), Some(LeaveChoice::Discard));

@@ -138,13 +138,16 @@ pub enum Row {
     Towns,
     /// [`Settings::theme`].
     Theme,
-    /// [`Settings::music_volume`].
+    /// The [`MUSIC`](crate::audio::groups::MUSIC) group's volume
+    /// ([`Settings::volumes`]).
     MusicVolume,
-    /// [`Settings::sound_volume`].
+    /// The [`SFX`](crate::audio::groups::SFX) group's volume
+    /// ([`Settings::volumes`]).
     SoundVolume,
     /// [`Settings::voices`]: "Voices (AI-generated)".
     Voices,
-    /// [`Settings::voice_volume`].
+    /// The [`VOICE`](crate::audio::groups::VOICE) group's volume
+    /// ([`Settings::volumes`]).
     VoiceVolume,
     /// [`ShuyiSettings::log_voice`](crate::ShuyiSettings::log_voice): "Voice on
     /// hover in the log".

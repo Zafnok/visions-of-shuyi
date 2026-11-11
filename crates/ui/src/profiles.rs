@@ -108,6 +108,7 @@ pub fn keys_from_before_profiles() -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::audio::groups::MUSIC;
     use crate::screen::tests::ctx;
 
     /// Every key the game keeps for a player is a key of any profile, and
@@ -143,7 +144,7 @@ mod tests {
         ok(c.rename_profile(ProfileId::FIRST, "Mei"));
         assert_eq!(set_up(&c), SetUp::Seen);
         let mut c = fresh();
-        c.preview_settings(|s| s.music_volume = 3);
+        c.preview_settings(|s| s.volumes.set(MUSIC, 3));
         assert_eq!(set_up(&c), SetUp::No, "previewed, not kept");
         ok(c.keep_settings());
         assert_eq!(set_up(&c), SetUp::Seen);

@@ -62,7 +62,7 @@ None. Nothing a player sees changes.
   existing tests and property tests (`fill_rect_only_touches_rect`) pass
   unchanged; a test counts that an item away from the rectangle is kept
   untouched.
-- In the game: move the pin, and put CI's `bench` numbers in
+- In the game: ~~move the pin~~ (done by the pin move of 2026-11-10, engine #353), and put CI's `bench` numbers in
   `docs/targets.md`.
 - If frame 43 is still the costliest frame after it, a Callgrind look at
   it again, named in the completion notes, with a ticket for what is
@@ -81,7 +81,7 @@ None. Nothing a player sees changes.
    skip the items that don't meet the hole (`Rect::intersect` on the
    visible part and the overhang), and keep the `Vec` when none do.
 2. The engine's tests; its PR, merged.
-3. In the game: move the pin (`cargo xtask engine-pin`), run the gates,
+3. In the game: ~~move the pin (`cargo xtask engine-pin`)~~ (done by the pin move of 2026-11-10, engine #353), run the gates,
    push, and read the `bench` table; update `docs/targets.md` (*The
    numbers*, *Over budget*).
 

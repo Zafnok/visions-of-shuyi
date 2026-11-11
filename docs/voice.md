@@ -290,7 +290,8 @@ each run in its lab environment.
   those passed.
 - A clip that isn't loaded within 0.3 s of being asked for is skipped
   rather than played late.
-- Clips play at `ctx.voice_volume` (0–10, default 8).
+- Clips play at the voice group's gain (`ctx.volume(VOICE)`, 0–100 on the
+  engine's loudness curve, default 97: engine #318).
 - A missing or unreadable clip file is a logged warning and silence.
 
 The dialogue screen (ticket 0720) says each line's clip as its text box

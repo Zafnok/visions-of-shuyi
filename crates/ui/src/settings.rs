@@ -21,20 +21,29 @@ use trpg_content::Theme;
 use crate::map_view::CursorStyle;
 
 pub use shuyi_ui::settings::{
-    Background, DEFAULT_VOLUME, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed,
+    Background, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed, Volumes,
 };
+use shuyi_ui::settings::{old_volume, read_old_volumes};
 
 /// This game's settings: the engine's, with this game's
 /// ([`Settings::game`](shuyi_ui::settings::Settings::game)).
 pub type Settings = shuyi_ui::settings::Settings<ShuyiSettings>;
 
-/// The saved format's version: 2 since the voices (ticket 0826). A
-/// version 1 save loads with the voices' defaults.
-pub const SETTINGS_VERSION: u32 = 2;
+/// The saved format's version: 2 since the voices (ticket 0826), 3 since
+/// the volumes are each sound group's on the engine's loudness curve
+/// (engine #318). A version 1 save loads with the voices' defaults, and
+/// the linear volumes of a version 1 or 2 save are put where they sound
+/// the same.
+pub const SETTINGS_VERSION: u32 = 3;
 
 /// The versions [`Settings::from_ron`] reads: each one's missing fields take
 /// their defaults.
-const READ_VERSIONS: [u32; 2] = [1, SETTINGS_VERSION];
+const READ_VERSIONS: [u32; 3] = [1, 2, SETTINGS_VERSION];
+
+/// The linear volume every group had by default before the loudness curve:
+/// a version 1 or 2 save always wrote its volumes, so one at this is read
+/// as the group's default (which sounds the same).
+const OLD_DEFAULT_VOLUME: u8 = 80;
 
 /// How much faster animations play at [`AnimSpeed::Fast`]. *Tunable.*
 pub const FAST_ANIM: f32 = 2.0;
@@ -368,13 +377,19 @@ struct SettingsFile {
     #[serde(skip_serializing_if = "Option::is_none")]
     towns_on_arrival: Option<bool>,
     theme: Theme,
-    music_volume: u8,
-    sound_volume: u8,
+    /// The volume of each sound group the player set (engine #318).
+    volumes: Volumes,
     /// `Some(false)` when voices are off, otherwise left out, as `intro`
     /// (ticket 0826).
     #[serde(skip_serializing_if = "Option::is_none")]
     voices: Option<bool>,
-    voice_volume: u8,
+    /// The linear volumes a version 1 or 2 save wrote: read, never written.
+    #[serde(skip_serializing, deserialize_with = "old_volume")]
+    music_volume: Option<u8>,
+    #[serde(skip_serializing, deserialize_with = "old_volume")]
+    sound_volume: Option<u8>,
+    #[serde(skip_serializing, deserialize_with = "old_volume")]
+    voice_volume: Option<u8>,
     /// `Some(false)` when the log's cursor plays no voice, otherwise left
     /// out, as `intro`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -413,10 +428,11 @@ fn file(s: &Settings) -> SettingsFile {
         intro: (!game.intro).then_some(false),
         towns_on_arrival: (game.towns == TownsOpen::OnConfirm).then_some(false),
         theme: s.theme,
-        music_volume: s.music_volume,
-        sound_volume: s.sound_volume,
+        volumes: s.volumes.clone(),
         voices: (!s.voices).then_some(false),
-        voice_volume: s.voice_volume,
+        music_volume: None,
+        sound_volume: None,
+        voice_volume: None,
         log_voice: (game.log_voice == LogVoice::Off).then_some(false),
         auto_advance: (game.auto_advance == AutoAdvance::On).then_some(true),
         portrait_style: (game.portrait_style != PortraitStyle::default())
@@ -439,10 +455,11 @@ impl GameSettings for ShuyiSettings {
     }
 
     /// Reads the saved form. Text that can't be read, or of a version
-    /// other than 1 and 2, gives `Err` with why (the caller then uses the
+    /// other than 1 to 3, gives `Err` with why (the caller then uses the
     /// defaults); a missing field takes its default, an unknown layout
-    /// counts as none picked and a volume over [`MAX_VOLUME`] is brought
-    /// down to it.
+    /// counts as none picked, a volume over [`MAX_VOLUME`] is brought
+    /// down to it and an old linear volume is put where it sounds the
+    /// same.
     // check-text: not player text (warnings for the log)
     fn from_ron(text: &str) -> Result<Settings, String> {
         let file: SettingsFile = ron::from_str(text).map_err(|e| format!("unreadable: {e}"))?;
@@ -454,10 +471,13 @@ impl GameSettings for ShuyiSettings {
         s.text_speed = file.text_speed;
         s.fullscreen = file.fullscreen;
         s.theme = file.theme;
-        s.music_volume = file.music_volume.min(MAX_VOLUME);
-        s.sound_volume = file.sound_volume.min(MAX_VOLUME);
+        for (group, volume) in file.volumes.iter() {
+            s.volumes.set(group, volume);
+        }
+        let old = |v: Option<u8>| v.filter(|&v| v != OLD_DEFAULT_VOLUME);
+        let (music, sound) = (old(file.music_volume), old(file.sound_volume));
+        read_old_volumes(&mut s.volumes, music, sound, old(file.voice_volume));
         s.voices = file.voices.unwrap_or(true);
-        s.voice_volume = file.voice_volume.min(MAX_VOLUME);
         s.game = ShuyiSettings {
             anim_speed: file.anim_speed,
             combat_animations: file.combat_animations,
@@ -494,6 +514,7 @@ impl GameSettings for ShuyiSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::audio::groups::{MUSIC, SFX, VOICE};
     use crate::input::LEFT_HANDED;
 
     /// Every setting changed from its default.
@@ -502,8 +523,9 @@ mod tests {
         s.text_speed = TextSpeed::Fast;
         s.fullscreen = true;
         s.theme = Theme::Moonlit;
-        s.music_volume = 35;
-        s.sound_volume = 64;
+        // The saved form's 35 and 64, from before the loudness curve.
+        s.volumes.set_from_linear(MUSIC, 35);
+        s.volumes.set_from_linear(SFX, 64);
         s.game = ShuyiSettings {
             anim_speed: AnimSpeed::Fast,
             combat_animations: false,
@@ -526,14 +548,14 @@ mod tests {
         s
     }
 
-    /// Ticket 0826: voices are on at 80 and the log's cursor plays them,
-    /// all three are saved, and a version 1 save (from before them) loads
-    /// with those defaults and the rest as it was.
+    /// Ticket 0826: voices are on at their default volume and the log's
+    /// cursor plays them, all three are saved, and a version 1 save (from
+    /// before them) loads with those defaults and the rest as it was.
     #[test]
     fn the_voice_settings_default_on_round_trip_and_migrate() {
         let s = Settings::default();
-        let defaults = (s.voices, s.voice_volume, s.game.log_voice);
-        assert_eq!(defaults, (true, 80, LogVoice::OnHover));
+        let defaults = (s.voices, s.volumes.get(VOICE), s.game.log_voice);
+        assert_eq!(defaults, (true, None, LogVoice::OnHover));
         let text = s.to_ron();
         assert!(
             !text.contains("voices") && !text.contains("log_voice"),
@@ -541,19 +563,39 @@ mod tests {
         );
         let mut off = Settings::default();
         off.voices = false;
-        off.voice_volume = 0;
+        off.volumes.set(VOICE, 0);
         off.game.log_voice = LogVoice::Off;
         let text = off.to_ron();
-        assert!(text.contains("version: 2,"), "{text}");
+        assert!(text.contains("version: 3,"), "{text}");
         assert!(text.contains("voices: Some(false),"), "{text}");
         assert!(text.contains("log_voice: Some(false),"), "{text}");
         assert_eq!(Settings::from_ron(&text), Ok(off));
         let old = Settings::from_ron("Settings(version: 1, sound_volume: 3)").unwrap();
         let mut expected = Settings::default();
-        expected.sound_volume = 3;
+        expected.volumes.set_from_linear(SFX, 3);
         assert_eq!(old, expected);
         let loud = Settings::from_ron("Settings(version: 2, voice_volume: 250)").unwrap();
-        assert_eq!(loud.voice_volume, MAX_VOLUME);
+        assert_eq!(loud.volumes.get(VOICE), Some(MAX_VOLUME));
+    }
+
+    /// Engine #318: the volumes are each sound group's on the loudness
+    /// curve. A version 1 or 2 save's linear volumes are put where they
+    /// sound the same, its 80 (the old default) at the group's default,
+    /// and none is written back; a volume over the loudest is brought
+    /// down to it.
+    #[test]
+    fn old_linear_volumes_load_where_they_sound_the_same() {
+        let old = "Settings(version: 2, music_volume: 35, sound_volume: 80, voice_volume: 100)";
+        let s = Settings::from_ron(old).unwrap();
+        let read = [MUSIC, SFX, VOICE].map(|group| s.volumes.get(group));
+        assert_eq!(read, [Some(85), None, Some(100)]);
+        let text = s.to_ron();
+        assert!(!text.contains("_volume"), "{text}");
+        assert!(text.contains("version: 3,"), "{text}");
+        assert_eq!(Settings::from_ron(&text), Ok(s));
+        let loud = r#"Settings(version: 3, volumes: {"music": 250})"#;
+        let loud = Settings::from_ron(loud).unwrap();
+        assert_eq!(loud.volumes.get(MUSIC), Some(MAX_VOLUME));
     }
 
     /// Ticket 0859: auto-advance starts off and is saved only when on, so
@@ -645,24 +687,31 @@ mod tests {
     /// Ticket 1109: settings saved before the engine had the settings
     /// (written by `main` at `6677932e`, every setting changed, and the
     /// defaults) load as they were. They were written byte for byte the
-    /// same until version 2 added the voices (0826): now that form, plus
-    /// the voice volume (voices and the log's, on, are left out).
+    /// same until version 2 added the voices (0826), and version 3 the
+    /// volumes on the loudness curve (engine #318): now that form, with
+    /// the volumes the player set in place of the three linear ones
+    /// (voices and the log's, on, are left out).
     #[test]
     fn settings_saved_before_the_split_load_unchanged() {
-        // The form written now: version 2, with the voice volume last.
-        let as_now = |text: &str| {
-            let text = text.replace("version: 1,", "version: 2,");
-            let body = text.trim_end().strip_suffix(")").unwrap_or_default();
-            as_written(&format!("{body}    voice_volume: 80,\n)"))
+        // The form written now: version 3, with `volumes` last.
+        let as_now = |text: &str, volumes: &str| {
+            let text = text.replace("version: 1,", "version: 3,");
+            let kept: Vec<&str> = (text.lines())
+                .filter(|line| !line.contains("_volume:"))
+                .collect();
+            let kept = kept.join("\n");
+            let body = kept.trim_end().strip_suffix(")").unwrap_or_default();
+            as_written(&format!("{body}    volumes: {volumes},\n)"))
         };
         let before = include_str!("settings/saved_before_1109.ron");
         let saved = as_written(before);
         assert_eq!(Settings::from_ron(&saved), Ok(changed()));
-        assert_eq!(changed().to_ron(), as_now(before));
+        let set = "{\n        \"music\": 85,\n        \"sfx\": 94,\n    }";
+        assert_eq!(changed().to_ron(), as_now(before, set));
         let before = include_str!("settings/defaults_before_1109.ron");
         let defaults = as_written(before);
         assert_eq!(Settings::from_ron(&defaults), Ok(Settings::default()));
-        assert_eq!(Settings::default().to_ron(), as_now(before));
+        assert_eq!(Settings::default().to_ron(), as_now(before, "{}"));
     }
 
     #[test]
@@ -678,7 +727,8 @@ mod tests {
         // But the map zoom: a new player starts at 2× (Nick, ticket 0439).
         assert_eq!(game.map_zoom, MapZoom::X2);
         assert_eq!(s.theme, Theme::Earthy);
-        assert_eq!((s.music_volume, s.sound_volume), (80, 80));
+        // Every sound group at its default: the old 80 (engine #318).
+        assert!(s.volumes.is_empty());
         assert_eq!(s.layout(), None);
     }
 
@@ -723,7 +773,7 @@ mod tests {
         for saved in ["0", "3", "-2", "200"] {
             let text = format!("Settings(version: 1, map_zoom: {saved}, sound_volume: 3)");
             let mut expected = Settings::default();
-            expected.sound_volume = 3;
+            expected.volumes.set_from_linear(SFX, 3);
             assert_eq!(Settings::from_ron(&text), Ok(expected), "{saved}");
         }
         let kept = Settings::from_ron("Settings(version: 1, map_zoom: 1)").unwrap();
@@ -740,7 +790,7 @@ mod tests {
     fn missing_fields_take_their_defaults() {
         let s = Settings::from_ron("Settings(version: 1, sound_volume: 3)").unwrap();
         let mut expected = Settings::default();
-        expected.sound_volume = 3;
+        expected.volumes.set_from_linear(SFX, 3);
         assert_eq!(s, expected);
     }
 
@@ -748,10 +798,10 @@ mod tests {
     fn bad_text_and_other_versions_are_refused() {
         let unreadable = Settings::from_ron("nonsense").unwrap_err();
         assert!(unreadable.starts_with("unreadable: "), "{unreadable}");
-        for version in [0, 3] {
+        for version in [0, 4] {
             assert_eq!(
                 Settings::from_ron(&format!("Settings(version: {version})")),
-                Err(format!("version {version} isn't 2"))
+                Err(format!("version {version} isn't 3"))
             );
         }
     }
@@ -761,7 +811,8 @@ mod tests {
         let text = "Settings(version: 1, music_volume: 200, sound_volume: 101, layout: \
                     Some(\"Two words\"))";
         let s = Settings::from_ron(text).unwrap();
-        assert_eq!((s.music_volume, s.sound_volume), (100, 100));
+        let read = (s.volumes.get(MUSIC), s.volumes.get(SFX));
+        assert_eq!(read, (Some(100), Some(100)));
         assert_eq!(s.layout(), None);
         // A layout's name is read whatever the keymap lists: the keymap's
         // owner (`Ctx::saved_layout`) drops one it doesn't have.
