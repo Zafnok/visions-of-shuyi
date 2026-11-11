@@ -82,7 +82,7 @@ fn the_recorded_playthrough_passes_the_march_stone() {
 }
 
 /// The rules alone: the fixture's commands hold the house until the last
-/// phase of turn 8 ends, in Classic, losing nobody.
+/// phase of turn 10 ends, in Classic, losing nobody.
 #[test]
 fn the_recorded_playthrough_holds_the_house_till_light() {
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
@@ -91,7 +91,7 @@ fn the_recorded_playthrough_holds_the_house_till_light() {
     playthrough::play(&mut state, &content, &winning_commands());
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(lost(&state), Vec::<&str>::new());
-    assert!(state.turn() >= 8, "won as turn 8 ends, not before");
+    assert!(state.turn() >= 10, "won as turn 10 ends, not before");
 }
 
 /// Acceptance: New Game reaches Chapter 5 through Chapters 1 to 4, and

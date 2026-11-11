@@ -1178,13 +1178,16 @@ fn hold_and_advance_keep_each_units_nearest_the_first_on_a_tie() {
         dest: tile(x),
         action: UnitAction::Seize,
     };
+    let mut keep = |id, at, command: &Command, holds: &mut Vec<_>| {
+        hold(&s, Some(&mut goals), &|_| true, id, at, command, holds);
+    };
     let mut holds = Vec::new();
-    hold(&s, &mut goals, UnitId(1), tile(2), &wait(1, 2), &mut holds);
-    hold(&s, &mut goals, UnitId(2), tile(3), &wait(2, 3), &mut holds);
-    hold(&s, &mut goals, UnitId(1), tile(4), &wait(1, 4), &mut holds);
-    hold(&s, &mut goals, UnitId(1), tile(3), &wait(1, 3), &mut holds);
-    hold(&s, &mut goals, UnitId(1), tile(4), &other(1, 4), &mut holds);
-    hold(&s, &mut goals, UnitId(7), tile(5), &wait(7, 5), &mut holds);
+    keep(UnitId(1), tile(2), &wait(1, 2), &mut holds);
+    keep(UnitId(2), tile(3), &wait(2, 3), &mut holds);
+    keep(UnitId(1), tile(4), &wait(1, 4), &mut holds);
+    keep(UnitId(1), tile(3), &wait(1, 3), &mut holds);
+    keep(UnitId(1), tile(4), &other(1, 4), &mut holds);
+    keep(UnitId(7), tile(5), &wait(7, 5), &mut holds);
     let kept: Vec<&Command> = holds.iter().map(|h| &h.2).collect();
     assert_eq!(kept, [&wait(1, 4), &wait(2, 3)]);
     let mut advances = Vec::new();
@@ -1806,4 +1809,81 @@ fn a_persona_stands_in_the_door_between_the_lord_and_the_enemy() {
     let rout = house_with_a_door(Objective::Rout { turn_limit: None });
     let waits = vec![(UnitId(2), Pos::new(3, 3), door)];
     assert_eq!(covers(&rout, &threats(&rout), waits), Vec::<Command>::new());
+}
+
+/// One row of plain: [`a_wounded_unit_steps_out_of_reach_in_a_hold`].
+const FIELD: &str = r#"(
+    name: "Field",
+    legend: { '.': "plain" },
+)
+---
+............
+"#;
+
+/// A battle of `objective` on [`FIELD`]: the lord (unit 1) at the west
+/// end, out of every reach; a wounded swordsman (unit 2, 1 HP) at (6, 0),
+/// next to a swordsman who never moves and fells anything it strikes
+/// (enemy 9, at (7, 0)).
+fn wounded_in_a_field(objective: Objective) -> BattleState {
+    let content = content();
+    let map = trpg_content::map::parse_map("field", FIELD, &content.terrain.display)
+        .unwrap_or_else(|e| panic!("{e:?}"))
+        .map;
+    let units = vec![
+        at(lord(player(1, 0)), 0, 0),
+        at(weak(player(2, 0)), 6, 0),
+        at(stationary(rigged(enemy(9, 0))), 7, 0),
+    ];
+    let mut setup = setup(units);
+    setup.map = map;
+    setup.objective = objective;
+    BattleState::new(setup).0
+}
+
+#[test]
+fn a_wounded_unit_steps_out_of_reach_in_a_hold() {
+    // A hold has no goals, so no unit had a hold to try: a wounded unit in
+    // reach had only the enemy AI's charge, a potion, or the waits in the
+    // legal order after the cap. Hardcore left them there and drank every
+    // potion it had (Chapter 5, 0529). Casual isn't checked: a fall
+    // barely costs it, and it strays.
+    let hold = Objective::Survive { turns: 1 };
+    for name in ["normal", "hardcore"] {
+        let end = play_out(wounded_in_a_field(hold), &mut bot(name, 1), 1);
+        assert_eq!(end.outcome(), Some(Outcome::Victory), "{name}");
+        assert!(end.fallen().is_empty(), "{name}: {:?}", end.fallen());
+    }
+    let s = wounded_in_a_field(hold);
+    assert_eq!(danger(&s).at_risk, 1);
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    // The step out of his reach nearest where it stands is the first wait.
+    let first_wait = ordered.iter().find(|c| {
+        matches!(
+            c,
+            Command::Act {
+                action: UnitAction::Wait,
+                ..
+            }
+        )
+    });
+    let out_of_reach = wait_at(2, 5, 0).2;
+    assert_eq!(first_wait, Some(&out_of_reach), "{ordered:?}");
+}
+
+#[test]
+fn a_hold_in_a_survive_is_only_for_a_unit_in_reach_and_nearest_where_it_stands() {
+    let s = wounded_in_a_field(Objective::Survive { turns: 1 });
+    let threats = threats(&s);
+    let safe = |at: Pos| !threats.iter().any(|(_, strikes)| strikes(at));
+    let mut holds = Vec::new();
+    for (id, dest, command) in [wait_at(2, 3, 0), wait_at(2, 5, 0), wait_at(2, 4, 0)] {
+        hold(&s, None, &safe, id, dest, &command, &mut holds);
+    }
+    let nearest: Vec<Command> = holds.into_iter().map(|h| h.2).collect();
+    assert_eq!(nearest, vec![wait_at(2, 5, 0).2]);
+    // The lord stands out of reach: nothing to retreat from.
+    let (id, dest, command) = wait_at(1, 1, 0);
+    let mut holds = Vec::new();
+    hold(&s, None, &safe, id, dest, &command, &mut holds);
+    assert_eq!(holds, Vec::new());
 }

@@ -1,7 +1,7 @@
 // Chapter 5's battle (ticket 0851; beat sheet docs/story/chapters/ch05.md):
 // the envoy's house in Saltmere, sold to the Hounds by the magistrate.
 // Hold it until first light: the battle is won when the last phase of turn
-// 8 ends (turn-structure.md, *Survive*). The Hound officer need not fall.
+// 10 ends (turn-structure.md, *Survive*). The Hound officer need not fall.
 // Every number here is a *the agent's starting value*, set by the bots
 // (`cargo xtask playtest ch05`, docs/playtesting.md, Chapter 5) and judged
 // in the Act 1 playtest (1064).
@@ -14,7 +14,9 @@
 // pier (at the door on turn 1: a unit in the door keeps him off the lead); and over the roofs, three at the start, down
 // the hatch or down the stairs at either end of the terrace to the quay.
 // More come in boats to the piers on turns 2 and 4, and across the roofs
-// from the streets behind on turn 3.
+// from the streets behind on turn 3. The Hounds by the water are a hard
+// fight (lv 13), the ones over the roofs, where the party's lightest
+// stand, an easier one (lv 9): the bots' Chapter 5 runs after 0529.
 //
 // Reached from the world map (worldmaps/act1.ron, `envoys_house`).
 (
@@ -35,28 +37,28 @@
     ],
     enemies: [
         // The quay, in front of the street door.
-        (template: "hound_swordsman", pos: (9, 10), level: Some(8)),
-        (template: "hound_raider", pos: (17, 10), level: Some(8)),
-        (template: "hound_guard", pos: (12, 11), level: Some(8)),
-        (template: "hound_archer", pos: (15, 11), level: Some(8)),
+        (template: "hound_swordsman", pos: (9, 10), level: Some(13)),
+        (template: "hound_raider", pos: (17, 10), level: Some(13)),
+        (template: "hound_guard", pos: (12, 11), level: Some(13)),
+        (template: "hound_archer", pos: (15, 11), level: Some(13)),
         // The docks: the officer comes up the wide pier, the sea steps,
         // with his man.
         (character: "hound_officer", pos: (13, 13), boss: true),
-        (template: "hound_swordsman", pos: (14, 15), level: Some(8)),
+        (template: "hound_swordsman", pos: (14, 15), level: Some(13)),
         // Black on three roofs.
-        (template: "hound_raider", pos: (7, 1), level: Some(8)),
-        (template: "hound_archer", pos: (20, 1), level: Some(8)),
-        (template: "hound_swordsman", pos: (24, 5), level: Some(8)),
+        (template: "hound_raider", pos: (7, 1), level: Some(9)),
+        (template: "hound_archer", pos: (20, 1), level: Some(9)),
+        (template: "hound_swordsman", pos: (24, 5), level: Some(9)),
     ],
     reinforcements: [
         // Boats to the piers.
-        (turn: 2, unit: (template: "hound_raider", pos: (5, 15), level: Some(8))),
-        (turn: 2, unit: (template: "hound_swordsman", pos: (22, 15), level: Some(8))),
+        (turn: 2, unit: (template: "hound_raider", pos: (5, 15), level: Some(13))),
+        (turn: 2, unit: (template: "hound_swordsman", pos: (22, 15), level: Some(13))),
         // Across the roofs from the streets behind.
-        (turn: 3, unit: (template: "hound_swordsman", pos: (0, 0), level: Some(8))),
-        (turn: 3, unit: (template: "hound_raider", pos: (27, 0), level: Some(8))),
-        (turn: 4, unit: (template: "hound_guard", pos: (13, 14), level: Some(8))),
-        (turn: 4, unit: (template: "hound_archer", pos: (14, 14), level: Some(8))),
+        (turn: 3, unit: (template: "hound_swordsman", pos: (0, 0), level: Some(9))),
+        (turn: 3, unit: (template: "hound_raider", pos: (27, 0), level: Some(9))),
+        (turn: 4, unit: (template: "hound_guard", pos: (13, 14), level: Some(13))),
+        (turn: 4, unit: (template: "hound_archer", pos: (14, 14), level: Some(13))),
     ],
     preparations: true,
     pack_cap: 3,
@@ -65,7 +67,7 @@
     solo_stock: ["potion", "potion", "potion", "houndmasters_axe", "fordwardens_spear", "elixir", "elixir", "focus_charm"],
     solo_gold: 5500,
     clear_gold: 2000,
-    objective: Survive(turns: 8),
+    objective: Survive(turns: 10),
     // Scene ids and what each is written for: the top of dialogue/ch05.dlg.
     triggers: [
         (when: TurnStart(turn: 1, phase: Player), scene: "ch05_first_turn", once: true),

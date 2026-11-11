@@ -96,7 +96,9 @@ command it:
    a list of **candidates**: each unit's best attack; what the enemy AI
    would do in its place; healing a wounded unit; moving each unit as far
    towards the enemy (the boss, the tile to seize) as it can walk; moving
-   each unit to the nearest tile out of every enemy's reach; each unit's
+   each unit to the nearest tile out of every enemy's reach (in a hold,
+   which has nothing to walk towards, each unit in reach to the one
+   nearest where it stands, ADR-0115); each unit's
    attack on its other targets (after every unit's move, ADR-0112); the
    other ways of attacking; and ending the turn last;
 3. plays each partial plan on a few **copies** of the battle with fresh
@@ -422,6 +424,69 @@ Tried and not kept (each with the officer on the near pier): Str 16 (77,
 (80, 74) or Spd 13 (72), 50 HP and Def 11 (75; Normal 52); with Str 15,
 the turn-4 boat at level 10 (72, 74), and with Survive 7 too (61, 68;
 Normal 64, 60); Survive 7 with Str 16 (67, 67; Normal 65, 75).
+
+After 1071 and 0529 (2026-11-10). 1071 put the guards on the road
+(Aldwater Toll Bridge before Veyne Hall, the Salt Road before the
+Envoy's House), and the armies that win them arrive stronger: Chapter 4
+went to 59 / 58 / 51 (Casual over) and Chapter 5 to 77 / 85 / 13. Why
+Hardcore fell to 13 was the bots': traced over every Hardcore try of
+seeds 1–100 that lost someone, 35 of its 58 deaths were units its own
+scoring knew could fall, most of them wounded on the roofs, and a
+survive offered no unit a way out of reach (no goals, so no holds), so
+it drank all three Potions and then lost the unit. The order now offers
+a unit in reach in a survive its hold, the tile out of every reach
+nearest where it stands (ADR-0115). With that alone, Chapter 5 went to
+85 / 83 / 85 (Hardcore's tries losing someone 41 → 11, its median items
+3 → 0): every bot too easy, Hardcore now the best of the three.
+
+Chapter 4: every unnamed Hound lv 7 → 9 (`cargo shuyi autobalance
+--stage ch04 --tries 200` found +4, 98 / 102 / 103 of 200, with Normal
+and Hardcore on their floor; +2 does it with less EXP for Chapter 5's
+army). The army: Lead lv 6, Hollis lv 9, Tamsin lv 10, Aske lv 6, Maud
+lv 5, Rue lv 14, Joss lv 3.
+
+```
+             seeds 1–100            seeds 101–200
+casual       52/100  band 30–55% ✓  46/100 ✓
+normal       50/100  band 50–75% ✓  53/100 ✓
+hardcore     51/100  band 50–75% ✓  59/100 ✓
+```
+
+Chapter 5: the Hounds by the water (the quay, the docks, the boats) lv
+13, the ones over the roofs lv 9, Survive 10 instead of 8. The army
+(after Chapter 4's new playthrough): Lead lv 11, Hedda lv 8, Hollis lv
+11, Tamsin lv 11, Aske lv 7, Maud lv 6, Rue lv 16, Joss lv 5.
+
+```
+             seeds 1–100            seeds 101–200
+casual       62/100  band 40–70% ✓  65/100 ✓
+normal       52/100  band 50–75% ✓  63/100 ✓
+hardcore     71/100  band 50–75% ✓  77/100 ⚠
+```
+
+Over the 200 tries, 63.5 / 57.5 / 74%: in every band. The steps, on the
+army before Chapter 4's new playthrough (Aske lv 10, Maud lv 8), seeds
+1–100 then 101–200:
+
+| Change (each on the one before, from 0529's fix) | Casual | Normal | Hardcore |
+| ------------------------------------------------ | ------ | ------ | -------- |
+| Every Hound lv 8 → 10 | 65 | 67 | 86 |
+| lv 12 | 61 | 37 | 60 |
+| lv 11 | 66 | 49 | 76 |
+| lv 11, the autobalance's +1 and −1 on two quay Hounds | 69, 65 | 56, 50 | 72, 76 |
+| Roofs lv 9, the rest lv 12 | 68, 66 | 66, 71 | 77, 81 |
+| Roofs lv 9, the rest lv 13 | 74, 78 | 55, 56 | 67, 70 |
+| Survive 9 | 69, 74 | 53, 56 | 67, 69 |
+| **Survive 10** | **66, 69** | **52, 56** | **67, 69** |
+
+Uniform levels can't put Normal and Hardcore in one band: Hardcore leads
+by about 25 points (the band is 25 wide). They lose different units:
+Normal its lightest on the roofs (Aske, Joss), Hardcore almost never
+there, so the roofs went down and the water up. Casual, which loses
+only when the lead falls (on any turn from 2 to 10), moved with the
+length of the hold and with little else. Tried and not kept: roofs lv 11
+with Survive 9 (67, 67; Normal 27, 46); the officer lv 12 (71, 74, no
+change).
 
 ## History
 
