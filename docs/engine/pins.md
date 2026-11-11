@@ -311,3 +311,11 @@ Nothing for the game: 25 PRs (#305, #312, #311, #310, #308, #314, #316, #315, #3
 | #356 | 2071 | No tracked path over 150 characters, so a Windows checkout of the engine stays under 260; `cargo xtask check-paths` fails a new one | unblocks 1262 (this PR: the short `CARGO_HOME` on Windows CI is gone) |
 
 Nothing for the game: none.
+
+## 2026-11-11: edb6c888 → efb624bd (4 engine PRs), #PRNUM
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #359 | 3309 | Files the player keeps: `Ctx::offer_file` and `Ctx::ask_for_file`, answered as system events, and where a platform's storage lives; the web shell's `download.js` is `player-files.js` | fixed: the release package check names `player-files.js` in the web shell (and `page-files.js`, shipped since #293 and never listed); unblocks 0872 and 0873 (engine#3309 out of their `blocked_by`, their pin steps struck for it; engine#2138 still blocks both) |
+
+Nothing for the game: 3 PRs (#358, #360, #361). #358 is engine tickets only; #360 and #361 are the engine's tutorial tries and book.
