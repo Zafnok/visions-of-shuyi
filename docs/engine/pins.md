@@ -321,7 +321,7 @@ Nothing for the game: none.
 
 Nothing for the game: 3 PRs (#358, #360, #361). #358 is engine tickets only; #360 and #361 are the engine's tutorial tries and book.
 
-## 2026-11-11: 97313b9e → 85e8d5c5 (2 engine PRs), #PRNUM
+## 2026-11-11: 97313b9e → 85e8d5c5 (2 engine PRs), #641
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
