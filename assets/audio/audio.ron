@@ -8,6 +8,12 @@
     // How long a track fades out before the next one starts (TUNABLE,
     // audio.md "Starting values").
     music_fade_ms: 500,
+    // The music dips a little under a voiced line and fades back after it
+    // (ticket 0865; audio.md, Voices). `to: 90` is 6 dB under (each step of
+    // the loudness curve is 0.6 dB). TUNABLE in the Act 1 playtest.
+    ducks: [
+        (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
+    ],
     sounds: [
         // Made in-house by `cargo xtask sfx` (ticket 0213) from the recipes
         // in assets-src/audio/sound-audition.html.

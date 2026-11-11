@@ -9,7 +9,7 @@ use trpg_content::{LineId, Variant};
 use trpg_ui::AudioRequest;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::Gain;
-use trpg_ui::audio::groups::VOICE;
+use trpg_ui::audio::groups::{MASTER, MUSIC, VOICE};
 use trpg_ui::debug::TEST_SCENE;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -241,4 +241,106 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
         (false, Some(0), LogVoice::Off)
     );
     assert_eq!(h.gain(VOICE), Gain::SILENT);
+}
+
+/// How far the music dips under a voice: `audio.ron`'s `ducks` rule
+/// (ticket 0865), 6 dB on the loudness curve.
+const DUCK_TO: u8 = 90;
+
+/// The music volume these tests set: not full, so the dip is seen to be
+/// a fraction of the player's own volume.
+const MUSIC_VOLUME: u8 = 70;
+
+/// The debug menu's Voice test, with the test scene's first line voiced,
+/// each clip `seconds` long, the music at [`MUSIC_VOLUME`] and the master
+/// volume full; then `settings` changed. Returns the voiced line.
+fn ducking_setup(
+    seconds: f32,
+    settings: impl FnOnce(&mut trpg_ui::settings::Settings),
+) -> (Harness, LineId) {
+    let mut h = on_voice_test();
+    let line = with_a_voice(&mut h);
+    h.voice_length(seconds);
+    let changed = h.ctx_mut().change_settings(|s| {
+        s.volumes.set(MUSIC, MUSIC_VOLUME);
+        s.volumes.set(MASTER, 100);
+        settings(s);
+    });
+    assert!(changed.is_ok(), "{changed:?}");
+    h.wait(0.0);
+    assert_eq!(h.gain(MUSIC), loudness(MUSIC_VOLUME), "full before");
+    (h, line)
+}
+
+/// Acceptance (0865): the music's gain goes down to `loudness(to)` of the
+/// player's volume while a voiced line plays (over `attack_ms`), stays
+/// there, and comes back over `release_ms` after the line ends.
+#[test]
+fn the_music_dips_under_a_voiced_line_and_comes_back() {
+    let (mut h, line) = ducking_setup(1.0, |_| {});
+    let full = loudness(MUSIC_VOLUME);
+    let ducked = full.times(loudness(DUCK_TO));
+    h.ctx_mut().play_voice(&line);
+    h.wait(0.0);
+    assert_eq!(h.voices(), [line.to_string()]);
+    // Past the 150 ms attack, and still while the line plays.
+    h.wait(0.3);
+    assert_eq!(h.gain(MUSIC), ducked);
+    h.wait(0.5);
+    assert_eq!(h.gain(MUSIC), ducked, "down while the line plays");
+    // The line ended at 1 s: partway back during the 600 ms release.
+    h.wait(0.5);
+    let back = h.gain(MUSIC);
+    assert!(ducked < back && back < full, "{back:?}");
+    // Past the release: full again.
+    h.wait(0.5);
+    assert_eq!(h.gain(MUSIC), full);
+}
+
+/// The music's gain at every frame of two seconds after the test line is
+/// asked for.
+fn music_gains_after_asking(h: &mut Harness, line: &LineId) -> Vec<Gain> {
+    h.ctx_mut().play_voice(line);
+    (0..120)
+        .map(|_| h.frame(&[], trpg_ui::harness::FRAME_DT).gain(MUSIC))
+        .collect()
+}
+
+/// Acceptance (0865): with voices off, the line is never played and the
+/// music never moves.
+#[test]
+fn with_voices_off_the_music_doesnt_dip() {
+    let (mut h, line) = ducking_setup(1.0, |s| s.voices = false);
+    let gains = music_gains_after_asking(&mut h, &line);
+    assert_eq!(h.voices(), [] as [String; 0]);
+    assert!(
+        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        "{gains:?}"
+    );
+}
+
+/// Acceptance (0865): a voice the player turned down to 0 plays, but
+/// lowers nothing.
+#[test]
+fn with_the_voice_volume_at_0_the_music_doesnt_dip() {
+    let (mut h, line) = ducking_setup(1.0, |s| s.volumes.set(VOICE, 0));
+    let gains = music_gains_after_asking(&mut h, &line);
+    assert_eq!(h.voices(), [line.to_string()], "the clip still plays");
+    assert!(
+        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        "{gains:?}"
+    );
+}
+
+/// Acceptance (0865): a line with no clip plays nothing and lowers nothing.
+#[test]
+fn a_line_with_no_clip_doesnt_dip_the_music() {
+    let (mut h, _) = ducking_setup(1.0, |_| {});
+    let unvoiced = lines(&h)[2].0.clone();
+    let gains = music_gains_after_asking(&mut h, &unvoiced);
+    assert_eq!(h.voices(), [] as [String; 0]);
+    assert!(
+        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        "{gains:?}"
+    );
 }

@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["engine#2343"]
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0865 — The music dips a little under a voiced line
@@ -83,12 +83,12 @@ playtest (1064's checklist).
 
 ## Acceptance criteria
 
-- [ ] `audio.ron` has the rule, and the content checks load it.
-- [ ] The Harness test: the music's gain is lowered while a voiced line
+- [x] `audio.ron` has the rule, and the content checks load it.
+- [x] The Harness test: the music's gain is lowered while a voiced line
       plays and back after it ends.
-- [ ] With voices off, voice volume 0, or no clip for the line, the
+- [x] With voices off, voice volume 0, or no clip for the line, the
       music's gain never changes (three tests).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -96,4 +96,23 @@ playtest (1064's checklist).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `assets/audio/audio.ron` has the one `ducks` rule: `(when: "voice",
+  lower: "music", to: 90, attack_ms: 150, release_ms: 600)`. `to: 90` is
+  6 dB under on the engine's loudness curve (0.6 dB a step). The engine
+  (pinned at `edb6c888`, past engine #332) does the rest: it lowers the
+  music only while the device reports a voice clip playing and the voice
+  group's gain isn't silent. No game code changed.
+- Tests in `crates/ui/tests/it/voice.rs`, through the debug menu's Voice
+  test: the music's gain goes down to `loudness(70) × loudness(90)` (the
+  test's music volume is 70, so the dip is seen to be relative), stays
+  down while the 1 s clip plays, is partway back during the release and
+  full after it; with voices off, the voice volume at 0, or a line with
+  no clip, it never moves over two seconds.
+- Docs: `docs/design/audio.md` rule 11, a starting-values bullet and the
+  friend's words in the appendix; the `ducks` field in
+  `assets/audio/README.md`.
+- *Claude's starting rule* (for the Act 1 playtest, 1064): the dip is
+  6 dB, down over 0.15 s and back over 0.6 s. Only the music dips, not
+  sound effects. Judge by ear in the playtest; the three numbers are in
+  `audio.ron`.
+- Engine friction: none, no production code (data only).

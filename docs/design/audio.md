@@ -42,6 +42,11 @@ His words, round by round, are in the [appendix](#appendix-nicks-words).
    versions, use the looping and no-vocal ones.
 10. **Movement sounds play for both sides.** The map cursor ticks as it moves,
    like Fire Emblem, "at a lower vol maybe": the menu move sound, quieter.
+11. **The music dips a little under a voiced line** (Nick, 2026-11-07,
+   passing on a friend's playtest; ticket 0865). While a line's voice clip
+   plays, the music goes slightly quieter, and fades back to full after the
+   line ends. Only when the line has a clip, voices are on and the voice
+   volume isn't 0. Sound effects don't dip.
 
 ## Music cues
 
@@ -341,6 +346,11 @@ sign-off: "it should sound like a heal").
   battle's track starts again from its beginning (the same track, also in a
   skirmish). `Retry Battle` starts the battle's music as a new battle does
   (a skirmish picks again).
+- The music's dip under a voiced line (rule 11) is 6 dB (to 90 on the
+  loudness curve, from the player's own music volume), reached over
+  0.15 s; it comes back over 0.6 s once the line ends. The friend asked
+  for "slightly" and "prob a fade transition"; the numbers are Claude's
+  (`audio.ron`'s `ducks`), to judge in the Act 1 playtest.
 
 ## Open sub-questions (not needed for Chapter 1; Nick: "we have enough sounds for ch1 atp")
 
@@ -789,3 +799,11 @@ by RandomMind. C: Woodland Fantasy by Matthew Pablo. D: Fantasy Music –
 Night Town by Angus Macnaughton. E: Solo Guitar – Celtic #32 by
 Tri-Tachyon. F: Suonatore di Liuto by Kevin MacLeod. G: Medieval: The
 Bard's Tale. Recorded as: the `camp` pool is B, C and G, rotating.)
+
+**The music under a voice** (2026-11-07, a friend's playtest of the Act 1
+build, passed on by Nick; ticket 0865):
+
+> During spoken dialogue (lines which have AI voices -- so it should
+> ensure the voice exists and AI voice option is checked and voice volume
+> is not 0) we should duck the music volume slightly and return it to
+> full vol after a line ends -- prob a fade transition in volume
