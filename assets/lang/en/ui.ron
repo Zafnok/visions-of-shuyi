@@ -635,6 +635,7 @@
     "battle.stance.deflect": "deflects a hit and strikes back",
     "battle.stance.overwatch": "shoots an enemy moving in range",
     "battle.forecast.passive": "{name}: {effect}",
+    "battle.forecast.kind_trait": "{kind} {trait}",
     "battle.art.desc.attack": "plain attack",
     "battle.reason.broken": "broken",
     "battle.reason.uses_left": "{left} uses left",

@@ -818,7 +818,7 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     assert_eq!(page(&h), Some(0));
     h.pad("DpadRight");
     assert_eq!(page(&h), Some(1));
-    h.pad("DpadRight DpadRight");
+    h.pad("DpadRight DpadRight DpadRight");
     assert_eq!(page(&h), Some(0));
     h.pad("DpadLeft");
     assert_eq!(page(&h), Some(info::PAGES - 1));

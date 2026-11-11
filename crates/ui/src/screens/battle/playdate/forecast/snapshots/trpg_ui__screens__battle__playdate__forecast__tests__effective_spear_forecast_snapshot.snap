@@ -1,0 +1,19 @@
+---
+source: crates/ui/src/screens/battle/playdate/forecast/tests.rs
+expression: "rows(&buf).join(\"\n\")"
+---
+╔═ Forecast ════════════╗
+║ Test Lord  Brigand    ║
+║ Iron Sword Iron Axe   ║
+║ 20/20      20/20      ║
+║ HP 19 ██▒▒ HP 20 █▒▒▒ ║
+║ Hit  96    Hit  65    ║
+║ Crit 3     Crit 0     ║
+╟───────────────────────╢
+║  8 dmg! → 1           ║
+║           2 ← 8 dmg   ║
+║  9 dmg  → 3           ║
+╟───────────────────────╢
+║ 17 ×2 Total   8 ×1    ║
+║ Spear ×2 vs Mounted   ║
+╚═══════════════════════╝

@@ -9,9 +9,10 @@
 //! 1. the class and level, HP with a bar, EXP, Mov with the movement type
 //!    and the class's tags; the stats, a raised or lowered one as the
 //!    bar, and the timed effects beside them;
-//! 2. the weapons, the armour and the accessory, the weapon ranks and the
-//!    affinities (each list on a line);
-//! 3. the skills, then the spells two to a row.
+//! 2. the weapons, the armour and the accessory;
+//! 3. the weapon ranks, each with its kind's trait (ticket 0489), then
+//!    the affinities on a line;
+//! 4. the skills, then the spells two to a row.
 
 use crate::prelude::*;
 
@@ -22,7 +23,7 @@ use crate::screens::battle::view::{GearView, InfoView, InfoWeaponView};
 use crate::screens::playdate::{self as pd, cells, cut, inks, to_i32, to_usize};
 
 /// How many pages the screen has.
-pub const PAGES: u8 = 3;
+pub const PAGES: u8 = 4;
 
 /// Length of the HP bar, in cells.
 const HP_BAR_CELLS: i32 = 10;
@@ -106,6 +107,7 @@ pub fn paint(ctx: &Ctx, view: &InfoView, area: Rect, buf: &mut GlyphBuffer) {
     match page {
         0 => paint_unit(&mut pen, view),
         1 => paint_loadout(&mut pen, view),
+        2 => paint_ranks(&mut pen, view),
         _ => paint_skills_and_spells(&mut pen, view),
     }
 }
@@ -161,7 +163,7 @@ fn paint_unit(pen: &mut Page<'_>, view: &InfoView) {
 
 /// The second page: the weapon slots (the equipped one marked, its
 /// durability at the right, its numbers under it), then the armour and
-/// the accessory side by side, then the weapon ranks and the affinities.
+/// the accessory side by side.
 fn paint_loadout(pen: &mut Page<'_>, view: &InfoView) {
     pen.text((0, 0), pen.width, &view.weapons_title);
     let mut dy = 1;
@@ -175,16 +177,39 @@ fn paint_loadout(pen: &mut Page<'_>, view: &InfoView) {
     for (gear, dx) in [(&view.armour, 0), (&view.accessory, SECOND)] {
         paint_gear(pen, gear, (dx, dy + 1));
     }
-    let pairs = |list: &[(String, String)]| {
-        let shown: Vec<String> = list.iter().map(|(a, b)| format!("{a} {b}")).collect();
-        shown.join("  ")
-    };
-    pen.text((0, dy + 4), HALF_W, &view.ranks_title);
-    pen.text((2, dy + 5), HALF_W - 2, &pairs(&view.ranks));
+}
+
+/// Where a weapon rank starts.
+const RANK_X: i32 = 11;
+
+/// Where a weapon kind's trait starts.
+const TRAIT_X: i32 = 13;
+
+/// The third page: each weapon kind, its rank and its trait on a row,
+/// then the affinities on a line.
+fn paint_ranks(pen: &mut Page<'_>, view: &InfoView) {
+    pen.text((0, 0), pen.width, &view.ranks_title);
+    let mut dy = 1;
+    for r in &view.ranks {
+        pen.text((2, dy), to_usize(RANK_X - 3), &r.kind);
+        pen.text((RANK_X, dy), 1, &r.rank);
+        if let Some(trait_) = &r.trait_ {
+            pen.text((TRAIT_X, dy), pen.width, trait_);
+        }
+        dy += 1;
+    }
+    if view.ranks.is_empty() {
+        pen.text((2, dy), 2, NOTHING);
+        dy += 1;
+    }
     if !view.affinities.is_empty() {
-        pen.text((SECOND, dy + 4), HALF_W, &view.affinities_title);
-        // To the frame: the page cuts it there.
-        pen.text((SECOND + 2, dy + 5), HALF_W, &pairs(&view.affinities));
+        pen.text((0, dy + 1), pen.width, &view.affinities_title);
+        let shown: Vec<String> = view
+            .affinities
+            .iter()
+            .map(|(a, b)| format!("{a} {b}"))
+            .collect();
+        pen.text((2, dy + 2), pen.width, &shown.join("  "));
     }
 }
 

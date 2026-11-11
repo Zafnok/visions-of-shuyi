@@ -179,6 +179,15 @@ for Nick to veto.
   unit, never a mounted or armored one. It says foot units can wade at 5
   Mov a tile, riders and armor can't, and the water gives +10 AVO and no
   DEF.
+- **Weapon kinds** (0489; Nick's Act 1 playtest, 2026-11-08: "only I
+  know that spears are good against horses"), at Full, the first time an
+  attack's forecast has a strike effective by its weapon kind (a spear on
+  a mounted unit, a bow on a flying one), the player's or the enemy's
+  counter; not a spell on an element its target is Weak to. It says a
+  spear's might counts double against riders and a bow's triple against
+  fliers, for both sides, and that the forecast's `!` means it applies. At
+  every level the forecast's note (`Spear ×2 vs Mounted`) and the unit
+  info screen's weapon ranks say the same. *Claude's starting rule.*
 - **A tip or a lesson:** one fact with nothing to tick off is a tip; a
   lesson is for something the player does, step by step. *Claude's
   starting rule* (0483).

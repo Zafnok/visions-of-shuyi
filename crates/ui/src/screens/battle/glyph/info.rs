@@ -1,6 +1,7 @@
 //! The glyph look of the unit info screen: a double box over the map and
 //! side panel, a 24 × 12 portrait area on the left (a placeholder box), Mov,
-//! tags, weapon ranks, affinities and supports under it; name, class, EXP, HP with a
+//! tags, weapon ranks (each with its kind's trait, ticket 0489),
+//! affinities and supports under it; name, class, EXP, HP with a
 //! bar, stats, timed effects and skills in the middle; weapons, armour,
 //! accessory and spells on the right. Lists stop where the box does.
 
@@ -20,6 +21,18 @@ pub const PORTRAIT: Rect = Rect::new(2, 1, 24, 12);
 
 /// Left column (under the portrait): movement, tags, weapon ranks.
 const LEFT_X: i32 = 3;
+
+/// Where a weapon rank starts, from the left column.
+const RANK_X: i32 = 9;
+
+/// The column the left column's text stops before: one cell clear of the
+/// middle column.
+const LEFT_END: i32 = MID_X - 1;
+
+/// How many cells `text` takes.
+fn text_cells(text: &str) -> i32 {
+    i32::try_from(text.chars().count()).unwrap_or(i32::MAX)
+}
 
 /// Middle column: name, level, HP, stats, skills.
 const MID_X: i32 = 29;
@@ -115,10 +128,23 @@ fn paint_left(pen: &mut Pen<'_>, view: &InfoView) {
     }
     y += 2;
     pen.text(LEFT_X, y, &view.ranks_title, UiColor::TextHighlight);
-    for (kind, rank) in &view.ranks {
+    for r in &view.ranks {
         y += 1;
-        let x = pen.text(LEFT_X, y, kind, UiColor::Text);
-        pen.text(x.max(LEFT_X + 10), y, rank, UiColor::Text);
+        let x = pen.text(LEFT_X, y, &r.kind, UiColor::Text);
+        let x = pen.text((x + 1).max(LEFT_X + RANK_X), y, &r.rank, UiColor::Text);
+        let Some(trait_) = &r.trait_ else {
+            continue;
+        };
+        // After the rank if it fits before the middle column, else on a
+        // row of its own under it.
+        let at = x + 1;
+        if at + text_cells(trait_) <= LEFT_END {
+            pen.text(at, y, trait_, UiColor::TextDim);
+        } else {
+            y += 1;
+            let room = usize::try_from(LEFT_END - LEFT_X - 2).unwrap_or(0);
+            pen.cut(LEFT_X + 2, y, trait_, room, UiColor::TextDim);
+        }
     }
     if !view.affinities.is_empty() {
         y += 2;

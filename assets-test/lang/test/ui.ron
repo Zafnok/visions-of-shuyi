@@ -1181,6 +1181,7 @@
         text: "SHOOTS AN ENEMY MOVING IN RANGE",
     ),
     (key: "battle.forecast.passive", source: "{name}: {effect}", text: "{name}: {effect}"),
+    (key: "battle.forecast.kind_trait", source: "{kind} {trait}", text: "{kind} {trait}"),
     (key: "battle.art.desc.attack", source: "plain attack", text: "PLAIN ATTACK"),
     (key: "battle.reason.broken", source: "broken", text: "BROKEN"),
     (key: "battle.reason.uses_left", source: "{left} uses left", text: "{left} USES LEFT"),

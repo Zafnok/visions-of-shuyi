@@ -1,0 +1,19 @@
+---
+source: crates/ui/src/screens/battle/playdate/info/tests.rs
+expression: "shown.join(\"\n\")"
+---
+╔═ Test Lord ════════════════════════════════════╗
+║ Weapon ranks                                   ║
+║   Sword    D follow-up ×6/5                    ║
+║   Spear    E ×2 vs Mounted                     ║
+║                                                ║
+║ Affinities                                     ║
+║   Fire Weak                                    ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+║                                                ║
+╚═══════════════════ ◀ 3/4 ▶ ════════════════════╝

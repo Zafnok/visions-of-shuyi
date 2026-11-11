@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-10
 ---
 
 # 0489 — Vix explains weapon effectiveness, and the screens say what each kind is good against
@@ -127,19 +127,19 @@ a tip, a forecast note, the info rows in two skins), plus tests.
 
 ## Acceptance criteria
 
-- [ ] Opening the forecast of Hollis's spear on a Rider fires
+- [x] Opening the forecast of Hollis's spear on a Rider fires
       `FirstEffective` once and the `weapon_kinds` tip shows at Full
       (Harness test on a test battle with a rider).
-- [ ] Opening the forecast of Tamsin attacking a spear guard (the
+- [x] Opening the forecast of Tamsin attacking a spear guard (the
       counter is effective) fires it too (test).
-- [ ] A Fire spell on a unit Weak to fire doesn't fire it (test).
-- [ ] At Short, no tip; the forecast note still shows (test).
-- [ ] The forecast's notes have `Spear ×2 vs Mounted` on an effective
+- [x] A Fire spell on a unit Weak to fire doesn't fire it (test).
+- [x] At Short, no tip; the forecast note still shows (test).
+- [x] The forecast's notes have `Spear ×2 vs Mounted` on an effective
       spear strike and none on a plain one (view test).
-- [ ] The info screen's Weapon ranks rows show each kind's trait (view
+- [x] The info screen's Weapon ranks rows show each kind's trait (view
       test; snapshot).
-- [ ] The tip passes the tip-text checks and names no key.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The tip passes the tip-text checks and names no key.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,4 +150,40 @@ a tip, a forecast note, the info rows in two skins), plus tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Trigger** `FirstEffective` (`crates/content/src/tip.rs`), fired with
+  `FirstForecast` while an attack's forecast (`Mode::Targeting`) has a
+  strike effective by its weapon kind's trait. Decided by
+  `forecast::kind_effects`, which reads the striker's weapon kind, the
+  kind's trait from the item data and the target's class tags, for the
+  attacker and for the target's counter if it has one; a spell is never
+  a weapon kind, so a Weak target adds nothing.
+- **Tip** `weapon_kinds` ("Weapon kinds", face `sly`) with the ticket's
+  draft text word for word.
+- **Forecast note** `Spear ×2 vs Mounted` (new key
+  `battle.forecast.kind_trait`, `{kind} {trait}`, over the existing
+  `battle.kind.*` and `battle.art.desc.effective`); both skins already
+  paint `view.notes`. The same note from both sides shows once.
+- **Info screen**: `InfoView::ranks` is now `InfoRankView` (kind, rank,
+  trait). The trait words reuse `battle.art.desc.followup`,
+  `.effective`, `.axe_min`, and `battle.mods.avoid` for the gauntlet
+  (`+15 avo`, matching the panel's AVO), so no new key there.
+  - PC: the trait follows the rank, dim, ending a cell before the middle
+    column; the rank column moved one cell left (`Sword    D`) so every
+    current trait fits on its row. A longer one goes on the row under.
+  - **Playdate: deviation.** Page 2 was full to the frame, so the weapon
+    ranks (one per row, with the trait) and the affinities moved to a new
+    page 3; the skills and spells are page 4 (`◀ 1/4 ▶`).
+    `docs/design/playdate.md` updated.
+- Docs: `tutorial.md` (*Tips*), `weapons-and-items.md`, `playdate.md`.
+
+Starting rules for the Act 1 playtest (1064), all *the agent's*:
+- The tip shows the first time a forecast has an effective weapon-kind
+  strike from either side, after the forecast tip if both are new.
+- It shows only for attack forecasts, not spell forecasts (a spell has no
+  weapon kind).
+- The Playdate's unit info has a fourth page: weapon ranks with their
+  traits, and the affinities.
+- The gauntlet's trait reads `+15 avo`.
+
+No follow-up tickets. Vix's voice clip: 0476 isn't done, so it voices
+this tip with the rest.

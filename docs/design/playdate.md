@@ -140,13 +140,14 @@ Like Fire Emblem on the GBA.
     art's notes. If they don't fit the screen, the rules between the
     parts go first, then the last notes.
   - **Unit info** is a window over the whole screen, the unit's name in
-    its frame, in **three pages** that **left and right turn** (wrapping;
-    `◀ 1/3 ▶` in the bottom of the frame): 1. class and level, HP with a
+    its frame, in **four pages** that **left and right turn** (wrapping;
+    `◀ 1/4 ▶` in the bottom of the frame): 1. class and level, HP with a
     bar, EXP, Mov, the movement type and the class's tags, the stats (a
     raised or lowered one as the bar) and the timed effects; 2. the
-    weapons, the armor and the accessory, the weapon ranks and the
-    affinities (each list on one line); 3. the skills, then the spells two
-    to a row. It opens on page 1; up and down show the next unit on the
+    weapons, the armor and the accessory; 3. the weapon ranks, each kind
+    with its trait on a row (`Spear  E ×2 vs Mounted`), then the
+    affinities on one line (0489: the traits didn't fit page 2); 4. the
+    skills, then the spells two to a row. It opens on page 1; up and down show the next unit on the
     same page. A list too long for its page stops at the frame, as the
     PC's do. No portrait placeholder.
   - **The map menu** has the turn in the top of its frame and the rewind

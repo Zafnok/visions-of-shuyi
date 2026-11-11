@@ -11,9 +11,9 @@
 
 use crate::prelude::*;
 use trpg_core::{
-    ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, BattleState, CastTarget, CombatMods, Command,
-    CommandError, CostError, Equipped, Event, Faction, MitigationStat, Pos, PowerStat, SkillCost,
-    SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS,
+    ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CombatRules,
+    Command, CommandError, CostError, Equipped, Event, Faction, MitigationStat, Pos, PowerStat,
+    SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS, WeaponTrait,
 };
 
 use super::attack::{AttackFrom, spell_uses, weapon_durability};
@@ -116,6 +116,28 @@ pub fn effective_text(words: Words<'_>, tag: UnitTag, mult: u8) -> String {
         "battle.art.desc.effective",
         &[("mult", &mult), ("tag", &tag)],
     )
+}
+
+/// What a weapon kind's trait does, in a few words (ticket 0489):
+/// `follow-up ×6/5`, `×2 vs Mounted`, `min damage 5`, `+15 avo`; `None`
+/// for no trait. The sword's ratio comes from `rules`.
+pub fn trait_text(words: Words<'_>, rules: &CombatRules, trait_: WeaponTrait) -> Option<String> {
+    Some(match trait_ {
+        WeaponTrait::None => return None,
+        WeaponTrait::SwordFollowUp => {
+            let (num, den) = rules.sword_followup;
+            words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)])
+        }
+        WeaponTrait::Effective(tag, mult) => effective_text(words, tag, mult),
+        WeaponTrait::AxeMinDamage(n) => words.text_with("battle.art.desc.axe_min", &[("n", &n)]),
+        WeaponTrait::GauntletAvoid(n) => mods_text(
+            words,
+            &CombatMods {
+                avoid: n,
+                ..CombatMods::default()
+            },
+        ),
+    })
 }
 
 /// An art's effect in a few words, built from its data: the number
@@ -594,6 +616,31 @@ mod tests {
     use trpg_core::{CombatMods, Debuff, TimedMods};
 
     use super::*;
+
+    /// Ticket 0489: each weapon kind's trait in a few words, the sword's
+    /// ratio from the rules.
+    #[test]
+    fn each_kinds_trait_has_its_words() {
+        let rules = CombatRules::default();
+        let text = |t| trait_text(Words::ENGLISH, &rules, t);
+        assert_eq!(
+            text(WeaponTrait::SwordFollowUp).as_deref(),
+            Some("follow-up ×6/5")
+        );
+        assert_eq!(
+            text(WeaponTrait::Effective(UnitTag::Mounted, 2)).as_deref(),
+            Some("×2 vs Mounted")
+        );
+        assert_eq!(
+            text(WeaponTrait::AxeMinDamage(5)).as_deref(),
+            Some("min damage 5")
+        );
+        assert_eq!(
+            text(WeaponTrait::GauntletAvoid(15)).as_deref(),
+            Some("+15 avo")
+        );
+        assert_eq!(text(WeaponTrait::None), None);
+    }
 
     #[test]
     fn reasons_say_what_is_missing() {

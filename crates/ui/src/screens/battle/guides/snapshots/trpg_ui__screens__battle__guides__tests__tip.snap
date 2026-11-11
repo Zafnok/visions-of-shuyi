@@ -4,11 +4,11 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Moving the cursor               │  Wading                                                        ║
+║ Moving the cursor               │  Weapon kinds                                                  ║
 ║ Played on the keys              │                                                                ║
-║ Finding your units              │  Foot units can wade a river, but each tile of water costs     ║
-║ Selecting a unit                │  5 Mov, most of a turn. Riders and armor can't go in.          ║
-║ Attacking                       │  In the water, a unit gets +10 AVO and no DEF bonus.           ║
+║ Finding your units              │  A spear's might counts double against riders, a bow's         ║
+║ Selecting a unit                │  triple against fliers, yours and theirs alike. A ! in         ║
+║ Attacking                       │  the forecast means it's working; a unit's details say more.   ║
 ║ Ending the turn                 │                                                                ║
 ║ Rewind                          │                                                                ║
 ║ Threat arrows                   │                                                                ║
@@ -28,7 +28,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Magic                           │                                                                ║
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
-║                                 │                                                                ║
+║ Weapon kinds                    │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
@@ -37,7 +37,8 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 --- colours ---
 aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccaccbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccaccbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -61,7 +62,6 @@ acccccccccccccccccccccccccccccccccaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 addddddddddddddddddddddddddddddddcacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
