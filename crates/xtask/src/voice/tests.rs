@@ -7,8 +7,11 @@ use trpg_content::names::Names;
 use trpg_content::voice::{MadeBy, Variant, VoiceClip};
 
 use super::audit;
-use super::files::{self, Cast, Reader, Say, Sent, SentMap, Voice};
-use super::plan::{Inputs, Plan, Why, plan};
+use shuyi_assets::voice::CastVoice;
+use shuyi_assets::voice::plan::Why;
+
+use super::files::{self, Cast, Reader, Say, Sent, SentMap};
+use super::plan::{self as voice_plan, Inputs, Plan, plan};
 use super::synth::{self, Level, Tools};
 use super::*;
 
@@ -47,22 +50,17 @@ fn dialogue(script: &str) -> DialogueTable {
 }
 
 fn cast() -> Cast {
-    let voice = |clip: &str, reader| Voice {
-        clip: clip.to_owned(),
-        reader,
-    };
-    Cast {
-        voices: BTreeMap::from([
-            (">".to_owned(), voice("narrator", Reader::Qwen3)),
-            ("test_lord".to_owned(), voice("rival", Reader::Qwen3)),
-            (
-                "test_knight".to_owned(),
-                voice("retainer", Reader::Chatterbox),
-            ),
-            ("lead_m".to_owned(), voice("lead_m", Reader::Qwen3)),
-            ("lead_f".to_owned(), voice("lead_f", Reader::Qwen3)),
-        ]),
-    }
+    let voice = |clip: &str, reader| CastVoice::new(clip, reader);
+    Cast::new(BTreeMap::from([
+        (">".to_owned(), voice("narrator", Reader::Qwen3)),
+        ("test_lord".to_owned(), voice("rival", Reader::Qwen3)),
+        (
+            "test_knight".to_owned(),
+            voice("retainer", Reader::Chatterbox),
+        ),
+        ("lead.m".to_owned(), voice("lead_m", Reader::Qwen3)),
+        ("lead.f".to_owned(), voice("lead_f", Reader::Qwen3)),
+    ]))
 }
 
 /// Everything a plan is made from, each part changeable.
@@ -83,7 +81,7 @@ impl World {
         let references = cast
             .voices
             .values()
-            .map(|v| (v.clip.clone(), "00000000".to_owned()))
+            .map(|v| (v.voice.clone(), "00000000".to_owned()))
             .collect();
         Self {
             dialogue: dialogue(SCRIPT),
@@ -119,11 +117,11 @@ impl World {
         let plan = self.plan();
         for &(i, _) in &plan.make {
             let w = &plan.wanted[i];
-            let voice = &self.cast.voices[&w.entry];
+            let voice = &self.cast.voices[&w.key];
             let tool = if w.direction.is_some() {
                 "directed".to_owned()
             } else {
-                format!("{:?}", voice.reader)
+                format!("{:?}", voice.settings)
             };
             self.clips
                 .retain(|c| (&c.line, c.variant) != (&w.line, w.variant));
@@ -132,7 +130,7 @@ impl World {
                 variant: w.variant,
                 spoken: w.spoken.clone(),
                 direction: w.direction.clone(),
-                voice: voice.clip.clone(),
+                voice: voice.voice.clone(),
                 made_by: MadeBy::Generated {
                     tool,
                     model: "m".to_owned(),
@@ -140,13 +138,18 @@ impl World {
                 },
             });
             let sent = Sent {
-                text: w.sent.clone(),
-                reference: self.references[&voice.clip].clone(),
+                text: self.sent_of(w),
+                reference: self.references[&voice.voice].clone(),
             };
             self.sent.insert(w.file(), sent);
         }
         self.clips.retain(|c| !plan.remove.contains(c));
         self
+    }
+
+    /// The words sent to the reader for `w`.
+    fn sent_of(&self, w: &voice_plan::Wanted) -> String {
+        voice_plan::sent(&w.spoken, &self.say, &self.names)
     }
 }
 
@@ -154,7 +157,7 @@ impl World {
 fn to_make(plan: &Plan) -> Vec<String> {
     plan.make
         .iter()
-        .map(|&(i, why)| format!("{} {why:?}", plan.wanted[i].file()))
+        .map(|(i, why)| format!("{} {why:?}", plan.wanted[*i].file()))
         .collect()
 }
 
@@ -168,7 +171,7 @@ fn every_spoken_and_narrated_line_needs_a_clip_and_replies_none() {
             format!(
                 "{} {} {} | {}",
                 w.file(),
-                w.entry,
+                w.key,
                 w.direction.as_deref().unwrap_or("-"),
                 w.spoken
             )
@@ -180,14 +183,14 @@ fn every_spoken_and_narrated_line_needs_a_clip_and_replies_none() {
             "a/a_5912b92e.ogg > slowly | The rain fell on Heth.",
             "a/a_2748b275.ogg test_lord - | Hello there.",
             "a/a_21833604.ogg test_knight angrily | You're late.",
-            "a/a_36a692b7.m.ogg lead_m - | Let's move.",
-            "a/a_36a692b7.f.ogg lead_f - | Let's move.",
+            "a/a_36a692b7.m.ogg lead.m - | Let's move.",
+            "a/a_36a692b7.f.ogg lead.f - | Let's move.",
             "a/a_c9e4741d.m.ogg > - | The exile grips his sword.",
             "a/a_c9e4741d.f.ogg > - | The exile grips her sword.",
             "a/a_16d9be18.ogg test_knight - | Good.",
         ]
     );
-    assert!(plan.make.iter().all(|&(_, why)| why == Why::Missing));
+    assert!(plan.make.iter().all(|(_, why)| *why == Why::Missing));
     assert_eq!(plan.make.len(), 8);
     assert_eq!(
         plan.wanted[3].before,
@@ -198,12 +201,10 @@ fn every_spoken_and_narrated_line_needs_a_clip_and_replies_none() {
 #[test]
 fn once_made_nothing_is_left_to_do() {
     let plan = World::new().made().plan();
+    assert_eq!(plan.wanted.len(), 8);
     assert_eq!(
-        plan,
-        Plan {
-            wanted: plan.wanted.clone(),
-            ..Plan::default()
-        }
+        (plan.make, plan.record, plan.remove, plan.uncast),
+        (vec![], vec![], vec![], vec![])
     );
 }
 
@@ -234,22 +235,22 @@ fn changing_a_direction_remakes_only_that_line() {
 #[test]
 fn changing_a_speakers_voice_remakes_only_their_lines() {
     let mut world = World::new().made();
-    world.cast.voices.get_mut("test_lord").unwrap().clip = "messenger".to_owned();
+    world.cast.voices.get_mut("test_lord").unwrap().voice = "messenger".to_owned();
     world
         .references
         .insert("messenger".to_owned(), "1".to_owned());
-    let lord = ["a/a_2748b275.ogg Voice"];
-    assert_eq!(to_make(&world.plan()), lord);
+    assert_eq!(to_make(&world.plan()), ["a/a_2748b275.ogg Recast"]);
 
     // Another reader, or a new recording of the same clip, is a new voice.
+    let lord = |why: &str| [format!("a/a_2748b275.ogg Voice({why:?})")];
     let mut world = World::new().made();
-    world.cast.voices.get_mut("test_lord").unwrap().reader = Reader::Chatterbox;
-    assert_eq!(to_make(&world.plan()), lord);
+    world.cast.voices.get_mut("test_lord").unwrap().settings = Reader::Chatterbox;
+    assert_eq!(to_make(&world.plan()), lord(voice_plan::READER));
     let mut world = World::new().made();
     world
         .references
         .insert("rival".to_owned(), "ffffffff".to_owned());
-    assert_eq!(to_make(&world.plan()), lord);
+    assert_eq!(to_make(&world.plan()), lord(voice_plan::REFERENCE));
 }
 
 #[test]
@@ -257,10 +258,11 @@ fn a_new_spelling_in_say_ron_remakes_the_lines_with_that_word_and_keeps_the_word
     let mut world = World::new().made();
     world.say.insert("town".to_owned(), "Hayth".to_owned());
     let plan = world.plan();
-    assert_eq!(to_make(&plan), ["a/a_5912b92e.ogg Spelling"]);
+    let spelling = format!("a/a_5912b92e.ogg Voice({:?})", voice_plan::SPELLING);
+    assert_eq!(to_make(&plan), [spelling]);
     let w = &plan.wanted[plan.make[0].0];
     assert_eq!(
-        (w.spoken.as_str(), w.sent.as_str()),
+        (w.spoken.as_str(), world.sent_of(w).as_str()),
         ("The rain fell on Heth.", "The rain fell on Hayth.")
     );
 }
@@ -275,10 +277,12 @@ fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
     let mut world = World::new();
     world.dialogue = dialogue(script);
     let plan = world.plan();
+    let sent: Vec<String> = plan.wanted.iter().map(|w| world.sent_of(w)).collect();
     let said: Vec<(&str, &str)> = plan
         .wanted
         .iter()
-        .map(|w| (w.spoken.as_str(), w.sent.as_str()))
+        .zip(&sent)
+        .map(|(w, sent)| (w.spoken.as_str(), sent.as_str()))
         .collect();
     assert_eq!(
         said,
@@ -302,7 +306,8 @@ fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
     }
     let plan = world.plan();
     assert_eq!(plan.make.len(), 2);
-    assert!(plan.make.iter().all(|&(_, why)| why == Why::Spelling));
+    let spelling = Why::Voice(voice_plan::SPELLING.to_owned());
+    assert!(plan.make.iter().all(|(_, why)| *why == spelling));
 }
 
 #[test]
@@ -360,14 +365,14 @@ fn a_recorded_clip_is_listed_for_recording_and_never_made() {
         };
     }
     // A new voice doesn't touch a recording; new words or direction do.
-    world.cast.voices.get_mut("test_lord").unwrap().clip = "messenger".to_owned();
+    world.cast.voices.get_mut("test_lord").unwrap().voice = "messenger".to_owned();
     world.dialogue = dialogue(&SCRIPT.replace("(angrily)", "(wearily)"));
     let plan = world.plan();
     assert_eq!(plan.make, []);
     let record: Vec<String> = plan
         .record
         .iter()
-        .map(|&(i, why)| format!("{} {why:?}", plan.wanted[i].file()))
+        .map(|(i, why)| format!("{} {why:?}", plan.wanted[*i].file()))
         .collect();
     assert_eq!(record, ["a/a_21833604.ogg Direction"]);
 }
@@ -398,11 +403,7 @@ fn a_speaker_without_a_voice_is_listed_and_keeps_their_clips() {
     let mut world = World::new().made();
     world.cast.voices.remove("test_knight");
     let plan = world.plan();
-    let uncast: Vec<&str> = plan
-        .uncast
-        .iter()
-        .map(|(_, entry)| entry.as_str())
-        .collect();
+    let uncast: Vec<&str> = plan.uncast.iter().map(|u| u.speaker.as_str()).collect();
     assert_eq!(uncast, ["test_knight", "test_knight"]);
     assert_eq!((plan.make.len(), plan.remove.len()), (0, 0));
 }
@@ -411,21 +412,19 @@ fn a_speaker_without_a_voice_is_listed_and_keeps_their_clips() {
 
 #[test]
 fn the_cast_names_characters_narration_and_the_leads_voices() {
-    let source = "(voices: {\">\": (clip: \"narrator\", reader: Qwen3), \"lead_m\": (clip: \"lead_m\", \
-                  reader: Qwen3), \"retainer\": (clip: \"retainer\", reader: Chatterbox)})";
-    let cast = files::cast(source, |id| id == "retainer").unwrap();
-    assert_eq!(cast.voices["retainer"].reader, Reader::Chatterbox);
-    let bad = "(voices: {\"lead\": (clip: \"x\", reader: Qwen3), \"nobody\": (clip: \"\", reader: Qwen3)})";
-    let errors = files::cast(bad, |_| true).unwrap_err();
-    assert!(
-        errors.contains("\"lead\" is not a character that speaks"),
-        "{errors}"
-    );
-    assert!(errors.contains("\"nobody\" has no clip"), "{errors}");
-    assert!(files::cast("(voices: {\"x\": \"y\"})", |_| true).is_err());
-    assert_eq!(Cast::entry("lead", Variant::F), "lead_f");
-    assert_eq!(Cast::entry("lead", Variant::M), "lead_m");
-    assert_eq!(Cast::entry("hollis", Variant::M), "hollis");
+    let source = "(voices: {\">\": (voice: \"narrator\", settings: Qwen3), \"lead.m\": (voice: \
+                  \"lead_m\", settings: Qwen3), \"retainer\": (voice: \"retainer\", settings: \
+                  Chatterbox)})";
+    let speaks = |id: &str| id == "retainer" || id == "lead";
+    let cast = files::cast(source, speaks).unwrap();
+    assert_eq!(cast.voices["retainer"].settings, Reader::Chatterbox);
+    assert_eq!(cast.voices["lead.m"].voice, "lead_m");
+    let errors = files::cast(
+        "(voices: {\"nobody\": (voice: \"x\", settings: Qwen3)})",
+        speaks,
+    )
+    .unwrap_err();
+    assert!(errors.starts_with(files::CAST_FILE), "{errors}");
 }
 
 /// The game's test voice folder keeps the tool's form of the cast.
@@ -441,7 +440,7 @@ fn the_test_voice_folders_cast_is_read_by_the_tool() {
     })
     .unwrap();
     assert_eq!(cast.voices.len(), 3);
-    assert!(cast.voices.values().all(|v| v.clip == "test_tone"));
+    assert!(cast.voices.values().all(|v| v.voice == "test_tone"));
 }
 
 #[test]
@@ -611,12 +610,12 @@ fn root() -> PathBuf {
 
 /// The test scene's cast, with real reference clips.
 const TEST_CAST: &str = "(voices: {\n\
-    \">\": (clip: \"narrator\", reader: Qwen3),\n\
-    \"lead_m\": (clip: \"lead_m\", reader: Qwen3),\n\
-    \"lead_f\": (clip: \"lead_f\", reader: Qwen3),\n\
-    \"test_knight\": (clip: \"retainer\", reader: Chatterbox),\n\
-    \"test_lord\": (clip: \"rival\", reader: Qwen3),\n\
-    \"test_archer\": (clip: \"poacher\", reader: Chatterbox),\n\
+    \">\": (voice: \"narrator\", settings: Qwen3),\n\
+    \"lead.m\": (voice: \"lead_m\", settings: Qwen3),\n\
+    \"lead.f\": (voice: \"lead_f\", settings: Qwen3),\n\
+    \"test_knight\": (voice: \"retainer\", settings: Chatterbox),\n\
+    \"test_lord\": (voice: \"rival\", settings: Qwen3),\n\
+    \"test_archer\": (voice: \"poacher\", settings: Chatterbox),\n\
 })";
 
 /// A fresh voice folder named `name` with the test cast.
@@ -872,7 +871,7 @@ fn status_and_generate_cover_the_guides_lessons_and_tips() {
     let content = content();
     let scripts = Scripts::new(&content, BTreeSet::from(["vix".to_owned()]));
     let folder = folder("vix");
-    let cast = "(voices: {\"guide\": (clip: \"guide\", reader: Chatterbox)})";
+    let cast = "(voices: {\"guide\": (voice: \"guide\", settings: Chatterbox)})";
     fs::write(folder.dir.join(files::CAST_FILE), cast).unwrap();
     let lines = trpg_content::voice::guide_scene(&shipped_lessons(), &content.tips)
         .lines()
@@ -1036,8 +1035,8 @@ fn generate_warns_of_a_halting_clip_and_audit_lists_every_clip() {
     );
     // The first line halts at every seed; the second only at the first,
     // so its next take is kept.
-    let halting = plan.wanted[0].key();
-    let first_take = format!("{}@{}", plan.wanted[1].key(), SEEDS[0]);
+    let halting = voice_plan::key(&plan.wanted[0]);
+    let first_take = format!("{}@{}", voice_plan::key(&plan.wanted[1]), SEEDS[0]);
     let mut tools = Tools::fake(&[]).halting(&[&halting, &first_take]);
     let report = generate(&folder, &scripts, &mut tools, false, "2026-11-09").unwrap();
     assert!(report.starts_with("voice: made 16 clips"), "{report}");

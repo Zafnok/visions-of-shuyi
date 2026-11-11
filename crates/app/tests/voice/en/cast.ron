@@ -2,8 +2,8 @@
 // speaker of the test clips has the same tone "voice", the manifest's.
 (
     voices: {
-        "test_knight": (clip: "test_tone", reader: Qwen3),
-        "test_lord": (clip: "test_tone", reader: Qwen3),
-        "test_archer": (clip: "test_tone", reader: Qwen3),
+        "test_knight": (voice: "test_tone", settings: Qwen3),
+        "test_lord": (voice: "test_tone", settings: Qwen3),
+        "test_archer": (voice: "test_tone", settings: Qwen3),
     },
 )
