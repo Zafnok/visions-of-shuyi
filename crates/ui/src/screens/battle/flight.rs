@@ -6,8 +6,8 @@
 //! ([`FLEE_S`]); Confirm skips it.
 //!
 //! A look only (ADR-0038): the rules have already moved them off the map
-//! ([`BattleState::fled`]). Until the moment is on screen (Harl's fall
-//! still playing back, his EXP bar) they stand where they were.
+//! ([`BattleState::fled`]). Until the moment is on screen (the boss's
+//! fall still playing back, the EXP bar) they stand where they were.
 //!
 //! [`Leftovers::Flee`]: trpg_core::Leftovers::Flee
 //! [`Event::Fled`]: trpg_core::Event::Fled

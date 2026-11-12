@@ -355,7 +355,7 @@ mod tests {
         assert_eq!(queued(&c, None), ["full", "short"]);
         assert_eq!(queued(&c, Some("test")), ["full", "short", "test"]);
         c.game.campaign_tutorial = Some(TutorialLevel::Full);
-        assert_eq!(queued(&c, Some("ch01")), ["full", "short"]);
+        assert_eq!(queued(&c, Some("another_battle")), ["full", "short"]);
         c.game.campaign_tutorial = Some(TutorialLevel::Short);
         assert_eq!(queued(&c, Some("test")), ["short"]);
         c.game.campaign_tutorial = Some(TutorialLevel::None);

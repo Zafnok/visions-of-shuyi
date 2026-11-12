@@ -223,11 +223,11 @@ fn the_skip_question_is_asked_in_the_box() {
     assert!(find(&buf, 11, "Hi.").is_none());
 }
 
-/// Chapter 1's map centred on Harrowby, as the Playdate screen's place.
-fn harrowby(ctx: &Ctx) -> crate::map_view::MapScene {
-    let place = crate::map_view::Place::of_map(&ctx.game.content.maps["ch01"]);
+/// The test map `test_small` as the Playdate screen's place.
+fn small_place(ctx: &Ctx) -> crate::map_view::MapScene {
+    let place = crate::map_view::Place::of_map(&ctx.game.content.maps["test_small"]);
     let tiles = ctx.game.map_skin.view_tiles(Rect::new(0, 0, 50, 15));
-    place.scene(trpg_core::Pos::new(3, 12), tiles)
+    place.scene(trpg_core::Pos::new(7, 4), tiles)
 }
 
 /// The place as the Playdate's map skin paints it, on the white ground.
@@ -240,7 +240,7 @@ fn place_alone(ctx: &Ctx, scene: &crate::map_view::MapScene) -> GlyphBuffer {
 #[test]
 fn the_place_shows_around_the_talk_its_white_ground_dotted() {
     let ctx = pd_ctx();
-    let scene = harrowby(&ctx);
+    let scene = small_place(&ctx);
     let alone = place_alone(&ctx, &scene);
     let mut view = two_speakers(&["Hi."]);
     view.place = Some(scene);
@@ -269,17 +269,17 @@ fn the_place_shows_around_the_talk_its_white_ground_dotted() {
 #[test]
 fn an_opening_shows_the_place_undarkened_then_cuts_to_dark_halfway() {
     let ctx = pd_ctx();
-    let scene = harrowby(&ctx);
+    let scene = small_place(&ctx);
     let alone = place_alone(&ctx, &scene);
     let mut view = two_speakers(&["Hi."]);
     view.place = Some(scene);
-    view.caption = Some("Harrowby".to_owned());
+    view.caption = Some("The village".to_owned());
     view.opening = Some(OpeningView { darkened: 0.4 });
     let mut buf = blank();
     paint(&ctx, &view, &mut buf);
     // No faces and no text box while it plays; the caption is up.
     assert_eq!(sprites(&buf), []);
-    assert!(find(&buf, 0, "Harrowby").is_some());
+    assert!(find(&buf, 0, "The village").is_some());
     assert_eq!(buf.get(25, 12), alone.get(25, 12));
     view.opening = Some(OpeningView { darkened: 0.5 });
     let mut buf = blank();
@@ -292,7 +292,7 @@ fn an_opening_shows_the_place_undarkened_then_cuts_to_dark_halfway() {
 #[test]
 fn a_battles_scene_darkens_the_battle_below_it() {
     let ctx = pd_ctx();
-    let below = place_alone(&ctx, &harrowby(&ctx));
+    let below = place_alone(&ctx, &small_place(&ctx));
     let mut buf = below.clone();
     let mut view = two_speakers(&["Hi."]);
     view.overlay = true;

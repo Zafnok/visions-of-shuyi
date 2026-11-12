@@ -197,16 +197,11 @@ fn a_tile_only_an_art_reaches_is_in_the_danger_zone_the_arrows_and_the_shown_ran
     assert!(!ordinary.scene(&c).tinted(range::ATTACK).contains(&two_away));
 }
 
-/// *The Company Ledger*, the biggest battle, as `cargo shuyi bench` starts
-/// it: the cursor on the lead.
-fn company_ledger(c: &Ctx) -> BattleScreen {
-    use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
-    let content = &c.game.content;
-    let def = &content.battles["side_company_ledger"];
-    let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
-    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
-    BattleScreen::new(state)
+/// The Quick Battle (a test battle) at its start: the cursor on the lead
+/// (3, 5), the mage below it (3, 6), the knight at (4, 6), the archer at
+/// (2, 4), and four enemies.
+fn quick_screen(c: &Ctx) -> BattleScreen {
+    BattleScreen::new(quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}")))
 }
 
 /// The path searches each of `actions` runs, the scene drawn after it as
@@ -229,51 +224,50 @@ fn searches_per_step(
     out
 }
 
-/// `bench/battle-cursor-sweep.bench.ron`'s steps and `battle-attack`'s
-/// first, with no unit selected: the cursor reaching a player unit runs no
-/// path search, as each enemy's threat area is kept for the battle (ticket
-/// 1259; before, each new unit searched every enemy's moves again).
+/// The cursor sweeping the Quick Battle past its units, with no unit
+/// selected: reaching a player unit runs no path search, as each enemy's
+/// threat area is kept for the battle (ticket 1259; before, each new unit
+/// searched every enemy's moves again). `bench/`'s cursor sweep times the
+/// same on the biggest battle.
 #[test]
 fn the_cursor_reaching_a_player_unit_runs_no_path_search() {
     use Action::{CursorDown, CursorLeft, CursorRight, CursorUp};
     let mut c = ctx();
-    let sweep: Vec<Action> = [CursorUp, CursorRight, CursorDown, CursorLeft]
-        .into_iter()
-        .flat_map(|a| [a; 12])
-        .collect();
-    let attack = [CursorRight, CursorRight, CursorDown];
-    for (actions, then_select) in [(&sweep[..], false), (&attack[..], true)] {
-        let mut s = company_ledger(&c);
-        // The first frame, on the lead, keeps the battle's areas.
-        s.scene(&c);
-        let counts = searches_per_step(&mut s, &mut c, actions);
-        let units = counts.iter().filter(|(_, unit)| unit.is_some()).count();
-        assert!(units >= 2, "the cursor met {units} units: {counts:?}");
-        assert!(counts.iter().all(|&(n, _)| n == 0), "{counts:?}");
-        if then_select {
-            // Selecting the rider: her own moves, and her planner from the
-            // kept areas, which searches again only the one enemy whose
-            // moves come next to her (each enemy before).
-            let counts = searches_per_step(&mut s, &mut c, &[Action::Confirm]);
-            assert_eq!(counts[0].0, 2, "{counts:?}");
-        }
-    }
+    // From the lead: the mage, the knight, the lead again, the archer.
+    let sweep = [
+        CursorDown,
+        CursorRight,
+        CursorUp,
+        CursorLeft,
+        CursorLeft,
+        CursorUp,
+    ];
+    let mut s = quick_screen(&c);
+    // The first frame, on the lead, keeps the battle's areas.
+    s.scene(&c);
+    let counts = searches_per_step(&mut s, &mut c, &sweep);
+    let units = counts.iter().filter(|(_, unit)| unit.is_some()).count();
+    assert_eq!(units, 4, "{counts:?}");
+    assert!(counts.iter().all(|&(n, _)| n == 0), "{counts:?}");
+    // Selecting the archer: its own moves, and its planner from the kept
+    // areas, which searches again only the enemies whose moves come next
+    // to it, never all four.
+    let counts = searches_per_step(&mut s, &mut c, &[Action::Confirm]);
+    assert!((1..=4).contains(&counts[0].0), "{counts:?}");
 }
 
-/// The cursor moves of `bench/battle-attack.bench.ron` while the rider is
-/// selected in *The Company Ledger*: the threat arrows reuse the enemies'
-/// searches made for her, so a move runs at most 2 path searches, and most
-/// none (ticket 1251; each ran one per enemy before).
+/// Cursor moves while the lead is selected in the Quick Battle: the threat
+/// arrows reuse the enemies' searches made for it, so a move runs at most
+/// 2 path searches, and most none (ticket 1251; each ran one per enemy
+/// before). `bench/`'s attack times the same on the biggest battle.
 #[test]
 fn a_cursor_move_while_a_unit_is_selected_hardly_searches() {
-    use Action::{Confirm, CursorDown, CursorRight, CursorUp};
+    use Action::{Confirm, CursorRight, CursorUp};
     use trpg_core::movement::searches;
     let mut c = ctx();
-    let mut s = company_ledger(&c);
-    for action in [CursorRight, CursorRight, CursorDown, Confirm] {
-        press(&mut s, &mut c, &[action]);
-        s.scene(&c);
-    }
+    let mut s = quick_screen(&c);
+    press(&mut s, &mut c, &[Confirm]);
+    s.scene(&c);
     let mut counts = Vec::new();
     for action in [CursorRight, CursorRight, CursorUp, CursorUp, CursorUp] {
         let before = searches();

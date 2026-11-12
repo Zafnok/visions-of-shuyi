@@ -470,30 +470,29 @@ fn nothing_off_the_view_is_drawn() {
     assert_eq!(painted(&ctx, &scene), blank());
 }
 
-/// Chapter 1's first battle, Harrowby Ford, on the Playdate as a new game
-/// reaches it: its scenes skipped, turn 1, the cursor on the lead. The
-/// harness plays it in the Playdate's palette and skins.
-pub(crate) fn harrowby_ford() -> crate::harness::Harness {
+/// The Quick Battle (a test battle) on the Playdate, past its
+/// Preparations and its turn-1 banner, the cursor on the lead. The harness
+/// plays it in the Playdate's palette and skins.
+pub(crate) fn quick_battle() -> crate::harness::Harness {
     let setup = |ctx: &mut Ctx| {
         let def = trpg_content::playdate_palette::load_playdate(&ctx.game.content.palette).unwrap();
         ctx.palette = Palette::new::<UiColor>(&def).unwrap();
         ctx.console = <crate::console::ConsoleSpec as crate::console::ConsoleSizes>::PLAYDATE;
         ctx.use_playdate_skins();
     };
-    let mut h = crate::harness::Harness::with_layout_and(crate::input::RIGHT_HANDED, setup)
-        .with_shipped_story();
-    h.keys("f f f Up f d f d f d f d f d f d f").wait(3.0);
-    h.keys("d f").wait(3.0);
+    let mut h = crate::harness::Harness::with_layout_and(crate::input::RIGHT_HANDED, setup);
+    // Quick Battle, then Preparations: Left wraps to `Fight!`.
+    h.keys("Down f Left f").wait(3.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 
-/// Harrowby Ford's opening view ([`harrowby_ford`]), the map alone over
+/// The Quick Battle's opening view ([`quick_battle`]), the map alone over
 /// the screen. The frame as braille (each character 2 × 4 pixels), so the
 /// snapshot is the picture.
 #[test]
-fn harrowby_fords_opening_view() {
-    let h = harrowby_ford();
+fn the_quick_battles_opening_view() {
+    let h = quick_battle();
     let scene = h.map_scene_in(SCREEN).unwrap();
     let frame = shown(&painted(h.game().ctx(), &scene));
     insta::assert_snapshot!(braille(&frame));

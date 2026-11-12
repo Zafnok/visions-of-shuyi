@@ -93,35 +93,38 @@ mod tests {
         Pos::new(x, y)
     }
 
+    /// On the test files' `test_small` map (14 × 8).
     #[test]
     fn a_place_is_centred_on_its_tile_as_far_as_the_map_allows() {
         let content = trpg_content::load_embedded().unwrap();
-        let place = Place::of_map(&content.maps["ch01"]);
-        assert_eq!((place.tiles.width(), place.tiles.height()), (24, 16));
+        let place = Place::of_map(&content.maps["test_small"]);
+        assert_eq!((place.tiles.width(), place.tiles.height()), (14, 8));
         assert_eq!(place.units, [] as [crate::map_view::scene::UnitView; 0]);
         // A view smaller than the map: the tile in the middle.
-        let scene = place.scene(p(12, 8), (10, 6));
-        assert_eq!((scene.origin, scene.size), (p(7, 5), (10, 6)));
+        let scene = place.scene(p(7, 4), (10, 6));
+        assert_eq!((scene.origin, scene.size), (p(2, 1), (10, 6)));
         assert_eq!(
-            scene.tile(p(12, 8)).and_then(|t| t.terrain),
-            place.tiles.get(p(12, 8)).copied()
+            scene.tile(p(7, 4)).and_then(|t| t.terrain),
+            place.tiles.get(p(7, 4)).copied()
         );
         // Near an edge: the view stops at it.
-        assert_eq!(place.scene(p(0, 15), (10, 6)).origin, p(0, 10));
-        assert_eq!(place.scene(p(23, 0), (10, 6)).origin, p(14, 0));
+        assert_eq!(place.scene(p(0, 7), (10, 6)).origin, p(0, 2));
+        assert_eq!(place.scene(p(13, 0), (10, 6)).origin, p(4, 0));
         // A view bigger than the map: the map in its middle, off the map
         // around it.
-        let wide = place.scene(p(3, 12), (50, 32));
-        assert_eq!(wide.origin, p(-13, -8));
+        let wide = place.scene(p(3, 6), (50, 32));
+        assert_eq!(wide.origin, p(-18, -12));
         assert_eq!(wide.tile(p(-1, 0)).map(|t| t.terrain), Some(None));
         assert!(wide.tile(p(0, 0)).is_some_and(|t| t.terrain.is_some()));
-        assert_eq!(wide.look, content.maps["ch01"].look);
+        assert_eq!(wide.look, content.maps["test_small"].look);
     }
 
+    /// On the test battle `test`: its brigand is on the part shown, its
+    /// party off it.
     #[test]
     fn a_battles_place_is_its_field_in_its_light_and_shows_its_units() {
         let content = trpg_content::load_embedded().unwrap();
-        let def = &content.battles["ch01"];
+        let def = &content.battles["test"];
         let mut place = Place::of_battle(&content, def);
         assert_eq!(place.tiles, def.map.tiles);
         assert_eq!(place.look, content.battle_look(def));
@@ -133,7 +136,7 @@ mod tests {
         );
         let setup = campaign.battle_setup(def, &content.tables());
         place.units = setup.units.iter().map(UnitView::of).collect();
-        let scene = place.scene(p(20, 2), (10, 6));
+        let scene = place.scene(p(12, 2), (10, 6));
         // Only the units on the part shown.
         assert_ne!(scene.units, [] as [crate::map_view::scene::UnitView; 0]);
         assert!(scene.units.len() < place.units.len());

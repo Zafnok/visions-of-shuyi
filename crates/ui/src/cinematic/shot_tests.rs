@@ -392,8 +392,12 @@ fn faces_cross_from_just_off_one_edge_to_just_off_the_other() {
 
 #[test]
 fn a_face_has_the_short_name_and_the_lead_the_one_given() {
-    let ctx = ctx();
-    let who: Vec<_> = ["lead", "retainer", "test_lord", "stranger"]
+    let mut ctx = ctx();
+    // A short form for the test speaker, as the names table gives one
+    // with `<id>.first`.
+    let table = &mut ctx.game.content.names.names;
+    table.insert("test_voice.first".to_owned(), "Voice".to_owned());
+    let who: Vec<_> = ["lead", "test_voice", "test_lord", "stranger"]
         .iter()
         .map(|id| CharacterId((*id).to_owned()))
         .collect();
@@ -402,14 +406,14 @@ fn a_face_has_the_short_name_and_the_lead_the_one_given() {
         faces.into_iter().map(|f| (f.portrait, f.name)).collect()
     };
     let pair = |portrait: &str, name: &str| (portrait.to_owned(), name.to_owned());
-    // "Hollis Marr" is Hollis; a name without a short form is whole; an
+    // "Test Voice" is Voice; a name without a short form is whole; an
     // id the names table lacks is shown as it is.
-    assert_eq!(ctx.game.content.names.get("retainer"), Some("Hollis Marr"));
+    assert_eq!(ctx.game.content.names.get("test_voice"), Some("Test Voice"));
     assert_eq!(
         named(&mara()),
         [
             pair("lead_f", "Mara"),
-            pair("retainer", "Hollis"),
+            pair("test_voice", "Voice"),
             pair("test_lord", "Test Lord"),
             pair("stranger", "stranger"),
         ]

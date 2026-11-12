@@ -106,13 +106,12 @@ mod tests {
 
     use super::*;
 
-    /// Chapter 1 as a new game starts it (the shipped New Game).
-    fn chapter_1() -> BattleState {
-        let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
-        let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
-        let campaign = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
-        let setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
-        BattleState::new(setup).0
+    /// The Quick Battle (a test battle) at its start: the lord, the knight
+    /// and the archer each reach an enemy and have an art for it; the mage
+    /// reaches one too, has no art, and has a spell to aim at a tile.
+    fn quick() -> BattleState {
+        let c = crate::screen::tests::ctx();
+        super::super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"))
     }
 
     /// The id of the player's unit on `at`.
@@ -132,20 +131,21 @@ mod tests {
         state.apply(&cmd).unwrap_or_else(|e| panic!("{e:?}"));
     }
 
-    const SERGEANT: Pos = Pos::new(6, 11);
-    const HERETIC: Pos = Pos::new(4, 13);
+    /// The units with an art in reach.
+    const WITH_ARTS: [Pos; 3] = [Pos::new(3, 5), Pos::new(4, 6), Pos::new(2, 4)];
+    const MAGE: Pos = Pos::new(3, 6);
 
     fn can(state: &BattleState, done: DoneWhen) -> bool {
         Doable::default().can(state, done)
     }
 
-    /// Chapter 1, turn 1: only the Sergeant reaches an enemy (and has an
-    /// art for it); the Heretic has a spell for the forest. Each goes when
-    /// its unit has acted; with nobody left, nothing that takes a unit can
-    /// be done, and what takes none always can.
+    /// Turn 1: every unit reaches an enemy, three have an art for it and
+    /// the mage a spell for a tile. Each goes when its units have acted;
+    /// with nobody left, nothing that takes a unit can be done, and what
+    /// takes none always can.
     #[test]
-    fn chapter_1_turn_1_can_do_what_its_units_left_can() {
-        let mut s = chapter_1();
+    fn turn_1_can_do_what_its_units_left_can() {
+        let mut s = quick();
         for done in [
             DoneWhen::UnitSelected,
             DoneWhen::ForecastOpened,
@@ -155,27 +155,22 @@ mod tests {
         ] {
             assert!(can(&s, done), "{done:?}");
         }
-        wait(&mut s, SERGEANT);
-        assert!(!can(&s, DoneWhen::Attacked));
-        assert!(!can(&s, DoneWhen::ForecastOpened));
+        for at in WITH_ARTS {
+            wait(&mut s, at);
+        }
+        assert!(can(&s, DoneWhen::Attacked));
+        assert!(can(&s, DoneWhen::ForecastOpened));
         assert!(!can(&s, DoneWhen::ArtsOpened));
         assert!(can(&s, DoneWhen::TileAimed));
         assert!(can(&s, DoneWhen::ThreatPointed));
-        wait(&mut s, HERETIC);
-        assert!(!can(&s, DoneWhen::TileAimed));
         assert!(can(&s, DoneWhen::UnitMoved));
-        let left: Vec<Pos> = s
-            .units()
-            .iter()
-            .filter(|u| u.faction == Faction::Player && !u.acted)
-            .map(|u| u.pos)
-            .collect();
-        for at in left {
-            wait(&mut s, at);
-        }
+        wait(&mut s, MAGE);
+        assert!(!can(&s, DoneWhen::TileAimed));
+        assert!(!can(&s, DoneWhen::Attacked));
         assert_eq!(s.phase(), Phase::Player);
         for done in [
             DoneWhen::UnitSelected,
+            DoneWhen::UnitMoved,
             DoneWhen::ActionMenuOpened,
             DoneWhen::SafePointed,
         ] {
@@ -196,33 +191,22 @@ mod tests {
     /// changes.
     #[test]
     fn an_answer_is_kept_until_a_new_one_is_started() {
-        let mut s = chapter_1();
+        let mut s = quick();
         let mut d = Doable::default();
-        assert!(d.can(&s, DoneWhen::Attacked));
-        wait(&mut s, SERGEANT);
-        assert!(d.can(&s, DoneWhen::Attacked));
-        assert!(!Doable::default().can(&s, DoneWhen::Attacked));
+        assert!(d.can(&s, DoneWhen::ArtsOpened));
+        for at in WITH_ARTS {
+            wait(&mut s, at);
+        }
+        assert!(d.can(&s, DoneWhen::ArtsOpened));
+        assert!(!Doable::default().can(&s, DoneWhen::ArtsOpened));
     }
 
-    /// Reaching an enemy isn't having an art for it: the Heretic beside a
-    /// brigand, the only one left to act, could attack but has no art.
+    /// Reaching an enemy isn't having an art for it: the mage, the only one
+    /// left to act, could attack but has no art.
     #[test]
     fn a_unit_in_reach_without_an_art_cant_open_arts() {
-        let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
-        let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
-        let campaign = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
-        let mut setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
-        let brigand = setup.units.iter().position(|u| u.faction == Faction::Enemy);
-        let brigand = brigand.unwrap_or_else(|| panic!("an enemy in Chapter 1"));
-        setup.units[brigand].pos = Pos::new(HERETIC.x + 1, HERETIC.y);
-        let mut s = BattleState::new(setup).0;
-        let others: Vec<Pos> = s
-            .units()
-            .iter()
-            .filter(|u| u.faction == Faction::Player && u.pos != HERETIC)
-            .map(|u| u.pos)
-            .collect();
-        for at in others {
+        let mut s = quick();
+        for at in WITH_ARTS {
             wait(&mut s, at);
         }
         assert!(can(&s, DoneWhen::Attacked));

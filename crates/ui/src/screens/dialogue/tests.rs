@@ -495,13 +495,13 @@ fn a_speaker_who_is_not_a_unit_is_named_by_the_names_table() {
         .game
         .content
         .names
-        .get("retainer")
+        .get("test_voice")
         .unwrap_or_default()
         .to_owned();
-    assert!(!name.is_empty() && name != "retainer", "{name}");
+    assert!(!name.is_empty() && name != "test_voice", "{name}");
     let s = full(&scene(vec![
-        place(Side::Left, "retainer"),
-        say("retainer", "My lord."),
+        place(Side::Left, "test_voice"),
+        say("test_voice", "My lord."),
     ]));
     let view = s.view(&c);
     assert_eq!(names(&view), [Some(name.as_str()), None]);
@@ -952,23 +952,24 @@ fn at(x: i32, y: i32) -> trpg_core::Pos {
 
 /// A map named by `@place` is shown centred on its tile, as much of it as
 /// the map skin fits on the screen; the battle only when the screen was
-/// given one; `@place none` and an unknown map show none.
+/// given one; `@place none` and an unknown map show none. On the test
+/// files: the map `test_small` and the battle `test` on it.
 #[test]
 fn the_view_shows_the_place_the_scene_names() {
     let mut c = ctx();
     c.change_settings(|s| s.text_speed = TextSpeed::Instant)
         .unwrap();
-    let ch01 = || PlaceLine::Map {
-        map: "ch01".into(),
-        at: at(3, 12),
+    let small = || PlaceLine::Map {
+        map: "test_small".into(),
+        at: at(3, 6),
         bright: None,
     };
     let steps = vec![
         narrate("Black."),
-        setting(ch01()),
+        setting(small()),
         narrate("The green."),
         setting(PlaceLine::Battle {
-            at: at(20, 3),
+            at: at(11, 5),
             bright: None,
         }),
         narrate("The fort."),
@@ -983,8 +984,8 @@ fn the_view_shows_the_place_the_scene_names() {
     ];
     let view = screen_tiles(&c);
     let maps = &c.game.content.maps;
-    let expected = Place::of_map(&maps["ch01"]).scene(at(3, 12), view);
-    let battle = &c.game.content.battles["ch01"];
+    let expected = Place::of_map(&maps["test_small"]).scene(at(3, 6), view);
+    let battle = &c.game.content.battles["test"];
     let mut field = Place::of_battle(&c.game.content, battle);
     field.units = vec![];
     let places = |s: &mut DialogueScreen, c: &mut Ctx| {
@@ -1004,7 +1005,7 @@ fn the_view_shows_the_place_the_scene_names() {
     let mut s = full(&scene(steps)).with_battle(field.clone());
     assert_eq!(s.battle(), Some(&field));
     let seen = places(&mut s, &mut c);
-    let fort = field.scene(at(20, 3), view);
+    let fort = field.scene(at(11, 5), view);
     assert_eq!(seen, [None, Some(expected), Some(fort), None, None]);
 }
 
@@ -1014,13 +1015,13 @@ fn a_jump_in_the_log_shows_that_lines_place() {
     let mut c = ctx();
     c.change_settings(|s| s.text_speed = TextSpeed::Instant)
         .unwrap();
-    let ch01 = PlaceLine::Map {
-        map: "ch01".into(),
-        at: at(3, 12),
+    let small = PlaceLine::Map {
+        map: "test_small".into(),
+        at: at(3, 6),
         bright: None,
     };
     let mut s = full(&scene(vec![
-        setting(ch01),
+        setting(small),
         narrate("One."),
         setting(PlaceLine::None),
         narrate("Two."),
@@ -1047,14 +1048,14 @@ fn the_keys_after_the_one_that_starts_an_opening_wait() {
         line: trpg_content::LineId::default(),
     };
     let yard = Step::Directive(Stage::Setting(trpg_content::PlaceLine::Map {
-        map: "harrowby_yard".into(),
-        at: trpg_core::Pos::new(12, 8),
+        map: "test_buildings".into(),
+        at: trpg_core::Pos::new(2, 1),
         bright: None,
     }));
     let mut s = full(&scene(vec![
         narrate("Black."),
         yard,
-        Step::Directive(Stage::Opening("ch01_sparring".into())),
+        Step::Directive(Stage::Opening("test_opening".into())),
         narrate("The yard."),
     ]));
     press(&mut s, &mut c, Action::Confirm);
@@ -1088,11 +1089,11 @@ fn fading_in_needs_a_place_and_no_opening() {
     let mut c = ctx();
     let fort = || {
         setting(PlaceLine::Battle {
-            at: at(20, 3),
+            at: at(11, 5),
             bright: None,
         })
     };
-    let field = Place::of_battle(&c.game.content, &c.game.content.battles["ch01"]);
+    let field = Place::of_battle(&c.game.content, &c.game.content.battles["test"]);
     // On black: straight to the box.
     let s = full(&scene(vec![
         narrate("Black."),
@@ -1112,20 +1113,20 @@ fn fading_in_needs_a_place_and_no_opening() {
     assert!((half - 0.5).abs() < 0.05, "{half}");
     s.update(&mut c, &frame(&[], 0.3, false));
     assert!(!s.is_opening());
-    // With an opening: the opening, not a fade (it moves for 2 s).
+    // With an opening: the opening, not a fade (it moves for 1 s).
     let yard = setting(PlaceLine::Map {
-        map: "harrowby_yard".into(),
-        at: at(12, 8),
+        map: "test_buildings".into(),
+        at: at(2, 1),
         bright: None,
     });
     let mut s = full(&scene(vec![
         yard,
-        Step::Directive(Stage::Opening("ch01_sparring".into())),
+        Step::Directive(Stage::Opening("test_opening".into())),
         narrate("The yard."),
     ]))
     .fading_in();
     let id = s.playing.as_ref().and_then(|p| p.id.clone());
-    assert_eq!(id.as_deref(), Some("ch01_sparring"));
-    s.update(&mut c, &frame(&[], 1.0, false));
+    assert_eq!(id.as_deref(), Some("test_opening"));
+    s.update(&mut c, &frame(&[], 0.9, false));
     assert_eq!(darkened(&s, &c), Some(0.0));
 }

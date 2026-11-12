@@ -293,8 +293,7 @@ fn on_act1(ctx: &Ctx, chapter: &str, at: &str, cleared: &[&str]) -> Campaign {
 }
 
 /// The cursor's keys undo each other and reach every shown place, on the
-/// test maps and on Act 1's at Chapter 4's start, after Veyne Hall, and
-/// with every place shown.
+/// test maps: at the start, after a place is won, and on the second map.
 #[test]
 fn the_cursors_keys_undo_each_other_and_reach_every_place() {
     let mut ctx = ctx();
@@ -309,7 +308,17 @@ fn the_cursors_keys_undo_each_other_and_reach_every_place() {
     second.world = None;
     second.enter_world(&ctx.game.content.worldmaps["test_world_2"].map);
     the_keys_undo_and_reach_everywhere(&mut ctx, second);
+}
 
+/// The same on Act 1's world map (a test of the game's own map, ADR-0118):
+/// at Chapter 4's start, after the `veyne_hall` place, and with every place
+/// shown.
+#[test]
+fn act_1s_world_map_lets_the_cursor_reach_every_place() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
+    let mut ctx = ctx();
     let act1 = on_act1(&ctx, "ch04", "greywater", &[]);
     the_keys_undo_and_reach_everywhere(&mut ctx, act1);
     let act1 = on_act1(&ctx, "ch05", "veyne_hall", &["aldwater", "veyne_hall"]);
