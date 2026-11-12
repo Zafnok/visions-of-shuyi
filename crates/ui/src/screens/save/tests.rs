@@ -617,3 +617,19 @@ fn the_picker_can_be_reached_to_hear_where_a_file_went() {
         .and_then(|a| a.downcast_mut::<SlotPickerScreen>());
     assert!(any.is_some());
 }
+
+/// Ticket 0874: loading with a save to export, the guide's tip is pushed
+/// on the very first update, and only then: not saving, not again.
+#[test]
+fn the_export_tip_is_pushed_on_the_first_update() {
+    let frame = FrameInput::new(vec![], 0.0, vec![]);
+    let mut c = saves_on_a_desktop();
+    c.game.tips_enabled = true;
+    let mut saving = SlotPickerScreen::save(&c, campaign(&c, "Mei", 0));
+    assert_eq!(format!("{:?}", saving.update(&mut c, &frame)), "None");
+    let mut s = SlotPickerScreen::load(&c);
+    assert_eq!(format!("{:?}", s.update(&mut c, &frame)), "Push(tip)");
+    assert_eq!(format!("{:?}", s.update(&mut c, &frame)), "None");
+    let mut again = SlotPickerScreen::load(&c);
+    assert_eq!(format!("{:?}", again.update(&mut c, &frame)), "None");
+}

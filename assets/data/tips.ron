@@ -20,7 +20,9 @@
 // or flying unit, never a mounted or armored one), FirstEffective (the
 // forecast is open and a strike of either side is effective by its weapon
 // kind: a spear on a mounted unit, a bow on a flying one; not a spell on an
-// element its target is Weak to).
+// element its target is Weak to). Outside battle (ticket 0874): FirstLoadGame
+// (the Load Game list opens with a save in it), FirstProfileScreen (the
+// Profile screen opens); not where saves can't be exported (the Playdate).
 // At most one tip per trigger.
 //
 // The battle menu's Guides lists every tip, in this order, after the
@@ -141,6 +143,24 @@
 triple against fliers, yours and theirs alike. A ! in
 the forecast means it's working; a unit's details say more.",
             face: "sly",
+        ),
+        (
+            id: "export_save",
+            trigger: FirstLoadGame,
+            title: "Exporting a save",
+            text: "Any save on this list can go out to a file of its own:
+a copy to keep, or to play on another computer.",
+            how: "Export the save under the cursor: {Info}",
+            face: "smile",
+        ),
+        (
+            id: "export_profile",
+            trigger: FirstProfileScreen,
+            title: "Exporting a profile",
+            text: "A profile can go out to a file of its own, with all its
+saves, options and keys: handy for a new computer.",
+            how: "Export the profile under the cursor: {Info}",
+            face: "smile",
         ),
     ],
 )

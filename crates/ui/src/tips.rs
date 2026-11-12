@@ -10,9 +10,11 @@
 //! 0455).
 
 pub mod glyph;
+pub mod screen;
 pub mod view;
 
 use crate::prelude::*;
+pub use screen::TipScreen;
 pub use view::{FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
 
 use core::fmt::Display;

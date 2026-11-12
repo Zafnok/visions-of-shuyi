@@ -11,6 +11,8 @@
 //! file, after asking whether the options and key bindings go with it,
 //! and on a desktop a line says where the saves are (ticket 0872,
 //! `docs/design/options.md`, *Saves outside the game*; [`crate::save_files`]).
+//! The first time it opens with a save to export, the guide's tip says so
+//! ([`TipScreen`], ticket 0874).
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screens
 //! show and do, and says it as a [`SavePromptView`] and a
@@ -22,6 +24,7 @@ pub mod view;
 use crate::prelude::*;
 pub use view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 
+use trpg_content::TipTrigger;
 use trpg_core::{Campaign, GameMode, SaveFile};
 
 use crate::audio::MenuSound;
@@ -32,6 +35,7 @@ use crate::save_files::{self, Export, ExportNotice, Exported};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::files;
 use crate::screens::pick_one;
+use crate::tips::TipScreen;
 use crate::widgets::{Ask, ListCursor, Menu, MenuItem};
 
 /// The key of the question after a chapter's victory in the language
@@ -149,6 +153,9 @@ pub struct SlotPickerScreen {
     message: Option<String>,
     /// Where the last export went.
     notice: ExportNotice,
+    /// Whether the guide's tip on exporting was looked at (ticket 0874):
+    /// the first update does.
+    tip_asked: bool,
 }
 
 impl SlotPickerScreen {
@@ -192,6 +199,7 @@ impl SlotPickerScreen {
             exporting: None,
             message: None,
             notice: ExportNotice::default(),
+            tip_asked: false,
         }
     }
 
@@ -288,6 +296,16 @@ impl SlotPickerScreen {
     /// The platform's answer to the last export ([`save_files::hear`]).
     pub fn heard(&mut self, exported: Option<Exported>) {
         self.notice.heard(exported);
+    }
+
+    /// The guide's tip on exporting a save (ticket 0874), if it is due:
+    /// loading, with a save in the list, where saves can be exported, the
+    /// first time ([`TipScreen::once`]).
+    fn export_tip(&self, ctx: &mut Ctx) -> Option<TipScreen> {
+        let saved = self.slots.iter().any(|s| matches!(s, Slot::Saved(_)));
+        let due = !self.is_saving() && saved && save_files::can_export(&ctx.platform);
+        due.then(|| TipScreen::once(ctx, TipTrigger::FirstLoadGame))
+            .flatten()
     }
 
     /// The message under the panel, if any.
@@ -500,6 +518,11 @@ impl Screen<Shuyi> for SlotPickerScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if !core::mem::replace(&mut self.tip_asked, true)
+            && let Some(tip) = self.export_tip(ctx)
+        {
+            return Transition::Push(Box::new(tip));
+        }
         for &action in &input.actions {
             if self.is_asking_export() {
                 self.answer_export(ctx, action);

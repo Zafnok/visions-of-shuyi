@@ -131,3 +131,19 @@ fn the_folder_key_opens_the_saves_folder_on_a_desktop() {
     let _ = s.update(&mut c, &input);
     assert_eq!(c.take_file_requests(), []);
 }
+
+/// Ticket 0874: where a profile can be exported, the guide's tip is
+/// pushed on the screen's very first update, and only then.
+#[test]
+fn the_export_tip_is_pushed_on_the_first_update() {
+    use crate::screen::{FrameInput, Screen};
+    let frame = FrameInput::new(vec![], 0.0, vec![]);
+    let mut c = crate::screen::tests::ctx();
+    c.game.tips_enabled = true;
+    let mut unknown = super::screen(&c);
+    assert_eq!(format!("{:?}", unknown.update(&mut c, &frame)), "None");
+    c.platform.storage_place = shuyi_ui::StoragePlace::Folder("/saves".into());
+    let mut s = super::screen(&c);
+    assert_eq!(format!("{:?}", s.update(&mut c, &frame)), "Push(tip)");
+    assert_eq!(format!("{:?}", s.update(&mut c, &frame)), "None");
+}

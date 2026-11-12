@@ -93,6 +93,11 @@ pub enum TipTrigger {
     /// its weapon kind's trait (a spear on a mounted unit, a bow on a
     /// flying one), not by a spell's element (ticket 0489).
     FirstEffective,
+    /// The Load Game list opens with a save in it, where saves can be
+    /// exported (ticket 0874).
+    FirstLoadGame,
+    /// The Profile screen opens, where saves can be exported (0874).
+    FirstProfileScreen,
     // The triggers below start lessons only (ticket 0457): no tip uses them
     // yet.
     /// In the player's phase, every unit of the player's has acted.
@@ -217,6 +222,8 @@ mod tests {
             TipTrigger::ZoomAvailable,
             TipTrigger::FirstWadeInReach,
             TipTrigger::FirstEffective,
+            TipTrigger::FirstLoadGame,
+            TipTrigger::FirstProfileScreen,
         ] {
             assert!(table.for_trigger(trigger).is_some(), "{trigger:?}");
         }

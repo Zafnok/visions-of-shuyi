@@ -28,6 +28,12 @@
     // (`docs/story/characters/guide.md`).
     "title.note.heading": "Still {name}?",
     "title.note.text": "Profile, on this menu, gives you a name of your own. Your options and saves stay with it.",
+    // The guide's note beside the menu while the cursor is on Load Game or
+    // on Profile, where saves can be exported (ticket 0874). Names no key:
+    // the guide's tip on each screen does.
+    "title.note.export_heading": "Did you know?",
+    "title.note.export_save": "Load Game can export any of your saves to a file, to keep a copy or play it on another computer.",
+    "title.note.export_profile": "Profile can export your whole profile to a file: every save, with your options and keys.",
 
     // Player profiles (`docs/design/options.md`). `{n}` is the profile's
     // number: the first profile, made on a first launch, is `Player 1`.

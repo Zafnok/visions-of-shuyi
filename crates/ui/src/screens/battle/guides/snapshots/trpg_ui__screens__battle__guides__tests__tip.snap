@@ -4,13 +4,12 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Moving the cursor               │  Weapon kinds                                                  ║
-║ Played on the keys              │                                                                ║
-║ Finding your units              │  A spear's might counts double against riders, a bow's         ║
-║ Selecting a unit                │  triple against fliers, yours and theirs alike. A ! in         ║
-║ Attacking                       │  the forecast means it's working; a unit's details say more.   ║
+║ Played on the keys              │  Exporting a profile                                           ║
+║ Finding your units              │                                                                ║
+║ Selecting a unit                │  A profile can go out to a file of its own, with all its       ║
+║ Attacking                       │  saves, options and keys: handy for a new computer.            ║
 ║ Ending the turn                 │                                                                ║
-║ Rewind                          │                                                                ║
+║ Rewind                          │  Export the profile under the cursor: e                        ║
 ║ Threat arrows                   │                                                                ║
 ║ Combat Arts                     │                                                                ║
 ║ Spells that change tiles        │                                                                ║
@@ -29,7 +28,8 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
 ║ Weapon kinds                    │                                                                ║
-║                                 │                                                                ║
+║ Exporting a save                │                                                                ║
+║ Exporting a profile             │                                                                ║
 ║                                 │                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
                                                                                                     
@@ -37,7 +37,8 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 --- colours ---
 aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccaccbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccaccbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -62,7 +63,6 @@ acccccccccccccccccccccccccccccccccaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 addddddddddddddddddddddddddddddddcacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
