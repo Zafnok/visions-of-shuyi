@@ -196,7 +196,8 @@ enum Kind {
     Comment,
 }
 
-/// `text` cut into runs of code, quoted text and comments.
+/// `text` cut into runs of code, quoted text and comments. A run of code
+/// may be empty (between two others, or at the end).
 fn runs(text: &str) -> Result<Vec<(Kind, Range<usize>)>, String> {
     let bytes = text.as_bytes();
     let mut out = Vec::new();
@@ -214,18 +215,14 @@ fn runs(text: &str) -> Result<Vec<(Kind, Range<usize>)>, String> {
             None
         };
         if let Some((kind, end)) = run {
-            if start < i {
-                out.push((Kind::Code, start..i));
-            }
+            out.push((Kind::Code, start..i));
             out.push((kind, i..end));
             (i, start) = (end, end);
         } else {
             i += 1;
         }
     }
-    if start < bytes.len() {
-        out.push((Kind::Code, start..bytes.len()));
-    }
+    out.push((Kind::Code, start..bytes.len()));
     Ok(out)
 }
 
@@ -343,15 +340,15 @@ impl Shape {
             .map(|n| from + n)
     }
 
-    /// Where the value of the field `word` at depth `depth` starts, at or
-    /// after `from` and before `to`: the byte after `word:` and its space.
+    /// Where the value of the field `word` at depth `depth` starts, the
+    /// field's name in `span`: the byte after `word:` and its space.
     fn field(&self, text: &str, word: &str, depth: usize, span: Range<usize>) -> Option<usize> {
-        span.clone().find_map(|i| {
+        span.into_iter().find_map(|i| {
             if !self.word_at(text, i, word, depth) {
                 return None;
             }
             let colon = Self::next_code(text, i + word.len())?;
-            (text.as_bytes()[colon] == b':' && colon < span.end)
+            (text.as_bytes()[colon] == b':')
                 .then(|| Self::next_code(text, colon + 1))
                 .flatten()
         })

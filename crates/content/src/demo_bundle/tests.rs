@@ -52,6 +52,11 @@ fn a_line_that_matches_nothing_stops_the_build() {
         cut_gone,
         Err("`chapters/ch02.ron` is cut, but the demo doesn't hold it".into())
     );
+    let cut_missing = plan("chapters/\nkeep data/nope.ron: x\n").left_out(&files(ASSETS));
+    assert_eq!(
+        cut_missing,
+        Err("`data/nope.ron` is cut, but the demo doesn't hold it".into())
+    );
     let bad = Plan::parse("leave out chapters/");
     assert_eq!(
         bad,
@@ -113,6 +118,28 @@ fn keep_entries_keeps_a_fields_structs_by_id_and_strings() {
     assert_eq!(no_field, Err("no monsters".into()));
     let no_key = keep_entries("[(class: \"x\")]", None, &keys(&["x"]));
     assert_eq!(no_key, Err("line 1: an entry with no key".into()));
+    let unbalanced = keep_entries("[\"x\"]\n)", None, &keys(&["x"]));
+    assert_eq!(unbalanced, Err("line 2: a bracket closes nothing".into()));
+}
+
+/// A field or an `id` is found by its whole name, followed by `:`, at its
+/// own depth: not inside a longer name, not as a value, not deeper in.
+#[test]
+fn keep_entries_finds_a_field_by_its_whole_name() {
+    let text = "(\n    old_speakers: [\"a\"],\n    speakers_left: [\"a\"],\n    \
+                inner: (speakers: [\"a\"]),\n    speakers: [\"a\", \"b\"],\n    \
+                cast: [(kind: id, id: \"x\"), (id: \"y\")],\n)\n";
+    let kept =
+        keep_entries(text, Some("speakers"), &keys(&["b"])).unwrap_or_else(|e| panic!("{e}"));
+    assert!(kept.contains("speakers: [\n\"b\",\n]"), "{kept}");
+    assert_eq!(
+        kept.matches("[\"a\"]").count(),
+        3,
+        "the decoys are as they were: {kept}"
+    );
+    let cast = keep_entries(text, Some("cast"), &keys(&["x"])).unwrap_or_else(|e| panic!("{e}"));
+    assert!(cast.contains("(kind: id, id: \"x\")"), "{cast}");
+    assert!(!cast.contains("\"y\""), "{cast}");
 }
 
 #[test]
@@ -131,7 +158,18 @@ fn rewrite_strips_cuts_and_swaps_only_what_it_should() {
         Ok(Some("{\n\"lead\": \"E\",\n}".to_owned()))
     );
     assert_eq!(plan.rewrite("data/plain.ron", "(a: 1)\n"), Ok(None));
+    assert_eq!(
+        plan.rewrite("data/plain.RON", "(a: 1) // a note\n"),
+        Ok(Some("(a: 1) \n".to_owned())),
+        "a RON file nobody cuts loses its comments"
+    );
     assert_eq!(plan.rewrite("dialogue/ch01.dlg", "# notes\n"), Ok(None));
+    let dlg = Plan::parse("swap dialogue/ch01.dlg: ch02 => ch01").unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        dlg.rewrite("dialogue/ch01.dlg", "# ch02\n"),
+        Ok(Some("# ch01\n".to_owned())),
+        "a swap applies to a file that isn't RON"
+    );
     let twice = plan.rewrite(
         "chapters/ch01.ron",
         "(next: Some(\"ch02\"), b: next: Some(\"ch02\"))",
