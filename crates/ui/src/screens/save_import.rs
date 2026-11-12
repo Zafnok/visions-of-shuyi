@@ -489,3 +489,6 @@ impl Screen<Shuyi> for ImportScreen {
         Some(self)
     }
 }
+
+#[cfg(test)]
+mod tests;

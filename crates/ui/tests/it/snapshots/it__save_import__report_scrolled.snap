@@ -1,0 +1,78 @@
+---
+source: crates/ui/tests/it/save_import.rs
+expression: h.snapshot()
+---
+                                                                                                    
+  ┌─ Import saves ───────────────────────────────────────────────────────────────────────────────┐  
+  │                                                                                              │  
+  │  From b.ron                                                                                  │  
+  │  Made by another build of version 0.3.0.                                                     │  
+  │  The saves go into a new profile, Player 2.                                                  │  
+  │                                                                                              │  
+  │  Slot 05           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 06           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 07           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 08           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 09           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 10           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 11           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 12           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 13           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 14           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 15           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 16           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 17           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 18           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 19           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Slot 20           Test Chapter (cleared)               0:00:05  Ready                       │  
+  │  Options and key bindings: Ready                                                             │  
+  │                                     Import these saves?                                      │  
+  │                                      Import     Cancel                                       │  
+  └───────────────────────────────────────────────────────────────────────────────── 5-20 of 20 ─┘  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                 arrows choose · f select · d back                                  
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aabbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddeeeeeeeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddcccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfffffdddddddddddddddddddddddbaa
+aabddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddcccccccccccccccccccddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddggggggggddddddddddddddddddddddddddddddddddddddbaa
+aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeeeeebbaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:panel_bg bg:panel_border_focus
+h = fg:text_dim bg:black

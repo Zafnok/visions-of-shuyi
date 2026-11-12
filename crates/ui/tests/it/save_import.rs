@@ -516,6 +516,7 @@ fn a_long_report_scrolls_and_names_another_build() {
     let report = view(&h);
     assert_eq!(report.range.as_deref(), Some("5-20 of 20"));
     assert_eq!(report.rows[0].label, "Slot 05");
+    assert_snapshot!("report_scrolled", h.snapshot());
     h.keys("Up");
     assert_eq!(view(&h).range.as_deref(), Some("4-19 of 20"));
     // Scrolling leaves the answer on Cancel.
@@ -569,6 +570,10 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     h.ctx_mut().platform.storage_place = StoragePlace::Unknown;
     h.keys("Down Down Down Down f Space");
     assert_eq!(h.top_screen(), "profiles");
+    // No help line names the key there, on a profile or the row that adds one.
+    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
+    h.keys("Down");
+    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
 }
 
 /// A picker that couldn't open the file, and a file of another version

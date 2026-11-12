@@ -181,3 +181,64 @@ fn the_name_in_a_file_name() {
     assert_eq!(with_number("Odo", 2), "Odo 2");
     assert_eq!(with_number("Abcdefghijkl", 3), "Abcdefghij 3");
 }
+
+/// The options' line takes the first verdict that isn't ready, whichever
+/// key it is on.
+#[test]
+fn the_options_verdict_is_the_first_that_isnt_ready() {
+    let c = ctx();
+    let keys = c.player_keys().to_ron();
+    let settings = Settings::to_ron(c.settings()).replacen("version: 3", "version: 9", 1);
+    let text = file(&[(KEYBINDINGS_KEY, &keys), (SETTINGS_KEY, &settings)]);
+    let report = Report::read(&c, "a.ron", &text, Channel::Profile);
+    let report = report.unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(
+        report.options,
+        Some(Verdict::Incompatible { found: 9, wants: 3 })
+    );
+}
+
+/// A suspend save that decodes but can't be continued shows no chapter:
+/// only its verdict.
+#[test]
+fn a_refused_suspend_save_shows_no_chapter() {
+    let c = ctx();
+    let mut gone = suspended(&c);
+    gone.campaign.chapter = "a_chapter_cut".to_owned();
+    let text = file(&[(SUSPEND_KEY, &text_of(&gone))]);
+    let report = Report::read(&c, "a.ron", &text, Channel::Profile);
+    let report = report.unwrap_or_else(|e| panic!("{e}"));
+    let [line] = report.saves.as_slice() else {
+        panic!("{:?}", report.saves);
+    };
+    assert_eq!(line.verdict, Verdict::Unreadable);
+    assert_eq!((line.chapter.as_deref(), line.playtime_s), (None, None));
+    let ready = file(&[(SUSPEND_KEY, &text_of(&suspended(&c)))]);
+    let report = Report::read(&c, "a.ron", &ready, Channel::Profile);
+    let report = report.unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(report.saves[0].playtime_s, Some(3725));
+}
+
+/// Another profile's storage reads, writes, lists and deletes its own
+/// keys, with its prefix in the computer's storage.
+#[test]
+fn another_profiles_storage_keeps_to_its_prefix() {
+    let mut computer = MemoryStorage::new();
+    computer
+        .write("p1-slot_01", "mine")
+        .unwrap_or_else(|e| panic!("{e}"));
+    let id = ron::from_str::<ProfileId>("2").unwrap_or_else(|e| panic!("{e}"));
+    let mut other = OtherProfile {
+        computer: &mut computer,
+        id,
+    };
+    assert_eq!(other.read("slot_01"), Ok(None));
+    other
+        .write("slot_01", "theirs")
+        .unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(other.read("slot_01"), Ok(Some("theirs".to_owned())));
+    assert_eq!(other.list(), Ok(vec!["slot_01".to_owned()]));
+    other.delete("slot_01").unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(other.list(), Ok(Vec::new()));
+    assert_eq!(computer.read("p1-slot_01"), Ok(Some("mine".to_owned())));
+}

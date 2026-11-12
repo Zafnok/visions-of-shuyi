@@ -10,7 +10,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::print_centred;
+use crate::screens::{centre_x, print_centred};
 use crate::widgets::AskView;
 
 /// The panel, in cells: Load Game's.
@@ -35,8 +35,8 @@ const OPTIONS_ROW: i32 = PANEL.y + PANEL.h - 4;
 const QUESTION_ROW: i32 = PANEL.y + PANEL.h - 3;
 /// Row of the message under the panel.
 const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
-/// Cells between two answers.
-const ANSWER_GAP: i32 = 3;
+/// What is between two answers.
+const ANSWER_GAP: &str = "   ";
 
 /// Cells `text` takes, as a coordinate.
 fn cells(text: &str) -> i32 {
@@ -130,9 +130,8 @@ fn paint_question(ctx: &Ctx, question: &AskView<bool>, buf: &mut GlyphBuffer) {
         .iter()
         .map(|a| format!(" {} ", a.label))
         .collect();
-    let gaps = ANSWER_GAP * i32::try_from(labels.len().saturating_sub(1)).unwrap_or(0);
-    let width: i32 = labels.iter().map(|l| cells(l)).sum::<i32>() + gaps;
-    let mut x = (i32::from(buf.width()) - width) / 2;
+    let line = labels.join(ANSWER_GAP);
+    let mut x = centre_x(buf, line.chars().count());
     for (answer, label) in question.answers.iter().zip(&labels) {
         let (fg, back) = if answer.focused {
             (bg, c(UiColor::PanelBorderFocus))
@@ -140,6 +139,6 @@ fn paint_question(ctx: &Ctx, question: &AskView<bool>, buf: &mut GlyphBuffer) {
             (text, bg)
         };
         buf.print(x, QUESTION_ROW + 1, label, fg, back);
-        x += cells(label) + ANSWER_GAP;
+        x += cells(label) + cells(ANSWER_GAP);
     }
 }
