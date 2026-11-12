@@ -173,6 +173,8 @@ fn the_name_in_a_file_name() {
         ("visions-of-shuyi-mei-1-slot-07.ron", "Mei"),
         ("visions-of-shuyi-mei-1-slot-07 (2).ron", "Mei"),
         ("visions-of-shuyi-2.ron", ""),
+        // Renamed by the player: no number to drop.
+        ("visions-of-shuyi-odo.ron", "Odo"),
         ("my-saves.ron", ""),
         ("visions-of-shuyi-abcdefghijklmnop-1.ron", "Abcdefghijkl"),
     ] {

@@ -485,7 +485,8 @@ pub fn name_in(file: &str) -> String {
     let Some(rest) = stem.strip_prefix(NAME_START) else {
         return String::new();
     };
-    let number = |w: &&str| !w.is_empty() && w.bytes().all(|b| b.is_ascii_digit());
+    // The words are never empty.
+    let number = |w: &&str| w.bytes().all(|b| b.is_ascii_digit());
     let mut words: Vec<&str> = rest.split('-').filter(|w| !w.is_empty()).collect();
     if let [.., slot, n] = words.as_slice()
         && *slot == SLOT_WORD
