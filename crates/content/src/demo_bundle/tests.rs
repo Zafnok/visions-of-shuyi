@@ -78,6 +78,14 @@ fn comments_go_and_lines_keep_their_numbers() {
     assert!(!stripped.contains("Chapter 4"));
     assert!(strip_comments("(a: \"open)").is_err());
     assert!(strip_comments("/* never").is_err());
+    // A mark's bytes are its own: `/*/` opens once, `*/*` closes once.
+    for (text, left) in [("/*/ a */x", "x"), ("/* /* */* */x", "x"), ("/**/x", "x")] {
+        assert_eq!(strip_comments(text).as_deref(), Ok(left), "{text}");
+    }
+    assert!(
+        strip_comments("/* /* */").is_err(),
+        "the outer one never closes"
+    );
 }
 
 #[test]

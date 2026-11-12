@@ -231,22 +231,26 @@ fn line_of(text: &str, at: usize) -> usize {
     text[..at].matches('\n').count() + 1
 }
 
-/// The end of the block comment opening at `at` (nested ones count).
+/// The end of the block comment opening at `at` (nested ones count): the
+/// byte after its `*/`.
 fn block_end(text: &str, at: usize) -> Result<usize, String> {
-    let bytes = text.as_bytes();
-    let (mut depth, mut i) = (0usize, at);
-    while i + 1 < bytes.len() {
-        match &bytes[i..i + 2] {
-            b"/*" => (depth, i) = (depth + 1, i + 2),
-            b"*/" => {
-                depth -= 1;
-                i += 2;
-                if depth == 0 {
-                    return Ok(i);
-                }
-            }
-            _ => i += 1,
+    let mut depth = 0usize;
+    // The pair after a `/*` or a `*/` shares its middle byte: not a mark.
+    let mut skip = false;
+    for (i, pair) in text.as_bytes()[at..].windows(2).enumerate() {
+        if skip {
+            skip = false;
+            continue;
         }
+        match pair {
+            b"/*" => depth += 1,
+            b"*/" => depth -= 1,
+            _ => continue,
+        }
+        if depth == 0 {
+            return Ok(at + i + 2);
+        }
+        skip = true;
     }
     Err(format!(
         "line {}: a comment never closes",
@@ -357,7 +361,8 @@ impl Shape {
     /// The bracket that closes the one opening at `open`.
     fn close_of(&self, text: &str, open: usize) -> Option<usize> {
         let bytes = text.as_bytes();
-        (open + 1..bytes.len()).find(|&j| {
+        // `open` itself opens: never the one that closes.
+        (open..bytes.len()).find(|&j| {
             self.code[j]
                 && self.depth[j] == self.depth[open]
                 && matches!(bytes[j], b')' | b']' | b'}')

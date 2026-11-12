@@ -137,7 +137,8 @@ fn the_demo_ends_after_chapter_1_and_its_save_goes_on_in_the_full_game() {
     let [(name, text)] = &offered[..] else {
         panic!("offered {offered:?}");
     };
-    assert!(name.ends_with("-slot-01.ron"), "{name}");
+    // Named as Load Game names slot 1 of this profile, "Player 1".
+    assert_eq!(name, "visions-of-shuyi-player-1-1-slot-01.ron");
     for later in ["ch02", "Chapter 2"] {
         assert!(!text.contains(later), "the file names {later}: {text}");
     }
