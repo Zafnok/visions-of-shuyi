@@ -1,16 +1,19 @@
 //! Rebuild when anything under `assets/` or `assets-test/` (the test files,
 //! ADR-0057) changes. The same for `assets-private/game/` and
 //! `assets-private/test/` when the `private-assets` feature embeds them
-//! (ADR-0040), after checking that the first is there.
+//! (ADR-0040), after checking that the first is there, and for
+//! `assets-private/content/`, the game's content from the private
+//! repository, embedded over `assets/` whenever it is there (ADR-0117).
 //!
 //! Also writes, into `OUT_DIR`, the tables of files that are the bundle's
 //! layers (`shuyi_assets::Layer::table`), each every file of its folder but
 //! the `README.md`s, which no build embeds (ADR-0105), sorted:
 //! `bundle_files.rs` of `assets/`, `test_files.rs` of `assets-test/`,
 //! `private_files.rs` and `private_test_files.rs` of the private folders
-//! (empty without the feature); `playdate_files.rs`, `assets/` without the
-//! files `playdate-bundle.txt` leaves out (ticket 1036), and
-//! `playdate_left_out.rs`, the paths of those.
+//! (empty without the feature), `content_files.rs` of the content (empty
+//! without it); `playdate_files.rs`, `assets/` without the files
+//! `playdate-bundle.txt` leaves out (ticket 1036), and
+//! `playdate_left_out.rs`, the paths of those, in `assets/` or the content.
 //!
 //! The Playdate's table holds a one-bit picture in place of each PNG it
 //! draws one-bit (ticket 1040, ADR-0085): `src/playdate_images.rs` says
@@ -20,6 +23,8 @@
 //! Playdate's private layer (ticket 1061): `assets-private/game/` the same
 //! way, its pictures in `OUT_DIR/onebit-private/`, a touched-up `.1bit`
 //! beside a PNG taken as it is. Without the feature it is empty.
+//! `playdate_content_files.rs` is the content's the same way, its pictures
+//! in `OUT_DIR/onebit-content/`.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -39,6 +44,13 @@ const PRIVATE: &str = "../../assets-private/game";
 
 /// The bought art of the test files, relative to this crate (ADR-0057).
 const PRIVATE_TEST: &str = "../../assets-private/test";
+
+/// The game's content from the private repository, relative to this crate
+/// (ADR-0117): embedded over `assets/` whenever it is there.
+const CONTENT: &str = "../../assets-private/content";
+
+/// The private repository's checkout, relative to this crate (ADR-0040).
+const CHECKOUT: &str = "../../assets-private";
 
 /// The story's files, relative to this crate.
 const ASSETS: &str = "../../assets";
@@ -69,7 +81,35 @@ fn main() {
         println!("cargo:rerun-if-changed={PRIVATE}");
         println!("cargo:rerun-if-changed={PRIVATE_TEST}");
     }
-    write_file_tables(private);
+    let content = Path::new(CONTENT).is_dir();
+    watch_content(content);
+    write_file_tables(private, content);
+}
+
+/// Tells cargo when the content layer changes (ADR-0117): the content when
+/// it is there. Else what a fetch that brings it changes, so the build that
+/// follows has it: the checkout's git index, or the checkout's folder. A
+/// path cargo watches must be there (while one is missing, cargo rebuilds
+/// this crate on every build), so with no checkout at all this makes the
+/// folder, empty and git-ignored, for `cargo shuyi private-assets` to clone
+/// into. The test that every layer is its folder (`bundle.rs`) catches a
+/// build that still missed one.
+fn watch_content(content: bool) {
+    if content {
+        println!("cargo:rerun-if-changed={CONTENT}");
+        return;
+    }
+    let checkout = Path::new(CHECKOUT);
+    if !checkout.is_dir() {
+        // A read-only tree can't have it: then nothing is watched.
+        let _ = std::fs::create_dir_all(checkout);
+    }
+    let index = checkout.join(".git/index");
+    if index.is_file() {
+        println!("cargo:rerun-if-changed={CHECKOUT}/.git/index");
+    } else if checkout.is_dir() {
+        println!("cargo:rerun-if-changed={CHECKOUT}");
+    }
 }
 
 /// Where a table's entry is read from: the environment variable naming a
@@ -80,14 +120,23 @@ type Source = (&'static str, String);
 /// bytes)]` expression with one `(path, include_bytes!(…))` per file,
 /// sorted by path (`/`-separated, relative to its folder), so the bundle can
 /// binary-search it. With `private`, the private layers too
-/// ([`private_table`], [`whole_table`]); without, they are empty.
-fn write_file_tables(private: bool) {
+/// ([`playdate_table`], [`whole_table`]); with `content`, the content's;
+/// without, they are empty.
+fn write_file_tables(private: bool, content: bool) {
     let mut files = Vec::new();
     walk(Path::new(ASSETS), "", &mut files);
     files.sort_unstable();
+    let mut content_files = Vec::new();
+    if content {
+        walk(Path::new(CONTENT), "", &mut content_files);
+        content_files.sort_unstable();
+    }
+    let mut both: Vec<String> = files.iter().chain(&content_files).cloned().collect();
+    both.sort_unstable();
+    both.dedup();
     let list = std::fs::read_to_string(PLAYDATE_LIST)
         .unwrap_or_else(|e| panic!("reading {PLAYDATE_LIST}: {e}"));
-    let left_out = left_out(&list, &files).unwrap_or_else(|e| panic!("{PLAYDATE_LIST}: {e}"));
+    let left_out = left_out(&list, &both).unwrap_or_else(|e| panic!("{PLAYDATE_LIST}: {e}"));
     let kept: Vec<String> = files
         .iter()
         .filter(|f| !left_out.contains(f))
@@ -107,9 +156,27 @@ fn write_file_tables(private: bool) {
     write_out("playdate_files.rs", &table(kept.iter(), playdate));
     write_out("test_files.rs", &whole_table(TEST));
     let empty = || String::from("&[]\n");
-    let (playdate_private, game, test) = if private {
+    let (playdate_content, own) = if content {
+        let below = Below {
+            folders: &[ASSETS],
+            files: &files,
+        };
         (
-            private_table(&list, &files),
+            playdate_table(CONTENT, "onebit-content", &list, &below),
+            whole_table(CONTENT),
+        )
+    } else {
+        (empty(), empty())
+    };
+    write_out("playdate_content_files.rs", &playdate_content);
+    write_out("content_files.rs", &own);
+    let (playdate_private, game, test) = if private {
+        let below = Below {
+            folders: &[CONTENT, ASSETS],
+            files: &both,
+        };
+        (
+            playdate_table(PRIVATE, "onebit-private", &list, &below),
             whole_table(PRIVATE),
             whole_table(PRIVATE_TEST),
         )
@@ -143,15 +210,24 @@ fn whole_table(folder: &str) -> String {
     table(files.iter(), |path| as_is(folder, path))
 }
 
-/// The Playdate's table of the bought art in `assets-private/game/`
-/// (ticket 1061): every file but those `list` leaves out, each picture the
-/// Playdate draws one-bit converted into `OUT_DIR/onebit-private/`, or,
-/// when a touched-up `<stem>.1bit` lies beside the PNG (ticket 1042), that
-/// file as it is. A fighter's scale is its sidecar's here, else the one in
-/// `assets/` (`public`, its files), as the layered bundle reads it.
-fn private_table(list: &str, public: &[String]) -> String {
+/// The layers a Playdate layer lies over, for the battler sidecars it
+/// doesn't have: their folders, in the order they are read, and their
+/// files (sorted).
+struct Below<'a> {
+    folders: &'a [&'static str],
+    files: &'a [String],
+}
+
+/// The Playdate's table of a layer over `assets/`, the folder `layer`: the
+/// bought art in `assets-private/game/` (ticket 1061) or the content in
+/// `assets-private/content/` (ADR-0117). Every file but those `list` leaves
+/// out, each picture the Playdate draws one-bit converted into `OUT_DIR`'s
+/// folder `dir`, or, when a touched-up `<stem>.1bit` lies beside the PNG
+/// (ticket 1042), that file as it is. A fighter's scale is its sidecar's
+/// here, else the one in the layers `below`, as the layered bundle reads it.
+fn playdate_table(layer: &'static str, dir: &str, list: &str, below: &Below<'_>) -> String {
     let mut files = Vec::new();
-    walk(Path::new(PRIVATE), "", &mut files);
+    walk(Path::new(layer), "", &mut files);
     files.sort_unstable();
     let rules = rules(list);
     files.retain(|path| !rules.iter().any(|rule| matches(rule, path)));
@@ -163,27 +239,25 @@ fn private_table(list: &str, public: &[String]) -> String {
         .cloned()
         .collect();
     to_convert.extend(
-        public
+        below
+            .files
             .iter()
             .filter(|path| is_sidecar(path) && files.binary_search(path).is_err())
             .cloned(),
     );
     let read = |path: &str| {
-        std::fs::read_to_string(Path::new(PRIVATE).join(path))
-            .or_else(|_| std::fs::read_to_string(Path::new(ASSETS).join(path)))
-            .ok()
+        std::iter::once(layer)
+            .chain(below.folders.iter().copied())
+            .find_map(|folder| std::fs::read_to_string(Path::new(folder).join(path)).ok())
     };
-    let one_bit = convert_pictures(PRIVATE, "onebit-private", &to_convert, read);
+    let one_bit = convert_pictures(layer, dir, &to_convert, read);
     let source = |path: &String| -> Source {
         if let Some(file) = touched.get(path) {
-            ("CARGO_MANIFEST_DIR", format!("/{PRIVATE}/{file}"))
+            ("CARGO_MANIFEST_DIR", format!("/{layer}/{file}"))
         } else if one_bit.contains(path) {
-            (
-                "OUT_DIR",
-                format!("/{}", one_bit_file("onebit-private", path)),
-            )
+            ("OUT_DIR", format!("/{}", one_bit_file(dir, path)))
         } else {
-            ("CARGO_MANIFEST_DIR", format!("/{PRIVATE}/{path}"))
+            ("CARGO_MANIFEST_DIR", format!("/{layer}/{path}"))
         }
     };
     table(files.iter(), source)
@@ -281,8 +355,9 @@ fn matches(&(_, rule): &(usize, &str), path: &str) -> bool {
     }
 }
 
-/// The paths of `files` (sorted) that `list` leaves out ([`matches`]). A
-/// rule that matches no file of `assets/` is an error.
+/// The paths of `files` (sorted: `assets/`'s and the content's) that
+/// `list` leaves out ([`matches`]). A rule that matches none of them is an
+/// error.
 fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
     let mut out = Vec::new();
     for rule in rules(list) {
@@ -290,7 +365,7 @@ fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
         out.extend(files.iter().filter(|path| matches(&rule, path)).cloned());
         if out.len() == before {
             return Err(format!(
-                "line {}: `{}` is no file under assets/",
+                "line {}: `{}` is no file under assets/ or assets-private/content/",
                 rule.0, rule.1
             ));
         }

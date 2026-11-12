@@ -12,6 +12,7 @@ mod battler_import;
 mod check_script;
 mod clean_targets;
 mod code_lines;
+mod content_layer;
 mod edge_marks;
 mod effect_marks;
 mod engine;
@@ -91,7 +92,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
             name @ ("check-keys" | "check-text" | "lang-status" | "font-atlas" | "frame-png"
             | "web" | "private-assets"),
         ) => shuyi(name, args),
-        Some("shuyi") => shuyi_cli::main_with(args, Some(&game_tools::Trpg)),
+        Some("shuyi") => shuyi_main(args.collect()),
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
         Some("check-mentions") => check_mentions(&args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
@@ -135,9 +136,23 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
 
 /// Runs `command` of Shuyi's tools (ticket 1117) with `args` on this
 /// repository, with the game's tools.
+/// `cargo shuyi`: Shuyi's tools with this game's. `check-keys` and `lint`
+/// run on the project as [`content_layer::project`] makes it, so they scan
+/// the content when it is there (ADR-0117).
+fn shuyi_main(args: Vec<String>) -> u8 {
+    match args.split_first() {
+        Some((name, rest)) if name == "check-keys" || name == "lint" => {
+            shuyi(name, rest.iter().cloned())
+        }
+        _ => shuyi_cli::main_with(args.into_iter(), Some(&game_tools::Trpg)),
+    }
+}
+
+/// Runs the Shuyi tool `command` with `args` on this repository's project,
+/// with the content in what `check-keys` scans ([`content_layer::project`]).
 fn shuyi(command: &str, args: impl Iterator<Item = String>) -> u8 {
     let project = match shuyi_cli::Project::load(&repo_root()) {
-        Ok(project) => project,
+        Ok(project) => content_layer::project(project),
         Err(e) => {
             eprintln!("{e}");
             return 2;
