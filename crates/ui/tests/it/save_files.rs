@@ -99,7 +99,11 @@ fn shows(h: &Harness, text: &str) -> bool {
 fn the_profile_screen_exports_the_whole_profile() {
     let mut h = launch();
     open_profile(&mut h);
-    assert!(shows(&h, "e export · x open folder"), "{}", h.snapshot());
+    assert!(
+        shows(&h, "e export · Space import · x open folder"),
+        "{}",
+        h.snapshot()
+    );
     h.keys("e");
     let (name, entries) = offered(&h);
     assert_eq!(name, "visions-of-shuyi-player-1-1.ron");
@@ -141,7 +145,11 @@ fn the_profile_under_the_cursor_is_the_one_exported() {
 fn load_game_exports_one_save_after_asking_about_the_options() {
     let mut h = launch();
     open_load_game(&mut h);
-    assert!(shows(&h, "e export · x open folder"), "{}", h.snapshot());
+    assert!(
+        shows(&h, "e export · Space import · x open folder"),
+        "{}",
+        h.snapshot()
+    );
     h.keys("Down e");
     let view = h
         .game()
@@ -212,12 +220,20 @@ fn the_place_line_shows_the_folder_on_a_desktop_only() {
     let mut h = launch_on_the_web();
     open_profile(&mut h);
     assert!(!shows(&h, "Saves are kept"), "{}", h.snapshot());
-    assert!(shows(&h, "e export · d back"), "{}", h.snapshot());
+    assert!(
+        shows(&h, "e export · Space import · d back"),
+        "{}",
+        h.snapshot()
+    );
     assert_snapshot!("profile_on_the_web", h.snapshot());
     let mut h = launch_on_the_web();
     open_load_game(&mut h);
     assert!(!shows(&h, "Saves are kept"));
-    assert!(shows(&h, "f load · e export · d back"), "{}", h.snapshot());
+    assert!(
+        shows(&h, "f load · e export · Space import · d back"),
+        "{}",
+        h.snapshot()
+    );
 }
 
 /// Where the platform has no files a player reaches (the Playdate), the

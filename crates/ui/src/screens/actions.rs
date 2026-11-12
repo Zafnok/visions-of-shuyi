@@ -9,9 +9,10 @@ use shuyi_ui::input::{NAVIGATION, UiAction, ui_actions};
 
 use super::{
     BattleScreen, CampScreen, ClassChangeScreen, CreditsScreen, DialogueScreen, FamiliarityScreen,
-    GameOverScreen, KeyBindingsScreen, LayoutPickerScreen, LeadSelectScreen, ModeSelectScreen,
-    OptionsScreen, PreparationsScreen, ProfileScreen, ResultsScreen, SavePromptScreen,
-    SlotPickerScreen, ToBeContinuedScreen, TownScreen, VoicesQuestionScreen, WorldMapScreen,
+    GameOverScreen, ImportScreen, KeyBindingsScreen, LayoutPickerScreen, LeadSelectScreen,
+    ModeSelectScreen, OptionsScreen, PreparationsScreen, ProfileScreen, ResultsScreen,
+    SavePromptScreen, SlotPickerScreen, ToBeContinuedScreen, TownScreen, VoicesQuestionScreen,
+    WorldMapScreen,
     battle::{guides::GuidesScreen, rewind::RewindScreen, shop::ShopScreen},
 };
 use crate::debug::{
@@ -134,7 +135,8 @@ pub const RESULTS: &[Action] = &[Confirm, Cancel];
 /// What the save prompt screen reacts to.
 pub const SAVE_PROMPT: &[Action] = NO_CANCEL;
 /// What the save slots screen reacts to: a grid's keys, and on Load
-/// Game the export and open-folder keys (0872, `screens::files::ACTIONS`).
+/// Game the export, open-folder and import keys (0872, 0873,
+/// `screens::files::ACTIONS`).
 pub const SAVE_SLOTS: &[Action] = &[
     CursorUp,
     CursorDown,
@@ -144,6 +146,7 @@ pub const SAVE_SLOTS: &[Action] = &[
     Cancel,
     Info,
     WorldFind,
+    EndTurn,
 ];
 /// Any action skips the cinematic and clears the notice
 /// (`title::pressed`).
@@ -168,7 +171,7 @@ pub const WORLD_MAP: &[Action] = &[
 /// Every screen the game can show, for `check --target`: the game's by the
 /// table above, the engine's by the widgets they declare themselves with.
 pub fn every_screen() -> Vec<ScreenActions<Action>> {
-    let own: [(&'static str, &[Action]); 27] = [
+    let own: [(&'static str, &[Action]); 28] = [
         (CinematicScreen::NAME, CINEMATIC),
         (PortraitViewerScreen::NAME, PORTRAIT_VIEWER),
         (ScenePreviewScreen::NAME, SCENE_PREVIEW),
@@ -192,6 +195,7 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
         (ResultsScreen::NAME, RESULTS),
         (SavePromptScreen::NAME, SAVE_PROMPT),
         (SlotPickerScreen::NAME, SAVE_SLOTS),
+        (ImportScreen::NAME, super::save_import::ACTIONS),
         ("title", TITLE), // check-text: not player text (the screen's name)
         (TownScreen::NAME, TOWN),
         (VoicesQuestionScreen::NAME, VOICES_QUESTION),
@@ -248,8 +252,12 @@ mod tests {
             assert!(found.next().is_none(), "{name} twice");
             screen.actions.clone().unwrap_or_default()
         };
-        assert_eq!(screens.len(), 34);
+        assert_eq!(screens.len(), 35);
         assert_eq!(listed(BattleScreen::NAME), BATTLE);
+        assert_eq!(
+            listed(ImportScreen::NAME),
+            super::super::save_import::ACTIONS
+        );
         assert_eq!(listed("title"), TITLE);
         assert_eq!(listed(FlowScreen::NAME), FLOW);
         let options = crate::screens::options::screen();

@@ -17,6 +17,8 @@
 //!   (0914) bundles a chapter save it never stored.
 //! - **Where the saves are** ([`place`]): the folder on a desktop; nothing
 //!   on the web, whose export is a download (Nick), or on the Playdate.
+//! - **Importing a file** ([`import`], ticket 0873): what this build can
+//!   read of it, where it goes, and writing it.
 
 use crate::prelude::*;
 use alloc::collections::BTreeMap;
@@ -32,8 +34,20 @@ use crate::screen::{Ctx, KEYBINDINGS_KEY, LAYOUT_KEY};
 use crate::settings::SETTINGS_KEY;
 use crate::storage::{Storage, StorageError};
 
+pub mod import;
+
 /// The start of every exported file's name.
 const NAME_START: &str = "visions-of-shuyi";
+
+/// The word before a slot's number in the name of a file of one save.
+const SLOT_WORD: &str = "slot";
+
+/// The ending of the files Import asks for (0873): what an export writes.
+pub const IMPORT_EXTENSION: &str = ".ron";
+
+/// This build's version, as the stamp of an exported file names it.
+// check-text: not player text (the build's version)
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Text key of the place line's words before the folder's path.
 pub const PLACE: &str = "save_files.place";
@@ -81,7 +95,7 @@ pub fn export_name(name: &str, id: ProfileId, what: Export) -> String {
         format!("-{safe}")
     };
     let slot = match what {
-        Export::Slot { slot, .. } => format!("-slot-{slot:02}"),
+        Export::Slot { slot, .. } => format!("-{SLOT_WORD}-{slot:02}"),
         Export::Profile => String::new(),
     };
     // check-text: not player text (a file name)
@@ -110,13 +124,10 @@ fn safe_name(name: &str) -> String {
 }
 
 /// The stamp of this build: the game's version and its content's
-/// fingerprint, read once per export (it reads every byte that ships).
-fn made() -> Made {
-    Made::new(
-        // check-text: not player text (the build's version)
-        env!("CARGO_PKG_VERSION"),
-        trpg_content::bundle::install().fingerprint(),
-    )
+/// fingerprint, read once per export or import (it reads every byte that
+/// ships).
+pub fn made() -> Made {
+    Made::new(VERSION, trpg_content::bundle::install().fingerprint())
 }
 
 /// Whether the platform has files a player reaches, so a screen offers
@@ -249,19 +260,41 @@ fn exported_of(offered: &shuyi_platform::player_files::Offered) -> Option<Export
 }
 
 /// The game's system hook: hands the Profile screen or the Load Game list
-/// where the file it offered went.
+/// where the file it offered went, and the Import screen the file it
+/// waits for (0873): the one picked, or one file dropped on the window.
+/// A file dropped anywhere else is ignored.
 #[cfg(feature = "std")]
 pub fn hear(game: &mut crate::game::Game, event: shuyi_platform::SystemEvent) {
-    use crate::screens::{ProfileScreen, SlotPickerScreen};
+    use crate::screens::{ImportScreen, ProfileScreen, SlotPickerScreen};
+    use shuyi_platform::SystemEvent;
+    use shuyi_platform::player_files::ChosenFile;
 
-    let shuyi_platform::SystemEvent::FileOffered(offered) = event else {
-        return;
-    };
-    let exported = exported_of(&offered);
-    if let Some(screen) = game.screen_mut::<SlotPickerScreen>() {
-        screen.heard(exported);
-    } else if let Some(screen) = game.screen_mut::<ProfileScreen>() {
-        screen.heard(exported);
+    match event {
+        SystemEvent::FileOffered(offered) => {
+            let exported = exported_of(&offered);
+            if let Some(screen) = game.screen_mut::<SlotPickerScreen>() {
+                screen.heard(exported);
+            } else if let Some(screen) = game.screen_mut::<ProfileScreen>() {
+                screen.heard(exported);
+            }
+        }
+        SystemEvent::FileChosen(chosen) => {
+            let Some(screen) = game.screen_mut::<ImportScreen>() else {
+                return;
+            };
+            match chosen {
+                ChosenFile::Picked { name, text, .. } => screen.chosen(&name, text),
+                ChosenFile::Cancelled => screen.not_chosen(true),
+                _ => screen.not_chosen(false),
+            }
+        }
+        SystemEvent::FilesDropped(mut files) if files.len() == 1 => {
+            if let (Some(screen), Some(file)) = (game.screen_mut::<ImportScreen>(), files.pop()) {
+                let name = file.name().to_owned();
+                screen.dropped(&name, file.into_bytes());
+            }
+        }
+        _ => {}
     }
 }
 

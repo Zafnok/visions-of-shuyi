@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0872"]
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 0873 — Import saves from a file, with a version check
@@ -121,22 +121,22 @@ picker (`screens/save.rs`).
 
 ## Acceptance criteria
 
-- [ ] A Harness test: a bundle with a current slot, a slot of save
+- [x] A Harness test: a bundle with a current slot, a slot of save
       version 1, a damaged slot and an unknown key shows "Ready",
       "incompatible version (1, reads 2)", "Can't be read" and leaves the
       unknown key out; Import writes only the current slot.
-- [ ] A Harness test: a bundle made by another game version stamp but
+- [x] A Harness test: a bundle made by another game version stamp but
       the same save versions imports every slot and shows the "made by"
       line.
-- [ ] A Harness test: Cancel writes nothing; a storage that fails mid-
+- [x] A Harness test: Cancel writes nothing; a storage that fails mid-
       import leaves the profile as it was (engine#2138's `apply`).
-- [ ] A Harness test: on facts without a picker, Import says to drop the
+- [x] A Harness test: on facts without a picker, Import says to drop the
       file, and a `FilesDropped` with the bundle opens the report.
-- [ ] A round trip: 0872's export of a profile, imported into a fresh
+- [x] A round trip: 0872's export of a profile, imported into a fresh
       profile, gives the same `save::slots` list.
-- [ ] Snapshots of the report screen; `cargo shuyi frame-png` pictures
+- [x] Snapshots of the report screen; `cargo shuyi frame-png` pictures
       in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -146,5 +146,53 @@ picker (`screens/save.rs`).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+**Done:**
+- `crates/ui/src/save_files/import.rs`: `GameCheck`, the verdict per key
+  (`slot_NN` through the engine's `FormatCheck::<SaveFile>` and then as
+  Load Game reads a slot; `suspend` a battle of a chapter the content
+  has; `settings` and `keybindings` by their versions and readers;
+  `layout` a layout the keymap has; `tips_seen`, `set_up`, `last_save`
+  ready; anything else unknown and left out), `plan` (`last_save` kept
+  only with the save it names), `Report` (where the file goes, a line
+  per save) and `Report::apply` (the engine's all-or-nothing `apply`; a
+  new profile that couldn't be filled is deleted again).
+- `crates/ui/src/screens/save_import.rs` and its glyph skin: waiting
+  (picker or drop), refused, and the report with "Import these
+  saves?" on Cancel. It pops with `ImportDone`, whose notice the Profile
+  screen or Load Game shows (Load Game reads its slots again and puts
+  the cursor on the imported save).
+- `save_files::hear` hands the Import screen `FileChosen` and a
+  `FilesDropped` of one file; a drop anywhere else is ignored.
+- Text in the `en` and `test` packs; `options.md` and ADR-0039 say what
+  import does.
+
+**Deviations:**
+- Step 5 ("if the profile in use was replaced, reload its settings and
+  keys"): it never is. Through Profile an import is always a new
+  profile, and through Load Game the file's options and keys are left
+  out, so nothing the profile in use has loaded changes.
+- The file's profile name isn't in the file, only in its name
+  (`export_name`): the new profile is named from that.
+
+**The agent's starting rules** (for the Act 1 playtest, 1064; also in
+`options.md`):
+- The import key is the **End turn** key (`Space` on both keyboards,
+  the pad's `Start`), named in the help lines of both screens.
+- A new profile takes the name in the file's name (`…-odo-kai-2.ron`
+  gives `Odo Kai`), with a number if that is taken (`Player 1 2`), or the
+  next `Player <n>`.
+- "One save" means one save slot and no suspended battle.
+- Through Load Game, the file's options and key bindings are left out
+  (the report says so).
+- The notice after an import counts the saves imported and refused, and
+  stays until the cursor moves.
+
+**Follow-ups:** none.
+
+**Engine friction:** estimate 700 (the slot picker, `screens/save.rs`),
+measured 978 (1.4×), under 2×.
+
+**PR size:** estimate 1,400, measured 2,368: the tests ran longer than
+planned (ten Harness tests). The only clean split is the checker vs the
+screen, and the screen can't be tested without the checker, so it ships
+as one PR.

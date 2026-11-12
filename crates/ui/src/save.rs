@@ -200,7 +200,7 @@ pub fn next_chapter_title(
 
 /// The title of `campaign`'s chapter; its id if the content no longer has
 /// it.
-fn chapter_title(content: &Content, words: Words<'_>, campaign: &Campaign) -> String {
+pub(crate) fn chapter_title(content: &Content, words: Words<'_>, campaign: &Campaign) -> String {
     content.chapters.get(&campaign.chapter).map_or_else(
         || campaign.chapter.clone(),
         |c| words.chapter_title(c).to_owned(),
