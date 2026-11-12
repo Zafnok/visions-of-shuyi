@@ -4,6 +4,24 @@
 //! below. Never add a file directly under `tests/` (an `xtask` test fails).
 //! Run one module with `cargo test -p trpg-ui --test it <name>::`.
 
+/// `insta::assert_snapshot!` of `value` against its copy in the private
+/// repository's `content/tests/snapshots/` (ADR-0118 §3), for a picture
+/// test that must check the real content's look, named or not: `$dir` is
+/// `trpg_content::bundle::content_tests()`'s folder. The file is named as
+/// insta names it here (`it__<module>__<test>.snap`).
+macro_rules! assert_private_snapshot {
+    ($dir:expr, $value:expr) => {{
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path($dir.join("snapshots"));
+        settings.bind(|| insta::assert_snapshot!($value));
+    }};
+    ($dir:expr, $name:expr, $value:expr) => {{
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path($dir.join("snapshots"));
+        settings.bind(|| insta::assert_snapshot!($name, $value));
+    }};
+}
+
 mod auto_advance;
 mod battle;
 mod ch01_lessons;

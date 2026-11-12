@@ -273,7 +273,7 @@ fn a_new_spelling_in_say_ron_remakes_the_lines_with_that_word_and_keeps_the_word
 #[test]
 fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
     let script = "@scene a\n@left test_lord neutral\ntest_lord: Wait... no. Not yet.\n\
-                  test_lord: Aye. ...Burn it. I burned it and he didn't even-- never mind.\n@end\n";
+                  test_lord: Aye. ...Fold it. I folded it and she didn't even-- never mind.\n@end\n";
     let mut world = World::new();
     world.dialogue = dialogue(script);
     let plan = world.plan();
@@ -289,8 +289,8 @@ fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
         [
             ("Wait... no. Not yet.", "Wait, no. Not yet."),
             (
-                "Aye. ...Burn it. I burned it and he didn't even-- never mind.",
-                "Aye. Burn it. I burned it and he didn't even\u{2014} never mind."
+                "Aye. ...Fold it. I folded it and she didn't even-- never mind.",
+                "Aye. Fold it. I folded it and she didn't even\u{2014} never mind."
             ),
         ]
     );
@@ -314,10 +314,10 @@ fn trailing_offs_and_breaks_are_sent_as_punctuation_and_the_line_keeps_them() {
 fn a_reader_is_sent_trailing_offs_and_breaks_as_punctuation() {
     let cases = [
         // After a sentence's end the mark goes: the full stop pauses.
-        ("Aye. ...Burn it.", "Aye. Burn it."),
+        ("Aye. ...Fold it.", "Aye. Fold it."),
         (
-            "Whose hand? ...It's the boy's.",
-            "Whose hand? It's the boy's.",
+            "Whose cup? ...It's the cook's.",
+            "Whose cup? It's the cook's.",
         ),
         (
             "\"Go home.\" ...That's not it.",
@@ -335,12 +335,12 @@ fn a_reader_is_sent_trailing_offs_and_breaks_as_punctuation() {
         ("Wait... I'll go.", "Wait, I'll go."),
         ("Go. ...", "Go."),
         // A break mid-line is an em dash, whatever follows.
-        ("Kid-- no. Don't.", "Kid\u{2014} no. Don't."),
+        ("Lad-- no. Leave it.", "Lad\u{2014} no. Leave it."),
         ("No-- I mean-- yes.", "No\u{2014} I mean\u{2014} yes."),
         ("all they-- Your Grace.", "all they\u{2014} Your Grace."),
         (
-            "she's no danger-- ...No. I can't.",
-            "she's no danger\u{2014} No. I can't.",
+            "it's no trouble-- ...No. I won't.",
+            "it's no trouble\u{2014} No. I won't.",
         ),
         ("Help me up -- no, don't.", "Help me up\u{2014} no, don't."),
         // Before other punctuation, and the one-character ellipsis.
@@ -858,6 +858,10 @@ fn without_a_cast_the_tool_says_so() {
 
 #[test]
 fn the_story_scenes_are_the_scenes_of_assets_dialogue() {
+    // The game's own scenes (ADR-0118: a test of the content).
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let scenes = story_scenes(&root()).unwrap();
     assert!(scenes.contains("ch01_intro"));
     assert!(scenes.contains("vix"), "the guide's lessons and tips");

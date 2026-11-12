@@ -187,12 +187,18 @@ mod tests {
         }
     }
 
+    /// The game's own scripts, wherever the content is (ADR-0118: a test
+    /// of the content).
     #[test]
     fn the_repository_scripts_have_no_problems() {
+        if trpg_content::bundle::skip_without_the_game() {
+            return;
+        }
         let (scripts, only) = scripts(&root(), None).unwrap();
         assert_eq!(only, None);
         let names: Vec<&str> = scripts.iter().map(|(n, _)| n.as_str()).collect();
-        assert!(names.contains(&"assets/dialogue/ch01.dlg"), "{names:?}");
+        let chapter_1 = |name: &&str| name.ends_with("/dialogue/ch01.dlg");
+        assert!(names.iter().any(chapter_1), "{names:?}");
         assert!(
             names.contains(&"assets-test/dialogue/test.dlg"),
             "{names:?}"
@@ -282,10 +288,10 @@ mod tests {
 
     #[test]
     fn a_script_of_the_game_is_checked_once_under_its_own_name() {
-        let path = root().join("assets/dialogue/ch01.dlg");
+        let path = root().join("assets-test/dialogue/test.dlg");
         let (with, only) = scripts(&root(), Some(&path)).unwrap();
         let (without, _) = scripts(&root(), None).unwrap();
-        assert_eq!(only.as_deref(), Some("assets/dialogue/ch01.dlg"));
+        assert_eq!(only.as_deref(), Some("assets-test/dialogue/test.dlg"));
         assert_eq!(with, without);
     }
 

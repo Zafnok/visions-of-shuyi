@@ -6,7 +6,7 @@ milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0156", "0157", "0158"]
+blocked_by: ["0156", "0157", "0158", "0162"]
 nick_input: none
 completed:
 ---
@@ -22,8 +22,9 @@ moves the content and is the last step. By then:
 
 - 0156 has built the content layer (`assets-private/content/` over
   `assets/`, every content-loading CI job checks it out);
-- 0157 has readied the tests (none quotes or draws real content; those
-  that need it run on the private copy);
+- 0157 (the scripts' tests) and 0162 (the data's) have readied the tests
+  (none quotes or draws real content; those that need it run on the
+  private copy and skip without it, ADR-0118);
 - 0158 has stopped the public web build and releases from carrying it.
 
 **What moves** is everything that is this game's content: what a copy

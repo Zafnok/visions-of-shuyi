@@ -3,57 +3,53 @@ source: crates/ui/tests/it/dialogue_log.rs
 expression: h.snapshot()
 ---
 ┌── Log ───────────────────────────────────────────────────────────────────────────────────────────┐
-│           In the Thornmarch, at the far edge of the kingdom, an exile chops wood.                │
-│                                                                                                  │
-│           Hollis sits on the block by the fire with one of Ellery's boots on his knee and an     │
-│           awl in his fist. He has not slept. There is a folded paper in his coat that he keeps   │
-│           touching.                                                                              │
-│                                                                                                  │
-│           Hollis Marr                                                                            │
-│           Sideways, with the grain. You'll have the axe in your foot, and then who mends the     │
-│           boot? Give me the other one.                                                           │
-│                                                                                                  │
-│                                                                                                  │
-│           Hollis Marr                                                                            │
-│           Forty years on my feet in other people's boots. Never seen the sea. Did you know       │
-│           that? Forty years. Pass me the thread.                                                 │
-│                                                                                                  │
-│                                                                                                  │
-│ ▶         Ellery                                                                                 │
-│           Why the sea?                                                                           │
+│           Test Knight                                                                            │
+│           Than never. Say it. I've heard it from you often enough.                               │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
-│           Hollis Marr                                                                            │
-│           Because it's the one thing the boy wrote home about from the war that I believed.      │
-│           ...There. Try that. And what'll you do, when this lifts? It lifts. Kings forget.       │
+│           The knight stamps off into the rain.                                                   │
+│                                                                                                  │
+│           Test Archer                                                                            │
+│           Was that about me?                                                                     │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│ ▶         Test Lord                                                                              │
+│           It's always about you.                                                                 │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│           Test Archer                                                                            │
+│           Ellery! You came back for us.                                                          │
+│                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 │           Ellery                                                                                 │
-│           > Beat you without you letting me.                                                     │
+│           > Someone has to carry your arrows.                                                    │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 └───────────────────────────────────────────────────── arrows move · f go to this line · d close ──┘
 --- colours ---
 aaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-acccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddcccccccccccccccca
+acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccca
-acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccca
-acccccccccccdddddddddcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccddddddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-aefeeeeeeeeeffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
-aeeeeeeeeeeeffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aefeeeeeeeeefffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aeeeeeeeeeeeffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -66,6 +62,10 @@ acccccccccccbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddddddddddddaaa
 --- legend ---
 a = fg:panel_border bg:panel_bg
@@ -75,5 +75,6 @@ d = fg:text_dim bg:panel_bg
 e = fg:text bg:black
 f = fg:text_highlight bg:black
 --- overlays ---
-under sprite 24,272 64x64  portraits/lead_m/neutral.png 0,0 32x32
-under sprite 24,432 64x64  portraits/lead_m/neutral.png 0,0 32x32
+under sprite 24,16 64x64  portraits/test_knight/angry.png 0,0 32x32
+under sprite 24,208 64x64  portraits/test_lord/sad.png 0,0 32x32
+under sprite 24,368 64x64  portraits/lead_m/neutral.png 0,0 32x32

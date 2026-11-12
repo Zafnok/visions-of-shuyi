@@ -196,6 +196,9 @@ fn an_opening_is_a_file_that_plays_on_the_place_in_force() {
 /// places.
 #[test]
 fn chapter_1_opens_its_two_scenes_away_from_the_battle() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let openings = |scene: &str| -> Vec<Step> {
         let steps = &content.dialogue.get(scene).map(|s| s.steps.clone());
