@@ -45,8 +45,16 @@ agent's too.
   folder when the new one has none of the game's keys yet; a failure
   leaves the old folder in use for that launch and logs why. Nothing is
   ever lost or written over.
-- If the folder choice is the engine's (`AppConfig`, `data_dir`), the
-  change goes there first (`engine-change`).
+- The engine does the folder and the move: engine PR #376 (engine
+  ticket 3310, engine ADR-0108), in the pin since the pin move of
+  2026-11-11, adds `AppConfig::desktop_folder`, whose
+  `DesktopFolder::MyGames(name)` is `<Documents>\My Games\<name>` on
+  Windows (the known folder, OneDrive followed) and the data folder
+  elsewhere, and moves the old folder's files there once, as above
+  (exports too; a failed copy keeps the old folder and logs why). The
+  game sets it in `crates/app/src/main.rs`, and
+  `storage::desktop_dir(name, desktop)` names the folder without moving
+  anything wherever the game shows or checks the path.
 
 **Out (do not do):**
 - The web's storage (stays `localStorage`), the Playdate's.
@@ -54,10 +62,11 @@ agent's too.
 
 ## Implementation steps
 
-1. Read the engine's storage folder code; decide where the choice lives
-   (engine `AppConfig` or the game), with an ADR or a section in
-   ADR-0039.
-2. The folder, the move, their tests (a temp folder for both places).
+1. ~~Decide where the choice lives~~: the engine's `AppConfig`
+   (done by the pin move of 2026-11-11). Note the folder in ADR-0039.
+2. Set `desktop_folder: DesktopFolder::MyGames(..)` with the game's
+   name; the game's tests that the move reaches the old saves (the
+   engine's own suite tests the move with temp folders).
 
 ## Acceptance criteria
 

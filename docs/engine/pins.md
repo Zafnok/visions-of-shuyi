@@ -328,3 +328,13 @@ Nothing for the game: 3 PRs (#358, #360, #361). #358 is engine tickets only; #36
 | #367 | 2138 | Save bundles: a storage's keys written as one checked text file, read back with a verdict per entry, and applied all or nothing | unblocks 0872 and 0873 (engine#2138 out of their `blocked_by`, their pin steps struck) |
 
 Nothing for the game: 1 PR (#363), the engine's own ticket skills.
+
+## 2026-11-11: 85e8d5c5 → 234de697 (12 engine PRs), #646
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #377 | 2514 | Frames over time from `frame-png`: `--every` and `--count` make a sheet labelled with times, an APNG or a GIF; the MCP `frame_png` tool returns the sheet | fixed: nothing to change (the game builds no `frame_png::Options` or MCP input literal; its `cargo shuyi frame-png` has the options); adopt → 1264 (the README's intro GIF, made by hand with Pillow in 0125, remade by one command) |
+| #376 | 3310 | A desktop keeps its storage in the folder the game names: My Games on Windows, the old folder moved there once | adopt → 0875 (its folder and move are the engine's `AppConfig::desktop_folder`; the ticket sets it instead of writing its own) |
+| #374 | 2066 | A `Behaviour:` line for a change a game sees without a break | adopt → 1254 (engine#2066 is done: it reads the line) |
+
+Nothing for the game: 9 PRs (#366, #364, #365, #330, #288, #357, #370, #375, #368). #366 is the engine's tutorial playground; #364, #365, #368, #370 and #375 are the engine's own ticket lint, examples, gates, CI and Dependabot; #330, #288 and #357 are dependency bumps with no change the game sees.
