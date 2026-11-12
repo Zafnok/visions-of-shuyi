@@ -330,8 +330,9 @@ we export I imagine it would become a download".
   the Profile list and under the Load Game list with the folder's path
   and the action that opens it. The web shows no such line.
 - **The desktop's saves folder** belongs in `Documents\My Games`, never
-  `AppData` (Nick: "more accessible"). Ticket 0875 moves it, and the
-  saves already in `AppData` with it.
+  `AppData` (Nick: "more accessible"). Since ticket 0875 it is
+  `Documents\My Games\Visions of Shuyi` on Windows, and the saves already
+  in `AppData` move there on the first launch.
 - **Importing:**
   - Through **Profile**, a file always becomes **a new profile**.
   - Through **Load Game**, a file holding **one save** goes into **this

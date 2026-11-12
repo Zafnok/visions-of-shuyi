@@ -7,7 +7,7 @@ use std::pin::pin;
 use std::task::{Context, Poll, Waker};
 
 use shuyi_app::read_voice_manifest;
-use shuyi_app::storage::{data_dir, web_prefix};
+use shuyi_app::storage::{DesktopFolder, data_dir, desktop_dir, web_prefix};
 use trpg_content::voice::{MANIFEST_FILE, clip_file};
 use trpg_content::{LineId, Variant};
 use trpg_ui::start::Startup;
@@ -50,7 +50,8 @@ fn crash_reports_name_the_games_version() {
 }
 
 /// Acceptance (1110): saves written before the engine's platform shell
-/// are found after it, in the same folder and under the same prefix.
+/// are found after it, under the same prefix on the web; on Windows the
+/// data folder is the one the saves move out of (0875).
 #[test]
 fn saves_stay_where_they_were() {
     assert_eq!(config().storage_name, STORAGE_NAME);
@@ -68,6 +69,28 @@ fn saves_stay_where_they_were() {
     );
     #[cfg(not(target_os = "windows"))]
     let _: Option<PathBuf> = dir;
+}
+
+/// Acceptance (0875): a desktop keeps the saves in `Documents\My
+/// Games\Visions of Shuyi` on Windows; the move from the old folder is the
+/// engine's, tested there (`storage::desktop`, engine ticket 3310). macOS
+/// and Linux keep the data folder.
+#[test]
+fn a_desktop_keeps_saves_in_my_games() {
+    assert_eq!(
+        config().desktop_folder,
+        DesktopFolder::MyGames("Visions of Shuyi")
+    );
+    let dir = desktop_dir(STORAGE_NAME, config().desktop_folder);
+    #[cfg(target_os = "windows")]
+    {
+        let dir = dir.unwrap();
+        let tail = std::path::Path::new("My Games").join("Visions of Shuyi");
+        assert!(dir.ends_with(&tail), "{dir:?}");
+        assert_ne!(Some(dir), data_dir(STORAGE_NAME));
+    }
+    #[cfg(not(target_os = "windows"))]
+    assert_eq!(dir, data_dir(STORAGE_NAME));
 }
 
 /// The three lines of `assets-test/dialogue/test.dlg` that have a test clip

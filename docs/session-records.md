@@ -17,7 +17,7 @@ compile a release build with the engine's debug tools on.
 ## Where the records are
 
 - **On a desktop**, every run is written when the game quits, to
-  `sessions/` in the game's data folder (`%APPDATA%\tactical-rpg\sessions\`
+  `sessions/` in the game's data folder (`Documents\My Games\Visions of Shuyi\sessions\`
   on Windows), named `<when it started>.session.ron`. The newest ten are
   kept; older ones are deleted.
 - **From the debug menu** (the debug key), **Save session** writes the run
@@ -39,7 +39,7 @@ the engine's and the game's versions and, in a battle, the battle's record
 (its first state, the commands since and the one being applied; nothing the
 player typed). The newest five are kept, beside the saves:
 
-- **Windows:** `%APPDATA%\tactical-rpg\crash-<when>.ron`;
+- **Windows:** `Documents\My Games\Visions of Shuyi\crash-<when>.ron` (`%APPDATA%\tactical-rpg` before ticket 0875, moved on the first launch);
 - **macOS:** `~/Library/Application Support/tactical-rpg/crash-<when>.ron`;
 - **Linux and the Steam Deck:** `~/.local/share/tactical-rpg/crash-<when>.ron`;
 - **the web:** the browser's `localStorage`, key `tactical-rpg/crash-<when>`
