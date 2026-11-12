@@ -533,7 +533,7 @@
         ],
     ),
 
-    // The Chapter 1 demo (ticket 0914, ADR-0118): `cargo shuyi export web
+    // The Chapter 1 demo (ticket 0914, ADR-0119): `cargo shuyi export web
     // --release --edition demo`. Its program embeds what
     // `crates/content/demo/bundle.txt` keeps of `assets/` (with the game's
     // content over it, ADR-0117) and the bought art (the content root, handed to `crates/content/build.rs` as

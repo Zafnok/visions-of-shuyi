@@ -46,10 +46,10 @@ fn play_to_the_end(h: &mut Harness) -> usize {
 
 #[test]
 fn the_game_opens_on_the_scene_with_the_default_lead() {
-    let h = preview("ch01_intro", LeadGender::Male);
+    let h = preview("test_intro", LeadGender::Male);
     assert_eq!(h.screens(), ["scene_preview", "dialogue"]);
     let player = dialogue(&h).player();
-    assert_eq!(player.scene_id(), "ch01_intro");
+    assert_eq!(player.scene_id(), "test_intro");
     assert_eq!(player.lead().name, "Ellery");
     assert_eq!(player.lead().gender, LeadGender::Male);
     assert!(!h.quit_requested());
@@ -57,7 +57,7 @@ fn the_game_opens_on_the_scene_with_the_default_lead() {
 
 #[test]
 fn the_other_lead_can_be_asked_for() {
-    let h = preview("ch01_intro", LeadGender::Female);
+    let h = preview("test_intro", LeadGender::Female);
     let player = dialogue(&h).player();
     assert_eq!(player.lead().name, "Ellery");
     assert_eq!(player.lead().gender, LeadGender::Female);
@@ -66,11 +66,11 @@ fn the_other_lead_can_be_asked_for() {
 
 #[test]
 fn when_the_scene_ends_confirm_plays_it_again_and_cancel_quits() {
-    let mut h = preview("ch01_intro", LeadGender::Male);
+    let mut h = preview("test_intro", LeadGender::Male);
     let first_page = dialogue(&h).page_lines().to_vec();
     let presses = play_to_the_end(&mut h);
     assert_eq!(h.screens(), ["scene_preview"]);
-    assert!(h.snapshot().contains("End of scene ch01_intro"));
+    assert!(h.snapshot().contains("End of scene test_intro"));
     assert!(!h.quit_requested());
     // Other keys do nothing; Confirm starts the scene over.
     h.keys("Down");
@@ -85,7 +85,7 @@ fn when_the_scene_ends_confirm_plays_it_again_and_cancel_quits() {
 
 #[test]
 fn a_first_launch_picks_a_layout_before_the_scene() {
-    let game = trpg_ui::game::start_on_scene(ctx(None), "ch01_intro", LeadGender::Male)
+    let game = trpg_ui::game::start_on_scene(ctx(None), "test_intro", LeadGender::Male)
         .unwrap_or_else(|e| panic!("{e}"));
     let mut h = Harness::from_game(game);
     assert_eq!(h.screens(), ["scene_preview", "dialogue", "layout_picker"]);
@@ -96,12 +96,13 @@ fn a_first_launch_picks_a_layout_before_the_scene() {
 
 #[test]
 fn an_unknown_scene_is_an_error_that_lists_the_scenes() {
-    let Err(error) = trpg_ui::game::start_on_scene(ctx(None), "ch01_intr", LeadGender::Male) else {
+    let Err(error) = trpg_ui::game::start_on_scene(ctx(None), "test_intr", LeadGender::Male) else {
         panic!("there is no such scene");
     };
     assert!(
-        error.starts_with("no scene \"ch01_intr\" in assets/dialogue/; the scenes are: "),
+        error.starts_with("no scene \"test_intr\" in assets/dialogue/; the scenes are: "),
         "{error}"
     );
-    assert!(error.contains(", ch01_intro, "), "{error}");
+    let listed = error.rsplit(": ").next().unwrap_or_default();
+    assert!(listed.split(", ").any(|id| id == "test_intro"), "{error}");
 }

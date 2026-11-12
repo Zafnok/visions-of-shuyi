@@ -1081,6 +1081,9 @@ fn screen_rows(h: &Harness) -> Vec<String> {
 /// one-bit as the front end draws them.
 #[test]
 fn chapter_ones_scenes_play_to_their_end_on_the_playdates_skins() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
     h.use_pad(PadKind::Playdate);
     let mut one_bit = OneBit::new(&h);

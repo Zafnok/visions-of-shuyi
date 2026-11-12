@@ -237,7 +237,7 @@ Nick asks for it.
 
 ## Completion notes
 
-**What was done** ([ADR-0118](../../docs/adr/0118-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md)):
+**What was done** ([ADR-0119](../../docs/adr/0119-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md)):
 
 - **The edition:** `demo` in `shuyi.ron` (`cargo shuyi export web
   --release --edition demo`): `trpg-app` with the bought art,
@@ -259,7 +259,9 @@ Nick asks for it.
   table is cut from `assets/` with `assets-private/content/` laid over it,
   so the list applies to the content wherever it lives; the demo build
   compiles neither whole table in, and `demo.yml` checks the content out
-  with the key. 0156 took ADR-0117, so this ticket's is ADR-0118.
+  with the key. 0156 and 0157 (merged meanwhile) took ADR-0117 and ADR-0118, so this
+  ticket's is ADR-0119. Per 0157 (ADR-0118), the demo's tests of the real
+  content start with `bundle::skip_without_the_game()`.
 - **The switch:** `SHUYI_CONTENT` naming the demo's folder gives the
   `demo_edition` cfg, and the bundle is the demo's tables. The demo's
   bundle holds an `edition.txt`; `bundle::is_demo` reads it, `Shuyi::demo`

@@ -133,6 +133,9 @@ fn full_game_on_a_desktop(ctx: &mut Ctx) {
 /// save the full game imports (0873) and loads into Chapter 2.
 #[test]
 fn the_demo_ends_after_chapter_1_and_its_save_goes_on_in_the_full_game() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let offered = play_the_demo(true);
     let [(name, text)] = &offered[..] else {
         panic!("offered {offered:?}");
@@ -165,12 +168,18 @@ fn the_demo_ends_after_chapter_1_and_its_save_goes_on_in_the_full_game() {
 /// Acceptance: *No* goes back to the title with no file.
 #[test]
 fn no_to_export_save_offers_nothing() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     assert_eq!(play_the_demo(false), [] as [(String, String); 0]);
 }
 
 /// Acceptance: the battle's suspend save the demo makes loads in the demo.
 #[test]
 fn the_demos_suspend_save_continues_in_the_demo() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     bundle::reading(demo(), || {
         let mut h = launch();
         h.keys("f f f Up f");

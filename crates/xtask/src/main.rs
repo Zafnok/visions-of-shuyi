@@ -18,6 +18,7 @@ mod effect_marks;
 mod engine;
 mod game_tools;
 mod icon;
+mod leaks;
 mod lines;
 mod map_sprite_import;
 mod mentions;
@@ -51,6 +52,7 @@ available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n    \
 [--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
 check-mentions <text>              find what GitHub would read as a mention of a user, in a PR title\n  \
+check-leaks                        find a tracked file that quotes the game's lines or map rows (ADR-0118)\n  \
 engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check [--offline]] move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
@@ -95,6 +97,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("shuyi") => shuyi_main(args.collect()),
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
         Some("check-mentions") => check_mentions(&args.collect::<Vec<_>>()),
+        Some("check-leaks") => leaks::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
         Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
         Some("skill-pack") => skill_pack(&args.collect::<Vec<_>>()),
@@ -1230,11 +1233,11 @@ mod tests {
 
     #[test]
     fn lines_lists_a_scene_and_fails_on_an_unknown_one() {
-        assert_eq!(dispatch(args(&["lines", "ch01_intro"]).into_iter()), 0);
+        assert_eq!(dispatch(args(&["lines", "test_intro"]).into_iter()), 0);
         assert_eq!(lines(&[]), 0);
         assert_eq!(lines(&args(&["--help"])), 0);
         assert_eq!(lines(&args(&["no_such_scene"])), 1);
-        assert_eq!(lines(&args(&["ch01_intro", "ch01_prebattle"])), 2);
+        assert_eq!(lines(&args(&["test_intro", "test_victory"])), 2);
     }
 
     #[test]

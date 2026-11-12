@@ -3,8 +3,12 @@
 //! Chapter 1's scenes before and after its battle over the battle's map,
 //! a scene during a battle over the battle map as it stands, and the
 //! chapter's places of their own (ticket 0733).
+//!
+//! The tests of Chapter 1's places check the real content (ADR-0118): they
+//! skip without it, and their pictures are in the private repository's
+//! `content/tests/snapshots/`.
 
-use insta::assert_snapshot;
+use trpg_content::bundle::{content_tests, skip_without_the_game};
 use trpg_core::{Faction, LeadGender, Pos, UnitId};
 use trpg_ui::Ctx;
 use trpg_ui::ShuyiCtx;
@@ -48,16 +52,18 @@ fn preview(scene: &str) -> Harness {
     Harness::from_game(game)
 }
 
-/// From New Game, the letter (no place yet), then the Red Company on the
-/// green: the battle's field at Harrowby, by the chapel, with nobody on it
-/// yet. In the glyph look.
+/// From New Game, the intro (no place yet), then the scene before the
+/// battle: the battle's field, with nobody on it yet. In the glyph look.
 #[test]
-fn the_scene_before_the_battle_is_drawn_over_its_field_at_harrowby() {
+fn chapter_1s_prebattle_scene_is_drawn_over_its_battles_field() {
+    let Some(dir) = content_tests() else {
+        return;
+    };
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.keys("f f f Up f");
     assert_eq!(dialogue(&h).player().scene_id(), "ch01_intro");
     assert_eq!(place(&h), None);
-    // Skip the letter (skipping stops at each reply choice: the first
+    // Skip the intro (skipping stops at each reply choice: the first
     // reply is picked).
     for _ in 0..8 {
         if dialogue(&h).player().scene_id() != "ch01_intro" {
@@ -73,12 +79,15 @@ fn the_scene_before_the_battle_is_drawn_over_its_field_at_harrowby() {
     assert!(shown.is_some_and(|s| s.units.is_empty()));
     // The first line typed out.
     h.wait(5.0);
-    assert_snapshot!(h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot());
 }
 
-/// After the battle, at the toll-fort.
+/// After the battle, over the battle's field.
 #[test]
-fn the_scene_after_the_battle_is_drawn_over_its_field_at_the_toll_fort() {
+fn chapter_1s_victory_scene_is_drawn_over_its_battles_field() {
+    if skip_without_the_game() {
+        return;
+    }
     let h = preview("ch01_victory");
     let ctx = h.game().ctx();
     assert_eq!(place(&h), Some(field(ctx, Pos::new(20, 3))));
@@ -99,12 +108,14 @@ fn bare(scene: Option<MapScene>) -> Option<MapScene> {
     })
 }
 
-/// The letter (ticket 0733): the opening captions on black, then the
-/// yard behind the rented house at Harrowby, at dawn (with the lead and
-/// Hollis on it: its opening, 0734, `openings.rs`). The first line over
-/// it, in the glyph look.
+/// Chapter 1's intro (ticket 0733): its captions on black, then its place
+/// at dawn (with people on it: its opening, 0734, `openings.rs`). The
+/// first line over it, in the glyph look.
 #[test]
-fn the_letter_is_read_in_the_yard_at_harrowby() {
+fn chapter_1s_intro_is_drawn_over_its_place_after_its_captions() {
+    let Some(dir) = content_tests() else {
+        return;
+    };
     let mut h = preview("ch01_intro");
     for _ in 0..3 {
         assert_eq!(place(&h), None);
@@ -117,14 +128,16 @@ fn the_letter_is_read_in_the_yard_at_harrowby() {
     assert_eq!(bare(place(&h)), Some(yard));
     assert_eq!(ctx.game.content.maps["harrowby_yard"].look.light, "dawn");
     h.wait(5.5);
-    assert_snapshot!(h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot());
 }
 
-/// The scene after the chapter (0733): the old lord's study at Veyne
-/// Hall, at night, centred on the desk (with Dace in it: its opening,
-/// 0734).
+/// The scene after the chapter (0733): its place indoors, at night
+/// (with someone in it: its opening, 0734).
 #[test]
-fn the_last_scene_is_in_the_study_at_veyne_hall() {
+fn chapter_1s_last_scene_is_drawn_over_its_place() {
+    if skip_without_the_game() {
+        return;
+    }
     let h = preview("ch01_tbc");
     let ctx = h.game().ctx();
     let study = map_place(ctx, "veyne_study", Pos::new(12, 7));
@@ -167,18 +180,21 @@ fn the_battle_map_behind_a_battles_scene_is_darkened() {
     assert!(terrain > 10, "only {terrain} terrain cells");
 }
 
-/// The study is darkened less than the other places (Nick, 0738: "Darken
-/// less in this scene only"): its `@place` line asks for 60%; every other
-/// Chapter 1 scene is at the usual brightness. After Dace's pacing, the
-/// first line over it, in the glyph look.
+/// The last scene's place is darkened less than the other places (Nick,
+/// 0738: "Darken less in this scene only"): its `@place` line asks for
+/// 60%; every other Chapter 1 scene is at the usual brightness. After its
+/// opening, the first line over it, in the glyph look.
 #[test]
-fn the_study_is_darkened_less_than_the_other_places() {
+fn chapter_1s_last_scene_is_darkened_less_than_its_others() {
+    let Some(dir) = content_tests() else {
+        return;
+    };
     let mut h = preview("ch01_tbc");
     assert_eq!(dialogue(&h).view(h.game().ctx()).bright, Some(0.6));
     h.wait(5.0);
     assert!(!dialogue(&h).is_opening());
     assert_eq!(dialogue(&h).view(h.game().ctx()).bright, Some(0.6));
-    assert_snapshot!(h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot());
     for scene in ["ch01_intro", "ch01_prebattle", "ch01_victory"] {
         let mut h = preview(scene);
         for _ in 0..4 {
@@ -188,12 +204,15 @@ fn the_study_is_darkened_less_than_the_other_places() {
     }
 }
 
-/// After Chapter 1 is won (0738): the toll-fort at noon (the beat sheet's
-/// time), with the party standing where the battle left them, on no side,
-/// and no enemy; the field starts bright and darkens over half a second
-/// before the first line comes up. The first line, in the glyph look.
+/// After Chapter 1 is won (0738): the battle's field at noon, with the
+/// party standing where the battle left them, on no side, and no enemy;
+/// the field starts bright and darkens over half a second before the
+/// first line comes up. The first line, in the glyph look.
 #[test]
 fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
+    let Some(dir) = content_tests() else {
+        return;
+    };
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.keys("f f f Up f");
     skip_scenes(&mut h);
@@ -207,7 +226,7 @@ fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
         .collect();
     stood.sort();
     assert_eq!(stood.len(), 6, "nobody lost");
-    // Harl's last words, the VICTORY banner and the results.
+    // The scenes after the last blow, the VICTORY banner and the results.
     for _ in 0..60 {
         match h.top_screen() {
             "dialogue" if dialogue(&h).player().scene_id() == "ch01_victory" => break,
@@ -228,7 +247,7 @@ fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
     shown.sort();
     assert_eq!(shown, stood);
     assert!(field.units.iter().all(|u| !u.sided));
-    // Noon (the beat sheet: "the toll-fort, noon").
+    // Noon, as the battle's file says.
     let ctx = h.game().ctx();
     assert_eq!(
         ctx.game
@@ -248,9 +267,9 @@ fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
     h.wait(0.3);
     assert!(!dialogue(&h).is_opening());
     let talk = dialogue(&h).view(h.game().ctx());
-    assert!(talk.text.lines[0].starts_with("The gate stands open."));
+    assert!(talk.text.lines.first().is_some_and(|l| !l.is_empty()));
     let behind = talk.place.map(|p| p.units.len());
     assert_eq!(behind, Some(6), "they stay behind the talk");
     h.wait(5.0);
-    assert_snapshot!(h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot());
 }

@@ -1,4 +1,4 @@
-//! What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0118):
+//! What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0119):
 //! the rules of `crates/content/demo/bundle.txt`, the demo edition's
 //! content root, and the cut its files go through.
 //!

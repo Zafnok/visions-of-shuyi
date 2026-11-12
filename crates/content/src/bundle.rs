@@ -36,7 +36,7 @@
 //! it as a table of its own, and with the `private-assets` feature the
 //! bought art over both (ticket 1061).
 //!
-//! The **demo edition** (ticket 0914, ADR-0118) embeds the demo's tables
+//! The **demo edition** (ticket 0914, ADR-0119) embeds the demo's tables
 //! in place of `assets/`, the content and the bought art ([`demo_layers`]):
 //! what `crates/content/demo/bundle.txt` keeps of them, the shared files
 //! cut to what Chapter 1 names, and a file saying it is the demo
@@ -215,7 +215,7 @@ fn content_layer(table: &'static [(&'static str, &'static [u8])]) -> Option<Laye
     (!table.is_empty()).then(|| Layer::table(CONTENT_DISPLAY_ROOT, table))
 }
 
-/// The demo's layers (ticket 0914, ADR-0118): its bought art over its
+/// The demo's layers (ticket 0914, ADR-0119): its bought art over its
 /// `assets/` (the content laid over `assets/`, cut), with no test files.
 /// The bundle of the demo edition; with the `demo-bundle` feature, for the
 /// test that plays the demo against it ([`reading`]).
@@ -361,9 +361,151 @@ pub fn is_private(shown: &str) -> bool {
         .any(|root| engine::shown_under(shown, root))
 }
 
+/// Whether the game's own content is here (ADR-0118): its chapters, read
+/// as a build that ships has them, without the test files. In `assets/`
+/// until ticket 0160 moves it, then only in a checkout of the private
+/// repository (ADR-0117). A test that needs the real content asks
+/// `skip_without_the_game`.
+pub fn has_the_game() -> bool {
+    let bundle = install();
+    story_only(|| {
+        bundle
+            .files_in("chapters")
+            .iter()
+            .any(|p| p.rsplit_once('.').is_some_and(|(_, ext)| ext == "ron"))
+    })
+}
+
+/// Whether a build has the helpers for the tests of the real content
+/// (ADR-0118): the builds with the test files ([`TEST_FILES`]), never one
+/// that ships.
+macro_rules! for_tests {
+    ($($item:item)*) => {
+        $(
+            #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
+            $item
+        )*
+    };
+}
+
+for_tests! {
+    /// Whether CI built this: every CI job that runs a test of the real
+    /// content checks the content out (ADR-0117 §3), so there a test never
+    /// skips.
+    fn in_ci() -> bool {
+        option_env!("CI").is_some()
+    }
+
+    /// The private repository's `content/tests/` on disk (ADR-0118): the
+    /// content's own test data, which no build embeds.
+    pub const CONTENT_TESTS: &str =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets-private/content/tests");
+
+    /// For a test that needs the game's own content, which a checkout
+    /// without access to the private repository doesn't have (ADR-0118):
+    /// `true`, after saying so, when the content is not here
+    /// ([`has_the_game`]), and the test returns at once. `false` when it is.
+    /// In CI a missing content is a failure, never a skip.
+    ///
+    /// # Panics
+    ///
+    /// In CI, when the content is not here.
+    pub fn skip_without_the_game() -> bool {
+        !there_or_skip(has_the_game(), "the game's content")
+    }
+
+    /// For a test of the real content that checks it against the content's
+    /// own test data (ADR-0118 §3): the folder [`CONTENT_TESTS`], when it
+    /// and the game are here. `None`, after saying so, when not, and the
+    /// test returns at once; in CI that is a failure, as for
+    /// `skip_without_the_game`.
+    ///
+    /// # Panics
+    ///
+    /// In CI, when either is not here.
+    pub fn content_tests() -> Option<std::path::PathBuf> {
+        let dir = std::path::PathBuf::from(CONTENT_TESTS);
+        let here = has_the_game() && dir.is_dir();
+        there_or_skip(here, "the game's content and its test data").then_some(dir)
+    }
+
+    /// `here`; when it is false, a panic in CI, else a note that the test
+    /// is skipped because it needs `what`.
+    fn there_or_skip(here: bool, what: &str) -> bool {
+        if here {
+            return true;
+        }
+        assert!(
+            !in_ci(),
+            "this test needs {what}, and this CI job didn't check it out (ADR-0117 §3)"
+        );
+        std::eprintln!(
+            "skipped: this test needs {what}, which this checkout doesn't have \
+             (`cargo shuyi private-assets`, ADR-0118)"
+        );
+        false
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A bundle of `layers`, for [`reading`].
+    fn leaked(layers: Vec<Layer>) -> &'static Bundle {
+        Box::leak(Box::new(Bundle::new(layers)))
+    }
+
+    /// The game is here when a story layer has a chapter: not when only the
+    /// test files have one, nor with only a chapter's notes.
+    #[test]
+    fn the_game_is_here_when_a_story_layer_has_a_chapter() {
+        static CHAPTER: &[(&str, &[u8])] = &[("chapters/one.ron", b"()")];
+        static NOTES: &[(&str, &[u8])] = &[("chapters/notes.md", b"notes")];
+        let with = |layers| reading(leaked(layers), has_the_game);
+        assert!(with(vec![Layer::table(DISPLAY_ROOT, CHAPTER)]));
+        assert!(with(vec![
+            Layer::table(CONTENT_DISPLAY_ROOT, CHAPTER).private(),
+            Layer::table(DISPLAY_ROOT, NOTES),
+        ]));
+        assert!(!with(vec![Layer::table(DISPLAY_ROOT, NOTES)]));
+        assert!(!with(vec![
+            Layer::table(DISPLAY_ROOT, NOTES),
+            Layer::table(TEST_DISPLAY_ROOT, CHAPTER).test(),
+        ]));
+    }
+
+    /// Here, the game's content is in `assets/` or the checkout, as on disk,
+    /// and its test data in the checkout.
+    #[test]
+    fn the_game_is_here_as_the_files_on_disk_say() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let on_disk = [DISPLAY_ROOT, CONTENT_DISPLAY_ROOT].iter().any(|layer| {
+            std::fs::read_dir(root.join(layer).join("chapters")).is_ok_and(|mut files| {
+                files.any(|f| f.is_ok_and(|f| f.path().extension().is_some_and(|e| e == "ron")))
+            })
+        });
+        assert_eq!(has_the_game(), on_disk);
+        assert_eq!(skip_without_the_game(), !on_disk);
+        let tests = root.join(CONTENT_DISPLAY_ROOT).join("tests");
+        let expected = (on_disk && tests.is_dir()).then_some(tests);
+        let found = content_tests().map(|dir| dir.canonicalize().unwrap());
+        assert_eq!(found, expected.map(|dir| dir.canonicalize().unwrap()));
+    }
+
+    /// Without the game a test skips, but in CI it fails.
+    #[test]
+    fn without_the_game_a_test_skips_but_fails_in_ci() {
+        let empty = leaked(vec![Layer::table(DISPLAY_ROOT, &[])]);
+        let skipped = std::panic::catch_unwind(|| reading(empty, skip_without_the_game));
+        let data = std::panic::catch_unwind(|| reading(empty, content_tests));
+        if in_ci() {
+            assert!(skipped.is_err() && data.is_err());
+        } else {
+            assert!(matches!(skipped, Ok(true)));
+            assert!(matches!(data, Ok(None)));
+        }
+    }
 
     #[test]
     fn reads_existing_file() {
@@ -441,7 +583,8 @@ mod tests {
     }
 
     /// Each table is its folder on disk, file for file and byte for byte,
-    /// without the READMEs (ADR-0105). The content's too (ADR-0117): empty
+    /// without the READMEs (ADR-0105). The content's too (ADR-0117),
+    /// without its `tests/` (ADR-0118): empty
     /// with no checkout, and a build made before the checkout was fetched
     /// fails here, so the gates never quietly read the public files.
     #[test]
@@ -465,6 +608,10 @@ mod tests {
             let readme = files.iter().any(|f| f.ends_with("README.md"));
             assert!(readme || !has_readme, "{files:?}");
             files.retain(|f| !f.ends_with("README.md"));
+            // The content's own test data is read from disk (ADR-0118).
+            if std::ptr::eq(table, CONTENT) {
+                files.retain(|f| !f.starts_with("tests/"));
+            }
             files.sort_unstable();
             let paths: Vec<&str> = table.iter().map(|(path, _)| *path).collect();
             assert_eq!(
@@ -486,6 +633,9 @@ mod tests {
     /// `shuyi.ron`'s canaries).
     #[test]
     fn the_demos_bundle_loads_chapter_1_alone_and_says_it_is_the_demo() {
+        if skip_without_the_game() {
+            return;
+        }
         let demo: &'static Bundle = Box::leak(Box::new(Bundle::new(demo_layers())));
         let chapters = reading(demo, || {
             assert!(is_demo());

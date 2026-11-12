@@ -90,13 +90,13 @@ fn comments_go_and_lines_keep_their_numbers() {
 
 #[test]
 fn keep_entries_keeps_a_maps_keys_and_their_dotted_forms() {
-    let names = "{\n    \"lead\": \"Ellery\",\n    \"rival\": \"Dace Marr\",\n    \
-                 \"rival.first\": \"Dace\",\n    \"rivalry\": \"x\",\n    \"king\": \"Emeric\",\n}\n";
+    let names = "{\n    \"lead\": \"Ellery\",\n    \"rival\": \"Ann Bell\",\n    \
+                 \"rival.first\": \"Ann\",\n    \"rivalry\": \"x\",\n    \"king\": \"Cole\",\n}\n";
     let cut =
         keep_entries(names, None, &keys(&["lead", "rival"])).unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(
         cut,
-        "{\n\"lead\": \"Ellery\",\n\"rival\": \"Dace Marr\",\n\"rival.first\": \"Dace\",\n}\n"
+        "{\n\"lead\": \"Ellery\",\n\"rival\": \"Ann Bell\",\n\"rival.first\": \"Ann\",\n}\n"
     );
     let gone = keep_entries(names, None, &keys(&["queen"]));
     assert_eq!(gone, Err("keeps `queen`, which is no entry".into()));
@@ -193,6 +193,9 @@ fn rewrite_strips_cuts_and_swaps_only_what_it_should() {
 /// what Chapter 1 names.
 #[test]
 fn the_demos_list_keeps_chapter_1_and_cuts_the_shared_files() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let list = include_str!("../../demo/bundle.txt");
     let plan = Plan::parse(list).unwrap_or_else(|e| panic!("{e}"));
     let all: Vec<String> = crate::bundle::files_under("")
@@ -236,7 +239,12 @@ fn the_demos_list_keeps_chapter_1_and_cuts_the_shared_files() {
     }
     let names = read("data/names.ron");
     assert!(names.contains("\"red_captain.nickname\""));
-    for later in ["Joss", "\"king\"", "place.saltmere", "vowmaster.first"] {
+    for later in [
+        "\"defector.first\"",
+        "\"king\"",
+        "place.saltmere",
+        "vowmaster.first",
+    ] {
         assert!(!names.contains(later), "{later}");
     }
     assert!(read("chapters/ch01.ron").contains("next: None"));

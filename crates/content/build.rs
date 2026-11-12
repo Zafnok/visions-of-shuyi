@@ -11,7 +11,8 @@
 //! `bundle_files.rs` of `assets/`, `test_files.rs` of `assets-test/`,
 //! `private_files.rs` and `private_test_files.rs` of the private folders
 //! (empty without the feature), `content_files.rs` of the content (empty
-//! without it); `playdate_files.rs`, `assets/` without the files
+//! without it, and without its `tests/`, the tests' own data, ADR-0118);
+//! `playdate_files.rs`, `assets/` without the files
 //! `playdate-bundle.txt` leaves out (ticket 1036), and
 //! `playdate_left_out.rs`, the paths of those, in `assets/` or the content.
 //!
@@ -27,7 +28,7 @@
 //! in `OUT_DIR/onebit-content/`.
 //!
 //! `demo_files.rs` and `demo_private_files.rs` are the Chapter 1 demo's
-//! (ticket 0914, ADR-0118): `assets/` with the content over it, and
+//! (ticket 0914, ADR-0119): `assets/` with the content over it, and
 //! `assets-private/game/`, without
 //! what `demo/bundle.txt` leaves out, cut as it says
 //! (`src/demo_bundle.rs`), the cut copies in `OUT_DIR/demo/`. When an
@@ -86,6 +87,10 @@ const TEST: &str = "../../assets-test";
 /// The name of the notes in an asset folder, which no build embeds
 /// (ADR-0105).
 const README: &str = "README.md";
+
+/// The content's own test data (ADR-0118): what the tests of the real
+/// content check it against, read from disk by them, never embedded.
+const CONTENT_TESTS: &str = "tests";
 
 /// What the Playdate build leaves out of `assets/` (ticket 1036).
 const PLAYDATE_LIST: &str = "playdate-bundle.txt";
@@ -477,7 +482,8 @@ fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
 }
 
 /// Adds the path (`prefix` + its name, `/`-separated) of every file in `dir`
-/// and the directories below it to `files`, but the [`README`]s.
+/// and the directories below it to `files`, but the [`README`]s and the
+/// content's [`CONTENT_TESTS`].
 fn walk(dir: &Path, prefix: &str, files: &mut Vec<String>) {
     let entries =
         std::fs::read_dir(dir).unwrap_or_else(|e| panic!("reading {}: {e}", dir.display()));
@@ -489,6 +495,9 @@ fn walk(dir: &Path, prefix: &str, files: &mut Vec<String>) {
             .unwrap_or_else(|| panic!("a file name in {} isn't UTF-8", dir.display()));
         let path = format!("{prefix}{name}");
         if entry.path().is_dir() {
+            if dir == Path::new(CONTENT) && name == CONTENT_TESTS {
+                continue;
+            }
             walk(&entry.path(), &format!("{path}/"), files);
         } else if name != README {
             files.push(path);

@@ -1,8 +1,8 @@
-# ADR-0118: The Chapter 1 demo is an edition built from a cut bundle
+# ADR-0119: The Chapter 1 demo is an edition built from a cut bundle
 
 - **Status:** Accepted (0914)
 - **Date:** 2026-11-12
-- **Related tickets:** 0914, 0915, 0872, 0873, 1036, 1249, 0156, 0160; engine 3081, 3082, 3099
+- **Related tickets:** 0914, 0915, 0872, 0873, 1036, 1249, 0156, 0157, 0160; engine 3081, 3082, 3099
 
 ## Context
 
@@ -21,7 +21,7 @@ files. Here that would be a second copy of every shared data file
 (`characters.ron`, `names.ron`, the language file, the fonts), and those
 files name what comes later: `names.ron` holds every character's and place's
 name, `characters.ron` every recruit and boss, and their comments retell
-the chapters ("Chapter 8: the king speaks in the closing scene"). The
+the chapters. The
 ticket rules out a hand-kept second copy.
 
 The Playdate already embeds `assets/` less a list

@@ -1,6 +1,6 @@
 name: Demo
 
-# The Chapter 1 web demo (ticket 0914, ADR-0118): `cargo shuyi export web
+# The Chapter 1 web demo (ticket 0914, ADR-0119): `cargo shuyi export web
 # --release --edition demo`, built from what `crates/content/demo/bundle.txt`
 # keeps of the game's files. The export reads its package back against the
 # edition's `disclosure` part in `shuyi.ron`: a later chapter's scene id, map

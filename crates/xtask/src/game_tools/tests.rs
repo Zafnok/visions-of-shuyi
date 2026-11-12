@@ -86,7 +86,7 @@ fn a_session_opens_on_the_battle_asked_for() {
     };
     assert!(unknown.starts_with("no battle \"nope\" in assets/battles/; the battles are: "));
     assert!(unknown.contains("ch04"), "{unknown}");
-    let h = harness(&start(&["--scene", "ch04_intro"])).unwrap();
+    let h = harness(&start(&["--scene", "test_intro"])).unwrap();
     assert_eq!(h.top_screen(), "dialogue");
 }
 
@@ -693,6 +693,9 @@ fn the_disclosure_list_names_the_music_voices_and_licenses_a_package_ships() {
 #[test]
 fn the_demo_edition_holds_the_full_games_files_and_its_canaries_only_the_later_chapters() {
     use trpg_content::bundle::{self, Bundle};
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let config = project().config;
     let full = config.disclosure.unwrap();
     let demo = &config.editions["demo"];

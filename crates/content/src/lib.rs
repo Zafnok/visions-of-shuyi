@@ -2044,14 +2044,13 @@ mod tests {
             chapters.as_ref(),
             supports.as_ref(),
         );
-        assert!(refs.maps.contains_key("ch01"));
+        assert!(refs.maps.contains_key("test_small"));
         let of = |scene: &str| -> Vec<&str> {
             let known = refs.battles.as_ref().and_then(|b| b.get(scene));
             known.into_iter().flatten().map(|(id, _)| *id).collect()
         };
-        assert_eq!(of("ch01_prebattle"), ["ch01"]);
-        assert_eq!(of("ch01_victory"), ["ch01"]);
         assert_eq!(of("test_intro"), ["test"]);
+        assert_eq!(of("test_victory"), ["test"]);
         assert_eq!(of("test_fort"), ["quick"]);
         assert_eq!(of("test_support_lord_knight_c"), [] as [&str; 0]);
         assert!(refs.elsewhere.contains("test_support_lord_knight_c"));
@@ -2061,7 +2060,7 @@ mod tests {
         let without = dialogue::PlaceRefs::new(maps.as_ref(), battles.as_ref(), Some(&none), None);
         assert!(without.battles.is_none());
         // A script's wrong place fails the load.
-        let bad = "@scene bad\n@place ch01 30,2\n> x\n@end\n";
+        let bad = "@scene bad\n@place test_small 30,2\n> x\n@end\n";
         let mut files = bundle::files_in(dialogue::DIALOGUE_DIR)
             .into_iter()
             .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
@@ -2073,7 +2072,7 @@ mod tests {
             errors.0,
             [ContentError::new(
                 "bad.dlg",
-                "tile 30,2 is off map \"ch01\" (24 by 16 tiles, from 0,0 to 23,15)"
+                "tile 30,2 is off map \"test_small\" (14 by 8 tiles, from 0,0 to 13,7)"
             )
             .at(2, None)]
         );
@@ -2086,8 +2085,6 @@ mod tests {
     fn a_scenes_battle_is_its_chapters_or_its_triggers() {
         let content = load_embedded().unwrap();
         let of = |scene: &str| content.battle_of_scene(scene).map(|b| b.id.as_str());
-        assert_eq!(of("ch01_prebattle"), Some("ch01"));
-        assert_eq!(of("ch01_victory"), Some("ch01"));
         assert_eq!(of("test_intro"), Some("test"));
         assert_eq!(of("test_victory"), Some("test"));
         assert_eq!(of("test_fort"), Some("quick"));

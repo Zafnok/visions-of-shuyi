@@ -676,6 +676,9 @@ fn cast_of(content: &crate::Content) -> Cast {
 #[test]
 fn chapter_1s_cast_is_the_new_game_roster_and_its_triggers() {
     const COMPANIONS: [&str; 5] = ["retainer", "sergeant", "poacher", "keeper", "heretic"];
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let cast = cast_of(&content);
     for companion in COMPANIONS {
@@ -708,10 +711,13 @@ fn chapter_1s_cast_is_the_new_game_roster_and_its_triggers() {
 }
 
 /// A world-map place's intro scenes can count on the enemies its battle
-/// fields (Gil before Millhaven Road's fight, 1071); its victory scenes
-/// on nobody (he may not have been beaten).
+/// fields (1071); its victory scenes on nobody (they may not have been
+/// beaten).
 #[test]
 fn a_places_intro_counts_on_its_battles_named_enemies() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let content = embedded();
     let places = [trpg_core::SideQuest {
         battle: "millhaven_road".into(),

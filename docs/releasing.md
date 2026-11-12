@@ -61,7 +61,7 @@ artifacts, but creates no release).
 
 ## The Chapter 1 demo
 
-The demo (ticket 0914, [ADR-0118](adr/0118-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md))
+The demo (ticket 0914, [ADR-0119](adr/0119-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md))
 is the `demo` edition: Chapter 1 and nothing later, ending on "Thanks for
 playing" and "Export save?" (`docs/design/demo.md`). What it keeps of
 `assets/` is `crates/content/demo/bundle.txt`.
