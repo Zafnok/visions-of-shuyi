@@ -58,6 +58,9 @@ fn check_rows(cases: Vec<(&str, &str, u8, SkillKind)>) {
 /// and one per kind of effect, against `progression.md`.
 #[test]
 fn the_embedded_passives_match_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let cases = vec![
         (
             "sword_focus_1",
@@ -132,6 +135,9 @@ fn the_embedded_passives_match_the_design_table() {
 /// against `progression.md` and `combat-arts.md`'s costs.
 #[test]
 fn the_embedded_actives_match_the_design_tables() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let t = embedded();
     let dur = SkillCost::Durability;
     let uses = SkillCost::Uses;
@@ -238,6 +244,9 @@ fn the_embedded_actives_match_the_design_tables() {
 /// active still costs durability and every spell active a spell use.
 #[test]
 fn the_non_attack_actives_cost_the_uses_of_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let t = embedded();
     let mut found: Vec<(&str, u8)> = Vec::new();
     for def in t.skills.values() {
@@ -280,6 +289,9 @@ fn the_non_attack_actives_cost_the_uses_of_the_design_table() {
 
 #[test]
 fn every_class_skill_exists_with_the_right_kind() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let classes = crate::class::load(Some(
         &crate::terrain::TerrainDef::load(None)
             .unwrap_or_default()

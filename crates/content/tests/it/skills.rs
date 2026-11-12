@@ -7,6 +7,8 @@
 //! Units are generic units of the skill's class with flat stats (HP 30, Str,
 //! Mag, Dex and Spd 5, Def and Res 2) and one iron weapon, on an all-plain
 //! 8×5 map. Most tests compare the same attack with and without the skill.
+//!
+//! Tests of the content (ADR-0118): each skips without it.
 
 use std::sync::{Arc, OnceLock};
 
@@ -273,6 +275,9 @@ fn passive(a: &Unit, skill: &str, on_enemy: bool) -> (Forecast, Forecast) {
 
 #[test]
 fn keen_edge_hit_30_crit_10_for_3_durability() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, keen) = duel("swordsman", "iron_sword", "keen_edge");
     assert_eq!(keen.attacker.crit, plain.attacker.crit + 10);
     assert_eq!(keen.attacker.hit, (plain.attacker.hit + 30).min(100));
@@ -286,6 +291,9 @@ fn keen_edge_hit_30_crit_10_for_3_durability() {
 
 #[test]
 fn sword_focus_1_crit_10_with_swords() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, focus) = passive(
         &player(1, "swordsman", p(0, 0), "iron_sword"),
         "sword_focus_1",
@@ -303,6 +311,9 @@ fn sword_focus_1_crit_10_with_swords() {
 
 #[test]
 fn flurry_one_more_strike_for_5_durability() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, flurry) = duel("brawler", "iron_gauntlets", "flurry");
     assert_eq!((plain.attacker.strikes, flurry.attacker.strikes), (1, 2));
     let mut s = battle(vec![
@@ -333,6 +344,9 @@ fn light_feet(skill: &str, spd: StatValue) -> (u8, u8) {
 
 #[test]
 fn light_feet_1_attack_speed_2_with_gauntlets() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     // Brawler AS 5, enemy AS 3 (Spd 4, sword burden 1): a gap of 2, then 4.
     assert_eq!(light_feet("light_feet_1", 4), (1, 2));
     assert_eq!(light_feet("light_feet_1", 5), (1, 1));
@@ -340,6 +354,9 @@ fn light_feet_1_attack_speed_2_with_gauntlets() {
 
 #[test]
 fn heavy_blow_might_5_and_one_strike() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let fast = with(player(1, "raider", p(0, 0), "iron_axe"), |u| {
         u.stats.spd = 13;
     });
@@ -353,6 +370,9 @@ fn heavy_blow_might_5_and_one_strike() {
 
 #[test]
 fn axe_focus_1_hit_10_with_axes() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, focus) = passive(
         &player(1, "raider", p(0, 0), "iron_axe"),
         "axe_focus_1",
@@ -363,6 +383,9 @@ fn axe_focus_1_hit_10_with_axes() {
 
 #[test]
 fn vault_move_1_after_a_bow_attack_for_1_durability() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let archer = player(1, "archer", p(0, 0), "iron_bow");
     let mut s = battle(vec![archer, enemy(3, p(2, 0))]);
     // A plain attack offers no move.
@@ -403,6 +426,9 @@ fn enemy_damage(defender: Unit, setup: impl FnOnce(&mut BattleState)) -> StatVal
 
 #[test]
 fn brace_def_and_res_5_until_its_next_phase_3_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let guard = player(1, "guard", p(0, 0), "iron_spear");
     // Str 5 + Iron Sword 5 − Def 2 = 8.
     assert_eq!(enemy_damage(guard.clone(), |_| {}), 8);
@@ -418,6 +444,9 @@ fn brace_def_and_res_5_until_its_next_phase_3_uses_a_battle() {
 
 #[test]
 fn a_guard_with_no_weapon_can_brace() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let guard = unit(1, "guard", Faction::Player, p(0, 0), None);
     let braced = enemy_damage(guard, |s| {
         act(s, 1, p(0, 0), use_skill("brace", None));
@@ -427,6 +456,9 @@ fn a_guard_with_no_weapon_can_brace() {
 
 #[test]
 fn steadfast_1_def_2_outside_its_own_phase() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let guard = player(1, "guard", p(0, 0), "iron_spear");
     assert_eq!(
         enemy_damage(knowing(guard.clone(), "steadfast_1"), |_| {}),
@@ -438,6 +470,9 @@ fn steadfast_1_def_2_outside_its_own_phase() {
 
 #[test]
 fn lance_rush_might_5_multiplied_by_effectiveness() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, rush) = duel("rider", "iron_spear", "lance_rush");
     assert_eq!(rush.attacker.damage, plain.attacker.damage + 5);
     // Against a mounted unit the spear's ×2 doubles it too (Nick).
@@ -469,6 +504,9 @@ fn charge(skill: &str, x: i32) -> (StatValue, StatValue) {
 
 #[test]
 fn charge_1_damage_2_after_moving_4() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, charged) = charge("charge_1", 5);
     assert_eq!(charged, plain + 2);
     let (plain, charged) = charge("charge_1", 4);
@@ -477,6 +515,9 @@ fn charge_1_damage_2_after_moving_4() {
 
 #[test]
 fn overcast_spell_might_5_for_an_extra_use() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         unit(1, "mage", Faction::Player, p(0, 0), None),
         enemy(3, p(2, 0)),
@@ -509,12 +550,18 @@ fn spell_damage(class: &str, skill: &str) -> (StatValue, StatValue) {
 
 #[test]
 fn black_magic_1_attack_spells_might_1() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, boosted) = spell_damage("mage", "black_magic_1");
     assert_eq!(boosted, plain + 1);
 }
 
 #[test]
 fn sanctuary_heals_adjacent_allies_by_mag_plus_5_3_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "cleric", p(1, 1), "iron_gauntlets"),
         with(player(2, "swordsman", p(1, 0), "iron_sword"), |u| u.hp = 1),
@@ -546,6 +593,9 @@ fn heal_amount(class: &str, spell: &str, skill: &str) -> (StatValue, StatValue) 
 
 #[test]
 fn white_magic_1_heal_spells_2_more() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, boosted) = heal_amount("cleric", "heal", "white_magic_1");
     assert_eq!((plain, boosted), (15, 17));
 }
@@ -571,6 +621,9 @@ fn exile() -> Unit {
 
 #[test]
 fn inspire_allies_within_2_hit_and_avoid_10_2_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let plain = lord_help(exile(), |_| {});
     let mut left = (0, 0);
     let inspired = lord_help(exile(), |s| {
@@ -584,6 +637,9 @@ fn inspire_allies_within_2_hit_and_avoid_10_2_uses_a_battle() {
 
 #[test]
 fn leadership_1_allies_within_2_hit_10() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let plain = lord_help(exile(), |_| {});
     let led = lord_help(knowing(exile(), "leadership_1"), |_| {});
     assert_eq!(led, (plain.0 + 10, plain.1));
@@ -593,12 +649,18 @@ fn leadership_1_allies_within_2_hit_10() {
 
 #[test]
 fn blade_flurry_one_more_strike_with_a_sword() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, flurry) = duel("duelist", "iron_sword", "blade_flurry");
     assert_eq!((plain.attacker.strikes, flurry.attacker.strikes), (1, 2));
 }
 
 #[test]
 fn sword_focus_2_crit_20_and_supersedes_1() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let a = player(1, "duelist", p(0, 0), "iron_sword");
     let (plain, focus) = passive(&knowing(a.clone(), "sword_focus_1"), "sword_focus_2", false);
     assert_eq!(focus.attacker.crit, plain.attacker.crit + 10);
@@ -608,6 +670,9 @@ fn sword_focus_2_crit_20_and_supersedes_1() {
 
 #[test]
 fn deadly_blow_doubles_crit() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let sharp = with(player(1, "shadowblade", p(0, 0), "iron_sword"), |u| {
         u.stats.dex = 20;
     });
@@ -620,6 +685,9 @@ fn deadly_blow_doubles_crit() {
 
 #[test]
 fn evasion_1_avoid_10() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, evasive) = passive(
         &player(1, "swordsman", p(0, 0), "iron_sword"),
         "evasion_1",
@@ -630,6 +698,9 @@ fn evasion_1_avoid_10() {
 
 #[test]
 fn hundred_fists_one_more_strike_and_hit_10_with_gauntlets() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, fists) = duel("striker", "iron_gauntlets", "hundred_fists");
     assert_eq!((plain.attacker.strikes, fists.attacker.strikes), (1, 2));
     assert_eq!(fists.attacker.hit, (plain.attacker.hit + 10).min(100));
@@ -642,6 +713,9 @@ fn hundred_fists_one_more_strike_and_hit_10_with_gauntlets() {
 
 #[test]
 fn light_feet_2_attack_speed_4_and_supersedes_1() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     // Enemy AS 5: a gap of 0, then 4.
     assert_eq!(light_feet("light_feet_2", 6), (1, 2));
     assert_eq!(light_feet("light_feet_1", 6), (1, 1));
@@ -649,6 +723,9 @@ fn light_feet_2_attack_speed_4_and_supersedes_1() {
 
 #[test]
 fn shove_pushes_an_adjacent_enemy_8_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "grappler", p(0, 0), "iron_gauntlets"),
         enemy(3, p(1, 0)),
@@ -661,6 +738,9 @@ fn shove_pushes_an_adjacent_enemy_8_uses_a_battle() {
 
 #[test]
 fn a_blocked_shove_deals_5_collision_damage_to_both_units() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "grappler", p(0, 0), "iron_gauntlets"),
         enemy(3, p(1, 0)),
@@ -677,6 +757,9 @@ fn a_blocked_shove_deals_5_collision_damage_to_both_units() {
 
 #[test]
 fn iron_grip_def_3_with_gauntlets() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, grip) = passive(
         &player(1, "grappler", p(0, 0), "iron_gauntlets"),
         "iron_grip",
@@ -687,6 +770,9 @@ fn iron_grip_def_3_with_gauntlets() {
 
 #[test]
 fn rampage_might_8_and_its_avoid_20_lower() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let quick = with(player(1, "berserker", p(0, 0), "iron_axe"), |u| {
         u.stats.spd = 15;
     });
@@ -699,6 +785,9 @@ fn rampage_might_8_and_its_avoid_20_lower() {
 
 #[test]
 fn fury_crit_15_at_half_hp_or_less() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let hurt = |hp| with(player(1, "berserker", p(0, 0), "iron_axe"), |u| u.hp = hp);
     let (plain, fury) = passive(&hurt(15), "fury", false);
     assert_eq!(fury.attacker.crit, plain.attacker.crit + 15);
@@ -708,6 +797,9 @@ fn fury_crit_15_at_half_hp_or_less() {
 
 #[test]
 fn war_cry_adjacent_allies_str_2_2_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "vanguard", p(0, 1), "iron_axe"),
         player(2, "swordsman", p(0, 2), "iron_sword"),
@@ -723,6 +815,9 @@ fn war_cry_adjacent_allies_str_2_2_uses_a_battle() {
 
 #[test]
 fn axe_focus_2_hit_20_with_axes() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, focus) = passive(
         &player(1, "vanguard", p(0, 0), "iron_axe"),
         "axe_focus_2",
@@ -733,6 +828,9 @@ fn axe_focus_2_hit_20_with_axes() {
 
 #[test]
 fn long_shot_range_2_more_with_a_bow() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let s = battle(vec![
         player(1, "marksman", p(0, 0), "iron_bow"),
         enemy(3, p(4, 0)),
@@ -767,18 +865,27 @@ fn bow_focus(skills: &[&str]) -> ((u8, u8), (u8, u8)) {
 
 #[test]
 fn bow_focus_1_hit_5_with_bows() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let ((hit, crit), focus) = bow_focus(&["bow_focus_1"]);
     assert_eq!(focus, (hit + 5, crit));
 }
 
 #[test]
 fn bow_focus_2_hit_10_crit_5_with_bows_and_supersedes_1() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let ((hit, crit), focus) = bow_focus(&["bow_focus_1", "bow_focus_2"]);
     assert_eq!(focus, (hit + 10, crit + 5));
 }
 
 #[test]
 fn actives_are_locked_to_their_weapon_kind() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     // Nick: Lance Rush with spears, Deadly Blow with swords, Trample with
     // axes.
     let wrong = |class: &str, weapon: &str, skill: &str| {
@@ -801,6 +908,9 @@ fn actives_are_locked_to_their_weapon_kind() {
 
 #[test]
 fn volley_one_more_strike_with_a_bow() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let s = battle(vec![
         player(1, "outrider", p(0, 0), "iron_bow"),
         enemy(3, p(2, 0)),
@@ -812,6 +922,9 @@ fn volley_one_more_strike_with_a_bow() {
 
 #[test]
 fn fortify_def_and_res_8_until_its_next_phase_2_uses_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let bulwark = player(1, "bulwark", p(0, 0), "iron_spear");
     let mut left = (0, 0);
     let fortified = enemy_damage(bulwark, |s| {
@@ -824,12 +937,18 @@ fn fortify_def_and_res_8_until_its_next_phase_2_uses_a_battle() {
 
 #[test]
 fn steadfast_2_def_4_outside_its_own_phase() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let bulwark = player(1, "bulwark", p(0, 0), "iron_spear");
     assert_eq!(enemy_damage(knowing(bulwark, "steadfast_2"), |_| {}), 4);
 }
 
 #[test]
 fn trample_might_4_and_ignores_the_targets_terrain() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let s = battle_with(
         vec![
             player(1, "iron_rider", p(0, 0), "iron_axe"),
@@ -846,6 +965,9 @@ fn trample_might_4_and_ignores_the_targets_terrain() {
 
 #[test]
 fn piercing_lance_ignores_5_def_with_a_spear() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let armoured = with(enemy(3, p(1, 0)), |u| u.stats.def = 8);
     let s = battle(vec![player(1, "lancer", p(0, 0), "iron_spear"), armoured]);
     let plain = forecast(&s, 1, p(0, 0), attack(3, None));
@@ -855,12 +977,18 @@ fn piercing_lance_ignores_5_def_with_a_spear() {
 
 #[test]
 fn charge_2_damage_4_after_moving_4() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, charged) = charge("charge_2", 5);
     assert_eq!(charged, plain + 4);
 }
 
 #[test]
 fn black_magic_2_attack_spells_might_3() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     // Sorcerers start with Force, not Fire: the Mystic's Fire shows it.
     let (plain, boosted) = spell_damage("mystic", "black_magic_2");
     assert_eq!(boosted, plain + 3);
@@ -868,6 +996,9 @@ fn black_magic_2_attack_spells_might_3() {
 
 #[test]
 fn siphon_heals_half_the_damage_dealt_for_an_extra_use() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mystic = with(unit(1, "mystic", Faction::Player, p(0, 0), None), |u| {
         u.stats.dex = 20;
         u.stats.spd = 1;
@@ -887,6 +1018,9 @@ fn siphon_heals_half_the_damage_dealt_for_an_extra_use() {
 
 #[test]
 fn benediction_heals_allies_within_2_once_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "priest", p(1, 1), "iron_gauntlets"),
         with(player(4, "swordsman", p(1, 3), "iron_sword"), |u| u.hp = 1),
@@ -916,6 +1050,9 @@ fn benediction_heals_allies_within_2_once_a_battle() {
 /// allies within 2 tiles), and White Magic adds to both.
 #[test]
 fn a_priest_promoted_from_a_mastered_cleric_has_sanctuary_and_benediction() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let c = content();
     let mastered = ClassRecord {
         class_level: c.classes.class_level_cap,
@@ -963,12 +1100,18 @@ fn a_priest_promoted_from_a_mastered_cleric_has_sanctuary_and_benediction() {
 
 #[test]
 fn white_magic_2_heal_spells_4_more() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (plain, boosted) = heal_amount("mystic", "heal", "white_magic_2");
     assert_eq!(boosted, plain + 4);
 }
 
 #[test]
 fn crest_strike_might_4_hit_15_with_a_sword() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let heir = with(player(1, "blade_heir", p(0, 0), "iron_sword"), |u| {
         u.stats.dex = 0;
     });
@@ -981,6 +1124,9 @@ fn crest_strike_might_4_hit_15_with_a_sword() {
 
 #[test]
 fn resolve_str_and_spd_3_at_half_hp_or_less() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let heir = |hp| {
         with(player(1, "blade_heir", p(0, 0), "iron_sword"), |u| {
             u.hp = hp;
@@ -1001,6 +1147,9 @@ fn commander() -> Unit {
 
 #[test]
 fn rally_allies_within_2_str_and_def_3_once_a_battle() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         commander(),
         player(2, "swordsman", p(0, 2), "iron_sword"),
@@ -1017,6 +1166,9 @@ fn rally_allies_within_2_str_and_def_3_once_a_battle() {
 
 #[test]
 fn leadership_2_allies_within_2_hit_and_avoid_10_and_supersedes_1() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let plain = lord_help(commander(), |_| {});
     let led = lord_help(
         knowing(knowing(commander(), "leadership_1"), "leadership_2"),
@@ -1029,6 +1181,9 @@ fn leadership_2_allies_within_2_hit_and_avoid_10_and_supersedes_1() {
 
 #[test]
 fn swoop_move_1_after_the_attack_for_3_durability() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut s = battle(vec![
         player(1, "flier", p(0, 0), "iron_spear"),
         enemy(3, p(1, 0)),
@@ -1041,6 +1196,9 @@ fn swoop_move_1_after_the_attack_for_3_durability() {
 
 #[test]
 fn sky_dodge_1_avoid_10_against_bows() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let flier = |learned: bool| {
         let f = with(
             unit(3, "flier", Faction::Enemy, p(2, 0), Some("iron_spear")),
@@ -1074,6 +1232,9 @@ fn sky_dodge_1_avoid_10_against_bows() {
 
 #[test]
 fn every_skill_has_a_test_here() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let source = include_str!("skills.rs");
     for id in content().skills.skills.keys() {
         assert!(

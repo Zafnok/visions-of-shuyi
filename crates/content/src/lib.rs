@@ -1828,8 +1828,9 @@ mod tests {
         assert_eq!(new_game, Ok(NewGameDef::default()));
         let (battles, chapters, new_game) = ok_story();
         assert!(battles.is_ok_and(|b| b.contains_key("test")));
-        assert!(chapters.is_ok_and(|c| c.contains_key("test")));
-        assert!(new_game.is_ok_and(|n| n.first_chapter == "ch01"));
+        let chapters = chapters.unwrap_or_default();
+        assert!(chapters.contains_key("test"));
+        assert!(new_game.is_ok_and(|n| chapters.contains_key(&n.first_chapter)));
     }
 
     #[test]
@@ -1959,7 +1960,7 @@ mod tests {
         );
         // Without the game's scripts, what plays their scenes fails.
         let errors = load_with_scripts(&more[files.len()..=files.len()]).unwrap_err();
-        assert!(errors.0.iter().any(|e| e.file.starts_with("assets/")));
+        assert!(errors.0.iter().any(|e| e.file.starts_with("assets")));
     }
 
     /// The embedded scripts pass the presence check (ADR-0055); with the

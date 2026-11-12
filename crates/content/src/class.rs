@@ -910,6 +910,9 @@ mod tests {
     /// 1-3, the tier-3 Flier, the lord's line and the enemy-only classes).
     #[test]
     fn embedded_class_tree_matches_design_doc() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let t = embedded();
         let count: usize = TREE.iter().map(|(_, ids)| ids.len()).sum();
         assert_eq!(t.classes.len(), count);
@@ -961,6 +964,9 @@ mod tests {
     #[test]
     fn embedded_max_armour_matches_design_doc() {
         use ArmourWeight::{Chain, Cloth, Leather, Plate};
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let t = embedded();
         let expected = [
             (
@@ -998,6 +1004,9 @@ mod tests {
     /// expectations from `progression.md` and `magic.md`.
     #[test]
     fn embedded_class_numbers_match_design_doc() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let t = embedded();
         let sp = |kind, start, max| WeaponProficiency { kind, start, max };
         let iron_rider = ClassDef {

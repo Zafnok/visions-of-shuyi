@@ -1,6 +1,8 @@
 //! Promotion and reclass (ticket 0603) with the real class tree and seals
 //! (`assets/data/classes.ron`, `items.ron`): `progression.md`'s shared
 //! promotion worked by hand, and every promotion in the tree.
+//!
+//! Tests of the content (ADR-0118): each skips without it.
 
 use std::sync::OnceLock;
 
@@ -84,6 +86,9 @@ fn gains(from: &str, to: &str) -> StatGains {
 /// `20 7 0 4 2 9 0`, Rider `20 6 0 5 5 5 1`.
 #[test]
 fn iron_rider_from_guard_and_from_rider() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     assert_eq!(
         gains("guard", "iron_rider"),
         StatGains([7, 3, 0, 2, 4, 2, 2])
@@ -99,6 +104,9 @@ fn iron_rider_from_guard_and_from_rider() {
 
 #[test]
 fn every_promotion_in_the_tree_works_with_its_tiers_seal() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let c = content();
     let mut promotions = 0;
     for from in c.classes.classes.values() {
@@ -134,6 +142,9 @@ fn every_promotion_in_the_tree_works_with_its_tiers_seal() {
 
 #[test]
 fn a_reclass_seal_reaches_the_tier_one_classes_of_the_tree() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let c = content();
     let mut u = master_of(&cid("swordsman"));
     let names: Vec<&str> = reclass_targets(&u, &c.classes)

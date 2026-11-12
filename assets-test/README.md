@@ -8,7 +8,7 @@ that ships has none of them.**
 
 | Path | What |
 | ---- | ---- |
-| `data/characters.ron` | The test characters (`test_lord`, `test_knight`, `test_archer`, `test_scout`, `test_rogue`, `test_mage`) and generic templates (`test_brigand`, `test_raider`, `test_frost_elemental`) |
+| `data/characters.ron` | The test characters (`test_lord`, `test_knight`, `test_archer`, `test_scout`, `test_rogue`, `test_mage`), generic templates (`test_brigand`, `test_raider`, `test_frost_elemental`) and speaker (`test_voice`, who has no class) |
 | `data/names.ron` | The test characters' names |
 | `data/supports.ron` | The two test support pairs |
 | `data/camp.ron`, `dialogue/test_camp.dlg` | The test camp event (`test_campfire`, ticket 1003): listed at camp once the test chapter's battle is won, with the lord and the knight in the army |
@@ -19,6 +19,7 @@ that ships has none of them.**
 | `battles/test_green.ron` | A green villager with two Potions of its own (ticket 0513): it drinks one when wounded. The bots play it (`cargo xtask playtest test_green`) |
 | `battles/test_village.ron`, `maps/test_village.map` | Save the village (ticket 0313): five houses, save at least three, two raiders who burn them. The bots play it (`cargo xtask playtest test_village`) |
 | `maps/test_small.map` | The map of both battles |
+| `openings/test_opening.ron` | The test opening (ticket 0162): the lead and the test knight on the test buildings' grass (`maps/test_buildings.map`) |
 | `cinematics/test.ron` | The test cinematic: a pan over the test battle's map, on which the lead walks up to the brigand and fells it, two text boxes of the test scene, three faces crossing, then the logo. The debug menu's "Play test cinematic" plays it |
 | `dialogue/test*.dlg` | The test scenes: the dialogue test, the test chapter's scenes, the battle triggers' and the supports' |
 | `portraits/test_lord*`, `portraits/test_knight*` | Placeholder portraits. The bought ones are in the private repository's `test/` folder (`assets-private/test/`), which is laid over this one the way `assets-private/game/` is laid over `assets/` |

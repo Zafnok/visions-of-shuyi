@@ -794,19 +794,23 @@ fn embedded_battles_load() {
     assert_eq!(c.battles["test"].music, skirmish);
 }
 
-/// Chapter 1 is won by defeating Red Harl; the rest run (Nick, 0845).
+/// Chapter 1 is won by defeating its `red_captain`; the rest run (Nick,
+/// 0845). A test of the content (ADR-0118).
 #[test]
-fn chapter_1_is_won_by_defeating_harl_and_the_rest_flee() {
+fn chapter_1_is_won_by_defeating_its_captain_and_the_rest_flee() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let c = content();
     let ch01 = &c.battles["ch01"];
-    let harl = ch01
+    let captain = ch01
         .enemies
         .iter()
         .find(|u| u.character == Some(CharacterId("red_captain".into())))
         .map(|u| u.id);
     assert_eq!(
         Some(ch01.objective),
-        harl.map(|unit| Objective::DefeatUnit {
+        captain.map(|unit| Objective::DefeatUnit {
             unit,
             turn_limit: None,
             leftovers: trpg_core::Leftovers::Flee,

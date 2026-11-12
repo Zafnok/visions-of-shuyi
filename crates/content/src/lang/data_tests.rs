@@ -145,6 +145,29 @@ fn english_lines_replies_and_captions_have_their_kind_and_scene() {
     assert_eq!(data.lines.len(), 10);
 }
 
+/// The game's own data offers its text: skills, arts, the story's names
+/// and the tips (a test of the content, ADR-0118).
+#[test]
+fn the_games_data_offers_its_text() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
+    let content = crate::load_embedded().unwrap();
+    let source = content.lang.source();
+    for (key, english) in [
+        ("skills.keen_edge.name", "Keen Edge"),
+        ("arts.guard_break.name", "Guard Break"),
+        ("names.lead", "Ellery"),
+        ("names.retainer.first", "Hollis"),
+        ("tips.battle_start.title", "Your move"),
+    ] {
+        assert_eq!(source.data.get(key).map(String::as_str), Some(english));
+        assert_eq!(content.lang.source_text(key), Some(english), "{key}");
+    }
+    assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
+}
+
+/// Every kind of data text, from what the test files use.
 #[test]
 fn the_embedded_content_offers_every_kind_of_data_text() {
     let content = crate::load_embedded().unwrap();
@@ -154,12 +177,8 @@ fn the_embedded_content_offers_every_kind_of_data_text() {
         ("items.potion.name", "Potion"),
         ("classes.guard.name", "Guard"),
         ("spells.fire.name", "Fire"),
-        ("skills.keen_edge.name", "Keen Edge"),
-        ("arts.guard_break.name", "Guard Break"),
         ("terrain.forest.name", "Forest"),
-        ("names.lead", "Ellery"),
-        ("names.retainer.first", "Hollis"),
-        ("tips.battle_start.title", "Your move"),
+        ("names.test_lord", "Test Lord"),
         ("chapters.test.title", "Test Chapter"),
         (
             "battles.test.note_2",
@@ -169,7 +188,6 @@ fn the_embedded_content_offers_every_kind_of_data_text() {
         assert_eq!(source.data.get(key).map(String::as_str), Some(english));
         assert_eq!(content.lang.source_text(key), Some(english), "{key}");
     }
-    assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
     assert_eq!(source.names, content.names);
     let line = &source.lines["test_5da5d147"];
     assert_eq!(line.text, "The rain had not stopped for three days.");

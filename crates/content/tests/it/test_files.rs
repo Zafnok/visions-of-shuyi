@@ -2,7 +2,9 @@
 //! pictures of the tests and the debug tools are in `assets-test/`, which
 //! only a debug build or a `test-fixtures` build embeds. These tests load
 //! the content the way a build that ships has it
-//! (`bundle::story_only`) and the way a test build has it.
+//! (`bundle::story_only`) and the way a test build has it. They need the
+//! story (a build that ships has nothing else): tests of the content
+//! (ADR-0118), which skip without it.
 
 use trpg_content::{Content, bundle, load_embedded};
 
@@ -22,6 +24,9 @@ fn is_test(id: &str) -> bool {
 /// Quick Battle.
 #[test]
 fn a_build_without_the_test_files_has_no_test_content() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = shipped();
     let characters = &content.characters;
     let groups: [(&str, Vec<&str>); 13] = [
@@ -116,6 +121,9 @@ fn a_build_without_the_test_files_has_no_test_content() {
 /// test files' beside it: what the tests and the debug Quick Battle play.
 #[test]
 fn the_test_files_add_to_the_story_and_change_none_of_it() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let shipped = shipped();
     let content = load_embedded().unwrap_or_else(|errors| panic!("{errors}"));
     const { assert!(bundle::TEST_FILES) };
@@ -163,7 +171,13 @@ fn the_test_files_add_to_the_story_and_change_none_of_it() {
         added,
         ["test_brigand", "test_frost_elemental", "test_raider"]
     );
-    assert_eq!(characters.speakers, shipped.characters.speakers);
+    let added: Vec<&str> = characters
+        .speakers
+        .iter()
+        .filter(|id| !shipped.characters.speakers.contains(*id))
+        .map(|id| id.0.as_str())
+        .collect();
+    assert_eq!(added, ["test_voice"]);
     let added: Vec<&str> = content
         .names
         .names
@@ -171,7 +185,7 @@ fn the_test_files_add_to_the_story_and_change_none_of_it() {
         .filter(|id| shipped.names.get(id).is_none())
         .map(String::as_str)
         .collect();
-    assert_eq!(added, test_characters);
+    assert_eq!(added, [&test_characters[..], &["test_voice"]].concat());
 
     // Everything the story has is the same with the test files there.
     for (id, def) in &shipped.characters.characters {

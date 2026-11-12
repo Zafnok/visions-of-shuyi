@@ -106,6 +106,9 @@ fn special_weapons() -> [(&'static str, WeaponDef); 4] {
 fn weapons_match_the_design() {
     use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
     use WeaponRank::{D, E};
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let table = [
         (
             "iron_sword",
@@ -168,6 +171,9 @@ fn weapons_match_the_design() {
 
 #[test]
 fn gear_and_consumables_match_the_design() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let t = items();
     let stats = |f: fn(&mut Stats)| {
         let mut s = Stats::default();
@@ -255,6 +261,9 @@ fn gear_and_consumables_match_the_design() {
 /// are the design's (which `CombatRules` and `WeaponRules` default to).
 #[test]
 fn rules_and_traits_match_the_design() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let t = items();
     assert_eq!(t.rules, WeaponRules::default());
     assert_eq!(t.combat_rules(), CombatRules::default());
@@ -414,6 +423,9 @@ fn seals_load_and_are_checked() {
 
 #[test]
 fn seal_checks_against_the_class_tree() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let classes = crate::class::load(None).unwrap_or_default();
     assert_eq!(check_seals(&items(), &classes), []);
     // Only the tiers classes promote into need a seal.
@@ -573,6 +585,9 @@ fn side(damage: StatValue, followup: StatValue, hit: u8, crit: u8, strikes: u8) 
 
 #[test]
 fn w1_sword_follow_up_vs_axe() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let swordfighter = unit(
         "swordsman",
         [22, 8, 7, 9, 5],
@@ -594,6 +609,9 @@ fn w1_sword_follow_up_vs_axe() {
 
 #[test]
 fn w2_spear_vs_cavalry_and_axe_minimum() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     // A Rider stands in for the design's untagged soldier: its Mounted tag
     // changes nothing here (the axe has no effectiveness).
     let soldier = |def| {
@@ -627,6 +645,9 @@ fn w2_spear_vs_cavalry_and_axe_minimum() {
 
 #[test]
 fn w3_bow_vs_flier_at_range_no_counter() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let archer = unit(
         "archer",
         [18, 6, 8, 7, 4],
@@ -652,6 +673,9 @@ fn w3_bow_vs_flier_at_range_no_counter() {
 
 #[test]
 fn w4_gauntlet_avoid_and_broken_weapon() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let mut fighter = unit(
         "raider",
         [26, 10, 5, 6, 5],

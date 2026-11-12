@@ -2,6 +2,8 @@
 //! the real content tables (ticket 0312): `combat-arts.md`'s worked example
 //! (W1 with each sword art: forecast and weapon EXP), and each art used by a
 //! rank-D unit of a class that wields its kind, with an iron weapon.
+//!
+//! Tests of the content (ADR-0118): each skips without it.
 
 use std::sync::{Arc, OnceLock};
 
@@ -132,6 +134,9 @@ fn w1() -> BattleState {
 /// and the weapon EXP when both strikes hit (5 / 8 / 7).
 #[test]
 fn the_worked_example_w1_with_each_sword_art() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     // (art, attacker (damage, follow-up, hit, crit, strikes), counter,
     // durability after, weapon EXP)
     let cases = [
@@ -197,6 +202,9 @@ fn the_worked_example_w1_with_each_sword_art() {
 /// an action of its own): the attack is accepted, announced and paid.
 #[test]
 fn every_art_can_be_used_with_its_iron_weapon() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let weapon = |kind| match kind {
         WeaponKind::Sword => ("swordsman", "iron_sword"),
         WeaponKind::Spear => ("guard", "iron_spear"),
@@ -280,6 +288,9 @@ fn every_art_can_be_used_with_its_iron_weapon() {
 fn rank_arts_c_to_s_are_taught_by_their_rank() {
     use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
     use WeaponRank::{A, B, C, S};
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let by_rank = |kind, rank| {
         let mut names: Vec<_> = content()
             .arts

@@ -96,5 +96,6 @@ fn the_embedded_table_has_the_test_names_only_with_the_test_files() {
     let shipped = bundle::story_only(load).unwrap_or_default();
     assert_eq!(shipped.get("test_lord"), None);
     assert_eq!(shipped.get("lead"), names.get("lead"));
-    assert_eq!(shipped.names.len() + 6, names.names.len());
+    // The six test characters' and the test speaker's.
+    assert_eq!(shipped.names.len() + 7, names.names.len());
 }

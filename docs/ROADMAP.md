@@ -449,9 +449,9 @@ Candle joins outside battle.
   Nick picked moving the story and the game's content into the private
   assets repository, as a private repository's CI costs far over $30 a
   month) → **0156** the private content layer → **0157** the scripts'
-  tests ready for it → **0162** the data's · **0158** the public web build and releases without it,
+  tests ready for it → **0162** the data's (content and core) → **0163** the UI's unit tests · **0164** the UI's integration tests and pictures · **0165** the bots' and tools' · **0158** the public web build and releases without it,
   Nick's full build on a restricted page · **0159** the story documents
-  move → **0160** the game's content and scripts move (after 0162, 0158)
+  move → **0160** the game's content and scripts move (after 0162–0165, 0158)
   → **0152** a private mirror of the scripts a writer can propose
   changes to (copied from the assets repository) · engine#2586 the dialogue preview screen → **0764** a
   script preview program for writers · **0765** the writer's guide for
