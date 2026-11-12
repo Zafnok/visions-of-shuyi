@@ -179,7 +179,12 @@ impl Harness {
     /// in debug and release test runs.
     pub fn from_game(game: Game) -> Self {
         let crank = game.ctx().game.content.keymap.crank;
-        let mut core = Core::new(game.with_debug_screens(true));
+        let core = Core::new(game.with_debug_screens(true));
+        // Where an exported file went reaches its screen, as in the game
+        // (`start::start`).
+        #[cfg(feature = "std")]
+        let core = core.with_system_hook(crate::save_files::hear);
+        let mut core = core;
         core.set_crank(crank);
         Self(core)
     }

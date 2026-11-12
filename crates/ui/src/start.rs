@@ -38,6 +38,7 @@ pub fn start(title: &'static str, startup: Result<Startup, String>) -> Start<Shu
     Start::new(Card::text(title), look, move |setup| load(setup, startup))
         .state_hash(Game::state_hash)
         .crash_record(crash_record)
+        .on_system(crate::save_files::hear)
 }
 
 /// What the game's frames are painted with: its font atlas and pictures.

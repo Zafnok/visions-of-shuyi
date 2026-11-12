@@ -267,3 +267,95 @@ Options), Nick picked **"Pause and mute"**.
 ### Open sub-questions
 
 - None.
+
+## Saves outside the game
+
+Decided: 2026-11-11
+Source: ticket 0872 (export), for 0873 (import) and 0914 (the demo's
+export)
+
+### Nick's words
+
+Asked where *where saves are*, Export and Import live (the Profile
+screen, a Saves page in Options, or the Load Game list), what one file
+holds, and what an import does over a profile with saves:
+
+> "as long as Vix gives a tutorial for it, I wouldn't mind both the
+> Profile and the Load Game options. Profile --> when hovering, has option
+> to export. Load Game --> when hovering, the same. When Load Game -->
+> export is selected, it asks if it should export associated
+> Options/Keybinds as well and can export a trimmed Profile containing
+> only the 1 save. When Profile export is selected it will export the
+> whole profile and all saves (more bytes). When importing, probably thru
+> either channel, with a warning if they Import a Profile wrapped save(s)
+> thru the Load Game channel, saying it will add a new profile"
+
+What one file holds: "depending on export channel". Importing over a
+profile with saves: **as a new profile**, never touching the one in use.
+
+On Vix's part: "both [a tip the first time on each screen] but also a
+quick, persistent Vix note when hovering profile or load game, that
+doesnt draw cursor focus or require any player tutorial input. just a
+note like "Did you know? You can export your [profile / save] from this
+menu!" something like that". He checked the mockup of the note and of the
+Load Game question ("Yes, as drawn").
+
+On a one-save file imported through Load Game: "first empty slot, if none
+empty, slot under cursor with confirmation default to no".
+
+On where the saves are shown (mockups of three places): "the save should
+never default to AppData probably should be in Documents or My Games
+folder which is more accessible... otherwise probably both but the
+browser storage one doesn't make a whole lot of sense it would be better
+if it only displayed the helper text in Desktop build & for browser when
+we export I imagine it would become a download".
+
+### Rules
+
+- **Export from the Profile screen:** with the cursor on a profile, the
+  export key exports **the whole profile**: its 30 slots, its suspend
+  save, its options, key bindings and layout, and the tips it has seen.
+- **Export from Load Game:** with the cursor on a save, the export key
+  asks `Export your options and key bindings too?` (Yes / No, the cursor
+  on No), then exports **a trimmed profile holding only that save**, plus
+  the options, key bindings and layout if the answer was Yes. An empty
+  slot, or one that can't be read, has nothing to export.
+- **One kind of file:** both are a profile's file, the Load Game one
+  with less in it, so either opens through either screen's Import (0873).
+- **On the web an export is a download** (the browser's downloads
+  folder). On the desktop it is written in the `exports` folder beside
+  the saves. A line after it says which: "Downloaded …", or the file's
+  path with the action that opens its folder.
+- **Where the saves are** is shown **on the desktop only**: a line under
+  the Profile list and under the Load Game list with the folder's path
+  and the action that opens it. The web shows no such line.
+- **The desktop's saves folder** belongs in `Documents\My Games`, never
+  `AppData` (Nick: "more accessible"). Ticket 0875 moves it, and the
+  saves already in `AppData` with it.
+- **Importing:**
+  - Through **Profile**, a file always becomes **a new profile**.
+  - Through **Load Game**, a file holding **one save** goes into **this
+    profile**: the first empty slot; if all 30 are full, the slot under
+    the cursor, after a yes/no question with the cursor on No.
+  - Through **Load Game**, a file holding **more than one save** (a whole
+    profile) warns first that it will be added as a new profile.
+  - The rest (the version check, the report before writing): 0873.
+- **Vix** (ticket 0874): a tip the first time each screen opens with
+  something to export, and on the title, while the cursor is on `Load
+  Game` or `Profile`, a note beside the menu ("Did you know? You can
+  export a save from this menu!" / "… your profile …"), every time, never
+  taking the cursor and asking for nothing.
+- **The Playdate** has no export or import (no files a player reaches).
+- *The agent's starting rules:* the export key is the **Unit info** key
+  (on menus it has no other use; `E` / `I` by default, the top face
+  button on a pad), named in each screen's help line. The file is called
+  `visions-of-shuyi-<profile name>-<n>.ron` for a profile and
+  `visions-of-shuyi-<profile name>-<n>-slot-<NN>.ron` for one save (the
+  name in lower case, spaces as `-`, any character but `a`–`z` or a
+  digit left out; `<n>` the profile's number, so a name with no such
+  letters still gives a name), and the desktop never writes over an older
+  file (`… (2).ron`).
+
+### Open sub-questions
+
+- None.

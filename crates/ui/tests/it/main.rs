@@ -39,6 +39,7 @@ mod preparations;
 mod profiles;
 mod rebind_buttons;
 mod save;
+mod save_files;
 mod scene_camera;
 mod scene_preview;
 mod sessions;

@@ -320,10 +320,10 @@ fn question(h: &Harness) -> Option<(String, String)> {
         a.map(|a| a.label.clone()).unwrap_or_default()
     }
     let view = screen(h).view(h.game().ctx());
-    if let Some(q) = view.leaving {
+    if let Some(q) = view.list.leaving {
         return Some((q.text, focused(&q.answers)));
     }
-    let q = view.deleting?;
+    let q = view.list.deleting?;
     Some((q.text, focused(&q.answers)))
 }
 
@@ -451,7 +451,7 @@ fn deleting_on_the_screen_asks_first_and_takes_the_saves() {
     // The only profile can't be deleted: its menu is Rename alone.
     h.keys("f");
     let view = screen(&h).view(h.game().ctx());
-    let actions = view.actions.unwrap_or_else(|| panic!("no menu"));
+    let actions = view.list.actions.unwrap_or_else(|| panic!("no menu"));
     let items = actions.menu.items.iter();
     let items: Vec<String> = items.map(|i| h.game().ctx().label(&i.label)).collect();
     assert_eq!(items, ["Rename"]);
@@ -505,7 +505,7 @@ fn a_name_another_profile_has_is_refused_and_the_box_stays() {
     let mut h = profile_screen();
     h.keys("Down f").type_text("player 1").keys("Enter");
     assert_eq!(screen(&h).typed(), Some("player 1"));
-    let message = screen(&h).view(h.game().ctx()).message;
+    let message = screen(&h).view(h.game().ctx()).list.message;
     assert_eq!(
         message.as_deref(),
         Some("Another profile already has that name.")

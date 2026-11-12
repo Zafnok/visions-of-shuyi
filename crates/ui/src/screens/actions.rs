@@ -131,8 +131,18 @@ pub const PREPARATIONS: &[Action] = &[
 pub const RESULTS: &[Action] = &[Confirm, Cancel];
 /// What the save prompt screen reacts to.
 pub const SAVE_PROMPT: &[Action] = NO_CANCEL;
-/// What the save slots screen reacts to.
-pub const SAVE_SLOTS: &[Action] = GRID;
+/// What the save slots screen reacts to: a grid's keys, and on Load
+/// Game the export and open-folder keys (0872, `screens::files::ACTIONS`).
+pub const SAVE_SLOTS: &[Action] = &[
+    CursorUp,
+    CursorDown,
+    CursorLeft,
+    CursorRight,
+    Confirm,
+    Cancel,
+    Info,
+    WorldFind,
+];
 /// Any action skips the cinematic and clears the notice
 /// (`title::pressed`).
 pub const TITLE: &[Action] = &Action::ALL;
@@ -193,7 +203,11 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
     screens.extend([
         ScreenActions::declared(OptionsScreen::NAME, navigation()),
         ScreenActions::declared(KeyBindingsScreen::NAME, navigation()),
-        ScreenActions::declared(ProfileScreen::NAME, navigation()),
+        ScreenActions::declared(ProfileScreen::NAME, {
+            let mut actions = navigation();
+            actions.extend_from_slice(super::files::ACTIONS);
+            actions
+        }),
         ScreenActions::declared(LayoutPickerScreen::NAME, menu()),
         ScreenActions::declared(DebugMenuScreen::NAME, menu()),
         ScreenActions::declared(GlyphSamplerScreen::NAME, ui_actions(&[UiAction::Cancel])),

@@ -7,6 +7,7 @@ pub mod class_change;
 pub mod credits;
 pub mod dialogue;
 pub mod familiarity;
+pub mod files;
 pub mod game_over;
 pub mod key_bindings;
 pub mod layout_picker;

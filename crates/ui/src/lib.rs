@@ -42,6 +42,7 @@ pub mod platform;
 pub mod portrait;
 pub mod profiles;
 pub mod save;
+pub mod save_files;
 pub mod screen;
 pub mod screens;
 pub mod settings;

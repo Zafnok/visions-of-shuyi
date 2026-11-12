@@ -7,6 +7,11 @@
 //! [`crate::flow`]). The slot picker is made to be
 //! opened from other menus too (the world map's `Save`, 1007).
 //!
+//! On Load Game the Unit info key exports the save under the cursor as a
+//! file, after asking whether the options and key bindings go with it,
+//! and on a desktop a line says where the saves are (ticket 0872,
+//! `docs/design/options.md`, *Saves outside the game*; [`crate::save_files`]).
+//!
 //! **The look is a skin** (ADR-0054): this module decides what the screens
 //! show and do, and says it as a [`SavePromptView`] and a
 //! [`SlotPickerView`]; [`glyph`] paints them.
@@ -23,7 +28,9 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
+use crate::save_files::{self, Export, ExportNotice, Exported};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screens::files;
 use crate::screens::pick_one;
 use crate::widgets::{Ask, ListCursor, Menu, MenuItem};
 
@@ -38,6 +45,8 @@ pub const SAVE_TITLE: &str = "save.title.save";
 pub const LOAD_TITLE: &str = "save.title.load";
 /// The key of what an empty slot shows.
 pub const EMPTY_SLOT: &str = "save.empty";
+/// The key of the question before a save is exported.
+pub const EXPORT_QUESTION: &str = "save.export_question";
 
 /// Slots shown at once.
 const VISIBLE: usize = 20;
@@ -134,8 +143,12 @@ pub struct SlotPickerScreen {
     cursor: ListCursor,
     /// "Overwrite slot N?", while it is open.
     asking: Option<Ask<bool>>,
+    /// "Export your options and key bindings too?", while it is open.
+    exporting: Option<Ask<bool>>,
     /// The message under the panel, if any.
     message: Option<String>,
+    /// Where the last export went.
+    notice: ExportNotice,
 }
 
 impl SlotPickerScreen {
@@ -176,7 +189,9 @@ impl SlotPickerScreen {
             slots,
             cursor,
             asking: None,
+            exporting: None,
             message: None,
+            notice: ExportNotice::default(),
         }
     }
 
@@ -208,9 +223,71 @@ impl SlotPickerScreen {
         matches!(self.purpose, Purpose::Save(_))
     }
 
-    /// Whether "Overwrite slot N?" is open.
+    /// Whether "Overwrite slot N?" or the export question is open.
     pub fn is_asking(&self) -> bool {
-        self.asking.is_some()
+        self.asking.is_some() || self.exporting.is_some()
+    }
+
+    /// Whether the export question is open.
+    pub fn is_asking_export(&self) -> bool {
+        self.exporting.is_some()
+    }
+
+    /// Whether the save under the cursor can be exported: loading, a save
+    /// that reads, on a platform with files a player reaches.
+    pub fn can_export(&self, ctx: &Ctx) -> bool {
+        !self.is_saving()
+            && save_files::can_export(&ctx.platform)
+            && matches!(self.slots.get(self.cursor.focus()), Some(Slot::Saved(_)))
+    }
+
+    /// The export key on the focused slot: asks whether the options and
+    /// key bindings go with it, the cursor on No (Nick, 0872).
+    fn ask_export(&mut self, ctx: &mut Ctx) {
+        if !self.can_export(ctx) {
+            return;
+        }
+        self.message = None;
+        let answers = [(true, "save.answer.yes"), (false, "save.answer.no")];
+        let ask = Ask::new(EXPORT_QUESTION, answers)
+            .focused_on(false)
+            .cancelled_by(false);
+        self.exporting = Some(ask);
+        ctx.audio.menu(MenuSound::Select);
+    }
+
+    /// An action while the export question is open: Cancel closes it,
+    /// either answer exports.
+    fn answer_export(&mut self, ctx: &mut Ctx, action: Action) {
+        let Some(ask) = self.exporting.as_mut() else {
+            return;
+        };
+        if action == Action::Cancel {
+            self.exporting = None;
+            ctx.audio.menu(MenuSound::Cancel);
+            return;
+        }
+        let Some(settings) = ask.handle(action, &mut ctx.audio) else {
+            return;
+        };
+        self.exporting = None;
+        let what = Export::Slot {
+            slot: self.focused_slot(),
+            settings,
+        };
+        let id = ctx.profiles().current();
+        if let Ok(file) = save_files::export(ctx, id, what) {
+            self.notice.offered(file);
+            ctx.audio.menu(MenuSound::Select);
+        } else {
+            self.notice.heard(Some(Exported::Failed));
+            ctx.audio.menu(MenuSound::Denied);
+        }
+    }
+
+    /// The platform's answer to the last export ([`save_files::hear`]).
+    pub fn heard(&mut self, exported: Option<Exported>) {
+        self.notice.heard(exported);
     }
 
     /// The message under the panel, if any.
@@ -235,6 +312,7 @@ impl SlotPickerScreen {
         }
         self.cursor.window(VISIBLE);
         self.message = None;
+        self.notice.clear();
         ctx.audio.menu(MenuSound::Move);
     }
 
@@ -305,12 +383,21 @@ impl SlotPickerScreen {
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> String {
         // A slot with something in it says so before it is chosen.
-        let key = if self.is_asking() {
+        let folder = save_files::place(&ctx.platform).is_some();
+        let key = if self.is_asking_export() {
+            "save.help.export_question"
+        } else if self.is_asking() {
             "save.help.asking"
         } else if self.would_overwrite() {
             "save.help.overwrite"
         } else if self.is_saving() {
             "save.help.save_here"
+        } else if self.can_export(ctx) && folder {
+            "save.help.load_export_folder"
+        } else if self.can_export(ctx) {
+            "save.help.load_export"
+        } else if folder {
+            "save.help.load_folder"
         } else {
             "save.help.load"
         };
@@ -349,10 +436,17 @@ impl SlotPickerScreen {
             slots,
             range,
             message: self.message.clone(),
+            notice: self.notice.shown().map(|n| n.text(ctx)),
             question: self.asking.as_ref().map(|ask| {
                 let slot = self.slot_text();
                 ask.view_with_keys(ctx, ctx.help_keys(), &[("slot", &slot)])
             }),
+            export_question: self.exporting.as_ref().map(|ask| ask.view(ctx)),
+            place: if self.is_saving() {
+                None
+            } else {
+                files::place_view(ctx)
+            },
             help: self.help(ctx),
         }
     }
@@ -407,6 +501,10 @@ impl Screen<Shuyi> for SlotPickerScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for &action in &input.actions {
+            if self.is_asking_export() {
+                self.answer_export(ctx, action);
+                continue;
+            }
             let done = if self.is_asking() {
                 self.answer(ctx, action)
             } else {
@@ -420,6 +518,15 @@ impl Screen<Shuyi> for SlotPickerScreen {
                         None
                     }
                     Action::Confirm => self.confirm(ctx),
+                    Action::Info => {
+                        // Only a save that loads: `can_export`.
+                        self.ask_export(ctx);
+                        None
+                    }
+                    Action::WorldFind if !self.is_saving() => {
+                        files::open_folder(ctx, self.notice.shown());
+                        None
+                    }
                     Action::Cancel => {
                         ctx.audio.menu(MenuSound::Cancel);
                         Some(Transition::Pop)
@@ -430,7 +537,7 @@ impl Screen<Shuyi> for SlotPickerScreen {
             if let Some(pop) = done {
                 return pop;
             }
-            if self.is_asking() && action == Action::Confirm {
+            if self.is_asking() && matches!(action, Action::Confirm | Action::Info) {
                 // The key that opened the question isn't its answer.
                 break;
             }
@@ -443,6 +550,10 @@ impl Screen<Shuyi> for SlotPickerScreen {
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
+        Some(self)
+    }
+
+    fn as_any_mut(&mut self) -> Option<&mut dyn core::any::Any> {
         Some(self)
     }
 }

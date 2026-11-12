@@ -1,0 +1,78 @@
+---
+source: crates/ui/tests/it/save_files.rs
+expression: h.snapshot()
+---
+                                                                                                    
+  ┌─ Load Game ──────────────────────────────────────────────────────────────────────────────────┐  
+  │                                                                                              │  
+  │  Slot  Chapter                                           Mode      Army                Time  │  
+  │                                                                                              │  
+  │  01    Test Chapter (cleared)                            Classic   2 units          0:00:00  │  
+  │  02    Test Chapter (cleared)                            Classic   2 units          0:00:00  │  
+  │  03    Empty                                                                                 │  
+  │  04    Empty                                                                                 │  
+  │  05    Empty                                                                                 │  
+  │  06    Empty                                                                                 │  
+  │  07    Empty                                                                                 │  
+  │  08    Empty                                                                                 │  
+  │  09    Empty           ╔═══════════════════════════════════════════╗                         │  
+  │  10    Empty           ║                                           ║                         │  
+  │  11    Empty           ║ Export your options and key bindings too? ║                         │  
+  │  12    Empty           ║  Yes     No                               ║                         │  
+  │  13    Empty           ║                                           ║                         │  
+  │  14    Empty           ╚═══════════════════════════════════════════╝                         │  
+  │  15    Empty                                                                                 │  
+  │  16    Empty                                                                                 │  
+  │  17    Empty                                                                                 │  
+  │  18    Empty                                                                                 │  
+  │  19    Empty                                                                                 │  
+  │  20    Empty                                                                                 │  
+  │                                                                                              │  
+  └───────────────────────────────────────────────────────────────────────────────── 1-20 of 30 ─┘  
+                                                                                                    
+                                                                                                    
+                   Saves are kept in C:\Users\Player\AppData\Roaming\tactical-rpg                   
+                                                                                                    
+                                 arrows choose · f export · d back                                  
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aabbcccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddeeeeddeeeeeeedddddddddddddddddddddddddddddddddddddddddddeeeeddddddeeeeddddddddddddddddeeeeddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgggggggggggggggggggggggggggggggggggggggggggggdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgdddddddddddddddddddddddddddddddddddddddddddgdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgdddddddddddddddddddddddddddddddddddddddddddgdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgdddddddddffffddddddddddddddddddddddddddddddgdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgdddddddddddddddddddddddddddddddddddddddddddgdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddgggggggggggggggggggggggggggggggggggggggggggggdddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeeeeebbaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:panel_bg bg:panel_border_focus
+g = fg:panel_border_focus bg:panel_bg
+h = fg:text_dim bg:black

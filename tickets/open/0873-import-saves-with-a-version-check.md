@@ -5,7 +5,7 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0872"]
 nick_input: none
 completed:
@@ -46,7 +46,8 @@ The engine pieces:
 
 ## Nick input
 
-None: 0872 asks where Import lives and what it does over existing saves.
+None: decided in 0872 (`docs/design/options.md`, *Saves outside the
+game*).
 
 ## Scope
 
@@ -65,16 +66,27 @@ None: 0872 asks where Import lives and what it does over existing saves.
   dropped file anywhere else in the game is ignored, as today.
 - **The report screen**, before anything is written: one line per save
   slot in the file (chapter, playtime, as the Load Game list shows them,
-  `save::slots`) with its verdict in words: "Ready", "Ready — replaces
-  slot 3", "From an incompatible version (save version 1, this game
+  `save::slots`) with its verdict in words: "Ready", "Ready — goes in
+  slot 3", "Ready — replaces slot 3", "From an incompatible version (save version 1, this game
   reads 2)", "Can't be read". A line when the file was made by another
   build ("Made by version 0.4.0; this is 0.5.0"), from `Mismatch`.
   Then Import / Cancel (a yes/no question, focus on the
   non-destructive choice).
-- **Applying** with `apply`, taking every `Ready` entry, into the
-  profile Nick's answer to 0872 says (a new profile through
-  `Ctx::add_profile`, or the one chosen after its own yes/no). A
-  notice with the count imported and refused.
+- **Where it goes** (Nick, 0872; `options.md`, *Saves outside the
+  game*). Import is offered on the Profile screen and on the Load Game
+  list, as Export is (the agent picks its action, as 0872 did for
+  Export):
+  - Through **Profile**: always **a new profile** (`Ctx::add_profile`,
+    named from the file's profile as the name rules allow).
+  - Through **Load Game**, a file with **one save**: into **this
+    profile**, the first empty slot; with all 30 full, the slot under the
+    cursor after a yes/no question, the cursor on No. Its options and keys,
+    if the file has them, are left out (*the agent's starting rule*: the
+    profile in use keeps its own; say so in the report).
+  - Through **Load Game**, a file with **more than one save**: a warning
+    that it will be added as a new profile, then as through Profile.
+- **Applying** with `apply`, taking every `Ready` entry. A notice with
+  the count imported and refused.
 - Text keys in the `en` pack; the Playdate leaves Import out.
 
 **Out (do not do):**
@@ -96,7 +108,8 @@ None: 0872 asks where Import lives and what it does over existing saves.
 3. `crates/ui/src/screens/save_import.rs` (new): the screen's logic
    (waiting for the file, the plan, the question), its view (plain data,
    ADR-0054) and a glyph skin in `save_import/glyph.rs`; declared
-   actions only (`keyboard-input`). Opened from the row 0872 added.
+   actions only (`keyboard-input`). Opened from the
+   Profile screen and the Load Game list (beside 0872's export).
 4. Wire `SystemEvent::FileChosen` / `FilesDropped` to it while it waits.
 5. Apply, then refresh what reads the profile: if the profile in use
    was replaced, reload its settings and keys as `switch_profile` does

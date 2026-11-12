@@ -76,7 +76,10 @@ fn view() -> SlotPickerView {
         ],
         range: "1-3 of 3".to_owned(),
         message: None,
+        notice: None,
         question: None,
+        export_question: None,
+        place: None,
         help: "help".to_owned(),
     }
 }
