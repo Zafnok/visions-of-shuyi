@@ -85,8 +85,9 @@ jobs:
           grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
 
   # Builds xtask once for every battle job, and lists the battles: every
-  # file in assets/battles, so a new battle is played without editing
-  # this workflow (ticket 0530).
+  # file in assets/battles and the content's battles/, so a new battle is
+  # played without editing this workflow (ticket 0530). The xtask artifact
+  # embeds the private content (ADR-0117): it is kept for a day only.
   build:
     name: build
     needs: detect
@@ -99,11 +100,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - name: List the battles
         id: battles
         run: |
           set -euo pipefail
-          battles=$(for file in assets/battles/*.ron; do basename "$file" .ron; done | jq -R . | jq -sc .)
+          # assets/'s and the content's (ADR-0117), each once.
+          battles=$(for file in assets/battles/*.ron assets-private/content/battles/*.ron; do
+            if [ -f "$file" ]; then basename "$file" .ron; fi
+          done | sort -u | jq -R . | jq -sc .)
           echo "$battles"
           echo "battles=$battles" >> "$GITHUB_OUTPUT"
       - run: rustup show
@@ -138,6 +150,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       # xtask finds the repository from the path it was built at, which is
       # this same checkout path on every runner.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

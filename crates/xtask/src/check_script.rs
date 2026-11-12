@@ -10,11 +10,14 @@ use std::fs;
 use std::path::Path;
 
 use trpg_content::ContentError;
-use trpg_content::bundle::{DISPLAY_ROOT, TEST_DISPLAY_ROOT};
+use trpg_content::bundle::TEST_DISPLAY_ROOT;
 use trpg_content::dialogue::{DIALOGUE_DIR, DIALOGUE_EXTENSION};
 
+use crate::content_layer;
+
 pub const USAGE: &str = "usage: cargo xtask check-script [file]\n\n\
-checks the dialogue scripts (assets/dialogue/*.dlg, and the test scripts in\n\
+checks the dialogue scripts (assets/dialogue/*.dlg, with the content's in\n\
+assets-private/content/dialogue/ over them, and the test scripts in\n\
 assets-test/dialogue/) and prints every problem as\n  \
 <file>:<line>: <what is wrong, and the fix where there is one>\n\
 then how many there are. exits 0 when there are none.\n\
@@ -67,31 +70,25 @@ fn same_file(a: &Path, b: &Path) -> bool {
     matches!((a.canonicalize(), b.canonicalize()), (Ok(a), Ok(b)) if a == b)
 }
 
-/// The folders of the repository whose `dialogue/` holds scripts: the
-/// test files' (ADR-0057: the content is checked with them, as in a test
-/// build), then the story's.
-const ROOTS: [&str; 2] = [TEST_DISPLAY_ROOT, DISPLAY_ROOT];
-
-/// The scripts to check: every `.dlg` file of `<root>/assets/dialogue/`
-/// and `<root>/assets-test/dialogue/`, by name, then `extra` if it isn't
-/// one of them. Returns them with the name `extra` is reported under.
+/// The scripts to check: every `.dlg` file of `<root>/assets/dialogue/`,
+/// with the content's (`assets-private/content/dialogue/`, ADR-0117) over
+/// it as the build lays them, and of `<root>/assets-test/dialogue/` (the
+/// test files', ADR-0057: the content is checked with them, as in a test
+/// build), by name; then `extra` if it isn't one of them. Returns them with
+/// the name `extra` is reported under.
 pub fn scripts(root: &Path, extra: Option<&Path>) -> Result<(Vec<Script>, Option<String>), String> {
+    let (dir, ext) = (DIALOGUE_DIR, DIALOGUE_EXTENSION);
+    let story = content_layer::files_in(root, &content_layer::STORY, dir, ext)?;
+    let tests = content_layer::files_in(root, &[TEST_DISPLAY_ROOT], dir, ext)?;
+    let mut files: Vec<_> = story.into_iter().chain(tests).collect();
+    files.sort();
     let mut only = None;
     let mut out = Vec::new();
-    for assets in ROOTS {
-        let dir = root.join(assets).join(DIALOGUE_DIR);
-        let entries = fs::read_dir(&dir).map_err(|e| format!("can't read {}: {e}", shown(&dir)))?;
-        let mut paths: Vec<_> = entries.filter_map(|e| Some(e.ok()?.path())).collect();
-        paths.retain(|p| shown(p).ends_with(DIALOGUE_EXTENSION));
-        paths.sort();
-        for path in &paths {
-            let file = path.file_name().unwrap_or_default().to_string_lossy();
-            let name = format!("{assets}/{DIALOGUE_DIR}/{file}");
-            if extra.is_some_and(|e| same_file(e, path)) {
-                only = Some(name.clone());
-            }
-            out.push((name, read_script(path)?));
+    for (name, path) in &files {
+        if extra.is_some_and(|e| same_file(e, path)) {
+            only = Some(name.clone());
         }
+        out.push((name.clone(), read_script(path)?));
     }
     if let (Some(extra), None) = (extra, &only) {
         out.push((shown(extra), read_script(extra)?));
@@ -251,6 +248,38 @@ mod tests {
         );
     }
 
+    /// The content's scripts (ADR-0117) replace `assets/`'s of their name
+    /// and are reported under their own; the test scripts are still read.
+    #[test]
+    fn the_contents_scripts_are_read_over_assets_scripts() {
+        let repo = crate::content_layer::tests::repo(
+            "check-script",
+            &[
+                ("assets/dialogue/ch01.dlg", "public"),
+                ("assets/dialogue/ch02.dlg", "public two"),
+                ("assets-test/dialogue/test.dlg", "test"),
+                ("assets-private/content/dialogue/ch01.dlg", "private"),
+            ],
+        );
+        let extra = repo.join("assets-private/content/dialogue/ch01.dlg");
+        let (scripts, only) = scripts(&repo, Some(&extra)).unwrap();
+        fs::remove_dir_all(&repo).unwrap();
+        let content = "assets-private/content/dialogue/ch01.dlg";
+        assert_eq!(only.as_deref(), Some(content));
+        let read: Vec<(&str, &str)> = scripts
+            .iter()
+            .map(|(n, t)| (n.as_str(), t.as_str()))
+            .collect();
+        assert_eq!(
+            read,
+            [
+                (content, "private"),
+                ("assets-test/dialogue/test.dlg", "test"),
+                ("assets/dialogue/ch02.dlg", "public two"),
+            ]
+        );
+    }
+
     #[test]
     fn a_script_of_the_game_is_checked_once_under_its_own_name() {
         let path = root().join("assets/dialogue/ch01.dlg");
@@ -268,10 +297,7 @@ mod tests {
         assert!(error.contains("no_such_script.dlg"), "{error}");
         let error = scripts(&root().join("no_such_dir"), None).unwrap_err();
         assert!(error.starts_with("can't read "), "{error}");
-        assert!(
-            error.contains("no_such_dir/assets-test/dialogue"),
-            "{error}"
-        );
+        assert!(error.contains("no_such_dir/assets/dialogue"), "{error}");
     }
 
     fn problem(file: &str, line: u32) -> ContentError {

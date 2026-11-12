@@ -39,6 +39,14 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - run: rustup show
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
         with:
@@ -93,6 +101,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
@@ -119,6 +135,14 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
@@ -189,6 +213,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries
@@ -211,6 +243,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install macroquad system libraries

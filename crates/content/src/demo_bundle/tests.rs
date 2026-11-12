@@ -40,7 +40,7 @@ fn a_line_that_matches_nothing_stops_the_build() {
     let no_file = plan("chapters/\nsidequests/\n").left_out(&files(ASSETS));
     assert_eq!(
         no_file,
-        Err("line 2: `sidequests/` is no file under assets/".into())
+        Err("line 2: `sidequests/` is no file under assets/ or assets-private/content/".into())
     );
     let keeps_nothing = plan("chapters/\n+ maps/ch01.map\n").left_out(&files(ASSETS));
     assert_eq!(

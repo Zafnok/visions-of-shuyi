@@ -13,6 +13,13 @@
 //! added. Tests and gates build without the feature, so they always read the
 //! public placeholders.
 //!
+//! The game's own content from the private repository, in
+//! `assets-private/content/`, is laid over `assets/` the same way whenever
+//! the build finds it there (ADR-0117), with or without the bought art
+//! (which lies over it). Every CI job that loads content checks it out, so
+//! the gates read the real game; a build without the checkout (a fork) reads
+//! the public files.
+//!
 //! A debug build, and a build with the `test-fixtures` feature, also embeds
 //! the **test files** in `assets-test/` (ADR-0057): the characters, chapter,
 //! battles and pictures of the tests and the debug tools. They are added
@@ -25,17 +32,18 @@
 //! Without `std` (the Playdate, ADR-0070 §3) there are no test files, and
 //! `assets/` is the **Playdate's bundle** (`playdate_layers`, ticket 1036):
 //! `assets/` without the files `crates/content/playdate-bundle.txt` lists,
-//! which it leaves out on purpose ([`left_out`]). With the
-//! `private-assets` feature the bought art is a table too, laid over it
-//! (ticket 1061).
+//! which it leaves out on purpose ([`left_out`]). The content is laid over
+//! it as a table of its own, and with the `private-assets` feature the
+//! bought art over both (ticket 1061).
 //!
-//! The **demo edition** (ticket 0914, ADR-0117) embeds the demo's tables
-//! in place of `assets/` and the bought art ([`demo_layers`]): what
-//! `crates/content/demo/bundle.txt` keeps of them, the shared files cut to
-//! what Chapter 1 names, and a file saying it is the demo ([`is_demo`]).
-//! It has the `demo_edition` cfg, which `build.rs` sets when the export
-//! names the demo's content root. Unlike the Playdate's, its bundle doesn't
-//! say what it left out: those paths would name the later chapters.
+//! The **demo edition** (ticket 0914, ADR-0118) embeds the demo's tables
+//! in place of `assets/`, the content and the bought art ([`demo_layers`]):
+//! what `crates/content/demo/bundle.txt` keeps of them, the shared files
+//! cut to what Chapter 1 names, and a file saying it is the demo
+//! ([`is_demo`]). It has the `demo_edition` cfg, which `build.rs` sets when
+//! the export names the demo's content root. Unlike the Playdate's, its
+//! bundle doesn't say what it left out: those paths would name the later
+//! chapters.
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
@@ -83,6 +91,17 @@ static DEMO_PRIVATE: &[(&str, &[u8])] =
 #[cfg(all(feature = "std", feature = "private-assets", not(demo_edition)))]
 static PRIVATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/private_files.rs"));
 
+/// Every file of `assets-private/content/` (ADR-0117), empty when the build
+/// had no checkout. Not in the demo edition, whose table holds what it
+/// keeps of it.
+#[cfg(all(feature = "std", not(demo_edition)))]
+static CONTENT: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/content_files.rs"));
+
+/// The Playdate's table of the content, made as [`PLAYDATE`] is.
+#[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
+static PLAYDATE_CONTENT: &[(&str, &[u8])] =
+    include!(concat!(env!("OUT_DIR"), "/playdate_content_files.rs"));
+
 #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
 static TEST: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/test_files.rs"));
 
@@ -109,6 +128,10 @@ pub const DISPLAY_ROOT: &str = "assets";
 /// (`assets-private/game/portraits/x.png`).
 pub const PRIVATE_DISPLAY_ROOT: &str = "assets-private/game";
 
+/// The same prefix for a file of the game's content from the private
+/// repository (`assets-private/content/dialogue/ch02.dlg`, ADR-0117).
+pub const CONTENT_DISPLAY_ROOT: &str = "assets-private/content";
+
 /// The same prefix for a test file (`assets-test/maps/test_small.map`).
 pub const TEST_DISPLAY_ROOT: &str = "assets-test";
 
@@ -117,24 +140,61 @@ pub const TEST_DISPLAY_ROOT: &str = "assets-test";
 pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 
 /// The game's embedded directories, in the order a file is read from them:
-/// the bought art, `assets/`, then the test files' bought art and the test
-/// files, each when this build has it. Without `std`, the Playdate's
-/// (`playdate_layers`); in the demo edition, the demo's ([`demo_layers`]).
+/// the bought art, the content, `assets/`, then the test files' bought art
+/// and the test files, each when this build has it. Without `std`, the
+/// Playdate's (`playdate_layers`); in the demo edition, the demo's
+/// ([`demo_layers`]).
 pub fn layers() -> Vec<Layer> {
     #[cfg(demo_edition)]
     let mut layers = demo_layers();
     #[cfg(not(demo_edition))]
+    let mut layers = {
+        #[cfg(feature = "std")]
+        let content = content_layer(CONTENT);
+        #[cfg(not(feature = "std"))]
+        let content = content_layer(PLAYDATE_CONTENT);
+        story_layers(content)
+    };
+    layers.extend(test_layers());
+    layers
+}
+
+/// [`layers`] with `content` as the content's layer (ADR-0117), between the
+/// bought art and `assets/`: a file there replaces `assets/`'s at its path.
+/// The layer is marked private in the engine's sense: its files may not be
+/// handed out, and a file no layer has is still shown under `assets/`. It
+/// isn't bought art: [`is_private`] is false for it, and it needs no
+/// credit (ADR-0051). A test lays a folder of its own there.
+#[cfg(not(demo_edition))]
+pub fn layers_with(content: Option<Layer>) -> Vec<Layer> {
+    let mut layers = story_layers(content);
+    layers.extend(test_layers());
+    layers
+}
+
+/// The bought art, `content` and `assets/`, each when this build has it.
+#[cfg(not(demo_edition))]
+fn story_layers(content: Option<Layer>) -> Vec<Layer> {
     let mut layers = vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
         Layer::table(PRIVATE_DISPLAY_ROOT, PRIVATE).private(),
-        #[cfg(feature = "std")]
-        Layer::table(DISPLAY_ROOT, ASSETS),
         #[cfg(all(not(feature = "std"), feature = "private-assets"))]
         Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
+    ];
+    layers.extend(content.map(Layer::private));
+    layers.extend([
+        #[cfg(feature = "std")]
+        Layer::table(DISPLAY_ROOT, ASSETS),
         #[cfg(not(feature = "std"))]
         playdate_layer(),
-    ];
-    let tests: Vec<Layer> = vec![
+    ]);
+    layers
+}
+
+/// The test files' bought art and the test files, each when this build
+/// has them (ADR-0057).
+fn test_layers() -> Vec<Layer> {
+    vec![
         #[cfg(all(
             feature = "std",
             feature = "private-assets",
@@ -145,15 +205,20 @@ pub fn layers() -> Vec<Layer> {
             .test(),
         #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
         Layer::table(TEST_DISPLAY_ROOT, TEST).test(),
-    ];
-    layers.extend(tests);
-    layers
+    ]
 }
 
-/// The demo's layers (ticket 0914, ADR-0117): its bought art over its
-/// `assets/`, with no test files. The bundle of the demo edition; with the
-/// `demo-bundle` feature, for the test that plays the demo against it
-/// ([`reading`]).
+/// The content's layer of `table`: none when it is empty (a build without
+/// the checkout, or with a checkout of nothing but notes).
+#[cfg(not(demo_edition))]
+fn content_layer(table: &'static [(&'static str, &'static [u8])]) -> Option<Layer> {
+    (!table.is_empty()).then(|| Layer::table(CONTENT_DISPLAY_ROOT, table))
+}
+
+/// The demo's layers (ticket 0914, ADR-0118): its bought art over its
+/// `assets/` (the content laid over `assets/`, cut), with no test files.
+/// The bundle of the demo edition; with the `demo-bundle` feature, for the
+/// test that plays the demo against it ([`reading`]).
 #[cfg(any(demo_edition, feature = "demo-bundle", test))]
 pub fn demo_layers() -> Vec<Layer> {
     vec![
@@ -172,18 +237,21 @@ const fn playdate_layer() -> Layer {
 
 /// The Playdate build's layers (ticket 1036): [`layers`] without `std`.
 /// With it (the `playdate-bundle` feature), for the test that plays
-/// Chapter 1 against them ([`reading`]). With the `private-assets`
-/// feature the bought art lies over `assets/`, as on the PC (ticket 1061).
+/// Chapter 1 against them ([`reading`]). The content lies over `assets/`,
+/// and with the `private-assets` feature the bought art over both, as on
+/// the PC (ticket 1061, ADR-0117).
 #[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
 pub fn playdate_layers() -> Vec<Layer> {
-    vec![
+    let mut layers = vec![
         #[cfg(all(
             feature = "private-assets",
             any(not(feature = "std"), feature = "playdate-bundle")
         ))]
         Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
-        playdate_layer(),
-    ]
+    ];
+    layers.extend(content_layer(PLAYDATE_CONTENT).map(Layer::private));
+    layers.push(playdate_layer());
+    layers
 }
 
 /// The game's bundle, the process-wide one: installed from [`layers`] the
@@ -373,19 +441,39 @@ mod tests {
     }
 
     /// Each table is its folder on disk, file for file and byte for byte,
-    /// without the READMEs (ADR-0105).
+    /// without the READMEs (ADR-0105). The content's too (ADR-0117): empty
+    /// with no checkout, and a build made before the checkout was fetched
+    /// fails here, so the gates never quietly read the public files.
     #[test]
     fn a_layer_is_its_folder_without_the_readmes() {
-        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        for (folder, table) in [("assets", ASSETS), ("assets-test", TEST)] {
-            let folder = manifest.join("../..").join(folder);
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let content = root.join(CONTENT_DISPLAY_ROOT);
+        let mut layers = vec![("assets", ASSETS, true), ("assets-test", TEST, true)];
+        if content.is_dir() {
+            // The content's notes are its only file before 0159 and 0160.
+            layers.push((CONTENT_DISPLAY_ROOT, CONTENT, false));
+        } else {
+            assert!(
+                CONTENT.is_empty(),
+                "{CONTENT_DISPLAY_ROOT}/ is gone: build again"
+            );
+        }
+        for (folder, table, has_readme) in layers {
+            let folder = root.join(folder);
             let mut files = Vec::new();
             on_disk(&folder, "", &mut files);
-            assert!(files.iter().any(|f| f.ends_with("README.md")), "{files:?}");
+            let readme = files.iter().any(|f| f.ends_with("README.md"));
+            assert!(readme || !has_readme, "{files:?}");
             files.retain(|f| !f.ends_with("README.md"));
             files.sort_unstable();
             let paths: Vec<&str> = table.iter().map(|(path, _)| *path).collect();
-            assert_eq!(paths, files);
+            assert_eq!(
+                paths,
+                files,
+                "the build's table isn't {}: a checkout fetched after the build? \
+                 `cargo clean -p trpg-content`, then build again",
+                folder.display()
+            );
             for (path, bytes) in table {
                 assert_eq!(*bytes, std::fs::read(folder.join(path)).unwrap(), "{path}");
             }
@@ -448,7 +536,9 @@ mod tests {
     /// left-out files as left out.
     #[test]
     fn the_playdate_table_is_assets_without_what_it_leaves_out() {
-        let all = Bundle::new(vec![Layer::table(DISPLAY_ROOT, ASSETS)]);
+        let mut all = Vec::from_iter(content_layer(CONTENT));
+        all.push(Layer::table(DISPLAY_ROOT, ASSETS));
+        let all = Bundle::new(all);
         let playdate = Bundle::new(playdate_layers());
         let kept = playdate.files_under("");
         assert!(kept.len() > 50, "{} files", kept.len());
@@ -534,17 +624,47 @@ mod tests {
         layers.iter().map(|layer| layer.name).collect()
     }
 
-    /// Without the `private-assets` feature (every gate), `assets/` and the
-    /// test files are the only layers: what a test reads never depends on
-    /// the machine it runs on.
+    /// Without the `private-assets` feature (every gate), the content when
+    /// the build has it (ADR-0117: every CI job that loads content does),
+    /// `assets/` and the test files are the only layers: a gate never reads
+    /// the bought art.
     #[cfg(not(feature = "private-assets"))]
     #[test]
-    fn gates_read_only_the_public_assets_and_the_test_files() {
+    fn gates_read_the_content_the_public_assets_and_the_test_files() {
         let layers = layers();
-        assert_eq!(names(&layers), [DISPLAY_ROOT, TEST_DISPLAY_ROOT]);
-        assert_eq!(layers.iter().filter(|layer| !layer.test).count(), 1);
-        assert!(layers.iter().all(|layer| !layer.private));
+        let mut expected = Vec::from_iter((!CONTENT.is_empty()).then_some(CONTENT_DISPLAY_ROOT));
+        expected.extend([DISPLAY_ROOT, TEST_DISPLAY_ROOT]);
+        assert_eq!(names(&layers), expected);
+        let art = |layer: &&Layer| is_private(&format!("{}/x.png", layer.name));
+        assert_eq!(layers.iter().find(art).map(|layer| layer.name), None);
         assert_eq!(TEST_FILES, layers.iter().any(|layer| layer.test));
+    }
+
+    /// A file of the content replaces `assets/`'s at its path and is shown
+    /// under the content's root; the bought art lies over both.
+    #[test]
+    fn the_content_lies_between_the_bought_art_and_assets() {
+        static CONTENT: &[(&str, &[u8])] = &[("data/palette.ron", b"the content's")];
+        let content = Layer::table(CONTENT_DISPLAY_ROOT, CONTENT);
+        let bundle = Bundle::new(layers_with(Some(content)));
+        assert_eq!(bundle.file("data/palette.ron"), Some("the content's"));
+        let shown = bundle.display_path("data/palette.ron");
+        assert_eq!(shown, "assets-private/content/data/palette.ron");
+        assert!(bundle.is_private(&shown));
+        assert!(!is_private(&shown));
+        let missing = bundle.display_path("data/nothing.ron");
+        assert_eq!(missing, "assets/data/nothing.ron");
+        let names = names(bundle.layers());
+        let at = |name| names.iter().position(|n| *n == name);
+        assert_eq!(
+            at(CONTENT_DISPLAY_ROOT),
+            Some(usize::from(cfg!(feature = "private-assets")))
+        );
+        assert!(at(CONTENT_DISPLAY_ROOT) < at(DISPLAY_ROOT));
+        // A table with files is a layer under the content's root; none without.
+        let layer = content_layer(CONTENT).map(|layer| (layer.name, layer.private));
+        assert_eq!(layer, Some((CONTENT_DISPLAY_ROOT, false)));
+        assert_eq!(content_layer(&[]).map(|layer| layer.name), None);
     }
 
     /// The installed bundle is the game's layers, in their order.

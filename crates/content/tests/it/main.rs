@@ -9,6 +9,7 @@ mod all_assets_load;
 mod arts;
 #[cfg(feature = "private-assets")]
 mod private_assets;
+mod private_content;
 mod promotion;
 mod skills;
 mod supports;

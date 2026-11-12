@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: setup
-completed:
+completed: 2026-11-12
 ---
 
 # 0156 — A private content layer: the real game content from the assets repository, in every CI job
@@ -154,21 +154,26 @@ steps when it starts and waits for "done":
 
 ## Acceptance criteria
 
-- [ ] With `--features private-content`, a file in
-      `assets-private/content/` replaces `assets/`'s file at the same path
-      (test).
-- [ ] Without the checkout, `cargo build --workspace` and the tests that
-      read no real content pass (the job list in the ADR says which).
-- [ ] Every job listed under **In** checks out `content` with
-      `required: true`; no other workflow job names `PRIVATE_ASSETS_KEY`
-      (grep).
-- [ ] A Dependabot PR's CI checks out `content` (or, if none comes during
-      the ticket, the Dependabot secret exists: `gh api
-      repos/Zafnok/visions-of-shuyi/dependabot/secrets` lists it).
-- [ ] The `content-change` skill and its loader exist;
+- [x] With `assets-private/content/` checked out, a file there replaces
+      `assets/`'s file at the same path (test:
+      `crates/content/tests/it/private_content.rs`, with a folder of its
+      own; and `bundle.rs`'s `the_content_lies_between_the_bought_art_and_assets`).
+      There is no `private-content` feature: see Deviations.
+- [x] Without the checkout, `cargo build --workspace` and the tests pass
+      (the first full run in this worktree had no checkout; today every test
+      reads only public content, so all of them).
+- [x] Every job listed under **In** checks out `content` with
+      `required: true`, but `export` (see Deviations); no other workflow job
+      names `PRIVATE_ASSETS_KEY` but `pages.yml` and `release.yml`'s, which
+      already did for the art (0158's).
+- [x] The Dependabot secret exists (`gh api
+      repos/Zafnok/visions-of-shuyi/dependabot/secrets` lists
+      `PRIVATE_ASSETS_KEY`). No Dependabot PR came during the ticket.
+- [x] The `content-change` skill and its loader exist;
       `pwsh -File scripts/sync-agent-skills.ps1 -Check` passes.
-- [ ] `assets-private.rev` points at the assets commit with the two READMEs.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `assets-private.rev` points at the assets commit with the two READMEs
+      (`0acd7f9`, Zafnok/visions-of-shuyi-assets#1).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -179,5 +184,86 @@ steps when it starts and waits for "done":
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done**
+
+- ADR-0117: the content layer. `content/` (the game's own data and
+  scripts) and `story/` (documents) in the private repository; the build
+  embeds `assets-private/content/` over `assets/` whenever it is there;
+  every CI job that loads content checks it out; nothing that embeds it
+  becomes a public artifact; the disk-reading tools read the same view.
+- `crates/content/build.rs` writes `content_files.rs` and
+  `playdate_content_files.rs` (the Playdate's, pictures made one-bit like
+  the bought art's; `private_table` became `playdate_table` for both).
+  `bundle.rs` lays the layer between the bought art and `assets/`
+  (`layers_with`), marked private in the engine's sense (not handed out,
+  counted in the fingerprint, a missing file still shown under `assets/`)
+  but not bought art (`bundle::is_private` stays false: no credit).
+- `shuyi.ron`: `private_assets.folders` gains `content` and `story`;
+  `credits.folders` unchanged.
+- `.github/actions/private-assets`: `content` and `art` inputs, and a check
+  that the pinned commit has `content/`. The content checkout is in
+  `ci.yml` (clippy, test ×3, doc-tests, wasm, no-std, playdate, docs,
+  coverage, tickets, bench), `mutants.yml` (plan, baseline, shards, weekly
+  baseline and shards) and `playtest.yml` (build, and the battle jobs; the
+  battles are listed from `assets/battles/` and the content's).
+- `xtask`: `content_layer.rs`. `check-script` and `voice` read the
+  dialogue with the content's files over `assets/`'s; `cargo shuyi
+  check-keys` and `lint` scan the content too. `lines` and `lang-status`
+  read the embedded bundle, which has it.
+- The `content-change` skill and its Codex loader; `AGENTS.md`,
+  `work-ticket` (fetch the checkout before the first build) and
+  `run-gates`.
+- The private repository: `content/README.md`, `story/README.md` and its
+  README's rows (Zafnok/visions-of-shuyi-assets#1, merged by Nick), and a
+  ruleset on its `main` made with `gh api` (id 27133256, "main: pull
+  requests only (ADR-0117)": no deletion, no force push, a pull request
+  needed; the repository's admin role may bypass it).
+- Setup: Nick's old deploy key's private half was lost, so the Dependabot
+  secret holds a **second** read-only deploy key ("visions-of-shuyi
+  dependabot (read-only)"); the builds' key and its Actions secret are
+  unchanged.
+
+**Deviations**
+
+- **No `private-content` feature: the checkout is the switch.** The
+  engine's tools build the game with the features `shuyi.ron` lists, and
+  `cargo shuyi bench` builds the tool program with `game.features` alone,
+  which can't name a feature a build without the checkout lacks; every
+  other job and every local gate would have needed the flag in its own
+  spelling, and one that forgot it would quietly read the public files
+  (ADR-0117, Alternatives). So the action outputs no feature either.
+- **Cargo's watch of a folder that may not be there.** A watched path
+  that is missing makes cargo rebuild on every build, so with no checkout
+  the build makes an empty, git-ignored `assets-private/` and watches it
+  (and a checkout without `content/`, its git index). `bundle.rs`'s test
+  that every layer is its folder catches a build that missed a checkout
+  made after it.
+- **`export` checks out no content** (0158 keeps it so: its package is a
+  public artifact), and the `wasm` job no longer uploads its web build: a
+  public repository's artifacts can be downloaded by anyone signed in.
+  `playtest.yml`'s xtask artifact embeds the content; it was already kept
+  one day only.
+- **cargo-mutants** copies the tree without what `.gitignore` lists, so
+  `.cargo/mutants.toml` sets `gitignore = false`.
+
+**For 0157 and 0160**
+
+- With real content over `assets/`, a test that expects a moved file's
+  display path to be `assets/...` (`bundle::tests::display_path_prefixes_assets`
+  reads `data/palette.ron`) or reads a moved file's public stand-in reads
+  the real one in CI. Seen with a made-up content palette.
+- A rule of `crates/content/playdate-bundle.txt` must match a file of
+  `assets/` or of the content; a rule that names only a moved file fails a
+  build without the checkout.
+
+**Size:** estimate about 200 production lines (the build's layer and the
+bundle's order, as `private-assets`' were, plus a small reader in xtask),
+measured 184 (0.9×, under 2×). PR size: planned about 1,300, measured
+about 1,500 with these notes.
+
+**CI:** see the PR for the first run's content jobs and the checkout
+step's time.
+
+**Notes for Nick:** nothing to check. On your machine, the full copy in
+`D:\tactical-rpg\assets-private\` gets `content/` and `story/` the next
+time it pulls its `main`.

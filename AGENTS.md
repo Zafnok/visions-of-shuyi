@@ -105,7 +105,7 @@ make a shared instruction work.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change`, `engine-pin`; and Shuyi Engine's skill pack, `shuyi-*` (`shuyi-input`, `shuyi-gates`, `shuyi-test`, …), copied at the pin by `cargo xtask skill-pack`, never edited here (ADR-0097). `keyboard-input` and `run-gates` hold only this game's rules on top of `shuyi-input` and `shuyi-gates` |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change`, `engine-pin`, `content-change`; and Shuyi Engine's skill pack, `shuyi-*` (`shuyi-input`, `shuyi-gates`, `shuyi-test`, …), copied at the pin by `cargo xtask skill-pack`, never edited here (ADR-0097). `keyboard-input` and `run-gates` hold only this game's rules on top of `shuyi-input` and `shuyi-gates` |
 | `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `engine-watch` (`trpg-engine-watch`, the watcher on the engine's `main` and the pin ledger's check: dev tooling, ADR-0096), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
 | `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the targets, the rules crate, the web build, the private repository. `cargo shuyi` is `cargo xtask shuyi`: xtask runs the engine's `shuyi-cli` at the pin, with the game's `frame-png` and `lang-status` (`cargo xtask <command>` still works too) |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |
@@ -114,7 +114,7 @@ make a shared instruction work.
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo shuyi font-atlas`); not embedded |
-| `assets-private/` | **Git-ignored**: the checkout of the private repository with the bought art (ADR-0040). `game/` is embedded over `assets/` by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
+| `assets-private/` | **Git-ignored**: the checkout of the private repository (ADR-0040). `content/` is the game's own content kept private, embedded over `assets/` whenever it is checked out, with nothing to turn on, and `story/` the story's documents (ADR-0117; change both with the `content-change` skill); `game/` is the bought art, embedded over both by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
 | `shuyi-engine.rev` | The commit of Shuyi Engine the game builds with ([`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), public, MIT OR Apache-2.0: the engine's code, carved out of the game by tickets 1102–1118 and 1154 and moved there by 1131, with its ADRs, tickets and plans). The game's crates depend on it by git URL and this revision; `cargo xtask engine-pin` moves it (ADR-0063 §8) |
 | `shuyi-engine/` | **Git-ignored**: a checkout of the engine, made by `cargo xtask engine`, which also points the build at it (`.cargo/engine-patch.toml`) so one working copy edits both; `cargo xtask engine --off` before committing the game (`docs/engine/README.md`) |
 | `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo shuyi private-assets`. Test clips: `crates/app/tests/voice/` |
@@ -137,13 +137,22 @@ make a shared instruction work.
   that shows the art may be committed (Nick, 2026-10-05: the README and the
   store pages need them; "we just don't distribute the raw files").
   `cargo shuyi private-assets` checks the private repository out into
-  `assets-private/` (only `game/`; add `--library` for the bought packs in
-  `assets-private/library/`). Gates never read it. To see it in a build:
+  `assets-private/` (`game/`, `test/`, `voice/`, `content/`, `story/`; add
+  `--library` for the bought packs in `assets-private/library/`). Gates
+  never read the art. To see it in a build:
   `cargo run -p trpg-app --features private-assets`. After pushing a change
   to it, run `cargo shuyi private-assets --pin` and commit
-  `assets-private.rev` in the same PR. On Nick's machine the full copy
+  `assets-private.rev` in the same PR (the art only: a change to
+  `content/` or `story/` goes through a pull request there, the
+  `content-change` skill). On Nick's machine the full copy
   (with the character generators and the original zips) is
   `D:\tactical-rpg\assets-private\`.
+- **The game's content** (ADR-0117): the private repository's `content/`
+  is laid over `assets/` by every build that has it checked out, and every
+  CI job that loads content checks it out, so the gates read the real
+  game. Run `cargo shuyi private-assets` in a new worktree **before the
+  first build**, so the local gates read what CI reads. A build without
+  access still builds, on the public files.
 - Git remote: `https://github.com/Zafnok/visions-of-shuyi` (public).
 - **Never write a bare `@word` on GitHub** (PR title or body, commit message,
   comment, release notes): GitHub turns it into a mention of that user, and

@@ -33,3 +33,9 @@ exclude_globs = [
     "crates/engine-watch/src/main.rs",
 ]
 timeout_multiplier = 3.0
+
+# Each mutant builds in a copy of the tree, which by default leaves out what
+# .gitignore lists: the private repository's checkout in assets-private/
+# with it, so the mutants would build without the game's content that the
+# unmutated run reads (ADR-0117).
+gitignore = false

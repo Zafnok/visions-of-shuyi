@@ -864,6 +864,49 @@ fn the_story_scenes_are_the_scenes_of_assets_dialogue() {
     assert!(!scenes.contains("test"));
 }
 
+/// A script of the content (ADR-0117) replaces `assets/`'s of its name, and
+/// one only the content has is read too.
+#[test]
+fn the_story_scenes_are_read_with_the_content_over_assets() {
+    let repo = crate::content_layer::tests::repo(
+        "voice",
+        &[
+            (
+                "assets/dialogue/ch01.dlg",
+                "@scene public_one
+> Hi.
+@end
+",
+            ),
+            (
+                "assets/dialogue/ch02.dlg",
+                "@scene public_two
+> Hi.
+@end
+",
+            ),
+            (
+                "assets-private/content/dialogue/ch01.dlg",
+                "@scene private_one
+> Hi.
+@end
+",
+            ),
+            (
+                "assets-private/content/dialogue/ch03.dlg",
+                "@scene private_three
+> Hi.
+@end
+",
+            ),
+        ],
+    );
+    let scenes = story_scenes(&repo).unwrap();
+    fs::remove_dir_all(&repo).unwrap();
+    let expected = ["private_one", "private_three", "public_two", "vix"];
+    assert_eq!(scenes, expected.map(str::to_owned).into());
+}
+
 /// Acceptance (0476): `status` reads the lessons' and tips' text as the
 /// guide's lines, scene `vix`, in her cast voice; made, none is left.
 #[test]

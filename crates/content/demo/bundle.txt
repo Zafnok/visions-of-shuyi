@@ -1,9 +1,11 @@
-# What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0117).
+# What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0118).
 #
 # This folder is the `demo` edition's content root (`shuyi.ron`'s
 # `editions`): `cargo shuyi export web --release --edition demo` hands it
 # to the build as `SHUYI_CONTENT`, and `build.rs` embeds every file under
-# `assets/` (and `assets-private/game/`) but those this list leaves out.
+# `assets/`, with the game's content from the private repository over it
+# (`assets-private/content/`, ADR-0117), and under `assets-private/game/`,
+# but those this list leaves out.
 # The demo's copy of every RON file has no comments, and the shared files
 # below hold only what Chapter 1 names. Nothing here is a second copy of a
 # data file: the cut is made at build time from the files as they are.

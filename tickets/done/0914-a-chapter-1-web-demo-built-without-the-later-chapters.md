@@ -237,7 +237,7 @@ Nick asks for it.
 
 ## Completion notes
 
-**What was done** ([ADR-0117](../../docs/adr/0117-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md)):
+**What was done** ([ADR-0118](../../docs/adr/0118-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md)):
 
 - **The edition:** `demo` in `shuyi.ron` (`cargo shuyi export web
   --release --edition demo`): `trpg-app` with the bought art,
@@ -255,6 +255,11 @@ Nick asks for it.
   loses its comments, which retold later chapters; `ch01.ron`'s `next`
   becomes `None` (`swap`). `supports.ron` and `camp.ron` are empty; the
   English text names no later chapter. No second copy of any file.
+- **The content layer (0156, merged while this was open):** the demo's
+  table is cut from `assets/` with `assets-private/content/` laid over it,
+  so the list applies to the content wherever it lives; the demo build
+  compiles neither whole table in, and `demo.yml` checks the content out
+  with the key. 0156 took ADR-0117, so this ticket's is ADR-0118.
 - **The switch:** `SHUYI_CONTENT` naming the demo's folder gives the
   `demo_edition` cfg, and the bundle is the demo's tables. The demo's
   bundle holds an `edition.txt`; `bundle::is_demo` reads it, `Shuyi::demo`
@@ -273,8 +278,11 @@ Nick asks for it.
   later). The xtask test checks each canary is in the full game's files and
   in none of the demo's.
 - **CI:** `.github/workflows/demo.yml`, on PRs touching `assets/`,
-  `crates/content/` or `shuyi.ron` (no art), and by hand with the art,
-  uploading the `demo-web` artifact for 0915.
+  `crates/content/` or `shuyi.ron` (no art), and by hand with the art.
+  **Deviation:** neither uploads the package as an artifact, as the scope
+  asked: since 0156 the demo embeds content from the private repository,
+  and a public repository's artifacts are anyone's (ADR-0117 §4). 0915
+  publishes the demo from a build of its own (noted there).
 
 **Verification:**
 

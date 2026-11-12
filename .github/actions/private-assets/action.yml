@@ -1,20 +1,36 @@
 name: Private assets
 description: >-
-  Checks out the bought art (ADR-0040) into assets-private/, at the commit
-  named in assets-private.rev, when the run has the key. Run it after the
+  Checks out the private repository into assets-private/, at the commit
+  named in assets-private.rev, when the run has the key: the bought art
+  (ADR-0040), the game's content (ADR-0117), or both. Run it after the
   repository's own checkout.
 
 inputs:
   key:
     description: >-
       secrets.PRIVATE_ASSETS_KEY: the read-only deploy key of the private
-      repository. Empty on forks and on Dependabot's runs.
+      repository. Empty on forks. Dependabot's runs have a Dependabot secret
+      of the same name.
     required: false
     default: ""
   required:
     description: >-
       'true' fails the job when the key is missing, instead of building with
-      the public placeholders.
+      the public files.
+    required: false
+    default: "false"
+  art:
+    description: >-
+      'true' checks out the bought art (game/, test/) and the voice clips
+      (voice/, copied beside the game). Every gate leaves it out (ADR-0040
+      §5).
+    required: false
+    default: "true"
+  content:
+    description: >-
+      'true' checks out the game's content (content/): the build lays it over
+      assets/ whenever it is there, without a feature (ADR-0117). Every job
+      that builds or loads content asks for it, with required 'true'.
     required: false
     default: "false"
 
@@ -39,31 +55,55 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Decide whether this run has the bought art
+    - name: Decide what this run checks out
       id: plan
       shell: bash
       env:
         HAS_KEY: ${{ inputs.key != '' }}
         REQUIRED: ${{ inputs.required }}
+        ART: ${{ inputs.art }}
+        CONTENT: ${{ inputs.content }}
       run: |
         set -euo pipefail
         if [ "$HAS_KEY" != "true" ]; then
           if [ "$REQUIRED" = "true" ]; then
-            echo "::error::PRIVATE_ASSETS_KEY is missing: this build must ship the bought art (ADR-0040)."
+            echo "::error::PRIVATE_ASSETS_KEY is missing: this job must build with the private repository's files (ADR-0040, ADR-0117)."
             exit 1
           fi
-          echo "::warning::PRIVATE_ASSETS_KEY is not available to this run: building with the public placeholders (ADR-0040)."
+          echo "::warning::PRIVATE_ASSETS_KEY is not available to this run: building with the public files (ADR-0040)."
           echo "export-flag=--without private-assets" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         rev=$(tr -d '[:space:]' < assets-private.rev)
-        echo "Private assets: checking out $rev"
+        folders=""
+        if [ "$ART" = "true" ]; then
+          # Only what the game embeds, the bought art of the test files (a
+          # build with the debug tools embeds it too, ADR-0057) and the
+          # voice clips that ship beside the game (ADR-0046); the bought
+          # packs themselves stay behind.
+          folders="game test voice"
+          {
+            echo "features=private-assets"
+            echo "web-flag=--private-assets"
+          } >> "$GITHUB_OUTPUT"
+        else
+          echo "export-flag=--without private-assets" >> "$GITHUB_OUTPUT"
+        fi
+        if [ "$CONTENT" = "true" ]; then
+          folders="$folders content"
+        fi
+        if [ -z "$folders" ]; then
+          echo "::error::Neither art nor content asked for: nothing to check out."
+          exit 1
+        fi
+        echo "Private repository: checking out $folders at $rev"
         {
           echo "rev=$rev"
-          echo "features=private-assets"
-          echo "web-flag=--private-assets"
+          echo "folders<<EOF"
+          echo "$folders" | tr ' ' '\n' | sed '/^$/d'
+          echo "EOF"
         } >> "$GITHUB_OUTPUT"
-    - name: Check out the bought art
+    - name: Check out the private repository
       if: steps.plan.outputs.rev != ''
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -71,17 +111,22 @@ runs:
         ref: ${{ steps.plan.outputs.rev }}
         ssh-key: ${{ inputs.key }}
         path: assets-private
-        # Only what the game embeds, the bought art of the test files (a
-        # build with the debug tools embeds it too, ADR-0057) and the voice
-        # clips that ship beside the game (ADR-0046); the bought packs
-        # themselves stay behind.
-        sparse-checkout: |
-          game
-          test
-          voice
+        sparse-checkout: ${{ steps.plan.outputs.folders }}
         persist-credentials: false
+    - name: Check the content is there
+      if: steps.plan.outputs.rev != '' && inputs.content == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # A pin from before the content layer has no content/: the build
+        # would quietly read the public files.
+        if [ ! -d assets-private/content ]; then
+          echo "::error::assets-private.rev names a commit without content/ (ADR-0117)."
+          exit 1
+        fi
+        echo "Content: $(find assets-private/content -type f | wc -l) files"
     - name: Put the voice clips beside the game
-      if: steps.plan.outputs.rev != ''
+      if: steps.plan.outputs.rev != '' && inputs.art == 'true'
       shell: bash
       run: |
         set -euo pipefail

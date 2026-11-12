@@ -1,4 +1,4 @@
-//! What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0117):
+//! What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0118):
 //! the rules of `crates/content/demo/bundle.txt`, the demo edition's
 //! content root, and the cut its files go through.
 //!
@@ -119,7 +119,10 @@ impl Plan {
             |rule: &Rule, what: &str| format!("line {}: `{}` {what}", rule.line, rule.path);
         for rule in &self.leave_out {
             if !files.iter().any(|f| rule.matches(f)) {
-                return Err(unmatched(rule, "is no file under assets/"));
+                return Err(unmatched(
+                    rule,
+                    "is no file under assets/ or assets-private/content/",
+                ));
             }
         }
         for rule in &self.keep_back {

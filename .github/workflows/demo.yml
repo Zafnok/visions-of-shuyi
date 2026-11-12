@@ -1,6 +1,6 @@
 name: Demo
 
-# The Chapter 1 web demo (ticket 0914, ADR-0117): `cargo shuyi export web
+# The Chapter 1 web demo (ticket 0914, ADR-0118): `cargo shuyi export web
 # --release --edition demo`, built from what `crates/content/demo/bundle.txt`
 # keeps of the game's files. The export reads its package back against the
 # edition's `disclosure` part in `shuyi.ron`: a later chapter's scene id, map
@@ -11,8 +11,11 @@ name: Demo
 #   `shuyi.ron`: the export without the bought art, so a change that pulls
 #   Chapter 2 into a file the demo keeps fails on that pull request, not on
 #   the day of a demo. Nothing is uploaded.
-# - By hand (`workflow_dispatch`): the export with the bought art, uploaded
-#   as the `demo-web` artifact, which ticket 0915 publishes.
+# - By hand (`workflow_dispatch`): the export with the bought art and its
+#   gate, the package that ships. Nothing is uploaded either way: the demo
+#   embeds the game's content from the private repository, and a public
+#   repository's artifacts can be downloaded by anyone (ADR-0117 §4).
+#   Ticket 0915 publishes the demo from a build of its own.
 #
 # Like release.yml, no rust-cache: the demo is a release build that ships,
 # and its builds are rare (zizmor's cache-poisoning finding).
@@ -47,14 +50,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The bought art only for the build that is uploaded; a pull request
-      # checks the demo's files with the public placeholders.
+      # The game's content (ADR-0117), which the demo is cut from like
+      # `assets/`, always; the bought art only for the build that is
+      # uploaded, so a pull request checks the demo with the public art.
       - id: private
-        if: github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/private-assets
         with:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
-          required: ${{ github.repository == 'Zafnok/visions-of-shuyi' }}
+          content: "true"
+          art: ${{ github.event_name == 'workflow_dispatch' }}
+          required: "true"
       - run: rustup toolchain install --no-self-update
       # The crates' licenses, which shuyi.ron ships beside the program, as
       # release.yml's `licenses` job makes them.
@@ -69,7 +74,7 @@ jobs:
       - run: cargo metadata --locked --format-version 1 > /dev/null
       - name: Export
         env:
-          WITHOUT_ART: ${{ github.event_name == 'workflow_dispatch' && steps.private.outputs.export-flag || '--without private-assets' }}
+          WITHOUT_ART: ${{ steps.private.outputs.export-flag }}
         run: cargo shuyi export web --release --edition demo $WITHOUT_ART
       # The reports name the edition and its content root (engine 3082).
       - name: Check the reports
@@ -78,10 +83,3 @@ jobs:
           folder=dist/export/demo/web
           grep -q '"edition": *"demo"' "$folder/export-report.json"
           grep -q '"content_root": *"crates/content/demo"' "$folder/exposure-report.json"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: github.event_name == 'workflow_dispatch'
-        with:
-          name: demo-web
-          path: |
-            dist/export/demo/web/*.zip
-            dist/export/demo/web/*.json

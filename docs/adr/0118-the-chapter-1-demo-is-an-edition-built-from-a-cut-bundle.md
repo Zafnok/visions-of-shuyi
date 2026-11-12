@@ -1,8 +1,8 @@
-# ADR-0117: The Chapter 1 demo is an edition built from a cut bundle
+# ADR-0118: The Chapter 1 demo is an edition built from a cut bundle
 
 - **Status:** Accepted (0914)
 - **Date:** 2026-11-12
-- **Related tickets:** 0914, 0915, 0872, 0873, 1036, 1249, 0160; engine 3081, 3082, 3099
+- **Related tickets:** 0914, 0915, 0872, 0873, 1036, 1249, 0156, 0160; engine 3081, 3082, 3099
 
 ## Context
 
@@ -37,8 +37,10 @@ left out (`bundle::left_out`).
    debug features (engine 3099), so the edition lists none to keep off.
 2. **The content root holds a list, not files.** `crates/content/demo/bundle.txt`
    says what the demo leaves out of `assets/` and how it cuts the shared
-   files; `build.rs` builds the demo's table from `assets/` (and
-   `assets-private/game/`) with it, through `src/demo_bundle.rs`, which the
+   files; `build.rs` builds the demo's table from `assets/` with the
+   game's content from the private repository laid over it (ADR-0117,
+   whenever `assets-private/content/` is checked out) and from
+   `assets-private/game/`, with it, through `src/demo_bundle.rs`, which the
    crate's tests check too. Its lines:
    - a folder or a file left out, `+` a file kept back from a folder's line
      (every chapter's folder but Chapter 1's own files, the world map, the
@@ -97,8 +99,11 @@ left out (`bundle::left_out`).
   the Playdate). Tracks name no story, but they are most of the package's
   size (1249). Follow-up: an engine ticket for an edition's music.
 - The bought art is cut by the same list (paths alike), not by `keep`.
-- Once 0160 moves the content into the private assets repository, the list
-  stays the same; the files come from there.
+- The content in the private repository (ADR-0117) is cut by the same
+  list, so the list stays the same when 0160 moves the content there; the
+  demo export in CI checks it out with the key, as every job that loads
+  content does. The demo edition compiles neither the whole of `assets/`
+  nor the content's own table in.
 
 ## Alternatives considered
 

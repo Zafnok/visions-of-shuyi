@@ -162,16 +162,13 @@ fn shipped_lessons() -> LessonTable {
     lesson::from_source(LESSONS_PATH, source, lesson::Refs::default()).unwrap_or_default()
 }
 
-/// The scenes of the story's scripts, `<root>/assets/dialogue/*.dlg`, and
-/// the guide's lines (ticket 0476).
+/// The scenes of the story's scripts, `<root>/assets/dialogue/*.dlg` with
+/// the content's over them (ADR-0117), and the guide's lines (ticket 0476).
 pub fn story_scenes(root: &Path) -> Result<BTreeSet<String>, String> {
-    let dir = root.join("assets").join(DIALOGUE_DIR);
-    let entries = fs::read_dir(&dir).map_err(|e| format!("reading {}: {e}", dir.display()))?;
+    let story = &crate::content_layer::STORY;
+    let files = crate::content_layer::files_in(root, story, DIALOGUE_DIR, DIALOGUE_EXTENSION)?;
     let mut scenes = BTreeSet::from([voice::GUIDE_SCENE.to_owned()]);
-    for path in entries.filter_map(|e| Some(e.ok()?.path())) {
-        if !path.to_string_lossy().ends_with(DIALOGUE_EXTENSION) {
-            continue;
-        }
+    for (_, path) in files {
         let text =
             fs::read_to_string(&path).map_err(|e| format!("reading {}: {e}", path.display()))?;
         let ids = text
