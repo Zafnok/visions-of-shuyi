@@ -204,26 +204,28 @@ enum Kind {
 fn runs(text: &str) -> Result<Vec<(Kind, Range<usize>)>, String> {
     let bytes = text.as_bytes();
     let mut out = Vec::new();
-    let (mut i, mut start) = (0, 0);
-    while i < bytes.len() {
+    // Where the run of code being read started: the bytes before it are
+    // in runs already. A `for` loop, so the build script that runs this
+    // ends whatever a mutant does to it.
+    let mut start = 0;
+    for i in 0..bytes.len() {
+        if i < start {
+            continue;
+        }
         let rest = &bytes[i..];
         let run = if rest.starts_with(b"//") {
             let end = rest.iter().position(|&b| b == b'\n').unwrap_or(rest.len());
-            Some((Kind::Comment, i + end))
+            (Kind::Comment, i + end)
         } else if rest.starts_with(b"/*") {
-            Some((Kind::Comment, block_end(text, i)?))
+            (Kind::Comment, block_end(text, i)?)
         } else if matches!(rest[0], b'"' | b'\'') {
-            Some((Kind::Quoted, quoted_end(text, i)?))
+            (Kind::Quoted, quoted_end(text, i)?)
         } else {
-            None
+            continue;
         };
-        if let Some((kind, end)) = run {
-            out.push((Kind::Code, start..i));
-            out.push((kind, i..end));
-            (i, start) = (end, end);
-        } else {
-            i += 1;
-        }
+        out.push((Kind::Code, start..i));
+        out.push((run.0, i..run.1));
+        start = run.1;
     }
     out.push((Kind::Code, start..bytes.len()));
     Ok(out)
@@ -266,12 +268,15 @@ fn block_end(text: &str, at: usize) -> Result<usize, String> {
 fn quoted_end(text: &str, at: usize) -> Result<usize, String> {
     let bytes = text.as_bytes();
     let quote = bytes[at];
-    let mut i = at + 1;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'\\' => i += 2,
-            b if b == quote => return Ok(i + 1),
-            _ => i += 1,
+    // Whether the byte before was a `\` that escapes this one.
+    let mut escaped = false;
+    for (i, &b) in bytes.iter().enumerate().skip(at + 1) {
+        if escaped {
+            escaped = false;
+        } else if b == b'\\' {
+            escaped = true;
+        } else if b == quote {
+            return Ok(i + 1);
         }
     }
     Err(format!("line {}: a quote never closes", line_of(text, at)))

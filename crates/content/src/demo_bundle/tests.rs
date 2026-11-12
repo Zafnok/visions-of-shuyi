@@ -86,6 +86,12 @@ fn comments_go_and_lines_keep_their_numbers() {
         strip_comments("/* /* */").is_err(),
         "the outer one never closes"
     );
+    // A quote right after another opens its own: what is in it stays.
+    let adjacent = "(a: \"x\"\"// kept\", b: 'q''/', c: \"\\\\\"//gone\n)";
+    assert_eq!(
+        strip_comments(adjacent).as_deref(),
+        Ok("(a: \"x\"\"// kept\", b: 'q''/', c: \"\\\\\"\n)")
+    );
 }
 
 #[test]
