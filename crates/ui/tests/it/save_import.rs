@@ -559,6 +559,27 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     h.keys("f");
     assert_eq!(h.top_screen(), "profiles");
 
+    // The last place taken while the report is open: Import says so.
+    let mut h = launch([1]);
+    let save = save::encode(&chapter_save(h.game().ctx(), 6)).unwrap_or_else(|e| panic!("{e}"));
+    for n in 2..=7 {
+        let name = format!("P{n}");
+        h.ctx_mut()
+            .add_profile(&name)
+            .unwrap_or_else(|e| panic!("{e}"));
+    }
+    import_from_profile(&mut h);
+    h.drop_file("y.ron", file_of(&[("slot_01", save)]))
+        .wait(0.02);
+    h.ctx_mut()
+        .add_profile("P8")
+        .unwrap_or_else(|e| panic!("{e}"));
+    h.keys("Left f");
+    assert_eq!(
+        view(&h).message.as_deref(),
+        Some("There can be at most 8 profiles: delete one to import this file.")
+    );
+
     let mut h = launch([1]);
     import_from_profile(&mut h);
     h.drop_file("x.ron", file).wait(0.02);
