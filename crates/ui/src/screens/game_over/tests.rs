@@ -280,3 +280,10 @@ fn to_be_continued_declares_its_actions() {
     let screen = ToBeContinuedScreen;
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::TO_BE_CONTINUED);
 }
+
+/// The demo's end card (0914) reacts to what "To be continued" does.
+#[test]
+fn the_demos_end_card_declares_its_actions() {
+    let screen = DemoEndScreen::new(&ctx(), "Ellery");
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::TO_BE_CONTINUED);
+}
