@@ -47,6 +47,8 @@ std = [
 harness = [
     "storage-conformance",
     "trpg-content/test-fixtures",
+    # The Chapter 1 demo's bundle (ticket 0914), which a test plays.
+    "trpg-content/demo-bundle",
     "shuyi-platform/harness",
 ]
 # `storage::conformance_suite`, for a platform's `Storage` (also without

@@ -58,17 +58,27 @@ pub const EXPORT_QUESTION: &str = "save.export_question";
 /// Slots shown at once.
 const VISIBLE: usize = 20;
 
-/// "Save your progress?" with `Yes` / `No`. Pops with the answer (a
-/// `bool`, `true` for `Yes`) once one is chosen; there is nothing to back
-/// out of.
+/// The key of the demo's question after its end card (0914).
+pub const EXPORT_DEMO_QUESTION: &str = "demo_end.export_question";
+
+/// "Save your progress?" with `Yes` / `No`, or the demo's "Export save?"
+/// ([`SavePromptScreen::export_demo`]). Pops with the answer (a `bool`,
+/// `true` for `Yes`) once one is chosen; there is nothing to back out of.
 #[derive(Debug, Clone)]
 pub struct SavePromptScreen {
     menu: Menu<bool>,
+    /// The question's text key.
+    question: &'static str,
+    /// What [`Screen::name`] reports.
+    name: &'static str,
 }
 
 impl SavePromptScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "save_prompt";
+
+    /// Name reported by the demo's "Export save?".
+    pub const EXPORT_DEMO_NAME: &'static str = "demo_export";
 
     /// The question with `Yes` focused, labelled in `ctx`'s language.
     pub fn new(ctx: &Ctx) -> Self {
@@ -77,6 +87,18 @@ impl SavePromptScreen {
             .to_vec();
         Self {
             menu: Menu::new(items).without_cancel(),
+            question: SAVE_QUESTION,
+            name: Self::NAME,
+        }
+    }
+
+    /// The Chapter 1 demo's "Export save?" after its end card (ticket
+    /// 0914), `Yes` focused: exporting writes over nothing.
+    pub fn export_demo(ctx: &Ctx) -> Self {
+        Self {
+            question: EXPORT_DEMO_QUESTION,
+            name: Self::EXPORT_DEMO_NAME,
+            ..Self::new(ctx)
         }
     }
 
@@ -90,7 +112,7 @@ impl SavePromptScreen {
     /// help line.
     pub fn view(&self, ctx: &Ctx) -> SavePromptView {
         SavePromptView {
-            question: ctx.text(SAVE_QUESTION).to_owned(),
+            question: ctx.text(self.question).to_owned(),
             menu: self.menu.view(),
             help: Self::help(ctx),
         }
@@ -99,7 +121,7 @@ impl SavePromptScreen {
 
 impl Screen<Shuyi> for SavePromptScreen {
     fn name(&self) -> &'static str {
-        Self::NAME
+        self.name
     }
 
     fn actions(&self) -> Option<Vec<crate::input::Action>> {

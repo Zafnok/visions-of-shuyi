@@ -58,3 +58,20 @@ To try the whole pipeline without cutting a real release, run it manually via
 **Actions → Release → Run workflow** on any branch: this does a dry run
 (builds and uploads the four packages and what is kept beside them as workflow
 artifacts, but creates no release).
+
+## The Chapter 1 demo
+
+The demo (ticket 0914, [ADR-0117](adr/0117-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md))
+is the `demo` edition: Chapter 1 and nothing later, ending on "Thanks for
+playing" and "Export save?" (`docs/design/demo.md`). What it keeps of
+`assets/` is `crates/content/demo/bundle.txt`.
+
+```bash
+cargo shuyi export web --release --edition demo
+```
+
+The package is in `dist/export/demo/web/`. **Actions → Demo → Run workflow**
+builds it with the bought art and uploads it as the `demo-web` artifact;
+every pull request that changes `assets/`, `crates/content/` or `shuyi.ron`
+exports it without the art, so a later chapter that reaches a file the demo
+keeps fails there.

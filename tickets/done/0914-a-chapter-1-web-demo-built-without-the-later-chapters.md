@@ -5,10 +5,10 @@ type: feature
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: done
 blocked_by: ["engine#3082", "0872"]
 nick_input: none
-completed:
+completed: 2026-11-12
 ---
 
 # 0914 — A Chapter 1 web demo, built without the later chapters
@@ -207,24 +207,24 @@ Nick asks for it.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi export web --release` for the demo edition passes the
+- [x] `cargo shuyi export web --release` for the demo edition passes the
       disclosure gate, and its `exposure-report.json` names the edition.
-- [ ] A canary planted in a Chapter 2 file fails the demo's export with
+- [x] A canary planted in a Chapter 2 file fails the demo's export with
       `SH3012` and passes the full game's (test or recorded run).
-- [ ] `strings` on the demo's Wasm finds no Chapter 2–8 scene id, map
+- [x] `strings` on the demo's Wasm finds no Chapter 2–8 scene id, map
       name or the ids of characters first met after Chapter 1 (a CI step).
-- [ ] A Harness test plays the demo from New Game through Chapter 1's
+- [x] A Harness test plays the demo from New Game through Chapter 1's
       win: both victory scenes, no "Save your progress?", "Thanks for
       playing, {lead}", "Export save?"; *Yes* offers one file and returns
       to the title, *No* returns to the title with none. The title shows
       no entry past Chapter 1.
-- [ ] A test: the demo's exported file, imported into the full game's
+- [x] A test: the demo's exported file, imported into the full game's
       content (0873's import, or its checker when the screen isn't
       needed), gives a save that loads and starts Chapter 2.
-- [ ] The full game still asks "Save your progress?" after Chapter 1.
-- [ ] The full game's build and tests are unchanged.
-- [ ] The CI job runs on a PR that touches `assets/`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The full game still asks "Save your progress?" after Chapter 1.
+- [x] The full game's build and tests are unchanged.
+- [x] The CI job runs on a PR that touches `assets/`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -237,5 +237,85 @@ Nick asks for it.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done** ([ADR-0117](../../docs/adr/0117-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md)):
+
+- **The edition:** `demo` in `shuyi.ron` (`cargo shuyi export web
+  --release --edition demo`): `trpg-app` with the bought art,
+  `default_features: false`, content root `crates/content/demo`, its own
+  `disclosure` part. Windows works the same way (`export windows
+  --edition demo`) at no extra cost; only the web was exported here.
+- **What it leaves out:** `crates/content/demo/bundle.txt`, read by
+  `crates/content/src/demo_bundle.rs` (shared with `build.rs`): every
+  chapter, battle, script, map and opening but Chapter 1's (its scenes also
+  use `harrowby_yard` and `veyne_study`), the world map and skirmishes.
+  `assets-test/` was already out of release builds. The shared files are cut
+  at build time by an allow list (`keep`): `characters.ron` (Chapter 1's
+  cast, the rival of `ch01_tbc`, the Red Company's generics, the guide and
+  the messenger) and `names.ron` (the names Chapter 1 uses); every RON file
+  loses its comments, which retold later chapters; `ch01.ron`'s `next`
+  becomes `None` (`swap`). `supports.ron` and `camp.ron` are empty; the
+  English text names no later chapter. No second copy of any file.
+- **The switch:** `SHUYI_CONTENT` naming the demo's folder gives the
+  `demo_edition` cfg, and the bundle is the demo's tables. The demo's
+  bundle holds an `edition.txt`; `bundle::is_demo` reads it, `Shuyi::demo`
+  keeps it. Unlike the Playdate's bundle it names no left-out file.
+- **The flow** (`crates/ui/src/flow/demo.rs`): after `ch01_tbc`, no "Save
+  your progress?"; "Thanks for playing, {lead}" (`DemoEndScreen`, the "To
+  be continued" look, in silence); "Export save?" (`SavePromptScreen::
+  export_demo`, Yes focused). *Yes* offers `SaveFile::chapter_cleared` of
+  the campaign as slot 1 through 0872's `save_files::offer`; then the
+  title. The demo's title has no Load Game (nothing the demo makes loads
+  from it); Quick Battle is debug-only as before. Continue works.
+- **Disclosure:** the demo's part allows what the full game's packages may
+  hold on Windows and the web (an xtask test keeps it equal), forbids the
+  later chapters' embedded paths, and has 24 canaries (each later chapter's
+  first scene id, the side quests', the later maps, characters first met
+  later). The xtask test checks each canary is in the full game's files and
+  in none of the demo's.
+- **CI:** `.github/workflows/demo.yml`, on PRs touching `assets/`,
+  `crates/content/` or `shuyi.ron` (no art), and by hand with the art,
+  uploading the `demo-web` artifact for 0915.
+
+**Verification:**
+
+- `export web --release --edition demo`, without and with the bought art
+  and voices: passed the gate; both reports name the edition and the
+  content root. `strings` on its Wasm finds no later scene id, map,
+  character or name (the one hit for the patterns is the loader's
+  `skirmishes/` folder name).
+- Recorded run: with `+ dialogue/ch02.dlg` added to the list, the demo's
+  export was refused with `SH3012` (a forbidden path and four canaries) and
+  its package removed; the full game's `export web --release` passed and its
+  Wasm holds `ch02_intro`.
+- Tests: `demo_bundle` unit tests (the list, comments, `keep`, `swap`, the
+  repository's list); the demo's bundle loads with no error and only
+  `ch01`; `tests/it/demo.rs` plays the demo from New Game through Chapter
+  1's win on the demo's bundle (both victory scenes, no save prompt, the
+  card, the question; Yes offers one file, No none; both back to the
+  title; the suspend save continues), and imports the file into the full
+  game, whose Load Game starts Chapter 2. `ch01_winnable` still reaches
+  "Save your progress?" and Chapter 2.
+- The browser pane: the demo's Wasm loaded and drew with no console error.
+  The pane was hidden, so its screenshots were stale and the play-through
+  was left to the Harness test.
+- Pictures: `docs/img/0914-*.png`, from `frame-png` with a throwaway edit
+  that started it on the demo's bundle (not in the PR).
+
+**Deviations:**
+
+- The demo ships every music track: the web build copies `music/` whole
+  and an edition can't choose tracks. The package is 93 MB with the art.
+  Noted in 1249, which owns the web's size.
+- A desktop demo's *Yes* writes the file to the exports folder without a
+  line saying so (the title doesn't hear the platform's answer). The web,
+  the demo's target, downloads it.
+
+*The agent's starting rules* (Nick can veto):
+
+- The demo's title has no Load Game.
+- The card's help line reads "{Confirm} continue".
+- The exported file is named like Load Game's export of slot 1
+  (`visions-of-shuyi-<profile>-<n>-slot-01.ron`).
+
+Friction: estimate 580 production lines (the ticket's split, judged by
+`build.rs`'s Playdate table and `save_prompt`), measured 567 (1.0×).

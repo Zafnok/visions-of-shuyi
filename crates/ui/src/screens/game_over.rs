@@ -33,6 +33,8 @@ const REWIND: &str = "game_over.rewind";
 const ITEMS: [&str; 2] = ["game_over.retry", "game_over.title"];
 /// The key of the last chapter's closing words.
 pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
+/// The key of the demo's closing words, with the lead's name (0914).
+pub const THANKS: &str = "demo_end.heading";
 
 /// How long Game Over's opening animation takes, in seconds (Nick,
 /// 2026-10-13: the short one).
@@ -200,6 +202,58 @@ impl Screen<Shuyi> for ToBeContinuedScreen {
             return Transition::Pop;
         }
         Transition::None
+    }
+
+    fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+        glyph::paint_to_be_continued(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
+        Some(self)
+    }
+}
+
+/// The Chapter 1 demo's end card (ticket 0914, `docs/design/demo.md`):
+/// "Thanks for playing, {lead}", in "To be continued"'s look. Confirm goes
+/// on to "Export save?" (pops).
+#[derive(Debug, Clone)]
+pub struct DemoEndScreen {
+    heading: String,
+}
+
+impl DemoEndScreen {
+    /// Name reported by [`Screen::name`].
+    pub const NAME: &'static str = "demo_end";
+
+    /// The card thanking `lead` (the name the player typed), in `ctx`'s
+    /// language.
+    pub fn new(ctx: &Ctx, lead: &str) -> Self {
+        Self {
+            heading: ctx.text_with(THANKS, &[("lead", &lead)]),
+        }
+    }
+
+    /// The screen as plain data, as "To be continued" says it
+    /// ([`glyph::paint_to_be_continued`]).
+    pub fn view(&self, ctx: &Ctx) -> ToBeContinuedView {
+        ToBeContinuedView {
+            heading: self.heading.clone(),
+            help: ctx.text_with("demo_end.help", &[]),
+        }
+    }
+}
+
+impl Screen<Shuyi> for DemoEndScreen {
+    fn name(&self) -> &'static str {
+        Self::NAME
+    }
+
+    fn actions(&self) -> Option<Vec<crate::input::Action>> {
+        Some(crate::screens::actions::TO_BE_CONTINUED.to_vec())
+    }
+
+    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        ToBeContinuedScreen.update(ctx, input)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

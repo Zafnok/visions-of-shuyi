@@ -32,7 +32,7 @@ pub use class_change::{ChangeKind, ClassChangeScreen};
 pub use credits::CreditsScreen;
 pub use dialogue::DialogueScreen;
 pub use familiarity::FamiliarityScreen;
-pub use game_over::{GameOverScreen, ToBeContinuedScreen};
+pub use game_over::{DemoEndScreen, GameOverScreen, ToBeContinuedScreen};
 pub use key_bindings::KeyBindingsScreen;
 pub use layout_picker::LayoutPickerScreen;
 pub use lead_select::LeadSelectScreen;
