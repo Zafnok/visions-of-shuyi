@@ -13,24 +13,28 @@ fn new(list: &[&str]) -> Result<Options, String> {
     parse_args(&args(&all))
 }
 
-/// A folder holding what a run reads from the repository.
+/// A folder holding what a run on the test world reads from the
+/// repository.
 fn sandbox() -> PathBuf {
     static NEXT: AtomicU32 = AtomicU32::new(0);
     let n = NEXT.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!("xtask-skirmish-{}-{n}", std::process::id()));
-    let repo = crate::repo_root();
     for file in [
         "crates/bots/personas.ron",
         "crates/bots/targets.ron",
         "assets-test/worldmaps/test_world.ron",
         "assets-test/skirmishes/test_world.ron",
-        "assets/worldmaps/act1.ron",
     ] {
-        let to = root.join(file);
-        fs::create_dir_all(to.parent().expect("a folder")).expect("a folder");
-        fs::copy(repo.join(file), to).expect("copied");
+        copy(&root, file);
     }
     root
+}
+
+/// `file` of the repository into the sandbox `root`.
+fn copy(root: &Path, file: &str) {
+    let to = root.join(file);
+    fs::create_dir_all(to.parent().expect("a folder")).expect("a folder");
+    fs::copy(crate::repo_root().join(file), to).expect("copied");
 }
 
 /// One casual try, enough to go through the whole command quickly.
@@ -88,12 +92,17 @@ fn help_and_bad_arguments_answer_without_generating() {
     assert_eq!(command(&root, &args(&["new", "--at", "x"])), 2);
 }
 
+/// On the test files' chapters (ADR-0118): the Quick Battle's is chapter
+/// 5, and `test_wm1` the first of chapter 4's.
 #[test]
 fn chapters_are_numbers_or_ids() {
-    let content = trpg_content::load_embedded().expect("content");
+    let mut content = trpg_content::load_embedded().expect("content");
+    content
+        .chapters
+        .retain(|id, _| id.starts_with("test") || id == "quick");
     assert_eq!(
-        chapter_ids(&content, &args(&["2", "ch01"])),
-        Ok(args(&["ch02", "ch01"]))
+        chapter_ids(&content, &args(&["5", "4", "test"])),
+        Ok(args(&["quick", "test_wm1", "test"]))
     );
     assert!(chapter_ids(&content, &args(&["77"])).is_err());
 }
@@ -137,8 +146,12 @@ fn a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again() {
         assert_eq!(read(&one), read(&two), "{file}");
     }
     let battle = fs::read_to_string(one.join(format!("assets-test/battles/{id}.ron"))).expect("it");
+    // With no chapter given, the army is the story's last chapter's.
+    let content = trpg_content::load_embedded().expect("content");
+    let chapters = trpg_bots::story_chapters(&content);
+    let story_last = chapters.last().map(|c| c.id.as_str()).unwrap_or_default();
     assert!(
-        battle.contains("bots_army: (chapter: \"ch05\", level: 5)"),
+        battle.contains(&format!("bots_army: (chapter: \"{story_last}\", level: 5)")),
         "{battle}"
     );
     assert!(
@@ -154,9 +167,14 @@ fn a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again() {
     let _ = (fs::remove_dir_all(one), fs::remove_dir_all(two));
 }
 
+/// A test of the content (ADR-0118 (a)): the story's first world map.
 #[test]
 fn without_a_map_it_goes_on_the_story_s_first_and_writes_beside_it() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let root = sandbox();
+    copy(&root, "assets/worldmaps/act1.ron");
     let list = args(&[
         "new",
         "--at",

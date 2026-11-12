@@ -451,22 +451,29 @@ fn stage_of(id: &str) -> BattleStage {
     stage(&CONTENT, &CONTENT.battles[id]).unwrap()
 }
 
+/// A battle no earlier chapter's playthrough comes before (the test
+/// chapter's, outside the story) is played with the army of its slots,
+/// fresh, and its own pack.
 #[test]
-fn chapter_1_is_played_with_the_army_it_always_was() {
-    let stage = stage_of("ch01");
+fn a_battle_with_nothing_before_it_is_played_with_a_fresh_army() {
+    let stage = stage_of("test");
     for mode in [GameMode::Classic, GameMode::Casual] {
-        assert_eq!(stage.setup(mode), &fresh("ch01", mode));
+        assert_eq!(stage.setup(mode), &fresh("test", mode));
     }
-    let army = army(&CONTENT, &CONTENT.battles["ch01"], &stage);
+    let army = army(&CONTENT, &CONTENT.battles["test"], &stage);
     assert_eq!(army.from, "fresh from the character data");
-    assert_eq!(army.pack, ["potion", "potion", "potion"]);
+    assert_eq!(army.pack, ["potion", "potion"]);
 }
 
 /// Acceptance: the playtest and the autobalance (the same `stage`) play
 /// Chapter 2 with the army Chapter 1 leaves and a pack of Potions, never
-/// the character data's levels or an empty pack.
+/// the character data's levels or an empty pack. A test of the content
+/// (ADR-0118 (a)): it plays Chapter 1's recorded playthrough.
 #[test]
 fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let def = &CONTENT.battles["ch02"];
     let stage = stage_of("ch02");
     for mode in [GameMode::Classic, GameMode::Casual] {

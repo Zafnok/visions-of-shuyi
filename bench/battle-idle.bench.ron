@@ -5,7 +5,7 @@
 // lists. The steps press the game's actions by name, so they hold for
 // any key layout and for the Playdate's buttons.
 //
-// The game's biggest battle, the Red Company's ledger (side_company_ledger:
+// The game's biggest battle, a side quest (side_company_ledger:
 // seven of the party against fifteen), open at its start with no input:
 // the map, its units and the side panel drawn each frame.
 (

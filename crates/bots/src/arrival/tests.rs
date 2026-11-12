@@ -2,7 +2,10 @@ use trpg_content::battle_campaign;
 use trpg_core::{CharacterId, Faction, LeadGender, Unit};
 
 use super::*;
+use crate::testkit::{TEST_RECRUIT, test_story};
 
+/// The game's content, for the tests of its story (ADR-0118 (a)): they
+/// play the recorded playthroughs of its chapters.
 fn content() -> Content {
     trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"))
 }
@@ -25,14 +28,18 @@ fn players(setup: &BattleSetup) -> Vec<(CharacterId, &Unit)> {
 }
 
 #[test]
-fn nothing_comes_before_chapter_1() {
-    let content = content();
-    assert_eq!(arrive(&content, "ch01", GameMode::Classic), None);
-    assert_eq!(chapters_before(&content, "ch01").len(), 0);
+fn nothing_comes_before_the_first_chapter() {
+    let content = test_story();
+    let first = "test_world_story";
+    assert_eq!(arrive(&content, first, GameMode::Classic), None);
+    assert_eq!(chapters_before(&content, first).len(), 0);
 }
 
 #[test]
 fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = content();
     let before: Vec<&str> = chapters_before(&content, "ch02")
         .iter()
@@ -73,12 +80,14 @@ fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
 }
 
 /// On the Act 1 map the fixed skirmishes that guard the way to a story
-/// battle are won before it, and only those (1071): the toll bridge before
-/// Veyne Hall, the Salt Road before the Envoy's House; never the optional
-/// Millhaven Road or Smugglers' Cove. A guard is fought with the army its
-/// chapter brings.
+/// battle are won before it, and only those (1071): `aldwater` before
+/// `ch04`'s battle, `salt_road` before `ch05`'s; never an optional one. A
+/// guard is fought with the army its chapter brings.
 #[test]
 fn the_guards_on_the_way_are_won_first() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = content();
     let chapters = story_chapters(&content);
     let guards = guards_by_chapter(&content, &chapters);
@@ -106,7 +115,7 @@ fn the_guards_on_the_way_are_won_first() {
         0,
         "optional"
     );
-    // The toll bridge's army is Chapter 3's, and the hall's has won it too.
+    // The guard's army is Chapter 3's, and Chapter 4's has won it too.
     let bridge = arrive(&content, "aldwater", GameMode::Classic);
     let hall = arrive(&content, "ch04", GameMode::Classic);
     let bridge = bridge.unwrap_or_else(|| panic!("no army"));
@@ -117,6 +126,9 @@ fn the_guards_on_the_way_are_won_first() {
 
 #[test]
 fn the_army_is_the_same_every_time() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = content();
     let first = arrive(&content, "ch02", GameMode::Classic);
     assert_eq!(first, arrive(&content, "ch02", GameMode::Classic));
@@ -124,22 +136,19 @@ fn the_army_is_the_same_every_time() {
 
 #[test]
 fn a_battle_no_chapter_fights_has_no_arrival() {
-    let content = content();
-    let quick = content
-        .battles
-        .keys()
-        .find(|id| chapters_before(&content, id).is_empty() && !id.starts_with("ch0"));
-    let quick = quick.unwrap_or_else(|| panic!("no battle outside the story"));
-    assert_eq!(arrive(&content, quick, GameMode::Classic), None);
+    let content = test_story();
+    assert_eq!(chapters_before(&content, "quick").len(), 0);
+    assert_eq!(arrive(&content, "quick", GameMode::Classic), None);
 }
 
 #[test]
 fn the_pack_takes_the_stock_first_then_what_the_gold_buys() {
-    let content = content();
-    let def = &content.battles["ch02"];
+    let content = test_story();
+    let def = &content.battles["test"];
     let mut setup = battle_campaign(&content, def, GameMode::Classic, lead())
         .battle_setup(def, &content.tables());
     setup.stock = trpg_core::Stock::default();
+    setup.pack.items.clear();
     setup.stock.add(ItemId::new("elixir"));
     setup.gold = 0;
     let shop = content.basic_shop.shop(2);
@@ -166,11 +175,12 @@ fn the_pack_takes_the_stock_first_then_what_the_gold_buys() {
 
 #[test]
 fn a_full_pack_buys_nothing_more() {
-    let content = content();
-    let def = &content.battles["ch02"];
+    let content = test_story();
+    let def = &content.battles["test"];
     let mut setup = battle_campaign(&content, def, GameMode::Classic, lead())
         .battle_setup(def, &content.tables());
     setup.stock = trpg_core::Stock::default();
+    setup.pack.items.clear();
     let potion = ItemId::new("potion");
     let price = content.items.consumable(&potion).map_or(0, |c| c.price);
     let cap = u32::try_from(setup.pack.cap).unwrap_or(0);
@@ -187,30 +197,35 @@ fn a_full_pack_buys_nothing_more() {
 
 #[test]
 fn whoever_a_scene_has_recruited_by_the_chapter_joins() {
-    let content = content();
+    let content = test_story();
     let mut campaign = new_campaign(&content, GameMode::Classic, lead());
-    let rue = CharacterId("heretic".into());
-    campaign
-        .roster
-        .retain(|u| u.character.as_ref() != Some(&rue));
-    recruit(&mut campaign, &content, "ch02");
+    let recruited = CharacterId(TEST_RECRUIT.into());
+    recruit(&mut campaign, &content, "test_wm1");
+    assert!(
+        campaign.member(&recruited).is_none(),
+        "not before the scene"
+    );
+    recruit(&mut campaign, &content, "test_wm2");
     let joined = campaign
-        .member(&rue)
-        .unwrap_or_else(|| panic!("Rue didn't join"));
+        .member(&recruited)
+        .unwrap_or_else(|| panic!("{TEST_RECRUIT} didn't join"));
     assert_eq!(joined.faction, Faction::Player);
-    assert_eq!(campaign.roster.len(), content.new_game.roster.len());
+    assert_eq!(campaign.roster.len(), content.new_game.roster.len() + 1);
 }
 
 /// Each earlier chapter's battle is played with whoever had joined by
-/// then (0850): Joss, recruited after Chapter 2, fights Chapter 3's
-/// recorded playthrough on the way to Chapter 4, which fails without him.
+/// then (0850): `defector`, recruited after Chapter 2, fights Chapter 3's
+/// recorded playthrough on the way to Chapter 4, which fails without them.
 #[test]
-fn a_recruit_fights_the_chapters_after_his_join_on_the_way() {
+fn a_recruit_fights_the_chapters_after_their_join_on_the_way() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = content();
     let setup = arrive(&content, "ch04", GameMode::Classic);
     let setup = setup.unwrap_or_else(|| panic!("Chapter 4 has an arrival"));
-    let joss = CharacterId("defector".into());
+    let defector = CharacterId("defector".into());
     let army = players(&setup);
-    assert!(army.iter().any(|(who, _)| *who == joss), "Joss is there");
-    assert_eq!(army.len(), 7, "the seven; Gil joins only on Millhaven Road");
+    assert!(army.iter().any(|(who, _)| *who == defector), "defector");
+    assert_eq!(army.len(), 7, "the New Game's six and defector");
 }

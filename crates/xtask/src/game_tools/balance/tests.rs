@@ -130,7 +130,7 @@ fn the_plan_names_the_battle_and_refuses_what_it_cant_balance() {
         plan_error(&root, Some("quick"), &with_option),
         "autobalance takes no game option, not --map"
     );
-    assert!(Trpg.playtest_stages().contains(&"ch01".to_owned()));
+    assert!(Trpg.playtest_stages().contains(&"test_too_hard".to_owned()));
     let _ = fs::remove_dir_all(&root);
 }
 

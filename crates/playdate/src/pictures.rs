@@ -118,11 +118,16 @@ mod tests {
     /// Ticket 1042: every face a portrait sidecar names is a one-bit picture
     /// in the Playdate's bundle, twice its PNG's size, in every one of
     /// Options' portrait styles (with `private-assets`, the bought faces
-    /// too: `cargo test -p trpg-playdate --features private-assets`).
+    /// too: `cargo test -p trpg-playdate --features private-assets`). A
+    /// test of the content (ADR-0118 (a)): the Playdate's bundle is the
+    /// game's Chapter 1, so it loads only with the game.
     #[test]
     fn every_portrait_has_a_one_bit_face_in_each_portrait_style() {
         use trpg_ui::PortraitStyle;
 
+        if bundle::skip_without_the_game() {
+            return;
+        }
         let (content, faces) = on_the_playdate(|| {
             let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
             let faces: Vec<(String, Option<&'static [u8]>)> = content

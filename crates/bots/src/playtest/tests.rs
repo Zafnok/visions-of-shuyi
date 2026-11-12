@@ -160,12 +160,12 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
     assert_eq!(band(fixed, Difficulty::Hard, "normal"), (40, 65));
 }
 
-/// The Envoy's House is a hold (Survive); Veyne Hall (defeat Dace) isn't.
+/// `test_hold` is a hold (Survive); `test_retreat` (defeat a unit) isn't.
 #[test]
 fn a_hold_is_a_battle_won_by_surviving() {
     let content = content();
-    assert!(is_hold(&content.battles["ch05"]));
-    assert!(!is_hold(&content.battles["ch04"]));
+    assert!(is_hold(&content.battles["test_hold"]));
+    assert!(!is_hold(&content.battles["test_retreat"]));
 }
 
 /// A hold (a Survive battle, 0851): the Casual bot's own band, the others'

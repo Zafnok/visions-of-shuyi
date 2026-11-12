@@ -812,8 +812,13 @@ mod tests {
         );
     }
 
+    /// A test of the content (ADR-0118 (a)): the table names the game's
+    /// own classes and characters.
     #[test]
     fn the_games_table_names_real_ids_once_each_and_the_placeholders_backdrops() {
+        if trpg_content::bundle::skip_without_the_game() {
+            return;
+        }
         let content = trpg_content::load_embedded().unwrap();
         let mut seen = Vec::new();
         for p in BATTLERS {

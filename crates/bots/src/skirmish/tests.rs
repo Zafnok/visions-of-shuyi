@@ -7,8 +7,8 @@ use trpg_content::worldmap::{self, WorldRefs};
 
 use super::*;
 
-static CONTENT: LazyLock<Content> =
-    LazyLock::new(|| trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}")));
+/// The test files' story (ADR-0118): `test_wm1` to `test_wm3`.
+static CONTENT: LazyLock<Content> = LazyLock::new(crate::testkit::test_story);
 
 fn world() -> &'static WorldMapDef {
     CONTENT
@@ -74,14 +74,14 @@ fn a_mixed_lv_35_battle_passes_validation_with_enemies_around_its_level() {
 fn only_mages_means_only_mages() {
     let request = Request {
         units: Units::Only("mage".to_owned()),
-        chapters: vec!["ch02".to_owned()],
+        chapters: vec!["test_wm2".to_owned()],
         level: 40,
         ..request()
     };
     let made = generated(&request);
     let def = load(&made);
     assert!(def.enemies.iter().all(|u| u.class.0 == "mage"));
-    assert_eq!(made.army.chapter, "ch02");
+    assert_eq!(made.army.chapter, "test_wm2");
 }
 
 #[test]
@@ -201,7 +201,7 @@ fn the_place_joins_the_map_by_a_road_and_passes_its_checks() {
 #[test]
 fn a_place_for_one_chapter_opens_only_then_and_is_out_of_sight_otherwise() {
     let request = Request {
-        chapters: vec!["ch02".to_owned()],
+        chapters: vec!["test_wm2".to_owned()],
         ..request()
     };
     let made = generated(&request);
@@ -211,14 +211,14 @@ fn a_place_for_one_chapter_opens_only_then_and_is_out_of_sight_otherwise() {
     let mut campaign = trpg_core::Campaign::new_game(
         trpg_core::GameMode::Classic,
         lead,
-        "ch02".to_owned(),
+        "test_wm2".to_owned(),
         Vec::new(),
         0,
         trpg_core::Stock::default(),
     );
     campaign.enter_world(&def.map);
     assert!(def.map.is_open("skirmish_10_10", &campaign));
-    campaign.chapter = "ch03".to_owned();
+    campaign.chapter = "test_wm3".to_owned();
     assert!(!def.map.is_shown("skirmish_10_10", &campaign));
 }
 
@@ -336,7 +336,8 @@ fn the_army_is_the_earliest_chapter_s_or_the_story_s_last() {
         let chapters: Vec<String> = list.iter().map(|c| (*c).to_owned()).collect();
         army_chapter(&CONTENT, &chapters)
     };
-    assert_eq!(chapter(&["ch02", "ch01"]), Ok("ch01".to_owned()));
+    let earliest = chapter(&["test_wm3", "test_wm2"]);
+    assert_eq!(earliest, Ok("test_wm2".to_owned()));
     let last = story_chapters(&CONTENT).last().map(|c| c.id.clone());
     assert_eq!(chapter(&[]).ok(), last);
     assert_eq!(
@@ -392,7 +393,8 @@ proptest! {
         if let Ok(made) = generate(&CONTENT, world(), &request) {
             let def = load(&made);
             prop_assert_eq!(def.enemies.len(), ENEMIES as usize);
-            prop_assert!(def.player_slots.len() >= 6);
+            let army = roster_by(&CONTENT, &made.army.chapter);
+            prop_assert_eq!(def.player_slots.len(), army.len());
         }
     }
 }

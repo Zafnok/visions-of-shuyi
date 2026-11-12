@@ -68,11 +68,24 @@ fn the_enemy_numbers_come_in_order_unnamed_enemies_only() {
     assert_eq!(knob(&knobs, "Brigand at 8,2: count").range(), -1..=1);
     assert_eq!(knob(&knobs, "Brigand at 8,2: weapon").range(), -1..=1);
 
-    // ch01: the three with an `id` and the boss are named.
+    // test: its one enemy has an `id`, so it is named and has no knob.
+    let (test, knobs) = battle("test");
+    assert!(test.text.entries().iter().all(|e| !e.unnamed));
+    assert!(knobs.iter().all(|k| !k.name().starts_with("Brigand")));
+}
+
+/// Chapter 1's own enemies (ADR-0118 (a)): the three with an `id` and the
+/// boss are named, and have no knob.
+#[test]
+fn chapter_1s_named_enemies_have_no_knobs() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let (ch01, knobs) = battle("ch01");
     let unnamed = ch01.text.entries().iter().filter(|e| e.unnamed).count();
     assert_eq!(unnamed, 10);
-    assert!(knobs.iter().all(|k| !k.name().starts_with("Red Harl")));
+    let boss = &CONTENT.characters.characters[&trpg_core::CharacterId("red_captain".into())];
+    assert!(knobs.iter().all(|k| !k.name().starts_with(&boss.name)));
     assert!(
         !knobs
             .iter()
@@ -232,7 +245,7 @@ fn authored_parts(battle: &TunedBattle) -> String {
 
 #[test]
 fn autobalance_never_touches_named_units_map_or_objectives() {
-    for id in ["ch01", "quick", "test", "test_hold", "test_escape"] {
+    for id in ["quick", "test", "test_hold", "test_escape", "test_retreat"] {
         let (authored, knobs) = battle(id);
         let parts = authored_parts(&authored);
         for knob in &knobs {
