@@ -399,10 +399,9 @@ fn save_lines(ctx: &Ctx, plan: &ImportPlan) -> Vec<SaveLine> {
     let mut lines: Vec<SaveLine> = Vec::new();
     for entry in &plan.entries {
         let (chapter, playtime_s) = if let Some(n) = slot_of(&entry.key) {
+            // `save::slot` reads a slot as `GameCheck` does: saved is ready.
             match save::slot(&file, content, words, n) {
-                Slot::Saved(s) if entry.verdict == Verdict::Ready => {
-                    (Some(s.title(ctx)), Some(s.playtime_s))
-                }
+                Slot::Saved(s) => (Some(s.title(ctx)), Some(s.playtime_s)),
                 _ => (None, None),
             }
         } else if entry.key == SUSPEND_KEY {
