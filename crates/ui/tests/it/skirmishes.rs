@@ -28,6 +28,9 @@ const SMUGGLERS_COVE: &str = include_str!("fixtures/smugglers_cove_winning.ron")
 /// the two on the way guard it.
 #[test]
 fn the_four_places_are_their_fixed_skirmishes() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = content();
     let map = &content.worldmaps["act1"].map;
     for (place, guards, intro) in [

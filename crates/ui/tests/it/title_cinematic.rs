@@ -581,14 +581,20 @@ fn fight(h: &Harness) -> Option<([String; 2], f32)> {
 
 /// Tickets 0820 and 0833: the storyboard's shots in order, each where the
 /// song changes, with a snapshot of each (the battle's shots: below).
+/// The shots of talk show the real lines, so their snapshots are in the
+/// private repository's `content/tests/snapshots/` (ADR-0118).
 #[test]
 fn the_storyboard_plays_shot_by_shot() {
+    let Some(dir) = trpg_content::bundle::content_tests() else {
+        return;
+    };
     let mut h = title();
     // 2 (0:15): the opening lines of `ch01_intro`, three boxes.
     wait_until(&mut h, 22.0);
     assert_alone_at(&h, 22.0);
     assert!(matches!(frame(&h), Frame::Talk { index: 1, .. }));
-    assert_snapshot!("title_cinematic_2_intro_lines", h.snapshot());
+    let talk = h.snapshot();
+    assert_private_snapshot!(dir, "title_cinematic_2_intro_lines", talk);
     wait_until(&mut h, 30.5);
     assert!(matches!(frame(&h), Frame::Talk { index: 2, .. }));
     // 3 (0:30.75): the six faces, crossing from the right.
@@ -605,15 +611,16 @@ fn the_storyboard_plays_shot_by_shot() {
     let faces = h.snapshot();
     assert!(faces.contains("Tamsin") && faces.contains("Aske"));
     assert_snapshot!("title_cinematic_3_faces", faces);
-    // 4 (0:48.5): the opening line of `ch01_prebattle` (Maud's news), one
-    // box, for seven and a half seconds (ticket 0843).
+    // 4 (0:48.5): the opening line of `ch01_prebattle`, one box, for
+    // seven and a half seconds (ticket 0843).
     wait_until(&mut h, 48.4);
     assert!(matches!(frame(&h), Frame::Characters { .. }));
     wait_until(&mut h, 48.6);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     wait_until(&mut h, 53.0);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
-    assert_snapshot!("title_cinematic_4_prebattle_line", h.snapshot());
+    let line = h.snapshot();
+    assert_private_snapshot!(dir, "title_cinematic_4_prebattle_line", line);
     wait_until(&mut h, 55.9);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     // 12 (1:55.8, on the last chord): the logo, with the menu, until the

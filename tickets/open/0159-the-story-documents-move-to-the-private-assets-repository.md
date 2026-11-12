@@ -45,6 +45,12 @@ What moves (0153 §3.1, counted 2026-11-10):
 
   `chapter-1.md` (279 lines) moves too: under B+ Chapter 1's content
   is private as well.
+- `assets-src/audio/voice-audition.html`, the page Nick chose the voices
+  on (0043): it plays real Chapter 1 lines, so it is a story document too
+  (found by 0157's `cargo xtask check-leaks`, which skips it until this
+  ticket moves it; drop it from the check's `MOVING` list here). Its row
+  in `assets-src/audio/README.md` and the link in
+  `docs/design/voices-languages-and-script.md` point at the new place.
 
 Where they go: the assets repository's `story/` (made by 0156), with
 `story/design/` for the sections. A design doc that loses a section keeps
@@ -89,7 +95,9 @@ None.
   at `docs/story/README.md` saying where the story is and how to get it
   (`cargo shuyi private-assets`).
 - 0153's check (0157), or a grep, shows no story section left in
-  `docs/design/`.
+  `docs/design/`; once 0157 is done (either order works), `cargo xtask
+  check-leaks` passes with
+  `docs/story/` and the audition page dropped from its `MOVING` list.
 
 **Out (do not do):**
 - The `.dlg` scripts and the game's data (0160).

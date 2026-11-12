@@ -86,7 +86,7 @@ fn a_session_opens_on_the_battle_asked_for() {
     };
     assert!(unknown.starts_with("no battle \"nope\" in assets/battles/; the battles are: "));
     assert!(unknown.contains("ch04"), "{unknown}");
-    let h = harness(&start(&["--scene", "ch04_intro"])).unwrap();
+    let h = harness(&start(&["--scene", "test_intro"])).unwrap();
     assert_eq!(h.top_screen(), "dialogue");
 }
 

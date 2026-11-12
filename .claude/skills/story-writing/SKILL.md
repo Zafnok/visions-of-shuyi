@@ -316,8 +316,8 @@ The lead's rules are below (*Writing the lead*). For the craft:
   embarrassed, grateful, amused), shown plainly; information may follow.
   Two replies that get the same answer are one reply.
 - **Replies differ in stance and warmth, not information.** Each choice
-  point offers at least one warm reply, and replies can be acts ("Eat
-  something.", "I'll take the watch."). Saying nothing can be a reply, and
+  point offers at least one warm reply, and replies can be acts ("Give
+  me the pack.", "Sit. I'll cook."). Saying nothing can be a reply, and
   the companion fills the gap.
 - **The cast notices the lead.** In quiet scenes someone notices the lead's
   body or habits (the cut they hid, the meal they skipped) and cares for
