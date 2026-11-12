@@ -41,6 +41,8 @@ also found three gaps.
 **Either order with engine#2066:** if engine#2066 is done, read its
 `Behaviour:` lines as below; if not, build the rest and leave the
 `Behaviour:` part for a follow-up that engine#2066's completion names.
+engine#2066 is done (engine PR #374, in the pin since the pin move of
+2026-11-11): the first branch.
 
 ## Nick input
 
