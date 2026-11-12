@@ -204,7 +204,8 @@ fn a_file_of_another_build_imports_when_its_saves_are_this_version() {
     let ctx = h.game().ctx();
     let a = save::encode(&chapter_save(ctx, 1)).unwrap_or_else(|e| panic!("{e}"));
     let b = save::encode(&chapter_save(ctx, 2)).unwrap_or_else(|e| panic!("{e}"));
-    let text = String::from_utf8(file_of(&[("slot_04", a), ("slot_09", b)]));
+    let tips = ("tips_seen", "intro".to_owned());
+    let text = String::from_utf8(file_of(&[("slot_04", a), ("slot_09", b), tips]));
     let mut bundle = read_bundle(&text.unwrap_or_default()).unwrap_or_else(|e| panic!("{e}"));
     bundle.made.game = "0.0.1".to_owned();
     import_from_profile(&mut h);
@@ -226,7 +227,14 @@ fn a_file_of_another_build_imports_when_its_saves_are_this_version() {
         Some("The saves go into a new profile, Player 1 2.")
     );
     h.keys("Left f");
-    assert_eq!(keys_of(&h, 2), ["slot_04", "slot_09"]);
+    assert_eq!(keys_of(&h, 2), ["slot_04", "slot_09", "tips_seen"]);
+    // The notice counts the saves, not the tips seen.
+    assert!(
+        h.snapshot()
+            .contains("Added the profile Player 1 2: 2 imported, 0 refused"),
+        "{}",
+        h.snapshot()
+    );
 }
 
 /// A storage that fails the first write of one key, and works again.
