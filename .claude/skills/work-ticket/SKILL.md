@@ -69,7 +69,15 @@ git switch main && git pull --ff-only
 git switch -c t<NNNN>-<slug>
 ```
 
-Then free disk space:
+Then fetch the private repository's checkout, before the first build, so
+the build and the gates read the game's content as CI does (ADR-0117):
+
+```bash
+cargo shuyi private-assets
+```
+
+Without access it fails and the game builds on the public files: say so
+in the PR. Then free disk space:
 
 ```bash
 cargo xtask clean-merged-targets
@@ -145,6 +153,10 @@ Set `status: in-progress` in the ticket frontmatter.
   credit's `private` list, the pack to its row and the artist to the
   credit's `author`. `cargo shuyi private-assets --pin` refuses files
   without a credit; don't widen an old path just to get past it.
+- **A change to the game's private content or story documents**
+  (`assets-private/content/`, `assets-private/story/`, ADR-0117): follow
+  the `content-change` skill, a pull request in the private repository
+  first, then this PR moves `assets-private.rev`.
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a
   small, well-known crate for a local need does not.

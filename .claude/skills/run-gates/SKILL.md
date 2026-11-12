@@ -79,6 +79,15 @@ pin has moved: it builds with the new pin) and commits what it writes in
 `.claude/skills/`; then run `pwsh -File scripts/sync-agent-skills.ps1`
 and commit the Codex loaders too. The `engine-pin` skill says when.
 
+**The gates read the game's content** (ADR-0117): every build lays
+`assets-private/content/` over `assets/` when it is there, and every CI job
+that loads content checks it out. Run `cargo shuyi private-assets` in the
+worktree before the first build, so the gates read what CI reads. If it was
+fetched after a build, `bundle.rs`'s test that every layer is its folder
+fails and says to run `cargo clean -p trpg-content`. Without access the
+gates run on the public files; say so in the PR. A change to the content
+follows the `content-change` skill.
+
 **The gates never read the bought art** (ADR-0040): run them exactly as
 above, without `--features private-assets`, whether or not
 `assets-private/` is on the machine. A ticket that changes files in

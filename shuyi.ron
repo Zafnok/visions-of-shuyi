@@ -533,16 +533,19 @@
         ],
     ),
 
-    // The bought art (ticket 0110, ADR-0040): `game/` is embedded over
-    // `assets/` with the `private-assets` feature, `test/` over
-    // `assets-test/` (ADR-0057), `voice/` is copied to `voice/` (ADR-0046),
-    // `library/` is the bought packs the importers read. Every file of
-    // `game/` and `test/` needs a credit (ADR-0051).
+    // The private repository (ticket 0110, ADR-0040): `game/` is the bought
+    // art, embedded over `assets/` with the `private-assets` feature, `test/`
+    // over `assets-test/` (ADR-0057), `voice/` is copied to `voice/`
+    // (ADR-0046), `library/` is the bought packs the importers read. Every
+    // file of `game/` and `test/` needs a credit (ADR-0051). `content/` is
+    // the game's own content, embedded over `assets/` whenever it is there
+    // (ADR-0117), and `story/` its story documents, which no build reads;
+    // neither needs a credit.
     private_assets: (
         url: "https://github.com/Zafnok/visions-of-shuyi-assets.git",
         checkout: "assets-private",
         pin_file: "assets-private.rev",
-        folders: ["game", "test", "voice"],
+        folders: ["game", "test", "voice", "content", "story"],
         library: "library",
         copies: [(from: "voice", to: "voice")],
         credits: (
