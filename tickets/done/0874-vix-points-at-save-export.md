@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0872"]
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 0874 — Vix points at save export
@@ -63,14 +63,14 @@ dialogue pause allows short instructional tips; the writer may redo them,
 
 ## Acceptance criteria
 
-- [ ] A Harness test: the cursor on `Load Game` shows the save note, on
+- [x] A Harness test: the cursor on `Load Game` shows the save note, on
       `Profile` the profile note, on any other item none; the cursor
       still moves through the menu as before.
-- [ ] A Harness test: each tip shows once per profile, on the screens
+- [x] A Harness test: each tip shows once per profile, on the screens
       above, and names the export key of the player's keymap.
-- [ ] Snapshots of the title with each note; frame-png pictures.
-- [ ] No key named in code or text (`cargo shuyi check-keys`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Snapshots of the title with each note; frame-png pictures.
+- [x] No key named in code or text (`cargo shuyi check-keys`).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,5 +78,42 @@ dialogue pause allows short instructional tips; the writer may redo them,
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+**Done:**
+- **The title's note** (`screens/title.rs`, `TitleScreen::note`): with
+  the cursor on `Load Game`, Vix's note beside the menu says Load Game can
+  export a save; on `Profile`, that Profile can export the whole profile;
+  on any other item none. It is the 0842 note's box (`NoteView`,
+  `glyph::note_layout`), heading "Did you know?", and takes no key. It
+  shows wherever a save can be exported (desktop and web), never on the
+  Playdate, at every tutorial level.
+- **Which note wins:** while 0842's set-up note is due (a profile never
+  set up), it shows on every item, `Profile` and `Load Game` included: it
+  is the one asking the player for something, and the export notes are
+  only an aside (the agent's choice).
+- **Two tips** in `assets/data/tips.ron` (`export_save`, `export_profile`)
+  on two new triggers, `FirstLoadGame` and `FirstProfileScreen`. Each
+  names the export key (Unit info) in its `how` through the keymap, none
+  in its `text`. They are listed in Guides with the others (the list is
+  the file).
+- **`TipScreen`** (`crates/ui/src/tips/screen.rs`): a tip box over a
+  screen outside battle, closed by Confirm or Cancel. Load Game (with a
+  save in it) and the Profile screen push it on their first frame, the
+  first time per profile; the tip is marked seen when it is pushed.
+  Tips off (Options) or a platform without export: no tip.
+
+**Deviations:** none.
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+- Vix's lines for the note and the two tips are the agent's, in plain
+  words (allowed by the ticket; the writer may redo them).
+- The tips show regardless of a campaign's tutorial level, which only
+  exists inside a campaign; turning tips off in Options stops them.
+- The tip box sits at the top of the screen, over the list, as in
+  battle, until it is closed.
+
+**Engine friction:** estimate 170 production lines (the 0842 note and the
+battle's tip box as the reference), measured 127 (0.7×), under 2×.
+
+**Pictures:** `docs/img/0874-*.png`, from `cargo shuyi frame-png` with a
+save and a save folder put in by a local edit to frame-png's Harness (it
+starts with neither, so export is off there); the edit was not kept.

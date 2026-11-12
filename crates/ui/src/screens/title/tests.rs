@@ -1319,3 +1319,32 @@ fn a_profile_seen_set_up_is_kept_and_has_no_note() {
     t.uncovered(&mut c, None);
     assert_eq!(t.view(&c).note, None);
 }
+
+/// Ticket 0874: on a profile never set up, the set-up note (0842) shows
+/// wherever the cursor is, `Profile` and `Load Game` too; once it is set
+/// up, those two show the notes on exporting.
+#[test]
+fn the_set_up_note_wins_over_the_export_notes() {
+    let mut c = ctx();
+    c.platform.storage_place = shuyi_ui::StoragePlace::Folder("/saves".into());
+    let mut t = TitleScreen::new(&c);
+    t.menu = t
+        .menu
+        .clone()
+        .focused(t.items().iter().position(|&i| i == Profile).unwrap());
+    let heading = |t: &TitleScreen, c: &Ctx| t.view(c).note.map(|n| n.heading);
+    assert_eq!(heading(&t, &c).as_deref(), Some("Still Player 1?"));
+    c.storage.write(save::SUSPEND_KEY, "anything").unwrap();
+    t.refresh(&c);
+    let profile = t.items().iter().position(|&i| i == Profile).unwrap();
+    t.menu = t.menu.clone().focused(profile);
+    let note = t.view(&c).note.unwrap();
+    assert_eq!(note.heading, "Did you know?");
+    assert!(
+        note.lines.concat().contains("Profile can export"),
+        "{note:?}"
+    );
+    t.menu = t.menu.clone().focused(0);
+    assert_eq!(t.items()[0], Continue);
+    assert_eq!(t.view(&c).note, None);
+}

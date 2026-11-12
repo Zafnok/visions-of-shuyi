@@ -55,8 +55,10 @@ pub struct TitleView {
     pub menu: Option<MenuView>,
     /// Why `Continue` couldn't, until the next key.
     pub notice: Option<String>,
-    /// The guide's note beside the menu while the profile in use was never
-    /// set up (ticket 0842); shown and faded with the menu.
+    /// The guide's note beside the menu, shown and faded with the menu:
+    /// while the profile in use was never set up (ticket 0842); else, where
+    /// saves can be exported, while the cursor is on `Load Game` or
+    /// `Profile` (0874). It takes no keys.
     pub note: Option<NoteView>,
     /// The help line: what the keys do here (not shown with the prompt).
     pub help: Option<String>,

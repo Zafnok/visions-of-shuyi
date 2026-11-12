@@ -50,6 +50,8 @@ pub const SCENE_PREVIEW: &[Action] = &[Confirm, Cancel];
 pub const SPRITE_TEST: &[Action] = &[Cancel];
 /// It shows itself as its first screen and reads nothing.
 pub const FLOW: &[Action] = &[];
+/// What a tip over a screen reacts to (0874): either closes it.
+pub const TIP: &[Action] = &[Confirm, Cancel];
 /// What the guides screen reacts to.
 pub const GUIDES: &[Action] = &[CursorUp, CursorDown, Cancel];
 /// What the battle screen reacts to.
@@ -166,13 +168,14 @@ pub const WORLD_MAP: &[Action] = &[
 /// Every screen the game can show, for `check --target`: the game's by the
 /// table above, the engine's by the widgets they declare themselves with.
 pub fn every_screen() -> Vec<ScreenActions<Action>> {
-    let own: [(&'static str, &[Action]); 26] = [
+    let own: [(&'static str, &[Action]); 27] = [
         (CinematicScreen::NAME, CINEMATIC),
         (PortraitViewerScreen::NAME, PORTRAIT_VIEWER),
         (ScenePreviewScreen::NAME, SCENE_PREVIEW),
         (SpriteTestScreen::NAME, SPRITE_TEST),
         (FlowScreen::NAME, FLOW),
         (GuidesScreen::NAME, GUIDES),
+        (crate::tips::TipScreen::NAME, TIP),
         (BattleScreen::NAME, BATTLE),
         (RewindScreen::NAME, REWIND),
         (ShopScreen::NAME, SHOP),
@@ -245,7 +248,7 @@ mod tests {
             assert!(found.next().is_none(), "{name} twice");
             screen.actions.clone().unwrap_or_default()
         };
-        assert_eq!(screens.len(), 33);
+        assert_eq!(screens.len(), 34);
         assert_eq!(listed(BattleScreen::NAME), BATTLE);
         assert_eq!(listed("title"), TITLE);
         assert_eq!(listed(FlowScreen::NAME), FLOW);

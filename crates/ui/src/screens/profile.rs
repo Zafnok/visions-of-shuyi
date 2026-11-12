@@ -6,7 +6,8 @@
 //! under the cursor as a file ([`save_files`]), and on a desktop a line
 //! says where the saves are, with a key that opens the folder. Adding a
 //! profile opens the first-launch layout picker for it
-//! ([`layout_picker::first`]). Its look is the engine's glyph skin
+//! ([`layout_picker::first`]). The first time it opens where a profile
+//! can be exported, the guide's tip says so ([`TipScreen`], 0874). Its look is the engine's glyph skin
 //! ([`glyph::paint`], ADR-0054) with the place line under it, or on the
 //! Playdate [`playdate::paint`] ([`SKINS`], ADR-0083).
 
@@ -24,6 +25,8 @@ use crate::save_files::{self, Export, ExportNotice, Exported};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::Skins;
 use crate::screens::files::{self, PlaceView};
+use crate::tips::TipScreen;
+use trpg_content::TipTrigger;
 
 /// The engine's profiles screen on this game.
 pub type ProfileList = ProfilesScreen<Shuyi>;
@@ -39,6 +42,9 @@ const HELP_EXPORT_FOLDER: &str = "profile.help.list_export_folder";
 pub struct ProfileScreen {
     list: ProfileList,
     notice: ExportNotice,
+    /// Whether the guide's tip on exporting was looked at (ticket 0874):
+    /// the first update does.
+    tip_asked: bool,
 }
 
 impl Deref for ProfileScreen {
@@ -66,6 +72,7 @@ pub fn screen(ctx: &Ctx) -> ProfileScreen {
     ProfileScreen {
         list,
         notice: ExportNotice::default(),
+        tip_asked: false,
     }
 }
 
@@ -145,6 +152,12 @@ impl Screen<Shuyi> for ProfileScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if !core::mem::replace(&mut self.tip_asked, true)
+            && save_files::can_export(&ctx.platform)
+            && let Some(tip) = TipScreen::once(ctx, TipTrigger::FirstProfileScreen)
+        {
+            return Transition::Push(Box::new(tip));
+        }
         let ours = input.actions.iter().any(|a| files::ACTIONS.contains(a));
         if ours && self.list_alone(ctx) {
             for &action in &input.actions {

@@ -45,6 +45,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::profiles::{self, SetUp};
 use crate::save;
+use crate::save_files;
 use crate::screen::{
     Ctx, FrameInput, IdleMotion, KeyPrompt, Keyboard, Screen, ScreenResult, Shuyi, SkinSet,
     Transition,
@@ -92,6 +93,15 @@ pub const NOTE_HEADING: &str = "title.note.heading";
 pub const NOTE_TEXT: &str = "title.note.text";
 /// The guide's expression in that note: plain instructions.
 const NOTE_FACE: &str = "neutral";
+/// Text key of the heading of the guide's notes on exporting (ticket
+/// 0874), beside `Load Game` and `Profile`.
+pub const EXPORT_NOTE_HEADING: &str = "title.note.export_heading";
+/// Text key of the note beside `Load Game`: a save can be exported there.
+pub const EXPORT_SAVE_NOTE: &str = "title.note.export_save";
+/// Text key of the note beside `Profile`: a profile can be exported there.
+pub const EXPORT_PROFILE_NOTE: &str = "title.note.export_profile";
+/// The guide's expression in those notes: a friendly aside.
+const EXPORT_NOTE_FACE: &str = "smile";
 
 /// Seconds the menu waits without a press before the cinematic takes over
 /// (Nick's number; *tunable*).
@@ -413,15 +423,42 @@ impl TitleScreen {
             prompt: waiting.then(|| ctx.text(Self::prompt_key(ctx)).to_owned()),
             menu: menu.then(|| self.menu.view()),
             notice: self.notice.clone().filter(|_| menu),
-            note: (menu && !self.set_up.done()).then(|| Self::note(ctx)),
+            note: menu.then(|| self.note(ctx)).flatten(),
             help: menu.then(|| Self::help(ctx)),
             debug_hint: debug_hint(ctx),
         }
     }
 
-    /// The guide's note suggesting the Profile screen (ticket 0842), with
-    /// the name of the profile in use.
-    fn note(ctx: &Ctx) -> NoteView {
+    /// The guide's note beside the menu, if any. On a profile never set
+    /// up, the one suggesting the Profile screen (ticket 0842), with the
+    /// name of the profile in use, wherever the cursor is: it asks for
+    /// something, the others only tell. Otherwise, where saves can be
+    /// exported, the one saying so for the item under the cursor, `Load
+    /// Game` or `Profile` (0874).
+    fn note(&self, ctx: &Ctx) -> Option<NoteView> {
+        if !self.set_up.done() {
+            let profiles = ctx.profiles();
+            let profile = profiles.get(profiles.current());
+            // check-text: not a data name (the player's own)
+            let name = profile.map_or("", |p| p.name.as_str());
+            let heading = ctx.text_with(NOTE_HEADING, &[("name", &name)]);
+            return Some(Self::guide_note(ctx, heading, NOTE_TEXT, NOTE_FACE));
+        }
+        if !save_files::can_export(&ctx.platform) {
+            return None;
+        }
+        let text = match self.menu.value(self.menu.focus())? {
+            Item::LoadGame => EXPORT_SAVE_NOTE,
+            Item::Profile => EXPORT_PROFILE_NOTE,
+            _ => return None,
+        };
+        let heading = ctx.text_with(EXPORT_NOTE_HEADING, &[]);
+        Some(Self::guide_note(ctx, heading, text, EXPORT_NOTE_FACE))
+    }
+
+    /// A note of the guide's: `heading`, the text of key `text`, and the
+    /// guide's `face` if the game has it.
+    fn guide_note(ctx: &Ctx, heading: String, text: &str, face: &str) -> NoteView {
         let words = ctx.words();
         let guide = ctx
             .game
@@ -429,21 +466,17 @@ impl TitleScreen {
             .portraits
             .get(trpg_content::tip::GUIDE_PORTRAIT);
         let face = guide
-            .is_some_and(|p| p.expression(NOTE_FACE).is_some())
+            .is_some_and(|p| p.expression(face).is_some())
             .then(|| FaceView {
                 portrait: trpg_content::tip::GUIDE_PORTRAIT.to_owned(),
-                expression: NOTE_FACE.to_owned(),
+                expression: face.to_owned(),
             });
-        let profiles = ctx.profiles();
-        let profile = profiles.get(profiles.current());
-        // check-text: not a data name (the player's own)
-        let name = profile.map_or("", |p| p.name.as_str());
         NoteView {
             title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
-            heading: ctx.text_with(NOTE_HEADING, &[("name", &name)]),
+            heading,
             lines: ctx
-                .text_with(NOTE_TEXT, &[])
+                .text_with(text, &[])
                 .lines()
                 .map(str::to_owned)
                 .collect(),

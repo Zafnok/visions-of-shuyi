@@ -29,7 +29,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
 ║ Weapon kinds                    │                                                                ║
-║                                 │                                                                ║
+║ Exporting a save                │                                                                ║
 ║                                 │                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
                                                                                                     
