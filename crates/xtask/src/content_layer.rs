@@ -107,7 +107,7 @@ pub(crate) mod tests {
             &[
                 ("assets/dialogue/a.dlg", "public a"),
                 ("assets/dialogue/b.dlg", "public b"),
-                ("assets/dialogue/README.md", "notes"),
+                ("assets/dialogue/notes.txt", "not a script"),
                 ("assets-private/content/dialogue/a.dlg", "private a"),
                 ("assets-private/content/dialogue/c.dlg", "private c"),
             ],

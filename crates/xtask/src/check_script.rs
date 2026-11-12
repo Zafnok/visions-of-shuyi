@@ -251,7 +251,7 @@ mod tests {
     /// The content's scripts (ADR-0117) replace `assets/`'s of their name
     /// and are reported under their own; the test scripts are still read.
     #[test]
-    fn the_contents_scripts_are_read_over_the_storys() {
+    fn the_contents_scripts_are_read_over_assets_scripts() {
         let repo = crate::content_layer::tests::repo(
             "check-script",
             &[
