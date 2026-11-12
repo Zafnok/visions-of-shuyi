@@ -563,7 +563,7 @@ fn hold_won(mode: GameMode, with_knight: bool) -> (Option<String>, Campaign) {
     (text, campaign.unwrap_or_else(|| panic!("no campaign")))
 }
 
-/// A scene's death (`@dies`, Hollis, 0319): with the knight in the army,
+/// A scene's death (`@dies`, 0319): with the knight in the army,
 /// the closing scene plays their version and they leave the army for good,
 /// in Classic and Casual alike, their weapons to the stock; without them
 /// (died earlier), the lead's version plays and nobody leaves.

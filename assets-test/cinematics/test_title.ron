@@ -1,0 +1,15 @@
+// TEST FILE: a cinematic timed to the `title` song as the title's own is
+// (ticket 0163, ADR-0118), for the title screen's tests, which play it as
+// the title's: a pan over the test battle, a fight at 69.95 s, another pan
+// and the logo at 115.8 s, the song's length in all. Not story content.
+(
+    id: "test_title",
+    length: Music("title"),
+    shots: [
+        (at: 0.0, shot: MapPan(battle: "test", from: (5.75, 3.5), to: (7.25, 3.5), zoom: 3)),
+        (at: 69.95, shot: Combat(battle: "test", attacker: "lead", target: "road_brigand",
+            from: (7, 3), seed: 10)),
+        (at: 74.5, shot: MapPan(battle: "test", from: (7.25, 3.5), to: (5.75, 3.5), zoom: 3)),
+        (at: 115.8, shot: Logo),
+    ],
+)

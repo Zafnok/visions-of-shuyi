@@ -986,14 +986,17 @@ fn a_scene_with_nothing_to_say_for_those_there_starts_finished() {
 proptest! {
     /// Every scene of the game, played for any army: nobody the army can
     /// lose is on screen unless they are there, whichever replies are
-    /// picked. (Those a scene can't play without are always there: Gil in
-    /// the scene before his fight on Millhaven Road, 1071.)
+    /// picked. (Those a scene can't play without are always there, 1071.)
+    /// A test of the game's own scenes and cast (ADR-0118).
     #[test]
     fn no_embedded_scene_shows_someone_who_is_gone(
         there in proptest::collection::vec(any::<bool>(), 8),
         pick in 0usize..3,
     ) {
         use trpg_content::dialogue::Cast;
+        if trpg_content::bundle::skip_without_the_game() {
+            return Ok(());
+        }
         let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
         let cast = Cast::new(
             &content.new_game,
@@ -1100,14 +1103,14 @@ fn the_place_lasts_until_the_next_place_line() {
         }))
     };
     let battle = Step::Directive(Stage::Setting(PlaceLine::Battle {
-        at: trpg_core::Pos::new(20, 3),
+        at: trpg_core::Pos::new(11, 5),
         bright: None,
     }));
     let mut p = play(&Scene {
         id: "s".into(),
         steps: vec![
             narration("Black."),
-            at("ch01", 3, 12),
+            at("test_small", 3, 6),
             narration("The green."),
             narration("Still the green."),
             Step::Choice {
@@ -1125,8 +1128,8 @@ fn the_place_lasts_until_the_next_place_line() {
     assert_eq!(place(&p), None);
     p.advance();
     let green = Some(PlaceLine::Map {
-        map: "ch01".into(),
-        at: trpg_core::Pos::new(3, 12),
+        map: "test_small".into(),
+        at: trpg_core::Pos::new(3, 6),
         bright: None,
     });
     assert_eq!(place(&p), green);
@@ -1138,7 +1141,7 @@ fn the_place_lasts_until_the_next_place_line() {
     assert_eq!(place(&p), green);
     p.choose(0);
     let fort = Some(PlaceLine::Battle {
-        at: trpg_core::Pos::new(20, 3),
+        at: trpg_core::Pos::new(11, 5),
         bright: None,
     });
     assert_eq!(place(&p), fort);

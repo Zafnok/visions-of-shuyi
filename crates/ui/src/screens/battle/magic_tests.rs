@@ -1853,71 +1853,37 @@ fn the_spell_lists_are_told_in_the_players_language() {
     assert!(!texts.iter().any(|t| t.contains("Test Mage")), "{texts:?}");
 }
 
-// ---- Cinder Oath (0317) ------------------------------------------------------
+// ---- A spell the defender can't counter (0317) ---------------------------
 
-/// Chapter 1 as a new game starts it (the shipped New Game, not
-/// [`ctx`]'s test chapter), with a brigand of the Red Company moved beside
-/// Rue, and Rue's id.
-fn rue_beside_a_brigand() -> (BattleState, UnitId) {
-    let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
-    let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
-    let campaign = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
-    let mut setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
-    let units = &mut setup.units;
-    let rue = units
-        .iter()
-        .position(|u| u.character.as_ref().is_some_and(|ch| ch.0 == "heretic"))
-        .expect("Rue in Chapter 1");
-    let at = units[rue].pos;
-    let free = [p(1, 0), p(-1, 0), p(0, 1), p(0, -1)]
-        .into_iter()
-        .map(|d| p(at.x + d.x, at.y + d.y))
-        .find(|&t| setup.map.tiles.in_bounds(t) && units.iter().all(|u| u.pos != t))
-        .expect("a free tile beside Rue");
-    let brigand = units
-        .iter()
-        .position(|u| u.faction == trpg_core::Faction::Enemy && u.class.0 == "brigand")
-        .expect("a brigand in Chapter 1");
-    units[brigand].pos = free;
-    let id = units[rue].id;
-    (BattleState::new(setup).0, id)
+/// [`field`] with a brigand (unit 4) moved beside the mage, above it at
+/// (0, 3), where its axe could strike back, and the mage's Fire the target
+/// of its list.
+fn fire_on_the_brigand(c: &mut Ctx) -> ForecastView {
+    let (map, mut units) = quick_units(c);
+    units[7].pos = p(0, 4);
+    units[6].pos = p(1, 4);
+    units[3].pos = p(0, 3);
+    units[1].pos = p(0, 5);
+    units[2].pos = p(4, 6);
+    let state = battle_with(c, map, units, Objective::Rout { turn_limit: None });
+    let s = casting(c, state, 0);
+    assert_eq!(targeting(&s).target(), on_unit(4));
+    forecast_of(&s, c)
 }
 
-/// Rue attacks the brigand beside her with Cinder Oath: the forecast's
-/// enemy side says `no counter`.
+/// An attack spell marked `no_counter` (Cinder Oath's rule): the
+/// forecast's enemy side says `no counter`, where the same spell without
+/// it shows the brigand's counter. Fire is given the mark here, so the
+/// test needs no spell of the game's.
 #[test]
-fn cinder_oath_shows_no_counter_in_chapter_1() {
+fn a_spell_the_defender_cant_counter_shows_no_counter() {
     let mut c = ctx();
-    let (state, rue) = rue_beside_a_brigand();
-    let at = state.unit(rue).unwrap().pos;
-    let mut s = BattleScreen::new(state);
-    s.cursor.jump(at);
-    step(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
-    choose(&mut s, &mut c, MenuEntry::Magic);
-    let Mode::List { menu, .. } = s.mode() else {
-        panic!("{:?}", s.mode());
-    };
-    let choices = menu.spells();
-    let oath = choices
-        .iter()
-        .position(|ch| ch.spell == sid("cinder_oath") && ch.active.is_none())
-        .expect("Cinder Oath in Rue's spell list");
-    for _ in 0..choices.len() {
-        let Mode::List { menu, .. } = s.mode() else {
-            unreachable!()
-        };
-        assert_ne!(
-            menu.spells(),
-            [] as [crate::screens::battle::magic::SpellChoice; 0]
-        );
-        if menu.focus() == oath {
-            break;
-        }
-        step(&mut s, &mut c, &[Action::CursorDown]);
-    }
-    step(&mut s, &mut c, &[Action::Confirm]);
-    assert!(matches!(s.mode(), Mode::CastTarget(_)), "{:?}", s.mode());
-    let shown = forecast_of(&s, &c);
-    assert_eq!(shown.sides[0].weapon, "Cinder Oath");
+    let plain = fire_on_the_brigand(&mut c);
+    assert_eq!(plain.sides[0].weapon, "Fire");
+    assert_eq!(plain.no_counter, None);
+    let fire = c.game.content.spells.spells.get_mut(&sid("fire"));
+    fire.expect("the test files' Fire").no_counter = true;
+    let shown = fire_on_the_brigand(&mut c);
+    assert_eq!(shown.sides[0].weapon, "Fire");
     assert_eq!(shown.no_counter.as_deref(), Some("no counter"));
 }

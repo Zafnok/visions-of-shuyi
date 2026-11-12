@@ -413,7 +413,7 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
         id: id.to_owned(),
         ..exile.clone()
     };
-    table.insert("heretic".to_owned(), named("heretic"));
+    table.insert("test_mage".to_owned(), named("test_mage"));
     table.insert("lead_m".to_owned(), named("lead_m"));
     table.insert("lead_f".to_owned(), named("lead_f"));
     let fighter = |character: Option<&str>, class: &str| Fighter {
@@ -427,10 +427,10 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
         pos: Pos::new(0, 0),
     };
     let id = |f: &Fighter| picture(&c, &c.game.lead, f).map(|p| p.id);
-    // Rue has her own, whatever her class.
+    // A character with its own has it, whatever its class.
     assert_eq!(
-        id(&fighter(Some("heretic"), "mage")).as_deref(),
-        Some("heretic")
+        id(&fighter(Some("test_mage"), "mage")).as_deref(),
+        Some("test_mage")
     );
     // The lead's is by gender (male by default), before the class's.
     assert_eq!(
@@ -441,9 +441,9 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
     let mara = LeadProfile::new("Mara", LeadGender::Female);
     let lead = fighter(Some("lead"), "exile");
     assert_eq!(picture(&c, &mara, &lead).unwrap().id, "lead_f");
-    // Hollis has none: his class's.
+    // A character with none: its class's.
     assert_eq!(
-        id(&fighter(Some("retainer"), "guard")).as_deref(),
+        id(&fighter(Some("test_knight"), "guard")).as_deref(),
         Some("guard")
     );
     assert_eq!(id(&fighter(None, "raider")).as_deref(), Some("raider"));

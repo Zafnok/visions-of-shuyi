@@ -269,7 +269,7 @@ fn levels_battles_and_the_switch_gate_the_lessons() {
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let plain = BattleScreen::new(quick_battle(&c.game.content).unwrap());
     assert_eq!(shown(&mut c, plain), None);
-    let other = quick().in_battle("ch01");
+    let other = quick().in_battle("another_battle");
     assert_eq!(shown(&mut c, other), None);
     c.game.lessons = crate::screen::Lessons::Off;
     assert_eq!(shown(&mut c, quick()), None);

@@ -268,19 +268,19 @@ fn the_overlay_leaves_the_rest_of_the_screen() {
     assert_eq!(portrait_sprite(&buf, LEFT_X).map(|s| s.opacity), Some(255));
 }
 
-/// Chapter 1's map centred on Harrowby, as the screen's place: the whole
-/// map fits the glyph look's screen, in its middle.
-fn harrowby(c: &Ctx) -> crate::map_view::MapScene {
-    let place = crate::map_view::Place::of_map(&c.game.content.maps["ch01"]);
+/// The test map `test_small` as the screen's place: the whole map fits the
+/// glyph look's screen, in its middle.
+fn small_place(c: &Ctx) -> crate::map_view::MapScene {
+    let place = crate::map_view::Place::of_map(&c.game.content.maps["test_small"]);
     let view = c.game.map_skin.view_tiles(Rect::new(0, 0, 100, 32));
-    place.scene(trpg_core::Pos::new(3, 12), view)
+    place.scene(trpg_core::Pos::new(7, 4), view)
 }
 
 #[test]
 fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
     let c = ctx();
     assert_eq!(c.game.map_skin.name(), "glyph");
-    let scene = harrowby(&c);
+    let scene = small_place(&c);
     let view = DialogueView {
         place: Some(scene.clone()),
         caption: Some("The green".to_owned()),
@@ -296,13 +296,13 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
         .map_skin
         .paint(&c, &scene, place.bounds(), &mut place);
     place.fade(PLACE_BRIGHTNESS);
-    for (x, y) in [(40, 10), (50, 20), (60, 3), (36, 16)] {
+    for (x, y) in [(40, 14), (50, 20), (60, 3), (36, 16)] {
         assert_eq!(buf.get(x, y), place.get(x, y), "cell {x},{y}");
         assert_ne!(glyph(&buf, x, y), Some('x'), "cell {x},{y}");
     }
     // A map tile there, not the black around the map.
     assert_ne!(
-        buf.get(40, 10).map(|c| c.bg),
+        buf.get(40, 14).map(|c| c.bg),
         Some(black.scale(PLACE_BRIGHTNESS))
     );
     // The place covers the whole screen, between the plates and the box
@@ -324,7 +324,7 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
         overlay: true,
         ..view
     });
-    assert_eq!(over.get(40, 10), place.get(40, 10));
+    assert_eq!(over.get(40, 14), place.get(40, 14));
     assert_eq!(over.get(50, PLATE_Y + 1), place.get(50, PLATE_Y + 1));
 }
 
@@ -333,7 +333,7 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
 #[test]
 fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
     let c = ctx();
-    let scene = harrowby(&c);
+    let scene = small_place(&c);
     let at = |darkened| {
         painted(&DialogueView {
             place: Some(scene.clone()),
@@ -351,7 +351,7 @@ fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
     // The place as the map skin paints it, where the frames and the text
     // box would be too: no portraits, plates or box.
     for (x, y) in [
-        (40, 10),
+        (40, 14),
         (LEFT_X + 5, FRAME_Y + 5),
         (50, TEXT_BOX.y),
         (80, 25),
@@ -363,9 +363,9 @@ fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
     // Half way through darkening, then as dark as behind the talk.
     let mut half = place.clone();
     half.fade(1.0 - (1.0 - PLACE_BRIGHTNESS) / 2.0);
-    assert_eq!(at(0.5).get(40, 10), half.get(40, 10));
+    assert_eq!(at(0.5).get(40, 14), half.get(40, 14));
     place.fade(PLACE_BRIGHTNESS);
-    assert_eq!(at(1.0).get(40, 10), place.get(40, 10));
+    assert_eq!(at(1.0).get(40, 14), place.get(40, 14));
 }
 
 /// A place whose `@place` line asks for its own brightness (0738) is
@@ -373,7 +373,7 @@ fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
 #[test]
 fn a_place_may_be_darkened_less_than_the_rest() {
     let c = ctx();
-    let scene = harrowby(&c);
+    let scene = small_place(&c);
     let black = c.palette.get(UiColor::Black);
     let mut place = GlyphBuffer::new(100, 32, Cell::new(' ', c.palette.get(UiColor::Text), black));
     c.game
@@ -385,12 +385,12 @@ fn a_place_may_be_darkened_less_than_the_rest() {
         bright: Some(0.6),
         ..two_speakers()
     };
-    assert_eq!(painted(&view).get(40, 10), place.get(40, 10));
+    assert_eq!(painted(&view).get(40, 14), place.get(40, 14));
     let darkened = DialogueView {
         opening: Some(OpeningView { darkened: 1.0 }),
         ..view
     };
-    assert_eq!(painted(&darkened).get(40, 10), place.get(40, 10));
+    assert_eq!(painted(&darkened).get(40, 14), place.get(40, 14));
 }
 
 #[test]

@@ -269,7 +269,8 @@ fn the_prompt_is_a_window_of_its_own_in_the_menus_place() {
 /// the cinematic once it is more than half bright.
 #[test]
 fn the_menu_and_the_cinematic_cut_in_halfway_through_their_fades() {
-    let c = pd_ctx();
+    let mut c = pd_ctx();
+    crate::screens::title::tests::with_test_title(&mut c);
     let mut v = view(&c);
     v.menu_opacity = 128;
     assert!(rows_of(&c, &v)[8].contains("New Game"));
@@ -288,7 +289,7 @@ fn the_menu_and_the_cinematic_cut_in_halfway_through_their_fades() {
     let buf = painted(&c, &v);
     let (image, _) = logo(&c);
     assert!(buf.sprites().iter().all(|s| s.image != image), "no logo");
-    // The moment the view says: 70 s in, the brigand's attack.
+    // The moment the view says: 70 s in, the fight.
     let mut fight = blank();
     player.draw(&c, 70.0, 1.0, &mut fight);
     assert_eq!(rows(&buf), rows(&fight));
@@ -322,6 +323,7 @@ fn the_menu_and_the_cinematic_cut_in_halfway_through_their_fades() {
 #[test]
 fn the_cinematics_shots_are_painted_in_the_playdates_look() {
     let mut c = pd_ctx();
+    crate::screens::title::tests::with_test_title(&mut c);
     c.console = ConsoleSpec::PLAYDATE;
     let player = CinematicPlayer::new(&c, "title", None).unwrap();
     let screen = Rect::new(0, 0, 50, 15);
@@ -337,7 +339,7 @@ fn the_cinematics_shots_are_painted_in_the_playdates_look() {
         "{frame:?}"
     );
     assert!(draw(1.0).backdrop().is_some(), "the map");
-    // The brigand's attack (69.95 s on): the plates along the bottom.
+    // The fight (69.95 s on): the plates along the bottom.
     let fight = draw(70.0);
     let corner = fight.get(0, 12).map(|c| c.glyph);
     assert!(matches!(corner, Some('┌' | '╔')), "{corner:?}");

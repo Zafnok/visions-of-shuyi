@@ -1072,26 +1072,27 @@ fn a_deflected_strike_and_an_overwatch_shot_show_in_the_playback() {
 }
 
 /// Opening the unit menu searches the moving unit's paths once (1247):
-/// the rider of `cargo shuyi bench`'s `battle-attack` (Tamsin, in *The
-/// Company Ledger*) walks onto the bridge beside the swordsman, and every
-/// art, weapon and target of the menu is checked against that one move,
-/// not against a fresh search each.
+/// the Quick Battle's archer (no skills, as the bench battle's rider)
+/// walks to two tiles from the brigand at (7, 4), and every art, weapon
+/// and target of the menu is checked against that one move, not against a
+/// fresh search each. (`bench/`'s attack times the same on the biggest
+/// battle.)
 #[test]
 fn opening_the_unit_menu_searches_the_move_once() {
-    use Action::{Confirm, CursorDown, CursorRight, CursorUp};
+    use Action::{Confirm, CursorLeft, CursorRight, CursorUp};
     use trpg_core::movement::searches;
-    use trpg_core::{GameMode, LeadGender, LeadProfile};
     let mut c = ctx();
-    let content = &c.game.content;
-    let def = &content.battles["side_company_ledger"];
-    let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let campaign = trpg_content::battle_campaign(content, def, GameMode::Classic, lead);
-    let (state, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    let state = super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
     let mut s = BattleScreen::new(state);
-    for action in [CursorRight, CursorRight, CursorDown, Confirm] {
-        step(&mut s, &mut c, &[action]);
-    }
-    for action in [CursorRight, CursorRight, CursorUp, CursorUp, CursorUp] {
+    // From the lead (3, 5) to the archer (2, 4), then to (5, 4).
+    for action in [
+        CursorLeft,
+        CursorUp,
+        Confirm,
+        CursorRight,
+        CursorRight,
+        CursorRight,
+    ] {
         step(&mut s, &mut c, &[action]);
     }
     step(&mut s, &mut c, &[Confirm]);
@@ -1103,5 +1104,6 @@ fn opening_the_unit_menu_searches_the_move_once() {
         panic!("no unit menu: {:?}", s.mode());
     };
     assert!(menu.values().contains(&MenuEntry::Arts));
+    assert!(!menu.values().contains(&MenuEntry::Skill));
     assert_eq!(searches() - before, 1);
 }

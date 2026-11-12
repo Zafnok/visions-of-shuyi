@@ -3,9 +3,25 @@ use crate::audio::{AudioRequest, pick_from_pool};
 use crate::color::UiColor;
 use crate::glyph_buffer::Cell;
 use crate::input::Action;
-use crate::screen::tests::ctx;
 use crate::storage::Storage;
 use Item::{Continue, Credits, LoadGame, NewGame, Options, Profile, QuickBattle, Quit};
+
+/// [`crate::screen::tests::ctx`] with the test files' `test_title` as the
+/// title's cinematic ([`with_test_title`]).
+fn ctx() -> Ctx {
+    let mut c = crate::screen::tests::ctx();
+    with_test_title(&mut c);
+    c
+}
+
+/// Makes the test files' `test_title` the title's cinematic (ADR-0118): it
+/// is timed to the title song as the game's own is, its fight at 69.95 s
+/// and its logo at 115.8 s, so the title's tests need none of the game's.
+pub(crate) fn with_test_title(c: &mut Ctx) {
+    let mut title = c.game.content.cinematics["test_title"].clone();
+    title.id = TITLE_CINEMATIC.to_owned();
+    c.game.content.cinematics.insert(title.id.clone(), title);
+}
 
 /// The pool the Quick Battle's file names (`assets-test/battles/quick.ron`).
 const QUICK_BATTLE_MUSIC_POOL: &str = "skirmish";

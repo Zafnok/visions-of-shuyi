@@ -89,26 +89,47 @@ mod tests {
         assert_eq!(q.take()[0].cue(), Some(CURSOR_MOVE));
     }
 
-    /// The embedded audio manifest (with the real `skirmish` pool).
+    /// A made-up manifest: a `pool` of three looped tracks, each 10 s.
     fn manifest() -> trpg_content::AudioManifest {
-        trpg_content::load_embedded().unwrap().audio
+        use trpg_content::{CreditRef, MusicCue};
+        let mut m = trpg_content::AudioManifest::default();
+        let cues = ["one", "two", "three"];
+        for cue in cues {
+            let track = MusicCue {
+                file: format!("{cue}.ogg"),
+                volume: 100,
+                looped: true,
+                length_ms: 10_000,
+                credit: CreditRef::Own,
+                group: None,
+            };
+            m.music.insert(cue.to_owned(), track);
+        }
+        m.pools
+            .insert("pool".to_owned(), cues.map(str::to_owned).to_vec());
+        m
     }
 
     #[test]
-    fn a_pool_pick_is_a_cue_of_the_skirmish_pool() {
+    fn a_pool_pick_is_a_cue_of_the_pool() {
         let m = manifest();
-        let pool = &m.pools["skirmish"];
+        let pool = &m.pools["pool"];
         for seed in [0, 1, 2, u64::MAX] {
-            let cue = pick_from_pool(&m, "skirmish", seed).unwrap();
+            let cue = pick_from_pool(&m, "pool", seed).unwrap();
             assert!(pool.iter().any(|c| c == cue), "{cue}");
         }
+        assert_eq!(pick_from_pool(&m, "no_such_pool", 0), None);
     }
 
     /// Ticket 0809: the `victory` pool is the 13 Win Jingle versions, each
-    /// played once, and two seeds can pick two of them. `defeat` loops.
+    /// played once, and two seeds can pick two of them. `defeat` loops. A
+    /// test of the game's own cue table (ADR-0118).
     #[test]
     fn the_victory_pool_is_thirteen_stings_and_seeds_pick_different_ones() {
-        let m = manifest();
+        if trpg_content::bundle::skip_without_the_game() {
+            return;
+        }
+        let m = trpg_content::load_embedded().unwrap().audio;
         let pool = &m.pools["victory"];
         assert_eq!(pool.len(), 13);
         for cue in pool {
@@ -124,26 +145,26 @@ mod tests {
         assert!(m.music["defeat"].looped);
     }
 
+    /// A looped track's clock is the time played, round its length.
     #[test]
-    fn the_embedded_title_track_has_a_clock() {
+    fn a_looped_track_has_a_clock() {
         let m = manifest();
-        let clock = MusicClock::from_elapsed(&m, "title", 140.0);
+        let clock = MusicClock::from_elapsed(&m, "two", 25.5);
         let clock = clock.unwrap();
-        assert!((clock.length - 133.743).abs() < 1e-3, "{clock:?}");
-        assert!((clock.position - 6.257).abs() < 1e-3, "{clock:?}");
+        assert!((clock.length - 10.0).abs() < 1e-3, "{clock:?}");
+        assert!((clock.position - 5.5).abs() < 1e-3, "{clock:?}");
     }
 
     proptest::proptest! {
-        // Each case loads the embedded content; a few dozen are plenty.
         #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
 
         /// Over enough seeds, every track in the pool comes up.
         #[test]
         fn every_track_in_a_pool_can_be_picked(start in proptest::prelude::any::<u64>()) {
             let m = manifest();
-            let pool = &m.pools["skirmish"];
+            let pool = &m.pools["pool"];
             let picked: std::collections::BTreeSet<&str> = (0..200)
-                .filter_map(|i| pick_from_pool(&m, "skirmish", start.wrapping_add(i)))
+                .filter_map(|i| pick_from_pool(&m, "pool", start.wrapping_add(i)))
                 .collect();
             proptest::prop_assert_eq!(picked.len(), pool.len());
         }

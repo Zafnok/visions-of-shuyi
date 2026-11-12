@@ -641,10 +641,10 @@ impl FlowScreen {
     /// campaign's roster are there (ADR-0055), so a companion who died in
     /// Classic isn't, and one who retreated in Casual is. Returns `false`,
     /// playing nothing, if the scene has nothing to say for them. Its
-    /// deaths (`@dies`, Hollis, 0319) happen as it starts, in every mode,
+    /// deaths (`@dies`, 0319) happen as it starts, in every mode,
     /// in the version for those there, played or not, so skipping the
     /// scene can't skip them; the scenes after it are played without them.
-    /// Its recruits (`@joins`, Joss, 0848) join the same way, fresh from
+    /// Its recruits (`@joins`, 0848) join the same way, fresh from
     /// the character data.
     fn play(&mut self, scene: &Scene, ctx: &Ctx) -> bool {
         let lead = self

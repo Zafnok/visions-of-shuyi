@@ -601,6 +601,9 @@ fn a_shot_is_painted_at_the_arts_own_size_whatever_the_players_map_zoom() {
 #[test]
 fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
     use crate::screens::battle::walk::SPRITE_WALK_TILES_PER_S;
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let ctx = ctx();
     // The map shots share one action list: each walk once.
     let mut walks = std::collections::BTreeSet::new();
@@ -642,6 +645,9 @@ fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
 /// shot holds its last moment for about half a second before the cut.
 #[test]
 fn the_titles_fights_end_half_a_second_before_their_cuts() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let ctx = ctx();
     let title = &ctx.game.content.cinematics["title"];
     let lead = LeadProfile::new(
@@ -675,6 +681,9 @@ fn the_titles_fights_end_half_a_second_before_their_cuts() {
 /// after at 74.5 and 91.25 unchanged), the logo on the chord at 115.8.
 #[test]
 fn the_titles_shots_start_on_round_threes_times() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let ctx = ctx();
     let title = &ctx.game.content.cinematics["title"];
     let starts: Vec<u32> = title.shots.iter().map(|s| s.at_ms).collect();

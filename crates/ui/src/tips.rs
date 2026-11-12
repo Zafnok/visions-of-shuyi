@@ -202,8 +202,13 @@ mod tests {
         );
     }
 
+    /// A test of the game's own tips (ADR-0118): their wording names the
+    /// Select key where a tile is picked.
     #[test]
     fn the_map_pick_tips_name_the_select_key() {
+        if trpg_content::bundle::skip_without_the_game() {
+            return;
+        }
         let content = trpg_content::load_embedded().unwrap();
         let tip = |id: &str| {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
