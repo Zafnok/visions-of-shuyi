@@ -170,13 +170,6 @@ fn content_layer(table: &'static [(&'static str, &'static [u8])]) -> Option<Laye
     (!table.is_empty()).then(|| Layer::table(CONTENT_DISPLAY_ROOT, table))
 }
 
-/// Whether this build embeds the game's content from the private
-/// repository (ADR-0117): it found files in `assets-private/content/`.
-#[cfg(feature = "std")]
-pub fn has_content() -> bool {
-    !CONTENT.is_empty()
-}
-
 /// `assets/` as the Playdate embeds it: without the files
 /// `playdate-bundle.txt` lists, which it leaves out.
 #[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
@@ -540,7 +533,7 @@ mod tests {
     #[test]
     fn gates_read_the_content_the_public_assets_and_the_test_files() {
         let layers = layers();
-        let mut expected = Vec::from_iter(has_content().then_some(CONTENT_DISPLAY_ROOT));
+        let mut expected = Vec::from_iter((!CONTENT.is_empty()).then_some(CONTENT_DISPLAY_ROOT));
         expected.extend([DISPLAY_ROOT, TEST_DISPLAY_ROOT]);
         assert_eq!(names(&layers), expected);
         let art = |layer: &&Layer| is_private(&format!("{}/x.png", layer.name));
@@ -569,6 +562,9 @@ mod tests {
             Some(usize::from(cfg!(feature = "private-assets")))
         );
         assert!(at(CONTENT_DISPLAY_ROOT) < at(DISPLAY_ROOT));
+        // A table with files is a layer under the content's root; none without.
+        let layer = content_layer(CONTENT).map(|layer| (layer.name, layer.private));
+        assert_eq!(layer, Some((CONTENT_DISPLAY_ROOT, false)));
         assert_eq!(content_layer(&[]).map(|layer| layer.name), None);
     }
 
