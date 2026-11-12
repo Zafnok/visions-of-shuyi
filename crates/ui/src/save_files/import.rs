@@ -453,9 +453,11 @@ fn new_name(ctx: &Ctx, file: &str) -> Option<String> {
     let free = |name: &String| profiles.clone().add(name).is_ok();
     let base = name_in(file);
     let named = (!base.is_empty()).then(|| base.clone());
-    let numbered_base = (2..=MAX_PROFILES + 1).filter(|_| !base.is_empty());
+    // Fewer than `MAX_PROFILES` profiles take fewer names than either list
+    // has: one of each is free.
+    let numbered_base = (2..=MAX_PROFILES).filter(|_| !base.is_empty());
     let numbered_base = numbered_base.map(|n| with_number(&base, n));
-    let numbered = (1..=MAX_PROFILES + 1)
+    let numbered = (1..=MAX_PROFILES)
         .map(|n| ctx.text_with(shuyi_ui::ctx::PROFILE_NUMBERED_TEXT, &[("n", &n)]));
     named
         .into_iter()
