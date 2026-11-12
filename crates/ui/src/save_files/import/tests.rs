@@ -172,6 +172,8 @@ fn the_name_in_a_file_name() {
         ("visions-of-shuyi-player-1-1.ron", "Player 1"),
         ("visions-of-shuyi-mei-1-slot-07.ron", "Mei"),
         ("visions-of-shuyi-mei-1-slot-07 (2).ron", "Mei"),
+        // A name with a number in it keeps it.
+        ("visions-of-shuyi-odo-2-1-slot-07.ron", "Odo 2"),
         ("visions-of-shuyi-2.ron", ""),
         // Renamed by the player: no number to drop.
         ("visions-of-shuyi-odo.ron", "Odo"),

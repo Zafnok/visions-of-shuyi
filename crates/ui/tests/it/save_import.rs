@@ -346,6 +346,9 @@ fn the_file_is_dropped_on_a_desktop_and_picked_on_the_web() {
     assert_eq!(h.top_screen(), "title");
     import_from_profile(&mut h);
     assert_snapshot!("waiting_for_a_drop", h.snapshot());
+    // Confirm doesn't leave while waiting; only Cancel does.
+    h.keys("f");
+    assert_eq!(h.top_screen(), "save_import");
     // Two files at once aren't one to import.
     let two = vec![
         shuyi_platform::dropped::DroppedFile::new("a.ron", file.clone()),
@@ -529,6 +532,18 @@ fn a_long_report_scrolls_and_names_another_build() {
     assert_eq!(view(&h).range.as_deref(), Some("4-19 of 20"));
     // Scrolling leaves the answer on Cancel.
     assert_eq!(focused_answer(&view(&h)).as_deref(), Some("Cancel"));
+
+    // Sixteen fit: no range.
+    let mut h = launch([1]);
+    let sixteen: Vec<(String, String)> = (1..=16).map(|n| (slot_key(n), save.clone())).collect();
+    let sixteen: Vec<(&str, String)> = sixteen
+        .iter()
+        .map(|(k, v)| (k.as_str(), v.clone()))
+        .collect();
+    import_from_profile(&mut h);
+    h.drop_file("c.ron", file_of(&sixteen)).wait(0.02);
+    let report = view(&h);
+    assert_eq!((report.rows.len(), report.range), (16, None));
 }
 
 /// With the most profiles, a file has nowhere to go: no question, and
@@ -558,6 +573,14 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     assert_eq!(report.help, "d back");
     h.keys("f");
     assert_eq!(h.top_screen(), "profiles");
+    // The row that adds a profile names no import key with no room.
+    h.keys("Up");
+    assert!(
+        h.snapshot().contains("arrows move · d back"),
+        "{}",
+        h.snapshot()
+    );
+    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
 
     // The last place taken while the report is open: Import says so.
     let mut h = launch([1]);
