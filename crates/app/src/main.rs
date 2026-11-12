@@ -11,6 +11,7 @@ mod args;
 mod tests;
 
 use macroquad::window::Conf;
+use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, CrashReports, VoiceFiles, Window};
 use trpg_content::{bundle, font, voice};
 
@@ -32,10 +33,17 @@ const _: () = assert!(
 /// to 1x. Its title and icon are `shuyi.ron`'s `app` (tickets 1199, 1201).
 const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(APP.window_icon);
 
-/// Where saves and settings are kept: never change it, or every player's
-/// saves are lost (`%APPDATA%/tactical-rpg`, `localStorage` keys under
-/// `tactical-rpg/`).
+/// The storage's name: never change it, or every player's saves are lost
+/// (`localStorage` keys under `tactical-rpg/` on the web, the folder
+/// `tactical-rpg` in the OS's data folder on macOS and Linux, and the
+/// Windows folder the saves move out of, `%APPDATA%/tactical-rpg`).
 const STORAGE_NAME: &str = APP.storage;
+
+/// Where a desktop keeps saves and settings: `Documents\My Games\Visions of
+/// Shuyi` on Windows, the old `%APPDATA%` folder moved there on the first
+/// launch (ticket 0875, ADR-0116). A literal, not the window's title: a
+/// rename of the game must not move the saves again.
+const DESKTOP_FOLDER: DesktopFolder = DesktopFolder::MyGames("Visions of Shuyi");
 
 /// What the platform shell needs to know about the game.
 fn config() -> AppConfig {
@@ -46,6 +54,7 @@ fn config() -> AppConfig {
         font::ATLAS_PNG_PATH,
         trpg_content::audio::files(None),
     );
+    config.desktop_folder = DESKTOP_FOLDER;
     config.voices = Some(VoiceFiles::new(
         voice::VOICE_DIR,
         voice::SOURCE_LANG,

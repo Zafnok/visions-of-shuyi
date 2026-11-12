@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-11
 ---
 
 # 0875 — Keep the desktop's saves in Documents/My Games
@@ -70,12 +70,12 @@ agent's too.
 
 ## Acceptance criteria
 
-- [ ] A test: a first launch with saves in the old folder moves them all
+- [x] A test: a first launch with saves in the old folder moves them all
       to the new one; a second launch finds them there.
-- [ ] A test: a new folder that already holds saves is used as it is;
+- [x] A test: a new folder that already holds saves is used as it is;
       the old folder is left alone.
-- [ ] The Profile and Load Game place line shows the new path.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The Profile and Load Game place line shows the new path.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,5 +83,30 @@ agent's too.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **The choice is the engine's** (engine ticket 3310, engine ADR-0108,
+  `Zafnok/shuyi-engine` PR): `AppConfig::desktop_folder`, with
+  `DesktopFolder::MyGames(name)` = `<Documents>\My Games\<name>` on
+  Windows (the known folder, so a Documents on OneDrive is followed). The
+  engine finds the folder once at start and hands it to the saves, crash
+  reports, kept sessions, exports and the place line, so the Profile and
+  Load Game line shows the new path with no game code.
+- **The game** sets `DesktopFolder::MyGames("Visions of Shuyi")`
+  (`crates/app/src/main.rs`); ADR-0116 records it. macOS and Linux keep
+  their data folders (no My Games convention there); the web keeps
+  `localStorage`.
+- **The move:** every file under `%APPDATA%\tactical-rpg\` (with
+  `exports\` and `sessions\`) is copied to the new folder, never over a
+  file, then the old files are removed. A failed copy undoes the copies
+  and that launch keeps the old folder, with a log line saying why. A new
+  folder that already holds keys is used as it is.
+- **Tests:** the move's tests are the engine's
+  (`storage::desktop::tests`, temporary folders for both places: first
+  and second launch, a new folder with saves, a failed move, nothing to
+  move). The game's `a_desktop_keeps_saves_in_my_games` checks the
+  config and the Windows path.
+- **Deviation:** the move's tests live in the engine, beside the move,
+  rather than in the game.
+- Not run by hand: a debug launch on Nick's machine would move his real
+  `%APPDATA%\tactical-rpg` saves into Documents; the first launch of the
+  merged build will do that, once.
+- No gameplay rules decided.

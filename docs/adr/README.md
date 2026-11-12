@@ -47,7 +47,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0036](0036-help-text-follows-the-device-and-own-font-glyphs.md) | Help text follows the device pressed last; our own glyphs join the font from a second BDF | Accepted |
 | [0037](0037-music-clock.md) | A music clock: `app` reports what is sounding, `ui` wraps it at the track's length | Accepted |
 | [0038](0038-graphics-are-a-skin.md) | Graphics are a skin: screens say what to show, a skin says how it looks | Accepted |
-| [0039](0039-save-file-format.md) | Saves are versioned RON `SaveFile`s; a battle is saved as its history | Accepted; kept in a player profile, ADR-0069 |
+| [0039](0039-save-file-format.md) | Saves are versioned RON `SaveFile`s; a battle is saved as its history | Accepted; kept in a player profile, ADR-0069; in `Documents\My Games` on Windows, ADR-0116 |
 | [0040](0040-private-assets.md) | Bought art lives in a private repository, pinned by commit and embedded by the `private-assets` feature | Accepted |
 | [0041](0041-prs-up-to-date-before-merging.md) | PRs must be up to date with `main` and green before they merge (no merge queue) | Superseded by ADR-0042 |
 | [0042](0042-prs-merge-on-green-without-updating.md) | PRs merge when their checks are green; they need not be up to date with `main` | Accepted |
@@ -123,6 +123,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0113](0113-the-voice-tool-plans-from-the-files-and-checks-every-take-by-ear.md) | The voice tool plans from the files and checks every take by ear | Accepted (0721); extends ADR-0046, ADR-0107, ADR-0109 |
 | [0114](0114-a-persona-weighs-standing-between-a-lord-and-the-enemy.md) | A persona weighs standing between a lord and the enemy that can reach it: the order offers each ready unit its cover, the tile that keeps the most of those enemies off the lords (their reach worked out with the unit there), after the escapes, in a survive only (it has no goals, so no unit ever stood in the Envoy's House's door) | Accepted (0526); amends ADR-0095 §2 and ADR-0112; amended by ADR-0115 |
 | [0115](0115-a-persona-weighs-stepping-out-of-reach-in-a-hold.md) | A persona weighs stepping out of reach in a hold: in a survive (no goals), each ready unit in an enemy's reach is offered its hold, the tile out of every reach nearest where it stands (Hardcore left wounded units to fall in the Envoy's House and drank every Potion) | Accepted (0529); amends ADR-0095 §2, ADR-0112 and ADR-0114 |
+| [0116](0116-the-desktops-saves-in-documents-my-games.md) | The desktop's saves live in `Documents\My Games\Visions of Shuyi` on Windows, the old `%APPDATA%` folder moved there once (engine ADR-0108) | Accepted (0875); amends ADR-0039 and ADR-0069 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
