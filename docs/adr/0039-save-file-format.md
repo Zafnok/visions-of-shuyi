@@ -92,7 +92,12 @@ in 30 slots, and a one-time suspend save of a battle in progress. Forces:
   (`export`, or `offer` for entries a screen never stored, as the demo's
   end does, 0914); the name is `visions-of-shuyi-<name>-<n>[-slot-NN].ron`.
   Import (0873) reads the same file; each entry's own version is still
-  what decides whether it loads.
+  what decides whether it loads: `save_files::import::GameCheck` gives
+  each key the engine's verdict (a save of another `SAVE_VERSION` is
+  `Incompatible` and refused, the options are read by their own
+  versions), and a build stamp that differs is only shown. When saves
+  migrate (engine 2110 and a game ticket), the check is where an older
+  save becomes importable.
 
 ## Alternatives considered
 

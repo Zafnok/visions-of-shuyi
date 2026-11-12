@@ -4,7 +4,8 @@
 //! in this game's [`ProfileScreen`], which adds its saves outside the game
 //! (0872, *Saves outside the game*): the export key exports the profile
 //! under the cursor as a file ([`save_files`]), and on a desktop a line
-//! says where the saves are, with a key that opens the folder. Adding a
+//! says where the saves are, with a key that opens the folder; the import
+//! key reads a file into a new profile ([`ImportScreen`], 0873). Adding a
 //! profile opens the first-launch layout picker for it
 //! ([`layout_picker::first`]). The first time it opens where a profile
 //! can be exported, the guide's tip says so ([`TipScreen`], 0874). Its look is the engine's glyph skin
@@ -21,10 +22,13 @@ use super::layout_picker;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
+use crate::profiles::MAX_PROFILES;
+use crate::save_files::import::Channel;
 use crate::save_files::{self, Export, ExportNotice, Exported};
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::Skins;
 use crate::screens::files::{self, PlaceView};
+use crate::screens::save_import::{ImportDone, ImportScreen};
 use crate::tips::TipScreen;
 use trpg_content::TipTrigger;
 
@@ -35,6 +39,9 @@ pub type ProfileList = ProfilesScreen<Shuyi>;
 const HELP_EXPORT: &str = "profile.help.list_export";
 /// Text key of that help line where the saves are in a folder.
 const HELP_EXPORT_FOLDER: &str = "profile.help.list_export_folder";
+/// Text key of the help line on the row that adds a profile, where a file
+/// can be imported as one.
+const HELP_ADD_IMPORT: &str = "profile.help.add_import";
 
 /// The Profile screen: the engine's list ([`ProfileList`], which it
 /// derefs to) with the export key and the place line.
@@ -42,6 +49,8 @@ const HELP_EXPORT_FOLDER: &str = "profile.help.list_export_folder";
 pub struct ProfileScreen {
     list: ProfileList,
     notice: ExportNotice,
+    /// What the last import did, until the cursor moves.
+    imported: Option<String>,
     /// Whether the guide's tip on exporting was looked at (ticket 0874):
     /// the first update does.
     tip_asked: bool,
@@ -72,6 +81,7 @@ pub fn screen(ctx: &Ctx) -> ProfileScreen {
     ProfileScreen {
         list,
         notice: ExportNotice::default(),
+        imported: None,
         tip_asked: false,
     }
 }
@@ -132,6 +142,15 @@ impl ProfileScreen {
                 HELP_EXPORT
             };
             list.help = ctx.text_with(key, &[]);
+        } else if self.list_alone(ctx)
+            && self.list.focused(ctx) == RowKind::Add
+            && ctx.profiles().all().len() < MAX_PROFILES
+            && ImportScreen::can_open(ctx)
+        {
+            list.help = ctx.text_with(HELP_ADD_IMPORT, &[]);
+        }
+        if list.message.is_none() {
+            list.message.clone_from(&self.imported);
         }
         if list.message.is_none() {
             list.message = self.notice.shown().map(|n| n.text(ctx));
@@ -164,14 +183,28 @@ impl Screen<Shuyi> for ProfileScreen {
                 match action {
                     Action::Info => self.export(ctx),
                     Action::WorldFind => files::open_folder(ctx, self.notice.shown()),
+                    files::IMPORT => {
+                        if let Some(import) = ImportScreen::open(ctx, Channel::Profile) {
+                            self.imported = None;
+                            return Transition::Push(Box::new(import));
+                        }
+                    }
                     _ => {}
                 }
             }
         }
         if input.actions.iter().any(|a| files::MOVES.contains(a)) {
             self.notice.clear();
+            self.imported = None;
         }
         self.list.update(ctx, input)
+    }
+
+    fn uncovered(&mut self, _ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
+        if let Some(done) = result.and_then(ScreenResult::take::<ImportDone>) {
+            self.imported = Some(done.notice);
+        }
+        Transition::None
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

@@ -340,7 +340,15 @@ we export I imagine it would become a download".
     the cursor, after a yes/no question with the cursor on No.
   - Through **Load Game**, a file holding **more than one save** (a whole
     profile) warns first that it will be added as a new profile.
-  - The rest (the version check, the report before writing): 0873.
+  - **Before anything is written** (0873) a report lists each save in the
+    file (its chapter and playtime, as Load Game shows them) with what
+    the game can do with it: "Ready" ("goes in slot 3" / "replaces slot
+    3" through Load Game), "From an incompatible version (save version 1,
+    this game reads 2)", or "Can't be read"; a line says when another
+    version of the game made the file. Then "Import these saves?" with
+    Import / Cancel, the cursor on Cancel. Every save marked Ready is
+    imported; the others are left out, and a notice after says how many
+    of each.
 - **Vix** (ticket 0874): a tip the first time each screen opens with
   something to export, and on the title, while the cursor is on `Load
   Game` or `Profile`, a note beside the menu ("Did you know? You can
@@ -356,6 +364,18 @@ we export I imagine it would become a download".
   digit left out; `<n>` the profile's number, so a name with no such
   letters still gives a name), and the desktop never writes over an older
   file (`… (2).ron`).
+- *The agent's starting rules for import* (0873):
+  - The import key is the **End turn** key (`Space`, the pad's `Start`),
+    named in each screen's help line. On a desktop the player drops the
+    file on the window; on the web the browser's file picker opens.
+  - A new profile is named from the file's name (`visions-of-shuyi-odo-kai-2.ron`
+    gives `Odo Kai`), with a number after it if that name is taken
+    (`Player 1 2`), or the next `Player <n>` if the file names none.
+  - "A file holding one save" is a file with one save slot and no
+    suspended battle; anything else counts as a whole profile.
+  - A save imported into this profile through Load Game comes without
+    the file's options and key bindings (the report says so): this
+    profile keeps its own.
 
 ### Open sub-questions
 

@@ -38,7 +38,7 @@ pub const SETTINGS_VERSION: u32 = 3;
 
 /// The versions [`Settings::from_ron`] reads: each one's missing fields take
 /// their defaults.
-const READ_VERSIONS: [u32; 3] = [1, 2, SETTINGS_VERSION];
+pub(crate) const READ_VERSIONS: [u32; 3] = [1, 2, SETTINGS_VERSION];
 
 /// The linear volume every group had by default before the loudness curve:
 /// a version 1 or 2 save always wrote its volumes, so one at this is read

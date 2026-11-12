@@ -9,7 +9,7 @@ use crate::screen::Ctx;
 use crate::screen::tests::ctx;
 use crate::storage::MemoryStorage;
 
-fn campaign(c: &Ctx) -> Campaign {
+pub(crate) fn campaign(c: &Ctx) -> Campaign {
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     let mut campaign = new_campaign(&c.game.content, GameMode::Casual, lead);
     campaign.playtime_s = 3725;
@@ -17,7 +17,7 @@ fn campaign(c: &Ctx) -> Campaign {
 }
 
 /// A suspend save of the test chapter's battle, just started.
-fn suspended(c: &Ctx) -> SaveFile {
+pub(crate) fn suspended(c: &Ctx) -> SaveFile {
     let campaign = campaign(c);
     let def = &c.game.content.battles[&c.game.content.chapters[&campaign.chapter].battle];
     let (state, _) = BattleState::new(campaign.battle_setup(def, &c.game.content.tables()));
@@ -25,7 +25,7 @@ fn suspended(c: &Ctx) -> SaveFile {
 }
 
 /// `save` as text, written by `version`.
-fn written_by(save: &SaveFile, version: u32) -> String {
+pub(crate) fn written_by(save: &SaveFile, version: u32) -> String {
     let mut save = save.clone();
     save.version = version;
     ron::to_string(&save).unwrap()

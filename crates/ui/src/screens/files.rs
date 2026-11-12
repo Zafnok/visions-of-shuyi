@@ -1,6 +1,6 @@
 //! What the Profile screen and the Load Game list share about saves
 //! outside the game (ticket 0872, `docs/design/options.md`, *Saves outside
-//! the game*): their two keys (export, open the folder), the place line's
+//! the game*): their keys (export, open the folder, import), the place line's
 //! view, and its glyph look ([`glyph`]). What a file holds and how it is
 //! offered is [`crate::save_files`].
 
@@ -15,10 +15,16 @@ use crate::screen::Ctx;
 pub use glyph::paint_place;
 
 /// The keys both screens add to their own: the Unit info key exports the
-/// row under the cursor (on menus it has no other use), and the world
-/// map's Find key opens the folder of the saves (on a desktop). *The
-/// agent's starting rule* (`options.md`).
-pub const ACTIONS: &[Action] = &[Action::Info, Action::WorldFind];
+/// row under the cursor (on menus it has no other use), the world map's
+/// Find key opens the folder of the saves (on a desktop), and the End
+/// turn key imports a file ([`IMPORT`], 0873). *The agent's starting
+/// rules* (`options.md`).
+pub const ACTIONS: &[Action] = &[Action::Info, Action::WorldFind, IMPORT];
+
+/// The key that imports a file (0873): the End turn key, which menus
+/// don't use and whose keys and buttons are neither export's nor the
+/// folder's on any keymap.
+pub const IMPORT: Action = Action::EndTurn;
 
 /// The keys that move the cursor, which put away the last export's notice.
 pub const MOVES: &[Action] = &[Action::CursorUp, Action::CursorDown];

@@ -589,6 +589,8 @@ fn export_is_only_for_a_save_that_loads() {
     let mut s = SlotPickerScreen::save(&c, campaign);
     press(&mut s, &mut c, &[Action::Info, Action::WorldFind]);
     assert!(!s.is_asking_export());
+    // Nor imports (0873).
+    assert_eq!(press(&mut s, &mut c, &[files::IMPORT]), "None");
     assert_eq!(s.view(&c).place, None);
     assert_eq!(file_requests(&mut c), [] as [String; 0]);
 

@@ -12,7 +12,8 @@
 //! and on a desktop a line says where the saves are (ticket 0872,
 //! `docs/design/options.md`, *Saves outside the game*; [`crate::save_files`]).
 //! The first time it opens with a save to export, the guide's tip says so
-//! ([`TipScreen`], ticket 0874).
+//! ([`TipScreen`], ticket 0874). The import key reads a file into this
+//! profile or a new one ([`ImportScreen`], ticket 0873).
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screens
 //! show and do, and says it as a [`SavePromptView`] and a
@@ -31,10 +32,12 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
+use crate::save_files::import::Channel;
 use crate::save_files::{self, Export, ExportNotice, Exported};
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::files;
 use crate::screens::pick_one;
+use crate::screens::save_import::{ImportDone, ImportScreen};
 use crate::tips::TipScreen;
 use crate::widgets::{Ask, ListCursor, Menu, MenuItem};
 
@@ -153,6 +156,8 @@ pub struct SlotPickerScreen {
     message: Option<String>,
     /// Where the last export went.
     notice: ExportNotice,
+    /// What the last import did, until the cursor moves.
+    imported: Option<String>,
     /// Whether the guide's tip on exporting was looked at (ticket 0874):
     /// the first update does.
     tip_asked: bool,
@@ -199,6 +204,7 @@ impl SlotPickerScreen {
             exporting: None,
             message: None,
             notice: ExportNotice::default(),
+            imported: None,
             tip_asked: false,
         }
     }
@@ -331,6 +337,7 @@ impl SlotPickerScreen {
         self.cursor.window(VISIBLE);
         self.message = None;
         self.notice.clear();
+        self.imported = None;
         ctx.audio.menu(MenuSound::Move);
     }
 
@@ -416,6 +423,8 @@ impl SlotPickerScreen {
             "save.help.load_export"
         } else if folder {
             "save.help.load_folder"
+        } else if ImportScreen::can_open(ctx) {
+            "save.help.load_import"
         } else {
             "save.help.load"
         };
@@ -454,7 +463,10 @@ impl SlotPickerScreen {
             slots,
             range,
             message: self.message.clone(),
-            notice: self.notice.shown().map(|n| n.text(ctx)),
+            notice: self
+                .imported
+                .clone()
+                .or_else(|| self.notice.shown().map(|n| n.text(ctx))),
             question: self.asking.as_ref().map(|ask| {
                 let slot = self.slot_text();
                 ask.view_with_keys(ctx, ctx.help_keys(), &[("slot", &slot)])
@@ -550,6 +562,15 @@ impl Screen<Shuyi> for SlotPickerScreen {
                         files::open_folder(ctx, self.notice.shown());
                         None
                     }
+                    files::IMPORT if !self.is_saving() => {
+                        let cursor = self.focused_slot();
+                        let import = ImportScreen::open(ctx, Channel::LoadGame { cursor });
+                        import.map(|import| {
+                            self.message = None;
+                            self.imported = None;
+                            Transition::Push(Box::new(import))
+                        })
+                    }
                     Action::Cancel => {
                         ctx.audio.menu(MenuSound::Cancel);
                         Some(Transition::Pop)
@@ -565,6 +586,21 @@ impl Screen<Shuyi> for SlotPickerScreen {
                 break;
             }
         }
+        Transition::None
+    }
+
+    /// After an import (0873): the slots read again, the cursor on the
+    /// slot the save went into, and the import's notice.
+    fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
+        let Some(done) = result.and_then(ScreenResult::take::<ImportDone>) else {
+            return Transition::None;
+        };
+        self.slots = save::slots(&ctx.storage, &ctx.game.content, ctx.words());
+        if let Some(slot) = done.slot {
+            self.cursor = self.cursor.clone().at(slot - 1);
+            self.cursor.window(VISIBLE);
+        }
+        self.imported = Some(done.notice);
         Transition::None
     }
 
