@@ -20,6 +20,42 @@ pub(crate) fn content() -> &'static Content {
     &CONTENT
 }
 
+/// The test files' story, for the tests of how the bots work (ADR-0118):
+/// the content with the test files' chapters and battles only, and a New
+/// Game of the test world's three chapters (`test_wm1`, `test_wm2`,
+/// `test_wm3`, in that order) with the lead and the test knight. The
+/// first chapter's victory has a scene in which the test rogue joins, so
+/// the army counts a recruit from the second chapter on.
+pub(crate) fn test_story() -> Content {
+    let mut content = content().clone();
+    let test = |id: &String| id.starts_with("test") || id == "quick";
+    content.battles.retain(|id, _| test(id));
+    content.chapters.retain(|id, _| test(id));
+    content.new_game = trpg_content::NewGameDef {
+        first_chapter: "test_wm1".into(),
+        ..trpg_content::NewGameDef::test_chapter()
+    };
+    let id = TEST_JOINS.to_owned();
+    let joins = trpg_content::Stage::Joins(trpg_core::CharacterId(TEST_RECRUIT.into()));
+    let steps = vec![trpg_content::Step::Directive(joins)];
+    let scene = trpg_content::Scene {
+        id: id.clone(),
+        steps,
+    };
+    content.dialogue.scenes.insert(id.clone(), scene);
+    let first = content.chapters.get_mut("test_wm1");
+    first
+        .unwrap_or_else(|| panic!("no test_wm1"))
+        .victory_scenes
+        .push(id);
+    content
+}
+
+/// The scene of [`test_story`] in which [`TEST_RECRUIT`] joins.
+pub(crate) const TEST_JOINS: &str = "test_rogue_joins";
+/// Who joins in [`test_story`]'s first chapter's victory.
+pub(crate) const TEST_RECRUIT: &str = "test_rogue";
+
 /// The plain row's tile `x`.
 pub(crate) fn tile(x: i32) -> Pos {
     Pos::new(x, 4)

@@ -5,7 +5,7 @@
 // lists. The steps press the game's actions by name, so they hold for
 // any key layout and for the Playdate's buttons.
 //
-// An attack in the biggest battle: the rider (Tamsin) sent onto the
+// An attack in the biggest battle: the rider sent onto the
 // bridge beside the swordsman who guards it, its forecast, then the
 // combat animation (the battle backdrop and both fighters) to its end.
 (
@@ -15,7 +15,7 @@
     script: (steps: [
         // The rider, two tiles right and one down of the lead.
         act("CursorRight"), act("CursorRight"), act("CursorDown"), act("Confirm"),
-        // The bridge, beside the swordsman; she walks there.
+        // The bridge, beside the swordsman; the rider walks there.
         act("CursorRight"), act("CursorRight"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
         act("Confirm"),
         wait(0.5),

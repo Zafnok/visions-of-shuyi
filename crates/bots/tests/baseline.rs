@@ -41,7 +41,8 @@ fn baseline_bot_plays_a_battle_to_the_end() {
     }
 }
 
-/// Chapter 1's difficulty sim (ticket 0803): the baseline bot, a mindless
+/// Chapter 1's difficulty sim (ticket 0803; a test of the content, ADR-0118
+/// (a)): the baseline bot, a mindless
 /// player, plays it with 200 seeds. The target is 30-70% won: a thinking
 /// player should win comfortably, a mindless one shouldn't always win. Run
 /// it after changing Chapter 1's units or the combat numbers:
@@ -56,6 +57,9 @@ fn baseline_bot_plays_a_battle_to_the_end() {
 #[ignore = "a manual measurement: 200 battles"]
 fn chapter_1_difficulty() {
     const TRIES: u64 = 200;
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap();
     let stage = stage(&content, &content.battles["ch01"]);
     let tries = play_tries(&stage, &baseline(&content, &stage), 1..TRIES + 1, 60)
@@ -198,27 +202,35 @@ fn the_act_1_rule_battles_finish_and_replay_identically() {
     }
 }
 
-/// Chapter 1 is won the moment Red Harl falls, with his company still on
-/// the map, and the rest of it runs (ticket 0845): the lead, unable to
-/// miss, strikes Harl at 1 HP from a tile next to him on turn 1.
+/// Chapter 1 is won the moment its captain (`red_captain`) falls, with
+/// the rest of the enemies still on the map, and they run (ticket 0845):
+/// the lead, unable to miss, strikes the captain at 1 HP from a tile next
+/// to them on turn 1. A test of the content (ADR-0118 (a)).
 #[test]
-fn chapter_1_is_won_when_harl_falls_first_and_the_rest_flee() {
+fn chapter_1_is_won_by_defeating_its_captain_and_the_rest_flee() {
     use trpg_core::{CharacterId, Command, Event, Faction, Objective, Outcome, Pos, UnitAction};
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap();
     let def = &content.battles["ch01"];
     let lead = LeadProfile::new("Bot", LeadGender::Male);
     let campaign = battle_campaign(&content, def, GameMode::Classic, lead);
     let base = campaign.battle_setup(def, &content.tables());
-    let harl_id = Some(CharacterId("red_captain".into()));
-    let harl = base.units.iter().find(|u| u.character == harl_id).unwrap();
-    let (harl, at) = (harl.id, harl.pos);
-    assert!(matches!(base.objective, Objective::DefeatUnit { unit, .. } if unit == harl));
+    let captain_id = Some(CharacterId("red_captain".into()));
+    let captain = base
+        .units
+        .iter()
+        .find(|u| u.character == captain_id)
+        .unwrap();
+    let (captain, at) = (captain.id, captain.pos);
+    assert!(matches!(base.objective, Objective::DefeatUnit { unit, .. } if unit == captain));
     let enemies = base
         .units
         .iter()
         .filter(|u| u.faction == Faction::Enemy)
         .count();
-    // The first tile next to Harl the lead can stand on and strike from.
+    // The first tile next to the captain the lead can stand on and strike from.
     let next_to = [(0, 1), (-1, 0), (1, 0), (0, -1)].map(|(dx, dy)| Pos::new(at.x + dx, at.y + dy));
     let won = next_to.into_iter().find_map(|pos| {
         if base.units.iter().any(|u| u.pos == pos) {
@@ -226,7 +238,7 @@ fn chapter_1_is_won_when_harl_falls_first_and_the_rest_flee() {
         }
         let mut setup = base.clone();
         for u in &mut setup.units {
-            if u.id == harl {
+            if u.id == captain {
                 u.hp = 1;
             }
             if u.id == trpg_core::UnitId(1) {
@@ -235,7 +247,7 @@ fn chapter_1_is_won_when_harl_falls_first_and_the_rest_flee() {
         }
         let (mut state, _) = BattleState::new(setup);
         let action = UnitAction::Attack {
-            target: harl,
+            target: captain,
             slot: 0,
             active: None,
             art: None,
@@ -250,7 +262,7 @@ fn chapter_1_is_won_when_harl_falls_first_and_the_rest_flee() {
             .ok()?;
         Some((state, events))
     });
-    let (state, events) = won.expect("no tile next to Harl to strike from");
+    let (state, events) = won.expect("no tile next to the captain to strike from");
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(state.turn(), 1);
     // Everyone else ran: none defeated, none left on the map.

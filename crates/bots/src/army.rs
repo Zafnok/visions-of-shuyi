@@ -240,9 +240,13 @@ fn gear(unit: &mut Unit, content: &Content, chapter: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testkit::{TEST_RECRUIT, test_story};
 
+    /// The test files' story (ADR-0118): `test_wm1` to `test_wm3`, whose
+    /// shop is chapter 4's, and the test chapter `test` outside it, whose
+    /// shop is chapter 1's.
     fn content() -> Content {
-        trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"))
+        test_story()
     }
 
     fn army(chapter: &str, level: Level) -> BotsArmy {
@@ -260,12 +264,11 @@ mod tests {
     #[test]
     fn reference_army_levels_and_roster() {
         let content = content();
-        let six = [
-            "lead", "retainer", "sergeant", "poacher", "keeper", "heretic",
-        ];
-        for (chapter, level) in [("ch01", 7), ("ch02", 35)] {
+        let two = ["lead", "test_knight"].as_slice();
+        let three = ["lead", "test_knight", TEST_RECRUIT].as_slice();
+        for (chapter, level, roster) in [("test_wm1", 7, two), ("test_wm2", 35, three)] {
             let units = reference_army(&content, &army(chapter, level));
-            assert_eq!(ids(&units), six, "{chapter}");
+            assert_eq!(ids(&units), roster, "{chapter}");
             assert!(units.iter().all(|u| u.level == level), "{chapter}");
         }
     }
@@ -273,21 +276,24 @@ mod tests {
     #[test]
     fn a_recruit_counts_from_the_chapter_after_the_scene_that_recruits() {
         let content = content();
-        // Joss joins in Chapter 2's victory scene.
-        assert!(
-            !roster_by(&content, "ch02")
+        let joined = |chapter| {
+            roster_by(&content, chapter)
                 .iter()
-                .any(|c| c.0 == "defector")
+                .any(|c| c.0 == TEST_RECRUIT)
+        };
+        assert!(
+            !joined("test_wm1"),
+            "the scene is the first chapter's victory"
         );
-        let whole_story = roster_by(&content, "no such chapter");
-        assert!(whole_story.iter().any(|c| c.0 == "defector"));
+        assert!(joined("test_wm2"));
+        assert!(joined("no such chapter"), "the whole story");
     }
 
     #[test]
     fn levels_raise_stats_by_the_classes_average_growths() {
         let content = content();
-        let low = reference_army(&content, &army("ch01", 2));
-        let high = reference_army(&content, &army("ch01", 12));
+        let low = reference_army(&content, &army("test", 2));
+        let high = reference_army(&content, &army("test", 12));
         for (low, high) in low.iter().zip(&high) {
             let class = content.classes.get(&low.class).expect("its class");
             let want = low.stats.hp + i32::from(growth(low, class, StatKind::Hp)) * 10 / 100;
@@ -299,7 +305,7 @@ mod tests {
     #[test]
     fn every_stat_grows_by_the_average_within_the_ceiling() {
         let content = content();
-        let start = reference_army(&content, &army("ch01", 1));
+        let start = reference_army(&content, &army("test", 1));
         let unit = start.first().expect("a unit");
         let class = content.classes.get(&unit.class).expect("its class");
         let mut grown = unit.clone();
@@ -331,9 +337,9 @@ mod tests {
         let content = content();
         let spell = trpg_core::SpellId::new("personal");
         let learned = |level| {
-            let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+            let mut unit = reference_army(&content, &army("test", 1)).remove(0);
             unit.personal_spells = vec![(20, spell.clone())];
-            raise(&mut unit, &content, &army("ch01", level));
+            raise(&mut unit, &content, &army("test", level));
             unit.learned.contains(&spell)
         };
         assert!(!learned(19));
@@ -344,7 +350,7 @@ mod tests {
     #[test]
     fn a_promotion_that_can_t_happen_says_so() {
         let content = content();
-        let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+        let mut unit = reference_army(&content, &army("test", 1)).remove(0);
         let class = content.classes.get(&unit.class).expect("its class").clone();
         let nowhere = trpg_core::ClassId("nowhere".to_owned());
         assert!(!advance(&mut unit, &class, &nowhere, &content));
@@ -358,7 +364,7 @@ mod tests {
         let content = content();
         let mut worn = 0;
         for level in [5, 20, 40] {
-            for unit in reference_army(&content, &army("ch02", level)) {
+            for unit in reference_army(&content, &army("test_wm1", level)) {
                 let class = content.classes.get(&unit.class).expect("its class");
                 let weapons: Vec<_> = unit.loadout.weapons.iter().flatten().collect();
                 let defs: Vec<_> = weapons
@@ -388,7 +394,7 @@ mod tests {
     #[test]
     fn a_unit_with_no_armour_buys_some() {
         let content = content();
-        let mut unit = reference_army(&content, &army("ch01", 1)).remove(0);
+        let mut unit = reference_army(&content, &army("test", 1)).remove(0);
         unit.loadout.armour = None;
         gear(&mut unit, &content, 2);
         assert!(unit.loadout.armour.is_some());
@@ -399,7 +405,7 @@ mod tests {
         let content = content();
         for (level, tier) in [(12, 1), (13, 2), (32, 2), (33, 3), (99, 3)] {
             assert_eq!(tier_at(level), tier);
-            for unit in reference_army(&content, &army("ch02", level)) {
+            for unit in reference_army(&content, &army("test_wm1", level)) {
                 let class = content.classes.get(&unit.class).expect("its class");
                 assert_eq!(class.tier, tier, "{} at {level}", unit.name);
                 assert!(unit.loadout.equipped.is_some(), "{} at {level}", unit.name);
@@ -419,34 +425,36 @@ mod tests {
                 .collect();
             held
         };
-        assert!(weapons("ch02").iter().any(|w| w.starts_with("iron_")));
-        assert!(weapons("ch02").iter().all(|w| !w.starts_with("steel_")));
+        assert!(weapons("test_wm1").iter().any(|w| w.starts_with("iron_")));
+        assert!(weapons("test_wm1").iter().all(|w| !w.starts_with("steel_")));
+        // The Quick Battle's chapter is chapter 5, whose shop sells steel.
+        assert!(weapons("quick").iter().any(|w| w.starts_with("steel_")));
     }
 
     #[test]
     fn the_pack_fills_with_the_best_consumable_on_sale() {
         let content = content();
-        let pack = reference_pack(&content, &army("ch02", 5), 3);
+        let pack = reference_pack(&content, &army("test_wm1", 5), 3);
         assert_eq!(pack, vec![ItemId::new("potion"); 3]);
-        assert_eq!(reference_pack(&content, &army("ch01", 5), 3), []);
+        assert_eq!(reference_pack(&content, &army("test", 5), 3), []);
     }
 
     #[test]
     fn the_story_chapters_start_at_the_new_game_file() {
         let content = content();
         let chapters = story_chapters(&content);
-        assert_eq!(chapters.first().map(|c| c.id.as_str()), Some("ch01"));
-        assert!(chapters.iter().any(|c| c.id == "ch02"));
+        let ids: Vec<&str> = chapters.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, ["test_wm1", "test_wm2", "test_wm3"]);
     }
 
     #[test]
     fn fielding_keeps_the_campaign_s_own_units() {
         let content = content();
-        let def = content.battles.get("ch02").expect("Chapter 2's battle");
+        let def = content.battles.get("test").expect("the test battle");
         let lead = trpg_core::LeadProfile::new("Wen", trpg_core::LeadGender::Female);
         let mut campaign =
             trpg_content::battle_campaign(&content, def, trpg_core::GameMode::Classic, lead);
-        field_army(&mut campaign, &content, &army("ch02", 20));
+        field_army(&mut campaign, &content, &army("test", 20));
         assert!(campaign.roster.iter().all(|u| u.level == 20));
         assert!(campaign.roster.iter().any(|u| u.name == "Wen"));
     }

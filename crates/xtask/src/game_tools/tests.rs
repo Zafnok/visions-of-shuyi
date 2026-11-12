@@ -76,16 +76,16 @@ fn a_session_opens_on_the_battle_asked_for() {
         all.extend(args);
         Start::of(&parse(&all).unwrap().game).unwrap()
     };
-    let h = harness(&start(&["--battle", "ch04"])).unwrap();
+    let h = harness(&start(&["--battle", "test"])).unwrap();
     assert_eq!(h.top_screen(), "battle");
     let battle = h.battle().unwrap().state();
-    // Its own characters fill all eight slots, Gil's too (1071).
-    assert_eq!((battle.turn(), battle.units().len()), (1, 8 + 13));
+    // Its own characters fill both slots, against its one brigand.
+    assert_eq!((battle.turn(), battle.units().len()), (1, 2 + 1));
     let Err(unknown) = harness(&start(&["--battle", "nope"])) else {
         panic!("no battle nope");
     };
     assert!(unknown.starts_with("no battle \"nope\" in assets/battles/; the battles are: "));
-    assert!(unknown.contains("ch04"), "{unknown}");
+    assert!(unknown.contains("test_retreat"), "{unknown}");
     let h = harness(&start(&["--scene", "test_intro"])).unwrap();
     assert_eq!(h.top_screen(), "dialogue");
 }
@@ -96,7 +96,7 @@ fn a_session_opens_on_the_battle_asked_for() {
 fn the_playdate_session_plays_on_its_console() {
     let battle = [GameArg {
         flag: "--battle".into(),
-        value: Some("ch04".into()),
+        value: Some("test".into()),
     }];
     let mut session = Trpg.session_on("playdate", &battle).unwrap();
     session.idle(2);
@@ -1182,8 +1182,13 @@ fn unit_of<'a>(units: &'a [serde_json::Value], character: &str) -> &'a serde_jso
 
 /// Ticket 1244: each scenario plays what it says, on the colour targets
 /// and on the Playdate, its actions pressed by its keys or its buttons.
+/// A test of the content (ADR-0118 (a)): the scenarios play the game's
+/// own battles and scenes.
 #[test]
 fn the_bench_scenarios_play_what_they_say() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     for playdate in [false, true] {
         let on = if playdate { "playdate" } else { "desktop" };
         let session = bench_played("battle-idle", playdate);

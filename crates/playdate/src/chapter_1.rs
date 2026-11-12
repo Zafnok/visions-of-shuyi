@@ -10,7 +10,8 @@
 //!
 //! The battle is won with the commands of the PC's playthrough test
 //! (`crates/ui/tests/it/ch01_winnable.rs`); the screens around it are
-//! driven with the Playdate's buttons.
+//! driven with the Playdate's buttons. A test of the content (ADR-0118
+//! (a)): it plays the game's own Chapter 1, and skips without it.
 
 use std::cell::RefCell;
 
@@ -114,7 +115,7 @@ fn play_chapter_1() -> Vec<String> {
         send(&mut h, &command);
     }
     assert_eq!(battle(&h).outcome(), Some(Outcome::Victory));
-    // Harl's last words, the banner, the results, the victory scenes,
+    // The boss's last words, the banner, the results, the victory scenes,
     // "Save your progress?".
     for _ in 0..40 {
         match h.top_screen() {
@@ -171,6 +172,9 @@ fn play_chapter_1() -> Vec<String> {
 /// The only test here that sets the bundle's watcher: it is process-wide.
 #[test]
 fn chapter_1_plays_through_on_the_playdates_bundle_which_holds_only_what_it_reads() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
     assert!(bundle::watch(note).is_ok());
     let playdate: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::playdate_layers())));
     SEEN.set(Some(Vec::new()));
