@@ -122,11 +122,15 @@ fn the_lessons_conditions_load_and_say_which_need_a_unit() {
 }
 
 /// The story's lessons (0457): the basic controls at Full, what is
-/// different here at Short, each with the trigger it starts at.
+/// different here at Short, each with the trigger it starts at. A test of
+/// the content (ADR-0118).
 #[test]
 fn the_story_has_the_ten_lessons_of_the_design() {
     use LessonLevel::{Full, Short};
     use TipTrigger as T;
+    if bundle::skip_without_the_game() {
+        return;
+    }
     let story = bundle::story_only(|| load(Refs::default())).unwrap();
     let got: Vec<(&str, LessonLevel, TipTrigger)> = story
         .lessons

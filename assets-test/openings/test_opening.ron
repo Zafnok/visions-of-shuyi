@@ -1,0 +1,16 @@
+// TEST FILE: a moving opening for the tests of openings (ticket 0162), on
+// the test buildings' grass: the lead steps in and back, facing right, and
+// the test knight walks round the corner. Not story content.
+(
+    id: "test_opening",
+    map: "test_buildings",
+    cast: [
+        (who: "lead", at: (1, 0), facing: Right),
+        (who: "test_knight", at: (3, 0), facing: Left),
+    ],
+    action: [
+        (at: 0.0, do: Walk(unit: "lead", path: [(1, 0), (2, 0)], secs: 0.2)),
+        (at: 0.3, do: Walk(unit: "lead", path: [(2, 0), (1, 0)], secs: 0.2, facing: Right)),
+        (at: 0.6, do: Walk(unit: "test_knight", path: [(3, 0), (4, 0), (4, 2)], secs: 0.4)),
+    ],
+)

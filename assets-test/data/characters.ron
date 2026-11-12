@@ -71,4 +71,6 @@
             loadout: (weapons: ["steel_axe", "iron_axe"]),
         ),
     ],
+    // A speaker with no class: walks on foot in an opening (ticket 0162).
+    speakers: ["test_voice"],
 )

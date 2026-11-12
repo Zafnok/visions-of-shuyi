@@ -625,7 +625,7 @@ mod tests {
     fn every_map_round_trips() {
         let terrain = crate::TerrainDef::load(None).unwrap_or_default();
         let maps = load_all().unwrap();
-        assert!(maps.contains_key("ch01") && maps.contains_key("test_small"));
+        assert!(maps.contains_key("test_small"));
         for (id, def) in &maps {
             let printed = print_map(&def.map, &def.legend, &def.look);
             let printed = printed.unwrap_or_else(|| panic!("{id} doesn't print"));

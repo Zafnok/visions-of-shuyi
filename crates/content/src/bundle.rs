@@ -780,7 +780,7 @@ mod tests {
                 files_under("").contains(&map),
                 display_path(map),
                 test_part(TABLES[0]),
-                file("maps/ch01.map").is_some(),
+                file("data/palette.ron").is_some(),
             )
         });
         assert_eq!(

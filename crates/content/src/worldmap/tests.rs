@@ -38,11 +38,15 @@ fn text(nodes: &str, roads: &str) -> String {
 /// The problems of world map `text` (as `test_world`, the map `test_wm1`
 /// names).
 fn problems(text: &str) -> Vec<String> {
-    let c = content();
+    problems_with(&content(), text)
+}
+
+/// [`problems`] against content `c`.
+fn problems_with(c: &Content, text: &str) -> Vec<String> {
     let raw: RawWorldMap = parse_ron("t.ron", text).unwrap_or_else(|e| panic!("{e:?}"));
     let mut out = Vec::new();
-    let def = build("test_world", raw, refs(&c), &mut |m| out.push(m));
-    check(&def, refs(&c), &mut |m| out.push(m));
+    let def = build("test_world", raw, refs(c), &mut |m| out.push(m));
+    check(&def, refs(c), &mut |m| out.push(m));
     out
 }
 
@@ -183,7 +187,8 @@ fn a_shops_later_stock_and_its_conditions_are_checked() {
 }
 
 /// Act 1's real map (1070): what it holds, and that it keeps it as the
-/// tickets that make its battles fill them in.
+/// tickets that make its battles fill them in. Tests of the content
+/// (ADR-0118): they skip without it.
 mod act1 {
     use super::*;
     use trpg_core::{NodeCondition, NodeKind, ShopKind};
@@ -213,6 +218,9 @@ mod act1 {
 
     #[test]
     fn every_place_of_the_outline_is_on_the_map() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let map = map();
         for id in [
             "veyne_hall",
@@ -245,6 +253,9 @@ mod act1 {
 
     #[test]
     fn a_made_battle_is_never_marked_not_built() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         for node in &map().nodes {
             let unbuilt = node.opens_when.contains(&NodeCondition::NotBuilt);
             assert!(!(unbuilt && node.kind.is_battle()), "{}", node.id);
@@ -253,6 +264,9 @@ mod act1 {
 
     #[test]
     fn each_side_quest_waits_for_its_character() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let map = map();
         for (place, who) in [
             ("company_ledger", "sergeant"),
@@ -269,6 +283,9 @@ mod act1 {
 
     #[test]
     fn the_shops_follow_the_tiers() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let map = map();
         let steel = |s: &str| s.starts_with("steel_");
         // Chapter 4 has no Steel yet; it reaches Millhaven from Chapter 5.
@@ -301,6 +318,9 @@ mod act1 {
 
     #[test]
     fn the_random_pool_is_the_acts_own_and_its_levels_hold_the_cap() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let map = map();
         let rules = map.skirmishes.clone().unwrap_or_else(|| panic!("no pool"));
         assert_eq!(rules.pool.len(), 3);
@@ -496,10 +516,20 @@ fn fixed_skirmishes_validate_battle_scenes_and_music_pool() {
             .iter()
             .any(|e| e.contains("no battle"))
     );
+    // A battle with a theme of its own, not a skirmish's pool.
+    let mut c = content();
+    let themed = c.battles.get_mut("test_fixed_guard").expect("a battle");
+    themed.music = trpg_core::BattleMusic::Cue("a_theme".into());
     assert!(
-        problems(&text(&fixed("ch01", ""), ""))
-            .iter()
-            .any(|e| e.contains("music must be"))
+        problems_with(
+            &c,
+            &text(
+                &fixed("test_fixed_guard", ""),
+                r#"(from: "a", to: "fixed", via: [(2, 5)]),"#
+            )
+        )
+        .iter()
+        .any(|e| e.contains("music must be"))
     );
 }
 
@@ -514,7 +544,7 @@ fn a_chapter_condition_must_name_a_chapter() {
             r#"(from: "a", to: "c", via: [(2, 5)]),"#,
         )
     };
-    assert!(from_source("w", "test_world", &place("ch02"), refs(&c)).is_ok());
+    assert!(from_source("w", "test_world", &place("test_wm2"), refs(&c)).is_ok());
     let errors =
         from_source("w", "test_world", &place("nope"), refs(&c)).expect_err("no such chapter");
     assert!(

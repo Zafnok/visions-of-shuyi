@@ -74,6 +74,9 @@ mod tests {
 
     #[test]
     fn embedded_file_holds_the_starting_values() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         assert_eq!(load(), Ok(AiWeights::STARTING));
     }
 }

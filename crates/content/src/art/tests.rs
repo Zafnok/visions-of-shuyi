@@ -30,6 +30,9 @@ fn get(t: &ArtTable, id: &str) -> ArtDef {
 fn the_embedded_arts_match_the_design_table() {
     use WeaponKind::{Axe, Bow, Gauntlet, Spear, Sword};
     use WeaponRank::{A, B, C, D, E, S};
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let rows = [
         ("flowing_cut", "Flowing Cut", Sword, E, 2),
         ("guard_break", "Guard Break", Sword, D, 4),
@@ -97,6 +100,9 @@ fn the_embedded_arts_match_the_design_table() {
 #[test]
 fn the_embedded_weapon_art_effects_match_the_design() {
     use trpg_core::{MitigationStat, PowerStat};
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let t = embedded();
     assert_eq!(
         get(&t, "pack_hunt").effect,
@@ -132,6 +138,9 @@ fn the_embedded_weapon_art_effects_match_the_design() {
 /// `combat-arts.md`, *Chapter 1 arts*: every art's effect.
 #[test]
 fn the_embedded_art_effects_match_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let debuff = |stat, amount| vec![Debuff { stat, amount }];
     let sidestep = TimedMods {
         stats: vec![],
@@ -196,6 +205,9 @@ fn the_embedded_art_effects_match_the_design_table() {
 /// numbers or debuff the target.
 #[test]
 fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let debuff = |stat, amount| vec![Debuff { stat, amount }];
     let rows = [
         ("cascade", with(|e| e.cascade = 3)),
@@ -267,6 +279,9 @@ fn the_embedded_ranks_c_to_s_effects_match_the_design_table() {
 /// several units.
 #[test]
 fn the_embedded_several_unit_arts_match_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let area = |area, min, max| {
         with(move |e| {
             e.area = Some(area);
@@ -289,6 +304,9 @@ fn the_embedded_several_unit_arts_match_the_design_table() {
 /// `combat-arts.md`, *Ranks C-S* (ticket 0326): the stances that react.
 #[test]
 fn the_embedded_reacting_stances_match_the_design_table() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let stance = |f: fn(&mut TimedMods)| {
         let mut mods = TimedMods::default();
         f(&mut mods);
@@ -324,6 +342,9 @@ fn the_embedded_reacting_stances_match_the_design_table() {
 /// embedded items pass the checks.
 #[test]
 fn only_special_weapons_have_arts() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let items = crate::item::load().unwrap_or_else(|e| panic!("{e:?}"));
     for (id, item) in &items.items {
         if let ItemDef::Weapon(w) = item {

@@ -272,22 +272,22 @@ fn units_are_those_on_the_battles_map_at_its_start() {
         wrong(&c, &walk("0", "road_brigand2", "(8, 3), (8, 2)", "1")),
         [format!("action 1: {}", none("road_brigand2"))]
     );
-    // An enemy that is a character goes by the character: Chapter 1's
-    // captain, who has no `id` of his own.
-    let captain = strike("0", "red_captain", "lead", "50").replace("at: 0", "at: 1");
-    let on_ch01 = acted(&captain).replace("\"test\"", "\"ch01\"");
-    let action = action(&c, &on_ch01);
-    let boss = c.battles["ch01"]
+    // An enemy that is a character goes by the character: the boss of
+    // `test_retreat`, who has no `id` of its own.
+    let boss = strike("0", "test_rogue", "test_lord", "5").replace("at: 0", "at: 1");
+    let on_retreat = acted(&boss).replace("\"test\"", "\"test_retreat\"");
+    let action = action(&c, &on_retreat);
+    let rogue = c.battles["test_retreat"]
         .enemies
         .iter()
-        .find(|u| u.character == Some(CharacterId("red_captain".into())))
+        .find(|u| u.character == Some(CharacterId("test_rogue".into())))
         .unwrap();
     assert_eq!(
         action.actions[0].act,
         Act::Strike {
-            unit: boss.id,
+            unit: rogue.id,
             target: UnitId(1),
-            hp_left: 50
+            hp_left: 5
         }
     );
 }
@@ -484,6 +484,21 @@ fn every_problem_of_an_action_is_reported_at_once() {
     );
 }
 
+/// Chapter 1's file names the three the title cinematic moves (a test of
+/// the content, ADR-0118).
+#[test]
+fn chapter_1_names_the_units_the_title_cinematic_moves() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
+    assert_eq!(
+        crate::battle::unit_names("ch01")
+            .into_keys()
+            .collect::<Vec<_>>(),
+        ["footbridge_brigand", "road_archer", "road_brigand"]
+    );
+}
+
 #[test]
 fn the_battles_name_their_enemies_by_unit_id() {
     let names = crate::battle::unit_names;
@@ -491,12 +506,7 @@ fn the_battles_name_their_enemies_by_unit_id() {
         names("test"),
         BTreeMap::from([("road_brigand".to_owned(), BRIGAND)])
     );
-    // Chapter 1's file names the three the title cinematic moves; a
-    // battle that has no file names none.
-    assert_eq!(
-        names("ch01").into_keys().collect::<Vec<_>>(),
-        ["footbridge_brigand", "road_archer", "road_brigand"]
-    );
+    // A battle that has no file names none.
     assert_eq!(names("nope"), BTreeMap::new());
     assert_eq!(names(""), BTreeMap::new());
     // Ids follow the slots that aren't numbered after the enemies.

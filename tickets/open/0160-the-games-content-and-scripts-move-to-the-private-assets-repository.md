@@ -6,7 +6,7 @@ milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0156", "0157", "0158", "0162"]
+blocked_by: ["0156", "0157", "0158", "0162", "0163", "0164", "0165"]
 nick_input: none
 completed:
 ---
@@ -22,7 +22,7 @@ moves the content and is the last step. By then:
 
 - 0156 has built the content layer (`assets-private/content/` over
   `assets/`, every content-loading CI job checks it out);
-- 0157 (the scripts' tests) and 0162 (the data's) have readied the tests
+- 0157 (the scripts' tests) and 0162–0165 (the data's) have readied the tests
   (none quotes or draws real content; those that need it run on the
   private copy and skip without it, ADR-0118);
 - 0158 has stopped the public web build and releases from carrying it.
@@ -56,6 +56,18 @@ the tests that need no real content (0156's rule). Where a public file
 needs a counterpart (for example `new_game.ron` pointing at the test
 chapter, or an audio manifest of the public sounds), it goes in
 `assets-test/`, or stays public as the default that `content/` replaces.
+
+What the tests of mechanisms still read from the data that moves (0162's
+completion notes list it): the classes, items, spells, skills and arts
+the test files name (`exile`, `guard`, `archer`, `mage`, `raider`,
+`brigand`, `swordsman`, `cleric`, `iron_sword`, `potion`, `fire`, …),
+the `lead` character and its name, the support rules, and the music cues
+`title`, `world_map` and the `skirmish` pool. 0162 ran the content
+crate's tests with the story's files deleted and `new_game.ron` on the
+test chapter: they passed, the tests of the content skipping. Run that
+again here, for every crate, without the checkout. Also:
+`dialogue/tests/presence.rs`'s `readme_if_examples_are_valid` reads real
+characters through `assets/dialogue/README.md`'s examples.
 
 ## Nick input
 

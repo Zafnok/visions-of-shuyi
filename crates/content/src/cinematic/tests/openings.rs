@@ -1,6 +1,6 @@
-//! Tests of the opening files (ticket 0734), on Chapter 1's places: the
-//! yard at Harrowby (25 × 16 tiles, the house wall along rows 2 to 4) and
-//! the study at Veyne Hall (the desk on rows 5 and 6, columns 9 to 15).
+//! Tests of the opening files (ticket 0734), on the test buildings
+//! (`assets-test/maps/test_buildings.map`, 10 × 6 tiles: grass on row 0,
+//! a wall at (7, 2) and the hall's walls from (5, 3) down).
 
 use trpg_core::{CharacterId, Pos, UnitId};
 
@@ -37,13 +37,13 @@ fn problems(c: &Content, source: &str) -> Vec<String> {
 }
 
 const LEAD_STEPS_IN: &str =
-    "(at: 0.0, do: Walk(unit: \"lead\", path: [(11, 8), (12, 8)], secs: 0.2))";
+    "(at: 0.0, do: Walk(unit: \"lead\", path: [(1, 0), (2, 0)], secs: 0.2))";
 
 #[test]
-fn chapter_1_openings_load() {
+fn the_test_opening_loads() {
     let c = content();
-    let sparring = &c.openings["ch01_sparring"];
-    assert_eq!(sparring.map, "harrowby_yard");
+    let test = &c.openings["test_opening"];
+    assert_eq!(test.map, "test_buildings");
     let member = |unit, who: &str, at, facing| CastMember {
         unit: UnitId(unit),
         character: CharacterId(who.to_owned()),
@@ -51,37 +51,43 @@ fn chapter_1_openings_load() {
         facing,
     };
     assert_eq!(
-        sparring.cast,
+        test.cast,
         [
-            member(1, "lead", p(11, 8), Heading::Right),
-            member(2, "retainer", p(13, 8), Heading::Left),
+            member(1, "lead", p(1, 0), Heading::Right),
+            member(2, "test_knight", p(3, 0), Heading::Left),
         ]
     );
-    assert_eq!(sparring.actions.len(), 8);
+    assert_eq!(test.actions.len(), 3);
     let back = ActionDef {
         at_ms: 300,
         act: Act::Walk {
             unit: UnitId(1),
-            path: vec![p(12, 8), p(11, 8)],
+            path: vec![p(2, 0), p(1, 0)],
             ms: 200,
             facing: Some(Heading::Right),
         },
     };
-    assert_eq!(sparring.actions[1], back);
-    // About 2 s of movement (Nick, 0738: "they can spar for maybe 2s").
-    assert_eq!(sparring.length_ms, 2050);
-    let pacing = &c.openings["ch01_pacing"];
-    assert_eq!(
-        (pacing.map.as_str(), pacing.length_ms),
-        ("veyne_study", 2400)
-    );
-    // Across the rug, back, and half way again (Nick, 0738: "Longer").
-    assert_eq!(pacing.actions.len(), 3);
-    assert_eq!(pacing.cast, [member(1, "rival", p(9, 8), Heading::Right)]);
-    let Act::Walk { path, facing, .. } = &pacing.actions[0].act else {
-        panic!("not a walk: {:?}", pacing.actions[0]);
+    assert_eq!(test.actions[1], back);
+    // Until its last walk ends.
+    assert_eq!(test.length_ms, 1000);
+    let Act::Walk { path, facing, .. } = &test.actions[2].act else {
+        panic!("not a walk: {:?}", test.actions[2]);
     };
-    assert_eq!((path.len(), *facing), (7, None));
+    // Round the corner: a tile a step.
+    assert_eq!((path.len(), *facing), (4, None));
+}
+
+/// Chapter 1's openings load on their places (a test of the content,
+/// ADR-0118).
+#[test]
+fn chapter_1s_openings_are_on_its_places() {
+    if bundle::skip_without_the_game() {
+        return;
+    }
+    let c = content();
+    let place = |id: &str| c.openings.get(id).map(|o| o.map.as_str());
+    assert_eq!(place("ch01_sparring"), Some("harrowby_yard"));
+    assert_eq!(place("ch01_pacing"), Some("veyne_study"));
 }
 
 #[test]
@@ -103,22 +109,22 @@ fn an_opening_names_itself_a_map_and_a_cast() {
 fn the_cast_are_characters_on_tiles_they_can_stand_on() {
     let c = content();
     let cast = [
-        "(who: \"lead\", at: (11, 8))",
-        "(who: \"nobody\", at: (2, 9))",
-        "(who: \"lead\", at: (12, 8))",
-        "(who: \"rival\", at: (30, 3))",
-        "(who: \"messenger\", at: (5, 2))",
-        "(who: \"vowmaster\", at: (11, 8))",
+        "(who: \"lead\", at: (1, 0))",
+        "(who: \"nobody\", at: (2, 4))",
+        "(who: \"lead\", at: (2, 0))",
+        "(who: \"test_knight\", at: (30, 3))",
+        "(who: \"test_voice\", at: (7, 2))",
+        "(who: \"test_lord\", at: (1, 0))",
     ];
-    let source = opening("harrowby_yard", &cast.join(", "), LEAD_STEPS_IN);
+    let source = opening("test_buildings", &cast.join(", "), LEAD_STEPS_IN);
     assert_eq!(
         problems(&c, &source),
         [
             "cast 2: no character \"nobody\"",
             "cast 3: \"lead\" is in the cast twice",
-            "cast 4: (30, 3) is not on map \"harrowby_yard\" (25×16 tiles)",
-            "cast 5: a person on foot can't stand on (5, 2)",
-            "cast 6: (11, 8) is where \"lead\" stands",
+            "cast 4: (30, 3) is not on map \"test_buildings\" (10×6 tiles)",
+            "cast 5: a person on foot can't stand on (7, 2)",
+            "cast 6: (1, 0) is where \"lead\" stands",
         ]
     );
 }
@@ -126,39 +132,38 @@ fn the_cast_are_characters_on_tiles_they_can_stand_on() {
 #[test]
 fn the_walks_are_checked_as_a_cinematic_action_on_the_place() {
     let c = content();
-    let cast = "(who: \"messenger\", at: (9, 8))";
+    let cast = "(who: \"test_voice\", at: (6, 1))";
     let action = [
-        // Into the desk: someone with no class walks on foot.
-        "(at: 0.0, do: Walk(unit: \"messenger\", path: [(9, 8), (9, 5)], secs: 0.5))",
-        "(at: 1.0, do: Strike(unit: \"messenger\", target: \"messenger\", hp_left: 0))",
-        "(at: 1.0, do: Walk(unit: \"hollis\", path: [(1, 1), (2, 1)], secs: 0.5))",
-        "(at: 1.0, do: Walk(unit: \"messenger\", path: [(9, 5), (9, 20)], secs: 0.5))",
+        // Into the hall's walls: someone with no class walks on foot.
+        "(at: 0.0, do: Walk(unit: \"test_voice\", path: [(6, 1), (6, 5)], secs: 0.5))",
+        "(at: 1.0, do: Strike(unit: \"test_voice\", target: \"test_voice\", hp_left: 0))",
+        "(at: 1.0, do: Walk(unit: \"nobody\", path: [(1, 1), (2, 1)], secs: 0.5))",
+        "(at: 1.0, do: Walk(unit: \"test_voice\", path: [(6, 5), (6, 20)], secs: 0.5))",
     ];
-    let source = opening("veyne_study", cast, &action.join(", "));
+    let source = opening("test_buildings", cast, &action.join(", "));
     assert_eq!(
         problems(&c, &source),
         [
-            "action 1: path: a person on foot can't walk on (9, 6)",
-            "action 1: path: a person on foot can't walk on (9, 5)",
+            "action 1: path: a person on foot can't walk on (6, 5)",
             "action 2: an opening has walks only, no strikes",
-            "action 3: no unit \"hollis\" in the opening's cast",
-            "action 4: path: (9, 20) is not on the map (25×16 tiles)",
+            "action 3: no unit \"nobody\" in the opening's cast",
+            "action 4: path: (6, 20) is not on the map (10×6 tiles)",
         ]
     );
-    let none = opening("veyne_study", cast, "");
+    let none = opening("test_buildings", cast, "");
     assert_eq!(problems(&c, &none), ["an action needs at least one entry"]);
 }
 
 #[test]
 fn a_walker_may_keep_a_facing() {
     let c = content();
-    let cast = "(who: \"lead\", at: (11, 8), facing: Up)";
+    let cast = "(who: \"lead\", at: (1, 0), facing: Up)";
     let action =
-        "(at: 0.5, do: Walk(unit: \"lead\", path: [(11, 8), (11, 9)], secs: 0.25, facing: Up))";
+        "(at: 0.5, do: Walk(unit: \"lead\", path: [(1, 0), (1, 1)], secs: 0.25, facing: Up))";
     let def = from_source(
         "o.ron",
         "t",
-        &opening("harrowby_yard", cast, action),
+        &opening("test_buildings", cast, action),
         refs(&c),
     );
     let def = def.unwrap_or_else(|e| panic!("{e:?}"));
@@ -170,8 +175,8 @@ fn a_walker_may_keep_a_facing() {
     assert_eq!(*facing, Some(Heading::Up));
     // Someone left without a facing faces the camera.
     let plain = opening(
-        "harrowby_yard",
-        "(who: \"lead\", at: (11, 8))",
+        "test_buildings",
+        "(who: \"lead\", at: (1, 0))",
         LEAD_STEPS_IN,
     );
     let plain = from_source("o.ron", "t", &plain, refs(&c)).unwrap_or_else(|e| panic!("{e:?}"));

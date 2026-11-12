@@ -60,5 +60,5 @@ fn every_dialogue_line_has_a_unique_id() {
             assert!(seen.insert(id.to_owned()), "two lines have the id {id}");
         }
     }
-    assert!(seen.len() > 100, "{}", seen.len());
+    assert!(!seen.is_empty());
 }

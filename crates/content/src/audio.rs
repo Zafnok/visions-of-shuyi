@@ -156,6 +156,9 @@ mod tests {
     /// Chapter 1's tracks, a pool as all its tracks, and nothing else.
     #[test]
     fn the_playdates_music_is_chapter_1s() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let m = load().unwrap_or_default();
         let cues = playdate_music(&m).unwrap_or_else(|e| panic!("{e}"));
         for cue in ["title", "battle_bright", "defeat", "village_home"] {

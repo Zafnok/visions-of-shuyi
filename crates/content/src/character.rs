@@ -946,7 +946,9 @@ mod tests {
         assert!(!shipped.generics.contains_key("test_brigand"));
         assert_eq!(shipped.characters.len() + 6, table.characters.len());
         assert_eq!(shipped.generics.len() + 3, table.generics.len());
-        assert_eq!(shipped.speakers, table.speakers);
+        let test_voice = CharacterId("test_voice".into());
+        assert!(table.speakers.contains(&test_voice) && !shipped.speakers.contains(&test_voice));
+        assert_eq!(shipped.speakers.len() + 1, table.speakers.len());
     }
 
     #[test]
@@ -1234,17 +1236,26 @@ mod tests {
         unit.loadout.equipped.is_some() || !unit.learned.is_empty()
     }
 
-    #[test]
-    fn embedded_characters_load_and_make_units() {
-        let classes = classes();
-        let items = items();
+    /// The characters of the files loaded, with names (the test files'
+    /// here).
+    fn embedded() -> CharacterTable {
         let t = load(
-            Some(&classes),
-            Some(&items),
+            Some(&classes()),
+            Some(&items()),
             Some(&crate::names::load().unwrap_or_default()),
         );
         assert!(t.is_ok(), "{t:?}");
-        let t = t.unwrap_or_default();
+        t.unwrap_or_default()
+    }
+
+    /// The game's characters and templates (a test of the content,
+    /// ADR-0118).
+    #[test]
+    fn the_games_cast_is_its_characters_and_speakers() {
+        if bundle::skip_without_the_game() {
+            return;
+        }
+        let t = embedded();
         let ids: Vec<&str> = t.characters.keys().map(|c| c.0.as_str()).collect();
         assert_eq!(
             ids,
@@ -1277,6 +1288,27 @@ mod tests {
             ]
         );
         assert_eq!(t.generics.len(), 53);
+        // The Chapter 1 cast (its chapter's "Cast on screen") can speak,
+        // as characters or as speakers.
+        for id in [
+            "lead",
+            "retainer",
+            "sergeant",
+            "poacher",
+            "keeper",
+            "heretic",
+            "red_captain",
+            "rival",
+            "vowmaster",
+        ] {
+            assert!(t.can_speak(&CharacterId(id.into())), "{id}");
+        }
+    }
+
+    #[test]
+    fn embedded_characters_load_and_make_units() {
+        let (classes, items) = (classes(), items());
+        let t = embedded();
         let lords: Vec<&str> = t
             .characters
             .values()
@@ -1299,21 +1331,7 @@ mod tests {
             let unit = g.unit(UnitId(0), &classes, &items, Faction::Enemy, Pos::new(0, 0));
             assert!(unit.is_ok_and(|u| armed(&u)), "{}", g.id);
         }
-        // The Chapter 1 cast (docs/story/chapters/ch01.md, "Cast on
-        // screen") can speak, as characters or as speakers.
-        for id in [
-            "lead",
-            "retainer",
-            "sergeant",
-            "poacher",
-            "keeper",
-            "heretic",
-            "red_captain",
-            "rival",
-            "vowmaster",
-        ] {
-            assert!(t.can_speak(&CharacterId(id.into())), "{id}");
-        }
+        assert!(t.can_speak(&CharacterId("test_voice".into())));
         assert!(!t.can_speak(&CharacterId("test_brigand".into())));
         // The Quick Battle's caster: Fire from its class, Frost and Heal
         // of its own.
