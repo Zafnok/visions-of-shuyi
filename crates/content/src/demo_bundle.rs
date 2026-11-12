@@ -410,7 +410,8 @@ pub fn keep_entries(
     let inside = shape.depth[open] + 1;
     let mut entries = Vec::new();
     let mut start = open + 1;
-    for i in open + 1..=close {
+    // `open` is a bracket, never a comma: the entries start after it.
+    for i in open..=close {
         if i == close || (shape.code[i] && bytes[i] == b',' && shape.depth[i] == inside) {
             let (lead, trimmed) = (
                 text[start..i].len() - text[start..i].trim_start().len(),
