@@ -4,7 +4,13 @@
 //! where they can be), and it closes; the campaign keeps it. The basic
 //! controls show only at `Full`, nothing at `None`. Rewind's lesson spends
 //! no charge.
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): the game's own lessons
+//! as its first battle teaches them. Each starts with the guard, and skips
+//! without the game's content; the lessons' mechanism is tested on the
+//! test lesson (`lessons.rs`, `screens/battle/lesson_tests.rs`).
 
+use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Phase, Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -21,7 +27,7 @@ const BASICS: [&str; 5] = ["cursor", "next_unit", "moving", "attacking", "ending
 
 // Chapter 1's party where it starts (`assets/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);
-/// The Sergeant, a Rider: the one who can reach an enemy on turn 1.
+/// The `sergeant`, a Rider: the one who can reach an enemy on turn 1.
 const SERGEANT: Pos = Pos::new(6, 11);
 const HERETIC: Pos = Pos::new(4, 13);
 /// The Brigand on the road, the nearest enemy.
@@ -204,6 +210,9 @@ fn openers(h: &mut Harness) {
 /// order close it; until then the turn can't end.
 #[test]
 fn the_cursor_lesson_opens_on_turn_one_and_closes_on_the_four_directions() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Full, &[]);
     assert_eq!(shown(&h), Some("cursor"));
     assert!(h.snapshot().contains("Moving the cursor"));
@@ -223,6 +232,9 @@ fn the_cursor_lesson_opens_on_turn_one_and_closes_on_the_four_directions() {
 /// cursor; the keys in its text are the player's.
 #[test]
 fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     assert_eq!(shown(&h), Some("keys"));
     let snap = h.snapshot();
@@ -237,6 +249,9 @@ fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
 /// Lesson 4, `Full`: details first, then the next unit.
 #[test]
 fn the_next_unit_lesson_closes_on_details_and_next_unit() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Full, &["cursor", "keys"]);
     assert_eq!(shown(&h), Some("next_unit"));
     h.keys("e");
@@ -248,6 +263,9 @@ fn the_next_unit_lesson_closes_on_details_and_next_unit() {
 /// Lesson 2, `Full`: select, move, the menu.
 #[test]
 fn the_moving_lesson_closes_when_a_unit_moves_and_its_menu_opens() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Full, &[]);
     openers(&mut h);
     assert_eq!(shown(&h), Some("moving"));
@@ -262,6 +280,9 @@ fn the_moving_lesson_closes_when_a_unit_moves_and_its_menu_opens() {
 /// (the Sergeant, on turn 1): the forecast, then the attack.
 #[test]
 fn the_attacking_lesson_opens_when_an_enemy_is_in_reach_and_closes_on_an_attack() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(
         TutorialLevel::Full,
         &["cursor", "keys", "next_unit", "moving", "threat_arrows"],
@@ -281,6 +302,9 @@ fn the_attacking_lesson_opens_when_an_enemy_is_in_reach_and_closes_on_an_attack(
 /// auto-end (on here) would end the turn: it waits for the player to.
 #[test]
 fn the_ending_turn_lesson_opens_when_every_unit_has_acted_and_auto_end_waits() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Full, &[]);
     openers(&mut h);
     // Auto-end on.
@@ -303,6 +327,9 @@ fn the_ending_turn_lesson_opens_when_every_unit_has_acted_and_auto_end_waits() {
 /// rewind screen does it, and spends no charge.
 #[test]
 fn the_rewind_lesson_opens_on_turn_two_and_spends_no_charge() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(
         TutorialLevel::Short,
         &["keys", "threat_arrows", "combat_arts", "terrain_magic"],
@@ -332,6 +359,9 @@ fn the_rewind_lesson_opens_on_turn_two_and_spends_no_charge() {
 /// one with arrows.
 #[test]
 fn the_threat_arrows_lesson_opens_when_they_show_and_closes_on_both_kinds_of_tile() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &["keys"]);
     assert_eq!(shown(&h), None, "nobody reaches the lead");
     go(&mut h, SERGEANT);
@@ -349,6 +379,9 @@ fn the_threat_arrows_lesson_opens_when_they_show_and_closes_on_both_kinds_of_til
 /// menu); opening them does it.
 #[test]
 fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_when_they_open() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &["keys", "threat_arrows"]);
     go(&mut h, SERGEANT);
     h.keys("f");
@@ -385,6 +418,9 @@ fn end_turn_refused(h: &mut Harness) -> bool {
 /// with Arts does.
 #[test]
 fn the_arts_lesson_doesnt_open_after_the_only_unit_with_arts_attacks() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(
         TutorialLevel::Full,
         &[
@@ -422,6 +458,9 @@ fn the_arts_lesson_doesnt_open_after_the_only_unit_with_arts_attacks() {
 /// the turn may end with units still to act.
 #[test]
 fn the_attacking_lesson_is_put_away_when_nobody_left_can_reach_an_enemy() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(
         TutorialLevel::Full,
         &[
@@ -452,6 +491,9 @@ fn the_attacking_lesson_is_put_away_when_nobody_left_can_reach_an_enemy() {
 /// does it.
 #[test]
 fn the_terrain_magic_lesson_opens_with_a_spell_for_a_tile_and_closes_when_one_is_aimed() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &["keys", "threat_arrows"]);
     go(&mut h, HERETIC);
     h.keys("f");
@@ -472,6 +514,9 @@ fn the_terrain_magic_lesson_opens_with_a_spell_for_a_tile_and_closes_when_one_is
 /// no lesson opens at all, into turn 2.
 #[test]
 fn short_shows_no_basic_controls_and_none_shows_nothing() {
+    if skip_without_the_game() {
+        return;
+    }
     for level in [TutorialLevel::Short, TutorialLevel::None] {
         // The lessons that need the right moment have their own tests.
         let mut h = chapter_1(level, &["threat_arrows", "combat_arts", "terrain_magic"]);
@@ -530,6 +575,9 @@ fn tip(h: &Harness) -> Option<trpg_content::TipTrigger> {
 /// for the rest of the battle, and End turn is never refused.
 #[test]
 fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1_with_tips(TutorialLevel::Full);
     // The start tip comes first, then the cursor lesson opens.
     assert!(tip(&h).is_some());
@@ -577,6 +625,9 @@ fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
 /// open) and the tips; the `Short` keys lesson comes next.
 #[test]
 fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1_with_tips(TutorialLevel::Full);
     h.keys("f").wait(0.1);
     assert_eq!(shown(&h), Some("cursor"));
@@ -676,10 +727,15 @@ fn back_on_turn_1(h: &mut Harness) {
 /// while it is up; "Keep going" closes it for good and the battle goes on.
 #[test]
 fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
+    // The box is drawn over Chapter 1's map: its picture is the private
+    // repository's (ADR-0118 §3).
+    let Some(dir) = trpg_content::bundle::content_tests() else {
+        return;
+    };
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     assert!(end_box(&h), "{}", h.snapshot());
-    insta::assert_snapshot!(h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot());
     let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
     assert_eq!(view.focus, 0);
     assert_eq!(
@@ -711,6 +767,9 @@ fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
 /// lessons done; the box doesn't come back.
 #[test]
 fn restart_the_battle_goes_back_to_turn_one_with_the_lessons_done() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     h.keys("Down f");
@@ -726,6 +785,9 @@ fn restart_the_battle_goes_back_to_turn_one_with_the_lessons_done() {
 /// doesn't ask again (once per campaign). The campaign's saves see it.
 #[test]
 fn restart_with_the_lessons_shows_them_again_and_does_not_ask_twice() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     h.keys("Down Down f");
@@ -742,6 +804,9 @@ fn restart_with_the_lessons_shows_them_again_and_does_not_ask_twice() {
 /// the turn.
 #[test]
 fn at_full_the_box_waits_for_the_basic_controls_too() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(
         TutorialLevel::Full,
         &["threat_arrows", "combat_arts", "terrain_magic"],
@@ -773,6 +838,9 @@ fn at_full_the_box_waits_for_the_basic_controls_too() {
 /// Acceptance: at `None` the box never comes.
 #[test]
 fn at_none_the_box_never_comes() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1(TutorialLevel::None, &[]);
     assert!(!end_box(&h));
     end_turn(&mut h);

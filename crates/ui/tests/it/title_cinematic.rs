@@ -8,12 +8,19 @@
 //! The song is 133.743 s long; its cinematic's last shot, the logo, starts
 //! at 115.8 s. What shows is read from the title's view, never from cells.
 //!
-//! The cinematic itself is tickets 0820 and 0833's: the storyboard's shots
-//! (`docs/design/title-screen.md`, *Storyboard* and *As built*), one
-//! snapshot of each.
+//! The tests of how the title runs a cinematic (ADR-0118 §1 (b)) play the
+//! test files' `test_title` as the title's ([`with_test_title`]): it is
+//! timed to the same song, a pan over the test battle, its fight at
+//! 69.95 s and its logo at 115.8 s.
+//!
+//! The game's own cinematic is tickets 0820 and 0833's: the storyboard's
+//! shots (`docs/design/title-screen.md`, *Storyboard* and *As built*),
+//! one snapshot of each. Its two tests are tests of the game's content
+//! (ADR-0118 §1 (a)): they skip without it, and their pictures, of the
+//! game's map, are the private repository's (§3).
 
-use insta::assert_snapshot;
 use trpg_core::{Faction, Pos, UnitId};
+use trpg_ui::Ctx;
 use trpg_ui::Storage;
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::{CinematicPlayer, Frame};
@@ -22,7 +29,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
-use trpg_ui::screens::title::TitleView;
+use trpg_ui::screens::title::{TITLE_CINEMATIC, TitleView};
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 /// The title song's length, in seconds (`assets/audio/audio.ron`).
@@ -30,8 +37,32 @@ const SONG: f32 = 133.743;
 /// Where the logo shot starts, in seconds.
 const LOGO: f32 = 115.8;
 
-/// A launch after the right-handed layout was picked, at the menu.
+/// Where the test cinematic's fight starts, in seconds.
+const TEST_FIGHT: f32 = 69.95;
+
+/// Makes the test files' `test_title` the title's cinematic (ADR-0118):
+/// it is timed to the title song as the game's own is, its fight at
+/// 69.95 s and its logo at 115.8 s.
+pub fn with_test_title(ctx: &mut Ctx) {
+    let cinematics = &mut ctx.game.content.cinematics;
+    let mut title = cinematics["test_title"].clone();
+    TITLE_CINEMATIC.clone_into(&mut title.id);
+    cinematics.insert(title.id.clone(), title);
+}
+
+/// A launch after the right-handed layout was picked, at the menu, with
+/// the test cinematic as the title's.
 fn title() -> Harness {
+    Harness::with_layout_and(RIGHT_HANDED, with_test_title)
+}
+
+/// [`title`], waiting for the first key as `app` launches the game.
+fn title_at_prompt() -> Harness {
+    Harness::at_prompt_with_layout_and(RIGHT_HANDED, with_test_title)
+}
+
+/// A launch at the menu with the game's own title cinematic.
+fn the_games_title() -> Harness {
     Harness::with_layout(RIGHT_HANDED)
 }
 
@@ -155,7 +186,7 @@ fn focused(h: &Harness) -> Option<String> {
 /// menu; and it loops with the song.
 #[test]
 fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
-    let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
+    let mut h = title_at_prompt();
     // Before the first press: the prompt, however long; no cinematic.
     h.wait(20.0);
     let waiting = view(&h);
@@ -176,12 +207,12 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     assert!((100..156).contains(&half), "{half}");
     wait_until(&mut h, 17.0);
     assert_alone_at(&h, 17.0);
-    // The second shot (the first is under the menu): the chapter's
-    // opening lines; then the storyboard's other shots, to the logo.
-    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
+    // The first shot, from where the song is; then the other shots, to
+    // the logo.
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     wait_until(&mut h, 53.0);
     assert_alone_at(&h, 53.0);
-    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     wait_until(&mut h, LOGO - 0.1);
     assert_alone_at(&h, LOGO - 0.1);
     // The logo: the menu fades in on it over half a second.
@@ -204,14 +235,13 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     wait(&mut h, 1.1);
     assert_alone_at(&h, 1.5);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
-    // All by itself: one request for the song, and the sounds of the two
-    // fights, as their combat scenes play them in a battle (ticket 0843).
+    // All by itself: one request for the song, and the sounds of the
+    // fight, as its combat scene plays them in a battle (ticket 0843).
     assert_eq!(music(&h), ["title"]);
     let player = CinematicPlayer::new(h.game().ctx(), "title", None).unwrap();
-    let road = player.sounds(ROAD_FIGHT, 74.499);
-    let footbridge = player.sounds(FOOTBRIDGE_FIGHT, 91.249);
-    assert!(!road.is_empty() && !footbridge.is_empty());
-    assert_eq!(h.sounds(), [road, footbridge].concat());
+    let fight = player.sounds(TEST_FIGHT, 74.499);
+    assert_ne!(fight, Vec::<String>::new());
+    assert_eq!(h.sounds(), fight);
 }
 
 /// Ticket 0843: going idle, the frames go from the menu to black, then
@@ -219,7 +249,7 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
 /// picture over a cinematic shot.
 #[test]
 fn going_idle_the_frames_go_through_black() {
-    let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
+    let mut h = title_at_prompt();
     h.keys("z");
     wait_until(&mut h, 14.8);
     let mut seen = Vec::new();
@@ -555,8 +585,8 @@ fn count(h: &Harness, faction: Faction) -> usize {
 const ROAD_FIGHT: f32 = 69.95;
 const FOOTBRIDGE_FIGHT: f32 = 88.2;
 
-/// The party, by its slots in `assets/battles/ch01.ron`, and the three
-/// enemies the cinematic moves.
+/// The party, by its slots in battle `ch01`, and the three enemies the
+/// cinematic moves.
 const LEAD: u32 = 1;
 const RETAINER: u32 = 2;
 const SERGEANT: u32 = 3;
@@ -579,16 +609,29 @@ fn fight(h: &Harness) -> Option<([String; 2], f32)> {
     Some((names, seconds))
 }
 
+/// The display name of character `id` (the names table's), its first word
+/// alone if `first`.
+fn name_of(h: &Harness, id: &str, first: bool) -> String {
+    let names = &h.game().ctx().game.content.names;
+    let name = names.get(id).unwrap_or_else(|| panic!("no name for {id}"));
+    let name = if first {
+        name.split_whitespace().next().unwrap_or(name)
+    } else {
+        name
+    };
+    name.to_owned()
+}
+
 /// Tickets 0820 and 0833: the storyboard's shots in order, each where the
 /// song changes, with a snapshot of each (the battle's shots: below).
-/// The shots of talk show the real lines, so their snapshots are in the
-/// private repository's `content/tests/snapshots/` (ADR-0118).
+/// They show the game's lines, faces and map, so their snapshots are in
+/// the private repository's `content/tests/snapshots/` (ADR-0118).
 #[test]
 fn the_storyboard_plays_shot_by_shot() {
     let Some(dir) = trpg_content::bundle::content_tests() else {
         return;
     };
-    let mut h = title();
+    let mut h = the_games_title();
     // 2 (0:15): the opening lines of `ch01_intro`, three boxes.
     wait_until(&mut h, 22.0);
     assert_alone_at(&h, 22.0);
@@ -609,8 +652,10 @@ fn the_storyboard_plays_shot_by_shot() {
     };
     assert!(x < early, "{early} to {x}");
     let faces = h.snapshot();
-    assert!(faces.contains("Tamsin") && faces.contains("Aske"));
-    assert_snapshot!("title_cinematic_3_faces", faces);
+    for id in ["sergeant", "poacher"] {
+        assert!(faces.contains(&name_of(&h, id, true)), "{id}");
+    }
+    assert_private_snapshot!(dir, "title_cinematic_3_faces", faces);
     // 4 (0:48.5): the opening line of `ch01_prebattle`, one box, for
     // seven and a half seconds (ticket 0843).
     wait_until(&mut h, 48.4);
@@ -630,7 +675,7 @@ fn the_storyboard_plays_shot_by_shot() {
     wait_until(&mut h, 125.0);
     assert_eq!(shows(&h), Shows::Menu(255));
     assert!((time(&h) - 125.0).abs() < 0.05, "{}", time(&h));
-    assert_snapshot!("title_cinematic_12_logo", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_12_logo", h.snapshot());
     // 1 (0:00), seen from the first loop on: the party where the battle
     // starts, nobody moving, the camera drifting to them at 3×.
     wait(&mut h, SONG - 125.0 + 3.0);
@@ -645,7 +690,7 @@ fn the_storyboard_plays_shot_by_shot() {
         (6, 14)
     );
     wait_until(&mut h, 8.0);
-    assert_snapshot!("title_cinematic_1_party", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_1_party", h.snapshot());
     wait_until(&mut h, 14.0);
     let Frame::MapPan {
         origin_px: later, ..
@@ -665,9 +710,12 @@ fn the_storyboard_plays_shot_by_shot() {
 /// party falls.
 #[test]
 fn the_battle_plays_as_turns_with_the_combat_scene() {
-    let mut h = title();
+    let Some(dir) = trpg_content::bundle::content_tests() else {
+        return;
+    };
+    let mut h = the_games_title();
     // 5 (0:56): turn 1 at 3×. Everyone is still at the cut; then one
-    // after another: Tamsin first, the lead next.
+    // after another: the `sergeant` first, the lead next.
     wait_until(&mut h, 56.1);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
@@ -678,7 +726,7 @@ fn the_battle_plays_as_turns_with_the_combat_scene() {
     wait_until(&mut h, 60.5);
     assert_eq!(tile(&h, LEAD), Some(Pos::new(8, 11)));
     assert_eq!(tile(&h, RETAINER), Some(Pos::new(5, 11)));
-    assert_snapshot!("title_cinematic_5_turn_one", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_5_turn_one", h.snapshot());
     // Then the brigand comes down to the road beside the lead, on the
     // phrase at 1:08.5; the lead's HP is still whole.
     wait_until(&mut h, 68.4);
@@ -693,12 +741,13 @@ fn the_battle_plays_as_turns_with_the_combat_scene() {
     let (names, seconds) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
     assert_eq!(names, ["Brigand", "Ellery"]);
     assert!((seconds - 1.5).abs() < 0.05, "{seconds}");
-    assert_snapshot!("title_cinematic_6_road_fight", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_6_road_fight", h.snapshot());
     wait_until(&mut h, 74.4);
     let (_, seconds) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
     assert!((3.9..4.2).contains(&seconds), "{seconds}");
     // 7 (1:14.5): turn 2 at 3×: the brigand is gone; the archer falls
-    // back; the party moves up; Tamsin goes to the footbridge's brigand.
+    // back; the party moves up; the `sergeant` goes to the footbridge's
+    // brigand.
     wait_until(&mut h, 75.0);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     assert_eq!(tile(&h, ROAD_BRIGAND), None);
@@ -708,37 +757,42 @@ fn the_battle_plays_as_turns_with_the_combat_scene() {
     wait_until(&mut h, 80.0);
     assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));
     assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 9)));
-    assert_snapshot!("title_cinematic_7_turn_two", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_7_turn_two", h.snapshot());
     wait_until(&mut h, FOOTBRIDGE_FIGHT - 0.05);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     assert_eq!(tile(&h, SERGEANT), Some(Pos::new(5, 5)));
     assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), Some(Pos::new(5, 4)));
-    // 8 (1:28.2): the combat scene: Tamsin attacks him, and he falls; the
-    // shot holds half a second after the last blow.
+    // 8 (1:28.2): the combat scene: the `sergeant` attacks it, and it
+    // falls; the shot holds half a second after the last blow.
     wait_until(&mut h, FOOTBRIDGE_FIGHT + 1.75);
     let (names, _) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
-    assert_eq!(names, ["Tamsin Rook", "Brigand"]);
-    assert_snapshot!("title_cinematic_8_footbridge_fight", h.snapshot());
+    assert_eq!(
+        names,
+        [name_of(&h, "sergeant", false), "Brigand".to_owned()]
+    );
+    let picture = h.snapshot();
+    assert_private_snapshot!(dir, "title_cinematic_8_footbridge_fight", picture);
     wait_until(&mut h, 91.2);
     let (_, seconds) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
     assert!((2.4..2.7).contains(&seconds), "{seconds}");
-    // 9 (1:31.25): the footbridge at 4×: Aske crosses after her.
+    // 9 (1:31.25): the footbridge at 4×: the `poacher` crosses after.
     wait_until(&mut h, 91.5);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 4, .. }));
     assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), None);
     assert_eq!(tile(&h, POACHER), Some(Pos::new(3, 9)));
     wait_until(&mut h, 94.0);
     assert_eq!(tile(&h, POACHER), Some(Pos::new(4, 5)));
-    assert_snapshot!("title_cinematic_9_footbridge", h.snapshot());
+    assert_private_snapshot!(dir, "title_cinematic_9_footbridge", h.snapshot());
     // 10 (1:35.5): turn 3 at 3×: the party moves up to the road bridge.
     wait_until(&mut h, 102.0);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 8)));
-    assert_snapshot!("title_cinematic_10_turn_three", h.snapshot());
-    // 11 (1:44.5): the whole map at 2×, Tamsin and Aske moving on.
+    assert_private_snapshot!(dir, "title_cinematic_10_turn_three", h.snapshot());
+    // 11 (1:44.5): the whole map at 2×, the two moving on.
     wait_until(&mut h, 110.0);
     assert!(matches!(frame(&h), Frame::MapPan { zoom: 2, .. }));
-    assert_snapshot!("title_cinematic_11_whole_field", h.snapshot());
+    let picture = h.snapshot();
+    assert_private_snapshot!(dir, "title_cinematic_11_whole_field", picture);
     wait_until(&mut h, LOGO - 0.1);
     assert_eq!(tile(&h, SERGEANT), Some(Pos::new(9, 5)));
     assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));

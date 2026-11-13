@@ -3,7 +3,7 @@
 
 use insta::assert_snapshot;
 use trpg_content::{Theme, TipTrigger};
-use trpg_core::{Faction, Pos};
+use trpg_core::{Faction, Phase, Pos, Trigger, TriggerWhen};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
@@ -628,12 +628,26 @@ fn tips_show_when_switched_on() {
     assert!(!shows(&h, "Your move"));
 }
 
-/// Ticket 0455: Chapter 1's start tip waits for Hollis's first-turn scene
-/// (`ch01_first_turn`), which plays over the battle once the banner is
-/// closed, and shows once the scene ends.
+/// Ticket 0455: the first battle's start tip waits for a scene on its
+/// first turn, which plays over the battle once the banner is closed, and
+/// shows once the scene ends. The test chapter's battle is given such a
+/// scene here (a test scene of the battle triggers; its words don't
+/// matter), as Chapter 1 has one, and no battle notes, so its banner
+/// comes first.
 #[test]
 fn the_start_tip_waits_for_the_first_turn_scene() {
-    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    let battle = h.ctx_mut().game.content.battles.get_mut("test");
+    let battle = battle.unwrap_or_else(|| panic!("no test battle"));
+    battle.triggers.push(Trigger {
+        when: TriggerWhen::TurnStart {
+            turn: 1,
+            phase: Phase::Player,
+        },
+        scene: "test_turn_3".into(),
+        once: true,
+    });
+    battle.battle_notes.clear();
     h.with_tips();
     // New Game, Classic, Not familiar, the default lead; the intro scenes
     // skipped.

@@ -173,8 +173,8 @@ fn worth(state: &BattleState, wanted: Wanted<'_>) -> i64 {
 }
 
 /// How far the lord walks from each tile to the tile to seize, in a Seize
-/// battle: as the crow flies, the lead on Greywater's shore walks away
-/// from the causeway (0849).
+/// battle: as the crow flies, as a lead on a shore would walk away from
+/// the only way across (0849).
 fn seize_field(state: &BattleState) -> Option<shuyi_core::grid::Grid<Option<u32>>> {
     let Objective::Seize { pos, .. } = state.objective() else {
         return None;
@@ -281,8 +281,8 @@ pub fn record(start: BattleState, content: &Content, seed: u64, header: &[&str],
     record_where(start, content, seed, header, path, &|_| true);
 }
 
-/// [`record`], with only the wins that are `wanted` counted as wins (Gil
-/// beaten before Millhaven Road is won, 1071).
+/// [`record`], with only the wins that are `wanted` counted as wins (a
+/// recruit beaten before the battle is won, 1071).
 pub fn record_where(
     start: BattleState,
     content: &Content,

@@ -1,11 +1,14 @@
 //! Chapter 5 can be won (ticket 0851): the player's commands in
 //! `fixtures/ch05_winning.ron`, played with the army Chapters 1 to 4's
 //! recorded playthroughs leave (`ch01_winnable` to `ch04_winnable`),
-//! Hedda joined in the attack scene, and Preparations left as they are,
-//! hold the envoy's house until first light with nobody lost. On the way
-//! the army wins the Salt Road, which guards the way to Saltmere (1071),
-//! with `fixtures/salt_road_winning.ron`. How the fixtures are played and
-//! recorded: [`playthrough`].
+//! `shieldbearer` joined in a scene before the battle, and Preparations
+//! left as they are, win battle `ch05` (a hold to turn 10) with nobody
+//! lost. On the way the army wins the fixed skirmish `salt_road`, which
+//! guards the way (1071), with `fixtures/salt_road_winning.ron`. How the
+//! fixtures are played and recorded: [`playthrough`].
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): each starts with the
+//! guard, and skips without the game's content.
 //!
 //! **If a balance change breaks this test** (or a new Chapter 1 to 4
 //! playthrough), the change must update the playthrough on purpose: look
@@ -15,12 +18,13 @@
 //! cargo test -p trpg-ui --test it ch05_winnable::record -- --ignored
 //! ```
 //!
-//! (`ch05_winnable::record_salt_road` for the Salt Road, and then Chapter
+//! (`ch05_winnable::record_salt_road` for `salt_road`, and then Chapter
 //! 5's again.)
 //!
 //! and read the new fixture's last lines (who fell, how many turns).
 
 use trpg_content::Content;
+use trpg_content::bundle::skip_without_the_game;
 use trpg_content::chapter::roster_units;
 use trpg_core::{BattleState, Campaign, CharacterId, Outcome, SavePoint};
 use trpg_ui::harness::Harness;
@@ -43,7 +47,7 @@ fn salt_road_commands() -> Vec<trpg_core::Command> {
 }
 
 /// The campaign as Chapters 1 to 4's recorded playthroughs leave it, and
-/// the Salt Road's battle as it starts with it, Preparations left as they
+/// battle `salt_road` as it starts with it, Preparations left as they
 /// are.
 fn salt_road(content: &Content) -> (Campaign, BattleState) {
     let (mut campaign, mut state) = chapter_4(content);
@@ -54,26 +58,29 @@ fn salt_road(content: &Content) -> (Campaign, BattleState) {
     (campaign, state)
 }
 
-/// The campaign as Chapters 1 to 4's recorded playthroughs and the Salt
-/// Road's leave it (every rewind charge unused, as the game counts them),
-/// Hedda joined as the house is attacked (`ch05_prebattle`), and Chapter
+/// The campaign as Chapters 1 to 4's recorded playthroughs and
+/// `salt_road`'s leave it (every rewind charge unused, as the game counts
+/// them), `shieldbearer` joined in a scene before the battle, and Chapter
 /// 5's battle as it starts with it, Preparations left as they are.
 fn chapter_5(content: &Content) -> (Campaign, BattleState) {
     let (mut campaign, mut state) = salt_road(content);
     playthrough::play(&mut state, content, &salt_road_commands());
     won(content, &mut campaign, &state, "salt_road");
-    for hedda in roster_units(content, &[CharacterId("shieldbearer".into())]) {
-        campaign.joins_in_scene(hedda);
+    for recruit in roster_units(content, &[CharacterId("shieldbearer".into())]) {
+        campaign.joins_in_scene(recruit);
     }
     let def = &content.battles["ch05"];
     let state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
     (campaign, state)
 }
 
-/// The rules alone: the fixture's commands rout the Hound post at the
-/// march stone, in Classic, losing nobody.
+/// The rules alone: the fixture's commands win `salt_road`, in Classic,
+/// losing nobody.
 #[test]
-fn the_recorded_playthrough_passes_the_march_stone() {
+fn the_recorded_playthrough_wins_salt_road() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let (_, mut state) = salt_road(&content);
     playthrough::play(&mut state, &content, &salt_road_commands());
@@ -81,13 +88,16 @@ fn the_recorded_playthrough_passes_the_march_stone() {
     assert_eq!(lost(&state), Vec::<&str>::new());
 }
 
-/// The rules alone: the fixture's commands hold the house until the last
-/// phase of turn 10 ends, in Classic, losing nobody.
+/// The rules alone: the fixture's commands hold until the last phase of
+/// turn 10 ends, in Classic, losing nobody.
 #[test]
-fn the_recorded_playthrough_holds_the_house_till_light() {
+fn the_recorded_playthrough_wins_chapter_5() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let (_, mut state) = chapter_5(&content);
-    assert_eq!(state.units().len(), 8 + 9, "eight and the Hounds");
+    assert_eq!(state.units().len(), 8 + 9, "eight and 9 enemies");
     playthrough::play(&mut state, &content, &winning_commands());
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(lost(&state), Vec::<&str>::new());
@@ -95,26 +105,27 @@ fn the_recorded_playthrough_holds_the_house_till_light() {
 }
 
 /// Acceptance: New Game reaches Chapter 5 through Chapters 1 to 4, and
-/// Chapter 5 plays through the real game: the road south, the Act 1
-/// world map, the Salt Road won on the way to Saltmere and the Envoy's
-/// House, the house, the
-/// sea steps and the attack (where Hedda joins), Preparations, the hold
-/// won with the recorded commands, the results, the morning, the quay,
-/// the boat, the Hound post, "Save your progress?" (0869: the map won't
-/// come back), a world-map save, "To be continued".
+/// Chapter 5 plays through the real game: its first scene, the Act 1
+/// world map, `salt_road` won on the way to `envoys_house`, the arrival's
+/// scenes (`shieldbearer` joins in one), Preparations, the hold won with
+/// the recorded commands, the results, the victory scenes, "Save your
+/// progress?" (0869: the map won't come back), a world-map save, "To be
+/// continued".
 #[test]
 fn chapter_5_plays_from_new_game_to_to_be_continued() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     chapter_4_won(&mut h);
-    // Find, Fixed skirmishes: the Salt Road, which opened with Veyne Hall
-    // won and guards the way south (1071); travel there and win it.
+    // Find, Fixed skirmishes: `salt_road`, which opened with `veyne_hall`
+    // won and guards the way (1071); travel there and win it.
     h.keys("x Down Down Down Down f f");
     h.wait(3.0);
     win_on_the_way(&mut h, "salt_road", &salt_road_commands());
-    // Find, Story battles, the next one from the Salt Road where the army
-    // is: the Envoy's House; close the list and travel there. Arriving
-    // plays the house, the sea steps and the attack, then Preparations;
-    // Left wraps to `Fight!`.
+    // Find, Story battles, the next one from `salt_road` where the army
+    // is: `envoys_house`; close the list and travel there. Arriving plays
+    // its scenes, then Preparations; Left wraps to `Fight!`.
     h.keys("x Down Down s x f");
     h.wait(6.0);
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
@@ -127,7 +138,7 @@ fn chapter_5_plays_from_new_game_to_to_be_continued() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(&h).units().len(), 8 + 9, "eight and the Hounds");
+    assert_eq!(battle(&h).units().len(), 8 + 9, "eight and 9 enemies");
     playthrough::play_in_game(&mut h, &winning_commands());
     for _ in 0..150 {
         match h.top_screen() {
@@ -146,7 +157,7 @@ fn chapter_5_plays_from_new_game_to_to_be_continued() {
         "{}",
         h.snapshot()
     );
-    // Yes, into the first empty slot: a save on the map, the house held.
+    // Yes, into the first empty slot: a save on the map, the battle won.
     h.keys("f f");
     assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     let saved = trpg_ui::save::read(&h.game().ctx().storage, &trpg_ui::save::slot_key(1));
@@ -159,16 +170,16 @@ fn chapter_5_plays_from_new_game_to_to_be_continued() {
     assert!(world.is_some_and(|w| w.cleared.contains("envoys_house")));
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
-    let hedda = CharacterId("shieldbearer".into());
+    let recruit = CharacterId("shieldbearer".into());
     let joined = campaign
         .roster
         .iter()
-        .any(|u| u.character.as_ref() == Some(&hedda));
-    assert!(joined, "Hedda joined");
+        .any(|u| u.character.as_ref() == Some(&recruit));
+    assert!(joined, "shieldbearer joined");
     assert_eq!(campaign.roster.len(), 8, "nobody was lost");
     let world = campaign.world.as_ref();
     let cleared = world.is_some_and(|w| w.cleared.contains("envoys_house"));
-    assert!(cleared, "the Envoy's House is held");
+    assert!(cleared, "envoys_house is won");
 }
 
 /// Records a new `fixtures/salt_road_winning.ron` ([`playthrough::record`]).
@@ -182,10 +193,10 @@ fn record_salt_road() {
         &content,
         1073,
         &[
-            "// A winning playthrough of the Salt Road (ticket 1071): the player's commands,",
-            "// phase by phase, with the army Chapters 1 to 4's playthroughs leave. Played",
-            "// back by ch05_winnable.rs, which says how to record a new one. Units 1-7: the",
-            "// lead, Hollis, Tamsin, Aske, Maud, Rue, Joss.",
+            "// A winning playthrough of battle salt_road (ticket 1071): the player's",
+            "// commands, phase by phase, with the army Chapters 1 to 4's playthroughs leave.",
+            "// Played back by ch05_winnable.rs, which says how to record a new one. Units",
+            "// 1-7: the New Game roster, then Chapter 2's recruit.",
         ],
         "tests/it/fixtures/salt_road_winning.ron",
     );
@@ -204,8 +215,9 @@ fn record() {
         &[
             "// A winning playthrough of Chapter 5 (ticket 0851): the player's commands,",
             "// phase by phase, with the army Chapters 1 to 4's playthroughs leave and",
-            "// Hedda. Played back by ch05_winnable.rs, which says how to record a new one.",
-            "// Units 1-8: the lead, Hedda, Hollis, Tamsin, Aske, Maud, Rue, Joss.",
+            "// Chapter 5's recruit. Played back by ch05_winnable.rs, which says how to",
+            "// record a new one. Units 1-8: the lead, the recruit, the rest of the New",
+            "// Game roster, then Chapter 2's recruit.",
         ],
         "tests/it/fixtures/ch05_winning.ron",
     );

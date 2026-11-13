@@ -1,7 +1,7 @@
-// A winning playthrough of The Company Ledger (ticket 1072): the player's
-// commands, phase by phase, with the army the battle's bots_army describes.
-// Played back by side_quests.rs, which says how to record a new one. Units
-// 1-7: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss.
+// A winning playthrough of battle side_company_ledger (ticket 1072): the
+// player's commands, phase by phase, with the army the battle's bots_army
+// describes. Played back by side_quests.rs, which says how to record a new
+// one. Units 1-7: the battle's slots, in order.
 [
     // Turn 1
     Act(unit:(3),dest:(x:14,y:10),action:Attack(target:(11),slot:0,active:None,art:Some(("line_pierce")))),

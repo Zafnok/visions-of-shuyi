@@ -343,7 +343,9 @@ fn win_the_last_story_battle_then_decline_the_save() {
 }
 
 /// Act 1's real map (ticket 1070), from a save at `at` with `cleared` won
-/// and the given chapter's roster: the map as a player finds it.
+/// and the given chapter's roster: the map as a player finds it. The
+/// `act1_` tests are tests of the game's content (ADR-0118 §1 (a)): each
+/// starts with the guard, and skips without it.
 fn act1_from_a_save(at: &str, cleared: &[&str]) -> Harness {
     act1_at_chapter("test_wm1", at, cleared)
 }
@@ -379,10 +381,14 @@ fn act1_at_chapter(chapter: &str, at: &str, cleared: &[&str]) -> Harness {
 
 /// Travel between Chapter 4's open places; what isn't open yet shows and
 /// can't be reached. Its two fixed skirmishes are open from the start
-/// (1071); The Company Ledger waits for the toll bridge, and Veyne Hall,
-/// Chapter 4's story battle, for its chapter.
+/// (1071); `company_ledger` waits for `aldwater`, and `veyne_hall`,
+/// Chapter 4's story battle, for its chapter. The map's picture is the
+/// private repository's (ADR-0118 §3).
 #[test]
 fn act1_the_army_walks_chapter_4s_open_places() {
+    let Some(dir) = trpg_content::bundle::content_tests() else {
+        return;
+    };
     let mut h = act1_from_a_save("greywater", &[]);
     let start = campaign(&h);
     let content = &h.game().ctx().game.content;
@@ -402,8 +408,8 @@ fn act1_the_army_walks_chapter_4s_open_places() {
         assert!(def.is_shown(shown, &start), "{shown} shows, greyed");
         assert!(!def.is_open(shown, &start), "{shown} isn't open");
     }
-    assert_snapshot!("act1_start", h.snapshot());
-    // Next place: The Valley Road, then Millhaven.
+    assert_private_snapshot!(dir, "act1_start", h.snapshot());
+    // Next place: `valley_road`, then `millhaven`.
     h.keys("s f");
     walk(&mut h);
     assert_eq!(at(&h), "valley_road");
@@ -435,9 +441,12 @@ fn town_stock(h: &mut Harness, shops: usize) -> Vec<Vec<String>> {
 }
 
 /// Each town's shops open with their stock, and the stock grows with the
-/// story: Saltmere's last stock for Chapter 8 adds the Hi-Potion.
+/// story: `saltmere`'s last stock, for Chapter 8, adds `hi_potion`.
 #[test]
 fn act1_each_towns_shops_open_with_their_stock() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut h = act1_from_a_save("millhaven", &[]);
     let stocks = town_stock(&mut h, 3);
     assert!(stocks[0].contains(&"iron_sword".to_owned()));
@@ -464,21 +473,24 @@ fn act1_each_towns_shops_open_with_their_stock() {
 }
 
 /// The cursor follows the roads on Act 1's map at Chapter 4 (1088, Nick's
-/// playtest: it "kinda just goes wherever it wants"): Millhaven has no
-/// road east; Aldwater's road east goes to Veyne Hall, and Left from there
-/// goes back to Aldwater, not to The Captain's Oath.
+/// playtest: it "kinda just goes wherever it wants"): `millhaven` has no
+/// road east; `aldwater`'s road east goes to `veyne_hall`, and Left from
+/// there goes back to `aldwater`, not to `captains_oath`.
 #[test]
 fn act1_the_cursor_goes_where_the_roads_go() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut h = act1_at_chapter("ch04", "millhaven", &[]);
     let cursor = |h: &Harness| map(h).cursor().to_owned();
     h.keys("Right");
-    assert_eq!(cursor(&h), "millhaven", "no road east of Millhaven");
+    assert_eq!(cursor(&h), "millhaven", "no road east of millhaven");
     h.keys("Down");
     assert_eq!(cursor(&h), "valley_road");
     h.keys("Right");
     assert_eq!(cursor(&h), "aldwater");
     h.keys("Down");
-    assert_eq!(cursor(&h), "aldwater", "no road south of Aldwater");
+    assert_eq!(cursor(&h), "aldwater", "no road south of aldwater");
     h.keys("Right");
     assert_eq!(cursor(&h), "veyne_hall");
     h.keys("Left");

@@ -1,12 +1,15 @@
-//! Act 1's side quests (ticket 1072): *The Company Ledger* (Tamsin's) and
-//! *Letters Home* (Aske's) on the real Act 1 map. Each opens under its
-//! condition and not otherwise; each can be won by its recorded
+//! Act 1's side quests (ticket 1072): `company_ledger` (`sergeant`'s) and
+//! `letters_home` (`poacher`'s) on the real Act 1 map. Each opens under
+//! its condition and not otherwise; each can be won by its recorded
 //! playthrough (`fixtures/side_*_winning.ron`, played with the army the
 //! battle's `bots_army` describes, raised by average growths as the bots
-//! raise theirs) and gives its reward; and *The Company Ledger* plays
-//! through the real game from the
-//! map: its scene, Preparations, the battle, the results, the strongroom,
-//! and the map again with the place cleared and the gold in the purse.
+//! raise theirs) and gives its reward; and `company_ledger` plays through
+//! the real game from the map: its scene, Preparations, the battle, the
+//! results, the scene after, and the map again with the place cleared and
+//! the gold in the purse.
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): each starts with the
+//! guard, and skips without the game's content.
 //!
 //! **If a balance change breaks a replay**, record a new one on purpose:
 //!
@@ -16,6 +19,7 @@
 //!
 //! and read the new fixture's last lines (who fell, how many turns).
 
+use trpg_content::bundle::skip_without_the_game;
 use trpg_content::{Content, battle_campaign};
 use trpg_core::{
     BattleDef, BattleState, Campaign, CharacterId, GameMode, ItemId, LeadGender, LeadProfile,
@@ -116,6 +120,9 @@ fn without(campaign: &mut Campaign, character: &str) {
 /// the army, and not before, and not without them.
 #[test]
 fn each_quest_opens_under_its_condition_and_not_otherwise() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let map = &content.worldmaps["act1"].map;
     for (place, battle, after, who) in [
@@ -142,11 +149,14 @@ fn each_quest_opens_under_its_condition_and_not_otherwise() {
     }
 }
 
-/// The rules alone: the fixture's commands win *The Company Ledger* in
-/// Classic, losing nobody; the paymaster is beaten (he retreats, which
-/// wins); the win pays the company's number.
+/// The rules alone: the fixture's commands win `side_company_ledger` in
+/// Classic, losing nobody; its boss `paymaster` is beaten (it retreats,
+/// which wins); the win pays the battle's gold.
 #[test]
-fn the_recorded_playthrough_takes_the_barn() {
+fn the_recorded_playthrough_wins_the_company_ledger() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let (mut campaign, def) = army_for(&content, "side_company_ledger");
     let mut state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
@@ -157,14 +167,14 @@ fn the_recorded_playthrough_takes_the_barn() {
     );
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(lost(&state), Vec::<&str>::new());
-    // The paymaster is defeated (he retreats, which counts), so the win
-    // is his retreat, not a rout.
-    let tull = CharacterId("paymaster".into());
+    // The boss is defeated (it retreats, which counts), so the win is its
+    // retreat, not a rout.
+    let boss = CharacterId("paymaster".into());
     let defeated = state
         .fallen()
         .iter()
-        .any(|u| u.character.as_ref() == Some(&tull));
-    assert!(defeated, "the paymaster was beaten");
+        .any(|u| u.character.as_ref() == Some(&boss));
+    assert!(defeated, "paymaster was beaten");
     let before = campaign.gold;
     campaign
         .apply_result(def, &state, 0)
@@ -172,11 +182,14 @@ fn the_recorded_playthrough_takes_the_barn() {
     assert_eq!(campaign.gold, before + 4212);
 }
 
-/// The rules alone: the fixture's commands win *Letters Home* in Classic,
-/// losing nobody; the win puts Tor's Bow in the stock, and only Aske can
-/// wield it.
+/// The rules alone: the fixture's commands win `side_letters_home` in
+/// Classic, losing nobody; the win puts `tors_bow` in the stock, and only
+/// `poacher` can wield it.
 #[test]
-fn the_recorded_playthrough_frees_the_boat() {
+fn the_recorded_playthrough_wins_letters_home() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let (mut campaign, def) = army_for(&content, "side_letters_home");
     let mut state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
@@ -228,17 +241,20 @@ pub fn campaign(h: &Harness) -> Campaign {
         .clone()
 }
 
-/// Acceptance: from Millhaven with the toll bridge won, *The Company
-/// Ledger* is a place the army can walk to; its scene plays, then
-/// Preparations, the battle (won with the recorded commands), the
-/// results, the strongroom, and the map again with the place cleared and
-/// the company's number in the purse.
+/// Acceptance: from `millhaven` with `aldwater` won, `company_ledger` is
+/// a place the army can walk to; its scene plays, then Preparations, the
+/// battle (won with the recorded commands), the results, the scene after,
+/// and the map again with the place cleared and the battle's gold in the
+/// purse.
 #[test]
 fn the_company_ledger_plays_from_the_map_to_the_map() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = act1_from_a_save("millhaven", &["aldwater"], "side_company_ledger");
     let before = campaign(&h);
     // Find → Side quests: the one entry; travel there. Arriving starts the
-    // quest: the barn gate, then Preparations; Left wraps to `Fight!`.
+    // quest: its scene, then Preparations; Left wraps to `Fight!`.
     h.keys("x Down Down Down f f");
     h.wait(2.0);
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
@@ -251,11 +267,7 @@ fn the_company_ledger_plays_from_the_map_to_the_map() {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(
-        battle(&h).units().len(),
-        7 + 15,
-        "seven, and the barn's men"
-    );
+    assert_eq!(battle(&h).units().len(), 7 + 15, "seven, and 15 enemies");
     // The notes and the banner.
     h.keys("f f");
     playthrough::play_in_game(&mut h, &playthrough::commands("ledger", LEDGER));
@@ -297,10 +309,10 @@ fn record_the_company_ledger() {
         &content,
         1072,
         &[
-            "// A winning playthrough of The Company Ledger (ticket 1072): the player's",
-            "// commands, phase by phase, with the army the battle's bots_army describes.",
-            "// Played back by side_quests.rs, which says how to record a new one. Units",
-            "// 1-7: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss.",
+            "// A winning playthrough of battle side_company_ledger (ticket 1072): the",
+            "// player's commands, phase by phase, with the army the battle's bots_army",
+            "// describes. Played back by side_quests.rs, which says how to record a new",
+            "// one. Units 1-7: the battle's slots, in order.",
         ],
         "tests/it/fixtures/side_company_ledger_winning.ron",
     );
@@ -318,10 +330,10 @@ fn record_letters_home() {
         &content,
         1073,
         &[
-            "// A winning playthrough of Letters Home (ticket 1072): the player's commands,",
-            "// phase by phase, with the army the battle's bots_army describes. Played back",
-            "// by side_quests.rs, which says how to record a new one. Units 1-7: the lead,",
-            "// Hollis, Tamsin, Aske, Maud, Rue, Joss.",
+            "// A winning playthrough of battle side_letters_home (ticket 1072): the",
+            "// player's commands, phase by phase, with the army the battle's bots_army",
+            "// describes. Played back by side_quests.rs, which says how to record a new",
+            "// one. Units 1-7: the battle's slots, in order.",
         ],
         "tests/it/fixtures/side_letters_home_winning.ron",
     );

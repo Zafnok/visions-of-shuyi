@@ -1,7 +1,10 @@
 //! Chapter 1 can be won (ticket 0803): the player's commands in
-//! `fixtures/ch01_winning.ron`, sent to the real game from New Game, rout
-//! the Red Company with nobody lost, and the chapter runs on to Chapter 2
+//! `fixtures/ch01_winning.ron`, sent to the real game from New Game, win
+//! battle `ch01` with nobody lost, and the chapter runs on to Chapter 2
 //! (0848). How the fixture is played and recorded: [`playthrough`].
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): each starts with the
+//! guard, and skips without the game's content.
 //!
 //! **If a balance change breaks this test**, the change must update the
 //! playthrough on purpose: look at what it did to the chapter, then record
@@ -15,6 +18,7 @@
 //! Chapter 1 playthrough leaves Chapter 2 another army: record Chapter 2's
 //! again after it (`ch02_winnable`).
 
+use trpg_content::bundle::skip_without_the_game;
 use trpg_content::{Content, new_campaign};
 use trpg_core::{BattleState, Faction, GameMode, LeadGender, LeadProfile, Outcome};
 use trpg_ui::harness::Harness;
@@ -43,13 +47,16 @@ fn chapter_1(content: &Content) -> BattleState {
 
 /// The rules alone: the fixture's commands win, in Classic, losing nobody.
 #[test]
-fn the_recorded_playthrough_routs_the_red_company() {
+fn the_recorded_playthrough_wins_chapter_1() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let mut state = chapter_1(&content);
     playthrough::play(&mut state, &content, &winning_commands());
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(lost(&state), Vec::<&str>::new());
-    assert_eq!(state.fallen().len(), 14, "13 soldiers and Harl");
+    assert_eq!(state.fallen().len(), 14, "the 14 enemies");
 }
 
 /// New Game, Classic, Not familiar, the default lead, then Chapter 1 won
@@ -57,8 +64,8 @@ fn the_recorded_playthrough_routs_the_red_company() {
 /// progress?".
 pub fn chapter_1_won(h: &mut Harness) {
     chapter_1_fought(h);
-    // Harl's last words, the VICTORY banner, the results, the victory
-    // scenes.
+    // The battle's last scene, the VICTORY banner, the results, the
+    // victory scenes.
     playthrough::on_to_the_save_prompt(h);
 }
 
@@ -68,7 +75,7 @@ pub fn chapter_1_fought(h: &mut Harness) {
     h.keys("f f f Up f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch01"));
-    // The letter, then the Red Company.
+    // The intro scenes, then the battle.
     skip_scenes(h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let start = battle(h);
@@ -86,6 +93,9 @@ pub fn chapter_1_fought(h: &mut Harness) {
 /// victory scenes, the save prompt, and on to Chapter 2.
 #[test]
 fn chapter_1_plays_from_new_game_into_chapter_2() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     chapter_1_won(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
@@ -111,7 +121,7 @@ fn record() {
         &[
             "// A winning playthrough of Chapter 1 (ticket 0803): the player's commands,",
             "// phase by phase. Played back by ch01_winnable.rs, which says how to record",
-            "// a new one. Units 1-6: the lead, Hollis, Tamsin, Aske, Maud, Rue.",
+            "// a new one. Units 1-6: the New Game roster, in its order.",
         ],
         "tests/it/fixtures/ch01_winning.ron",
     );

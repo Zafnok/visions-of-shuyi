@@ -6,7 +6,7 @@ milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0156", "0157", "0158", "0162", "0163", "0164", "0165"]
+blocked_by: ["0156", "0157", "0158", "0162", "0163", "0164", "0165", "0166"]
 nick_input: none
 completed:
 ---
@@ -24,7 +24,8 @@ moves the content and is the last step. By then:
   `assets/`, every content-loading CI job checks it out);
 - 0157 (the scripts' tests) and 0162–0165 (the data's) have readied the tests
   (none quotes or draws real content; those that need it run on the
-  private copy and skip without it, ADR-0118);
+  private copy and skip without it, ADR-0118), and 0166 the comments
+  outside them (none names the story's people or tells the plot);
 - 0158 has stopped the public web build and releases from carrying it.
 
 **What moves** is everything that is this game's content: what a copy
@@ -64,8 +65,9 @@ the test files name (`exile`, `guard`, `archer`, `mage`, `raider`,
 the `lead` character and its name, the support rules, and the music cues
 `title`, `world_map` and the `skirmish` pool. 0162 ran the content
 crate's tests with the story's files deleted and `new_game.ron` on the
-test chapter: they passed, the tests of the content skipping. Run that
-again here, for every crate, without the checkout. Also:
+test chapter: they passed, the tests of the content skipping (0163, 0164
+and 0165 did the same for theirs). Run that again here, for every crate,
+without the checkout. Also:
 `dialogue/tests/presence.rs`'s `readme_if_examples_are_valid` reads real
 characters through `assets/dialogue/README.md`'s examples.
 
