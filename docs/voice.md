@@ -316,8 +316,11 @@ a scene over it, the battle preloads the lines it may still show (ticket
 lessons not started. Only the next 3 are kept loaded, so a tip the player
 sets off out of that order may be fetched as it shows, and be silent on a
 slow web host; ticket 0496 keeps them all loaded once the engine can
-(engine ticket 3213). The tips over screens outside battle (Load Game,
-Profile) are silent yet (0497). `cargo xtask`'s tests check that every
+(engine ticket 3213).
+
+The tip box over a screen outside battle (the Load Game list, the Profile
+screen; ticket 0497) preloads its line when it opens, says it on its first
+frame and stops it when it closes. `cargo xtask`'s tests check that every
 lesson's and tip's `text` has a clip when `voice/` is here
 (`every_lesson_and_tip_the_guide_says_has_a_clip`).
 

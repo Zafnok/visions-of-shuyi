@@ -3,9 +3,11 @@
 //! The screen asks for it with [`TipScreen::once`] the first time it
 //! opens; the tip is then seen for the profile (ADR-0069), so it shows
 //! once. The battle keeps its own queue of tips (`screens::battle::tips`).
+//! The guide says the tip (ticket 0497): its line is preloaded when the box
+//! is made, asked for on its first frame, and stopped when it closes.
 
 use crate::prelude::*;
-use trpg_content::TipTrigger;
+use trpg_content::{LineId, TipTrigger};
 
 use super::{TipView, TipsSeen, glyph};
 use crate::audio::MenuSound;
@@ -18,6 +20,12 @@ use crate::screens::battle::tips::TipState;
 #[derive(Debug, Clone)]
 pub struct TipScreen {
     trigger: TipTrigger,
+    /// The guide's line of the tip ([`trpg_content::voice::guide_line`]).
+    line: LineId,
+    /// Whether the first frame has run: she says the line only then.
+    said: bool,
+    /// Whether her clip was asked for: only then is there a voice to stop.
+    speaking: bool,
 }
 
 impl TipScreen {
@@ -37,8 +45,15 @@ impl TipScreen {
             return None;
         }
         let id = tip.id.clone();
+        let line = trpg_content::voice::guide_line(&tip.text);
         seen.mark(&id, &mut ctx.storage);
-        Some(Self { trigger })
+        ctx.preload_voices(core::slice::from_ref(&line));
+        Some(Self {
+            trigger,
+            line,
+            said: false,
+            speaking: false,
+        })
     }
 
     /// The tip it shows.
@@ -69,7 +84,14 @@ impl Screen<Shuyi> for TipScreen {
             .any(|a| matches!(a, Action::Confirm | Action::Cancel))
         {
             ctx.audio.menu(MenuSound::Select);
+            if self.speaking {
+                ctx.stop_voice();
+            }
             return Transition::Pop;
+        }
+        if !core::mem::replace(&mut self.said, true) && ctx.has_voice(&self.line) {
+            ctx.play_voice(&self.line);
+            self.speaking = true;
         }
         Transition::None
     }
@@ -117,5 +139,79 @@ mod tests {
         assert_eq!(step(&[Action::CursorDown]), "None");
         assert_eq!(step(&[Action::Confirm]), "Pop");
         assert_eq!(step(&[Action::Cancel]), "Pop");
+    }
+
+    /// A context with tips on and a voice manifest holding a clip for
+    /// every line the guide says.
+    fn voiced() -> Ctx {
+        let (mut c, _) = crate::screens::battle::guide_voice::tests::voiced();
+        c.game.tips_enabled = true;
+        c
+    }
+
+    /// The guide's line of `trigger`'s tip.
+    fn line(c: &Ctx, trigger: TipTrigger) -> LineId {
+        let tip = c.game.content.tips.for_trigger(trigger).unwrap();
+        trpg_content::voice::guide_line(&tip.text)
+    }
+
+    fn voice_requests(c: &mut Ctx) -> Vec<crate::AudioRequest> {
+        use crate::AudioRequest as R;
+        c.audio
+            .take()
+            .into_iter()
+            .filter(|r| {
+                matches!(
+                    r,
+                    R::PlayVoice { .. } | R::StopVoice | R::PreloadVoices { .. }
+                )
+            })
+            .collect()
+    }
+
+    /// Acceptance (0497): the box over the Load Game list preloads its
+    /// line when made, asks for it once on its first frame, and stops it
+    /// when Confirm closes it.
+    #[test]
+    fn the_tip_box_says_its_line_once_and_stops_it_on_close() {
+        use crate::AudioRequest as R;
+        use trpg_content::Variant;
+        let mut c = voiced();
+        let line = line(&c, TipTrigger::FirstLoadGame);
+        let mut tip = TipScreen::once(&mut c, TipTrigger::FirstLoadGame).unwrap();
+        assert_eq!(
+            voice_requests(&mut c),
+            [R::PreloadVoices {
+                lines: vec![(line.clone(), Variant::None)]
+            }]
+        );
+        let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
+        assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
+        let play = R::PlayVoice {
+            line,
+            variant: Variant::None,
+        };
+        assert_eq!(voice_requests(&mut c), [play]);
+        assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
+        assert_eq!(voice_requests(&mut c), [], "asked for once");
+        assert!(matches!(
+            tip.update(&mut c, &frame(&[Action::Confirm])),
+            Transition::Pop
+        ));
+        assert_eq!(voice_requests(&mut c), [R::StopVoice]);
+    }
+
+    /// Acceptance (0497): with voices off nothing is preloaded, asked for
+    /// or stopped.
+    #[test]
+    fn with_voices_off_the_tip_box_asks_for_nothing() {
+        let mut c = voiced();
+        c.change_settings(|s| s.voices = false).unwrap();
+        c.audio.take();
+        let mut tip = TipScreen::once(&mut c, TipTrigger::FirstProfileScreen).unwrap();
+        let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
+        tip.update(&mut c, &frame(&[]));
+        tip.update(&mut c, &frame(&[Action::Cancel]));
+        assert_eq!(voice_requests(&mut c), []);
     }
 }

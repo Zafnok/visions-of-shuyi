@@ -37,7 +37,7 @@ pub mod event_sounds;
 pub mod flight;
 pub mod forecast;
 pub mod glyph;
-mod guide_voice;
+pub(crate) mod guide_voice;
 pub mod guides;
 pub mod info;
 pub mod items;
