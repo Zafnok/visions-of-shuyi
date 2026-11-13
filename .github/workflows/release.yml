@@ -41,13 +41,6 @@ on:
           check-version fails as expected). Leave blank for a normal dry run.
         required: false
         default: ''
-      debug_test_tag:
-        description: >-
-          TEMPORARY (ticket 0917's test, removed before merging): keep the
-          debug files on this throwaway release tag of the private assets
-          repository, on a dry run.
-        required: false
-        default: ''
 
 permissions:
   contents: read
@@ -210,19 +203,18 @@ jobs:
       - name: Keep the debug file private
         if: >-
           (matrix.target == 'windows' || matrix.target == 'linux')
-          && (needs.check-version.outputs.dry_run == 'false' || inputs.debug_test_tag != '')
+          && needs.check-version.outputs.dry_run == 'false'
         env:
           DEBUG_FILES_TOKEN: ${{ secrets.DEBUG_FILES_TOKEN }}
           DEBUG_FILES_REPO: Zafnok/visions-of-shuyi-assets
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          TEST_TAG: ${{ inputs.debug_test_tag }}
           VERSION: ${{ needs.check-version.outputs.version }}
           NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}.debug
         run: |
           set -euo pipefail
           from="dist/export/$TARGET"
           folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
-          bash scripts/upload-debug-file.sh "$from/$folder.debug" "${TEST_TAG:-debug-v$VERSION}" "$NAME"
+          bash scripts/upload-debug-file.sh "$from/$folder.debug" "debug-v$VERSION" "$NAME"
       # The `.app` keeps its signature and its program's mode in a zip `ditto`
       # writes; the export leaves macOS's package a folder.
       - name: Zip the macOS package
