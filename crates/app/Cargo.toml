@@ -23,6 +23,11 @@ debug-tools = ["trpg-ui/debug-tools"]
 # `assets-private/game/` (`cargo shuyi private-assets`). Turned on by the
 # Pages build and release.yml when they have the key, never by a gate.
 private-assets = ["trpg-content/private-assets"]
+# Reads the game's files from `trpg-app.pack` beside the program in place of
+# embedding them (ADR-0120, engine ADR-0110): `cargo shuyi export <target>
+# --release` turns it on for the desktops and the web, and bakes the pack
+# with the game's tools. Never on in a debug build, the tests or the Playdate.
+packed = ["trpg-content/packed"]
 
 [dependencies]
 trpg-core = { path = "../core" }

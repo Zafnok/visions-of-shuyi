@@ -35,6 +35,11 @@ playdate-bundle = []
 # a build that ships: the demo edition's own build has it as its bundle
 # (the `demo_edition` cfg, which `build.rs` sets).
 demo-bundle = []
+# Reads `assets/` and the content from the pack beside the program in place
+# of embedding them (ADR-0120): the release export's desktop and web builds,
+# through `trpg-app`'s `packed`. The program lays the pack in with
+# `bundle::use_pack` before the first file is read.
+packed = ["std"]
 
 [dependencies]
 trpg-core = { path = "../core", default-features = false }
