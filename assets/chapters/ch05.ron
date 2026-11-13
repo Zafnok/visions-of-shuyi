@@ -1,5 +1,5 @@
 // Chapter 5: Salt and Silver (ticket 0851). Beat sheet:
-// docs/story/chapters/ch05.md; script: dialogue/ch05.dlg. On the Act 1
+// assets-private/story/chapters/ch05.md; script: dialogue/ch05.dlg. On the Act 1
 // world map: the road south plays as it begins, then the map shows; the
 // envoy's house, the sea steps and the attack play when the army reaches
 // the Envoy's House in Saltmere (worldmaps/act1.ron, `envoys_house`), then

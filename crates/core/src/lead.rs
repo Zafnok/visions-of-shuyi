@@ -1,5 +1,5 @@
 //! The lead: the Persona-style main character the player shapes
-//! (`docs/design/setting-and-tone.md`, "The lead"). The player picks the
+//! (`assets-private/story/design/setting-and-tone.md`, "The lead"). The player picks the
 //! lead's gender and first name at New Game (0801), so dialogue refers to
 //! the lead with tokens: `{lead}` for the name and `{they}`, `{them}`,
 //! `{their}`, `{theirs}`, `{themself}` (and `{They}` etc.) for pronouns,
@@ -15,11 +15,11 @@ use serde::{Deserialize, Serialize};
 /// `characters.ron`. Its portrait depends on the gender
 /// ([`LeadProfile::portrait_id`]).
 pub const LEAD_ID: &str = "lead";
-/// The lead's default first name (a placeholder; the family name Veyne is
-/// fixed), which the player can change at New Game.
+/// The lead's default first name (a placeholder; the family name,
+/// [`FAMILY_NAME`], is fixed), which the player can change at New Game.
 pub const DEFAULT_NAME: &str = "Ellery";
 /// The lead's family name, which the player can't change
-/// (`setting-and-tone.md`).
+/// (`assets-private/story/design/setting-and-tone.md`).
 pub const FAMILY_NAME: &str = "Veyne";
 /// Longest lead name, in characters.
 pub const MAX_NAME_LEN: usize = 12;

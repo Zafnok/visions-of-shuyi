@@ -26,17 +26,17 @@ discernable = "discernable"
 # e.g. `Iy` in the portrait snapshots, `abd` in the dialogue ones.
 iy = "iy"
 abd = "abd"
-# Names in the dialogue research (docs/story/craft.md, ticket 0736):
+# Names in the dialogue research (assets-private/story/craft.md, ticket 0736):
 # Mass Effect's Commander Shepard, the CoSER paper (split as "Co"+"SER"), and
 # Hask, the made-up deserter captain of the story-writing skill's examples.
 shepard = "shepard"
 ser = "ser"
 hask = "hask"
-# Invented story names and words (docs/story/names.md, ticket 0701).
+# Invented story names and words (assets-private/story/names.md, ticket 0701).
 aske = "aske"
 othe = "othe"
 mor = "mor"
-# Ned Tolley, the Chapter 3 boss (docs/story/names.md, ticket 0743).
+# Ned Tolley, the Chapter 3 boss (assets-private/story/names.md, ticket 0743).
 ned = "ned"
 
 [default]

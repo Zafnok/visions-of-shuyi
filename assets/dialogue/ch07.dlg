@@ -1,7 +1,7 @@
 # Chapter 7: Ossary. Written on a blank page from the beat sheet's cards
 # by ticket 0749 (the story-writing skill).
-# Beat sheet: docs/story/chapters/ch07.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch07.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # A world-map chapter (world-structure.md): it plays out over the Act 1
 # map's nodes and ends with the story battle in the Undercroft, wardens
@@ -76,7 +76,7 @@
 # line of theirs is in an "@if" block, and each scene reads through with
 # any of them gone.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the road is downtime; the road post, the
 # gate, the streets, the barracks, Crane and the stair are played
 # straight, and the warmth is a hand on a blanket, bread torn in half,
@@ -88,7 +88,7 @@
 # Tamsin fires questions and exclaims at her peaks; Aske ends flat and
 # uses no contractions; Hedda's periods are warm; Oriel trails off; Joss
 # corrects himself; Gil is formal, and plain in the dark. American
-# English throughout (setting-and-tone.md, Language); the warden's
+# English throughout (assets-private/story/design/setting-and-tone.md, Language); the warden's
 # "dear" and "there, now" are her nurse's words.
 #
 # Expressions: only the five every character has (neutral, happy, angry,

@@ -58,13 +58,13 @@
 //!
 //!   A defeat changes nothing ([`ApplyError::NotWon`]): the game is over,
 //!   and Retry starts the battle again from its setup.
-//! - **A scripted death** (`death-and-difficulty.md`, Hollis, 0069): a
+//! - **A scripted death** (`death-and-difficulty.md`, 0069): a
 //!   scene can remove a named character for good, in **every** mode
 //!   ([`Campaign::dies_in_scene`], the dialogue's `@dies`): it leaves the
 //!   roster, its loadout goes to the stock and its supports end, as for a
 //!   Classic death. A lord (the lead) never does.
 //! - **A scripted join** (`battle-scenes-and-recruitment.md`, *In a scene,
-//!   on a story beat*, Joss, 0069): a scene can add a named character to
+//!   on a story beat*, 0069): a scene can add a named character to
 //!   the army ([`Campaign::joins_in_scene`], the dialogue's `@joins`), as
 //!   a player unit at the end of the roster, unless it is already in it.
 //! - **Supports** (`docs/design/supports.md`, rules in [`crate::support`]):
@@ -254,7 +254,7 @@ pub struct BattleDef {
     /// The battle's strategy hints (0411).
     pub battle_notes: Vec<BattleNote>,
     /// The place an escape map's exit leads to, named on the objective
-    /// line (`the Brennish lines`; 0324). English: the screen translates
+    /// line (`the far bank`; 0324). English: the screen translates
     /// it. Only on an [`Objective::Escape`] battle.
     pub exit_name: Option<String>,
     /// The houses to save, if the battle has a village goal (0313).

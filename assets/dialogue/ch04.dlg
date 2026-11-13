@@ -1,7 +1,7 @@
 # Chapter 4: The Hound's Country. Written on a blank page from the beat
 # sheet's cards by ticket 0746 (the story-writing skill).
-# Beat sheet: docs/story/chapters/ch04.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch04.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # The first world-map chapter (world-structure.md): the chapter plays out
 # over the Act 1 map's nodes and ends with the story battle at Veyne Hall.
@@ -68,7 +68,7 @@
 # scene reads through with any of them gone. The stable is Hollis's:
 # without him the lead finds the mare alone.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the gate, the battle and the stable are
 # played straight; the warmth is a pair of cold hands in a keeper's
 # sleeves, a kitchen window kept late, a fat mare nobody rode. The road,

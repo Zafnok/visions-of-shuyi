@@ -263,5 +263,5 @@ tickets anymore."
 - Don't work two tickets in one PR.
 - Don't ask Nick technical questions. Decide, and write an ADR if it matters.
 - Don't invent game-design answers (stats, magic, story) — those come from
-  `docs/design/` and `docs/story/beats.md`.
+  `docs/design/` and `assets-private/story/beats.md`.
 - Don't edit accepted ADRs; supersede them.

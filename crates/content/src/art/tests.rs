@@ -82,7 +82,7 @@ fn the_embedded_arts_match_the_design_table() {
         ("pack_hunt", "Pack Hunt", Axe, None, 3),
         ("hold_the_ford", "Hold the Ford", Spear, None, 3),
         ("moonwave", "Moonwave", Sword, None, 4),
-        // Tor's Bow, Aske's personal weapon (ticket 1072, *Letters Home*).
+        // `tors_bow`, the poacher's personal weapon (ticket 1072).
         ("longshot", "Longshot", Bow, None, 3),
     ];
     assert_eq!(t.arts.len(), rows.len() + weapon_arts.len());

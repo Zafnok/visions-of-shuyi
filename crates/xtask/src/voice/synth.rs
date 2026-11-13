@@ -302,7 +302,7 @@ pub const SHORT_LINE_WORDS: usize = 4;
 /// transcriber spells otherwise (an invented name) costs a letter or two,
 /// which a short line can't spare: one of at most [`SHORT_LINE_WORDS`]
 /// words also passes when every word sounds the same ([`sound`]), so
-/// "Dases" says "Dace's.".
+/// "Mases" says "Mace's.".
 pub fn says(heard: &str, words: &str) -> bool {
     let (a, b) = (plain(heard), plain(words));
     alike(&a, &b) >= SAME_WORDS || {

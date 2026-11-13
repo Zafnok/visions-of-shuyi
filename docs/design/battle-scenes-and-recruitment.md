@@ -64,8 +64,7 @@ still saying Joss is "talk-recruited":
 > similar to how Dark Souls 2 tracks your deaths and rewards with steel prot
 > ring. But talk to join just feels odd to me, at least in-battle.
 
-and, for Act 1's two such recruits: "Joss: scene. Gil: beat him
-(Recommended)".
+The story part of this decision is in the private assets repository, `story/design/battle-scenes-and-recruitment.md`.
 
 ## Rules
 
@@ -81,14 +80,10 @@ and, for Act 1's two such recruits: "Joss: scene. Gil: beat him
   1. **Defeat them**: a map marks an enemy as "joins you if defeated". When
      it falls it says its line, leaves the map, and joins after the battle.
      Best as an **optional sub-boss** in a big battle whose win condition is
-     something else (a boss), so the player chooses to beat them. Example:
-     Gil Parrow, the prize-fighter in Chapter 4's *Millhaven Road* skirmish:
-     beat him and he joins after the fight. Win without beating him and he
-     is missed.
+     something else (a boss), so the player chooses to beat them.
   2. **In a scene, on a story beat**: the character joins in a story scene
-     before or after a battle, with no battle condition. Example: Joss
-     Pellam (Chapter 2) refuses to burn Kell's Ford and joins in the scene
-     after the battle.
+     before or after a battle, with no battle condition.
+     The examples of the first two: the story part of this decision is in the private assets repository, `story/design/battle-scenes-and-recruitment.md`.
   3. **Side stories / quests outside battle**: later, with the world map
      (`world-structure.md`); ticket 1009.
   4. **Achievements** (Nick: "maybe"): a recruit earned for a long-run feat

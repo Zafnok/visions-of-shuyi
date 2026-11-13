@@ -288,17 +288,17 @@ mod act1 {
         }
         let map = map();
         let steel = |s: &str| s.starts_with("steel_");
-        // Chapter 4 has no Steel yet; it reaches Millhaven from Chapter 5.
+        // Chapter 4 has no Steel yet; it reaches `millhaven` from Chapter 5.
         let armoury = stock(&map, "millhaven", ShopKind::Armoury, false);
         assert!(!armoury.iter().any(|i| steel(i)), "{armoury:?}");
         let armoury = stock(&map, "millhaven", ShopKind::Armoury, true);
         assert!(armoury.iter().any(|i| steel(i)), "{armoury:?}");
-        // The Hi-Potion only from Chapter 8, at Saltmere.
+        // The Hi-Potion only from Chapter 8, at `saltmere`.
         for kind in [ShopKind::Vendor, ShopKind::Alchemist] {
             assert_eq!(stock(&map, "saltmere", kind, false), ["potion"]);
             assert_eq!(stock(&map, "saltmere", kind, true), ["potion", "hi_potion"]);
         }
-        // Saltmere is the biggest shop in Act 1, and nothing sells the Elixir.
+        // `saltmere` is the biggest shop in Act 1, and nothing sells the Elixir.
         let size = |town| {
             let Some(NodeKind::Town { shops, .. }) = map.node(town).map(|n| &n.kind) else {
                 panic!("no town {town}");
@@ -312,7 +312,7 @@ mod act1 {
             shops.iter().map(|s| s.stock.len()).sum::<usize>()
         };
         for town in ["millhaven", "cairnford", "ossary"] {
-            assert!(size("saltmere") > size(town), "{town} outsells Saltmere");
+            assert!(size("saltmere") > size(town), "{town} outsells saltmere");
         }
     }
 

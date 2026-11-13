@@ -1,9 +1,9 @@
 //! `@dies <character>`: a scene's death (ticket 0319,
-//! `death-and-difficulty.md`, Hollis): when the scene plays, the character
+//! `death-and-difficulty.md`): when the scene plays, the character
 //! leaves the army for good, in every mode
 //! ([`Campaign::dies_in_scene`](trpg_core::Campaign::dies_in_scene)).
 //! `@joins <character>`: a scene's recruit (ticket 0848,
-//! `battle-scenes-and-recruitment.md`, *In a scene, on a story beat*, Joss):
+//! `battle-scenes-and-recruitment.md`, *In a scene, on a story beat*):
 //! when the scene plays, the character joins the army
 //! ([`Campaign::joins_in_scene`](trpg_core::Campaign::joins_in_scene)).
 //!

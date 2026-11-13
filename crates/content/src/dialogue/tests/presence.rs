@@ -918,7 +918,7 @@ fn a_scene_recruit_may_be_gone_after_the_chapter_that_recruits_them() {
     }
 }
 
-/// A recruit who joins before the chapter's battle (Hedda, 0851) can fall
+/// A recruit who joins before the chapter's battle (0851) can fall
 /// in it: certain in the scenes before it and, placed by a slot, as turn
 /// 1's player phase starts, but not later in the battle or after it.
 #[test]

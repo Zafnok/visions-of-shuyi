@@ -290,7 +290,7 @@ changes.
 | [`tickets/`](tickets/README.md) | The backlog. Each ticket is a Markdown file; finished ones move to `tickets/done/` |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Milestones and the path to the Act 1 playtest |
 | [`docs/design/`](docs/design/README.md) | Game-design decisions, made by Nick |
-| [`docs/story/`](docs/story/README.md) | Story beats, bible and characters (spoilers!) |
+| [`docs/story/`](docs/story/README.md) | Where the story beats, bible and characters are: the private assets repository (spoilers!) |
 | [`docs/adr/`](docs/adr/README.md) | Technical decisions |
 | [`docs/engine/`](docs/engine/README.md) | How the game works with Shuyi Engine |
 | [`docs/targets.md`](docs/targets.md) | Each platform's performance budgets and the benchmarks that hold them |

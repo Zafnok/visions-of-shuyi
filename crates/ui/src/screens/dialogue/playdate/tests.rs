@@ -146,10 +146,10 @@ fn the_right_face_is_mirrored_and_a_lone_face_leaves_the_other_side_empty() {
 #[test]
 fn the_caption_goes_across_the_top_row() {
     let mut view = two_speakers(&["Hi."]);
-    view.caption = Some("Harrowby, dawn".to_owned());
+    view.caption = Some("Dunmere, dawn".to_owned());
     let buf = painted(&view);
-    let x = find(&buf, 0, "Harrowby, dawn").unwrap();
-    assert_eq!(x, (50 - 14) / 2);
+    let x = find(&buf, 0, "Dunmere, dawn").unwrap();
+    assert_eq!(x, (50 - 13) / 2);
     assert_eq!(cell(&buf, x, 0).bg, c("panel_bg"));
 }
 

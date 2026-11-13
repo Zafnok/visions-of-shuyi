@@ -102,7 +102,7 @@ struct RawBattle {
     #[serde(default)]
     battle_notes: Vec<RawNote>,
     /// The place an escape map's exit leads to, written bare:
-    /// `exit_name: "the Brennish lines"`.
+    /// `exit_name: "the far bank"`.
     #[serde(default, deserialize_with = "bare")]
     exit_name: Option<String>,
     /// The houses to save (0313), written bare: `village: (minimum: 3,

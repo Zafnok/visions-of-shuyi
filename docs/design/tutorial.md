@@ -84,9 +84,9 @@ New Game asks the player how familiar they are, with three answers:
   twice its size on the left, the guide's name as the box's title). The
   conversation box with the big portrait is not used for tips.
 - The guide's **name** and voice: **Vix**, the dry insider (ticket 0731,
-  Nick's words in `docs/story/characters/guide.md`). The box's title is
+  Nick's words in `assets-private/story/characters/guide.md`). The box's title is
   her name, from the names table. Claude writes every line
-  (`docs/story/writers-guide.md`).
+  (`assets-private/story/writers-guide.md`).
 
 ### The lessons (forced, as a checklist)
 
@@ -152,7 +152,7 @@ New Game asks the player how familiar they are, with three answers:
 - **Threat arrows**: which enemies can reach the tile you're moving to.
 - **Combat Arts**: their own menu, and that some cost uses per battle.
 - **Terrain magic**: a spell can change a tile (Fire can burn a forest).
-  Chapter 1 doesn't script it (`chapter-1.md`, *Extras*), so this lesson
+  Chapter 1 doesn't script it (`assets-private/story/design/chapter-1.md`, *Extras*), so this lesson
   waits for the first time it can happen, in whichever battle.
 
 The exact items of each lesson, and when each starts, are written by the
