@@ -266,20 +266,20 @@ pub fn pack_layers() -> Vec<Layer> {
 
 /// The pack beside the program a packed build reads in place of the
 /// tables of `assets/` and the content ([`use_pack`]).
-#[cfg(feature = "packed")]
+#[cfg(any(feature = "packed", all(test, feature = "std")))]
 static PACKED: std::sync::OnceLock<Layer> = std::sync::OnceLock::new();
 
 /// Lays `pack`, the pack beside the program opened as a layer, where a
 /// packed build reads `assets/` and the content from (ADR-0120): before
 /// anything reads a file ([`install`]). Only the first call counts.
-#[cfg(feature = "packed")]
+#[cfg(any(feature = "packed", all(test, feature = "std")))]
 pub fn use_pack(pack: Layer) {
     let _ = PACKED.set(pack);
 }
 
 /// The pack's layer, or an empty one if the program had none: the game
 /// then shows why in place of its title (`crates/app/src/main.rs`).
-#[cfg(feature = "packed")]
+#[cfg(any(feature = "packed", all(test, feature = "std")))]
 fn packed_layer() -> Layer {
     PACKED
         .get()
@@ -981,5 +981,41 @@ mod tests {
         // Another thread is never affected.
         let elsewhere = story_only(|| std::thread::spawn(move || file(map).is_some()).join());
         assert!(matches!(elsewhere, Ok(true)));
+    }
+
+    /// Ticket 1265: what the release export bakes is every file of
+    /// `assets/` (with the content over it), the bytes the game embeds,
+    /// and no bought art or test file.
+    #[test]
+    fn the_pack_layers_are_the_shipped_files_of_assets() {
+        let packed = Bundle::new(pack_layers());
+        let keymap = "data/keymap.ron";
+        assert_eq!(packed.bytes(keymap), install().bytes(keymap));
+        let paths = packed.files_under("");
+        let assets: Vec<&str> = ASSETS.iter().map(|(path, _)| *path).collect();
+        for path in &assets {
+            assert!(paths.contains(path), "{path}");
+        }
+        for path in &paths {
+            assert!(!is_private(&packed.display_path(path)), "{path}");
+            assert!(packed.test_part(path).is_none(), "{path}");
+        }
+    }
+
+    /// Ticket 1265: a packed build reads the pack the program laid in, and
+    /// one that laid none reads an empty `assets/` (its start then says
+    /// why). Only the first pack laid counts.
+    #[test]
+    fn a_packed_build_reads_the_pack_it_was_given() {
+        static FILES: &[(&str, &[u8])] = &[("data/x.ron", b"(a: 1)")];
+        static OTHER: &[(&str, &[u8])] = &[("data/y.ron", b"(b: 2)")];
+        let empty = Bundle::new(vec![packed_layer()]);
+        assert!(PACKED.get().is_some() || empty.files_under("").is_empty());
+        use_pack(Layer::table(DISPLAY_ROOT, FILES));
+        use_pack(Layer::table(DISPLAY_ROOT, OTHER));
+        let read = Bundle::new(vec![packed_layer()]);
+        assert_eq!(read.files_under(""), ["data/x.ron"]);
+        assert_eq!(read.bytes("data/x.ron"), Some(&b"(a: 1)"[..]));
+        assert_eq!(read.display_path("data/x.ron"), "assets/data/x.ron");
     }
 }
