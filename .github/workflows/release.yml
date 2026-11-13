@@ -16,8 +16,10 @@ name: Release
 # (ADR-0117 §4). Until the store's itch.io page exists (ticket 0901, which
 # adds a push to it in each package job), a package is built, checked and
 # left behind, and the GitHub Release holds the notes and each package's
-# reports. The debug file stays behind too: it is the whole program before
-# stripping, content and all.
+# reports. The debug file (Windows and Linux) is the whole program before
+# stripping, content and all: on a real release each job puts it straight on
+# a release of the private assets repository (ticket 0917, DEBUG_FILES_TOKEN),
+# never on this repository's release or an artifact.
 #
 # See docs/releasing.md for how to actually cut one.
 #
@@ -156,7 +158,7 @@ jobs:
         run: |
           set -euo pipefail
           apt-get update
-          apt-get install -y --no-install-recommends git openssh-client ca-certificates curl \
+          apt-get install -y --no-install-recommends git openssh-client ca-certificates curl jq \
             build-essential pkg-config libasound2-dev libudev-dev libx11-dev libxi-dev \
             libxkbcommon-dev libgl1-mesa-dev
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
@@ -194,6 +196,25 @@ jobs:
         env:
           ART: ${{ steps.private.outputs.features }}
         run: bash scripts/check-release-package.sh "$TARGET" "dist/export/$TARGET" $ART
+      # The debug file reads a player's crash report and embeds the content, so
+      # a real release keeps it private: a release of the private assets
+      # repository named after the version (docs/releasing.md, "The debug
+      # files"). A dry run built and checked it above and uploads nothing.
+      - name: Keep the debug file private
+        if: >-
+          (matrix.target == 'windows' || matrix.target == 'linux')
+          && needs.check-version.outputs.dry_run == 'false'
+        env:
+          DEBUG_FILES_TOKEN: ${{ secrets.DEBUG_FILES_TOKEN }}
+          DEBUG_FILES_REPO: Zafnok/visions-of-shuyi-assets
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          VERSION: ${{ needs.check-version.outputs.version }}
+          NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}.debug
+        run: |
+          set -euo pipefail
+          from="dist/export/$TARGET"
+          folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
+          bash scripts/upload-debug-file.sh "$from/$folder.debug" "debug-v$VERSION" "$NAME"
       # The `.app` keeps its signature and its program's mode in a zip `ditto`
       # writes; the export leaves macOS's package a folder.
       - name: Zip the macOS package
@@ -201,9 +222,8 @@ jobs:
         working-directory: dist/export/macos
         run: ditto -c -k --keepParent "$(ls -d visions-of-shuyi-*-macos)" package.zip
       # What may leave the job: the two reports, which name each file with
-      # its size and hash and never hold the files' text. The package and the
-      # debug file stay behind (ticket 0158); 0901 pushes the package to
-      # itch.io from here.
+      # its size and hash and never hold the files' text. The package stays
+      # behind (ticket 0158); 0901 pushes the package to itch.io from here.
       - name: Keep the reports
         env:
           NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}

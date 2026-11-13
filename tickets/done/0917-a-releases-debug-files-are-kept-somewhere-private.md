@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0158"]
 nick_input: setup
-completed:
+completed: 2026-11-12
 ---
 
 # 0917 — A release's debug files are kept somewhere private
@@ -70,12 +70,12 @@ itch.io project): the session gives the exact clicks and waits for
 
 ## Acceptance criteria
 
-- [ ] A test run puts a `.debug` in the private place (run linked), and
+- [x] A test run puts a `.debug` in the private place (run linked), and
       nothing with the content is a workflow artifact or on a GitHub
       Release.
-- [ ] `docs/releasing.md` says where the debug files are and how to
+- [x] `docs/releasing.md` says where the debug files are and how to
       fetch one.
-- [ ] zizmor passes; all gates in the `run-gates` skill pass.
+- [x] zizmor passes; all gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,5 +83,44 @@ itch.io project): the session gives the exact clicks and waits for
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.**
+- **Where:** a release `debug-v<version>` of the private assets repository
+  `Zafnok/visions-of-shuyi-assets`, picked over a restricted itch.io
+  project (both free): itch.io keeps one build per channel and butler has
+  no documented download command, so each version would need its own
+  channel and a crash report a visit to the page; the private repository
+  already holds what the file embeds, keeps a release per version, and
+  `gh release download` fetches one. The comparison is in
+  `docs/releasing.md`, "The debug files". No ADR: the secret is a token to
+  a repository the project already uses, and the choice is recorded there.
+- **Setup (Nick):** the secret `DEBUG_FILES_TOKEN`, a fine-grained token of
+  Zafnok's with Contents: Read and write on that repository only (added
+  2026-11-12; no expiry date given).
+- `scripts/upload-debug-file.sh` (curl and jq, so it runs in the sniper
+  container too, which now installs jq): finds or makes the release (the
+  two jobs may race: the loser looks again), replaces an asset of the same
+  name on a rerun, and checks the uploaded size. No token on a real
+  release: it fails.
+- `release.yml`: step **Keep the debug file private** after "Check the
+  package", Windows and Linux, only when `dry_run == 'false'`, names the
+  file `visions-of-shuyi-<version>-<release_name>.debug`.
+- **Test run** (a temporary `debug_test_tag` input, removed before merge):
+  https://github.com/Zafnok/visions-of-shuyi/actions/runs/43360103728 put
+  `visions-of-shuyi-0.3.0-linux-x64.debug` (68.6 MB) and
+  `…-windows-x64.debug` (70.7 MB) on the throwaway release
+  `debug-test-0917` there. The run's artifacts are `licenses` and the four
+  `kept-<target>` (11–12 KB each, the reports); no GitHub Release was made
+  (`release` skipped). `gh release download` fetched the Linux one (seven
+  `.debug_*` sections); then the release and its tag were deleted.
+- zizmor: no new finding (its two on `release.yml` were there before: the
+  self-repository syntax and `action-gh-release`).
+
+**Found: today's crash reports can't use the debug file.** The engine
+writes a report's `backtrace` with `Backtrace::to_string()`, the short
+form: in a stripped build, `<unknown>` frames with no addresses, and no
+load address. `docs/releasing.md` says so; follow-up **0918** (an engine
+change, which needs Nick's OK before its engine ticket and PR).
+
+**Gates:** no Rust changed; ran the skills sync check, ticket-lint,
+check-mentions, check-leaks, pr-size and typos locally; CI runs the rest.
+shellcheck isn't installed here.

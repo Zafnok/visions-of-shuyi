@@ -27,6 +27,7 @@ with the content goes straight from its job to a restricted itch.io page:
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
 | A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
+| A release's debug files (Windows, Linux) | a release `debug-v<version>` of the private assets repository (below) | whoever can read that repository | `release.yml`, on a tag |
 
 The demo never goes to Pages.
 
@@ -67,7 +68,61 @@ The GitHub Release carries, never in a package:
 
 The export also writes `<package>.debug` (Windows and Linux), which reads a
 player's crash report. It is the whole program before stripping, content
-included, so it stays in the job like the package.
+included, so it goes to the private assets repository instead (below).
+
+## The debug files
+
+A real release puts each `.debug` straight from its package job on the
+release `debug-v<version>` of the private assets repository,
+[`Zafnok/visions-of-shuyi-assets`](https://github.com/Zafnok/visions-of-shuyi-assets/releases),
+named `visions-of-shuyi-<version>-<windows-x64|linux-x64>.debug`
+(`scripts/upload-debug-file.sh`; ticket 0917). The first job there makes the
+release; a rerun replaces the file. A dry run builds and checks the debug
+file and uploads nothing.
+
+**Fetch one for a crash report** (anyone who can read the private
+repository, with `gh` signed in):
+
+```bash
+gh release download debug-v0.2.0 -R Zafnok/visions-of-shuyi-assets -p '*windows-x64.debug' -D dist/debug
+```
+
+It holds the program's symbols and line tables at the same places as the
+shipped program (`scripts/check-release-package.sh` checks it), so a
+code address in the shipped program reads as a function, file and line:
+`addr2line -f -C -e <file>.debug <address>` (MSYS2's binutils on Windows).
+**Not yet usable on a player's report:** the engine writes a crash
+report's `backtrace` in the standard library's short form, which in a
+stripped build is `<unknown>` frames with no addresses, and the report
+doesn't say where the program was loaded. Until it does (follow-up of
+ticket 0918), a report's `location` (file and line of the panic, which
+the release keeps) is what reads it.
+
+**Why there.** The file is as private as the content it embeds (ADR-0117
+§4), so it can't be on this repository's release or an artifact. Compared:
+
+| Place | Cost | Who can read | Secret |
+| ----- | ---- | ------------ | ------ |
+| A release of the private assets repository (**chosen**) | free (a release asset up to 2 GiB) | the private repository's collaborators; `gh release download` fetches one by version | a new one, `DEBUG_FILES_TOKEN` |
+| A restricted itch.io project of its own | free | Nick, from the project's page | none new (`BUTLER_API_KEY`) |
+
+itch.io keeps one build per channel and butler has no documented command
+to download one, so each version would need a channel of its own and a
+crash report a visit to the page in a browser. The private repository
+already holds what the file embeds, keeps one release per version, and an
+agent reading a crash report fetches the file with `gh`.
+
+`DEBUG_FILES_TOKEN` is a secret of this repository: a fine-grained token
+of Zafnok's (made 2026-11-12, no expiry) with **Contents: Read and write**
+on `Zafnok/visions-of-shuyi-assets` only. Workflows of this repository can
+use it, never a fork's pull request; only `release.yml` does. A real release
+without it fails at **Keep the debug file private**, before the GitHub
+Release. **Make a new one** (if it's revoked or leaks): github.com →
+Settings → Developer settings → Personal access tokens → Fine-grained
+tokens → Generate new token, Repository access *Only select repositories*,
+`visions-of-shuyi-assets`, Permissions *Contents: Read and write*; then this
+repository's Settings → Secrets and variables → Actions → `DEBUG_FILES_TOKEN`
+→ Update.
 
 Why Windows builds with the GNU toolchain:
 [ADR-0108](adr/0108-windows-release-builds-with-the-gnu-toolchain.md).
