@@ -732,3 +732,35 @@ fn only_the_arts_list_marks_the_arts_menu_open() {
         Marks::None
     );
 }
+
+/// Acceptance (0494): the guide's coming lines hold the lessons that may
+/// still start here (shown at the campaign's level, of this battle or any,
+/// not done) and no other.
+#[test]
+fn her_coming_lines_hold_only_the_lessons_still_to_start_here() {
+    let mut c = ctx();
+    c.game.lessons = crate::screen::Lessons::On;
+    c.game.campaign_tutorial = Some(TutorialLevel::Short);
+    let text = |id: &str| format!("The lesson {id}.");
+    let with = |id: &str, level: LessonLevel, battles: &[&str]| Lesson {
+        text: text(id),
+        battles: battles.iter().map(|&b| b.to_owned()).collect(),
+        ..lesson(id, level, &[DoneWhen::CursorMoved])
+    };
+    c.game.content.lessons.lessons = vec![
+        with("anywhere", LessonLevel::Short, &[]),
+        with("here", LessonLevel::Short, &[QUICK_BATTLE]),
+        with("full_only", LessonLevel::Full, &[]),
+        with("elsewhere", LessonLevel::Short, &["another_battle"]),
+        with("done", LessonLevel::Short, &[]),
+    ];
+    c.game.campaign_lessons.insert("done".to_owned());
+    let lines = quick().coming_guide_lines(&c);
+    let line = |id: &str| trpg_content::voice::guide_line(&text(id));
+    for id in ["anywhere", "here"] {
+        assert!(lines.contains(&line(id)), "{id}");
+    }
+    for id in ["full_only", "elsewhere", "done"] {
+        assert!(!lines.contains(&line(id)), "{id}");
+    }
+}

@@ -998,3 +998,22 @@ fn effective_spear_forecast_snapshot() {
     attack_raider(&mut s, &mut c);
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
+
+/// Acceptance (0494): the unseen tips, whose lines the guide may still
+/// say, are every tip but those shown; none while tips are off.
+#[test]
+fn the_unseen_tips_are_those_not_shown_yet_and_none_while_tips_are_off() {
+    let mut c = tipped();
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    let shown = s
+        .shown_tip()
+        .and_then(|t| c.game.content.tips.for_trigger(t));
+    let shown = shown.map(|t| t.id.clone()).unwrap_or_default();
+    let unseen: Vec<String> = s.tips.unseen(&c).map(|t| t.id.clone()).collect();
+    assert_eq!(unseen.len(), c.game.content.tips.tips.len() - 1);
+    assert!(!unseen.contains(&shown), "{shown} was shown");
+    c.game.tips_enabled = false;
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.tips.unseen(&c).count(), 0);
+}
