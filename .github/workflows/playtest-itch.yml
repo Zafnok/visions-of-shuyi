@@ -19,7 +19,7 @@ name: Playtest page
 
 on:
   push:
-    branches: [main]
+    branches: [main, t0158-private-builds] # TEMP: test run, removed before merge
   workflow_dispatch:
 
 permissions:
