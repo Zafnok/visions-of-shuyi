@@ -19,10 +19,10 @@ fn lead() -> LeadProfile {
     LeadProfile::new("Ellery", trpg_core::LeadGender::Male)
 }
 
-/// A names table: the king is Emeric.
+/// A names table: the king is Aldric.
 fn names() -> Names {
     Names {
-        names: [("king", "Emeric"), ("place.thornmarch", "the Thornmarch")]
+        names: [("king", "Aldric"), ("place.thornmarch", "the Fenwold")]
             .map(|(id, name)| (id.to_owned(), name.to_owned()))
             .into(),
     }
@@ -615,17 +615,17 @@ fn name_tokens_are_filled_in() {
     };
     let mut player = DialoguePlayer::new(&scene, lead(), names(), &Present::Everyone);
     let v = player.current();
-    assert_eq!(v.caption.as_deref(), Some("the Thornmarch"));
+    assert_eq!(v.caption.as_deref(), Some("the Fenwold"));
     assert_eq!(
         v.text.as_deref(),
-        Some("Emeric rode out, and Emeric rode home. He waited.")
+        Some("Aldric rode out, and Aldric rode home. He waited.")
     );
     player.advance();
     assert_eq!(
         player.current().choices,
         Some(vec![
-            Cow::Borrowed("For Emeric!"),
-            Cow::Borrowed("The Thornmarch first.")
+            Cow::Borrowed("For Aldric!"),
+            Cow::Borrowed("The Fenwold first.")
         ])
     );
     // A rename reaches every use; the scene keeps its tokens.

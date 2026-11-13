@@ -323,8 +323,8 @@ mod tests {
                 damage: 5,
             },
         };
-        // Rue's reaches only the next tile and can't be countered; Maud's
-        // reaches 2.
+        // The heretic's reaches only the next tile and can't be countered;
+        // the keeper's reaches 2.
         let cinder_oath = SpellDef {
             max_range: 1,
             no_counter: true,

@@ -242,7 +242,7 @@ pub struct Army {
     /// Where it comes from: `campaign after ch01`, `reference army lv 35
     /// by ch02` or `fresh from the character data`.
     pub from: String,
-    /// Each unit in unit order, `Hollis guard lv 5`.
+    /// Each unit in unit order, `Lead exile lv 1`.
     pub units: Vec<String>,
     /// The pack, by item id.
     pub pack: Vec<String>,

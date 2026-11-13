@@ -54,7 +54,7 @@ impl FaceLook {
 }
 
 /// The suffix of the names-table id of a character's short name (ticket
-/// 0712): `retainer.first` is "Hollis".
+/// 0712): `retainer.first` is the retainer's first name.
 const SHORT_NAME: &str = ".first";
 
 /// One face of the shot.

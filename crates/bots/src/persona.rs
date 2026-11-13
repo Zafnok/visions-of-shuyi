@@ -442,7 +442,7 @@ fn hp_of(state: &BattleState, id: UnitId) -> i64 {
 
 /// How far the nearest player unit that may seize stands from `pos`,
 /// walking (the flow field, as [`Tally::approach`] measures): as the crow
-/// flies, a lord on Greywater's shore came "closer" to the scriptorium by
+/// flies, a lord on `ch03`'s shore came "closer" to the scriptorium by
 /// walking away from the causeway, and stayed there (0849). As the crow
 /// flies only when none can walk there; 0 if there is none.
 fn seize_distance(state: &BattleState, pos: Pos, by_lord: bool) -> i64 {
@@ -678,7 +678,7 @@ fn split_attacks(
 /// weighed only attacks, and no unit ever stood in the door between the
 /// lead and the enemy that killed it (0526). Where there are goals, the
 /// advances and holds are the units' moves, and covers before them filled
-/// the places tried: Normal won Kell's Ford with nobody dying 13 to 18
+/// the places tried: Normal won `ch02` with nobody dying 13 to 18
 /// times in 100 less.
 fn covers(
     state: &BattleState,

@@ -514,7 +514,7 @@ fn the_report_names_the_army() {
     let mut record = record();
     record.army = Army {
         from: "campaign after ch01".to_owned(),
-        units: vec!["Lead exile lv 1".to_owned(), "Hollis guard lv 5".to_owned()],
+        units: vec!["Lead exile lv 1".to_owned(), "Corin guard lv 5".to_owned()],
         pack: vec!["potion".to_owned()],
         gold: 100,
     };
@@ -522,7 +522,7 @@ fn the_report_names_the_army() {
     let second = text.lines().nth(1).unwrap_or_default();
     assert_eq!(
         second,
-        "army · campaign after ch01 · Lead exile lv 1, Hollis guard lv 5 · pack potion · gold 100"
+        "army · campaign after ch01 · Lead exile lv 1, Corin guard lv 5 · pack potion · gold 100"
     );
     record.army.pack.clear();
     assert!(render(&record, None).contains(" · pack empty · gold 100\n"));

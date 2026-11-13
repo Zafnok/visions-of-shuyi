@@ -168,7 +168,7 @@ mod tests {
 
     /// A draft with a curly quote and a name written out.
     const DRAFT: &str = "@scene draft_723\n@left lead neutral\n\
-                         > It\u{2019}s raining.\n> Emeric is late.\n@end\n";
+                         > It\u{2019}s raining.\n> Ellery is late.\n@end\n";
 
     /// [`DRAFT`] as a file outside `assets/dialogue/`, deleted on drop.
     struct Draft(PathBuf);
@@ -226,8 +226,8 @@ mod tests {
             report(&problems, only.as_deref(), scripts.len()),
             format!(
                 "{name}:3:5: non-ASCII punctuation '\u{2019}'; use ' instead\n\
-                 {name}:4: \"Emeric\" is written out; write {{n:king}} (\"Emeric\") so a \
-                 rename reaches this line\n\
+                 {name}:4: \"Ellery\" is the lead's default name; write {{lead}} for the \
+                 name the player chose\n\
                  2 problems in {name}\n"
             )
         );

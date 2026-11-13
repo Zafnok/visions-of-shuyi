@@ -131,11 +131,11 @@ fn def() -> BattleDef {
                 mode: None,
                 recruit: true,
             },
-            scene: "rook_joins".into(),
+            scene: "enemy_joins".into(),
             once: true,
         }],
         battle_notes: vec![BattleNote {
-            text: "Rook: joins if defeated.".into(),
+            text: "Spare the captain.".into(),
             units: vec![UnitId(5)],
         }],
         exit_name: None,
@@ -770,7 +770,7 @@ fn escaped_units_count_as_standing() {
     assert!(rewards.exp_gained(UnitId(2)) > 0);
 }
 
-/// A scene's death (Hollis, 0319): gone for good in Classic and Casual
+/// A scene's death (0319): gone for good in Classic and Casual
 /// alike, with its gear in the stock and its supports ended; never the
 /// lead.
 #[test]
@@ -799,7 +799,7 @@ fn a_scene_death_removes_a_character_for_good_in_every_mode() {
     }
 }
 
-/// A scene's recruit (Joss, 0848): joins at the end of the roster as a
+/// A scene's recruit (0848): joins at the end of the roster as a
 /// player unit, once, and only a named character.
 #[test]
 fn a_scene_join_adds_a_character_to_the_army_once() {

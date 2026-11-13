@@ -124,11 +124,11 @@ pub enum Stage {
     /// at full brightness, then the place darkens): ticket 0734.
     Opening(String),
     /// `@dies <character>`: the character leaves the army for good when
-    /// the scene plays, in every mode (Hollis, ticket 0319): see
+    /// the scene plays, in every mode (ticket 0319): see
     /// [`deaths`].
     Dies(CharacterId),
     /// `@joins <character>`: the character joins the army when the scene
-    /// plays (a recruit on a story beat, Joss, ticket 0848;
+    /// plays (a recruit on a story beat, ticket 0848;
     /// `battle-scenes-and-recruitment.md`): see [`joins`].
     Joins(CharacterId),
 }

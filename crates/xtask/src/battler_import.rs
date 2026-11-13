@@ -104,12 +104,12 @@ const fn below(tint: Tint, from_row: u32) -> Tint {
     Tint { from_row, ..tint }
 }
 
-/// The Church Knight's gold trim, tabard and shield in Red Company red.
+/// The Church Knight's gold trim, tabard and shield in the enemy's red.
 const GOLD_TO_RED: [Tint; 1] = [tint((15.0, 60.0), 0.25, 2.0, 1.1, 0.9)];
-/// The same in faded Veyne blue, for Hollis.
+/// The same in faded blue, for the retainer.
 const GOLD_TO_BLUE: [Tint; 1] = [tint((15.0, 60.0), 0.25, 215.0, 0.8, 0.95)];
 /// The Archer's blue and violet clothes in red, her green leaf brown, and
-/// her blond hair dark: a Red Company archer, not Aske.
+/// her blond hair dark: an enemy archer, not the poacher.
 const ARCHER_TO_RED: [Tint; 3] = [
     tint((185.0, 290.0), 0.15, 2.0, 1.2, 1.0),
     tint((60.0, 170.0), 0.2, 30.0, 0.8, 0.6),
@@ -158,7 +158,7 @@ const fn shironejiya(id: &'static str, source: &'static str) -> Picture {
 
 const ARCHER: &str = "tiny-tales/characters/heroes/Archer/battler.png";
 
-/// The Church Knight: the Guard class and Hollis.
+/// The Church Knight: the Guard class and the retainer.
 const fn church_knight(id: &'static str) -> Picture {
     tiny(
         id,
@@ -168,7 +168,7 @@ const fn church_knight(id: &'static str) -> Picture {
 
 /// Every class and named character of the Quick Battle and Chapter 1 with
 /// a bought picture (Nick's choices, ticket 0413). A class's picture is
-/// what the Red Company's soldiers of that class look like; a named
+/// what the enemy's soldiers of that class look like; a named
 /// character of the player's who shares it has their own row. The Rider
 /// has none yet (Pixel Flag's Paladin isn't bought): it keeps the public
 /// placeholder.
@@ -185,11 +185,11 @@ pub const BATTLERS: [Picture; 14] = [
         ),
         &PINK_TO_BLUE,
     ),
-    // Aske is the Archer hero as bought; the Red Company's archers are
+    // The poacher is the Archer hero as bought; the enemy's archers are
     // the same picture in red with dark hair.
     tiny("poacher", ARCHER),
     tinted(tiny("archer", ARCHER), &ARCHER_TO_RED),
-    // Rue is the Witch (face and combat picture match).
+    // The heretic is the Witch (face and combat picture match).
     tiny("heretic", "tiny-tales/characters/heroes/Witch/battler.png"),
     // The Tiny Tales class pictures are drawn smaller than its heroes:
     // the wizard and the cleric at 1.25× stand as tall.
@@ -201,7 +201,7 @@ pub const BATTLERS: [Picture; 14] = [
         5,
         4,
     ),
-    // Also Maud's.
+    // Also the keeper's.
     scaled(
         tiny(
             "cleric",
@@ -210,7 +210,7 @@ pub const BATTLERS: [Picture; 14] = [
         5,
         4,
     ),
-    // The Red Company's guard in red; Hollis in faded Veyne blue.
+    // The enemy's guard in red; the retainer in faded blue.
     tinted(church_knight("guard"), &GOLD_TO_RED),
     tinted(church_knight("retainer"), &GOLD_TO_BLUE),
     tiny(
@@ -222,8 +222,8 @@ pub const BATTLERS: [Picture; 14] = [
         "tiny-tales/characters/battler-classes/elemental-forces/Fire_Elemental/battler.png",
     ),
     // The Brigand is the bearded axe bandit in its second colours, the
-    // Raider the armoured axe fighter in red, Harl the bearded axe bandit
-    // as drawn.
+    // Raider the armoured axe fighter in red, the red captain the bearded axe
+    // bandit as drawn.
     shironejiya("brigand", "shironejiya/monster_s/m_s_bandanna05_b.png"),
     shironejiya("raider", "shironejiya/monster_s/m_s_fighter04_a.png"),
     shironejiya("red_captain", "shironejiya/monster_s/m_s_bandanna05.png"),

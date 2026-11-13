@@ -422,7 +422,7 @@ fn with_the_enemy_on_the_left_its_plate_is_on_the_left() {
     let c = pd_ctx();
     let mut view = stage(&c);
     view.left = 1;
-    view.fighters[1].name = "Brigand of the Red Company".to_owned();
+    view.fighters[1].name = "Brigand of the Gray Legion".to_owned();
     view.fighters[0].name = "Ellery Veyne".to_owned();
     let buf = painted(&c, &view);
     // Each name cut where its plate's HP begins.

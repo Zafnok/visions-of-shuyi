@@ -1,4 +1,4 @@
-//! The guide's lines (ticket 0476): what Vix says in a lesson's or a
+//! The guide's lines (ticket 0476): what the guide says in a lesson's or a
 //! tip's box, its `text`, voiced like a script's lines. They have no `.dlg`
 //! scene, so one is built from the lessons and tips, [`GUIDE_SCENE`], with
 //! ids made as a script line's are (ADR-0045 §3): rewording gives a new
