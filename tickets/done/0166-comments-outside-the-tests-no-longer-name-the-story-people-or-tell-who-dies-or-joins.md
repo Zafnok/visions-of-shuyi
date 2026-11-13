@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0164"]
 nick_input: none
-completed:
+completed: 2026-11-12
 ---
 
 # 0166 — Comments outside the tests no longer name the story's people or tell who dies or joins
@@ -80,12 +80,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] The grep finds no display name of the story in `crates/**/*.rs`
+- [x] The grep finds no display name of the story in `crates/**/*.rs`
       outside data that 0160 moves; the completion notes list what was
       left and why.
-- [ ] No comment under `crates/` tells who dies, joins or leaves.
-- [ ] `cargo xtask check-leaks` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No comment under `crates/` tells who dies, joins or leaves.
+- [x] `cargo xtask check-leaks` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -93,5 +93,32 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Grepped every capitalised display name of `assets/data/names.ron`
+  (people, places, factions, gods) in `crates/**/*.rs` outside
+  `crates/ui/tests/it/`: 142 hits once the game's title was set aside.
+  Plot: `dialogue/deaths.rs`, `dialogue.rs`, `dialogue/presence.rs`,
+  `dialogue/tests/presence.rs`, `core/src/campaign.rs`,
+  `core/src/campaign/tests.rs`, `bots/src/arrival/tests.rs` (who dies,
+  who joins and when): reworded to what the code does. Name only: the
+  rest, reworded to ids or roles (`the poacher`, `the keeper`, `ch03`).
+- Tests of a mechanism that used story names as fixtures now use
+  made-up ones: `content/src/dialogue/tests/names.rs` has its own
+  invented names table (ADR-0118 §1 (b)), and `character.rs`,
+  `ui/src/dialogue/tests.rs`, the Playdate tests, `xtask`'s voice and
+  playtest tests use invented names. `check_script.rs`'s draft writes
+  the lead's public default name instead of the king's, so the same
+  "name written out" check fires through its lead branch.
+- Tests of the real table are guarded (ADR-0118 §1 (a)) and read the
+  names at run time: `names/tests.rs` (the king and the crown exist, the
+  family and nickname short forms match the full names),
+  `lang/data_tests.rs` (the retainer's first name is the table's), the
+  README example in `dialogue/tests/names.rs`. These now check the
+  shape of the names rather than their spelling.
+- Left on purpose: `Veyne` (the lead's public family name in
+  `trpg_core::lead`, and the lead-select tests of `Ellery Veyne`);
+  `Vix` (the tutorial guide, outside the story; its tip box is in public
+  snapshots); item and spell display names in the guarded tests of the
+  real data (`Tor's Bow`, `Fordwarden's Spear`, `Vigil Light`), which
+  0160 moves with the data; `Haltet das Tor` (German, not a name); and
+  the `rook` fixture id (a placeholder unit, not the sergeant).
+- No follow-up tickets.

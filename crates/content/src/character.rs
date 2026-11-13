@@ -613,7 +613,7 @@ mod tests {
     #[test]
     fn names_come_from_the_names_table() {
         let src = file(&[character("hero", "swordsman", "")], "");
-        let table = names(&[("hero", "Hollis Marr")]);
+        let table = names(&[("hero", "Corin Ashby")]);
         let t = from_source(
             "ch.ron",
             &src,
@@ -623,7 +623,7 @@ mod tests {
         )
         .unwrap_or_default();
         let def = t.characters.get(&CharacterId("hero".into()));
-        assert_eq!(def.map(|d| d.name.as_str()), Some("Hollis Marr"));
+        assert_eq!(def.map(|d| d.name.as_str()), Some("Corin Ashby"));
         // The character's unit carries the table's name.
         let unit = def.and_then(|d| {
             character_unit(
@@ -636,13 +636,13 @@ mod tests {
             )
             .ok()
         });
-        assert_eq!(unit.map(|u| u.name), Some("Hollis Marr".to_owned()));
+        assert_eq!(unit.map(|u| u.name), Some("Corin Ashby".to_owned()));
     }
 
     #[test]
     fn a_character_without_a_name_is_an_error() {
         let src = file(&[character("hero", "swordsman", "")], "");
-        let table = names(&[("other", "Aske")]);
+        let table = names(&[("other", "Brannoc")]);
         let errors: Vec<String> = from_source(
             "ch.ron",
             &src,
@@ -676,12 +676,12 @@ mod tests {
     fn speakers_load_and_can_speak() {
         let table = names(&[
             ("hero", "Hero"),
-            ("dace", "Dace Marr"),
-            ("crane_2", "Crane"),
+            ("rowan", "Rowan Ashby"),
+            ("heron_2", "Heron"),
         ]);
         let t = from_source(
             "ch.ron",
-            &with_speakers("\"dace\", \"crane_2\""),
+            &with_speakers("\"rowan\", \"heron_2\""),
             Some(&classes()),
             Some(&items()),
             Some(&table),
@@ -689,12 +689,12 @@ mod tests {
         assert!(t.is_ok(), "{t:?}");
         let t = t.unwrap_or_default();
         let id = |s: &str| CharacterId(s.into());
-        assert_eq!(t.speakers, BTreeSet::from([id("crane_2"), id("dace")]));
+        assert_eq!(t.speakers, BTreeSet::from([id("heron_2"), id("rowan")]));
         // Speakers aren't units.
         assert_eq!(t.characters.len(), 1);
         assert!(t.can_speak(&id("hero")));
-        assert!(t.can_speak(&id("dace")));
-        assert!(t.can_speak(&id("crane_2")));
+        assert!(t.can_speak(&id("rowan")));
+        assert!(t.can_speak(&id("heron_2")));
         assert!(!t.can_speak(&id("nobody")));
     }
 
@@ -710,9 +710,9 @@ mod tests {
     #[test]
     fn speaker_ids_are_checked() {
         assert_eq!(
-            errors(&with_speakers("\"Dace\", \"the.rival\", \"\"")),
+            errors(&with_speakers("\"Rowan\", \"the.rival\", \"\"")),
             [
-                "ch.ron:9: speaker \"Dace\": ids are lowercase letters, digits and _",
+                "ch.ron:9: speaker \"Rowan\": ids are lowercase letters, digits and _",
                 "ch.ron:9: speaker \"the.rival\": ids are lowercase letters, digits and _",
                 "ch.ron:9: speaker \"\": ids are lowercase letters, digits and _",
             ]
@@ -722,15 +722,15 @@ mod tests {
     #[test]
     fn duplicate_speakers() {
         assert_eq!(
-            errors(&with_speakers("\"dace\", \"crane\", \"dace\"")),
-            ["ch.ron:9: duplicate speaker id \"dace\""]
+            errors(&with_speakers("\"rowan\", \"heron\", \"rowan\"")),
+            ["ch.ron:9: duplicate speaker id \"rowan\""]
         );
     }
 
     #[test]
     fn a_speaker_who_is_a_character_is_an_error() {
         assert_eq!(
-            errors(&with_speakers("\"dace\", \"hero\"")),
+            errors(&with_speakers("\"rowan\", \"hero\"")),
             [
                 "ch.ron:4: \"hero\" is both a character and a speaker; a character can \
                  already speak, so remove it from speakers"
@@ -740,10 +740,10 @@ mod tests {
 
     #[test]
     fn a_speaker_without_a_name_is_an_error() {
-        let table = names(&[("hero", "Hero"), ("dace", "Dace Marr")]);
+        let table = names(&[("hero", "Hero"), ("rowan", "Rowan Ashby")]);
         let errors: Vec<String> = from_source(
             "ch.ron",
-            &with_speakers("\"dace\", \"crane\""),
+            &with_speakers("\"rowan\", \"heron\""),
             Some(&classes()),
             Some(&items()),
             Some(&table),
@@ -756,7 +756,7 @@ mod tests {
         assert_eq!(
             errors,
             [
-                "ch.ron:9: speaker \"crane\" has no name: add \"crane\": \"<name>\" to \
+                "ch.ron:9: speaker \"heron\" has no name: add \"heron\": \"<name>\" to \
                  assets/data/names.ron"
             ]
         );

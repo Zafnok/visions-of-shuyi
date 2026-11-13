@@ -158,13 +158,20 @@ fn the_games_data_offers_its_text() {
         ("skills.keen_edge.name", "Keen Edge"),
         ("arts.guard_break.name", "Guard Break"),
         ("names.lead", "Ellery"),
-        ("names.retainer.first", "Hollis"),
         ("tips.battle_start.title", "Your move"),
     ] {
         assert_eq!(source.data.get(key).map(String::as_str), Some(english));
         assert_eq!(content.lang.source_text(key), Some(english), "{key}");
     }
     assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
+    // A story name's text is the names table's.
+    let first = content.names.get("retainer.first");
+    assert!(first.is_some());
+    assert_eq!(
+        source.data.get("names.retainer.first").map(String::as_str),
+        first
+    );
+    assert_eq!(content.lang.source_text("names.retainer.first"), first);
 }
 
 /// Every kind of data text, from what the test files use.
