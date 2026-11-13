@@ -52,6 +52,15 @@ writes (the program, `NOTICES.txt`, `HOW-TO-OPEN.txt`). A file it names that
 isn't there refuses the export; only `voice` is optional. On macOS the folders
 are inside the `.app`, in `Contents/Resources`.
 
+The desktops' and the web's programs read `assets/` (with the content over it)
+from `trpg-app.pack` beside them, which the export bakes with the game's tools
+and checks against the files (ADR-0120): a package without it shows "bake it
+again" in place of the game. `cargo shuyi bake --target desktop --out <file>`
+bakes one by hand, and `--check` proves it. The bought art stays in the
+program. A new file of `assets/` or of the content needs its line in the
+`disclosure` parts' `allowed_pack_entries` (the demo's too if it keeps it); an
+xtask test names it.
+
 Its `disclosure` part is the list a package is held to (ticket 1208): a file it
 doesn't name, a forbidden path or a canary from the test files refuses the
 export with `SH3012`, names the file and its source, and removes the package. A

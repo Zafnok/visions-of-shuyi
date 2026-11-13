@@ -56,8 +56,9 @@ pub use shuyi_assets::bundle::reading;
 pub use shuyi_assets::bundle::{Bundle, Layer, Watcher, story_only, watch};
 
 /// Every file under `assets/`: its path (relative to `assets/`,
-/// `/`-separated) and contents, sorted by path.
-#[cfg(any(all(feature = "std", not(demo_edition)), test))]
+/// `/`-separated) and contents, sorted by path. Not in a packed build,
+/// which reads them from the pack beside the program ([`use_pack`]).
+#[cfg(any(all(feature = "std", not(demo_edition), not(feature = "packed")), test))]
 static ASSETS: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
 
 /// [`ASSETS`] without the files the Playdate leaves out: the bundle without
@@ -80,7 +81,11 @@ static PLAYDATE_PRIVATE: &[(&str, &[u8])] =
 
 /// The demo's table of `assets/` (ticket 0914): what it keeps, cut, and
 /// its edition's file.
-#[cfg(any(demo_edition, feature = "demo-bundle", test))]
+#[cfg(any(
+    all(demo_edition, not(feature = "packed")),
+    feature = "demo-bundle",
+    test
+))]
 static DEMO: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/demo_files.rs"));
 
 /// The demo's table of the bought art.
@@ -94,7 +99,7 @@ static PRIVATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/private_f
 /// Every file of `assets-private/content/` (ADR-0117), empty when the build
 /// had no checkout. Not in the demo edition, whose table holds what it
 /// keeps of it.
-#[cfg(all(feature = "std", not(demo_edition)))]
+#[cfg(all(feature = "std", not(demo_edition), not(feature = "packed")))]
 static CONTENT: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/content_files.rs"));
 
 /// The Playdate's table of the content, made as [`PLAYDATE`] is.
@@ -149,8 +154,11 @@ pub fn layers() -> Vec<Layer> {
     let mut layers = demo_layers();
     #[cfg(not(demo_edition))]
     let mut layers = {
-        #[cfg(feature = "std")]
+        #[cfg(all(feature = "std", not(feature = "packed")))]
         let content = content_layer(CONTENT);
+        // The pack holds the content laid over `assets/` (ADR-0120).
+        #[cfg(feature = "packed")]
+        let content = None;
         #[cfg(not(feature = "std"))]
         let content = content_layer(PLAYDATE_CONTENT);
         story_layers(content)
@@ -183,8 +191,10 @@ fn story_layers(content: Option<Layer>) -> Vec<Layer> {
     ];
     layers.extend(content.map(Layer::private));
     layers.extend([
-        #[cfg(feature = "std")]
+        #[cfg(all(feature = "std", not(feature = "packed")))]
         Layer::table(DISPLAY_ROOT, ASSETS),
+        #[cfg(feature = "packed")]
+        packed_layer(),
         #[cfg(not(feature = "std"))]
         playdate_layer(),
     ]);
@@ -210,7 +220,7 @@ fn test_layers() -> Vec<Layer> {
 
 /// The content's layer of `table`: none when it is empty (a build without
 /// the checkout, or with a checkout of nothing but notes).
-#[cfg(not(demo_edition))]
+#[cfg(all(not(demo_edition), not(feature = "packed")))]
 fn content_layer(table: &'static [(&'static str, &'static [u8])]) -> Option<Layer> {
     (!table.is_empty()).then(|| Layer::table(CONTENT_DISPLAY_ROOT, table))
 }
@@ -224,8 +234,57 @@ pub fn demo_layers() -> Vec<Layer> {
     vec![
         #[cfg(feature = "private-assets")]
         Layer::table(PRIVATE_DISPLAY_ROOT, DEMO_PRIVATE).private(),
+        #[cfg(not(all(demo_edition, feature = "packed", not(feature = "demo-bundle"))))]
         Layer::table(DISPLAY_ROOT, DEMO),
+        #[cfg(all(demo_edition, feature = "packed", not(feature = "demo-bundle")))]
+        packed_layer(),
     ]
+}
+
+/// The stamp of the pack beside the program (ADR-0120): the game's
+/// version, so a pack of another version is refused and said to be baked
+/// again. The tools bake with it and a packed build opens the pack with it.
+pub const PACK_STAMP: &str = concat!("visions-of-shuyi ", env!("CARGO_PKG_VERSION"));
+
+/// What a release export bakes into the pack beside the program (ADR-0120):
+/// the files this build reads from `assets/` with the content laid over
+/// them, or in the demo edition the demo's table. The bought art stays in
+/// the program (the `private-assets` feature, ADR-0040), and no build that
+/// ships has the test files. Not in a packed build, which has no tables
+/// of them to bake.
+#[cfg(all(feature = "std", not(feature = "packed")))]
+pub fn pack_layers() -> Vec<Layer> {
+    #[cfg(demo_edition)]
+    return vec![Layer::table(DISPLAY_ROOT, DEMO)];
+    #[cfg(not(demo_edition))]
+    {
+        let mut layers: Vec<Layer> = content_layer(CONTENT).into_iter().collect();
+        layers.push(Layer::table(DISPLAY_ROOT, ASSETS));
+        layers
+    }
+}
+
+/// The pack beside the program a packed build reads in place of the
+/// tables of `assets/` and the content ([`use_pack`]).
+#[cfg(feature = "packed")]
+static PACKED: std::sync::OnceLock<Layer> = std::sync::OnceLock::new();
+
+/// Lays `pack`, the pack beside the program opened as a layer, where a
+/// packed build reads `assets/` and the content from (ADR-0120): before
+/// anything reads a file ([`install`]). Only the first call counts.
+#[cfg(feature = "packed")]
+pub fn use_pack(pack: Layer) {
+    let _ = PACKED.set(pack);
+}
+
+/// The pack's layer, or an empty one if the program had none: the game
+/// then shows why in place of its title (`crates/app/src/main.rs`).
+#[cfg(feature = "packed")]
+fn packed_layer() -> Layer {
+    PACKED
+        .get()
+        .copied()
+        .unwrap_or(Layer::table(DISPLAY_ROOT, &[]))
 }
 
 /// `assets/` as the Playdate embeds it: without the files

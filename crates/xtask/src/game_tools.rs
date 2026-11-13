@@ -16,15 +16,16 @@
 //! options: the layout picked before, the Playdate's screen (ADR-0074),
 //! the map alone, the prompt start, the tips and a light for every battle.
 
-use shuyi_assets::ContentError;
 use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::pack::Bake;
+use shuyi_assets::{ContentError, Formats};
 use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::contract::playtest::PlaytestInput;
 use shuyi_cli::contract::replay::{Record, ReplayRun};
 use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{
-    AutobalancePlan, GameArg, GameLang, GameOption, GameTools, OneBitSkin, PlaytestPlan,
+    AutobalancePlan, GameArg, GameBake, GameLang, GameOption, GameTools, OneBitSkin, PlaytestPlan,
 };
 use shuyi_core::bots::playtest::Tries;
 use shuyi_platform::session::{SessionRecord, Stamps};
@@ -349,6 +350,29 @@ impl GameTools for Trpg {
     fn one_bit(&self, _target: &str) -> Option<Result<OneBitSkin, String>> {
         Some(playdate_palette_def().and_then(one_bit::skin))
     }
+
+    /// The pack a release export of the desktops and the web ships beside
+    /// the program (ADR-0120): every file of `assets/` with the content
+    /// laid over it (the demo's table in the demo edition), each as its own
+    /// bytes, stamped with the game's version. The Playdate bakes its own
+    /// files (`cargo xtask playdate`, ADR-0070).
+    fn bake(&self, target: Option<&str>) -> Result<GameBake, String> {
+        if target == Some(PLAYDATE) {
+            return Err(format!(
+                "{PLAYDATE}: its files are baked by `cargo xtask playdate` (ADR-0070)"
+            ));
+        }
+        Ok(pack_bake())
+    }
+}
+
+/// What [`Trpg::bake`] bakes for the desktops and the web.
+pub fn pack_bake() -> GameBake {
+    GameBake::new(
+        Bake::new(trpg_content::bundle::PACK_STAMP),
+        trpg_content::bundle::Bundle::new(trpg_content::bundle::pack_layers()),
+        Formats::new(),
+    )
 }
 
 /// Plays `script` in a Harness started as `start` says and paints the

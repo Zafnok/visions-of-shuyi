@@ -1282,3 +1282,84 @@ fn the_bench_scenarios_play_what_they_say() {
         );
     }
 }
+
+/// Ticket 1265: the pack a release export ships beside the program holds
+/// every file the embedded bundle of `assets/` and the content holds, with
+/// the same bytes, and nothing else; and it opens with the stamp the
+/// packed build asks for.
+#[test]
+fn the_baked_pack_holds_every_file_of_the_embedded_bundle_with_the_same_bytes() {
+    use shuyi_assets::pack::Pack;
+    use trpg_content::bundle::{self, Bundle, PACK_STAMP};
+    let made = pack_bake();
+    let baked = made
+        .bake
+        .bake(&made.formats, &made.bundle, None)
+        .unwrap_or_else(|e| panic!("{e:?}"));
+    // Kept for the test's run, as the program keeps the pack it read.
+    let bytes: &'static [u8] = Box::leak(baked.bytes.into_boxed_slice());
+    let pack = Pack::open(bytes, PACK_STAMP).unwrap();
+    let embedded = Bundle::new(bundle::pack_layers());
+    let paths = embedded.files_under("");
+    assert!(paths.len() > 100, "{paths:?}");
+    assert!(paths.contains(&"data/keymap.ron"), "{paths:?}");
+    for path in &paths {
+        assert_eq!(pack.get(path), embedded.bytes(path), "{path}");
+    }
+    let packed: Vec<&str> = pack.files().iter().map(|f| f.path.as_str()).collect();
+    assert_eq!(packed, paths);
+    // The game reads the pack as it reads the embedded files.
+    let read = Bundle::new(vec![pack.into_layer(bundle::DISPLAY_ROOT)]);
+    assert_eq!(read.files_under(""), paths);
+    assert!(Pack::open(bytes, "visions-of-shuyi 0.0.0").is_err());
+    // The Playdate's files are its own (ADR-0070).
+    assert!(Trpg.bake(Some(PLAYDATE)).is_err());
+    assert!(Trpg.bake(Some("desktop")).is_ok());
+}
+
+/// Ticket 1265: the disclosure parts name every file of the pack the full
+/// game's and the demo's release exports ship (`allowed_pack_entries`),
+/// and the pack itself beside the program, so a new file of `assets/` or
+/// of the content fails here and not when a release is cut. Without the
+/// game's content checked out, the pack holds fewer files, all named.
+#[test]
+fn the_disclosure_lists_name_every_file_of_the_pack() {
+    use trpg_content::bundle::{self, Bundle};
+    let config = project().config;
+    let full = config.disclosure.unwrap();
+    let demo = config.editions["demo"].disclosure.clone().unwrap();
+    for part in [&full, &demo] {
+        assert!(part.allowed_files.contains(&"trpg-app.pack".to_owned()));
+    }
+    assert!(
+        full.allowed_files
+            .contains(&"visions-of-shuyi.app/Contents/Resources/trpg-app.pack".to_owned())
+    );
+    let full_pack = Bundle::new(bundle::pack_layers()).files_under("");
+    let demo_bundle = Bundle::new(bundle::demo_layers());
+    let demo_pack: Vec<&str> = demo_bundle
+        .files_under("")
+        .into_iter()
+        .filter(|path| !bundle::is_private(&demo_bundle.display_path(path)))
+        .collect();
+    let whole = !bundle::skip_without_the_game();
+    for (name, part, pack) in [("full", &full, full_pack), ("demo", &demo, demo_pack)] {
+        let listed: Vec<&str> = part
+            .allowed_pack_entries
+            .iter()
+            .map(String::as_str)
+            .collect();
+        let missing: Vec<&&str> = pack.iter().filter(|p| !listed.contains(p)).collect();
+        assert!(
+            missing.is_empty(),
+            "{name}: not in allowed_pack_entries: {missing:#?}"
+        );
+        if whole {
+            let extra: Vec<&&str> = listed.iter().filter(|p| !pack.contains(p)).collect();
+            assert!(
+                extra.is_empty(),
+                "{name}: in no file of the pack: {extra:#?}"
+            );
+        }
+    }
+}

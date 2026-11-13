@@ -71,10 +71,25 @@ fn window_conf() -> Conf {
     shuyi_app::window_conf(&WINDOW)
 }
 
+/// Where the game starts (the command line's), once a packed build has
+/// its files: the pack beside the program, laid in the bundle before
+/// anything reads a file (ADR-0120). A pack that is missing, of another
+/// version or broken is the start's error, which the game shows in place
+/// of its title, saying to bake it again.
+fn startup() -> Result<args::Startup, String> {
+    #[cfg(feature = "packed")]
+    {
+        let pack = shuyi_app::pack_beside_program(env!("CARGO_PKG_NAME"), bundle::PACK_STAMP)
+            .map_err(|e| e.to_string())?;
+        bundle::use_pack(pack.into_layer(bundle::DISPLAY_ROOT));
+    }
+    args::startup()
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     // The game's name in white on black while it loads, as on the
     // Playdate (ticket 1036).
-    let start = trpg_ui::start::start(WINDOW.title, args::startup());
+    let start = trpg_ui::start::start(WINDOW.title, startup());
     shuyi_app::run(config(), start).await;
 }

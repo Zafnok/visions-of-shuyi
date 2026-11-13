@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Checks a package `cargo shuyi export <target> --release` wrote (ticket
 # 0910), as release.yml runs it: the final package's files against what
-# shuyi.ron ships, whether the bought art is in the build, then by target:
+# shuyi.ron ships (with the pack of the game's files beside the program,
+# ADR-0120), whether the bought art is in the build, that the program holds
+# no RON text of `assets/`, then by target:
 #
 # - windows: the icon and version info are in the program, which imports no
 #   MinGW runtime DLL and has no debug sections, and the debug file has them;
@@ -20,6 +22,7 @@ target=$1
 out=$2
 art=${3:-}
 bin=visions-of-shuyi
+pack=trpg-app.pack
 report="$out/export-report.json"
 
 fail() { echo "check: $*"; exit 1; }
@@ -39,6 +42,7 @@ beside() {
   printf '%s\n' README.txt LICENSE THIRD_PARTY_ASSETS.md THIRD_PARTY_LICENSES.html \
     Terminus-LICENSE.txt NOTICES.txt
   tree assets/audio/licenses "${folders}audio-licenses"
+  echo "${folders}$pack"
   tree music "${folders}music"
   if [ -d voice ]; then tree voice "${folders}voice"; fi
 }
@@ -89,6 +93,17 @@ else
   case "$features" in *private-assets*) fail "the bought art is in a build that said it wasn't" ;; esac
 fi
 
+# The program reads `assets/` from the pack (ADR-0120): no line of a data
+# file is in it. The keymap's first line is its own and no crate's.
+no_assets_text() {
+  local program=$1 line
+  line=$(grep -m 1 -v '^\s*$' assets/data/keymap.ron | tr -d '\r')
+  if grep -qF "$line" "$program"; then
+    fail "the program holds assets/data/keymap.ron as text: it should read the pack"
+  fi
+  echo "check: no text of assets/ in the program"
+}
+
 # No debug sections in the program; the debug file has them at the same place.
 sections() {
   local program=$1 debug="$out/$folder.debug" left a b
@@ -105,6 +120,7 @@ case "$target" in
   windows)
     program="$out/$folder/$bin.exe"
     sections "$program"
+    no_assets_text "$program"
     objdump -h "$program" | grep -q ' \.rsrc' || fail "no icon or version info in the program"
     dlls=$(objdump -p "$program" | awk '/DLL Name:/ { print $3 }' | sort -fu)
     echo "check: imports $(echo "$dlls" | tr '\n' ' ')"
@@ -115,6 +131,7 @@ case "$target" in
   linux)
     program="$out/$folder/$bin"
     sections "$program"
+    no_assets_text "$program"
     # Not piped into `grep -q`: it stops reading at the program, and the tar
     # still writing the entries after it (`voice/`) dies of SIGPIPE, which
     # pipefail reports as a failure (ticket 0913).
@@ -130,6 +147,7 @@ case "$target" in
   macos)
     app="$out/$folder/$bin.app"
     codesign --verify --strict --verbose=2 "$app"
+    no_assets_text "$app/Contents/MacOS/$bin"
     codesign -dv "$app" 2>&1 | grep -q 'Signature=adhoc' || fail "not signed ad hoc"
     archs=$(lipo -archs "$app/Contents/MacOS/$bin")
     echo "check: slices $archs"
@@ -137,6 +155,7 @@ case "$target" in
     case " $archs " in *" x86_64 "*) ;; *) fail "no x86_64 slice" ;; esac
     ;;
   web)
+    no_assets_text "$out/$folder/$bin.wasm"
     for script in macroquad sapp-jsutils; do
       grep -q "$script" "$out/$folder/NOTICES.txt" || fail "NOTICES.txt doesn't name $script"
     done
