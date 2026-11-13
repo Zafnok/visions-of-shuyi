@@ -840,7 +840,9 @@ fn a_foot_unit_beside_a_river_shows_the_wading_tip_once() {
     let close = |h: &mut Harness| {
         let mut seen = Vec::new();
         for _ in 0..10 {
-            h.wait(0.1);
+            // A press on the map that changes nothing (Zoom, with glyphs):
+            // a tip waits for one (0495).
+            h.keys("q").wait(0.1);
             let Some(tip) = h.battle().and_then(BattleScreen::shown_tip) else {
                 return seen;
             };

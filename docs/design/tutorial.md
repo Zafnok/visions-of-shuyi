@@ -192,6 +192,41 @@ for Nick to veto.
   lesson is for something the player does, step by step. *Claude's
   starting rule* (0483).
 
+### How a tip box is put away (0495)
+
+Nick, 2026-11-12, after playing the Chapter 1 demo: "Vix's tutorial steals
+priority (D/F confirm / cancel) over other UI elements. So when she asks
+you to go to options for example, several of her tutorials then play one
+after another and D both closes options and her tutorial so you're trying
+to go back out of options to do her tutorials and instead just skipping
+them one after another."
+
+Shown the box over the map menu after leaving Options (both looks) and
+three choices (A. modal but safe, like *Fire Emblem: Three Houses*'
+tutorial pop-ups; B. out of the way in a corner, the battle taking every
+key; C. a key of its own), he picked **A. Modal, but safe**:
+
+- A tip takes the keys until **Confirm or Cancel** closes it, as before,
+  and only a press made while it is up closes it.
+- A tip comes up **in its moment** (selecting a unit, the forecast…). One
+  that missed its moment (it fired while a lesson was up, while another
+  tip was, or while a screen was over the battle) waits until the player
+  is **back on the map with no menu open**. For example: back from
+  Options, the map menu is still open; the D that closes it closes the
+  menu, and the tip comes up on the map after it.
+- **One at a time:** after a tip is closed, a lesson is done, or a screen
+  the player opened from the battle (Options, Guides, Rewind, a shop) goes,
+  the next tip waits for a **press on the map** (a cursor move, a unit
+  picked, a menu opened). For example: selecting a unit for the first time
+  brings up *Moving a unit*; closed, *Skills* comes up at the next press.
+- *Claude's starting rules:* a lesson done goes straight to the next
+  lesson, never to a tip between them, so on turn 1 the tips that fired
+  during the lessons come after the last of that run (once the player is
+  back on the map). The box at the end of the lessons waits for a press on
+  the map after the last lesson, like a tip. A scene that plays over the
+  battle doesn't make the next tip wait for a press (the battle-start tip
+  still comes up as the first scene ends).
+
 ### Guides (in the menu)
 
 - A **Guides** entry in the battle's menu opens a list of every lesson
@@ -268,3 +303,4 @@ How the split works (0475):
 - **0731** the guide's name and lines.
 - **0465** the guide's box at the end of the lessons.
 - **0466** the zoom tip.
+- **0495** how a tip box is put away, and one at a time.

@@ -402,6 +402,9 @@ pub struct BattleScreen {
     music: Option<String>,
     /// One-time tips waiting to show (0406).
     tips: TipState,
+    /// The kind of [`mode`](Self::mode) the queued tips were in their
+    /// moment for (0495): when it changes, they wait for the map.
+    tip_mode: Option<core::mem::Discriminant<Mode>>,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
     /// The guide's voice for the box on screen (0476).
@@ -566,6 +569,7 @@ impl BattleScreen {
             toast: None,
             queue: VecDeque::new(),
             tips: TipState::default(),
+            tip_mode: None,
             lessons: LessonState::default(),
             guide_voice: GuideVoice::default(),
             end_focus: 0,
@@ -1066,10 +1070,30 @@ impl BattleScreen {
         {
             return None;
         }
+        let browsing = matches!(self.mode, Mode::Idle { .. });
         self.tips.queued().find(|&t| {
-            t == TipTrigger::FirstEnemyPhase
-                || (self.state.phase() == Phase::Player && self.banner().is_none())
+            let moment = t == TipTrigger::FirstEnemyPhase
+                || (self.state.phase() == Phase::Player && self.banner().is_none());
+            // One on screen stays; another comes up only after a press on
+            // the map, and outside browsing only in its own moment (0495).
+            let ready = !self.tips.waiting() && (browsing || self.tips.is_fresh(t));
+            moment && (self.tips.on_screen(t) || ready)
         })
+    }
+
+    /// At the frame's start: the queued tips' moment passes if the kind of
+    /// mode changed (0495: a tip that couldn't come up in it waits for the
+    /// map), then the tips and lessons the battle's state fired are queued.
+    fn take_in_tips(&mut self, ctx: &mut Ctx) {
+        let now = core::mem::discriminant(&self.mode);
+        if self.tip_mode != Some(now) {
+            self.tips.go_stale();
+            self.tip_mode = Some(now);
+        }
+        self.detect_tips(ctx);
+        self.absorb_lessons(ctx);
+        self.detect_zoom_tip(ctx);
+        self.tips.absorb(ctx);
     }
 
     /// The id of the line the guide says in the box on screen, the tip's
@@ -1144,6 +1168,7 @@ impl BattleScreen {
     /// it, so it never cuts into what the last lesson had the player doing.
     pub fn lessons_end_shown(&self, ctx: &Ctx) -> bool {
         matches!(self.mode, Mode::Idle { .. })
+            && !self.tips.waiting()
             && self.queue.is_empty()
             && self.lesson_moment()
             && self.due_tip().is_none()
@@ -1274,9 +1299,15 @@ impl BattleScreen {
 
     /// Ticks the lesson in play's items for what was noticed since last
     /// time; one that is done closes, and the campaign keeps it.
+    /// A lesson done makes the next tip wait for a press on the map
+    /// (0495), so a key meant for the next lesson never closes it.
     fn tick_lessons(&mut self, ctx: &mut Ctx) {
+        let was_open = self.lessons.is_open();
         for done in core::mem::take(&mut self.noticed) {
             self.lessons.tick(ctx, done);
+        }
+        if was_open && !self.lessons.is_open() {
+            self.tips.wait_for_play();
         }
     }
 
@@ -1976,6 +2007,10 @@ impl BattleScreen {
             self.notice(DoneWhen::OptionsOpened);
         }
         self.tick_lessons(ctx);
+        // Back from it, the next tip waits for a press on the map (0495):
+        // the press that closed the screen, or the one after, is for the
+        // menu the player came back to, never a box.
+        self.tips.wait_for_play();
         Transition::Push(match opened {
             Opened::Options => Box::new(crate::screens::options::screen()),
             Opened::Guides => Box::new(GuidesScreen::new(&ctx.game.content)),
@@ -2841,10 +2876,7 @@ impl BattleScreen {
             0.0
         };
         self.tick_popups(dt);
-        self.detect_tips(ctx);
-        self.absorb_lessons(ctx);
-        self.detect_zoom_tip(ctx);
-        self.tips.absorb(ctx);
+        self.take_in_tips(ctx);
         let mut actions: VecDeque<Action> = input.actions.iter().copied().collect();
         while let Some(action) = actions.pop_front() {
             self.tick_lessons(ctx);
@@ -2854,6 +2886,8 @@ impl BattleScreen {
                 }
                 continue;
             }
+            // A press on the map: the next box may come up (0495).
+            self.tips.played();
             // The zoom is the player's view, not a move: in any phase.
             if action == Action::ZoomMap {
                 self.toggle_zoom(ctx);
