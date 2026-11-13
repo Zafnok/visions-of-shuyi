@@ -420,8 +420,8 @@ jobs:
   # and the web package gated against the budgets of every target shuyi.ron
   # lists (docs/targets.md). The table is the job's summary; a number over its
   # budget fails the job, naming the scenario, the frame and the target.
-  # Until ticket 1250, the numbers its first run found over budget
-  # (KNOWN_OVER: tickets 1247, 1248, 1249) are warnings instead; any other
+  # Until ticket 1250, the numbers its first run found over budget that are
+  # still over (KNOWN_OVER: ticket 1248) are warnings instead; any other
   # number over its budget, or a scenario that doesn't play, still fails it.
   # It isn't in `ci-result` until 1250 either.
   bench:
@@ -464,7 +464,6 @@ jobs:
             playdate/frame-instructions/battle-attack
             playdate/frame-instructions/battle-enemy-turn
             playdate/frame-instructions/dialogue-portrait
-            web/package
         run: |
           set +e
           cargo shuyi bench --out dist/bench 2>&1 | tee bench.log
@@ -490,7 +489,7 @@ jobs:
     name: ci-result
     if: always()
     # Not `bench` yet: its first run found numbers over their budgets, which
-    # tickets 1247, 1248 and 1249 bring under; 1250 adds it here. Until
+    # tickets 1247, 1248 and 1249 bring under (1248 still open); 1250 adds it here. Until
     # then it runs, posts its table and shows red without blocking.
     needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, export]
     runs-on: ubuntu-latest

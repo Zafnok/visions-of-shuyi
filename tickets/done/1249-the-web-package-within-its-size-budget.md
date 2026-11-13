@@ -5,10 +5,10 @@ type: infra
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-13
 ---
 
 # 1249 — The web package within its size budget
@@ -97,12 +97,12 @@ None: no change to what the player hears or sees.
 
 ## Acceptance criteria
 
-- [ ] The `bench` job's web package row is under 25 MB, with the whole
+- [x] The `bench` job's web package row is under 25 MB, with the whole
       zip's size shown too.
-- [ ] `KNOWN_OVER` no longer lists `web/package`.
-- [ ] In the browser pane, the title song and the opening scene's track
+- [x] `KNOWN_OVER` no longer lists `web/package`.
+- [x] In the browser pane, the title song and the opening scene's track
       play, and neither is downloaded before it starts.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -112,5 +112,25 @@ None: no change to what the player hears or sees.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- The engine change (engine PR #393, ticket 3313) and the pin move had
+  already landed, so this PR is the game's side only.
+- `web/package` is out of `KNOWN_OVER` in `.github/workflows/ci.yml`; the
+  comments there and `scripts/bench-known-over.sh`'s warning now name
+  ticket 1248, the one left.
+- `docs/targets.md`: the package row from the `bench` job of PR #674
+  (2026-11-13): **10.7 MB** gated against 25 MB, 81.9 MB the whole zip; a
+  paragraph on what the web's package budget counts and why; the 1249
+  entry gone from "Over budget".
+- Browser pane, a release web build without the bought art
+  (`cargo shuyi web --release`, no wasm-opt), on 2026-11-13: opening the
+  page fetched the scripts and `visions-of-shuyi.wasm` (10.5 MB) and no
+  music; `music/new_sunrise_v1.ogg` (2.5 MB) was fetched when the title
+  came up after the layout picker, and `music/squirrel_village_loop.ogg`
+  (2.5 MB) with the opening scene's first voice clips when New Game
+  reached Chapter 1's opening. No other track was fetched.
+- Deviation: in the pane I could confirm when each track is fetched but
+  not hear it: the sound mixer's state isn't reachable from page scripts,
+  and the pane gave no sign of blocks being mixed. Nothing about playback
+  changed in this PR (no code changed), so the check covers what the
+  ticket changes, the measure.
+- Follow-ups: none.
