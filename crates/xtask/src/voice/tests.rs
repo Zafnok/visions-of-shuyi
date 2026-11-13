@@ -1110,3 +1110,73 @@ fn audit_of_none(folder: &Folder, scripts: &Scripts<'_>, tools: &Tools) -> bool 
             .unwrap()
             .contains("\n0 clips;")
 }
+
+// ---- Every lesson and tip the guide says has a clip (ticket 0494) ----
+
+/// The `text` of each shipped lesson and tip of `content` that has no
+/// playable clip in the manifest `source`: a box she would show in
+/// silence.
+fn unvoiced_guide_texts(source: &str, content: &trpg_content::Content) -> Vec<String> {
+    let scripts = Scripts::new(content, BTreeSet::new());
+    let manifest = voice::from_source(MANIFEST_FILE, source, &scripts.dialogue)
+        .unwrap_or_else(|e| panic!("{MANIFEST_FILE}: {:?}", e.iter().map(|e| &e.message)));
+    let playable = voice::playable(&manifest, &scripts.dialogue, &content.names);
+    let lessons = shipped_lessons();
+    let lessons = lessons.lessons.iter().map(|l| &l.text);
+    let texts = lessons.chain(content.tips.tips.iter().map(|t| &t.text));
+    texts
+        .filter(|t| {
+            let line = voice::guide_line(t);
+            playable.variant_for(&line, Variant::None).is_none()
+        })
+        .cloned()
+        .collect()
+}
+
+/// A manifest with a clip of every line of the guide's scene of
+/// `content`'s shipped lessons and tips.
+fn guide_manifest(content: &trpg_content::Content) -> String {
+    let scene = voice::guide_scene(&shipped_lessons(), &content.tips);
+    let clip = |l: &dlg::Line| {
+        format!(
+            "(line: \"{}\", spoken: \"{}\", voice: \"guide\", \
+             made_by: Generated(tool: \"t\", model: \"m\", date: \"2026-11-12\")),\n",
+            l.id, l.text
+        )
+    };
+    let clips: String = scene.lines().iter().map(clip).collect();
+    format!("(clips: [\n{clips}])")
+}
+
+/// A tip added with no clip is found: the check below would fail on it.
+#[test]
+fn a_tip_with_no_clip_is_found() {
+    let mut content = content();
+    let manifest = guide_manifest(&content);
+    assert_eq!(unvoiced_guide_texts(&manifest, &content), [] as [String; 0]);
+    let mut tip = content.tips.tips[0].clone();
+    tip.text = "A tip nobody has voiced yet.".to_owned();
+    content.tips.tips.push(tip);
+    assert_eq!(
+        unvoiced_guide_texts(&manifest, &content),
+        ["A tip nobody has voiced yet."]
+    );
+}
+
+/// Acceptance (0494): every lesson's and tip's `text` has a playable clip
+/// in the private repository's manifest, so a new one without a clip fails
+/// CI and not a playtest. Skipped without its copy in `voice/` (`cargo
+/// shuyi private-assets`), as the disclosure list's check of it is.
+#[test]
+fn every_lesson_and_tip_the_guide_says_has_a_clip() {
+    let path = root().join("voice").join(SOURCE_LANG).join(MANIFEST_FILE);
+    let Ok(source) = fs::read_to_string(&path) else {
+        return;
+    };
+    let content = content();
+    assert_eq!(
+        unvoiced_guide_texts(&source, &content),
+        [] as [String; 0],
+        "make their clips: cargo xtask voice generate --scene vix (docs/voice.md)"
+    );
+}

@@ -4,7 +4,7 @@
 use crate::prelude::*;
 use alloc::collections::VecDeque;
 
-use trpg_content::TipTrigger;
+use trpg_content::{Tip, TipTrigger};
 use trpg_core::TutorialLevel;
 
 use crate::screen::Ctx;
@@ -100,6 +100,17 @@ impl TipState {
     /// are off.
     pub fn queued(&self) -> impl Iterator<Item = TipTrigger> + '_ {
         self.queue.iter().copied().filter(|_| !self.off)
+    }
+
+    /// The tips not seen yet, in file order: none while tips are off,
+    /// or before the first [`absorb`](Self::absorb) with them on.
+    pub fn unseen<'a>(&'a self, ctx: &'a Ctx) -> impl Iterator<Item = &'a Tip> {
+        let seen = self.seen.as_ref().filter(|_| !self.off);
+        let tips = seen.map(|seen| {
+            let tips = ctx.game.content.tips.tips.iter();
+            tips.filter(move |tip| !seen.contains(&tip.id))
+        });
+        tips.into_iter().flatten()
     }
 
     /// Notes whether a screen is over the battle: while one is, no tip

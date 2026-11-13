@@ -1083,6 +1083,46 @@ impl BattleScreen {
         Some(trpg_content::voice::guide_line(text))
     }
 
+    /// The ids of the guide's lines this battle may still show, likeliest
+    /// first (0494): the queued tips', the waiting lessons' (the one in
+    /// play first), the tips not seen yet, then the lessons that may yet
+    /// start here; each once. Unseen tips come before lessons not started:
+    /// a tip shows the moment its trigger fires, while a lesson that
+    /// shares a tip's trigger waits behind the tip, queued (and so moved
+    /// to the front) while the tip is read. Only the first few are kept
+    /// loaded, so a tip fired out of this order may still be fetched late.
+    // engine-friction: engine#3213 (keep every unseen line loaded instead)
+    fn coming_guide_lines(&self, ctx: &Ctx) -> Vec<trpg_content::LineId> {
+        let content = &ctx.game.content;
+        let queued = self
+            .tips
+            .queued()
+            .filter_map(|t| content.tips.for_trigger(t));
+        let waiting = self
+            .lessons
+            .waiting()
+            .filter_map(|id| content.lessons.get(id));
+        let battle = self.battle_id.as_deref();
+        let to_start = content.lessons.lessons.iter().filter(|l| {
+            LessonState::shows(ctx, l.level)
+                && l.starts_in(battle)
+                && !ctx.game.campaign_lessons.contains(&l.id)
+        });
+        let texts = queued
+            .map(|t| &t.text)
+            .chain(waiting.map(|l| &l.text))
+            .chain(self.tips.unseen(ctx).map(|t| &t.text))
+            .chain(to_start.map(|l| &l.text));
+        let mut lines: Vec<trpg_content::LineId> = Vec::new();
+        for text in texts {
+            let line = trpg_content::voice::guide_line(text);
+            if !lines.contains(&line) {
+                lines.push(line);
+            }
+        }
+        lines
+    }
+
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
         if !TipState::shown_in(ctx) {
@@ -2971,7 +3011,11 @@ impl Screen<Shuyi> for BattleScreen {
         self.tips
             .show(stays.then(|| self.shown_tip()).flatten(), ctx);
         let line = stays.then(|| self.guide_line(ctx)).flatten();
-        self.guide_voice.show(line, ctx);
+        let coming = self
+            .guide_voice
+            .preload_due(line.as_ref(), ctx)
+            .then(|| self.coming_guide_lines(ctx));
+        self.guide_voice.show(line, coming, ctx);
         transition
     }
 
@@ -2979,6 +3023,7 @@ impl Screen<Shuyi> for BattleScreen {
     /// lesson shows until it goes.
     fn covered(&mut self, _ctx: &mut Ctx) {
         self.tips.set_covered(true);
+        self.guide_voice.covered();
     }
 
     /// On top again, with what the screen above popped with: the rewind

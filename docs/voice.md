@@ -309,7 +309,17 @@ the test scene's voiced lines, one per press, without the screen.
 The battle screen (ticket 0476) says the guide's line as a lesson's or a
 tip's box comes on screen; the box going, or another taking its place,
 stops it. A box back on screen after a pause (a combat playing over an
-open lesson) doesn't say it again. The Guides list says nothing.
+open lesson) doesn't say it again. The Guides list says nothing. On its
+first frame, each time her box changes and on the first frame back after
+a scene over it, the battle preloads the lines it may still show (ticket
+0494): the queued tips', the waiting lessons', the unseen tips', then the
+lessons not started. Only the next 3 are kept loaded, so a tip the player
+sets off out of that order may be fetched as it shows, and be silent on a
+slow web host; ticket 0496 keeps them all loaded once the engine can
+(engine ticket 3213). The tips over screens outside battle (Load Game,
+Profile) are silent yet (0497). `cargo xtask`'s tests check that every
+lesson's and tip's `text` has a clip when `voice/` is here
+(`every_lesson_and_tip_the_guide_says_has_a_clip`).
 
 ## Trying it with the test clips
 

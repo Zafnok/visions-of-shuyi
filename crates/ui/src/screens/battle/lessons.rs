@@ -177,6 +177,11 @@ impl LessonState {
         self.queue.front().map(|w| w.id.as_str())
     }
 
+    /// The ids of the lessons waiting, the one in play first.
+    pub fn waiting(&self) -> impl Iterator<Item = &str> {
+        self.queue.iter().map(|w| w.id.as_str())
+    }
+
     /// Whether the lesson in play has been on screen: its items tick, and
     /// the turn waits for it.
     pub fn is_open(&self) -> bool {
