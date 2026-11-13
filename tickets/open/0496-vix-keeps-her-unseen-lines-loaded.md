@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["0494", "engine#3213"]
+blocked_by: ["0494"]
 nick_input: none
 completed:
 ---
@@ -40,8 +40,9 @@ whether her lines sound right goes on the Act 1 playtest's checklist
 ## Scope
 
 **In:**
-- The pin moved to an engine commit with 3213 (`engine-change` §7, or the
-  open `engine-pin` PR if one is merging; issue #649 tracks the pin).
+- ~~The pin moved to an engine commit with 3213 (`engine-change` §7, or the
+  open `engine-pin` PR if one is merging; issue #649 tracks the pin).~~
+  (done by the pin move of 2026-11-13)
 - The battle keeps the guide's lines it may still show
   (`coming_guide_lines`, any order) with `ctx.keep_voices`, sent when the
   list changes and on the first frame back after a screen over the
@@ -56,7 +57,7 @@ whether her lines sound right goes on the Act 1 playtest's checklist
 
 ## Implementation steps
 
-1. Move the pin (`engine-change` §7).
+1. ~~Move the pin (`engine-change` §7).~~ (done by the pin move of 2026-11-13)
 2. `GuideVoice::show` sends `ctx.keep_voices(&coming)` where it sends
    `preload_voices` today; `coming_guide_lines` needs no order any more
    (keep its doc honest).

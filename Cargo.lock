@@ -342,6 +342,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gif"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee8cfcc411d9adbbaba82fb72661cc1bcca13e8bba98b364e62b2dba8f960159"
+dependencies = [
+ "weezl",
+]
+
+[[package]]
 name = "gilrs"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -496,12 +505,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-
-[[package]]
 name = "lewton"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -631,21 +634,6 @@ name = "mutants"
 version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "add0ac067452ff1aca8c5002111bd6b1c895baee6e45fcbc44e0193aea17be56"
-
-[[package]]
-name = "nanoserde"
-version = "0.1.37"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5de9cf844ab1e25a0353525bd74cb889843a6215fa4a0d156fd446f4857a1b99"
-dependencies = [
- "nanoserde-derive",
-]
-
-[[package]]
-name = "nanoserde-derive"
-version = "0.1.22"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e943b2c21337b7e3ec6678500687cdc741b7639ad457f234693352075c082204"
 
 [[package]]
 name = "ndk-sys"
@@ -832,26 +820,6 @@ dependencies = [
  "libc",
  "quad-alsa-sys",
  "winapi",
-]
-
-[[package]]
-name = "quad-storage"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e73edba8c792f3b5a45c68a1086f6f8c1bbda34ab9399a7faabd7dc7d4e14a0e"
-dependencies = [
- "lazy_static",
- "nanoserde",
- "quad-storage-sys",
-]
-
-[[package]]
-name = "quad-storage-sys"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1187c77ced2cc6ae79bd6e35cc09e22159164a05c4d867e299bfbf1f801e9157"
-dependencies = [
- "sapp-jsutils",
 ]
 
 [[package]]
@@ -1096,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "shuyi"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "shuyi-app",
  "shuyi-assets",
@@ -1108,17 +1076,16 @@ dependencies = [
 [[package]]
 name = "shuyi-alloc-count"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 
 [[package]]
 name = "shuyi-app"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "gilrs",
  "macroquad",
  "quad-snd",
- "quad-storage",
  "sapp-jsutils",
  "serde_json",
  "shuyi-alloc-count",
@@ -1131,7 +1098,7 @@ dependencies = [
 [[package]]
 name = "shuyi-assets"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "include_dir",
  "libm",
@@ -1148,10 +1115,11 @@ dependencies = [
 [[package]]
 name = "shuyi-cli"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "crc32fast",
  "flate2",
+ "gif",
  "hound",
  "include_dir",
  "lewton",
@@ -1173,7 +1141,7 @@ dependencies = [
 [[package]]
 name = "shuyi-core"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "schemars",
  "serde",
@@ -1182,7 +1150,7 @@ dependencies = [
 [[package]]
 name = "shuyi-platform"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "ron",
  "schemars",
@@ -1197,7 +1165,7 @@ dependencies = [
 [[package]]
 name = "shuyi-ui"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=234de697e435026301a653b0963800663db1ef7f#234de697e435026301a653b0963800663db1ef7f"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=a434b973d26342f40df24dddc6220656dce9a3c2#a434b973d26342f40df24dddc6220656dce9a3c2"
 dependencies = [
  "libm",
  "ron",
@@ -1546,6 +1514,12 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "weezl"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
 
 [[package]]
 name = "winapi"

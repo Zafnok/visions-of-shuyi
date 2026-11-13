@@ -25,8 +25,13 @@ the art or the title changes without redoing that work.
 Engine PR #377 (engine ticket 2514), in the pin since the pin move of
 2026-11-11, gives `frame-png` frames over time: `--every SECONDS
 --count N` after the steps draws `N` frames, as a sheet labelled with
-their times, or as an APNG that loops forever with `--apng` (a GIF too).
-The game's `cargo shuyi frame-png` has the options already.
+their times, or as an APNG that loops forever with `--apng`. Engine PR
+#379 (engine ticket 2589), in the pin since the pin move of 2026-11-13,
+adds `--gif`: a looping GIF with the frames' exact colours, never
+quantized or dithered (a frame of more than 256 colours is refused and
+`--apng` suggested), each frame shown for its delay to the nearest
+hundredth of a second. The game's `cargo shuyi frame-png` has the
+options already.
 
 ## Nick input
 
@@ -37,7 +42,7 @@ look is 0125's.
 
 **In:**
 - Remake the intro animation with `frame-png --every … --count …
-  --apng` (or its GIF output), built with `--features private-assets` as
+  --gif` (`--apng` if a frame has more than 256 colours), built with `--features private-assets` as
   0125's was. `--count` is at most 64 and `every × (count − 1)` at most
   2000 frames: the intro's two stretches (56 s to 74.5 s, 116 s to
   119 s) at 10 frames a second need more than 64 frames, so either draw

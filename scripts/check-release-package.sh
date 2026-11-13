@@ -59,8 +59,8 @@ case "$target" in
       beside ""
       # The engine's web shell (its `crates/cli/web/`, `SHELL` in `web.rs`). The
       # export report doesn't list it, so a script the engine adds is named here.
-      printf '%s\n' index.html "$bin.wasm" mq_js_bundle.js sapp_jsutils.js quad-storage.js \
-        gamepad.js sound.js player-files.js page-files.js
+      printf '%s\n' index.html "$bin.wasm" mq_js_bundle.js sapp_jsutils.js storage.js \
+        gamepad.js sound.js player-files.js page-files.js pack-file.js
     })
     ;;
   *) fail "no such target: $target" ;;
@@ -137,7 +137,7 @@ case "$target" in
     case " $archs " in *" x86_64 "*) ;; *) fail "no x86_64 slice" ;; esac
     ;;
   web)
-    for script in macroquad sapp-jsutils quad-storage; do
+    for script in macroquad sapp-jsutils; do
       grep -q "$script" "$out/$folder/NOTICES.txt" || fail "NOTICES.txt doesn't name $script"
     done
     ;;
