@@ -49,7 +49,12 @@ Two things his sentence doesn't settle, which need his eye on a rendered
 frame (`docs/design/look-and-feel.md`, *Nick's words*: he judges pictures):
 
 1. **Messages.** A message is printed at column 1 of row 30 today, where
-   the danger-zone hint would now be.
+   the danger-zone hint would now be. A long one already runs into the
+   toggles today: ticket 1266 saw `Save storage error: localStorage is
+   turned off or blocked in this browser` printed over `w danger zone:
+   OFF ·`, its last letter against `Shift+Space auto-end: OFF` with no
+   space between. Whatever layout is picked, a message as long as that
+   one must not touch a hint (a test with that message).
 2. **When the end-turn hint moves or isn't there.** `Space end turn` is
    the last hint of the *browsing* help only, and the browsing help has
    four forms of different length (over a ready unit of ours, over an

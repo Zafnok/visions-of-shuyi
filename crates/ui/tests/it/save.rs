@@ -610,6 +610,81 @@ fn a_failed_suspend_stays_in_the_battle() {
     win(&mut h);
 }
 
+/// Storage as a browser that refuses it gives it to the web build (ticket
+/// 1266): every call answers the engine's `localStorage` error.
+#[derive(Debug)]
+struct Refused;
+
+/// What the engine's `localStorage` answers with storage turned off.
+const REFUSED: &str = "localStorage is turned off or blocked in this browser";
+
+impl Storage for Refused {
+    fn read(&self, _: &str) -> Result<Option<String>, trpg_ui::StorageError> {
+        Err(trpg_ui::StorageError::Backend(REFUSED.into()))
+    }
+    fn write(&mut self, _: &str, _: &str) -> Result<(), trpg_ui::StorageError> {
+        Err(trpg_ui::StorageError::Backend(REFUSED.into()))
+    }
+    fn delete(&mut self, _: &str) -> Result<(), trpg_ui::StorageError> {
+        Err(trpg_ui::StorageError::Backend(REFUSED.into()))
+    }
+    fn list(&self) -> Result<Vec<String>, trpg_ui::StorageError> {
+        Err(trpg_ui::StorageError::Backend(REFUSED.into()))
+    }
+}
+
+/// Ticket 1266's walk in the browser, on a storage that refuses every
+/// call: the game starts at the title, a new game
+/// reaches the battle, and the suspend save shows the storage error and
+/// the battle goes on.
+#[test]
+fn a_storage_that_refuses_everything_still_plays_and_says_why_it_cant_save() {
+    let mut ctx = Ctx::embedded()
+        .unwrap_or_else(|e| panic!("{e}"))
+        .with_storage(Box::new(Refused));
+    ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
+    // No layout can be kept, so the first key asks for one, each launch;
+    // it is used anyway.
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "layout_picker"]);
+    h.keys("f");
+    assert_eq!(h.screens(), ["title"]);
+    // New Game in Classic; how familiar the player is can't be kept
+    // either, so it is asked (the third line: no lessons or tips).
+    h.keys("f f");
+    assert_eq!(h.top_screen(), "familiarity", "{}", h.snapshot());
+    h.keys("Down Down f");
+    // Start, as `to_battle` does.
+    assert_eq!(h.top_screen(), "lead_select");
+    h.keys("Up f");
+    skip_scene(&mut h);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    close_notes(&mut h);
+    close_banner(&mut h);
+    let before = battle_text(&h);
+    suspend(&mut h);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    assert!(
+        shows(&h, &format!("Save storage error: {REFUSED}")),
+        "{}",
+        h.snapshot()
+    );
+    assert_eq!(battle_text(&h), before);
+    h.wait(2.0);
+    // A save in a slot after the victory says why too, and the slots stay.
+    win(&mut h);
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
+    assert!(
+        shows(&h, &format!("Save storage error: {REFUSED}")),
+        "{}",
+        h.snapshot()
+    );
+}
+
 /// A suspend save that can't be deleted is still continued.
 #[test]
 fn continue_goes_on_even_if_the_save_cant_be_deleted() {
