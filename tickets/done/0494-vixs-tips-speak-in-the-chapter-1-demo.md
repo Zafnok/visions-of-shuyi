@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-12
 ---
 
 # 0494 — Vix speaks every tip and lesson in the Chapter 1 demo
@@ -107,18 +107,18 @@ sound right goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] `voice/en/voice.ron` has a clip for `weapon_kinds`, `export_save` and
+- [x] `voice/en/voice.ron` has a clip for `weapon_kinds`, `export_save` and
       `export_profile`, and `assets-private.rev` points at that commit.
-- [ ] The new xtask test fails with a tip whose `text` has no clip (tried
+- [x] The new xtask test fails with a tip whose `text` has no clip (tried
       by a throwaway edit, recorded in the notes) and passes on the real
       data.
-- [ ] A test shows the battle screen preloads the guide's lines (the
+- [x] A test shows the battle screen preloads the guide's lines (the
       lines it hands to `preload_voices`, read from the test `Ctx`).
 - [ ] In the web demo with voices on, every lesson and tip box shown on
       Chapter 1's turn 1 at Full speaks (noted in the completion notes,
       with the build served the way it was tested).
-- [ ] The demo's export still passes its disclosure gate.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The demo's export still passes its disclosure gate.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -128,5 +128,85 @@ sound right goes on the Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Reproduction (step 1).** The web demo (`cargo shuyi export web
+--release --edition demo`, `dist/licenses/THIRD_PARTY_LICENSES.html` a
+local placeholder since `cargo about` isn't installed here), served by a
+small Python server that logs each clip request, in the browser pane,
+New Game at "Not familiar" with voices on. Every one of her boxes asked
+for its clip only the moment it showed: the start tip (`vix_68f45648`),
+"Moving the cursor" (`vix_77b7d50c`) and "Played on the keys"
+(`vix_b6c9f7e8`) were each requested within milliseconds of appearing.
+The platform drops a clip not loaded 0.3 s after it is asked for, so on
+a host whose fetch and decoding take longer (itch.io's servers), her box
+is silent. The three tips with no clip at all (`weapon_kinds`,
+`export_save`, `export_profile`) were silent in every build. Both causes
+were real.
+
+**The clips.** `cargo xtask voice generate --scene vix` made
+`vix_6079f203` (`weapon_kinds`), `vix_afbcd15d` (`export_save`) and
+`vix_c015c123` (`export_profile`) with Chatterbox, no audit warning.
+Committed in the private repository as `539a486` on its `main` and
+pinned. Note: that `main` now has a "changes must be made through a pull
+request" rule; the push went through on the owner's bypass, as
+`docs/voice.md` ("Committing the clips") still says to push. Their files
+are in all three `allowed_files` lists of `shuyi.ron` (the full game's,
+its macOS bundle paths, and the demo's).
+
+**The preload: approach and why.** `GuideVoice` (battle screen) sends
+`ctx.preload_voices` with the guide's lines the battle may still show,
+on its first frame, whenever her box changes, and on the first frame
+back after a screen over the battle (a scene there sends its own list,
+replacing hers). The list is built only then (`preload_due`), never per
+frame, and sent only when it changed. Order
+(`BattleScreen::coming_guide_lines`): the queued tips', the waiting
+lessons' (the one in play first), the unseen tips' (file order), then
+the lessons that may still start here. The platform keeps only the next
+3 loaded (the engine's `AHEAD`), so the order matters: the first build
+put lessons before unseen tips, and the tip shown on first picking a
+unit up was then fetched only as it showed. Unseen tips go first because
+a tip shows the moment its trigger fires, while a lesson sharing a tip's
+trigger is queued behind the tip and moves to the front while the tip is
+read. Preloading every unseen line instead isn't possible through the
+engine today: a tip the player sets off out of this order can still be
+fetched late. Engine ticket **3213** (`Zafnok/shuyi-engine`, PR #392,
+the ticket alone) adds `Ctx::keep_voices`, a set kept loaded; game
+ticket **0496** switches to it. The code is marked
+`// engine-friction: engine#3213`.
+
+**The check.** `voice::tests::every_lesson_and_tip_the_guide_says_has_a_clip`
+(`crates/xtask/src/voice/tests.rs`) reads `voice/en/voice.ron` and fails
+on any shipped lesson's or tip's `text` without a playable clip (stale
+counts as missing). Throwaway edit: removing `vix_6079f203`'s entry from
+the copied manifest failed it, naming the `weapon_kinds` text; restored,
+it passes. `a_tip_with_no_clip_is_found` keeps that case as a permanent
+test on a built manifest. **Deviation:** like the disclosure list's
+check of `voice/`, it is skipped without the private copy, and CI's
+jobs check out `content/` only (`art: "false"`), never `voice/`. So it
+fails the local gates (`cargo test --workspace` with `cargo shuyi
+private-assets` done), not CI.
+
+**Web demo check (step 5).** The final build, exported the same way and
+served with every clip held 0.5 s (slower than the 0.3 s limit) and
+`Cache-Control: no-store`, in the browser pane (hidden, frames driven by
+a `MessageChannel` loop, keys dispatched on the canvas). Turn 1 at Full:
+the start tip, "Moving the cursor", "Played on the keys", "Finding your
+units", "Selecting a unit", the "Moving a unit" tip, the "Skills" tip,
+the "Enemy in reach" tip and "Threat arrows" each had its clip fetched
+5 to 20 s before it showed, and none was fetched as it showed. Not
+walked: the rest of turn 1 after the first unit's move (the remaining
+units, the attack, the forecast and the end of the turn); the last
+acceptance box stays unticked for that reason and for the gap above.
+Whether her lines sound right goes on the Act 1 playtest's checklist
+(1064).
+
+**Engine friction:** estimate 60 (written after starting, judged by the
+dialogue screen's preload), measured 65 (1.1×); signal: a workaround
+(the 3-clip window), outcome engine feature, engine#3213; row in
+`docs/engine/friction.md`.
+
+**Follow-up tickets:** 0496 (keep every unseen line loaded, blocked by
+engine#3213), 0497 (the two tips over the Load Game and Profile screens
+never ask for a voice at all: `TipScreen` doesn't speak, so their new
+clips aren't heard yet).
+
+No gameplay rule was decided.

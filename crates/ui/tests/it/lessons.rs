@@ -273,3 +273,61 @@ fn with_voices_off_no_box_asks_for_her() {
     });
     assert_eq!(asked.count(), 0);
 }
+
+/// Acceptance (0494): the battle preloads her lines before her first box
+/// asks for its clip (on the web a clip is fetched, and one not loaded
+/// 0.3 s after it is asked for is skipped): the queued tip's first, then
+/// the lesson's. Once the tip is closed, the list is sent again without
+/// it, before the lesson's clip is asked for.
+#[test]
+fn the_battle_preloads_her_lines_before_her_box_asks_for_one() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    h.with_tips();
+    let manifest = guide_manifest(&h);
+    h.ctx_mut().set_voice_manifest(&manifest);
+    let content = &h.game().ctx().game.content;
+    let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
+    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let lesson = content.lessons.lessons[0].text.clone();
+    let line = trpg_content::voice::guide_line;
+    to_battle_answering_voices(&mut h, "f");
+    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstBattleStart));
+    let guide = |r: &AudioRequest| match r {
+        AudioRequest::PreloadVoices { lines } => {
+            let ids: Vec<_> = lines.iter().map(|(id, _)| id.clone()).collect();
+            ids.iter().all(|id| id.scene_id() == "vix").then_some(ids)
+        }
+        AudioRequest::PlayVoice { line, .. } if line.scene_id() == "vix" => Some(vec![]),
+        _ => None,
+    };
+    let asked: Vec<Vec<_>> = h.audio_requests().iter().filter_map(guide).collect();
+    // Preloads (the first on the battle's first frame), then her clip
+    // (an empty list here), last; the preload just before it starts with
+    // the tip's line, then the lesson's.
+    let Some((played, preloads)) = asked.split_last() else {
+        panic!("nothing asked");
+    };
+    assert_eq!(played, &[] as &[trpg_content::LineId]);
+    let Some(preload) = preloads.last() else {
+        panic!("her clip was asked for with nothing preloaded: {asked:?}");
+    };
+    assert_eq!(preload[..2], [line(&tip), line(&lesson)]);
+    h.clear_audio().keys("f");
+    assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
+    let after: Vec<AudioRequest> = h
+        .audio_requests()
+        .into_iter()
+        .filter(|r| guide(r).is_some() || *r == AudioRequest::StopVoice)
+        .collect();
+    let [
+        AudioRequest::PreloadVoices { lines },
+        AudioRequest::StopVoice,
+        voice,
+    ] = after.as_slice()
+    else {
+        panic!("{after:?}");
+    };
+    assert_eq!(lines[0].0, line(&lesson));
+    assert!(!lines.iter().any(|(id, _)| *id == line(&tip)), "seen: gone");
+    assert_eq!(voice, &play(&lesson));
+}
