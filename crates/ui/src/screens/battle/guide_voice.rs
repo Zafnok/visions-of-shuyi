@@ -4,13 +4,15 @@
 //! place, stops it. With voices off, or no clip, nothing is asked for or
 //! stopped (0238).
 //!
-//! Her coming lines are preloaded (0494): a clip not loaded 0.3 s after it
-//! is asked for is skipped, and on the web it is fetched from the host. So
-//! on the battle's first frame, and each time her box changes, the screen
-//! hands the platform the lines the battle may still show, likeliest
-//! first; it keeps the first few loaded while the player reads the box on
-//! screen. The list is sent again only when it changed, or after a screen
-//! over the battle (a scene) sent its own.
+//! Her coming lines are kept loaded (0494, 0496): a clip not loaded 0.3 s
+//! after it is asked for is skipped, and on the web it is fetched from the
+//! host. So on the battle's first frame, and each time her box changes,
+//! the screen hands the platform the lines the battle may still show
+//! ([`Ctx::keep_voices`]), in any order: a tip fires the first time the
+//! player does something, which the game can't foresee, so every one is
+//! kept. The set is sent again only when it changed, or on the first frame
+//! back after a screen over the battle, and an empty one when the battle
+//! leaves the stack ([`GuideVoice::leave`]).
 
 use crate::prelude::*;
 use trpg_content::LineId;
@@ -28,37 +30,52 @@ pub struct GuideVoice {
     /// The last line she was asked to say: a box back on screen after a
     /// pause (a combat playing over an open lesson) doesn't say it again.
     said: Option<LineId>,
-    /// The lines last handed to [`Ctx::preload_voices`]; `None` before
-    /// the first frame.
-    preloaded: Option<Vec<LineId>>,
+    /// The voiced lines last handed to [`Ctx::keep_voices`]: what the
+    /// platform keeps loaded for her.
+    kept: Vec<LineId>,
+    /// Whether her set was sent since the battle came on top (its first
+    /// frame, or back from a screen over it).
+    sent: bool,
 }
 
 impl GuideVoice {
-    /// Whether this frame should preload her coming lines, with `line`
-    /// the line of the box on screen: on the first frame and whenever it
-    /// changed, while voices are on.
-    pub fn preload_due(&self, line: Option<&LineId>, ctx: &Ctx) -> bool {
-        (self.preloaded.is_none() || line != self.on_screen.as_ref()) && ctx.settings().voices
+    /// Whether this frame should send the set of her coming lines, with
+    /// `line` the line of the box on screen: on the first frame and
+    /// whenever it changed, while voices are on.
+    pub fn keep_due(&self, line: Option<&LineId>, ctx: &Ctx) -> bool {
+        (!self.sent || line != self.on_screen.as_ref()) && ctx.settings().voices
     }
 
-    /// Notes that a screen is over the battle: a scene there preloads its
-    /// own lines in place of hers, so her list is sent again on the first
-    /// frame back.
+    /// Notes that a screen is over the battle: her set is sent again on
+    /// the first frame back.
     pub fn covered(&mut self) {
-        self.preloaded = None;
+        self.sent = false;
+    }
+
+    /// The battle leaves the stack: her lines are let go, if any was
+    /// kept (an empty set sent when none was would only be noise).
+    pub fn leave(&mut self, ctx: &mut Ctx) {
+        if !core::mem::take(&mut self.kept).is_empty() {
+            ctx.keep_voices(&[]);
+        }
+        self.sent = false;
     }
 
     /// Notes the line of the box on screen as the frame ends (`None` for
     /// no box), and starts or stops her voice when it changed. First
-    /// preloads `coming` (her lines the battle may still show, likeliest
-    /// first, when [`preload_due`](Self::preload_due)) if it differs from
-    /// the list sent last.
+    /// keeps `coming` loaded (her lines the battle may still show, when
+    /// [`keep_due`](Self::keep_due)): its lines with a clip, sent if they
+    /// differ from the set sent last, or on the first frame on top with
+    /// any.
     pub fn show(&mut self, line: Option<LineId>, coming: Option<Vec<LineId>>, ctx: &mut Ctx) {
-        if let Some(coming) = coming
-            && self.preloaded.as_ref() != Some(&coming)
-        {
-            ctx.preload_voices(&coming);
-            self.preloaded = Some(coming);
+        if let Some(mut coming) = coming {
+            coming.retain(|l| ctx.has_voice(l));
+            let resend = !self.sent && !coming.is_empty();
+            if resend || coming != self.kept {
+                ctx.keep_voices(&coming);
+                self.kept = coming;
+            }
+            self.sent = true;
         }
         let changed = line != self.on_screen;
         if !changed {
@@ -109,8 +126,8 @@ pub(crate) mod tests {
         (c, ids)
     }
 
-    fn preload(lines: &[LineId]) -> AudioRequest {
-        AudioRequest::PreloadVoices {
+    fn keep(lines: &[LineId]) -> AudioRequest {
+        AudioRequest::KeepVoices {
             lines: lines
                 .iter()
                 .map(|l| (l.clone(), trpg_content::Variant::None))
@@ -119,23 +136,24 @@ pub(crate) mod tests {
     }
 
     /// One frame's end as the battle screen calls it: `coming` is built
-    /// only when a preload is due.
+    /// only when sending the set is due.
     fn frame(v: &mut GuideVoice, line: Option<&LineId>, coming: &[LineId], c: &mut Ctx) {
-        let coming = v.preload_due(line, c).then(|| coming.to_vec());
+        let coming = v.keep_due(line, c).then(|| coming.to_vec());
         v.show(line.cloned(), coming, c);
     }
 
-    /// Acceptance (0494): the first frame preloads her coming lines before
-    /// any box shows; a box coming preloads the new list before asking for
-    /// its clip; an unchanged list or an unchanged box sends nothing.
+    /// Acceptance (0494, 0496): the first frame keeps her coming lines
+    /// loaded before any box shows; a box coming sends the new set before
+    /// asking for its clip; an unchanged set or an unchanged box sends
+    /// nothing.
     #[test]
-    fn her_coming_lines_are_preloaded_first_and_at_each_change() {
+    fn her_coming_lines_are_kept_first_and_at_each_change() {
         let (mut c, lines) = voiced();
         assert!(lines.len() >= 3);
         let mut v = GuideVoice::default();
         frame(&mut v, None, &lines, &mut c);
-        assert_eq!(c.audio.take(), [preload(&lines)]);
-        assert!(!v.preload_due(None, &c), "no change: no list built");
+        assert_eq!(c.audio.take(), [keep(&lines)]);
+        assert!(!v.keep_due(None, &c), "no change: no set built");
         frame(&mut v, None, &lines, &mut c);
         assert_eq!(c.audio.take(), []);
         // Her first box: the same list, so only her clip.
@@ -145,38 +163,67 @@ pub(crate) mod tests {
             variant: trpg_content::Variant::None,
         };
         assert_eq!(c.audio.take(), [play(&lines[0])]);
-        // It goes and the next comes: the list without it, then her line.
+        // It goes and the next comes: the set without it, then her line.
         let rest = &lines[1..];
         frame(&mut v, Some(&lines[1]), rest, &mut c);
         assert_eq!(
             c.audio.take(),
-            [preload(rest), AudioRequest::StopVoice, play(&lines[1])]
+            [keep(rest), AudioRequest::StopVoice, play(&lines[1])]
         );
     }
 
-    /// A screen over the battle preloads its own lines: hers are sent
-    /// again on the first frame back, even unchanged.
+    /// After a screen over the battle, her set is sent again on the first
+    /// frame back, even unchanged.
     #[test]
-    fn her_lines_are_preloaded_again_after_a_screen_over_the_battle() {
+    fn her_lines_are_kept_again_after_a_screen_over_the_battle() {
         let (mut c, lines) = voiced();
         let mut v = GuideVoice::default();
         frame(&mut v, None, &lines, &mut c);
-        assert_eq!(c.audio.take(), [preload(&lines)]);
+        assert_eq!(c.audio.take(), [keep(&lines)]);
         v.covered();
         frame(&mut v, None, &lines, &mut c);
-        assert_eq!(c.audio.take(), [preload(&lines)]);
+        assert_eq!(c.audio.take(), [keep(&lines)]);
         frame(&mut v, None, &lines, &mut c);
         assert_eq!(c.audio.take(), []);
     }
 
-    /// With voices off, nothing is preloaded and no list is built.
+    /// Acceptance (0496): leaving the battle lets her lines go, and a
+    /// battle on screen again sends its set anew.
     #[test]
-    fn voices_off_preload_nothing() {
+    fn leaving_lets_her_lines_go() {
+        let (mut c, lines) = voiced();
+        let mut v = GuideVoice::default();
+        frame(&mut v, None, &lines, &mut c);
+        c.audio.take();
+        v.leave(&mut c);
+        assert_eq!(c.audio.take(), [keep(&[])]);
+        frame(&mut v, None, &lines, &mut c);
+        assert_eq!(c.audio.take(), [keep(&lines)]);
+    }
+
+    /// Lines with no clip are left out of the set; with none, nothing is
+    /// sent, on the first frame or on leaving.
+    #[test]
+    fn no_clip_keeps_nothing() {
+        let (mut c, lines) = voiced();
+        let mut v = GuideVoice::default();
+        let unvoiced = [LineId::new("vix_00000000")];
+        frame(&mut v, None, &unvoiced, &mut c);
+        v.leave(&mut c);
+        assert_eq!(c.audio.take(), []);
+        let mixed = [unvoiced[0].clone(), lines[0].clone()];
+        frame(&mut v, None, &mixed, &mut c);
+        assert_eq!(c.audio.take(), [keep(&lines[..1])]);
+    }
+
+    /// With voices off, nothing is kept and no set is built.
+    #[test]
+    fn voices_off_keep_nothing() {
         let (mut c, lines) = voiced();
         c.change_settings(|s| s.voices = false).unwrap();
         c.audio.take();
         let mut v = GuideVoice::default();
-        assert!(!v.preload_due(None, &c));
+        assert!(!v.keep_due(None, &c));
         frame(&mut v, None, &lines, &mut c);
         frame(&mut v, Some(&lines[0]), &lines, &mut c);
         assert_eq!(c.audio.take(), []);

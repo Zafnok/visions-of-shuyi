@@ -291,6 +291,10 @@ each run in its lab environment.
 - When a scene starts, a screen calls `ctx.preload_voices(&line_ids)` with
   its lines in script order. `app` keeps the next 3 clips loaded and frees
   those passed.
+- Lines that may be said at any moment, in an order the player decides
+  (the guide's tips), go to `ctx.keep_voices(&line_ids)` instead: `app`
+  keeps every clip of that set loaded until the next set replaces it; an
+  empty set lets them go.
 - A clip that isn't loaded within 0.3 s of being asked for is skipped
   rather than played late.
 - Clips play at the voice group's gain (`ctx.volume(VOICE)`, 0–100 on the
@@ -311,12 +315,11 @@ tip's box comes on screen; the box going, or another taking its place,
 stops it. A box back on screen after a pause (a combat playing over an
 open lesson) doesn't say it again. The Guides list says nothing. On its
 first frame, each time her box changes and on the first frame back after
-a scene over it, the battle preloads the lines it may still show (ticket
-0494): the queued tips', the waiting lessons', the unseen tips', then the
-lessons not started. Only the next 3 are kept loaded, so a tip the player
-sets off out of that order may be fetched as it shows, and be silent on a
-slow web host; ticket 0496 keeps them all loaded once the engine can
-(engine ticket 3213).
+a screen over it, the battle keeps loaded every line it may still show
+(`ctx.keep_voices`, tickets 0494 and 0496): the queued tips', the waiting
+lessons', the unseen tips' and the lessons not started. A tip the player
+sets off first, in whatever order, is loaded before its box shows. When
+the battle leaves the stack it sends an empty set, letting them go.
 
 The tip box over a screen outside battle (the Load Game list, the Profile
 screen; ticket 0497) preloads its line when it opens, says it on its first
