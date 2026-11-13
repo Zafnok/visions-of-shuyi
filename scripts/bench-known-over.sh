@@ -36,7 +36,7 @@ fi
 new=0
 while IFS=$'\t' read -r key says; do
   if printf '%s\n' ${KNOWN_OVER:-} | grep -qxF -- "$key"; then
-    echo "::warning::$says (known: tickets 1247-1249)"
+    echo "::warning::$says (known: ticket 1248)"
   else
     echo "::error::$says"
     new=1

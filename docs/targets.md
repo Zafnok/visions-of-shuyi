@@ -83,9 +83,22 @@ CI has no Playdate SDK to build it.
 | dialogue-portrait | desktop, web | 304 | 2,089,109 (157) | 1,982,354 | 1,152,168 | 4.6 MB |
 | dialogue-portrait | playdate | 304 | **2,581,737** (157) | 2,561,958 | 1,560,167 | 5.3 MB |
 
-| Package | Size |
-| --- | ---: |
-| `visions-of-shuyi-0.3.0-web.zip` | **81.8 MB** |
+| Package | Size (gated) | Whole package |
+| --- | ---: | ---: |
+| `visions-of-shuyi-0.3.0-web.zip` | 10.7 MB | 81.9 MB |
+
+The web's package budget counts what a player waits for before the game
+starts, not the whole upload (engine ticket 3313, its
+`docs/targets/web.md`). The gated size leaves out the folders `shuyi.ron`'s
+`web.music` and `web.voice` ship beside the build: the game fetches each
+track or clip in the background when it first plays it, and itch.io and
+GitHub Pages serve an uploaded HTML5 zip as separate files, so those are
+never waited for (ticket 1249 checked it in a browser: the page loads the
+scripts and the 10.5 MB `.wasm`, the title song is fetched when it starts
+and the opening scene's track when New Game reaches it). The whole zip,
+with the 75 MB `music/` folder, is the upload's size; the "Whole package"
+column keeps it in sight. Measured 2026-11-13 by the `bench` job of PR
+#674.
 
 ## Over budget
 
@@ -97,7 +110,6 @@ covers each one:
   the game does anything; a portrait drawn in one bit takes 2.7 million
   more. The enemy's choice and the attack's first move tip those frames
   over.
-- **The web package (1249).** The 75 MB `music/` folder ships in it.
 
 Ticket 1261 brought the Playdate's cursor sweep under. The engine's `GlyphBuffer::fill_rect`
 had rebuilt every item drawn so far for each rectangle it filled, also
@@ -113,7 +125,7 @@ unit no longer searches every enemy's moves: the cursor sweep's costliest
 frame went from 2.28 to 1.37 million on the colour targets and from 3.05
 to 2.26 million on the Playdate.
 
-Until they land, CI's `bench` job reports these four as warnings
+Until it lands, CI's `bench` job reports these three as warnings
 (`KNOWN_OVER` in `.github/workflows/ci.yml`, read by
 `scripts/bench-known-over.sh`). Any other number over its budget, or a
 scenario that doesn't play, still fails the job. The job isn't part of
