@@ -28,6 +28,7 @@ mod playdate_images;
 mod playtest;
 mod portrait_import;
 mod pr_size;
+mod readme_pictures;
 mod sfx;
 mod skill_pack;
 mod skirmish;
@@ -75,6 +76,8 @@ portrait-import <busts> <id>       cut bought busts into portraits (portrait-imp
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
 playdate [--release] [--bench] [--private-assets] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx;\n                                     --private-assets: with the bought art)
+  readme-pictures                    draw the README's intro animation again, docs/img/intro.gif
+                                     (with --features private-assets; readme-pictures --help)
   playdate-images                    write the Playdate's one-bit pictures to look at, into
                                      target/playdate/images/ (and the bought ones' into assets-private/)
 
@@ -124,6 +127,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("lines") => lines(&args.collect::<Vec<_>>()),
         Some("check-script") => check_script(&args.collect::<Vec<_>>()),
         Some("voice") => voice(&args.collect::<Vec<_>>()),
+        Some("readme-pictures") => readme_pictures(&args.collect::<Vec<_>>()),
         Some("voice-test-clips") => voice_test_clips(&args.collect::<Vec<_>>()),
         Some(command) => {
             eprintln!("unknown command: {command}");
@@ -163,6 +167,20 @@ fn shuyi(command: &str, args: impl Iterator<Item = String>) -> u8 {
     };
     let args: Vec<String> = std::iter::once(command.to_owned()).chain(args).collect();
     shuyi_cli::run(&project, &args, Some(&game_tools::Trpg))
+}
+
+/// `readme-pictures` (ticket 1264): the README's intro animation, drawn by
+/// `frame-png` with the bought art.
+fn readme_pictures(args: &[String]) -> u8 {
+    if !cfg!(feature = "private-assets") {
+        eprintln!("readme-pictures: the picture shows the bought art; build with --features private-assets
+");
+        eprintln!("{}", readme_pictures::USAGE);
+        return 2;
+    }
+    readme_pictures::command(&repo_root(), args, |args| {
+        shuyi("frame-png", args.iter().cloned())
+    })
 }
 
 fn ticket_lint(args: &[String]) -> u8 {
@@ -1150,6 +1168,13 @@ mod tests {
         assert_eq!(dispatch(args(&blocked).into_iter()), 1);
         assert!(history.join("quick-casual.jsonl").is_file());
         std::fs::remove_dir_all(&history).unwrap();
+    }
+
+    /// Without the bought art the README's intro can't be drawn (1264).
+    #[cfg(not(feature = "private-assets"))]
+    #[test]
+    fn readme_pictures_needs_the_bought_art() {
+        assert_eq!(dispatch(args(&["readme-pictures"]).into_iter()), 2);
     }
 
     #[test]

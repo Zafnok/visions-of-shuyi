@@ -30,6 +30,9 @@ shuyi-cli.workspace = true
 # The one-bit converter and its PNG reader, for `playdate-images` (ticket
 # 1040).
 shuyi-assets = { workspace = true, features = ["png"] }
+# `readme-pictures` joins `frame-png --gif`'s clips into the README's intro
+# animation (ticket 1264), with the GIF crate the engine writes them with.
+gif = { version = "0.14", default-features = false, features = ["std"] }
 mutants = "0.0.4"
 ron.workspace = true
 serde.workspace = true
