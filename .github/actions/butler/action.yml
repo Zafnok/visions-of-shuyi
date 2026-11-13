@@ -1,0 +1,60 @@
+name: Butler
+description: >-
+  Installs itch.io's butler (the command that uploads builds to itch.io) on a
+  Linux or Windows runner and gives its path as the output `butler` (not on
+  the PATH: writing GITHUB_PATH is zizmor's github-env finding): the official
+  download from broth.itch.zone at a pinned version, refused unless its
+  SHA-256 matches the one below. broth publishes no checksum, so the hashes
+  were taken from two downloads of that version when it was pinned (ticket
+  0915). To move it: download
+  `https://broth.itch.zone/butler/<platform>/<version>/archive/default` for
+  linux-amd64 and windows-amd64, hash both, change the three values. Used by
+  demo.yml (0915); 0901 and 0158 reuse it.
+
+inputs:
+  version:
+    description: butler's version on broth.itch.zone.
+    required: false
+    default: "15.32.0"
+  sha256-linux:
+    description: The SHA-256 of that version's linux-amd64 zip.
+    required: false
+    default: "2335971394ef6596f95ded0833e85ee28755e13761716ef4c91d6b11f69162f5"
+  sha256-windows:
+    description: The SHA-256 of that version's windows-amd64 zip.
+    required: false
+    default: "5902c488b86bb3518ca00bf4e706d7687f229e3f0f28653cd943348ea9ec8878"
+
+outputs:
+  butler:
+    description: The installed butler program's path.
+    value: ${{ steps.install.outputs.butler }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install butler
+      id: install
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        SHA256_LINUX: ${{ inputs.sha256-linux }}
+        SHA256_WINDOWS: ${{ inputs.sha256-windows }}
+      run: |
+        set -euo pipefail
+        case "$RUNNER_OS" in
+          Linux) platform=linux-amd64 sha256=$SHA256_LINUX program=butler ;;
+          Windows) platform=windows-amd64 sha256=$SHA256_WINDOWS program=butler.exe ;;
+          *) echo "::error::no butler for $RUNNER_OS here"; exit 1 ;;
+        esac
+        dir="$RUNNER_TEMP/butler"
+        mkdir -p "$dir"
+        cd "$dir"
+        curl --proto '=https' --tlsv1.2 -sSfL -o butler.zip \
+          "https://broth.itch.zone/butler/$platform/$VERSION/archive/default"
+        echo "$sha256  butler.zip" | sha256sum --check --strict
+        unzip -q butler.zip
+        rm butler.zip
+        chmod +x "$program"
+        "./$program" -V
+        echo "butler=$dir/$program" >> "$GITHUB_OUTPUT"
