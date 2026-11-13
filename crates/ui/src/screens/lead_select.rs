@@ -1,5 +1,5 @@
 //! The lead screen, after the mode (ticket 0801,
-//! `docs/design/setting-and-tone.md`): pick the lead's gender, shown with
+//! `assets-private/story/design/setting-and-tone.md`): pick the lead's gender, shown with
 //! the `lead_m` and `lead_f` portraits, and first name (default
 //! [`DEFAULT_NAME`]; the family name [`FAMILY_NAME`] is fixed).
 //!

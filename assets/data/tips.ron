@@ -1,4 +1,4 @@
-// One-time tips (ticket 0406, docs/design/chapter-1.md "Teaching"): each is
+// One-time tips (ticket 0406, assets-private/story/design/chapter-1.md "Teaching"): each is
 // shown once per profile, the first time its trigger happens in a battle.
 //
 // `text` is what the guide says: at most 3 lines of 60 characters. She is

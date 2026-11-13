@@ -87,7 +87,7 @@ fn special_weapons() -> [(&'static str, WeaponDef); 4] {
             ),
         ),
         ("fordwardens_spear", special(spear, "hold_the_ford", None)),
-        // Aske's personal weapon (ticket 1072, *Letters Home*).
+        // The poacher's personal weapon (ticket 1072).
         ("tors_bow", tors_bow),
         (
             "moonblade",

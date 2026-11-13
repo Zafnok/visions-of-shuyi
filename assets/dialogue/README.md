@@ -9,7 +9,7 @@ The dialogue screen (ticket 0704) plays them one text box at a time.
 `cargo xtask check-script [file]` runs the same checks on the scripts
 alone, and `cargo run -p trpg-app -- --scene <id>` opens the game on one
 scene. A gentler introduction for a writer new to the repository:
-`docs/story/writers-guide.md`.
+`assets-private/story/writers-guide.md`.
 
 ## A full example
 
@@ -154,7 +154,7 @@ bors[sad]: Not for long. The bridge is gone.
 
 ## The lead: reply choices and tokens
 
-The lead is shaped by the player (`docs/design/setting-and-tone.md`,
+The lead is shaped by the player (`assets-private/story/design/setting-and-tone.md`,
 "Rules for writing the lead"): they speak mostly through **reply choices**,
 and the player picks their gender and first name at New Game. The
 character id `lead` is the lead; their name plate shows the player's name
@@ -251,7 +251,7 @@ its translations, and only the voice clip must be made again.
 ## Names
 
 Every proper noun of the story (characters, places, factions, gods, terms)
-has a stable id in `docs/story/names.md`, and its display name in the
+has a stable id in `assets-private/story/names.md`, and its display name in the
 game's names table, `assets/data/names.ron` (ticket 0709). Nick may rename
 anything, so **scripts never write a name out**: they use a name token, and
 a rename is one line in `names.ron`.
@@ -282,7 +282,7 @@ name id). Names keep their article (`the Thornmarch`), so write
 ### Short forms
 
 People mostly say a first name, so the short forms of a name are ids of
-their own (`docs/story/names.md`, "Short forms"), used like any other:
+their own (`assets-private/story/names.md`, "Short forms"), used like any other:
 
 | Id | For | Example |
 | -- | --- | ------- |

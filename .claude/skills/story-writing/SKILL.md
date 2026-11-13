@@ -20,17 +20,29 @@ metadata:
 Read `docs/adr/0011-story-authoring-pipeline.md` first. The quality comes from
 the process; do not skip steps.
 
+## Where the story lives
+
+The story's documents are private (ADR-0117, ticket 0159): the beats,
+bible, characters, outline, beat sheets, ledger, names registry, craft
+notes and writer's guide are in the private assets repository's `story/`,
+and the story parts of `docs/design/` in its `story/design/`. `cargo shuyi
+private-assets` checks them out into `assets-private/story/`; without
+access there is no story to write from, so stop and say so. A change to
+them is a pull request there, then the game's that moves
+`assets-private.rev`: the `content-change` skill. `docs/story/README.md`
+is only a stub saying this.
+
 ## Canon order (higher wins on conflict)
 
-1. `docs/story/beats.md` — Nick's beats. Never contradict. If a beat is
+1. `assets-private/story/beats.md` — Nick's beats. Never contradict. If a beat is
    ambiguous, pick an interpretation and flag it in the PR.
 2. `docs/design/*.md` — game systems (e.g. if magic exists, how it works).
-3. `docs/story/bible.md`, `characters/*.md`, `outline.md`.
-4. `docs/story/ledger.md` — what has happened so far.
+3. `assets-private/story/bible.md`, `characters/*.md`, `outline.md`.
+4. `assets-private/story/ledger.md` — what has happened so far.
 
 ## Names are variables
 
-Nick may rename anything (`docs/story/names.md`). Every proper noun has a
+Nick may rename anything (`assets-private/story/names.md`). Every proper noun has a
 stable id there; add new names there first, then to the game's names table,
 `assets/data/names.ron`. In `.dlg` scripts, speakers are role ids and names
 in text are name tokens: `{n:king}` for "Emeric", `{N:place.thornmarch}` for
@@ -39,7 +51,7 @@ in text are name tokens: `{n:king}` for "Emeric", `{N:place.thornmarch}` for
 rejects it. First names are `{n:<id>.first}` (`{n:retainer.first}` for
 "Hollis"); the other short forms (family names, a god's name or title) are
 in the registry's "Short forms" table. The lead is `{lead}`, never a name token. The story docs use
-display names; a rename is a find-and-replace across `docs/story/` in the
+display names; a rename is a find-and-replace across `assets-private/story/` in the
 same commit as the registry change.
 
 ## Craft
@@ -73,15 +85,15 @@ What he wants, in his words: characters who are "first and foremost
 engaging and emotional", so that their deaths matter. **The first question
 for every scene is whether a player will like these people more after it,
 and would miss them.** Craft comes second. The research behind this
-section, with its sources, is `docs/story/craft.md`;
+section, with its sources, is `assets-private/story/craft.md`;
 read "What went wrong" and "Why AI characters read as robots" once before
 your first scene.
 
 ### Rewrites start on a blank page
 
 - **A rewrite of a scene is written from the beats, not from its old
-  lines.** Open `docs/story/beats.md`, the chapter's beat sheet
-  (`docs/story/chapters/chNN.md`), the character sheets and the ledger.
+  lines.** Open `assets-private/story/beats.md`, the chapter's beat sheet
+  (`assets-private/story/chapters/chNN.md`), the character sheets and the ledger.
   Keep the old `.dlg` closed until the new draft has passed the critique
   pass. Then open it only to carry over structure: scene ids, `@`
   directives, the `@choice` replies the story gates read, the `@if`
@@ -91,7 +103,7 @@ your first scene.
   (Chapter 1's do: 0707, 0724, 0728). Read the sheets for want, need,
   flaw, voice notes and *Won't say*; skip the quoted lines. A line the
   beat sheet quotes tells you what that moment must get across, not the
-  words, unless Nick kept the words (`setting-and-tone.md`, *Words
+  words, unless Nick kept the words (`assets-private/story/design/setting-and-tone.md`, *Words
   kept*).
 - **Never fix a rejected scene line by line, and never splice lines from
   two drafts.** If a scene needs more than a couple of lines changed, it
@@ -404,7 +416,7 @@ Run it on every scene, after the draft and before the critique pass:
   change.
 - **Tone** follows `bible.md`. Humour is allowed in dark stories; it makes the
   dark parts land. **Where it goes is decided**
-  (`docs/design/setting-and-tone.md`, *Where the jokes go*): the game's
+  (`assets-private/story/design/setting-and-tone.md`, *Where the jokes go*): the game's
   opening and serious battles are played straight. No one-liners, running
   gags or comic bits before, in or over a fight that matters: boss lines,
   death and retreat lines included. People in danger talk like it. Banter
@@ -421,7 +433,7 @@ Run it on every scene, after the draft and before the critique pass:
   format has no stage directions, so don't write a line that only
   works if it is muttered or said aside; use narration (`>`) if how it is
   said matters.
-- **American English** (`setting-and-tone.md`, *Language*): American
+- **American English** (`assets-private/story/design/setting-and-tone.md`, *Language*): American
   spelling and American words in all game text (color, armor, gray,
   peddler; no "whilst", "bloody", "mate", "lads", "that lot").
   Old-fashioned words are not ruled out; British ones are. Plain words,
@@ -447,7 +459,7 @@ Run it on every scene, after the draft and before the critique pass:
 
 ## Writing the lead
 
-The lead is Persona-style (`docs/design/setting-and-tone.md`, "Rules for
+The lead is Persona-style (`assets-private/story/design/setting-and-tone.md`, "Rules for
 writing the lead"); the validator enforces the limits below.
 
 - **Few lines.** Outside reply choices the lead (`lead:`) speaks only in
@@ -478,7 +490,7 @@ writing the lead"); the validator enforces the limits below.
 
 Follow [`references/critique-pass.md`](references/critique-pass.md):
 the cold read by a fresh subagent, then the editor's list. Fix every
-hit, then update `docs/story/ledger.md` with what changed for each
+hit, then update `assets-private/story/ledger.md` with what changed for each
 character.
 
 ## Gates

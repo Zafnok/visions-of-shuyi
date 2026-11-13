@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0156"]
 nick_input: none
-completed:
+completed: 2026-11-12
 ---
 
 # 0159 — The story documents move to the private assets repository
@@ -119,13 +119,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `docs/story/` holds only its stub README; the assets repository's
+- [x] `docs/story/` holds only its stub README; the assets repository's
       `story/` holds the 39 files and `story/design/` the sections.
-- [ ] `git grep -n "docs/story/" -- . ':!tickets/' ':!docs/research/'`
+- [x] `git grep -n "docs/story/" -- . ':!tickets/' ':!docs/research/'`
       finds only the stub's own lines.
-- [ ] The names-registry, writer's-guide and audio-cue tests pass in CI
+- [x] The names-registry, writer's-guide and audio-cue tests pass in CI
       on the private copy.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -133,5 +133,76 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Size.** Estimate (step 1): about 12,000 lines deleted and about 400
+changed lines to review; no production code beyond a test helper (about
+15 lines). Measured: see the PR's `PR size:` line. It passes the 3,000-line
+warning by deletion alone (ADR-0101): the moved documents can't split
+from the pointers to them.
+
+**What moved** (private repository, `story/`; its pull request merges
+first, then this one moves `assets-private.rev`):
+
+- `docs/story/`: the 38 documents (the README stays as a stub saying
+  where the story is and how to get it). The private `story/README.md`
+  keeps 0156's words and the old index under *What is here*.
+- `story/design/`: `setting-and-tone.md` and `chapter-1.md` whole, and a
+  file per design document that lost a part, each part under the heading
+  it had (`title.md`, `world-structure.md` ×2, `audio.md` ×3,
+  `battle-scenes-and-recruitment.md` ×2, `voices-languages-and-script.md`,
+  `death-and-difficulty.md`, `turn-structure.md`, `look-and-feel.md`,
+  `combat-arts.md`, `README.md`). Where each was, the design document
+  says "The story part of this decision is in the private assets
+  repository, `story/design/<file>`."
+- `story/design/playdate/`: 49 of the 90 pictures in
+  `docs/design/playdate/` draw Chapter 1's map or quote its lines (the
+  `q1`–`q3r2` mockups, `1037-`, `1038-`, `1039-map-menu`, `0066-`, the
+  `1043-` dialogue shots, `1044-map` and `-field`); `playdate.md` says
+  which, and its links point there. The other 41 (test map, menus,
+  options, icons, the test world map, faces) stay.
+- `story/audio/voice-audition.html` (dropped from `check-leaks`'
+  `MOVING` with `docs/story/`; `MOVING` now holds only the tickets and
+  0160's folders).
+
+**The ranges, read again (step 2).** The ticket's numbers were from
+2026-11-10; the parts moved, by heading: title *Who Shuyi is in the
+story*; world-structure *Continents and acts* and *Implications for the
+story outline*; voices *The cast* (the table); death-and-difficulty the
+scripted death; turn-structure *Act 1's battle rules* (all but its
+heading and *Decided/Source*); look-and-feel *Act 1's new cast*'s table;
+combat-arts Chapter 2's two weapon rows.
+
+**Deviations**
+
+- `audio.md` lost more than the listed lines: the whole *Chapters 2–8's
+  cues* table and its two bullets after it that name the plot, and the
+  appendix's three 0071 rounds (Nick's words on the death, the
+  confession and the antagonist's faction). Four rows of the *Music cues*
+  table keep their cue id (the audio test reads it) with the plot cut
+  from their *Use* cell (`battle_rival`, `scene_departure`,
+  `scene_confide`, `scene_lamplight`); the cells as they were are in the
+  private file.
+- `battle-scenes-and-recruitment.md` also lost Nick's two-line answer
+  naming who joins how, besides the two examples.
+- `docs/design/README.md`'s 0069 row lost the plot from its status cell
+  (to `story/design/README.md`).
+- `q3r2-e-grey.png` stays public: the README shows it as the Playdate's
+  picture, beside the Chapter 1 screenshots it already shows (store
+  pictures, Nick 2026-10-05).
+- The acceptance grep still finds, besides the stub: the lines that point
+  at the stub (`AGENTS.md`'s map, `README.md`'s table, the
+  `story-writing` skill), a made-up path in `check-leaks`' own test (now
+  asserting `docs/story/` is searched), and three ADRs (0011, 0098,
+  0117), left as written since accepted ADRs aren't edited. ADR-0117
+  already says where the documents went.
+- CI: the private-assets action checks `story/` out with `content/`, so
+  every job that runs the tests has the two documents they read.
+
+**The tests.** `bundle::story_doc(name)` (beside 0157's
+`content_tests`) gives a story document's path in `assets-private/story/`,
+or skips without it (a failure in CI). The names-registry test and the
+writer's-guide test read through it and check what they checked; the
+audio-cue test is unchanged (its rows stayed). `changes.yml` no longer
+names the two moved files (a pin move runs everything).
+
+**For Nick:** nothing to check. The story's documents are now read from
+`assets-private/story/` after `cargo shuyi private-assets`.

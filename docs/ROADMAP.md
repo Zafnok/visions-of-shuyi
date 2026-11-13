@@ -7,7 +7,7 @@ All work is in [`tickets/`](../tickets/README.md). Status is read from the
 folders: `tickets/open/` vs `tickets/done/`.
 
 > **The critical path now is Act 1** (2026-10-21, ticket 0129): Chapters
-> 1–8 (`docs/story/outline.md`) playable on the web and on the Playdate,
+> 1–8 (`assets-private/story/outline.md`) playable on the web and on the Playdate,
 > then **one** playtest of the whole act by Nick (**1064**). It replaces
 > Chapter 1 playtest round 4 (0804) and the Chapter 1 play-through on the
 > Playdate (1050), both folded into 1064. Nick, the same day: "any tickets

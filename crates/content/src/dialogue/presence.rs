@@ -126,10 +126,10 @@ impl Cast {
     /// characters each scene's `@joins` lines add to the army (0848). The
     /// army can lose them once they are in it, but not in the chapter that
     /// recruits them before its battle is fought: before the join they
-    /// aren't in the army (a script that names them there, as Joss on the
-    /// far bank, says lines that play anyway). One who joins after the
-    /// battle (Joss) is certain in all the chapter's scenes and its
-    /// battle's; one who joins before it (Hedda, 0851) only in the scenes
+    /// aren't in the army (a script that names them there before the join
+    /// says lines that play anyway). One who joins after the battle is
+    /// certain in all the chapter's scenes and its battle's; one who
+    /// joins before it (0851) only in the scenes
     /// before it and, if the battle places them, as turn 1's player phase
     /// starts: they can fall in the battle.
     #[must_use]
@@ -175,9 +175,8 @@ impl Cast {
 
     /// The same, with the world maps' battles (`places`, their scenes):
     /// a place's intro scenes play before its battle, which is won once,
-    /// so they can count on the characters it fields as enemies, as Gil
-    /// before he is beaten on Millhaven Road (1071). Its victory scenes
-    /// count on nobody.
+    /// so they can count on the named characters it fields as
+    /// enemies (1071). Its victory scenes count on nobody.
     #[must_use]
     pub fn with_places(
         mut self,

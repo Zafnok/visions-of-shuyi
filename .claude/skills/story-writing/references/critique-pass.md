@@ -52,4 +52,4 @@ in a scene fail, redraft the scene from its card instead of patching:
 - [ ] Lines over length budget; unknown expressions/speakers.
 - [ ] The chapter advances the main plot AND at least one personal arc.
 
-Then update `docs/story/ledger.md` with what changed for each character.
+Then update `assets-private/story/ledger.md` with what changed for each character.

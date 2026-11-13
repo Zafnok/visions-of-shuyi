@@ -16,7 +16,7 @@ fn p(x: i32, y: i32) -> Pos {
 }
 
 fn lead() -> LeadProfile {
-    LeadProfile::new("Wren", LeadGender::Female)
+    LeadProfile::new("Mara", LeadGender::Female)
 }
 
 /// The test opening.
@@ -45,7 +45,7 @@ fn the_cast_stand_as_characters_on_no_side() {
     assert_eq!(lead_unit.character, Some(CharacterId("lead".into())));
     // The lead's label is from the name the player gave; the knight's is
     // its own map label.
-    assert_eq!(lead_unit.label, "Wr");
+    assert_eq!(lead_unit.label, "Ma");
     assert_eq!(cast[1].label, "Kn");
     assert!(
         cast.iter()

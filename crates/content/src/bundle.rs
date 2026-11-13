@@ -429,6 +429,24 @@ for_tests! {
         there_or_skip(here, "the game's content and its test data").then_some(dir)
     }
 
+    /// The private repository's `story/` on disk (ADR-0117, ticket 0159):
+    /// the story's documents, which no build embeds.
+    pub const STORY_DOCS: &str =
+        concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets-private/story");
+
+    /// For a test that checks the game against one of the story's documents
+    /// (`names.md`, `writers-guide.md`): its path in [`STORY_DOCS`], when it
+    /// is there. `None`, after saying so, when not, and the test returns at
+    /// once; in CI that is a failure, as for `skip_without_the_game`.
+    ///
+    /// # Panics
+    ///
+    /// In CI, when the document is not here.
+    pub fn story_doc(name: &str) -> Option<std::path::PathBuf> {
+        let path = std::path::Path::new(STORY_DOCS).join(name);
+        there_or_skip(path.is_file(), "the story's documents").then_some(path)
+    }
+
     /// `here`; when it is false, a panic in CI, else a note that the test
     /// is skipped because it needs `what`.
     fn there_or_skip(here: bool, what: &str) -> bool {

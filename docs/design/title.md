@@ -51,13 +51,7 @@ Final pick, from *Vows / Visions / Veil / Valor / Vestige / Voice of Shuyi*:
 
 ## Who Shuyi is in the story (Nick fixed)
 
-- **Shuyi is a guardian.** It provides the lifeblood that the people of the
-  Jade Reach worship, something like mana or qi.
-- **Nobody has seen the guardian in a very long time.** Because of that, many
-  people use the name "Shuyi" for the lifeblood itself. Both usages exist
-  in-world.
-- **The title is mainly a hook.** Shuyi does not have to appear much. Like
-  Fire Emblem's emblem, the name can stay in the background.
+The story part of this decision is in the private assets repository, `story/design/title.md`.
 
 ## Trademark risk (Nick decided 2026-09-30)
 

@@ -322,7 +322,7 @@ about 18 seconds.
   no separate list of cinematic lines, so when the script is rewritten the
   cinematic changes with it. The lines shown in the mockups were **not
   approved**: Nick finds the script's opening too full of quips
-  (`setting-and-tone.md`, *Where the jokes go*; rewrite: ticket 0724).
+  (`assets-private/story/design/setting-and-tone.md`, *Where the jokes go*; rewrite: ticket 0724).
 - **No spoilers:** only the opening lines of scenes that play **before**
   the Chapter 1 battle (`ch01_intro`, `ch01_prebattle`), and never past a
   reply choice.

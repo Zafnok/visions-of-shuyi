@@ -1,7 +1,7 @@
 # The Company Ledger, Tamsin's side quest (ticket 1072). Written on a
 # blank page from the beat sheet's cards (the story-writing skill).
-# Beat sheet: docs/story/chapters/side-tamsin.md. Continuity:
-# docs/story/ledger.md. Voice cards: docs/story/characters/*.md and the
+# Beat sheet: assets-private/story/chapters/side-tamsin.md. Continuity:
+# assets-private/story/ledger.md. Voice cards: assets-private/story/characters/*.md and the
 # beat sheet (the paymaster, Denny).
 #
 # An optional battle on the Act 1 map (worldmaps/act1.ron,
@@ -45,7 +45,7 @@
 # Places). Music: the mood cues are this ticket's picks; the battle's cue
 # is in its file.
 #
-# Tone (setting-and-tone.md, "Where the jokes go"): the gate and the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"): the gate and the
 # battle are played straight; the strongroom is a quiet scene after, where
 # the warmth is a woman counting coin she has wanted for three years and
 # finding it is only coin.

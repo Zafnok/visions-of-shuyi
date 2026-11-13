@@ -30,7 +30,9 @@ inputs:
     description: >-
       'true' checks out the game's content (content/): the build lays it over
       assets/ whenever it is there, without a feature (ADR-0117). Every job
-      that builds or loads content asks for it, with required 'true'.
+      that builds or loads content asks for it, with required 'true'. The
+      story's documents (story/) come with it: no build reads them, but the
+      tests of the names registry and the writer's guide do (0159).
     required: false
     default: "false"
 
@@ -90,7 +92,7 @@ runs:
           echo "export-flag=--without private-assets" >> "$GITHUB_OUTPUT"
         fi
         if [ "$CONTENT" = "true" ]; then
-          folders="$folders content"
+          folders="$folders content story"
         fi
         if [ -z "$folders" ]; then
           echo "::error::Neither art nor content asked for: nothing to check out."

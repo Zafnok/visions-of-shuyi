@@ -1,5 +1,5 @@
 // Act 1's world map (ticket 1070): the Old Kingdoms of Ardeval, from
-// docs/story/outline.md, Chapters 4 to 8. The army comes up out of the
+// assets-private/story/outline.md, Chapters 4 to 8. The army comes up out of the
 // Thornmarch in the south-west, through the valley heartland, down the Salt
 // Road to Saltmere on the south coast, east to the Ashfields, north to Ossary
 // and back to Saltmere's docks for the ship.
@@ -45,7 +45,7 @@
                                       intro_scenes: ["ch04_millhaven_road_intro"],
                                       victory_scenes: ["ch04_millhaven_road_victory"]),
                              guards_path: false)),
-        // Tamsin's side quest (1072; docs/story/chapters/side-tamsin.md).
+        // Tamsin's side quest (1072; assets-private/story/chapters/side-tamsin.md).
         (id: "company_ledger", name: "The Company Ledger", pos: (14, 4), music: Some("side_quest"),
          kind: SideQuest((battle: "side_company_ledger", intro_scenes: ["side_ledger_intro"],
                           victory_scenes: ["side_ledger_victory"])),
@@ -92,7 +92,7 @@
                                       victory_scenes: ["ch05_cove_victory"]),
                              guards_path: false),
          opens_when: [Cleared("salt_road")]),
-        // Aske's side quest (1072; docs/story/chapters/side-aske.md).
+        // Aske's side quest (1072; assets-private/story/chapters/side-aske.md).
         (id: "letters_home", name: "Letters Home", pos: (50, 26), music: Some("side_quest"),
          kind: SideQuest((battle: "side_letters_home", intro_scenes: ["side_letters_intro"],
                           victory_scenes: ["side_letters_victory"])),

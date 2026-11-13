@@ -1,7 +1,7 @@
 //! The command line (native only; the web build has none). Without
 //! arguments the game starts at the title. `--scene <id>` opens it
 //! straight on one dialogue scene, for whoever writes scripts (ticket
-//! 0723, `docs/story/writers-guide.md`); `--lead f` gives that scene the
+//! 0723, `assets-private/story/writers-guide.md`); `--lead f` gives that scene the
 //! female lead.
 
 use trpg_core::LeadGender;

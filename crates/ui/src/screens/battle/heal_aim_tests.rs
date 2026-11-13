@@ -34,7 +34,7 @@ fn p(x: i32, y: i32) -> Pos {
 
 /// The Quick Battle with the archer moved to (1, 6), two tiles left of the
 /// mage, at `archer_hp` HP; with `vigil` the mage also knows Vigil Light
-/// (Maud's heal, range 1-2), and with `knight_hurt` the knight stands at
+/// (the keeper's heal, range 1-2), and with `knight_hurt` the knight stands at
 /// (2, 7), 5 HP down.
 fn field(c: &Ctx, archer_hp: StatValue, vigil: bool, knight_hurt: bool) -> BattleState {
     let (map, mut units) = quick_units(c);
@@ -223,7 +223,7 @@ fn harness_up_and_down_step_to_the_other_hurt_ally_and_cancel_backs_out() {
     assert_eq!(h.battle().unwrap().state(), &state);
 }
 
-/// Maud's two heals in the list: from next to the ally both can be
+/// The keeper's two heals in the list: from next to the ally both can be
 /// chosen; from two tiles away only Vigil Light reaches, so Heal is dimmed
 /// and the list opens on Vigil Light.
 #[test]

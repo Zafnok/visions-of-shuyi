@@ -1,7 +1,7 @@
 # Chapter 3: Greywater. Written on a blank page from the beat sheet's
 # cards by ticket 0745 (the story-writing skill).
-# Beat sheet: docs/story/chapters/ch03.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch03.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # Scene ids, for chapters/ch03.ron and battles/ch03.ron to wire (0849):
 #
@@ -53,7 +53,7 @@
 # pay-book: it says "D. Marr", and that is what is read. The player has
 # never heard Vosse's name before this chapter, so Hollis places it.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the shore, the causeway and everything
 # after the fight are played straight; the warmth is a pot, a sleeve, a
 # pair of burned hands, half a loaf. Punctuation is the voice acting:

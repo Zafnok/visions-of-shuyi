@@ -68,18 +68,18 @@ Options he was shown:
 
 ### Linear opening (Chapters 1–2, maybe 3)
 
-- A chapter = its story scenes + **one battle** (`chapter-1.md`).
+- A chapter = its story scenes + **one battle** (`assets-private/story/design/chapter-1.md`).
 - Saving works as in `death-and-difficulty.md`: "Save your progress?" after
   the chapter victory, plus the one-time suspend in battle.
 - Between chapters the game flow (0801) offers what the design already calls
   for: camp (`supports.md`) and, from Chapter 2, Preparations with its shop
-  (`chapter-1.md`, `weapons-and-items.md`).
+  (`assets-private/story/design/chapter-1.md`, `weapons-and-items.md`).
 - **Chapter 3 is linear too** (0701 gate 2, Nick: "sure"), so **the world map
-  unlocks after Chapter 3** (`docs/story/outline.md`).
+  unlocks after Chapter 3** (`assets-private/story/outline.md`).
 
 ### World map (the rest of each act)
 
-A chapter is still a **story beat** (`chapter-1.md`). On the world map, a
+A chapter is still a **story beat** (`assets-private/story/design/chapter-1.md`). On the world map, a
 chapter's beat plays out over several map nodes and ends with the chapter's
 **story battle** (usually the climax). Until that battle is won, the player
 can freely use everything already open on the map.
@@ -165,19 +165,7 @@ still follows `weapons-and-items.md` / 0408.
 
 ### Continents and acts
 
-- **Each continent is a separate act with its own world map.** The first act
-  is the European-style home continent (`setting-and-tone.md`).
-- At the end of an act, the story moves the army to the next continent, and a
-  new world map replaces the old one. **The player can't go back** to an
-  earlier act's map. (Whether the finale revisits the home continent is a
-  story choice for the outline, 0701.)
-- An act can span several chapters on the same map. Not every act has to
-  change continent. Acts and continents are laid out in the story outline
-  (0701).
-- *Claude's default, Nick may veto:* the whole army, stock, gold and support
-  progress carry over to the next act, like one continuous campaign.
-- Each act's map has its own enemy-level range, which is what the
-  random-skirmish cap is measured against.
+The story part of this decision is in the private assets repository, `story/design/world-structure.md`.
 
 ## The world map screen (ticket 1007)
 
@@ -263,16 +251,7 @@ world map*; the keys: `controls.md`, *World map*):
 
 ## Implications for the story outline (0701)
 
-- Act 1 = the home continent. Chapters 1–2 (maybe 3) are linear
-  single-battle chapters. Then the Act 1 world map opens.
-- For each world-map chapter, the outline names its **story battle**, the
-  **fixed skirmishes** (and which ones guard paths), the **towns** that open,
-  and any **side quests** (which character's story, unlock condition).
-- Side quests are the natural home for companions' personal backstories, next
-  to supports.
-- Every act ends with a big story battle. A move to a new continent happens
-  at an act boundary.
-- No branching routes: one main story, one ending path.
+The story part of this decision is in the private assets repository, `story/design/world-structure.md`.
 
 ## Not in this system (deferred)
 

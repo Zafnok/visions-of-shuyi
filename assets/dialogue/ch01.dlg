@@ -3,8 +3,8 @@
 # 0707's script and the 0724 and 0728 reworks were set aside, and built
 # again with different scenes when Nick found the first draft the old
 # script's moments in a new voice (2026-10-25).
-# Beat sheet: docs/story/chapters/ch01.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch01.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # Scene ids, as chapters/ch01.ron and battles/ch01.ron wire them (0803):
 #
@@ -37,7 +37,7 @@
 # boxes of ch01_intro (the opening captions) and the first box of
 # ch01_prebattle (Maud's news). Keep those boxes first.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the opening and the battle are played
 # straight, which means no comedy bits, not no warmth. The care is on the
 # body (a shoulder, wet clothes, bread, a hand). The lead's wry reply may
@@ -54,7 +54,7 @@
 # of them: the order's seal, that only the new lord may use it, and the
 # road to the hall reach the player on every path. Read it with one
 # companion gone, and with only the lead left, before changing it.
-# docs/story/ledger.md ("If a companion died in Chapter 1") records what
+# assets-private/story/ledger.md ("If a companion died in Chapter 1") records what
 # each death leaves unsaid.
 
 # ---------------------------------------------------------------------------

@@ -331,7 +331,7 @@ fn a_reader_is_sent_trailing_offs_and_breaks_as_punctuation() {
         // A trailing-off mid-line: a comma, or a full stop before a new
         // sentence.
         ("Wait... no. Not yet.", "Wait, no. Not yet."),
-        ("Wait... Aske!", "Wait. Aske!"),
+        ("Wait... Bran!", "Wait. Bran!"),
         ("Wait... I'll go.", "Wait, I'll go."),
         ("Go. ...", "Go."),
         // A break mid-line is an em dash, whatever follows.
@@ -445,15 +445,15 @@ fn the_test_voice_folders_cast_is_read_by_the_tool() {
 
 #[test]
 fn respelling_replaces_whole_words_and_names_by_id() {
-    let say = files::say("{\"town\": \"Hayth\", \"Aske\": \"Ask\"}").unwrap();
+    let say = files::say("{\"town\": \"Hayth\", \"Bran\": \"Brahn\"}").unwrap();
     let name = |id: &str| (id == "town").then(|| "Heth".to_owned());
     assert_eq!(
         files::respell(
-            "Aske left Heth; Askew and Hethers stayed. Aske's bow.",
+            "Bran left Heth; Brandon and Hethers stayed. Bran's bow.",
             &say,
             name
         ),
-        "Ask left Hayth; Askew and Hethers stayed. Aske's bow."
+        "Brahn left Hayth; Brandon and Hethers stayed. Bran's bow."
     );
 }
 
@@ -486,7 +486,7 @@ fn fingerprints_are_fnv1a_32() {
 #[test]
 fn a_take_says_the_words_when_they_are_nearly_the_same() {
     assert!(synth::says(" You're late.", "You're late."));
-    assert!(synth::says("Tamsen rides at dawn", "Tamsin rides at dawn!"));
+    assert!(synth::says("Halwen rides at dawn", "Halwin rides at dawn!"));
     assert!(!synth::says("You are late, sir", "You're late."));
     assert!(!synth::says("", "No."));
     assert!(synth::says("", "..."));
@@ -494,21 +494,21 @@ fn a_take_says_the_words_when_they_are_nearly_the_same() {
 
 #[test]
 fn a_short_line_passes_when_its_words_sound_the_same() {
-    // 0722: the transcriber spells the lead's "Dace's." its own ways.
-    for heard in ["Dases.", "Daces", "Days."] {
-        assert!(synth::says(heard, "Dace's."), "{heard}");
+    // 0722: the transcriber spells a name's "Mace's." its own ways.
+    for heard in ["Mases.", "Maces", "Mays."] {
+        assert!(synth::says(heard, "Mace's."), "{heard}");
     }
     assert!(synth::says("Kales", "Kael's!"));
-    assert!(!synth::says("Bases.", "Dace's."));
-    assert!(!synth::says("Dace is.", "Dace's."));
+    assert!(!synth::says("Bases.", "Mace's."));
+    assert!(!synth::says("Mace is.", "Mace's."));
     assert!(!synth::says("Hold the boat.", "Hold the gate."));
     // Sounding the same is not enough past a few words.
-    let long = "Dace's, Kael's, Tamsin's, Ellis's, Ferro's.";
-    let heard = "Dases, Kales, Tamsens, Elises, Feros.";
+    let long = "Mace's, Kael's, Halwin's, Ellis's, Ferro's.";
+    let heard = "Mases, Kales, Halwens, Elises, Feros.";
     assert!(!synth::says(heard, long));
     assert!(synth::says(
-        "Dases, Kales, Tamsens, Elises.",
-        "Dace's, Kael's, Tamsin's, Ellis's."
+        "Mases, Kales, Halwens, Elises.",
+        "Mace's, Kael's, Halwin's, Ellis's."
     ));
 }
 

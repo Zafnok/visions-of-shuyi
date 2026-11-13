@@ -1,6 +1,6 @@
 //! The scene preview (ticket 0723): the game opened straight on one
 //! dialogue scene, for whoever writes scripts
-//! (`docs/story/writers-guide.md`). `app` starts it for `--scene <id>`
+//! (`assets-private/story/writers-guide.md`). `app` starts it for `--scene <id>`
 //! ([`Game::start_on_scene`](crate::Game::start_on_scene)). The scene plays
 //! with everyone there (ADR-0055), as in the debug menu's test scene; when
 //! it ends this screen shows, and `Confirm` plays it again.

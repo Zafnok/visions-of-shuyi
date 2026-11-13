@@ -214,8 +214,9 @@ fn whoever_a_scene_has_recruited_by_the_chapter_joins() {
 }
 
 /// Each earlier chapter's battle is played with whoever had joined by
-/// then (0850): `defector`, recruited after Chapter 2, fights Chapter 3's
-/// recorded playthrough on the way to Chapter 4, which fails without them.
+/// then (0850): a recruit from an earlier chapter's scene fights the
+/// recorded playthroughs after their join on the way to Chapter 4, which
+/// fail without them.
 #[test]
 fn a_recruit_fights_the_chapters_after_their_join_on_the_way() {
     if trpg_content::bundle::skip_without_the_game() {
@@ -227,5 +228,5 @@ fn a_recruit_fights_the_chapters_after_their_join_on_the_way() {
     let defector = CharacterId("defector".into());
     let army = players(&setup);
     assert!(army.iter().any(|(who, _)| *who == defector), "defector");
-    assert_eq!(army.len(), 7, "the New Game's six and defector");
+    assert_eq!(army.len(), 7, "the New Game's six and the recruit");
 }
