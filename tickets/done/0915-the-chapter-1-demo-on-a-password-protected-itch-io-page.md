@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: in-progress
+status: done
 blocked_by: ["0914"]
 nick_input: setup
-completed:
+completed: 2026-11-12
 ---
 
 # 0915 — The Chapter 1 demo on a password-protected itch.io page
@@ -106,14 +106,14 @@ how applicants get in.
 
 ## Acceptance criteria
 
-- [ ] A by-hand run pushes the demo to the restricted project (the run
+- [x] A by-hand run pushes the demo to the restricted project (the run
       linked in the completion notes).
-- [ ] The project's page, opened with the password or a key, plays the
+- [x] The project's page, opened with the password or a key, plays the
       demo in the browser to Chapter 1's first battle.
-- [ ] The page without the password or a key shows nothing of the game
+- [x] The page without the password or a key shows nothing of the game
       (checked in a browser with no itch.io login).
-- [ ] No workflow but this one and 0901's names `BUTLER_API_KEY`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No workflow but this one and 0901's names `BUTLER_API_KEY`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -122,5 +122,60 @@ how applicants get in.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done:**
+
+- **Nick's decision:** the web demo behind **one password** (download keys
+  can't open a browser-only itch.io page: a key unlocks downloads, and such a
+  page has none). He then asked for a desktop demo too, with a **download key
+  per applicant**: the Windows demo is its own Restricted project with no
+  password, so the web demo's password never shows it and each key traces one
+  applicant. Projects: `zafnok/visions-of-shuyi-chapter-1-demo-web` (password)
+  and `zafnok/visions-of-shuyi-chapter-1-demo-windows` (keys), the repository
+  variables `ITCH_DEMO_PROJECT` and `ITCH_DEMO_DESKTOP_PROJECT`.
+- **`.github/workflows/demo.yml`:** the `export` job is a matrix: `web` on
+  every run, `web` and `windows` on a by-hand run (the Windows job sets up the
+  GNU target as `release.yml` does). A by-hand run with *publish* ticked
+  pushes each package with butler to its project's `web` or `windows`
+  channel, `--userversion <version>-demo+<commit>`. No secret or no variable:
+  a notice, and the job ends green after the export. All in one job from the
+  build to itch.io: no GitHub artifact (ADR-0117 §4, as 0914 noted).
+- **`.github/actions/butler`:** installs butler from `broth.itch.zone` at a
+  pinned version (15.32.0) on Linux or Windows, refused unless the zip's
+  SHA-256 matches (broth publishes none; the hashes were taken from two
+  downloads each). Gives butler's path as an output instead of writing
+  `GITHUB_PATH` (zizmor's `github-env`). 0901 and 0158 reuse it.
+- **`docs/releasing.md`:** "The demo's itch.io pages": pushing, the
+  one-time settings, changing the password, making and revoking a key per
+  applicant (with the key options to keep). **0766:** its packet step names
+  the web demo's link and password and a key link per applicant.
+
+**Verification:**
+
+- Run: https://github.com/Zafnok/visions-of-shuyi/actions/runs/43339431351
+  (both jobs green; first builds on both channels, 89 and 92 MiB).
+- The web page with the password: New Game, through the opening scenes, to
+  Chapter 1's first battle on the player's turn, with the bought art; no
+  console error.
+- The Windows key link, with no itch.io login: the download page offers the
+  zip, version `0.3.0-demo+ddbd924`.
+- Both pages with no itch.io login: the web page shows only its title and
+  the password box; the Windows page says the visitor has no access.
+- `BUTLER_API_KEY` is named only in `demo.yml` (0901 hasn't started).
+- All `run-gates` commands passed locally; zizmor finds nothing new.
+
+**Deviations:**
+
+- The Windows demo and its key-only project (Nick's request mid-ticket).
+- The push lives in `demo.yml` (the ticket allowed it there), not a new
+  workflow: the package can't leave its job.
+
+**Notes for Nick:**
+
+- The game in the web page's frame is served from an `html-classic.itch.zone`
+  address that plays without the password. Only someone who already got in
+  sees it, but they could pass it on, and a new password doesn't close it
+  (`docs/releasing.md`).
+- The page's embed was 640×360 when tested; the docs give 1600×1024 or
+  *Click to launch in fullscreen*.
+
+Friction: none, no game code (a workflow, an action and docs).

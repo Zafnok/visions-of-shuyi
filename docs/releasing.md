@@ -111,8 +111,16 @@ upload key is the secret `BUTLER_API_KEY`.
 - **Change the web demo's password:** **Edit game → Visibility & access →
   Restricted → Password**, type the new one, **Save**. The old one stops
   working at once; send the new one to the applicants still in the running.
+  The game itself is served from an `html-classic.itch.zone` address in the
+  page's frame, which plays without the password: someone who got in can pass
+  that address on, and a new password doesn't close it. Its path holds the
+  upload's build number (`/html/<upload>-<build>/`), so a new push probably
+  moves it; that hasn't been checked yet.
 - **A key for an applicant:** on the Windows project, **Distribute → Download
   keys → Generate**, one key, the applicant's handle (the packet's mark) as
-  its note; copy the key's link into their packet. **Turn one off:** the same
+  its label, the options as they come (*can be claimed* on, *require key to
+  be claimed* and *grant external key* off: requiring a claim would make
+  every applicant make an itch.io account); copy the key's link into their
+  packet. **Turn one off:** the same
   list, the key's **Revoke**. A leaked link names its key, and the key's
   note names the applicant.
