@@ -80,15 +80,16 @@ impl GuideVoice {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use core::fmt::Write as _;
 
     use crate::AudioRequest;
     use crate::screen::tests::ctx;
 
-    /// A context whose voice manifest has a clip for every guide line.
-    fn voiced() -> (Ctx, Vec<LineId>) {
+    /// A context whose voice manifest has a clip for every guide line
+    /// (the tip box outside battle uses it too, 0497).
+    pub(crate) fn voiced() -> (Ctx, Vec<LineId>) {
         let mut c = ctx();
         let content = &c.game.content;
         let scene = trpg_content::voice::guide_scene(&content.lessons, &content.tips);

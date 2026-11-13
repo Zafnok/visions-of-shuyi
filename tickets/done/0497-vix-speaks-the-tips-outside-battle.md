@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["0494"]
 nick_input: none
-completed:
+completed: 2026-11-12
 ---
 
 # 0497 — Vix speaks the tips that show outside battle (Load Game, Profile)
@@ -54,10 +54,10 @@ checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] The tip box over the Load Game list asks for its clip once and
+- [x] The tip box over the Load Game list asks for its clip once and
       stops it when closed (test).
-- [ ] Nothing is asked for with voices off (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Nothing is asked for with voices off (test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -65,5 +65,15 @@ checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `TipScreen` keeps its tip's guide line: `once` preloads it, the first
+  `update` says it (only when `ctx.has_voice`, which is false with voices
+  off), and Confirm/Cancel stops it when it was said. A Confirm on the very
+  first frame closes the box without saying it.
+- Tests in `crates/ui/src/tips/screen.rs`: preload on open, one request on
+  the first frame and none after, Stop on Confirm; nothing at all with
+  voices off. They reuse the battle's manifest helper
+  (`screens::battle::guide_voice::tests::voiced`, now `pub(crate)`) rather
+  than a third copy of it.
+- `docs/voice.md`: the tips outside battle are voiced.
+- No gameplay rule decided. How she sounds over Load Game and Profile goes
+  on the Act 1 playtest's checklist (1064).
