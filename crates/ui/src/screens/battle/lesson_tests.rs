@@ -401,6 +401,12 @@ fn a_tip_comes_first_then_tips_wait_for_the_open_lesson() {
     // Keys go to the map, not the tip.
     press(&mut s, &mut c, &CURSORS);
     assert_eq!(s.shown_lesson(), None);
+    // The lesson done, the tip waits for the next press on the map (0495),
+    // so a key meant for the lesson never closes it; still selecting, it
+    // is in its moment.
+    assert_eq!(s.shown_tip(), None);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
 }
 

@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-12
 ---
 
 # 0495 — Vix's boxes don't take the keys meant for other screens
@@ -122,21 +122,21 @@ change to `tips.rs` and `overlay_key`), more if Nick picks B or C.
 
 ## Acceptance criteria
 
-- [ ] The Harness test (Options opened from the map menu on turn 1 at
+- [x] The Harness test (Options opened from the map menu on turn 1 at
       Full, then Cancel back to the map) fails before the fix and passes
       after: each box that came due is on screen until a press made after
       it came up.
-- [ ] A test: Cancel held from closing Options doesn't dismiss the box
+- [x] A test: Cancel held from closing Options doesn't dismiss the box
       that comes up; a fresh Cancel does (or, with B or C, the rule Nick
       picked).
-- [ ] A test: two boxes due at once come up one at a time, the second
+- [x] A test: two boxes due at once come up one at a time, the second
       only after a map action.
-- [ ] `cargo shuyi frame-png` pictures in the PR: a box after leaving
+- [x] `cargo shuyi frame-png` pictures in the PR: a box after leaving
       Options, in both looks.
-- [ ] `docs/design/tutorial.md` holds Nick's decision; the agent's
+- [x] `docs/design/tutorial.md` holds Nick's decision; the agent's
       starting rules are listed in the completion notes for the Act 1
       playtest (1064).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -147,5 +147,59 @@ change to `tips.rs` and `overlay_key`), more if Nick picks B or C.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's decision** (asked 2026-11-12 with pictures of the box over the map
+menu after leaving Options, glyphs and pictures): **A. Modal, but safe**.
+Recorded in `docs/design/tutorial.md`, *How a tip box is put away (0495)*.
+
+**What the bug really was.** Reproduced on Chapter 1's turn 1 at Full: a tip
+that fires while a lesson is up (picking a unit up during the keys lesson)
+waits behind it, and the moment a lesson closes it came up in the gap. The
+keys lesson closes when Options opens, so back from Options the tip sat
+over the map menu that was still open, and the D meant to close the menu
+closed Vix instead. The same gap ate the arrow keys meant for the next
+lesson. Lessons themselves take no keys; only tips and the box at the end
+of the lessons do. No press is ever given to two screens (the engine gives
+each frame's keys to the top screen only), and Confirm and Cancel never
+auto-repeat here, so a "held" key can't close a box.
+
+**What was done** (`tips.rs`, `mod.rs`):
+- A tip comes up in its moment (the kind of map mode it fired in), or, once
+  that has passed (the mode changed, or a screen covered the battle), only
+  while the map is browsing with nothing open.
+- After a tip is closed, a lesson is done, or a screen the player opened
+  from the battle (Options, Guides, Rewind, a shop) goes, the next tip and
+  the box at the end of the lessons wait for a press on the map.
+- Header comments in `tips.ron` and `lessons.ron` say how each box goes.
+- Tests: the Options round trip on Chapter 1 (`ch01_tips.rs`,
+  `leaving_options_never_closes_a_tip_unread`), Guides from the map menu
+  and back (`a_tip_waits_out_the_map_menu_the_player_comes_back_to`), two
+  tips due at once (`two_tips_due_at_once_come_up_one_press_apart`); all
+  three fail on the old code. Tests that closed several tips in a row press
+  Zoom between them (no zoom with glyphs: a press that changes nothing).
+- Pictures: `docs/img/0495-before-*.png` (the bug),
+  `0495-after-options-*.png` (back from Options: the menu and the next
+  lesson, no tip), `0495-tip-on-map-*.png` (the tip on the map after turn
+  1's lessons), in glyphs and pictures.
+
+**Deviations.** Step 3's held-key tracking isn't built: Confirm and Cancel
+don't repeat when held, so every one the battle sees is a new press; the
+"a press on the map first" rule covers the case instead, and the
+acceptance test for it is the Guides round trip above. The snapshot of the
+box at the end of the lessons (private repository) is unchanged: the test
+waits for the cursor's pulse to match it after the new press.
+
+**The agent's starting rules, for the Act 1 playtest (1064):**
+- A lesson done goes straight to the next lesson, never to a tip between
+  them: on turn 1 at Full the tips that fired during the lessons
+  (*Moving a unit*, *Terrain*, *Magic*…) come after the last lesson of
+  that run, once the player is back on the map.
+- After a tip is closed, the next comes at the player's next press on the
+  map (a cursor move counts), not on its own after a pause.
+- The box at the end of the lessons waits for a press on the map after the
+  last lesson (on turn 2 at Short: after closing the rewind screen).
+- A scene over the battle doesn't make a tip wait for a press: the
+  battle-start tip still comes up as the opening scene ends.
+
+Engine friction: estimate 120 (the ticket's, judged by 0467's change to
+`tips.rs` and `overlay_key`; written before coding only as the ticket's
+number), measured 45, under 2×. No follow-up tickets.

@@ -76,10 +76,11 @@ fn go(h: &mut Harness, to: Pos) {
 }
 
 /// Closes every tip that comes on screen, in turn, returning their
-/// triggers.
+/// triggers. Each waits for a press on the map ([`nudge`]).
 fn close_tips(h: &mut Harness) -> Vec<TipTrigger> {
     let mut seen = Vec::new();
     for _ in 0..20 {
+        nudge(h);
         h.wait(0.1);
         let Some(tip) = battle(h).shown_tip() else {
             return seen;
@@ -90,6 +91,13 @@ fn close_tips(h: &mut Harness) -> Vec<TipTrigger> {
     panic!("the tips never ran out: {seen:?}");
 }
 
+/// A press on the map that changes nothing (Zoom, with glyphs, which
+/// don't zoom): a box waiting for the player to do something comes up
+/// after it (0495).
+fn nudge(h: &mut Harness) {
+    h.keys("q");
+}
+
 /// Finishes the cursor lesson: the four directions, the cursor ending
 /// back where it was.
 fn finish_cursor_lesson(h: &mut Harness) {
@@ -97,6 +105,29 @@ fn finish_cursor_lesson(h: &mut Harness) {
         h.keys("Up Down Left Right");
     }
     assert_ne!(battle(h).shown_lesson(), Some("cursor"));
+}
+
+/// Finishes turn 1's run of lessons (the cursor, the keys, the next unit,
+/// selecting) and backs out to the map, the cursor on the lead. A tip
+/// that fired meanwhile waits for them all (0495: a lesson done goes
+/// straight to the next, never to a tip between them).
+fn finish_turn_1_lessons(h: &mut Harness) {
+    finish_cursor_lesson(h);
+    assert_eq!(battle(h).shown_lesson(), Some("keys"));
+    h.keys("Right Left");
+    // Options from the map menu, and back to the map.
+    h.keys("d Down Down Down f d d");
+    assert_eq!(battle(h).shown_tip(), None);
+    assert_eq!(battle(h).shown_lesson(), Some("next_unit"));
+    h.keys("s");
+    go(h, LEAD);
+    h.keys("e d");
+    assert_eq!(battle(h).shown_lesson(), Some("moving"));
+    h.keys("f Up f").wait(1.0);
+    assert_eq!(battle(h).shown_lesson(), None);
+    assert_eq!(battle(h).shown_tip(), None, "no tip over the menu");
+    h.keys("d d").wait(0.1);
+    assert!(matches!(battle(h).mode(), Mode::Idle { .. }));
 }
 
 /// Ticket 0466: on a map that can zoom, the zoom tip stays away through
@@ -140,7 +171,7 @@ fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
 }
 
 /// (a) The mage's action menu opens while a lesson is open: the Magic tip
-/// waits for it, then shows once the lesson is done.
+/// waits for it, then shows once turn 1's lessons are done (0495).
 #[test]
 fn the_magic_tip_shows_after_the_lesson_open_when_it_fired() {
     if skip_without_the_game() {
@@ -159,7 +190,7 @@ fn the_magic_tip_shows_after_the_lesson_open_when_it_fired() {
     h.keys("d d").wait(0.1);
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
     go(&mut h, LEAD);
-    finish_cursor_lesson(&mut h);
+    finish_turn_1_lessons(&mut h);
     assert!(
         close_tips(&mut h).contains(&TipTrigger::FirstCaster),
         "the Magic tip never showed"
@@ -167,7 +198,7 @@ fn the_magic_tip_shows_after_the_lesson_open_when_it_fired() {
 }
 
 /// (b) The cursor rests on a forest with nothing selected while the
-/// turn-1 lessons run: the Terrain tip shows once they are done.
+/// turn-1 lessons run: the Terrain tip shows once they are done (0495).
 #[test]
 fn the_terrain_tip_shows_after_the_lesson_open_when_it_fired() {
     if skip_without_the_game() {
@@ -178,9 +209,66 @@ fn the_terrain_tip_shows_after_the_lesson_open_when_it_fired() {
     h.wait(0.5);
     assert_eq!(battle(&h).shown_tip(), None, "the lesson goes first");
     go(&mut h, LEAD);
-    finish_cursor_lesson(&mut h);
+    finish_turn_1_lessons(&mut h);
     assert!(
         close_tips(&mut h).contains(&TipTrigger::FirstTerrain),
         "the Terrain tip never showed"
+    );
+}
+
+/// Ticket 0495 (Nick: "D both closes options and her tutorial"): on turn
+/// 1 at Full, a tip that fires during the keys lesson (picking a unit up
+/// and putting it back) waits through Options, the map menu the player
+/// comes back to and the lessons after; it comes up only on the map,
+/// after a press, stays until a press made while it is up, and the next
+/// tip waits for another press on the map.
+#[test]
+fn leaving_options_never_closes_a_tip_unread() {
+    if skip_without_the_game() {
+        return;
+    }
+    let mut h = chapter_1();
+    finish_cursor_lesson(&mut h);
+    assert_eq!(battle(&h).shown_lesson(), Some("keys"));
+    // A unit picked up and put back: its tip waits for the lesson.
+    h.keys("f").wait(0.3);
+    h.keys("d").wait(0.3);
+    assert_eq!(battle(&h).shown_tip(), None);
+    h.keys("Right Left");
+    // Options from the map menu, and back out of it.
+    h.keys("d Down Down Down f");
+    assert_eq!(h.top_screen(), "options");
+    h.keys("d").wait(0.3);
+    assert_eq!(h.top_screen(), "battle");
+    assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
+    assert_eq!(battle(&h).shown_tip(), None, "no tip over the map menu");
+    // Cancel closes the menu, not a tip; the next lesson is up.
+    h.keys("d").wait(0.3);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    assert_eq!(battle(&h).shown_tip(), None);
+    assert_eq!(battle(&h).shown_lesson(), Some("next_unit"));
+    // The next lessons, to the action menu and back to the map.
+    h.keys("s");
+    go(&mut h, LEAD);
+    h.keys("e d");
+    assert_eq!(battle(&h).shown_lesson(), Some("moving"));
+    h.keys("f Up f").wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
+    assert_eq!(battle(&h).shown_tip(), None, "no tip over the action menu");
+    h.keys("d d").wait(0.3);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    // Back on the map after a press: the tip that waited is up, and stays.
+    let first = battle(&h).shown_tip();
+    assert_eq!(first, Some(TipTrigger::FirstUnitSelected));
+    h.wait(1.0);
+    assert_eq!(battle(&h).shown_tip(), first);
+    // A fresh press closes it; the next waits for a press on the map.
+    h.keys("d").wait(0.3);
+    assert_eq!(battle(&h).shown_tip(), None);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    nudge(&mut h);
+    assert!(
+        battle(&h).shown_tip().is_some(),
+        "the next tip after a press"
     );
 }

@@ -25,6 +25,13 @@
 // Profile screen opens); not where saves can't be exported (the Playdate).
 // At most one tip per trigger.
 //
+// How a tip is put away (ticket 0495, docs/design/tutorial.md "How a tip
+// box is put away"): in battle it takes the keys until Confirm or Cancel
+// closes it, a press made while it is up. It comes up in its moment, or,
+// if it missed it (behind a lesson, another tip or a screen), only on the
+// map with no menu open; after a tip is closed, a lesson is done or a
+// screen the player opened goes, the next waits for a press on the map.
+//
 // The battle menu's Guides lists every tip, in this order, after the
 // lessons (ticket 0458).
 //

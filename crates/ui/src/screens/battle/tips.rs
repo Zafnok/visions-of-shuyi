@@ -16,6 +16,13 @@ use crate::tips::TipsSeen;
 /// at most once per profile and a tip that never reached the screen (its
 /// battle retried or left first) is queued again the next time its
 /// trigger fires. The player dismisses it once it is on screen.
+///
+/// A tip comes up only when the player is ready for it (0495, Nick's A:
+/// "modal, but safe"): one that missed its moment (it waited behind a
+/// lesson, another tip or a screen over the battle) waits until the map is
+/// browsing with nothing open, and after a tip is closed, a lesson is done
+/// or the player opened a screen over the battle, the next waits for a
+/// press on the map. So a key meant for a menu never closes one unread.
 #[derive(Debug, Clone, Default)]
 pub struct TipState {
     /// Loaded from storage on first use.
@@ -33,6 +40,13 @@ pub struct TipState {
     /// as of the last [`absorb`](Self::absorb): the queue waits, hidden
     /// (ticket 0841).
     off: bool,
+    /// The queued tips still in their moment: queued since the battle's
+    /// mode last changed ([`go_stale`](Self::go_stale)). Only these may
+    /// come up outside browsing.
+    fresh: Vec<TipTrigger>,
+    /// Whether the next tip waits for a press on the map
+    /// ([`wait_for_play`](Self::wait_for_play)).
+    waiting: bool,
 }
 
 impl TipState {
@@ -73,6 +87,7 @@ impl TipState {
             };
             if !seen.contains(&tip.id) && !self.queue.contains(&trigger) {
                 self.queue.push_back(trigger);
+                self.fresh.push(trigger);
             }
         }
     }
@@ -104,8 +119,12 @@ impl TipState {
 
     /// Notes whether a screen is over the battle: while one is, no tip
     /// shows.
+    /// A screen over the battle takes the moment of every tip queued.
     pub fn set_covered(&mut self, covered: bool) {
         self.covered = covered;
+        if covered {
+            self.go_stale();
+        }
     }
 
     /// Whether a screen is over the battle.
@@ -113,8 +132,38 @@ impl TipState {
         self.covered
     }
 
-    /// Drops `trigger`'s tip from the queue.
+    /// Drops `trigger`'s tip from the queue; the next waits for a press on
+    /// the map.
     pub fn dismiss(&mut self, trigger: TipTrigger) {
         self.queue.retain(|&t| t != trigger);
+        self.fresh.retain(|&t| t != trigger);
+        self.waiting = true;
+    }
+
+    /// The moment of every tip queued has passed (the battle's mode
+    /// changed, or a screen covered it): they wait for the map.
+    pub fn go_stale(&mut self) {
+        self.fresh.clear();
+    }
+
+    /// Whether `trigger`'s tip is still in its moment.
+    pub fn is_fresh(&self, trigger: TipTrigger) -> bool {
+        self.fresh.contains(&trigger)
+    }
+
+    /// The next tip waits for a press on the map (a lesson was done, or the
+    /// player opened a screen over the battle).
+    pub fn wait_for_play(&mut self) {
+        self.waiting = true;
+    }
+
+    /// The player pressed a key on the map: a tip may come up again.
+    pub fn played(&mut self) {
+        self.waiting = false;
+    }
+
+    /// Whether the next tip waits for a press on the map.
+    pub fn waiting(&self) -> bool {
+        self.waiting
     }
 }

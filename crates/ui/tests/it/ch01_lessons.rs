@@ -701,7 +701,18 @@ fn finish_short(h: &mut Harness) {
     end_turn(h);
     to_turn(h, 2);
     assert_eq!(shown(h), Some("rewind"));
-    h.keys("r d").wait(0.1);
+    h.keys("r d");
+    // The box at the end waits for a press on the map (0495).
+    assert!(!end_box(h));
+    nudge(h);
+    h.wait(0.1);
+}
+
+/// A press on the map that changes nothing (Zoom, with glyphs, which
+/// don't zoom): a box waiting for the player to do something comes up
+/// after it (0495).
+fn nudge(h: &mut Harness) {
+    h.keys("q");
 }
 
 /// Closes what stands before turn 1's map after a restart.
@@ -735,6 +746,9 @@ fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     assert!(end_box(&h), "{}", h.snapshot());
+    // The cursor's pulse as the stored picture has it: the press the box
+    // waits for since 0495 moved its phase.
+    h.wait(32.0 / 60.0);
     assert_private_snapshot!(dir, h.snapshot());
     let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
     assert_eq!(view.focus, 0);
@@ -832,6 +846,7 @@ fn at_full_the_box_waits_for_the_basic_controls_too() {
     to_turn(&mut h, 2);
     assert!(!end_box(&h), "Rewind is left");
     h.keys("r d").wait(0.1);
+    nudge(&mut h);
     assert!(end_box(&h), "{}", h.snapshot());
 }
 

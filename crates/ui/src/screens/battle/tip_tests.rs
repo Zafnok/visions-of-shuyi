@@ -56,7 +56,8 @@ fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
     })
 }
 
-/// Dismisses every tip on screen, returning the triggers it took.
+/// Dismisses every tip on screen, returning the triggers it took. After
+/// each, the next waits for a press on the map ([`play`], 0495).
 fn dismiss_all(s: &mut BattleScreen, c: &mut Ctx) -> Vec<TipTrigger> {
     let mut seen = Vec::new();
     for _ in 0..10 {
@@ -66,8 +67,16 @@ fn dismiss_all(s: &mut BattleScreen, c: &mut Ctx) -> Vec<TipTrigger> {
         };
         seen.push(t);
         press(s, c, &[Action::Confirm]);
+        play(s, c);
     }
     panic!("tips never ran out: {seen:?}");
+}
+
+/// A press on the map that changes nothing: Zoom, on a map skin that
+/// can't zoom. A tip waiting for the player to do something may come up
+/// after it (0495).
+fn play(s: &mut BattleScreen, c: &mut Ctx) {
+    press(s, c, &[Action::ZoomMap]);
 }
 
 #[test]
@@ -470,9 +479,13 @@ fn tips_wait_while_the_rewind_screen_is_open() {
     s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
     s.press(&mut c, &[]);
     assert_eq!(s.shown_tip(), None);
-    // Closed: the battle's next frame takes in the tip fired by hand.
+    // Closed: the battle's next frame takes in the tip fired by hand, and
+    // it waits for a press on the map (0495): the press that closed the
+    // screen, or the next, is never the tip's.
     s.press(&mut c, &[Action::Cancel]);
     s.frame(&mut c, &[], 0.0);
+    assert_eq!(s.shown_tip(), None);
+    s.press(&mut c, &[Action::ZoomMap]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
 
@@ -997,4 +1010,61 @@ fn effective_spear_forecast_snapshot() {
     });
     attack_raider(&mut s, &mut c);
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// Ticket 0495: two tips due at once come up one at a time. The second
+/// waits for a press on the map after the first is closed, and comes up
+/// in its moment (still selecting), never straight after the first.
+#[test]
+fn two_tips_due_at_once_come_up_one_press_apart() {
+    let mut c = tipped();
+    let mut s = quick();
+    dismiss_all(&mut s, &mut c);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), None);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), None, "the next waits for a press");
+    play(&mut s, &mut c);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstSkillUnit));
+}
+
+/// Ticket 0495: a tip that comes due while a screen the player opened
+/// from the map menu (here Guides) is over the battle waits out the menu
+/// they come back to. Cancel closes the screen, Cancel again closes the
+/// menu, not the tip; the tip comes up on the map, and only a fresh press
+/// closes it.
+#[test]
+fn a_tip_waits_out_the_map_menu_the_player_comes_back_to() {
+    let mut c = tipped();
+    let mut s = quick();
+    dismiss_all(&mut s, &mut c);
+    let mut s = Stacked::new(s);
+    s.press(&mut c, &[Action::Cancel]);
+    assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
+    s.press(
+        &mut c,
+        &[Action::CursorDown, Action::CursorDown, Action::Confirm],
+    );
+    assert!(s.guides().is_some());
+    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.press(&mut c, &[]);
+    assert_eq!(s.shown_tip(), None);
+    // Back in the map menu: the tip waits.
+    s.press(&mut c, &[Action::Cancel]);
+    assert!(s.guides().is_none());
+    s.press(&mut c, &[]);
+    assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
+    assert_eq!(s.shown_tip(), None);
+    // Cancel closes the menu, and the tip comes up on the map.
+    s.press(&mut c, &[Action::Cancel]);
+    assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
+    // A fresh Cancel closes it; the map stays as it was.
+    s.press(&mut c, &[Action::Cancel]);
+    assert_eq!(s.shown_tip(), None);
+    assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
 }
