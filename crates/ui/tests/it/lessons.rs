@@ -268,19 +268,22 @@ fn with_voices_off_no_box_asks_for_her() {
     let asked = h.audio_requests().into_iter().filter(|r| {
         matches!(
             r,
-            AudioRequest::PlayVoice { .. } | AudioRequest::PreloadVoices { .. }
+            AudioRequest::PlayVoice { .. }
+                | AudioRequest::PreloadVoices { .. }
+                | AudioRequest::KeepVoices { .. }
         )
     });
     assert_eq!(asked.count(), 0);
 }
 
-/// Acceptance (0494): the battle preloads her lines before her first box
-/// asks for its clip (on the web a clip is fetched, and one not loaded
-/// 0.3 s after it is asked for is skipped): the queued tip's first, then
-/// the lesson's. Once the tip is closed, the list is sent again without
-/// it, before the lesson's clip is asked for.
+/// Acceptance (0494, 0496): the battle keeps her lines loaded before her
+/// first box asks for its clip (on the web a clip is fetched, and one not
+/// loaded 0.3 s after it is asked for is skipped): the set sent on the
+/// battle's first frame holds every unseen tip's line and the lesson's.
+/// Once the tip is closed, the set is sent again without it, before the
+/// lesson's clip is asked for.
 #[test]
-fn the_battle_preloads_her_lines_before_her_box_asks_for_one() {
+fn the_battle_keeps_her_lines_before_her_box_asks_for_one() {
     let mut h = launch(Box::new(MemoryStorage::new()));
     h.with_tips();
     let manifest = guide_manifest(&h);
@@ -290,10 +293,12 @@ fn the_battle_preloads_her_lines_before_her_box_asks_for_one() {
     let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
     let lesson = content.lessons.lessons[0].text.clone();
     let line = trpg_content::voice::guide_line;
+    let mut every: Vec<_> = content.tips.tips.iter().map(|t| line(&t.text)).collect();
+    every.push(line(&lesson));
     to_battle_answering_voices(&mut h, "f");
     assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstBattleStart));
     let guide = |r: &AudioRequest| match r {
-        AudioRequest::PreloadVoices { lines } => {
+        AudioRequest::KeepVoices { lines } => {
             let ids: Vec<_> = lines.iter().map(|(id, _)| id.clone()).collect();
             ids.iter().all(|id| id.scene_id() == "vix").then_some(ids)
         }
@@ -301,17 +306,16 @@ fn the_battle_preloads_her_lines_before_her_box_asks_for_one() {
         _ => None,
     };
     let asked: Vec<Vec<_>> = h.audio_requests().iter().filter_map(guide).collect();
-    // Preloads (the first on the battle's first frame), then her clip
-    // (an empty list here), last; the preload just before it starts with
-    // the tip's line, then the lesson's.
-    let Some((played, preloads)) = asked.split_last() else {
-        panic!("nothing asked");
+    // One set, on the battle's first frame, then her clip (an empty list
+    // here): her box shows on that frame too, so the set comes first.
+    let [kept, played] = asked.as_slice() else {
+        panic!("{asked:?}");
     };
     assert_eq!(played, &[] as &[trpg_content::LineId]);
-    let Some(preload) = preloads.last() else {
-        panic!("her clip was asked for with nothing preloaded: {asked:?}");
-    };
-    assert_eq!(preload[..2], [line(&tip), line(&lesson)]);
+    for id in &every {
+        assert!(kept.contains(id), "{id:?} not kept: {kept:?}");
+    }
+    assert!(kept.contains(&line(&tip)));
     h.clear_audio().keys("f");
     assert_eq!(battle(&h).shown_lesson(), Some(TEST_LESSON));
     let after: Vec<AudioRequest> = h
@@ -320,14 +324,38 @@ fn the_battle_preloads_her_lines_before_her_box_asks_for_one() {
         .filter(|r| guide(r).is_some() || *r == AudioRequest::StopVoice)
         .collect();
     let [
-        AudioRequest::PreloadVoices { lines },
+        AudioRequest::KeepVoices { lines },
         AudioRequest::StopVoice,
         voice,
     ] = after.as_slice()
     else {
         panic!("{after:?}");
     };
-    assert_eq!(lines[0].0, line(&lesson));
+    assert!(lines.iter().any(|(id, _)| *id == line(&lesson)));
     assert!(!lines.iter().any(|(id, _)| *id == line(&tip)), "seen: gone");
     assert_eq!(voice, &play(&lesson));
+}
+
+/// Acceptance (0496): leaving the battle (the map menu's `Suspend`) with
+/// her lesson still open lets her lines go: an empty set is sent.
+#[test]
+fn leaving_the_battle_lets_her_lines_go() {
+    let mut h = launch(Box::new(MemoryStorage::new()));
+    let manifest = guide_manifest(&h);
+    h.ctx_mut().set_voice_manifest(&manifest);
+    to_battle_answering_voices(&mut h, "f");
+    let kept = h
+        .audio_requests()
+        .into_iter()
+        .any(|r| matches!(r, AudioRequest::KeepVoices { lines } if !lines.is_empty()));
+    assert!(kept, "her lines were kept in battle");
+    h.keys("Up Down").clear_audio();
+    h.keys("d Down Down Down Down f f");
+    assert_eq!(h.screens(), ["title"]);
+    let kept: Vec<_> = h
+        .audio_requests()
+        .into_iter()
+        .filter(|r| matches!(r, AudioRequest::KeepVoices { .. }))
+        .collect();
+    assert_eq!(kept, [AudioRequest::KeepVoices { lines: vec![] }]);
 }

@@ -1107,15 +1107,10 @@ impl BattleScreen {
         Some(trpg_content::voice::guide_line(text))
     }
 
-    /// The ids of the guide's lines this battle may still show, likeliest
-    /// first (0494): the queued tips', the waiting lessons' (the one in
-    /// play first), the tips not seen yet, then the lessons that may yet
-    /// start here; each once. Unseen tips come before lessons not started:
-    /// a tip shows the moment its trigger fires, while a lesson that
-    /// shares a tip's trigger waits behind the tip, queued (and so moved
-    /// to the front) while the tip is read. Only the first few are kept
-    /// loaded, so a tip fired out of this order may still be fetched late.
-    // engine-friction: engine#3213 (keep every unseen line loaded instead)
+    /// The ids of the guide's lines this battle may still show (0494,
+    /// 0496), each once: the queued tips', the waiting lessons', the tips
+    /// not seen yet and the lessons that may yet start here. The order
+    /// doesn't matter: every one is kept loaded.
     fn coming_guide_lines(&self, ctx: &Ctx) -> Vec<trpg_content::LineId> {
         let content = &ctx.game.content;
         let queued = self
@@ -2905,6 +2900,44 @@ fn not_plain(t: &TerrainRules) -> bool {
 }
 
 impl BattleScreen {
+    /// [`Screen::uncovered`]'s answer to what the screen above popped
+    /// with, before the guide's lines are let go if it leaves.
+    fn answered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
+        let Some(result) = result else {
+            return Transition::None;
+        };
+        let result = match result.downcast::<RewindEffect>() {
+            Ok(effect) => return self.rewound(ctx, effect),
+            Err(other) => other,
+        };
+        let result = match result.downcast::<ShopVisit>() {
+            Ok(visit) => {
+                // Nothing chosen: the unit hasn't acted, its menu is back.
+                if let Some(cmd) = visit.command() {
+                    self.apply(&cmd);
+                }
+                return Transition::None;
+            }
+            Err(other) => other,
+        };
+        match result.take::<GameOverChoice>() {
+            Some(GameOverChoice::Rewind) => self.rewind_from_defeat(ctx),
+            Some(GameOverChoice::Retry) => Transition::pop_with(BattleEnd::Restart),
+            Some(GameOverChoice::Title) => Transition::pop_with(BattleEnd::Title),
+            None => Transition::None,
+        }
+    }
+
+    /// `transition`, once the guide's lines are let go if it takes the
+    /// battle off the stack (0496): anything but staying or a screen
+    /// pushed over it.
+    fn leaving(&mut self, transition: Transition, ctx: &mut Ctx) -> Transition {
+        if !matches!(transition, Transition::None | Transition::Push(_)) {
+            self.guide_voice.leave(ctx);
+        }
+        transition
+    }
+
     /// [`Screen::update`]'s frame, before its tip is noted as shown.
     fn update_frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.begin_frame(ctx, input.dt());
@@ -3047,10 +3080,10 @@ impl Screen<Shuyi> for BattleScreen {
         let line = stays.then(|| self.guide_line(ctx)).flatten();
         let coming = self
             .guide_voice
-            .preload_due(line.as_ref(), ctx)
+            .keep_due(line.as_ref(), ctx)
             .then(|| self.coming_guide_lines(ctx));
         self.guide_voice.show(line, coming, ctx);
-        transition
+        self.leaving(transition, ctx)
     }
 
     /// A screen over the battle (a scene, the rewind screen, …): no tip or
@@ -3067,29 +3100,8 @@ impl Screen<Shuyi> for BattleScreen {
     /// Guides list hand nothing back.
     fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
         self.tips.set_covered(false);
-        let Some(result) = result else {
-            return Transition::None;
-        };
-        let result = match result.downcast::<RewindEffect>() {
-            Ok(effect) => return self.rewound(ctx, effect),
-            Err(other) => other,
-        };
-        let result = match result.downcast::<ShopVisit>() {
-            Ok(visit) => {
-                // Nothing chosen: the unit hasn't acted, its menu is back.
-                if let Some(cmd) = visit.command() {
-                    self.apply(&cmd);
-                }
-                return Transition::None;
-            }
-            Err(other) => other,
-        };
-        match result.take::<GameOverChoice>() {
-            Some(GameOverChoice::Rewind) => self.rewind_from_defeat(ctx),
-            Some(GameOverChoice::Retry) => Transition::pop_with(BattleEnd::Restart),
-            Some(GameOverChoice::Title) => Transition::pop_with(BattleEnd::Title),
-            None => Transition::None,
-        }
+        let transition = self.answered(ctx, result);
+        self.leaving(transition, ctx)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
