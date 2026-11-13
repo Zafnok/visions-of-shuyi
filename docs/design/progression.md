@@ -802,7 +802,7 @@ Flier [F] (Sp) ──────┬─► Sky Lancer [F] Sp Sw     ──► St
 - **Role** (Nick, "1A"): a **sword foot soldier who is good at everything**.
   The lord starts as a tier-1 **Exile** (swords only, Mov 5, on foot).
   "Exile" matches the story (a disgraced or exiled noble,
-  `setting-and-tone.md`) and avoids Fire Emblem's "Lord".
+  `assets-private/story/design/setting-and-tone.md`) and avoids Fire Emblem's "Lord".
 - **Shape** (Nick, "2B"): the Exile branches into two **lord-only** tier-2
   classes, and each goes on to its own lord-only tier 3:
   - **Blade Heir** (fast; swords, plus gauntlets) → **Sovereign**.

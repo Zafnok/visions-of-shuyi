@@ -57,9 +57,9 @@ jobs:
           while IFS= read -r path; do
             [ -z "$path" ] && continue
             case "$path" in
-              THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md|docs/story/names.md) echo "read by trpg-content: $path"; doc_crates="$doc_crates trpg-content" ;;
+              THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md) echo "read by trpg-content: $path"; doc_crates="$doc_crates trpg-content" ;;
               docs/engine/pins.md) echo "read by trpg-engine-watch: $path"; doc_crates="$doc_crates trpg-engine-watch" ;;
-              docs/story/writers-guide.md|tickets/README.md) echo "read by xtask: $path"; doc_crates="$doc_crates xtask" ;;
+              tickets/README.md) echo "read by xtask: $path"; doc_crates="$doc_crates xtask" ;;
               *.md|docs/*|tickets/*|.claude/*) echo "docs: $path" ;;
               *) echo "code: $path"; code=true ;;
             esac

@@ -38,15 +38,12 @@ pub const SHORT: usize = 4;
 pub const ROW: usize = 12;
 
 /// What is not searched, by path prefix: the tickets (0153 §3.5), and the
-/// files tickets 0159 and 0160 move into the private repository, which
-/// hold the content until they do. A `README.md` in `assets/` is always
+/// files ticket 0160 moves into the private repository, which hold the
+/// content until it does (0159 moved the story's documents). A `README.md` in `assets/` is always
 /// searched: the formats stay public. Once 0160 has moved the files, the
 /// `assets/` entries name nothing and 0160 removes them.
 pub const MOVING: &[&str] = &[
     "tickets/",
-    // 0159: the story's documents.
-    "docs/story/",
-    "assets-src/audio/voice-audition.html",
     // 0160: the game's content.
     "assets/dialogue/",
     "assets/chapters/",
@@ -446,7 +443,6 @@ miller[sad] (quietly): Grind it fine, {n:baker}, the way your mother ground it e
     fn the_moving_files_and_tickets_are_not_searched_but_a_readme_is() {
         for path in [
             "tickets/open/0160-x.md",
-            "docs/story/made_up.md",
             "assets/dialogue/ch01.dlg",
             "assets/maps/ch01.map",
         ] {
@@ -456,6 +452,7 @@ miller[sad] (quietly): Grind it fine, {n:baker}, the way your mother ground it e
             "assets/made_up/README.md",
             "crates/ui/tests/it/snapshots/it__x.snap",
             "docs/design/made_up.md",
+            "docs/story/made_up.md",
         ] {
             assert!(searched(path), "{path}");
         }

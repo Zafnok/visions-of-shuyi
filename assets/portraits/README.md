@@ -21,7 +21,7 @@ busts; `retainer`, `sergeant`, `keeper`, `red_captain`, `rival`,
 with the bundle's Character Generator. Without the private assets those
 seven and `poacher` and `heretic` have no portrait, and dialogue shows an
 empty frame for them. Which bought expression each name shows is in the
-character's sheet (`docs/story/characters/`).
+character's sheet (`assets-private/story/characters/`).
 
 ## Format
 

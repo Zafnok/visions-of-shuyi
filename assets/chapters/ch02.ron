@@ -1,5 +1,5 @@
 // Chapter 2: Kell's Ford (ticket 0848). Beat sheet:
-// docs/story/chapters/ch02.md; script: dialogue/ch02.dlg. Joss joins in
+// assets-private/story/chapters/ch02.md; script: dialogue/ch02.dlg. Joss joins in
 // ch02_join (`@joins`).
 (
     id: "ch02",

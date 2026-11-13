@@ -1,7 +1,7 @@
 # Chapter 2: Kell's Ford. Written on a blank page from the beat sheet's
 # cards by ticket 0744 (the story-writing skill).
-# Beat sheet: docs/story/chapters/ch02.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch02.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # Scene ids, for chapters/ch02.ron and battles/ch02.ron to wire (0848):
 #
@@ -45,7 +45,7 @@
 # the battle every line of theirs is in an "@if" block, and each scene
 # reads through with any of them gone, and with all of them gone.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the halt and the ford are played straight.
 # The care is on the body (a boot, a knee, bread, cold hands). Downtime
 # after the fight (the far bank) may be light, briefly. Punctuation is

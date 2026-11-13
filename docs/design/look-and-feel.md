@@ -722,7 +722,7 @@ sprites.
   `sad`, `surprised`) are mapped to the closest of the 8 per character
   (0706). A missing one may be made by a small edit.
 - **The Chapter 1 cast's faces** (decided 2026-10-04 and 2026-10-11,
-  ticket 0706; each character's sheet in `docs/story/characters/` has the
+  ticket 0706; each character's sheet in `assets-private/story/characters/` has the
   face and its expressions):
   - **Bought heroes:** the lead is the Male and the Female Fighter, Aske
     the Archer, Rue the Witch. The female lead's top is recoloured from
@@ -1030,18 +1030,7 @@ Shironejiya the only close match in style, so more of its pictures are
 used; its own faces are an older 48×48 style that doesn't fit our
 busts, so they aren't.
 
-| Who | Face | Combat picture | Status |
-| --- | ---- | -------------- | ------ |
-| Joss Pellam (`defector`) | The **Thief** hero (Heroes 1), with its map sprite | Shironejiya's **sword-and-shield hero** (`m_s_hero07`) at 1.25×, recoloured by Claude: hair brown and headband dark like the Thief's, and its red cloth turned Hound black | Decided ("F Hound black") |
-| Oriel Mast (`battlemage`) | A **generator** face: greying hair, stubble, a grey-and-gold coat | Shironejiya's **court mage** (`m_s_mage_middle_m01`) at 1.25×, casting with an arm out, his blue hair recoloured grey | Decided ("D Court mage") |
-| Crane (`vowmaster`) | A **generator** face: long white hair and a full white beard, with a spectacle rim added by Claude | Unchanged (0040): Shironejiya's old hooded man | Decided ("F Long hair"); his sheet becomes bearded |
-| Ragna Holt (`envoy`) | A **generator** face, no combat picture (she never fights): dark-blonde hair in a bun, a traveller's coat | none | Claude's pick of Nick's two (below) |
-| Dace (`rival`) in person | Unchanged (0706): his generator face | Unchanged (0040): the dark knight | Already decided; his map picture is 0735's |
-| Gil Parrow (`prizefighter`) | Generator face **B**: slicked-back black hair, a scar over one eye, a goatee | Sagak Art's **"8-Bit Heroes 2: Fighter"** (<https://sagak-art-pururu.itch.io/8bitheroes-fighter>, $3, not bought yet): bare-chested, gold fist wraps, red sash, about 45 pixels tall, drawn at **1.75×** | Decided |
-| Hedda Ravn (`shieldbearer`) | A **generator** face to match the picture: long red hair in a ponytail, about 32, weathered; not the pack's own painted portraits (0076) | elie automata's **Battle Axemaiden** (<https://elie-automata.itch.io/battle-axemaiden-animated-character-story-art>, free with credit, AI-assisted): red ponytail, dark plate with a red cape, a long axe; her three-quarter pose | Decided (0076: "the axemaiden seems fine for hedda") |
-| The Hound lieutenant, Silas Hendry (Chapter 2 boss, axe) | He speaks (Chapter 2's scenes), so a **generator** face to match the picture: shaggy red hair and a full red beard | Stupid Creations' **TTMini: Bandit Brigand** (<https://stupidcreations.itch.io/ttmini-bandit-brigand>, $2.99, not bought yet, AI-assisted): red beard, leather and mail, red cloak, hand axe and round shield; his three-quarter pose | Decided (0076: "Bandit Brigand") |
-| Greywater's boss: **the prior** (Chapter 3) | Only if he speaks | Shironejiya's **dark-robed priest** (`m_s_mage_dark_m01`) at 1.25× | Decided: the prior is the boss, not the Hound captain |
-| Crane's champion (Chapter 7 boss) | Only if she speaks | Shironejiya's **blue-armoured knight** with sword and shield (`m_s_val`) at 1.25×; the champion is a woman | Decided |
+The story part of this decision is in the private assets repository, `story/design/look-and-feel.md`.
 
 **Nick's words:**
 
@@ -1375,7 +1364,7 @@ talk over the darkened yard; Dace pacing a stone hall). His answers:
   combat screen's backdrop (*Combat screen* above).
 - **The place line stays** (`@caption`, today's top line: "Harrowby, the
   Thornmarch").
-- **Chapter 1's places** (`docs/story/chapters/ch01.md`):
+- **Chapter 1's places** (`assets-private/story/chapters/ch01.md`):
 
   | Scene | Place | Moving opening |
   | ----- | ----- | -------------- |
@@ -1493,7 +1482,7 @@ is in `controls.md`, *Dialogue log*.
   the reply and every line after it from the log; jumping forward goes
   only as far as the line the reply answers. Reading on, the replies come
   up again and any one can be picked. (Replies never change the story,
-  `docs/story/outline.md`, so this is always safe.)
+  `assets-private/story/outline.md`, so this is always safe.)
 - **This scene only.** The log starts empty when a scene starts.
 - **Cancel closes the log** and the scene goes on where it was. Nothing
   else closes it.
