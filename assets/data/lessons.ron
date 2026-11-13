@@ -4,6 +4,12 @@
 // is open the turn can't end (unless an item is `TurnEnded`). Each lesson
 // shows once per campaign, the first time its trigger happens in a battle,
 // one at a time: lessons started by the same trigger come in file order.
+// A lesson box takes no keys and has nothing to dismiss: the battle works
+// under it and it closes itself. The next lesson follows a done one at
+// once; the tips that fired meanwhile wait until a lesson run is over and
+// the player is back on the map (ticket 0495). The box at the end of the
+// lessons takes the keys and waits for a press on the map after the last
+// lesson, like a tip.
 // A lesson is only up when a unit still to act that turn could do what it
 // asks (ticket 0464): attack (ForecastOpened, Attacked) needs one that could
 // reach an enemy, ArtsOpened one with an art it could use from a tile it can

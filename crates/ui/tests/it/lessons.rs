@@ -100,9 +100,9 @@ fn at_full_the_lesson_opens_holds_the_turn_and_closes() {
     assert_eq!(battle(&h).shown_lesson(), None);
     assert!(!h.snapshot().contains("Moving the cursor"));
     assert_eq!(lessons_done(&h), [TEST_LESSON]);
-    // Keep going at the end of the lessons (0465); now End turn asks, and
-    // yes ends the phase.
-    h.keys("f Space f");
+    // Keep going at the end of the lessons (0465), once a press on the map
+    // brings it up (0495); now End turn asks, and yes ends the phase.
+    h.keys("q f Space f");
     assert_ne!(battle(&h).state().phase(), Phase::Player);
 }
 
@@ -138,8 +138,9 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
     to_battle(&mut h, "");
     h.keys("Up Down Left Right");
     assert_eq!(lessons_done(&h), [TEST_LESSON]);
-    // Keep going at the end of the lessons (0465).
-    h.keys("f");
+    // Keep going at the end of the lessons (0465), once a press on the map
+    // brings it up (0495).
+    h.keys("q f");
     assert_eq!(lessons_done(&h), [END_ANSWERED, TEST_LESSON]);
     // The map menu's Suspend, then yes.
     h.keys("d Down Down Down Down f f");
