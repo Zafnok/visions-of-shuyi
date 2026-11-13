@@ -1,7 +1,7 @@
-// A winning playthrough of Aldwater Toll Bridge (ticket 1071): the player's
+// A winning playthrough of battle aldwater (ticket 1071): the player's
 // commands, phase by phase, with the army Chapters 1 to 3's playthroughs
 // leave. Played back by ch04_winnable.rs, which says how to record a new one.
-// Units 1-7: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss.
+// Units 1-7: the New Game roster, then Chapter 2's recruit.
 [
     // Turn 1
     Act(unit:(6),dest:(x:5,y:5),action:Cast(spell:("fire"),target:Unit((11)),active:None)),

@@ -1,12 +1,15 @@
 //! Act 1's fixed skirmishes of Chapters 4 and 5 (ticket 1071) on the real
-//! Act 1 map: *Aldwater Toll Bridge* and *The Salt Road* guard the way to
-//! their chapters' story battles, *Millhaven Road* (where Gil joins if
-//! beaten) and *Smugglers' Cove* are optional. The guards' recorded
+//! Act 1 map: `aldwater` and `salt_road` guard the way to their chapters'
+//! story battles, `millhaven_road` (whose boss, `prizefighter`, joins if
+//! beaten) and `smugglers_cove` are optional. The guards' recorded
 //! playthroughs are part of Chapters 4 and 5's (`ch04_winnable`,
 //! `ch05_winnable`), played with the army those chapters bring; the
 //! optional ones' (`fixtures/<battle>_winning.ron`) with the army the
 //! battle's `bots_army` describes, as the side quests' are
 //! (`side_quests`).
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): each starts with the
+//! guard, and skips without the game's content.
 //!
 //! **If a balance change breaks a replay**, record a new one on purpose:
 //!
@@ -16,6 +19,7 @@
 //!
 //! and read the new fixture's last lines (who fell, how many turns).
 
+use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{BattleState, CharacterId, ItemId, NodeKind, Outcome, WorldCommand, WorldEvent};
 
 use crate::playthrough::{self, lost, skip_scenes};
@@ -28,7 +32,7 @@ const SMUGGLERS_COVE: &str = include_str!("fixtures/smugglers_cove_winning.ron")
 /// the two on the way guard it.
 #[test]
 fn the_four_places_are_their_fixed_skirmishes() {
-    if trpg_content::bundle::skip_without_the_game() {
+    if skip_without_the_game() {
         return;
     }
     let content = content();
@@ -55,16 +59,19 @@ fn the_four_places_are_their_fixed_skirmishes() {
 }
 
 /// Acceptance: a guard stops the army on its way to the story battle
-/// until it is won. The toll bridge stands between the valley road and
-/// Veyne Hall; the Salt Road between the hall and Saltmere, which, with
-/// the Envoy's House and the cove, opens only once it is won.
+/// until it is won. `aldwater` stands between `valley_road` and
+/// `veyne_hall`; `salt_road` between `veyne_hall` and `saltmere`, which,
+/// with `envoys_house` and `smugglers_cove`, opens only once it is won.
 #[test]
 fn a_guard_blocks_the_way_until_won() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let map = &content.worldmaps["act1"].map;
     // Any army will do: the map reads only what is won.
     let (mut c, _) = army_for(&content, "millhaven_road");
-    // `on_act1` puts the campaign in Chapter 2; the hall waits for 4.
+    // `on_act1` puts the campaign in Chapter 2; `veyne_hall` waits for 4.
     on_act1(&mut c, "valley_road", &[]);
     c.chapter = "ch04".into();
     let to_hall = WorldCommand::TravelTo("veyne_hall".into());
@@ -86,7 +93,7 @@ fn a_guard_blocks_the_way_until_won() {
     on_act1(&mut c, "veyne_hall", &["aldwater", "veyne_hall"]);
     c.chapter = "ch05".into();
     for closed in ["saltmere", "envoys_house", "smugglers_cove"] {
-        assert!(!map.is_open(closed, &c), "{closed} before the Salt Road");
+        assert!(!map.is_open(closed, &c), "{closed} before salt_road");
     }
     assert!(map.blocks_path("salt_road", &c));
     on_act1(
@@ -96,7 +103,7 @@ fn a_guard_blocks_the_way_until_won() {
     );
     c.chapter = "ch05".into();
     for open in ["saltmere", "envoys_house", "smugglers_cove"] {
-        assert!(map.is_open(open, &c), "{open} after the Salt Road");
+        assert!(map.is_open(open, &c), "{open} after salt_road");
     }
     // The optional ones never stop travel.
     on_act1(&mut c, "millhaven", &[]);
@@ -104,11 +111,14 @@ fn a_guard_blocks_the_way_until_won() {
     assert!(!map.blocks_path("smugglers_cove", &c));
 }
 
-/// The rules alone: the fixture's commands beat Gil before the Corporal
-/// falls, in Classic, losing nobody: he is recruited as he falls, and
-/// joins the army when the win is applied.
+/// The rules alone: the fixture's commands beat `prizefighter` before the
+/// battle is won, in Classic, losing nobody: it is recruited as it falls,
+/// and joins the army when the win is applied.
 #[test]
-fn the_recorded_playthrough_beats_gil_and_he_joins() {
+fn the_recorded_playthrough_wins_millhaven_road_with_its_recruit() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let (mut campaign, def) = army_for(&content, "millhaven_road");
     let mut state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
@@ -116,20 +126,23 @@ fn the_recorded_playthrough_beats_gil_and_he_joins() {
     playthrough::play(&mut state, &content, &commands);
     assert_eq!(state.outcome(), Some(Outcome::Victory));
     assert_eq!(lost(&state), Vec::<&str>::new());
-    let gil = CharacterId("prizefighter".into());
+    let recruit = CharacterId("prizefighter".into());
     let recruited = state.recruited().iter();
     let recruited: Vec<_> = recruited.filter_map(|u| u.character.clone()).collect();
-    assert_eq!(recruited, std::slice::from_ref(&gil));
+    assert_eq!(recruited, std::slice::from_ref(&recruit));
     campaign
         .apply_result(def, &state, 0)
         .unwrap_or_else(|e| panic!("{e:?}"));
-    assert!(campaign.member(&gil).is_some(), "Gil joined");
+    assert!(campaign.member(&recruit).is_some(), "prizefighter joined");
 }
 
-/// The rules alone: the fixture's commands rout the smugglers, in
-/// Classic, losing nobody; the casks are the loot.
+/// The rules alone: the fixture's commands win `smugglers_cove`, in
+/// Classic, losing nobody; the gold and an elixir are the loot.
 #[test]
-fn the_recorded_playthrough_takes_the_cove() {
+fn the_recorded_playthrough_wins_smugglers_cove() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = content();
     let (mut campaign, def) = army_for(&content, "smugglers_cove");
     let mut state = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
@@ -145,15 +158,19 @@ fn the_recorded_playthrough_takes_the_cove() {
     assert_eq!(campaign.stock.count(&ItemId::new("elixir")), elixirs + 1);
 }
 
-/// Acceptance: from Millhaven, *Millhaven Road* is a place the army can
+/// Acceptance: from `millhaven`, `millhaven_road` is a place the army can
 /// walk to; its scene plays, then Preparations, the battle (won with the
-/// recorded commands, Gil beaten), the results, the scene after with Gil
-/// in it, and the map again with the place cleared and Gil in the army.
+/// recorded commands, `prizefighter` beaten), the results, the scene
+/// after, and the map again with the place cleared and the recruit in the
+/// army.
 #[test]
-fn gil_joins_on_millhaven_road_from_the_map_to_the_map() {
+fn millhaven_road_plays_from_the_map_to_the_map_with_its_recruit() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = act1_from_a_save("millhaven", &[], "millhaven_road");
     let before = campaign(&h);
-    // Find → Fixed skirmishes: the nearest, Millhaven Road; travel there.
+    // Find → Fixed skirmishes: the nearest, `millhaven_road`; travel there.
     h.keys("x Down Down Down Down f f");
     h.wait(2.0);
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
@@ -186,7 +203,7 @@ fn gil_joins_on_millhaven_road_from_the_map_to_the_map() {
     let after = campaign(&h);
     let world = after.world.as_ref();
     assert!(world.is_some_and(|w| w.cleared.contains("millhaven_road")));
-    assert_eq!(after.roster.len(), before.roster.len() + 1, "Gil joined");
+    assert_eq!(after.roster.len(), before.roster.len() + 1, "one joined");
     assert!(after.member(&CharacterId("prizefighter".into())).is_some());
 }
 
@@ -198,19 +215,19 @@ fn record_millhaven_road() {
     let content = content();
     let (campaign, def) = army_for(&content, "millhaven_road");
     let start = BattleState::new(campaign.battle_setup(def, &content.tables())).0;
-    let gil_beaten = |state: &BattleState| !state.recruited().is_empty();
+    let recruit_beaten = |state: &BattleState| !state.recruited().is_empty();
     playthrough::record_where(
         start,
         &content,
         1072,
         &[
-            "// A winning playthrough of Millhaven Road (ticket 1071), Gil beaten: the",
-            "// player's commands, phase by phase, with the army the battle's bots_army",
-            "// describes. Played back by skirmishes.rs, which says how to record a new",
-            "// one. Units 1-7: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss.",
+            "// A winning playthrough of battle millhaven_road (ticket 1071), its recruit",
+            "// beaten: the player's commands, phase by phase, with the army the battle's",
+            "// bots_army describes. Played back by skirmishes.rs, which says how to record",
+            "// a new one. Units 1-7: the battle's slots, in order.",
         ],
         "tests/it/fixtures/millhaven_road_winning.ron",
-        &gil_beaten,
+        &recruit_beaten,
     );
 }
 
@@ -226,10 +243,10 @@ fn record_smugglers_cove() {
         &content,
         1074,
         &[
-            "// A winning playthrough of Smugglers' Cove (ticket 1071): the player's",
+            "// A winning playthrough of battle smugglers_cove (ticket 1071): the player's",
             "// commands, phase by phase, with the army the battle's bots_army describes.",
             "// Played back by skirmishes.rs, which says how to record a new one. Units",
-            "// 1-9: the lead, Hollis, Tamsin, Aske, Maud, Rue, Joss, Gil, Hedda.",
+            "// 1-9: the battle's slots, in order.",
         ],
         "tests/it/fixtures/smugglers_cove_winning.ron",
     );

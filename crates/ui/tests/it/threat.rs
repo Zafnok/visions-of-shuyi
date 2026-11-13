@@ -74,12 +74,16 @@ fn quick_battle() -> Harness {
     h
 }
 
-/// The example of `turn-structure.md`: on turn 1 of Chapter 1 the Sergeant
-/// proposes the road tile 5 east of him. The Brigand beside it, the
-/// Brigand to the east, the Archer and the Raider north of the road
-/// bridge, who stands guard, could each attack him there.
+/// The example of `turn-structure.md`: on turn 1 of Chapter 1 the
+/// `sergeant` proposes the road tile 5 east of it. The Brigand beside it,
+/// the Brigand to the east, the Archer and the Raider north of the road
+/// bridge, which stands guard, could each attack it there. A test of the
+/// game's content (ADR-0118 §1 (a)): it skips without it.
 #[test]
 fn chapter_1_names_who_can_attack_the_tile_the_sergeant_proposes() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1();
     let (brigand, east, archer, raider) = (p(10, 10), p(16, 11), p(12, 9), p(11, 5));
     // Nobody reaches the lead where he starts; the nearest Brigand reaches

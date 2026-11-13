@@ -57,11 +57,12 @@ fn skip_scenes(h: &mut Harness) {
 }
 
 /// The ticket's walk-through: the title, New Game, the lead's name on the
-/// letter grid, and into Chapter 1's first battle, with no layout ever
+/// letter grid, and into the first battle (the test chapter's, as every
+/// test of this file but the last plays), with no layout ever
 /// asked for.
 #[test]
-fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
-    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+fn the_d_pad_a_and_b_play_from_the_title_into_the_first_battle() {
+    let mut h = Harness::first_launch_and(playdate);
     h.use_pad(PadKind::Playdate).with_tips().with_lessons();
     assert_eq!(h.game().buffer().spec(), ConsoleSpec::PLAYDATE);
     // A ends the title's wait, then picks New Game, Classic and the
@@ -132,10 +133,11 @@ fn view_of<S: 'static, V>(h: &Harness, view: impl Fn(&S, &Ctx) -> V) -> V {
 
 /// Ticket 1045: New Game to the first scene on the Playdate's skins: the
 /// mode, the familiarity, the lead (the name spelled on the letter grid),
-/// each screen as the Playdate shows it, then Chapter 1's opening scene.
+/// each screen as the Playdate shows it, then the first chapter's opening
+/// scene.
 #[test]
 fn new_game_to_the_first_scene_on_the_playdates_skins() {
-    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    let mut h = Harness::first_launch_and(playdate_skins);
     h.use_pad(PadKind::Playdate);
     let mut one_bit = OneBit::new(&h);
     // A ends the title's wait, then picks New Game (on its release: the
@@ -196,7 +198,7 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
 #[test]
 fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
     use trpg_ui::screens::options::Row;
-    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    let mut h = Harness::first_launch_and(playdate_skins);
     h.use_pad(PadKind::Playdate);
     // The title's Options: third in its menu.
     h.pad("East DpadDown DpadDown East");
@@ -319,11 +321,11 @@ impl OneBit {
     }
 }
 
-/// The title, the opening scene's lines typing out, and Chapter 1's first
+/// The title, the opening scene's lines typing out, and the first
 /// battle with its cursor moving, on the Playdate's console and palette.
 #[test]
 fn the_one_bit_frames_are_the_references_whole_or_changed() {
-    let mut h = Harness::first_launch_and(playdate_with_inks).with_shipped_story();
+    let mut h = Harness::first_launch_and(playdate_with_inks);
     h.use_pad(PadKind::Playdate).with_tips().with_lessons();
     let mut one_bit = OneBit::new(&h);
     one_bit.check(&h);
@@ -368,11 +370,11 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
 
 /// Ticket 1034: on the Playdate, A + B together ends the turn (its
 /// question shows, as on the PC) and holding B while pressing right or
-/// left picks the next or previous ready unit, in Chapter 1's first
+/// left picks the next or previous ready unit, in the first
 /// battle; B alone still cancels.
 #[test]
 fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
-    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+    let mut h = Harness::first_launch_and(playdate);
     h.use_pad(PadKind::Playdate);
     // A to New Game, Classic and the familiarity answer, the name as it
     // is, Start; past the scenes and the banner.
@@ -414,7 +416,7 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     assert_ne!(phase, Some(Phase::Player));
 }
 
-/// Chapter 1's first battle on the Playdate, lessons off: New Game,
+/// The first battle on the Playdate, lessons off: New Game,
 /// Classic, the familiarity answer, the name as it is, Start, past the
 /// scenes and the banner, with the cursor on the lead.
 fn first_battle() -> Harness {
@@ -426,8 +428,7 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     let mut h = Harness::first_launch_and(|ctx| {
         playdate(ctx);
         setup(ctx);
-    })
-    .with_shipped_story();
+    });
     h.use_pad(PadKind::Playdate);
     h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
@@ -469,7 +470,7 @@ fn battle_view(h: &Harness) -> BattleView {
     view_of(h, BattleScreen::view)
 }
 
-/// Ticket 1038: Chapter 1's first battle on the Playdate's skins, read
+/// Ticket 1038: the first battle on the Playdate's skins, read
 /// from the battle's view: the map fills the screen, the corner pop-ups
 /// tell of what is under the cursor and give way to the menus, which open
 /// beside their tile, and the turn ends through its question (its buttons
@@ -532,7 +533,7 @@ fn rewind_points(h: &Harness) -> Option<(Vec<usize>, Option<usize>)> {
     Some((points, r.focused().map(|e| e.point)))
 }
 
-/// Ticket 1035: in Chapter 1's first battle, the crank wound back opens
+/// Ticket 1035: in the first battle, the crank wound back opens
 /// the rewind and steps back one action per notch; wound forwards it
 /// steps towards the present; B closes it; A asks "Use 1 of N charges?"
 /// and A again rewinds, as on the PC.
@@ -688,7 +689,7 @@ fn the_playdates_map_menu_lists_the_shortcuts_with_no_button() {
 /// controller.
 #[test]
 fn the_pcs_map_menu_has_no_shortcut_entries() {
-    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("f f f Up f");
     for _ in 0..8 {
         if h.top_screen() == "dialogue" {
@@ -712,7 +713,7 @@ fn the_pcs_map_menu_has_no_shortcut_entries() {
 /// nothing elsewhere.
 #[test]
 fn the_system_menu_entries_work_where_they_can() {
-    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+    let mut h = Harness::first_launch_and(playdate);
     h.use_pad(PadKind::Playdate);
     // The title waiting for a button: nothing opens over it.
     h.system_menu(SystemMenuEntry::Options);
@@ -977,14 +978,50 @@ fn wait_for(h: &mut Harness, seconds: f32, mut seen: impl FnMut(&Harness) -> boo
     }
 }
 
+/// The test files' `test_title` as the title's cinematic
+/// ([`with_test_title`](crate::title_cinematic::with_test_title)), with a
+/// shot of every kind: the test chapter's opening lines from 15 s, the
+/// lead's and the test knight's faces from 30.75 s, its own pan again from
+/// 48 s, then its fight at 69.95 s and its logo.
+fn with_every_kind_of_shot(ctx: &mut Ctx) {
+    use trpg_content::cinematic::{Shot as Kind, ShotDef};
+    use trpg_content::dialogue::Side;
+    use trpg_core::{CharacterId, LEAD_ID};
+    use trpg_ui::screens::title::TITLE_CINEMATIC;
+    crate::title_cinematic::with_test_title(ctx);
+    let title = ctx.game.content.cinematics.get_mut(TITLE_CINEMATIC);
+    let title = title.unwrap_or_else(|| panic!("no title cinematic"));
+    let pan = title.shots[0].shot.clone();
+    let talk = Kind::Talk {
+        scene: "test_intro".into(),
+        first: 0,
+        count: 2,
+    };
+    let faces = Kind::Characters {
+        who: vec![
+            CharacterId(LEAD_ID.into()),
+            CharacterId("test_knight".into()),
+        ],
+        expression: "neutral".into(),
+        from: Side::Right,
+    };
+    let shots = [(15_000, talk), (30_750, faces), (48_000, pan)];
+    let shots = shots.map(|(at_ms, shot)| ShotDef { at_ms, shot });
+    title.shots.splice(1..1, shots);
+}
+
 /// Ticket 1044: on the Playdate's skins, with no music, left alone the
 /// title's cinematic plays: its map shots at half the file's zoom (3×
 /// becomes 2×), its fights on the combat picture, then the logo with the
 /// menu, which works. Read from the title's view; a few frames are drawn
-/// one-bit as the front end draws them.
+/// one-bit as the front end draws them. On the test cinematic, with a shot
+/// of every kind ([`with_every_kind_of_shot`]).
 #[test]
 fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
-    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    let mut h = Harness::first_launch_and(|ctx| {
+        playdate_skins(ctx);
+        with_every_kind_of_shot(ctx);
+    });
     h.use_pad(PadKind::Playdate);
     h.without_music();
     let mut one_bit = OneBit::new(&h);
@@ -993,7 +1030,7 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     h.pad("East");
     assert!(title_view(&h).menu.is_some());
     one_bit.check(&h);
-    // The opening captions (from 15 s) in the dialogue's Playdate look
+    // The opening lines (from 15 s) in the dialogue's Playdate look
     // (ticket 1043): the text box across the bottom of the screen.
     wait_for(
         &mut h,
@@ -1025,7 +1062,7 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     let sprites = h.game().buffer().sprites();
     assert!(sprites.iter().all(|s| s.dest.h == 128), "{sprites:?}");
     one_bit.check(&h);
-    // The first turn's march (from 56 s).
+    // The pan again (from 48 s).
     wait_for(&mut h, 40.0, |h| {
         cinematic_frame(h).is_some_and(|(_, t)| t > 60.0)
     });
@@ -1034,7 +1071,7 @@ fn the_title_cinematic_plays_to_its_menu_on_the_playdate() {
     };
     assert_eq!(zoom, 2);
     one_bit.check(&h);
-    // The brigand attacks the lead (from 69.95 s): the combat picture.
+    // The lead attacks the brigand (from 69.95 s): the combat picture.
     wait_for(&mut h, 15.0, |h| {
         matches!(cinematic_frame(h), Some((Shot::Combat { .. }, _)))
     });

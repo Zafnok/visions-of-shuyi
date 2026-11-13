@@ -1,17 +1,18 @@
 //! A conversation's short moving opening, where the script asks for one
 //! (ticket 0734, `docs/design/look-and-feel.md`, *Places behind
-//! conversations*): Chapter 1's intro opens on two people in its place,
-//! and its last scene on one. What happens is read from the screen's view
-//! and its map scene, not from cells; one snapshot shows the look, in
-//! glyphs.
+//! conversations*): the opening's people move on its place at full
+//! brightness, then the place darkens and the talk starts. What happens is
+//! read from the screen's view and its map scene, not from cells; one
+//! snapshot shows the look, in glyphs.
 //!
-//! These play Chapter 1's own openings (ADR-0118): they skip without the
-//! content, the snapshot is in the private repository's
-//! `content/tests/snapshots/`, and a line is read from the content, never
-//! quoted. Moving them to a test opening is ticket 0162's.
+//! On the test files (ADR-0118 §1 (b)): the test opening `test_opening`
+//! (the lead steps in and back, the test knight walks round a corner, on
+//! `test_buildings`) is given to the test chapter's intro, and to the test
+//! scene with a reply choice, as their scripts would ask for it with
+//! `@place` and `@opening` ([`with_test_opening`]). A line is read from the
+//! content, never quoted.
 
-use trpg_content::bundle::{content_tests, skip_without_the_game};
-use trpg_content::dialogue::Present;
+use trpg_content::dialogue::{PlaceLine, Present, Stage, Step};
 use trpg_core::{CharacterId, LeadGender, Pos};
 use trpg_ui::Ctx;
 use trpg_ui::ShuyiCtx;
@@ -25,11 +26,41 @@ fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
 }
 
-/// The game opened on `scene` with a lead of `gender`, as `--scene` does.
+/// The test chapter's intro: its caption, then the opening, then its talk.
+const INTRO: &str = "test_intro";
+
+/// The test scene with a reply choice: a line of narration on black, then
+/// the opening, then its talk.
+const WITH_A_CHOICE: &str = "test";
+
+/// Puts `@place test_buildings 4,2` and `@opening test_opening` before
+/// step `at` of scene `scene`.
+fn with_test_opening(ctx: &mut Ctx, scene: &str, at: usize) {
+    let scenes = &mut ctx.game.content.dialogue.scenes;
+    let found = scenes.get_mut(scene);
+    let found = found.unwrap_or_else(|| panic!("no scene {scene}"));
+    let place = PlaceLine::Map {
+        map: "test_buildings".into(),
+        at: p(4, 2),
+        bright: None,
+    };
+    let opening = Stage::Opening("test_opening".into());
+    let steps = [
+        Step::Directive(Stage::Setting(place)),
+        Step::Directive(opening),
+    ];
+    found.steps.splice(at..at, steps);
+}
+
+/// The game opened on `scene` with a lead of `gender`, as `--scene` does,
+/// the two test scenes given the test opening.
 fn preview(scene: &str, gender: LeadGender) -> Harness {
-    let ctx = Ctx::embedded()
+    let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(RIGHT_HANDED);
+    // After the intro's caption; after the other's narration on black.
+    with_test_opening(&mut ctx, INTRO, 1);
+    with_test_opening(&mut ctx, WITH_A_CHOICE, 2);
     let game = trpg_ui::game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
@@ -68,85 +99,71 @@ fn at(who: &str, pos: Pos, facing: Facing) -> (String, Pos, Facing) {
 }
 
 /// Whether the text box on screen starts line `n` (from 0) of `scene`, as
-/// the game says it with everyone there: up to the line's first token
-/// the names don't fill in (the lead's), or the box's first row.
+/// the game says it with everyone there and the lead's name filled in: up
+/// to the line's first other token, or the box's first row.
 fn shows_line(h: &Harness, scene: &str, n: usize) -> bool {
-    let content = &h.game().ctx().game.content;
+    let ctx = h.game().ctx();
+    let content = &ctx.game.content;
     let found = content.dialogue.get(scene);
     let scene = found.unwrap_or_else(|| panic!("no scene {scene}"));
     let resolved = scene.resolved(&Present::Everyone);
     let line = content.names.substitute(resolved.lines()[n].text);
+    let line = line.replace("{lead}", &ctx.game.lead.name);
     let head: String = line.chars().take_while(|&c| c != '{').collect();
     let shown = view(h).text.lines;
     let first = shown.first().map_or("", |row| row.trim_end());
     !head.is_empty() && !first.is_empty() && (first.starts_with(&head) || head.starts_with(first))
 }
 
-/// The first line after `ch01_intro`'s three captions on black.
-const INTRO_TALK: usize = 3;
-
-/// `ch01_intro` past its three captions on black, up to the opening.
-fn intro_opening(gender: LeadGender) -> Harness {
-    let mut h = preview("ch01_intro", gender);
-    for _ in 0..3 {
-        assert!(!dialogue(&h).is_opening());
-        h.wait(3.0);
-        h.keys("f");
-    }
-    h
+/// Where the test opening's cast starts, and ends.
+fn the_cast_at_the_start() -> Vec<(String, Pos, Facing)> {
+    vec![
+        at("lead", p(1, 0), Facing::Right),
+        at("test_knight", p(3, 0), Facing::Left),
+    ]
 }
 
-/// The intro opens on the lead and a companion in its place at full
-/// brightness, with no talk on screen, on no side (no outline, 0738); the
-/// first line comes up after the opening's 2.05 s and half a second of
-/// darkening, and they stay behind it.
+/// The opening plays on the place at full brightness, with no talk on
+/// screen and nobody on a side (no outline, 0738): the lead steps in, and
+/// back still facing the way it looked; the test knight walks round the
+/// corner. The first line comes up after the opening's second and half a
+/// second of darkening, and they stay behind it where it left them.
 #[test]
-fn chapter_1s_intro_opens_on_two_people_in_its_place() {
-    if skip_without_the_game() {
-        return;
-    }
-    let mut h = intro_opening(LeadGender::Female);
+fn an_opening_plays_on_its_place_then_the_talk_starts() {
+    let mut h = preview(INTRO, LeadGender::Female);
     assert!(dialogue(&h).is_opening());
     let shown = view(&h);
     assert_eq!(shown.opening.map(|o| o.darkened), Some(0.0));
-    assert_eq!(
-        standing(&h),
-        [
-            at("lead", p(11, 8), Facing::Right),
-            at("retainer", p(13, 8), Facing::Left)
-        ]
-    );
+    assert_eq!(standing(&h), the_cast_at_the_start());
     // The place itself, with them on it.
     let mut bare = place(&h);
     bare.units.clear();
     assert!(!place(&h).units.iter().any(|u| u.sided));
-    // The lead has stepped in.
+    // The lead has stepped in, then back: facing right all the while.
     h.wait(0.2);
-    assert_eq!(standing(&h)[0], at("lead", p(12, 8), Facing::Right));
-    h.wait(1.6);
+    assert_eq!(standing(&h)[0], at("lead", p(2, 0), Facing::Right));
+    h.wait(0.3);
+    assert_eq!(standing(&h)[0], at("lead", p(1, 0), Facing::Right));
+    h.wait(0.3);
     assert!(
         view(&h).opening.is_some_and(|o| o.darkened == 0.0),
         "still moving"
     );
-    h.wait(0.5);
+    h.wait(0.4);
     assert!(dialogue(&h).is_opening(), "still darkening");
     let darkening = view(&h).opening.map_or(0.0, |o| o.darkened);
     assert!(darkening > 0.0 && darkening < 1.0, "{darkening}");
-    h.wait(0.3);
+    h.wait(0.4);
     assert!(!dialogue(&h).is_opening());
     let talk = view(&h);
     assert_eq!(talk.opening, None);
-    assert!(shows_line(&h, "ch01_intro", INTRO_TALK));
+    assert!(shows_line(&h, INTRO, 0));
     assert!(talk.text.shown > 0);
     // They stand where it left them, darkened with the place, behind the
     // talk.
-    assert_eq!(
-        standing(&h),
-        [
-            at("lead", p(11, 8), Facing::Right),
-            at("retainer", p(13, 8), Facing::Left)
-        ]
-    );
+    let left = standing(&h);
+    assert_eq!(left[0], at("lead", p(1, 0), Facing::Right));
+    assert_eq!((left[1].0.as_str(), left[1].1), ("test_knight", p(4, 2)));
     let mut behind = place(&h);
     behind.units.clear();
     assert_eq!(behind, bare);
@@ -155,91 +172,67 @@ fn chapter_1s_intro_opens_on_two_people_in_its_place() {
 /// Confirm during the opening shows the first line at once.
 #[test]
 fn confirm_skips_the_opening_to_the_first_line() {
-    if skip_without_the_game() {
-        return;
-    }
-    let mut h = intro_opening(LeadGender::Male);
+    let mut h = preview(INTRO, LeadGender::Male);
     h.wait(0.5);
     assert!(dialogue(&h).is_opening());
     h.keys("f");
     assert!(!dialogue(&h).is_opening());
     let talk = view(&h);
     assert!(talk.opening.is_none());
-    assert!(shows_line(&h, "ch01_intro", INTRO_TALK));
+    assert!(shows_line(&h, INTRO, 0));
     // Where the opening would have left them.
-    assert_eq!(standing(&h)[0], at("lead", p(11, 8), Facing::Right));
+    assert_eq!(standing(&h)[0], at("lead", p(1, 0), Facing::Right));
+    assert_eq!(standing(&h)[1].1, p(4, 2));
 }
 
 /// Cancel during the opening asks whether to skip the scene, as on any
 /// line; answering no shows the first line.
 #[test]
 fn the_skip_question_still_works_during_the_opening() {
-    if skip_without_the_game() {
-        return;
-    }
-    let mut h = intro_opening(LeadGender::Male);
+    let mut h = preview(INTRO, LeadGender::Male);
     h.wait(0.3);
     h.keys("d");
     assert!(!dialogue(&h).is_opening());
     assert!(dialogue(&h).is_asking_skip());
     h.keys("d");
     assert!(!dialogue(&h).is_asking_skip());
-    assert!(shows_line(&h, "ch01_intro", INTRO_TALK));
-    // Skipping from the captions passes over the opening: the reply choice
-    // comes up at once.
-    let mut h = preview("ch01_intro", LeadGender::Male);
+    assert!(shows_line(&h, INTRO, 0));
+    // Skipping from the line on black passes over the opening: the reply
+    // choice comes up at once.
+    let mut h = preview(WITH_A_CHOICE, LeadGender::Male);
+    assert!(!dialogue(&h).is_opening());
     h.keys("d f");
     assert!(!dialogue(&h).is_opening());
     assert!(dialogue(&h).menu().is_some());
 }
 
-/// The last scene opens on one person pacing its place, then the talk.
+/// A line on black before the opening: the opening waits for it.
 #[test]
-fn chapter_1s_last_scene_opens_on_someone_pacing() {
-    if skip_without_the_game() {
-        return;
-    }
-    let mut h = preview("ch01_tbc", LeadGender::Male);
-    assert!(dialogue(&h).is_opening());
-    assert_eq!(standing(&h), [at("rival", p(9, 8), Facing::Right)]);
-    h.wait(0.45);
-    let pacing = &standing(&h)[0];
-    assert!((10..15).contains(&pacing.1.x), "{pacing:?}");
-    // Back across the rug (Nick, 0738: "Longer").
-    h.wait(1.0);
-    let back = &standing(&h)[0];
-    assert!(
-        back.2 == Facing::Left && (9..15).contains(&back.1.x),
-        "{back:?}"
-    );
-    h.wait(1.6);
+fn an_opening_after_a_line_waits_for_it() {
+    let mut h = preview(WITH_A_CHOICE, LeadGender::Male);
     assert!(!dialogue(&h).is_opening());
-    assert_eq!(standing(&h), [at("rival", p(12, 8), Facing::Right)]);
-    assert!(shows_line(&h, "ch01_tbc", 0));
+    assert!(shows_line(&h, WITH_A_CHOICE, 0));
+    h.wait(3.0);
+    h.keys("f");
+    assert!(dialogue(&h).is_opening());
+    assert_eq!(standing(&h), the_cast_at_the_start());
 }
 
-/// No other Chapter 1 scene has an opening.
+/// A scene whose script asks for no opening opens straight on its talk.
 #[test]
 fn other_scenes_open_straight_on_their_talk() {
-    if skip_without_the_game() {
-        return;
-    }
-    for scene in ["ch01_prebattle", "ch01_victory"] {
-        let h = preview(scene, LeadGender::Male);
-        assert!(!dialogue(&h).is_opening(), "{scene}");
-        let units = view(&h).place.map(|p| p.units);
-        assert_eq!(units, Some(Vec::new()), "{scene}");
-    }
+    let h = preview("test_victory", LeadGender::Male);
+    assert!(!dialogue(&h).is_opening());
+    assert_eq!(view(&h).opening, None);
+    let units = view(&h).place.map(|p| p.units);
+    assert_eq!(units.unwrap_or_default(), Vec::new());
 }
 
 /// The female lead walks the place as herself: her map picture is looked
 /// up by her look (`lead_f`), like on the battle map.
 #[test]
 fn the_lead_in_the_opening_is_the_one_the_player_made() {
-    if skip_without_the_game() {
-        return;
-    }
-    let h = intro_opening(LeadGender::Female);
+    let h = preview(INTRO, LeadGender::Female);
     let lead = place(&h).units.into_iter().next();
     let lead = lead.unwrap_or_else(|| panic!("nobody in the place"));
     assert_eq!(lead.character, Some(CharacterId("lead".into())));
@@ -250,11 +243,8 @@ fn the_lead_in_the_opening_is_the_one_the_player_made() {
 /// people's labels on it, the caption over it and no talk.
 #[test]
 fn the_opening_in_glyphs() {
-    let Some(dir) = content_tests() else {
-        return;
-    };
-    let mut h = intro_opening(LeadGender::Male);
+    let mut h = preview(INTRO, LeadGender::Male);
     assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     h.wait(0.2);
-    assert_private_snapshot!(dir, h.snapshot());
+    insta::assert_snapshot!(h.snapshot());
 }

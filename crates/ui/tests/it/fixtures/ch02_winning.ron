@@ -1,7 +1,7 @@
 // A winning playthrough of Chapter 2 (ticket 0848): the player's commands,
 // phase by phase, with the army Chapter 1's playthrough leaves. Played back by
-// ch02_winnable.rs, which says how to record a new one. Units 1-6: the lead,
-// Hollis, Tamsin, Aske, Maud, Rue.
+// ch02_winnable.rs, which says how to record a new one. Units 1-6: the New
+// Game roster, in its order.
 [
     // Turn 1
     Act(unit:(6),dest:(x:12,y:12),action:Cast(spell:("cinder_oath"),target:Unit((11)),active:Some(("overcast")))),

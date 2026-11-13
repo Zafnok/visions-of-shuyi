@@ -1,7 +1,7 @@
-// A winning playthrough of Letters Home (ticket 1072): the player's commands,
-// phase by phase, with the army the battle's bots_army describes. Played back
-// by side_quests.rs, which says how to record a new one. Units 1-7: the lead,
-// Hollis, Tamsin, Aske, Maud, Rue, Joss.
+// A winning playthrough of battle side_letters_home (ticket 1072): the
+// player's commands, phase by phase, with the army the battle's bots_army
+// describes. Played back by side_quests.rs, which says how to record a new
+// one. Units 1-7: the battle's slots, in order.
 [
     // Turn 1
     Act(unit:(2),dest:(x:2,y:3),action:UseSkill(skill:("brace"),target:None)),

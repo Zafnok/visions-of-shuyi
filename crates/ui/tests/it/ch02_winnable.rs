@@ -1,10 +1,13 @@
 //! Chapter 2 can be won (ticket 0848): the player's commands in
 //! `fixtures/ch02_winning.ron`, played with the army Chapter 1's recorded
 //! playthrough leaves (`ch01_winnable`) and Preparations left as they are,
-//! beat Silas Hendry with nobody lost and at least the minimum of Kell's
-//! Ford's houses standing; Joss joins in the scene after the battle, and
-//! Hendry's axe is the player's. How the fixture is played and recorded:
-//! [`playthrough`].
+//! win battle `ch02` with nobody lost and at least its village's minimum of
+//! houses standing; `defector` joins in a scene after the battle, and the
+//! win gives the item `houndmasters_axe`. How the fixture is played and
+//! recorded: [`playthrough`].
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): each starts with the
+//! guard, and skips without the game's content.
 //!
 //! **If a balance change breaks this test** (or a new Chapter 1
 //! playthrough), the change must update the playthrough on purpose: look
@@ -18,6 +21,7 @@
 //! many houses). A new Chapter 2 playthrough leaves Chapter 3 another
 //! army: record Chapter 3's again after it (`ch03_winnable`).
 
+use trpg_content::bundle::skip_without_the_game;
 use trpg_content::{Content, new_campaign};
 use trpg_core::{BattleState, Campaign, CharacterId, GameMode, ItemId, Outcome};
 use trpg_ui::harness::Harness;
@@ -51,10 +55,13 @@ pub fn chapter_2(content: &Content) -> (Campaign, BattleState) {
     (campaign, state)
 }
 
-/// The rules alone: the fixture's commands beat Hendry, in Classic,
-/// losing nobody and saving at least three houses; the win gives his axe.
+/// The rules alone: the fixture's commands win, in Classic, losing nobody
+/// and saving at least three houses; the win gives the axe.
 #[test]
-fn the_recorded_playthrough_beats_the_lieutenant() {
+fn the_recorded_playthrough_wins_chapter_2() {
+    if skip_without_the_game() {
+        return;
+    }
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let (mut campaign, mut state) = chapter_2(&content);
     playthrough::play(&mut state, &content, &winning_commands());
@@ -74,7 +81,7 @@ fn the_recorded_playthrough_beats_the_lieutenant() {
 /// they are), up to Chapter 2's "Save your progress?".
 pub fn chapter_2_won(h: &mut Harness) {
     chapter_1_won(h);
-    // "Save your progress?" No; Chapter 2's halt and the ford's edge.
+    // "Save your progress?" No; Chapter 2's intro scenes.
     h.keys("Down f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch02"));
@@ -88,26 +95,28 @@ pub fn chapter_2_won(h: &mut Harness) {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(h).units().len(), 6 + 15, "six and the raid");
+    assert_eq!(battle(h).units().len(), 6 + 15, "six and 15 enemies");
     playthrough::play_in_game(h, &winning_commands());
     playthrough::on_to_the_save_prompt(h);
 }
 
 /// Acceptance: New Game reaches Chapter 2 through Chapter 1, and Chapter
 /// 2 plays through the real game: its intro scenes, Preparations, the
-/// battle won with the recorded commands, the results, the herald, Joss
-/// joining on the far bank, Veyne Hall, the save prompt, and on to
-/// Chapter 3 (0849).
+/// battle won with the recorded commands, the results, the victory scenes
+/// (`defector` joins in one), the save prompt, and on to Chapter 3 (0849).
 #[test]
 fn chapter_2_plays_from_new_game_into_chapter_3() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     chapter_2_won(&mut h);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
-    let joss = CharacterId("defector".into());
-    let joined = campaign.member(&joss);
-    assert!(joined.is_some(), "Joss joined on the far bank");
-    assert_eq!(campaign.roster.len(), 7, "nobody was lost, and Joss");
+    let recruit = CharacterId("defector".into());
+    let joined = campaign.member(&recruit);
+    assert!(joined.is_some(), "defector joined");
+    assert_eq!(campaign.roster.len(), 7, "nobody was lost, and the recruit");
     let axe = ItemId::new("houndmasters_axe");
     assert!(campaign.stock.weapons.iter().any(|w| w.def == axe));
     h.keys("Down f");
@@ -128,8 +137,8 @@ fn record() {
         &[
             "// A winning playthrough of Chapter 2 (ticket 0848): the player's commands,",
             "// phase by phase, with the army Chapter 1's playthrough leaves. Played back by",
-            "// ch02_winnable.rs, which says how to record a new one. Units 1-6: the lead,",
-            "// Hollis, Tamsin, Aske, Maud, Rue.",
+            "// ch02_winnable.rs, which says how to record a new one. Units 1-6: the New",
+            "// Game roster, in its order.",
         ],
         "tests/it/fixtures/ch02_winning.ron",
     );

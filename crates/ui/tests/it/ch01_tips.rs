@@ -2,8 +2,14 @@
 //! from a fresh profile, while the lessons (0457) run (ticket 0467): a
 //! tip whose trigger fires while a lesson is open shows once the lesson
 //! is done, and a tip counts as seen only once it has been on screen.
+//!
+//! Tests of the game's content (ADR-0118 §1 (a)): the game's own tips and
+//! lessons in its first battle. Each starts with the guard, and skips
+//! without the game's content; the tips' mechanism is tested on the test
+//! files (`lessons.rs`, `battle.rs`, `crates/ui/src/tips.rs`).
 
 use trpg_content::TipTrigger;
+use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -12,9 +18,9 @@ use trpg_ui::screens::battle::mode::Mode;
 
 // Chapter 1's party where it starts (`assets/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);
-/// Rue, a Mage: her action menu has Magic.
-const RUE: Pos = Pos::new(4, 13);
-/// A forest tile west of Harrowby (`assets/maps/ch01.map`).
+/// The `heretic`, a Mage: its action menu has Magic.
+const MAGE: Pos = Pos::new(4, 13);
+/// A forest tile on Chapter 1's map (`maps/ch01.map`).
 const FOREST: Pos = Pos::new(2, 10);
 
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
@@ -98,6 +104,9 @@ fn finish_cursor_lesson(h: &mut Harness) {
 /// menu the last one ends in, and shows back on the map.
 #[test]
 fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1();
     h.with_map_skin("sprite");
     let mut seen = Vec::new();
@@ -130,12 +139,15 @@ fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
     assert!(close_tips(&mut h).contains(&TipTrigger::ZoomAvailable));
 }
 
-/// (a) Rue's action menu opens while a lesson is open: the Magic tip
+/// (a) The mage's action menu opens while a lesson is open: the Magic tip
 /// waits for it, then shows once the lesson is done.
 #[test]
 fn the_magic_tip_shows_after_the_lesson_open_when_it_fired() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1();
-    go(&mut h, RUE);
+    go(&mut h, MAGE);
     h.keys("f f").wait(0.5);
     assert!(
         matches!(battle(&h).mode(), Mode::ActionMenu { .. }),
@@ -158,6 +170,9 @@ fn the_magic_tip_shows_after_the_lesson_open_when_it_fired() {
 /// turn-1 lessons run: the Terrain tip shows once they are done.
 #[test]
 fn the_terrain_tip_shows_after_the_lesson_open_when_it_fired() {
+    if skip_without_the_game() {
+        return;
+    }
     let mut h = chapter_1();
     go(&mut h, FOREST);
     h.wait(0.5);
