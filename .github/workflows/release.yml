@@ -2,18 +2,24 @@ name: Release
 
 # Cuts a GitHub Release from a `vX.Y.Z` tag (ADR-0009): `cargo shuyi export`
 # makes Windows, Linux, macOS (universal) and web packages (ticket 0910,
-# ADR-0108), and they are attached to the release with each program's debug file
-# and export reports. `workflow_dispatch` runs
-# the exact same pipeline as a dry run (packages are uploaded as workflow
-# artifacts but no release is created), so it can be exercised on a branch
-# before ever pushing a tag.
+# ADR-0108) and checks each one. `workflow_dispatch` runs the exact same
+# pipeline as a dry run, without the release, so it can be exercised on a
+# branch before ever pushing a tag.
 #
-# Every package embeds the bought art (ADR-0040), checked out from the private
-# repository with PRIVATE_ASSETS_KEY. A real release from this repository
-# fails without the key; a dry run or a fork builds with the public
-# placeholders and warns.
+# Every package embeds the bought art (ADR-0040) and the game's content
+# (ADR-0117), checked out from the private repository with
+# PRIVATE_ASSETS_KEY. A real release from this repository fails without the
+# key; a dry run or a fork builds with the public files and warns.
 #
-# See the "Releasing" section in README.md for how to actually cut one.
+# So no package leaves its job through GitHub (ticket 0158): a public
+# repository's releases and workflow artifacts can be downloaded by anyone
+# (ADR-0117 §4). Until the store's itch.io page exists (ticket 0901, which
+# adds a push to it in each package job), a package is built, checked and
+# left behind, and the GitHub Release holds the notes and each package's
+# reports. The debug file stays behind too: it is the whole program before
+# stripping, content and all.
+#
+# See docs/releasing.md for how to actually cut one.
 #
 # Deliberately no Swatinem/rust-cache here (unlike ci.yml): this workflow
 # runs rarely (once per release) and its output ships to players, so a full,
@@ -160,6 +166,7 @@ jobs:
         uses: ./.github/actions/private-assets
         with:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          content: "true"
           required: ${{ github.repository == 'Zafnok/visions-of-shuyi' && needs.check-version.outputs.dry_run == 'false' }}
       - run: rustup toolchain install --no-self-update
       # .cargo/config.toml links the GNU target with MSYS2's mingw-w64 GCC,
@@ -193,29 +200,40 @@ jobs:
         if: matrix.target == 'macos'
         working-directory: dist/export/macos
         run: ditto -c -k --keepParent "$(ls -d visions-of-shuyi-*-macos)" package.zip
-      - name: Give the files the release's names
+      # What may leave the job: the two reports, which name each file with
+      # its size and hash and never hold the files' text. The package and the
+      # debug file stay behind (ticket 0158); 0901 pushes the package to
+      # itch.io from here.
+      - name: Keep the reports
         env:
           NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}
-          FOLDER: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.target }}
         run: |
           set -euo pipefail
           from="dist/export/$TARGET"
-          mkdir -p dist/release/package dist/release/kept
-          case "$TARGET" in
-            linux) mv "$from/$FOLDER.tar.gz" "dist/release/package/$NAME.tar.gz" ;;
-            macos) mv "$from/package.zip" "dist/release/package/$NAME.zip" ;;
-            *) mv "$from/$FOLDER.zip" "dist/release/package/$NAME.zip" ;;
-          esac
-          if [ -f "$from/$FOLDER.debug" ]; then
-            mv "$from/$FOLDER.debug" "dist/release/kept/$NAME.debug"
-          fi
+          mkdir -p dist/release/kept
           mv "$from/export-report.json" "dist/release/kept/$NAME.export-report.json"
           mv "$from/exposure-report.json" "dist/release/kept/$NAME.exposure-report.json"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: package-${{ matrix.target }}
-          path: dist/release/package/*
-      # Never in a package: the debug file reads a player's crash report.
+      # A guard on that: only the reports, and none holds a line of the
+      # game's dialogue, public or private.
+      - name: Check the reports hold no content
+        run: |
+          set -euo pipefail
+          others=$(find dist/release/kept -type f ! -name '*-report.json')
+          if [ -n "$others" ]; then
+            echo "::error::Only the reports leave the job: $others"
+            exit 1
+          fi
+          roots=assets
+          if [ -d assets-private/content ]; then roots="$roots assets-private/content"; fi
+          # shellcheck disable=SC2086 # two folder names, no spaces
+          find $roots -name '*.dlg' -exec cat {} + \
+            | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | awk 'length($0) >= 24' \
+            | sort -u > "$RUNNER_TEMP/lines.txt"
+          echo "Searching the reports for $(wc -l < "$RUNNER_TEMP/lines.txt") dialogue lines"
+          if grep -F -l -f "$RUNNER_TEMP/lines.txt" dist/release/kept/*; then
+            echo "::error::A report holds a line of dialogue."
+            exit 1
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kept-${{ matrix.target }}
@@ -232,17 +250,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: package-*
-          merge-multiple: true
-          path: packages
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
           pattern: kept-*
           merge-multiple: true
           path: kept
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          files: |
-            packages/*
-            kept/*
+          files: kept/*
           generate_release_notes: true

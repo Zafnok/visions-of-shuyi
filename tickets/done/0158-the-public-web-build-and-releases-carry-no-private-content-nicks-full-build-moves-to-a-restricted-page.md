@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0156"]
 nick_input: setup
-completed:
+completed: 2026-11-12
 ---
 
 # 0158 — The public web build and releases carry no private content; Nick's full build moves to a restricted page
@@ -133,18 +133,18 @@ as they are?
 
 ## Acceptance criteria
 
-- [ ] A push to `main` (or a by-hand run) uploads the full web build to
+- [x] A push to `main` (or a by-hand run) uploads the full web build to
       the restricted playtest project (run linked); without the password
       and logged out, the page shows nothing of the game.
-- [ ] The playtest page, opened with the password, plays to Chapter 1's
+- [x] The playtest page, opened with the password, plays to Chapter 1's
       first battle.
-- [ ] `pages.yml` checks out no content (the run's log).
-- [ ] A `release.yml` dry run leaves no package with the content as a
+- [x] `pages.yml` checks out no content (the run's log).
+- [x] A `release.yml` dry run leaves no package with the content as a
       workflow artifact or on a GitHub Release (run linked).
-- [ ] `docs/releasing.md` says where each build goes; 1064 names the
+- [x] `docs/releasing.md` says where each build goes; 1064 names the
       playtest page.
-- [ ] Nick's answer on the old releases is quoted and carried out.
-- [ ] zizmor passes; all gates in the `run-gates` skill pass.
+- [x] Nick's answer on the old releases is quoted and carried out.
+- [x] zizmor passes; all gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -153,5 +153,58 @@ as they are?
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.**
+- `.github/workflows/playtest-itch.yml` (new): on each push to `main` and by
+  hand, `cargo shuyi web --release --debug-tools --private-assets` with the
+  content checked out (`content: "true"`, `required: "true"`), then
+  `butler push dist/web zafnok/visions-of-shuyi-playtest:web` in the same
+  job. Its own concurrency group with `cancel-in-progress`. No secret or no
+  variable: a notice, green. Variable set:
+  `ITCH_PLAYTEST_PROJECT=zafnok/visions-of-shuyi-playtest`.
+- Test run from this branch (a temporary branch trigger, removed before
+  merge): https://github.com/Zafnok/visions-of-shuyi/actions/runs/43350532711
+  (content checked out, 97.61 MiB pushed to channel `web`). Logged out and
+  without the password the page shows only "A password is required to view
+  this page", no game frame. With Nick's password typed in the browser pane:
+  New Game → Chapter 1's scenes → the first battle's player turn, with the
+  bought art and the debug tools (Quick Battle, `F2 debug`).
+- `pages.yml`: a header on why it checks out no content and that the demo
+  never goes there. Its last run on `main`
+  (https://github.com/Zafnok/visions-of-shuyi/actions/runs/43348654579)
+  logs `content: false` and checks out `game test voice` only.
+- `release.yml`: the package jobs check the content out (`required` on a
+  real release from this repository). 0901 isn't done, so no package leaves
+  its job: the GitHub Release holds the notes and each package's two
+  reports. A step checks that only the reports leave and that neither holds
+  one of the game's dialogue lines (2,342 searched). Dry run:
+  https://github.com/Zafnok/visions-of-shuyi/actions/runs/43349570231 — its
+  artifacts are `licenses` and `kept-<target>` (about 11 KB each, the
+  reports), no package.
+- Docs: `docs/releasing.md` ("Where each build goes", "The playtest page",
+  what a release holds), 1064 names the playtest page, README says what the
+  browser build will show.
+
+**Deviation: the debug files are not kept.** The ticket expected the
+`kept-*` debug files to hold no content. Reading the engine's export
+(`crates/cli/src/export/desktop.rs`, `pack`): `<package>.debug` is a copy
+of the program before `objcopy --strip-all`, so it embeds everything the
+game embeds. It now stays in its job like the package; only the reports
+are kept. Follow-up **0917** finds a private home for it before the game
+sells (a crash report can't be read without it).
+
+**Nick's decision on the old releases:** asked with the question pop-up;
+answer: "Delete the downloads". Done with `gh release delete-asset`: the
+12 packages of v0.1.0, v0.2.0 and v0.3.0 (Windows, Linux, macOS, web); the
+releases and their notes remain, with no files.
+
+**Left as is:** older workflow artifacts (earlier release dry runs'
+packages and debug files, Pages' uploads, an old CI `web` upload) hold the
+content as it is in this repository's public files and git history today;
+they expire within 90 days. Nothing new is lost by leaving them.
+
+**Notes for Nick:** the playtest page updates by itself after every merge
+to `main`; the demo pages are untouched. The page's password was typed in
+the session's chat, so you may want to change it once (Edit game →
+Visibility & access).
+
+Follow-up tickets: 0917 (a release's debug files kept somewhere private).

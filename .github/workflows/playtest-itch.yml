@@ -1,0 +1,83 @@
+name: Playtest page
+
+# Nick's full web build (ticket 0158): the whole game, with the bought art,
+# the game's content from the private repository (ADR-0117) and the debug
+# tools, as Pages had it before the content went private. It goes to a
+# restricted itch.io project behind a password, the repository variable
+# ITCH_PLAYTEST_PROJECT (`<user>/<project>`), channel `web`
+# (`docs/releasing.md`, "Where each build goes"). Pages (pages.yml) keeps the
+# public files only.
+#
+# One job builds and pushes, as demo.yml does: nothing with the content
+# becomes a GitHub artifact, since a public repository's artifacts can be
+# downloaded by anyone (ADR-0117 §4). Without the secret BUTLER_API_KEY or the
+# variable, the job builds, says it didn't publish, and stays green.
+#
+# Pushes in a row cancel the build before them, so only the last uploads.
+# No rust-cache: what it builds goes out (zizmor's cache-poisoning finding),
+# as in release.yml and demo.yml.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playtest-itch-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: private
+        uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          content: "true"
+          required: "true"
+      - run: rustup show
+      # --debug-tools: Quick Battle on the title screen (ADR-0023).
+      - env:
+          PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}
+        run: cargo shuyi web --release --debug-tools $PRIVATE_ASSETS_FLAG
+      - name: Can it publish?
+        id: itch
+        env:
+          HAS_KEY: ${{ secrets.BUTLER_API_KEY != '' }}
+          PROJECT: ${{ vars.ITCH_PLAYTEST_PROJECT }}
+        run: |
+          if [ "$HAS_KEY" != "true" ] || [ -z "$PROJECT" ]; then
+            echo "::notice::No BUTLER_API_KEY secret or ITCH_PLAYTEST_PROJECT variable: the playtest build was built, not published (docs/releasing.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - id: butler
+        if: steps.itch.outputs.ready == 'true'
+        uses: ./.github/actions/butler
+      - name: Push to itch.io
+        if: steps.itch.outputs.ready == 'true'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          PROJECT: ${{ vars.ITCH_PLAYTEST_PROJECT }}
+          SHA: ${{ github.sha }}
+          BUTLER: ${{ steps.butler.outputs.butler }}
+        run: |
+          set -euo pipefail
+          test -f dist/web/index.html
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "trpg-app") | .version')
+          "$BUTLER" push dist/web "$PROJECT:web" --userversion "$version-playtest+${SHA:0:7}"
+          "$BUTLER" status "$PROJECT:web"

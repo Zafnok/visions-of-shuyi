@@ -1,5 +1,13 @@
 name: Pages
 
+# The public web build at https://zafnok.github.io/visions-of-shuyi/, with the
+# debug tools. It checks out the bought art but never the game's content
+# (ticket 0158): a Pages site of this repository is open to anyone, so once
+# the content lives only in the private repository (ADR-0117) it serves the
+# public files and the test game. Nick's full build goes to a restricted
+# itch.io page instead (playtest-itch.yml), and the Chapter 1 demo to its own
+# (demo.yml); the demo never goes here.
+
 on:
   push:
     branches: [main]

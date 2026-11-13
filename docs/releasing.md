@@ -8,10 +8,41 @@ Releases are cut by pushing a tag ([ADR-0009](adr/0009-distribution.md)):
    leading `v`, must exactly match `Cargo.toml`, or the workflow fails).
 3. The [release workflow](../.github/workflows/release.yml) runs `cargo shuyi
    export <target> --release` for Windows, Linux, macOS (universal) and web,
-   checks each final package (`scripts/check-release-package.sh`), and attaches
-   them to a new
+   with the bought art and the game's content, checks each final package
+   (`scripts/check-release-package.sh`), and makes a
    [GitHub Release](https://github.com/Zafnok/visions-of-shuyi/releases) for the
-   tag with auto-generated notes.
+   tag with auto-generated notes and each package's reports. The packages
+   themselves are not attached (below).
+
+## Where each build goes
+
+The game's content and story are private (ADR-0117, ticket 0158), and so is
+the bought art's source (ADR-0040). Anything public on GitHub, a Pages site,
+a release or a workflow's artifacts, can be downloaded by anyone, so a build
+with the content goes straight from its job to a restricted itch.io page:
+
+| Build | Where | Who can open it | Workflow |
+| ----- | ----- | --------------- | -------- |
+| Public web build, debug tools, **no content** (the public files and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
+| Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
+| The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
+| A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
+
+The demo never goes to Pages.
+
+### The playtest page
+
+`ITCH_PLAYTEST_PROJECT` is a repository variable naming `<user>/<project>`
+of an itch.io HTML project, **Restricted** with **Also allow a password to
+view page** (a password of its own, not the demo's). Each push to `main`
+builds the full game for the web (`cargo shuyi web --release --debug-tools
+--private-assets`, the content checked out) and runs `butler push dist/web
+<user>/<project>:web`; pushes in a row upload only the last. Without the
+secret `BUTLER_API_KEY` or the variable, the job builds, says it didn't
+publish, and stays green. Once, after the first push: on the project's
+**Edit game** page, tick **This file will be played in the browser** for the
+`web` upload, **Save**. The password and the `html-classic.itch.zone`
+address behave as the web demo's (below).
 
 ## What a release holds
 
@@ -27,12 +58,16 @@ new track or voice clip needs its two lines there, as on macOS it has another
 path. The check finds what is written plainly: it guards against mistakes, not
 against a player digging.
 
-Beside each package the release carries, never in it:
+The GitHub Release carries, never in a package:
 
-- `<package>.debug`, Windows and Linux: the program with its line tables, which
-  reads a player's crash report.
 - `<package>.export-report.json` and `<package>.exposure-report.json`: the
   version, the sizes, the signing, and every file of the package with its hash.
+  The job checks that only these leave it and that neither holds a line of
+  dialogue.
+
+The export also writes `<package>.debug` (Windows and Linux), which reads a
+player's crash report. It is the whole program before stripping, content
+included, so it stays in the job like the package.
 
 Why Windows builds with the GNU toolchain:
 [ADR-0108](adr/0108-windows-release-builds-with-the-gnu-toolchain.md).
@@ -56,8 +91,8 @@ builds in the sniper SDK: the engine's `docs/targets/desktop.md`.
 
 To try the whole pipeline without cutting a real release, run it manually via
 **Actions → Release → Run workflow** on any branch: this does a dry run
-(builds and uploads the four packages and what is kept beside them as workflow
-artifacts, but creates no release).
+(builds and checks the four packages and uploads only their reports as
+workflow artifacts, `kept-<target>`; it creates no release).
 
 ## The Chapter 1 demo
 
