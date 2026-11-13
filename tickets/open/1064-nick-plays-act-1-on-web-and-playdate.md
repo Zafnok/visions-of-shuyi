@@ -53,8 +53,9 @@ not a blocker: the playtest runs on the scripts that exist.
 ## Nick input
 
 **Playtest:** Nick plays Act 1 from New Game to "Act 1 ends" on the
-Pages build (once 0158 is done: the full web build on the restricted
-itch.io page it makes, as Pages then carries no private content), and Chapter 1 at least (all of Act 1 if he wants) on his
+full web build on the restricted itch.io playtest page (0158,
+`docs/releasing.md`, "The playtest page": Pages carries no private
+content), and Chapter 1 at least (all of Act 1 if he wants) on his
 Playdate (sideload: Simulator, *Device → Upload Game to Device*). He
 answers the checklist and reports anything else in plain words: bugs,
 feel, difficulty, story, looks, controls, sounds, pauses that feel long.
@@ -64,7 +65,7 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
 **In:**
 - Cut a release the way 0804 did (bump the version in its own PR from a
   branch whose name doesn't start with `t1064`, tag, wait for the release
-  and Pages) and build the English `.pdx` (`cargo xtask playdate
+  and the playtest page's upload, `playtest-itch.yml`) and build the English `.pdx` (`cargo xtask playdate
   --release`).
 - **The checklist**, published as a private claude.ai page that saves
   his answers (as 0804's round 3 did), with the links, the key
@@ -94,7 +95,7 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
 ## Implementation steps
 
 1. Check every `blocked_by` id is in `tickets/done/`, `main` is green and
-   Pages is deployed.
+   the playtest page has `main`'s build (`playtest-itch.yml`'s last run).
 2. Version bump PR, tag, release; build the `.pdx`.
 3. Build the checklist page from the sources above (`artifact-design`
    and `artifact-capabilities` skills: the page keeps his answers).
