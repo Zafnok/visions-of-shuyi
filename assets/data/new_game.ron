@@ -1,9 +1,13 @@
-// How a new game starts (ticket 0801; format in chapters/README.md):
-// Chapter 1 with its six, 0 gold and an empty stock
-// (assets-private/story/design/chapter-1.md).
+// The public stand-in of how a new game starts (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: the test chapter (assets-test/chapters/test.ron), which only a
+// build with the test files has.
+//
+// Format: chapters/README.md.
 (
-    first_chapter: "ch01",
-    roster: ["lead", "retainer", "sergeant", "poacher", "keeper", "heretic"],
+    first_chapter: "test",
+    roster: ["lead", "test_knight"],
     gold: 0,
     stock: [],
 )

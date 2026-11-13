@@ -315,6 +315,9 @@ mod tests {
     /// `magic.md`'s tables.
     #[test]
     fn spells_match_the_design() {
+        if crate::bundle::skip_without_the_game() {
+            return;
+        }
         let burns_forest = TerrainEffect {
             from: vec![tid("forest")],
             to: tid("burning"),
@@ -583,8 +586,14 @@ mod tests {
         assert_eq!(
             errors,
             [
-                "assets/data/classes.ron: class \"broken\": unknown spell \"zap\"",
-                "assets/data/characters.ron: character \"odd\": unknown spell \"glow\"",
+                format!(
+                    "{}: class \"broken\": unknown spell \"zap\"",
+                    bundle::display_path(CLASSES_PATH)
+                ),
+                format!(
+                    "{}: character \"odd\": unknown spell \"glow\"",
+                    bundle::display_path("data/characters.ron")
+                ),
             ]
         );
         // Positioned at the owner's line when it is in the file.
@@ -601,7 +610,7 @@ mod tests {
             .unwrap_or(0);
         assert_ne!(mage.spells, [] as [(u8, trpg_core::SpellId); 0]);
         assert!(
-            first.starts_with(&format!("assets/data/classes.ron:{line}: ")),
+            first.starts_with(&format!("{}:{line}: ", bundle::display_path(CLASSES_PATH))),
             "{first}"
         );
     }

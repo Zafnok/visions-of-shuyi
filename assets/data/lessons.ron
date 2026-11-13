@@ -1,3 +1,8 @@
+// The public stand-in of the lessons (ticket 0160, ADR-0117). The game's own
+// file is in the private repository's content/, laid over this one by every
+// build that has it checked out. A build without it (a fork) reads this:
+// every lesson, without notes (the tutorial).
+//
 // Checklist lessons (ticket 0456, docs/design/tutorial.md "The lessons"):
 // the guide's box with a list of things to do, ticked as the player does
 // them, in any order. The lesson closes when every item is ticked; while it
@@ -57,8 +62,6 @@
 // this game at Short. The test lesson is in assets-test/data/lessons.ron.
 (
     lessons: [
-        // Basic controls, turn 1. Then the keys (below), at every level
-        // that has lessons.
         (
             id: "cursor",
             level: Full,
@@ -73,7 +76,6 @@
                 (label: "Move it right: {CursorRight}", done_when: Pressed("CursorRight")),
             ],
         ),
-        // Different here: no mouse, and every key can be changed.
         (
             id: "keys",
             level: Short,
@@ -111,7 +113,6 @@
                 (label: "See its menu", done_when: ActionMenuOpened),
             ],
         ),
-        // The first time a selected unit could reach an enemy.
         (
             id: "attacking",
             level: Full,
@@ -124,8 +125,6 @@
                 (label: "Attack: {Confirm}. Back out: {Cancel}", done_when: Attacked),
             ],
         ),
-        // When every unit has acted on the first turn, before auto-end
-        // would end it (auto-end waits for it).
         (
             id: "ending_turn",
             level: Full,
@@ -137,7 +136,6 @@
                 (label: "End turn: {EndTurn}, or menu: {Cancel}", done_when: TurnEnded),
             ],
         ),
-        // Different here. Turn 2: there is a turn to undo.
         (
             id: "rewind",
             level: Short,
@@ -173,8 +171,6 @@
                 (label: "Open Arts in the unit's menu", done_when: ArtsOpened),
             ],
         ),
-        // Chapter 1 doesn't script it: the first time it can happen, in
-        // any battle (Rue's Cinder Oath on a forest, in Chapter 1).
         (
             id: "terrain_magic",
             level: Short,

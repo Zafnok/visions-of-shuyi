@@ -260,7 +260,7 @@ fn a_blocks_character_must_be_known() {
     );
     // Someone who only speaks may be asked about too.
     assert_eq!(
-        errors(&scene("@if messenger\n> x\n@endif")),
+        errors(&scene("@if test_voice\n> x\n@endif")),
         Vec::<String>::new()
     );
 }
@@ -630,9 +630,13 @@ fn a_block_that_can_only_go_one_way_is_an_error() {
 
 /// The two examples under "Who is still there" in
 /// `assets/dialogue/README.md` pass every check, with everyone they put
-/// in a block able to be gone.
+/// in a block able to be gone. They name the game's cast (a test of the
+/// content, ADR-0118).
 #[test]
 fn readme_if_examples_are_valid() {
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let everyone = cast(&["sergeant", "keeper", "heretic"], &[]);
     for (nth, blocks) in [(9, 1), (11, 3)] {
         let example = README.split("```").nth(nth).unwrap_or_default();

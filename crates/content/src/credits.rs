@@ -90,7 +90,11 @@ mod tests {
         assert_eq!(
             messages,
             [
-                "credit \"a\": Music credits go in assets/audio/audio.ron",
+                format!(
+                    "credit \"a\": Music credits go in {}",
+                    crate::bundle::display_path(crate::audio::AUDIO_PATH)
+                )
+                .as_str(),
                 "credit \"a\": private path \"/x\" must be a path inside assets-private/game/",
             ]
         );

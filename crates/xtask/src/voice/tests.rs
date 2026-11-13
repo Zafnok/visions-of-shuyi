@@ -1169,6 +1169,10 @@ fn a_tip_with_no_clip_is_found() {
 /// shuyi private-assets`), as the disclosure list's check of it is.
 #[test]
 fn every_lesson_and_tip_the_guide_says_has_a_clip() {
+    // The manifest names the game's own lines (a test of the content).
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
     let path = root().join("voice").join(SOURCE_LANG).join(MANIFEST_FILE);
     let Ok(source) = fs::read_to_string(&path) else {
         return;

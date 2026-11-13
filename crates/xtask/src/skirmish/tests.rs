@@ -117,6 +117,10 @@ fn a_new_file_goes_in_the_data_folder_of_its_world_map() {
         beside("assets/worldmaps/a.ron", "maps/b.map"),
         "assets/maps/b.map"
     );
+    assert_eq!(
+        beside("assets-private/content/worldmaps/a.ron", "maps/b.map"),
+        "assets-private/content/maps/b.map"
+    );
 }
 
 #[test]
@@ -174,7 +178,10 @@ fn without_a_map_it_goes_on_the_story_s_first_and_writes_beside_it() {
         return;
     }
     let root = sandbox();
-    copy(&root, "assets/worldmaps/act1.ron");
+    // The content's, beside which the new files go.
+    let world = trpg_content::bundle::display_path("worldmaps/act1.ron");
+    let folder = world.trim_end_matches("worldmaps/act1.ron").to_owned();
+    copy(&root, &world);
     let list = args(&[
         "new",
         "--at",
@@ -195,12 +202,12 @@ fn without_a_map_it_goes_on_the_story_s_first_and_writes_beside_it() {
     assert_eq!(
         ran.written,
         [
-            "assets/maps/act1_skirmish_10_10.map",
-            "assets/battles/act1_skirmish_10_10.ron",
-            "assets/worldmaps/act1.ron",
+            format!("{folder}maps/act1_skirmish_10_10.map"),
+            format!("{folder}battles/act1_skirmish_10_10.ron"),
+            world.clone(),
         ]
     );
-    let world = fs::read_to_string(root.join("assets/worldmaps/act1.ron")).expect("it");
+    let world = fs::read_to_string(root.join(&world)).expect("it");
     assert!(world.contains("(id: \"skirmish_10_10\""));
     let _ = fs::remove_dir_all(root);
 }

@@ -1094,7 +1094,7 @@
         credits: (
             file: "assets/data/credits.ron",
             folders: ["game", "test"],
-            audio_manifest: "assets/audio/audio.ron",
+            audio_manifest: "assets-private/content/audio/audio.ron",
             private_root: "assets-private/game",
             hint: "a new pack also needs a row in THIRD_PARTY_ASSETS.md",
         ),

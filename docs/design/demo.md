@@ -33,7 +33,7 @@ option).
 
 1. **The demo plays all of Chapter 1's scenes**, the after-battle ones
    too: `ch01_victory`, then `ch01_tbc`. `ch01_tbc` is listed in
-   `assets/chapters/ch01.ron`'s `victory_scenes` and written in
+   `assets-private/content/chapters/ch01.ron`'s `victory_scenes` and written in
    `ch01.dlg`: it is Chapter 1's ending, not Chapter 2's opening.
 2. **No "Save your progress?" in the demo.** The full game asks it after
    Chapter 1 (0869); the demo goes from the last scene straight to the

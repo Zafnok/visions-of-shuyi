@@ -271,7 +271,7 @@ The order:
 
 Written 2026-10-21 (ticket 0129, Phase 0: the backlog moved off the
 Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
-(`assets/chapters/ch01.ron`); the chapter flow already chains chapters
+(`assets-private/content/chapters/ch01.ron`); the chapter flow already chains chapters
 with `next`. Phases run in order, but Phase 1's questions and Phase 2's
 lanes overlap: a lane starts as soon as its own tickets are ready.
 Within a lane, → is order and · is "side by side". Act 1 waits for the
@@ -452,6 +452,7 @@ Candle joins outside battle.
   tests ready for it → **0162** the data's (content and core) → **0163** the UI's unit tests · **0164** the UI's integration tests and pictures · **0165** the bots' and tools' · **0166** the comments outside the tests · **0158** the public web build and releases without it,
   Nick's full build on a restricted page · **0159** the story documents
   move → **0160** the game's content and scripts move (after 0162–0166, 0158)
+  → **0167** the public READMEs and docs name no story people
   → **0152** a private mirror of the scripts a writer can propose
   changes to (copied from the assets repository) · engine#2586 the dialogue preview screen → **0764** a
   script preview program for writers · **0765** the writer's guide for

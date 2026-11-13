@@ -14,20 +14,20 @@
 # The title screen and its cinematic (also the credits').
 title
 
-# Chapter 1's scenes (`@music` in `assets/dialogue/ch01.dlg`).
+# Chapter 1's scenes (`@music` in `assets-private/content/dialogue/ch01.dlg`).
 village_home
 dungeon_tense
 scene_sad
 talk_antagonist
 
-# Harrowby Ford (`assets/battles/ch01.ron`), its win and its loss.
+# Harrowby Ford (`assets-private/content/battles/ch01.ron`), its win and its loss.
 battle_bright
 victory
 defeat
 
 # The world map (ticket 1066): its own track, and the tracks its towns
 # play while they are open (`music` of a town in
-# `assets/worldmaps/act1.ron`). Chapters 2 to 8's battles and scenes are
+# `assets-private/content/worldmaps/act1.ron`). Chapters 2 to 8's battles and scenes are
 # still silent here (ticket 1260).
 world_map
 village

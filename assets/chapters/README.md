@@ -13,7 +13,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
     number: Some(1),
     opening_scenes: [],                 // a world-map chapter's: see below
     intro_scenes: ["ch01_intro", "ch01_prebattle"],
-    battle: "ch01",                     // assets/battles/ch01.ron
+    battle: "ch01",                     // assets-private/content/battles/ch01.ron
     victory_scenes: ["ch01_victory", "ch01_tbc"],
     next: Some("ch02"),                 // or None: "To be continued"
     world_map: None,                    // or Some("act1"): see below

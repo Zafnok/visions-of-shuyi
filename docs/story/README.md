@@ -18,3 +18,11 @@ with its `README.md`. A change to them is a pull request in the private
 repository, then this repository's that moves `assets-private.rev`: the
 `content-change` skill. How the story is written: ADR-0011 and the
 `story-writing` skill.
+
+The game's own content is beside them, in the private repository's
+`content/` since ticket 0160: the scripts (`dialogue/*.dlg`), chapters,
+battles, maps, world maps, cinematics, openings, skirmishes and the data
+tables, laid out like `assets/` and checked out into
+`assets-private/content/`, which every build that has it lays over
+`assets/` (ADR-0117). A build without it starts the test chapter on the
+public stand-ins (ADR-0121).

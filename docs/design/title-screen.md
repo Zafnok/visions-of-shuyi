@@ -49,7 +49,7 @@ screen before the title), web only or Windows too (A web only / B both):
                  Press any key
 ```
 
-**As built (tickets 0820, 0833 and 0843, `assets/cinematics/title.ron`).**
+**As built (tickets 0820, 0833 and 0843, `assets-private/content/cinematics/title.ron`).**
 The cuts were moved onto the song's changes, measured in the song file
 (the agent can't hear it; Nick judges them by ear in the Act 1
 playtest). Nick's playtest of Chapter 1 (2026-10-14, ticket 0833) asked
@@ -317,7 +317,7 @@ about 18 seconds.
 - **Conversation snippets play in the game's real dialogue screen**, by
   themselves, with the text typing out.
 - **The snippets are the Chapter 1 script itself.** The cinematic loads the
-  same script file the game plays (`assets/dialogue/ch01.dlg`) and shows
+  same script file the game plays (`assets-private/content/dialogue/ch01.dlg`) and shows
   the first few lines of a scene, whatever they are at the time. There is
   no separate list of cinematic lines, so when the script is rewritten the
   cinematic changes with it. The lines shown in the mockups were **not

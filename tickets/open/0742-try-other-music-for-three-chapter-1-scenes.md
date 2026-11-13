@@ -42,6 +42,12 @@ so `blocked_by` has 1118 and 1050.
 into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 `blocked_by` any more.
 
+**Since 0160** the game's battles, maps, chapters, scripts and data are
+in the private repository's `content/` (`assets-private/content/`,
+ADR-0117): this ticket's changes to them go through the
+`content-change` skill, a pull request there first, then this
+ticket's, which moves `assets-private.rev`.
+
 ## Nick input
 
 **Decision.** A listening page (Artifact) per scene: 3–4 candidates each,

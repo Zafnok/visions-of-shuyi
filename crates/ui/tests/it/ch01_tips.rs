@@ -16,7 +16,7 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::mode::Mode;
 
-// Chapter 1's party where it starts (`assets/battles/ch01.ron`).
+// Chapter 1's party where it starts (`assets-private/content/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);
 /// The `heretic`, a Mage: its action menu has Magic.
 const MAGE: Pos = Pos::new(4, 13);

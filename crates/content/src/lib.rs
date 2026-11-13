@@ -2109,12 +2109,13 @@ mod tests {
             .iter()
             .map(ToString::to_string)
             .collect();
+        let items = bundle::display_path("data/items.ron");
         assert_eq!(
             errors,
             [
-                "assets/data/items.ron: no seal of kind Tier(2), but classes promote into tier 2",
-                "assets/data/items.ron: no seal of kind Tier(3), but classes promote into tier 3",
-                "assets/data/items.ron: no seal of kind Reclass",
+                format!("{items}: no seal of kind Tier(2), but classes promote into tier 2"),
+                format!("{items}: no seal of kind Tier(3), but classes promote into tier 3"),
+                format!("{items}: no seal of kind Reclass"),
             ]
         );
         // Skipped when another file failed.

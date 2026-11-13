@@ -655,12 +655,12 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect();
+        let names = crate::bundle::display_path(crate::names::NAMES_PATH);
         assert_eq!(
             errors,
-            [
-                "ch.ron:4: character \"hero\" has no name: add \"hero\": \"<name>\" to \
-                 assets/data/names.ron"
-            ]
+            [format!(
+                "ch.ron:4: character \"hero\" has no name: add \"hero\": \"<name>\" to {names}"
+            )]
         );
     }
 
@@ -753,12 +753,12 @@ mod tests {
         .iter()
         .map(ToString::to_string)
         .collect();
+        let names = crate::bundle::display_path(crate::names::NAMES_PATH);
         assert_eq!(
             errors,
-            [
-                "ch.ron:9: speaker \"heron\" has no name: add \"heron\": \"<name>\" to \
-                 assets/data/names.ron"
-            ]
+            [format!(
+                "ch.ron:9: speaker \"heron\" has no name: add \"heron\": \"<name>\" to {names}"
+            )]
         );
     }
 

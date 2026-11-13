@@ -35,6 +35,8 @@
 //! export of the `demo` edition names `demo/` as `SHUYI_CONTENT`, the
 //! build gets the `demo_edition` cfg and the bundle is those tables
 //! instead of the whole of `assets/` and the content.
+//! The demo is Chapter 1 of the content: without the checkout its tables
+//! are empty and the `demo` edition doesn't build (ADR-0121).
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -234,7 +236,31 @@ fn write_file_tables(private: bool, content: bool) {
     }
     paths.push_str("]\n");
     write_out("playdate_left_out.rs", &paths);
-    write_demo(&both, &content_files, private);
+    if content {
+        write_demo(&both, &content_files, private);
+    } else {
+        write_no_demo();
+    }
+}
+
+/// The demo's tables without the content (ADR-0117): empty. The demo is
+/// Chapter 1 of the game's content, so a build without the checkout (a
+/// fork) has none, and an export of the demo edition needs the checkout.
+fn write_no_demo() {
+    assert!(
+        std::env::var_os("SHUYI_CONTENT").is_none(),
+        "the demo edition is Chapter 1 of the game's content, which isn't in          assets-private/content/. Fetch it with `cargo shuyi private-assets` (it needs          access to the private repository)."
+    );
+    write_out(
+        "demo_files.rs",
+        "&[]
+",
+    );
+    write_out(
+        "demo_private_files.rs",
+        "&[]
+",
+    );
 }
 
 /// Writes the demo's tables (ticket 0914): `demo_files.rs` of `assets/`

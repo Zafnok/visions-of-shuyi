@@ -927,7 +927,13 @@ mod tests {
             let (shown, part) = test_part(path).unwrap();
             assert_eq!(shown, format!("assets-test/{path}"));
             assert_ne!(Some(part), file(path));
-            assert_eq!(display_path(path), format!("assets/{path}"));
+            // The story's own: `assets/`'s stand-in, or the content's over it.
+            let shown = display_path(path);
+            let roots = [DISPLAY_ROOT, CONTENT_DISPLAY_ROOT];
+            assert!(
+                roots.iter().any(|root| shown == format!("{root}/{path}")),
+                "{shown}"
+            );
         }
         assert_eq!(test_part("maps/test_small.map"), None);
         assert_eq!(test_part("data/palette.ron"), None);

@@ -436,11 +436,12 @@ fn seal_checks_against_the_class_tree() {
         .iter()
         .map(ToString::to_string)
         .collect();
+    let items = crate::bundle::display_path("data/items.ron");
     assert_eq!(
         errors,
         [
-            "assets/data/items.ron: no seal of kind Tier(3), but classes promote into tier 3",
-            "assets/data/items.ron: no seal of kind Reclass",
+            format!("{items}: no seal of kind Tier(3), but classes promote into tier 3"),
+            format!("{items}: no seal of kind Reclass"),
         ]
     );
     assert_eq!(check_seals(&t, &ClassTable::default()).len(), 1);

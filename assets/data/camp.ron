@@ -1,3 +1,8 @@
+// The public stand-in of camp's events (ticket 0160, ADR-0117). The game's
+// own file is in the private repository's content/, laid over this one by
+// every build that has it checked out. A build without it (a fork) reads
+// this: none. The test files add their own (assets-test/data/camp.ron).
+//
 // Camp events (ticket 1003, docs/design/supports.md "Rules: camp events"):
 // short, optional, scripted scenes listed at camp once the story reaches
 // their point. They give nothing (no points, stats or items). Loaded by

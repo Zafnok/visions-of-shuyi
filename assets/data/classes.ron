@@ -1,3 +1,8 @@
+// The public stand-in of the class table (ticket 0160, ADR-0117). The game's
+// own file is in the private repository's content/, laid over this one by
+// every build that has it checked out. A build without it (a fork) reads
+// this: the whole class tree, which the test tileset draws.
+//
 // The class tree and its progression tables (ADR-0005). Loaded by
 // trpg_content::class.
 //
@@ -21,26 +26,14 @@
 // Sky Tyrant) have no numbers yet, so they are left out and Flier's
 // `promotes_to` stays empty.
 (
-    // Highest character level: 99 through Act 1 (ticket 0013); may be raised
-    // for Acts 2-3.
     level_cap: 99,
-    // EXP pace (progression.md, Pace; ticket 0608): (from character level,
-    // percent of every unit EXP award). TUNABLE. A battle's awards give
-    // about 2 levels to Lv 40, 1 to Lv 70, then 1 every 2 battles: Lv 99
-    // after about 110 battles. Levels rise from 1; percents never rise.
     exp_pace: [(1, 100), (40, 50), (70, 25)],
-    // Highest class level; reaching it masters the class.
     class_level_cap: 10,
-    // Absolute limits no stat may exceed (stats-and-combat.md). Classes have no
-    // stat caps of their own (progression.md, Stat caps):
-    //              (HP, Str, Mag, Dex, Spd, Def, Res)
     hard_ceilings: (200, 100, 100, 100, 100, 100, 100),
     mov_ceiling: 15,
-    // Per tier, index 0 = tier 1. Both must never decrease as the tier rises.
     min_gains: [2, 2, 3],
     cp_per_class_level: [10, 17, 25],
     classes: [
-        // ───────────────────────────── Tier 1 ─────────────────────────────
         (
             id: "swordsman", name: "Swordsman", tier: 1, movement_type: "foot", mov: 5,
             weapons: [(Sword, D, C)], max_armour: Some(Leather), weapon_slots: 3,
@@ -137,7 +130,6 @@
             spells: [(1, "frost")],
             affinities: [(Ice, Absorb), (Fire, Weak)],
         ),
-        // ───────────────────────────── Tier 2 ─────────────────────────────
         (
             id: "duelist", name: "Duelist", tier: 2, movement_type: "foot", mov: 6,
             weapons: [(Sword, C, A)], max_armour: Some(Leather), weapon_slots: 3,
@@ -211,7 +203,6 @@
             promotes_to: ["bastion"],
         ),
         (
-            // Shared promotion: from Guard or Rider.
             id: "iron_rider", name: "Iron Rider", tier: 2, movement_type: "mounted", mov: 6,
             tags: [Armored, Mounted],
             weapons: [(Spear, C, A), (Axe, D, B), (Sword, D, B)], max_armour: Some(Plate),
@@ -239,7 +230,6 @@
             promotes_to: ["archmage"],
         ),
         (
-            // Shared promotion: from Mage or Cleric.
             id: "mystic", name: "Mystic", tier: 2, movement_type: "foot", mov: 5,
             weapons: [(Sword, D, C), (Gauntlet, D, C)], max_armour: Some(Cloth), weapon_slots: 3,
             base:    (21,  2,  9,  7,  7,  2,  9),
@@ -273,7 +263,6 @@
             active: Some("rally"), passives: ["leadership_2"],
             promotes_to: ["grand_marshal"],
         ),
-        // ───────────────────────────── Tier 3 ─────────────────────────────
         (
             id: "blade_dancer", name: "Blade Dancer", tier: 3, movement_type: "foot", mov: 6,
             weapons: [(Sword, A, S)], max_armour: Some(Leather), weapon_slots: 3,
@@ -343,8 +332,6 @@
             growths: (80, 50,  5, 50, 50, 35, 20),
         ),
         (
-            // Start of the flying line (ticket 0017). Tiers 4+ aren't designed
-            // yet, so nobody can promote past it for now.
             id: "flier", name: "Flier", tier: 3, movement_type: "flying", mov: 7, tags: [Flying],
             weapons: [(Spear, A, S)], max_armour: Some(Leather), weapon_slots: 3,
             base:    (27,  9,  3, 12, 15,  7, 11),

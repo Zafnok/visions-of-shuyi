@@ -30,7 +30,7 @@ each frame stored as the part it changes, the menu held 3 s before the
 loop. The colors are exact. The clips and their moments
 are in `crates/xtask/src/readme_pictures.rs`. Picking other moments means
 changing that file's `CLIPS`; the cinematic's cuts are in
-`assets/cinematics/title.ron`.
+`assets-private/content/cinematics/title.ron`.
 
 ## The other pictures
 

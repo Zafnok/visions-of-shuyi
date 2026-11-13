@@ -68,3 +68,23 @@ fn a_file_in_the_content_replaces_the_assets_file_at_its_path() {
         Some([1, 2, 3])
     );
 }
+
+/// Without the checkout (a fork, a worktree without access; ADR-0121) the
+/// build lays no content over `assets/`: the public stand-ins and the test
+/// files load, none of the game's own chapters is there, and New Game
+/// starts the test chapter with the lead and the test knight.
+#[test]
+fn without_the_content_new_game_starts_the_test_chapter() {
+    let public: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::layers_with(None))));
+    let (content, has_the_game) = bundle::reading(public, || {
+        (trpg_content::load_embedded(), bundle::has_the_game())
+    });
+    let content = content.unwrap_or_else(|errors| panic!("{errors}"));
+    assert!(!has_the_game);
+    let lead = trpg_core::LeadProfile::new("Mara", trpg_core::LeadGender::Female);
+    let game = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
+    assert_eq!(game.chapter, "test");
+    assert!(content.chapters.contains_key("test"));
+    let names: Vec<&str> = game.roster.iter().map(|u| u.name.as_str()).collect();
+    assert_eq!(names, ["Mara", "Test Knight"]);
+}

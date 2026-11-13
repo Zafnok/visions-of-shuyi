@@ -25,7 +25,7 @@ fn p(x: i32, y: i32) -> Pos {
 /// The basic-controls lessons (`Full` only).
 const BASICS: [&str; 5] = ["cursor", "next_unit", "moving", "attacking", "ending_turn"];
 
-// Chapter 1's party where it starts (`assets/battles/ch01.ron`).
+// Chapter 1's party where it starts (`assets-private/content/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);
 /// The `sergeant`, a Rider: the one who can reach an enemy on turn 1.
 const SERGEANT: Pos = Pos::new(6, 11);
