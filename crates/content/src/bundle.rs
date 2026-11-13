@@ -35,6 +35,15 @@
 //! which it leaves out on purpose ([`left_out`]). The content is laid over
 //! it as a table of its own, and with the `private-assets` feature the
 //! bought art over both (ticket 1061).
+//!
+//! The **demo edition** (ticket 0914, ADR-0119) embeds the demo's tables
+//! in place of `assets/`, the content and the bought art ([`demo_layers`]):
+//! what `crates/content/demo/bundle.txt` keeps of them, the shared files
+//! cut to what Chapter 1 names, and a file saying it is the demo
+//! ([`is_demo`]). It has the `demo_edition` cfg, which `build.rs` sets when
+//! the export names the demo's content root. Unlike the Playdate's, its
+//! bundle doesn't say what it left out: those paths would name the later
+//! chapters.
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
@@ -48,7 +57,7 @@ pub use shuyi_assets::bundle::{Bundle, Layer, Watcher, story_only, watch};
 
 /// Every file under `assets/`: its path (relative to `assets/`,
 /// `/`-separated) and contents, sorted by path.
-#[cfg(any(feature = "std", test))]
+#[cfg(any(all(feature = "std", not(demo_edition)), test))]
 static ASSETS: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
 
 /// [`ASSETS`] without the files the Playdate leaves out: the bundle without
@@ -69,12 +78,23 @@ static PLAYDATE_LEFT_OUT: &[&str] = include!(concat!(env!("OUT_DIR"), "/playdate
 static PLAYDATE_PRIVATE: &[(&str, &[u8])] =
     include!(concat!(env!("OUT_DIR"), "/playdate_private_files.rs"));
 
-#[cfg(all(feature = "std", feature = "private-assets"))]
+/// The demo's table of `assets/` (ticket 0914): what it keeps, cut, and
+/// its edition's file.
+#[cfg(any(demo_edition, feature = "demo-bundle", test))]
+static DEMO: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/demo_files.rs"));
+
+/// The demo's table of the bought art.
+#[cfg(all(feature = "private-assets", any(demo_edition, feature = "demo-bundle")))]
+static DEMO_PRIVATE: &[(&str, &[u8])] =
+    include!(concat!(env!("OUT_DIR"), "/demo_private_files.rs"));
+
+#[cfg(all(feature = "std", feature = "private-assets", not(demo_edition)))]
 static PRIVATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/private_files.rs"));
 
 /// Every file of `assets-private/content/` (ADR-0117), empty when the build
-/// had no checkout.
-#[cfg(feature = "std")]
+/// had no checkout. Not in the demo edition, whose table holds what it
+/// keeps of it.
+#[cfg(all(feature = "std", not(demo_edition)))]
 static CONTENT: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/content_files.rs"));
 
 /// The Playdate's table of the content, made as [`PLAYDATE`] is.
@@ -122,13 +142,21 @@ pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 /// The game's embedded directories, in the order a file is read from them:
 /// the bought art, the content, `assets/`, then the test files' bought art
 /// and the test files, each when this build has it. Without `std`, the
-/// Playdate's (`playdate_layers`).
+/// Playdate's (`playdate_layers`); in the demo edition, the demo's
+/// ([`demo_layers`]).
 pub fn layers() -> Vec<Layer> {
-    #[cfg(feature = "std")]
-    let content = content_layer(CONTENT);
-    #[cfg(not(feature = "std"))]
-    let content = content_layer(PLAYDATE_CONTENT);
-    layers_with(content)
+    #[cfg(demo_edition)]
+    let mut layers = demo_layers();
+    #[cfg(not(demo_edition))]
+    let mut layers = {
+        #[cfg(feature = "std")]
+        let content = content_layer(CONTENT);
+        #[cfg(not(feature = "std"))]
+        let content = content_layer(PLAYDATE_CONTENT);
+        story_layers(content)
+    };
+    layers.extend(test_layers());
+    layers
 }
 
 /// [`layers`] with `content` as the content's layer (ADR-0117), between the
@@ -137,7 +165,16 @@ pub fn layers() -> Vec<Layer> {
 /// handed out, and a file no layer has is still shown under `assets/`. It
 /// isn't bought art: [`is_private`] is false for it, and it needs no
 /// credit (ADR-0051). A test lays a folder of its own there.
+#[cfg(not(demo_edition))]
 pub fn layers_with(content: Option<Layer>) -> Vec<Layer> {
+    let mut layers = story_layers(content);
+    layers.extend(test_layers());
+    layers
+}
+
+/// The bought art, `content` and `assets/`, each when this build has it.
+#[cfg(not(demo_edition))]
+fn story_layers(content: Option<Layer>) -> Vec<Layer> {
     let mut layers = vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
         Layer::table(PRIVATE_DISPLAY_ROOT, PRIVATE).private(),
@@ -150,6 +187,14 @@ pub fn layers_with(content: Option<Layer>) -> Vec<Layer> {
         Layer::table(DISPLAY_ROOT, ASSETS),
         #[cfg(not(feature = "std"))]
         playdate_layer(),
+    ]);
+    layers
+}
+
+/// The test files' bought art and the test files, each when this build
+/// has them (ADR-0057).
+fn test_layers() -> Vec<Layer> {
+    vec![
         #[cfg(all(
             feature = "std",
             feature = "private-assets",
@@ -160,14 +205,27 @@ pub fn layers_with(content: Option<Layer>) -> Vec<Layer> {
             .test(),
         #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
         Layer::table(TEST_DISPLAY_ROOT, TEST).test(),
-    ]);
-    layers
+    ]
 }
 
 /// The content's layer of `table`: none when it is empty (a build without
 /// the checkout, or with a checkout of nothing but notes).
+#[cfg(not(demo_edition))]
 fn content_layer(table: &'static [(&'static str, &'static [u8])]) -> Option<Layer> {
     (!table.is_empty()).then(|| Layer::table(CONTENT_DISPLAY_ROOT, table))
+}
+
+/// The demo's layers (ticket 0914, ADR-0119): its bought art over its
+/// `assets/` (the content laid over `assets/`, cut), with no test files.
+/// The bundle of the demo edition; with the `demo-bundle` feature, for the
+/// test that plays the demo against it ([`reading`]).
+#[cfg(any(demo_edition, feature = "demo-bundle", test))]
+pub fn demo_layers() -> Vec<Layer> {
+    vec![
+        #[cfg(feature = "private-assets")]
+        Layer::table(PRIVATE_DISPLAY_ROOT, DEMO_PRIVATE).private(),
+        Layer::table(DISPLAY_ROOT, DEMO),
+    ]
 }
 
 /// `assets/` as the Playdate embeds it: without the files
@@ -201,6 +259,13 @@ pub fn playdate_layers() -> Vec<Layer> {
 /// Inside [`reading`], the bundle this thread reads instead.
 pub fn install() -> &'static Bundle {
     engine::get_or_install(|| Bundle::new(layers()))
+}
+
+/// Whether the game's bundle is the Chapter 1 demo's (ticket 0914): it
+/// holds the demo's edition file, which no other bundle has. The demo
+/// ends after Chapter 1 and its title has no entry past it.
+pub fn is_demo() -> bool {
+    file(crate::edition::EDITION_FILE).is_some_and(|text| text == crate::edition::DEMO)
 }
 
 /// Whether this build leaves the file at `path` (relative to `assets/`)
@@ -559,6 +624,43 @@ mod tests {
             for (path, bytes) in table {
                 assert_eq!(*bytes, std::fs::read(folder.join(path)).unwrap(), "{path}");
             }
+        }
+    }
+
+    /// The demo's bundle (ticket 0914) loads with no error, says it is
+    /// the demo, and holds Chapter 1 and no later chapter: no file of it
+    /// names one (the edition's export checks the program the same way,
+    /// `shuyi.ron`'s canaries).
+    #[test]
+    fn the_demos_bundle_loads_chapter_1_alone_and_says_it_is_the_demo() {
+        if skip_without_the_game() {
+            return;
+        }
+        let demo: &'static Bundle = Box::leak(Box::new(Bundle::new(demo_layers())));
+        let chapters = reading(demo, || {
+            assert!(is_demo());
+            let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+            assert!(content.worldmaps.is_empty());
+            content.chapters.into_keys().collect::<Vec<_>>()
+        });
+        assert_eq!(chapters, ["ch01"]);
+        assert!(!is_demo(), "the whole game isn't the demo");
+        for path in demo.files_under("") {
+            let text = demo.file(path).unwrap_or_default();
+            for later in [
+                "ch02",
+                "ch05",
+                "ch08",
+                "greywater_kitchen",
+                "defector",
+                "Chapter 2",
+            ] {
+                assert!(!text.contains(later), "{path} names {later}");
+            }
+        }
+        for path in ["dialogue/ch02.dlg", "maps/ch02.map", "skirmishes/act1.ron"] {
+            assert_eq!(demo.bytes(path), None, "{path}");
+            assert!(!demo.left_out(path), "the demo names no file it left out");
         }
     }
 

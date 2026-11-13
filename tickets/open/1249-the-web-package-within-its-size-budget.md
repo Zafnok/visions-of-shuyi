@@ -23,6 +23,14 @@ itch.io and browsers download it before the game starts). The game's
 `music/` folder, which `shuyi.ron`'s `web.music` ships beside the web
 build, is 75 MB of it: 46 Ogg Vorbis tracks and jingles.
 
+**From 0914 (the Chapter 1 demo, `--edition demo`):** the demo edition
+ships every track too. The web build copies `web.music` whole and an
+edition can't choose its tracks (engine ADR-0100; the engine's book says
+the same of the Playdate's), so the demo's package is about as big as the
+full game's, though Chapter 1 plays a handful of tracks. Whatever this
+ticket does should cover the demo's package as well (an edition's own
+music list in the engine is one way).
+
 ## Nick input
 
 **Decision**, asked before building, only if the fix touches what the

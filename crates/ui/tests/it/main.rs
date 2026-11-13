@@ -36,6 +36,7 @@ mod class_change;
 mod controller;
 mod crash_reports;
 mod credits;
+mod demo;
 mod dialogue;
 mod dialogue_log;
 mod flow;

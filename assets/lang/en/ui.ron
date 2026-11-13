@@ -232,6 +232,10 @@
     "game_over.help": "{Cursor} choose · {Confirm} select",
     "to_be_continued.heading": "To be continued...",
     "to_be_continued.help": "{Confirm} title",
+    // The Chapter 1 demo's end (0914): its card, then its one question.
+    "demo_end.heading": "Thanks for playing, {lead}",
+    "demo_end.help": "{Confirm} continue",
+    "demo_end.export_question": "Export save?",
 
     // The credits.
     "credits.title": "Credits",

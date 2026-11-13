@@ -1,0 +1,61 @@
+# What the Chapter 1 demo embeds of `assets/` (ticket 0914, ADR-0119).
+#
+# This folder is the `demo` edition's content root (`shuyi.ron`'s
+# `editions`): `cargo shuyi export web --release --edition demo` hands it
+# to the build as `SHUYI_CONTENT`, and `build.rs` embeds every file under
+# `assets/`, with the game's content from the private repository over it
+# (`assets-private/content/`, ADR-0117), and under `assets-private/game/`,
+# but those this list leaves out.
+# The demo's copy of every RON file has no comments, and the shared files
+# below hold only what Chapter 1 names. Nothing here is a second copy of a
+# data file: the cut is made at build time from the files as they are.
+# The lines' forms are in `crates/content/src/demo_bundle.rs`; a line that
+# matches nothing stops the build.
+#
+# A test plays the demo from New Game to its end against this bundle
+# (`crates/ui/tests/it/demo.rs`), and every file the demo's game loads
+# must be there: what Chapter 1 reads stays. The demo's export refuses a
+# package that holds a later chapter's ids (`shuyi.ron`, the edition's
+# `disclosure`).
+#
+# A new file under one of these folders is left out of the demo until a
+# `+` line keeps it. A new entry in a cut file is left out until its
+# `keep` line names it.
+
+# Every chapter, battle, script, map and conversation opening, but
+# Chapter 1's. Chapter 1's scenes play at Harrowby's yard and in the study
+# at Veyne Hall too (ch01_sparring, ch01_tbc).
+chapters/
+battles/
+dialogue/
+maps/
+openings/
++ chapters/ch01.ron
++ battles/ch01.ron
++ dialogue/ch01.dlg
++ maps/ch01.map
++ maps/harrowby_yard.map
++ maps/veyne_study.map
++ openings/ch01_pacing.ron
++ openings/ch01_sparring.ron
+
+# The world map and its skirmishes come after Chapter 1.
+skirmishes/
+worldmaps/
+
+# Chapter 1 ends the demo: `next` names no chapter it holds. The full
+# game's `ch01.ron` names Chapter 2, so a save exported from the demo goes
+# on there.
+swap chapters/ch01.ron: next: Some("ch02") => next: None
+
+# The characters Chapter 1 fields, opens on or speaks with.
+keep data/characters.ron characters: lead retainer sergeant poacher keeper heretic red_captain rival
+keep data/characters.ron generics: red_brigand red_raider red_archer red_rider red_guard
+keep data/characters.ron speakers: guide messenger
+
+# The names Chapter 1's characters and script use (a key keeps its `.`
+# forms: `retainer` keeps `retainer.first`).
+keep data/names.ron: lead retainer sergeant poacher keeper heretic red_captain rival
+keep data/names.ron: guide messenger vowmaster.title
+keep data/names.ron: place.harrowby place.veyne_hall place.greywater place.thornmarch
+keep data/names.ron: faction.red_company family.veyne house.veyne god.mother.name event.ash_peace

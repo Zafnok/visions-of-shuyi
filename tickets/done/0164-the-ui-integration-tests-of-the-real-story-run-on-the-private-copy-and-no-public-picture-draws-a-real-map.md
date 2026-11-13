@@ -138,6 +138,7 @@ passed with the story deleted, its pictures the same.
 | `title_cinematic.rs` `the_storyboard_plays_shot_by_shot`, `the_battle_plays_as_turns_with_the_combat_scene` | (a) | `content_tests()` (the guard and the private folder); their 10 public pictures (faces, map, logo) moved private; the characters' names read from the names table, never written |
 | `openings.rs` (7) | (b) | Re-pointed to `test_opening` (0162's), given in memory to `test_intro` and to the test scene with a reply choice (`@place test_buildings` and `@opening`, no new line written). The pacing test is gone (the test opening's step back covers facing); `an_opening_after_a_line_waits_for_it` is new. The picture is public again, of the test opening, and its private copy deleted |
 | `places.rs` | (a)/(b) | Unchanged (0157's) |
+| `demo.rs` (3, from 0914, merged in) | (a) | Unchanged: guarded already; its three pictures (the demo's title menu, end card and export question) draw no map |
 | `playthrough.rs` | — | Two comments named a place and a person |
 
 **Pictures.** 120 `.snap` files are left under `crates/ui/tests/it/`. All

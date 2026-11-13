@@ -63,6 +63,15 @@ fn the_recorded_playthrough_wins_chapter_1() {
 /// with the recorded commands (its scenes skipped), up to "Save your
 /// progress?".
 pub fn chapter_1_won(h: &mut Harness) {
+    chapter_1_fought(h);
+    // The battle's last scene, the VICTORY banner, the results, the
+    // victory scenes.
+    playthrough::on_to_the_save_prompt(h);
+}
+
+/// From the title, New Game and Chapter 1 played until its battle is won
+/// (the demo's play-through too, ticket 0914).
+pub fn chapter_1_fought(h: &mut Harness) {
     h.keys("f f f Up f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch01"));
@@ -77,9 +86,6 @@ pub fn chapter_1_won(h: &mut Harness) {
     assert_eq!(players.count(), 6);
     assert_eq!(start.units().len(), 20);
     playthrough::play_in_game(h, &winning_commands());
-    // The battle's last scene, the VICTORY banner, the results, the
-    // victory scenes.
-    playthrough::on_to_the_save_prompt(h);
 }
 
 /// Acceptance: Chapter 1 from New Game through the real game: the intro
