@@ -105,8 +105,8 @@ upload key is the secret `BUTLER_API_KEY`.
   green.
 - **Once, after the first push:** on the web project's **Edit game** page,
   tick **This file will be played in the browser** for the `web` upload, set
-  the embed size to 1600×1024 (or **Click to launch in fullscreen**),
-  **Save**. On the Windows project's, tick **Windows** for the `windows`
+  the embed size to 1280×720 and tick **Fullscreen button** (Nick's
+  setting, 2026-11-12), **Save**. On the Windows project's, tick **Windows** for the `windows`
   upload, **Save**.
 - **Change the web demo's password:** **Edit game → Visibility & access →
   Restricted → Password**, type the new one, **Save**. The old one stops

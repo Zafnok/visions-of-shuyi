@@ -175,7 +175,7 @@ how applicants get in.
   address that plays without the password. Only someone who already got in
   sees it, but they could pass it on, and a new password doesn't close it
   (`docs/releasing.md`).
-- The page's embed was 640×360 when tested; the docs give 1600×1024 or
-  *Click to launch in fullscreen*.
+- The page's embed was 640×360 when tested; Nick then set 1280×720 with a
+  fullscreen button (checked on the page), which the docs now give.
 
 Friction: none, no game code (a workflow, an action and docs).
