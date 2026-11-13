@@ -164,7 +164,7 @@ All numbers are FE-sized; ticket 0013 kept that scale.
   already gates it).
 - A special weapon may also have a **passive** that costs nothing (the
   Moonblade, *Special weapons* below).
-- Chapter 1 has **no special weapons** (no loot in Chapter 1, `chapter-1.md`).
+- Chapter 1 has **no special weapons** (no loot in Chapter 1, `assets-private/story/design/chapter-1.md`).
   The first ones come in Chapter 2 (*Special weapons*, ticket 0018).
 
 ## Using an art (exact rules)
@@ -539,10 +539,10 @@ and for the wave's power: "whichever is higher for the wielder".
 
 | Weapon | Kind | Rank | Mt | Hit | Crit | Wt | Rng | Dur | Price | Where |
 | ------ | ---- | ---- | -- | --- | ---- | -- | --- | --- | ----- | ----- |
-| **Houndmaster's Axe** | Axe | D | 10 | 70 | 5 | 7 | 1 | 25 | 900 | Chapter 2: the Hound lieutenant's axe, given when the battle is won |
-| **Fordwarden's Spear** | Spear | E | 6 | 80 | 0 | 5 | 1–2 | 20 | 800 | Chapter 2: a reward for saving houses past the minimum |
 | **Moonblade** *(working name)* | Sword | C | 10 | 85 | 0 | 4 | 1 | 30 | 3000 | The end of a long optional questline (Nick; not Chapters 2–3) |
 | **Tor's Bow** | Bow | E | 7 | 85 | 10 | 3 | 2 | 25 | 1200 | *Letters Home*, Aske's side quest (1072): her brother's hill bow, sent south by her mother; **personal**, only Aske wields it |
+
+Chapter 2's two weapons: the story part of this decision is in the private assets repository, `story/design/combat-arts.md`.
 
 - **Houndmaster's Axe: Pack Hunt** (3 dur): this combat, might **+2 for
   each other unit of the user's side next to the target**, up to +6. The

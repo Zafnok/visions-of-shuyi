@@ -10,6 +10,13 @@ smaller sizes, Terminus 6×12, unscii-8 and Spleen 5×8. Every option shown
 is in [`playdate/`](playdate/) at the device's real pixel size. Names,
 numbers and the forecast in them are placeholders.
 
+The pictures that show Chapter 1's map or its lines are in the private
+assets repository, `story/design/playdate/` (ticket 0159): the `q1`,
+`q2`, `q3` and `q3r2` mockups but `q2-c-info.png` and the chosen
+`q3r2-e-grey.png` (the README shows it), every `1037-` and `1038-`
+picture, `1039-map-menu.png`, the `0066-` pictures, `1043-`'s but the
+faces, and `1044-map.png` and `1044-field.png`.
+
 | Picture | Shows |
 | ------- | ----- |
 | `q1-a-8x16.png` | **Chosen size:** today's 8×16 cells, the map fills the screen, info in corner pop-ups |
@@ -90,7 +97,7 @@ Like Fire Emblem on the GBA.
   and rewinds) is on the Unit info screen and in the map menu
   (*Claude's starting rule*).
 - *Claude's starting rules from building the battle screen (1038, Nick
-  can veto; pictures `playdate/1038-*.png`):*
+  can veto; pictures `assets-private/story/design/playdate/1038-*.png`):*
   - **The corner pop-ups** sit flush in the corners, in the battle's
     window look (white inside a double black frame). The unit's shows its
     name and `HP 19/19` (no bar); the terrain's its name and the PC's
@@ -174,7 +181,7 @@ Like Fire Emblem on the GBA.
 
 Decided: 2026-10-18. Source: ticket 0066 (built by 1058). Nick played
 the 1055 build on his Playdate: the PC's lesson box covered the top of
-the screen and ran off its right edge (`playdate/0066-today.png`). He
+the screen and ran off its right edge (`assets-private/story/design/playdate/0066-today.png`). He
 was shown Chapter 1's first battle on the Playdate's map skin with the
 "Moving the cursor" lesson and the "Your move" tip, each option drawn at
 the device's size (the grey box stands in for the guide's one-bit face,
@@ -182,11 +189,11 @@ ADR-0040; the button names are the Playdate's):
 
 | Picture | Shows |
 | ------- | ----- |
-| [`playdate/0066-lesson.png`](playdate/0066-lesson.png) | **Chosen:** the lesson in a window down the side away from the cursor, the 1× face, the text and checklist at once |
-| [`playdate/0066-tip.png`](playdate/0066-tip.png) | **Chosen:** an ordinary tip in the same window |
-| `playdate/0066-q1-options.png` | Q1 at ×2: today's box, a strip along the top or bottom, the side window, a full page |
-| `playdate/0066-q2-options.png` | Q2 at ×2: the face at 2× (full page only), 1×, half size, none |
-| `playdate/0066-q3-options.png` | Q3 at ×2: all at once; the text first and then a small checklist window, or only a count |
+| [`assets-private/story/design/playdate/0066-lesson.png`](../../assets-private/story/design/playdate/0066-lesson.png) | **Chosen:** the lesson in a window down the side away from the cursor, the 1× face, the text and checklist at once |
+| [`assets-private/story/design/playdate/0066-tip.png`](../../assets-private/story/design/playdate/0066-tip.png) | **Chosen:** an ordinary tip in the same window |
+| `assets-private/story/design/playdate/0066-q1-options.png` | Q1 at ×2: today's box, a strip along the top or bottom, the side window, a full page |
+| `assets-private/story/design/playdate/0066-q2-options.png` | Q2 at ×2: the face at 2× (full page only), 1×, half size, none |
+| `assets-private/story/design/playdate/0066-q3-options.png` | Q3 at ×2: all at once; the text first and then a small checklist window, or only a count |
 
 ##### Nick's words
 
@@ -283,7 +290,7 @@ Decided: 2026-10-17. Source: ticket 1037's sign-off. Nick saw the first
 build's line (HP left black, HP lost white, so his own units at full HP
 showed none) and asked: "lets look at the hp can we dither or use a box
 outline or smth?" Shown four options on Harrowby Ford with some units hurt
-(`playdate/1037-hp-options.png`), he chose: "lets have A for enemy, but C
+(`assets-private/story/design/playdate/1037-hp-options.png`), he chose: "lets have A for enemy, but C
 for ally. This gives more contrast for readability".
 
 - **Enemies (A):** the line along the bottom of the tile, as long as the
@@ -658,9 +665,9 @@ As built by ticket 1044 (`cargo shuyi frame-png --playdate`, shown at ×2,
 the public placeholder backdrop and fighters):
 [`1044-title.png`](playdate/1044-title.png) (the menu, a debug build's
 with Quick Battle), [`1044-prompt.png`](playdate/1044-prompt.png),
-[`1044-map.png`](playdate/1044-map.png) (turn 1's march),
+[`1044-map.png`](../../assets-private/story/design/playdate/1044-map.png) (turn 1's march),
 [`1044-fight.png`](playdate/1044-fight.png),
-[`1044-field.png`](playdate/1044-field.png) (the whole field). In the
+[`1044-field.png`](../../assets-private/story/design/playdate/1044-field.png) (the whole field). In the
 Simulator with the bought art (screenshots of the running game):
 [`1044-simulator-title.png`](playdate/1044-simulator-title.png) (the
 logo shot, the menu back), [`1044-simulator-fight.png`](playdate/1044-simulator-fight.png).
@@ -692,12 +699,12 @@ logo shot, the menu back), [`1044-simulator-fight.png`](playdate/1044-simulator-
 
 As built by ticket 1043 (`cargo shuyi frame-png --playdate`, shown at
 ×2, the public placeholder faces): Chapter 1's opening scene,
-[`1043-narration.png`](playdate/1043-narration.png),
-[`1043-listener-speaks.png`](playdate/1043-listener-speaks.png),
-[`1043-lead-speaks.png`](playdate/1043-lead-speaks.png),
-[`1043-choice.png`](playdate/1043-choice.png),
-[`1043-log.png`](playdate/1043-log.png); the title cinematic's
-[`1043-cinematic-talk.png`](playdate/1043-cinematic-talk.png) and
+[`1043-narration.png`](../../assets-private/story/design/playdate/1043-narration.png),
+[`1043-listener-speaks.png`](../../assets-private/story/design/playdate/1043-listener-speaks.png),
+[`1043-lead-speaks.png`](../../assets-private/story/design/playdate/1043-lead-speaks.png),
+[`1043-choice.png`](../../assets-private/story/design/playdate/1043-choice.png),
+[`1043-log.png`](../../assets-private/story/design/playdate/1043-log.png); the title cinematic's
+[`1043-cinematic-talk.png`](../../assets-private/story/design/playdate/1043-cinematic-talk.png) and
 [`1043-cinematic-faces.png`](playdate/1043-cinematic-faces.png).
 
 *Claude's starting rules (ticket 1043, Nick can veto; on the Act 1

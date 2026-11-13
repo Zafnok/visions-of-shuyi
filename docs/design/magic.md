@@ -203,7 +203,7 @@ weapon traits that spells don't have.) Hit and crit rolls follow the normal
 | Frost Elemental | Ice `Absorb`, Fire `Weak` | Casts Frost |
 
 Nick: these "won't be overly common". Chapter 1 has none (0009,
-`chapter-1.md`). Their other stats come from 0005.
+`assets-private/story/design/chapter-1.md`). Their other stats come from 0005.
 
 ## Battle notes (strategy hints)
 
@@ -519,16 +519,16 @@ equips Force on their turn, the mage counters with Force (and spends a use).
 
 - **What magic is in the world:** decided in the story bible (0701 gate 1,
   Nick: "probably B"): **vows** sworn to the memory of dead gods, controlled by
-  the church (the Vigil). See `docs/story/bible.md`, "Rules of magic".
+  the church (the Vigil). See `assets-private/story/bible.md`, "Rules of magic".
 - **Class spell lists, magic class tree with ≥3 tiers, EXP for heals and tile
   casts:** 0005.
-- **Personal signature spells:** named by 0701 (in `docs/story/characters/`:
+- **Personal signature spells:** named by 0701 (in `assets-private/story/characters/`:
   Maud, Rue, and Crane as an enemy). Rue's Cinder Oath and Maud's Vigil
   Light have starting numbers (0803, above); Rue's Kept Promise and Crane's
   are still to be set. Cinder Oath is range 1 with no counter and gets
   upgraded later (0056, above); what triggers the upgrade is open. Whether
   the others can be upgraded is open (Nick, 0803).
 - **Elemental enemies in Chapter 1, and a terrain-magic moment on the Chapter
-  1 map:** neither in Chapter 1 (0009, `chapter-1.md`).
+  1 map:** neither in Chapter 1 (0009, `assets-private/story/design/chapter-1.md`).
 - **Push spells, more elements, more terrain interactions, spell Combat
   Arts:** not planned. Each would need a design change.

@@ -1,7 +1,7 @@
 # Letters Home, Aske's side quest (ticket 1072). Written on a blank page
 # from the beat sheet's cards (the story-writing skill). Beat sheet:
-# docs/story/chapters/side-aske.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md and the beat sheet (Casker,
+# assets-private/story/chapters/side-aske.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md and the beat sheet (Casker,
 # Sten).
 #
 # An optional battle on the Act 1 map (worldmaps/act1.ron,

@@ -1,7 +1,7 @@
 # Chapter 8: The Last Watch. Written on a blank page from the beat sheet's
 # cards by ticket 0750 (the story-writing skill).
-# Beat sheet: docs/story/chapters/ch08.md. Continuity: docs/story/ledger.md.
-# Voice cards: docs/story/characters/*.md.
+# Beat sheet: assets-private/story/chapters/ch08.md. Continuity: assets-private/story/ledger.md.
+# Voice cards: assets-private/story/characters/*.md.
 #
 # Act 1's last chapter (world-structure.md): it plays out over the Act 1
 # map's nodes and ends with the story battle on Saltmere's docks, a hold
@@ -84,7 +84,7 @@
 # theirs is in an "@if" block, and each scene reads through with any of
 # them gone.
 #
-# Tone (docs/design/setting-and-tone.md, "Where the jokes go"; the
+# Tone (assets-private/story/design/setting-and-tone.md, "Where the jokes go"; the
 # story-writing skill, Craft): the crossroads is the road, so it has the
 # chapter's two light lines; the night before is quiet and warm; the
 # quay, the streets, the battle, the gangway and the deck are played
@@ -97,7 +97,7 @@
 # finish a sentence; Rue asks; Tamsin fires questions and exclaims at her
 # peaks; Aske ends flat and uses no contractions; Joss corrects himself;
 # Gil is formal, and plain in danger; Oriel trails off; the king is
-# measured and gentle. American English throughout (setting-and-tone.md,
+# measured and gentle. American English throughout (assets-private/story/design/setting-and-tone.md,
 # Language); "Aye" and "Go and get her" are kept words (Nick's, and the
 # outline's).
 #

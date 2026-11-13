@@ -1,5 +1,5 @@
 // Chapter 3: Greywater (ticket 0849). Beat sheet:
-// docs/story/chapters/ch03.md; script: dialogue/ch03.dlg. No recruit.
+// assets-private/story/chapters/ch03.md; script: dialogue/ch03.dlg. No recruit.
 // Chapter 4 (ticket 0850) opens the Act 1 world map (world-structure.md).
 (
     id: "ch03",

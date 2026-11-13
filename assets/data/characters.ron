@@ -1,4 +1,4 @@
-// The Chapter 1 cast (ticket 0803; sheets in docs/story/characters/) and the
+// The Chapter 1 cast (ticket 0803; sheets in assets-private/story/characters/) and the
 // Red Company's generic soldiers; Chapter 2's recruit, boss and Hounds
 // (ticket 0848); Chapter 3's prior, Hound sergeant and the abbey's wardens
 // (ticket 0849). Every stat, level and loadout is a
@@ -143,7 +143,7 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
         ),
-        // Chapter 4 (ticket 0850; docs/story/chapters/ch04.md).
+        // Chapter 4 (ticket 0850; assets-private/story/chapters/ch04.md).
         // Dace Marr, the Chapter 4 boss (rival.md): captain of the king's
         // Hounds, an enemy Shadowblade in Act 1 (swords and gauntlets),
         // quick (his talent is Spd). At Veyne Hall he retreats at 0 HP
@@ -176,7 +176,7 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
         ),
-        // Chapter 5 (ticket 0851; docs/story/chapters/ch05.md).
+        // Chapter 5 (ticket 0851; assets-private/story/chapters/ch05.md).
         // Hedda Ravn (shieldbearer.md): Ragna's bodyguard, ten years in a
         // Brennish shield company, a Raider who joins as the house is
         // attacked (`@joins` in ch05_prebattle). A veteran, so a little
@@ -200,7 +200,7 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
         ),
-        // Act 1's side quests (ticket 1072; docs/story/chapters/side-*.md).
+        // Act 1's side quests (ticket 1072; assets-private/story/chapters/side-*.md).
         // Ambrose Tull, the crown paymaster: a clerk in a borrowed vest who
         // retreats out the barn's back door at 0 HP (The Company Ledger).
         (

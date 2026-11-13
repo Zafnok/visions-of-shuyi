@@ -125,21 +125,7 @@ A unit falls when its HP reaches 0.
   select restart battle". So to switch during a battle, restart it: that
   goes back to Preparations. In a battle the Options screen shows the mode
   and says where it can be changed.
-- **A scripted death: Hollis, Chapter 8** (Nick, 0069, 2026-10-22: "Fights,
-  then dies in the scene (Recommended)"). Example: Hollis is in the army at
-  Saltmere Docks. He's deployed and fights the hold like anyone. When the
-  battle is won, the closing scene has him hold the gangway, and he dies.
-  That happens **in Classic and Casual alike**, whatever he did in the
-  battle, and he leaves the roster for good (his loadout goes to the stock,
-  as for a Classic death).
-  - If he **falls during this battle**: in Casual he retreats as usual and
-    still dies in the closing scene; in Classic he is dead, and the closing
-    scene is the other version, where the lead tells Dace instead
-    (`docs/story/outline.md`, Chapter 8).
-  - If he **died earlier** (Classic), the same "lead tells Dace" version
-    plays.
-  - *Claude's starting rule:* while Hollis is in the army he is always
-    deployed in Chapter 8 (a forced slot, like the lead).
+- The story part of this decision is in the private assets repository, `story/design/death-and-difficulty.md`.
 - The mode is stored in the campaign, so it's part of every save.
 - Enemy, ally and neutral units that fall are always removed; the mode only
   affects the player's own units.

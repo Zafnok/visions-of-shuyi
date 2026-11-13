@@ -142,7 +142,7 @@ impl SceneRules<Stage> for Rules<'_> {
             format!(
                 "the lead's line is {cells} characters; the limit is {MAX_LEAD_LINE_LEN}: \
                  the lead speaks in short, neutral lines and otherwise through reply \
-                 choices (docs/design/setting-and-tone.md, \"Rules for writing the lead\")"
+                 choices (assets-private/story/design/setting-and-tone.md, \"Rules for writing the lead\")"
             )
         })
     }

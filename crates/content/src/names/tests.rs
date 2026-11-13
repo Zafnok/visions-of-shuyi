@@ -19,19 +19,25 @@ fn embedded_table_loads() {
     assert!(crown.is_some_and(|n| n.starts_with("the ")), "{crown:?}");
 }
 
-/// The ids in the first column of every table of `docs/story/names.md`.
-fn registry_ids() -> std::collections::BTreeSet<String> {
-    include_str!("../../../../docs/story/names.md")
-        .lines()
-        .filter_map(|l| l.strip_prefix("| `"))
-        .filter_map(|l| l.split_once('`'))
-        .map(|(id, _)| id.to_owned())
-        .collect()
+/// The ids in the first column of every table of the names registry, the
+/// private repository's `story/names.md` (ticket 0159); `None` without it.
+fn registry_ids() -> Option<std::collections::BTreeSet<String>> {
+    let path = crate::bundle::story_doc("names.md")?;
+    let text = std::fs::read_to_string(&path).unwrap_or_default();
+    Some(
+        text.lines()
+            .filter_map(|l| l.strip_prefix("| `"))
+            .filter_map(|l| l.split_once('`'))
+            .map(|(id, _)| id.to_owned())
+            .collect(),
+    )
 }
 
 #[test]
 fn table_holds_every_registered_id() {
-    let ids = registry_ids();
+    let Some(ids) = registry_ids() else {
+        return;
+    };
     assert!(ids.len() > 60, "parsed only {} ids", ids.len());
     let names = load().unwrap_or_default();
     let missing: Vec<&String> = ids.iter().filter(|id| names.get(id).is_none()).collect();
@@ -46,7 +52,7 @@ fn table_holds_every_registered_id() {
     assert_eq!(
         extra,
         Vec::<&String>::new(),
-        "ids not in docs/story/names.md"
+        "ids not in the names registry (story/names.md)"
     );
 }
 

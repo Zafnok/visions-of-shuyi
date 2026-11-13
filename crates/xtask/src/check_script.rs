@@ -1,6 +1,6 @@
 //! `cargo xtask check-script [file]`: the checks a dialogue script goes
 //! through (`assets/dialogue/README.md`), without building the tests, for
-//! whoever writes scripts (ticket 0723, `docs/story/writers-guide.md`).
+//! whoever writes scripts (ticket 0723, `assets-private/story/writers-guide.md`).
 //! Reads the scripts as they are on disk; prints one `file:line: message`
 //! per problem, then a count. No rule lives here: every message is
 //! `trpg_content`'s.
@@ -367,10 +367,13 @@ mod tests {
         assert_eq!(read_script(&draft.0).unwrap(), "\n\n\n\n\n\n> Hi.\n\n");
     }
 
-    /// Every example of the writer's guide passes the checker (0723).
+    /// Every example of the writer's guide passes the checker (0723). The
+    /// guide is in the private repository's `story/` (ticket 0159).
     #[test]
     fn the_writers_guide_examples_have_no_problems() {
-        let guide = root().join("docs/story/writers-guide.md");
+        let Some(guide) = trpg_content::bundle::story_doc("writers-guide.md") else {
+            return;
+        };
         let (scripts, only) = scripts(&root(), Some(&guide)).unwrap();
         let text = &scripts.last().unwrap().1;
         let scenes = text.lines().filter(|l| l.starts_with("@scene ")).count();

@@ -1,6 +1,6 @@
 // How a new game starts (ticket 0801; format in chapters/README.md):
 // Chapter 1 with its six, 0 gold and an empty stock
-// (docs/design/chapter-1.md).
+// (assets-private/story/design/chapter-1.md).
 (
     first_chapter: "ch01",
     roster: ["lead", "retainer", "sergeant", "poacher", "keeper", "heretic"],

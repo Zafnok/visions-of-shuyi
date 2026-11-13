@@ -2,15 +2,15 @@
 // stable id. It's the only place a name is written: characters.ron takes a
 // named character's name from here (its id is the name id), and .dlg text
 // writes {n:<id>} (or {N:<id>} for a capital first letter) instead of the
-// name. To rename, change the value here; see docs/story/names.md, "How
+// name. To rename, change the value here; see assets-private/story/names.md, "How
 // renaming works". Loaded by trpg_content::names.
 //
-// Ids: lowercase letters, digits, _ and ., as in docs/story/names.md (every
+// Ids: lowercase letters, digits, _ and ., as in assets-private/story/names.md (every
 // id there must be here). Values: plain ASCII, no { or }, each unique. Keep
 // the leading "the" where the name has one ("the Thornmarch"), so a token
 // reads right mid-sentence.
 {
-    // Characters (docs/story/names.md). The lead's name is the player's
+    // Characters (assets-private/story/names.md). The lead's name is the player's
     // choice: dialogue writes {lead}; this is only the default.
     "lead": "Ellery",
     "retainer": "Hollis Marr",

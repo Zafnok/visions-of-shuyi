@@ -474,7 +474,7 @@ Any unit can wear any accessory.
   pre-filled** (Nick, 0408): the pack starts empty and the player brings
   only what they own, from shops, battles, chests and so on.
 - The cap is **set per battle** in the chapter data (Nick: "scale them to the
-  battle"). Chapter 1's cap comes from `chapter-1.md` (0009); default if a
+  battle"). Chapter 1's cap comes from `assets-private/story/design/chapter-1.md` (0009); default if a
   chapter doesn't say: **6** (*tunable*).
 - A battle without a Preparations screen (e.g. an opening chapter) uses the
   chapter's default loadouts and default pack, given for free. A battle
@@ -628,7 +628,7 @@ yet, nor any ring.
   tile is decided (0037, `terrain.md`, *Building tiles*).
 - **Chests** (*Claude's starting rule*): a player unit on a chest uses `Open`;
   no key needed for now. Contents: gold or an item.
-- Chapter 1 has no shop, village or chest (0009, `chapter-1.md`).
+- Chapter 1 has no shop, village or chest (0009, `assets-private/story/design/chapter-1.md`).
 
 ## Worked examples
 
@@ -719,7 +719,7 @@ Distance 1.
 - **Magic** weapons/tomes, their weight and traits: 0004.
 - **Class weapon kinds, starting/max ranks, armour limits, tags:** 0005.
 - **Pack cap, shops/villages/chests in Chapter 1:** decided in 0009
-  (`chapter-1.md`: cap 3, no shops/villages/chests).
+  (`assets-private/story/design/chapter-1.md`: cap 3, no shops/villages/chests).
 - **Materials and forging** at the blacksmith: later; towns, skirmishes or
   side quests on the world map (`world-structure.md`) are the likely sources.
 - **Enemies destroying villages, chest keys, thief classes:** later chapters.

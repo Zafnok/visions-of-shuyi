@@ -62,7 +62,7 @@ script only.
 - Conversations are **viewed at camp** once unlocked (Nick).
 - **Not now:** hub activities (far future, maybe never) and pair abilities
   (far future). Each is a parked ticket (see below).
-- **No romance** (from `setting-and-tone.md`, 0007). Supports are friendship,
+- **No romance** (from `assets-private/story/design/setting-and-tone.md`, 0007). Supports are friendship,
   rivalry, mentorship and family. There are no S ranks, no marriage and no
   shipping. A couple that already exists before the story starts may appear,
   but it is never developed into a romance on screen.
@@ -77,7 +77,7 @@ script only.
   story pipeline (`story-writing` skill, character sheets in 0701 and later
   content tickets), not here.
 - **The lead has supports too**: lead ↔ companion pairs are normal pairs. In
-  them the lead follows the Persona-style lead rules in `setting-and-tone.md`:
+  them the lead follows the Persona-style lead rules in `assets-private/story/design/setting-and-tone.md`:
   few lines, and at most one reply choice per conversation (*tunable*). The
   reply changes a line or two of reaction, never the rank or the points.
 - The same pair can't have two rank tracks. Support is symmetric: A↔B is one
@@ -133,7 +133,7 @@ A pair gains points only when **both units are deployed and on the map**
   action. Nothing counts for an ally that isn't in a support pair with the
   caster.
 - **Rough pace, counted in battles, not chapters.** A chapter is a story
-  beat, not one battle (`chapter-1.md`). Chapters 1–2 (maybe 3) are a single
+  beat, not one battle (`assets-private/story/design/chapter-1.md`). Chapters 1–2 (maybe 3) are a single
   battle each. After that the game opens up, with many small skirmishes
   between the bigger story battles. Estimates for a pair that fights side by
   side and ends most turns adjacent:

@@ -55,7 +55,7 @@ pub const MAX_OPTION_LEN: usize = 60;
 /// scene rejoins quickly.
 pub const MAX_REACTION_TEXTS: usize = 4;
 /// Longest line the lead may speak outside reply choices
-/// (`docs/design/setting-and-tone.md`, "Rules for writing the lead").
+/// (`assets-private/story/design/setting-and-tone.md`, "Rules for writing the lead").
 pub const MAX_LEAD_LINE_LEN: usize = 40;
 /// The expressions every portrait has: the ones a script may use for a
 /// character without a portrait. A character with one may use exactly its

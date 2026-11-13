@@ -1,5 +1,5 @@
 // Chapter 4: The Hound's Country (ticket 0850). Beat sheet:
-// docs/story/chapters/ch04.md; script: dialogue/ch04.dlg. The first
+// assets-private/story/chapters/ch04.md; script: dialogue/ch04.dlg. The first
 // world-map chapter (world-structure.md): the valley road plays as it
 // begins, then the Act 1 map shows; the rise and the gate play when the
 // army arrives at Veyne Hall (worldmaps/act1.ron, `veyne_hall`), then its

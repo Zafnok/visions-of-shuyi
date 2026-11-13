@@ -54,7 +54,7 @@ fn the_games_chapters_and_new_game_load() {
         return;
     }
     let c = content();
-    // New Game starts Chapter 1 with its six (chapter-1.md).
+    // New Game starts Chapter 1 with its six (assets-private/story/design/chapter-1.md).
     let ch01 = &c.chapters["ch01"];
     assert_eq!(ch01.battle, "ch01");
     assert_eq!(ch01.intro_scenes, ["ch01_intro", "ch01_prebattle"]);

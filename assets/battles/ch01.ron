@@ -1,4 +1,4 @@
-// Chapter 1's battle (ticket 0803; rules in docs/design/chapter-1.md):
+// Chapter 1's battle (ticket 0803; rules in assets-private/story/design/chapter-1.md):
 // defeat Red Harl; the rest of the Red Company runs when he falls (0845).
 // No Preparations, a pack of 3 Potions, 1000 gold for the win. Every number here is *tunable* and judged in the playtest
 // (0804); the difficulty sim that set the levels is

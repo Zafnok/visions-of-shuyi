@@ -1,6 +1,6 @@
 //! The names table (`assets/data/names.ron`, ticket 0709): every display
 //! name of the story (characters, places, factions, terms) by stable id
-//! (`docs/story/names.md`), so a rename is one line. Named characters take
+//! (`assets-private/story/names.md`), so a rename is one line. Named characters take
 //! their name from it, and dialogue text refers to a name with a token,
 //! `{n:<id>}` (or `{N:<id>}` for a capital first letter), filled in by
 //! [`Names::substitute`] when the scene is shown.

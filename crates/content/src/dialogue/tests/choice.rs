@@ -293,7 +293,7 @@ fn the_lead_speaks_in_short_lines() {
     assert_eq!(errors(&scene(&body("Let's move."))), Vec::<String>::new());
     let message = "the lead's line is 41 characters; the limit is 40: the lead speaks in short, \
                    neutral lines and otherwise through reply choices \
-                   (docs/design/setting-and-tone.md, \"Rules for writing the lead\")";
+                   (assets-private/story/design/setting-and-tone.md, \"Rules for writing the lead\")";
     assert_eq!(
         errors(&scene(&body(&format!("{at_limit}a")))),
         [format!("t.dlg:6: {message}")]

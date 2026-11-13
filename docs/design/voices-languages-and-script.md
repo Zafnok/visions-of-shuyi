@@ -68,7 +68,7 @@ rule 2). It covers voices only; the rule for pictures is unchanged.
 ## Voices
 
 Decided: 2026-11-01. Source: ticket 0043, by ear, on two listening pages
-(`assets-src/audio/voice-audition.html`, `assets-src/audio/voice-cast.html`).
+(`assets-private/story/audio/voice-audition.html`, `assets-src/audio/voice-cast.html`).
 
 ### Nick's words
 
@@ -221,25 +221,7 @@ of grief" for sadness, and "Yes, use them".
 
 ### The cast
 
-Chapter 1's speakers and Vix. A character from a later chapter gets a round of
-their own when they are written (0077). "Asked for" is the description the
-voice was designed from, shortened; the voices themselves are in
-`assets-src/audio/voice-refs/`.
-
-| Character | Id | Pick | Reader | Asked for |
-| --------- | -- | ---- | ------ | --------- |
-| Hollis | `retainer` | A | Chatterbox | Man of 56, old soldier; low, dry, weathered, gruff |
-| The lead, man | `lead_m` | A | Qwen3-TTS | Man in his early 20s; clear, even, quiet, calm |
-| The lead, woman | `lead_f` | B | Qwen3-TTS | Woman of 22, in exile; low, dry, quiet, slightly wry |
-| Harl | `red_captain` | C | Qwen3-TTS | Big man of 46, rough English accent; loud, booming, gravelly |
-| Tamsin | `sergeant` | A | Qwen3-TTS | Woman of 27, cavalry sergeant; fast, loud, bossy, hot-tempered |
-| Rue | `heretic` | F | Qwen3-TTS | Woman of 19, medium pitch; sharp, angry, quick, a little rough |
-| Maud | `keeper` | A | Qwen3-TTS | Woman of 27, healer; anxious, warm, kind |
-| Aske | `poacher` | C | Chatterbox | Girl of 17, Scottish highland accent; clear, hard, serious |
-| Dace | `rival` | D | Qwen3-TTS | Man of 22, tenor; warm, quick, easy charm |
-| The messenger | `messenger` | A | Qwen3-TTS | Young man, a servant; plain, nervous, respectful |
-| The narrator | `>` | E | Qwen3-TTS | Man of about 50; deep, gravelly, steady, unhurried |
-| Vix | `guide` | K | Chatterbox | Woman in her late 20s; smooth, velvety, bright, playfully teasing |
+The story part of this decision is in the private assets repository, `story/design/voices-languages-and-script.md`.
 
 ### The agent's starting rules
 
@@ -252,7 +234,7 @@ Nick can veto any of these.
 - A voice speaks the language of the text. There is no separate voice language
   setting.
 - Vix's sexy, upbeat direction is how she sounds. Her wording stays by her
-  character sheet (`docs/story/characters/guide.md`): short, dry, plain.
+  character sheet (`assets-private/story/characters/guide.md`): short, dry, plain.
 
 ### What the tools research found
 
