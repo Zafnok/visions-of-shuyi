@@ -35,15 +35,16 @@ name in kanji.
 **Either order with 0158:** 0153 picked moving the story and the game's
 content into the private assets repository, and 0158 takes the full game
 off GitHub Pages and public GitHub Releases: Nick's full web build goes
-to a restricted itch.io project. If 0158 is done, reuse its butler step
-and `BUTLER_API_KEY`, and publish the release packages (web included)
-here; if not, this ticket sets butler up and 0158 reuses it.
+to a restricted itch.io project, and `release.yml`'s packages, built with
+the content, stop being GitHub artifacts. If 0158 is done, its package
+jobs build and check each package and upload nothing: add the push to the
+store's channels in each of them. If not, do the same once 0158 lands.
 
-**Either order with 0915:** 0915 puts the Chapter 1 demo on its own
-password-protected itch.io page with butler and `BUTLER_API_KEY`. If it
-is done, reuse its butler install step and secret, and keep the demo's
-project separate from the full game's; if not, this ticket sets them up
-and 0915 reuses them.
+**From 0915 (done):** reuse `BUTLER_API_KEY` and
+`.github/actions/butler` (butler pinned and checked by its SHA-256, Linux
+or Windows), and push from the job that builds the package, as
+`.github/workflows/demo.yml` does. The demo's two projects stay separate
+from the full game's.
 
 ## Nick input
 
@@ -52,9 +53,8 @@ and 0915 reuses them.
 2. Title: working title; **Kind of project: HTML** (lets the web build play in
    the page; downloads can still be attached). Visibility: **Draft** or
    **Restricted** until ready.
-3. **Account settings → API keys → Generate new API key.**
-4. GitHub repo → **Settings → Secrets and variables → Actions** → new secret
-   `BUTLER_API_KEY` with that key.
+3. (Done in 0915: the secret `BUTLER_API_KEY` is already in the
+   repository; skip.)
 5. Tell the session the project URL (e.g. `https://<user>.itch.io/<game>`).
 6. After the first push: on the project's edit page, tick **"This file will be
    played in the browser"** for the `web` upload, set the embed size to
@@ -62,13 +62,16 @@ and 0915 reuses them.
 
 ## Implementation steps
 
-1. Add a job to `release.yml` (after packaging): install butler (official
-   download from `broth.itch.zone`, verify it runs), then
-   `butler push <file-or-dir> <user>/<game>:<channel> --userversion <version>`
-   for channels `windows`, `linux`, `mac`, `web` (the web folder, not the zip).
-2. `BUTLER_API_KEY` passed via env; skip the job when the secret is absent.
-3. Document the itch project settings above in `docs/RELEASING.md` (create it;
-   move the release steps from README there and link).
+1. In each of `release.yml`'s package jobs (the package never leaves its
+   job, ADR-0117 §4): `./.github/actions/butler`, then
+   `butler push <folder> <user>/<game>:<channel> --userversion <version>`
+   for channels `windows`, `linux`, `mac`, `web` (the web folder, not the
+   zip). The action knows Linux and Windows; add macOS's build (its
+   `darwin-amd64` zip and SHA-256) for the `mac` job, and the Linux job runs
+   in the sniper container (check `unzip` and `curl` are there).
+2. `BUTLER_API_KEY` passed via env; without it the push steps say so and are skipped, green, as `demo.yml` does.
+3. Document the itch project settings above in `docs/releasing.md` (beside
+   "The demo's itch.io pages").
 
 ## Acceptance criteria
 
