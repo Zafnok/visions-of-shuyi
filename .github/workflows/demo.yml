@@ -1,6 +1,6 @@
 name: Demo
 
-# The Chapter 1 web demo (ticket 0914, ADR-0119): `cargo shuyi export web
+# The Chapter 1 demo (ticket 0914, ADR-0119): `cargo shuyi export <target>
 # --release --edition demo`, built from what `crates/content/demo/bundle.txt`
 # keeps of the game's files. The export reads its package back against the
 # edition's `disclosure` part in `shuyi.ron`: a later chapter's scene id, map
@@ -8,14 +8,21 @@ name: Demo
 # export with SH3012 (engine 3081).
 #
 # - On a pull request that changes the game's files, their embedding or
-#   `shuyi.ron`: the export without the bought art, so a change that pulls
+#   `shuyi.ron`: the web export without the bought art, so a change that pulls
 #   Chapter 2 into a file the demo keeps fails on that pull request, not on
 #   the day of a demo. Nothing is uploaded.
-# - By hand (`workflow_dispatch`): the export with the bought art and its
-#   gate, the package that ships. Nothing is uploaded either way: the demo
-#   embeds the game's content from the private repository, and a public
-#   repository's artifacts can be downloaded by anyone (ADR-0117 §4).
-#   Ticket 0915 publishes the demo from a build of its own.
+# - By hand (`workflow_dispatch`): the web and Windows exports with the
+#   bought art and their gate, the packages that ship, then (ticket 0915)
+#   each job pushes its package with butler to its restricted itch.io
+#   project (`docs/releasing.md`): the web to ITCH_DEMO_PROJECT (a password
+#   lets the writers applying play it in the browser), Windows to
+#   ITCH_DEMO_DESKTOP_PROJECT (a download key per applicant). Both are
+#   repository variables naming `<user>/<project>`. Without BUTLER_API_KEY or
+#   the job's variable, the job says so and stops after the export, green.
+#   Nothing is uploaded to GitHub either way: the demo embeds the game's
+#   content from the private repository, and a public repository's artifacts
+#   can be downloaded by anyone (ADR-0117 §4), hence one job from the build
+#   to itch.io.
 #
 # Like release.yml, no rust-cache: the demo is a release build that ships,
 # and its builds are rare (zizmor's cache-poisoning finding).
@@ -28,6 +35,11 @@ on:
       - 'shuyi.ron'
       - '.github/workflows/demo.yml'
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Push the demo to its itch.io project after the export.
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -41,11 +53,17 @@ env:
 
 jobs:
   export:
-    name: export (demo, web)
-    runs-on: ubuntu-latest
+    name: export (demo, ${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["web","windows"]' || '["web"]') }}
+    runs-on: ${{ matrix.target == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
     defaults:
       run:
         shell: bash
+    env:
+      TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -61,6 +79,14 @@ jobs:
           art: ${{ github.event_name == 'workflow_dispatch' }}
           required: "true"
       - run: rustup toolchain install --no-self-update
+      # As release.yml: .cargo/config.toml links the GNU target with MSYS2's
+      # mingw-w64 GCC, whose binutils give `objcopy` and `windres`.
+      - name: Set up the Windows GNU target
+        if: matrix.target == 'windows'
+        run: |
+          /c/msys64/usr/bin/pacman.exe -Sy --noconfirm --needed mingw-w64-x86_64-gcc
+          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
+          rustup target add x86_64-pc-windows-gnu
       # The crates' licenses, which shuyi.ron ships beside the program, as
       # release.yml's `licenses` job makes them.
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
@@ -75,11 +101,47 @@ jobs:
       - name: Export
         env:
           WITHOUT_ART: ${{ steps.private.outputs.export-flag }}
-        run: cargo shuyi export web --release --edition demo $WITHOUT_ART
+        run: cargo shuyi export "$TARGET" --release --edition demo $WITHOUT_ART
       # The reports name the edition and its content root (engine 3082).
       - name: Check the reports
         run: |
           set -euo pipefail
-          folder=dist/export/demo/web
+          folder="dist/export/demo/$TARGET"
           grep -q '"edition": *"demo"' "$folder/export-report.json"
           grep -q '"content_root": *"crates/content/demo"' "$folder/exposure-report.json"
+      # The upload (ticket 0915): only a by-hand run with the bought art.
+      - name: Can it publish?
+        id: itch
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          HAS_KEY: ${{ secrets.BUTLER_API_KEY != '' }}
+          PROJECT: ${{ matrix.target == 'windows' && vars.ITCH_DEMO_DESKTOP_PROJECT || vars.ITCH_DEMO_PROJECT }}
+        run: |
+          if [ "$HAS_KEY" != "true" ] || [ -z "$PROJECT" ]; then
+            echo "::notice::No BUTLER_API_KEY secret or itch.io project variable for $TARGET: the demo was built and checked, not published (docs/releasing.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - id: butler
+        if: steps.itch.outputs.ready == 'true'
+        uses: ./.github/actions/butler
+      - name: Push to itch.io
+        if: steps.itch.outputs.ready == 'true'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          PROJECT: ${{ matrix.target == 'windows' && vars.ITCH_DEMO_DESKTOP_PROJECT || vars.ITCH_DEMO_PROJECT }}
+          SHA: ${{ github.sha }}
+          BUTLER: ${{ steps.butler.outputs.butler }}
+        run: |
+          set -euo pipefail
+          out="dist/export/demo/$TARGET"
+          folder=$(jq -r .folder "$out/export-report.json" | tr -d '\r')
+          case "$TARGET" in
+            web) test -f "$out/$folder/index.html" ;;
+            windows) test -f "$out/$folder/visions-of-shuyi.exe" ;;
+          esac
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "trpg-app") | .version' | tr -d '\r')
+          "$BUTLER" push "$out/$folder" "$PROJECT:$TARGET" --userversion "$version-demo+${SHA:0:7}"
+          "$BUTLER" status "$PROJECT:$TARGET"

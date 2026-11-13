@@ -5,7 +5,7 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: in-progress
 blocked_by: ["0914"]
 nick_input: setup
 completed:

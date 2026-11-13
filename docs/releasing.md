@@ -71,8 +71,48 @@ cargo shuyi export web --release --edition demo
 ```
 
 The package is in `dist/export/demo/web/`. **Actions → Demo → Run workflow**
-builds it with the bought art and checks it, and uploads nothing: the demo
-embeds the game's content from the private repository, and a public
-repository's artifacts are anyone's (ADR-0117 §4). Every pull request that changes `assets/`, `crates/content/` or `shuyi.ron`
+builds it with the bought art, checks it, and pushes it to the demo's itch.io
+page (below). It uploads nothing to GitHub: the demo embeds the game's content
+from the private repository, and a public repository's artifacts are anyone's
+(ADR-0117 §4). Every pull request that changes `assets/`, `crates/content/` or `shuyi.ron`
 exports it without the art, so a later chapter that reaches a file the demo
 keeps fails there.
+
+### The demo's itch.io pages
+
+The demo has two itch.io projects of its own (ticket 0915), kept apart from the
+full game's (0901), both **Restricted**, so only the writers applying (0766)
+can open them:
+
+- **The web demo** (`ITCH_DEMO_PROJECT`): played in the browser, behind one
+  **password**. itch.io's download keys can't open it: a key unlocks
+  downloads, and a browser-only page has none.
+- **The Windows demo** (`ITCH_DEMO_DESKTOP_PROJECT`): a download, with **no
+  password**, opened only by a **download key** per applicant. It is its own
+  project because anyone with the web demo's password would otherwise see the
+  download, and a key would no longer say whose link leaked.
+
+Both variables are repository variables naming `<user>/<project>`; the
+upload key is the secret `BUTLER_API_KEY`.
+
+- **Push them:** **Actions → Demo → Run workflow** on `main` (leave *Push the
+  demo to its itch.io project* ticked). One job per target builds the demo,
+  checks it against its disclosure list, installs butler
+  (`.github/actions/butler`, a pinned version checked by its SHA-256) and runs
+  `butler push <package> <user>/<project>:<web|windows>`, with the game's
+  version and the commit as the upload's version. A job without the secret or
+  its variable builds and checks its demo, says it didn't publish, and stays
+  green.
+- **Once, after the first push:** on the web project's **Edit game** page,
+  tick **This file will be played in the browser** for the `web` upload, set
+  the embed size to 1600×1024 (or **Click to launch in fullscreen**),
+  **Save**. On the Windows project's, tick **Windows** for the `windows`
+  upload, **Save**.
+- **Change the web demo's password:** **Edit game → Visibility & access →
+  Restricted → Password**, type the new one, **Save**. The old one stops
+  working at once; send the new one to the applicants still in the running.
+- **A key for an applicant:** on the Windows project, **Distribute → Download
+  keys → Generate**, one key, the applicant's handle (the packet's mark) as
+  its note; copy the key's link into their packet. **Turn one off:** the same
+  list, the key's **Revoke**. A leaked link names its key, and the key's
+  note names the applicant.

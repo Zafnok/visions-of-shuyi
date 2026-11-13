@@ -152,7 +152,11 @@ question at a time, options plus "describe your own"):
 1. Read the ad draft and post it on r/INAT (and anywhere else he picks)
    from his account.
 2. For each applicant, run the packet command the session gives him (or
-   ask a session to), and send the packet.
+   ask a session to), and send the packet. The packet carries the web
+   demo's link and password, and the link of a download key of its own for
+   the Windows demo, made on that itch.io project with the applicant's
+   handle as its note (`docs/releasing.md`, "The demo's itch.io pages",
+   ticket 0915).
 3. Put each entry that comes back in `dist/trial/entries/<handle>/`
    (never committed), and ask a session to make the comparison page.
 4. Pick, from the page. The session may suggest a second round for two
