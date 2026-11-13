@@ -338,3 +338,19 @@ Nothing for the game: 1 PR (#363), the engine's own ticket skills.
 | #374 | 2066 | A `Behaviour:` line for a change a game sees without a break | adopt → 1254 (engine#2066 is done: it reads the line) |
 
 Nothing for the game: 9 PRs (#366, #364, #365, #330, #288, #357, #370, #375, #368). #366 is the engine's tutorial playground; #364, #365, #368, #370 and #375 are the engine's own ticket lint, examples, gates, CI and Dependabot; #330, #288 and #357 are dependency bumps with no change the game sees.
+
+## 2026-11-13: 234de697 → a434b973 (21 engine PRs), #649
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #378 | 3300 | Desktop and web exports ship a baked pack beside the program when the package has a `packed` feature; `web::Options` and `ExportOutput` gain `pack`; every web build ships `pack-file.js` | fixed: the release package check names `pack-file.js` in the web shell (the game builds neither struct field by field); adopt → 1265 (the game's release builds read its files from a pack instead of embedding them as text) |
+| #386 | 3033 | In-house web saves: the engine's own `storage.js` in place of `quad-storage.js`, and a `localStorage` that throws answers `StorageError::Backend` | fixed: `quad-storage.js`'s rows leave `THIRD_PARTY_ASSETS.md` and `credits.ron`, `sapp_jsutils.js`'s row says what uses it now, and the release package check names `storage.js` and no longer asks `NOTICES.txt` for quad-storage; adopt → 1266 (a browser that refuses storage shows the save error, checked in the browser pane) |
+| #390 | 3312 | A save bundle holds each RON entry as RON over lines; `SAVE_BUNDLE_VERSION` is 2 and a version 1 file is refused | fixed: nothing to change (the game writes and reads bundles only through `SaveBundle`, and its tests build theirs) |
+| #395 | 3213 | A screen can keep a set of voice clips loaded, beside the clips coming next (`Ctx::keep_voices`) | unblocks 0496 (engine#3213 out of its `blocked_by`, its pin steps struck; the `engine-friction: engine#3213` mark is its to replace) |
+| #380 | 3089 | The in-house Windows backend's audio thread runs as a "Pro Audio" task, a frame's sounds start on one sample, and the output counts its dry callbacks | adopt → 1241 (its check of the loops reads the dry callbacks; the game turns the backend on there) |
+| #379 | 2589 | `frame-png --gif`: frames over time as a GIF with an exact palette, never quantized | adopt → 1264 (the README's intro is remade with `--gif`) |
+| #385 | 2811 | `frame-png --preview`: an example's animated card for the engine's website, from its `shuyi.ron` | not for the game: it makes the engine website's Examples cards, and the game is no engine example (its README animation is 1264's) |
+| #391 | 2590 | `shuyi new`'s `private-files` part: a new game's private repository, read by `BasicGame::private` | not for the game: the part is written only by `shuyi new`, and `BasicGame` isn't the game's (its private layer is ADR-0117's) |
+| #393 | 3313 | `shuyi bench`'s web package number leaves out `web.music` and `web.voice`; its table gains a "Whole package" column | adopt → 1249 (this is its engine change: its engine and pin steps struck) |
+
+Nothing for the game: 12 PRs (#381, #383, #382, #384, #387, #389, #388, #392, #396, #394, #397, #398). #389 and #392 hold the tickets of #390 and #395; #387 and #388 are engine tickets only; #381, #383, #384, #396 and #398 are the engine's tutorial, book and playground; #382 is the engine's own flaky-gate ledger; #394 and #397 change the engine's reusable playtest workflow and the template's CI, neither of which the game's CI calls.

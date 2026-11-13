@@ -30,6 +30,14 @@ its root `Cargo.toml`, because CPAL and quad-snd each bring a crate with
 default with quad-snd still selectable. Once it lands, the game gets the
 backend at a pin move rather than carrying the patch itself.
 
+Engine PR #380 (3089), in the pin since the pin move of 2026-11-13,
+fixes a gap in the backend's Windows output (its audio thread now runs
+as a "Pro Audio" task) and starts the sounds one frame asks for on the
+same sample. It also counts the callbacks that found the device buffer
+empty (`Output::dry_callbacks`, `Output::raised_priority`): the check of
+the loops below reads that count, so a gap heard in the game's build is
+known to be the output's or not.
+
 ## Nick input
 
 None. His sign-off on the backend's sound is the engine's, given on
@@ -43,7 +51,8 @@ None. His sign-off on the backend's sound is the engine's, given on
   builds then play through the backend.
 - Check the game's music loops play gaplessly: the title's and a
   battle's tracks, recorded with the engine's sound-parity tools or
-  listened to in a build. Check its sounds, fades and volumes play as
+  listened to in a build, with the output's dry callbacks counted
+  (engine #380) and zero on Windows. Check its sounds, fades and volumes play as
   before.
 - Note in the completion notes any game sound that the voice limit now
   skips, which quad-snd would have stolen a voice for.

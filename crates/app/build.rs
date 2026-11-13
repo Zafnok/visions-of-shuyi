@@ -1,4 +1,4 @@
-//! `quad-storage`/`sapp-jsutils` (web storage, ticket 0207) and the
+//! The engine's `storage.js`/`sapp-jsutils` (web storage, ticket 0207) and the
 //! engine's `gamepad.js` (controllers, ticket 0219), in the web shell
 //! `cargo shuyi web` packages (Shuyi Engine's `crates/cli/web/`, whose README says
 //! why a game's binary sets this; ticket 1117), are miniquad JS plugins:

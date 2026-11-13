@@ -58,8 +58,9 @@ None: no change to what the player hears or sees.
 ## Scope
 
 **In:**
-- An engine change (the `engine-change` skill: an engine ticket and PR
-  first, then this game's PR that moves the pin): for the web, `shuyi
+- ~~An engine change (the `engine-change` skill: an engine ticket and PR
+  first, then this game's PR that moves the pin)~~ (done: engine PR #393,
+  engine ticket 3313, in the pin since the pin move of 2026-11-13): for the web, `shuyi
   bench`'s package number counts what the page loads before the game's
   first frame, which is the zip without the folders `web.music` and
   `web.voice` ship beside the build. Its table shows the whole zip's
@@ -81,10 +82,13 @@ None: no change to what the player hears or sees.
 
 ## Implementation steps
 
-1. Write the engine ticket and change `packages` in `bench.rs` (and its
+1. ~~Write the engine ticket and change `packages` in `bench.rs` (and its
    report) as in Scope, with a test of a web export whose music folder
-   is over the budget and whose loaded-at-start files are under it.
-2. Move the game's pin (`cargo xtask engine-pin`), drop `web/package`
+   is over the budget and whose loaded-at-start files are under it.~~
+   (done by engine PR #393: its package table gains a "Whole package"
+   column)
+2. ~~Move the game's pin (`cargo xtask engine-pin`)~~ (done by the pin
+   move of 2026-11-13), drop `web/package`
    from `KNOWN_OVER`, re-run the `bench` job and record its web package
    row in `docs/targets.md`.
 3. Play the web build in the browser pane: the title song and a later

@@ -78,9 +78,6 @@
         (id: "mq_js_bundle", group: Software, title: "macroquad JS/WASM loader", author: "not-fl3",
          source: "https://github.com/not-fl3/macroquad/blob/5e9b5ca912ac65962c05c0da842a4a70eaae34b9/js/mq_js_bundle.js",
          license: "MIT", hidden: true),
-        (id: "quad_storage_js", group: Software, title: "quad-storage JS plugin", author: "optozorax",
-         source: "https://github.com/optozorax/quad-storage/blob/3760b953aec17d65cc4ca8edfa39c38e7337ec3a/js/quad-storage.js",
-         license: "MIT", hidden: true),
         (id: "sapp_jsutils", group: Software, title: "sapp-jsutils", author: "not-fl3",
          source: "https://github.com/not-fl3/sapp-jsutils", license: "MIT", hidden: true),
         // The table of controller button layouts inside the gilrs crate.
