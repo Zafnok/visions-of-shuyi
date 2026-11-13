@@ -507,6 +507,15 @@ fn save_prompt_declares_its_actions() {
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::SAVE_PROMPT);
 }
 
+/// The demo's "Export save?" (0914) is the save prompt's question by
+/// another name, with its actions.
+#[test]
+fn the_demos_export_question_declares_its_actions() {
+    let screen = SavePromptScreen::export_demo(&crate::screen::tests::ctx());
+    assert_eq!(screen.name(), SavePromptScreen::EXPORT_DEMO_NAME);
+    crate::screens::actions::assert_declares(&screen, crate::screens::actions::SAVE_PROMPT);
+}
+
 #[test]
 fn save_slots_declares_its_actions() {
     let screen = SlotPickerScreen::load(&crate::screen::tests::ctx());

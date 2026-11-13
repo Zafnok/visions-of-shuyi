@@ -28,7 +28,10 @@ pub mod character;
 pub mod cinematic;
 pub mod class;
 pub mod credits;
+#[cfg(feature = "std")]
+pub mod demo_bundle;
 pub mod dialogue;
+pub mod edition;
 mod enums;
 pub mod error;
 pub mod font;

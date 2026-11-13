@@ -1,0 +1,85 @@
+name: Demo
+
+# The Chapter 1 web demo (ticket 0914, ADR-0119): `cargo shuyi export web
+# --release --edition demo`, built from what `crates/content/demo/bundle.txt`
+# keeps of the game's files. The export reads its package back against the
+# edition's `disclosure` part in `shuyi.ron`: a later chapter's scene id, map
+# or character found anywhere in it, the Wasm's text included, refuses the
+# export with SH3012 (engine 3081).
+#
+# - On a pull request that changes the game's files, their embedding or
+#   `shuyi.ron`: the export without the bought art, so a change that pulls
+#   Chapter 2 into a file the demo keeps fails on that pull request, not on
+#   the day of a demo. Nothing is uploaded.
+# - By hand (`workflow_dispatch`): the export with the bought art and its
+#   gate, the package that ships. Nothing is uploaded either way: the demo
+#   embeds the game's content from the private repository, and a public
+#   repository's artifacts can be downloaded by anyone (ADR-0117 §4).
+#   Ticket 0915 publishes the demo from a build of its own.
+#
+# Like release.yml, no rust-cache: the demo is a release build that ships,
+# and its builds are rare (zizmor's cache-poisoning finding).
+
+on:
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'crates/content/**'
+      - 'shuyi.ron'
+      - '.github/workflows/demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  export:
+    name: export (demo, web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The game's content (ADR-0117), which the demo is cut from like
+      # `assets/`, always; the bought art only for the build that is
+      # uploaded, so a pull request checks the demo with the public art.
+      - id: private
+        uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          content: "true"
+          art: ${{ github.event_name == 'workflow_dispatch' }}
+          required: "true"
+      - run: rustup toolchain install --no-self-update
+      # The crates' licenses, which shuyi.ron ships beside the program, as
+      # release.yml's `licenses` job makes them.
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-about
+      - run: |
+          mkdir -p dist/licenses
+          cargo about generate -m crates/app/Cargo.toml about.hbs \
+            -o dist/licenses/THIRD_PARTY_LICENSES.html
+      # The export's own cargo commands don't take --locked.
+      - run: cargo metadata --locked --format-version 1 > /dev/null
+      - name: Export
+        env:
+          WITHOUT_ART: ${{ steps.private.outputs.export-flag }}
+        run: cargo shuyi export web --release --edition demo $WITHOUT_ART
+      # The reports name the edition and its content root (engine 3082).
+      - name: Check the reports
+        run: |
+          set -euo pipefail
+          folder=dist/export/demo/web
+          grep -q '"edition": *"demo"' "$folder/export-report.json"
+          grep -q '"content_root": *"crates/content/demo"' "$folder/exposure-report.json"

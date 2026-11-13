@@ -215,6 +215,10 @@ enum Stage {
     Slots(bool),
     /// After the last chapter.
     ToBeContinued,
+    /// The demo's "Thanks for playing" after Chapter 1 (0914).
+    DemoEnd,
+    /// The demo's "Export save?" after its card.
+    DemoExport,
     /// The world map (1007).
     WorldMap,
 }
@@ -630,6 +634,8 @@ impl FlowScreen {
                 let node = self.world_node.take().unwrap_or_default();
                 self.world_won(ctx, &node);
             }
+            // The demo is over: its end card, never the save prompt.
+            Then::NextChapter if ctx.game.demo => self.demo_end(ctx),
             // The chapter is over: the save prompt, then the next one.
             Then::NextChapter => {
                 self.show(Stage::SavePrompt, Box::new(SavePromptScreen::new(ctx)));
@@ -936,6 +942,12 @@ impl FlowScreen {
                 None => {}
             },
             Stage::ToBeContinued => {}
+            Stage::DemoEnd => self.demo_export_question(ctx),
+            Stage::DemoExport => {
+                if result.and_then(ScreenResult::take) == Some(true) {
+                    self.demo_export(ctx);
+                }
+            }
             Stage::WorldMap => {
                 let battle = result.and_then(ScreenResult::take::<WorldBattle>);
                 if let Some(WorldBattle { mut campaign, node }) = battle {
@@ -1039,5 +1051,6 @@ impl Screen<Shuyi> for FlowScreen {
     }
 }
 
+mod demo;
 #[cfg(test)]
 mod tests;

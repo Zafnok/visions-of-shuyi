@@ -30,6 +30,11 @@ test-fixtures = []
 # too, for the test that plays Chapter 1 against it. Without `std` it is the
 # only bundle. Never on in a PC or web build.
 playdate-bundle = []
+# The Chapter 1 demo's bundle (`bundle::demo_layers`, ticket 0914) beside
+# the whole one, for the test that plays the demo against it. Never on in
+# a build that ships: the demo edition's own build has it as its bundle
+# (the `demo_edition` cfg, which `build.rs` sets).
+demo-bundle = []
 
 [dependencies]
 trpg-core = { path = "../core", default-features = false }

@@ -91,7 +91,12 @@ how applicants get in.
 ## Implementation steps
 
 1. Read 0914's completion notes (the edition's name, the export
-   command, the artifact) and 0901 if done.
+   command) and 0901 if done. **From 0914:** `demo.yml` uploads no
+   artifact (the demo embeds the private repository's content, and a
+   public repository's artifacts are anyone's, ADR-0117 §4), so this
+   workflow builds the demo itself (`cargo shuyi export web --release
+   --edition demo`, the content and the art checked out with the key) and
+   sends the package straight to itch.io.
 2. Ask the question; give Nick the setup steps; wait for "done".
 3. The workflow; run it by hand; open the page in the browser pane
    with the password (or a key Nick gives the session), start New Game,

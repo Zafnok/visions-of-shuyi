@@ -153,6 +153,12 @@ pub struct Shuyi {
     /// starts (New Game asks the player), then the campaign's
     /// ([`crate::flow`]).
     pub lead: LeadProfile,
+    /// Whether this is the Chapter 1 demo (ticket 0914,
+    /// `docs/design/demo.md`): its bundle says so
+    /// ([`trpg_content::bundle::is_demo`]). Chapter 1 then ends on
+    /// "Thanks for playing" and "Export save?", and the title has no Load
+    /// Game.
+    pub demo: bool,
 }
 
 impl Shuyi {
@@ -173,6 +179,7 @@ impl Shuyi {
             tips_enabled: false,
             lessons: Lessons::Off,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
+            demo: trpg_content::bundle::is_demo(),
         }
     }
 

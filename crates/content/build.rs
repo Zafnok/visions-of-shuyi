@@ -26,6 +26,15 @@
 //! beside a PNG taken as it is. Without the feature it is empty.
 //! `playdate_content_files.rs` is the content's the same way, its pictures
 //! in `OUT_DIR/onebit-content/`.
+//!
+//! `demo_files.rs` and `demo_private_files.rs` are the Chapter 1 demo's
+//! (ticket 0914, ADR-0119): `assets/` with the content over it, and
+//! `assets-private/game/`, without
+//! what `demo/bundle.txt` leaves out, cut as it says
+//! (`src/demo_bundle.rs`), the cut copies in `OUT_DIR/demo/`. When an
+//! export of the `demo` edition names `demo/` as `SHUYI_CONTENT`, the
+//! build gets the `demo_edition` cfg and the bundle is those tables
+//! instead of the whole of `assets/` and the content.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -39,6 +48,22 @@ use shuyi_assets::bitmap::convert::png_pixels;
 #[path = "src/playdate_images.rs"]
 #[allow(dead_code)] // the build uses only part of it
 mod playdate_images;
+
+/// The demo's edition file (ticket 0914).
+#[path = "src/edition.rs"]
+mod edition;
+
+/// What the demo embeds and how it is cut (ticket 0914), relative to this
+/// crate.
+#[path = "src/demo_bundle.rs"]
+#[allow(dead_code)] // the build uses only part of it
+mod demo_bundle;
+
+/// The demo edition's content root, relative to this crate (ticket 0914).
+const DEMO: &str = "demo";
+
+/// Its list of what it leaves out and cuts.
+const DEMO_LIST: &str = "demo/bundle.txt";
 
 /// The bought art, relative to this crate (ADR-0040).
 const PRIVATE: &str = "../../assets-private/game";
@@ -74,6 +99,18 @@ fn main() {
     println!("cargo:rerun-if-changed={ASSETS}");
     println!("cargo:rerun-if-changed={TEST}");
     println!("cargo:rerun-if-changed={PLAYDATE_LIST}");
+    println!("cargo:rerun-if-changed={DEMO}");
+    println!("cargo:rerun-if-env-changed=SHUYI_CONTENT");
+    println!("cargo::rustc-check-cfg=cfg(demo_edition)");
+    if let Some(root) = std::env::var_os("SHUYI_CONTENT") {
+        let named = Path::new(&root).canonicalize().ok();
+        assert!(
+            named.is_some() && named == Path::new(DEMO).canonicalize().ok(),
+            "SHUYI_CONTENT is {}, which is no edition's content root this game has:              crates/content/demo is the demo's (shuyi.ron's `editions`)",
+            root.display()
+        );
+        println!("cargo:rustc-cfg=demo_edition");
+    }
     let private = std::env::var_os("CARGO_FEATURE_PRIVATE_ASSETS").is_some();
     if private {
         assert!(
@@ -197,6 +234,66 @@ fn write_file_tables(private: bool, content: bool) {
     }
     paths.push_str("]\n");
     write_out("playdate_left_out.rs", &paths);
+    write_demo(&both, &content_files, private);
+}
+
+/// Writes the demo's tables (ticket 0914): `demo_files.rs` of `assets/`
+/// with the content over it (`files`, both sorted; `content`, those the
+/// content has, sorted, each read from there) and the edition's file,
+/// `demo_private_files.rs` of `assets-private/game/` with `private` (empty
+/// without), each without what `demo/bundle.txt` leaves out, the files it
+/// cuts written cut into `OUT_DIR/demo/` and `OUT_DIR/demo-private/`.
+fn write_demo(files: &[String], content: &[String], private: bool) {
+    let list =
+        std::fs::read_to_string(DEMO_LIST).unwrap_or_else(|e| panic!("reading {DEMO_LIST}: {e}"));
+    let plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
+    plan.left_out(files)
+        .unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
+    let edition = edition::EDITION_FILE.to_owned();
+    let mut kept: Vec<String> = files
+        .iter()
+        .filter(|f| !plan.leaves_out(f))
+        .cloned()
+        .collect();
+    kept.push(edition.clone());
+    kept.sort_unstable();
+    write_out(&format!("demo/{edition}"), edition::DEMO);
+    let source = |path: &String| -> Source {
+        if *path == edition {
+            ("OUT_DIR", format!("/demo/{edition}"))
+        } else if content.binary_search(path).is_ok() {
+            demo_copy(&plan, CONTENT, "demo", path)
+        } else {
+            demo_copy(&plan, ASSETS, "demo", path)
+        }
+    };
+    write_out("demo_files.rs", &table(kept.iter(), source));
+    let mut art = Vec::new();
+    if private {
+        walk(Path::new(PRIVATE), "", &mut art);
+        art.retain(|f| !plan.leaves_out(f));
+        art.sort_unstable();
+    }
+    let source = |path: &String| demo_copy(&plan, PRIVATE, "demo-private", path);
+    write_out("demo_private_files.rs", &table(art.iter(), source));
+}
+
+/// Where the demo's table reads the file at `path` in `folder`: the file,
+/// or its cut copy (`demo_bundle::Plan::rewrite`), written into `OUT_DIR`'s
+/// folder `dir`.
+fn demo_copy(plan: &demo_bundle::Plan, folder: &str, dir: &str, path: &String) -> Source {
+    let Ok(text) = std::fs::read_to_string(Path::new(folder).join(path)) else {
+        return as_is(folder, path);
+    };
+    let shown = folder.trim_start_matches("../../");
+    match plan.rewrite(path, &text) {
+        Ok(Some(cut)) => {
+            write_out(&format!("{dir}/{path}"), &cut);
+            ("OUT_DIR", format!("/{dir}/{path}"))
+        }
+        Ok(None) => as_is(folder, path),
+        Err(e) => panic!("{DEMO_LIST}: {shown}/{e}"),
+    }
 }
 
 /// The file at `path` in `folder`, as it is.
@@ -333,9 +430,13 @@ fn out_dir() -> PathBuf {
     PathBuf::from(std::env::var_os("OUT_DIR").unwrap_or_else(|| panic!("cargo sets OUT_DIR")))
 }
 
-/// Writes `contents` to the file `name` in `OUT_DIR`.
+/// Writes `contents` to the file `name` in `OUT_DIR`, making its folder.
 fn write_out(name: &str, contents: &str) {
     let out = out_dir().join(name);
+    if let Some(folder) = out.parent() {
+        std::fs::create_dir_all(folder)
+            .unwrap_or_else(|e| panic!("making {}: {e}", folder.display()));
+    }
     std::fs::write(&out, contents).unwrap_or_else(|e| panic!("writing {}: {e}", out.display()));
 }
 

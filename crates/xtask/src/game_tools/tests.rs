@@ -685,6 +685,54 @@ fn the_disclosure_list_names_the_music_voices_and_licenses_a_package_ships() {
     }
 }
 
+/// Ticket 0914: the demo edition's packages may hold what the full game's
+/// may on Windows and the web, and nothing the full game's may not; its
+/// content root is the demo's list's folder; and each of its canaries is
+/// in a file of the full game and in no file of the demo's bundle, so it
+/// would find a later chapter that came back and never trips on Chapter 1.
+#[test]
+fn the_demo_edition_holds_the_full_games_files_and_its_canaries_only_the_later_chapters() {
+    use trpg_content::bundle::{self, Bundle};
+    if bundle::skip_without_the_game() {
+        return;
+    }
+    let config = project().config;
+    let full = config.disclosure.unwrap();
+    let demo = &config.editions["demo"];
+    assert!(!demo.default_features);
+    assert_eq!(demo.content.as_deref(), Some("crates/content/demo"));
+    assert!(repo_root().join("crates/content/demo/bundle.txt").is_file());
+    let part = demo.disclosure.clone().unwrap();
+    let mut desktop_and_web = full.allowed_files.clone();
+    desktop_and_web.retain(|f| !f.starts_with("visions-of-shuyi.app/"));
+    assert_eq!(part.allowed_files, desktop_and_web);
+    for path in &full.forbidden_paths {
+        assert!(part.forbidden_paths.contains(path), "{path}");
+    }
+    assert!(part.canaries.len() > 20, "{:?}", part.canaries);
+    let texts = |b: &Bundle| -> Vec<String> {
+        let paths = bundle::story_only(|| b.files_under(""));
+        paths
+            .iter()
+            .filter_map(|p| bundle::story_only(|| b.file(p)))
+            .map(str::to_owned)
+            .collect()
+    };
+    let whole = texts(bundle::install());
+    let demo_files = texts(&Bundle::new(bundle::demo_layers()));
+    for canary in part.canaries.iter().chain(&part.forbidden_paths) {
+        let in_full = whole.iter().any(|t| t.contains(canary.as_str()));
+        if part.canaries.contains(canary) {
+            assert!(
+                in_full,
+                "the canary {canary} is in no file of the full game"
+            );
+        }
+        let leaked = demo_files.iter().any(|t| t.contains(canary.as_str()));
+        assert!(!leaked, "{canary} is in a file of the demo");
+    }
+}
+
 /// Every file under `dir`, at any depth, as `prefix/<path>` with `/`.
 fn files_under(dir: &Path, prefix: &str, out: &mut Vec<String>) {
     for entry in fs::read_dir(dir).unwrap() {

@@ -305,10 +305,14 @@ impl TitleScreen {
     }
 
     /// The menu: `Continue` first if a battle is `suspended`; `Load Game`
-    /// disabled unless a slot is `saved`. Nothing to back out of on the
-    /// title screen.
+    /// disabled unless a slot is `saved`, and not there in the demo, which
+    /// saves to no slot and has no chapter to load past Chapter 1 (0914).
+    /// Nothing to back out of on the title screen.
     fn build(ctx: &Ctx, quick_battle: bool, suspended: bool, saved: bool) -> Menu<Item> {
-        let mut items = vec![Item::NewGame, Item::LoadGame];
+        let mut items = vec![Item::NewGame];
+        if !ctx.game.demo {
+            items.push(Item::LoadGame);
+        }
         if suspended {
             items.insert(0, Item::Continue);
         }

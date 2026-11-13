@@ -8,11 +8,11 @@ use shuyi_ui::input::fit::ScreenActions;
 use shuyi_ui::input::{NAVIGATION, UiAction, ui_actions};
 
 use super::{
-    BattleScreen, CampScreen, ClassChangeScreen, CreditsScreen, DialogueScreen, FamiliarityScreen,
-    GameOverScreen, ImportScreen, KeyBindingsScreen, LayoutPickerScreen, LeadSelectScreen,
-    ModeSelectScreen, OptionsScreen, PreparationsScreen, ProfileScreen, ResultsScreen,
-    SavePromptScreen, SlotPickerScreen, ToBeContinuedScreen, TownScreen, VoicesQuestionScreen,
-    WorldMapScreen,
+    BattleScreen, CampScreen, ClassChangeScreen, CreditsScreen, DemoEndScreen, DialogueScreen,
+    FamiliarityScreen, GameOverScreen, ImportScreen, KeyBindingsScreen, LayoutPickerScreen,
+    LeadSelectScreen, ModeSelectScreen, OptionsScreen, PreparationsScreen, ProfileScreen,
+    ResultsScreen, SavePromptScreen, SlotPickerScreen, ToBeContinuedScreen, TownScreen,
+    VoicesQuestionScreen, WorldMapScreen,
     battle::{guides::GuidesScreen, rewind::RewindScreen, shop::ShopScreen},
 };
 use crate::debug::{
@@ -171,7 +171,7 @@ pub const WORLD_MAP: &[Action] = &[
 /// Every screen the game can show, for `check --target`: the game's by the
 /// table above, the engine's by the widgets they declare themselves with.
 pub fn every_screen() -> Vec<ScreenActions<Action>> {
-    let own: [(&'static str, &[Action]); 28] = [
+    let own: [(&'static str, &[Action]); 30] = [
         (CinematicScreen::NAME, CINEMATIC),
         (PortraitViewerScreen::NAME, PORTRAIT_VIEWER),
         (ScenePreviewScreen::NAME, SCENE_PREVIEW),
@@ -189,11 +189,13 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
         (FamiliarityScreen::NAME, FAMILIARITY),
         (GameOverScreen::NAME, GAME_OVER),
         (ToBeContinuedScreen::NAME, TO_BE_CONTINUED),
+        (DemoEndScreen::NAME, TO_BE_CONTINUED),
         (LeadSelectScreen::NAME, LEAD_SELECT),
         (ModeSelectScreen::NAME, MODE_SELECT),
         (PreparationsScreen::NAME, PREPARATIONS),
         (ResultsScreen::NAME, RESULTS),
         (SavePromptScreen::NAME, SAVE_PROMPT),
+        (SavePromptScreen::EXPORT_DEMO_NAME, SAVE_PROMPT),
         (SlotPickerScreen::NAME, SAVE_SLOTS),
         (ImportScreen::NAME, super::save_import::ACTIONS),
         ("title", TITLE), // check-text: not player text (the screen's name)
@@ -252,7 +254,7 @@ mod tests {
             assert!(found.next().is_none(), "{name} twice");
             screen.actions.clone().unwrap_or_default()
         };
-        assert_eq!(screens.len(), 35);
+        assert_eq!(screens.len(), 37);
         assert_eq!(listed(BattleScreen::NAME), BATTLE);
         assert_eq!(
             listed(ImportScreen::NAME),
