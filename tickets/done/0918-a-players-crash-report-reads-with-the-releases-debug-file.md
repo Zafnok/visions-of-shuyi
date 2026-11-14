@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-14
 ---
 
 # 0918 — A player's crash report reads with the release's debug file
@@ -82,12 +82,12 @@ None. (The engine change is done: engine#2598.)
 
 ## Acceptance criteria
 
-- [ ] A crash report from a stripped release build gives frame offsets,
+- [x] A crash report from a stripped release build gives frame offsets,
       and `addr2line` with that build's `.debug` names the panicking
       function and its file and line (output in the PR).
-- [ ] `docs/releasing.md` has the commands, the "Not yet usable"
+- [x] `docs/releasing.md` has the commands, the "Not yet usable"
       paragraph gone.
-- [ ] All gates in the `run-gates` skill pass, here and in the engine.
+- [x] All gates in the `run-gates` skill pass, here and in the engine.
 
 ## Tests required
 
@@ -106,7 +106,9 @@ None. (The engine change is done: engine#2598.)
   the names it shows today. Engine ticket 2520 (`shuyi crash
   --symbols`) had planned these frames with the `backtrace` crate; it
   now builds on 2598's.
-- **Here:** the pin moves to the engine PR's merge; `docs/releasing.md`
+- **Here:** Nick moved the pin to the engine PR's merge himself
+  (Zafnok/visions-of-shuyi#683, `4ce11a3b`), so this PR has no pin
+  move; `docs/releasing.md`
   "The debug files" has the commands that read a player's report with
   the version's `.debug` (the image base from `objdump -p`, each offset
   minus 1, `addr2line -f -C -i -p`), in place of "Not yet usable".
