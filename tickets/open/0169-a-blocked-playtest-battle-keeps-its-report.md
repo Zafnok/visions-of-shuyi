@@ -5,7 +5,7 @@ type: bug
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: none
 completed:

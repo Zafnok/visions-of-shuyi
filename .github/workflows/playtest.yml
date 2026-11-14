@@ -168,12 +168,17 @@ jobs:
         env:
           BATTLE: ${{ matrix.battle }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
           # An artifact loses the file's mode.
           chmod +x target/release/xtask
           mkdir -p reports
-          target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt"
-          echo "${PIPESTATUS[0]}" > "reports/$BATTLE.status"
+          # A blocked battle exits non-zero. The step keeps going so the
+          # report is uploaded and the next step names the battle (ticket
+          # 0169): `|| status=$?` stops `-e` (the runner's `bash -e` too)
+          # ending the step here, and with pipefail it is xtask's code.
+          status=0
+          target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
+          echo "$status" > "reports/$BATTLE.status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playtest-report-${{ matrix.battle }}
