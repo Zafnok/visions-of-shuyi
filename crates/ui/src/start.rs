@@ -14,6 +14,7 @@ use trpg_core::LeadGender;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::crash::crash_record;
 use crate::game::{self, Game};
+use crate::hot::HotContent;
 use crate::screen::{Ctx, Lessons, Shuyi};
 use crate::screens::TitleScreen;
 
@@ -57,7 +58,7 @@ fn load(setup: Setup, startup: Result<Startup, String>) -> Result<Game, String> 
     ctx.game.tips_enabled = true;
     ctx.game.lessons = Lessons::On;
     let ctx = setup.ctx(ctx);
-    match startup {
+    let game = match startup {
         Startup::Title => {
             let mut game = game::start(ctx);
             // Once, under the menu (`docs/design/crash-reports.md`).
@@ -67,8 +68,10 @@ fn load(setup: Setup, startup: Result<Startup, String>) -> Result<Game, String> 
                     title.show_notice(notice);
                 }
             }
-            Ok(game)
+            game
         }
-        Startup::Scene { id, gender } => game::start_on_scene(ctx, &id, gender),
-    }
+        Startup::Scene { id, gender } => game::start_on_scene(ctx, &id, gender)?,
+    };
+    // Its palettes and scenes reload as their files change (ticket 1209).
+    HotContent::install(game)
 }

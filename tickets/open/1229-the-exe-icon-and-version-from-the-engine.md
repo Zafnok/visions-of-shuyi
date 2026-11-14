@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
-blocked_by: ["engine#3049"]
+blocked_by: ["engine#3049", "0919"]
 nick_input: none
 completed:
 ---

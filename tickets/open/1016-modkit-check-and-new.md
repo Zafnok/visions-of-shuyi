@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["1013", "1014"]
+blocked_by: ["1013", "1014", "0919"]
 nick_input: none
 completed:
 ---

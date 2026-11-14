@@ -39,6 +39,12 @@
     // (ticket 0140). This check reads only a profile's display and input.
     target_profiles: Some("targets"),
 
+    // The folder `cargo shuyi run --watch` names to the game (ticket 1209,
+    // ADR-0124): a debug build then reads `assets/` from disk, and beside it
+    // `assets-test/` and the content (`assets-private/content/`) in place of
+    // their embedded copies, and reloads a changed palette or scene.
+    assets: Some("assets"),
+
     // What `check --target` checks the game against (ticket 0138): the sizes
     // are `ConsoleSpec::PC` and `ConsoleSpec::PLAYDATE`
     // (crates/ui/src/console.rs), with cells 16 px tall.

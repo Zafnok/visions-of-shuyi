@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["0919"]
 nick_input: none
 completed:
 ---

@@ -6,7 +6,7 @@ milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["0107", "0821", "0909"]
+blocked_by: ["0107", "0821", "0909", "0919"]
 nick_input: setup
 completed:
 ---
