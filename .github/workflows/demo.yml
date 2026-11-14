@@ -87,6 +87,11 @@ jobs:
           /c/msys64/usr/bin/pacman.exe -Sy --noconfirm --needed mingw-w64-x86_64-gcc
           echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
           rustup target add x86_64-pc-windows-gnu
+      # As release.yml: a release web export runs wasm-opt and fails without
+      # it (engine ADR-0094, ticket 0916).
+      - name: Set up Binaryen
+        if: matrix.target == 'web'
+        uses: ./.github/actions/binaryen
       # The crates' licenses, which shuyi.ron ships beside the program, as
       # release.yml's `licenses` job makes them.
       - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1

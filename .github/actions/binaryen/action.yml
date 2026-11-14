@@ -1,0 +1,48 @@
+name: Binaryen
+description: >-
+  Installs Binaryen's `wasm-opt` on a Linux runner, into /usr/local/bin so
+  it is on the PATH (where `cargo shuyi export web --release` looks for it,
+  engine ADR-0094; writing GITHUB_PATH is zizmor's github-env finding): the
+  official release from github.com/WebAssembly/binaryen at a pinned
+  version, refused unless its SHA-256 matches the one below (the release's
+  own digest when it was pinned, ticket 0916). The release's programs are
+  linked statically. To move it: pick a release, take the
+  `binaryen-<version>-x86_64-linux.tar.gz` asset's sha256 from
+  `gh api repos/WebAssembly/binaryen/releases/tags/<version>`, change both
+  values. Used by ci.yml's `export` job and the `web` legs of release.yml
+  and demo.yml.
+
+inputs:
+  version:
+    description: Binaryen's release tag.
+    required: false
+    default: "version_133"
+  sha256:
+    description: The SHA-256 of that release's x86_64-linux tarball.
+    required: false
+    default: "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489"
+
+runs:
+  using: composite
+  steps:
+    - name: Install wasm-opt
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        SHA256: ${{ inputs.sha256 }}
+      run: |
+        set -euo pipefail
+        if [ "$RUNNER_OS" != Linux ]; then
+          echo "::error::no Binaryen for $RUNNER_OS here"
+          exit 1
+        fi
+        dir="$RUNNER_TEMP/binaryen"
+        mkdir -p "$dir"
+        cd "$dir"
+        curl --proto '=https' --tlsv1.2 -sSfL -o binaryen.tar.gz \
+          "https://github.com/WebAssembly/binaryen/releases/download/$VERSION/binaryen-$VERSION-x86_64-linux.tar.gz"
+        echo "$SHA256  binaryen.tar.gz" | sha256sum --check --strict
+        tar xzf binaryen.tar.gz "binaryen-$VERSION/bin/wasm-opt"
+        sudo install -m 755 "binaryen-$VERSION/bin/wasm-opt" /usr/local/bin/wasm-opt
+        rm -rf binaryen.tar.gz "binaryen-$VERSION"
+        wasm-opt --version
