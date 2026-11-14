@@ -689,7 +689,7 @@ fn markers_are_found_by_line_and_in_a_diff_s_added_code() {
         marker_lines(source),
         [(2, "2255".to_owned()), (4, "2540".to_owned())]
     );
-    let diff = "diff --git a/crates/ui/src/a.rs b/crates/ui/src/a.rs\n--- a/crates/ui/src/a.rs\n+++ b/crates/ui/src/a.rs\n@@ -1 +1,2 @@\n // engine-friction: engine#1111\n+// engine-friction: engine#2255\n-// engine-friction: engine#3333\n+++ b/crates/engine-watch/src/tests.rs\n+// engine-friction: engine#4444\n+++ b/docs/x.md\n+// engine-friction: engine#5555\n+++ b/crates/app/src/b.rs\n+    // engine-friction: engine#2255 again\n+    // engine-friction: engine#6666\n";
+    let diff = "diff --git a/crates/ui/src/a.rs b/crates/ui/src/a.rs\n--- a/crates/ui/src/a.rs\n+++ b/crates/ui/src/a.rs\n@@ -1 +1,2 @@\n // engine-friction: engine#1111\n+// engine-friction: engine#2255\n-// engine-friction: engine#3333\n+++ b/crates/engine-watch/src/tests.rs\n+// engine-friction: engine#4444\n+++ b/docs/x.md\n+// engine-friction: engine#5555\n+++ b/crates/ui/README.md\n+// engine-friction: engine#7777\n+++ b/crates/app/src/b.rs\n+    // engine-friction: engine#2255 again\n+    // engine-friction: engine#6666\n";
     assert_eq!(added_markers(diff), ["2255", "6666"]);
 }
 

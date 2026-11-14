@@ -398,6 +398,10 @@ mod tests {
         let section = parse(text).unwrap().remove(0);
         assert_eq!(row_prs(&section), [378, 386]);
         assert_eq!(section.rows[1].ticket, "3033");
+        // A row of two cells has no ticket cell: its second is the decision.
+        let short = parse("## 2026-11-13: 234de697 → a434b973\n| #90 | adopt → 1191 |\n").unwrap();
+        assert_eq!(short[0].rows[0].ticket, "");
+        assert_eq!(short[0].rows[0].decision, "adopt → 1191");
         let sections = [section];
         assert_eq!(pinned_on(&sections, "3033"), Some("2026-11-13"));
         assert_eq!(pinned_on(&sections, "303"), None);
