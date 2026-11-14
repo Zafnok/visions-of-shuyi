@@ -29,7 +29,7 @@ pub fn check_triggers(
         let mut error = |message: String| {
             errors.push(ContentError::new(battle, format!("trigger {i}: {message}")));
         };
-        if dialogue.get(&t.scene).is_none() {
+        if crate::dialogue::scene_missing(dialogue, &t.scene) {
             error(format!("no dialogue scene \"{}\"", t.scene));
         }
         for c in characters(&t.when) {

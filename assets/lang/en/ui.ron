@@ -903,4 +903,33 @@
     "class_change.hint.choose": "{Confirm} choose",
     "class_change.hint.back": "{Cancel} back",
     "class_change.help.confirming": "{Confirm} yes · {Cancel} no",
+
+    // The writer's script preview, `story-preview` (ticket 0764): the
+    // engine's screen's words, then the game's.
+    "preview.tab.scenes": "Scenes",
+    "preview.tab.switches": "Switches",
+    "preview.tab.lines": "Lines",
+    "preview.tab.problems": "Problems",
+    "preview.switch.here": "Here",
+    "preview.switch.gone": "Gone",
+    "preview.switch.on": "On",
+    "preview.switch.off": "Off",
+    "preview.switch.strip": "Strip: file, line, direction, faces",
+    "preview.lines.go_to": "Go to line",
+    "preview.note.no_scenes": "No scenes. Drag your dialogue folder onto this program, or put the program beside it",
+    "preview.note.no_scene": "Pick a scene first",
+    "preview.note.no_problems": "No problems",
+    "preview.note.finished": "The scene is over: pick a line to play it again",
+    "preview.help": "{Cursor} move · {Confirm} pick · {Cancel} back · {Info} names and faces",
+    "preview.help.go_to": "Type a line number · {Confirm} go · {Cancel} close",
+    "preview.help.playing": "{Cancel} preview",
+    // A switch of who the lead is, and the longest name a player may give.
+    "preview.switch.female_lead": "The lead is female",
+    "preview.switch.long_name": "The lead has a 12-letter name",
+    "preview.note.only_here": "Only the scenes in this folder are checked",
+    "preview.faces": "Faces: {faces}",
+    "preview.names.title": "Names and faces",
+    "preview.names.names": "Names: the token, then the name it shows today (a capital N starts it with a capital)",
+    "preview.names.characters": "Characters: the id, and the expressions of their face",
+    "preview.names.help": "{Cursor} scroll · {Info} or {Cancel} back",
 }

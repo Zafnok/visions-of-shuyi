@@ -58,13 +58,45 @@ fn the_game_opens_on_a_battle_or_a_scene() {
         Ok(Opens::Battle("ch04".into()))
     );
     assert_eq!(opens(&["--scene", "a"]), Ok(Opens::Scene("a".into())));
-    let twice = Err("--battle and --scene: one or the other, once".to_owned());
+    assert_eq!(
+        opens(&["--story-preview", "d"]),
+        Ok(Opens::Preview("d".into()))
+    );
+    let twice = Err("--battle, --scene and --story-preview: one of them, once".to_owned());
     assert_eq!(opens(&["--battle", "a", "--scene", "b"]), twice);
     assert_eq!(opens(&["--battle", "a", "--battle", "b"]), twice);
+    assert_eq!(opens(&["--scene", "a", "--story-preview", "d"]), twice);
     assert_eq!(
         opens(&["--prompt", "--scene", "a"]),
-        Err("--prompt: only at the title, not with --battle or --scene".into())
+        Err("--prompt: only at the title, not with --battle, --scene or --story-preview".into())
     );
+}
+
+/// Ticket 0764: `--preview` opens the writer's script preview on the
+/// `.dlg` files of a folder, and a folder it can't read is refused.
+#[test]
+fn a_session_opens_the_script_preview_on_a_folder() {
+    let dir = std::env::temp_dir().join(format!("xtask-preview-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("a.dlg"), "@scene a\n> Hello.\n@end\n").unwrap();
+    fs::write(dir.join("notes.txt"), "not a script").unwrap();
+    let layer = dlg_folder(&dir).unwrap();
+    let start = Start::of(
+        &parse(&["a.png", "--story-preview", &dir.to_string_lossy()])
+            .unwrap()
+            .game,
+    );
+    let h = harness(&start.unwrap()).unwrap();
+    assert_eq!(h.top_screen(), "story_preview");
+    let files = trpg_content::bundle::Bundle::new(vec![layer]).files_under("");
+    assert_eq!(files, ["a.dlg"]);
+    let refused = dlg_folder(&dir.join("gone")).err().unwrap_or_default();
+    assert!(
+        refused.starts_with("--story-preview: can't read"),
+        "{refused}"
+    );
+    let _ = fs::remove_dir_all(&dir);
 }
 
 /// The battle `--battle` opens is that battle at its start, and an

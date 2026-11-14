@@ -14,6 +14,13 @@ workspace = true
 name = "visions-of-shuyi"
 path = "src/main.rs"
 
+# The writer's script preview (ticket 0764): the scenes of a folder of
+# `.dlg` files, played in the game's dialogue screen. The kit builds it as
+# `shuyi.ron`'s `story-preview` edition, which embeds none of the scripts.
+[[bin]]
+name = "story-preview"
+path = "src/bin/story_preview.rs"
+
 [features]
 # Debug tools (Quick Battle, glyph sampler) in a release build: turned on only
 # by the Pages build, `cargo shuyi web --release --debug-tools` (ADR-0023).

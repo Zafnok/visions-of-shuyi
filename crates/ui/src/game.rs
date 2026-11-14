@@ -55,7 +55,7 @@ pub fn new(ctx: Ctx, root: Box<dyn Screen<Shuyi>>) -> Game {
 
 /// Uses the layout saved in `ctx.storage` (the settings') if none is in
 /// use yet.
-fn use_saved_layout(ctx: &mut Ctx) {
+pub(crate) fn use_saved_layout(ctx: &mut Ctx) {
     if ctx.layout().is_none()
         && let Some(layout) = ctx.saved_layout()
     {

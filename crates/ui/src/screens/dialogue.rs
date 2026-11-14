@@ -242,8 +242,14 @@ impl DialogueScreen {
     /// `scene` full-screen, as it plays for those `present` (ADR-0055),
     /// with `lead`'s name and pronouns and the names from `names`.
     pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
+        Self::playing(DialoguePlayer::new(scene, lead, names, present))
+    }
+
+    /// `player`'s scene full-screen, from the text box it is at: the
+    /// writer's preview starts a scene at any of them (ticket 0764).
+    pub fn playing(player: DialoguePlayer) -> Self {
         let mut screen = Self {
-            player: DialoguePlayer::new(scene, lead, names, present),
+            player,
             overlay: false,
             text: TextBox::new(
                 "",

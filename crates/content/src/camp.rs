@@ -103,7 +103,10 @@ pub fn from_sources<F: AsRef<str>>(
             if e.title.trim().is_empty() {
                 at("the title is empty".into());
             }
-            if refs.dialogue.is_some_and(|d| d.get(&e.scene).is_none()) {
+            if refs
+                .dialogue
+                .is_some_and(|d| crate::dialogue::scene_missing(d, &e.scene))
+            {
                 at(format!("unknown dialogue scene \"{}\"", e.scene));
             }
             if let Some(battles) = refs.battles.filter(|b| !b.is_empty()) {

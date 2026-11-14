@@ -50,6 +50,8 @@ pub mod snapshot;
 #[cfg(feature = "std")]
 pub mod start;
 pub mod storage;
+#[cfg(feature = "std")]
+pub mod story_preview;
 pub mod tips;
 pub mod widgets;
 pub mod words;
