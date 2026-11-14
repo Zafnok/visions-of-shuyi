@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-14
 ---
 
 # 1267 — The release workflow takes its matrix and version check from `export --plan`
@@ -72,12 +72,18 @@ the sums.
 
 ## Acceptance criteria
 
-- [ ] `release.yml` names no runner image digest and no version check of its own.
+- [x] `release.yml` names no runner image digest and no version check of its own.
 - [ ] A dry run builds all four targets with the plan's hosts and the Linux container.
-- [ ] A dry run with `fake_tag: v0.0.0` fails at `check-version` with the plan's message.
+      *Not met, main's break:* the four jobs ran on the plan's runners and
+      Linux in the plan's sniper image; web built, and the desktops fail at
+      Export with `SH1002` since 0764 gave `trpg-app` two programs. Follow-up 1269.
+- [x] A dry run with `fake_tag: v0.0.0` fails at `check-version` with the plan's message.
 - [ ] A dry run's summary shows a `SHA256SUMS` line per package.
-- [ ] `actionlint` and zizmor (the `security` workflow) pass.
-- [ ] All gates in the `run-gates` skill pass.
+      *Partly:* the web job's summary shows its line; the `sums` job waits
+      on all four packages, so it runs once 1269 lands.
+- [x] `actionlint` and zizmor (the `security` workflow) pass.
+- [x] All gates in the `run-gates` skill pass (no Rust changed: the
+      skill-loader check, ticket-lint, check-mentions, check-leaks, typos, pr-size).
 
 ## Tests required
 
@@ -85,5 +91,32 @@ None beyond the gates and the dry runs (links in the PR).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `check-version` runs `cargo shuyi export --plan --json`, with `--tag` on a
+  push (the ref's name) and on a dry run with `fake_tag`; its error and help
+  become the job's `::error::`. It outputs the version, `dry_run` and the
+  matrix: the plan's `build` exports, each with its runner (hosts mapped as
+  the engine's template does), its container and the game's `release_name`.
+  An unknown host or target, or an image without a `@sha256:` digest, fails
+  the job. It also writes the plan to the run's summary.
+- The `package` job takes `runs-on` and `container` from the matrix; the
+  sniper digest is gone. zizmor can't read a matrix from a job's output and
+  flags the container as unpinned: suppressed in place, with the digest
+  check above as the reason.
+- Each package job writes `<release name>.sha256` (`<hash>  <file>`) next to
+  its reports and into its summary; the macOS zip is now named
+  `<package>.zip` instead of `package.zip`, so its line names it. A new
+  `sums` job (dry runs too) joins them into `SHA256SUMS`, shows it and uploads
+  it; `release` attests it with `actions/attest` (`id-token` and
+  `attestations: write` on that job only) and attaches it with the reports.
+- `docs/releasing.md`: the plan's tag check, what `SHA256SUMS` holds, how to
+  check a package and its attestation, and the dry run's `fake_tag`.
+- **Found:** since 0764 (PR #682) every desktop release and demo export on
+  `main` fails with `SH1002` (`trpg-app` has two programs and the `export`
+  part can't name one). Filed **1269**; its dry run also covers this
+  ticket's two unmet criteria.
+- Dry runs: plan + build
+  https://github.com/Zafnok/visions-of-shuyi/actions/runs/43633342376,
+  `fake_tag: v0.0.0`
+  https://github.com/Zafnok/visions-of-shuyi/actions/runs/43633344969.
+- Engine friction: none: no Rust code (workflow ~55 lines added, ~40
+  removed, as estimated).
