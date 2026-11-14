@@ -1,8 +1,9 @@
 name: Release
 
 # Cuts a GitHub Release from a `vX.Y.Z` tag (ADR-0009): `cargo shuyi export`
-# makes Windows, Linux, macOS (universal) and web packages (ticket 0910,
-# ADR-0108) and checks each one. `workflow_dispatch` runs the exact same
+# makes each package `cargo shuyi export --plan` says CI builds (Windows,
+# Linux, macOS universal and web; ticket 0910, ADR-0108, ticket 1267), checks
+# each one and records its SHA-256 in SHA256SUMS. `workflow_dispatch` runs the exact same
 # pipeline as a dry run, without the release, so it can be exercised on a
 # branch before ever pushing a tag.
 #
@@ -36,8 +37,8 @@ on:
     inputs:
       fake_tag:
         description: >-
-          Dry-run only: tag to check against Cargo.toml's version instead of
-          the real workspace version (e.g. a bogus "v0.0.0" to verify
+          Dry-run only: a tag for `cargo shuyi export --plan --tag` to check
+          against the game's version (e.g. a bogus "v0.0.0" to verify
           check-version fails as expected). Leave blank for a normal dry run.
         required: false
         default: ''
@@ -49,47 +50,66 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Establishes the version for this run and whether this is a real release
-  # or a dry run, and fails fast on a tag/Cargo.toml mismatch (implementation
-  # step 2).
+  # The version, whether this is a real release or a dry run, and the
+  # package matrix, all from `cargo shuyi export --plan` (engine ADR-0114):
+  # each target shuyi.ron lists that CI builds, with its runner and image
+  # (the sniper SDK's, at the engine's digest), beside the name the game's
+  # release gives it. With a tag (a push, or a dry run's fake_tag) the plan
+  # fails unless the tag is `v` and the version.
   check-version:
     name: check-version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      dry_run: ${{ steps.version.outputs.dry_run }}
+      version: ${{ steps.plan.outputs.version }}
+      dry_run: ${{ steps.plan.outputs.dry_run }}
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: rustup show
-      - id: version
+      - id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
           FAKE_TAG: ${{ inputs.fake_tag }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          cargo_version=$(cargo metadata --no-deps --format-version 1 \
-            | jq -r '.packages[] | select(.name == "trpg-app") | .version')
-
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          args=(export --plan --json)
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
             dry_run=true
-            tag="${FAKE_TAG:-v$cargo_version}"
+            if [ -n "$FAKE_TAG" ]; then args+=(--tag "$FAKE_TAG"); fi
           else
             dry_run=false
-            tag="${GITHUB_REF#refs/tags/}"
+            args+=(--tag "$TAG")
           fi
-          tag_version="${tag#v}"
-
-          echo "tag=$tag cargo_version=$cargo_version dry_run=$dry_run"
-          if [ "$tag_version" != "$cargo_version" ]; then
-            echo "::error::tag '$tag' (version '$tag_version') does not match" \
-              "workspace.package.version '$cargo_version' in Cargo.toml"
+          if ! cargo shuyi "${args[@]}" > plan.json; then
+            jq -r '"::error::export --plan: \(.error // "failed")", (.help // empty)' plan.json || cat plan.json
             exit 1
           fi
-
-          echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
-          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          # The plan's hosts on GitHub's runners, as the engine's template
+          # maps them; a target the game's release doesn't name yet fails,
+          # and so does an image not pinned by its digest.
+          matrix=$(jq -c '{include: [.result.exports[] | select(.ci == "build") | {
+              target: .exporter,
+              runner: ({windows: "windows-latest", macos: "macos-latest", linux: "ubuntu-latest",
+                        "linux-arm64": "ubuntu-24.04-arm"}[.host] // error("no runner for host \(.host)")),
+              container: (.container // "" | if . == "" or test("@sha256:[0-9a-f]{64}$") then .
+                          else error("the image \(.) is not pinned by its digest") end),
+              release_name: ({windows: "windows-x64", linux: "linux-x64", macos: "macos-universal",
+                              web: "web"}[.exporter] // error("no release name for \(.exporter)"))
+            }]}' plan.json)
+          {
+            echo "version=$(jq -r .result.version plan.json)"
+            echo "dry_run=$dry_run"
+            echo "matrix=$matrix"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### The packages of version $(jq -r .result.version plan.json)"
+            echo
+            jq -r '.result.exports[] | if .ci == "build" then "- `\(.exporter)`: built on \(.host)" else "- `\(.exporter)`: checked only, \(.why)" end' plan.json
+            jq -r '.limits[] | "- \(.)"' plan.json
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # The crates' licenses (ADR-0013), which shuyi.ron ships in every package.
   licenses:
@@ -119,30 +139,19 @@ jobs:
 
   # One job per target: `cargo shuyi export` (shuyi.ron's `export` part, ticket
   # 0910) builds and packages it, then the package is checked and given the
-  # release's name. The Linux package builds in Valve's Steam Linux Runtime 3.0
-  # ("sniper") SDK, whose glibc 2.31 is the floor, at the engine CI's digest.
+  # release's name. Its runner and image are the plan's (check-version): the
+  # Linux package builds in Valve's Steam Linux Runtime 3.0 ("sniper") SDK,
+  # whose glibc 2.31 is the floor.
   package:
     name: package (${{ matrix.target }})
     needs: [check-version, licenses]
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - target: windows
-            os: windows-latest
-            release_name: windows-x64
-          - target: linux
-            os: ubuntu-latest
-            release_name: linux-x64
-            container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20261007.263965@sha256:220d1dc739254155a91c010f959a4f8e7c183e69d18300d6be53a20aee12b02d
-          - target: macos
-            os: macos-latest
-            release_name: macos-universal
-          - target: web
-            os: ubuntu-latest
-            release_name: web
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
+      matrix: ${{ fromJSON(needs.check-version.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    # zizmor can't read a matrix from a job's output: check-version refuses
+    # an image without its digest.
+    container: ${{ matrix.container }} # zizmor: ignore[unpinned-images]
     defaults:
       run:
         shell: bash
@@ -225,10 +234,30 @@ jobs:
       - name: Zip the macOS package
         if: matrix.target == 'macos'
         working-directory: dist/export/macos
-        run: ditto -c -k --keepParent "$(ls -d visions-of-shuyi-*-macos)" package.zip
+        run: |
+          set -euo pipefail
+          package=$(ls -d visions-of-shuyi-*-macos)
+          ditto -c -k --keepParent "$package" "$package.zip"
+      # The package's SHA-256, its line of the release's SHA256SUMS: the
+      # digest leaves the job, the package doesn't.
+      - name: The package's SHA-256
+        env:
+          NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}
+        run: |
+          set -euo pipefail
+          from="dist/export/$TARGET"
+          package=$(jq -r .package "$from/export-report.json" | tr -d '\r')
+          if [ -d "$from/$package" ]; then package="$package.zip"; fi
+          if command -v sha256sum > /dev/null; then sum=(sha256sum); else sum=(shasum -a 256); fi
+          mkdir -p dist/release/kept
+          # One form on every system: `<hash>  <file>` (no binary-mode `*`).
+          (cd "$from" && "${sum[@]}" "$package") | sed 's/^\([0-9a-f]*\) [ *]/\1  /' \
+            > "dist/release/kept/$NAME.sha256"
+          { echo '```'; cat "dist/release/kept/$NAME.sha256"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # What may leave the job: the two reports, which name each file with
-      # its size and hash and never hold the files' text. The package stays
-      # behind (ticket 0158); 0901 pushes the package to itch.io from here.
+      # its size and hash and never hold the files' text, and the package's
+      # SHA-256. The package stays behind (ticket 0158); 0901 pushes the
+      # package to itch.io from here.
       - name: Keep the reports
         env:
           NAME: visions-of-shuyi-${{ needs.check-version.outputs.version }}-${{ matrix.release_name }}
@@ -238,14 +267,14 @@ jobs:
           mkdir -p dist/release/kept
           mv "$from/export-report.json" "dist/release/kept/$NAME.export-report.json"
           mv "$from/exposure-report.json" "dist/release/kept/$NAME.exposure-report.json"
-      # A guard on that: only the reports, and none holds a line of the
-      # game's dialogue, public or private.
+      # A guard on that: only the reports and the SHA-256, and no report
+      # holds a line of the game's dialogue, public or private.
       - name: Check the reports hold no content
         run: |
           set -euo pipefail
-          others=$(find dist/release/kept -type f ! -name '*-report.json')
+          others=$(find dist/release/kept -type f ! -name '*-report.json' ! -name '*.sha256')
           if [ -n "$others" ]; then
-            echo "::error::Only the reports leave the job: $others"
+            echo "::error::Only the reports and the SHA-256 leave the job: $others"
             exit 1
           fi
           roots=assets
@@ -264,21 +293,59 @@ jobs:
           name: kept-${{ matrix.target }}
           path: dist/release/kept/*
 
-  # Only this job needs write access, and only for a real (non-dry-run) run.
-  release:
-    name: release
-    if: needs.check-version.outputs.dry_run == 'false'
-    needs: [check-version, package]
+  # Every package's line together, SHA256SUMS, on a dry run too: in the
+  # run's summary and as an artifact for the release.
+  sums:
+    name: sums
+    needs: package
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: kept-*
           merge-multiple: true
           path: kept
+      - name: SHA256SUMS
+        run: |
+          set -euo pipefail
+          cat kept/*.sha256 | sort -k 2 > SHA256SUMS
+          { echo '### SHA256SUMS'; echo; echo '```'; cat SHA256SUMS; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sha256sums
+          path: SHA256SUMS
+          if-no-files-found: error
+
+  # Only this job needs write access, and only for a real (non-dry-run) run:
+  # the release, and the attestations of where each package was built. They
+  # attest SHA256SUMS's digests, as no package is published (ticket 0158);
+  # `gh attestation verify <package> --repo Zafnok/visions-of-shuyi` checks
+  # one (docs/releasing.md).
+  release:
+    name: release
+    if: needs.check-version.outputs.dry_run == 'false'
+    needs: [check-version, sums]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: kept-*
+          merge-multiple: true
+          path: kept
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sha256sums
+          path: kept
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: kept/SHA256SUMS
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          files: kept/*
+          files: |
+            kept/*-report.json
+            kept/SHA256SUMS
           generate_release_notes: true
