@@ -240,6 +240,23 @@ fn a_fight_plays_on_the_stage_with_both_fighters() {
     assert!(!h.snapshot().contains("battlebacks/"));
 }
 
+/// The debug view's `grid` channel (ticket 1252) outlines nothing while
+/// the stage covers the map, and is still offered; the map's outline is
+/// back once the fight is over.
+#[test]
+fn the_grid_channel_draws_nothing_over_the_stage() {
+    use shuyi_ui::grid::debug::GRID;
+    let mut h = fight(|_| {});
+    h.ctx_mut().debug_view.set(GRID.id(), true);
+    h.wait(FRAME_DT);
+    assert!(stage_of(&h).is_some());
+    assert_eq!(h.game().buffer().gizmos(), []);
+    assert!(h.ctx().debug_view.offered().contains(&GRID));
+    frames_of_fight(&mut h);
+    h.wait(FRAME_DT);
+    assert_ne!(h.game().buffer().gizmos(), []);
+}
+
 #[test]
 fn the_backdrop_is_the_one_of_the_ground_the_defender_stands_on() {
     let c = ctx();

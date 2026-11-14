@@ -3108,6 +3108,20 @@ impl Screen<Shuyi> for BattleScreen {
         SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
+    /// The grid kit's `grid` channel of the debug view (engine ADR-0085):
+    /// the map's layout as its skin laid it out, while the map shows (a
+    /// fight's stage covers it).
+    fn debug_draw(&self, ctx: &Ctx, out: &mut shuyi_ui::debug::gizmo::Gizmos) {
+        use shuyi_ui::grid::debug::{GRID, layout_gizmos};
+        // Asking offers the channel, so the debug menu lists it.
+        if !out.channel_on(GRID) || self.stage_view(ctx).is_some() {
+            return;
+        }
+        let scene = self.scene(ctx);
+        let grid = ctx.game.map_skin.grid(&scene, map_area(ctx));
+        layout_gizmos(&scene, &grid, out);
+    }
+
     fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
