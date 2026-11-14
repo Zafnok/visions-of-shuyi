@@ -25,7 +25,6 @@ use core::cell::Cell as Count;
 use shuyi_assets::bundle::Layer;
 use shuyi_assets::dialogue::{DialogueFile, scripts_from_parsed};
 use shuyi_platform::{Card, Look, Setup, Start};
-use shuyi_ui::GameHooks;
 use shuyi_ui::dialogue::preview::{
     DialogueFiles, DialogueFolder, DialoguePreview, Play, PreviewGame, PreviewScreen, Showing,
 };
@@ -474,11 +473,7 @@ pub fn ctx() -> Result<Ctx, String> {
 pub fn game(mut ctx: Ctx, folder: Layer) -> Result<Game, String> {
     game::use_saved_layout(&mut ctx);
     let root = StoryPreview::new(&ctx);
-    let hooks = GameHooks {
-        debug: None,
-        ..game::hooks()
-    };
-    Game::new(ctx, Box::new(root), hooks)
+    game::new(ctx, Box::new(root))
         .with_debug_screens(false)
         .with_module(DialogueFolder::new(folder))
         .map_err(|e| e.to_string())

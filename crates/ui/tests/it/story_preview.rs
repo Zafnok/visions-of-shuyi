@@ -302,7 +302,10 @@ fn unit_info_opens_the_names_and_the_faces_and_closes_them() {
     assert!(lord.contains("neutral") && lord.contains("sad"), "{lord}");
     assert!(entry("lead").is_some_and(|e| e.contains("neutral")));
     // The cursor scrolls; Cancel closes it, Unit info too.
-    h.act(Action::CursorDown);
+    act(
+        &mut h,
+        &[Action::CursorDown, Action::CursorDown, Action::CursorUp],
+    );
     assert_eq!(game_view(&h).reference.map(|r| r.first), Some(1));
     h.act(Action::Cancel);
     assert!(game_view(&h).reference.is_none());
@@ -311,6 +314,7 @@ fn unit_info_opens_the_names_and_the_faces_and_closes_them() {
     assert_eq!(view(&h).tab, Tab::Scenes, "the keys went to the page");
     let declared = screen(&h).actions().unwrap_or_default();
     assert!(declared.contains(&Action::Info));
+    assert!(h.screen_mut::<StoryPreview>().is_some());
 }
 
 /// The scene `id` of the Chapter 1 script, as written there.
@@ -391,4 +395,18 @@ fn a_line_with_a_stand_in_shows_the_leads_name() {
         ],
     );
     assert_eq!(shown(&h), format!("Let's go, {DEFAULT_NAME}."));
+}
+
+#[test]
+fn two_problems_on_one_line_are_each_listed_once() {
+    // Two unknown tokens: the format's checks and the game's find both;
+    // the game's list leaves out what the format's already have.
+    let broken = TRIAL.replace("The road goes on.", "The {nope} road {nada} goes on.");
+    let (h, _) = preview_of(&[("trial.dlg", &broken)]);
+    let problems: Vec<String> = view(&h).problems.into_iter().map(|p| p.message).collect();
+    let unknown = |token: &str| {
+        let message = format!("unknown token \"{{{token}}}\"");
+        problems.iter().filter(|m| **m == message).count()
+    };
+    assert_eq!((unknown("nope"), unknown("nada")), (1, 1), "{problems:?}");
 }

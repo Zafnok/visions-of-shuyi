@@ -68,10 +68,7 @@ mod tests {
     use super::*;
 
     fn table() -> DialogueTable {
-        let scene = super::super::Scene {
-            id: "here".to_owned(),
-            ..Default::default()
-        };
+        let scene = super::super::Scene::default();
         DialogueTable::new([("here".to_owned(), scene)].into_iter().collect())
     }
 

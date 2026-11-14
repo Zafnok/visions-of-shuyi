@@ -1065,3 +1065,27 @@ fn the_format_rules_read_a_stand_in_as_the_name() {
     assert!(written.written_name("king", "Aldric").is_none());
     assert_eq!(FormatRules.limits(), &LIMITS);
 }
+
+/// A scene as the text box shows it (ticket 0764): its stand-ins written
+/// `{lead}`, every line keeping the id it was read with.
+#[test]
+fn a_scene_as_shown_has_the_name_where_it_had_a_stand_in() {
+    let (parsed, errors) = parse_dlg(
+        "t.dlg",
+        "@scene a\n> {lead|The exile} waits.\n> Rain.\n@end\n",
+    );
+    assert_eq!(errors, []);
+    let scene = &parsed[0].scene;
+    let shown = as_shown(scene);
+    assert_eq!(shown.id, "a");
+    let texts: Vec<&str> = shown.steps.iter().filter_map(|s| s.text()).collect();
+    assert_eq!(texts, ["{lead} waits.", "Rain."]);
+    let ids = |s: &Scene| {
+        s.lines()
+            .into_iter()
+            .map(|l| l.id.clone())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(ids(&shown), ids(scene));
+    assert_eq!(as_shown(&shown), shown, "nothing left to take out");
+}
