@@ -1381,6 +1381,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "trpg-story-preview"
+version = "0.3.0"
+dependencies = [
+ "macroquad",
+ "shuyi",
+ "shuyi-app",
+ "tempfile",
+ "trpg-content",
+ "trpg-ui",
+ "winresource",
+]
+
+[[package]]
 name = "trpg-ui"
 version = "0.3.0"
 dependencies = [

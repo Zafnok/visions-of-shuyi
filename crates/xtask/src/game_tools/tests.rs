@@ -2,6 +2,7 @@
 //! and `lang-status`, the checks on the real code, and the committed font
 //! atlas.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -1395,4 +1396,92 @@ fn the_disclosure_lists_name_every_file_of_the_pack() {
             );
         }
     }
+}
+
+/// The programs of each package of the workspace, by package, as `cargo
+/// metadata` lists them (its `bin` targets).
+fn programs_by_package(metadata: &serde_json::Value) -> BTreeMap<String, Vec<String>> {
+    let mut programs = BTreeMap::new();
+    for package in metadata["packages"].as_array().into_iter().flatten() {
+        let bins = package["targets"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|t| {
+                t["kind"]
+                    .as_array()
+                    .is_some_and(|k| k.contains(&"bin".into()))
+            })
+            .filter_map(|t| t["name"].as_str().map(str::to_owned))
+            .collect();
+        if let Some(name) = package["name"].as_str() {
+            programs.insert(name.to_owned(), bins);
+        }
+    }
+    programs
+}
+
+/// The packages `cargo shuyi export` builds with no `bin` named (the
+/// `export` part's, and each edition's that names none) whose program it
+/// can't pick: the engine takes the one named as the package, else the
+/// only one (`SH1002`, ticket 1269).
+fn unpicked_programs(project: &Project, programs: &BTreeMap<String, Vec<String>>) -> Vec<String> {
+    let config = &project.config;
+    let export = config.export.as_ref().and_then(|e| e.package.clone());
+    let editions = config.editions.iter().filter(|(_, e)| e.bin.is_none());
+    let mut built: Vec<(String, Option<String>)> = vec![("export".to_owned(), export.clone())];
+    built.extend(editions.map(|(name, e)| (name.clone(), e.package.clone().or(export.clone()))));
+    built
+        .into_iter()
+        .filter_map(|(part, package)| {
+            let package = package?;
+            let bins = programs.get(&package).map_or(&[][..], Vec::as_slice);
+            let picked = bins.len() == 1 || bins.contains(&package);
+            (!picked).then(|| format!("{part}: `{package}` has programs {bins:?}"))
+        })
+        .collect()
+}
+
+/// Ticket 1269: every package an export builds without naming its `bin`
+/// has one program (or one named as the package), so the release's and the
+/// demo's exports pick the game's; a second `[[bin]]` in `trpg-app` fails
+/// here and not at a release.
+#[test]
+fn every_export_without_a_bin_can_pick_its_program() {
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let output = std::process::Command::new(cargo)
+        .args([
+            "metadata",
+            "--format-version",
+            "1",
+            "--no-deps",
+            "--offline",
+        ])
+        .current_dir(repo_root())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let metadata: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let mut programs = programs_by_package(&metadata);
+    assert_eq!(programs["trpg-app"], ["visions-of-shuyi"]);
+    assert_eq!(programs["trpg-story-preview"], ["story-preview"]);
+    let project = project();
+    assert_eq!(unpicked_programs(&project, &programs), Vec::<String>::new());
+    // A second program in the game's package: the export and the demo
+    // can't pick one.
+    programs
+        .get_mut("trpg-app")
+        .unwrap()
+        .push("story-preview".to_owned());
+    assert_eq!(
+        unpicked_programs(&project, &programs),
+        [
+            r#"export: `trpg-app` has programs ["visions-of-shuyi", "story-preview"]"#,
+            r#"demo: `trpg-app` has programs ["visions-of-shuyi", "story-preview"]"#,
+        ]
+    );
 }

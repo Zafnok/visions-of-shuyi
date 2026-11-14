@@ -1,0 +1,45 @@
+[package]
+name = "trpg-story-preview"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+# The writer's script preview (ticket 0764): the scenes of a folder of
+# `.dlg` files, played in the game's dialogue screen. The kit builds it as
+# `shuyi.ron`'s `story-preview` edition, which embeds none of the scripts.
+# A package of its own (ticket 1269), so `trpg-app` keeps one program,
+# which `cargo shuyi export` picks.
+[[bin]]
+name = "story-preview"
+path = "src/main.rs"
+
+[features]
+# As `trpg-app`'s: the test files' check in a release build with them.
+debug-tools = ["trpg-ui/debug-tools"]
+# The bought art, embedded over `assets/` (ADR-0040), as `trpg-app`'s.
+private-assets = ["trpg-content/private-assets"]
+# Reads the files from `trpg-story-preview.pack` beside the program
+# (ADR-0120): turned on by `cargo shuyi export <target> --release`.
+packed = ["trpg-content/packed"]
+
+[dependencies]
+trpg-content = { path = "../content" }
+trpg-ui = { path = "../ui" }
+# What `crates/app/src/app_info.rs` names `AppInfo` through.
+shuyi.workspace = true
+shuyi-app.workspace = true
+# The entry point: `#[macroquad::main]` has to be in the binary.
+macroquad.workspace = true
+
+# The exe's icon, as the game's (ticket 0902), on a Windows host only.
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
+
+[dev-dependencies]
+tempfile = "3"

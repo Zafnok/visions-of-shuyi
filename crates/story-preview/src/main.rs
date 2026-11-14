@@ -12,7 +12,9 @@
 // A release build on Windows is a GUI program: no console window.
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
-#[path = "../app_info.rs"]
+// Who the game is: the game's own `AppInfo` (`cargo shuyi app-info`),
+// shared with `trpg-app` so the preview has its name, icon and storage.
+#[path = "../../app/src/app_info.rs"]
 mod app_info;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -26,12 +28,12 @@ use trpg_content::{bundle, font};
 
 use crate::app_info::APP;
 
-// As the game's (`main.rs`): a build that ships has none of the test files.
+// As the game's (`crates/app/src/main.rs`): a build that ships has none of the test files.
 #[cfg(not(any(debug_assertions, feature = "debug-tools")))]
 const _: () = assert!(
     !trpg_content::bundle::TEST_FILES,
     "this release build would embed the test files (assets-test/): build the program \
-     alone, with `-p trpg-app` (ADR-0057)"
+     alone, with `-p trpg-story-preview` (ADR-0057)"
 );
 
 /// The game's window.
@@ -117,7 +119,7 @@ fn window_conf() -> Conf {
 
 /// The folder, once a packed build has its files: the pack beside the
 /// program, laid in the bundle before anything reads a file, as the game's
-/// (`main.rs`, ADR-0120). A pack that is missing or broken is the start's
+/// (`crates/app/src/main.rs`, ADR-0120). A pack that is missing or broken is the start's
 /// error, shown in the window.
 fn startup() -> Result<Layer, String> {
     #[cfg(feature = "packed")]

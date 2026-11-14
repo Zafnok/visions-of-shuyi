@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-14
 ---
 
 # 1269 — The release and demo desktop exports pick the game's program again
@@ -75,13 +75,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo metadata` lists one program for `trpg-app`.
+- [x] `cargo metadata` lists one program for `trpg-app`.
 - [ ] A Release dry run builds all four packages, and its `sums` job's
       summary shows `SHA256SUMS` with four lines (1267's two criteria it
       couldn't meet; links in the PR).
 - [ ] The story kit's Windows export still builds `story-preview`.
-- [ ] The xtask test fails when a second `[[bin]]` is added to `trpg-app`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The xtask test fails when a second `[[bin]]` is added to `trpg-app`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -90,5 +90,27 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `story-preview` is now the package `trpg-story-preview`
+  (`crates/story-preview`): the moved `src/main.rs` (its `#[path]` now
+  `../../app/src/app_info.rs`), a `Cargo.toml` with `debug-tools`,
+  `private-assets` and `packed` forwarding as `trpg-app`'s, and a
+  `build.rs` giving its exe the game's icon (it had it as `trpg-app`'s
+  program). `trpg-app` has one program again.
+- `shuyi.ron`: the `story-preview` edition names `package:
+  "trpg-story-preview"`; its disclosure lists `trpg-story-preview.pack`,
+  since the engine names the pack after the package. `story-kit.yml` looks
+  for that pack, scopes cargo-about to the new manifest and rebuilds the
+  kit when `crates/story-preview` changes.
+- ADR-0125 records the package and amends ADR-0123 §1 (status line and
+  index row only). `AGENTS.md`'s crate map names the new crate.
+- **Deviation:** mutants, coverage (`llvm-cov`), the mutants baseline and
+  Sonar leave `crates/story-preview` out as they leave `crates/app` out:
+  the program was under `crates/app/**` and excluded until now.
+- The xtask test (`every_export_without_a_bin_can_pick_its_program`)
+  reads `cargo metadata --no-deps`, checks the `export` part's package and
+  every edition with no `bin`, and adds a second program to `trpg-app` to
+  see the export and the demo fail.
+- Locally: `cargo shuyi export windows --release --without private-assets`
+  and `--edition story-preview` both pass (the preview's zip holds
+  `story-preview.exe` and `trpg-story-preview.pack`).
+- No gameplay rule decided; nothing for Nick to play.
