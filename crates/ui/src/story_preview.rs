@@ -476,7 +476,6 @@ pub fn game(mut ctx: Ctx, folder: Layer) -> Result<Game, String> {
     let root = StoryPreview::new(&ctx);
     let hooks = GameHooks {
         debug: None,
-        debug_screens: &[],
         ..game::hooks()
     };
     Game::new(ctx, Box::new(root), hooks)

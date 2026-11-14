@@ -1031,3 +1031,37 @@ fn load_scripts_reports_a_broken_file_and_the_checks_of_the_others() {
                      fixture/dialogue/a.dlg:1";
     assert_eq!(load_errors(BOTH), [duplicate, unrecognised]);
 }
+
+/// The format's rules on a scene as written (ticket 0764): a stand-in,
+/// `{lead|the exile}`, is the name and as long; every other answer is the
+/// lead's tokens'.
+#[test]
+fn the_format_rules_read_a_stand_in_as_the_name() {
+    use shuyi_assets::dialogue::{SceneRules, Tokens};
+    let written = FormatRules.tokens();
+    let lead = LeadTokens;
+    assert_eq!(written.longest("lead|the exile"), lead.longest("lead"));
+    assert!(written.longest("lead").is_some());
+    assert_eq!(written.longest("lead|"), None, "no words: no stand-in");
+    assert_eq!(written.longest("nope"), None);
+    assert_eq!(written.unknown("nope"), lead.unknown("nope"));
+    assert!(written.unknown("nope").contains("{lead}"));
+    for (id, token) in [("lead", "n:lead"), ("king", "n:king")] {
+        assert_eq!(
+            written.reserved_name(id, token),
+            lead.reserved_name(id, token)
+        );
+        assert_eq!(
+            written.unknown_name(id, token),
+            lead.unknown_name(id, token)
+        );
+    }
+    assert!(written.reserved_name("lead", "n:lead").is_some());
+    assert!(written.reserved_name("king", "n:king").is_none());
+    for (id, form) in [("lead", "Exile"), ("king", "Aldric")] {
+        assert_eq!(written.written_name(id, form), lead.written_name(id, form));
+    }
+    assert!(written.written_name("lead", "Exile").is_some());
+    assert!(written.written_name("king", "Aldric").is_none());
+    assert_eq!(FormatRules.limits(), &LIMITS);
+}

@@ -138,3 +138,22 @@ fn the_preview_declares_unit_info_and_the_cursor_with_the_engines_actions() {
     assert_eq!(screen.name(), "story_preview");
     assert!(screen.as_any().is_some());
 }
+
+#[test]
+fn the_preview_draws_the_engines_tabs_and_the_page_over_them() {
+    let mut ctx = ctx();
+    let mut screen = StoryPreview::new(&ctx);
+    let mut buf = buffer(&ctx);
+    screen.draw(&ctx, &mut buf);
+    let tabs = ctx.text("preview.tab.scenes").to_owned();
+    assert!(row(&buf, 0).contains(&tabs), "{:?}", row(&buf, 0));
+    // Unit info opens the page of names and faces, drawn over the tabs.
+    let input = FrameInput::new(vec![Action::Info], 0.0, vec![]);
+    let _ = screen.update(&mut ctx, &input);
+    let mut buf = buffer(&ctx);
+    screen.draw(&ctx, &mut buf);
+    assert_eq!(row(&buf, 0).trim(), ctx.text(REFERENCE_KEY));
+    let shown = format!("{screen:?}");
+    assert!(shown.starts_with("StoryPreview {"), "{shown}");
+    assert!(shown.contains("reference: Some(0)"), "{shown}");
+}
