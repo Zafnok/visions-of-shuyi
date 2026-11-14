@@ -93,7 +93,10 @@ None. Verified by CI.
   so it would have failed with `SH1003`; it installs Binaryen the same way.
 - `docs/releasing.md`'s *One package by hand* says a release web package
   needs `wasm-opt` on `PATH` (MSYS2's `mingw-w64-x86_64-binaryen`).
-- `docs/targets.md`'s web package numbers: see the PR's `bench` run;
-  updated if the size moved. No budget changed.
+- Verified on the PR's CI: the `export` job's log shows `wasm-opt version
+  133`, the package's `.wasm` is 8.2 MB (10.5 MB before) and has no custom
+  section at all (no `name`, no `producers`); `bench` passes. The web
+  package's gated size in `docs/targets.md` went 10.7 → 8.7 MB. No budget
+  changed.
 - Nothing for Nick: nothing is installed on his machine, and the game plays
   the same.
