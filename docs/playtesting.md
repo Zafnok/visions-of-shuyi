@@ -55,8 +55,8 @@ playtest and the autobalance build it the same way) is, for a battle:
   recruits by the chapter joins fresh from the character data. On a
   world map, the fixed skirmishes that guard the way to a chapter's story
   battle are won first, each by its recorded playthrough in the same way
-  (ticket 1071: every player wins them; Aldwater Toll Bridge before
-  Chapter 4, the Salt Road before Chapter 5), so a guard is played with
+  (ticket 1071: every player wins them; `aldwater` before
+  Chapter 4, `salt_road` before Chapter 5), so a guard is played with
   the army its chapter brings, after the guards before it. Then the
   battle's Preparations: the pack (below), nothing else (weapons and
   armour stay where they are);
@@ -69,7 +69,7 @@ it was on its second line, Classic's units with their class and level,
 the pack and the gold:
 
 ```
-army · campaign after ch01 · Lead exile lv 1, Hollis Marr guard lv 4, … · pack potion, potion, potion · gold 100
+army · campaign after ch01 · Lead exile lv 1, retainer guard lv 4, … · pack potion, potion, potion · gold 100
 ```
 
 **The pack in Preparations** (*the agent's starting rule*): first the
@@ -211,11 +211,11 @@ hardcore · turns median 8 (normal 10)    lower ✓
 try 3 · casual · Victory · turns 17 · deaths 0 · items 3 · lord fell 0 · retreats 0 · turns 17 · won 1
 …
 
-casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: Tamsin Rook 93×
+casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: sergeant 93×
                      items per try  median 3  max 3 · turns median 23 · 2.52 s per try
-normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: Hollis Marr 24×
+normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: retainer 24×
                      items per try  median 3  max 3 · turns median 10 · 9.30 s per try
-hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 · most: Hollis Marr 10×
+hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 · most: retainer 10×
                      items per try  median 1  max 3 · turns median 8 · 45.46 s per try
 ```
 
@@ -225,7 +225,7 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 | `army · …` | The army the bots fielded (*The army*): where it comes from, each unit's class and level, the pack, the gold. |
 | `N/100 succeed … band …` | How many tries met the bot's success rule, and the band its tier wants: **✓** in the band, **✗ too hard** under it, **⚠ too easy** over it. `blocked` after it: under the 20% floor. |
 | `turns median … lower` | Hardcore's median turns against Normal's, both over the tries won with nobody dying: **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
-| `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell Maud 1`) and on which turn (`fell Maud turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`. |
+| `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell keeper 1`) and on which turn (`fell keeper turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`. |
 | bot lines | Per bot: its mode, the tries won, how many tries had 0, 1, 2, 3 or more units fall and the unit that fell most often, items used per try, the median turns, how long a try took (the only numbers that differ between two runs with the same arguments), and the previous run's success count as `was …`. |
 | `previous` | The run before this one, when there was one; its numbers are the `was …`. |
 
@@ -237,7 +237,7 @@ after the autobalance raised every unnamed Hound from level 1 to 5:
 
 ```
 ch02 · Normal tier · casual, normal, hardcore · turn cap 60
-army · campaign after ch01 · Lead exile lv 1, Hollis Marr guard lv 5, Tamsin Rook rider lv 6, Aske archer lv 2, Maud cleric lv 1, Rue mage lv 3 · pack potion, potion, potion · gold 100
+army · campaign after ch01 · Lead exile lv 1, retainer guard lv 5, sergeant rider lv 6, poacher archer lv 2, keeper cleric lv 1, heretic mage lv 3 · pack potion, potion, potion · gold 100
 
              seeds 1–100            seeds 101–200
 casual       47/100  band 30–55% ✓  50/100 ✓
@@ -263,7 +263,7 @@ hardcore     62/100  band 50–75% ✓  60/100 ✓
 hardcore turns median 5 (normal 6) lower ✓    5 (normal 6) lower ✓
 ```
 
-The stall is gone, and Casual plays Kell's Ford better too. Two runs of
+The stall is gone, and Casual plays Chapter 2's ford better too. Two runs of
 the autobalance (160 evaluations) found no setting with every band met:
 Casual now wins about as often as Normal wins with nobody dying, and
 enemy numbers move both alike. Ticket 0524 re-tunes Chapters 1 and 2.
@@ -281,8 +281,8 @@ hardcore     70/100  band 50–75% ✓  67/100 ✓
 hardcore turns median 8 (normal 9) lower ✓    8 (normal 9) lower ✓
 ```
 
-Chapter 2, with the army that playthrough leaves (Hollis lv 4, Tamsin
-lv 8, Rue lv 3) and a second raider beside the west house's, at 1,13:
+Chapter 2, with the army that playthrough leaves (retainer lv 4, sergeant
+lv 8, heretic lv 3) and a second raider beside the west house's, at 1,13:
 
 ```
 ch02         seeds 1–100            seeds 101–200
@@ -320,8 +320,8 @@ walked away from the causeway to the corner nearest the scriptorium
 across the lake and stayed there (it is now counted walking).
 
 After 0524's new Chapter 2 recording (2026-11-04), Chapter 3's army is
-Lead lv 3, Hollis lv 6, Tamsin lv 8, Aske lv 5, Maud lv 3, Rue lv 8 and
-Joss lv 3, and Chapter 3 unchanged:
+Lead lv 3, retainer lv 6, sergeant lv 8, poacher lv 5, keeper lv 3, heretic lv 8 and
+defector lv 3, and Chapter 3 unchanged:
 
 ```
              seeds 1–100            seeds 101–200
@@ -331,9 +331,9 @@ hardcore     69/100  band 50–75% ✓  74/100 ✓
 hardcore turns median 9 (normal 10) lower ✓    8 (normal 10) lower ✓
 ```
 
-Chapter 4 on 2026-11-05 (ticket 0850), Veyne Hall, with the army
-Chapters 1 to 3 leave (Lead lv 5, Hollis lv 8, Tamsin lv 9, Aske lv 6,
-Maud lv 5, Rue lv 12, Joss lv 3), the first story battle won by a boss
+Chapter 4 on 2026-11-05 (ticket 0850), `ch04`, with the army
+Chapters 1 to 3 leave (Lead lv 5, retainer lv 8, sergeant lv 9, poacher lv 6,
+keeper lv 5, heretic lv 12, defector lv 3), the first story battle won by a boss
 who retreats:
 
 ```
@@ -344,28 +344,28 @@ hardcore     63/100  band 50–75% ✓  56/100 ✓
 hardcore turns median 7 (normal 7) lower ✗    7 (normal 7) lower ✗
 ```
 
-As first built (Dace 30 HP, Str 10, Def 6; two riders behind the party
+As first built (the boss 30 HP, Str 10, Def 6; two riders behind the party
 on turn 4) Casual was too easy, 68/100, with Normal at 53 and Hardcore
 at 63. `cargo shuyi autobalance --stage ch04` (12 evaluations, then its
 time ran out) found no change to the unnamed enemies that helped. The
-three bots fail the same way here, the lead falling to Dace, so their
+three bots fail the same way here, the lead falling to the boss, so their
 rates move together: raising the Hounds' levels left Casual at 68–71,
-and Dace on `Stationary` let every bot through (Casual 75–84). What
-separated them was a Dace hard to put down rather than hard-hitting
-(40 HP, Str 11, Def 8: Normal fails by single deaths to his blows,
-Casual by its army bleeding out before the lead reaches him) and his
+and the boss on `Stationary` let every bot through (Casual 75–84). What
+separated them was a boss hard to put down rather than hard-hitting
+(40 HP, Str 11, Def 8: Normal fails by single deaths to the boss's blows,
+Casual by its army bleeding out before the lead reaches the boss) and the
 riders back on turn 7 instead of 4. The `lower ✗` is the bots' (ticket
 0525).
 
 0850 also fixed the bots' arrival army: it recruited only for the
 chapter being played, so Chapter 4's army replayed Chapter 3 without
-Joss, who joins after Chapter 2, and failed. Each chapter on the way now
+the units recruited before it, and failed. Each chapter on the way now
 gets its recruits before its battle (`trpg_bots::arrival`).
 
-Chapter 5 on 2026-11-08 (ticket 0851), the Envoy's House, the first hold
-(Survive 6 turns), with the army Chapters 1 to 4 leave and Hedda (Lead
-lv 7, Hedda lv 8, Hollis lv 10, Tamsin lv 10, Aske lv 7, Maud lv 5, Rue
-lv 14, Joss lv 3). A hold has its own Casual band (Nick, 0851) and no
+Chapter 5 on 2026-11-08 (ticket 0851), `ch05`, the first hold
+(Survive 6 turns), with the army Chapters 1 to 4 leave and the chapter's own unit (Lead
+lv 7, shieldbearer lv 8, retainer lv 10, sergeant lv 10, poacher lv 7, keeper lv 5, heretic
+lv 14, defector lv 3). A hold has its own Casual band (Nick, 0851) and no
 faster check (`playtest-bots.md`, *Holds have their own Casual band*):
 
 ```
@@ -376,8 +376,8 @@ hardcore     62/100  band 50–75% ✓  57/100 ✓
 ```
 
 As first built (7 turns, a wave over the roofs on turn 5, the officer
-32 HP, Str 10 on the near pier, Tamsin by the street door) Casual won
-78, Normal 27 and Hardcore 11: Classic deaths, Joss's most, and
+32 HP, Str 10 on the near pier, the sergeant by the street door) Casual won
+78, Normal 27 and Hardcore 11: Classic deaths, the defector's most, and
 Hardcore's potions. `cargo shuyi autobalance --stage ch05` (47
 evaluations in 40 minutes) found only every starting Hound at level 1,
 which left Casual at 78: the pressure is the reinforcements', which it
@@ -385,9 +385,9 @@ doesn't change. By hand: 6 turns and no turn-5 wave; the officer harder
 (40 HP, Str 13, Def 8) and at the far end of the wide pier, so he
 reaches the door on turn 2 (careful bots meet him; on the near pier he
 killed the lead on turn 1 in 94–97 tries of every bot at Str 12, and in
-11–15 at Str 11); Tamsin's slot upstairs (she rode onto the quay on
+11–15 at Str 11); the sergeant's slot upstairs (she rode onto the quay on
 turn 2 and fell there most). What didn't separate the bots: more Hounds,
-more turns, quay archers (they kill Rue), unbarred ground-floor
+more turns, quay archers (they kill the heretic), unbarred ground-floor
 shutters. Casual's lead waits indoors and falls only to the officer, so
 nothing tried moved it under 78 without sinking Normal; no bot holds the
 door against him (ticket 0526).
@@ -398,10 +398,10 @@ place it tried went to attacks, and with the officer on the near pier he
 walked onto the door tile and killed the lead on turn 1. The order now
 offers each ready unit its cover, the tile that keeps the enemies off a
 lord they can reach (ADR-0114). That lets the officer be dangerous to a
-careless guard only: the Envoy's House now has the officer on the near
+careless guard only: `ch05` now has the officer on the near
 pier, (13, 13), at the door on turn 1; Str 15 instead of 13; and Survive
-8 instead of 6. The army: Lead lv 8, Hedda lv 8, Hollis lv 9, Tamsin lv
-10, Aske lv 8, Maud lv 5, Rue lv 14, Joss lv 3.
+8 instead of 6. The army: Lead lv 8, shieldbearer lv 8, retainer lv 9, sergeant lv
+10, poacher lv 8, keeper lv 5, heretic lv 14, defector lv 3.
 
 ```
              seeds 1–100            seeds 101–200
@@ -411,7 +411,7 @@ hardcore     69/100  band 50–75% ✓  68/100 ✓
 ```
 
 Casual now loses the way a careless player would: its guard in the door
-(Hedda, mostly) falls to the officer on turns 2–3, the rest thin out
+(the shieldbearer, mostly) falls to the officer on turns 2–3, the rest thin out
 (three or more retreats in 87 tries of 100), and the lead falls on turns
 4 to 8. The steps, Casual and Normal on seeds 1–100 then 101–200:
 
@@ -430,8 +430,7 @@ the turn-4 boat at level 10 (72, 74), and with Survive 7 too (61, 68;
 Normal 64, 60); Survive 7 with Str 16 (67, 67; Normal 65, 75).
 
 After 1071 and 0529 (2026-11-10). 1071 put the guards on the road
-(Aldwater Toll Bridge before Veyne Hall, the Salt Road before the
-Envoy's House), and the armies that win them arrive stronger: Chapter 4
+(`aldwater` before Chapter 4, `salt_road` before Chapter 5), and the armies that win them arrive stronger: Chapter 4
 went to 59 / 58 / 51 (Casual over) and Chapter 5 to 77 / 85 / 13. Why
 Hardcore fell to 13 was the bots': traced over every Hardcore try of
 seeds 1–100 that lost someone, 35 of its 58 deaths were units its own
@@ -446,8 +445,8 @@ nearest where it stands (ADR-0115). With that alone, Chapter 5 went to
 Chapter 4: every unnamed Hound lv 7 → 9 (`cargo shuyi autobalance
 --stage ch04 --tries 200` found +4, 98 / 102 / 103 of 200, with Normal
 and Hardcore on their floor; +2 does it with less EXP for Chapter 5's
-army). The army: Lead lv 6, Hollis lv 9, Tamsin lv 10, Aske lv 6, Maud
-lv 5, Rue lv 14, Joss lv 3.
+army). The army: Lead lv 6, retainer lv 9, sergeant lv 10, poacher lv 6, keeper
+lv 5, heretic lv 14, defector lv 3.
 
 ```
              seeds 1–100            seeds 101–200
@@ -458,8 +457,8 @@ hardcore     51/100  band 50–75% ✓  59/100 ✓
 
 Chapter 5: the Hounds by the water (the quay, the docks, the boats) lv
 13, the ones over the roofs lv 9, Survive 10 instead of 8. The army
-(after Chapter 4's new playthrough): Lead lv 11, Hedda lv 8, Hollis lv
-11, Tamsin lv 11, Aske lv 7, Maud lv 6, Rue lv 16, Joss lv 5.
+(after Chapter 4's new playthrough): Lead lv 11, shieldbearer lv 8, retainer lv
+11, sergeant lv 11, poacher lv 7, keeper lv 6, heretic lv 16, defector lv 5.
 
 ```
              seeds 1–100            seeds 101–200
@@ -469,7 +468,7 @@ hardcore     71/100  band 50–75% ✓  77/100 ⚠
 ```
 
 Over the 200 tries, 63.5 / 57.5 / 74%: in every band. The steps, on the
-army before Chapter 4's new playthrough (Aske lv 10, Maud lv 8), seeds
+army before Chapter 4's new playthrough (poacher lv 10, keeper lv 8), seeds
 1–100 then 101–200:
 
 | Change (each on the one before, from 0529's fix) | Casual | Normal | Hardcore |
@@ -485,7 +484,7 @@ army before Chapter 4's new playthrough (Aske lv 10, Maud lv 8), seeds
 
 Uniform levels can't put Normal and Hardcore in one band: Hardcore leads
 by about 25 points (the band is 25 wide). They lose different units:
-Normal its lightest on the roofs (Aske, Joss), Hardcore almost never
+Normal its lightest on the roofs (the poacher, the defector), Hardcore almost never
 there, so the roofs went down and the water up. Casual, which loses
 only when the lead falls (on any turn from 2 to 10), moved with the
 length of the hold and with little else. Tried and not kept: roofs lv 11

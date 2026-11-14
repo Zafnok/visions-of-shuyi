@@ -60,8 +60,8 @@ Every line is one of these. Directives start at the very first column.
 | `@place <map> <x>,<y> bright <n>%`, `@place battle <x>,<y> bright <n>%` | The same, darkened only to `n`% of its brightness (1% to 100%) instead of the usual 40%. See "Places". |
 | `@place none` | Back to black behind the talk. |
 | `@opening <opening>` | Before the next text box, plays that opening of `assets/openings/` (its file name without `.ron`) on the place: its characters move, then the place darkens and the talk comes up. See "Places". |
-| `@dies <character>` | A death in the scene (Hollis, `death-and-difficulty.md`): when the scene plays, the character leaves the army for good, in Classic and Casual alike; their gear goes to the stock and their supports end. Usually inside an `@if` block for them. See "Rules". |
-| `@joins <character>` | A recruit on a story beat (Joss, `battle-scenes-and-recruitment.md`): when the scene plays, the character joins the army, fresh from `characters.ron`. The army can lose them from the next chapter on, so later scenes show them only in `@if` blocks; the scenes of the chapter that recruits them need none. See "Rules". |
+| `@dies <character>` | A death in the scene (`death-and-difficulty.md`): when the scene plays, the character leaves the army for good, in Classic and Casual alike; their gear goes to the stock and their supports end. Usually inside an `@if` block for them. See "Rules". |
+| `@joins <character>` | A recruit on a story beat (`battle-scenes-and-recruitment.md`): when the scene plays, the character joins the army, fresh from `characters.ron`. The army can lose them from the next chapter on, so later scenes show them only in `@if` blocks; the scenes of the chapter that recruits them need none. See "Rules". |
 | `<character>: <text>` | The character speaks. They must be on screen (`@left`/`@right` first). |
 | `<character>[<expression>]: <text>` | The character changes expression, then speaks. The new expression stays. |
 | `<character> (<direction>): <text>`, `<character>[<expression>] (<direction>): <text>` | The line says how it is spoken. See "Directions". |
@@ -265,18 +265,19 @@ retainer: {n:king} wants you out of {n:place.thornmarch}.
 @end
 ```
 
-With the current names this shows the caption "The Thornmarch, dusk" and
-the line "Emeric wants you out of the Thornmarch."
+On screen each token is the display name its id has in `names.ron`: the
+caption starts with the place's name, capitalised, and the line names the
+king and the place.
 
 | Token | Becomes |
 | ----- | ------- |
-| `{n:<id>}` | The display name with that id, as written in `names.ron` (`{n:king}` → `Emeric`, `{n:place.thornmarch}` → `the Thornmarch`) |
-| `{N:<id>}` | The same with a capital first letter, for the start of a sentence (`{N:place.thornmarch}` → `The Thornmarch`) |
+| `{n:<id>}` | The display name with that id, as written in `names.ron` (`{n:king}` → the king's name, `{n:place.thornmarch}` → the place's name with its `the`) |
+| `{N:<id>}` | The same with a capital first letter, for the start of a sentence (`{N:place.thornmarch}` → the place's name as `The ...`) |
 
 Name tokens work in speech, narration, captions and reply text. Speaker
 ids (`retainer:`) and `@left`/`@right` use character ids, not tokens; a
 character's name plate comes from `names.ron` too (its character id is its
-name id). Names keep their article (`the Thornmarch`), so write
+name id). Names keep their article (`the` in front of a place that has one), so write
 `{n:place.thornmarch}`, not `the {n:place.thornmarch}`.
 
 ### Short forms
@@ -286,12 +287,12 @@ their own (`assets-private/story/names.md`, "Short forms"), used like any other:
 
 | Id | For | Example |
 | -- | --- | ------- |
-| `<character>.first` | The first name of a character with a two-word name | `{n:retainer.first}` → `Hollis` |
-| `family.<name>` | A family name several people share | `{n:family.marr}` → `Marr` |
+| `<character>.first` | The first name of a character with a two-word name | `{n:retainer.first}` → the retainer's first name |
+| `family.<name>` | A family name several people share | `{n:family.marr}` → the family name alone |
 | `<god>.name`, `<god>.title` | A god's name and title on their own | `{n:god.mother.name}` → `Ama`, `{n:god.mother.title}` → `the Mother` |
-| `<character>.last` | A surname only that character has | `{n:sergeant.last}` → `Rook` |
-| `red_captain.nickname` | A nickname | `Red Harl` |
-| `vowmaster.title` | An office, for people who don't say the name | `the Master of Vows` |
+| `<character>.last` | A surname only that character has | `{n:sergeant.last}` → the sergeant's surname |
+| `red_captain.nickname` | A nickname | `{n:red_captain.nickname}` |
+| `vowmaster.title` | An office, for people who don't say the name | `{n:vowmaster.title}` |
 | `faction.brennmark.adj` | A people's name without its article: the adjective, or a nickname | `{n:faction.brennmark.adj}` → `Brennish` |
 
 ### Rules for names
@@ -302,14 +303,15 @@ their own (`assets-private/story/names.md`, "Short forms"), used like any other:
 - **No names written out.** A line that contains a display name from
   `names.ron` is an error that names the token to use. The check matches
   whole words, case-sensitively, without the name's leading `the`/`a`/`an`
-  (so `Thornmarch` alone is caught too). Names with no capital letter
+  (so a place's name without its `the` is caught too). Names with no capital letter
   (`breath`, `a vow`, `mor`) are ordinary words and aren't checked.
-  Comments aren't checked. Short forms are names too, so `Hollis` alone is
+  Comments aren't checked. Short forms are names too, so the retainer's first name alone is
   an error; a line that holds several names reports the longest
-  (`Hollis Marr` is reported as `{n:retainer}`). A few short forms are also
-  ordinary words (`Mother`, `Hand`, `Pyre`, `Wren`, `Crane`, `Rook`, `Holt`,
-  `Mast`): with a capital they are always taken as the name, so reword a
-  line that starts with one.
+  (the retainer's full name is reported as `{n:retainer}`, not
+  `{n:retainer.first}`). A few short forms are also ordinary words (a
+  god's title such as `Mother` or `Hand`, a surname that is also a bird
+  or a thing): with a capital they are always taken as the name, so
+  reword a line that starts with one.
 - **Lengths** count every name token as the **longest** name in
   `names.ron`, whichever name it is, so renaming anything can't push a line
   over its limit.
@@ -369,7 +371,7 @@ block:
 @if heretic
 keeper: {n:heretic}, stay close to me.
 @else
-keeper: She would have hated this road.
+keeper: Keep to the road.
 @endif
 @right clear
 @endif
@@ -430,9 +432,9 @@ lead: Onward.
   fallen before the scene where they would have said something, or
   after it. A line in their `@else` that leans on what they said there
   must be true either way: say the fact without their name, or have
-  someone else who could know it say it (Chapter 7's Crane says how Wren
-  left the field only when Rue isn't in the room: her first telling on
-  one path, a confirmation on the other). The tests in
+  someone else who could know it say it (a later scene may give a fact
+  only when the one who first told it isn't in the room: its first
+  telling on one path, a confirmation on the other). The tests in
   `crates/content/src/dialogue/tests/knowledge.rs` read those facts
   along each Classic path.
 - Both parts of every block get line ids, translations and voice clips.

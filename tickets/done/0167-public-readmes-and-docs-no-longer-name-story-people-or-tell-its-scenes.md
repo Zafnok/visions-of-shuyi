@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0160"]
 nick_input: none
-completed:
+completed: 2026-11-13
 ---
 
 # 0167 — Public READMEs and docs no longer name the story's people or tell its scenes
@@ -75,12 +75,12 @@ Expected size: no production code; about 300–500 changed lines of docs.
 
 ## Acceptance criteria
 
-- [ ] The grep of step 2 finds no display name of the story outside the
+- [x] The grep of step 2 finds no display name of the story outside the
       out-of-scope folders (the completion notes list what is left and
       why).
-- [ ] No public README or doc in scope tells who dies, joins or leaves.
-- [ ] `cargo xtask check-leaks` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No public README or doc in scope tells who dies, joins or leaves.
+- [x] `cargo xtask check-leaks` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -88,5 +88,43 @@ Expected size: no production code; about 300–500 changed lines of docs.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Step 1: the person and place values of the private `names.ron`
+  (91 words once `Ellery`, `Veyne`, `Vix`, the generic minor names
+  such as `Messenger` and the factions, gods and terms were set aside).
+  Step 2: `git grep -nwF` over the tracked files, less `tickets/`,
+  `docs/adr/`, `docs/design/`, `docs/research/` and the engine's
+  `shuyi-*` skills: 98 text hits (the rest were binary `.ogg`/`.flac`
+  matches, noise). A second grep for plot words (dies, joins, betray,
+  confession…) found one more line (`docs/ROADMAP.md`'s "runaway Candle").
+- Plot (who dies, joins or leaves, or what a scene holds), reworded to
+  what the file needs: `docs/playtesting.md` (the defector "joins after
+  Chapter 2", the shieldbearer arriving for Chapter 5), `docs/ROADMAP.md`
+  (0069's "Dace fleeing … Hollis's death", 1071 "with Gil", 1009's
+  runaway recruit), `assets/dialogue/README.md` (`@dies`/`@joins`'s
+  examples named the cast; the `@else` example's knowledge rule told a
+  Chapter 7 scene; the `@if` example's `@else` line hinted a death),
+  `assets-src/audio/import.py` (the retainer's confession).
+- Name only, reworded to ids or roles (`the retainer`, `ch04`,
+  `harrowby_yard`): the rest of `docs/playtesting.md` (report samples and
+  army lists now print role ids), `docs/ROADMAP.md`, the dialogue README's
+  name tables, `.claude/skills/story-writing/SKILL.md`,
+  `THIRD_PARTY_ASSETS.md`, `_typos.toml`, `assets-src/tilesets/tiny_tales.ron`,
+  `assets/battlers/README.md`, `assets/data/{credits,lighting,names,terrain}.ron`
+  (comments), `assets/openings/README.md`, `crates/content/demo/bundle.txt`,
+  `crates/content/playdate-music.txt`, `docs/voice.md` (its `say.ron`
+  example now respells the public `guide`).
+- `readme_names_example_is_valid` (guarded since 0160) no longer checks
+  that the README writes the example's output with real names, since the
+  README now says what it shows without them; it still checks the
+  example against the real table, token for token.
+- Left on purpose: `Tor's Bow` (`item/tests.rs`, an item name in a
+  guarded test of the real data) and `Haltet das Tor` (German, not a
+  name), as in 0166; the lowercase `aske`/`ned` entries of `_typos.toml`
+  (a case-sensitive whole-word grep doesn't match them, and typos needs
+  them for the tickets and design documents); the map ids
+  `harrowby_yard` and `veyne_study` (content ids, ADR-0118 §2).
+- The ticket's list named `assets/battles/`, `cinematics/`, `portraits/`,
+  `crates/ui/README.md`, `docs/session-records.md`, `docs/engine/` and
+  `docs/targets.md`: 0160 and 0166 had already cleared them; the grep
+  found no person or place there.
+- No follow-up tickets.

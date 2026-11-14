@@ -23,8 +23,8 @@
 # `keep` line names it.
 
 # Every chapter, battle, script, map and conversation opening, but
-# Chapter 1's. Chapter 1's scenes play at Harrowby's yard and in the study
-# at Veyne Hall too (ch01_sparring, ch01_tbc).
+# Chapter 1's. Chapter 1's scenes play on the `harrowby_yard` and
+# `veyne_study` maps too (ch01_sparring, ch01_tbc).
 chapters/
 battles/
 dialogue/
