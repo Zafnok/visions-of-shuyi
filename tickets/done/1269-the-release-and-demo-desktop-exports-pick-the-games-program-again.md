@@ -76,10 +76,10 @@ None.
 ## Acceptance criteria
 
 - [x] `cargo metadata` lists one program for `trpg-app`.
-- [ ] A Release dry run builds all four packages, and its `sums` job's
+- [x] A Release dry run builds all four packages, and its `sums` job's
       summary shows `SHA256SUMS` with four lines (1267's two criteria it
       couldn't meet; links in the PR).
-- [ ] The story kit's Windows export still builds `story-preview`.
+- [x] The story kit's Windows export still builds `story-preview`.
 - [x] The xtask test fails when a second `[[bin]]` is added to `trpg-app`.
 - [x] All gates in the `run-gates` skill pass.
 
@@ -113,4 +113,9 @@ None.
 - Locally: `cargo shuyi export windows --release --without private-assets`
   and `--edition story-preview` both pass (the preview's zip holds
   `story-preview.exe` and `trpg-story-preview.pack`).
+- CI: Release dry run https://github.com/Zafnok/visions-of-shuyi/actions/runs/43638615911
+  (all four packages; `SHA256SUMS` has four lines, linux, macos, web and
+  windows) and Story kit https://github.com/Zafnok/visions-of-shuyi/actions/runs/43638618063
+  (`story-preview (windows)` green). The Story kit run uploaded this
+  branch's build to the mirror's `kit` release, as its nightly would.
 - No gameplay rule decided; nothing for Nick to play.
