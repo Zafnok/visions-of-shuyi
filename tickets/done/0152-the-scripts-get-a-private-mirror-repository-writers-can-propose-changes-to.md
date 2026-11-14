@@ -350,8 +350,8 @@ the assets repository at the pin; the import lands there), then built:
   setup and the workflows on `main`, so they moved to **0168** (blocked by
   this ticket; 0766 now waits for it too). Nick's setup was not done when
   this PR opened.
-- PR size: 2,615 changed lines against the 1,700 estimated (the import's
-  tests and the ticket's rewrite ran over). It could have split off the
+- PR size: 2,954 changed lines against the 1,700 estimated (the import's
+  tests, the ticket's rewrite and 0168 ran over). It could have split off the
   import (about 1,000 lines with its skill), but it was written and
   tested by then; it is under ADR-0101's 3,000.
 - Engine friction: estimate 400 production lines, measured 587 (1.5×),
