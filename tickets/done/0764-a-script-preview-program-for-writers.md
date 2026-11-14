@@ -216,7 +216,7 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 - [x] The preview's build embeds no `dialogue/` path (a test of its
       bundle), and the built program contains none of three chosen
       script lines (a step in the kit job).
-- [ ] The kit release holds the Windows zip (link in the completion
+- [x] The kit release holds the Windows zip (link in the completion
       notes).
 - [x] All gates in the `run-gates` skill pass.
 
@@ -269,6 +269,13 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
   program, `trpg-app.pack`, `music/`, `NOTICES.txt`, `HOW-TO-OPEN.txt`, the
   licences and `README.txt` from `assets-src/package/story-preview/`). A
   run by hand with `macos` ticked builds macOS too.
+- **The kit, by hand:** Story kit run 43560541583 from this branch
+  (Nick's go-ahead) put `story-preview-windows.zip` on the mirror's
+  release: https://github.com/Zafnok/visions-of-shuyi-story/releases/tag/kit.
+  Its job found none of its three script lines in the program or the pack.
+  The zip, downloaded on Windows and started on a fresh clone of the
+  mirror's `dialogue/`, opened and ran. The nightly run rebuilds it from
+  `main` once this is merged.
 - `cargo shuyi frame-png --story-preview <folder>` opens the preview (so
   does the MCP session), for the pictures below.
 
