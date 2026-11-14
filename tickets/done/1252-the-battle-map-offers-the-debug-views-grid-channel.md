@@ -75,7 +75,9 @@ Expected size: about 15 production lines, judged by Hello, Grid's
   on outlines the cells, the cursor's cell and each unit's cell with its
   index; off, nothing is drawn but `grid` is still offered, and the
   state hash is the same either way; with debug tools off, nothing is
-  asked or built.
+  asked or built. `settings_tests.rs`: nothing is drawn over a fight's
+  stage, and the outline is back after it (CI's mutants check found that
+  branch untested).
 - Picture: `docs/img/1252-battle-grid-channel.png` (`cargo shuyi
   frame-png <out> --keys "f d Down f Left f f Right" --wait 0.3 --debug
   grid`).
