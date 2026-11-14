@@ -37,6 +37,11 @@
 //! instead of the whole of `assets/` and the content.
 //! The demo is Chapter 1 of the content: without the checkout its tables
 //! are empty and the `demo` edition doesn't build (ADR-0121).
+//!
+//! When an export of the `story-preview` edition (the writer's script
+//! preview, ticket 0764) names `story-preview/` as `SHUYI_CONTENT`, every
+//! table leaves out what `story-preview/bundle.txt` lists (the scripts):
+//! the program holds no scene but the ones in the folder it reads.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -66,6 +71,16 @@ const DEMO: &str = "demo";
 
 /// Its list of what it leaves out and cuts.
 const DEMO_LIST: &str = "demo/bundle.txt";
+
+/// The writer's preview's content root, relative to this crate (ticket
+/// 0764).
+const PREVIEW: &str = "story-preview";
+
+/// Its list of what it leaves out.
+const PREVIEW_LIST: &str = "story-preview/bundle.txt";
+
+/// What every table leaves out: the preview edition's list, in its build.
+static LEFT_OUT: std::sync::OnceLock<demo_bundle::Plan> = std::sync::OnceLock::new();
 
 /// The bought art, relative to this crate (ADR-0040).
 const PRIVATE: &str = "../../assets-private/game";
@@ -102,16 +117,30 @@ fn main() {
     println!("cargo:rerun-if-changed={TEST}");
     println!("cargo:rerun-if-changed={PLAYDATE_LIST}");
     println!("cargo:rerun-if-changed={DEMO}");
+    println!("cargo:rerun-if-changed={PREVIEW}");
     println!("cargo:rerun-if-env-changed=SHUYI_CONTENT");
     println!("cargo::rustc-check-cfg=cfg(demo_edition)");
+    let mut demo = false;
     if let Some(root) = std::env::var_os("SHUYI_CONTENT") {
         let named = Path::new(&root).canonicalize().ok();
-        assert!(
-            named.is_some() && named == Path::new(DEMO).canonicalize().ok(),
-            "SHUYI_CONTENT is {}, which is no edition's content root this game has:              crates/content/demo is the demo's (shuyi.ron's `editions`)",
-            root.display()
-        );
-        println!("cargo:rustc-cfg=demo_edition");
+        let is = |dir: &str| named.is_some() && named == Path::new(dir).canonicalize().ok();
+        if is(DEMO) {
+            println!("cargo:rustc-cfg=demo_edition");
+            demo = true;
+        } else if is(PREVIEW) {
+            let list = std::fs::read_to_string(PREVIEW_LIST)
+                .unwrap_or_else(|e| panic!("reading {PREVIEW_LIST}: {e}"));
+            let plan =
+                demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{PREVIEW_LIST}: {e}"));
+            let _ = LEFT_OUT.set(plan);
+        } else {
+            panic!(
+                "SHUYI_CONTENT is {}, which is no edition's content root this game has: \
+                 crates/content/demo is the demo's, crates/content/story-preview the \
+                 writer's preview's (shuyi.ron's `editions`)",
+                root.display()
+            );
+        }
     }
     let private = std::env::var_os("CARGO_FEATURE_PRIVATE_ASSETS").is_some();
     if private {
@@ -127,7 +156,7 @@ fn main() {
     }
     let content = Path::new(CONTENT).is_dir();
     watch_content(content);
-    write_file_tables(private, content);
+    write_file_tables(private, content, demo);
 }
 
 /// Tells cargo when the content layer changes (ADR-0117): the content when
@@ -166,7 +195,7 @@ type Source = (&'static str, String);
 /// binary-search it. With `private`, the private layers too
 /// ([`playdate_table`], [`whole_table`]); with `content`, the content's;
 /// without, they are empty.
-fn write_file_tables(private: bool, content: bool) {
+fn write_file_tables(private: bool, content: bool, demo: bool) {
     let mut files = Vec::new();
     walk(Path::new(ASSETS), "", &mut files);
     files.sort_unstable();
@@ -178,6 +207,10 @@ fn write_file_tables(private: bool, content: bool) {
     let mut both: Vec<String> = files.iter().chain(&content_files).cloned().collect();
     both.sort_unstable();
     both.dedup();
+    if let (Some(plan), true) = (LEFT_OUT.get(), content) {
+        plan.left_out(&both)
+            .unwrap_or_else(|e| panic!("{PREVIEW_LIST}: {e}"));
+    }
     let list = std::fs::read_to_string(PLAYDATE_LIST)
         .unwrap_or_else(|e| panic!("reading {PLAYDATE_LIST}: {e}"));
     let left_out = left_out(&list, &both).unwrap_or_else(|e| panic!("{PLAYDATE_LIST}: {e}"));
@@ -239,16 +272,16 @@ fn write_file_tables(private: bool, content: bool) {
     if content {
         write_demo(&both, &content_files, private);
     } else {
-        write_no_demo();
+        write_no_demo(demo);
     }
 }
 
 /// The demo's tables without the content (ADR-0117): empty. The demo is
 /// Chapter 1 of the game's content, so a build without the checkout (a
 /// fork) has none, and an export of the demo edition needs the checkout.
-fn write_no_demo() {
+fn write_no_demo(demo: bool) {
     assert!(
-        std::env::var_os("SHUYI_CONTENT").is_none(),
+        !demo,
         "the demo edition is Chapter 1 of the game's content, which isn't in          assets-private/content/. Fetch it with `cargo shuyi private-assets` (it needs          access to the private repository)."
     );
     write_out(
@@ -399,13 +432,15 @@ fn is_sidecar(path: &str) -> bool {
         .is_some_and(|(name, ext)| !name.contains('/') && ext.eq_ignore_ascii_case("ron"))
 }
 
-/// The table expression of `files`, each read from its `source`.
+/// The table expression of `files`, each read from its `source`, but those
+/// the writer's preview leaves out in its build ([`LEFT_OUT`]).
 fn table<'a>(
     files: impl Iterator<Item = &'a String>,
     source: impl Fn(&String) -> Source,
 ) -> String {
     let mut table = String::from("&[\n");
-    for path in files {
+    let left_out = |path: &str| LEFT_OUT.get().is_some_and(|plan| plan.leaves_out(path));
+    for path in files.filter(|path| !left_out(path)) {
         let (root, file) = source(path);
         writeln!(
             table,

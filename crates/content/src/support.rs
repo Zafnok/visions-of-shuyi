@@ -159,7 +159,7 @@ impl PairChecker<'_> {
             }
             if let Some(dialogue) = self.dialogue {
                 for scene in [&p.conversations.c, &p.conversations.b, &p.conversations.a] {
-                    if dialogue.get(scene).is_none() {
+                    if crate::dialogue::scene_missing(dialogue, scene) {
                         at(format!("unknown dialogue scene \"{scene}\""));
                     }
                 }

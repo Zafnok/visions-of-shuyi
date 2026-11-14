@@ -418,7 +418,7 @@ fn check_places(def: &WorldMapDef, refs: WorldRefs<'_>, err: &mut dyn FnMut(Stri
                     err(format!("place \"{id}\": no battle \"{}\"", quest.battle));
                 }
                 for scene in quest.intro_scenes.iter().chain(&quest.victory_scenes) {
-                    if refs.dialogue.get(scene).is_none() {
+                    if crate::dialogue::scene_missing(refs.dialogue, scene) {
                         err(format!("place \"{id}\": no scene \"{scene}\""));
                     }
                 }

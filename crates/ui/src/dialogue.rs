@@ -12,6 +12,7 @@ use crate::prelude::*;
 use alloc::borrow::Cow;
 
 use shuyi_ui::dialogue::DialogueHooks;
+use shuyi_ui::dialogue::preview::Showing;
 use trpg_content::{LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage};
 use trpg_core::LeadProfile;
 
@@ -117,6 +118,34 @@ impl DialoguePlayer {
         Self(shuyi_ui::dialogue::DialoguePlayer::new(
             scene, hooks, present,
         ))
+    }
+
+    /// [`new`](Self::new), started at its text box `text_box` (0 is the
+    /// first) as if the boxes before it had been read, each reply choice
+    /// on the way taking its first reply: who stands where, the caption,
+    /// the place and the music are what those lines set (the writer's
+    /// preview, ticket 0764).
+    pub fn at_text_box(
+        scene: &Scene,
+        lead: LeadProfile,
+        names: Names,
+        present: &Present,
+        text_box: usize,
+    ) -> Self {
+        let hooks = Hooks { lead, names };
+        Self(shuyi_ui::dialogue::DialoguePlayer::from_text_box(
+            scene,
+            hooks,
+            present,
+            text_box,
+            &[],
+        ))
+    }
+
+    /// What the preview of a scene shows of it ([`Showing`]): the line in
+    /// the text box and how it is said.
+    pub fn showing(&self) -> Showing {
+        Showing::of(&self.0)
     }
 
     /// The lead whose name and pronouns fill the text.
