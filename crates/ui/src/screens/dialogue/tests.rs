@@ -1130,3 +1130,15 @@ fn fading_in_needs_a_place_and_no_opening() {
     s.update(&mut c, &frame(&[], 0.9, false));
     assert_eq!(darkened(&s, &c), Some(0.0));
 }
+
+/// A clip that loads slowly, then sounds, ends when it stops sounding:
+/// the time it waited to start doesn't count (0863).
+#[test]
+fn a_clip_ends_when_it_stops_sounding_after_it_was_heard() {
+    let mut clip = Clip::default();
+    assert_eq!(clip.ended_s(false, 0.25), None, "loading");
+    assert_eq!(clip.ended_s(true, 0.25), None, "sounding");
+    assert_eq!(clip.ended_s(false, 0.125), Some(0.125), "ended");
+    let mut never = Clip::default();
+    assert_eq!(never.ended_s(false, 0.5), Some(0.0), "given up at 0.5 s");
+}
