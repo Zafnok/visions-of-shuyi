@@ -1,0 +1,144 @@
+name: Story kit
+
+# Builds the writer's programs and puts them on the private mirror's
+# release `kit` (ticket 0152, ADR-0122): story-check for Linux and Windows,
+# with the crates' licence notices (ADR-0013). 0764 adds the preview
+# program.
+#
+# story-check embeds the game's content (the chapters and battles name the
+# scenes they play), so it is built with the private repository checked
+# out and goes straight to the mirror's release: never a workflow
+# artifact, which anyone can download from a public repository (ADR-0117
+# §4).
+#
+# By hand, and nightly when what the program is built from changed since
+# the game commit the release's notes name. The release needs a commit in
+# the mirror: run story-mirror.yml first.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: story-kit
+  cancel-in-progress: false
+
+env:
+  MIRROR: Zafnok/visions-of-shuyi-story
+  CARGO_TERM_COLOR: always
+
+jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.plan.outputs.build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Is the kit out of date?
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::STORY_MIRROR_TOKEN is not available to this run: the kit is not built (ticket 0152)."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! notes=$(gh release view kit -R "$MIRROR" --json body -q .body 2> /dev/null); then
+            gh release create kit -R "$MIRROR" --title "Writer's kit" \
+              --notes "The writer's programs. Being built." \
+              || { echo "::error::Can't make the release kit in $MIRROR: run story-mirror first (the mirror needs a commit), or renew STORY_MIRROR_TOKEN (ticket 0152, setup step 3)."; exit 1; }
+            notes=""
+          fi
+          built=$(printf '%s\n' "$notes" | sed -nE 's/^Game-Commit: *([0-9a-f]{40}).*$/\1/p' | head -1)
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$built" ] \
+            || ! git cat-file -e "$built^{commit}" 2> /dev/null \
+            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets crates/content crates/writer Cargo.lock shuyi-engine.rev; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The kit was built from $built and nothing it is built from changed since."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: build (${{ matrix.os }})
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            program: story-check
+            asset: story-check-linux
+          - os: windows-latest
+            program: story-check.exe
+            asset: story-check-windows.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - run: rustup show
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: story-kit
+      - run: cargo build --release --locked -p trpg-writer --bin story-check
+      - name: Upload to the release kit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+          PROGRAM: ${{ matrix.program }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          cp "target/release/$PROGRAM" "$ASSET"
+          gh release upload kit "$ASSET" -R "$MIRROR" --clobber
+
+  publish:
+    name: notices and notes
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-about
+      # The crates story-check is built from, as every package carries them.
+      - run: |
+          cargo about generate -m crates/writer/Cargo.toml about.hbs \
+            -o THIRD_PARTY_LICENSES.html
+      - name: Upload the notices and name the commit
+        env:
+          GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload kit THIRD_PARTY_LICENSES.html -R "$MIRROR" --clobber
+          sha=$(git rev-parse HEAD)
+          pin=$(tr -d '[:space:]' < assets-private.rev)
+          gh release edit kit -R "$MIRROR" --notes "$(cat <<EOF
+          The writer's programs: story-check checks the scripts (put it in the
+          repository's folder and run it there; story-check --help says how).
+
+          Game-Commit: $sha
+          Assets-Commit: $pin
+          EOF
+          )"

@@ -26,3 +26,9 @@ tables, laid out like `assets/` and checked out into
 `assets-private/content/`, which every build that has it lays over
 `assets/` (ADR-0117). A build without it starts the test chapter on the
 public stand-ins (ADR-0121).
+
+The writer works in a copy of the scripts and these documents: the
+private mirror `Zafnok/visions-of-shuyi-story`, synced from the pin by
+`.github/workflows/story-mirror.yml` (ticket 0152, ADR-0122). A pull
+request there that Nick approved comes back with `cargo xtask
+story-import` (the `story-import` skill); never edit the mirror itself.

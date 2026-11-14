@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0152", "0159", "0160", "0764", "0765", "0915", "0494", "0495"]
+blocked_by: ["0152", "0168", "0159", "0160", "0764", "0765", "0915", "0494", "0495"]
 nick_input: setup
 completed:
 ---

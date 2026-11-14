@@ -1,6 +1,6 @@
 ---
 name: work-ticket
-description: Pick up, implement, verify, archive and open a PR for exactly one ticket from tickets/open/. Use whenever asked to "work ticket NNNN", "do the next ticket", or start any implementation work in this repo. Not for a sonar or engine-pin issue (sonar-fix, engine-pin) or for writing a new ticket (write-ticket).
+description: Pick up, implement, verify, archive and open a PR for exactly one ticket from tickets/open/. Use whenever asked to "work ticket NNNN", "do the next ticket", or start any implementation work in this repo. Not for a sonar or engine-pin issue (sonar-fix, engine-pin), a writer's mirror pull request (story-import) or for writing a new ticket (write-ticket).
 metadata:
   version: "1.0"
 ---

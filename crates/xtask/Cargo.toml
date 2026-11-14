@@ -19,6 +19,9 @@ trpg-engine-watch = { path = "../engine-watch" }
 # with (ticket 0506).
 shuyi-core = { workspace = true, features = ["std"] }
 trpg-content = { path = "../content" }
+# The script checks `check-script` runs, shared with the writer's
+# `story-check` (ticket 0152).
+trpg-writer = { path = "../writer" }
 trpg-core = { path = "../core" }
 # The Harness, for the game's `frame-png` (`game_tools`, ticket 0232).
 trpg-ui = { path = "../ui", features = ["harness"] }

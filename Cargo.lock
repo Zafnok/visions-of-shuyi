@@ -1397,6 +1397,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "trpg-writer"
+version = "0.3.0"
+dependencies = [
+ "trpg-content",
+]
+
+[[package]]
 name = "ttf-parser"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1701,6 +1708,7 @@ dependencies = [
  "trpg-core",
  "trpg-engine-watch",
  "trpg-ui",
+ "trpg-writer",
 ]
 
 [[package]]

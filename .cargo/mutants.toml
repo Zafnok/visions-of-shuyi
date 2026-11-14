@@ -15,6 +15,10 @@
 # do `gain_problems` and `check_with_gains` in `crates/xtask/src/engine.rs`
 # (ticket 1197).
 #
+# `story_import::gh` (`crates/xtask/src/story_import.rs`) and
+# `story-check`'s `main` (`crates/writer/src/main.rs`) only run `gh` or
+# print what the tested `trpg_writer::story_check` returns (ticket 0152).
+#
 # `Debuffs::visit_none` and `visit_unit` (`crates/core/src/art.rs`) return
 # an empty list, which is what `Default::default()` is: that mutant changes
 # nothing (ticket 0325).
@@ -24,6 +28,7 @@
 exclude_re = [
     "Debuffs>::visit_(none|unit)",
     "engine::(gain_problems|check_with_gains)",
+    "story_import::gh",
     'FlowScreen>::actions.*Some\(vec!\[\]\)',
 ]
 exclude_globs = [
@@ -31,6 +36,7 @@ exclude_globs = [
     "crates/playdate/src/pd/**",
     "crates/engine-watch/src/fetch.rs",
     "crates/engine-watch/src/main.rs",
+    "crates/writer/src/main.rs",
 ]
 timeout_multiplier = 3.0
 

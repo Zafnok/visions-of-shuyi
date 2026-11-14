@@ -1,0 +1,44 @@
+# The writer's mirror's own check (ticket 0152, ADR-0122). Copied to the
+# mirror's .github/workflows/ by the game's story-mirror workflow: edit it
+# in the game's tools/story-mirror/, never in the mirror.
+#
+# It runs the release kit's story-check (built by the game's story-kit
+# workflow) on dialogue/ and marks each problem on its line. No secret: the
+# mirror's own read-only token downloads the program.
+name: Check the scripts
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: story-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get story-check from the release kit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release download kit -R "$GITHUB_REPOSITORY" -p story-check-linux -O story-check; then
+            echo "::error::The release 'kit' has no story-check-linux yet: the game's story-kit workflow makes it."
+            exit 1
+          fi
+          chmod +x story-check
+      - name: Check the scripts
+        run: |
+          set -uo pipefail
+          ./story-check dialogue > report.txt
+          code=$?
+          cat report.txt
+          # file:line:col: message, or file:line: message, as annotations.
+          sed -e 's/%/%25/g' report.txt | sed -nE \
+            -e 's/^([^:]+):([0-9]+):([0-9]+): (.*)$/::error file=\1,line=\2,col=\3::\4/p' \
+            -e 's/^([^:]+):([0-9]+): (.*)$/::error file=\1,line=\2::\3/p'
+          exit "$code"
