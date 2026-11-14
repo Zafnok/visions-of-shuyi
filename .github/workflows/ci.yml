@@ -406,6 +406,9 @@ jobs:
           mkdir -p dist/licenses
           cargo about generate -m crates/app/Cargo.toml about.hbs \
             -o dist/licenses/THIRD_PARTY_LICENSES.html
+      # A release web export runs wasm-opt and fails without it (engine
+      # ADR-0094, ticket 0916).
+      - uses: ./.github/actions/binaryen
       # The export's own cargo commands don't take --locked.
       - run: cargo metadata --locked --format-version 1 > /dev/null
       - run: cargo shuyi export web --release --without private-assets

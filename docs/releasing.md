@@ -140,6 +140,11 @@ Why Windows builds with the GNU toolchain:
 
 Make `dist/licenses/` first; `cargo install --locked cargo-about` gives the
 tool. MSYS2's `mingw64/bin` must be on `PATH`, for `objcopy` and `windres`.
+A release `web` package (the game's or the demo's) needs Binaryen's
+`wasm-opt` on `PATH` too, and fails with `SH1003` without it (engine
+ADR-0094): `pacman -S mingw-w64-x86_64-binaryen` in MSYS2, or a release
+from [github.com/WebAssembly/binaryen](https://github.com/WebAssembly/binaryen/releases).
+CI installs the version pinned in `.github/actions/binaryen/action.yml`.
 
 ```bash
 cargo about generate -m crates/app/Cargo.toml about.hbs -o dist/licenses/THIRD_PARTY_LICENSES.html

@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-13
 ---
 
 # 0916 — Release and CI web exports run wasm-opt
@@ -68,10 +68,10 @@ None. Verified by CI.
 
 ## Acceptance criteria
 
-- [ ] CI's `export` job runs `wasm-opt` (its log says so) and passes
+- [x] CI's `export` job runs `wasm-opt` (its log says so) and passes
       without `wasm_opt: optional` in `shuyi.ron`.
-- [ ] `release.yml`'s `web` leg installs Binaryen the same way.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `release.yml`'s `web` leg installs Binaryen the same way.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,5 +79,24 @@ None. Verified by CI.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- A composite action, `.github/actions/binaryen`, installs Binaryen's
+  `wasm-opt` at a pinned release (`version_133`), refused unless the
+  tarball's SHA-256 matches, into `/usr/local/bin` (the engine looks on
+  `PATH`; writing `GITHUB_PATH` is zizmor's github-env finding), like the
+  `butler` action pins butler. The engine's own CI uses Ubuntu's `apt
+  install binaryen`, which isn't pinned, so this copies its approach (a
+  Binaryen on the runner) but not its install line.
+- CI's `export` job and `release.yml`'s `web` leg use it; `shuyi.ron`'s
+  `export` part no longer says `wasm_opt: optional`.
+- **Deviation:** `demo.yml`'s `web` leg exports `--release --edition demo`
+  too (on every PR touching `assets/`, `crates/content/` or `shuyi.ron`),
+  so it would have failed with `SH1003`; it installs Binaryen the same way.
+- `docs/releasing.md`'s *One package by hand* says a release web package
+  needs `wasm-opt` on `PATH` (MSYS2's `mingw-w64-x86_64-binaryen`).
+- Verified on the PR's CI: the `export` job's log shows `wasm-opt version
+  133`, the package's `.wasm` is 8.2 MB (10.5 MB before) and has no custom
+  section at all (no `name`, no `producers`); `bench` passes. The web
+  package's gated size in `docs/targets.md` went 10.7 → 8.7 MB. No budget
+  changed.
+- Nothing for Nick: nothing is installed on his machine, and the game plays
+  the same.

@@ -85,7 +85,7 @@ CI has no Playdate SDK to build it.
 
 | Package | Size (gated) | Whole package |
 | --- | ---: | ---: |
-| `visions-of-shuyi-0.3.0-web.zip` | 10.7 MB | 81.9 MB |
+| `visions-of-shuyi-0.3.0-web.zip` | 8.7 MB | 81.8 MB |
 
 The web's package budget counts what a player waits for before the game
 starts, not the whole upload (engine ticket 3313, its
@@ -94,11 +94,12 @@ starts, not the whole upload (engine ticket 3313, its
 track or clip in the background when it first plays it, and itch.io and
 GitHub Pages serve an uploaded HTML5 zip as separate files, so those are
 never waited for (ticket 1249 checked it in a browser: the page loads the
-scripts and the 10.5 MB `.wasm`, the title song is fetched when it starts
+scripts and the `.wasm`, the title song is fetched when it starts
 and the opening scene's track when New Game reaches it). The whole zip,
 with the 75 MB `music/` folder, is the upload's size; the "Whole package"
 column keeps it in sight. Measured 2026-11-13 by the `bench` job of PR
-#674.
+#681 (ticket 0916: the first package `wasm-opt -Oz` shrank, its `.wasm`
+8.2 MB from 10.5).
 
 ## Over budget
 
