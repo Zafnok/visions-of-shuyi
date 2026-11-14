@@ -136,7 +136,7 @@ None.
 - `cargo shuyi run --watch` itself can't start the game:
   since 0764 `trpg-app` has two programs and the engine refuses to choose
   (SH1002). The same refusal breaks desktop exports (`release.yml`,
-  `demo.yml`). Filed as **0919** (blocks 0901, 0918, 1016, 1229, 1267). I ran
+  `demo.yml`). Filed as **0919** (blocks 0901, 1016, 1229, 1267). I ran
   what `run --watch` runs instead: `SHUYI_WATCH=<repo>/assets cargo run -p
   trpg-app --bin visions-of-shuyi`.
 - The README filter (`bundle::Folder`) is a workaround for `read_folder`
