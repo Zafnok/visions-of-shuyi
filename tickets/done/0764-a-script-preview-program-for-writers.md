@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0152", "engine#2586"]
 nick_input: none
-completed:
+completed: 2026-11-14
 ---
 
 # 0764 — A script preview program for writers
@@ -201,24 +201,24 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 
 ## Acceptance criteria
 
-- [ ] From a temporary folder holding one `.dlg` file, the scene list
+- [x] From a temporary folder holding one `.dlg` file, the scene list
       shows its scenes (Harness test reading the view).
-- [ ] With a condition switched off, the scene plays its `@else` line
+- [x] With a condition switched off, the scene plays its `@else` line
       (Harness test).
-- [ ] A jump to line N shows that text box with the portraits, caption
+- [x] A jump to line N shows that text box with the portraits, caption
       and place the lines before it set (Harness test).
-- [ ] A saved change shows on the next frame; a broken file shows its
+- [x] A saved change shows on the next frame; a broken file shows its
       problem with file and line and keeps the old scene playing
       (Harness tests through the headless backend's `change_file`).
-- [ ] With only `ch01_intro` and `ch01_prebattle` in the folder, the
+- [x] With only `ch01_intro` and `ch01_prebattle` in the folder, the
       preview plays both and reports no problem about other scenes
       (test).
-- [ ] The preview's build embeds no `dialogue/` path (a test of its
+- [x] The preview's build embeds no `dialogue/` path (a test of its
       bundle), and the built program contains none of three chosen
       script lines (a step in the kit job).
-- [ ] The kit release holds the Windows zip (link in the completion
+- [x] The kit release holds the Windows zip (link in the completion
       notes).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -229,5 +229,90 @@ rule; how a writer uses it is judged by the writer in 0766's trial.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done**
+
+- **`story-preview`** is a second binary of `trpg-app`
+  (`crates/app/src/bin/story_preview.rs`): it shares the game's platform
+  shell, its settings (the key layout chosen in the game), its music folder
+  and its packed release build, which a second package would duplicate.
+  The folder is the one named (a folder, or the folder of a `.dlg` file
+  dragged onto it), else `dialogue/` beside the program, else none: the
+  Scenes tab then says to drag the folder onto the program.
+- **The game's half of the engine's preview** (`crates/ui/src/story_preview.rs`):
+  `ShuyiPreview` (`PreviewGame`) plays a scene in the game's
+  `DialogueScreen` from any text box (`DialoguePlayer::at_text_box`,
+  `DialogueScreen::playing`), over its battle's map for a battle's scene,
+  with two switches of its own (the female lead; a 12-letter name,
+  `Maximilianus`); `StoryPreview` wraps the engine's screen with the page
+  of names and faces (every `{n:<id>}` with today's name, every
+  character's id and expressions), the note "Only the scenes in this
+  folder are checked", and a line under the strip naming each face's
+  expression. View and skin are split (ADR-0054).
+- **Checks:** `story-check`'s, every rule, through
+  `trpg_content::load_with_some_scripts`: a chapter, battle trigger,
+  cinematic, camp event, support or world-map place naming a scene the
+  folder lacks is noted, not reported (ADR-0123). With a whole clone of the
+  mirror nothing is noted and every rule holds; a test plays every script
+  of the game with no problem.
+- **No script inside the program:** shuyi.ron's `story-preview` edition
+  (engine#3082 was pinned, so no `no-embedded-scripts` feature):
+  `crates/content/story-preview/bundle.txt` lists `dialogue/`, and
+  `build.rs` leaves it out of every table, so the program and the pack its
+  release export bakes hold none. A local `cargo shuyi export windows
+  --release --edition story-preview` passed the edition's disclosure (156
+  pack entries, none a script), and none of 50 script lines (the first
+  five long speech lines of each of the ten scripts) was in the program or
+  its pack. The program started and ran on a folder of test scenes.
+- **Packaging:** `story-kit.yml`'s new `preview` job exports the edition
+  with the bought art, checks the program and pack for three script lines,
+  and uploads `story-preview-windows.zip` (the export's own zip: the
+  program, `trpg-app.pack`, `music/`, `NOTICES.txt`, `HOW-TO-OPEN.txt`, the
+  licences and `README.txt` from `assets-src/package/story-preview/`). A
+  run by hand with `macos` ticked builds macOS too.
+- **The kit, by hand:** Story kit run 43560541583 from this branch
+  (Nick's go-ahead) put `story-preview-windows.zip` on the mirror's
+  release: https://github.com/Zafnok/visions-of-shuyi-story/releases/tag/kit.
+  Its job found none of its three script lines in the program or the pack.
+  The zip, downloaded on Windows and started on a fresh clone of the
+  mirror's `dialogue/`, opened and ran. The nightly run rebuilds it from
+  `main` once this is merged.
+- `cargo shuyi frame-png --story-preview <folder>` opens the preview (so
+  does the MCP session), for the pictures below.
+
+**Deviations**
+
+- **Unit info, not Options, opens the names and faces.** `Options` has no
+  key in any layout (only the Playdate's system menu sends it), so a writer
+  couldn't reach the page. Unit info (`Info`) is an existing action with a
+  key in both layouts and a button; no new default key. PrevUnit/NextUnit
+  weren't needed: the engine's tabs turn with the cursor.
+- **Direction and faces are on the top strip**, not under the text box:
+  the strip is the engine's (engine#2586); the game's faces line sits
+  under it.
+- **The format's checks and stand-ins:** the engine's preview checks the
+  scenes as written, `{lead|the exile}` and all, so the game hands it
+  `FormatRules`, which read a stand-in as the name, and plays a scene with
+  its stand-ins taken out and its line ids kept (`as_shown`).
+- The names page isn't in the PR's pictures: it shows the story's real
+  names, which the public repository no longer does (0167). The pictures
+  use the test characters.
+- macOS isn't built or run here (its job is off unless asked).
+
+- **The web:** `cargo shuyi web` builds every binary of the package, so
+  `story-preview` builds for the web too, with no folder (it starts on no
+  scenes); the web preview is 0767's.
+
+**Size** — estimate 450 production lines (judged by `scene_preview.rs`
+and the ticket's parts), measured 684 (`cargo xtask code-lines`): 1.5×,
+under 2×. The parts the estimate didn't hold: `FormatRules` and
+`as_shown` for stand-ins, the `--story-preview` start of the game's tools
+(36), the pack loading in the binary. PR size: estimate 1,250, measured
+2,310: the edition's `disclosure` in `shuyi.ron` (253 lines, mostly the
+pack's 156 entries, the project's without the scripts) and 534 lines of
+tests. Under 3,000; it doesn't split cleanly (the edition, the program
+and the tests of each are one change).
+
+**Starting rules** — none: nothing here is a game rule.
+
+**Follow-ups** — none new: the web preview is 0767; the guide's pages
+about the program are 0765.

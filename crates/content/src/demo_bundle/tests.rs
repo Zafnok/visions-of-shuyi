@@ -255,3 +255,24 @@ fn the_demos_list_keeps_chapter_1_and_cuts_the_shared_files() {
     }
     assert!(read("chapters/ch01.ron").contains("next: None"));
 }
+
+/// The writer's preview's list (ticket 0764): its build, the
+/// `story-preview` edition, leaves out every script, in `assets/`, the
+/// content and the test files alike, and nothing else.
+#[test]
+fn the_writers_preview_leaves_out_every_script_and_nothing_else() {
+    let list = include_str!("../../story-preview/bundle.txt");
+    let plan = Plan::parse(list).unwrap_or_else(|e| panic!("{e}"));
+    let all: Vec<String> = crate::bundle::files_under("")
+        .into_iter()
+        .map(str::to_owned)
+        .collect();
+    let scripts: Vec<&String> = all.iter().filter(|p| p.starts_with("dialogue/")).collect();
+    assert!(!scripts.is_empty(), "the test files have scripts");
+    let out = plan.left_out(&all).unwrap_or_else(|e| panic!("{e}"));
+    let out: Vec<&String> = out.iter().collect();
+    assert_eq!(out, scripts);
+    assert!(scripts.iter().all(|p| plan.leaves_out(p)));
+    assert!(!plan.leaves_out("data/names.ron"));
+    assert!(!plan.leaves_out("portraits/lead_m.ron"));
+}

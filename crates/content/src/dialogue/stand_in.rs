@@ -11,7 +11,7 @@ use alloc::collections::BTreeMap;
 
 use trpg_core::lead::{self, Part};
 
-use super::{DialogueTable, LineId, Lines, ParsedScene, Step};
+use super::{DialogueTable, LineId, Lines, ParsedScene, Scene, Step};
 use crate::error::ContentError;
 
 /// The lines written with a stand-in, by id: each line's text as written,
@@ -47,6 +47,19 @@ fn strip(text: &str) -> Option<String> {
         }
     }
     found.then_some(out)
+}
+
+/// `scene` as the text box shows it: each `{lead|<words>}` written
+/// `{lead}`, every line keeping the id it was read with (the writer's
+/// preview, ticket 0764, follows the line on screen by that id).
+pub fn as_shown(scene: &Scene) -> Scene {
+    let mut shown = scene.clone();
+    texts_mut(&mut shown.steps, &mut |text| {
+        if let Some(stripped) = strip(text) {
+            *text = stripped;
+        }
+    });
+    shown
 }
 
 /// Whether `text` says the name with no stand-in: a bare `{lead}`.

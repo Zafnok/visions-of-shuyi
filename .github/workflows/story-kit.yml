@@ -2,8 +2,12 @@ name: Story kit
 
 # Builds the writer's programs and puts them on the private mirror's
 # release `kit` (ticket 0152, ADR-0122): story-check for Linux and Windows,
-# with the crates' licence notices (ADR-0013). 0764 adds the preview
-# program.
+# with the crates' licence notices (ADR-0013), and the script preview
+# (ticket 0764), `story-preview`, zipped for Windows with the bought art
+# inside, its music, its notices and a README. The preview is built as
+# shuyi.ron's `story-preview` edition, which embeds none of the scripts;
+# its job checks the program for three lines of them before uploading it.
+# macOS only when a run by hand asks (its minutes cost ten times).
 #
 # story-check embeds the game's content (the chapters and battles name the
 # scenes they play), so it is built with the private repository checked
@@ -17,6 +21,11 @@ name: Story kit
 
 on:
   workflow_dispatch:
+    inputs:
+      macos:
+        description: Build the script preview for macOS too
+        type: boolean
+        default: false
   schedule:
     - cron: "23 4 * * *"
 
@@ -37,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build: ${{ steps.plan.outputs.build }}
+      previews: ${{ steps.plan.outputs.previews }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,8 +57,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
+          MACOS: ${{ inputs.macos }}
         run: |
           set -euo pipefail
+          if [ "$MACOS" = "true" ]; then
+            echo 'previews=[{"target":"windows","os":"windows-latest"},{"target":"macos","os":"macos-latest"}]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'previews=[{"target":"windows","os":"windows-latest"}]' >> "$GITHUB_OUTPUT"
+          fi
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::STORY_MIRROR_TOKEN is not available to this run: the kit is not built (ticket 0152)."
             echo "build=false" >> "$GITHUB_OUTPUT"
@@ -63,7 +79,7 @@ jobs:
           built=$(printf '%s\n' "$notes" | sed -nE 's/^Game-Commit: *([0-9a-f]{40}).*$/\1/p' | head -1)
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$built" ] \
             || ! git cat-file -e "$built^{commit}" 2> /dev/null \
-            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets crates/content crates/writer Cargo.lock shuyi-engine.rev; then
+            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets assets-src/package crates/core crates/content crates/ui crates/app crates/writer music Cargo.lock shuyi.ron shuyi-engine.rev; then
             echo "build=true" >> "$GITHUB_OUTPUT"
           else
             echo "The kit was built from $built and nothing it is built from changed since."
@@ -110,9 +126,102 @@ jobs:
           cp "target/release/$PROGRAM" "$ASSET"
           gh release upload kit "$ASSET" -R "$MIRROR" --clobber
 
+  # The script preview: `cargo shuyi export <target> --release --edition
+  # story-preview` (shuyi.ron), with the bought art, then a check that the
+  # program holds none of three of the scripts' lines, then the package
+  # zipped to the release. Never a workflow artifact (the art is inside).
+  preview:
+    name: story-preview (${{ matrix.target }})
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.previews) }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          content: "true"
+          required: "true"
+      - run: rustup toolchain install --no-self-update
+      # .cargo/config.toml links the GNU target with MSYS2's mingw-w64 GCC,
+      # as release.yml does.
+      - name: Set up the Windows GNU target
+        if: matrix.target == 'windows'
+        run: |
+          /c/msys64/usr/bin/pacman.exe -Sy --noconfirm --needed mingw-w64-x86_64-gcc
+          echo 'C:\msys64\mingw64\bin' >> "$GITHUB_PATH"
+          rustup target add x86_64-pc-windows-gnu
+      - name: Set up both Mac targets
+        if: matrix.target == 'macos'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: story-kit-preview
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-about
+      # The crates the program is built from, as every package carries them.
+      - run: |
+          mkdir -p dist/licenses
+          cargo about generate -m crates/app/Cargo.toml about.hbs \
+            -o dist/licenses/THIRD_PARTY_LICENSES.html
+      # The export's own cargo commands don't take --locked.
+      - run: cargo metadata --locked --format-version 1 > /dev/null
+      - run: cargo shuyi export "$TARGET" --release --edition story-preview
+      # Three lines of the scripts, the first long speech line of three
+      # files, none of which may be in the program: the edition's content
+      # root leaves every script out (ticket 0764).
+      - name: The program holds no script line
+        run: |
+          set -euo pipefail
+          from="dist/export/story-preview/$TARGET"
+          folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
+          program=$(find "$from/$folder" -type f \( -name 'story-preview.exe' -o -path '*/MacOS/story-preview' \) | head -1)
+          [ -n "$program" ] || { echo "::error::no story-preview program in $from/$folder"; exit 1; }
+          pack=$(find "$from/$folder" -type f -name 'trpg-app.pack' | head -1)
+          checked=0
+          for script in ch01 ch04 ch08; do
+            line=$(sed -nE 's/^[a-z_]+(\[[a-z]+\])?( \([^)]*\))?: (.{30,})$/\3/p' \
+              "assets-private/content/dialogue/$script.dlg" | head -1)
+            [ -n "$line" ] || { echo "::error::no long speech line in $script.dlg to look for"; exit 1; }
+            if grep -qF -- "$line" "$program" $pack; then
+              echo "::error::the program holds a line of dialogue/$script.dlg: the story-preview edition embeds the scripts"
+              exit 1
+            fi
+            checked=$((checked + 1))
+          done
+          echo "None of $checked script lines is in $program or its pack."
+      - name: Zip and upload to the release kit
+        env:
+          GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          from="dist/export/story-preview/$TARGET"
+          folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
+          asset="story-preview-$TARGET.zip"
+          # The export zips the Windows package itself; macOS's it leaves a
+          # folder, which `ditto` zips keeping the app's signature.
+          if [ "$TARGET" = "macos" ]; then
+            (cd "$from" && ditto -c -k --keepParent "$folder" "$OLDPWD/$asset")
+          else
+            cp "$from/$folder.zip" "$asset"
+          fi
+          gh release upload kit "$asset" -R "$MIRROR" --clobber
+
   publish:
     name: notices and notes
-    needs: build
+    needs: [build, preview]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -136,7 +245,9 @@ jobs:
           pin=$(tr -d '[:space:]' < assets-private.rev)
           gh release edit kit -R "$MIRROR" --notes "$(cat <<EOF
           The writer's programs: story-check checks the scripts (put it in the
-          repository's folder and run it there; story-check --help says how).
+          repository's folder and run it there; story-check --help says how),
+          and story-preview plays them in the game's own text box (unzip
+          story-preview-windows.zip, then read its README.txt).
 
           Game-Commit: $sha
           Assets-Commit: $pin

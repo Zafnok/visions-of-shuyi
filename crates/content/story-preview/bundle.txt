@@ -1,0 +1,13 @@
+# What the writer's script preview leaves out (ticket 0764).
+#
+# This folder is the `story-preview` edition's content root (`shuyi.ron`'s
+# `editions`): `cargo shuyi export windows --release --edition
+# story-preview` hands it to the build as `SHUYI_CONTENT`, and `build.rs`
+# embeds every file it always does (`assets/`, the game's content from the
+# private repository over it, ADR-0117, and the bought art) but those this
+# list leaves out, from every layer. The program a trial writer is sent so
+# holds no scene but the ones in its folder. The lines' forms are
+# `crates/content/src/demo_bundle.rs`'s; here only folders are left out.
+
+# Every script.
+dialogue/

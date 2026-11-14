@@ -507,6 +507,11 @@ fn pan_problems(
 /// `first`.
 fn talk_problems(refs: Refs<'_>, scene: &str, first: usize, count: usize) -> Vec<String> {
     let Some(def) = refs.scenes.get(scene) else {
+        // In a load of only some scripts, a scene not there has no boxes
+        // to check.
+        if !crate::dialogue::scene_missing(refs.scenes, scene) {
+            return Vec::new();
+        }
         return vec![format!("no dialogue scene \"{scene}\"")];
     };
     if count == 0 {

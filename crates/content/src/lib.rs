@@ -275,6 +275,27 @@ pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content
     load(Some(scripts))
 }
 
+/// What [`load_with_some_scripts`] found.
+#[cfg(feature = "std")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SomeScripts {
+    /// The content, or every problem but a scene named that isn't there.
+    pub content: Result<Content, ContentErrors>,
+    /// The scenes the game's files name that the scripts don't have.
+    pub not_here: alloc::collections::BTreeSet<String>,
+}
+
+/// [`load_with_scripts`] with some of the game's scripts, not all (the
+/// writer's preview on a trial packet of two scenes, ticket 0764): every
+/// check, but a chapter, battle trigger, cinematic, camp event, support or
+/// world-map place may name a scene the scripts don't have. Those scenes
+/// are listed in [`SomeScripts::not_here`] instead.
+#[cfg(feature = "std")]
+pub fn load_with_some_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> SomeScripts {
+    let (content, not_here) = dialogue::with_some_scenes(|| load_with_scripts(scripts));
+    SomeScripts { content, not_here }
+}
+
 /// Loads and validates everything; the dialogue files are `scripts`, or
 /// the bundle's when `None`.
 fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
@@ -1964,6 +1985,50 @@ mod tests {
         // Without the game's scripts, what plays their scenes fails.
         let errors = load_with_scripts(&more[files.len()..=files.len()]).unwrap_err();
         assert!(errors.0.iter().any(|e| e.file.starts_with("assets")));
+    }
+
+    /// The bundle's dialogue files, each named as a problem names it.
+    fn bundle_scripts() -> Vec<(String, &'static str)> {
+        let paths = bundle::files_in(dialogue::DIALOGUE_DIR);
+        paths
+            .into_iter()
+            .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
+            .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
+            .collect()
+    }
+
+    /// With some of the scripts (ticket 0764), a scene a file names that
+    /// isn't there is noted, never a problem: no script at all loads, and
+    /// every other problem is still found.
+    #[test]
+    fn a_load_of_some_scripts_notes_the_scenes_not_there() {
+        let none = load_with_some_scripts::<&str>(&[]);
+        let content = none.content.unwrap();
+        assert!(content.dialogue.scenes.is_empty());
+        let embedded = load_embedded().unwrap();
+        assert_eq!(content.battles, embedded.battles);
+        assert_eq!(content.chapters, embedded.chapters);
+        let every: alloc::collections::BTreeSet<String> =
+            embedded.dialogue.scenes.keys().cloned().collect();
+        assert!(!none.not_here.is_empty());
+        assert!(none.not_here.is_subset(&every), "{:?}", none.not_here);
+        // Every scene the strict load of no script misses is noted.
+        let strict = load_with_scripts::<&str>(&[]).unwrap_err();
+        let noted = |e: &&ContentError| none.not_here.iter().any(|id| e.message.contains(id));
+        assert!(strict.0.iter().all(|e| noted(&e)), "{strict}");
+        // Every script there: nothing is noted, and the content is the game's.
+        let all = load_with_some_scripts(&bundle_scripts());
+        assert!(all.not_here.is_empty(), "{:?}", all.not_here);
+        assert_eq!(all.content.unwrap().dialogue, embedded.dialogue);
+        // A problem of the scripts given is still one.
+        let stranger = [("who.dlg", "@scene who\nnobody: Hello.\n@end\n")];
+        let errors = load_with_some_scripts(&stranger).content.unwrap_err();
+        assert_eq!(
+            errors.0,
+            [ContentError::new("who.dlg", "unknown character \"nobody\"").at(2, None)]
+        );
+        // The load after is strict again.
+        assert!(load_with_scripts::<&str>(&[]).is_err());
     }
 
     /// The embedded scripts pass the presence check (ADR-0055); with the

@@ -91,6 +91,53 @@ impl Rules<'_> {
     }
 }
 
+/// The format's rules on the game's scenes, without the game's tables: the
+/// text box's size and the lead's tokens. What the writer's preview checks
+/// a scene alone against (ticket 0764); [`scripts_from_sources`] holds it
+/// to the game's characters, portraits, names and music too.
+///
+/// [`scripts_from_sources`]: super::scripts_from_sources
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct FormatRules;
+
+impl SceneRules<Stage> for FormatRules {
+    fn limits(&self) -> &DialogueLimits {
+        &LIMITS
+    }
+
+    fn tokens(&self) -> &dyn Tokens {
+        &WrittenTokens
+    }
+}
+
+/// [`LeadTokens`] on a scene as written, before its stand-ins are taken
+/// out ([`super::stand_in`]): `{lead|<words>}` is the name, as long.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct WrittenTokens;
+
+impl Tokens for WrittenTokens {
+    fn longest(&self, token: &str) -> Option<usize> {
+        let named = super::stand_in(token).is_some();
+        LeadTokens.longest(if named { lead::NAME_TOKEN } else { token })
+    }
+
+    fn unknown(&self, token: &str) -> String {
+        LeadTokens.unknown(token)
+    }
+
+    fn reserved_name(&self, id: &str, token: &str) -> Option<String> {
+        LeadTokens.reserved_name(id, token)
+    }
+
+    fn unknown_name(&self, id: &str, token: &str) -> String {
+        LeadTokens.unknown_name(id, token)
+    }
+
+    fn written_name(&self, id: &str, form: &str) -> Option<String> {
+        LeadTokens.written_name(id, form)
+    }
+}
+
 impl SceneRules<Stage> for Rules<'_> {
     fn limits(&self) -> &DialogueLimits {
         &LIMITS

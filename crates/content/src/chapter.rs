@@ -172,7 +172,7 @@ pub fn check_chapter(
         err(format!("no battle \"{}\"", def.battle));
     }
     for scene in def.scenes() {
-        if dialogue.get(scene).is_none() {
+        if crate::dialogue::scene_missing(dialogue, scene) {
             err(format!("no dialogue scene \"{scene}\""));
         }
     }

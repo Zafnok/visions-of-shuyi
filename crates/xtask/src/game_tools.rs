@@ -16,6 +16,8 @@
 //! options: the layout picked before, the Playdate's screen (ADR-0074),
 //! the map alone, the prompt start, the tips and a light for every battle.
 
+use std::path::Path;
+
 use shuyi_assets::font::FontAtlasDef;
 use shuyi_assets::pack::Bake;
 use shuyi_assets::{ContentError, Formats};
@@ -52,7 +54,7 @@ const PLAYDATE: &str = "playdate";
 const TITLE: &str = "Visions of Shuyi";
 
 /// The game's `frame-png` options.
-const OPTIONS: [GameOption; 9] = [
+const OPTIONS: [GameOption; 10] = [
     GameOption::new("--layout", "the key layout picked before (default right)")
         .with_value(Some("right|left")),
     GameOption::new(
@@ -96,6 +98,12 @@ const OPTIONS: [GameOption; 9] = [
                --scene does (the default lead, male)",
     )
     .with_value(Some("ID")),
+    GameOption::new(
+        "--story-preview",
+        "open the writer's script preview (story-preview, 0764) on the\n\
+               .dlg files of this folder",
+    )
+    .with_value(Some("FOLDER")),
     // engine-friction: engine#2540
     GameOption::new(
         "--then-pad",
@@ -160,6 +168,8 @@ enum Opens {
     Battle(String),
     /// On a dialogue scene (`--scene`).
     Scene(String),
+    /// The writer's script preview on a folder's scripts (`--story-preview`).
+    Preview(String),
 }
 
 /// A step played after the script's.
@@ -197,17 +207,20 @@ impl Start {
                 "--prompt" => start.prompt = true,
                 "--tips" => start.tips = true,
                 "--light" => start.light = Some(value),
-                "--battle" | "--scene" if start.opens != Opens::Title => {
-                    return Err("--battle and --scene: one or the other, once".into());
+                "--battle" | "--scene" | "--story-preview" if start.opens != Opens::Title => {
+                    return Err("--battle, --scene and --story-preview: one of them, once".into());
                 }
                 "--battle" => start.opens = Opens::Battle(value),
                 "--scene" => start.opens = Opens::Scene(value),
+                "--story-preview" => start.opens = Opens::Preview(value),
                 "--then-pad" => start.after.push(After::Pad(value)),
                 other => return Err(format!("unknown option: {other}")),
             }
         }
         if start.prompt && start.opens != Opens::Title {
-            return Err("--prompt: only at the title, not with --battle or --scene".into());
+            return Err(
+                "--prompt: only at the title, not with --battle, --scene or --story-preview".into(),
+            );
         }
         Ok(start)
     }
@@ -428,6 +441,24 @@ fn battle_data(state: &BattleState) -> serde_json::Value {
     })
 }
 
+/// The `.dlg` files of `folder`, as the preview reads them: a layer named
+/// as the program names its folder.
+fn dlg_folder(folder: &Path) -> Result<shuyi_assets::bundle::Layer, String> {
+    let read = |e: std::io::Error| format!("--story-preview: can't read {}: {e}", folder.display());
+    let mut files = std::collections::BTreeMap::new();
+    for entry in std::fs::read_dir(folder).map_err(read)? {
+        let path = entry.map_err(read)?.path();
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        if name.ends_with(trpg_content::dialogue::DIALOGUE_EXTENSION) {
+            files.insert(name.to_owned(), std::fs::read(&path).map_err(read)?);
+        }
+    }
+    shuyi_assets::bundle::Layer::owned("dialogue".to_owned(), files).map_err(|e| format!("{e:?}"))
+}
+
 /// A Harness started as `start` says.
 fn harness(start: &Start) -> Result<Harness, String> {
     let playdate = start
@@ -454,6 +485,12 @@ fn harness(start: &Start) -> Result<Harness, String> {
         Opens::Scene(id) => Harness::with_layout_starting(start.layout, setup, |ctx| {
             trpg_ui::game::start_on_scene(ctx, id, LeadGender::Male)
         })?,
+        Opens::Preview(folder) => {
+            let folder = dlg_folder(Path::new(folder))?;
+            Harness::with_layout_starting(start.layout, setup, |ctx| {
+                trpg_ui::story_preview::game(ctx, folder)
+            })?
+        }
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();

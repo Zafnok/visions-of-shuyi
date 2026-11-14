@@ -10,6 +10,7 @@
 use crate::prelude::*;
 
 mod deaths;
+mod named;
 mod openings;
 mod presence;
 mod rules;
@@ -20,15 +21,18 @@ use shuyi_assets::dialogue::{self as engine, Directive, Parsed};
 use trpg_core::{CharacterId, Pos};
 
 pub use deaths::{deaths, joined, joins};
+pub(crate) use named::missing as scene_missing;
+#[cfg(feature = "std")]
+pub(crate) use named::with_some_scenes;
 pub use presence::{Cast, check_presence};
-pub use rules::LeadTokens;
+pub use rules::{FormatRules, LeadTokens};
 pub use setting::{PlaceRefs, check_places};
 pub(crate) use shuyi_assets::dialogue::is_id;
 pub use shuyi_assets::dialogue::{
     DialogueLimits, Line, LineId, Lines, MusicLine, NARRATION_SPEAKER, PartLines, Present,
     REPLY_SPEAKER, Side, caption_key, check_duplicates, print_scene,
 };
-pub use stand_in::{StandIns, missing as missing_stand_ins, stand_in, written};
+pub use stand_in::{StandIns, as_shown, missing as missing_stand_ins, stand_in, written};
 
 use crate::audio::AudioManifest;
 use crate::bundle;
