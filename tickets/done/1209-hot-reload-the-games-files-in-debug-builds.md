@@ -136,7 +136,7 @@ None.
 - `cargo shuyi run --watch` itself can't start the game:
   since 0764 `trpg-app` has two programs and the engine refuses to choose
   (SH1002). The same refusal breaks desktop exports (`release.yml`,
-  `demo.yml`). Filed as **0919** (blocks 0901, 0918, 1016, 1229). I ran
+  `demo.yml`). Filed as **0919** (blocks 0901, 0918, 1016, 1229, 1267). I ran
   what `run --watch` runs instead: `SHUYI_WATCH=<repo>/assets cargo run -p
   trpg-app --bin visions-of-shuyi`.
 - The README filter (`bundle::Folder`) is a workaround for `read_folder`
@@ -151,10 +151,10 @@ None.
 `hot_palette.rs`, about 50 lines for one palette, plus reading three
 folders in `main` and a lookup of which layer a folder replaces), measured
 180 (1.1×). Signal: a workaround for an engine assumption (the README
-filter), reviewed: engine ergonomics, shipped and followed up by **1267**
-(marked `// engine-friction: 1267`).
+filter), reviewed: engine ergonomics, shipped and followed up by **1269**
+(marked `// engine-friction: 1269`).
 
 **Gameplay rules decided:** none.
 
 **Follow-up tickets:** 0919 (desktop exports and `run --watch` pick the
-game's program again), 1267 (a folder reader that leaves files out).
+game's program again), 1269 (a folder reader that leaves files out).

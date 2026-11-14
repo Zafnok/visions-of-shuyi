@@ -65,7 +65,7 @@ impl Module<Shuyi> for HotContent {
     }
 
     fn reloaded(&mut self, ctx: &mut Ctx, changed: &[String]) {
-        // engine-friction: 1267 (a `read_folder` that leaves files out)
+        // engine-friction: 1269 (a `read_folder` that leaves files out)
         bundle::take_changes(changed);
         if !changed.iter().any(|path| reloads(path)) {
             return;

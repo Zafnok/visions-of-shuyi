@@ -182,7 +182,7 @@ static DISK: std::sync::OnceLock<Vec<Folder>> = std::sync::OnceLock::new();
 /// the files a build embeds of it. The platform's reader keeps every file
 /// (a README too), so a change is copied from one to the other
 /// ([`take_changes`]).
-// engine-friction: 1267 (a `read_folder` that leaves files out)
+// engine-friction: 1269 (a `read_folder` that leaves files out)
 #[cfg(feature = "std")]
 #[derive(Debug, Clone, Copy)]
 pub struct Folder {
