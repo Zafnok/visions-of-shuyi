@@ -318,6 +318,36 @@ mod tests {
         assert!(error.contains("no_such_dir"), "{error}");
     }
 
+    /// A folder named is checked whole; a file is checked with the default
+    /// folder's scripts, and only its own problems are listed. Whatever the
+    /// game's chapters miss in these drafts is the other files' problems.
+    #[test]
+    fn story_check_lists_a_folder_s_problems_or_a_file_s_alone() {
+        let folder = Folder::new("check");
+        let dialogue = folder.0.join(DIALOGUE);
+        fs::create_dir(&dialogue).unwrap();
+        let quote = "@scene draft_a\n@left lead neutral\n> It\u{2019}s raining.\n@end\n";
+        fs::write(dialogue.join("a.dlg"), quote).unwrap();
+        let fine = folder.0.join("b.dlg");
+        fs::write(
+            &fine,
+            "@scene draft_b\n@left lead neutral\n> It rains.\n@end\n",
+        )
+        .unwrap();
+        let none = folder.0.join("none");
+
+        let (code, out, err) = story_check(&[shown(&dialogue)], &none);
+        assert_eq!((code, err.as_str()), (1, ""));
+        let problem = format!("{}/a.dlg:3:5: non-ASCII punctuation", shown(&dialogue));
+        assert!(out.contains(&problem), "{out}");
+
+        let (code, out, err) = story_check(&[shown(&fine)], &dialogue);
+        assert_eq!((code, err.as_str()), (0, ""));
+        let only = format!("0 problems in {}\n(", shown(&fine));
+        assert!(out.starts_with(&only), "{out}");
+        assert!(out.ends_with("run `story-check` to list them)\n"), "{out}");
+    }
+
     #[test]
     fn story_check_reads_its_command_line() {
         let folder = Folder::new("args");
