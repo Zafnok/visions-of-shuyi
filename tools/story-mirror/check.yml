@@ -33,9 +33,12 @@ jobs:
           chmod +x story-check
       - name: Check the scripts
         run: |
-          set -uo pipefail
-          ./story-check dialogue > report.txt
-          code=$?
+          set -euo pipefail
+          # The step's shell is `bash -e`: catch the exit code, or a problem
+          # found stops the step before the report and its annotations
+          # (ticket 0168).
+          code=0
+          ./story-check dialogue > report.txt || code=$?
           cat report.txt
           # file:line:col: message, or file:line: message, as annotations.
           sed -e 's/%/%25/g' report.txt | sed -nE \
