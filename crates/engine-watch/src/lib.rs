@@ -4,7 +4,8 @@
 //! crate lists every engine PR between the pin and the engine's `main`,
 //! sorts each into *Breaking*, *Unblocks*, *New for games* or *Nothing for
 //! the game* (a PR that breaks the API and adds to it is in the first and
-//! the third), and says whether a pin move is due: a PR changed the public
+//! the third; a `Behaviour:` line, a change the game sees without a break,
+//! puts a PR in the first too, ticket 1254), and says whether a pin move is due: a PR changed the public
 //! API, unblocks a game ticket, or changed engine code more than 48 hours
 //! ago. `.github/workflows/engine-watch.yml` files the answer as the one
 //! open issue labelled `engine-pin`, and the `engine-pin` skill works it.
@@ -77,10 +78,34 @@ pub struct OpenTicket {
     pub blocked_by: Vec<String>,
 }
 
+/// An `engine-friction: engine#NNNN` marker in the game's code: a
+/// workaround that waits for that engine ticket.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Marker {
+    /// The file, from the repository's root, with `/`.
+    pub path: String,
+    /// Its line, from 1.
+    pub line: usize,
+    /// The engine ticket it names.
+    pub engine_id: String,
+}
+
+/// An open game PR that adds `engine-friction` markers.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PrMarker {
+    /// Its number in the game's repository.
+    pub number: u32,
+    /// Its title.
+    pub title: String,
+    /// The engine tickets its added markers name.
+    pub engine_ids: Vec<String>,
+}
+
 /// A section of the report a PR goes in.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Kind {
-    /// It breaks the public API: its `Breaking:` lines.
+    /// It breaks the public API, or changes what a game sees: its
+    /// `Breaking:` lines, then its `Behaviour:` lines with that prefix.
     Breaking(Vec<String>),
     /// It finishes engine tickets game work waits for: what waits.
     Unblocks(Vec<String>),
@@ -139,6 +164,13 @@ pub struct Report {
     pub notes: Vec<String>,
     /// The time it was made, in seconds since 1970.
     pub now: i64,
+    /// The engine tickets the gap's PRs moved to `tickets/done/`.
+    pub passed: Vec<String>,
+    /// The game's friction markers that name one of `passed`.
+    pub markers: Vec<Marker>,
+    /// The open game PRs that add a marker (the report lists those that
+    /// name one of `passed`).
+    pub pr_markers: Vec<PrMarker>,
 }
 
 /// The digit runs of exactly four digits in `text`.
@@ -239,12 +271,19 @@ fn adds_public(pr: &EnginePr, api_dirs: &[String]) -> bool {
         })
 }
 
-/// What a PR breaks: its `Breaking:` lines, or its `api: breaking` label.
-fn breaks(pr: &EnginePr) -> Vec<String> {
+/// What the pin PR fixes or keeps for a PR: its `Breaking:` lines (or its
+/// `api: breaking` label), then its `Behaviour:` lines with that prefix. A
+/// PR with any is in the report's *Breaking* table and needs a ledger row.
+pub fn breaks(pr: &EnginePr) -> Vec<String> {
     let mut lines = breaking_lines(pr);
     if lines.is_empty() && api_label(pr) == Some("breaking") {
         lines.push("the `api: breaking` label".to_owned());
     }
+    lines.extend(
+        behaviour_lines(pr)
+            .into_iter()
+            .map(|what| format!("Behaviour: {what}")),
+    );
     lines
 }
 
@@ -272,22 +311,71 @@ pub fn changes_public_api(pr: &EnginePr, api_dirs: &[String]) -> bool {
 /// The `Breaking:` lines of a PR's body and of its tickets' notes, without
 /// the `Breaking:`. `Breaking: none` and `Breaking: no break` aren't breaks.
 pub fn breaking_lines(pr: &EnginePr) -> Vec<String> {
+    marked_lines(pr, &["Breaking:"])
+}
+
+/// The `Behaviour:` lines of a PR's body and of its tickets' notes (engine
+/// ADR-0108, engine#2066): a change a game sees without a break. Without
+/// the `Behaviour:`; `Behaviour: none` isn't one. `Behavior:` counts too.
+pub fn behaviour_lines(pr: &EnginePr) -> Vec<String> {
+    marked_lines(pr, &["Behaviour:", "Behavior:"])
+}
+
+/// A line without its indent and list bullet.
+fn unbulleted(line: &str) -> &str {
+    let line = line.trim_start();
+    line.strip_prefix("- ")
+        .or_else(|| line.strip_prefix("* "))
+        .unwrap_or(line)
+}
+
+/// The paragraphs of `text` that start with one of `marks` (after a list
+/// bullet), without it: a wrapped line goes on, as a Markdown paragraph
+/// does, until a blank line, a new bullet, a heading, a code fence or
+/// another mark.
+fn marked_paragraphs(text: &str, marks: &[&str]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut open = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        let bare = unbulleted(line);
+        if let Some(what) = marks.iter().find_map(|m| bare.strip_prefix(m)) {
+            out.push(what.trim().to_owned());
+            open = true;
+        } else if open
+            && !trimmed.is_empty()
+            && bare.len() == line.trim_start().len()
+            && !trimmed.starts_with('#')
+            && !trimmed.starts_with("```")
+            && !["Breaking:", "Behaviour:", "Behavior:"]
+                .iter()
+                .any(|m| trimmed.starts_with(m))
+        {
+            if let Some(last) = out.last_mut() {
+                last.push(' ');
+                last.push_str(trimmed);
+            }
+        } else {
+            open = false;
+        }
+    }
+    out
+}
+
+/// The lines of a PR's body and of its tickets' notes that start with one
+/// of `marks` (after a list bullet, wrapped lines joined), without it, once
+/// each.
+fn marked_lines(pr: &EnginePr, marks: &[&str]) -> Vec<String> {
     let texts = [Some(pr.body.as_str()), pr.ticket_notes.as_deref()];
     texts
         .into_iter()
         .flatten()
-        .flat_map(str::lines)
-        .filter_map(|line| {
-            let line = line.trim_start();
-            let line = line
-                .strip_prefix("- ")
-                .or_else(|| line.strip_prefix("* "))
-                .unwrap_or(line);
-            let what = line.strip_prefix("Breaking:")?.trim();
+        .flat_map(|text| marked_paragraphs(text, marks))
+        .filter_map(|what| {
             let lower = what.to_ascii_lowercase();
             let none =
                 what.is_empty() || lower.starts_with("none") || lower.starts_with("no break");
-            (!none).then(|| what.to_owned())
+            (!none).then_some(what)
         })
         // The engine copies its ticket's notes into the PR body, so the
         // same line is usually in both.
@@ -329,6 +417,50 @@ pub fn open_ticket(file_name: &str, text: &str) -> Option<OpenTicket> {
 }
 
 /// The engine ticket ids of the `// engine-friction: engine#NNNN` markers in
+/// a source file, with their lines (from 1).
+pub fn marker_lines(source: &str) -> Vec<(usize, String)> {
+    source
+        .lines()
+        .enumerate()
+        .flat_map(|(i, line)| {
+            friction_markers(line)
+                .into_iter()
+                .map(move |id| (i + 1, id))
+        })
+        .collect()
+}
+
+/// Whether a path names a Rust source file.
+pub fn is_rust(path: &str) -> bool {
+    std::path::Path::new(path)
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("rs"))
+}
+
+/// The engine ticket ids of the markers a diff (`gh pr diff`) adds to the
+/// `.rs` files of `crates/`, leaving out this crate's (its tests write
+/// markers as fixtures).
+pub fn added_markers(diff: &str) -> Vec<String> {
+    let mut counted = false;
+    let mut out = Vec::new();
+    for line in diff.lines() {
+        if let Some(path) = line.strip_prefix("+++ ") {
+            let path = path.strip_prefix("b/").unwrap_or(path);
+            counted = path.starts_with("crates/")
+                && !path.starts_with("crates/engine-watch/")
+                && is_rust(path);
+        } else if let Some(added) = line.strip_prefix('+').filter(|_| counted) {
+            for id in friction_markers(added) {
+                if !out.contains(&id) {
+                    out.push(id);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// The engine ticket ids of the `// engine-friction: engine#NNNN` markers in
 /// a source file.
 pub fn friction_markers(source: &str) -> Vec<String> {
     source
@@ -342,24 +474,29 @@ pub fn friction_markers(source: &str) -> Vec<String> {
         .collect()
 }
 
-/// What a PR unblocks: the open game tickets blocked by an engine ticket it
-/// moved to `tickets/done/`, and the friction markers that name one. A PR
-/// that only files a ticket unblocks nothing.
-fn unblocks(pr: &EnginePr, open: &[OpenTicket], markers: &[String]) -> Vec<String> {
-    let done = pr.tickets.iter().filter(|id| {
+/// The engine tickets a PR moved to `tickets/done/`. A PR that only files a
+/// ticket finishes none.
+fn finished(pr: &EnginePr) -> impl Iterator<Item = &String> {
+    pr.tickets.iter().filter(|id| {
         let prefix = format!("tickets/done/{id}-");
         pr.files.iter().any(|f| f.path.starts_with(&prefix))
-    });
+    })
+}
+
+/// What a PR unblocks: the open game tickets blocked by an engine ticket it
+/// moved to `tickets/done/`, and the friction markers that name one.
+fn unblocks(pr: &EnginePr, open: &[OpenTicket], markers: &[Marker]) -> Vec<String> {
     let mut out = Vec::new();
-    for id in done {
+    for id in finished(pr) {
         let engine_id = format!("engine#{id}");
         for ticket in open.iter().filter(|t| t.blocked_by.contains(&engine_id)) {
             if !out.contains(&ticket.id) {
                 out.push(ticket.id.clone());
             }
         }
-        if markers.contains(id) {
-            out.push(format!("the `engine-friction: {engine_id}` marker"));
+        let marker = format!("the `engine-friction: {engine_id}` marker");
+        if markers.iter().any(|m| m.engine_id == *id) && !out.contains(&marker) {
+            out.push(marker);
         }
     }
     out
@@ -385,9 +522,10 @@ pub fn classify(
     gap: Gap,
     api_dirs: &[String],
     open: &[OpenTicket],
-    markers: &[String],
+    markers: &[Marker],
     now: i64,
 ) -> Report {
+    let mut passed: Vec<String> = Vec::new();
     let mut due_api = None;
     let mut due_unblock = None;
     let mut due_wait = None;
@@ -396,6 +534,11 @@ pub fn classify(
         let public = changes_public_api(&pr, api_dirs);
         let breaking = breaks(&pr);
         let waits = unblocks(&pr, open, markers);
+        for id in finished(&pr) {
+            if !passed.contains(id) {
+                passed.push(id.clone());
+            }
+        }
         let code = pr.files.iter().any(|f| f.path.starts_with("crates/"));
         let waited = epoch_seconds(&pr.merged_at).is_some_and(|t| now - t > WAIT_SECS);
         if public && due_api.is_none() {
@@ -430,6 +573,13 @@ pub fn classify(
         due: due_api.or(due_unblock).or(due_wait),
         notes: gap.notes,
         now,
+        markers: markers
+            .iter()
+            .filter(|m| passed.contains(&m.engine_id))
+            .cloned()
+            .collect(),
+        passed,
+        pr_markers: Vec::new(),
     }
 }
 

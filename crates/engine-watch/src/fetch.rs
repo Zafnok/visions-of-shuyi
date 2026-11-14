@@ -13,7 +13,7 @@ use std::process::Command;
 use serde_json::Value;
 
 use crate::ledger::{self, Section};
-use crate::{ENGINE_REPO, EnginePr, Gap, OpenTicket, PrFile, Report};
+use crate::{ENGINE_REPO, EnginePr, Gap, Marker, OpenTicket, PrFile, PrMarker, Report};
 
 /// The most commits GitHub's compare lists.
 const MAX_COMMITS: u64 = 250;
@@ -120,19 +120,15 @@ fn engine_pr(number: u32, merge_sha: &str) -> Result<EnginePr, String> {
     })
 }
 
-/// The engine commits between `pin` and its `main`, with their PRs.
-pub fn gap(pin: &str) -> Result<Gap, String> {
-    let main = gh(&[
-        "api",
-        &format!("repos/{ENGINE_REPO}/commits/main"),
-        "--jq",
-        ".sha",
-    ])?
-    .trim()
-    .to_owned();
+/// The engine's PRs between `from` and `to` by their squash commits'
+/// titles, oldest first, with those commits; and a note for each commit
+/// without a PR.
+type Numbered = (Vec<(u32, String)>, Vec<String>);
+
+fn numbered_commits(from: &str, to: &str) -> Result<Numbered, String> {
     let compare = json(&gh(&[
         "api",
-        &format!("repos/{ENGINE_REPO}/compare/{pin}...{main}"),
+        &format!("repos/{ENGINE_REPO}/compare/{from}...{to}"),
         "--jq",
         "{status, total_commits, commits: [.commits[] | {sha, title: (.commit.message | split(\"\\n\")[0])}]}",
     ])?)?;
@@ -140,14 +136,14 @@ pub fn gap(pin: &str) -> Result<Gap, String> {
         Some("ahead" | "identical") => {}
         other => {
             return Err(format!(
-                "the pin {pin} isn't on the engine's main (compare says {other:?})"
+                "{from} isn't on the engine's main before {to} (compare says {other:?})"
             ));
         }
     }
     let total = compare["total_commits"].as_u64().unwrap_or_default();
     if total > MAX_COMMITS {
         return Err(format!(
-            "the pin is {total} engine commits behind main, more than GitHub's compare lists ({MAX_COMMITS}): move the pin in steps"
+            "{from} is {total} engine commits behind {to}, more than GitHub's compare lists ({MAX_COMMITS}): move the pin in steps"
         ));
     }
     let mut numbered = Vec::new();
@@ -163,6 +159,20 @@ pub fn gap(pin: &str) -> Result<Gap, String> {
             )),
         }
     }
+    Ok((numbered, notes))
+}
+
+/// The engine commits between `pin` and its `main`, with their PRs.
+pub fn gap(pin: &str) -> Result<Gap, String> {
+    let main = gh(&[
+        "api",
+        &format!("repos/{ENGINE_REPO}/commits/main"),
+        "--jq",
+        ".sha",
+    ])?
+    .trim()
+    .to_owned();
+    let (numbered, notes) = numbered_commits(pin, &main)?;
     let mut prs = Vec::new();
     for chunk in numbered.chunks(AT_ONCE) {
         let fetched: Vec<Result<EnginePr, String>> = std::thread::scope(|scope| {
@@ -216,6 +226,62 @@ pub fn breaking_and_new(numbers: &[u32], rev: &str) -> Result<Vec<u32>, String> 
         }
     }
     Ok(both)
+}
+
+/// The engine PRs a ledger section's move passed that have a `Breaking:` or
+/// `Behaviour:` line and no row (ticket 1254). Asks `gh` only about the PRs
+/// without a row, and nothing for a section from `baseline`.
+pub fn unrowed_marked(section: &Section) -> Result<Vec<u32>, String> {
+    if !ledger::has_start(section) {
+        return Ok(Vec::new());
+    }
+    let rowed = ledger::row_prs(section);
+    let (numbered, _) = numbered_commits(&section.from, &section.to)?;
+    let mut marked = Vec::new();
+    for (number, sha) in numbered.iter().filter(|(n, _)| !rowed.contains(n)) {
+        if !crate::breaks(&engine_pr(*number, sha)?).is_empty() {
+            marked.push(*number);
+        }
+    }
+    Ok(marked)
+}
+
+/// The open game PRs that add a friction marker to `crates/`, from `gh pr
+/// list` and each one's diff.
+pub fn open_pr_markers() -> Result<Vec<PrMarker>, String> {
+    let list = json(&gh(&[
+        "pr",
+        "list",
+        "--state",
+        "open",
+        "--limit",
+        "100",
+        "--json",
+        "number,title,files",
+    ])?)?;
+    let mut out = Vec::new();
+    for pr in list.as_array().into_iter().flatten() {
+        let touches_code = pr["files"].as_array().into_iter().flatten().any(|f| {
+            f["path"]
+                .as_str()
+                .is_some_and(|p| p.starts_with("crates/") && crate::is_rust(p))
+        });
+        let Some(number) = pr["number"].as_u64().and_then(|n| u32::try_from(n).ok()) else {
+            continue;
+        };
+        if !touches_code {
+            continue;
+        }
+        let engine_ids = crate::added_markers(&gh(&["pr", "diff", &number.to_string()])?);
+        if !engine_ids.is_empty() {
+            out.push(PrMarker {
+                number,
+                title: pr["title"].as_str().unwrap_or_default().to_owned(),
+                engine_ids,
+            });
+        }
+    }
+    Ok(out)
 }
 
 /// The folders of the engine's public crates at `main`, and a note when
@@ -280,24 +346,38 @@ pub fn ticket_ids(root: &Path) -> Result<HashSet<String>, String> {
     Ok(ids)
 }
 
-/// The engine ids of every `// engine-friction: engine#NNNN` under `dir`,
-/// leaving out this crate, whose tests write markers as fixtures.
-pub fn friction_markers(dir: &Path) -> Vec<String> {
+/// Every `// engine-friction: engine#NNNN` under `root`'s `crates/`, with
+/// its file and line, leaving out this crate, whose tests write markers as
+/// fixtures.
+pub fn friction_markers(root: &Path) -> Vec<Marker> {
     let mut out = Vec::new();
+    markers_under(root, &root.join("crates"), &mut out);
+    out.sort_by(|a, b| (&a.path, a.line).cmp(&(&b.path, b.line)));
+    out
+}
+
+fn markers_under(root: &Path, dir: &Path, out: &mut Vec<Marker>) {
     let Ok(entries) = fs::read_dir(dir) else {
-        return out;
+        return;
     };
     for entry in entries.flatten() {
         let path = entry.path();
         let name = entry.file_name();
         if path.is_dir() && name != "target" && name != "engine-watch" {
-            out.extend(friction_markers(&path));
+            markers_under(root, &path, out);
         } else if path.extension().is_some_and(|e| e == "rs") {
             let text = fs::read_to_string(&path).unwrap_or_default();
-            out.extend(crate::friction_markers(&text));
+            let shown = path.strip_prefix(root).unwrap_or(&path);
+            let shown = shown.to_string_lossy().replace('\\', "/");
+            for (line, engine_id) in crate::marker_lines(&text) {
+                out.push(Marker {
+                    path: shown.clone(),
+                    line,
+                    engine_id,
+                });
+            }
         }
     }
-    out
 }
 
 /// The ledger's sections.
@@ -322,9 +402,16 @@ pub fn watch(root: &Path, now: i64) -> Result<Watch, String> {
     gap.notes.extend(note);
     let open = open_tickets(root)?;
     let open_ids = open.iter().map(|t| t.id.clone()).collect();
-    let markers = friction_markers(&root.join("crates"));
+    let markers = friction_markers(root);
+    let mut report = crate::classify(gap, &dirs, &open, &markers, now);
+    match open_pr_markers() {
+        Ok(found) => report.pr_markers = found,
+        Err(e) => report.notes.push(format!(
+            "The open PRs couldn't be read for friction markers: {e}"
+        )),
+    }
     Ok(Watch {
-        report: crate::classify(gap, &dirs, &open, &markers, now),
+        report,
         ledger: ledger(root)?,
         open_ids,
     })
@@ -363,9 +450,9 @@ mod tests {
         let ids = ticket_ids(root()).unwrap();
         assert!(ids.contains("1190") && ids.contains("0101"));
         assert!(
-            friction_markers(&root().join("crates"))
+            friction_markers(root())
                 .iter()
-                .all(|id| id.len() == 4)
+                .all(|m| m.engine_id.len() == 4 && m.path.starts_with("crates/") && m.line > 0)
         );
         assert_ne!(ledger(root()).unwrap(), [] as [crate::ledger::Section; 0]);
         assert_eq!(pin(root()).unwrap().len(), 40);

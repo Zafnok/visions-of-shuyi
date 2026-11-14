@@ -75,6 +75,14 @@ fn internal_change() -> PrFile {
     )
 }
 
+fn marker(path: &str, line: usize, engine_id: &str) -> Marker {
+    Marker {
+        path: path.to_owned(),
+        line,
+        engine_id: engine_id.to_owned(),
+    }
+}
+
 fn kinds(report: &Report) -> Vec<(u32, Vec<Kind>)> {
     report
         .rows
@@ -213,12 +221,30 @@ fn the_api_label_wins_over_the_patch() {
 #[test]
 fn breaking_lines_come_from_the_body_and_the_ticket_notes() {
     let mut breaking = pr(88, "[2013] Public types", vec![internal_change()]);
-    breaking.body = "## API changes\n\nBreaking: shuyi-app: Window: build it with Window::new\n- Breaking: shuyi-ui: BoxPlace::new\nThe contract doesn't change.\n".to_owned();
+    breaking.body = "## API changes\n\nBreaking: shuyi-app: Window: build it with Window::new\n- Breaking: shuyi-ui: BoxPlace::new\n\nThe contract doesn't change.\n".to_owned();
     assert_eq!(
         breaking_lines(&breaking),
         [
             "shuyi-app: Window: build it with Window::new",
             "shuyi-ui: BoxPlace::new"
+        ]
+    );
+    // A wrapped line goes on to the end of its paragraph, as in Markdown,
+    // whether it is a list item or not.
+    let mut wrapped = pr(410, "[2828] Exercises", vec![]);
+    wrapped.ticket_notes = Some(
+        "Behaviour: shuyi-app: on the web, a page\nwrites `shuyi-page-check`.\n\nSearched the game.\n- Breaking: shuyi-ui: a\n  b\n- Done.\nBreaking: shuyi-cli: c\nBehaviour: shuyi-cli: d\n```migration\nsince: 0.1.0\n```\nBreaking: e\n## Later\n"
+            .to_owned(),
+    );
+    assert_eq!(
+        breaking_lines(&wrapped),
+        ["shuyi-ui: a b", "shuyi-cli: c", "e"]
+    );
+    assert_eq!(
+        behaviour_lines(&wrapped),
+        [
+            "shuyi-app: on the web, a page writes `shuyi-page-check`.",
+            "shuyi-cli: d"
         ]
     );
     let mut noted = pr(90, "[2024] More constructors", vec![]);
@@ -345,7 +371,10 @@ fn only_a_ticket_moved_to_done_unblocks() {
         gap(vec![finishes_2131(vec![])]),
         &dirs(),
         &[],
-        &["2131".to_owned()],
+        &[
+            marker("crates/ui/src/a.rs", 3, "2131"),
+            marker("crates/ui/src/b.rs", 9, "2131"),
+        ],
         merged(),
     );
     let marker = "the `engine-friction: engine#2131` marker".to_owned();
@@ -608,4 +637,213 @@ fn the_json_carries_what_the_workflow_reads() {
             .starts_with("<!-- engine-pin:v1 ")
     );
     assert!(markdown(&report, rendered.as_ref()).starts_with("# Engine pin: 1 engine PR behind"));
+}
+
+#[test]
+fn behaviour_lines_come_from_the_body_and_the_notes_and_go_under_breaking() {
+    let mut changed = pr(256, "[2350] Looser .dlg text", vec![internal_change()]);
+    changed.body =
+        "Behaviour: shuyi-assets: .dlg rejects only control characters\nBehaviour: none\n"
+            .to_owned();
+    changed.ticket_notes = Some(
+        "- Behaviour: shuyi-assets: .dlg rejects only control characters\n- Behavior: shuyi-cli: lang-status labels\n\nNo `Behaviour:` line here.\n"
+            .to_owned(),
+    );
+    assert_eq!(
+        behaviour_lines(&changed),
+        [
+            "shuyi-assets: .dlg rejects only control characters",
+            "shuyi-cli: lang-status labels"
+        ]
+    );
+    assert_eq!(breaking_lines(&changed), [] as [String; 0]);
+    let report = classify(gap(vec![changed]), &dirs(), &[], &[], merged());
+    assert_eq!(
+        kinds(&report),
+        [(
+            256,
+            vec![Kind::Breaking(vec![
+                "Behaviour: shuyi-assets: .dlg rejects only control characters".to_owned(),
+                "Behaviour: shuyi-cli: lang-status labels".to_owned(),
+            ])]
+        )]
+    );
+    // A behaviour change alone doesn't change the public API.
+    assert_eq!(report.due, None);
+    // Breaking lines come first; the label stands in for none.
+    let mut both = labelled(pr(88, "[2013] x", vec![]), "api: breaking");
+    both.body = "Behaviour: shuyi-ui: a default\n".to_owned();
+    assert_eq!(
+        breaks(&both),
+        [
+            "the `api: breaking` label",
+            "Behaviour: shuyi-ui: a default"
+        ]
+    );
+}
+
+#[test]
+fn markers_are_found_by_line_and_in_a_diff_s_added_code() {
+    let source = "fn a() {}\n// engine-friction: engine#2255 (the voice)\nfn b() {\n    // engine-friction: engine#2540\n}\n";
+    assert_eq!(
+        marker_lines(source),
+        [(2, "2255".to_owned()), (4, "2540".to_owned())]
+    );
+    let diff = "diff --git a/crates/ui/src/a.rs b/crates/ui/src/a.rs\n--- a/crates/ui/src/a.rs\n+++ b/crates/ui/src/a.rs\n@@ -1 +1,2 @@\n // engine-friction: engine#1111\n+// engine-friction: engine#2255\n-// engine-friction: engine#3333\n+++ b/crates/engine-watch/src/tests.rs\n+// engine-friction: engine#4444\n+++ b/docs/x.md\n+// engine-friction: engine#5555\n+++ b/crates/ui/README.md\n+// engine-friction: engine#7777\n+++ b/crates/app/src/b.rs\n+    // engine-friction: engine#2255 again\n+    // engine-friction: engine#6666\n";
+    assert_eq!(added_markers(diff), ["2255", "6666"]);
+}
+
+/// A fixture `crates/` tree under the system's temporary folder.
+fn fixture_tree(files: &[(&str, &str)]) -> std::path::PathBuf {
+    let root = std::env::temp_dir().join(format!("trpg-engine-watch-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    for (path, text) in files {
+        let file = root.join(path);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(file, text).unwrap();
+    }
+    root
+}
+
+/// The body's text from the heading `from` to the heading `to`.
+fn between<'a>(body: &'a str, from: &str, to: &str) -> &'a str {
+    &body[body.find(from).unwrap()..body.find(to).unwrap()]
+}
+
+#[test]
+fn the_report_lists_behaviour_lines_and_the_workarounds_the_pin_ends() {
+    let root = fixture_tree(&[
+        (
+            "crates/ui/src/dialogue.rs",
+            "fn a() {}\n\n// engine-friction: engine#2255\nfn wait() {}\n",
+        ),
+        (
+            "crates/ui/src/other.rs",
+            "// engine-friction: engine#2540\n",
+        ),
+        (
+            "crates/engine-watch/src/x.rs",
+            "// engine-friction: engine#2255\n",
+        ),
+        ("crates/target/x.rs", "// engine-friction: engine#2255\n"),
+        ("docs/x.rs", "// engine-friction: engine#2255\n"),
+    ]);
+    let markers = fetch::friction_markers(&root);
+    let _ = std::fs::remove_dir_all(&root);
+    assert_eq!(
+        markers,
+        [
+            marker("crates/ui/src/dialogue.rs", 3, "2255"),
+            marker("crates/ui/src/other.rs", 1, "2540"),
+        ]
+    );
+    let mut voice = pr(
+        301,
+        "[2255] Screens know when a voice clip has ended",
+        vec![file("tickets/done/2255-voice-end.md", "+done")],
+    );
+    voice.ticket_notes =
+        Some("Breaking: none\nBehaviour: shuyi-ui: a clip's end comes as an event\n".to_owned());
+    let mut report = classify(gap(vec![voice]), &dirs(), &[], &markers, merged());
+    assert_eq!(report.passed, ["2255"]);
+    assert_eq!(
+        report.markers,
+        [marker("crates/ui/src/dialogue.rs", 3, "2255")]
+    );
+    report.pr_markers = vec![
+        PrMarker {
+            number: 563,
+            title: "A per-character wait for @voice".to_owned(),
+            engine_ids: vec!["2255".to_owned()],
+        },
+        PrMarker {
+            number: 564,
+            title: "Old".to_owned(),
+            engine_ids: vec!["2013".to_owned()],
+        },
+        PrMarker {
+            number: 565,
+            title: "Not pinned".to_owned(),
+            engine_ids: vec!["2999".to_owned()],
+        },
+    ];
+    let ledger = ledger::parse(
+        "## 2026-10-21: 11111111 → 3f2256d4\n| #88 | 2013 | Constructors | fixed: x |\n",
+    )
+    .unwrap();
+    let (_, body) = render(&report, &ledger, &HashSet::new(), &run()).unwrap();
+    let breaking = between(&body, "### Breaking", "### Unblocks");
+    assert!(breaking.contains("| Breaking or behaviour |"), "{breaking}");
+    assert!(
+        breaking.contains("| [#301](https://github.com/Zafnok/shuyi-engine/pull/301) | 2255 | [2255] Screens know when a voice clip has ended | Behaviour: shuyi-ui: a clip's end comes as an event |"),
+        "{breaking}"
+    );
+    let ends = between(&body, "### Workarounds the pin ends", "### The work");
+    assert!(
+        ends.contains("- `crates/ui/src/dialogue.rs:3`: engine#2255\n"),
+        "{ends}"
+    );
+    assert!(!ends.contains("other.rs"), "{ends}");
+    assert!(
+        ends.contains(
+            "- open PR #563 (A per-character wait for `@voice`) adds a marker for engine#2255\n"
+        ),
+        "{ends}"
+    );
+    assert!(
+        ends.contains(
+            "- open PR #564 (Old) adds a marker for engine#2013, in the pin since 2026-10-21\n"
+        ),
+        "{ends}"
+    );
+    assert!(!ends.contains("#565"), "{ends}");
+    // Nothing passed, nothing added: none.
+    let report = classify(
+        gap(vec![pr(79, "[2012] x", vec![])]),
+        &dirs(),
+        &[],
+        &markers,
+        merged(),
+    );
+    let (_, body) = render(&report, &[], &HashSet::new(), &run()).unwrap();
+    let ends = between(&body, "### Workarounds the pin ends", "### The work");
+    assert!(ends.ends_with("None.\n\n"), "{ends}");
+}
+
+#[test]
+fn the_adoption_list_names_each_ticket_once_with_its_age_and_marks_the_idle() {
+    let ledger = ledger::parse(
+        "## 2026-10-12: 11111111 → 22222222\n| #70 | 2100 | A | adopt → 1170 |\n| #71 | 2101 | B | unblocks 1180 (its pin step struck) |\n\n## 2026-10-21: 22222222 → 3f2256d4\n| #78 | 2511 | A prelude | adopt → 1191; adopt → 1170 |\n| #79 | 2512 | C | fixed: x; unblocks 1180 and 1191 |\n| #80 | 2513 | D | adopt → 1192 |\n",
+    )
+    .unwrap();
+    let open: HashSet<String> = ["1170", "1180", "1191"].map(str::to_owned).into();
+    let report = classify(
+        gap(vec![pr(79, "[2012] x", vec![])]),
+        &dirs(),
+        &[],
+        &[],
+        merged(),
+    );
+    let (_, body) = render(&report, &ledger, &open, &run()).unwrap();
+    let list = between(&body, "### Adoption tickets still open", "### Workarounds");
+    assert!(
+        list.ends_with(
+            "- 1170, adopted by the pin move of 2026-10-12, 11 days: **idle**\n\
+             - 1180, unblocked by the pin move of 2026-10-12, 11 days: **idle**\n\
+             - 1191, adopted by the pin move of 2026-10-21, 2 days\n\n"
+        ),
+        "{list}"
+    );
+    assert_eq!(list.matches("1170").count(), 1, "{list}");
+    assert!(!list.contains("1192"), "{list}");
+    // Five days is not yet idle, six is; one day is a day.
+    let at = |days: i64| {
+        let mut report = report.clone();
+        report.now = epoch_seconds("2026-10-21T00:00:00Z").unwrap() + days * 86_400;
+        let only: HashSet<String> = ["1191".to_owned()].into();
+        render(&report, &ledger, &only, &run()).unwrap().1
+    };
+    assert!(at(5).contains("- 1191, adopted by the pin move of 2026-10-21, 5 days\n"));
+    assert!(at(6).contains("- 1191, adopted by the pin move of 2026-10-21, 6 days: **idle**\n"));
+    assert!(at(1).contains("- 1191, adopted by the pin move of 2026-10-21, 1 day\n"));
 }

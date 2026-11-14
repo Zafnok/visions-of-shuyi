@@ -46,6 +46,9 @@ jobs:
     permissions:
       contents: read
       issues: write
+      # The report lists the open PRs that add an engine-friction marker
+      # (ticket 1254).
+      pull-requests: read
     steps:
       - name: Has the engine's main moved?
         id: check
@@ -121,6 +124,7 @@ jobs:
         if: steps.check.outputs.go == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TRIGGER: ${{ steps.check.outputs.trigger }}
           SEEN: ${{ steps.check.outputs.seen }}
           DISPATCHED: ${{ steps.check.outputs.dispatched }}

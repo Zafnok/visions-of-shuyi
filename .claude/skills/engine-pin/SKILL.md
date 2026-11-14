@@ -30,7 +30,10 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
 ## Steps
 
 1. **Read the issue** (`gh issue view <n>`): the four sections, why the
-   move is due, and the adoption tickets still open.
+   move is due, the adoption tickets still open (each once, with its age;
+   one marked **idle** has had its engine piece in the pin more than 5
+   days: name it in the PR body so it gets picked up, the pin PR doesn't
+   do it), and the workarounds the pin ends.
 
 2. **Re-run the report.** The engine's `main` may have moved since the
    issue was written, so pin the newest:
@@ -61,7 +64,14 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
 
    Run the gates (`run-gates`). Fix every *Breaking* row **on the game
    side, with behaviour unchanged**: the row's `Breaking:` lines say what
-   changed (a type moved onto `new`, a field added). A snapshot that
+   changed (a type moved onto `new`, a field added). A row's `Behaviour:`
+   lines (engine ADR-0108) are changes the game sees without a break: a
+   loosened or tightened check, a default, an error text, a label, an
+   order or a timing. For each, search the game's code, tests and ADRs for
+   the rule it touches, and keep the game's rule on the game side or take
+   the engine's on purpose (the engine's 2350 loosened `.dlg` text, and
+   the game kept ADR-0045 with `AsciiDlg`). Its ledger row's `fixed:` says
+   which, and names the search when nothing changes. A snapshot that
    changes needs its engine PR named in the PR body as the reason. Then
    `cargo shuyi mcp --ready` (the MCP server builds on the new engine).
    A break that can't be fixed on the game side needs an engine change:
@@ -117,6 +127,17 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    else for them. In each one whose text says its first step moves the
    pin, strike that step ("done by the pin move of YYYY-MM-DD").
 
+   **Workarounds the pin ends.** Each `engine-friction: engine#NNNN`
+   marker the report lists names an engine ticket this move passes: the
+   workaround under it can go. The pin PR removes it when that is a
+   mechanical change (the engine's piece used in its place, behaviour
+   unchanged); otherwise the ledger row of that engine PR names the game
+   ticket that does (an open one, or a new one from `write-ticket`). An
+   open PR the report lists as adding a marker is building a workaround
+   for something the pin has or is about to have: name it in the pin PR's
+   body with the engine PR that ends it (the 0.08 s-per-character wait of #563 shipped on top of
+   a pin that already had engine 2255's end-of-clip report).
+
 6. **The ledger section**, appended to `docs/engine/pins.md` (its header
    says the form):
 
@@ -134,13 +155,16 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    Nothing for the game: 12 PRs (#75, #79, …)
    ```
 
-   A row for every *Breaking*, *Unblocks* and *New for games* PR; the
-   game PR's number once it exists.
+   A row for every *Breaking*, *Unblocks* and *New for games* PR (a PR in
+   *Breaking* for its `Behaviour:` lines alone included); the game PR's
+   number once it exists.
 
 7. **Check:** `cargo xtask engine-pin --check` (the ledger's last
    section is the pin, every row has a decision, every `adopt → NNNN`
-   names a ticket, a *Breaking* row that also adds has both decisions; it
-   asks GitHub about the last section's `fixed:`-only rows), `cargo xtask skill-pack --check` and `cargo xtask
+   names a ticket, a *Breaking* row that also adds has both decisions,
+   every engine PR the move passed with a `Breaking:` or `Behaviour:` line
+   has a row; it asks GitHub about the last section's `fixed:`-only rows
+   and the PRs without a row), `cargo xtask skill-pack --check` and `cargo xtask
    ticket-lint`.
 
 8. **Commit and PR.** Commit as `Engine pin: <old 8> → <new 8>`. The PR
