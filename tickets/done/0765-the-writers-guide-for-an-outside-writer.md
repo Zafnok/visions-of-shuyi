@@ -5,10 +5,10 @@ type: infra
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0152", "0764"]
 nick_input: none
-completed:
+completed: 2026-11-14
 ---
 
 # 0765 — The writer's guide for an outside writer
@@ -200,20 +200,20 @@ through the mirror's issues once one is hired (0766).
 
 ## Acceptance criteria
 
-- [ ] `docs/story/writers-guide.md`, `docs/story/cheat-sheet.md` and
+- [x] `docs/story/writers-guide.md`, `docs/story/cheat-sheet.md` and
       `tools/story-mirror/README.md` don't contain `cargo`, `rustup`,
       `Claude` or a link to the game's repository
       (`github.com/Zafnok/visions-of-shuyi` not followed by `-story`)
       (a check in the test).
-- [ ] Every ` ```dlg ` example in the guide and the cheat sheet passes
+- [x] Every ` ```dlg ` example in the guide and the cheat sheet passes
       the checker (the test).
-- [ ] The cheat sheet says in words that there are no flags or
+- [x] The cheat sheet says in words that there are no flags or
       variables, and shows `@if`/`@else`/`@endif`.
-- [ ] The guide says the beats, arcs and outline are open to the
+- [x] The guide says the beats, arcs and outline are open to the
       writer's proposal and that Nick decides.
 - [ ] After the next sync, the mirror shows the new README and
       `story/cheat-sheet.md` (checked on GitHub, noted).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -222,5 +222,79 @@ through the mirror's issues once one is hired (0766).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-11-14).**
+
+- **The writer's guide rewritten** for a writer with the mirror and the
+  kit only: a first section saying the scripts are AI drafts Nick finds
+  robotic, with his words on the beats and arcs; Part 1 *Working* (your
+  copy and the kit, sending a change with GitHub Desktop or github.com's
+  editor, the preview's tabs, checking in the preview and on the pull
+  request, how a change gets in, asking in an issue); Part 2 *What you may
+  change* (yours / open to your proposal, Nick decides / set by the
+  design / the ledger) and *What a rewrite costs* (Chapter 1 voiced, no
+  translations yet, a direction keeps the id, ask before renaming a
+  scene); Part 3 the format, today's sections 1 to 5 kept with their
+  examples, reworded where they said Claude or named paths outside the
+  writer's copy. A choice sets nothing and `@if` is the only condition,
+  said in both the choice and the `@if` sections.
+- **`story/cheat-sheet.md`**, new: one full example scene with every cue,
+  then a table each for direction, expression, names, conditions ("there
+  are no flags or variables"), choices and stage; the limits; 0723's six
+  rules; the cost in two lines.
+- **The mirror's start page** (`tools/story-mirror/README.md`): what it
+  is, confidential, the reading order, the kit, proposing, asking.
+- `story/README.md` *For a human writer*: the cheat sheet first,
+  `craft.md` last ("notes on why earlier AI drafts failed"), the beats
+  "open to your proposal". `docs/story/README.md` and
+  `assets/dialogue/README.md`'s opening name the kit's two programs and
+  the two pages.
+- **Tests** (`crates/xtask/src/check_script.rs`): the examples test runs
+  over the guide (8 scenes or more) and the cheat sheet (1 or more); a new
+  test checks the guide, the cheat sheet and the mirror's README name no
+  `cargo`, `rustup`, `Claude` or the game's repository's URL.
+- **Cold read:** a subagent with only the three pages, playing a writer
+  new to Git, listed 27 places it got lost or found a button misnamed
+  (Fetch vs Pull, the Commit button's label, the release's Assets
+  heading, TextEdit's smart quotes, extracting the zip, a bare `{lead}`,
+  "lines" vs "text boxes", the names and faces page named three ways,
+  "centred"). All fixed but one (below).
+
+**Deviations.**
+
+- **The paths.** Since 0159 the guide and `story/README.md` live in the
+  private repository's `story/`, not `docs/story/`, so they and the new
+  cheat sheet changed there (Zafnok/visions-of-shuyi-assets, a pull
+  request merged first; this one moves the pin). The mirror copies
+  `story/` whole, so `story/cheat-sheet.md` needs no `files.txt` line.
+- **`changes.yml`'s *read by* list** no longer names the guide (it left
+  this repository); it names `tools/story-mirror/README.md` instead, which
+  the new test reads (`every_markdown_file_the_code_reads_is_tested`).
+- **Links.** Links inside `story/` (and to `story/design/`) are relative
+  and work in both repositories; everything else (`dialogue/README.md`,
+  the mirror's top-level `design/`) is named in words, "at the top of
+  your copy".
+- **Not fixed from the cold read:** how a continuation line is indented
+  inside a reply's reaction; the format reference doesn't say it plainly,
+  so the guide says only "two spaces will do" for a scene's own lines.
+- **macOS:** the kit has no Mac `story-check` and builds the Mac preview
+  only when asked, so the guide says to ask in an issue and use the pull
+  request's check meanwhile.
+- **Write access:** the guide says the invitation gives Write access
+  (0152's ruleset keeps `main` closed); with Read access github.com's
+  editor would try to fork.
+
+**Not checked yet:** the acceptance line "after the next sync, the mirror
+shows the new README and `story/cheat-sheet.md`" waits for this to merge
+and the sync to run; it is unticked above.
+
+**Size.** Docs and a test: no production code (engine friction: none).
+PR size: estimate 1,000 changed lines (the ticket's), most of them in the
+private repository, which `pr-size` doesn't count here.
+
+**Follow-ups:** none new. **Starting rules:** none; the guide decides
+nothing Nick hadn't said.
+
+**For Nick:** the guide tells a writer the beats, characters, outline and
+names are open to their proposal and that you decide, in your words of
+2026-11-08; and that the scripts there now are AI drafts to keep or throw
+away.
