@@ -220,25 +220,59 @@ mod tests {
         assert!(error.contains("no_such_dir/assets/dialogue"), "{error}");
     }
 
-    /// Every example of the writer's guide passes the checker (0723). The
-    /// guide is in the private repository's `story/` (ticket 0159).
+    /// Every example of the writer's guide and of its cheat sheet passes
+    /// the checker (0723, 0765). Both are in the private repository's
+    /// `story/` (ticket 0159).
     #[test]
     fn the_writers_guide_examples_have_no_problems() {
-        // The guide's examples name the game's cast (a test of the content).
+        // The examples name the game's cast (a test of the content).
         if trpg_content::bundle::skip_without_the_game() {
             return;
         }
-        let Some(guide) = trpg_content::bundle::story_doc("writers-guide.md") else {
-            return;
+        for (name, least) in [("writers-guide.md", 8), ("cheat-sheet.md", 1)] {
+            let Some(doc) = trpg_content::bundle::story_doc(name) else {
+                return;
+            };
+            let (scripts, only) = scripts(&root(), Some(&doc)).unwrap();
+            let text = &scripts.last().unwrap().1;
+            let scenes = text.lines().filter(|l| l.starts_with("@scene ")).count();
+            assert!(scenes >= least, "{name} has {scenes} example scenes");
+            let problems = problems(&scripts);
+            assert_eq!(
+                report(&problems, only.as_deref(), scripts.len(), COMMAND),
+                format!(
+                    "0 problems in {}
+",
+                    shown(&doc)
+                )
+            );
+        }
+    }
+
+    /// The writer's pages name nothing a writer outside the game's
+    /// repository can use (0765): no Rust tools, no coding agent, no link
+    /// to the game's repository, only to the mirror.
+    #[test]
+    fn the_writers_pages_name_only_what_a_writer_has() {
+        let only_what_a_writer_has = |name: &str, text: &str| {
+            for word in ["cargo", "rustup", "Claude"] {
+                assert!(!text.contains(word), "{name} names `{word}`");
+            }
+            let game = "github.com/Zafnok/visions-of-shuyi";
+            for (at, _) in text.match_indices(game) {
+                let after = &text[at + game.len()..];
+                assert!(
+                    after.starts_with("-story"),
+                    "{name} links the game's repository"
+                );
+            }
         };
-        let (scripts, only) = scripts(&root(), Some(&guide)).unwrap();
-        let text = &scripts.last().unwrap().1;
-        let scenes = text.lines().filter(|l| l.starts_with("@scene ")).count();
-        assert!(scenes >= 8, "the guide has {scenes} example scenes");
-        let problems = problems(&scripts);
-        assert_eq!(
-            report(&problems, only.as_deref(), scripts.len(), COMMAND),
-            format!("0 problems in {}\n", shown(&guide))
-        );
+        let mirror = root().join("tools/story-mirror/README.md");
+        only_what_a_writer_has("the mirror's README", &fs::read_to_string(mirror).unwrap());
+        for name in ["writers-guide.md", "cheat-sheet.md"] {
+            if let Some(doc) = trpg_content::bundle::story_doc(name) {
+                only_what_a_writer_has(name, &fs::read_to_string(doc).unwrap());
+            }
+        }
     }
 }
