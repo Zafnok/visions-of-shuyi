@@ -127,7 +127,7 @@
         // (`decoration: true`, checked when the battles load). The rules
         // are filler: the rug can be walked on like the floor, the rest
         // can't. Glyphs and colours: Claude's, TUNABLE.
-        // The yard at Harrowby (harrowby_yard.map).
+        // The yard (harrowby_yard.map).
         (
             id: "roof", name: "Roof", glyphs: "╱╲", fg: "stone", bg: "wood_bg", decoration: true,
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
@@ -158,7 +158,7 @@
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
             defense: 0, avoid: 0, heal_percent: 0,
         ),
-        // The study at Veyne Hall (veyne_study.map).
+        // The study (veyne_study.map).
         (
             id: "desk", name: "Desk", glyphs: "╤╤", fg: "wood", bg: "wood_bg", decoration: true,
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },

@@ -45,7 +45,7 @@ them (`trpg_ui::cinematic::opening`).
   bar. Someone with a class walks by its movement type; a speaker (who
   has none) walks on foot.
 - How long it plays: until its last walk ends. About **2 seconds**
-  (Nick, 0738: the sparring "maybe 2s", Dace's pacing "Longer"); the
+  (Nick, 0738: the sparring "maybe 2s", the rival's pacing "Longer"); the
   darkening adds half a second.
 - A walker faces the way it goes; with `facing`, that way all along (a
   step back towards an opponent). After a walk it keeps facing the way it

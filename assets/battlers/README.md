@@ -28,7 +28,7 @@ So a named character with no picture of their own looks like their class,
 and a class with no picture yet shows the default figure. A class's bought
 picture is the one the enemy's soldiers show (the Red Company's guard is
 the Church Knight in red); a named character who shares it gets a row of
-their own in the importer's table, recoloured (Hollis: the same knight in
+their own in the importer's table, recoloured (the retainer: the same knight in
 blue).
 
 ## Format

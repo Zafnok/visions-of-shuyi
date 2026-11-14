@@ -36,7 +36,7 @@ hask = "hask"
 aske = "aske"
 othe = "othe"
 mor = "mor"
-# Ned Tolley, the Chapter 3 boss (assets-private/story/names.md, ticket 0743).
+# The Chapter 3 boss's first name (assets-private/story/names.md, ticket 0743).
 ned = "ned"
 
 [default]

@@ -135,7 +135,7 @@ does, and plans its clips with the engine's `voice::plan`.
 
 ```ron
 {
-    "aske": "Ask",
+    "guide": "Vicks",
     "Harrow": "Harro",
 }
 ```
@@ -161,7 +161,7 @@ with the spaces around it, is sent as plain punctuation
 | Before other punctuation | nothing | `What...?` → `What?` |
 | At the line's end | `.` | `Should've waited for--` → `Should've waited for.` |
 | A break (`--`) anywhere else | `—` | `that's all they-- Your Grace.` → `that's all they— Your Grace.` |
-| A trailing-off before a new sentence (a capital word that isn't "I") | `.` | `Wait... Aske!` → `Wait. Aske!` |
+| A trailing-off before a new sentence (a capital word that isn't "I") | `.` | `Wait... Run!` → `Wait. Run!` |
 | A trailing-off anywhere else | `,` | `Wait... no.` → `Wait, no.` |
 
 A run of marks (`danger-- ...No.`) is read as one, a break if it has a
@@ -217,7 +217,7 @@ lines go to their voice's reader; directed lines to ADR-0109's recipe. Every
 take is transcribed (faster-whisper) and kept when it says the line's words
 (or the respelled ones), 85 % alike letter by letter, or, for a line of at
 most four words, word for word by sound, since a transcriber spells an
-invented name its own way ("Dases" for "Dace's.", ADR-0113's follow-ups);
+invented name its own way (one name's possessive came back as a different word, ADR-0113's follow-ups);
 otherwise the next seed is tried, up to four. A
 line with no good take is reported and not saved. Each clip is trimmed to at
 most 0.1 s of silence at either end and brought to −18 LUFS (true peak at

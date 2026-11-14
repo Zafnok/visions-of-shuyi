@@ -13,7 +13,7 @@
 //
 // Ids: lowercase letters, digits, _ and ., as in assets-private/story/names.md (every
 // id there must be here). Values: plain ASCII, no { or }, each unique. Keep
-// the leading "the" where the name has one ("the Thornmarch"), so a token
+// the leading "the" where the name has one ("the Old Road"), so a token
 // reads right mid-sentence.
 {
     "lead": "Ellery",

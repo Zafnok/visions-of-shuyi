@@ -83,9 +83,9 @@ portrait on level-up · **0451** point at a hurt
 ally to heal · **0452** forest tiles that show where the forest ends ·
 **0429** what a skill or art does, shown while choosing it · **0728** the
 Chapter 1 script reworked as scenes (0719, 0722 and 0726 wait for it) ·
-**0729** the dialogue log · **0730** Maud's softer eyes · **0832** a
+**0729** the dialogue log · **0730** the keeper's softer eyes · **0832** a
 combat-scene shot → **0833** the title cinematic moving like the game
-(also after 0728) · **0834** Tamsin less dominant · and the decisions
+(also after 0728) · **0834** the sergeant less dominant · and the decisions
 **0056** Cinder Oath's range (decided 2026-10-15: range 1, the enemy
 can't counter; built by **0317**), **0057** a tutorial (decided 2026-10-14:
 New Game asks how familiar you are, a Fox Miko guide, checklist lessons in
@@ -119,7 +119,7 @@ how much faces dim over a place · **0740** narration left-aligned (after engine
 the pre-battle place reads as the chapel green · **0843** the intro's fixes
 (longer news, shorter fight hold, hit sounds, the logo on the chord, a
 start through black) · **0844** a setting to turn the intro off · **0446**
-Tamsin's combat picture · **0449** arrows where the map goes past the view (done)
+the sergeant's combat picture · **0449** arrows where the map goes past the view (done)
 · **0466** a zoom tip · **0464** lessons only when they can be done →
 **0465** the end of the lessons points at Guides and offers a fresh start ·
 **0467** tips lost before they show · **0841** Tutorial None stops what's
@@ -127,7 +127,7 @@ queued · **0463** the forecast's weapon swap easy to find · **0468** Vix's
 ears · **0842** Vix's profile nudge on the title · **0250** key names that
 stand out · **0847** a better dialogue log key · **0461** the road up to a
 bridge · **0462** aiming starts on an enemy · **0318** Cinder Oath can't
-counter · **0845** the objective becomes defeating Harl → **0846** the lead
+counter · **0845** the objective becomes defeating Chapter 1's boss → **0846** the lead
 a little stronger. Parked, not before round 4: **0063** rework the intro's
 shots, **0064** a story role for Vix, **0065** naming Vix and the lead,
 **0469** pictures in Guides, **0908** polish before the Steam release
@@ -289,15 +289,15 @@ tickets in brackets):
    **0073** four armour weights (0321, 0320, Chapter 1's loadouts) →
    **0074** the Steel armour sold from Chapter 5 (its data ticket)
 3. **0028** shop music (0473)
-4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
-   a boss who can't die, Hollis's death and its Classic fallback, the
+4. **0069** Act 1's battle rules: the escape objective, a boss who
+   flees, a boss who can't die, a story death and its Classic fallback, the
    kinds of side-quest reward, what each early chapter introduces
    (0319, 0848, 0849, 0750, 1072, 1083, 1084)
 5. **0025** world map, **0026** capital and **0027** camp music (1007,
    1003) · **0071** story-battle themes and scene music for Chapters
    2–8 (0848–0854)
 6. **0070** faces and combat pictures for the new cast (0848–0854,
-   1069); **0076** the two it left open, Hedda and the Hound lieutenant
+   1069); **0076** the two it left open, the shieldbearer and the Hound lieutenant
    (0848, 0851, 1069)
 7. **0606**'s question, where to promote and reclass (asked inside 0606
    before it is built)
@@ -315,7 +315,7 @@ map, **0063**–**0065** (the intro's shots, a story role for Vix, naming
 Vix and the lead). Asked when their ticket is picked up: the questions
 inside Lane G's tickets (0250, 0449, 0463, 0739, 0741, 0742, 0846,
 0847) and 1062's; **1009** (quest recruitment) only if 1083's runaway
-Candle joins outside battle.
+recruit joins outside battle.
 
 **Phase 2: systems**, in lanes that run side by side:
 
@@ -417,7 +417,7 @@ Candle joins outside battle.
   explains wading · **0078** → **0484** stats easy to see in battle ·
   **0609** a spell learned in battle comes with its uses · **0762**
   voiced lines without long pauses (→ **0757**) · **0763** the dialogue
-  box at the bottom · **0864** Tamsin a little stronger (asks Nick) ·
+  box at the bottom · **0864** the sergeant a little stronger (asks Nick) ·
   **0865** the music dips under a voiced line (after engine#2511 →
   engine#2342 → engine#2343).
 - **I. Nick's playtest of the Act 1 build** (2026-11-08). Decisions
@@ -430,14 +430,14 @@ Candle joins outside battle.
   **0527** the bots report units that can't hurt the enemy or fall
   behind (first, so the balance tickets show per-unit numbers before
   and after) · **0528** enemies close in instead of waiting · **0870**
-  Joss a little weaker (asks Nick) · **0485** the end-of-lessons box
+  the defector a little weaker (asks Nick) · **0485** the end-of-lessons box
   only in Chapter 1 · **0486** shop lines show every number · **0487**
   previous and next unit in Loadouts · **0488** the seize point stays
   visible under a unit · **0489** Vix explains weapon effectiveness ·
   **0490** the Arts lesson shows an art is an attack · **0491**
   Chapter 4's doorways look like doors · **0869** a save after the last
   chapter's win (→ **1065**) · **1088** the world map's cursor follows
-  the roads · **1089** Cairnford's world-map picture cut right ·
+  the roads · **1089** a town's world-map picture cut right ·
   **0453** (Lane G) gives Cinder Oath its "no counter" note. The
   balance tickets (0332, 0333, 0610, 0870, 0528, 0867, 0868) each
   re-record the bots' winning playthroughs, so they run one at a time:
@@ -477,7 +477,7 @@ them sequential: **0744** (Chapter 2, after 0737) → **0745** → **0746**
 before **0854** wires it; it preserves the decided finale beat.
 Each chapter's battle after its script, 0509, 0323, 0608, 0070 and
 0071: **0848** Chapter 2 (also 0313, 0409, 0443, 0069, 0329) → **0858**
-Chapter 2's art (after Nick buys Hendry's picture and builds his face)
+Chapter 2's art (after Nick buys the Hound lieutenant's picture and builds the face)
 and **0520** the bots play a chapter with the army the chapters before
 it leave → **0523** Hardcore stops stalling in front of a guarded
 chokepoint (then **0524** Chapters 1 and 2 back inside their bands)
@@ -485,7 +485,7 @@ chokepoint (then **0524** Chapters 1 and 2 back inside their bands)
 Chapters 4–8 (also 1007, 1008, 0319, 1070); **0871** records Chapter 5's
 win again after 0846 made the lead stronger. The world map's content: **1070** nodes,
 towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
-fixed skirmishes of Chapters 4 and 5, with Gil (after 0746, 0747; then **0529**
+fixed skirmishes of Chapters 4 and 5 (after 0746, 0747; then **0529**
 Chapters 4 and 5 back in their bands) → **1090** those of
 Chapters 6 and 7 (after 0748, 0749) and **1072**, **1083** and **1084** the five
 side quests (after 0018, 0329, 0069 and their chapters' scripts). The
@@ -528,11 +528,11 @@ Design answers unblock most of the rules work. Suggested order:
 1. **0001** stats & combat · **0002** turn structure · **0003** weapons & items · **0004** magic · **0006** death & difficulty · **0007** setting, tone & story beats
 2. **0005** level ups & classes (after 0001) · **0008** world structure · **0009** Chapter 1 scope (after 0007) · **0014** Combat Arts (after 0003) · **0016** the lord's unique class line (after 0005, 0009)
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
-4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
+4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** the red captain's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
-6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** Hedda's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
+6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
    · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
@@ -560,7 +560,7 @@ done tickets were dropped, 0711 now waits for 0110 (it needs the bought
 files), and 0803 now waits for 0710 and 0807 (it sets Chapter 1's music).
 0231 (pictures as sprite items, ADR-0038) was added to row 1: 0711 draws
 the bought faces with it.
-Nick also put the combat scene (0413), Harl's picture (0035) and 0316
+Nick also put the combat scene (0413), the red captain's picture (0035) and 0316
 (non-attack skills cost uses per battle) in front of the playtest, and
 0822 (Game Over offers Rewind while charges are left; "yes", PR #140).
 2026-10-02: 0714 (dialogue speakers who aren't units) was added to row 1
@@ -586,7 +586,7 @@ same day: Nick said the playtest waits for it.
 The table was brought up to date on 2026-10-04 (ticket 0121): every other
 ticket named above is done.
 
-**0035** (Harl's picture) left row 1 on 2026-10-04: Nick chose it in 0040
+**0035** (the red captain's picture) left row 1 on 2026-10-04: Nick chose it in 0040
 (Shironejiya's bearded axe bandit), so 0413 and 0706 no longer wait on it.
 The private assets repo is
 done (0110 and 0116, 2026-10-02, ADR-0040): Nick uploaded it and added its

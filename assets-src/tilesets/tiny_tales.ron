@@ -35,7 +35,7 @@
         "throne": ("dungeons-1/Set_A_Fortress1", 161),
         "wall": ("dungeons-1/Set_E_Fortress1", 22),
         "door": ("dungeons-1/Set_E_Fortress1", 22),
-        // Decoration (ticket 0733): the yard at Harrowby stands on grass
+        // Decoration (ticket 0733): the yard (`harrowby_yard`) stands on grass
         // and on the yard's earth, the study's furniture on the floor and
         // the banner on the wall. The layers below draw them.
         "roof": ("world-map/Set_A_Standard_Fields2", 89),
@@ -156,7 +156,7 @@
                 ".##.": ("dungeons-1/Set_A_Fortress1", 82),
             },
         ),
-        // The yard at Harrowby (0733), from the Overworld set: the back
+        // The yard, `harrowby_yard` (0733), from the Overworld set: the back
         // of the lead's rented house (Small Village), its roof and its
         // plank wall each a patch with its edges where it ends, the door
         // over the wall with its lintel on the tile above.
@@ -203,7 +203,7 @@
         "hedge": Tiles(of: ["hedge"], tile: ("overworld/Set_B_Exteriors", 2)),
         "well": Tiles(of: ["well"], tile: ("overworld/Set_B_Exteriors", 156)),
         "rack": Tiles(of: ["rack"], tile: ("overworld/Set_D_Interiors", 193)),
-        // The study at Veyne Hall (0733), from the Overworld set's
+        // The study, `veyne_study` (0733), from the Overworld set's
         // furniture: a wooden table, papers on it, bookshelves two tiles
         // wide and a blue rug. The bundle has no banner: a pale blue
         // valance (Interiors) hangs on the wall, House Veyne's shield

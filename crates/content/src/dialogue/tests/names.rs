@@ -256,8 +256,9 @@ fn a_rename_reaches_every_use() {
 }
 
 /// The names example in `assets/dialogue/README.md` passes every check
-/// against the real names table and reads as the README says (a test of
-/// the content, ADR-0118 §1 (a)).
+/// against the real names table and shows the caption and line the README
+/// describes (a test of the content, ADR-0118 §1 (a)). The README names
+/// no display name (ADR-0118 §2), so only the tokens are compared.
 #[test]
 fn readme_names_example_is_valid() {
     if crate::bundle::skip_without_the_game() {
@@ -276,16 +277,14 @@ fn readme_names_example_is_valid() {
         })
         .map(|t| names().substitute(t).into_owned())
         .collect();
-    // What the README says the example shows, with the table's names.
+    // What the README says the example shows: the place capitalised in
+    // the caption, the king and the place in the line.
     let said = [
         "{N:place.thornmarch}, dusk",
         "{N:king} wants you out of {n:place.thornmarch}.",
     ]
     .map(|t| names().substitute(t).into_owned());
     assert_eq!(shown, said);
-    for line in &said {
-        assert!(README.contains(&format!("\"{line}\"")), "{line}");
-    }
 }
 
 #[test]

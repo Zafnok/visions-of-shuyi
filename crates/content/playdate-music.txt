@@ -20,7 +20,7 @@ dungeon_tense
 scene_sad
 talk_antagonist
 
-# Harrowby Ford (`assets-private/content/battles/ch01.ron`), its win and its loss.
+# Chapter 1's battle (`assets-private/content/battles/ch01.ron`), its win and its loss.
 battle_bright
 victory
 defeat
