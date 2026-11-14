@@ -5,10 +5,10 @@ type: bug
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-13
 ---
 
 # 0169 — A blocked playtest battle keeps its report
@@ -63,12 +63,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A blocked battle's run uploads `playtest-report-<battle>` and prints
+- [x] A blocked battle's run uploads `playtest-report-<battle>` and prints
       the `::error::<battle>: blocked …` line (shown with a run link, e.g.
       a throwaway branch whose battle is made unwinnable, or reasoned from
       the step's script if no such battle is at hand: said so).
-- [ ] A winnable battle's run is unchanged (green).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A winnable battle's run is unchanged (green).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -76,5 +76,23 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- *Play the battle* now runs under `set -euo pipefail` and catches the
+  playtest's code with `status=0` and `... | tee ... || status=$?`, then
+  writes it to `reports/$BATTLE.status`. With `pipefail` the pipeline's
+  code is xtask's (`tee` doesn't fail), and the `||` keeps `-e` (ours and
+  the runner's `bash -e`) from ending the step, so the report is uploaded
+  and *Fail if the battle is blocked* prints the `::error::` line.
+- Other workflows: the only other exit-code capture
+  (`grep -rn 'PIPESTATUS\|$?' .github/ scripts/`) is ci.yml's *Bench*
+  step, which already wraps it in `set +e` ... `set -e`. Nothing else to
+  fix.
+- Blocked battle: reasoned from the script, no throwaway run (every
+  battle plays in a throwaway branch's run, about 14 jobs up to 30
+  minutes each, to show one shell line). The same lines were run locally
+  under `bash -e` with a command that prints a line and exits 3: the step
+  exited 0, the status file held 3 and the report held the line.
+- Winnable battles: this PR changes the playtest, a lever, so its own
+  Playtest run plays every battle; it stays green (the PR's checks).
+- Gates: zizmor (`--min-severity medium`) and actionlint clean on
+  `playtest.yml`; no Rust changed.
+- Engine friction: none: no code. No follow-up tickets.
