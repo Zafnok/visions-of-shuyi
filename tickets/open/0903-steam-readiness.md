@@ -40,6 +40,11 @@ ADR-0045 and ADR-0046 and add a line to 0907.
 for the Chapter 1 playtest (0804), which was folded into the Act 1
 playtest; it now waits for 1064.
 
+**Added 2026-11-14 (the engine pin move, engine PR #411):** before the
+store page or any of its footage goes public, run 1268's reveal kit
+(`cargo shuyi reveal prepare`) on the approved captures, with the store
+URL in `shuyi.ron`'s `reveal` part.
+
 ## Nick input
 
 **Setup (when Nick decides to go for Steam):** register at
