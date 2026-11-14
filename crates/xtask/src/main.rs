@@ -32,6 +32,7 @@ mod readme_pictures;
 mod sfx;
 mod skill_pack;
 mod skirmish;
+mod story_import;
 mod test_auto;
 mod test_card;
 mod test_tileset;
@@ -74,6 +75,7 @@ tileset-import [--list]            pack the bought terrain tiles and write the g
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
+story-import <n> [--dry-run]       take a mirror pull request Nick approved into the assets repository\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
 playdate [--release] [--bench] [--private-assets] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx;\n                                     --private-assets: with the bought art)
   readme-pictures                    draw the README's intro animation again, docs/img/intro.gif
@@ -126,6 +128,9 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
         Some("check-script") => check_script(&args.collect::<Vec<_>>()),
+        Some("story-import") => {
+            story_import::command(&repo_root(), &args.collect::<Vec<_>>(), &story_import::gh)
+        }
         Some("voice") => voice(&args.collect::<Vec<_>>()),
         Some("readme-pictures") => readme_pictures(&args.collect::<Vec<_>>()),
         Some("voice-test-clips") => voice_test_clips(&args.collect::<Vec<_>>()),
@@ -855,10 +860,9 @@ fn check_script(args: &[String]) -> u8 {
     };
     match check_script::scripts(&repo_root(), file) {
         Ok((scripts, only)) => {
-            let problems = check_script::problems(&scripts);
-            let only = only.as_deref();
-            print!("{}", check_script::report(&problems, only, scripts.len()));
-            u8::from(!check_script::clean(&problems, only))
+            let (code, out) = trpg_writer::check(&scripts, only.as_deref(), check_script::COMMAND);
+            print!("{out}");
+            code
         }
         Err(e) => {
             eprintln!("check-script: {e}");

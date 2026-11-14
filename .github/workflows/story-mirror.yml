@@ -1,0 +1,165 @@
+name: Story mirror
+
+# Copies the writer's files into the private mirror
+# Zafnok/visions-of-shuyi-story (ticket 0152, ADR-0122): the scripts and
+# story documents from the private assets repository at the pin
+# (assets-private.rev), and the public files tools/story-mirror/files.txt
+# lists. Commits on top of the mirror's main, never a force push, with the
+# game's commit and the pin as trailers; then closes each mirror pull
+# request named by a `Story-PR: <n>` trailer in the pushed range: its
+# change is in the game now (`cargo xtask story-import`).
+#
+# STORY_MIRROR_TOKEN is a fine-grained token of Nick's on the mirror alone
+# (contents, pull requests, workflows: read and write). Only this workflow
+# and story-kit.yml name it. Without it (a fork) the run warns and stops.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - assets-private.rev
+      - assets/dialogue/README.md
+      - docs/design/audio.md
+      - docs/design/death-and-difficulty.md
+      - docs/design/voices-languages-and-script.md
+      - tools/story-mirror/**
+      - .github/workflows/story-mirror.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: story-mirror
+  cancel-in-progress: false
+
+env:
+  MIRROR: Zafnok/visions-of-shuyi-story
+
+jobs:
+  sync:
+    name: sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is there a token?
+        id: token
+        env:
+          HAS_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::warning::STORY_MIRROR_TOKEN is not available to this run: the mirror is not synced (ticket 0152)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.token.outputs.ok == 'true'
+        with:
+          persist-credentials: false
+          # The pushed range, for its Story-PR trailers.
+          fetch-depth: 0
+      # The scripts and the story documents at the pin (ADR-0117).
+      - uses: ./.github/actions/private-assets
+        if: steps.token.outputs.ok == 'true'
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - name: Fetch the mirror
+        if: steps.token.outputs.ok == 'true'
+        env:
+          TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git init -q -b main mirror
+          git -C mirror config http.https://github.com/.extraheader "AUTHORIZATION: basic $auth"
+          git -C mirror remote add origin "https://github.com/$MIRROR.git"
+          if ! git -C mirror ls-remote origin > /dev/null; then
+            echo "::error::Can't read $MIRROR with STORY_MIRROR_TOKEN. If the token expired, make a new one as ticket 0152's setup step 3 says (github.com/settings/personal-access-tokens, fine-grained, the mirror only: contents, pull requests and workflows read and write) and replace the secret (step 4)."
+            exit 1
+          fi
+          if git -C mirror ls-remote --exit-code origin refs/heads/main > /dev/null; then
+            git -C mirror fetch -q origin main
+            git -C mirror reset -q --hard FETCH_HEAD
+          else
+            echo "The mirror is empty: this is its first commit."
+          fi
+      - name: Copy the files
+        if: steps.token.outputs.ok == 'true'
+        run: |
+          set -euo pipefail
+          git -C mirror rm -rq --ignore-unmatch .
+          while read -r to from _; do
+            case "$to" in ''|'#'*) continue ;; esac
+            case "$from" in
+              */)
+                [ -d "$from" ] || { echo "::error::files.txt names $from, which isn't here"; exit 1; }
+                mkdir -p "mirror/$to"
+                cp -R "$from." "mirror/$to"
+                ;;
+              *'*'*)
+                dir="${from%/*}" ext="${from##*\*}"
+                mkdir -p "mirror/${to%/*}"
+                for file in "$dir"/*"$ext"; do
+                  [ -f "$file" ] || { echo "::error::files.txt names $from, which matches nothing"; exit 1; }
+                  cp "$file" "mirror/${to%/*}/"
+                done
+                ;;
+              *)
+                [ -f "$from" ] || { echo "::error::files.txt names $from, which isn't here"; exit 1; }
+                mkdir -p "$(dirname "mirror/$to")"
+                cp "$from" "mirror/$to"
+                ;;
+            esac
+          done < tools/story-mirror/files.txt
+          git -C mirror add -A
+          git -C mirror status --short | head -50
+      - name: Commit and push
+        if: steps.token.outputs.ok == 'true'
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          pin=$(tr -d '[:space:]' < assets-private.rev)
+          subject=$(git log -1 --format=%s HEAD)
+          if git -C mirror rev-parse -q --verify HEAD > /dev/null && git -C mirror diff --cached --quiet; then
+            echo "The mirror already holds these files."
+            exit 0
+          fi
+          git -C mirror -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -F - <<EOF
+          Game ${sha:0:7}: $subject
+
+          Game-Commit: $sha
+          Assets-Commit: $pin
+          EOF
+          git -C mirror log -1 --format='%H%n%B'
+          git -C mirror push -q origin HEAD:refs/heads/main
+      - name: Close the pull requests now in the game
+        if: steps.token.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
+          BEFORE: ${{ github.event.before }}
+          SERVER: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          if [ -n "${BEFORE:-}" ] && git cat-file -e "$BEFORE^{commit}" 2> /dev/null; then
+            range="$BEFORE..$sha"
+          else
+            range="-1 $sha"
+          fi
+          # shellcheck disable=SC2086 # the range is one or two arguments
+          numbers=$(git log --format=%B $range | sed -nE 's/^[[:space:]*-]*Story-PR: *([0-9]+)[[:space:]]*$/\1/p' | sort -un)
+          for n in $numbers; do
+            state=$(gh pr view "$n" -R "$MIRROR" --json state -q .state || echo MISSING)
+            if [ "$state" != "OPEN" ]; then
+              echo "Pull request $n: $state, left as it is."
+              continue
+            fi
+            gh pr close "$n" -R "$MIRROR" --comment "This change is in the game now: $SERVER/$REPO/commit/$sha. Thank you!"
+          done

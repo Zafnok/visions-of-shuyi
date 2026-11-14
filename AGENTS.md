@@ -42,11 +42,13 @@ make a shared instruction work.
 
 1. **Work one ticket at a time** from `tickets/open/`, using the `work-ticket`
    skill. One ticket = one branch = one PR. The PR moves the ticket to
-   `tickets/done/`. Two exceptions: a GitHub issue labelled `sonar` is its
+   `tickets/done/`. Three exceptions: a GitHub issue labelled `sonar` is its
    own ticket, filed weekly from SonarCloud and fixed with the `sonar-fix`
-   skill (ADR-0071), and so is one labelled `engine-pin`, filed by a
+   skill (ADR-0071); so is one labelled `engine-pin`, filed by a
    watcher on the engine's `main` when its public API changes and worked
-   with the `engine-pin` skill (ADR-0096). A ticket that needs an engine change follows the
+   with the `engine-pin` skill (ADR-0096); and so is a pull request of the
+   writer's mirror that Nick approved, worked with the `story-import`
+   skill (ADR-0122). A ticket that needs an engine change follows the
    `engine-change` skill (an engine PR in `Zafnok/shuyi-engine` first,
    then the game's PR that moves the pin).
 2. **No unticketed work.** Don't write game code "to get a head start". Found
@@ -107,13 +109,14 @@ make a shared instruction work.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | A stub: the story's documents are in the private repository, `assets-private/story/` (below) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change`, `engine-pin`, `content-change`; and Shuyi Engine's skill pack, `shuyi-*` (`shuyi-input`, `shuyi-gates`, `shuyi-test`, …), copied at the pin by `cargo xtask skill-pack`, never edited here (ADR-0097). `keyboard-input` and `run-gates` hold only this game's rules on top of `shuyi-input` and `shuyi-gates` |
-| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `engine-watch` (`trpg-engine-watch`, the watcher on the engine's `main` and the pin ledger's check: dev tooling, ADR-0096), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change`, `engine-pin`, `content-change`, `story-import`; and Shuyi Engine's skill pack, `shuyi-*` (`shuyi-input`, `shuyi-gates`, `shuyi-test`, …), copied at the pin by `cargo xtask skill-pack`, never edited here (ADR-0097). `keyboard-input` and `run-gates` hold only this game's rules on top of `shuyi-input` and `shuyi-gates` |
+| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `engine-watch` (`trpg-engine-watch`, the watcher on the engine's `main` and the pin ledger's check: dev tooling, ADR-0096), `writer` (`trpg-writer`, the writer's `story-check`, built for the mirror: ADR-0122), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
 | `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the targets, the rules crate, the web build, the private repository. `cargo shuyi` is `cargo xtask shuyi`: xtask runs the engine's `shuyi-cli` at the pin, with the game's `frame-png` and `lang-status` (`cargo xtask <command>` still works too) |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |
 | `assets/` | The public files embedded in the game: fonts, sounds, palettes, terrain, keymap, UI text, credits, the placeholder pictures, each format's `README.md`, and the public stand-ins of the data tables (ADR-0121). The game's own chapters, battles, maps, scripts and data are in `assets-private/content/` (below), laid over it; a build without it starts the test chapter |
 | `bench/` | `cargo shuyi bench`'s scenarios (`*.bench.ron`, ticket 1244): the biggest battle, an attack, the fullest menu and a dialogue line, gated in CI against each target's budgets; the targets, budgets and numbers are in `docs/targets.md` |
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
+| `tools/story-mirror/` | The writer's private mirror, [`Zafnok/visions-of-shuyi-story`](https://github.com/Zafnok/visions-of-shuyi-story) (ADR-0122): `files.txt` lists what it holds (the scripts and story documents at the pin, the format, a few design notes), `check.yml` its own check, `README.md` its start page. Synced by `story-mirror.yml`, its `story-check` built by `story-kit.yml` from `crates/writer` (`trpg-writer`); never edit the mirror. A pull request there that Nick approved comes in with `cargo xtask story-import` |
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo shuyi font-atlas`); not embedded |
 | `assets-private/` | **Git-ignored**: the checkout of the private repository (ADR-0040). `content/` is the game's own content kept private, embedded over `assets/` whenever it is checked out, with nothing to turn on (but `content/tests/`, the tests' own data, ADR-0118), and `story/` the story's documents (ADR-0117): beats, bible, characters, outline, ledger (ADR-0011), and in `story/design/` the story parts of `docs/design/` (ticket 0159). Change both with the `content-change` skill; `game/` is the bought art, embedded over both by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |

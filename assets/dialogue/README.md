@@ -9,7 +9,10 @@ The dialogue screen (ticket 0704) plays them one text box at a time.
 `cargo xtask check-script [file]` runs the same checks on the scripts
 alone, and `cargo run -p trpg-app -- --scene <id>` opens the game on one
 scene. A gentler introduction for a writer new to the repository:
-`assets-private/story/writers-guide.md`.
+`assets-private/story/writers-guide.md`. An outside writer works in a
+private mirror of the scripts, this file and the story's documents, and
+checks scripts there with `story-check`, the same checks as a program
+(ticket 0152, ADR-0122).
 
 ## A full example
 

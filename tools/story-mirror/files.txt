@@ -1,0 +1,24 @@
+# The writer's mirror, Zafnok/visions-of-shuyi-story (ticket 0152,
+# ADR-0122): every file it holds and where each comes from. Read by the
+# sync (.github/workflows/story-mirror.yml) and the import (`cargo xtask
+# story-import`), so the two never disagree.
+#
+# One line each: <mirror path> <from> [import]
+# - <from> is a path in the game's checkout, with the assets repository
+#   checked out at the pin in assets-private/.
+# - A path ending in / is a folder, copied whole; <folder>/*.<ext> is that
+#   folder's files with that extension; anything else is one file.
+# - import: a writer's change there is taken back into the assets
+#   repository (<from> without "assets-private/"). A file belongs to the
+#   longest mirror path that holds it, so story/design/ is not taken back:
+#   a change there, or to any other line without import, is a proposal
+#   for Nick.
+dialogue/*.dlg                         assets-private/content/dialogue/*.dlg  import
+dialogue/README.md                     assets/dialogue/README.md
+story/                                 assets-private/story/                  import
+story/design/                          assets-private/story/design/
+design/audio.md                        docs/design/audio.md
+design/death-and-difficulty.md         docs/design/death-and-difficulty.md
+design/voices-languages-and-script.md  docs/design/voices-languages-and-script.md
+README.md                              tools/story-mirror/README.md
+.github/workflows/check.yml            tools/story-mirror/check.yml
