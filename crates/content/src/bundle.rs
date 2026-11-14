@@ -1011,13 +1011,20 @@ mod tests {
         static TEST: &[(&str, &[u8])] = &[("data/b.ron", b"embedded"), ("data/c.ron", b"embedded")];
         let disk = BTreeMap::from([("data/c.ron".to_owned(), b"disk".to_vec())]);
         let folder = Layer::owned(TEST_DISPLAY_ROOT.to_owned(), disk).unwrap();
+        let content = Layer::owned(CONTENT_DISPLAY_ROOT.to_owned(), BTreeMap::new()).unwrap();
         let embedded = vec![
+            Layer::table(CONTENT_DISPLAY_ROOT, &[]).private(),
             Layer::table(DISPLAY_ROOT, ASSETS),
             Layer::table(TEST_DISPLAY_ROOT, TEST).test(),
         ];
-        let read = with_folders(embedded, &[folder]);
-        let marks: Vec<_> = read.iter().map(|l| (l.name, l.test)).collect();
-        assert_eq!(marks, [(DISPLAY_ROOT, false), (TEST_DISPLAY_ROOT, true)]);
+        let read = with_folders(embedded, &[folder, content]);
+        let marks: Vec<_> = read.iter().map(|l| (l.name, l.private, l.test)).collect();
+        let expected = [
+            (CONTENT_DISPLAY_ROOT, true, false),
+            (DISPLAY_ROOT, false, false),
+            (TEST_DISPLAY_ROOT, false, true),
+        ];
+        assert_eq!(marks, expected);
         let bundle = Bundle::new(read);
         assert_eq!(bundle.file("data/b.ron"), Some("assets"));
         assert_eq!(bundle.file("data/c.ron"), Some("disk"));
@@ -1054,6 +1061,24 @@ mod tests {
         assert_eq!(read.file("data/a.ron"), Some("new"));
         assert_eq!(read.file("data/new.ron"), Some("new"));
         assert_eq!(read.file("README.md"), None);
+    }
+
+    /// The process's folders (the app reads them once, at the start) are
+    /// read as the game reads a folder, and take the platform's changes. A
+    /// folder named after no layer: the bundle the other tests read stays
+    /// as it is.
+    #[test]
+    fn the_folders_read_from_disk_take_the_platforms_changes() {
+        let files = BTreeMap::from([("data/a.ron".to_owned(), b"old".to_vec())]);
+        let watched = Layer::owned("no-such-layer".to_owned(), files).unwrap();
+        read_from_disk(vec![watched]);
+        let folders = DISK.get().unwrap();
+        let names: Vec<_> = folders.iter().map(|f| f.read.name).collect();
+        assert_eq!(names, ["no-such-layer"]);
+        assert!(watched.replace("data/a.ron", b"new".to_vec()));
+        take_changes(&["data/a.ron".to_owned()]);
+        let read = Bundle::new(vec![folders[0].read]);
+        assert_eq!(read.file("data/a.ron"), Some("new"));
     }
 
     /// A file of the content replaces `assets/`'s at its path and is shown
