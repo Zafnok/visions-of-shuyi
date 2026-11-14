@@ -91,11 +91,10 @@ const READ_BASE_S: f32 = 1.0;
 /// Auto-advance: reading time per character on a page with no voice left
 /// to say. *Tunable.*
 const READ_PER_CHAR_S: f32 = 0.05;
-/// Auto-advance: how long a clip is taken to say a character, until the
-/// platform reports when a clip ends. Slower than the clips speak, so a
-/// line is never cut short.
-// engine-friction: engine#2255
-const SPEECH_PER_CHAR_S: f32 = 0.08;
+/// Auto-advance: seconds a clip that hasn't started sounding (its file
+/// missing, or loaded too late) is waited for before it counts as ended,
+/// as long as the platform gives it ([`Ctx::voice_playing`]).
+const VOICE_WAIT_S: f32 = 0.5;
 
 /// Whether a line of `kind` has a voice. `docs/design/voices-languages-and-script.md`,
 /// *Voices*: "Every speech line in a story scene has a voice, the lead's
@@ -230,9 +229,34 @@ pub struct DialogueScreen {
     /// Seconds the page has been fully revealed with nothing else open,
     /// for auto-advance.
     waited_s: f32,
-    /// Seconds left of the text box's voice clip (negative once it has
-    /// ended), for auto-advance; `None` for a silent box.
-    voice_left_s: Option<f32>,
+    /// The text box's voice clip, for auto-advance; `None` for a silent
+    /// box.
+    clip: Option<Clip>,
+}
+
+/// A text box's voice clip, as the platform reports it (ticket 0863).
+#[derive(Debug, Clone, Default)]
+struct Clip {
+    /// Whether it has been heard sounding.
+    heard: bool,
+    /// Seconds it hasn't sounded: since it was asked for, or since it
+    /// ended once heard.
+    quiet_s: f32,
+}
+
+impl Clip {
+    /// Seconds since it ended, given whether `sounding` this frame of
+    /// `dt`: `None` while it sounds, or might still start.
+    fn ended_s(&mut self, sounding: bool, dt: f32) -> Option<f32> {
+        if sounding {
+            self.heard = true;
+            self.quiet_s = 0.0;
+            return None;
+        }
+        self.quiet_s += dt;
+        let wait = if self.heard { 0.0 } else { VOICE_WAIT_S };
+        Some(self.quiet_s - wait).filter(|&s| s >= 0.0)
+    }
 }
 
 impl DialogueScreen {
@@ -269,7 +293,7 @@ impl DialogueScreen {
             voice_due: false,
             speaking: false,
             waited_s: 0.0,
-            voice_left_s: None,
+            clip: None,
         };
         screen.start_box();
         screen
@@ -437,7 +461,7 @@ impl DialogueScreen {
     fn show_box(&mut self) {
         self.voice_due = true;
         self.waited_s = 0.0;
-        self.voice_left_s = None;
+        self.clip = None;
         let view = self.player.current();
         let text = TextBox::new(
             view.text.as_deref().unwrap_or(""),
@@ -550,7 +574,7 @@ impl DialogueScreen {
         if let Some(line) = self.player.line().filter(|_| in_box).cloned() {
             self.speak(ctx, &line);
             if self.speaking {
-                self.voice_left_s = Some(self.speech_s());
+                self.clip = Some(Clip::default());
             }
         }
         ctx.preload_voices(&coming_lines(&self.player));
@@ -687,9 +711,9 @@ impl DialogueScreen {
     /// [`AUTO_PAUSE_S`] passed, any other page after its reading time.
     fn auto_advance(&mut self, ctx: &Ctx, input: &FrameInput) -> bool {
         let dt = input.dt();
-        if let Some(left) = &mut self.voice_left_s {
-            *left -= dt;
-        }
+        let line = self.player.line();
+        let sounding = ctx.voice_playing().is_some_and(|l| Some(l) == line);
+        let ended_s = self.clip.as_mut().map(|c| c.ended_s(sounding, dt));
         let waits = self.menu.is_some() || self.is_asking_skip() || !self.is_revealed();
         let on = ctx.settings().game.auto_advance == AutoAdvance::On;
         if !on || waits || !input.actions.is_empty() {
@@ -698,18 +722,10 @@ impl DialogueScreen {
         }
         self.waited_s += dt;
         let last_page = !self.text.clone().next_page();
-        match self.voice_left_s.filter(|_| last_page) {
-            Some(left) => left <= -AUTO_PAUSE_S,
+        match ended_s.filter(|_| last_page) {
+            Some(ended_s) => ended_s.is_some_and(|s| s >= AUTO_PAUSE_S),
             None => self.waited_s >= READ_BASE_S + READ_PER_CHAR_S * chars(self.page_lines()),
         }
-    }
-
-    /// How long the text box's clip is taken to last: [`SPEECH_PER_CHAR_S`]
-    /// a character of its line.
-    // engine-friction: engine#2255
-    fn speech_s(&self) -> f32 {
-        let text = self.player.current().text;
-        SPEECH_PER_CHAR_S * chars(&[text.unwrap_or_default()])
     }
 
     /// One frame of an opening: Confirm (or End turn) ends it, Cancel ends

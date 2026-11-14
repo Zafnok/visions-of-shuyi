@@ -366,3 +366,16 @@ Nothing for the game: 9 PRs (#366, #364, #365, #330, #288, #357, #370, #375, #36
 | #393 | 3313 | `shuyi bench`'s web package number leaves out `web.music` and `web.voice`; its table gains a "Whole package" column | adopt → 1249 (this is its engine change: its engine and pin steps struck) |
 
 Nothing for the game: 12 PRs (#381, #383, #382, #384, #387, #389, #388, #392, #396, #394, #397, #398). #389 and #392 hold the tickets of #390 and #395; #387 and #388 are engine tickets only; #381, #383, #384, #396 and #398 are the engine's tutorial, book and playground; #382 is the engine's own flaky-gate ledger; #394 and #397 change the engine's reusable playtest workflow and the template's CI, neither of which the game's CI calls.
+
+## 2026-11-14: a434b973 → 4ce11a3b (14 engine PRs), #683
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #399 | 2591 | `shuyi repos` makes a game's public and private repositories on GitHub, with read-only keys, secrets and a ruleset; `doctor`'s `Check` is `#[non_exhaustive]` with `optional` | fixed: nothing to change (the game builds no `doctor::Check` and implements no `Probe`); not for the game: its repository and its private assets repository exist already, with their keys and secrets (ADR-0040, ADR-0117), and `shuyi repos` makes the template's layout, not the game's |
+| #407 | 3050 | Release a game from a tag: `export --plan`, `Exporter`'s `host()`, `container()` and `ci()`, the template's `release.yml` with `SHA256SUMS` and attestations | fixed: nothing to change (the game implements no `Exporter`); adopt → 1267 (the game's `release.yml` takes its version check and matrix from `export --plan`, dropping its bash check and its copy of the sniper image's digest, and records each package's SHA-256) |
+| #406 | 2597 | `shuyi new` asks whether to include the skills' worked examples; `check-skills` passes a skill without its example that says so | not for the game: the game wasn't made by `shuyi new`, and `skill-pack` copies the pack with its examples, so its `check-skills` is unchanged |
+| #411 | 2816 | `shuyi reveal`: a verifiable kit of the approved captures, builds and receipts before the first public footage | adopt → 1268 (a kit before the Steam and itch.io pages and their footage go public; 0901 and 0903 say so) |
+| #410 | 2828 | Exercises in the book: `run_game_checked`, `PageCheck` and the page plugin's checks | not for the game: the game runs on the long form, not `run_game`, and has no book page to answer |
+| #416 | 2598 | A crash report's `frames`: return addresses as offsets into the executable on Windows and Linux | adopt → 0918 (its engine half is this PR: its engine steps struck; left are the check on the game's release package and `docs/releasing.md`) |
+
+Nothing for the game: 8 PRs (#400, #404, #405, #409, #408, #412, #413, #415). #400, #405 and #413 are the engine's book and playground; #404 and #415 change `shuyi new` and its template's dependency budget, which the game wasn't made by; #409 and #412 are the engine's own xtask and worktrees; #408 restates the MCP server's move-aside promise and its test, with its code unchanged.

@@ -31,20 +31,29 @@ form's absolute addresses need the place the program was loaded to read.
 
 Found while working 0917.
 
+**From engine#2598 (done, engine PR #416, at the pin since the move of
+2026-11-14):** a report's `frames` (`shuyi_platform::crash::CodeFrame`,
+`offset: Option<u64>`) holds the panicking thread's return addresses as
+offsets into the executable on Windows and Linux (`None` in another
+module; none on macOS and the web), with no new crate. The engine's
+`docs/crash-reports.md`, *Reading the frames*, has the `addr2line`
+commands; its PR shows them naming the game's panicking frame from a
+stripped Windows release. What is left here is the game's half: the
+check on the game's own release package and `docs/releasing.md`.
+
 ## Nick input
 
-None. The engine change needs Nick's OK before its engine ticket and PR
-(the `engine-change` skill).
+None. (The engine change is done: engine#2598.)
 
 ## Scope
 
 **In:**
-- An engine change (`engine-change` skill: engine ticket and PR in
+- ~~An engine change (`engine-change` skill: engine ticket and PR in
   `Zafnok/shuyi-engine`, then this game's PR moves the pin): a crash
   report's backtrace gives each frame's address relative to the start of
   the program it is in (or the absolute address and the program's load
   address, as fields of the report), on Windows and Linux. Debug builds
-  keep the names they show today.
+  keep the names they show today.~~ Done by engine#2598 (engine PR #416).
 - `docs/releasing.md` "The debug files": the exact commands that turn a
   player's report into functions and lines with the version's `.debug`
   (`addr2line -f -C -e`, with the address adjusted as the report needs),
@@ -57,15 +66,15 @@ None. The engine change needs Nick's OK before its engine ticket and PR
 
 ## Implementation steps
 
-1. Read the engine's `crates/app/src/crash.rs`, `crates/platform/src/crash.rs`
+1. ~~Read the engine's `crates/app/src/crash.rs`, `crates/platform/src/crash.rs`
    and `docs/crash-reports.md`. Decide how a frame's offset is found
    (e.g. `Backtrace::frames()` ips minus the main module's base:
    `GetModuleHandleW(null)` on Windows, `dl_iterate_phdr` or the
    `__executable_start` symbol on Linux) without a new crate if one
    isn't already in the tree; record the choice in the engine.
 2. Engine ticket, PR, tests (a report's frames carry offsets; the format
-   documented). Ask Nick before opening them.
-3. Here: move the pin; on a by-hand release dry run with a temporary
+   documented). Ask Nick before opening them.~~ Done by engine#2598.
+3. Here: ~~move the pin~~ (done by the pin move of 2026-11-14); on a by-hand release dry run with a temporary
    panic switch, or locally with `cargo shuyi export windows --release`
    and `SHUYI_PANIC_AT_FRAME` in a build that reads it, check that
    `addr2line` on the debug file names the panicking function.
@@ -82,7 +91,7 @@ None. The engine change needs Nick's OK before its engine ticket and PR
 
 ## Tests required
 
-- Engine: a unit test of the report's frame format.
+- ~~Engine: a unit test of the report's frame format.~~ Done in engine#2598.
 - Here: none beyond the gates; the check in step 3 is in the PR.
 
 ## Completion notes
