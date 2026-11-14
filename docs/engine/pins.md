@@ -11,7 +11,10 @@ PRs), #<game PR>`. Its table has a row for every *Breaking*, *Unblocks* and
 
 - *Breaking:* `fixed: <what the game changed>`; for a PR the report also
   lists under *New for games*, `fixed: …; adopt → NNNN` or `fixed: …; not for
-  the game: <why>`;
+  the game: <why>`. A PR with only `Behaviour:` lines (engine ADR-0108: a
+  change the game sees without a break) is in this table too: `fixed:` says
+  whether the game keeps its own rule or takes the engine's, and how
+  (`fixed: nothing to change (…)` names what was searched);
 - *Unblocks:* `unblocks NNNN`;
 - *New for games:* `adopt → NNNN` (a game ticket that moves the game onto
   the engine's piece, or an open ticket changed to use it; `adopt → NNNN
@@ -23,9 +26,18 @@ A line under the table counts the rest: `Nothing for the game: N PRs (#…,
 
 `cargo xtask engine-pin --check` (in CI) fails when the last section isn't
 the pin in `shuyi-engine.rev`, when a row has no decision, when an
-`adopt → NNNN` names no ticket in `tickets/open/` or `tickets/done/`, or when
+`adopt → NNNN` names no ticket in `tickets/open/` or `tickets/done/`, when
 a row of the last section has only `fixed:` for a PR that also adds public
-items (it asks GitHub about those rows). Older sections aren't asked about.
+items, or when an engine PR the last section's move passed has a `Breaking:`
+or `Behaviour:` line and no row (it asks GitHub about those PRs, ticket
+1254). Older sections aren't asked about.
+
+The report (`cargo xtask engine-pin --report`, and the issue) also lists
+the adoption tickets still open, once each with their age, *idle* past 5
+days, and under *Workarounds the pin ends* each `engine-friction:
+engine#NNNN` marker in `crates/` whose engine ticket the move passes, and
+each open PR that adds one for such a ticket or one already pinned. The
+pin PR removes each marker, or its row names the ticket that does.
 
 ## 2026-10-25: baseline → 3f2256d4
 

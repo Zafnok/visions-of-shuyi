@@ -2,7 +2,7 @@
 //! move, newest last, headed `## YYYY-MM-DD: <from 8 hex> → <to 8 hex> (N
 //! engine PRs)`, with a row and a decision for every *Breaking*, *Unblocks*
 //! and *New for games* engine PR. `cargo xtask engine-pin --check` fails on
-//! what [`problems`] and [`gains_undecided`] find.
+//! what [`problems`], [`gains_undecided`] and [`missing_rows`] find.
 
 use std::collections::HashSet;
 use std::hash::BuildHasher;
@@ -15,6 +15,8 @@ pub const PATH: &str = "docs/engine/pins.md";
 pub struct LedgerRow {
     /// The first cell: the engine PR.
     pub pr: String,
+    /// The second cell: the engine tickets, as written (`2013`, `2388, 3096`).
+    pub ticket: String,
     /// The last cell: what the game does about it.
     pub decision: String,
 }
@@ -26,6 +28,9 @@ pub struct Section {
     pub heading: String,
     /// The day of the move, `YYYY-MM-DD`.
     pub date: String,
+    /// The commit the move started from, as the heading writes it (8 hex
+    /// digits, or `baseline`).
+    pub from: String,
     /// The commit pinned, as the heading writes it (8 hex digits).
     pub to: String,
     /// Its table's rows.
@@ -39,8 +44,8 @@ fn is_hex(text: &str) -> bool {
             .all(|c| c.is_ascii_digit() || ('a'..='f').contains(&c))
 }
 
-/// A heading's day and the commit it pins.
-fn heading(text: &str) -> Option<(String, String)> {
+/// A heading's day, the commit it starts from and the commit it pins.
+fn heading(text: &str) -> Option<(String, String, String)> {
     let (date, rest) = text.split_once(": ")?;
     let valid_date = date.len() == 10
         && date.chars().enumerate().all(|(i, c)| {
@@ -50,8 +55,9 @@ fn heading(text: &str) -> Option<(String, String)> {
                 c.is_ascii_digit()
             }
         });
-    let to = rest.split_once(" → ")?.1.split([' ', ',', '(']).next()?;
-    (valid_date && is_hex(to)).then(|| (date.to_owned(), to.to_owned()))
+    let (from, to) = rest.split_once(" → ")?;
+    let to = to.split([' ', ',', '(']).next()?;
+    (valid_date && is_hex(to)).then(|| (date.to_owned(), from.trim().to_owned(), to.to_owned()))
 }
 
 /// The ledger's sections, or what is wrong with its form.
@@ -59,7 +65,7 @@ pub fn parse(text: &str) -> Result<Vec<Section>, String> {
     let mut sections: Vec<Section> = Vec::new();
     for (i, line) in text.lines().enumerate() {
         if let Some(title) = line.strip_prefix("## ") {
-            let (date, to) = heading(title).ok_or_else(|| {
+            let (date, from, to) = heading(title).ok_or_else(|| {
                 format!(
                     "{PATH}:{}: expected `## YYYY-MM-DD: <from> → <to 8 hex> …`, found `{line}`",
                     i + 1
@@ -68,6 +74,7 @@ pub fn parse(text: &str) -> Result<Vec<Section>, String> {
             sections.push(Section {
                 heading: title.to_owned(),
                 date,
+                from,
                 to,
                 rows: Vec::new(),
             });
@@ -96,6 +103,11 @@ pub fn parse(text: &str) -> Result<Vec<Section>, String> {
         };
         section.rows.push(LedgerRow {
             pr: cells.first().map_or_else(String::new, |c| (*c).to_owned()),
+            ticket: if cells.len() > 2 {
+                cells[1].to_owned()
+            } else {
+                String::new()
+            },
             decision: if cells.len() > 1 {
                 cells.last().map_or_else(String::new, |c| (*c).to_owned())
             } else {
@@ -116,6 +128,69 @@ pub fn adopted(decision: &str) -> Vec<String> {
                 .filter(|id| id.chars().all(|c| c.is_ascii_digit()))
         })
         .map(str::to_owned)
+        .collect()
+}
+
+/// The tickets an `unblocks NNNN` decision names: those before its first
+/// bracket or `;` (`unblocks 0872 and 0873 (engine#3309 …)`).
+pub fn unblocked(decision: &str) -> Vec<String> {
+    decision
+        .split("unblocks ")
+        .skip(1)
+        .flat_map(|rest| {
+            let named = rest.split(['(', ';']).next().unwrap_or(rest);
+            named
+                .split(|c: char| !c.is_ascii_digit())
+                .filter(|run| run.len() == 4)
+                .map(str::to_owned)
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}
+
+/// The first pin move whose rows name engine ticket `id`: its day.
+pub fn pinned_on<'a>(sections: &'a [Section], id: &str) -> Option<&'a str> {
+    sections.iter().find_map(|s| {
+        s.rows
+            .iter()
+            .any(|r| {
+                r.ticket
+                    .split(|c: char| !c.is_ascii_digit())
+                    .any(|run| run == id)
+            })
+            .then_some(s.date.as_str())
+    })
+}
+
+/// Whether a section's move started from a commit (not `baseline`), so its
+/// engine PRs can be listed.
+pub fn has_start(section: &Section) -> bool {
+    is_hex(&section.from)
+}
+
+/// The engine PRs a section's rows name.
+pub fn row_prs(section: &Section) -> Vec<u32> {
+    section
+        .rows
+        .iter()
+        .filter_map(|row| pr_number(&row.pr))
+        .collect()
+}
+
+/// What is wrong with a section given `marked`, the engine PRs its move
+/// passed that have a `Breaking:` or `Behaviour:` line: one with no row
+/// (ticket 1254).
+pub fn missing_rows(section: &Section, marked: &[u32]) -> Vec<String> {
+    let rowed = row_prs(section);
+    marked
+        .iter()
+        .filter(|number| !rowed.contains(number))
+        .map(|number| {
+            format!(
+                "{PATH}, `{}`: engine PR #{number} has a `Breaking:` or `Behaviour:` line, so it needs a row and a decision (the `engine-pin` skill)",
+                section.heading
+            )
+        })
         .collect()
 }
 
@@ -228,6 +303,10 @@ mod tests {
         let sections = parse(&text).unwrap();
         assert_eq!(sections.len(), 2);
         assert_eq!(sections[0].to, "3f2256d4");
+        assert_eq!(sections[0].from, "baseline");
+        assert!(!has_start(&sections[0]));
+        assert_eq!(sections[1].from, "3f2256d4");
+        assert!(has_start(&sections[1]));
         assert_eq!(sections[0].date, "2026-10-25");
         assert_eq!(sections[0].rows, [] as [crate::ledger::LedgerRow; 0]);
         assert_eq!(sections[1].to, "6e7f71fd");
@@ -311,6 +390,43 @@ mod tests {
         }
         // Other decisions aren't asked about.
         assert_eq!(fixed_only(&section("unblocks 1180")), [90]);
+    }
+
+    #[test]
+    fn a_pr_with_a_breaking_or_behaviour_line_needs_a_row() {
+        let text = "## 2026-11-13: 234de697 → a434b973\n| #378 | 3300 | Packs | fixed: x |\n| [#386](https://x/386) | 3033 | Saves | adopt → 1266 |\n";
+        let section = parse(text).unwrap().remove(0);
+        assert_eq!(row_prs(&section), [378, 386]);
+        assert_eq!(section.rows[1].ticket, "3033");
+        let sections = [section];
+        assert_eq!(pinned_on(&sections, "3033"), Some("2026-11-13"));
+        assert_eq!(pinned_on(&sections, "303"), None);
+        let [section] = sections;
+        assert_eq!(missing_rows(&section, &[378, 386]), [] as [String; 0]);
+        let found = missing_rows(&section, &[386, 390]);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert!(
+            found[0].contains("engine PR #390 has a `Breaking:` or `Behaviour:` line"),
+            "{found:?}"
+        );
+        assert!(
+            found[0].contains("`2026-11-13: 234de697 → a434b973`"),
+            "{found:?}"
+        );
+    }
+
+    #[test]
+    fn an_unblocks_decision_names_its_tickets_before_its_bracket() {
+        assert_eq!(unblocked("unblocks 1180"), ["1180"]);
+        assert_eq!(
+            unblocked("unblocks 0872 and 0873 (engine#3309 out of their `blocked_by`; 1234)"),
+            ["0872", "0873"]
+        );
+        assert_eq!(
+            unblocked("fixed: x; unblocks 0914 (its pin step struck) and 0764's clause"),
+            ["0914"]
+        );
+        assert_eq!(unblocked("adopt → 1191"), [] as [String; 0]);
     }
 
     #[test]

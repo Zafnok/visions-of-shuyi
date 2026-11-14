@@ -228,8 +228,10 @@ fn ledger_problems(root: &Path, rev_text: &str) -> Vec<String> {
 }
 
 /// What GitHub says is wrong with the ledger's last section: a row with only
-/// a `fixed:` for an engine PR that also adds public items. Apart from
-/// [`check`] because it asks `gh`, and no test reaches the network.
+/// a `fixed:` for an engine PR that also adds public items, or no row for an
+/// engine PR the move passed with a `Breaking:` or `Behaviour:` line (ticket
+/// 1254). Apart from [`check`] because it asks `gh`, and no test reaches the
+/// network.
 fn gain_problems(root: &Path) -> Vec<String> {
     let found = fetch::ledger(root).and_then(|sections| {
         let Some(last) = sections.last() else {
@@ -237,7 +239,9 @@ fn gain_problems(root: &Path) -> Vec<String> {
         };
         let rev = read(root, REV_FILE)?;
         let both = fetch::breaking_and_new(&ledger::fixed_only(last), rev.trim())?;
-        Ok(ledger::gains_undecided(last, &both))
+        let mut found = ledger::gains_undecided(last, &both);
+        found.extend(ledger::missing_rows(last, &fetch::unrowed_marked(last)?));
+        Ok(found)
     });
     found.unwrap_or_else(|e| vec![e])
 }

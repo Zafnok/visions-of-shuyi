@@ -130,13 +130,13 @@ pub fn render<S: BuildHasher>(
     );
     let mut body = head(report, run);
     body.push_str(
-        "\n### Breaking\n\nFixed in the pin PR, on the game side, with behaviour unchanged. A PR also under *New for games* needs that decision too.\n\n",
+        "\n### Breaking\n\nFixed in the pin PR, on the game side, with behaviour unchanged. A `Behaviour:` line is a change the game sees without a break: the pin PR keeps the game's rule or takes the engine's, and says which. Each PR gets a ledger row. A PR also under *New for games* needs that decision too.\n\n",
     );
     table(
         &mut body,
         report,
         |k| matches!(k, Kind::Breaking(_)),
-        Some("Breaking"),
+        Some("Breaking or behaviour"),
     );
     body.push_str("\n### Unblocks\n\nThese game tickets become ready; the pin PR does nothing else for them.\n\n");
     table(
@@ -149,8 +149,10 @@ pub fn render<S: BuildHasher>(
     table(&mut body, report, |k| *k == Kind::NewForGames, None);
     body.push_str("\n### Nothing for the game\n\nNo public API added. Read each title: a PR that changes behavior or adds a suite or check in a crate the game links gets a ledger row and a decision, whatever its label says.\n\n");
     table(&mut body, report, |k| *k == Kind::Nothing, Some("Labels"));
-    body.push_str("\n### Adoption tickets still open\n\n");
+    body.push_str("\n### Adoption tickets still open\n\nEach once, from the pin move that brought its engine piece. One that has had it more than 5 days is marked idle.\n\n");
     body.push_str(&adoptions(ledger, open_ids, report.now));
+    body.push_str("\n### Workarounds the pin ends\n\nEach `engine-friction: engine#NNNN` marker whose engine ticket this move passes. The pin PR removes it, or names the game ticket that does.\n\n");
+    body.push_str(&workarounds(report, ledger));
     body.push_str(
         "\n### The work\n\nWork this issue with the `engine-pin` skill (`.claude/skills/engine-pin/SKILL.md`), in one PR, \
          using `opus-5.5 / gpt-6.1-sol` at medium effort (choose the member for your harness; see tickets/README.md):\n\n\
@@ -158,6 +160,7 @@ pub fn render<S: BuildHasher>(
          - [ ] fix each *Breaking* row on the game side, behaviour unchanged\n\
          - [ ] decide each *New for games* row: `adopt → NNNN` or `not for the game: …`\n\
          - [ ] read each *Nothing for the game* title for a gain its label hides\n\
+         - [ ] remove each marker under *Workarounds the pin ends*, or name the ticket that does\n\
          - [ ] write the pin move's section in `docs/engine/pins.md`\n\
          - [ ] open the PR `Engine pin: <old 8> → <new 8> (N engine PRs)` that closes this issue\n",
     );
@@ -205,32 +208,89 @@ fn head(report: &Report, run: &Run) -> String {
     body
 }
 
-/// The ledger's `adopt → NNNN` tickets still in `tickets/open/`, with the
-/// day of their pin move and their age at `now`.
+/// Days an adopter ticket may wait with its engine piece in the pin before
+/// the issue marks it idle (ticket 1254).
+const IDLE_DAYS: i64 = 5;
+
+/// The ledger's `adopt → NNNN` and `unblocks NNNN` tickets still in
+/// `tickets/open/`, each once, from the first pin move that names it, with
+/// its day, its age at `now`, and *idle* past [`IDLE_DAYS`].
 fn adoptions<S: BuildHasher>(
     ledger: &[Section],
     open_ids: &HashSet<String, S>,
     now: i64,
 ) -> String {
-    let lines: Vec<String> = ledger
-        .iter()
-        .flat_map(|s| {
-            s.rows
-                .iter()
-                .flat_map(|r| ledger::adopted(&r.decision))
-                .map(|id| (id, s.date.clone()))
-        })
-        .filter(|(id, _)| open_ids.contains(id))
-        .map(|(id, date)| {
-            let days = crate::epoch_seconds(&format!("{date}T00:00:00Z"))
-                .map_or(String::new(), |t| format!(", {} days", (now - t) / 86_400));
-            format!("- {id}, adopted by the pin move of {date}{days}\n")
+    let mut seen: Vec<(String, &str, &str)> = Vec::new();
+    for section in ledger {
+        for row in &section.rows {
+            let adopted = ledger::adopted(&row.decision)
+                .into_iter()
+                .map(|id| (id, "adopted"));
+            let unblocked = ledger::unblocked(&row.decision)
+                .into_iter()
+                .map(|id| (id, "unblocked"));
+            for (id, how) in adopted.chain(unblocked) {
+                if open_ids.contains(&id) && !seen.iter().any(|(s, _, _)| *s == id) {
+                    seen.push((id, how, &section.date));
+                }
+            }
+        }
+    }
+    let lines: Vec<String> = seen
+        .into_iter()
+        .map(|(id, how, date)| {
+            let days =
+                crate::epoch_seconds(&format!("{date}T00:00:00Z")).map(|t| (now - t) / 86_400);
+            let age = match days {
+                Some(d) if d > IDLE_DAYS => format!(", {d} days: **idle**"),
+                Some(d) => format!(", {d} day{}", plural(usize::try_from(d).unwrap_or(0))),
+                None => String::new(),
+            };
+            format!("- {id}, {how} by the pin move of {date}{age}\n")
         })
         .collect();
     if lines.is_empty() {
         "None.\n".to_owned()
     } else {
         lines.concat()
+    }
+}
+
+/// The friction markers in `crates/` for the engine tickets the move passes,
+/// and the open game PRs that add one for those or for a ticket an earlier
+/// move pinned (by the ledger), or "None.".
+fn workarounds(report: &Report, ledger: &[Section]) -> String {
+    let mut out = String::new();
+    for m in &report.markers {
+        let _ = writeln!(out, "- `{}:{}`: engine#{}", m.path, m.line, m.engine_id);
+    }
+    for pr in &report.pr_markers {
+        let ids: Vec<String> = pr
+            .engine_ids
+            .iter()
+            .filter_map(|id| {
+                if report.passed.contains(id) {
+                    Some(format!("engine#{id}"))
+                } else {
+                    ledger::pinned_on(ledger, id)
+                        .map(|day| format!("engine#{id}, in the pin since {day}"))
+                }
+            })
+            .collect();
+        if !ids.is_empty() {
+            let _ = writeln!(
+                out,
+                "- open PR #{} ({}) adds a marker for {}",
+                pr.number,
+                cell(&pr.title),
+                ids.join(", ")
+            );
+        }
+    }
+    if out.is_empty() {
+        "None.\n".to_owned()
+    } else {
+        out
     }
 }
 
