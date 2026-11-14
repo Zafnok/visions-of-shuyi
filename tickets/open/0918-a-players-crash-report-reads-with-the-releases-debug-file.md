@@ -5,7 +5,7 @@ type: infra
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: none
 completed:
@@ -96,5 +96,28 @@ None. (The engine change is done: engine#2598.)
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Engine:** engine ticket 2598 (Zafnok/shuyi-engine#416). A
+  crash report gains `frames`, the panicking thread's stack as offsets
+  into the program (`(offset: Some(n))`, or `None` in a system library),
+  on Windows and Linux. The stack is walked by the system's own unwinder
+  (`RtlCaptureStackBackTrace` and `GetModuleHandleExW` on Windows,
+  glibc's `backtrace()` and `/proc/self/maps` on Linux), so no crate was
+  added. The `backtrace` text stays as it was, so a debug build shows
+  the names it shows today. Engine ticket 2520 (`shuyi crash
+  --symbols`) had planned these frames with the `backtrace` crate; it
+  now builds on 2598's.
+- **Here:** the pin moves to the engine PR's merge; `docs/releasing.md`
+  "The debug files" has the commands that read a player's report with
+  the version's `.debug` (the image base from `objdump -p`, each offset
+  minus 1, `addr2line -f -C -i -p`), in place of "Not yet usable".
+- **Checked by hand** (step 3): `cargo shuyi export windows --release`
+  against the engine change, then the stripped `visions-of-shuyi.exe`
+  with `SHUYI_PANIC_AT_FRAME=3`. Its report held 18 frames in the program
+  and 2 outside, and the documented commands named the panicking
+  function at the report's `location` (`shuyi_app`'s `frame_or_crash`,
+  `lib.rs:583`), and the game's `main.rs:89` and `:94` under it. The
+  output is in the PR. The test report was removed from the data folder
+  afterwards.
+- Deviation: the ticket's step 1 suggested `Backtrace::frames()`; that
+  is unstable Rust, so the system's unwinder took its place.
+- No gameplay rules decided. Nothing for the Act 1 playtest.
