@@ -1,6 +1,6 @@
 //! The title's intro cinematic through the real game (ticket 0819;
 //! `docs/design/title-screen.md`, *Intro cinematic*): left alone, the menu
-//! fades out and `assets/cinematics/title.ron` plays in time with the
+//! fades out and `assets-private/content/cinematics/title.ron` plays in time with the
 //! title song; a press skips to the logo and the menu. Since ticket 0843
 //! the menu and the title's picture go to black first, and the cinematic
 //! comes in from black.

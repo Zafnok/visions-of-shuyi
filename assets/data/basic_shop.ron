@@ -1,3 +1,8 @@
+// The public stand-in of the basic shop's stock (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: its plain items.
+//
 // The basic shop on the Preparations screen (ticket 0443): what it sells
 // and from when. Source: docs/design/weapons-and-items.md, "The
 // Preparations shop" (0044, the armour from 0073). Loaded by

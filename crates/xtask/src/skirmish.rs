@@ -218,10 +218,13 @@ fn file_at(root: &Path, path: &str) -> PathBuf {
     root.join(path)
 }
 
-/// Where a file of the same data folder as `world` goes: the test files'
-/// beside a test map, the story's beside a story map.
+/// Where a file of the same data folder as `world` (a world map's shown
+/// path, `<folder>/worldmaps/<id>.ron`) goes: the test files' beside a test
+/// map, the content's beside one of the content (ADR-0117).
 fn beside(world: &str, path: &str) -> String {
-    let data = world.split('/').next().unwrap_or("assets");
+    let data = world
+        .rsplit_once(&format!("/{WORLDMAPS_DIR}/"))
+        .map_or("assets", |(folder, _)| folder);
     format!("{data}/{path}")
 }
 

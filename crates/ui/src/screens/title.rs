@@ -56,7 +56,7 @@ use crate::widgets::{Menu, MenuEvent, MenuItem};
 /// The title screen's music cue (`audio.md`).
 pub const TITLE_MUSIC: &str = "title";
 
-/// The cinematic the title plays (`assets/cinematics/title.ron`).
+/// The cinematic the title plays (`assets-private/content/cinematics/title.ron`).
 pub const TITLE_CINEMATIC: &str = "title";
 
 /// The sound of a press that skips the cinematic: the sword hit, until

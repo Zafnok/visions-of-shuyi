@@ -644,15 +644,16 @@ fn the_project_requires_the_glyphs_the_content_does() {
 /// `shuyi.ron` names the files the content does for the credits check.
 #[test]
 fn the_project_checks_the_credits_the_content_reads() {
-    use trpg_content::bundle::{PRIVATE_DISPLAY_ROOT, display_path};
+    use trpg_content::bundle::{CONTENT_DISPLAY_ROOT, PRIVATE_DISPLAY_ROOT, display_path};
     let credits = project().config.private_assets.unwrap().credits.unwrap();
     assert_eq!(
         credits.file,
         display_path(trpg_content::credits::CREDITS_PATH)
     );
+    // The music's credits are the content's manifest's (ticket 0160).
     assert_eq!(
         credits.audio_manifest,
-        display_path(trpg_content::audio::AUDIO_PATH)
+        format!("{CONTENT_DISPLAY_ROOT}/{}", trpg_content::audio::AUDIO_PATH)
     );
     assert_eq!(credits.private_root, PRIVATE_DISPLAY_ROOT);
 }

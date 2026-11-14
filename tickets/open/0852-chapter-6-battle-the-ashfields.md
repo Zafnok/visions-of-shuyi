@@ -43,6 +43,12 @@ Completion notes). If 1090 has built *The Burnt Mill* by then, Chapter 6's
 recorded playthrough is made with the army that won it; if not, 1090 does
 that part.
 
+**Since 0160** the game's battles, maps, chapters, scripts and data are
+in the private repository's `content/` (`assets-private/content/`,
+ADR-0117): this ticket's changes to them go through the
+`content-change` skill, a pull request there first, then this
+ticket's, which moves `assets-private.rev`.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and

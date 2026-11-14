@@ -87,25 +87,8 @@ zoom: 25 × 16 tiles. Its terrain may be **decoration**, the terrain of
 a desk, a banner…): a battle whose map has any fails to load, so no battle
 changes.
 
-| File | Where |
-| ---- | ----- |
-| `harrowby_yard.map` | Chapter 1, the letter (`ch01_intro`): the yard behind the lead's rented house at Harrowby, at dawn |
-| `veyne_study.map` | Chapter 1, to be continued (`ch01_tbc`): the old lord's study at Veyne Hall, at night |
-| `kells_road.map` | Chapter 2, a halt in the dark (`ch02_intro`): the road above Kell's Ford, before dawn |
-| `kells_far_bank.map` | Chapter 2, the boy from the river (`ch02_join`): the far bank of the ford, at dusk |
-| `veyne_guardroom.map` | Chapter 2, to be continued (`ch02_tbc`): the guardroom at Veyne Hall's gate, at night |
-| `greywater_boathouse.map` | Chapter 3, the boathouse (`ch03_intro`): a boathouse on Greywater's lake shore, the night before |
-| `greywater_causeway.map` | Chapter 3, the causeway at night (`ch03_telling`): the shore end of the causeway, the night after |
-| `greywater_kitchen.map` | Chapter 3, the kitchen (`ch03_confession`): the abbey's kitchen, later that night |
-| `veyne_yard.map` | Chapter 3, to be continued (`ch03_tbc`): the yard at Veyne Hall, at night |
-| `valley_road.map` | Chapter 4, the valley road (`ch04_intro`): the forest road above the heartland, morning |
-| `veyne_rise.map` | Chapter 4, the rise above the hall (`ch04_eve`): the hill above Veyne Hall, at dusk |
-| `veyne_stable.map` | Chapter 4, the stable (`ch04_victory`): Veyne Hall's yard and stable, late morning |
-| `millhaven_post.map` | Chapter 4, to be continued (`ch04_tbc`): a Hound post on the Millhaven road, at night |
-| `south_road.map` | Chapter 5, the road south (`ch05_intro`): the road out of the valley toward the salt country, first light |
-| `envoys_house.map` | Chapter 5, the envoy's house (`ch05_envoy`, `ch05_victory`): the room at the top of the stairs, Ragna's table |
-| `saltmere_quay.map` | Chapter 5, the quay and the boat (`ch05_quay`, `ch05_tide`): Saltmere's harbor front, the evening tide |
-| `north_road_post.map` | Chapter 5, to be continued (`ch05_tbc`): a Hound post on the north road, at dusk |
+The game's places are listed in the private repository's
+`content/maps/README.md` (`assets-private/content/maps/`, ticket 0160).
 
 ## Rules checked by the loader
 

@@ -53,9 +53,6 @@ them (`trpg_ui::cinematic::opening`).
 - Pictures, not a fight: nothing here runs the rules, and a rebalance
   never changes an opening.
 
-Chapter 1's two:
-
-| Opening | Scene | Place |
-| ------- | ----- | ----- |
-| `ch01_sparring` | `ch01_intro` | the yard at Harrowby: the lead and Hollis step in and back at each other |
-| `ch01_pacing` | `ch01_tbc` | the study at Veyne Hall: Dace paces across the rug, back, and half way across again |
+The game's openings are listed in the private repository's
+`content/openings/README.md` (`assets-private/content/openings/`,
+ticket 0160). The test files' is `assets-test/openings/test_opening.ron`.

@@ -371,6 +371,10 @@ mod tests {
     /// guide is in the private repository's `story/` (ticket 0159).
     #[test]
     fn the_writers_guide_examples_have_no_problems() {
+        // The guide's examples name the game's cast (a test of the content).
+        if trpg_content::bundle::skip_without_the_game() {
+            return;
+        }
         let Some(guide) = trpg_content::bundle::story_doc("writers-guide.md") else {
             return;
         };

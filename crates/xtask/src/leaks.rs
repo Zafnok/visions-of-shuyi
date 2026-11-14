@@ -14,8 +14,8 @@
 //!   characters and three kinds of tile.
 //!
 //! A token (`{n:keeper}`) splits a line: its parts are searched apart, as
-//! the screen fills the token in. The files the content's move takes away
-//! ([`MOVING`]) and the tickets are not searched. What is found is named by
+//! the screen fills the token in. The tickets are not searched
+//! ([`UNSEARCHED`]). What is found is named by
 //! place only, the file and line of the quote and of its source: the
 //! check's output never quotes the line itself, as CI's logs are public.
 
@@ -37,26 +37,13 @@ pub const SHORT: usize = 4;
 /// The fewest characters of a map row that is looked for.
 pub const ROW: usize = 12;
 
-/// What is not searched, by path prefix: the tickets (0153 §3.5), and the
-/// files ticket 0160 moves into the private repository, which hold the
-/// content until it does (0159 moved the story's documents). A `README.md` in `assets/` is always
-/// searched: the formats stay public. Once 0160 has moved the files, the
-/// `assets/` entries name nothing and 0160 removes them.
-pub const MOVING: &[&str] = &[
-    "tickets/",
-    // 0160: the game's content.
-    "assets/dialogue/",
-    "assets/chapters/",
-    "assets/battles/",
-    "assets/maps/",
-    "assets/worldmaps/",
-    "assets/cinematics/",
-    "assets/openings/",
-    "assets/skirmishes/",
-];
+/// What is not searched, by path prefix: the tickets (0153 §3.5). The
+/// game's content is in the private repository since ticket 0160, so every
+/// other tracked file is searched. A `README.md` is searched wherever it is.
+pub const UNSEARCHED: &[&str] = &["tickets/"];
 
 /// The game's lines and map rows, each with the place it comes from
-/// (`assets/dialogue/ch01.dlg:72`).
+/// (`assets-private/content/dialogue/ch01.dlg:72`).
 #[derive(Debug, Default)]
 pub struct Sources {
     /// Every run of [`PHRASE`] words of a line.
@@ -245,11 +232,11 @@ fn numbered_words(text: &str) -> Vec<(usize, String)> {
     out
 }
 
-/// Whether the tracked file `path` is searched: not under [`MOVING`], but
-/// a `README.md`.
+/// Whether the tracked file `path` is searched: not under [`UNSEARCHED`],
+/// but a `README.md`.
 pub fn searched(path: &str) -> bool {
     path.rsplit('/').next() == Some("README.md")
-        || !MOVING.iter().any(|prefix| path.starts_with(prefix))
+        || !UNSEARCHED.iter().any(|prefix| path.starts_with(prefix))
 }
 
 /// Each quote in the tracked files of `root` of what `sources` holds, as
@@ -440,15 +427,12 @@ miller[sad] (quietly): Grind it fine, {n:baker}, the way your mother ground it e
     }
 
     #[test]
-    fn the_moving_files_and_tickets_are_not_searched_but_a_readme_is() {
+    fn the_tickets_are_not_searched_but_a_readme_is() {
+        assert!(!searched("tickets/open/0160-x.md"));
         for path in [
-            "tickets/open/0160-x.md",
-            "assets/dialogue/ch01.dlg",
-            "assets/maps/ch01.map",
-        ] {
-            assert!(!searched(path), "{path}");
-        }
-        for path in [
+            "tickets/README.md",
+            "assets/dialogue/made_up.dlg",
+            "assets/maps/made_up.map",
             "assets/made_up/README.md",
             "crates/ui/tests/it/snapshots/it__x.snap",
             "docs/design/made_up.md",

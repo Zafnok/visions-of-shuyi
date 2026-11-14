@@ -1,10 +1,12 @@
-// The Chapter 1 cast (ticket 0803; sheets in assets-private/story/characters/) and the
-// Red Company's generic soldiers; Chapter 2's recruit, boss and Hounds
-// (ticket 0848); Chapter 3's prior, Hound sergeant and the abbey's wardens
-// (ticket 0849). Every stat, level and loadout is a
-// *tunable* starting value, judged in the Chapter 1 playtest (0804). Loaded
-// by trpg_content::character. The test characters and templates (ids
-// starting `test_`) are in assets-test/data/characters.ron (ADR-0057).
+// The public stand-in of the character table (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: the lead, the guide (a speaker) and the skirmish generator's
+// templates (`skirmish_*`). The test files add their own characters
+// (assets-test/data/characters.ron).
+//
+// Loaded by trpg_content::character. The test characters and templates
+// (ids starting `test_`) are in assets-test/data/characters.ron (ADR-0057).
 //
 // characters: named characters.
 //   id: also the character's name id: the display name is its entry in
@@ -33,11 +35,6 @@
 //   picture, not a unit.
 (
     characters: [
-        // The lead (ticket 0708): the player picks the gender and first
-        // name at New Game, so dialogue shows the chosen name and the
-        // portrait lead_m or lead_f. The Exile's own base, with two points
-        // of the talent stat: Str 8, so the Iron Sword kills a fresh
-        // Brigand in one fight (Nick, 0846: "usually lead is a bit strong").
         (
             id: "lead", class: "exile", level: 1, is_lord: true,
             map_label: Some("El"),
@@ -46,225 +43,8 @@
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword", "steel_sword"], armour: Some("leather_vest")),
         ),
-        // Hollis Marr: twenty years a guard captain, so two levels up on
-        // the others.
-        (
-            id: "retainer", class: "guard", level: 3,
-            talent: Hp,
-            base: (24, 8, 0, 5, 3, 10, 1),
-            weapon_ranks: [(Spear, D)],
-            loadout: (weapons: ["iron_spear", "steel_spear"], armour: Some("chain_mail")),
-        ),
-        // Tamsin Rook: a cavalry sergeant of the Red Company until last
-        // winter.
-        (
-            id: "sergeant", class: "rider", level: 2,
-            talent: Spd,
-            base: (21, 7, 0, 6, 5, 5, 1),
-            weapon_ranks: [(Sword, E), (Spear, D)],
-            loadout: (weapons: ["iron_spear"], armour: Some("leather_vest")),
-        ),
-        // Aske.
-        (
-            id: "poacher", class: "archer", level: 2,
-            talent: Dex,
-            base: (17, 5, 0, 8, 6, 3, 1),
-            weapon_ranks: [(Bow, D)],
-            loadout: (weapons: ["iron_bow"], armour: Some("leather_vest")),
-        ),
-        // Maud: Heal from the class, and her own vow, Vigil Light
-        // (keeper.md).
-        (
-            id: "keeper", class: "cleric", level: 1,
-            talent: Res,
-            base: (17, 1, 6, 4, 5, 1, 8),
-            weapon_ranks: [(Gauntlet, E)],
-            personal_spells: [(1, "vigil_light")],
-            loadout: (weapons: ["iron_gauntlets"], armour: Some("linen_robe")),
-        ),
-        // Rue: Fire from the class, and the vow she swore at the
-        // Ashfields, Cinder Oath (heretic.md). No sword: she fights with
-        // her vows.
-        (
-            id: "heretic", class: "mage", level: 1,
-            talent: Mag,
-            base: (16, 1, 7, 5, 6, 1, 5),
-            weapon_ranks: [],
-            personal_spells: [(1, "cinder_oath")],
-            loadout: (armour: Some("linen_robe")),
-        ),
-        // Red Harl Coster, the Chapter 1 boss (red_captain.md).
-        (
-            id: "red_captain", class: "brigand", level: 5,
-            talent: Str,
-            base: (30, 10, 0, 6, 6, 6, 1),
-            weapon_ranks: [(Axe, D)],
-            loadout: (weapons: ["steel_axe", "iron_axe"], armour: Some("leather_vest")),
-        ),
-        // Joss Pellam (defector.md, ticket 0848): joins in the scene after
-        // Kell's Ford (`@joins`), a level behind where the party will be.
-        // A seamstress's son: his talent is Dex.
-        (
-            id: "defector", class: "swordsman", level: 3,
-            talent: Dex,
-            base: (21, 6, 0, 9, 9, 4, 2),
-            weapon_ranks: [(Sword, D)],
-            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
-        ),
-        // Silas Hendry, the Chapter 2 boss (hound_lieutenant.md): an axe
-        // user with the Houndmaster's Axe, Dace's gift, and its art Pack
-        // Hunt (combat-arts.md, Special weapons). The axe is the player's
-        // when the battle is won (battles/ch02.ron, clear_items).
-        (
-            id: "hound_lieutenant", class: "raider", level: 6,
-            talent: Str,
-            base: (30, 10, 0, 6, 6, 7, 1),
-            weapon_ranks: [(Axe, D)],
-            loadout: (weapons: ["houndmasters_axe"], armour: Some("chain_mail")),
-        ),
-        // Edwin Sallow, the prior of Greywater, the Chapter 3 boss
-        // (greywater_prior.md, ticket 0849): an old keeper of the Vigil's
-        // fire vows, Fire and Frost from the class, frail in the body. He
-        // holds his seat in the scriptorium, the Seize point.
-        (
-            id: "greywater_prior", class: "mage", level: 6,
-            talent: Mag,
-            base: (24, 2, 10, 7, 6, 2, 8),
-            weapon_ranks: [],
-            loadout: (armour: Some("linen_robe")),
-        ),
-        // Ned Tolley, the Hound sergeant on Greywater's gate
-        // (hound_sergeant.md, ticket 0849): fifteen years on Veyne Hall's
-        // gate, a sword and a battered shield. A named enemy, not the boss.
-        (
-            id: "hound_sergeant", class: "swordsman", level: 5,
-            talent: Def,
-            base: (26, 8, 0, 7, 6, 6, 2),
-            weapon_ranks: [(Sword, D)],
-            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
-        ),
-        // Chapter 4 (ticket 0850; assets-private/story/chapters/ch04.md).
-        // Dace Marr, the Chapter 4 boss (rival.md): captain of the king's
-        // Hounds, an enemy Shadowblade in Act 1 (swords and gauntlets),
-        // quick (his talent is Spd). At Veyne Hall he retreats at 0 HP
-        // (battles/ch04.ron, `defeat: Retreats`). Hard to put down rather
-        // than hard-hitting: the bots' Chapter 4 runs (playtesting.md).
-        (
-            id: "rival", class: "shadowblade", level: 8,
-            talent: Spd,
-            base: (40, 11, 1, 13, 13, 8, 4),
-            weapon_ranks: [(Sword, C), (Gauntlet, D)],
-            loadout: (weapons: ["steel_sword", "iron_gauntlets"], armour: Some("leather_vest")),
-        ),
-        // Gil Parrow, Champion of Six Fairs (prizefighter.md): a Brawler
-        // who joins if beaten on Millhaven Road (1071), a little behind
-        // the party's front line. A prize-fighter's talent is Str.
-        (
-            id: "prizefighter", class: "brawler", level: 5,
-            talent: Str,
-            base: (27, 8, 0, 6, 10, 5, 2),
-            weapon_ranks: [(Gauntlet, D)],
-            loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
-        ),
-        // The leader of the Hound patrol on Millhaven Road (1071), nameless
-        // like the Officer: beating him wins the fight, so Gil can be
-        // beaten first or missed (battle-scenes-and-recruitment.md).
-        (
-            id: "patrol_leader", class: "swordsman", level: 6,
-            talent: Def,
-            base: (28, 9, 0, 8, 7, 7, 2),
-            weapon_ranks: [(Sword, D)],
-            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
-        ),
-        // Chapter 5 (ticket 0851; assets-private/story/chapters/ch05.md).
-        // Hedda Ravn (shieldbearer.md): Ragna's bodyguard, ten years in a
-        // Brennish shield company, a Raider who joins as the house is
-        // attacked (`@joins` in ch05_prebattle). A veteran, so a little
-        // ahead of the party's front line; a bodyguard's talent is Def.
-        (
-            id: "shieldbearer", class: "raider", level: 8,
-            talent: Def,
-            base: (31, 11, 0, 6, 7, 8, 2),
-            weapon_ranks: [(Axe, C)],
-            loadout: (weapons: ["steel_axe", "iron_axe"], armour: Some("chain_mail")),
-        ),
-        // The Hound officer, the boss of the Envoy's House (ch05.md): a
-        // sergeant of Hendry's old company, nameless like the herald. He
-        // comes with the docks; in a Survive he need not fall. Hard to stop
-        // at the door: the bots' Chapter 5 runs (playtesting.md), where a
-        // careless guard in the door falls to him (0526).
-        (
-            id: "hound_officer", class: "swordsman", level: 9,
-            talent: Str,
-            base: (40, 15, 0, 11, 11, 8, 3),
-            weapon_ranks: [(Sword, D)],
-            loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
-        ),
-        // Act 1's side quests (ticket 1072; assets-private/story/chapters/side-*.md).
-        // Ambrose Tull, the crown paymaster: a clerk in a borrowed vest who
-        // retreats out the barn's back door at 0 HP (The Company Ledger).
-        (
-            id: "paymaster", class: "swordsman", level: 9,
-            talent: Dex,
-            base: (24, 6, 0, 9, 7, 5, 4),
-            weapon_ranks: [(Sword, D)],
-            loadout: (weapons: ["iron_sword"], armour: Some("leather_vest")),
-        ),
-        // Denny Rudd, a Red Company rider who rode with Tamsin, on the
-        // paymaster's shilling (The Company Ledger): a named enemy who falls.
-        (
-            id: "red_veteran", class: "rider", level: 9,
-            talent: Str,
-            base: (30, 10, 0, 7, 8, 7, 1),
-            weapon_ranks: [(Sword, D), (Spear, C)],
-            loadout: (weapons: ["steel_spear", "iron_sword"], armour: Some("chain_mail")),
-        ),
-        // Jory Casker, a League privateer with a council paper, the boss of
-        // Letters Home.
-        (
-            id: "privateer", class: "swordsman", level: 14, map_label: Some("Ca"),
-            talent: Spd,
-            base: (29, 10, 1, 14, 18, 7, 4),
-            weapon_ranks: [(Sword, C)],
-            loadout: (weapons: ["steel_sword", "iron_sword"], armour: Some("leather_vest")),
-        ),
     ],
     generics: [
-        // The Red Company (Chapter 1's enemies).
-        (id: "red_brigand", class: "brigand", level: 1, loadout: (weapons: ["iron_axe"])),
-        (id: "red_raider", class: "raider", level: 1, loadout: (weapons: ["iron_axe"])),
-        (id: "red_archer", class: "archer", level: 1, loadout: (weapons: ["iron_bow"])),
-        (id: "red_rider", class: "rider", level: 1, loadout: (weapons: ["iron_spear"])),
-        (
-            id: "red_guard", class: "guard", level: 1,
-            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
-        ),
-        // The Hounds in Brennish colors (Chapter 2's enemies, ticket
-        // 0848). Levels are set in the battle files.
-        (id: "hound_raider", class: "raider", level: 2, loadout: (weapons: ["iron_axe"])),
-        (id: "hound_swordsman", class: "swordsman", level: 2, loadout: (weapons: ["iron_sword"])),
-        (id: "hound_archer", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
-        (id: "hound_rider", class: "rider", level: 2, loadout: (weapons: ["iron_spear"])),
-        (
-            id: "hound_guard", class: "guard", level: 2,
-            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
-        ),
-        // Greywater's wardens, the abbey's own men in the Vigil's gray
-        // (Chapter 3, ticket 0849). Levels are set in the battle files.
-        (
-            id: "warden_guard", class: "guard", level: 2,
-            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
-        ),
-        (id: "warden_archer", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
-        // The Saltmere League's privateers (Letters Home, ticket 1072): sailors
-        // who are nobody's soldiers. Levels are set in the battle file.
-        (id: "privateer_cutlass", class: "swordsman", level: 2, loadout: (weapons: ["iron_sword"])),
-        (id: "privateer_bowman", class: "archer", level: 2, loadout: (weapons: ["iron_bow"])),
-        (id: "privateer_axe", class: "raider", level: 2, loadout: (weapons: ["iron_axe"])),
-        (id: "privateer_brawler", class: "brawler", level: 2, loadout: (weapons: ["iron_gauntlets"])),
-        // One per class a generated skirmish may field (ticket 0510, `cargo xtask
-        // skirmish`): the class's iron weapon, or its spells. Levels are set in
-        // the battle files. Healers can't win a fight, so they have none.
         (id: "skirmish_swordsman", class: "swordsman", level: 1, loadout: (weapons: ["iron_sword"])),
         (id: "skirmish_brawler", class: "brawler", level: 1, loadout: (weapons: ["iron_gauntlets"])),
         (id: "skirmish_raider", class: "raider", level: 1, loadout: (weapons: ["iron_axe"])),
@@ -300,22 +80,5 @@
         (id: "skirmish_archmage", class: "archmage", level: 1, loadout: (weapons: [])),
         (id: "skirmish_arcanist", class: "arcanist", level: 1, loadout: (weapons: [])),
     ],
-    // speakers: ids that may speak in dialogue (.dlg) but aren't units
-    // (yet). Each needs a name in names.ron. The Master of Vows doesn't
-    // fight in Chapter 1; the messenger (ticket 0707) only ever speaks.
-    // Dace (the rival) and Gil became characters in 0850.
-    // Chapter 2 (ticket 0744): the herald only ever speaks (Joss and the
-    // Hound lieutenant became characters in 0848; the Hound sergeant and
-    // the prior of Greywater in 0849).
-    // Chapter 5 (ticket 0747): the envoy and the magistrate only ever
-    // speak (Hedda and the Hound officer became characters in 0851).
-    // Chapter 6 (ticket 0748): Oriel, the Brennish commander and the
-    // king's knight speak before 0852 makes units of those that fight.
-    // Chapter 7 (ticket 0749): the warden of the Candles' barracks speaks
-    // before 0853 makes a unit of her.
-    // Chapter 8 (ticket 0750): the king speaks in the closing scene and
-    // never fights in Act 1.
-    // Letters Home (ticket 1072): the hill people's boat master only speaks.
-    // The guide, Vix, speaks the lessons' and tips' lines (ticket 0476).
-    speakers: ["guide", "vowmaster", "messenger", "herald", "envoy", "magistrate", "battlemage", "brennish_commander", "crown_knight", "undercroft_warden", "king", "boatmaster"],
+    speakers: ["guide"],
 )

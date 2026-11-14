@@ -1,3 +1,8 @@
+// The public stand-in of the enemy AI's weights (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: the same starting values.
+//
 // The enemy AI's numbers (ticket 0501). Loaded by trpg_content::ai; the rules
 // that use them are in trpg_core::ai. Every number is *tunable*: difficulty
 // feel is judged in playtest (0804).

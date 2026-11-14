@@ -1,3 +1,8 @@
+// The public stand-in of the audio manifest (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: every sound, music track, pool and credit of the public files.
+//
 // The audio manifest: every sound and music cue, music pools and credits.
 // Format: assets/audio/README.md. Decisions: docs/design/audio.md (0020),
 // ADR-0026, ADR-0027. Loaded and validated by trpg_content::audio.
@@ -5,27 +10,18 @@
 // also loudness-matches them. Music plays at volume 100; sounds at 40,
 // because Nick found them far too loud at 100 (ticket 0222).
 (
-    // How long a track fades out before the next one starts (TUNABLE,
-    // audio.md "Starting values").
     music_fade_ms: 500,
-    // The music dips a little under a voiced line and fades back after it
-    // (ticket 0865; audio.md, Voices). `to: 90` is 6 dB under (each step of
-    // the loudness curve is 0.6 dB). TUNABLE in the Act 1 playtest.
     ducks: [
         (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
     ],
     sounds: [
-        // Made in-house by `cargo xtask sfx` (ticket 0213) from the recipes
-        // in assets-src/audio/sound-audition.html.
         (id: "menu_move", files: ["sfx/menu_move.wav"], volume: 40, credit: Own),
-        // The map cursor's tick: menu_move, quieter (audio.md, TUNABLE).
         (id: "cursor_move", files: ["sfx/menu_move.wav"], volume: 24, credit: Own),
         (id: "menu_select", files: ["sfx/menu_select.wav"], volume: 15, credit: Own),
         (id: "menu_cancel", files: ["sfx/menu_cancel.wav"], volume: 15, credit: Own),
         (id: "miss", files: ["sfx/miss.wav"], volume: 40, credit: Own),
         (id: "heal", files: ["sfx/heal.wav"], volume: 40, credit: Own),
         (id: "hit_sword", files: ["sfx/sword_sound_1.ogg"], volume: 40, credit: Credit("sword_sound_1")),
-        // audio.md: the axe shares the spear's sound "for now".
         (id: "hit_spear", files: ["sfx/knife_stab.ogg"], volume: 40, credit: Credit("knife_stab")),
         (id: "hit_axe", files: ["sfx/knife_stab.ogg"], volume: 40, credit: Credit("knife_stab")),
         (id: "hit_bow", files: ["sfx/arrow_impact.ogg"], volume: 40, credit: Credit("arrow_impact")),
@@ -37,7 +33,6 @@
         (id: "hit_magic", files: ["sfx/magic_earth_spell_impact.ogg"], volume: 40, credit: Credit("magic_earth_spell_impact")),
         (id: "crit_fire", files: ["sfx/fireball_impact.ogg"], volume: 40, credit: Credit("fireball_impact")),
         (id: "crit_ice", files: ["sfx/magic_ice_impact.ogg"], volume: 40, credit: Credit("magic_ice_impact")),
-        // audio.md: each step picks one of the three at random.
         (id: "step_foot", files: ["sfx/footstep_dirt_00.ogg", "sfx/footstep_dirt_gravel_4.ogg", "sfx/footstep_grass_5.ogg"],
          volume: 40, credit: Credits(["footstep_dirt_00", "footstep_dirt_gravel_4", "footstep_grass_5"])),
         (id: "step_armored", files: ["sfx/knight_footstep_gravel_5.ogg"], volume: 40, credit: Credit("knight_footstep_gravel_5")),
@@ -65,21 +60,14 @@
         (id: "battle_epic_b", file: "battle_theme_b.ogg", volume: 100, length_ms: 66038, credit: Credit("battle_theme_b")),
         (id: "battle_church_2", file: "fantasy_choir_2.ogg", volume: 100, length_ms: 126131, credit: Credit("fantasy_choir")),
         (id: "battle_church_3", file: "fantasy_choir_3.ogg", volume: 100, length_ms: 91241, credit: Credit("fantasy_choir")),
-        // Veyne Hall (Chapter 4, ticket 0850): Nick's pick for Dace (0071).
         (id: "battle_rival", file: "a_slave_to_no_one.ogg", volume: 100, length_ms: 270000, credit: Credit("a_slave_to_no_one")),
-        // The Envoy's House (Chapter 5, ticket 0851): Nick's pick for holding a
-        // house at night (0071). The source's loop, 0:04.6 to 1:28.6.
         (id: "battle_night_siege", file: "battle_music.ogg", volume: 100, length_ms: 84000, credit: Credit("battle_music")),
-        // Hollis's confession on the sea steps (Chapter 5, ticket 0851): Nick's
-        // pick for a long-kept secret told at last (0071).
         (id: "scene_confide", file: "soliloquy.ogg", volume: 100, length_ms: 224340, credit: Credit("soliloquy")),
-        // The skirmish pool's tracks (pools below).
         (id: "skirmish_zhelanov_1", file: "zhelanov_battle_theme_1.ogg", volume: 100, length_ms: 100415, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_2", file: "zhelanov_battle_theme_2.ogg", volume: 100, length_ms: 88790, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_3", file: "zhelanov_battle_theme_3.ogg", volume: 100, length_ms: 84532, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_5", file: "zhelanov_battle_theme_5.ogg", volume: 100, length_ms: 90044, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_jocolloman", file: "rpg_battle_theme.ogg", volume: 100, length_ms: 77500, credit: Credit("rpg_battle_theme")),
-        // The victory pool's tracks (pools below): each plays once.
         (id: "victory_bandoneon", file: "win_jingle_bandoneon.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
         (id: "victory_brass", file: "win_jingle_brass.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
         (id: "victory_doot", file: "win_jingle_doot.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
@@ -93,36 +81,23 @@
         (id: "victory_steel_drums", file: "win_jingle_steel_drums.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
         (id: "victory_strings", file: "win_jingle_strings.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
         (id: "victory_vibraphone", file: "win_jingle_vibraphone.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
-        // From the DEFEAT banner through the Game Over screen (0023). It
-        // loops (0024); the file ends with a pause (import.py, TUNABLE).
         (id: "defeat", file: "the_fallen.ogg", volume: 100, length_ms: 89140, credit: Credit("the_fallen")),
-        // The camp pool's tracks (pools below): they rotate while camp is
-        // open, each played once to its end (0027, ticket 1003).
         (id: "camp_old_tower_inn", file: "old_tower_inn.ogg", volume: 100, looped: false, length_ms: 105482, credit: Credit("old_tower_inn")),
         (id: "camp_woodland_fantasy", file: "woodland_fantasy.ogg", volume: 100, looped: false, length_ms: 150048, credit: Credit("woodland_fantasy")),
         (id: "camp_bards_tale", file: "bards_tale.ogg", volume: 100, looped: false, length_ms: 158589, credit: Credit("bards_tale")),
-        // The Act 1 world map (0025, ticket 1007): played once to its end,
-        // then the map is quiet a while and it starts again (audio.md, The
-        // world map).
         (id: "world_map", file: "the_world_at_your_door.ogg", volume: 100, looped: false, length_ms: 161698, credit: Credit("the_world_at_your_door")),
-        // Every capital (0026, ticket 1007).
         (id: "capital", file: "adventures_in_adventureland.ogg", volume: 100, length_ms: 261251, credit: Credit("adventures_in_adventureland")),
     ],
     pools: [
-        // Skirmishes pick one at random per battle (audio.md rule 8; 0807).
         (id: "skirmish", music: ["skirmish_zhelanov_1", "skirmish_zhelanov_2", "skirmish_zhelanov_3",
                                  "skirmish_zhelanov_5", "skirmish_jocolloman"]),
-        // A won battle picks one at random (audio.md; 0022, 0809).
         (id: "victory", music: ["victory_bandoneon", "victory_brass", "victory_doot", "victory_fantasia",
                                 "victory_fretless", "victory_grand_piano", "victory_jazz_guitar", "victory_muted_guitar",
                                 "victory_nylon", "victory_pizzicato", "victory_steel_drums", "victory_strings",
                                 "victory_vibraphone"]),
-        // Camp plays them in turn, in this order, from a random first one
-        // (audio.md "Starting values"; 0027, 1003).
         (id: "camp", music: ["camp_old_tower_inn", "camp_woodland_fantasy", "camp_bards_tale"]),
     ],
     credits: [
-        // Music (one entry per work; the note names the file or version).
         (id: "new_sunrise", title: "New Sunrise", author: "nene",
          source: "https://opengameart.org/content/new-sunrise", license: "CC0-1.0",
          tags: ["music", "title", "city_first_visit", "calm", "hopeful", "city", "orchestral"],
@@ -212,7 +187,6 @@
          source: "https://opengameart.org/content/win-jingle", license: "CC0-1.0",
          tags: ["music", "victory", "jingle", "sting"],
          note: "13 of the 17 .wav versions in winjingle.zip (not Saw, Square, Banjo or Harpsichord)"),
-        // The pack's own terms ask for the composer's site in the credit.
         (id: "the_fallen", title: "The Fallen", author: "Jonathan Shaw (www.jshaw.co.uk)",
          source: "https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music",
          license: "CC-BY-3.0",
@@ -252,7 +226,6 @@
          tags: ["music", "capital", "bustling", "grand", "city"],
          note: "Adventures in Adventureland.mp3"),
 
-        // Sounds (freesound: the public HQ OGG preview of each sound).
         (id: "sword_sound_1", title: "Sword sound 1", author: "Merrick079",
          source: "https://freesound.org/s/568170/", license: "CC0-1.0",
          tags: ["sfx", "hit_sword", "sword", "hit"], note: "HQ preview"),

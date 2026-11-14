@@ -1,5 +1,10 @@
-// One-time tips (ticket 0406, assets-private/story/design/chapter-1.md "Teaching"): each is
-// shown once per profile, the first time its trigger happens in a battle.
+// The public stand-in of the one-time tips (ticket 0160, ADR-0117). The
+// game's own file is in the private repository's content/, laid over this
+// one by every build that has it checked out. A build without it (a fork)
+// reads this: every tip, without notes (the tutorial).
+//
+// One-time tips (ticket 0406): each is shown once per profile, the first
+// time its trigger happens in a battle.
 //
 // `text` is what the guide says: at most 3 lines of 60 characters. She is
 // voiced (ticket 0475) and a clip can't say a key the player rebound, so

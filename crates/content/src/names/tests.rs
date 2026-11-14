@@ -35,6 +35,10 @@ fn registry_ids() -> Option<std::collections::BTreeSet<String>> {
 
 #[test]
 fn table_holds_every_registered_id() {
+    // The registry names the game's own names (a test of the content).
+    if crate::bundle::skip_without_the_game() {
+        return;
+    }
     let Some(ids) = registry_ids() else {
         return;
     };

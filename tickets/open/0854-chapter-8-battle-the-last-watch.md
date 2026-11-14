@@ -36,6 +36,12 @@ revelation when Rue died before Chapter 6. Preserve its rendered-path
 fixtures when the scenes are attached to actual battle and victory flow.
 0070 kept **Dace**'s face (0706) and the dark knight (0040); Ragna's face is listed in 0851. Generator faces are built by Nick in the Character Generator from a parts list this ticket gives him (Nick, 0070: the agent's pasted generator mockups aren't reliable); Shironejiya pictures come from <http://hi79.web.fc2.com/material/monster_s/> and carry that site's credit text (`look-and-feel.md`, *Fighters with no Tiny Tales art*).
 
+**Since 0160** the game's battles, maps, chapters, scripts and data are
+in the private repository's `content/` (`assets-private/content/`,
+ADR-0117): this ticket's changes to them go through the
+`content-change` skill, a pull request there first, then this
+ticket's, which moves `assets-private.rev`.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21: he checks only design and

@@ -1,3 +1,8 @@
+// The public stand-in of the spell table (ticket 0160, ADR-0117). The game's
+// own file is in the private repository's content/, laid over this one by
+// every build that has it checked out. A build without it (a fork) reads
+// this: every spell.
+//
 // Every spell. Source: docs/design/magic.md (0004), "Starter spells". All
 // numbers are *tunable* starting values and rescale with ticket 0013. Loaded
 // by trpg_content::spell. Spells are innate, not items: which units know
@@ -44,13 +49,6 @@
             id: "mend", name: "Mend", kind: Heal(heal_power: 20),
             element: None, range: (1, 1), uses: 4,
         ),
-        // Personal signature spells (magic.md; named in the characters'
-        // sheets). Numbers are Claude's starting values (ticket 0803):
-        // Nick judges them in the playtest (0804).
-        //
-        // Rue's: a close, hard fire strike with few uses. It burns a forest
-        // tile like any fire vow. Range 1 stays (Nick, 0056), and the
-        // enemy can't strike back when Rue attacks with it (no_counter).
         (
             id: "cinder_oath", name: "Cinder Oath", kind: Attack(might: 9, hit: 80, crit: 0),
             element: Fire, range: (1, 1), uses: 3, no_counter: true, terrain_effect: Some((
@@ -58,7 +56,6 @@
                 lasts: UntilCastersNextPhase(then: "burnt", damage: 5),
             )),
         ),
-        // Maud's: a weaker heal that reaches 2 tiles.
         (
             id: "vigil_light", name: "Vigil Light", kind: Heal(heal_power: 6),
             element: None, range: (1, 2), uses: 5,

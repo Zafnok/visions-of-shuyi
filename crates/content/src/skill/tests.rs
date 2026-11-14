@@ -571,7 +571,7 @@ fn reference_errors_name_the_class_and_the_problem() {
     assert!(
         errors
             .iter()
-            .all(|e| e.file == "assets/data/classes.ron" && e.line.is_some())
+            .all(|e| e.file == crate::bundle::display_path("data/classes.ron") && e.line.is_some())
     );
     // A class missing from the file gets no line.
     let lost = ClassTable {

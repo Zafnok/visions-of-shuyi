@@ -382,8 +382,8 @@ fn unknown_characters() {
 
 #[test]
 fn speakers_who_are_not_units_may_be_placed_and_speak() {
-    let src = "@scene s\n@left retainer neutral\n@right rival angry\n\
-               retainer: Hold.\nrival[happy]: No.\n@end\n";
+    let src = "@scene s\n@left test_voice neutral\n@right test_knight angry\n\
+               test_voice: Hold.\ntest_knight[happy]: No.\n@end\n";
     assert_eq!(errors(src), [] as [&str; 0]);
     let characters = characters();
     assert!(!characters.speakers.is_empty());
@@ -398,7 +398,7 @@ fn speakers_who_are_not_units_may_be_placed_and_speak() {
     }
     // Someone in neither list still fails, next to a speaker.
     assert_eq!(
-        errors("@scene s\n@left retainer neutral\n@right mira neutral\nmira: Hey.\n@end\n"),
+        errors("@scene s\n@left test_voice neutral\n@right mira neutral\nmira: Hey.\n@end\n"),
         [
             "t.dlg:3: unknown character \"mira\"",
             "t.dlg:4: unknown character \"mira\"",

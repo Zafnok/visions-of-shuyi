@@ -1,3 +1,8 @@
+// The public stand-in of the combat arts (ticket 0160, ADR-0117). The game's
+// own file is in the private repository's content/, laid over this one by
+// every build that has it checked out. A build without it (a fork) reads
+// this: every art but the personal weapons'.
+//
 // Every Combat Art. Source: docs/design/combat-arts.md (0014), "Chapter 1
 // arts": two per weapon kind, at ranks E and D (list approved by Nick).
 // Every number is TUNABLE (FE-sized until ticket 0013). Ranks C-S (ticket
@@ -79,7 +84,6 @@
 //                                move in the weapon's range is shot once
 (
     arts: [
-        // Sword
         (
             id: "flowing_cut", name: "Flowing Cut", kind: Sword, rank: Some(E), cost: 2,
             effect: (sword_followup: Some((3, 2))),
@@ -104,7 +108,6 @@
             id: "riposte", name: "Riposte", kind: Sword, rank: Some(C), cost: 4,
             effect: (stance: Some((reaction: Some(StrikesFirst)))),
         ),
-        // Spear
         (
             id: "unhorse", name: "Unhorse", kind: Spear, rank: Some(E), cost: 2,
             effect: (hit: 10, effective: [(Mounted, 3)]),
@@ -129,7 +132,6 @@
             id: "comet_lance", name: "Comet Lance", kind: Spear, rank: Some(S), cost: 8,
             effect: (area: Some(Line(3)), min_range: Some(1), max_range: Some(3)),
         ),
-        // Axe
         (
             id: "crushing_swing", name: "Crushing Swing", kind: Axe, rank: Some(E), cost: 2,
             effect: (hit: 20, axe_min_damage: Some(8)),
@@ -154,7 +156,6 @@
             id: "felling_blow", name: "Felling Blow", kind: Axe, rank: Some(S), cost: 8,
             effect: (axe_min_damage_max_hp_div: Some(3)),
         ),
-        // Bow
         (
             id: "close_shot", name: "Close Shot", kind: Bow, rank: Some(E), cost: 2,
             effect: (hit: -10, min_range: Some(1)),
@@ -179,7 +180,6 @@
             id: "arrow_rain", name: "Arrow Rain", kind: Bow, rank: Some(S), cost: 8,
             effect: (area: Some(Burst), min_range: Some(2), max_range: Some(3)),
         ),
-        // Gauntlet
         (
             id: "pressure_point", name: "Pressure Point", kind: Gauntlet, rank: Some(E), cost: 2,
             effect: (on_first_hit: Some((stat: Spd, amount: 3))),
@@ -207,7 +207,6 @@
                 (stat: Res, amount: 4), (stat: Spd, amount: 4),
             ]),
         ),
-        // Special weapons' own arts (combat-arts.md, Special weapons; 0329)
         (
             id: "pack_hunt", name: "Pack Hunt", kind: Axe, rank: None, cost: 3,
             effect: (pack_might: Some((2, 6))),
@@ -219,12 +218,6 @@
         (
             id: "moonwave", name: "Moonwave", kind: Sword, rank: None, cost: 4,
             effect: (max_range: Some(2), power: Some(Higher), mitigation: Some(Res)),
-        ),
-        // Tor's Bow (1072, Letters Home): a hill hunter's long shot, 2 to 3
-        // tiles, a little less sure.
-        (
-            id: "longshot", name: "Longshot", kind: Bow, rank: None, cost: 3,
-            effect: (hit: -10, min_range: Some(2), max_range: Some(3)),
         ),
     ],
 )
