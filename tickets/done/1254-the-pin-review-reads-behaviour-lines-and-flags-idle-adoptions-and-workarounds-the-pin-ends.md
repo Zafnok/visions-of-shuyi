@@ -150,6 +150,11 @@ docs, `engine-pin --check`, `ticket-lint`, `check-leaks`,
 platform builds and the other crates' tests weren't run: no code they
 build changed.
 
+The new check's first catch: the pin move of 2026-11-14 (#683), which
+landed while this was open, listed engine #404 under *Nothing for the
+game* though it has a `Behaviour:` line. This PR moves it into a row
+(`fixed: nothing to change`, the game never runs `shuyi new`).
+
 Follow-ups: none.
 
 Nick input: none.
