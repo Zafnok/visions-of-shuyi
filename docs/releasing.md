@@ -4,15 +4,18 @@ Releases are cut by pushing a tag ([ADR-0009](adr/0009-distribution.md)):
 
 1. Bump `version` in the root `Cargo.toml`'s `[workspace.package]` and merge
    that change to `main`.
-2. `git tag vX.Y.Z && git push origin vX.Y.Z` (the tag's version, without the
-   leading `v`, must exactly match `Cargo.toml`, or the workflow fails).
+2. `git tag vX.Y.Z && git push origin vX.Y.Z`. `cargo shuyi export --plan
+   --tag vX.Y.Z` checks the tag first: it fails (`SH0001`) unless the tag is
+   `v` and the version, and the workflow's `check-version` job runs it.
 3. The [release workflow](../.github/workflows/release.yml) runs `cargo shuyi
-   export <target> --release` for Windows, Linux, macOS (universal) and web,
-   with the bought art and the game's content, checks each final package
+   export <target> --release` for each target the plan says CI builds
+   (Windows, Linux, macOS universal and web; the Playdate is check-only), on
+   the plan's runner and, for Linux, in its image, with the bought art and the
+   game's content, checks each final package
    (`scripts/check-release-package.sh`), and makes a
    [GitHub Release](https://github.com/Zafnok/visions-of-shuyi/releases) for the
-   tag with auto-generated notes and each package's reports. The packages
-   themselves are not attached (below).
+   tag with auto-generated notes, each package's reports and `SHA256SUMS`. The
+   packages themselves are not attached (below).
 
 ## Where each build goes
 
@@ -72,8 +75,23 @@ The GitHub Release carries, never in a package:
 
 - `<package>.export-report.json` and `<package>.exposure-report.json`: the
   version, the sizes, the signing, and every file of the package with its hash.
-  The job checks that only these leave it and that neither holds a line of
-  dialogue.
+  The job checks that only these and the package's SHA-256 leave it and that
+  neither report holds a line of dialogue.
+- `SHA256SUMS`: one line per package, `<sha256>  <file>`, the file as the
+  package job left it (`visions-of-shuyi-<version>-windows.zip`, `-linux.tar.gz`,
+  `-web.zip`, and `-macos.zip`, the `.app`'s folder zipped by `ditto`). The
+  release attests these digests (`actions/attest`): where and from which
+  commit each package was built, though no package is published.
+
+**Check a package** against it, in the folder that holds both:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify visions-of-shuyi-0.3.0-windows.zip --repo Zafnok/visions-of-shuyi
+```
+
+(`shasum -a 256 -c` on macOS.) The first says `OK` for each package there; the
+second that GitHub's runner of this repository built it.
 
 The export also writes `<package>.debug` (Windows and Linux), which reads a
 player's crash report. It is the whole program before stripping, content
@@ -181,8 +199,11 @@ builds in the sniper SDK: the engine's `docs/targets/desktop.md`.
 
 To try the whole pipeline without cutting a real release, run it manually via
 **Actions → Release → Run workflow** on any branch: this does a dry run
-(builds and checks the four packages and uploads only their reports as
-workflow artifacts, `kept-<target>`; it creates no release).
+(builds and checks the four packages and uploads only their reports and
+SHA-256 lines as workflow artifacts, `kept-<target>`; the `sums` job shows
+`SHA256SUMS` in the run's summary; it creates no release and attests nothing).
+**fake_tag** checks a tag of your choosing with the plan: `v0.0.0` must fail at
+`check-version`.
 
 ## The Chapter 1 demo
 

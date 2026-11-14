@@ -1,5 +1,5 @@
 ---
-id: "1269"
+id: "1270"
 title: Read the game's folders through a folder reader that leaves files out
 type: feature
 milestone: "Engine: carve"
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1269 — Read the game's folders through a folder reader that leaves files out
+# 1270 — Read the game's folders through a folder reader that leaves files out
 
 ## Context
 
@@ -25,7 +25,7 @@ embeds a README (ADR-0105) or the content's `tests/` (ADR-0118), and
 keeps, per folder, the watched layer and a second layer without those
 files, and copies each change across: `bundle::Folder`, `Folder::take`,
 `bundle::take_changes` and the call in `trpg_ui::hot::HotContent::reloaded`
-(about 45 lines, marked `// engine-friction: 1269`).
+(about 45 lines, marked `// engine-friction: 1270`).
 
 The generic shape: **a folder read into a layer, and watched, leaving out
 the files a filter refuses**. A mod loader or a level folder wants the
@@ -70,7 +70,7 @@ engine step does: the `engine-change` skill.)
 
 ## Acceptance criteria
 
-- [ ] No `// engine-friction: 1269` is left in the game.
+- [ ] No `// engine-friction: 1270` is left in the game.
 - [ ] The content read from the folders on disk equals the embedded
       content (the app's test).
 - [ ] `crates/ui/tests/it/hot_reload.rs` passes unchanged.

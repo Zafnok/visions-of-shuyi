@@ -1,6 +1,6 @@
 # ADR-0123: The writer's preview: an edition without scripts, and a load of some scripts
 
-- **Status:** Accepted
+- **Status:** Accepted; §1's program moved to a package of its own by ADR-0125
 - **Date:** 2026-11-13
 - **Related tickets:** 0764; 0152 (the kit, ADR-0122), 0766 (the trial
   packet), engine#2585, engine#2586 (the preview screen), engine#3082 (editions)

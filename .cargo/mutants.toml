@@ -1,6 +1,7 @@
 # The game's binary (`crates/app`) drives a window, a sound device and
 # controllers through the engine's platform shell, which no test has; like
-# coverage and Sonar, mutants leave it out. The engine's own code is a
+# coverage and Sonar, mutants leave it out, and the writer's preview program
+# (`crates/story-preview`, which was in `crates/app` until ticket 1269) with it. The engine's own code is a
 # dependency (ticket 1131), never mutated here: its repository runs this
 # gate on it.
 #
@@ -38,6 +39,7 @@ exclude_re = [
 ]
 exclude_globs = [
     "crates/app/**",
+    "crates/story-preview/**",
     "crates/playdate/src/pd/**",
     "crates/engine-watch/src/fetch.rs",
     "crates/engine-watch/src/main.rs",
