@@ -11,9 +11,7 @@ use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::options::{Row, shown_rows};
 use trpg_ui::settings::{AutoAdvance, TextSpeed};
 
-/// Forty characters: read in 1 s + 40 × 0.05 s = 3 s; said, as clips are
-/// taken to last until the platform reports their end, in 40 × 0.08 s =
-/// 3.2 s, then the 0.5 s pause.
+/// Forty characters: read in 1 s + 40 × 0.05 s = 3 s.
 const LONG: &str = "The river is high, and the ford is gone.";
 
 fn narrate(text: &str) -> Step {
@@ -51,8 +49,9 @@ fn playing(steps: Vec<Step>, on: bool) -> Harness {
     h
 }
 
-/// [`playing`], with a voice clip for every line of `steps`.
-fn voiced(steps: Vec<Step>) -> Harness {
+/// [`playing`], with a voice clip for every line of `steps`, each lasting
+/// `length_s` seconds.
+fn voiced(steps: Vec<Step>, length_s: f32) -> Harness {
     let mut scene = Scene {
         id: "auto".into(),
         steps: steps.clone(),
@@ -73,6 +72,7 @@ fn voiced(steps: Vec<Step>) -> Harness {
     h.ctx_mut()
         .set_voice_manifest(&format!("(clips: [\n{clips}])"));
     assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    h.voice_length(length_s);
     h
 }
 
@@ -110,14 +110,29 @@ fn a_silent_line_advances_after_its_reading_time() {
     assert_eq!(h.top_screen(), "");
 }
 
-/// Acceptance: on, a voiced line moves on once its clip has ended and the
-/// pause passed: later than reading alone would.
+/// Acceptance: on, a voiced line moves on 0.5 s after its clip ends, as
+/// the platform reports it: a short clip sooner than reading would take
+/// (3 s), a long one later.
 #[test]
 fn a_voiced_line_advances_after_its_clip_and_the_pause() {
-    let mut h = voiced(vec![narrate(LONG), narrate("Two.")]);
-    h.wait(3.6);
+    for (clip_s, moves_s) in [(1.0, 1.5), (5.0, 5.5)] {
+        let mut h = voiced(vec![narrate(LONG), narrate("Two.")], clip_s);
+        h.wait(moves_s - 0.1);
+        assert_eq!(page(&h), LONG, "a {clip_s} s clip");
+        assert_eq!(h.voices().len(), 1, "its clip plays");
+        h.wait(0.2);
+        assert_eq!(page(&h), "Two.", "a {clip_s} s clip");
+    }
+}
+
+/// Acceptance: a clip that never sounds (skipped as late, or its file
+/// missing) counts as ended once the platform gives up on it, 0.5 s, and
+/// the line moves on after the pause.
+#[test]
+fn a_clip_that_never_sounds_counts_as_ended() {
+    let mut h = voiced(vec![narrate(LONG), narrate("Two.")], 0.0);
+    h.wait(0.9);
     assert_eq!(page(&h), LONG);
-    assert_eq!(h.voices().len(), 1, "its clip plays");
     h.wait(0.2);
     assert_eq!(page(&h), "Two.");
 }
@@ -193,7 +208,7 @@ fn a_reply_choice_always_waits() {
     let choice = Step::Choice {
         options: vec![reply("I will.", "Good."), reply("No.", "Pity.")],
     };
-    let mut h = voiced(vec![say("Will you lead?"), choice]);
+    let mut h = voiced(vec![say("Will you lead?"), choice], 1.0);
     h.wait(30.0);
     let screen = h.game().screen::<DialogueScreen>();
     assert!(

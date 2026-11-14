@@ -46,6 +46,10 @@ or Windows), and push from the job that builds the package, as
 `.github/workflows/demo.yml` does. The demo's two projects stay separate
 from the full game's.
 
+**Added 2026-11-14 (the engine pin move, engine PR #411):** before the
+itch.io page leaves Draft or Restricted, run 1268's reveal kit (`cargo
+shuyi reveal prepare`) on the captures it shows.
+
 ## Nick input
 
 **Setup (≈10 minutes):**
