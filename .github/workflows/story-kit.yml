@@ -79,7 +79,7 @@ jobs:
           built=$(printf '%s\n' "$notes" | sed -nE 's/^Game-Commit: *([0-9a-f]{40}).*$/\1/p' | head -1)
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$built" ] \
             || ! git cat-file -e "$built^{commit}" 2> /dev/null \
-            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets assets-src/package crates/core crates/content crates/ui crates/app crates/writer music Cargo.lock shuyi.ron shuyi-engine.rev; then
+            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets assets-src/package crates/core crates/content crates/ui crates/app crates/story-preview crates/writer music Cargo.lock shuyi.ron shuyi-engine.rev; then
             echo "build=true" >> "$GITHUB_OUTPUT"
           else
             echo "The kit was built from $built and nothing it is built from changed since."
@@ -174,7 +174,7 @@ jobs:
       # The crates the program is built from, as every package carries them.
       - run: |
           mkdir -p dist/licenses
-          cargo about generate -m crates/app/Cargo.toml about.hbs \
+          cargo about generate -m crates/story-preview/Cargo.toml about.hbs \
             -o dist/licenses/THIRD_PARTY_LICENSES.html
       # The export's own cargo commands don't take --locked.
       - run: cargo metadata --locked --format-version 1 > /dev/null
@@ -189,7 +189,7 @@ jobs:
           folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
           program=$(find "$from/$folder" -type f \( -name 'story-preview.exe' -o -path '*/MacOS/story-preview' \) | head -1)
           [ -n "$program" ] || { echo "::error::no story-preview program in $from/$folder"; exit 1; }
-          pack=$(find "$from/$folder" -type f -name 'trpg-app.pack' | head -1)
+          pack=$(find "$from/$folder" -type f -name 'trpg-story-preview.pack' | head -1)
           checked=0
           for script in ch01 ch04 ch08; do
             line=$(sed -nE 's/^[a-z_]+(\[[a-z]+\])?( \([^)]*\))?: (.{30,})$/\3/p' \

@@ -1072,13 +1072,14 @@
         ),
         // The writer's script preview (ticket 0764): `cargo shuyi export
         // windows --release --edition story-preview`, which story-kit.yml
-        // runs for the writer's mirror. Its program is `story-preview` with
-        // the bought art, and its content root's list leaves every script
-        // out of every layer, so it holds only the scenes of the folder it
-        // reads. Its packages hold the program, its README, the music and
+        // runs for the writer's mirror. Its program is `story-preview`, the
+        // package `trpg-story-preview`'s (ticket 1269), with the bought art,
+        // and its content root's list leaves every script out of every
+        // layer, so it holds only the scenes of the folder it reads. Its packages hold the program, its README, the music and
         // the notices, and no script's path; the kit job checks the program
         // for three lines of the scripts too (this file is public).
         "story-preview": (
+            package: "trpg-story-preview",
             bin: "story-preview",
             default_features: false,
             features: ["private-assets"],
@@ -1099,7 +1100,7 @@
                     "THIRD_PARTY_ASSETS.md",
                     "THIRD_PARTY_LICENSES.html",
                     "Terminus-LICENSE.txt",
-                    "trpg-app.pack",
+                    "trpg-story-preview.pack",
                     "audio-licenses/CC-BY-3.0.txt",
                     "audio-licenses/CC-BY-4.0.txt",
                     "audio-licenses/CC0-1.0.txt",
