@@ -442,6 +442,24 @@ mod tests {
         assert_eq!(h.snapshot(), keys);
     }
 
+    /// `hearing` keeps the game it wraps and gives it the hook: a `.dlg`
+    /// file dropped on the script preview joins its folder (ticket 0767).
+    #[test]
+    fn hearing_gives_the_game_the_preview_hook() {
+        use crate::story_preview::{self, StoryPreview};
+        use shuyi_assets::bundle::Layer;
+        let folder = Layer::owned("dialogue".to_owned(), std::collections::BTreeMap::new())
+            .unwrap_or_else(|e| panic!("{e:?}"));
+        let ctx = story_preview::ctx().unwrap_or_else(|e| panic!("{e}"));
+        let game = story_preview::game(ctx, folder).unwrap_or_else(|e| panic!("{e}"));
+        let mut h = Harness::from_game(game).hearing(story_preview::hear);
+        h.drop_file("a.dlg", b"@scene a\n> Hello.\n@end\n".to_vec());
+        let scenes = h
+            .screen::<StoryPreview>()
+            .map(|s| s.preview().view(h.ctx()).scenes.len());
+        assert_eq!(scenes, Some(1));
+    }
+
     #[test]
     fn new_is_a_first_launch_and_with_layout_a_later_one() {
         let h = Harness::default();
