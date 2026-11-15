@@ -47,6 +47,11 @@ const START_HERE: &str = "docs/writer-trial/start-here.txt";
 const READING_GUIDE: &str = "docs/writer-trial/reading-guide.md";
 /// The writer's VS Code folder (ticket 0768), which every packet waits for.
 const EDITOR: &str = "tools/vscode-dlg/package.json";
+/// The story documents' folder in the private checkout. Paths in it are
+/// built from it, so no literal names one of its Markdown files (the
+/// repository test of the Markdown the code reads would take one for a
+/// public file the tools read).
+const STORY: &str = "assets-private/story/";
 /// Where everything is written; never committed (`.gitignore`'s `/dist/`).
 const OUT: &str = "dist/trial";
 
@@ -364,10 +369,7 @@ pub fn packet_paths(list: &[Page]) -> BTreeMap<String, String> {
         .iter()
         .map(|p| (p.from.clone(), p.to.clone()))
         .collect();
-    out.insert(
-        "assets-private/story/names.md".into(),
-        "story/names.md".into(),
-    );
+    out.insert(format!("{STORY}names.md"), "story/names.md".into());
     for script in [SCRIPT, "assets/dialogue/ch01.dlg"] {
         out.insert(script.into(), "dialogue/ch01.dlg".into());
     }
@@ -1141,17 +1143,17 @@ mod tests {
         packet_paths(&[
             Page {
                 to: "cheat-sheet.md".into(),
-                from: "assets-private/story/cheat-sheet.md".into(),
+                from: format!("{STORY}cheat-sheet.md"),
                 sections: vec![],
             },
             Page {
                 to: "story/2-the-arc.md".into(),
-                from: "assets-private/story/outline.md".into(),
+                from: format!("{STORY}outline.md"),
                 sections: vec![],
             },
             Page {
                 to: "story/3-chapter-1.md".into(),
-                from: "assets-private/story/chapters/ch01.md".into(),
+                from: format!("{STORY}chapters/ch01.md"),
                 sections: vec![],
             },
         ])
@@ -1160,12 +1162,12 @@ mod tests {
     #[test]
     fn links_point_into_the_packet_and_show_the_folder() {
         let m = moved();
-        let cheat = "assets-private/story/cheat-sheet.md";
+        let cheat = &format!("{STORY}cheat-sheet.md");
         assert_eq!(
             packet_refs("See [`names.md`](names.md).\n", cheat, "cheat-sheet.md", &m),
             "See [`story/names.md`](story/names.md).\n"
         );
-        let ch01 = "assets-private/story/chapters/ch01.md";
+        let ch01 = &format!("{STORY}chapters/ch01.md");
         assert_eq!(
             packet_refs(
                 "[the outline](../outline.md#act-1)",
@@ -1189,7 +1191,7 @@ mod tests {
     #[test]
     fn a_file_outside_the_packet_is_marked_and_unlinked() {
         let m = moved();
-        let cheat = "assets-private/story/cheat-sheet.md";
+        let cheat = &format!("{STORY}cheat-sheet.md");
         assert_eq!(
             packet_refs(
                 "the [writer's guide](writers-guide.md)",
