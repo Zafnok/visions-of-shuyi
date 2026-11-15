@@ -206,6 +206,73 @@ SHA-256 lines as workflow artifacts, `kept-<target>`; the `sums` job shows
 **fake_tag** checks a tag of your choosing with the plan: `v0.0.0` must fail at
 `check-version`.
 
+## A press or playtest copy
+
+A closed build handed to one person before release (press, a publisher, a
+playtester outside the team) is a copy marked for them (ticket 1272, the
+engine's ADR-0118, the `shuyi-ship` skill's step 10). Who gets one is
+Nick's call.
+
+**What a mark can and can't show.** A mark is a deterrent and
+circumstantial evidence, **never proof**. Each copy holds the recipient's
+8-character code three times: in the program, in the pack's layout and in
+the low bits of one picture of the pack (`shuyi.ron`'s `export:
+(overlay_picture: "portraits/lead_m/sad.png")`, the lead's placeholder
+portrait, changed by at most 3 per color channel; the bought art is inside
+the program, not the pack, so it can't carry this mark). Any one mark left names the copy. But two recipients
+who compare their copies can find and remove all three; repacking the pack
+loses its mark, saving the picture again at a lower quality loses that one,
+and overwriting the program's field loses the third. A match says *whose
+copy this was*, not who leaked it. Pair each copy with a store key of the
+recipient's own (Steam or itch.io): the key names the account that played,
+which no mark in a file can.
+
+**Before the first copy, once:**
+
+- The reveal kit must exist and verify (ticket 1268): the ledger of copies
+  is kept beside the kit's folder, `recipients.ron` next to `reveal/`.
+- A signing key of its own: `ssh-keygen -t ed25519 -f
+  ~/.ssh/shuyi-recipients` (a passphrase needs `ssh-agent`). It signs the
+  ledger and draws each recipient's code, so only its holder can make a
+  copy that names someone. Keep it in `~/.ssh/` on the machine that makes
+  copies, with a backup offline, and never in a repository, this one or the
+  private one: CI's build key reads the private repository. Set
+  `SHUYI_SIGNING_KEY` to its path, or pass `--signing-key`.
+
+**Make a copy** (a release build, with the bought art as always):
+
+```bash
+cargo about generate -m crates/app/Cargo.toml about.hbs -o dist/licenses/THIRD_PARTY_LICENSES.html
+cargo shuyi export windows --release --recipient press-jane --label "Jane, Example Magazine"
+```
+
+The id is 1 to 64 letters, digits, `.`, `_` and `-`; the label is who it is
+for, in words. The package is built as for a release and passes its gates,
+then copied into `dist/recipients/<id>/windows/` and marked, and the copy
+is held to the `disclosure` part again. `linux`, `macos` and `web` work the
+same; the Playdate has no copies. Making the same recipient's copy again
+from the same build gives the same copy.
+
+**The ledger**, `recipients.ron` and its signature `recipients.ron.sig`
+beside the kit, gets an entry for each copy: the id and label, the day, the
+code, the target and version, the base package's and the copy's SHA-256,
+and the kit's digest. It lives with the kit in the private repository's
+checkout (`assets-private/`), outside `content/`, which the build embeds,
+and never in this repository: commit and push both files there after each
+copy, so the record is kept and dated. A ledger signed by another key, or
+changed by hand, is refused.
+
+**Check a file that turned up** (a zip, a folder, the program, the pack or
+a PNG):
+
+```bash
+cargo shuyi export --detect-recipient leaked/visions-of-shuyi-windows.zip
+```
+
+It lists each mark it read, the code it holds and whom the signed ledger
+gave it; on the public build it says "no mark found". Report a match with
+the limit above, every time.
+
 ## The Chapter 1 demo
 
 The demo (ticket 0914, [ADR-0119](adr/0119-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md))
