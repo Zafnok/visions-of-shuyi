@@ -17,7 +17,7 @@ completed: 2026-11-14
 
 Ibasho Corp. now owns Visions of Shuyi: Nick assigned the game to it in a
 signed Confirmatory IP Assignment dated 2026-11-14. The repository's
-copyright notices still name Nick Wentz as the owner. Nick approved the
+copyright notices still name Nick personally as the owner. Nick approved the
 `LICENSE` change himself (AGENTS.md hard rule 6: `LICENSE` is his call),
 2026-11-14.
 
@@ -29,10 +29,9 @@ reviews the PR.
 ## Scope
 
 **In:**
-- `LICENSE`: the line `Copyright (c) 2026 Nick Wentz. All rights reserved.`
-  becomes `Copyright (c) 2026 Ibasho Corp. All rights reserved.`
+- `LICENSE`: the copyright line, which named Nick personally, becomes `Copyright (c) 2026 Ibasho Corp. All rights reserved.`
 - Every other copyright or ownership line in the repository that names
-  Nick Wentz as the owner (README, Cargo metadata, the about and credits
+  Nick personally as the owner (README, Cargo metadata, the about and credits
   screens, store or reveal kit text, file headers) names Ibasho Corp.
   instead.
 - Added in review (Nick, 2026-11-14: "keep it all consistent. Ibasho Corp.
@@ -40,7 +39,7 @@ reviews the PR.
   the Playdate bundle's `author` field, name Ibasho Corp. too.
 
 **Out (do not do):**
-- Personal credit lines ("Directed by Nick Wentz"): they stay.
+- Personal credit lines (a "Directed by" line naming Nick): they stay.
 - `THIRD_PARTY_ASSETS.md`: unchanged.
 - Shuyi Engine, its dependency and its notices: Nick owns the engine
   personally under MIT OR Apache-2.0.
@@ -48,7 +47,7 @@ reviews the PR.
 
 ## Implementation steps
 
-1. Search the repository, without `target/`, for `Nick Wentz`,
+1. Search the repository, without `target/`, for Nick's full name (both spellings),
    `Copyright` and `(c) 20`.
 2. Change the `LICENSE` line above.
 3. Change each other line found that states ownership or names the
@@ -60,7 +59,7 @@ reviews the PR.
 - [x] `LICENSE` line 3 reads `Copyright (c) 2026 Ibasho Corp. All rights reserved.`;
       its licensor (line 13) and attribution (line 51) name Ibasho Corp.
 - [x] No ownership, copyright or author line outside `LICENSE` names Nick
-      Wentz; `playdate::tests::pdxinfo_names_the_game_and_its_version` passes.
+      personally; `playdate::tests::pdxinfo_names_the_game_and_its_version` passes.
 - [x] `THIRD_PARTY_ASSETS.md` and the engine pin are unchanged.
 - [x] `cargo xtask ticket-lint` passes; CI runs the other gates on the PR.
 
@@ -84,7 +83,15 @@ Nothing else states ownership: no Cargo manifest has `authors` or a
 copyright field, the public credits, store and reveal kit text name no
 owner, no source file has a copyright header, and the private repository's
 `content/` and `story/` have no copyright line. Done tickets that quote the
-old name (0905, 1031) are history and stay.
+old name (0905, 1031) were updated too (below).
+
+Nick, in review: no file names him in full, except where it is about
+Shuyi Engine, which he owns personally. Two done tickets that quoted the
+old attribution and Playdate author (0905, 1031) now name Ibasho Corp., and
+this ticket no longer quotes his full name. No file of the repository or of
+the private repository's `content/` and `story/` names him in full now.
+The git history (old commits' text and author) still does: rewriting a
+public repository's history is out of this ticket.
 
 Unchanged: `THIRD_PARTY_ASSETS.md`, the Shuyi Engine pin and its notices.
 
