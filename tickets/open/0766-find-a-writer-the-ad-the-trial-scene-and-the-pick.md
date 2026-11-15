@@ -332,6 +332,12 @@ the Windows demo's per-applicant download key is left out too (also an
 (`ITCH_PREVIEW_PROJECT` unset: the Story kit built and checked it, and
 published nothing); Nick makes it, then runs the Story kit.
 
+**0768 comes before the first packet.** Nick, 2026-11-15: "I think 0768
+should block sending the packet if .dlg is a fragile format. Writers
+should not be expected to be technical". It is (reaction lines indented
+by exactly two spaces; every block closed), so no packet goes out until
+0768's folder is in it (`docs/writer-trial/README.md` says so).
+
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
 (`docs/engine/friction.md`).
 

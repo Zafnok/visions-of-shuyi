@@ -45,6 +45,8 @@ const PACKET_LIST: &str = "docs/writer-trial/packet.txt";
 const START_HERE: &str = "docs/writer-trial/start-here.txt";
 /// The reading guide at the top of the comparison page.
 const READING_GUIDE: &str = "docs/writer-trial/reading-guide.md";
+/// The writer's VS Code folder (ticket 0768), which every packet waits for.
+const EDITOR: &str = "tools/vscode-dlg/package.json";
 /// Where everything is written; never committed (`.gitignore`'s `/dist/`).
 const OUT: &str = "dist/trial";
 
@@ -427,6 +429,13 @@ pub fn packet_command(root: &Path, args: &[String]) -> u8 {
 }
 
 fn build_packet(root: &Path, args: &[String]) -> Result<PathBuf, String> {
+    // Nick, 2026-11-15: no packet before writers have the editor's colors
+    // and indenting (ticket 0768): the format breaks easily by hand.
+    if !root.join(EDITOR).is_file() {
+        return Err(format!(
+            "no {EDITOR}: ticket 0768 (the .dlg colors and indenting for VS Code) comes before the first packet"
+        ));
+    }
     let flags = flags(args)?;
     let handle = flags.get("for").ok_or(PACKET_USAGE)?.clone();
     if !valid_handle(&handle) {

@@ -42,6 +42,13 @@ Restricted, with a password of its own; its name in the repository
 variable `ITCH_PREVIEW_PROJECT`; then **Actions → Story kit → Run
 workflow** pushes it).
 
+**Send no packet before ticket 0768 is in** (Nick, 2026-11-15: writers
+shouldn't be expected to be technical). The format is easy to break by
+hand: a reply's reaction lines must be indented by exactly two spaces, and
+every `@choice`, `@if` and `@scene` needs its closing line. 0768 puts the
+editor colors and indenting in the packet; until its folder
+(`tools/vscode-dlg/`) is there, `trial-packet` refuses to make a packet.
+
 For each applicant, after they signed the agreement:
 
 1. Run:
