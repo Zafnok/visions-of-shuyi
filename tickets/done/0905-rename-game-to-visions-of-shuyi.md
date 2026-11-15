@@ -101,7 +101,7 @@ added to the scope at Nick's request.
   CLAUDE.md). The SonarCloud badges keep the `Zafnok_tactical-rpg` project key,
   because renaming the GitHub repo doesn't rename the SonarCloud project.
 - **Not changed, Nick's call:** `LICENSE` still names the game `tactical-rpg`
-  (its first line, and the credit line "tactical-rpg by Nick Wentz"). Only
+  (its first line, and the credit line "tactical-rpg by Ibasho Corp."). Only
   Nick edits the license.
 - Left alone: ADRs and done tickets (history), and the dev-only sound
   audition page.
