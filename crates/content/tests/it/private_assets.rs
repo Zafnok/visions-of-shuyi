@@ -8,7 +8,8 @@
 //!
 //! Run it after changing anything in `assets-private/game/` or
 //! `assets-private/test/` (the bought art of the test files, ADR-0057); the
-//! Pages build runs it before it builds the game.
+//! playtest page's build (`playtest-itch.yml`) runs it with the game's
+//! content before it builds the game.
 
 /// Every content file still loads and validates with the private files laid
 /// over `assets/`.
