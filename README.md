@@ -303,7 +303,7 @@ changes.
 
 ## License
 
-**Source-available, not open source.** Copyright (c) 2026 Nick Wentz, all
+**Source-available, not open source.** Copyright (c) 2026 Ibasho Corp., all
 rights reserved. You may read and learn from the code, use it in
 non-commercial teaching, make free non-commercial mods, and stream or post
 videos of the game (monetized is fine). You may not redistribute or sell it or
