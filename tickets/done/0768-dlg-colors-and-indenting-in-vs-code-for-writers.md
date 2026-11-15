@@ -107,7 +107,7 @@ trial's script open, in the PR.
       `README.md`; the JSON parses and the paths agree (test).
 - [x] A trial packet holds `vscode-dlg/` with the four files (test over
       `packet.txt`, and the zip from step 7).
-- [ ] The PR has a screenshot of VS Code coloring a `.dlg` script with the
+- [x] The PR has a screenshot of VS Code coloring a `.dlg` script with the
       folder installed, and says Enter after an option indents two spaces.
 - [x] `brief.md` and the mirror's README say how to install it, in plain
       words, and that it's optional.
@@ -138,8 +138,11 @@ trial's script open, in the PR.
   The mirror copies it as `editor/vscode-dlg/`, its README points there.
 - Test: `the_vscode_folder_parses_and_the_packet_copies_all_of_it`. A
   test packet (`--for test`) holds `vscode-dlg/` with the four files.
-- The screenshot: see the PR (a VS Code update waiting on Nick's open
-  window blocked new VS Code windows on this machine for a while).
+- Pictures: `docs/screenshots/0768-colors.png` and `0768-enter.png`,
+  VS Code 1.141 with the folder installed in a profile of its own,
+  showing the public test script `assets-test/dialogue/test.dlg` (not
+  Chapter 1: the repository is public). Enter after `* earnest:` and
+  after its reaction line both start two spaces in.
 - Gates: the xtask ones (fmt, clippy, its tests, ticket-lint,
   check-leaks, check-mentions, pr-size, typos, skill check). The Rust
   build gates (WASM, Playdate, deny) were not run: no game crate changed.
