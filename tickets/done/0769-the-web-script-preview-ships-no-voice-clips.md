@@ -1,5 +1,5 @@
 ---
-id: "0768"
+id: "0769"
 title: "The web script preview ships no voice clips"
 type: bug
 milestone: M6 Story & dialogue
@@ -11,7 +11,7 @@ nick_input: none
 completed: 2026-11-15
 ---
 
-# 0768 — The web script preview ships no voice clips
+# 0769 — The web script preview ships no voice clips
 
 ## Context
 

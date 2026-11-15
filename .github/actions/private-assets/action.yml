@@ -29,7 +29,7 @@ inputs:
   voice:
     description: >-
       With art 'true': 'false' leaves the voice clips out, for a build that
-      ships none (the script preview, 0768); a web build ships voice/
+      ships none (the script preview, 0769); a web build ships voice/
       whenever it is there.
     required: false
     default: "true"

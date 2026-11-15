@@ -160,7 +160,7 @@ jobs:
           required: "true"
           # No voice clips: the preview ships none (0764), and the web build
           # copies `web.voice` beside the page whatever the edition says,
-          # which its disclosure refuses (ticket 0768).
+          # which its disclosure refuses (ticket 0769).
           voice: "false"
       - run: rustup toolchain install --no-self-update
       # .cargo/config.toml links the GNU target with MSYS2's mingw-w64 GCC,
