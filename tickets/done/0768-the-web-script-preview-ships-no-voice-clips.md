@@ -31,7 +31,7 @@ None.
 
 ## Scope
 
-**In:** the preview job takes `voice/` away before the export, so no
+**In:** the preview job doesn't check the voice clips out, so no
 target's preview holds a clip.
 
 **Out:** voice in the preview (0764 leaves it out); an engine way for an
@@ -39,8 +39,8 @@ edition to drop `web.voice` (engine friction, noted below).
 
 ## Implementation steps
 
-1. In `story-kit.yml`'s `preview` job, remove `voice/` after the
-   private-assets step.
+1. Give the private-assets action a `voice` input, and pass `voice:
+   "false"` from `story-kit.yml`'s `preview` job.
 
 ## Acceptance criteria
 
@@ -54,10 +54,13 @@ edition to drop `web.voice` (engine friction, noted below).
 
 ## Completion notes
 
-**What was done:** `story-kit.yml`'s `preview` job removes `voice/` right
-after the private-assets checkout, for every target; the web build skips
-`web.voice` when the folder isn't there. The desktop exports never copied
-it (the edition's `beside` has no voice), so they don't change.
+**What was done:** the private-assets action has a `voice` input
+(default `"true"`, so every other job is unchanged): with `"false"` the
+sparse checkout leaves `voice/` out and nothing is copied beside the
+game. `story-kit.yml`'s `preview` job passes `voice: "false"`, so the
+clips are never downloaded, rather than downloaded and deleted (Nick
+asked for that in review). The web build skips `web.voice` when the folder
+isn't there; the desktop exports never copied it.
 
 **Verification:** run 43679214465 refused 126 files, the voice folder's
 126 (20 named and "106 more"), and nothing else, so the folder was the

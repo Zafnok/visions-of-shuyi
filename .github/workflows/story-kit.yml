@@ -158,12 +158,10 @@ jobs:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
           content: "true"
           required: "true"
-      # The bought art comes with the voice clips (voice/), which the
-      # preview never ships (0764): the web build copies `web.voice` beside
-      # the page whatever the edition says, and the edition's disclosure
-      # refuses them (ticket 0768). Without the folder there are none.
-      - name: Leave the voice clips out
-        run: rm -rf voice
+          # No voice clips: the preview ships none (0764), and the web build
+          # copies `web.voice` beside the page whatever the edition says,
+          # which its disclosure refuses (ticket 0768).
+          voice: "false"
       - run: rustup toolchain install --no-self-update
       # .cargo/config.toml links the GNU target with MSYS2's mingw-w64 GCC,
       # as release.yml does.
