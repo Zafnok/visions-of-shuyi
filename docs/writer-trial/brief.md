@@ -59,6 +59,14 @@ Nothing to install: everything runs in your browser.
    the page again. The **Problems** tab lists anything the game couldn't
    read, with its line.
 
+**Optional, for VS Code users:** the packet's `vscode-dlg` folder colors
+the script and indents a reply's reaction for you. Close VS Code, copy the
+whole folder into VS Code's extensions folder
+(`%USERPROFILE%\.vscode\extensions\` on Windows, `~/.vscode/extensions/`
+on a Mac or Linux) and open VS Code again. To remove it, delete the
+folder. Nothing to run: it's a few text files, and `vscode-dlg/README.md`
+says more. Any plain-text editor still works.
+
 **Your file is the only copy: the page keeps nothing.** The preview only
 shows the file you drop on it. You can't edit there, and it saves nothing.
 Reloading it, closing the tab, or an update to the page (it can be

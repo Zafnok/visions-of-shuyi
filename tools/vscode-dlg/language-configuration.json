@@ -1,0 +1,31 @@
+{
+  "comments": {
+    "lineComment": "#"
+  },
+  "brackets": [
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"]
+  ],
+  "autoClosingPairs": [],
+  "surroundingPairs": [
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"]
+  ],
+  "onEnterRules": [
+    {
+      "beforeText": "^\\*\\s*[A-Za-z0-9_-]+:",
+      "action": {
+        "indent": "none",
+        "appendText": "  "
+      }
+    },
+    {
+      "beforeText": "^  \\S",
+      "action": {
+        "indent": "none"
+      }
+    }
+  ]
+}

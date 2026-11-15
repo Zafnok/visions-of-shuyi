@@ -21,6 +21,12 @@ brief.md                 docs/writer-trial/brief.md
 terms.md                 docs/writer-trial/terms.md
 cheat-sheet.md           assets-private/story/cheat-sheet.md
 
+# Colors and indenting for VS Code users (ticket 0768): copied whole.
+vscode-dlg/README.md                         tools/vscode-dlg/README.md
+vscode-dlg/package.json                      tools/vscode-dlg/package.json
+vscode-dlg/language-configuration.json       tools/vscode-dlg/language-configuration.json
+vscode-dlg/syntaxes/dlg.tmLanguage.json      tools/vscode-dlg/syntaxes/dlg.tmLanguage.json
+
 story/1-world.md         assets-private/story/bible.md              Premise | Geography | Factions | Rules of magic | Glossary
 story/2-the-arc.md       assets-private/story/outline.md            The shape of the game | Act 1 | Act 2 | Act 3
 story/3-chapter-1.md     assets-private/story/chapters/ch01.md      Cast on screen | What the chapter must do | Scenes | Continuity notes
