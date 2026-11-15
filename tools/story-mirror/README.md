@@ -51,12 +51,12 @@ The release [`kit`](../../releases/tag/kit) has the programs:
   a terminal (optional).
 
 **Optional, for VS Code users:** the folder `editor/vscode-dlg/` here
-colors the scripts and indents a reply's reaction for you. Close VS Code,
-copy the whole `vscode-dlg` folder into VS Code's extensions folder
-(`%USERPROFILE%\.vscode\extensions\` on Windows, `~/.vscode/extensions/`
-on a Mac or Linux) and open VS Code again. To remove it, delete the
-folder. Nothing to run: it's a few text files, and its `README.md` says
-more. Any plain-text editor still works.
+colors the scripts and keeps a reply's reaction lines indented two spaces
+for you. Nothing to run: it's four text files. Its
+[`README.md`](editor/vscode-dlg/README.md) shows, step by step, how to
+copy it into VS Code's extensions folder on Windows, a Mac or Linux, how
+to tell it worked, and how to remove it. Any plain-text editor still
+works, with the preview's **Problems** list to catch mistakes.
 
 ## Propose a change
 

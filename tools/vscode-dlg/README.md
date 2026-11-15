@@ -1,29 +1,45 @@
 # Colors for .dlg scripts in VS Code
 
-Optional. If you write in [VS Code](https://code.visualstudio.com/), this
-folder colors the game's `.dlg` scripts: comments, `@` lines, narration,
-replies, speakers and their expressions, and name tokens such as
-`{n:place.harrowby}`. It also helps with indenting: press Enter after a
-reply line (`* earnest: ...`) and the next line starts two spaces in,
-ready for that reply's reaction; press Enter on a reaction line and the
-next one stays two spaces in. Tab puts in two spaces.
+Optional. Skip this unless you write in
+[VS Code](https://code.visualstudio.com/): Notepad, TextEdit or any
+plain-text editor works just as well, with the preview's **Problems** tab
+to catch mistakes.
+
+This folder makes VS Code color the game's `.dlg` scripts: comments, `@`
+lines, narration, replies, who speaks and their expression, and names
+such as `{n:place.harrowby}`. It also keeps a reply's reaction lines
+indented for you: press Enter after a reply line such as
+`* earnest: We go now.` and the next line starts two spaces in; press
+Enter on one of those indented lines and the next one stays two spaces
+in. Tab puts in two spaces.
 
 It only colors and indents. It doesn't check your script: the preview's
-**Problems** tab does that. Any plain-text editor still works.
+**Problems** tab does that. Nothing to run: the folder is four text
+files.
 
-## Install
+## Add it
 
-1. Close VS Code.
-2. Copy this whole `vscode-dlg` folder into VS Code's extensions folder:
-   - Windows: `%USERPROFILE%\.vscode\extensions\` (paste that into
-     File Explorer's address bar)
-   - Mac or Linux: `~/.vscode/extensions/` (in Finder: Go > Go to Folder)
-3. Open VS Code and open a `.dlg` file. The language in the bottom-right
-   corner reads "Dialogue script".
+1. If you have never opened VS Code, open it once (that makes its
+   extensions folder). Then close VS Code completely.
+2. Open the extensions folder:
+   - **Windows:** open File Explorer, click its address bar (the bar at
+     the top showing the folder's path), paste
+     `%USERPROFILE%\.vscode\extensions` and press Enter.
+   - **Mac:** open Finder, choose **Go > Go to Folder…** in the menu bar,
+     paste `~/.vscode/extensions` and press Return.
+   - **Linux:** open your file manager, press Ctrl+L, type
+     `~/.vscode/extensions` and press Enter.
+3. Copy this whole `vscode-dlg` folder into it (drag it in, or copy and
+   paste it). The result is a folder `vscode-dlg` inside `extensions`,
+   with `package.json` directly in it.
+4. Open VS Code again and open a `.dlg` script.
 
-Nothing is downloaded and nothing runs: the folder is a few text files.
+**How to tell it worked:** the script is in colors, not all one color,
+and the bottom-right corner of the window reads **Dialogue script**. If
+it doesn't, close VS Code and check step 3: `vscode-dlg` must sit
+directly in `extensions`, not inside another folder.
 
-## Remove
+## Remove it
 
 Close VS Code and delete the `vscode-dlg` folder from the extensions
 folder.

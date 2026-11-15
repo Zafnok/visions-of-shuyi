@@ -59,13 +59,41 @@ Nothing to install: everything runs in your browser.
    the page again. The **Problems** tab lists anything the game couldn't
    read, with its line.
 
-**Optional, for VS Code users:** the packet's `vscode-dlg` folder colors
-the script and indents a reply's reaction for you. Close VS Code, copy the
-whole folder into VS Code's extensions folder
-(`%USERPROFILE%\.vscode\extensions\` on Windows, `~/.vscode/extensions/`
-on a Mac or Linux) and open VS Code again. To remove it, delete the
-folder. Nothing to run: it's a few text files, and `vscode-dlg/README.md`
-says more. Any plain-text editor still works.
+### Optional: colors in VS Code
+
+Skip this unless you write in [VS Code](https://code.visualstudio.com/).
+Notepad, TextEdit or any plain-text editor works just as well, with the
+preview's **Problems** tab to catch mistakes.
+
+The packet's `vscode-dlg` folder makes VS Code color the script (who
+speaks, narration, replies, names) and keeps a reply's reaction lines
+indented for you: press Enter after a reply line such as
+`* earnest: We go now.` and the next line starts two spaces in; press
+Enter on one of those indented lines and the next one stays two spaces
+in. Nothing to run: the folder is four text files.
+
+To add it:
+
+1. If you have never opened VS Code, open it once (that makes its
+   extensions folder). Then close VS Code completely.
+2. Open the extensions folder:
+   - **Windows:** open File Explorer, click its address bar (the bar at
+     the top showing the folder's path), paste
+     `%USERPROFILE%\.vscode\extensions` and press Enter.
+   - **Mac:** open Finder, choose **Go > Go to Folder…** in the menu bar,
+     paste `~/.vscode/extensions` and press Return.
+3. Copy the packet's whole `vscode-dlg` folder into it (drag it in, or
+   copy and paste it). The result is a folder `vscode-dlg` inside
+   `extensions`, with `package.json` directly in it.
+4. Open VS Code again and open `dialogue/ch01.dlg`.
+
+**How to tell it worked:** the script is in colors, not all one color,
+and the bottom-right corner of the window reads **Dialogue script**. If
+it doesn't, close VS Code and check step 3: `vscode-dlg` must sit
+directly in `extensions`, not inside another folder.
+
+To remove it: close VS Code and delete the `vscode-dlg` folder from the
+extensions folder.
 
 **Your file is the only copy: the page keeps nothing.** The preview only
 shows the file you drop on it. You can't edit there, and it saves nothing.
