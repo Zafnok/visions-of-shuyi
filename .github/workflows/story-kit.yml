@@ -7,7 +7,11 @@ name: Story kit
 # inside, its music, its notices and a README. The preview is built as
 # shuyi.ron's `story-preview` edition, which embeds none of the scripts;
 # its job checks the program for three lines of them before uploading it.
-# macOS only when a run by hand asks (its minutes cost ten times).
+# macOS only when a run by hand asks (its minutes cost ten times). The web
+# preview (ticket 0767), the same edition built for the browser, where the
+# writer drops their .dlg files on the page, goes to its own Restricted
+# itch.io project, behind a password (ITCH_PREVIEW_PROJECT,
+# docs/releasing.md), never to a public page: the bought art is inside.
 #
 # story-check embeds the game's content (the chapters and battles name the
 # scenes they play), so it is built with the private repository checked
@@ -61,9 +65,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$MACOS" = "true" ]; then
-            echo 'previews=[{"target":"windows","os":"windows-latest"},{"target":"macos","os":"macos-latest"}]' >> "$GITHUB_OUTPUT"
+            echo 'previews=[{"target":"windows","os":"windows-latest"},{"target":"web","os":"ubuntu-latest"},{"target":"macos","os":"macos-latest"}]' >> "$GITHUB_OUTPUT"
           else
-            echo 'previews=[{"target":"windows","os":"windows-latest"}]' >> "$GITHUB_OUTPUT"
+            echo 'previews=[{"target":"windows","os":"windows-latest"},{"target":"web","os":"ubuntu-latest"}]' >> "$GITHUB_OUTPUT"
           fi
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::STORY_MIRROR_TOKEN is not available to this run: the kit is not built (ticket 0152)."
@@ -129,7 +133,8 @@ jobs:
   # The script preview: `cargo shuyi export <target> --release --edition
   # story-preview` (shuyi.ron), with the bought art, then a check that the
   # program holds none of three of the scripts' lines, then the package
-  # zipped to the release. Never a workflow artifact (the art is inside).
+  # zipped to the release, or the web's pushed to its itch.io project.
+  # Never a workflow artifact (the art is inside).
   preview:
     name: story-preview (${{ matrix.target }})
     needs: plan
@@ -165,6 +170,10 @@ jobs:
       - name: Set up both Mac targets
         if: matrix.target == 'macos'
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      # A release web export runs wasm-opt and fails without it (ticket 0916).
+      - name: Set up Binaryen
+        if: matrix.target == 'web'
+        uses: ./.github/actions/binaryen
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           key: story-kit-preview
@@ -187,7 +196,7 @@ jobs:
           set -euo pipefail
           from="dist/export/story-preview/$TARGET"
           folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
-          program=$(find "$from/$folder" -type f \( -name 'story-preview.exe' -o -path '*/MacOS/story-preview' \) | head -1)
+          program=$(find "$from/$folder" -type f \( -name 'story-preview.exe' -o -name 'story-preview.wasm' -o -path '*/MacOS/story-preview' \) | head -1)
           [ -n "$program" ] || { echo "::error::no story-preview program in $from/$folder"; exit 1; }
           pack=$(find "$from/$folder" -type f -name 'trpg-story-preview.pack' | head -1)
           checked=0
@@ -203,6 +212,7 @@ jobs:
           done
           echo "None of $checked script lines is in $program or its pack."
       - name: Zip and upload to the release kit
+        if: matrix.target != 'web'
         env:
           GH_TOKEN: ${{ secrets.STORY_MIRROR_TOKEN }}
         run: |
@@ -218,6 +228,41 @@ jobs:
             cp "$from/$folder.zip" "$asset"
           fi
           gh release upload kit "$asset" -R "$MIRROR" --clobber
+      # The web preview (ticket 0767): pushed with butler to its Restricted
+      # itch.io project, as demo.yml pushes the web demo. Without the secret
+      # or the variable, the job says so and stays green.
+      - name: Can the web preview publish?
+        id: itch
+        if: matrix.target == 'web'
+        env:
+          HAS_KEY: ${{ secrets.BUTLER_API_KEY != '' }}
+          PROJECT: ${{ vars.ITCH_PREVIEW_PROJECT }}
+        run: |
+          if [ "$HAS_KEY" != "true" ] || [ -z "$PROJECT" ]; then
+            echo "::notice::No BUTLER_API_KEY secret or ITCH_PREVIEW_PROJECT variable: the web preview was built and checked, not published (docs/releasing.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - id: butler
+        if: steps.itch.outputs.ready == 'true'
+        uses: ./.github/actions/butler
+      - name: Push the web preview to itch.io
+        if: steps.itch.outputs.ready == 'true'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          PROJECT: ${{ vars.ITCH_PREVIEW_PROJECT }}
+          SHA: ${{ github.sha }}
+          BUTLER: ${{ steps.butler.outputs.butler }}
+        run: |
+          set -euo pipefail
+          from="dist/export/story-preview/$TARGET"
+          folder=$(jq -r .folder "$from/export-report.json" | tr -d '\r')
+          test -f "$from/$folder/index.html"
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "trpg-story-preview") | .version' | tr -d '\r')
+          "$BUTLER" push "$from/$folder" "$PROJECT:web" --userversion "$version-preview+${SHA:0:7}"
+          "$BUTLER" status "$PROJECT:web"
 
   publish:
     name: notices and notes

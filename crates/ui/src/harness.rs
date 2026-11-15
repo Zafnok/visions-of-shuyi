@@ -189,6 +189,16 @@ impl Harness {
         Self(core)
     }
 
+    /// The same Harness with `hook` as the game's system hook, in place of
+    /// the game's own ([`save_files::hear`](crate::save_files::hear)): the
+    /// script preview's ([`story_preview::hear`](crate::story_preview::hear)),
+    /// say, which puts a dropped `.dlg` file in its folder.
+    #[cfg(feature = "std")]
+    #[must_use]
+    pub fn hearing(self, hook: shuyi_platform::SystemHook<Shuyi>) -> Self {
+        Self(self.0.with_system_hook(hook))
+    }
+
     /// [`Core::music_load_delay`].
     pub fn music_load_delay(&mut self, seconds: f32) -> &mut Self {
         self.0.music_load_delay(seconds);
@@ -430,6 +440,24 @@ mod tests {
         h.keys("Up");
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         assert_eq!(h.snapshot(), keys);
+    }
+
+    /// `hearing` keeps the game it wraps and gives it the hook: a `.dlg`
+    /// file dropped on the script preview joins its folder (ticket 0767).
+    #[test]
+    fn hearing_gives_the_game_the_preview_hook() {
+        use crate::story_preview::{self, StoryPreview};
+        use shuyi_assets::bundle::Layer;
+        let folder = Layer::owned("dialogue".to_owned(), std::collections::BTreeMap::new())
+            .unwrap_or_else(|e| panic!("{e:?}"));
+        let ctx = story_preview::ctx().unwrap_or_else(|e| panic!("{e}"));
+        let game = story_preview::game(ctx, folder).unwrap_or_else(|e| panic!("{e}"));
+        let mut h = Harness::from_game(game).hearing(story_preview::hear);
+        h.drop_file("a.dlg", b"@scene a\n> Hello.\n@end\n".to_vec());
+        let scenes = h
+            .screen::<StoryPreview>()
+            .map(|s| s.preview().view(h.ctx()).scenes.len());
+        assert_eq!(scenes, Some(1));
     }
 
     #[test]

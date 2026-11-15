@@ -88,8 +88,14 @@ fn a_session_opens_the_script_preview_on_a_folder() {
             .unwrap()
             .game,
     );
-    let h = harness(&start.unwrap()).unwrap();
+    let mut h = harness(&start.unwrap()).unwrap();
     assert_eq!(h.top_screen(), "story_preview");
+    // Ticket 0767: a `.dlg` file dropped (`--drop`) joins the folder.
+    assert!(h.ctx().platform.can_drop_files());
+    h.drop_file("b.dlg", b"@scene b\n> Bee.\n@end\n".to_vec());
+    let preview = h.screen::<trpg_ui::story_preview::StoryPreview>();
+    let scenes = preview.map(|p| p.preview().view(h.ctx()).scenes.len());
+    assert_eq!(scenes, Some(2));
     let files = trpg_content::bundle::Bundle::new(vec![layer]).files_under("");
     assert_eq!(files, ["a.dlg"]);
     let refused = dlg_folder(&dir.join("gone")).err().unwrap_or_default();
