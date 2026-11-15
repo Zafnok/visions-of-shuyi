@@ -1,0 +1,35 @@
+# The writer trial's packet (ticket 0766): every page `cargo xtask
+# trial-packet` puts in it besides the preview program, the trial's script
+# (dialogue/ch01.dlg), START-HERE.txt (start-here.txt, filled in) and
+# story/names.md, which it writes itself.
+#
+# One line each: <packet path> <from> [<section> | <section> ...]
+# - <from> is a path in the game's checkout, with the private repository
+#   checked out in assets-private/ (`cargo shuyi private-assets`).
+# - With sections, the page is the file's title line and each "## "
+#   section whose heading starts with one of them (with its "###" parts),
+#   in this order; without, the whole file. A section that isn't there
+#   stops the packet, so a renamed heading is never left out unseen.
+# - Lines with the same packet path are joined into one page.
+#
+# How much story an applicant sees (Nick, 2026-11-14): Chapter 1, the
+# arc, Act 1's outline, and "brief character sheet snippets maybe not the
+# whole char sheet for each but just enough to paint a picture". Every
+# page here can leak with a packet: add one with care.
+
+brief.md                 docs/writer-trial/brief.md
+terms.md                 docs/writer-trial/terms.md
+cheat-sheet.md           assets-private/story/cheat-sheet.md
+
+story/1-world.md         assets-private/story/bible.md              Premise | Geography | Factions | Rules of magic | Glossary
+story/2-the-arc.md       assets-private/story/outline.md            The shape of the game | Act 1 | Act 2 | Act 3
+story/3-chapter-1.md     assets-private/story/chapters/ch01.md      Cast on screen | What the chapter must do | Scenes | Continuity notes
+
+story/4-characters.md    assets-private/story/characters/lead.md         Situation at the start | Reply tones | Voice notes
+story/4-characters.md    assets-private/story/characters/retainer.md     At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/sergeant.md     At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/poacher.md      At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/keeper.md       At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/heretic.md      At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/rival.md        At a glance | Voice card
+story/4-characters.md    assets-private/story/characters/red_captain.md  At a glance

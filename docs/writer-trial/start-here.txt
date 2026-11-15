@@ -1,0 +1,22 @@
+Visions of Shuyi: writer trial
+==============================
+
+This packet was made for {handle}. It's confidential: please keep it to
+yourself (terms.md).
+
+Due: {due}
+
+1. Read brief.md: what to do, how to send it back, what I'm looking at.
+2. Play Chapter 1 as a player does (the demo):
+   - in your browser: {demo}
+     password: {demo-password}
+   - or download it for Windows (your own key): {key}
+3. Double-click story-preview.exe to see dialogue/ch01.dlg in the game's
+   text box. Edit the file, save, and the preview plays it again.
+   (No Windows? The preview runs in a browser too: {preview}
+   password: {preview-password}. Drop your dialogue folder on the page.)
+4. cheat-sheet.md is the script format. The story pages are in story/,
+   in the order to read them.
+
+The .md files are plain text: open them in any text editor, or in a
+Markdown viewer if you have one.

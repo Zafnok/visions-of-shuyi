@@ -42,6 +42,9 @@ serde.workspace = true
 # The playtest report as JSON, and its history (ticket 0505).
 serde_json = "1"
 serde_norway = "0.9.42"
+# Trial packets of the writer search (ticket 0766): reads the kit's zip and
+# writes each applicant's.
+zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2"] }
 
 [features]
 # `frame-png` renders the bought art (ADR-0040): commit its output only as a

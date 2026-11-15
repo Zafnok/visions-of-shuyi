@@ -21,4 +21,7 @@ design/audio.md                        docs/design/audio.md
 design/death-and-difficulty.md         docs/design/death-and-difficulty.md
 design/voices-languages-and-script.md  docs/design/voices-languages-and-script.md
 README.md                              tools/story-mirror/README.md
+# The game's license (a copy, never edited here: ticket 0766), so a hired
+# writer's pull requests fall under its section 7, Contributions.
+LICENSE                                LICENSE
 .github/workflows/check.yml            tools/story-mirror/check.yml

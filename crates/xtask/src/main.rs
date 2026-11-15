@@ -41,6 +41,7 @@ mod tickets;
 mod tileset_import;
 mod tileset_ron;
 mod title_art;
+mod trial;
 mod voice;
 mod voice_test;
 
@@ -76,6 +77,8 @@ playtest <battle-id> [options]     a bot plays a battle many times and reports (
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 story-import <n> [--dry-run]       take a mirror pull request Nick approved into the assets repository\n  \
+trial-packet --for <handle> [...]  one applicant's writer trial packet, dist/trial/<handle>.zip\n  \
+trial-compare                      the trial's entries side by side, dist/trial/compare.html\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
 playdate [--release] [--bench] [--private-assets] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx;\n                                     --private-assets: with the bought art)
   readme-pictures                    draw the README's intro animation again, docs/img/intro.gif
@@ -131,6 +134,8 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("story-import") => {
             story_import::command(&repo_root(), &args.collect::<Vec<_>>(), &story_import::gh)
         }
+        Some("trial-packet") => trial::packet_command(&repo_root(), &args.collect::<Vec<_>>()),
+        Some("trial-compare") => trial::compare_command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("voice") => voice(&args.collect::<Vec<_>>()),
         Some("readme-pictures") => readme_pictures(&args.collect::<Vec<_>>()),
         Some("voice-test-clips") => voice_test_clips(&args.collect::<Vec<_>>()),
