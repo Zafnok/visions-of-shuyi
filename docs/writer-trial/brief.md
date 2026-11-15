@@ -48,14 +48,15 @@ two scenes that sing beat five that are merely fine.
 
 ## How to see it
 
+Nothing to install: everything runs in your browser.
+
 1. Unzip the packet anywhere and open its folder.
-2. Double-click `story-preview.exe`. (The first time, Windows may say
-   "Windows protected your PC": choose **More info**, then **Run anyway**.
-   `HOW-TO-OPEN.txt` says the same.)
-3. The preview plays the scenes in `dialogue/` in the game's own text
-   box, with the faces and the music. Edit `dialogue/ch01.dlg` in any
-   plain-text editor (Notepad is fine; not Word) and save: the preview
-   plays it again. The **Problems** tab lists anything the game couldn't
+2. Open the script preview's page (the link and password are in
+   `START-HERE.txt`) and drag `dialogue/ch01.dlg` onto it. It plays your
+   scenes in the game's own text box, with the faces and the music.
+3. Edit `dialogue/ch01.dlg` in any plain-text editor (Notepad or
+   TextEdit in plain-text mode is fine; not Word), save, and drag it onto
+   the page again. The **Problems** tab lists anything the game couldn't
    read, with its line.
 
 `cheat-sheet.md` is the whole script format on a few pages. The demo
@@ -90,6 +91,6 @@ format slip. The writing is what I'm judging.
 The game is a hobby project with a revenue share. The trial is unpaid,
 and no pay is guaranteed before the game launches. After launch, the
 writer I pick gets a share of the game's net revenue after Steam's cut,
-probably tied to how it does (for example 5 to 10% depending on the
-review score). The exact terms will be in a written agreement before any
+probably tied to how it sells (for example 5 to 10% depending on the
+game's sales). The exact terms will be in a written agreement before any
 work beyond this trial. `terms.md` says what happens to your entry.

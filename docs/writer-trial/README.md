@@ -33,24 +33,33 @@ ignored):
    confidentiality agreement's text, say. (A copy each applicant signed
    isn't one of these: they sign before they get the packet.)
 
+The packet holds text files only, no program (Nick, 2026-11-14: an
+applicant asked to run an `.exe` may balk). The applicant plays the web
+demo and sees their script in the **web script preview** (ticket 0767),
+both in the browser. The preview's itch.io project has to exist first:
+`docs/releasing.md`, *The script preview's itch.io page* (an HTML project,
+Restricted, with a password of its own; its name in the repository
+variable `ITCH_PREVIEW_PROJECT`; then **Actions → Story kit → Run
+workflow** pushes it).
+
 For each applicant, after they signed the agreement:
 
-1. On the Windows demo's itch.io project, make one download key with
-   their handle as its label (`docs/releasing.md`, *The demo's itch.io
-   pages*) and copy its link.
-2. Run:
+1. Run:
 
    ```
-   cargo xtask trial-packet --for <handle> --key <the key's link> --due "<the date you agreed>"
+   cargo xtask trial-packet --for <handle> --due "<the date you agreed>"
    ```
 
    It writes `dist/trial/<handle>.zip`. The handle is the packet's mark,
    in its zip's name, the first line of its script and its
    `START-HERE.txt`: letters, digits, `-` and `_`. It stops, and makes no
    packet, if a link or the date is missing or if the scenes have a
-   problem. The first run downloads the preview from the mirror's kit
-   release.
-3. Send the zip from your own cloud drive or as an attachment.
+   problem.
+2. Send the zip from your own cloud drive or as an attachment.
+
+The web pages share one password each, so a leaked password doesn't say
+whose it was (the packet's mark does, if the packet itself leaks). Change
+a password when an applicant drops out (`docs/releasing.md`).
 
 ## Comparing the entries
 

@@ -7,16 +7,17 @@ yourself (terms.md).
 Due: {due}
 
 1. Read brief.md: what to do, how to send it back, what I'm looking at.
-2. Play Chapter 1 as a player does (the demo):
-   - in your browser: {demo}
-     password: {demo-password}
-   - or download it for Windows (your own key): {key}
-3. Double-click story-preview.exe to see dialogue/ch01.dlg in the game's
-   text box. Edit the file, save, and the preview plays it again.
-   (No Windows? The preview runs in a browser too: {preview}
-   password: {preview-password}. Drop your dialogue folder on the page.)
+2. Play Chapter 1 as a player does, in your browser:
+   {demo}
+   password: {demo-password}
+3. See your script in the game's own text box, in your browser:
+   {preview}
+   password: {preview-password}
+   Drag dialogue/ch01.dlg from this folder onto the page. Edit the file,
+   save, and drag it onto the page again to see the change.
 4. cheat-sheet.md is the script format. The story pages are in story/,
    in the order to read them.
 
-The .md files are plain text: open them in any text editor, or in a
-Markdown viewer if you have one.
+Everything here is a plain text file: nothing to install or run. Open
+the .md files in any text editor, or in a Markdown viewer if you have
+one.

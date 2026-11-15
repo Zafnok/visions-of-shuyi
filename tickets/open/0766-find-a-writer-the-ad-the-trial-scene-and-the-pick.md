@@ -282,7 +282,8 @@ Nick's answers (the question pop-up, 2026-11-14):
 2. Pay: "This is in the Hobby / RevShare category on INAT. Trial will thus
    be unpaid, and no pay is guaranteed til game launches. It'll be after
    Steam cut revshare, and probably performance based (i.e. 5-10% net rev
-   depending on review score)".
+   depending on review score)". Then: "the 5-10% will actually be based
+   on game sales rather than review score".
 3. Terms: an NDA, drafted in another session. `terms.md` is a plain
    summary that defers to the signed agreement.
 4. Time box: "I can work it out individually": `--due` per packet.
@@ -302,12 +303,12 @@ Done:
   outline's shape and three acts, Chapter 1's beat sheet, and each sheet's
   *At a glance* and *Voice card*, the lead's situation, reply tones and
   voice notes, Harl's *At a glance* only), `reading-guide.md`.
-- `cargo xtask trial-packet --for <handle> --key <link> --due <date>`:
-  `dist/trial/<handle>.zip` with the kit's preview program at its root,
-  `dialogue/ch01.dlg` (the mark, then the five scenes cut at `@scene` and
-  `@end`), the pages, `story/names.md` (every id the scenes use and its
-  name) and `START-HERE.txt` (the mark, the due date, the demo, key and
-  web preview links). It refuses to make a packet with a missing link or
+- `cargo xtask trial-packet --for <handle> --due <date>`:
+  `dist/trial/<handle>.zip`, text files only: `dialogue/ch01.dlg` (the
+  mark, then the five scenes cut at `@scene` and `@end`), the pages,
+  `story/names.md` (every id the scenes use and its name) and
+  `START-HERE.txt` (the mark, the due date, the web demo's and the web
+  script preview's links and passwords). It refuses to make a packet with a missing link or
   date or with a script problem (the preview's check, which allows the
   scenes the packet leaves out). Files in `dist/trial/extra/` go in too.
 - `cargo xtask trial-compare`: `dist/trial/compare.html` and
@@ -316,11 +317,20 @@ Done:
 - The mirror's `files.txt` copies `LICENSE`.
 - 1073, 1083 and 1084 already said their words wait for the writer 0766
   finds: no change needed.
-- Checked: a packet for `test` built from the real kit; unzipped, its
-  `story-preview.exe` started; the preview on its `dialogue/` listed the
-  five scenes, no problems, and played `ch01_victory` over its battle map.
+- Checked: a packet for `test` built and unzipped; the preview on its
+  `dialogue/` listed the five scenes, no problems, and played
+  `ch01_victory` over its battle map.
   `trial-compare` on two made-up entries wrote the page with Entry A and
   B and no handle.
+
+Deviation: **no program in the packet.** The ticket put the preview
+program (0764's `.exe`) in it; Nick, 2026-11-14: "I think writers might be
+sussed out by us asking to run an .exe ... an .exe I wanna avoid". The
+applicant uses the web script preview (0767) and the web demo instead, and
+the Windows demo's per-applicant download key is left out too (also an
+`.exe`). The web preview's itch.io project didn't exist yet
+(`ITCH_PREVIEW_PROJECT` unset: the Story kit built and checked it, and
+published nothing); Nick makes it, then runs the Story kit.
 
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
 (`docs/engine/friction.md`).

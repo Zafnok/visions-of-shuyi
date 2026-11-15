@@ -11,5 +11,8 @@ What it offers, as the packet's brief repeats it (Nick, 2026-11-14):
 > Steam cut revshare, and probably performance based (i.e. 5-10% net rev
 > depending on review score)
 
+Nick, the same day: "the 5-10% will actually be based on game sales
+rather than review score". The brief says so.
+
 To post it again elsewhere, keep it to the same offer and name no
 repository: the packet is the only thing an applicant gets (`README.md`).

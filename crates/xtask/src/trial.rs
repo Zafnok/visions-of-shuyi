@@ -3,9 +3,11 @@
 //! trial-compare` lays the entries that came back side by side for Nick to
 //! judge without names.
 //!
-//! A packet is a zip of the script preview program (the kit's, ticket
-//! 0764), with the trial's scenes cut from Chapter 1's script beside it in
-//! `dialogue/`, and the pages `docs/writer-trial/packet.txt` lists. Every
+//! A packet is a zip of text files and no program (Nick, 2026-11-14:
+//! applicants may balk at running an `.exe`): the trial's scenes cut from
+//! Chapter 1's script in `dialogue/`, the pages `docs/writer-trial/packet.txt`
+//! lists, and the links of the web demo and the web script preview (ticket
+//! 0767), where the writer drops the `.dlg` file to see it. Every
 //! packet carries its applicant's mark (the first line of its script, its
 //! `START-HERE.txt` and its zip's name), so a leaked packet can be traced.
 //! Everything it writes is in `dist/trial/`, which is never committed.
@@ -15,7 +17,7 @@ use std::collections::hash_map::RandomState;
 use std::fmt::Write as _;
 use std::fs;
 use std::hash::BuildHasher;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use zip::write::SimpleFileOptions;
@@ -46,15 +48,12 @@ const READING_GUIDE: &str = "docs/writer-trial/reading-guide.md";
 /// Where everything is written; never committed (`.gitignore`'s `/dist/`).
 const OUT: &str = "dist/trial";
 
-pub const PACKET_USAGE: &str = "usage: cargo xtask trial-packet --for <handle> [--key <link>] [--due <date>] [--kit <zip>]\n\n\
+pub const PACKET_USAGE: &str = "usage: cargo xtask trial-packet --for <handle> --due <date>\n\n\
 builds dist/trial/<handle>.zip, the writer trial's packet for one applicant\n\
-(ticket 0766): the script preview program with the trial's scenes beside it,\n\
-the brief, the terms, the story pages and START-HERE.txt with the links.\n\
+(ticket 0766): the trial's scenes, the brief, the terms, the story pages and\n\
+START-HERE.txt with the links. Text files only, no program.\n\
   --for <handle>  the applicant's mark: letters, digits, - and _\n\
-  --key <link>    the link of their Windows demo download key (itch.io)\n\
   --due <date>    when their entry is due, as you agreed it\n\
-  --kit <zip>     the preview's zip (default: the mirror's kit release,\n\
-                  downloaded once into dist/trial/kit/)\n\
 The web demo's and web preview's links and passwords come from\n\
 dist/trial/links.txt (one `name = value` a line: demo, demo-password,\n\
 preview, preview-password). Anything in dist/trial/extra/ (the signed\n\
@@ -262,7 +261,7 @@ pub fn fill(template: &str, values: &BTreeMap<String, String>) -> Result<String,
         Ok(out)
     } else {
         Err(format!(
-            "no value for {}: give --key and --due, and put the links in {OUT}/links.txt (trial-packet --help)",
+            "no value for {}: give --due, and put the links in {OUT}/links.txt (trial-packet --help)",
             missing.join(", ")
         ))
     }
@@ -288,16 +287,11 @@ pub fn problems(script: &str) -> Vec<String> {
     }
 }
 
-/// The files of one packet besides the preview program, by their path in
-/// it.
+/// The files of one packet, by their path in it.
 pub type Files = BTreeMap<String, Vec<u8>>;
 
-/// Writes `zip_path`: the kit's files with its top folder taken off, then
-/// `files`, all under the folder `root`.
-pub fn write_packet(kit: &Path, files: &Files, root: &str, zip_path: &Path) -> Result<(), String> {
-    let kit_file = fs::File::open(kit).map_err(|e| format!("can't open {}: {e}", kit.display()))?;
-    let mut kit_zip =
-        zip::ZipArchive::new(kit_file).map_err(|e| format!("{}: {e}", kit.display()))?;
+/// Writes `zip_path`: `files`, under the folder `root`.
+pub fn write_packet(files: &Files, root: &str, zip_path: &Path) -> Result<(), String> {
     if let Some(parent) = zip_path.parent() {
         fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
     }
@@ -305,28 +299,6 @@ pub fn write_packet(kit: &Path, files: &Files, root: &str, zip_path: &Path) -> R
     let mut zip = zip::ZipWriter::new(out);
     let options = SimpleFileOptions::default();
     let err = |e: &dyn std::fmt::Display| format!("{}: {e}", zip_path.display());
-    for i in 0..kit_zip.len() {
-        let mut entry = kit_zip.by_index(i).map_err(|e| err(&e))?;
-        if entry.is_dir() {
-            continue;
-        }
-        let Some(name) = entry.enclosed_name() else {
-            continue;
-        };
-        let name = name.to_string_lossy().replace('\\', "/");
-        // The kit's zip holds one folder; the packet's is its own.
-        let inner = name.split_once('/').map_or(name.as_str(), |(_, rest)| rest);
-        if files.contains_key(inner) {
-            return Err(format!(
-                "the kit already has {inner}: rename the packet's file"
-            ));
-        }
-        let mut bytes = Vec::new();
-        entry.read_to_end(&mut bytes).map_err(|e| err(&e))?;
-        zip.start_file(format!("{root}/{inner}"), options)
-            .map_err(|e| err(&e))?;
-        zip.write_all(&bytes).map_err(|e| err(&e))?;
-    }
     for (name, bytes) in files {
         zip.start_file(format!("{root}/{name}"), options)
             .map_err(|e| err(&e))?;
@@ -345,7 +317,7 @@ pub struct PacketInputs {
     /// The pages [`PACKET_LIST`] names, already cut, by packet path.
     pub pages: Files,
     pub start_here: String,
-    /// The links and the applicant's key and due date.
+    /// The links and the applicant's due date.
     pub values: BTreeMap<String, String>,
 }
 
@@ -422,35 +394,6 @@ fn names(root: &Path) -> Result<BTreeMap<String, String>, String> {
     read_names(&read(root, path)?)
 }
 
-/// The kit's preview zip: `--kit`, or the mirror's kit release, fetched
-/// once with `gh`.
-fn kit(root: &Path, given: Option<&str>) -> Result<PathBuf, String> {
-    if let Some(path) = given {
-        return Ok(PathBuf::from(path));
-    }
-    let dir = root.join(OUT).join("kit");
-    let zip = dir.join("story-preview-windows.zip");
-    if !zip.is_file() {
-        println!("downloading the script preview from the mirror's kit release...");
-        let ok = std::process::Command::new("gh")
-            .args([
-                "release",
-                "download",
-                "kit",
-                "-R",
-                crate::story_import::MIRROR,
-            ])
-            .args(["-p", "story-preview-windows.zip", "-D"])
-            .arg(&dir)
-            .status()
-            .is_ok_and(|s| s.success());
-        if !ok {
-            return Err("couldn't download the kit: download story-preview-windows.zip from the mirror's kit release and give it with --kit".into());
-        }
-    }
-    Ok(zip)
-}
-
 /// `trial-packet`'s arguments: `--name value` pairs.
 fn flags(args: &[String]) -> Result<BTreeMap<String, String>, String> {
     let mut out = BTreeMap::new();
@@ -491,19 +434,14 @@ fn build_packet(root: &Path, args: &[String]) -> Result<PathBuf, String> {
             "{handle:?}: a handle is letters, digits, - and _ only"
         ));
     }
-    if let Some(unknown) = flags
-        .keys()
-        .find(|k| !["for", "key", "due", "kit"].contains(&k.as_str()))
-    {
+    if let Some(unknown) = flags.keys().find(|k| !["for", "due"].contains(&k.as_str())) {
         return Err(format!("unknown option --{unknown}"));
     }
     let mut values = fs::read_to_string(root.join(OUT).join("links.txt"))
         .map(|t| read_links(&t))
         .unwrap_or_default();
-    for name in ["key", "due"] {
-        if let Some(v) = flags.get(name) {
-            values.insert(name.into(), v.clone());
-        }
+    if let Some(due) = flags.get("due") {
+        values.insert("due".into(), due.clone());
     }
     let inputs = PacketInputs {
         handle: handle.clone(),
@@ -518,14 +456,8 @@ fn build_packet(root: &Path, args: &[String]) -> Result<PathBuf, String> {
     for (name, bytes) in extras(&root.join(OUT).join("extra"))? {
         files.insert(name, bytes);
     }
-    let kit = kit(root, flags.get("kit").map(String::as_str))?;
     let zip = root.join(OUT).join(format!("{handle}.zip"));
-    write_packet(
-        &kit,
-        &files,
-        &format!("visions-of-shuyi-trial-{handle}"),
-        &zip,
-    )?;
+    write_packet(&files, &format!("visions-of-shuyi-trial-{handle}"), &zip)?;
     Ok(zip)
 }
 
@@ -952,8 +884,8 @@ mod tests {
         let mut values = BTreeMap::new();
         values.insert("handle".to_string(), "test".to_string());
         assert_eq!(fill("For {handle}.", &values).unwrap(), "For test.");
-        let err = fill("{handle} {key} {due}", &values).unwrap_err();
-        assert!(err.contains("key, due"), "{err}");
+        let err = fill("{handle} {preview} {due}", &values).unwrap_err();
+        assert!(err.contains("preview, due"), "{err}");
         assert_eq!(
             read_links("# x\ndemo = https://a\nempty =\n"),
             BTreeMap::from([("demo".to_string(), "https://a".to_string())])
@@ -966,8 +898,8 @@ mod tests {
             script: SCRIPT_TEXT.into(),
             names: names(),
             pages: Files::from([("brief.md".to_string(), b"# Brief\n".to_vec())]),
-            start_here: "Packet for {handle}. Key: {key}\n".into(),
-            values: BTreeMap::from([("key".to_string(), "https://key".to_string())]),
+            start_here: "Packet for {handle}. Preview: {preview}\n".into(),
+            values: BTreeMap::from([("preview".to_string(), "https://preview".to_string())]),
         }
     }
 
@@ -977,22 +909,8 @@ mod tests {
         assert!(err.contains("ch01.dlg:3: bad"));
     }
 
-    /// A kit like the release's: one folder, the program and its music.
-    fn fake_kit(dir: &Path) -> PathBuf {
-        let path = dir.join("kit.zip");
-        let mut zip = zip::ZipWriter::new(fs::File::create(&path).unwrap());
-        for (name, body) in [
-            ("story-preview-0.3.0/story-preview.exe", "exe"),
-            ("story-preview-0.3.0/music/a.ogg", "ogg"),
-        ] {
-            zip.start_file(name, SimpleFileOptions::default()).unwrap();
-            zip.write_all(body.as_bytes()).unwrap();
-        }
-        zip.finish().unwrap();
-        path
-    }
-
     fn zip_text(path: &Path, name: &str) -> String {
+        use std::io::Read as _;
         let mut zip = zip::ZipArchive::new(fs::File::open(path).unwrap()).unwrap();
         let mut out = String::new();
         zip.by_name(name).unwrap().read_to_string(&mut out).unwrap();
@@ -1000,11 +918,11 @@ mod tests {
     }
 
     #[test]
-    fn a_packet_holds_the_program_beside_the_marked_scenes() {
+    fn a_packet_holds_the_marked_scenes_and_no_program() {
         let dir = Folder::new("packet");
         let files = packet_files(&inputs(), &|_| Vec::new()).unwrap();
         let out = dir.0.join("test.zip");
-        write_packet(&fake_kit(&dir.0), &files, "trial-test", &out).unwrap();
+        write_packet(&files, "trial-test", &out).unwrap();
         let mut names: Vec<String> = zip::ZipArchive::new(fs::File::open(&out).unwrap())
             .unwrap()
             .file_names()
@@ -1017,8 +935,6 @@ mod tests {
                 "trial-test/START-HERE.txt",
                 "trial-test/brief.md",
                 "trial-test/dialogue/ch01.dlg",
-                "trial-test/music/a.ogg",
-                "trial-test/story-preview.exe",
                 "trial-test/story/names.md",
             ]
         );
@@ -1027,16 +943,8 @@ mod tests {
         assert_eq!(script, trial_script(SCRIPT_TEXT, "test").unwrap());
         assert_eq!(
             zip_text(&out, "trial-test/START-HERE.txt"),
-            "Packet for test. Key: https://key\n"
+            "Packet for test. Preview: https://preview\n"
         );
-    }
-
-    #[test]
-    fn a_packet_file_never_overwrites_one_of_the_kits() {
-        let dir = Folder::new("clash");
-        let files = Files::from([("music/a.ogg".to_string(), Vec::new())]);
-        let err = write_packet(&fake_kit(&dir.0), &files, "r", &dir.0.join("x.zip")).unwrap_err();
-        assert!(err.contains("music/a.ogg"));
     }
 
     /// The real script, when the private checkout is here (CI's jobs that
