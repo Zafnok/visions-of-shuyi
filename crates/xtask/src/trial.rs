@@ -356,12 +356,177 @@ fn read(root: &Path, path: &str) -> Result<String, String> {
     fs::read_to_string(root.join(path)).map_err(|e| format!("can't read {path}: {e}"))
 }
 
+/// Where each file of the game's checkout is in a packet: every page's
+/// source, the names table's page (the packet writes its own,
+/// `story/names.md`) and Chapter 1's script.
+pub fn packet_paths(list: &[Page]) -> BTreeMap<String, String> {
+    let mut out: BTreeMap<String, String> = list
+        .iter()
+        .map(|p| (p.from.clone(), p.to.clone()))
+        .collect();
+    out.insert(
+        "assets-private/story/names.md".into(),
+        "story/names.md".into(),
+    );
+    for script in [SCRIPT, "assets/dialogue/ch01.dlg"] {
+        out.insert(script.into(), "dialogue/ch01.dlg".into());
+    }
+    out
+}
+
+/// Whether `page`'s file paths are rewritten for the packet: a Markdown
+/// page cut from the story's documents. The trial's own pages and the VS
+/// Code folder are written for the packet already.
+fn rewrites_paths(page: &Page) -> bool {
+    Path::new(&page.to).extension().is_some_and(|e| e == "md")
+        && page.from.starts_with("assets-private/")
+}
+
+/// `path` with its `.` and `..` parts resolved.
+fn normalized(path: &str) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop();
+            }
+            p => parts.push(p),
+        }
+    }
+    parts.join("/")
+}
+
+/// Where `mention` (a path written in `from`, relative to its folder or to
+/// the checkout's root) is in the packet, if it is.
+fn in_packet(mention: &str, from: &str, moved: &BTreeMap<String, String>) -> Option<String> {
+    let folder = from.rsplit_once('/').map_or("", |(dir, _)| dir);
+    [format!("{folder}/{mention}"), mention.to_string()]
+        .iter()
+        .find_map(|candidate| moved.get(&normalized(candidate)).cloned())
+}
+
+/// The link from the page at `page` to the packet file `to`, both from the
+/// packet's root.
+fn relative(page: &str, to: &str) -> String {
+    let folders: Vec<&str> = page.split('/').collect();
+    let folders = &folders[..folders.len() - 1];
+    let target: Vec<&str> = to.split('/').collect();
+    // Only the folders the two paths don't share are climbed out of.
+    let shared = folders
+        .iter()
+        .zip(&target[..target.len() - 1])
+        .take_while(|(a, b)| a == b)
+        .count();
+    let mut out = "../".repeat(folders.len() - shared);
+    out.push_str(&target[shared..].join("/"));
+    out
+}
+
+/// Whether `text` names a file: a word, a dot and `md`, `dlg` or `ron`.
+fn names_a_file(text: &str) -> bool {
+    let text = text.trim_matches('`');
+    let Some((stem, ext)) = text.split('#').next().unwrap_or("").rsplit_once('.') else {
+        return false;
+    };
+    ["md", "dlg", "ron"].contains(&ext)
+        && stem.ends_with(|c: char| c.is_alphanumeric() || c == '_' || c == '-')
+        && !text.contains(' ')
+}
+
+/// What a packet page says where the story documents said a path: links
+/// and `code` mentions of a file the packet has show its packet path (from
+/// the packet's root, so the folder is in the text too), and a link works
+/// from the page; a file the packet doesn't have is marked so, its link
+/// taken out. `from` is the page's source and `page` its packet path.
+pub fn packet_refs(text: &str, from: &str, page: &str, moved: &BTreeMap<String, String>) -> String {
+    // A fenced block (an example script) stays as written.
+    let mut out = String::new();
+    let mut fenced = false;
+    for line in text.split_inclusive('\n') {
+        if line.trim_start().starts_with("```") {
+            fenced = !fenced;
+            out.push_str(line);
+        } else if fenced {
+            out.push_str(line);
+        } else {
+            out.push_str(&line_refs(line, from, page, moved));
+        }
+    }
+    out
+}
+
+/// [`packet_refs`] on one line outside a fenced block.
+fn line_refs(text: &str, from: &str, page: &str, moved: &BTreeMap<String, String>) -> String {
+    let mut out = String::new();
+    let mut rest = text;
+    while let Some(at) = rest.find(['[', '`']) {
+        out.push_str(&rest[..at]);
+        rest = &rest[at..];
+        if rest.starts_with('[')
+            && let Some(close) = rest.find("](")
+            && let Some(end) = rest[close..].find(')')
+            && !rest[1..close].contains(']')
+        {
+            let label = &rest[1..close];
+            let target = &rest[close + 2..close + end];
+            rest = &rest[close + end + 1..];
+            if target.contains("://") || target.starts_with('#') {
+                let _ = write!(out, "[{label}]({target})");
+                continue;
+            }
+            let (file, anchor) = target.split_once('#').map_or((target, ""), |(f, a)| (f, a));
+            let anchor = if anchor.is_empty() {
+                String::new()
+            } else {
+                format!("#{anchor}")
+            };
+            match in_packet(file, from, moved) {
+                Some(to) if names_a_file(label) => {
+                    let _ = write!(out, "[`{to}`]({}{anchor})", relative(page, &to));
+                }
+                Some(to) => {
+                    let _ = write!(out, "[{label}]({}{anchor}) (`{to}`)", relative(page, &to));
+                }
+                None => {
+                    let _ = write!(out, "{label} (not in this packet)");
+                }
+            }
+            continue;
+        }
+        if rest.starts_with('`')
+            && let Some(end) = rest[1..].find('`')
+        {
+            let code = &rest[1..=end];
+            rest = &rest[end + 2..];
+            let file = code.split('#').next().unwrap_or(code);
+            if !names_a_file(code) {
+                let _ = write!(out, "`{code}`");
+            } else if let Some(to) = in_packet(file, from, moved) {
+                let _ = write!(out, "`{to}`");
+            } else {
+                let _ = write!(out, "`{code}` (not in this packet)");
+            }
+            continue;
+        }
+        out.push_str(&rest[..1]);
+        rest = &rest[1..];
+    }
+    out.push_str(rest);
+    out
+}
+
 /// The pages of [`PACKET_LIST`], cut, by packet path; lines with the same
 /// path are joined.
 fn pages(root: &Path) -> Result<Files, String> {
     let mut out: BTreeMap<String, String> = BTreeMap::new();
-    for page in read_packet_list(&read(root, PACKET_LIST)?)? {
-        let text = sections(&read(root, &page.from)?, &page.sections, &page.from)?;
+    let list = read_packet_list(&read(root, PACKET_LIST)?)?;
+    let moved = packet_paths(&list);
+    for page in list {
+        let mut text = sections(&read(root, &page.from)?, &page.sections, &page.from)?;
+        if rewrites_paths(&page) {
+            text = packet_refs(&text, &page.from, &page.to, &moved);
+        }
         let joined = out.entry(page.to).or_default();
         if !joined.is_empty() {
             joined.push_str("\n---\n\n");
@@ -970,6 +1135,83 @@ mod tests {
         assert_eq!(problems(&trial), Vec::<String>::new());
         // And the pages the list names are all there to cut.
         pages(&root).unwrap();
+    }
+
+    fn moved() -> BTreeMap<String, String> {
+        packet_paths(&[
+            Page {
+                to: "cheat-sheet.md".into(),
+                from: "assets-private/story/cheat-sheet.md".into(),
+                sections: vec![],
+            },
+            Page {
+                to: "story/2-the-arc.md".into(),
+                from: "assets-private/story/outline.md".into(),
+                sections: vec![],
+            },
+            Page {
+                to: "story/3-chapter-1.md".into(),
+                from: "assets-private/story/chapters/ch01.md".into(),
+                sections: vec![],
+            },
+        ])
+    }
+
+    #[test]
+    fn links_point_into_the_packet_and_show_the_folder() {
+        let m = moved();
+        let cheat = "assets-private/story/cheat-sheet.md";
+        assert_eq!(
+            packet_refs("See [`names.md`](names.md).\n", cheat, "cheat-sheet.md", &m),
+            "See [`story/names.md`](story/names.md).\n"
+        );
+        let ch01 = "assets-private/story/chapters/ch01.md";
+        assert_eq!(
+            packet_refs(
+                "[the outline](../outline.md#act-1)",
+                ch01,
+                "story/3-chapter-1.md",
+                &m
+            ),
+            "[the outline](2-the-arc.md#act-1) (`story/2-the-arc.md`)"
+        );
+        assert_eq!(
+            packet_refs(
+                "`../names.md` and `assets/dialogue/ch01.dlg`",
+                ch01,
+                "story/3-chapter-1.md",
+                &m
+            ),
+            "`story/names.md` and `dialogue/ch01.dlg`"
+        );
+    }
+
+    #[test]
+    fn a_file_outside_the_packet_is_marked_and_unlinked() {
+        let m = moved();
+        let cheat = "assets-private/story/cheat-sheet.md";
+        assert_eq!(
+            packet_refs(
+                "the [writer's guide](writers-guide.md)",
+                cheat,
+                "cheat-sheet.md",
+                &m
+            ),
+            "the writer's guide (not in this packet)"
+        );
+        assert_eq!(
+            packet_refs(
+                "`turn-structure.md`, `@scene`, `.dlg`",
+                cheat,
+                "cheat-sheet.md",
+                &m
+            ),
+            "`turn-structure.md` (not in this packet), `@scene`, `.dlg`"
+        );
+        let web = "[VS Code](https://code.visualstudio.com/)";
+        assert_eq!(packet_refs(web, cheat, "cheat-sheet.md", &m), web);
+        let fenced = "```dlg\n# see `names.md`\n```\n";
+        assert_eq!(packet_refs(fenced, cheat, "cheat-sheet.md", &m), fenced);
     }
 
     #[test]
