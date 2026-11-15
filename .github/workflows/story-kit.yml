@@ -205,8 +205,11 @@ jobs:
           pack=$(find "$from/$folder" -type f -name 'trpg-story-preview.pack' | head -1)
           checked=0
           for script in ch01 ch04 ch08; do
+            # The first match by awk, which reads to the end: `head -1`
+            # closed the pipe on sed, whose "Broken pipe" then failed the
+            # step under pipefail (ticket 0769).
             line=$(sed -nE 's/^[a-z_]+(\[[a-z]+\])?( \([^)]*\))?: (.{30,})$/\3/p' \
-              "assets-private/content/dialogue/$script.dlg" | head -1)
+              "assets-private/content/dialogue/$script.dlg" | awk 'NR == 1')
             [ -n "$line" ] || { echo "::error::no long speech line in $script.dlg to look for"; exit 1; }
             if grep -qF -- "$line" "$program" $pack; then
               echo "::error::the program holds a line of dialogue/$script.dlg: the story-preview edition embeds the scripts"

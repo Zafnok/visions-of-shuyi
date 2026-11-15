@@ -62,6 +62,12 @@ clips are never downloaded, rather than downloaded and deleted (Nick
 asked for that in review). The web build skips `web.voice` when the folder
 isn't there; the desktop exports never copied it.
 
+**Also fixed:** the check that the program holds no script line took
+the first line with `sed ... | head -1`; `head` closed the pipe, sed
+failed with "Broken pipe" and `pipefail` failed the step before any line
+was checked (Story kit run 43683311824, on the Linux web leg; Windows had
+passed by timing). It takes the first line with `awk 'NR == 1'` now.
+
 **Verification:** run 43679214465 refused 126 files, the voice folder's
 126 (20 named and "106 more"), and nothing else, so the folder was the
 only problem. The release Wasm built locally holds none of the edition's
