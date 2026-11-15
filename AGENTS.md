@@ -136,6 +136,11 @@ make a shared instruction work.
 - Use `cargo install --locked <tool>` (cargo-binstall fails to build here).
 - `cargo xtask clean-merged-targets [--dry-run]` deletes the `target/` build
   folder of every worktree whose PR has merged (10+ GB each).
+- Once per clone, run `git config core.hooksPath scripts/git-hooks`: its
+  `post-checkout` gives every new worktree an NTFS-compressed `target/`
+  (about half the disk). `cargo shuyi doctor` checks both (`git-hooks`,
+  `target-compression`) and prints the `compact` line for a `target/`
+  made before it.
 - **Bought art** (ADR-0040): the files are never in this repository, and
   neither is a picture that hands the art out (a sheet, a cut-out sprite, a
   mockup pasted together from the files). A screenshot of the running game

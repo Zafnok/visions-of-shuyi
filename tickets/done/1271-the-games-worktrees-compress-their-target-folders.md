@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-15
 ---
 
 # 1271 — The game's worktrees compress their target folders, set by a git hook
@@ -70,5 +70,21 @@ None beyond the gates; `doctor`'s output and the two sizes are in the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `scripts/git-hooks/post-checkout` is the engine template's hook at the
+  pin (`cfd79d10`), with the game's comments: on `git worktree add` or a
+  clone on Windows it creates `target/` and marks it NTFS-compressed.
+- The setup line, `git config core.hooksPath scripts/git-hooks`, is in
+  `AGENTS.md`'s environment section, beside `clean-merged-targets`: the
+  README has no setup section, and `AGENTS.md` is where a checkout's
+  setup (`private-assets` before the first build) already is. It was set
+  on Nick's clone (`D:/tactical-rpg/.git/config`), so every worktree has it.
+- In a new worktree, `cargo shuyi doctor` reports `ok git-hooks:
+  core.hooksPath is scripts/git-hooks` and `ok target-compression:
+  target/ is compressed`.
+- Measured: this worktree's `target/` after `cargo test --workspace` holds
+  4.9 GB of files and takes 2.7 GB on disk (`du --apparent-size` against
+  `du`). The worktree's `target/` was already marked compressed before the
+  run, so the two numbers are the same build's size uncompressed and
+  compressed rather than two builds.
+- 0145's pre-push hook goes in the same folder; noted there.
+- No gameplay rules decided.
