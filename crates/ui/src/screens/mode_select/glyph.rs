@@ -76,11 +76,7 @@ mod tests {
         };
         ModeSelectView {
             heading: "PICK".to_owned(),
-            menu: MenuView {
-                items: vec![item("Classic", false), item("Casual", true)],
-                first_shown: 0,
-                shown: 2,
-            },
+            menu: MenuView::new(vec![item("Classic", false), item("Casual", true)]),
             lines: vec![line("first line", false), line("second line", true)],
             help: "help".to_owned(),
         }

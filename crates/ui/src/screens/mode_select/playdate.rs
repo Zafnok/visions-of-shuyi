@@ -57,11 +57,7 @@ mod tests {
         };
         ModeSelectView {
             heading: "Choose a game mode".to_owned(),
-            menu: MenuView {
-                items: vec![item("Classic", 0), item("Casual", 1)],
-                first_shown: 0,
-                shown: 2,
-            },
+            menu: MenuView::new(vec![item("Classic", 0), item("Casual", 1)]),
             lines: vec![
                 line(
                     "Classic: a unit that falls in battle dies and is gone for good.",

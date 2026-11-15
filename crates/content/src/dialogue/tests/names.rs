@@ -224,7 +224,7 @@ fn name_tokens_count_as_the_longest_name() {
     assert_eq!(
         errors(&scene(&format!("> {base}{{n:king}}\n> {base}a{{n:king}}"))),
         [format!(
-            "t.dlg:5: text is {} characters; the limit is {MAX_TEXT_LEN}",
+            "t.dlg:5: text is {} cells; the limit is {MAX_TEXT_LEN}",
             MAX_TEXT_LEN + 1
         )]
     );
@@ -296,7 +296,7 @@ fn unknown_tokens_count_as_written() {
     assert_eq!(
         errs[1],
         format!(
-            "t.dlg:4: text is {} characters; the limit is {MAX_TEXT_LEN}",
+            "t.dlg:4: text is {} cells; the limit is {MAX_TEXT_LEN}",
             MAX_TEXT_LEN + 1
         )
     );

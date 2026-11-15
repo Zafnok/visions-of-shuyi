@@ -83,7 +83,7 @@ mod tests {
     }
 
     fn down(button: Button) -> RawInputEvent {
-        RawInputEvent::PadDown(button, PadKind::Playdate)
+        RawInputEvent::PadDown(button, PadKind::Playdate, 0)
     }
 
     /// The ticket: A is `East` (Confirm by default), B is `West` (Cancel),
@@ -95,7 +95,7 @@ mod tests {
         assert_eq!(
             p.poll(B | UP | LEFT, B | UP | LEFT),
             [
-                RawInputEvent::PadUp(Button::East),
+                RawInputEvent::PadUp(Button::East, 0),
                 down(Button::West),
                 down(Button::DpadUp),
                 down(Button::DpadLeft),
@@ -111,7 +111,7 @@ mod tests {
         let mut p = pad();
         assert_eq!(p.poll(A, A), [down(Button::East)]);
         assert_eq!(p.poll(A, 0), []);
-        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::East)]);
+        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::East, 0)]);
         assert_eq!(p.poll(0, 0), []);
     }
 
@@ -120,6 +120,6 @@ mod tests {
     fn a_tap_between_two_frames_is_not_lost() {
         let mut p = pad();
         assert_eq!(p.poll(0, B), [down(Button::West)]);
-        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::West)]);
+        assert_eq!(p.poll(0, 0), [RawInputEvent::PadUp(Button::West, 0)]);
     }
 }

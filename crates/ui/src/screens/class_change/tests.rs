@@ -233,14 +233,12 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert!(s.is_confirming());
     assert_eq!(s.help(&c), "f yes · d no");
     let view = columns(&s, &c);
+    let mut ask = AskView::new("Promote Test Knight to Iron Rider?", Vec::new());
+    ask.keys = Some("f yes / d no".into());
     assert_eq!(
         view.question,
         Some(QuestionView {
-            ask: AskView {
-                text: "Promote Test Knight to Iron Rider?".into(),
-                answers: Vec::new(),
-                keys: Some("f yes / d no".into()),
-            },
+            ask,
             cost: "Uses 1 Tier 2 Seal (1 in stock).".into(),
         })
     );

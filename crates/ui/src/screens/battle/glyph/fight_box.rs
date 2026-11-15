@@ -33,7 +33,7 @@ pub fn paint(ctx: &Ctx, view: &FightBoxView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(BOX, &look.border(c(UiColor::PanelBorderFocus)), None);
+    buf.panel(BOX, &look.with_border(c(UiColor::PanelBorderFocus)), None);
     if let Some(name) = &view.banner {
         // Between the corners.
         let top = Rect::new(BOX.x + 1, BOX.y, BOX.w - 2, 1);

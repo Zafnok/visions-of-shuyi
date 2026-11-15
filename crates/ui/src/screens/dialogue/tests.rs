@@ -334,10 +334,7 @@ fn cancel_asks_before_skipping() {
     let mut s = full(&two_speakers("First."));
     press(&mut s, &mut c, Action::Cancel);
     assert!(s.is_asking_skip());
-    let skip = SkipView {
-        question: "Skip scene?".to_owned(),
-        answers: "f yes / d no".to_owned(),
-    };
+    let skip = SkipView::new("Skip scene?".to_owned(), "f yes / d no".to_owned());
     assert_eq!(s.view(&c).text.skip, Some(skip));
     // Time stands still while asking.
     s.update(&mut c, &frame(&[], 1.0, false));

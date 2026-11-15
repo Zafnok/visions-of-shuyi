@@ -544,16 +544,16 @@ pub(crate) mod tests {
             assert_eq!(small.items().len(), big.items().len());
             for (one, two) in small.items().iter().zip(big.items()) {
                 let expected = match *one {
-                    Item::Rect(o) => Item::Rect(Overlay {
-                        rect: double(o.rect),
-                        ..o
-                    }),
-                    Item::Sprite(sprite) => Item::Sprite(Sprite {
-                        dest: double(sprite.dest),
-                        clip: double(sprite.clip),
-                        base: sprite.base.map(double),
-                        ..sprite
-                    }),
+                    Item::Rect(mut o) => {
+                        o.rect = double(o.rect);
+                        Item::Rect(o)
+                    }
+                    Item::Sprite(mut sprite) => {
+                        sprite.dest = double(sprite.dest);
+                        sprite.clip = double(sprite.clip);
+                        sprite.base = sprite.base.map(double);
+                        Item::Sprite(sprite)
+                    }
                     ref other => panic!("an item the sprite skin doesn't paint: {other:?}"),
                 };
                 assert_eq!(*two, expected, "at {clock_ms} ms");

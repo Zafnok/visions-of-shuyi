@@ -86,15 +86,11 @@ fn a_window_is_a_double_frame_with_its_title_and_footer_in_it() {
 fn a_menu_is_a_window_an_item_a_row_the_focus_a_bar_across_it() {
     let ctx = pd_ctx();
     let mut buf = blank();
-    let view = MenuView {
-        items: vec![
-            item("One", false, true),
-            item("Second", true, true),
-            item("Off", false, false),
-        ],
-        first_shown: 0,
-        shown: 3,
-    };
+    let view = MenuView::new(vec![
+        item("One", false, true),
+        item("Second", true, true),
+        item("Off", false, false),
+    ]);
     assert_eq!(menu_size(&ctx, &view), (10, 5));
     super::menu(&ctx, &mut buf, (1, 0), &view);
     assert_eq!(

@@ -259,11 +259,7 @@ fn the_places_window_and_a_list_sit_away_from_the_cursor() {
     };
     open.list = Some(ListView {
         title: "Millbrook".into(),
-        menu: MenuView {
-            items: vec![item("Armory", true), item("Vendor", false)],
-            first_shown: 0,
-            shown: 2,
-        },
+        menu: MenuView::new(vec![item("Armory", true), item("Vendor", false)]),
     });
     let buf = painted(&ctx, &open);
     assert_eq!(find(&buf, 0, "╔═ Millbrook ═╗"), Some(35));
@@ -493,11 +489,7 @@ fn list(n: usize) -> ListView {
     };
     ListView {
         title: "Find".into(),
-        menu: MenuView {
-            items: (0..n).map(item).collect(),
-            first_shown: 0,
-            shown: n,
-        },
+        menu: MenuView::new((0..n).map(item).collect()),
     }
 }
 

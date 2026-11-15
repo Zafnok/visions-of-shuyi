@@ -1,6 +1,6 @@
 ---
 name: shuyi-ship
-description: Get a game on Shuyi Engine ready to ship. A package per target (`cargo shuyi export target`); the web build (`cargo shuyi web --release`, and what a game needs for it); the targets it ships on and their controls (`check --target`); a baked pack; the credits of every third-party work it uses; and the reveal kit, its evidence before the first public footage (`cargo shuyi reveal prepare`). Use when building a game for players or the web, adding a target such as the Steam Deck, writing its credits, making pictures for a store page, or before showing the game in public. Not for the checks before a commit (shuyi-gates) or a new game (shuyi-new-game).
+description: Get a game on Shuyi Engine ready to ship. A package per target (`cargo shuyi export target`); the web build (`cargo shuyi web --release`, and what a game needs for it); the targets it ships on and their controls (`check --target`); a baked pack; the credits of every third-party work it uses; the reveal kit, its evidence before the first public footage (`cargo shuyi reveal prepare`); and a closed build's copy marked for one recipient (`export --recipient`), a deterrent, never proof. Use when building a game for players or the web, adding a target such as the Steam Deck, writing its credits, making pictures for a store page, or before showing the game in public. Not for the checks before a commit (shuyi-gates) or a new game (shuyi-new-game).
 license: MIT OR Apache-2.0
 metadata:
   version: "1.0"

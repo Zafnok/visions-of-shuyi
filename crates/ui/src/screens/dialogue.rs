@@ -925,10 +925,7 @@ impl DialogueScreen {
         // The text box asks in its own place (the engine's text box skin).
         let skip = self.asking_skip.as_ref().map(|ask| {
             let view = ask.view(ctx);
-            SkipView {
-                question: view.text,
-                answers: view.keys.unwrap_or_default(),
-            }
+            SkipView::new(view.text, view.keys.unwrap_or_default())
         });
         let waits = !self.is_asking_skip() && self.menu.is_none() && self.is_revealed();
         let mut text = TextView::new(self.page_lines().to_vec(), shown);

@@ -283,7 +283,7 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
         BoxStyle::Single
     };
     let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg));
-    buf.panel(SIDE_PANEL, &look.border(c(UiColor::PanelBorder)), None);
+    buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
     if let Some(t) = &panel.terrain {
         // check-text: not a data name (the view's own)
         print_clipped(
@@ -491,8 +491,8 @@ fn draw_dialog_at(
     let (w, h) = dialog_size(title, lines);
     let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
-        .border(c(UiColor::PanelBorder))
-        .title(c(UiColor::TextHighlight));
+        .with_border(c(UiColor::PanelBorder))
+        .with_title(c(UiColor::TextHighlight));
     buf.panel(rect, &look, Some(title).filter(|t| !t.is_empty()));
     for (y, (line, color)) in (rect.y + 2..).zip(lines) {
         buf.print(rect.x + 2, y, line, c(*color), bg);
@@ -534,7 +534,7 @@ fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuff
     );
     let color = banner_color(banner.kind);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(rect, &look.border(c(color)), None);
+    buf.panel(rect, &look.with_border(c(color)), None);
     let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
     buf.print_centred(row(2), &banner.title, c(color));
     buf.print_centred(row(3), &banner.subtitle, c(UiColor::Text));

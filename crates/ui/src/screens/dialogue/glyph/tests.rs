@@ -74,11 +74,7 @@ fn replies(labels: &[&str], focus: usize) -> MenuView {
         enabled: true,
         focused: i == focus,
     };
-    MenuView {
-        items: labels.iter().enumerate().map(item).collect(),
-        first_shown: 0,
-        shown: labels.len(),
-    }
+    MenuView::new(labels.iter().enumerate().map(item).collect())
 }
 
 /// `view` painted over a 100×32 screen of `x`s.
@@ -445,10 +441,10 @@ fn a_character_without_a_portrait_gets_an_empty_frame() {
 fn the_skip_question_replaces_the_text() {
     let c = ctx();
     let mut view = two_speakers();
-    view.text.skip = Some(SkipView {
-        question: "Skip scene?".to_owned(),
-        answers: "f yes / d no".to_owned(),
-    });
+    view.text.skip = Some(SkipView::new(
+        "Skip scene?".to_owned(),
+        "f yes / d no".to_owned(),
+    ));
     let buf = painted(&view);
     assert!(row(&buf, TEXT_Y).starts_with("│   Skip scene?  "));
     assert!(row(&buf, TEXT_Y + 1).starts_with("│   f yes / d no  "));

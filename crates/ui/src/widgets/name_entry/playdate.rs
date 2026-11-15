@@ -96,12 +96,7 @@ mod tests {
                 .map(String::from)
                 .to_vec(),
         );
-        GridView {
-            title: "First name".to_owned(),
-            spelled: "Elle".to_owned(),
-            rows,
-            focus: (1, 2),
-        }
+        GridView::new("First name".to_owned(), "Elle".to_owned(), rows, (1, 2))
     }
 
     #[test]
