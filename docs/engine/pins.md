@@ -381,7 +381,7 @@ Nothing for the game: 12 PRs (#381, #383, #382, #384, #387, #389, #388, #392, #3
 
 Nothing for the game: 7 PRs (#400, #405, #409, #408, #412, #413, #415). #400, #405 and #413 are the engine's book and playground; #415 changes `shuyi new`'s template's dependency budget, which the game wasn't made by; #409 and #412 are the engine's own xtask and worktrees; #408 restates the MCP server's move-aside promise and its test, with its code unchanged.
 
-## 2026-11-15: 4ce11a3b → cfd79d10 (22 engine PRs), #PRNUM
+## 2026-11-15: 4ce11a3b → cfd79d10 (22 engine PRs), #700
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
