@@ -70,7 +70,7 @@ untouched.
 
 ## 3. The game's side
 
-Point the pin at the new commit (`content-change` §5), so CI checks the
+Point the pin at the new commit (`content-change`, "The game's CI reads the new content before either merges"), so CI checks the
 game with the writer's change before anything merges:
 
 ```bash
@@ -112,7 +112,7 @@ game's back.
 
 ## 4. Merge in order
 
-`content-change` §6–§7: when the assets pull request has merged, check
+`content-change` ("What the pin carries") and `shuyi-private-files` §4: when the assets pull request has merged, check
 what the pin carries, `cargo shuyi private-assets --pin`, commit
 `assets-private.rev`, and merge the game's pull request once CI is green.
 Nick merges; don't merge it for him unless he said to.

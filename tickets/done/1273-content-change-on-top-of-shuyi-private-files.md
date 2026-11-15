@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-15
 ---
 
 # 1273 — The content-change skill keeps only the game's rules on top of shuyi-private-files
@@ -74,5 +74,24 @@ None beyond the gates (`check-skills` and the sync check).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `content-change` now opens by sending the reader to `shuyi-private-files`
+  for every shared step (the checkout, the `--no-track` branch, never
+  pushing `main`, pushing by full name, the two pull requests, `--pin`
+  after the merge, two pull requests moving the pin, never in public) and
+  keeps only the game's: a table mapping the template's names to the
+  game's, the bought art left out, the ticket in branch, commit and title,
+  the pull requests' links, the pin on the private branch while both are
+  open (the game's own rule: the template's CI waits on the old pin),
+  what the pin carries (`-- content story`, the `[NNNN]` check), a
+  `story/`-only change moving the pin, `check-leaks` (ADR-0118), the
+  artifact rule, no bare mention, and the dialogue pause.
+- Names: `private-assets` reads `checkout` and `pin_file` from
+  `shuyi.ron`'s `private_assets`, so the pack's commands work here as
+  written; only its prose says `private/` and `private.rev`, which the
+  table maps.
+- Beyond the scope list: `story-import` pointed at `content-change` §5
+  and §6–§7, which no longer exist; it now names the sections. AGENTS.md's
+  map row lists `content-change` with `keyboard-input` and `run-gates`.
+- `check-skills` (the description had to fit 1,024 characters) and
+  `sync-agent-skills.ps1 -Check` pass. No follow-up tickets. No gameplay
+  rules decided.
