@@ -487,13 +487,33 @@ fn look(game: &Shuyi) -> Look<'_> {
 
 /// How the preview starts: `title` on its loading card, then the preview
 /// over `folder` (read with `shuyi_app::read_watched_folder`, so a saved
-/// file is read again in an optimized build), or the folder's error.
+/// file is read again in an optimized build), or the folder's error. A
+/// `.dlg` file dropped on the window joins the folder ([`hear`]): on the
+/// web, which has no folders, `folder` is empty and the writer drops their
+/// scenes on the page (ticket 0767).
 pub fn start(title: &'static str, folder: Result<Layer, String>) -> Start<Shuyi> {
-    Start::new(Card::text(title), look, move |setup: Setup| {
+    let start = Start::new(Card::text(title), look, move |setup: Setup| {
         let folder = folder?;
         let ctx = setup.ctx(ctx()?);
         game(ctx, folder)
-    })
+    });
+    #[cfg(feature = "std")]
+    let start = start.on_system(hear);
+    start
+}
+
+/// The preview's system hook: the `.dlg` files of a drop join its folder
+/// in place of a file of the same name, as a saved file does
+/// ([`drop_scenes`](shuyi_ui::dialogue::preview::drop_scenes)), and play
+/// on the next frame. Files of another kind are left out.
+#[cfg(feature = "std")]
+pub fn hear(game: &mut Game, event: shuyi_platform::SystemEvent) {
+    if let shuyi_platform::SystemEvent::FilesDropped(files) = event {
+        let files = files
+            .into_iter()
+            .map(|file| (file.name().to_owned(), file.into_bytes()));
+        shuyi_ui::dialogue::preview::drop_scenes(game, files);
+    }
 }
 
 /// The longest name a player may give the lead.

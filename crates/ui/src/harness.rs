@@ -189,6 +189,16 @@ impl Harness {
         Self(core)
     }
 
+    /// The same Harness with `hook` as the game's system hook, in place of
+    /// the game's own ([`save_files::hear`](crate::save_files::hear)): the
+    /// script preview's ([`story_preview::hear`](crate::story_preview::hear)),
+    /// say, which puts a dropped `.dlg` file in its folder.
+    #[cfg(feature = "std")]
+    #[must_use]
+    pub fn hearing(self, hook: shuyi_platform::SystemHook<Shuyi>) -> Self {
+        Self(self.0.with_system_hook(hook))
+    }
+
     /// [`Core::music_load_delay`].
     pub fn music_load_delay(&mut self, seconds: f32) -> &mut Self {
         self.0.music_load_delay(seconds);

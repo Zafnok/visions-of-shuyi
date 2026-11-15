@@ -3,11 +3,13 @@
 //! character sent away and the `@else` line played, a jump to a line, a
 //! saved change and a broken file read through the headless backend's
 //! `change_file` with debug tools off, the page of names and faces, and two
-//! scenes of Chapter 1 alone checked as a trial packet.
+//! scenes of Chapter 1 alone checked as a trial packet, and the web's
+//! start (ticket 0767): no scenes until the writer drops a `.dlg` file.
 
 use std::collections::BTreeMap;
 
 use shuyi_assets::bundle::Layer;
+use shuyi_ui::FileDrops;
 use shuyi_ui::dialogue::preview::{PreviewView, Tab};
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::LeadGender;
@@ -49,8 +51,10 @@ fn preview_of(files: &[(&str, &str)]) -> (Core, Layer) {
     let folder = Layer::owned("dialogue".to_owned(), files).unwrap_or_else(|e| panic!("{e:?}"));
     let mut ctx = story_preview::ctx().unwrap_or_else(|e| panic!("{e}"));
     ctx.use_layout(RIGHT_HANDED);
+    // As on the desktop and the web: a file dropped on the window is heard.
+    ctx.platform = ctx.platform.with_file_drops(FileDrops::Heard);
     let game = story_preview::game(ctx, folder).unwrap_or_else(|e| panic!("{e}"));
-    let mut h = Core::new(game);
+    let mut h = Core::new(game).with_system_hook(story_preview::hear);
     h.watch_files(true);
     h.wait(FRAME_DT);
     (h, folder)
@@ -249,6 +253,30 @@ fn a_saved_change_plays_on_the_next_frame_from_the_same_text_box() {
     assert_eq!(shown(&h), "You're late again.");
     assert_eq!(view(&h).playing.map(|p| p.text_box), Some(1));
     assert!(!h.ctx().debug_tools, "as a writer's optimized build");
+}
+
+#[test]
+fn a_dropped_file_joins_an_empty_folder_and_plays_and_dropped_again_changed_plays_again() {
+    // The web's start: no folder, so no scenes, and the note says to drop one.
+    let (mut h, _) = preview_of(&[]);
+    assert_eq!(view(&h).scenes, []);
+    let note = view(&h).note.unwrap_or_default();
+    assert_eq!(note, h.ctx().text("preview.note.no_scenes_drop"));
+    // A file of another kind is left out.
+    h.drop_file("notes.txt", b"@scene notes\n> No.\n@end\n".to_vec());
+    assert_eq!(view(&h).scenes, []);
+    h.drop_file("trial.dlg", TRIAL.as_bytes().to_vec());
+    let ids: Vec<String> = view(&h).scenes.into_iter().map(|s| s.id).collect();
+    assert_eq!(ids, ["trial", "trial_two"]);
+    assert_eq!(view(&h).problems, []);
+    h.act(Action::Confirm);
+    act(&mut h, &[Action::Confirm, Action::Confirm]);
+    assert_eq!(shown(&h), "You're late.");
+    // Saved and dropped again: the change plays from the same text box.
+    let reworded = TRIAL.replace("You're late.", "You're late again.");
+    h.drop_file("trial.dlg", reworded.into_bytes());
+    assert_eq!(shown(&h), "You're late again.");
+    assert_eq!(view(&h).playing.map(|p| p.text_box), Some(1));
 }
 
 #[test]

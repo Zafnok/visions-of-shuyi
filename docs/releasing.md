@@ -29,10 +29,11 @@ with the content goes straight from its job to a restricted itch.io page:
 | Public web build, debug tools, **no content** (the public files and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
+| The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, nightly when it changed and by hand |
 | A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
 | A release's debug files (Windows, Linux) | a release `debug-v<version>` of the private assets repository (below) | whoever can read that repository | `release.yml`, on a tag |
 
-The demo never goes to Pages.
+The demo and the script preview never go to Pages.
 
 ### The playtest page
 
@@ -270,3 +271,28 @@ upload key is the secret `BUTLER_API_KEY`.
   packet. **Turn one off:** the same
   list, the key's **Revoke**. A leaked link names its key, and the key's
   note names the applicant.
+
+### The script preview's itch.io page
+
+The writer's script preview (tickets 0764, 0767) has a web build: the same
+program, with none of the scripts in it, that starts on no scenes and plays
+the `.dlg` files a writer drops on the page. It holds the bought art, so it
+goes to a Restricted itch.io project of its own, never Pages, and never the
+private mirror's GitHub Pages (a private repository's Pages site is public).
+`ITCH_PREVIEW_PROJECT` is a repository variable naming `<user>/<project>`
+of an itch.io HTML project, **Restricted** with **Also allow a password to
+view page** (a password of its own, not the demo's).
+
+- **Push it:** `story-kit.yml`'s `story-preview (web)` job, on each run that
+  builds the kit (nightly when it changed, or **Actions → Story kit → Run
+  workflow**), exports `--edition story-preview` for the web, checks the
+  Wasm and its pack hold none of three script lines, and runs `butler push
+  <package> <user>/<project>:web`. Without `BUTLER_API_KEY` or the variable
+  it builds and checks, says it didn't publish, and stays green.
+- **Once, after the first push:** on the project's **Edit game** page, tick
+  **This file will be played in the browser** for the `web` upload, set the
+  embed size to 1280×720 and tick **Fullscreen button**, **Save**. Put the
+  page's link and password in the trial packet (0766) next to the Windows
+  zip.
+- The password and the `html-classic.itch.zone` address behave as the web
+  demo's (above).

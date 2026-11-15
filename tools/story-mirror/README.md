@@ -38,8 +38,11 @@ The release [`kit`](../../releases/tag/kit) has the programs:
 - `story-preview-windows.zip`: the preview. It plays your scenes in the
   game's text box and lists their problems. Once you have your copy on
   your computer (the guide's section 2), extract it outside that folder
-  and drag `dialogue/` onto `story-preview.exe`. Windows only for now;
-  on a Mac, the guide's section 1 says what to do.
+  and drag `dialogue/` onto `story-preview.exe`. Windows only; on a Mac
+  or Linux, use the web preview below.
+- The web preview: the same preview in your browser, at the link and
+  password you were sent. It starts with no scenes: drop your `.dlg`
+  files on the page, and drop a file again after you save it.
 - `story-check-windows.exe`, `story-check-linux`: the checker alone, for
   a terminal (optional).
 
