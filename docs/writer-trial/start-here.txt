@@ -15,6 +15,9 @@ Due: {due}
    password: {preview-password}
    Drag dialogue/ch01.dlg from this folder onto the page. Edit the file,
    save, and drag it onto the page again to see the change.
+   The page keeps nothing: a reload or an update to the page (it can
+   change any night) clears it. Your file on your computer is the only
+   copy, so save often and keep a backup somewhere else.
 4. cheat-sheet.md is the script format. The story pages are in story/,
    in the order to read them.
 

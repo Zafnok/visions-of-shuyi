@@ -42,7 +42,10 @@ The release [`kit`](../../releases/tag/kit) has the programs:
   or Linux, use the web preview below.
 - The web preview: the same preview in your browser, at the link and
   password you were sent. It starts with no scenes: drop your `.dlg`
-  files on the page, and drop a file again after you save it.
+  files on the page, and drop a file again after you save it. The page
+  keeps nothing: a reload, or an update to the page (it can change any
+  night), clears it. Your files on your computer are the only copy:
+  save often and send your changes (the guide's Part 1).
 - `story-check-windows.exe`, `story-check-linux`: the checker alone, for
   a terminal (optional).
 

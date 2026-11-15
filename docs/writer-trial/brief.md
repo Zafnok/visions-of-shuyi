@@ -59,6 +59,14 @@ Nothing to install: everything runs in your browser.
    the page again. The **Problems** tab lists anything the game couldn't
    read, with its line.
 
+**Your file is the only copy: the page keeps nothing.** The preview only
+shows the file you drop on it. You can't edit there, and it saves nothing.
+Reloading it, closing the tab, or an update to the page (it can be
+updated any night, without warning) clears what you dropped. Write in
+the file on your own computer, save often, and keep a backup copy
+somewhere else, such as a cloud drive or a second folder. If the page is
+reset, drop the file again.
+
 `cheat-sheet.md` is the whole script format on a few pages. The demo
 link in `START-HERE.txt` lets you play Chapter 1 as a player sees it.
 
