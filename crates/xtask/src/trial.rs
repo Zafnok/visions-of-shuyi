@@ -1043,4 +1043,68 @@ mod tests {
             )]
         );
     }
+
+    /// The VS Code folder for `.dlg` scripts (ticket 0768): its JSON
+    /// parses, `package.json` names files that are there, and the packet
+    /// list copies every file of it whole, under `vscode-dlg/`.
+    #[test]
+    fn the_vscode_folder_parses_and_the_packet_copies_all_of_it() {
+        const DIR: &str = "tools/vscode-dlg";
+        let root = crate::repo_root();
+        let mut files = Vec::new();
+        let mut todo = vec![root.join(DIR)];
+        while let Some(dir) = todo.pop() {
+            for entry in fs::read_dir(&dir).unwrap().flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    todo.push(path);
+                } else {
+                    let rel = path.strip_prefix(root.join(DIR)).unwrap();
+                    files.push(rel.to_string_lossy().replace('\\', "/"));
+                }
+            }
+        }
+        files.sort();
+        let json = |rel: &str| -> serde_json::Value {
+            serde_json::from_str(&fs::read_to_string(root.join(DIR).join(rel)).unwrap())
+                .unwrap_or_else(|e| panic!("{DIR}/{rel}: {e}"))
+        };
+        let is_json = |f: &&String| {
+            Path::new(f.as_str())
+                .extension()
+                .is_some_and(|e| e == "json")
+        };
+        for rel in files.iter().filter(is_json) {
+            json(rel);
+        }
+        let package = json("package.json");
+        let contributes = &package["contributes"];
+        let named = [
+            &contributes["languages"][0]["configuration"],
+            &contributes["grammars"][0]["path"],
+        ];
+        for path in named {
+            let path = path.as_str().expect("a path").trim_start_matches("./");
+            assert!(files.iter().any(|f| f == path), "package.json names {path}");
+        }
+        assert!(package.get("main").is_none(), "no code");
+
+        let list = read_packet_list(&fs::read_to_string(root.join(PACKET_LIST)).unwrap()).unwrap();
+        let mut listed: Vec<String> = list
+            .iter()
+            .filter_map(|page| {
+                let rel = page.to.strip_prefix("vscode-dlg/")?;
+                assert_eq!(
+                    page.from,
+                    format!("{DIR}/{rel}"),
+                    "{} copied as itself",
+                    page.to
+                );
+                assert!(page.sections.is_empty(), "{} copied whole", page.to);
+                Some(rel.to_string())
+            })
+            .collect();
+        listed.sort();
+        assert_eq!(listed, files, "packet.txt lists exactly the folder's files");
+    }
 }

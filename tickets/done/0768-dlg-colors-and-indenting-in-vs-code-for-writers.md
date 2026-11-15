@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-15
 ---
 
 # 0768 — .dlg colors and indenting in VS Code for writers
@@ -102,17 +102,17 @@ trial's script open, in the PR.
 
 ## Acceptance criteria
 
-- [ ] `tools/vscode-dlg/` holds `package.json`,
+- [x] `tools/vscode-dlg/` holds `package.json`,
       `language-configuration.json`, `syntaxes/dlg.tmLanguage.json` and
       `README.md`; the JSON parses and the paths agree (test).
-- [ ] A trial packet holds `vscode-dlg/` with the four files (test over
+- [x] A trial packet holds `vscode-dlg/` with the four files (test over
       `packet.txt`, and the zip from step 7).
-- [ ] The PR has a screenshot of VS Code coloring a `.dlg` script with the
+- [x] The PR has a screenshot of VS Code coloring a `.dlg` script with the
       folder installed, and says Enter after an option indents two spaces.
-- [ ] `brief.md` and the mirror's README say how to install it, in plain
+- [x] `brief.md` and the mirror's README say how to install it, in plain
       words, and that it's optional.
-- [ ] No `.vsix`, no program, nothing published.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No `.vsix`, no program, nothing published.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -122,5 +122,28 @@ trial's script open, in the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `tools/vscode-dlg/`: `package.json` (language `dlg`, its grammar and
+  configuration, no code), `syntaxes/dlg.tmLanguage.json` (the engine's
+  sublime syntax rule for rule, plus `{n:id}`, `{N:id}`, `{lead}` and
+  `{lead|stand-in}` as `variable.other.name.dlg`),
+  `language-configuration.json` (`#` comments; Enter after `* tone:`
+  appends two spaces; Enter on a two-space line keeps it) and a README.
+- Beyond the ticket: `package.json` sets, for `.dlg` files only, a tab
+  of two spaces (Tab inserts spaces, indentation not guessed) and word
+  wrap, so Tab gives the reaction indent and long lines stay readable.
+- The packet lists the four files; `brief.md` and the folder's README
+  give click-by-click steps (File Explorer's address bar, Finder's Go to
+  Folder, how to tell it worked, how to remove it), asked for by the
+  0766 session (Nick: "Writers should not be expected to be technical").
+  The mirror copies it as `editor/vscode-dlg/`, its README points there.
+- Test: `the_vscode_folder_parses_and_the_packet_copies_all_of_it`. A
+  test packet (`--for test`) holds `vscode-dlg/` with the four files.
+- Pictures: `docs/screenshots/0768-colors.png` and `0768-enter.png`,
+  VS Code 1.141 with the folder installed in a profile of its own,
+  showing the public test script `assets-test/dialogue/test.dlg` (not
+  Chapter 1: the repository is public). Enter after `* earnest:` and
+  after its reaction line both start two spaces in.
+- Gates: the xtask ones (fmt, clippy, its tests, ticket-lint,
+  check-leaks, check-mentions, pr-size, typos, skill check). The Rust
+  build gates (WASM, Playdate, deny) were not run: no game crate changed.
+- No starting rules: no gameplay.

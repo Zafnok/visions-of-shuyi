@@ -30,6 +30,7 @@ don't.
 | `dialogue/` | The scripts, one `.dlg` file per chapter or side quest, and `README.md`, the format | The scripts, yes. The format: suggest it in an issue |
 | `story/` | Beats, bible, characters, outline, chapter beat sheets, ledger, names, the guide | Yes; the beats, characters, outline and names need Nick's yes |
 | `story/design/`, `design/` | Decisions about the game: tone, the lead, audio, death, voices | Propose only: Nick decides |
+| `editor/` | Colors for the scripts in VS Code (optional, below) | Suggest it in an issue |
 
 ## Get the kit
 
@@ -48,6 +49,14 @@ The release [`kit`](../../releases/tag/kit) has the programs:
   save often and send your changes (the guide's Part 1).
 - `story-check-windows.exe`, `story-check-linux`: the checker alone, for
   a terminal (optional).
+
+**Optional, for VS Code users:** the folder `editor/vscode-dlg/` here
+colors the scripts and keeps a reply's reaction lines indented two spaces
+for you. Nothing to run: it's four text files. Its
+[`README.md`](editor/vscode-dlg/README.md) shows, step by step, how to
+copy it into VS Code's extensions folder on Windows, a Mac or Linux, how
+to tell it worked, and how to remove it. Any plain-text editor still
+works, with the preview's **Problems** list to catch mistakes.
 
 ## Propose a change
 
