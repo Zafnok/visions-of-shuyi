@@ -7,8 +7,8 @@ wins.
 ## The packet
 
 - It's confidential. Please don't share it, post it or show it to anyone,
-  in whole or in part: the scripts, the story pages, the pictures, the
-  program, the demo's links and passwords.
+  in whole or in part: the scripts, the story pages, and the links and
+  passwords of the demo and the script preview.
 - It's marked as yours, so a copy that turns up somewhere can be traced
   back to the packet it came from.
 - When the trial is over and you aren't the writer picked, please delete
@@ -21,10 +21,11 @@ wins.
   writing to use it.
 - I won't publish it, put it in the game or pass it to anyone outside
   the project.
-- The ideas in the story pages were there before your entry. If your
-  note proposes a change to a beat, I may still decide a beat goes that
-  way on my own: please say so in your note if an idea of yours is one
-  you'd want credit or pay for.
+- **Your ideas too.** If your note suggests a change to the story and I
+  want to use it, whether or not I hire you, I'll ask you first, and
+  we'll agree in writing on credit and pay before it goes in. If I had
+  already planned the same change, or another applicant suggested it
+  too, I'll tell you so plainly.
 
 ## The job
 
