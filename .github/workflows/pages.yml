@@ -1,12 +1,13 @@
 name: Pages
 
 # The public web build at https://zafnok.github.io/visions-of-shuyi/, with the
-# debug tools. It checks out the bought art but never the game's content
-# (ticket 0158): a Pages site of this repository is open to anyone, so once
-# the content lives only in the private repository (ADR-0117) it serves the
-# public files and the test game. Nick's full build goes to a restricted
-# itch.io page instead (playtest-itch.yml), and the Chapter 1 demo to its own
-# (demo.yml); the demo never goes here.
+# debug tools. It checks out nothing of the private repository (ticket 0158,
+# then Nick's call on 2026-11-15): a Pages site of this repository is open to
+# anyone and its files can be pulled out of the build, so it serves only the
+# public files, the placeholder art and the test game. No content, no bought
+# art, no voice clips. Nick's full build goes to a restricted itch.io page
+# instead (playtest-itch.yml, which also checks the bought art), and the
+# Chapter 1 demo to its own (demo.yml); the demo never goes here.
 
 on:
   push:
@@ -32,26 +33,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The bought art (ADR-0040). Without the key (a fork) the build uses the
-      # public placeholders and says so in a warning.
-      - id: private
-        uses: ./.github/actions/private-assets
-        with:
-          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      # No gate reads the bought art, so this is where it is checked: the
-      # content must still load with it laid over assets/.
-      - name: Check the content loads with the bought art
-        if: steps.private.outputs.features != ''
-        run: >-
-          cargo test -p trpg-content --locked --features private-assets
-          --test it private_assets::
-      # --debug-tools: Quick Battle on the title screen, for Nick's sign-offs
-      # (ADR-0023). Only this workflow passes it.
-      - env:
-          PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}
-        run: cargo shuyi web --release --debug-tools $PRIVATE_ASSETS_FLAG
+      # --debug-tools: Quick Battle on the title screen (ADR-0023).
+      - run: cargo shuyi web --release --debug-tools
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist/web

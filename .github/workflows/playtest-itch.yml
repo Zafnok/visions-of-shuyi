@@ -48,6 +48,14 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No gate reads the bought art, so this is where it is checked with
+      # the game's content: everything loads with the art laid over it, and
+      # a build that ships (the art, no test files) loads too. Pages has no
+      # private files, so this is the only place it runs.
+      - name: Check the content loads with the bought art
+        run: >-
+          cargo test -p trpg-content --locked --features private-assets
+          --test it private_assets::
       # --debug-tools: Quick Battle on the title screen (ADR-0023).
       - env:
           PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}

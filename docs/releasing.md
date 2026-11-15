@@ -26,7 +26,7 @@ with the content goes straight from its job to a restricted itch.io page:
 
 | Build | Where | Who can open it | Workflow |
 | ----- | ----- | --------------- | -------- |
-| Public web build, debug tools, **no content** (the public files and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
+| Public web build, debug tools, **nothing private**: no content, no bought art, no voice (the public files, the placeholder art and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
 | The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, nightly when it changed and by hand |
