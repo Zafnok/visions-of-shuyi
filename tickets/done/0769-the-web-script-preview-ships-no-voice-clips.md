@@ -44,7 +44,7 @@ edition to drop `web.voice` (engine friction, noted below).
 
 ## Acceptance criteria
 
-- [ ] The Story kit's `story-preview (web)` job exports and passes the
+- [x] The Story kit's `story-preview (web)` job exports and passes the
       disclosure check.
 
 ## Tests required
@@ -73,7 +73,7 @@ passed by timing). It takes the first line with `awk 'NR == 1'` now.
 only problem. The release Wasm built locally holds none of the edition's
 `forbidden_paths`. A local release export can't finish here (MSYS2's
 `wasm-opt` stalls, as in 0767), so the next Story kit run is the check:
-**the acceptance box stays open until that run is green.**
+**Story kit run 43684699684 on this branch is green**: the web export passed its disclosure, none of the 3 script lines was in the Wasm or its pack, and butler pushed the first build to the `web` channel.
 
 **Engine friction:** a workaround for an engine assumption. An edition
 replaces `export.beside` but not `web.voice` or `web.music`, so a web
