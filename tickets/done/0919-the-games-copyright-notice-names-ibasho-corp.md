@@ -30,63 +30,63 @@ reviews the PR.
 
 **In:**
 - `LICENSE`: the line `Copyright (c) 2026 Nick Wentz. All rights reserved.`
-  becomes `Copyright (c) 2026 Ibasho Corp. All rights reserved.` Nothing
-  else in `LICENSE` changes.
+  becomes `Copyright (c) 2026 Ibasho Corp. All rights reserved.`
 - Every other copyright or ownership line in the repository that names
   Nick Wentz as the owner (README, Cargo metadata, the about and credits
   screens, store or reveal kit text, file headers) names Ibasho Corp.
   instead.
+- Added in review (Nick, 2026-11-14: "keep it all consistent. Ibasho Corp.
+  everywhere"): `LICENSE`'s licensor definition and attribution text, and
+  the Playdate bundle's `author` field, name Ibasho Corp. too.
 
 **Out (do not do):**
-- Author and credit lines ("Directed by Nick Wentz", an `author` field):
-  they stay.
+- Personal credit lines ("Directed by Nick Wentz"): they stay.
 - `THIRD_PARTY_ASSETS.md`: unchanged.
 - Shuyi Engine, its dependency and its notices: Nick owns the engine
   personally under MIT OR Apache-2.0.
-- Any other wording in `LICENSE` (its definitions, its attribution text):
-  only Nick decides those.
+- Any other wording in `LICENSE`: only Nick decides that.
 
 ## Implementation steps
 
 1. Search the repository, without `target/`, for `Nick Wentz`,
    `Copyright` and `(c) 20`.
 2. Change the `LICENSE` line above.
-3. Change each other line found that states ownership; leave author and
-   credit lines.
+3. Change each other line found that states ownership or names the
+   game's author; leave personal credit lines.
 4. List in the completion notes what was left and why.
 
 ## Acceptance criteria
 
-- [x] `LICENSE` line 3 reads `Copyright (c) 2026 Ibasho Corp. All rights reserved.`
-      and `git diff` shows no other change to `LICENSE`.
-- [x] No ownership or copyright line outside `LICENSE` names Nick Wentz.
+- [x] `LICENSE` line 3 reads `Copyright (c) 2026 Ibasho Corp. All rights reserved.`;
+      its licensor (line 13) and attribution (line 51) name Ibasho Corp.
+- [x] No ownership, copyright or author line outside `LICENSE` names Nick
+      Wentz; `playdate::tests::pdxinfo_names_the_game_and_its_version` passes.
 - [x] `THIRD_PARTY_ASSETS.md` and the engine pin are unchanged.
-- [x] `cargo xtask ticket-lint` passes; the change is text no code reads, so
-      the other gates run in CI on the PR.
+- [x] `cargo xtask ticket-lint` passes; CI runs the other gates on the PR.
 
 ## Tests required
 
-- None: text only. `cargo xtask ticket-lint` and CI's checks.
+- Unit: the existing `pdxinfo` test, updated to the new author.
 
 ## Completion notes
 
-Changed two lines: `LICENSE` line 3 and the copyright sentence of
-`README.md`'s *License* section. Nothing else in the repository states
-ownership: no Cargo manifest has `authors` or a copyright field, the public
-credits, store and reveal kit text name no owner, no source file has a
-copyright header, and the private repository's `content/` and `story/`
-have no copyright line either.
+Changed:
 
-Left as they are, on purpose:
+- `LICENSE` line 3, the copyright line.
+- `LICENSE` line 13, `"Licensor" means Ibasho Corp.`, and line 51, the
+  attribution text `"tactical-rpg by Ibasho Corp."` (Nick, in review: Ibasho
+  Corp. everywhere). The rest of `LICENSE` is unchanged.
+- `README.md`'s *License* section, the copyright sentence.
+- `crates/xtask/src/playdate.rs`: `AUTHOR`, the Playdate bundle's `author`
+  field, and the test of the `pdxinfo` it writes.
 
-- `LICENSE` line 13, `"Licensor" means Nick Wentz.`, and line 51, the
-  attribution text `"tactical-rpg by Nick Wentz"`: the ticket keeps the rest
-  of `LICENSE` unchanged. The licensor is normally the owner, so line 13
-  now disagrees with line 3; whether it becomes Ibasho Corp. is Nick's
-  call, in a PR of its own.
-- `crates/xtask/src/playdate.rs`, `AUTHOR = "Nick Wentz"`: the Playdate
-  bundle's `author` field, an author line, not ownership.
-- `THIRD_PARTY_ASSETS.md` and the Shuyi Engine pin and notices.
+Nothing else states ownership: no Cargo manifest has `authors` or a
+copyright field, the public credits, store and reveal kit text name no
+owner, no source file has a copyright header, and the private repository's
+`content/` and `story/` have no copyright line. Done tickets that quote the
+old name (0905, 1031) are history and stay.
 
-Gates: text only, so no build or test reads it (nothing in `crates/`
-reads the notice); `cargo xtask ticket-lint` passes.
+Unchanged: `THIRD_PARTY_ASSETS.md`, the Shuyi Engine pin and its notices.
+
+Checks: `cargo xtask ticket-lint` and the `pdxinfo` test pass locally; CI
+runs the rest.
