@@ -27,6 +27,14 @@ wins.
   already planned the same change, or another applicant suggested it
   too, I'll tell you so plainly.
 
+## The voices
+
+The game's spoken lines are made with AI voice synthesis. If I hire you,
+the lines you write for the game will be given to a voice model to make
+them spoken. Your trial entry won't be, unless I hire you and we agree to
+use it. If you have any concern about this, ethical or otherwise, tell me
+right away.
+
 ## The job
 
 The trial is unpaid. What the writer I pick is offered (a share of the

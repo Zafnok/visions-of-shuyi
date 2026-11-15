@@ -16,6 +16,18 @@ The battles, the story's arcs and the beats are there. The dialogue isn't:
 every script so far is an AI draft, and it reads robotic. I want someone
 who can make these people sound like people talking.
 
+## The voices are made with AI
+
+The characters' spoken lines are made with AI voice synthesis; you'll
+hear them in the demo. If I hire you, every line you write for the game
+will be voiced that way: its text is given to a voice model, which makes
+the clip. Your trial entry won't be, unless I hire you and we agree to
+use it.
+
+If that's a problem for you, for any reason, please tell me right away,
+before you spend time on the trial. It's a fair concern, and I'd rather
+know now.
+
 ## What to do
 
 Rewrite Chapter 1's scenes in `dialogue/ch01.dlg`. These are the five
