@@ -19,7 +19,7 @@
 
 brief.md                 docs/writer-trial/brief.md
 terms.md                 docs/writer-trial/terms.md
-cheat-sheet.md           assets-private/story/cheat-sheet.md
+cheat-sheet.md           assets-private/story/cheat-sheet.md        A scene with all of it | Direction | Emotion | Names | Conditions | Choices | Stage | Limits | Rules that may get
 
 # Colors and indenting for VS Code users (ticket 0768): copied whole.
 vscode-dlg/README.md                         tools/vscode-dlg/README.md
