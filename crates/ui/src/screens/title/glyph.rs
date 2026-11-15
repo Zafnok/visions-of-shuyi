@@ -367,11 +367,10 @@ mod tests {
             backdrop: None,
             sparks: None,
             prompt: None,
-            menu: Some(MenuView {
-                items: vec![item("New Game", true), item("Quit", false)],
-                first_shown: 0,
-                shown: 2,
-            }),
+            menu: Some(MenuView::new(vec![
+                item("New Game", true),
+                item("Quit", false),
+            ])),
             notice: None,
             note: None,
             help: Some("help".to_owned()),

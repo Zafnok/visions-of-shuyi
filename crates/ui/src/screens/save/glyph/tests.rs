@@ -89,11 +89,7 @@ fn the_prompt_is_a_question_a_menu_and_a_help_line() {
     let c = ctx();
     let view = SavePromptView {
         question: "SAVE?".to_owned(),
-        menu: MenuView {
-            items: vec![item("Yes", true), item("No", false)],
-            first_shown: 0,
-            shown: 2,
-        },
+        menu: MenuView::new(vec![item("Yes", true), item("No", false)]),
         help: "help".to_owned(),
     };
     let mut buf = stale(&c);
@@ -224,11 +220,9 @@ fn a_message_goes_under_the_panel() {
 fn the_overwrite_question_is_a_double_box_in_the_middle() {
     let c = ctx();
     let mut asking = view();
-    asking.question = Some(AskView {
-        text: "Overwrite slot 02?".to_owned(),
-        answers: Vec::new(),
-        keys: Some("f yes / d no".to_owned()),
-    });
+    let mut question = AskView::new("Overwrite slot 02?", Vec::new());
+    question.keys = Some("f yes / d no".to_owned());
+    asking.question = Some(question);
     let mut buf = stale(&c);
     paint_slots(&c, &asking, &mut buf);
     assert!(shows(&buf, "Overwrite slot 02?"));

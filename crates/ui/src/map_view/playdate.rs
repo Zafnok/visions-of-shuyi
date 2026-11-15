@@ -38,22 +38,24 @@ pub use shuyi_ui::grid::glyph::style::FLASH_SHOWN;
 /// (`docs/design/playdate.md`: 24 × 15 tiles at once), with Chapter 1's
 /// 24-tile map in the middle and room for the cursor's marks beside the
 /// first and last tile.
-pub const ONE_BIT: GlyphSkin = GlyphSkin {
-    colors: MapColors::new(MAP_COLORS.path, MAP_COLORS.cursor, "map_threat"),
-    style: GlyphStyle {
-        range: RangeLook::Fill {
+pub const ONE_BIT: GlyphSkin = GlyphSkin::new(
+    MapColors::new(MAP_COLORS.path, MAP_COLORS.cursor, "map_threat"),
+    GLYPH.walk,
+    GLYPH.foot_px,
+)
+.with_style(
+    GlyphStyle::PLAIN
+        .with_range(RangeLook::Fill {
             glyphs: "map_marked_glyph",
             skip: &[range::DANGER],
-        },
-        flash: FlashLook::Invert,
-        cursor: CursorLook::Flat,
-        threat: ThreatLook::Plain {
+        })
+        .with_flash(FlashLook::Invert)
+        .with_cursor(CursorLook::Flat)
+        .with_threat(ThreatLook::Plain {
             edge: "map_threat_edge",
-        },
-        side_cells: 1,
-    },
-    ..GLYPH
-};
+        })
+        .with_side_cells(1),
+);
 
 /// This game's units as the Playdate's skin shows them
 /// ([`units::draw_unit`]), over the danger zone's dashed edge.

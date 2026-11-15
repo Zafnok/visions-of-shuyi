@@ -98,7 +98,7 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(SIDE_PANEL, &look.border(c(UiColor::PanelBorder)), None);
+    buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
     let top = Rect::new(SIDE_PANEL.x, SIDE_PANEL.y, SIDE_PANEL.w, 1);
     let title = format!(" {} ", view.title);
     buf.print_centred(top, &title, c(UiColor::TextHighlight));

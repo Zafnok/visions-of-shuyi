@@ -258,6 +258,8 @@ fn update(step: &mut Step) -> bool {
                 turned,
                 docked,
                 kind,
+                // The Playdate is one pad, the one `pad.poll` reports.
+                0,
             ));
             let chosen = CHOSEN.take();
             let changed = game_stack::run(|| {
