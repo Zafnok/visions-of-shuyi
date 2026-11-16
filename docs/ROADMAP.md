@@ -125,7 +125,8 @@ the sergeant's combat picture · **0449** arrows where the map goes past the vie
 **0467** tips lost before they show · **0841** Tutorial None stops what's
 queued · **0463** the forecast's weapon swap easy to find · **0468** Vix's
 ears · **0842** Vix's profile nudge on the title · **0250** key names that
-stand out · **0847** a better dialogue log key · **0461** the road up to a
+stand out (decided: key caps; built by **0254** after engine#2347 and
+engine#3215) · **0847** a better dialogue log key · **0461** the road up to a
 bridge · **0462** aiming starts on an enemy · **0318** Cinder Oath can't
 counter · **0845** the objective becomes defeating Chapter 1's boss → **0846** the lead
 a little stronger. Parked, not before round 4: **0063** rework the intro's
@@ -402,7 +403,7 @@ recruit joins outside battle.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
-  **0846** · the rest of round 3's tickets: **0250**, **0318**,
+  **0846** · the rest of round 3's tickets: **0254** (0250 decided), **0318**,
   **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
   **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.
   Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
