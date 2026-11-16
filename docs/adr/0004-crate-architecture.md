@@ -25,7 +25,7 @@ app  ──►  ui  ──►  content  ──►  core
 | `crates/core` | `trpg-core` | lib | Grid, terrain rules, units, stats, pathfinding, combat, turn/phase system, commands & events, AI, progression, RNG | Do I/O, read files, use wall-clock time, depend on macroquad, `ui` or `content` |
 | `crates/content` | `trpg-content` | lib | Data schemas (serde), parsers for map/dialogue/portrait files, validation, the embedded asset bundle | Contain game rules; depend on macroquad or `ui` |
 | `crates/ui` | `trpg-ui` | lib | `GlyphBuffer`, colours, screens & screen stack, input `Action`s, key-repeat, menus, animations (driven by a `dt` argument), headless test `Harness` | Depend on macroquad; read the clock or keyboard directly |
-| `crates/app` | `trpg-app` (binary `tactical-rpg`) | bin | Window, font atlas, blitting, raw keyboard → `ui` input, storage backend, audio, main loop | Contain game logic or screen logic |
+| `crates/app` | `trpg-app` (binary `visions-of-shuyi`) | bin | Window, font atlas, blitting, raw keyboard → `ui` input, storage backend, audio, main loop | Contain game logic or screen logic |
 
 Workspace-wide rules:
 
