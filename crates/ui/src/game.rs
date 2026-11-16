@@ -895,10 +895,7 @@ mod tests {
     }
 
     fn beep(volume: f32) -> AudioRequest {
-        AudioRequest::PlaySound {
-            cue: "beep".into(),
-            volume,
-        }
+        AudioRequest::play_sound("beep", volume)
     }
 
     fn music(cue: &str, command: fn(String) -> MusicCommand) -> MusicCommand {

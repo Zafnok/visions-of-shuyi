@@ -222,11 +222,7 @@ fn camp_takes_its_track_back_after_a_conversations_music() {
     update(&mut s, &mut ctx, &[]);
     let track = s.music.as_ref().map(|m| m.track().to_owned()).unwrap();
     ctx.audio.take();
-    let clock = |cue: &str| MusicClock {
-        cue: cue.into(),
-        position: 1.0,
-        length: 60.0,
-    };
+    let clock = |cue: &str| MusicClock::new(cue, 1.0, 60.0);
     ctx.music_clock = Some(clock(&track));
     s.uncovered(&mut ctx, None);
     assert_eq!(ctx.audio.take(), []);

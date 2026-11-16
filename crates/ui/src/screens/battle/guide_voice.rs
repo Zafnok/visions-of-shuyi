@@ -158,10 +158,8 @@ pub(crate) mod tests {
         assert_eq!(c.audio.take(), []);
         // Her first box: the same list, so only her clip.
         frame(&mut v, Some(&lines[0]), &lines, &mut c);
-        let play = |line: &LineId| AudioRequest::PlayVoice {
-            line: line.clone(),
-            variant: trpg_content::Variant::None,
-        };
+        let play =
+            |line: &LineId| AudioRequest::play_voice(line.clone(), trpg_content::Variant::None);
         assert_eq!(c.audio.take(), [play(&lines[0])]);
         // It goes and the next comes: the set without it, then her line.
         let rest = &lines[1..];

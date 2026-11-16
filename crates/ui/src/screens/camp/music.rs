@@ -196,11 +196,7 @@ impl Speaker {
             })
             .collect();
         for cue in started {
-            let clock = crate::audio::MusicClock {
-                cue,
-                position: 0.0,
-                length: 1.0,
-            };
+            let clock = crate::audio::MusicClock::new(cue, 0.0, 1.0);
             self.state.heard(Some(&clock));
         }
     }

@@ -34,9 +34,10 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past engine#3214's merge (`engine-change` §3.6, the
+- ~~Move the pin past engine#3214's merge (`engine-change` §3.6, the
   `engine-pin` skill's review and `docs/engine/pins.md` section for every
-  engine PR the move passes).
+  engine PR the move passes).~~ Done by the pin move of 2026-11-15
+  (issue #703).
 - A game Harness test: a scene of the script preview played to its end
   shows the Scenes tab, on that scene.
 
@@ -45,13 +46,15 @@ None.
 ## Implementation steps
 
 1. Check engine#3214 is in the engine's `tickets/done/` (`work-ticket` §1).
-2. Move the pin (`cargo xtask engine-pin`), fix the game for the engine
-   PRs it passes, write the pin's section.
+2. ~~Move the pin (`cargo xtask engine-pin`), fix the game for the engine
+   PRs it passes, write the pin's section.~~ Done by the pin move of
+   2026-11-15 (issue #703).
 3. The test in `crates/ui/tests/it/story_preview.rs`.
 
 ## Acceptance criteria
 
-- [ ] The pin is at or past engine#3214's merge commit.
+- [x] The pin is at or past engine#3214's merge commit (the pin move of
+      2026-11-15).
 - [ ] A Harness test plays a preview scene to its end and finds the
       Scenes tab, on that scene.
 - [ ] All gates in the `run-gates` skill pass.

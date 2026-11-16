@@ -821,11 +821,11 @@ fn the_sparks_follow_how_long_the_title_was_updated() {
 
 /// A frame of `dt` seconds with the title song `position` seconds in.
 fn song_tick(t: &mut TitleScreen, c: &mut Ctx, position: f32, dt: f32) {
-    c.music_clock = Some(crate::audio::MusicClock {
-        cue: TITLE_MUSIC.to_owned(),
+    c.music_clock = Some(crate::audio::MusicClock::new(
+        TITLE_MUSIC.to_owned(),
         position,
-        length: 133.743,
-    });
+        133.743,
+    ));
     t.update(c, &tick(dt));
 }
 
@@ -1006,10 +1006,7 @@ fn a_press_skips_the_cinematic_and_nothing_else() {
     assert_eq!(
         c.audio.take(),
         [
-            AudioRequest::PlaySound {
-                cue: TITLE_SKIP_SOUND.to_owned(),
-                volume: 1.0
-            },
+            AudioRequest::play_sound(TITLE_SKIP_SOUND.to_owned(), 1.0),
             AudioRequest::StopMusic
         ]
     );
