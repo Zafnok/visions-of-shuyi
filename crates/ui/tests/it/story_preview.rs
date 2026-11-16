@@ -4,14 +4,15 @@
 //! saved change and a broken file read through the headless backend's
 //! `change_file` with debug tools off, the page of names and faces, and two
 //! scenes of Chapter 1 alone checked as a trial packet, and the web's
-//! start (ticket 0767): no scenes until the writer drops a `.dlg` file.
+//! start (ticket 0767): no scenes until the writer drops a `.dlg` file;
+//! and the trial's page of names over the demo's bundle (ticket 0771).
 
 use std::collections::BTreeMap;
 
 use shuyi_assets::bundle::Layer;
 use shuyi_ui::FileDrops;
 use shuyi_ui::dialogue::preview::{PreviewView, Tab};
-use trpg_content::bundle::skip_without_the_game;
+use trpg_content::bundle::{self, Bundle, skip_without_the_game};
 use trpg_core::LeadGender;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_ui::harness::{Core, FRAME_DT};
@@ -343,6 +344,45 @@ fn unit_info_opens_the_names_and_the_faces_and_closes_them() {
     let declared = screen(&h).actions().unwrap_or_default();
     assert!(declared.contains(&Action::Info));
     assert!(h.screen_mut::<StoryPreview>().is_some());
+}
+
+/// The first parts of the rows of the page of names and faces, opened on
+/// a preview of an empty folder over the bundle installed.
+fn names_on_the_page() -> Vec<String> {
+    let (mut h, _) = preview_of(&[]);
+    h.act(Action::Info);
+    let page = game_view(&h).reference.unwrap_or_else(|| panic!("no page"));
+    page.rows
+        .into_iter()
+        .filter_map(|r| match r {
+            ReferenceRow::Entry(token, _) => Some(token),
+            ReferenceRow::Heading(_) => None,
+        })
+        .collect()
+}
+
+/// Ticket 0771: the trial's web preview (the `story-trial` edition) is
+/// built on the demo's bundle, less the scripts, so its page of names and
+/// faces lists Chapter 1's cast and nobody met later; the kit's
+/// (`story-preview`), on the whole game, lists them all.
+#[test]
+fn the_trials_page_of_names_and_faces_names_only_chapter_1s_cast() {
+    if skip_without_the_game() {
+        return;
+    }
+    let later = ["{n:sister}", "{n:prince}", "{n:defector}", "defector"];
+    let whole = names_on_the_page();
+    for name in later {
+        assert!(whole.iter().any(|t| t == name), "{name}: {whole:?}");
+    }
+    let demo: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::demo_layers())));
+    let trial = bundle::reading(demo, names_on_the_page);
+    for name in later {
+        assert!(!trial.iter().any(|t| t == name), "{name}: {trial:?}");
+    }
+    for name in ["lead", "retainer", "{n:retainer}", "{n:red_captain}"] {
+        assert!(trial.iter().any(|t| t == name), "{name}: {trial:?}");
+    }
 }
 
 /// The scene `id` of the Chapter 1 script, as written there.

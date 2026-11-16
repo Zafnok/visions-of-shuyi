@@ -341,9 +341,12 @@ upload key is the secret `BUTLER_API_KEY`.
 
 ### The script preview's itch.io page
 
-The writer's script preview (tickets 0764, 0767) has a web build: the same
-program, with none of the scripts in it, that starts on no scenes and plays
-the `.dlg` files a writer drops on the page. It holds the bought art, so it
+The writer's script preview (tickets 0764, 0767) has a web build for the
+applicants on trial: the same program, with none of the scripts in it, that
+starts on no scenes and plays the `.dlg` files a writer drops on the page.
+It is the `story-trial` edition (ticket 0771, ADR-0126), Chapter 1 as the
+demo cuts it, so its page of names and faces names only Chapter 1's cast;
+the hired writer's Windows kit keeps every name. It holds the bought art, so it
 goes to a Restricted itch.io project of its own, never Pages, and never the
 private mirror's GitHub Pages (a private repository's Pages site is public).
 `ITCH_PREVIEW_PROJECT` is a repository variable naming `<user>/<project>`
@@ -352,7 +355,7 @@ view page** (a password of its own, not the demo's).
 
 - **Push it:** `story-kit.yml`'s `story-preview (web)` job, on each run that
   builds the kit (nightly when it changed, or **Actions → Story kit → Run
-  workflow**), exports `--edition story-preview` for the web, checks the
+  workflow**), exports `--edition story-trial` for the web, checks the
   Wasm and its pack hold none of three script lines, and runs `butler push
   <package> <user>/<project>:web`. Without `BUTLER_API_KEY` or the variable
   it builds and checks, says it didn't publish, and stays green.
