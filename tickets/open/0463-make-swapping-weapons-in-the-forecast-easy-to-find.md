@@ -48,7 +48,8 @@ games (check each before showing it):
 - A. Arrows ◄ ► either side of the weapon's name, as Fire Emblem's
   forecasts do on the weapon row (Three Houses, Engage).
 - B. A key hint on the forecast: "← → weapon" with the player's keys
-  (follow 0250's look for key names if it's done).
+  (key names drawn as 0250 decided: key caps, built by 0254; if 0254
+  isn't done, plain text, and 0254 switches it).
 - C. A line in the Attacking lesson: "Swap weapons: {CursorLeft} {CursorRight}"
   (only when the unit has 2+ weapons).
 - D. A tip, the first time a unit with 2+ usable weapons opens a forecast.

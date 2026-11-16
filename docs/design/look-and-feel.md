@@ -1578,6 +1578,79 @@ player's map look is pictures:
 - **The cursor** is the battle map's picture cursor: thick marks with a
   dark edge round the plate.
 
+### Key names in hints
+
+Decided 2026-11-16, ticket 0250, over five rounds of mockups (real
+Chapter 1 frames in both looks, with only the key names repainted in the
+real font and palette). Nick, playing Chapter 1 (0804), on the text box's
+`b log` hint:
+
+> "generally looks fine, but I think all hotkeys need to be more easily
+> discernable right now they blend in "b log" looks like some word... if
+> it were "<B> log" or "[B] log" or bolded B log or something with a
+> different color for the keybind it would be better"
+
+Shown brackets, angle brackets, a key colour, a key-cap box, bold and a
+mix of brackets and colour, in lowercase and capitals:
+
+> "can I see bold + keycap? also, this probably will need to be changed on
+> console / playdate (console using i.e. colored buttons or official
+> icons, and playdate consideration for 1-bit screen) -- these can be
+> followup tickets. Let me see bold + keycap before deciding, in both
+> lower and uppercase."
+>
+> "bold + capitals + keycaps looks good. But I think the centering can use
+> some work. somehow keep the border/margin on keycaps more consistent.
+> The top/bottom margin should be same. And left/right the same.
+> Shouldn't have some keys like W and D and F going to top of the box."
+>
+> (Even margins, with longer names as written or in capitals:) "G3 when
+> looking at Shift and Space. But for Arrows I think we can represent it
+> with a combination keycap in the triangle-like shape it usually comes on
+> the keyboard. That's how most games show it."
+>
+> (The arrows at 8 and 10 px a key; a cursor on other keys as a small
+> lettered T, four caps or one wide cap:) "1: 8 px keys"; "four caps but
+> seems the commas and period are currently behind the caps so fix that"
+
+This is the keyboard's look. **A controller's buttons and the Playdate**
+are open (*Open sub-questions*).
+
+- **Every key name is a key cap**: wherever text names one of the
+  player's keys (help bars, the text box's corner, tips and lessons,
+  Options, Key bindings), the name sits in a small rounded box like a
+  keyboard key, in the same place in the line. The words around it are
+  unchanged. Example: the battle's help bar reads `F select · E info ·
+  S next unit · Space end turn`, with `F`, `E`, `S` and `Space` each in a
+  cap (no brackets).
+- **The cap:** a box a shade lighter than the panel, with a 1 px edge
+  lighter again (the mockup's `#4a402e` and `#807052`, *tunable*), its
+  corners rounded. The name is in **bold**, in the `text` colour, brighter
+  than the help line's `text_dim` words.
+- **Even margins:** 2 px between the letters and the box's edge, the same
+  above as below and the same left as right, for every capital letter
+  (W, D and F sit as low as E). The cap is one text line tall. A
+  lowercase letter that hangs below the line (the `p` of `Space`) may
+  reach the bottom edge: Nick picked this seeing it.
+- **Single letters are capitals** (`F`, not `f`). Longer names are
+  written as the keymap writes them: `Space`, `Shift+Space`, `F2`,
+  `Enter`. A chord is one cap holding the whole name.
+- **The arrow keys** (the cursor on ↑ ← ↓ →): one picture of four small
+  caps in an upside-down T, as on a keyboard, each 8 × 8 px with an
+  arrow, one text line tall and three cells wide, in place of the word
+  `arrows`.
+- **The cursor on other keys:** four caps in up, left, down, right order,
+  one space between them (`W A S D` as four caps).
+- **Nothing hides behind a cap:** a comma, full stop or colon right after
+  it is drawn whole, beside the cap's edge, not under it.
+- **Both looks** (glyphs and pictures): the same caps.
+
+*Claude's starting rules (Nick can veto):*
+
+- An action with no key still reads `! not mapped`, in plain text, no cap.
+- On the Key bindings screen the caps are the key names in the slot
+  columns; a slot being captured keeps its prompt in plain text.
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side
@@ -1636,3 +1709,7 @@ black.
   where a message goes, and what auto-end lines up with when the key help
   has no `end turn`, are for him to pick from rendered options (ticket
   0445).
+- Key names in hints with a controller (coloured buttons or the
+  platform's icons, ticket 0255) and on the Playdate's one-bit screen
+  (ticket 0256): the keyboard's key caps are decided (*Key names in
+  hints*); these two are asked when their tickets are picked up.
