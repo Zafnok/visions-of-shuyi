@@ -397,7 +397,7 @@ Nothing for the game: 7 PRs (#400, #405, #409, #408, #412, #413, #415). #400, #4
 
 Nothing for the game: 13 PRs (#419, #420, #421, #422, #423, #424, #426, #427, #430, #431, #432, #433, #434). #426 ships the pack skill `shuyi-private-files`, copied here by `skill-pack`: adopt → 1273 (`content-change` keeps only the game's rules on top of it). #421 is the engine's own compression hook and gate (the game's is 1271's). #419 is research; #420, #423, #424, #427, #430, #431 and #434 are the engine's own tests, versions, PR size, gates, build profiles, aliases and MCP command; #422 its merge commits and `.codex/config.toml`; #432 and #433 hold tickets only.
 
-## 2026-11-15: cfd79d10 → e074d3ec (6 engine PRs), #PRNUM
+## 2026-11-15: cfd79d10 → e074d3ec (6 engine PRs), #706
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
