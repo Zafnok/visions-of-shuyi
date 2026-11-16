@@ -5,6 +5,8 @@ This packet was made for {handle}. It's confidential: please keep it to
 yourself (terms.md).
 
 Due: {due}
+Send your entry by email to: {email}
+Questions while you work: on Discord, where you applied.
 
 1. Read brief.md: what to do, how to send it back, what I'm looking at.
 2. Play Chapter 1 as a player does, in your browser:
@@ -19,7 +21,8 @@ Due: {due}
    Drag dialogue/ch01.dlg from this folder onto the game itself. Edit
    the file, save, and drag it onto the game again to see the change.
    Keep the name ch01.dlg: a file with another name plays beside the
-   first instead of replacing it. brief.md says which editor to use.
+   first instead of replacing it. brief.md says which editor to use
+   (VS Code, with the vscode-dlg folder, is the easiest).
    The page keeps nothing: a reload or an update to the page (it can
    change any night) clears it. Your file on your computer is the only
    copy, so save often and keep a backup somewhere else.

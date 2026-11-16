@@ -61,10 +61,10 @@ builds dist/trial/<handle>.zip, the writer trial's packet for one applicant\n\
 START-HERE.txt with the links. Text files only, no program.\n\
   --for <handle>  the applicant's mark: letters, digits, - and _\n\
   --due <date>    when their entry is due, as you agreed it\n\
-The web demo's and web preview's links and passwords come from\n\
-dist/trial/links.txt (one `name = value` a line: demo, demo-password,\n\
-preview, preview-password). Anything in dist/trial/extra/ (the signed\n\
-agreement, say) goes in too.";
+The web demo's and web preview's links and passwords, and the email\n\
+address entries go to, come from dist/trial/links.txt (one `name = value`\n\
+a line: demo, demo-password, preview, preview-password, email). Anything\n\
+in dist/trial/extra/ (the signed agreements, say) goes in too.";
 
 pub const COMPARE_USAGE: &str = "usage: cargo xtask trial-compare\n\n\
 reads each entry in dist/trial/entries/<handle>/ (its .dlg files) and writes\n\

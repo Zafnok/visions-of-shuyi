@@ -65,8 +65,8 @@ two scenes that sing beat five that are merely fine.
 
 ## How to see it
 
-Nothing to install: everything runs in your browser. The demo and the
-preview are played with the **keyboard** only. The first key you press
+The demo and the preview run in your browser: nothing to install. They
+are played with the **keyboard** only. The first key you press
 asks you to pick a layout (right- or left-handed); after that, the line
 at the bottom of the screen names the keys.
 
@@ -82,28 +82,30 @@ at the bottom of the screen names the keys.
    doesn't show, look there: a file with a mistake keeps playing its last
    good version.
 
-Which editor:
+### Which editor
+
+**VS Code is the one I recommend.** It's free, for Windows, Mac and Linux
+([code.visualstudio.com](https://code.visualstudio.com/)). With the
+packet's `vscode-dlg` folder it colors the script (who speaks, narration,
+replies, names) and keeps a reply's reaction lines indented for you: press
+Enter after a reply line such as `* earnest: We go now.` and the next
+line starts two spaces in; press Enter on one of those indented lines and
+the next one stays two spaces in. That indenting is the easiest thing to
+get wrong by hand. The folder is four text files: nothing to run.
+
+If you'd rather not install it, a plain-text editor works too, with the
+preview's **Problems** tab to catch mistakes:
 
 - **Windows:** Notepad. Right-click the file, **Open with**, **Notepad**.
 - **Mac:** TextEdit, set up once so it doesn't change your quotes: in
   TextEdit's **Settings**, choose **Plain text**, and under **Edit >
   Substitutions** turn off **Smart Quotes** and **Smart Dashes**. When you
   save, keep the name `ch01.dlg`; if TextEdit offers to add `.txt`, say no.
-- Not Word or Google Docs: they change quotes and dashes and save a
-  different kind of file.
 
-### Optional: colors in VS Code
+Not Word or Google Docs: they change quotes and dashes and save a
+different kind of file.
 
-Skip this unless you write in [VS Code](https://code.visualstudio.com/).
-Notepad, TextEdit or any plain-text editor works just as well, with the
-preview's **Problems** tab to catch mistakes.
-
-The packet's `vscode-dlg` folder makes VS Code color the script (who
-speaks, narration, replies, names) and keeps a reply's reaction lines
-indented for you: press Enter after a reply line such as
-`* earnest: We go now.` and the next line starts two spaces in; press
-Enter on one of those indented lines and the next one stays two spaces
-in. Nothing to run: the folder is four text files.
+### Adding the colors to VS Code
 
 To add it:
 
@@ -145,10 +147,11 @@ link in `START-HERE.txt` lets you play Chapter 1 as a player sees it.
 - a short note, as long as you like: what you changed and why, anything
   you'd do with more time, anything in the beats you'd change.
 
-Send them to me on Discord, in the conversation where you applied, with
-the file attached. The due date is in `START-HERE.txt`. Tell me if you
-need longer: that's fine, just say so before then. Questions while you
-work go there too.
+Email them to the address in `START-HERE.txt`, with the file attached.
+That address is for everything official: your entry, and later any
+agreement. Questions while you work can go to me on Discord, in the
+conversation where you applied. The due date is in `START-HERE.txt`. Tell
+me if you need longer: that's fine, just say so before then.
 
 ## What I'm looking at
 

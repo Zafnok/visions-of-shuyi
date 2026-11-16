@@ -27,6 +27,7 @@ ignored):
    demo-password = <its password>
    preview = <the web script preview's itch.io page>
    preview-password = <its password>
+   email = <where entries are sent>
    ```
 
 3. Put anything every packet should carry in `dist/trial/extra/`: the
