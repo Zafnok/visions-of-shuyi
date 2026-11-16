@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: low
-status: todo
+status: done
 blocked_by: ["engine#3214"]
 nick_input: none
-completed:
+completed: 2026-11-15
 ---
 
 # 0770 — The script preview returns to its scenes when a scene ends
@@ -55,9 +55,9 @@ None.
 
 - [x] The pin is at or past engine#3214's merge commit (the pin move of
       2026-11-15).
-- [ ] A Harness test plays a preview scene to its end and finds the
+- [x] A Harness test plays a preview scene to its end and finds the
       Scenes tab, on that scene.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -65,5 +65,15 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+engine#3214 is in the engine's `tickets/done/` and the pin (`e074d3ec`,
+the pin move of 2026-11-15) is ahead of its closing commit, so no game
+code changed: the engine's `DialoguePreview` already opens the Scenes tab
+on the scene just played when the game's dialogue screen pops.
+
+Added `a_scene_played_to_its_end_opens_the_scenes_tab_on_that_scene` in
+`crates/ui/tests/it/story_preview.rs`: it plays the test file's second
+scene (`trial_two`, so the cursor is not on row 0 by chance) to its end,
+finds the tabs open on Scenes with the cursor on `trial_two`, and Confirm
+plays it again from its first text box.
+
+Deviations: none. No follow-up tickets. No gameplay rules decided.
