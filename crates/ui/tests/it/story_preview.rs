@@ -4,7 +4,8 @@
 //! saved change and a broken file read through the headless backend's
 //! `change_file` with debug tools off, the page of names and faces, and two
 //! scenes of Chapter 1 alone checked as a trial packet, and the web's
-//! start (ticket 0767): no scenes until the writer drops a `.dlg` file.
+//! start (ticket 0767): no scenes until the writer drops a `.dlg` file;
+//! a scene played to its end back on the Scenes tab (ticket 0770).
 
 use std::collections::BTreeMap;
 
@@ -437,4 +438,25 @@ fn two_problems_on_one_line_are_each_listed_once() {
         problems.iter().filter(|m| **m == message).count()
     };
     assert_eq!((unknown("nope"), unknown("nada")), (1, 1), "{problems:?}");
+}
+
+#[test]
+fn a_scene_played_to_its_end_opens_the_scenes_tab_on_that_scene() {
+    let (mut h, _) = preview();
+    // The second scene: one line, then its end.
+    act(&mut h, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(shown(&h), "The road goes on.");
+    // Confirm shows the whole line, Confirm again ends the scene.
+    act(&mut h, &[Action::Confirm, Action::Confirm]);
+    let after = view(&h);
+    assert!(after.open, "the tabs show again");
+    assert!(screen(&h).playing().is_none(), "the scene is over");
+    assert_eq!(after.tab, Tab::Scenes);
+    let focused = after.scenes.get(after.focus).map(|s| s.id.as_str());
+    assert_eq!(focused, Some("trial_two"));
+    // Confirm plays it again, from its start.
+    h.act(Action::Confirm);
+    assert!(!view(&h).open);
+    assert_eq!(view(&h).playing.map(|p| p.text_box), Some(0));
+    assert_eq!(shown(&h), "The road goes on.");
 }
