@@ -21,9 +21,10 @@ sanctions list. Today (November 2026) the embargoed places are:
 If you aren't sure whether that includes you, ask me before you start.
 
 If the US adds the country or region where you live to that list later,
-I have to stop paying you from that day. If your work for the game isn't
-finished by then, our agreement ends and I'll hire another writer to
-finish it.
+I have to stop paying you from that day. Money you had already earned
+isn't cancelled: US rules require it to be held, and it's paid to you if
+paying you becomes legal again. If your work for the game isn't finished
+by then, our agreement ends and I'll hire another writer to finish it.
 
 ## The packet
 
