@@ -12,7 +12,8 @@ What it offers, as the packet's brief repeats it (Nick, 2026-11-14):
 > depending on review score)
 
 Nick, the same day: "the 5-10% will actually be based on game sales
-rather than review score". The brief says so.
+rather than review score". The brief gives no figure: it points to the
+compensation PDF Nick sends with his first email (2026-11-15).
 
 To post it again elsewhere, keep it to the same offer and name no
 repository: the packet is the only thing an applicant gets (`README.md`).
