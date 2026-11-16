@@ -773,6 +773,74 @@ fn the_demo_edition_holds_the_full_games_files_and_its_canaries_only_the_later_c
     }
 }
 
+/// Ticket 0771: the trial's web preview (`story-trial`) is the
+/// `story-preview` program on the demo's bundle less the scripts. Its
+/// pack is the demo's without them, it forbids what both forbid, and its
+/// canaries, the demo's and the later cast's ids, are each in a file of
+/// the full game and in no file of its bundle (the demo's but the
+/// scripts).
+#[test]
+fn the_trial_edition_is_the_demo_less_the_scripts_with_no_later_name() {
+    use trpg_content::bundle::{self, Bundle};
+    let config = project().config;
+    let (demo, preview) = (&config.editions["demo"], &config.editions["story-preview"]);
+    let trial = &config.editions["story-trial"];
+    assert_eq!(trial.content.as_deref(), Some("crates/content/story-trial"));
+    let list = fs::read_to_string(repo_root().join("crates/content/story-trial/bundle.txt"));
+    let list = list.unwrap();
+    let rules: Vec<&str> = list
+        .lines()
+        .filter(|l| !l.trim().is_empty() && !l.starts_with('#'))
+        .collect();
+    assert_eq!(rules, ["dialogue/"]);
+    assert_eq!(
+        (trial.package.as_deref(), trial.bin.as_deref()),
+        (preview.package.as_deref(), preview.bin.as_deref())
+    );
+    let [demo, preview, part] = [demo, preview, trial].map(|e| e.disclosure.clone().unwrap());
+    assert_eq!(part.allowed_files, preview.allowed_files);
+    let mut pack = demo.allowed_pack_entries.clone();
+    pack.retain(|p| !p.starts_with("dialogue/"));
+    assert_eq!(part.allowed_pack_entries, pack);
+    for path in demo.forbidden_paths.iter().chain(&preview.forbidden_paths) {
+        assert!(part.forbidden_paths.contains(path), "{path}");
+    }
+    for canary in demo
+        .canaries
+        .iter()
+        .chain(&["sister".into(), "prince".into()])
+    {
+        assert!(part.canaries.contains(canary), "{canary}");
+    }
+    // The engine refuses a shorter one, which any program holds by chance.
+    for canary in &part.canaries {
+        assert!(canary.len() >= 6, "{canary}: under 6 bytes");
+    }
+    if bundle::skip_without_the_game() {
+        return;
+    }
+    let texts = |b: &Bundle, scripts: bool| -> Vec<String> {
+        let paths = bundle::story_only(|| b.files_under(""));
+        paths
+            .iter()
+            .filter(|p| scripts || !p.starts_with("dialogue/"))
+            .filter_map(|p| bundle::story_only(|| b.file(p)))
+            .map(str::to_owned)
+            .collect()
+    };
+    let whole = texts(bundle::install(), true);
+    let trial_files = texts(&Bundle::new(bundle::demo_layers()), false);
+    for canary in &part.canaries {
+        let in_full = whole.iter().any(|t| t.contains(canary.as_str()));
+        assert!(
+            in_full,
+            "the canary {canary} is in no file of the full game"
+        );
+        let leaked = trial_files.iter().any(|t| t.contains(canary.as_str()));
+        assert!(!leaked, "{canary} is in a file of the trial's preview");
+    }
+}
+
 /// Every file under `dir`, at any depth, as `prefix/<path>` with `/`.
 fn files_under(dir: &Path, prefix: &str, out: &mut Vec<String>) {
     for entry in fs::read_dir(dir).unwrap() {

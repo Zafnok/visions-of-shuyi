@@ -1,0 +1,14 @@
+# What the writer trial's web preview leaves out (ticket 0771, ADR-0126).
+#
+# This folder is the `story-trial` edition's content root (`shuyi.ron`'s
+# `editions`): `cargo shuyi export web --release --edition story-trial`
+# hands it to the build as `SHUYI_CONTENT`. `build.rs` then embeds the
+# Chapter 1 demo's tables (`crates/content/demo/bundle.txt`: Chapter 1's
+# files, and the names and characters tables cut to what Chapter 1 uses),
+# but those this list leaves out. An applicant's preview so holds no scene
+# but the ones dropped on its page, and its page of names and faces names
+# only Chapter 1's cast. The lines' forms are
+# `crates/content/src/demo_bundle.rs`'s; here only folders are left out.
+
+# Every script.
+dialogue/

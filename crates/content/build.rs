@@ -42,6 +42,12 @@
 //! preview, ticket 0764) names `story-preview/` as `SHUYI_CONTENT`, every
 //! table leaves out what `story-preview/bundle.txt` lists (the scripts):
 //! the program holds no scene but the ones in the folder it reads.
+//!
+//! The writer trial's web preview (ticket 0771, ADR-0126) is the demo's
+//! tables with what `story-trial/bundle.txt` lists (the scripts) left out:
+//! its export names `story-trial/`, the build gets the `demo_edition` cfg
+//! as the demo's does, and every table leaves out that list's paths, so
+//! it holds only Chapter 1's names and characters and no script.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -79,7 +85,15 @@ const PREVIEW: &str = "story-preview";
 /// Its list of what it leaves out.
 const PREVIEW_LIST: &str = "story-preview/bundle.txt";
 
-/// What every table leaves out: the preview edition's list, in its build.
+/// The writer trial's web preview's content root, relative to this crate
+/// (ticket 0771): the demo's tables, less its list.
+const TRIAL: &str = "story-trial";
+
+/// Its list of what it leaves out.
+const TRIAL_LIST: &str = "story-trial/bundle.txt";
+
+/// What every table leaves out: the list of the preview's edition or the
+/// trial's, in its build.
 static LEFT_OUT: std::sync::OnceLock<demo_bundle::Plan> = std::sync::OnceLock::new();
 
 /// The bought art, relative to this crate (ADR-0040).
@@ -118,6 +132,7 @@ fn main() {
     println!("cargo:rerun-if-changed={PLAYDATE_LIST}");
     println!("cargo:rerun-if-changed={DEMO}");
     println!("cargo:rerun-if-changed={PREVIEW}");
+    println!("cargo:rerun-if-changed={TRIAL}");
     println!("cargo:rerun-if-env-changed=SHUYI_CONTENT");
     println!("cargo::rustc-check-cfg=cfg(demo_edition)");
     let mut demo = false;
@@ -128,16 +143,17 @@ fn main() {
             println!("cargo:rustc-cfg=demo_edition");
             demo = true;
         } else if is(PREVIEW) {
-            let list = std::fs::read_to_string(PREVIEW_LIST)
-                .unwrap_or_else(|e| panic!("reading {PREVIEW_LIST}: {e}"));
-            let plan =
-                demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{PREVIEW_LIST}: {e}"));
-            let _ = LEFT_OUT.set(plan);
+            leave_out(PREVIEW_LIST);
+        } else if is(TRIAL) {
+            println!("cargo:rustc-cfg=demo_edition");
+            demo = true;
+            leave_out(TRIAL_LIST);
         } else {
             panic!(
                 "SHUYI_CONTENT is {}, which is no edition's content root this game has: \
                  crates/content/demo is the demo's, crates/content/story-preview the \
-                 writer's preview's (shuyi.ron's `editions`)",
+                 writer's preview's, crates/content/story-trial the trial's web \
+                 preview's (shuyi.ron's `editions`)",
                 root.display()
             );
         }
@@ -157,6 +173,13 @@ fn main() {
     let content = Path::new(CONTENT).is_dir();
     watch_content(content);
     write_file_tables(private, content, demo);
+}
+
+/// Leaves what the list at `path` names out of every table ([`LEFT_OUT`]).
+fn leave_out(path: &str) {
+    let list = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("reading {path}: {e}"));
+    let plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{path}: {e}"));
+    let _ = LEFT_OUT.set(plan);
 }
 
 /// Tells cargo when the content layer changes (ADR-0117): the content when
@@ -209,7 +232,7 @@ fn write_file_tables(private: bool, content: bool, demo: bool) {
     both.dedup();
     if let (Some(plan), true) = (LEFT_OUT.get(), content) {
         plan.left_out(&both)
-            .unwrap_or_else(|e| panic!("{PREVIEW_LIST}: {e}"));
+            .unwrap_or_else(|e| panic!("the edition's list of what it leaves out: {e}"));
     }
     let list = std::fs::read_to_string(PLAYDATE_LIST)
         .unwrap_or_else(|e| panic!("reading {PLAYDATE_LIST}: {e}"));
@@ -433,7 +456,8 @@ fn is_sidecar(path: &str) -> bool {
 }
 
 /// The table expression of `files`, each read from its `source`, but those
-/// the writer's preview leaves out in its build ([`LEFT_OUT`]).
+/// the writer's preview or the trial's leaves out in its build
+/// ([`LEFT_OUT`]).
 fn table<'a>(
     files: impl Iterator<Item = &'a String>,
     source: impl Fn(&String) -> Source,
