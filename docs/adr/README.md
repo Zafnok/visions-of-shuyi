@@ -17,7 +17,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0006](0006-input-actions-and-virtual-cursor.md) | Input actions, vim-style keymap, virtual cursor | Superseded by ADR-0015 |
 | [0007](0007-testing-strategy.md) | Testing strategy | Accepted; behaviour tests read the map scene, per ADR-0038 |
 | [0008](0008-ci-quality-gates.md) | CI and quality gates (free tier only) | Superseded by ADR-0014 |
-| [0009](0009-distribution.md) | Distribution: Windows first, web, itch, Steam | Accepted |
+| [0009](0009-distribution.md) | Distribution: Windows first, web, itch, Steam | Accepted; amended by ADR-0127 |
 | [0010](0010-ticket-workflow-and-model-routing.md) | Ticket workflow and model routing | Accepted; model routing and instruction entry point amended by ADR-0102 |
 | [0011](0011-story-authoring-pipeline.md) | Story authoring pipeline with LLMs | Accepted |
 | [0012](0012-visual-style.md) | Visual style: cells, tiles, color, portraits | Superseded by ADR-0018 |
@@ -31,7 +31,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0020](0020-battle-state-serialisation.md) | Battle state saves its own data, not the content tables | Accepted |
 | [0021](0021-skill-effects-as-data.md) | Skill effects are data, gathered into combat modifiers | Accepted |
 | [0022](0022-combat-arts-and-attack-preview.md) | Combat Arts as weapon-input changes, and the attack preview | Accepted |
-| [0023](0023-debug-tools-feature-for-pages-build.md) | A `debug-tools` cargo feature for the Pages build | Accepted |
+| [0023](0023-debug-tools-feature-for-pages-build.md) | A `debug-tools` cargo feature for the Pages build | Accepted; amended by ADR-0127 |
 | [0024](0024-cursor-as-pixel-overlays.md) | Draw the battle cursor as pixel overlays, with selectable styles | Accepted |
 | [0025](0025-battle-event-playback-in-the-battle-screen.md) | Event playback runs inside the battle screen, as a mode | Accepted; playback keys changed in 0418 |
 | [0026](0026-audio-cues-and-music-files.md) | Audio cues as data, played by `app`; music files beside the game | Accepted; licenses and credits amended by ADR-0027; native music loading amended by ADR-0028; track lengths and the music clock added by ADR-0037 |
@@ -134,6 +134,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0124](0124-the-debug-build-reads-its-folders-from-disk-under-run-watch-and-reloads-palettes-and-scenes.md) | Under `cargo shuyi run --watch` a debug build reads `assets/`, `assets-test/` and the content from their folders in place of their tables (the bought art stays embedded), each as a build embeds it (`bundle::Folder`, a change copied from the watched folder); a `hot_content` module loads the whole content again when a palette or a `.dlg` changes and takes only the palettes and the dialogue, never rules data | Accepted (1209); extends ADR-0005, ADR-0105, ADR-0057, ADR-0117 |
 | [0125](0125-the-writers-preview-is-a-package-of-its-own.md) | The writer's preview is the package `trpg-story-preview` (one program, `story-preview`), so `trpg-app` has one program and `cargo shuyi export` picks it; the edition names the package, the pack is `trpg-story-preview.pack`; an xtask test keeps every package an export builds without a `bin` to one program | Accepted (1269); amends ADR-0123 |
 | [0126](0126-the-trials-web-preview-is-the-demos-cut-without-the-scripts.md) | The writer trial's web preview is shuyi.ron's `story-trial` edition: the `story-preview` program on the Chapter 1 demo's tables (`demo_edition`) with `dialogue/` left out of every table, so its page of names and faces and its pack hold only Chapter 1's cast; the hired writer's Windows kit stays `story-preview` with every name; its disclosure is kept in step with the demo's and the preview's by an xtask test | Accepted (0771); extends ADR-0119, ADR-0123 |
+| [0127](0127-no-github-pages-and-no-github-releases.md) | No GitHub Pages site and no GitHub Releases: `pages.yml` is gone, `release.yml` builds, checks and attests but makes no release; every played build is on a password-protected itch.io page | Accepted (0920); amends ADR-0009, ADR-0023 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

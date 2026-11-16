@@ -10,7 +10,7 @@ engine's [ADR-0072](https://github.com/Zafnok/shuyi-engine/blob/main/docs/adr/00
 and its *Session records* in `docs/platform-backends.md` say how.
 
 Only debug builds record: a `cargo run` build, or one with the `debug-tools`
-feature (the Pages build). A build that ships never does, since a record
+feature (the playtest page's web build). A build that ships never does, since a record
 holds the player's input and saves: `crates/app/src/main.rs` refuses to
 compile a release build with the engine's debug tools on.
 
@@ -23,7 +23,7 @@ compile a release build with the engine's debug tools on.
 - **From the debug menu** (the debug key), **Save session** writes the run
   so far at once, and recording goes on. Use it right after a bug shows:
   the record then ends near it.
-- **On the web** (the Pages build), nothing is written by itself: **Save
+- **On the web** (the playtest page's build), nothing is written by itself: **Save
   session** downloads the file.
 
 A crash doesn't write one yet (the engine's ticket 3060). After a crash,
@@ -65,7 +65,7 @@ and everything they pressed: send it only to the developers.
 A record plays back only on the build that made it, or one that plays the
 same: a later change to the rules or the screens can make it play
 differently from the frame that change matters. Say which build it was (the
-commit it was built from, or the Pages build's date).
+commit it was built from, or the playtest page's upload date).
 
 ## Playing one
 

@@ -26,8 +26,8 @@ rebuilds the battle exactly (ADR-0007 layer 5). So Nick's own play, and
 later testers', can be recorded at almost no cost and measured with the same
 numbers as the bots (0505's `BattleMeasures`).
 
-This ticket records play in the **Pages build only** (debug tools on,
-ADR-0023). The shipped game records nothing.
+This ticket records play in the **playtest page's build only** (debug
+tools on, ADR-0023; GitHub Pages is off since 0920). The shipped game records nothing.
 
 **Either order with 1180:** if 1180 is done, the personas file is
 read through the engine's `Persona` (engine#2130); if not, use the
@@ -42,7 +42,7 @@ it lands, preserving the human/bot comparison's report.
 ## Nick input
 
 **Setup:** the recordings come from Nick's Act 1 playtest (1064), so
-this ticket waits for it: Nick plays on the Pages build, exports the
+this ticket waits for it: Nick plays on the playtest page's build, exports the
 recordings from the debug menu, and says which of Casual / Normal /
 Hardcore he played as. No separate play-through is asked for this
 ticket (Nick, 2026-10-21: no spot checks of gameplay tickets).

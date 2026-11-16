@@ -12,28 +12,29 @@ Releases are cut by pushing a tag ([ADR-0009](adr/0009-distribution.md)):
    (Windows, Linux, macOS universal and web; the Playdate is check-only), on
    the plan's runner and, for Linux, in its image, with the bought art and the
    game's content, checks each final package
-   (`scripts/check-release-package.sh`), and makes a
-   [GitHub Release](https://github.com/Zafnok/visions-of-shuyi/releases) for the
-   tag with auto-generated notes, each package's reports and `SHA256SUMS`. The
-   packages themselves are not attached (below).
+   (`scripts/check-release-package.sh`), and attests `SHA256SUMS`. It makes
+   no GitHub Release (ticket 0920, ADR-0127): each package's reports and
+   `SHA256SUMS` stay as the run's artifacts, and the packages themselves
+   leave nothing behind (below).
 
 ## Where each build goes
 
 The game's content and story are private (ADR-0117, ticket 0158), and so is
 the bought art's source (ADR-0040). Anything public on GitHub, a Pages site,
 a release or a workflow's artifacts, can be downloaded by anyone, so a build
-with the content goes straight from its job to a restricted itch.io page:
+with the content goes straight from its job to a restricted itch.io page.
+There is no public build at all: GitHub Pages is off and no GitHub Release is
+made (ticket 0920, ADR-0127).
 
 | Build | Where | Who can open it | Workflow |
 | ----- | ----- | --------------- | -------- |
-| Public web build, debug tools, **nothing private**: no content, no bought art, no voice (the public files, the placeholder art and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
 | The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, nightly when it changed and by hand |
 | A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
 | A release's debug files (Windows, Linux) | a release `debug-v<version>` of the private assets repository (below) | whoever can read that repository | `release.yml`, on a tag |
 
-The demo and the script preview never go to Pages.
+Nothing goes to GitHub Pages or a GitHub Release.
 
 ### The playtest page
 
@@ -72,7 +73,7 @@ new track or voice clip needs its two lines there, as on macOS it has another
 path. The check finds what is written plainly: it guards against mistakes, not
 against a player digging.
 
-The GitHub Release carries, never in a package:
+The release run keeps as its artifacts, never in a package:
 
 - `<package>.export-report.json` and `<package>.exposure-report.json`: the
   version, the sizes, the signing, and every file of the package with its hash.
@@ -81,7 +82,7 @@ The GitHub Release carries, never in a package:
 - `SHA256SUMS`: one line per package, `<sha256>  <file>`, the file as the
   package job left it (`visions-of-shuyi-<version>-windows.zip`, `-linux.tar.gz`,
   `-web.zip`, and `-macos.zip`, the `.app`'s folder zipped by `ditto`). The
-  release attests these digests (`actions/attest`): where and from which
+  run's `attest` job attests these digests (`actions/attest`): where and from which
   commit each package was built, though no package is published.
 
 **Check a package** against it, in the folder that holds both:
