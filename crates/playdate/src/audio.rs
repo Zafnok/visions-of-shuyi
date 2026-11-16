@@ -215,7 +215,7 @@ impl<S: Speaker> Audio<S> {
     /// `music`'s commands) and applies the `music` commands.
     pub fn play(&mut self, speaker: &mut S, requests: &[AudioRequest], music: &[MusicCommand]) {
         for request in requests {
-            if let AudioRequest::PlaySound { cue, volume } = request {
+            if let AudioRequest::PlaySound { cue, volume, .. } = request {
                 self.play_sound(speaker, cue, *volume);
             }
         }
@@ -301,6 +301,9 @@ impl<S: Speaker> Audio<S> {
                 }
             }
             MusicCommand::Stop { cue } => self.stop_track(speaker, cue),
+            // A command a later engine adds: the Playdate plays none it
+            // doesn't know.
+            _ => {}
         }
     }
 
@@ -492,13 +495,8 @@ mod tests {
             .insert("blip".into(), sound(&["sfx/blip.wav"], 100));
         m.sounds
             .insert("bloop".into(), sound(&["sfx/blip.wav"], 40));
-        let track = |file: &str, volume, looped| MusicCue {
-            file: file.into(),
-            volume,
-            looped,
-            length_ms: 10_000,
-            credit: CreditRef::Own,
-            group: None,
+        let track = |file: &str, volume, looped| {
+            MusicCue::new(file.into(), volume, 10_000, CreditRef::Own).with_looped(looped)
         };
         m.music.insert("theme".into(), track("theme.ogg", 80, true));
         m.music
@@ -530,10 +528,7 @@ mod tests {
     }
 
     fn sound(cue: &str, volume: f32) -> AudioRequest {
-        AudioRequest::PlaySound {
-            cue: cue.into(),
-            volume,
-        }
+        AudioRequest::play_sound(cue, volume)
     }
 
     fn load(cue: &str) -> MusicCommand {

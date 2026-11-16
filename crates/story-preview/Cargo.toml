@@ -34,8 +34,6 @@ trpg-ui = { path = "../ui" }
 # What `crates/app/src/app_info.rs` names `AppInfo` through.
 shuyi.workspace = true
 shuyi-app.workspace = true
-# The entry point: `#[macroquad::main]` has to be in the binary.
-macroquad.workspace = true
 
 # The exe's icon, as the game's (ticket 0902), on a Windows host only.
 [target.'cfg(windows)'.build-dependencies]

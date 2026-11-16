@@ -22,7 +22,6 @@ mod app_info;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
 
-use macroquad::window::Conf;
 use shuyi::assets::bundle::Layer;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, Window};
@@ -117,10 +116,6 @@ fn config() -> AppConfig {
     config
 }
 
-fn window_conf() -> Conf {
-    shuyi_app::window_conf(&WINDOW)
-}
-
 /// The folder, once a packed build has its files: the pack beside the
 /// program, laid in the bundle before anything reads a file, as the game's
 /// (`crates/app/src/main.rs`, ADR-0120). A pack that is missing or broken is the start's
@@ -135,10 +130,9 @@ fn startup() -> Result<Layer, String> {
     folder()
 }
 
-#[macroquad::main(window_conf)]
-async fn main() {
+fn main() {
     let start = trpg_ui::story_preview::start(WINDOW.title, startup());
-    shuyi_app::run(config(), start).await;
+    shuyi_app::run_app(config(), start);
 }
 
 #[cfg(test)]

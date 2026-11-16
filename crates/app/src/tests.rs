@@ -28,10 +28,20 @@ fn block_on<F: Future>(future: F) -> F::Output {
 
 #[test]
 fn the_window_has_an_icon() {
-    let conf = shuyi_app::window_conf(&WINDOW);
-    assert!(conf.icon.is_some());
+    // What the engine checks before it gives the window the icon: each
+    // picture decodes to its size's RGBA pixels (16, 32 and 64 square).
+    fn pixels(png: &[u8]) -> usize {
+        macroquad::texture::Image::from_file_with_format(png, None)
+            .expect("the icon's picture decodes")
+            .bytes
+            .len()
+    }
+    let icon = WINDOW.icon.expect("the window has an icon");
+    assert_eq!(pixels(icon.small), 16 * 16 * 4);
+    assert_eq!(pixels(icon.medium), 32 * 32 * 4);
+    assert_eq!(pixels(icon.big), 64 * 64 * 4);
     assert_eq!(WINDOW.icon, APP.window_icon);
-    assert_eq!(conf.window_title, "Visions of Shuyi");
+    assert_eq!(WINDOW.title, "Visions of Shuyi");
 }
 
 /// Acceptance (1199): the name and the storage name players' saves depend

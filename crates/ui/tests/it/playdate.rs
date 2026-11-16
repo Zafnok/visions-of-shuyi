@@ -1006,7 +1006,7 @@ fn with_every_kind_of_shot(ctx: &mut Ctx) {
         from: Side::Right,
     };
     let shots = [(15_000, talk), (30_750, faces), (48_000, pan)];
-    let shots = shots.map(|(at_ms, shot)| ShotDef { at_ms, shot });
+    let shots = shots.map(|(at_ms, shot)| ShotDef::new(at_ms, shot));
     title.shots.splice(1..1, shots);
 }
 

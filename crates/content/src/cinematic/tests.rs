@@ -54,29 +54,26 @@ fn the_test_cinematic_loads() {
             }),
         }
     );
-    let talk = ShotDef {
-        at_ms: 6000,
-        shot: Shot::Talk {
+    let talk = ShotDef::new(
+        6000,
+        Shot::Talk {
             scene: "test".to_owned(),
             first: 6,
             count: 2,
         },
-    };
+    );
     assert_eq!(test.shots[1], talk);
     let who = ["lead", "test_lord", "test_knight"];
-    let faces = ShotDef {
-        at_ms: 10_000,
-        shot: Shot::Characters {
+    let faces = ShotDef::new(
+        10_000,
+        Shot::Characters {
             who: who.iter().map(|id| CharacterId((*id).to_owned())).collect(),
             expression: "neutral".to_owned(),
             from: Side::Right,
         },
-    };
+    );
     assert_eq!(test.shots[2], faces);
-    let logo = ShotDef {
-        at_ms: 16_000,
-        shot: Shot::Logo,
-    };
+    let logo = ShotDef::new(16_000, Shot::Logo);
     assert_eq!(test.shots[3], logo);
 }
 
@@ -98,10 +95,7 @@ fn the_title_cinematic_is_as_long_as_its_song_and_ends_on_the_logo() {
     assert_eq!(title.music.as_deref(), Some("title"));
     assert_eq!(title.length_ms, c.audio.music["title"].length_ms);
     assert_eq!(title.shots[0].at_ms, 0);
-    let logo = ShotDef {
-        at_ms: 115_800,
-        shot: Shot::Logo,
-    };
+    let logo = ShotDef::new(115_800, Shot::Logo);
     assert_eq!(title.shots.last(), Some(&logo));
     for shot in &title.shots {
         if let Shot::MapPan { battle, .. } = &shot.shot {

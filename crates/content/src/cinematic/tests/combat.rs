@@ -50,10 +50,7 @@ fn the_combat_test_cinematic_is_the_lead_attacking_the_brigand() {
     let c = content();
     let test = &c.cinematics["combat"];
     assert_eq!((test.music.as_deref(), test.length_ms), (None, 6000));
-    let fight = ShotDef {
-        at_ms: 0,
-        shot: Shot::Combat(shot()),
-    };
+    let fight = ShotDef::new(0, Shot::Combat(shot()));
     assert_eq!(test.shots, [fight]);
 }
 
