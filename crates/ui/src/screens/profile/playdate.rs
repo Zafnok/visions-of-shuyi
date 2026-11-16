@@ -84,7 +84,7 @@ pub fn paint(ctx: &Ctx, view: &ProfilesView, buf: &mut GlyphBuffer) {
     if let Some(question) = &view.deleting {
         ask_view(ctx, buf, question);
     }
-    centred(ctx, buf, height - 1, &view.help);
+    centred(ctx, buf, height - 1, &view.help.plain());
 }
 
 /// `row` at `(x, y)`, `x` the window's left edge: its label (the bar if
@@ -144,7 +144,7 @@ mod tests {
             leaving: None,
             deleting: None,
             message: None,
-            help: "help".to_owned(),
+            help: "help".into(),
         }
     }
 

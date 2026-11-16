@@ -234,7 +234,7 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(s.help(&c), "f yes · d no");
     let view = columns(&s, &c);
     let mut ask = AskView::new("Promote Test Knight to Iron Rider?", Vec::new());
-    ask.keys = Some("f yes / d no".into());
+    ask.keys = Some(yes_no());
     assert_eq!(
         view.question,
         Some(QuestionView {
@@ -643,4 +643,15 @@ fn reclass_result_snapshot() {
 fn class_change_declares_its_actions() {
     let screen = demo(&crate::screen::tests::ctx(), ChangeKind::Promote);
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::CLASS_CHANGE);
+}
+
+/// The engine's yes-or-no keys line (engine#2347): each key's name in a
+/// key span.
+fn yes_no() -> shuyi_ui::text::StyledText {
+    let mut keys = shuyi_ui::text::StyledText::new();
+    keys.push_key("f")
+        .push_plain(" yes / ")
+        .push_key("d")
+        .push_plain(" no");
+    keys
 }

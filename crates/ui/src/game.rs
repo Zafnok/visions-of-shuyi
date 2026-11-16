@@ -397,13 +397,9 @@ mod tests {
 
     #[test]
     fn pad_changes_become_pad_events_with_the_pressing_pads_kind() {
-        let mut pads = Pads::new(crate::input::StickDef {
-            press_percent: 50,
-            release_percent: 35,
-        });
-        let holding = |buttons: &[Button]| PadState {
-            buttons: buttons.iter().copied().collect(),
-            ..PadState::default()
+        let mut pads = Pads::new(crate::input::StickDef::new(50, 35));
+        let holding = |buttons: &[Button]| {
+            PadState::new(buttons.iter().copied().collect(), (0.0, 0.0), (0.0, 0.0))
         };
         let pad = |id, kind, buttons: &[Button]| (id, kind, holding(buttons));
         let sony = PadKind::PlayStation;

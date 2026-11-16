@@ -196,7 +196,7 @@ fn the_waiting_page_shows_its_key_and_marker_in_the_bottom_of_the_frame() {
     assert!(row(&buf, 14).ends_with("═ A ▼ ═╝"), "{}", row(&buf, 14));
     // The marker blinks: unlit, a gap in the frame.
     wait.marker = false;
-    wait.log_hint = Some("Menu log".to_owned());
+    wait.log_hint = Some("Menu log".into());
     view.text.waiting = Some(wait);
     let buf = painted(&view);
     assert!(

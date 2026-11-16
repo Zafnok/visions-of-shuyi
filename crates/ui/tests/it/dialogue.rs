@@ -111,7 +111,7 @@ fn waiting_reveals_the_text_so_one_press_moves_on() {
 fn skipping_asks_first() {
     let mut h = full_screen();
     h.keys("d");
-    let skip = SkipView::new("Skip scene?".to_owned(), "f yes / d no".to_owned());
+    let skip = SkipView::new("Skip scene?".to_owned(), yes_no());
     assert_eq!(view(&h).text.skip, Some(skip));
     // No: the scene goes on.
     h.keys("d");
@@ -424,4 +424,15 @@ fn skipping_asks_for_the_last_music_only() {
     // The scene is over; its music plays on.
     assert_eq!(h.top_screen(), "");
     assert_eq!(h.game().music().current(), Some("talk_calm"));
+}
+
+/// The engine's yes-or-no keys line (engine#2347): each key's name in a
+/// key span.
+fn yes_no() -> shuyi_ui::text::StyledText {
+    let mut keys = shuyi_ui::text::StyledText::new();
+    keys.push_key("f")
+        .push_plain(" yes / ")
+        .push_key("d")
+        .push_plain(" no");
+    keys
 }

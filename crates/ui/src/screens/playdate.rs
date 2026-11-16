@@ -292,7 +292,7 @@ pub enum Answers<'a> {
 /// one, its answers otherwise.
 pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, question: &AskView<T>) -> Rect {
     if let Some(keys) = &question.keys {
-        return ask(ctx, buf, &question.text, Answers::Hint(keys));
+        return ask(ctx, buf, &question.text, Answers::Hint(&keys.plain()));
     }
     let choices: Vec<_> = question
         .answers

@@ -942,7 +942,7 @@ impl DialogueScreen {
         let km = ctx.help_keys();
         let log_mapped = key_name(km, Action::DialogueLog) != km.not_mapped();
         let mut wait = WaitView::new(key_name(km, Action::Confirm), self.text.marker_lit());
-        wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]));
+        wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]).into());
         wait
     }
 }

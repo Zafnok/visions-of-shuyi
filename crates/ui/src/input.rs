@@ -207,7 +207,7 @@ mod tests {
     fn every_button_name_is_in_the_font() {
         let font = trpg_content::load_embedded().map_or_else(|e| panic!("{e:?}"), |c| c.font);
         let names = PadKind::ALL
-            .into_iter()
+            .iter()
             .flat_map(|kind| Button::ALL.iter().map(move |&b| kind.button_name(b)))
             .chain(pad::DIRECTION_SETS.map(|(name, _)| name));
         for name in names {
