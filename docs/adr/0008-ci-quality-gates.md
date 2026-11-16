@@ -6,7 +6,7 @@
 ## Context
 
 CI is the only reviewer. Nick requires free-tier tooling only (e.g. paid GitHub
-Advanced Security is out). The repository `Zafnok/tactical-rpg` is **public**,
+Advanced Security is out). The repository `Zafnok/visions-of-shuyi` is **public**,
 which matters: several tools that are paid for private repos are free for
 public ones.
 
