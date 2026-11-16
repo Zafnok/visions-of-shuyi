@@ -1,8 +1,13 @@
 # The packet and your entry, in plain words
 
-This page is a summary. **The confidentiality agreement you signed before
-getting this packet is what counts**; where the two differ, the agreement
-wins.
+This page is a summary. **The two agreements you signed with Ibasho Corp.
+before getting this packet, the confidentiality agreement and the Writer
+Trial and AI Voice Acknowledgment, are what count**; where this page
+differs, they win. "I" on this page is Nick, writing for Ibasho Corp.
+
+## Who can apply
+
+You must be 18 or older. Applicants from any country are welcome.
 
 ## The packet
 
@@ -32,11 +37,14 @@ wins.
 The game's spoken lines are made with AI voice synthesis. If I hire you,
 the lines you write for the game will be given to a voice model to make
 them spoken. Your trial entry won't be, unless I hire you and we agree to
-use it. If you have any concern about this, ethical or otherwise, tell me
-right away.
+use it. I won't record, clone or synthesize your own voice, and I won't
+use your writing to train an AI model. If you have any concern about
+this, ethical or otherwise, tell me right away.
 
 ## The job
 
 The trial is unpaid. What the writer I pick is offered (a share of the
 game's revenue after launch) will be in a written agreement before any
-work beyond the trial.
+work beyond the trial. If either of us needs to stop partway through,
+either side can end it with two weeks' notice. The agreement says what
+happens to work already done.
