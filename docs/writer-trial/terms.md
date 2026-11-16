@@ -9,9 +9,21 @@ differs, they win. "I" on this page is Nick, writing for Ibasho Corp.
 
 You must be 18 or older. Applicants from almost any country are welcome.
 Ibasho Corp. is a US company, so it can't take work from or pay anyone
-who lives in a country or region under US sanctions, or who is on a US
-sanctions list. If you aren't sure whether that includes you, ask me
-before you start.
+who lives in a country or region under a US embargo, or who is on a US
+sanctions list. Today (November 2026) the embargoed places are:
+
+- Cuba
+- Iran
+- North Korea
+- the Crimea region of Ukraine, and the areas of Ukraine called the
+  Donetsk and Luhansk "People's Republics"
+
+If you aren't sure whether that includes you, ask me before you start.
+
+If the US adds the country or region where you live to that list later,
+I have to stop paying you from that day. If your work for the game isn't
+finished by then, our agreement ends and I'll hire another writer to
+finish it.
 
 ## The packet
 
