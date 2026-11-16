@@ -19,7 +19,7 @@
 
 brief.md                 docs/writer-trial/brief.md
 terms.md                 docs/writer-trial/terms.md
-cheat-sheet.md           assets-private/story/cheat-sheet.md        A scene with all of it | Direction | Emotion | Names | Conditions | Choices | Stage | Limits | Rules that may get
+cheat-sheet.md           assets-private/story/trial/cheat-sheet.md
 
 # Colors and indenting for VS Code users (ticket 0768): copied whole.
 vscode-dlg/README.md                         tools/vscode-dlg/README.md
@@ -27,15 +27,12 @@ vscode-dlg/package.json                      tools/vscode-dlg/package.json
 vscode-dlg/language-configuration.json       tools/vscode-dlg/language-configuration.json
 vscode-dlg/syntaxes/dlg.tmLanguage.json      tools/vscode-dlg/syntaxes/dlg.tmLanguage.json
 
-story/1-world.md         assets-private/story/bible.md              Premise | Geography | Factions | Rules of magic | Glossary
-story/2-the-arc.md       assets-private/story/outline.md            The shape of the game | Act 1 | Act 2 | Act 3
-story/3-chapter-1.md     assets-private/story/chapters/ch01.md      Cast on screen | What the chapter must do | Scenes | Continuity notes
-
-story/4-characters.md    assets-private/story/characters/lead.md         Situation at the start | Reply tones | Voice notes
-story/4-characters.md    assets-private/story/characters/retainer.md     At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/sergeant.md     At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/poacher.md      At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/keeper.md       At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/heretic.md      At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/rival.md        At a glance | Voice card
-story/4-characters.md    assets-private/story/characters/red_captain.md  At a glance
+# The story pages are copies made for applicants (2026-11-15, Nick: "we
+# should probably be sending in pruned / prettified versions"): cut from
+# the bible, the outline, Chapter 1's beat sheet and the character sheets,
+# with the internal notes taken out and the beats the draft doesn't have
+# pruned. Change them in assets-private/story/trial/, not here.
+story/1-world.md         assets-private/story/trial/1-world.md
+story/2-the-arc.md       assets-private/story/trial/2-the-arc.md
+story/3-chapter-1.md     assets-private/story/trial/3-chapter-1.md
+story/4-characters.md    assets-private/story/trial/4-characters.md
