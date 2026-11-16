@@ -10,13 +10,17 @@ differs, they win. "I" on this page is Nick, writing for Ibasho Corp.
 You must be 18 or older. Applicants from almost any country are welcome.
 Ibasho Corp. is a US company, so it can't take work from or pay anyone
 who lives in a country or region under a US embargo, or who is on a US
-sanctions list. Today (November 2026) the embargoed places are:
+sanctions list. As of November 15, 2026, the embargoed places are:
 
 - Cuba
 - Iran
 - North Korea
 - the Crimea region of Ukraine, and the areas of Ukraine called the
   Donetsk and Luhansk "People's Republics"
+
+The US Treasury's sanctions office (OFAC) keeps the official list:
+https://ofac.treasury.gov/sanctions-programs-and-country-information.
+Where this page and OFAC's differ, OFAC's is right.
 
 If you aren't sure whether that includes you, ask me before you start.
 
