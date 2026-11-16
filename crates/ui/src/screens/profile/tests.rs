@@ -64,7 +64,7 @@ fn the_export_key_exports_the_profile_under_the_cursor() {
         .game()
         .ctx()
         .text_with("profile.help.list_export_folder", &[]);
-    assert_eq!(view.list.help, help);
+    assert_eq!(view.list.help.plain(), help);
     h.keys("Down e");
     let names: Vec<&str> = h.offered().iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(names, ["visions-of-shuyi-mei-2.ron"]);

@@ -107,7 +107,7 @@ fn message(h: &Harness) -> String {
 
 /// The help line.
 fn help(h: &Harness) -> String {
-    view(h).help
+    view(h).help.plain()
 }
 
 #[test]

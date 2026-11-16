@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0250", "engine#2347", "engine#3215"]
+blocked_by: ["0250", "engine#3215"]
 nick_input: none
 completed:
 ---
@@ -48,8 +48,10 @@ playtest's checklist (1064).
 ## Scope
 
 **In:**
-- Move the engine pin past engine#2347 and engine#3215 (`engine-change`
-  §7); fix what the pin move breaks.
+- Move the engine pin past engine#3215 (`engine-change` §7); fix what
+  the pin move breaks. (engine#2347 is in the pin since the pin move of
+  2026-11-16, which already switched the game's call sites to its
+  `StyledText` with no key roles: `.into()` and `.plain()`.)
 - The game's views that name keys hold `StyledText`, built with
   `ctx.text_styled` / `help_line_styled`: the battle's help bars
   (`crates/ui/src/screens/battle/`), the text box's corner (`b log

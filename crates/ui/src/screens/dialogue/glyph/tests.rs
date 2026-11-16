@@ -406,7 +406,7 @@ fn a_waiting_page_shows_its_key_and_the_blinking_arrow() {
     assert!(row(&painted(&view), arrow_row).ends_with(" f    │"));
     // The log's hint, three cells before the key.
     if let Some(waiting) = &mut view.text.waiting {
-        waiting.log_hint = Some("b log".to_owned());
+        waiting.log_hint = Some("b log".into());
     }
     assert!(row(&painted(&view), arrow_row).ends_with(" b log   f    │"));
 }

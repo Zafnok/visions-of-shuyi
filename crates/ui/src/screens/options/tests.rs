@@ -367,7 +367,7 @@ fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
     c.game.campaign_mode = Some(GameMode::Classic);
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let mut s = on(Row::Tutorial);
-    assert_eq!(s.help(&c), "arrows move · f change · d back");
+    assert_eq!(s.help(&c).plain(), "arrows move · f change · d back");
     // Left stops at Full; right steps to Short, then None, and stops.
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Full));
@@ -460,12 +460,15 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     c.game.campaign_mode = Some(GameMode::Classic);
     c.game.mode_switch = ModeSwitch::Open;
     let mut s = on(Row::GameMode);
-    assert_eq!(s.help(&c), "arrows move · f switch to Casual · d back");
+    assert_eq!(
+        s.help(&c).plain(),
+        "arrows move · f switch to Casual · d back"
+    );
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     // The key that asked isn't the answer.
     assert_eq!(s.asking(), Some(Question::SwitchToCasual.key()));
     assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
-    assert_eq!(s.help(&c), "f yes · d no");
+    assert_eq!(s.help(&c).plain(), "f yes · d no");
     // Nothing but the answers does anything.
     press(&mut s, &mut c, &[Action::CursorDown, Action::CursorRight]);
     assert_eq!((focus(&s, &c), s.asking().is_some()), (Row::GameMode, true));
@@ -481,7 +484,7 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     assert_eq!(s.message(), Some(CASUAL_MESSAGE));
     assert_eq!(sounds(&mut c), ["menu_select"]);
     // Casual offers nothing.
-    assert_eq!(s.help(&c), "arrows move · d back");
+    assert_eq!(s.help(&c).plain(), "arrows move · d back");
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.asking(), None);
     assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
@@ -494,7 +497,7 @@ fn classic_cant_switch_where_the_switch_is_closed() {
     let mut c = ctx();
     c.game.campaign_mode = Some(GameMode::Classic);
     let mut s = on(Row::GameMode);
-    assert_eq!(s.help(&c), "arrows move · d back");
+    assert_eq!(s.help(&c).plain(), "arrows move · d back");
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     assert_eq!(s.asking(), None);
     assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
@@ -515,7 +518,7 @@ fn reset_tips_forgets_the_tips_seen() {
     seen.mark("first_move", &mut c.storage);
     assert!(TipsSeen::load(&c.storage).contains("first_move"));
     let mut s = on(Row::ResetTips);
-    assert_eq!(s.help(&c), "arrows move · f reset · d back");
+    assert_eq!(s.help(&c).plain(), "arrows move · f reset · d back");
     // Nick: it asks first.
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     assert_eq!(s.asking(), Some(Question::ResetTips.key()));
@@ -544,7 +547,7 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     .unwrap();
     let changed = c.settings().clone();
     let mut s = on(Row::RestoreDefaults);
-    assert_eq!(s.help(&c), "wasd move · j restore · k back");
+    assert_eq!(s.help(&c).plain(), "wasd move · j restore · k back");
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.asking(), Some(Question::RestoreDefaults.key()));
     press(&mut s, &mut c, &[Action::Cancel]);
@@ -629,10 +632,13 @@ fn discard_puts_every_setting_back_and_saves_nothing() {
 #[test]
 fn help_names_what_confirm_does_on_each_kind_of_row() {
     let c = ctx();
-    assert_eq!(screen().help(&c), "arrows move · f change · d back");
-    assert_eq!(on(Row::Layout).help(&c), "arrows move · f open · d back");
+    assert_eq!(screen().help(&c).plain(), "arrows move · f change · d back");
     assert_eq!(
-        on(Row::KeyBindings).help(&c),
+        on(Row::Layout).help(&c).plain(),
+        "arrows move · f open · d back"
+    );
+    assert_eq!(
+        on(Row::KeyBindings).help(&c).plain(),
         "arrows move · f open · d back"
     );
 }

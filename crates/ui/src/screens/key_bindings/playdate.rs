@@ -115,7 +115,7 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
     if let Some(message) = &view.message {
         footer(ctx, buf, rect, message);
     }
-    centred(ctx, buf, bottom, &view.help);
+    centred(ctx, buf, bottom, &view.help.plain());
     if let (Some(choices), Some(y)) = (&view.choices, focused_y) {
         paint_choices(ctx, buf, choices, rect, y);
     }

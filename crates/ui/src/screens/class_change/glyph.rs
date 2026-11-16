@@ -227,11 +227,16 @@ fn paint_column(ctx: &Ctx, view: &ColumnsView, column: &ColumnView, buf: &mut Gl
 fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let keys = question.ask.keys.as_deref().unwrap_or_default();
+    let keys = question
+        .ask
+        .keys
+        .as_ref()
+        .map(shuyi_ui::text::StyledText::plain)
+        .unwrap_or_default();
     let lines = [
         (question.ask.text.as_str(), UiColor::Text),
         (question.cost.as_str(), UiColor::Text),
-        (keys, UiColor::TextDim),
+        (keys.as_str(), UiColor::TextDim),
     ];
     let widest = lines.iter().map(|(l, _)| l.chars().count()).max();
     let w = i32::try_from(widest.unwrap_or(0)).unwrap_or(0) + 4;

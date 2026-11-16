@@ -17,7 +17,7 @@ fn focus_and_help(h: &Harness) -> (Option<Layout>, String) {
     let screen = h.game().screen::<LayoutPickerScreen>();
     let screen = screen.unwrap_or_else(|| panic!("no layout picker"));
     let view = screen.view(h.game().ctx());
-    (view.focused().map(|l| l.layout), view.help)
+    (view.focused().map(|l| l.layout), view.help.plain())
 }
 
 /// The title's help line.

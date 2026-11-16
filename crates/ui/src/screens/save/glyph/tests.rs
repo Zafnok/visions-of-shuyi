@@ -221,7 +221,7 @@ fn the_overwrite_question_is_a_double_box_in_the_middle() {
     let c = ctx();
     let mut asking = view();
     let mut question = AskView::new("Overwrite slot 02?", Vec::new());
-    question.keys = Some("f yes / d no".to_owned());
+    question.keys = Some("f yes / d no".into());
     asking.question = Some(question);
     let mut buf = stale(&c);
     paint_slots(&c, &asking, &mut buf);

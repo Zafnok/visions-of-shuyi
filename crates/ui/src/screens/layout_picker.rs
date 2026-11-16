@@ -103,6 +103,6 @@ mod tests {
         assert_eq!(legend(1)[..3], ["wasd move", "j select", "k/Escape back"]);
         assert_eq!(view.layouts[0].name, "Right-handed");
         assert_eq!(label(&c, LEFT_HANDED), "Left-handed");
-        assert!(change(&c).view(&c).help.contains("back"));
+        assert!(change(&c).view(&c).help.plain().contains("back"));
     }
 }

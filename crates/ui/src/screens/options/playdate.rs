@@ -60,7 +60,7 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     if let Some(message) = &view.message {
         footer(ctx, buf, rect, message);
     }
-    centred(ctx, buf, bottom, &view.help);
+    centred(ctx, buf, bottom, &view.help.plain());
     if let Some(question) = &view.question {
         ask_view(ctx, buf, question);
     }

@@ -54,13 +54,13 @@ pub const FEMALE: &str = "f";
 /// What the game's packs keep to besides English: the rules of tips and
 /// lessons, the lead's tokens, the dialogue box, and a line's text for
 /// each gender of the lead.
-pub const RULES: PackRules<'static> = PackRules {
-    data_problem: data::text_problem,
-    tokens: &LeadTokens,
-    limits: LIMITS,
-    variants: &[MALE, FEMALE],
-    widths: &shuyi_assets::font::CellWidths::NARROW,
-};
+pub const RULES: PackRules<'static> = PackRules::new(
+    data::text_problem,
+    &LeadTokens,
+    LIMITS,
+    &shuyi_assets::font::CellWidths::NARROW,
+)
+.with_variants(&[MALE, FEMALE]);
 
 /// The variant of a pack's line said of a lead of `gender`.
 pub const fn variant(gender: LeadGender) -> &'static str {

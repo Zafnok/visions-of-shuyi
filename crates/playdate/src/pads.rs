@@ -31,14 +31,15 @@ const PAD: usize = 0;
 
 /// The pad state of the buttons whose bits are set in `bits`.
 pub fn state(bits: u32) -> PadState {
-    PadState {
-        buttons: BUTTONS
+    PadState::new(
+        BUTTONS
             .iter()
             .filter(|&&(bit, _)| bits & bit != 0)
             .map(|&(_, button)| button)
             .collect(),
-        ..PadState::default()
-    }
+        (0.0, 0.0),
+        (0.0, 0.0),
+    )
 }
 
 /// The Playdate's buttons, read once per frame.
@@ -76,10 +77,7 @@ mod tests {
     const A: u32 = 32;
 
     fn pad() -> PlaydatePad {
-        PlaydatePad::new(StickDef {
-            press_percent: 50,
-            release_percent: 35,
-        })
+        PlaydatePad::new(StickDef::new(50, 35))
     }
 
     fn down(button: Button) -> RawInputEvent {
