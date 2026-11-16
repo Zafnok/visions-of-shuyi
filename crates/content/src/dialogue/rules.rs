@@ -187,7 +187,7 @@ impl SceneRules<Stage> for Rules<'_> {
     fn speech_problem(&self, speaker: &CharacterId, cells: usize) -> Option<String> {
         (speaker.0 == LEAD_ID && cells > MAX_LEAD_LINE_LEN).then(|| {
             format!(
-                "the lead's line is {cells} characters; the limit is {MAX_LEAD_LINE_LEN}: \
+                "the lead's line is {cells} cells; the limit is {MAX_LEAD_LINE_LEN}: \
                  the lead speaks in short, neutral lines and otherwise through reply \
                  choices (assets-private/story/design/setting-and-tone.md, \"Rules for writing the lead\")"
             )

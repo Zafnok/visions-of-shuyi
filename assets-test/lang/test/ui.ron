@@ -1585,6 +1585,7 @@
     (key: "preview.switch.strip", source: "Strip: file, line, direction, faces", text: "STRIP: FILE, LINE, DIRECTION, FACES"),
     (key: "preview.lines.go_to", source: "Go to line", text: "GO TO LINE"),
     (key: "preview.note.no_scenes", source: "No scenes. Drag your dialogue folder onto this program, or put the program beside it", text: "NO SCENES. DRAG YOUR DIALOGUE FOLDER ONTO THIS PROGRAM, OR PUT THE PROGRAM BESIDE IT"),
+    (key: "preview.note.no_scenes_drop", source: "No scenes. Drop your .dlg files here", text: "NO SCENES. DROP YOUR .DLG FILES HERE"),
     (key: "preview.note.no_scene", source: "Pick a scene first", text: "PICK A SCENE FIRST"),
     (key: "preview.note.no_problems", source: "No problems", text: "NO PROBLEMS"),
     (key: "preview.note.finished", source: "The scene is over: pick a line to play it again", text: "THE SCENE IS OVER: PICK A LINE TO PLAY IT AGAIN"),

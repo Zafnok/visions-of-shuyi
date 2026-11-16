@@ -1,6 +1,6 @@
 tactical-rpg Source-Available License, version 1.0
 
-Copyright (c) 2026 Nick Wentz. All rights reserved.
+Copyright (c) 2026 Ibasho Corp. All rights reserved.
 
 This repository is public so that people can see how the game is made. Being
 able to see it does not mean you may use it however you like. This is NOT an
@@ -10,7 +10,7 @@ open-source license.
 1. Definitions
 --------------------------------------------------------------------------------
 
-"Licensor" means Nick Wentz.
+"Licensor" means Ibasho Corp.
 
 "Software" means everything in this repository and every build made from it:
 source code, data files, maps, dialogue and story text, characters, ASCII art,
@@ -48,7 +48,7 @@ You may, free of charge and for non-Commercial purposes only:
   b. use it in teaching and learning (for example classes, workshops, study
      groups, and non-Commercial articles, talks or videos about how it works);
   c. quote short excerpts of source code or text, with attribution to
-     "tactical-rpg by Nick Wentz" and a link to this repository.
+     "tactical-rpg by Ibasho Corp." and a link to this repository.
 
 You may not distribute builds of the Software or substantial portions of it
 under this section.

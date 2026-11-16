@@ -246,10 +246,10 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
         h.frame(&[event], 1.0 / 30.0);
     };
     let pad = PadKind::Playdate;
-    frame(&mut h, RawInputEvent::PadDown(Button::West, pad));
-    frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad));
-    frame(&mut h, RawInputEvent::PadUp(Button::DpadDown));
-    frame(&mut h, RawInputEvent::PadUp(Button::West));
+    frame(&mut h, RawInputEvent::PadDown(Button::West, pad, 0));
+    frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad, 0));
+    frame(&mut h, RawInputEvent::PadUp(Button::DpadDown, 0));
+    frame(&mut h, RawInputEvent::PadUp(Button::West, 0));
     assert_eq!(h.top_screen(), "key_bindings");
     let (_, view) = kb(&h);
     let chord = |h: &Harness| h.game().ctx().pad_bindings().slots(Action::DangerZone)[0];
@@ -1006,7 +1006,7 @@ fn with_every_kind_of_shot(ctx: &mut Ctx) {
         from: Side::Right,
     };
     let shots = [(15_000, talk), (30_750, faces), (48_000, pan)];
-    let shots = shots.map(|(at_ms, shot)| ShotDef { at_ms, shot });
+    let shots = shots.map(|(at_ms, shot)| ShotDef::new(at_ms, shot));
     title.shots.splice(1..1, shots);
 }
 

@@ -5,6 +5,8 @@
 //! dragged onto the program, or the folder of a file dragged onto it),
 //! else `dialogue/` beside the program, as in a clone of the writer's
 //! mirror; with neither it starts on no scenes and says how to start it.
+//! A `.dlg` file dropped on the window joins the folder: the web build
+//! (ticket 0767) starts on no scenes and plays the files dropped on its page.
 //!
 //! The kit's build embeds none of the game's scripts (`shuyi.ron`'s
 //! `story-preview` edition): it holds only the scenes of its folder.
@@ -20,7 +22,6 @@ mod app_info;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
 
-use macroquad::window::Conf;
 use shuyi::assets::bundle::Layer;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, Window};
@@ -87,7 +88,9 @@ fn folder() -> Result<Layer, String> {
     }
 }
 
-/// On the web, which has no folders (dropped files are 0767's): none.
+/// On the web, which has no folders: none. The writer drops their `.dlg`
+/// files on the page, which join it (ticket 0767,
+/// [`trpg_ui::story_preview::hear`]).
 #[cfg(target_arch = "wasm32")]
 fn folder() -> Result<Layer, String> {
     no_folder()
@@ -113,10 +116,6 @@ fn config() -> AppConfig {
     config
 }
 
-fn window_conf() -> Conf {
-    shuyi_app::window_conf(&WINDOW)
-}
-
 /// The folder, once a packed build has its files: the pack beside the
 /// program, laid in the bundle before anything reads a file, as the game's
 /// (`crates/app/src/main.rs`, ADR-0120). A pack that is missing or broken is the start's
@@ -131,10 +130,9 @@ fn startup() -> Result<Layer, String> {
     folder()
 }
 
-#[macroquad::main(window_conf)]
-async fn main() {
+fn main() {
     let start = trpg_ui::story_preview::start(WINDOW.title, startup());
-    shuyi_app::run(config(), start).await;
+    shuyi_app::run_app(config(), start);
 }
 
 #[cfg(test)]

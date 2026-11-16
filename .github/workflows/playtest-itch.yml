@@ -2,11 +2,10 @@ name: Playtest page
 
 # Nick's full web build (ticket 0158): the whole game, with the bought art,
 # the game's content from the private repository (ADR-0117) and the debug
-# tools, as Pages had it before the content went private. It goes to a
-# restricted itch.io project behind a password, the repository variable
-# ITCH_PLAYTEST_PROJECT (`<user>/<project>`), channel `web`
-# (`docs/releasing.md`, "Where each build goes"). Pages (pages.yml) keeps the
-# public files only.
+# tools. It goes to a restricted itch.io project behind a password, the
+# repository variable ITCH_PLAYTEST_PROJECT (`<user>/<project>`), channel
+# `web` (`docs/releasing.md`, "Where each build goes"). There is no public
+# web build: GitHub Pages is off (ticket 0920, ADR-0127).
 #
 # One job builds and pushes, as demo.yml does: nothing with the content
 # becomes a GitHub artifact, since a public repository's artifacts can be
@@ -48,6 +47,14 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No gate reads the bought art, so this is where it is checked with
+      # the game's content: everything loads with the art laid over it, and
+      # a build that ships (the art, no test files) loads too. This is the
+      # only place it runs.
+      - name: Check the content loads with the bought art
+        run: >-
+          cargo test -p trpg-content --locked --features private-assets
+          --test it private_assets::
       # --debug-tools: Quick Battle on the title screen (ADR-0023).
       - env:
           PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}

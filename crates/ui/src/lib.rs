@@ -34,6 +34,8 @@ pub mod game;
 pub mod glyph_buffer;
 #[cfg(any(test, feature = "harness"))]
 pub mod harness;
+#[cfg(feature = "std")]
+pub mod hot;
 pub mod input;
 pub mod lang_keys;
 pub mod map_view;
@@ -67,7 +69,7 @@ pub use screen::{
     Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
 };
 pub use settings::{PortraitStyle, Settings, ShuyiSettings};
-pub use shuyi_ui::PlatformFacts;
+pub use shuyi_ui::{FileDrops, PlatformFacts};
 pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};
 pub use trpg_content::ImageId;

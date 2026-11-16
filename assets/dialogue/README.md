@@ -6,13 +6,14 @@ They are loaded by `trpg_content::dialogue` and validated by the all-assets
 test (ADR-0005), so a broken script fails CI with `file:line: message`.
 The dialogue screen (ticket 0704) plays them one text box at a time.
 
-`cargo xtask check-script [file]` runs the same checks on the scripts
-alone, and `cargo run -p trpg-app -- --scene <id>` opens the game on one
-scene. A gentler introduction for a writer new to the repository:
-`assets-private/story/writers-guide.md`. An outside writer works in a
-private mirror of the scripts, this file and the story's documents, and
-checks scripts there with `story-check`, the same checks as a program
-(ticket 0152, ADR-0122).
+The same checks run on the scripts alone as `story-check [folder or
+file]`, and as the Problems tab of `story-preview`, which plays a folder's
+scenes in the game's text box: the two programs of the writer's kit
+(tickets 0152 and 0764). In the game's repository they are `cargo xtask
+check-script [file]` and `cargo run -p trpg-app -- --scene <id>`. A
+writer's introduction to the format: `story/cheat-sheet.md`, one page,
+and `story/writers-guide.md` (in the game's repository, under
+`assets-private/`).
 
 ## A full example
 

@@ -109,20 +109,17 @@ impl Screen<Shuyi> for SpriteTestScreen {
             buf.add_sprite(card_at(col, top, scale));
         }
         label(buf, 32, labels, "flipped");
-        buf.add_sprite(Sprite {
-            flip_x: true,
-            ..card_at(32, top, BIG)
-        });
+        let mut sprite = card_at(32, top, BIG);
+        sprite.flip_x = true;
+        buf.add_sprite(sprite);
         label(buf, 46, labels, "top-right quarter");
-        buf.add_sprite(Sprite {
-            src: Rect::new(width / 2, 0, width / 2, height / 2),
-            ..card_at(46, top, BIG)
-        });
+        let mut sprite = card_at(46, top, BIG);
+        sprite.src = Rect::new(width / 2, 0, width / 2, height / 2);
+        buf.add_sprite(sprite);
         label(buf, 66, labels, "under the glyphs");
-        buf.add_sprite(Sprite {
-            layer: Layer::Under,
-            ..card_at(66, top, BIG)
-        });
+        let mut sprite = card_at(66, top, BIG);
+        sprite.layer = Layer::Under;
+        buf.add_sprite(sprite);
         for (row, line) in (top..).zip(OVER_TEXT) {
             buf.print_fg(66, row, line, black);
         }
@@ -134,11 +131,10 @@ impl Screen<Shuyi> for SpriteTestScreen {
         label(buf, LEFT, labels, "half opacity");
         buf.fill_rect(panel, Cell::new(' ', text, panel_bg));
         buf.draw_box(panel, BoxStyle::Single, c(UiColor::PanelBorder), panel_bg);
-        buf.add_sprite(Sprite {
-            opacity: HALF,
-            // Inside the panel's border, a cell clear of it on each side.
-            ..card_at(4, top + 1, BIG)
-        });
+        // Inside the panel's border, a cell clear of it on each side.
+        let mut sprite = card_at(4, top + 1, BIG);
+        sprite.opacity = HALF;
+        buf.add_sprite(sprite);
         label(buf, 22, labels, "cut by a box drawn after it");
         buf.add_sprite(card_at(22, top + 1, BIG));
         // Over the picture's right half, from its third row down.
@@ -162,6 +158,12 @@ mod tests {
     use super::*;
     use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
+
+    /// `sprite` with `change` made to it.
+    fn with(mut sprite: Sprite, change: impl FnOnce(&mut Sprite)) -> Sprite {
+        change(&mut sprite);
+        sprite
+    }
 
     fn draw(ctx: &Ctx) -> GlyphBuffer {
         let p = &ctx.palette;
@@ -197,31 +199,13 @@ mod tests {
                 at(16, 48, 16),
                 at(64, 48, 48),
                 at(144, 48, 80),
-                Sprite {
-                    flip_x: true,
-                    ..at(256, 48, 80)
-                },
-                Sprite {
-                    src: Rect::new(8, 0, 8, 8),
-                    ..at(368, 48, 80)
-                },
-                Sprite {
-                    layer: Layer::Under,
-                    ..at(528, 48, 80)
-                },
-                Sprite {
-                    opacity: 128,
-                    ..at(32, 208, 80)
-                },
+                with(at(256, 48, 80), |s| s.flip_x = true),
+                with(at(368, 48, 80), |s| s.src = Rect::new(8, 0, 8, 8)),
+                with(at(528, 48, 80), |s| s.layer = Layer::Under),
+                with(at(32, 208, 80), |s| s.opacity = 128),
                 // Cut by the text box: the rows above it, and the left half.
-                Sprite {
-                    clip: Rect::new(176, 208, 80, 32),
-                    ..cut
-                },
-                Sprite {
-                    clip: Rect::new(176, 240, 40, 48),
-                    ..cut
-                },
+                with(cut, |s| s.clip = Rect::new(176, 208, 80, 32)),
+                with(cut, |s| s.clip = Rect::new(176, 240, 40, 48)),
             ]
         );
         // Only sprites: no rectangles stand in for a picture.

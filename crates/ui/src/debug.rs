@@ -523,10 +523,7 @@ mod tests {
         // No voices: only the menu's own sound.
         assert_eq!(choose(&mut ctx, &mut menu), []);
         ctx.set_voice_manifest(&manifest);
-        let play = |i: usize| AudioRequest::PlayVoice {
-            line: lines[i].clone(),
-            variant: Variant::None,
-        };
+        let play = |i: usize| AudioRequest::play_voice(lines[i].clone(), Variant::None);
         let preload = AudioRequest::PreloadVoices {
             lines: lines.iter().map(|l| (l.clone(), Variant::None)).collect(),
         };

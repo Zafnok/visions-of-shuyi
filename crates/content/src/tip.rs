@@ -267,7 +267,7 @@ mod tests {
         assert!(has("the title must be"), "{all:?}");
         assert!(has("unknown placeholder {Nope}"), "{all:?}");
         assert!(has("1 to 3 lines"), "{all:?}");
-        assert!(has("over 60 characters"), "{all:?}");
+        assert!(has("over 60 cells"), "{all:?}");
     }
 
     #[test]

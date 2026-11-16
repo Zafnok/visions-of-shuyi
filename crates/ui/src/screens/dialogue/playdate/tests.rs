@@ -49,11 +49,7 @@ fn replies(labels: &[&str], focus: usize) -> MenuView {
         enabled: true,
         focused: i == focus,
     };
-    MenuView {
-        items: labels.iter().enumerate().map(item).collect(),
-        first_shown: 0,
-        shown: labels.len(),
-    }
+    MenuView::new(labels.iter().enumerate().map(item).collect())
 }
 
 fn painted(view: &DialogueView) -> GlyphBuffer {
@@ -213,10 +209,10 @@ fn the_waiting_page_shows_its_key_and_marker_in_the_bottom_of_the_frame() {
 #[test]
 fn the_skip_question_is_asked_in_the_box() {
     let mut view = two_speakers(&["Hi."]);
-    view.text.skip = Some(SkipView {
-        question: "Skip this scene?".to_owned(),
-        answers: "A yes · B no".to_owned(),
-    });
+    view.text.skip = Some(SkipView::new(
+        "Skip this scene?".to_owned(),
+        "A yes · B no".to_owned(),
+    ));
     let buf = painted(&view);
     assert_eq!(find(&buf, 11, "Skip this scene?"), Some(TEXT_X));
     assert_eq!(find(&buf, 12, "A yes · B no"), Some(TEXT_X));

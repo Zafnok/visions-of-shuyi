@@ -1174,11 +1174,9 @@ mod tests {
         let s = drawn(struck(0.5, 0.0));
         assert_eq!(s.len(), 6);
         assert_eq!(s[..5], plain[..]);
-        let over = Sprite {
-            paint: light,
-            opacity: 128,
-            ..s[4]
-        };
+        let mut over = s[4];
+        over.paint = light;
+        over.opacity = 128;
         assert_eq!(s[5], over);
         assert_ne!(s[4].paint, light);
         // A struck unit that has acted is lit all the same.

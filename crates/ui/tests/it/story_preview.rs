@@ -3,13 +3,17 @@
 //! character sent away and the `@else` line played, a jump to a line, a
 //! saved change and a broken file read through the headless backend's
 //! `change_file` with debug tools off, the page of names and faces, and two
-//! scenes of Chapter 1 alone checked as a trial packet.
+//! scenes of Chapter 1 alone checked as a trial packet, and the web's
+//! start (ticket 0767): no scenes until the writer drops a `.dlg` file;
+//! the trial's page of names over the demo's bundle (ticket 0771); and
+//! a scene played to its end back on the Scenes tab (ticket 0770).
 
 use std::collections::BTreeMap;
 
 use shuyi_assets::bundle::Layer;
+use shuyi_ui::FileDrops;
 use shuyi_ui::dialogue::preview::{PreviewView, Tab};
-use trpg_content::bundle::skip_without_the_game;
+use trpg_content::bundle::{self, Bundle, skip_without_the_game};
 use trpg_core::LeadGender;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_ui::harness::{Core, FRAME_DT};
@@ -49,8 +53,10 @@ fn preview_of(files: &[(&str, &str)]) -> (Core, Layer) {
     let folder = Layer::owned("dialogue".to_owned(), files).unwrap_or_else(|e| panic!("{e:?}"));
     let mut ctx = story_preview::ctx().unwrap_or_else(|e| panic!("{e}"));
     ctx.use_layout(RIGHT_HANDED);
+    // As on the desktop and the web: a file dropped on the window is heard.
+    ctx.platform = ctx.platform.with_file_drops(FileDrops::Heard);
     let game = story_preview::game(ctx, folder).unwrap_or_else(|e| panic!("{e}"));
-    let mut h = Core::new(game);
+    let mut h = Core::new(game).with_system_hook(story_preview::hear);
     h.watch_files(true);
     h.wait(FRAME_DT);
     (h, folder)
@@ -252,6 +258,30 @@ fn a_saved_change_plays_on_the_next_frame_from_the_same_text_box() {
 }
 
 #[test]
+fn a_dropped_file_joins_an_empty_folder_and_plays_and_dropped_again_changed_plays_again() {
+    // The web's start: no folder, so no scenes, and the note says to drop one.
+    let (mut h, _) = preview_of(&[]);
+    assert_eq!(view(&h).scenes, []);
+    let note = view(&h).note.unwrap_or_default();
+    assert_eq!(note, h.ctx().text("preview.note.no_scenes_drop"));
+    // A file of another kind is left out.
+    h.drop_file("notes.txt", b"@scene notes\n> No.\n@end\n".to_vec());
+    assert_eq!(view(&h).scenes, []);
+    h.drop_file("trial.dlg", TRIAL.as_bytes().to_vec());
+    let ids: Vec<String> = view(&h).scenes.into_iter().map(|s| s.id).collect();
+    assert_eq!(ids, ["trial", "trial_two"]);
+    assert_eq!(view(&h).problems, []);
+    h.act(Action::Confirm);
+    act(&mut h, &[Action::Confirm, Action::Confirm]);
+    assert_eq!(shown(&h), "You're late.");
+    // Saved and dropped again: the change plays from the same text box.
+    let reworded = TRIAL.replace("You're late.", "You're late again.");
+    h.drop_file("trial.dlg", reworded.into_bytes());
+    assert_eq!(shown(&h), "You're late again.");
+    assert_eq!(view(&h).playing.map(|p| p.text_box), Some(1));
+}
+
+#[test]
 fn a_broken_file_shows_its_problem_and_keeps_the_last_good_scene_playing() {
     let (mut h, folder) = preview();
     h.act(Action::Confirm);
@@ -315,6 +345,45 @@ fn unit_info_opens_the_names_and_the_faces_and_closes_them() {
     let declared = screen(&h).actions().unwrap_or_default();
     assert!(declared.contains(&Action::Info));
     assert!(h.screen_mut::<StoryPreview>().is_some());
+}
+
+/// The first parts of the rows of the page of names and faces, opened on
+/// a preview of an empty folder over the bundle installed.
+fn names_on_the_page() -> Vec<String> {
+    let (mut h, _) = preview_of(&[]);
+    h.act(Action::Info);
+    let page = game_view(&h).reference.unwrap_or_else(|| panic!("no page"));
+    page.rows
+        .into_iter()
+        .filter_map(|r| match r {
+            ReferenceRow::Entry(token, _) => Some(token),
+            ReferenceRow::Heading(_) => None,
+        })
+        .collect()
+}
+
+/// Ticket 0771: the trial's web preview (the `story-trial` edition) is
+/// built on the demo's bundle, less the scripts, so its page of names and
+/// faces lists Chapter 1's cast and nobody met later; the kit's
+/// (`story-preview`), on the whole game, lists them all.
+#[test]
+fn the_trials_page_of_names_and_faces_names_only_chapter_1s_cast() {
+    if skip_without_the_game() {
+        return;
+    }
+    let later = ["{n:sister}", "{n:prince}", "{n:defector}", "defector"];
+    let whole = names_on_the_page();
+    for name in later {
+        assert!(whole.iter().any(|t| t == name), "{name}: {whole:?}");
+    }
+    let demo: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::demo_layers())));
+    let trial = bundle::reading(demo, names_on_the_page);
+    for name in later {
+        assert!(!trial.iter().any(|t| t == name), "{name}: {trial:?}");
+    }
+    for name in ["lead", "retainer", "{n:retainer}", "{n:red_captain}"] {
+        assert!(trial.iter().any(|t| t == name), "{name}: {trial:?}");
+    }
 }
 
 /// The scene `id` of the Chapter 1 script, as written there.
@@ -409,4 +478,25 @@ fn two_problems_on_one_line_are_each_listed_once() {
         problems.iter().filter(|m| **m == message).count()
     };
     assert_eq!((unknown("nope"), unknown("nada")), (1, 1), "{problems:?}");
+}
+
+#[test]
+fn a_scene_played_to_its_end_opens_the_scenes_tab_on_that_scene() {
+    let (mut h, _) = preview();
+    // The second scene: one line, then its end.
+    act(&mut h, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(shown(&h), "The road goes on.");
+    // Confirm shows the whole line, Confirm again ends the scene.
+    act(&mut h, &[Action::Confirm, Action::Confirm]);
+    let after = view(&h);
+    assert!(after.open, "the tabs show again");
+    assert!(screen(&h).playing().is_none(), "the scene is over");
+    assert_eq!(after.tab, Tab::Scenes);
+    let focused = after.scenes.get(after.focus).map(|s| s.id.as_str());
+    assert_eq!(focused, Some("trial_two"));
+    // Confirm plays it again, from its start.
+    h.act(Action::Confirm);
+    assert!(!view(&h).open);
+    assert_eq!(view(&h).playing.map(|p| p.text_box), Some(0));
+    assert_eq!(shown(&h), "The road goes on.");
 }

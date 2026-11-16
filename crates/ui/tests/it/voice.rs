@@ -49,10 +49,7 @@ fn on_voice_test() -> Harness {
 }
 
 fn play(line: &LineId) -> AudioRequest {
-    AudioRequest::PlayVoice {
-        line: line.clone(),
-        variant: Variant::None,
-    }
+    AudioRequest::play_voice(line.clone(), Variant::None)
 }
 
 /// The voice requests of the run so far.

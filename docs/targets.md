@@ -91,8 +91,7 @@ The web's package budget counts what a player waits for before the game
 starts, not the whole upload (engine ticket 3313, its
 `docs/targets/web.md`). The gated size leaves out the folders `shuyi.ron`'s
 `web.music` and `web.voice` ship beside the build: the game fetches each
-track or clip in the background when it first plays it, and itch.io and
-GitHub Pages serve an uploaded HTML5 zip as separate files, so those are
+track or clip in the background when it first plays it, and itch.io serves an uploaded HTML5 zip as separate files, so those are
 never waited for (ticket 1249 checked it in a browser: the page loads the
 scripts and the `.wasm`, the title song is fetched when it starts
 and the opening scene's track when New Game reaches it). The whole zip,

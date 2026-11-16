@@ -43,7 +43,7 @@ use trpg_ui::platform::playdate_facts;
 use trpg_ui::screen::{Ctx, Shuyi, ShuyiCtx};
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::start::Startup;
-use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
+use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, FileDrops, GlyphBuffer, Palette, Rect, UiColor};
 
 /// The target the game's Playdate build is for, its one target in one bit
 /// (`shuyi.ron`'s `targets`).
@@ -487,9 +487,16 @@ fn harness(start: &Start) -> Result<Harness, String> {
         })?,
         Opens::Preview(folder) => {
             let folder = dlg_folder(Path::new(folder))?;
+            // As the program on the desktop and the web: a `.dlg` file
+            // dropped (`--drop`) joins the folder (ticket 0767).
+            let setup = |ctx: &mut Ctx| {
+                ctx.platform = ctx.platform.clone().with_file_drops(FileDrops::Heard);
+                setup(ctx);
+            };
             Harness::with_layout_starting(start.layout, setup, |ctx| {
                 trpg_ui::story_preview::game(ctx, folder)
             })?
+            .hearing(trpg_ui::story_preview::hear)
         }
     };
     // The game as players get it: New Game starts the story.

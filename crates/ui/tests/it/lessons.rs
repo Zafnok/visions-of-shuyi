@@ -200,10 +200,7 @@ fn voice_requests(h: &Harness) -> Vec<AudioRequest> {
 }
 
 fn play(text: &str) -> AudioRequest {
-    AudioRequest::PlayVoice {
-        line: trpg_content::voice::guide_line(text),
-        variant: Variant::None,
-    }
+    AudioRequest::play_voice(trpg_content::voice::guide_line(text), Variant::None)
 }
 
 /// Acceptance (0476): the lesson opening, with a clip in the manifest,

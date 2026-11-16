@@ -55,11 +55,7 @@ fn view(c: &Ctx) -> TitleView {
         backdrop: Some(backdrop(c)),
         sparks: Some(1234),
         prompt: None,
-        menu: Some(MenuView {
-            items,
-            first_shown: 0,
-            shown: 5,
-        }),
+        menu: Some(MenuView::new(items)),
         notice: None,
         note: None,
         help: Some("✛ move · Ⓐ select".to_owned()),

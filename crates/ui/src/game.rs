@@ -229,9 +229,9 @@ mod tests {
         assert_eq!(game.ctx().device, playdate, "help names its buttons");
         game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.screens(), ["title"]);
-        let press = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        let press = |b| RawInputEvent::PadDown(b, PadKind::Playdate, 0);
         game.frame(&[press(Button::East)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East, 0)], 0.0);
         // The flow pushes its first screen on its first frame.
         game.frame(&[], 0.0);
         assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
@@ -389,9 +389,9 @@ mod tests {
 
     fn pad_tap(game: &mut Game, button: Button) -> bool {
         let quit = game
-            .frame(&[RawInputEvent::PadDown(button, PadKind::Xbox)], 0.0)
+            .frame(&[RawInputEvent::PadDown(button, PadKind::Xbox, 0)], 0.0)
             .quit;
-        game.frame(&[RawInputEvent::PadUp(button)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(button, 0)], 0.0);
         quit
     }
 
@@ -414,12 +414,13 @@ mod tests {
         assert_eq!(
             RawInputEvent::from_pads(&mut pads, &both),
             [
-                RawInputEvent::PadDown(Button::South, sony),
-                RawInputEvent::PadDown(Button::Start, PadKind::Xbox),
+                RawInputEvent::PadDown(Button::South, sony, 7),
+                RawInputEvent::PadDown(Button::Start, PadKind::Xbox, 3),
             ]
         );
-        // Releases come first and carry no kind; a button already held on
-        // one pad isn't pressed again by another.
+        // Releases come first and carry no kind; each pad's own changes,
+        // with its id (the engine's `Game` makes a button two pads hold
+        // one press).
         let next = [
             pad(3, PadKind::Xbox, &[Button::South]),
             pad(7, sony, &[Button::South, Button::North]),
@@ -427,20 +428,30 @@ mod tests {
         assert_eq!(
             RawInputEvent::from_pads(&mut pads, &next),
             [
-                RawInputEvent::PadUp(Button::Start),
-                RawInputEvent::PadDown(Button::North, sony),
+                RawInputEvent::PadUp(Button::Start, 3),
+                RawInputEvent::PadDown(Button::South, PadKind::Xbox, 3),
+                RawInputEvent::PadDown(Button::North, sony, 7),
             ]
         );
-        // Pressed on two pads in the same frame: the first one listed.
+        // Pressed on two pads in the same frame: each, by pad id.
         let together = [
             pad(3, PadKind::Xbox, &[Button::South, Button::West]),
             pad(7, sony, &[Button::South, Button::North, Button::West]),
         ];
         assert_eq!(
             RawInputEvent::from_pads(&mut pads, &together),
-            [RawInputEvent::PadDown(Button::West, PadKind::Xbox)]
+            [
+                RawInputEvent::PadDown(Button::West, PadKind::Xbox, 3),
+                RawInputEvent::PadDown(Button::West, sony, 7),
+            ]
         );
-        assert_eq!(RawInputEvent::from_pads(&mut pads, &[]).len(), 3);
+        // Unplugged: every held button let go, then each pad removed.
+        let gone = RawInputEvent::from_pads(&mut pads, &[]);
+        assert_eq!(gone.len(), 7);
+        assert_eq!(
+            gone[5..],
+            [RawInputEvent::PadRemoved(3), RawInputEvent::PadRemoved(7)]
+        );
     }
 
     /// Ticket 0219: with the default buttons, the bottom face button
@@ -468,18 +479,18 @@ mod tests {
         let sony = PadKind::PlayStation;
         let mut game = start(ctx());
         assert_eq!(game.ctx().device, Device::Keyboard);
-        game.frame(&[RawInputEvent::PadDown(Button::DpadDown, sony)], 0.0);
+        game.frame(&[RawInputEvent::PadDown(Button::DpadDown, sony, 0)], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
-        game.frame(&[RawInputEvent::PadUp(Button::DpadDown)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::DpadDown, 0)], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
         // An unbound button on another pad changes nothing.
-        let unbound = RawInputEvent::PadDown(Button::RightStickPress, PadKind::Nintendo);
+        let unbound = RawInputEvent::PadDown(Button::RightStickPress, PadKind::Nintendo, 0);
         game.frame(&[unbound], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
         game.frame(&[down(Key::Up)], 0.0);
         assert_eq!(game.ctx().device, Device::Keyboard);
         // The last press of a frame wins.
-        let nintendo = RawInputEvent::PadDown(Button::DpadUp, PadKind::Nintendo);
+        let nintendo = RawInputEvent::PadDown(Button::DpadUp, PadKind::Nintendo, 0);
         game.frame(
             &[RawInputEvent::Up(Key::Up), down(Key::Down), nintendo],
             0.0,
@@ -498,8 +509,11 @@ mod tests {
     fn screens_see_held_buttons() {
         let seen = std::rc::Rc::default();
         let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        game.frame(&[RawInputEvent::PadDown(Button::South, PadKind::Xbox)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(
+            &[RawInputEvent::PadDown(Button::South, PadKind::Xbox, 0)],
+            0.0,
+        );
+        game.frame(&[RawInputEvent::PadUp(Button::South, 0)], 0.0);
         let seen = seen.borrow();
         assert_eq!(seen[0].actions, [Action::Confirm]);
         assert!(seen[0].is_held(Action::Confirm));
@@ -517,9 +531,9 @@ mod tests {
         let mut ctx = ctx();
         ctx.use_playdate_buttons();
         let mut game = new(ctx, Box::new(Spy(std::rc::Rc::clone(&seen))));
-        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate, 0);
         game.frame(&[down(Button::East)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East, 0)], 0.0);
         game.frame(&[], 0.0);
         // A key afterwards is keyboard input again.
         game.frame(&[RawInputEvent::Down(Chord::plain(Key::F))], 0.0);
@@ -538,14 +552,14 @@ mod tests {
         let mut ctx = waiting(ctx());
         ctx.use_playdate_buttons();
         let mut game = start(ctx);
-        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate, 0);
         game.frame(&[down(Button::East)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East, 0)], 0.0);
         game.frame(&[], 1.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         assert_eq!(game.screens(), ["title"]);
         game.frame(&[down(Button::East)], 0.0);
-        game.frame(&[RawInputEvent::PadUp(Button::East)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::East, 0)], 0.0);
         // The flow pushes its first screen on its first frame.
         game.frame(&[], 0.0);
         assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
@@ -556,19 +570,23 @@ mod tests {
     #[test]
     fn a_pad_button_moves_the_key_prompt_on() {
         let mut game = start(waiting(ctx()));
-        game.frame(&[RawInputEvent::PadUp(Button::RightStickPress)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::RightStickPress, 0)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(
             &[RawInputEvent::PadDown(
                 Button::RightStickPress,
                 PadKind::Xbox,
+                0,
             )],
             0.0,
         );
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         // Started without the prompt, it never waits.
         let mut game = start(ctx());
-        game.frame(&[RawInputEvent::PadDown(Button::South, PadKind::Xbox)], 0.0);
+        game.frame(
+            &[RawInputEvent::PadDown(Button::South, PadKind::Xbox, 0)],
+            0.0,
+        );
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
     }
 
@@ -764,12 +782,12 @@ mod tests {
         let seen = std::rc::Rc::default();
         let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         // Bound or not, in order.
-        let down = |b| RawInputEvent::PadDown(b, PadKind::Xbox);
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Xbox, 0);
         let events = [down(Button::RightStickUp), down(Button::South)];
         game.frame(&events, 0.0);
         let ups = [
-            RawInputEvent::PadUp(Button::South),
-            RawInputEvent::PadUp(Button::RightStickUp),
+            RawInputEvent::PadUp(Button::South, 0),
+            RawInputEvent::PadUp(Button::RightStickUp, 0),
         ];
         game.frame(&ups, 0.0);
         game.frame(&[], 0.0);
@@ -877,10 +895,7 @@ mod tests {
     }
 
     fn beep(volume: f32) -> AudioRequest {
-        AudioRequest::PlaySound {
-            cue: "beep".into(),
-            volume,
-        }
+        AudioRequest::play_sound("beep", volume)
     }
 
     fn music(cue: &str, command: fn(String) -> MusicCommand) -> MusicCommand {

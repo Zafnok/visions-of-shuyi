@@ -42,7 +42,7 @@ use crate::playdate_audio;
 const GAME_NAME: &str = "Visions of Shuyi";
 
 /// The `author` in `pdxinfo`.
-const AUTHOR: &str = "Nick Wentz";
+const AUTHOR: &str = "Ibasho Corp.";
 
 /// The Playdate's bundle ID: the game's data folder on the device is named
 /// after it, so it never changes once a build is out.
@@ -849,7 +849,7 @@ mod tests {
     fn pdxinfo_names_the_game_and_its_version() {
         assert_eq!(
             pdxinfo("0.2.0").unwrap(),
-            "name=Visions of Shuyi\nauthor=Nick Wentz\nbundleID=com.zafnok.visionsofshuyi\n\
+            "name=Visions of Shuyi\nauthor=Ibasho Corp.\nbundleID=com.zafnok.visionsofshuyi\n\
              version=0.2.0\nbuildNumber=200\n"
         );
     }

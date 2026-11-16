@@ -111,10 +111,7 @@ fn waiting_reveals_the_text_so_one_press_moves_on() {
 fn skipping_asks_first() {
     let mut h = full_screen();
     h.keys("d");
-    let skip = SkipView {
-        question: "Skip scene?".to_owned(),
-        answers: "f yes / d no".to_owned(),
-    };
+    let skip = SkipView::new("Skip scene?".to_owned(), "f yes / d no".to_owned());
     assert_eq!(view(&h).text.skip, Some(skip));
     // No: the scene goes on.
     h.keys("d");

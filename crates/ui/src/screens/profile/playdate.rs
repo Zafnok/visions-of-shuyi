@@ -201,12 +201,12 @@ mod tests {
             .map(row)
             .collect();
         letters.extend([row("nopqrstuvwxyz"), row("0123456789"), row("-'")]);
-        v.grid = Some(crate::widgets::name_entry::GridView {
-            title: "Profile name".to_owned(),
-            spelled: String::new(),
-            rows: letters,
-            focus: (0, 0),
-        });
+        v.grid = Some(crate::widgets::name_entry::GridView::new(
+            "Profile name".to_owned(),
+            String::new(),
+            letters,
+            (0, 0),
+        ));
         let shown = rows(&painted(&v));
         // Ten rows tall, from row 2.
         assert!(shown[2].starts_with("╔═ Profile name"), "{shown:#?}");
@@ -268,14 +268,13 @@ mod tests {
             label: label.to_owned(),
             focused,
         };
-        v.deleting = Some(AskView {
-            text: "Delete Player 1? Its saves and options go with it.".to_owned(),
-            answers: vec![
+        v.deleting = Some(AskView::new(
+            "Delete Player 1? Its saves and options go with it.",
+            vec![
                 answer(DeleteChoice::Yes, "Yes", false),
                 answer(DeleteChoice::No, "No", true),
             ],
-            keys: None,
-        });
+        ));
         let buf = painted(&v);
         let shown = rows(&buf);
         let line = shown.iter().position(|r| r.contains("Yes")).unwrap();

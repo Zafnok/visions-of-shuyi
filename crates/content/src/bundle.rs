@@ -164,7 +164,131 @@ pub fn layers() -> Vec<Layer> {
         story_layers(content)
     };
     layers.extend(test_layers());
+    #[cfg(feature = "std")]
+    if let Some(folders) = DISK.get() {
+        let read: Vec<Layer> = folders.iter().map(|folder| folder.read).collect();
+        return with_folders(layers, &read);
+    }
     layers
+}
+
+/// The folders on disk a debug build reads in place of its embedded
+/// layers ([`read_from_disk`]).
+#[cfg(feature = "std")]
+static DISK: std::sync::OnceLock<Vec<Folder>> = std::sync::OnceLock::new();
+
+/// A folder read from disk in place of an embedded layer (ADR-0124): as
+/// the platform reads and watches it, and as the game reads it, with only
+/// the files a build embeds of it. The platform's reader keeps every file
+/// (a README too), so a change is copied from one to the other
+/// ([`take_changes`]).
+// engine-friction: 1270 (a `read_folder` that leaves files out)
+#[cfg(feature = "std")]
+#[derive(Debug, Clone, Copy)]
+pub struct Folder {
+    /// The folder as the platform watches it: every file.
+    pub watched: Layer,
+    /// The folder as the game reads it, named as `watched` is.
+    pub read: Layer,
+}
+
+#[cfg(feature = "std")]
+impl Folder {
+    /// The folder `watched` (a layer the platform read and watches),
+    /// with the files a build embeds of it to read. `None` if a path of
+    /// it is one no layer may have.
+    pub fn new(watched: Layer) -> Option<Self> {
+        let all = Bundle::new(vec![watched]);
+        let files = all
+            .files_under("")
+            .into_iter()
+            .filter(|path| embeds(watched.name, path))
+            .filter_map(|path| Some((path.to_owned(), all.bytes(path)?.to_vec())))
+            .collect();
+        let read = Layer::owned(watched.name.to_owned(), files).ok()?;
+        Some(Self { watched, read })
+    }
+
+    /// Copies the files of `changed` (paths in the bundle) that changed
+    /// in the folder to the game's view of it.
+    pub fn take(&self, changed: &[String]) {
+        let (watched, read) = (
+            Bundle::new(vec![self.watched]),
+            Bundle::new(vec![self.read]),
+        );
+        for path in changed.iter().filter(|path| embeds(self.read.name, path)) {
+            if let Some(bytes) = watched.bytes(path)
+                && read.bytes(path) != Some(bytes)
+            {
+                // Always taken: the game's view is a layer made at run time.
+                let _ = self.read.replace(path, bytes.to_vec());
+            }
+        }
+    }
+}
+
+/// Whether a build embeds the file at `path` of the folder shown as
+/// `folder`: not a README (ADR-0105), nor the content's own test data,
+/// its `tests/` (ADR-0118), as `build.rs` leaves them out.
+#[cfg(feature = "std")]
+fn embeds(folder: &str, path: &str) -> bool {
+    let readme = path.rsplit('/').next() == Some("README.md");
+    let tests = folder == CONTENT_DISPLAY_ROOT && path.starts_with("tests/");
+    !readme && !tests
+}
+
+/// Copies the files at `changed` (paths in the bundle, as the platform
+/// says they changed) from each folder read from disk to the game's view
+/// of it ([`Folder::take`]): before the game reloads anything.
+#[cfg(feature = "std")]
+pub fn take_changes(changed: &[String]) {
+    for folder in DISK.get().into_iter().flatten() {
+        folder.take(changed);
+    }
+}
+
+/// The embedded layers a debug build may read from their folders on disk
+/// instead, under `cargo shuyi run --watch` (ticket 1209, ADR-0124): every
+/// one of [`layers`] but the bought art, whose pictures don't reload yet.
+/// Each is shown as its folder's path from the repository's root (the
+/// content's `assets-private/content`), and named so.
+#[cfg(feature = "std")]
+pub fn disk_folders() -> Vec<&'static str> {
+    let bought = [PRIVATE_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT];
+    layers()
+        .iter()
+        .map(|layer| layer.name)
+        .filter(|name| !bought.contains(name))
+        .collect()
+}
+
+/// Reads `folders`, each a folder of [`disk_folders`] read from disk (and
+/// watched) as a layer of that name, in place of the embedded layer it is
+/// named after (ADR-0124): before anything reads a file ([`install`]).
+/// Only the first call counts. The app does it, in a debug build under
+/// `cargo shuyi run --watch`.
+#[cfg(feature = "std")]
+pub fn read_from_disk(folders: Vec<Layer>) {
+    let _ = DISK.set(folders.into_iter().filter_map(Folder::new).collect());
+}
+
+/// `layers` with each one a layer of `folders` is named after replaced by
+/// it, as private and as test as the one it replaces.
+#[cfg(feature = "std")]
+pub fn with_folders(layers: Vec<Layer>, folders: &[Layer]) -> Vec<Layer> {
+    layers
+        .into_iter()
+        .map(
+            |layer| match folders.iter().find(|f| f.name == layer.name) {
+                Some(folder) => Layer {
+                    private: layer.private,
+                    test: layer.test,
+                    ..*folder
+                },
+                None => layer,
+            },
+        )
+        .collect()
 }
 
 /// [`layers`] with `content` as the content's layer (ADR-0117), between the
@@ -865,6 +989,96 @@ mod tests {
         let art = |layer: &&Layer| is_private(&format!("{}/x.png", layer.name));
         assert_eq!(layers.iter().find(art).map(|layer| layer.name), None);
         assert_eq!(TEST_FILES, layers.iter().any(|layer| layer.test));
+    }
+
+    /// Every layer but the bought art may come from disk, each named after
+    /// its folder (ticket 1209).
+    #[test]
+    fn the_folders_on_disk_are_the_layers_but_the_bought_art() {
+        let mut expected = names(&layers());
+        expected
+            .retain(|name| !name.starts_with("assets-private/") || *name == CONTENT_DISPLAY_ROOT);
+        assert_eq!(disk_folders(), expected);
+        assert!(disk_folders().contains(&DISPLAY_ROOT));
+        assert_eq!(TEST_FILES, disk_folders().contains(&TEST_DISPLAY_ROOT));
+    }
+
+    /// A folder read from disk takes the place of the layer it is named
+    /// after, where it lies, and keeps its marks.
+    #[test]
+    fn a_folder_on_disk_takes_the_place_of_its_embedded_layer() {
+        static ASSETS: &[(&str, &[u8])] = &[("data/a.ron", b"assets"), ("data/b.ron", b"assets")];
+        static TEST: &[(&str, &[u8])] = &[("data/b.ron", b"embedded"), ("data/c.ron", b"embedded")];
+        let disk = BTreeMap::from([("data/c.ron".to_owned(), b"disk".to_vec())]);
+        let folder = Layer::owned(TEST_DISPLAY_ROOT.to_owned(), disk).unwrap();
+        let content = Layer::owned(CONTENT_DISPLAY_ROOT.to_owned(), BTreeMap::new()).unwrap();
+        let embedded = vec![
+            Layer::table(CONTENT_DISPLAY_ROOT, &[]).private(),
+            Layer::table(DISPLAY_ROOT, ASSETS),
+            Layer::table(TEST_DISPLAY_ROOT, TEST).test(),
+        ];
+        let read = with_folders(embedded, &[folder, content]);
+        let marks: Vec<_> = read.iter().map(|l| (l.name, l.private, l.test)).collect();
+        let expected = [
+            (CONTENT_DISPLAY_ROOT, true, false),
+            (DISPLAY_ROOT, false, false),
+            (TEST_DISPLAY_ROOT, false, true),
+        ];
+        assert_eq!(marks, expected);
+        let bundle = Bundle::new(read);
+        assert_eq!(bundle.file("data/b.ron"), Some("assets"));
+        assert_eq!(bundle.file("data/c.ron"), Some("disk"));
+        assert_eq!(bundle.display_path("data/c.ron"), "assets-test/data/c.ron");
+        assert!(folder.replace("data/c.ron", b"saved".to_vec()));
+        assert_eq!(bundle.file("data/c.ron"), Some("saved"));
+    }
+
+    /// The game reads a folder from disk as a build embeds it, without its
+    /// READMEs or the content's own test data, and a change the platform
+    /// saw is copied to it.
+    #[test]
+    fn a_folder_from_disk_is_read_as_a_build_embeds_it() {
+        let owned = |name: &str, paths: &[&str]| {
+            let files = paths.iter().map(|p| ((*p).to_owned(), b"old".to_vec()));
+            Layer::owned(name.to_owned(), files.collect()).unwrap()
+        };
+        let paths = ["data/a.ron", "README.md", "data/README.md", "tests/t.ron"];
+        let paths_of = |layer: Layer| Bundle::new(vec![layer]).files_under("");
+        let content = Folder::new(owned(CONTENT_DISPLAY_ROOT, &paths)).unwrap();
+        assert_eq!(paths_of(content.read), ["data/a.ron"]);
+        assert_eq!(paths_of(content.watched).len(), 4);
+        let assets = Folder::new(owned(DISPLAY_ROOT, &paths)).unwrap();
+        assert_eq!(paths_of(assets.read), ["data/a.ron", "tests/t.ron"]);
+        assert_eq!(assets.read.name, DISPLAY_ROOT);
+        // The platform puts a change in the folder it watches.
+        let changed = ["data/a.ron", "README.md", "data/new.ron"];
+        for path in changed {
+            assert!(assets.watched.replace(path, b"new".to_vec()));
+        }
+        let changed: Vec<String> = changed.iter().map(|&p| p.to_owned()).collect();
+        assets.take(&changed);
+        let read = Bundle::new(vec![assets.read]);
+        assert_eq!(read.file("data/a.ron"), Some("new"));
+        assert_eq!(read.file("data/new.ron"), Some("new"));
+        assert_eq!(read.file("README.md"), None);
+    }
+
+    /// The process's folders (the app reads them once, at the start) are
+    /// read as the game reads a folder, and take the platform's changes. A
+    /// folder named after no layer: the bundle the other tests read stays
+    /// as it is.
+    #[test]
+    fn the_folders_read_from_disk_take_the_platforms_changes() {
+        let files = BTreeMap::from([("data/a.ron".to_owned(), b"old".to_vec())]);
+        let watched = Layer::owned("no-such-layer".to_owned(), files).unwrap();
+        read_from_disk(vec![watched]);
+        let folders = DISK.get().unwrap();
+        let names: Vec<_> = folders.iter().map(|f| f.read.name).collect();
+        assert_eq!(names, ["no-such-layer"]);
+        assert!(watched.replace("data/a.ron", b"new".to_vec()));
+        take_changes(&["data/a.ron".to_owned()]);
+        let read = Bundle::new(vec![folders[0].read]);
+        assert_eq!(read.file("data/a.ron"), Some("new"));
     }
 
     /// A file of the content replaces `assets/`'s at its path and is shown

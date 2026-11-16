@@ -32,3 +32,5 @@ private mirror `Zafnok/visions-of-shuyi-story`, synced from the pin by
 `.github/workflows/story-mirror.yml` (ticket 0152, ADR-0122). A pull
 request there that Nick approved comes back with `cargo xtask
 story-import` (the `story-import` skill); never edit the mirror itself.
+The writer starts from the mirror's `README.md` (`tools/story-mirror/`),
+then `story/cheat-sheet.md` and `story/writers-guide.md` (ticket 0765).

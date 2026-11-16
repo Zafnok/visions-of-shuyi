@@ -28,10 +28,20 @@ fn block_on<F: Future>(future: F) -> F::Output {
 
 #[test]
 fn the_window_has_an_icon() {
-    let conf = shuyi_app::window_conf(&WINDOW);
-    assert!(conf.icon.is_some());
+    // What the engine checks before it gives the window the icon: each
+    // picture decodes to its size's RGBA pixels (16, 32 and 64 square).
+    fn pixels(png: &[u8]) -> usize {
+        macroquad::texture::Image::from_file_with_format(png, None)
+            .expect("the icon's picture decodes")
+            .bytes
+            .len()
+    }
+    let icon = WINDOW.icon.expect("the window has an icon");
+    assert_eq!(pixels(icon.small), 16 * 16 * 4);
+    assert_eq!(pixels(icon.medium), 32 * 32 * 4);
+    assert_eq!(pixels(icon.big), 64 * 64 * 4);
     assert_eq!(WINDOW.icon, APP.window_icon);
-    assert_eq!(conf.window_title, "Visions of Shuyi");
+    assert_eq!(WINDOW.title, "Visions of Shuyi");
 }
 
 /// Acceptance (1199): the name and the storage name players' saves depend
@@ -152,4 +162,25 @@ fn the_font_and_images_are_the_contents() {
     assert!(std::ptr::eq(look.font, &raw const content.font));
     assert!(std::ptr::eq(look.images, &raw const content.images));
     assert!((config.files)(config.font_png).is_some());
+}
+
+/// The game's folders read from disk under `run --watch` (ticket 1209) are
+/// the game this build embeds: one for each layer but the bought art, each
+/// named after its own, and the content loads from them as it does from
+/// the embedded files.
+#[test]
+fn the_folders_on_disk_load_the_content_the_build_embeds() {
+    use trpg_content::bundle::{self, Bundle, Folder};
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let folders = super::folders_on_disk(&root);
+    let names: Vec<&str> = folders.iter().map(|folder| folder.name).collect();
+    assert_eq!(names, bundle::disk_folders());
+    let read: Vec<_> = folders.into_iter().filter_map(Folder::new).collect();
+    let read: Vec<_> = read.iter().map(|folder| folder.read).collect();
+    let embedded = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+    let disk = Bundle::new(bundle::with_folders(bundle::layers(), &read));
+    let disk: &'static Bundle = Box::leak(Box::new(disk));
+    let read = bundle::reading(disk, trpg_content::load_embedded);
+    let read = read.unwrap_or_else(|e| panic!("{e}"));
+    assert!(read == embedded, "the content read from disk differs");
 }

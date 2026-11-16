@@ -917,6 +917,9 @@
     "preview.switch.strip": "Strip: file, line, direction, faces",
     "preview.lines.go_to": "Go to line",
     "preview.note.no_scenes": "No scenes. Drag your dialogue folder onto this program, or put the program beside it",
+    // Where a file dropped on the window joins the folder: the web build,
+    // which starts on no scenes, and the desktop (ticket 0767).
+    "preview.note.no_scenes_drop": "No scenes. Drop your .dlg files here",
     "preview.note.no_scene": "Pick a scene first",
     "preview.note.no_problems": "No problems",
     "preview.note.finished": "The scene is over: pick a line to play it again",

@@ -45,7 +45,8 @@ None.
 **In:**
 - A tracked hooks folder, `scripts/git-hooks/pre-push`, set up with `git
   config core.hooksPath scripts/git-hooks` (in `AGENTS.md`'s environment
-  section and the setup scripts). It runs, in seconds:
+  section and the setup scripts; ticket 1271 made the folder, with its
+  `post-checkout`, and the `AGENTS.md` line already). It runs, in seconds:
   - `cargo fmt --all --check`;
   - `typos`;
   - `cargo xtask ticket-lint --pr-branch <current>`;

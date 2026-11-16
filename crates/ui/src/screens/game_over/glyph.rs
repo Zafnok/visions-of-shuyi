@@ -180,11 +180,7 @@ mod tests {
         GameOverView {
             heading: "OVER".to_owned(),
             progress,
-            menu: over.then(|| MenuView {
-                items: vec![item("Retry", true), item("Title", false)],
-                first_shown: 0,
-                shown: 2,
-            }),
+            menu: over.then(|| MenuView::new(vec![item("Retry", true), item("Title", false)])),
             help: over.then(|| "help".to_owned()),
         }
     }

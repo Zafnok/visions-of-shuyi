@@ -212,7 +212,7 @@ high-water mark (1026: 15,256 bytes; it must stay well under 64 KB).
   covers both platform crates.
 
 **For Nick.** On the Playdate the game's name is "Visions of Shuyi",
-its author "Nick Wentz" and its bundle ID `com.zafnok.visionsofshuyi`
+its author "Ibasho Corp." and its bundle ID `com.zafnok.visionsofshuyi`
 (its data folder on the device; it should not change once a build is
 out). Say if you want other names. No gameplay rules were decided.
 

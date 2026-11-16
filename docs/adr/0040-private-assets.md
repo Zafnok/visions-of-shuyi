@@ -137,9 +137,11 @@ deploy key of the private repository. `.github/actions/private-assets`
 checks out `game/` at the pinned commit when the run has the key, and
 outputs the flags to build with:
 
-- **Pages** (`pages.yml`): uses it, runs §5's test, then builds with
-  `cargo xtask web --private-assets`. Without the key it warns and builds
-  with placeholders.
+- **Pages** (`pages.yml`): *since 2026-11-15, never uses it*: a Pages site
+  is public and the files can be pulled out of its build, so it builds with
+  the placeholders (Nick). §5's test runs in `playtest-itch.yml` instead,
+  with the game's content, before the full build goes to the playtest page
+  behind its password.
 - **Release** (`release.yml`): every package uses it. A real release from
   `Zafnok/visions-of-shuyi` **fails** without the key, so a sold build never
   ships placeholders by accident. A dry run or a fork warns and uses

@@ -367,10 +367,7 @@ fn a_press_during_the_cinematic_skips_to_the_logo_and_the_silence() {
         assert_eq!(
             h.audio_requests(),
             [
-                AudioRequest::PlaySound {
-                    cue: "hit_sword".into(),
-                    volume: 1.0
-                },
+                AudioRequest::play_sound("hit_sword", 1.0),
                 AudioRequest::StopMusic
             ]
         );

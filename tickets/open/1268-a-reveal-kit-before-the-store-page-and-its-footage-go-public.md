@@ -43,7 +43,11 @@ the checklist's line, and record nothing as decided.
 - A `reveal` part in `shuyi.ron`: the store URL once 0903 has one, the
   approved captures (the trailer and store screenshots, captured from the
   game, ADR-0040 allows them), and `salts` in the private repository's
-  checkout outside `content/` (never in this repository).
+  checkout outside `content/` (never in this repository). Set the part's
+  `out` so the kit is written in that checkout too: press and playtest
+  copies (1272) keep their signed ledger, `recipients.ron`, beside the
+  kit's folder, and `docs/releasing.md`'s "A press or playtest copy" says
+  it lives in `assets-private/`, outside `content/`.
 - `docs/releasing.md`: when to run `reveal prepare` (before each store
   page or footage goes public), where the kit and its digest are kept
   (the digest in a pushed commit or tag, which dates it; the kit in the
