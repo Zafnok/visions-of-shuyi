@@ -7,7 +7,11 @@ differs, they win. "I" on this page is Nick, writing for Ibasho Corp.
 
 ## Who can apply
 
-You must be 18 or older. Applicants from any country are welcome.
+You must be 18 or older. Applicants from almost any country are welcome.
+Ibasho Corp. is a US company, so it can't take work from or pay anyone
+who lives in a country or region under US sanctions, or who is on a US
+sanctions list. If you aren't sure whether that includes you, ask me
+before you start.
 
 ## The packet
 
