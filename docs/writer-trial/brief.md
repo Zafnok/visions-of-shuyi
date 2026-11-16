@@ -171,7 +171,7 @@ format slip. The writing is what I'm judging.
 
 The game is a hobby project with a revenue share. The trial is unpaid,
 and no pay is guaranteed before the game launches. After launch, the
-writer I pick gets a share of the game's net revenue after Steam's cut,
-probably tied to how it sells (for example 5 to 10% depending on the
-game's sales). The exact terms will be in a written agreement before any
-work beyond this trial. `terms.md` says what happens to your entry.
+writer I pick gets a share of the game's net revenue. The exact terms are
+in the compensation PDF I sent with my first email, and they'll be signed
+as part of a written agreement before any work beyond this trial.
+`terms.md` says what happens to your entry.
