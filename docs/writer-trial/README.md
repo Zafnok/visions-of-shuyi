@@ -9,7 +9,7 @@ any access to a repository.
 | ---- | ---- |
 | `ad.md` | The ad as Nick posted it, and the offer it made |
 | `brief.md` | In the packet: what to do, how to send it, what is judged, the offer |
-| `terms.md` | In the packet: the packet and the entry in plain words (the signed agreement governs) |
+| `terms.md` | In the packet: the packet and the entry in plain words (the two signed agreements govern) |
 | `start-here.txt` | In the packet, filled in for each applicant: the mark, the due date, the links |
 | `packet.txt` | Every other page in the packet, cut from the private story documents at build time |
 | `reading-guide.md` | The top of the comparison page |
@@ -30,7 +30,7 @@ ignored):
    ```
 
 3. Put anything every packet should carry in `dist/trial/extra/`: the
-   confidentiality agreement's text, say. (A copy each applicant signed
+   two agreements' text, say. (A copy each applicant signed
    isn't one of these: they sign before they get the packet.)
 
 The packet holds text files only, no program (Nick, 2026-11-14: an
@@ -49,7 +49,8 @@ every `@choice`, `@if` and `@scene` needs its closing line. 0768 puts the
 editor colors and indenting in the packet; until its folder
 (`tools/vscode-dlg/`) is there, `trial-packet` refuses to make a packet.
 
-For each applicant, after they signed the agreement:
+For each applicant, after they signed both agreements with Ibasho Corp. (the
+confidentiality agreement and the Writer Trial and AI Voice Acknowledgment):
 
 1. Run:
 
