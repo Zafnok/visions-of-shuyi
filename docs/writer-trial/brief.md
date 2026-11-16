@@ -7,7 +7,7 @@ and what I'll be looking at.
 
 A tactics RPG in the manner of Fire Emblem: a small party, turn-based
 battles on a grid, and a story told in text boxes with portraits between
-the battles. Act 1 (eight chapters) is playable. The demo you have the
+the battles. Act 1's first five chapters are playable. The demo you have the
 link to is the title screen, the opening and Chapter 1.
 
 ## Why I'm looking for a writer
@@ -31,10 +31,10 @@ know now.
 ## What to do
 
 Rewrite Chapter 1's scenes in `dialogue/ch01.dlg`. These are the five
-scenes the demo plays outside the battle's map, in the order they play:
+Chapter 1 scenes, in the order they play:
 
-- `ch01_intro`: the opening captions, then the letter;
-- `ch01_prebattle`: the Red Company; the party gathers;
+- `ch01_intro`: the opening captions, then the yard at dawn;
+- `ch01_prebattle`: the letter and the Red Company; the party gathers;
 - `ch01_first_turn`: a line at the start of the battle;
 - `ch01_victory`: after the fight;
 - `ch01_tbc`: the scene that ends the chapter.
@@ -42,14 +42,19 @@ scenes the demo plays outside the battle's map, in the order they play:
 What's in the file now is the **AI draft**: rewrite it, or throw it away
 and start from the beats. Keep each scene's `@scene` id and its `@end`, so
 the game can still find it. Inside a scene, everything is yours: the
-lines, who speaks, how much, the order. Keep the lead's reply choices (one
-each in `ch01_intro`, `ch01_prebattle` and `ch01_victory`), but their
-wording is yours too.
+lines, who speaks, how much, the order. Keep the lead's reply choices:
+one in `ch01_intro`, one in `ch01_prebattle`, and one in each version of
+`ch01_victory` (with Rue and without her). Their wording is yours too.
 
 `ch01_victory` has `@if` blocks: a companion who fell in the battle is
-gone, so the scene has to work without them. The cheat sheet's
-*Conditions* section shows how, and the preview's Switches tab plays the
-scene with someone missing.
+gone, so the scene has to work without them, or with only the lead left.
+The cheat sheet's *Conditions* section shows how, and the preview's
+Switches tab plays the scene with someone missing. However the battle
+went, the scene has to get three things across:
+
+- Harl was carrying a paper sealed with the Veyne family's seal;
+- only whoever holds the family's hall can seal with it;
+- so the party's road now leads to Veyne Hall.
 
 The story pages in `story/` are there to help, not to bind you. If a beat
 or a character's voice card gets in the way of a good scene, change it and
@@ -60,15 +65,32 @@ two scenes that sing beat five that are merely fine.
 
 ## How to see it
 
-Nothing to install: everything runs in your browser.
+Nothing to install: everything runs in your browser. The demo and the
+preview are played with the **keyboard** only. The first key you press
+asks you to pick a layout (right- or left-handed); after that, the line
+at the bottom of the screen names the keys.
 
 1. Open the script preview's page (the link and password are in
-   `START-HERE.txt`) and drag `dialogue/ch01.dlg` onto it. It plays your
-   scenes in the game's own text box, with the faces and the music.
-2. Edit `dialogue/ch01.dlg` in any plain-text editor (Notepad or
-   TextEdit in plain-text mode is fine; not Word), save, and drag it onto
-   the page again. The **Problems** tab lists anything the game couldn't
-   read, with its line.
+   `START-HERE.txt`) and drag `dialogue/ch01.dlg` onto the game itself.
+   It plays your scenes in the game's own text box, with the faces and
+   the music.
+2. Edit `dialogue/ch01.dlg` in a plain-text editor, save, and drag it
+   onto the game again. **Keep the name `ch01.dlg`**: a file with another
+   name (`ch01 v2.dlg`) plays beside the first one instead of replacing
+   it, and one that ends in `.txt` isn't read at all. The **Problems** tab
+   lists anything the game couldn't read, with its line. If your change
+   doesn't show, look there: a file with a mistake keeps playing its last
+   good version.
+
+Which editor:
+
+- **Windows:** Notepad. Right-click the file, **Open with**, **Notepad**.
+- **Mac:** TextEdit, set up once so it doesn't change your quotes: in
+  TextEdit's **Settings**, choose **Plain text**, and under **Edit >
+  Substitutions** turn off **Smart Quotes** and **Smart Dashes**. When you
+  save, keep the name `ch01.dlg`; if TextEdit offers to add `.txt`, say no.
+- Not Word or Google Docs: they change quotes and dashes and save a
+  different kind of file.
 
 ### Optional: colors in VS Code
 
@@ -123,9 +145,10 @@ link in `START-HERE.txt` lets you play Chapter 1 as a player sees it.
 - a short note, as long as you like: what you changed and why, anything
   you'd do with more time, anything in the beats you'd change.
 
-Reply to the message that brought you this packet, with the file
-attached. The due date is in `START-HERE.txt`. Tell me if you need
-longer: that's fine, just say so before then.
+Send them to me on Discord, in the conversation where you applied, with
+the file attached. The due date is in `START-HERE.txt`. Tell me if you
+need longer: that's fine, just say so before then. Questions while you
+work go there too.
 
 ## What I'm looking at
 

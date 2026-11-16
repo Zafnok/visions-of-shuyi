@@ -1,5 +1,5 @@
 # The writer trial's packet (ticket 0766): every page `cargo xtask
-# trial-packet` puts in it besides the preview program, the trial's script
+# trial-packet` puts in it besides the trial's script
 # (dialogue/ch01.dlg), START-HERE.txt (start-here.txt, filled in) and
 # story/names.md, which it writes itself.
 #
