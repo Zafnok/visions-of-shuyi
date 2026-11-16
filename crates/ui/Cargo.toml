@@ -54,8 +54,8 @@ harness = [
 # `storage::conformance_suite`, for a platform's `Storage` (also without
 # `std`: the Playdate's debug build runs it on the device's files).
 storage-conformance = ["shuyi-ui/storage-conformance"]
-# Debug tools (Quick Battle, glyph sampler) in a release build: the Pages
-# build only (ADR-0023). Never on in shipped builds. The Quick Battle is
+# Debug tools (Quick Battle, glyph sampler) in a release build: the playtest
+# page's build only (ADR-0023). Never on in shipped builds. The Quick Battle is
 # made of the test files (ADR-0057).
 debug-tools = ["trpg-content/test-fixtures", "shuyi-ui/debug-tools"]
 # `onebit::reference`, the plain one-bit renderer the fast one must equal

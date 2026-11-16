@@ -5,8 +5,7 @@
 **A tactical RPG you can play entirely from the keyboard.**
 *Fire Emblem's battles, a roguelike's glyphs or pixel art, a text editor's hands.*
 
-[**▶ Play the latest build in your browser**](https://zafnok.github.io/visions-of-shuyi/)
-&nbsp;·&nbsp; [Roadmap](docs/ROADMAP.md)
+[Roadmap](docs/ROADMAP.md)
 &nbsp;·&nbsp; [Backlog](tickets/README.md)
 &nbsp;·&nbsp; [Design decisions](docs/design/README.md)
 &nbsp;·&nbsp; [Shuyi Engine](https://github.com/Zafnok/shuyi-engine)
@@ -77,11 +76,9 @@ was bought and its files are not part of this repository.</sub>
 
 ## What you can play today
 
-**Pre-alpha.** The [browser build](https://zafnok.github.io/visions-of-shuyi/)
-is rebuilt after every change. The game's story and content are kept private
-(ticket 0158): once they move out of this repository, the browser build plays
-only the public files and the test game, with the debug tools, and the full
-game is played on a private page. Today **New Game** plays the first five chapters of
+**Pre-alpha.** There is no public build: the game's story and content are
+kept private (ticket 0158), and the game is played on password-protected
+pages only (ticket 0920). Today **New Game** plays the first five chapters of
 Act 1:
 
 - **Chapters 1 to 3** run one after another: scenes, a battle, more

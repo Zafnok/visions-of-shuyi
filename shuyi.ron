@@ -108,7 +108,7 @@
     ),
 
     // The web build (tickets 0206, 0207, 0219): `--debug-tools` for the
-    // Pages build (ADR-0023), `--private-assets` for the bought art
+    // playtest page's build (ADR-0023), `--private-assets` for the bought art
     // (ADR-0040). Music (ADR-0026) and voices (ADR-0046) ship beside it.
     web: (
         package: "trpg-app",

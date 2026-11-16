@@ -30,8 +30,8 @@ this ticket while 0766 is open without asking Nick.
 ## Nick input
 
 None. Nothing waits on a person. If 0045 recorded that Nick's wife plays
-Chapter 1 in Chinese, that happens after this merges (on the Pages
-build), and what she finds becomes tickets through `write-ticket`.
+Chapter 1 in Chinese, that happens after this merges (on the playtest
+page's build), and what she finds becomes tickets through `write-ticket`.
 
 ## Scope
 
