@@ -338,6 +338,55 @@ fn a_unit_an_art_strikes_is_a_row_under_the_totals() {
     assert_eq!(text(&buf, LEFT_X, totals + 5, 7), "pierces");
 }
 
+/// Ticket 0463: with a weapon to swap to, a `◂▸` mark in the cell before
+/// the attacker's weapon and the hint in the bottom border, both in the
+/// highlight colour; with none, neither.
+#[test]
+fn a_weapon_to_swap_to_is_marked_and_named_in_the_bottom_border() {
+    let bottom = SIDE_PANEL.y + SIDE_PANEL.h - 1;
+    let plain = render(&view(20, |_| {}));
+    assert_eq!(plain.overlays().len(), 0);
+    assert!(
+        !row(&plain, bottom).contains("weapon"),
+        "{}",
+        row(&plain, bottom)
+    );
+    let v = view(20, |v| v.swap = Some("Left/Right weapon".into()));
+    let buf = render(&v);
+    assert!(row(&buf, bottom).contains(" Left/Right weapon "));
+    let hi = ctx().palette.get(UiColor::TextHighlight);
+    let at = text(&buf, SIDE_PANEL.x, bottom, SIDE_PANEL.w)
+        .find('L')
+        .unwrap();
+    let x = SIDE_PANEL.x + i32::try_from(at).unwrap();
+    assert_eq!(buf.get(x, bottom).unwrap().fg, hi);
+    // The weapon's row is as before; the mark is drawn over the cell
+    // before it, every pixel inside that cell.
+    assert_eq!(row(&buf, WEAPON_ROW), row(&plain, WEAPON_ROW));
+    let (cw, ch) = ConsoleSpec::PC.cell_px();
+    let marks = buf.overlays();
+    assert_eq!(marks.len(), 2 * SWAP_ROWS.len());
+    for o in marks {
+        assert_eq!((o.color, o.layer), (hi, Layer::Over));
+        assert_eq!((o.rect.x / cw, o.rect.y / ch), (LEFT_X - 1, WEAPON_ROW));
+        assert!(o.rect.x + o.rect.w <= LEFT_X * cw, "{o:?}");
+    }
+}
+
+#[test]
+fn the_swap_mark_is_two_triangles_pointing_apart() {
+    let runs = swap_arrows(0, 0, Rgb::new(1, 1, 1));
+    let (left, right): (Vec<&Overlay>, Vec<&Overlay>) =
+        runs.iter().partition(|o| o.rect.x < SWAP_GAP_X);
+    assert_eq!((left.len(), right.len()), (5, 5));
+    // The widest row in the middle; the left one ends where it points
+    // from, a pixel apart from the right one's start.
+    let widths: Vec<i32> = right.iter().map(|o| o.rect.w).collect();
+    assert_eq!(widths, SWAP_ROWS);
+    assert!(left.iter().all(|o| o.rect.x + o.rect.w == SWAP_GAP_X - 1));
+    assert!(right.iter().all(|o| o.rect.x == SWAP_GAP_X));
+}
+
 /// The lord's forecast with a Steel Sword of 25 uses, its short name
 /// `short` (ticket 0498).
 fn steel(short: Option<&str>) -> ForecastView {

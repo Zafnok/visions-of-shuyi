@@ -8,7 +8,9 @@
 //! strikes numbered down the middle, `!` after an effective one, the
 //! skull on the kill and the strikes after it in grey dots; then the
 //! totals, a row per unit an art strikes and the notes. Too many rows for
-//! the screen: the rules go first, then the last notes.
+//! the screen: the rules go first, then the last notes. When left and
+//! right swap the weapon, the `◂▸` mark before it and `Left/Right weapon`
+//! in the bottom of the frame, as on the PC (0463).
 
 use crate::prelude::*;
 use trpg_core::{Side, StatValue};
@@ -18,7 +20,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::forecast::{
-    SIDES, Under, lost_shaded, skull, under, uses_after_name, weapon_name,
+    SIDES, Under, lost_shaded, skull, swap_arrows, under, uses_after_name, weapon_name,
 };
 use crate::screens::battle::units::{lit_fill, meter_cells};
 use crate::screens::battle::view::{ForecastSideView, ForecastView};
@@ -117,6 +119,9 @@ fn overlap(a: Rect, b: Rect) -> bool {
 pub fn paint(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect, buf: &mut GlyphBuffer) {
     let rect = rect(ctx, scene, view, area);
     pd::window(ctx, buf, rect, &view.title);
+    if let Some(swap) = &view.swap {
+        pd::footer(ctx, buf, rect, swap);
+    }
     let x = rect.x + 2;
     let shown = lines(view, to_usize(rect.h - 2));
     for (y, line) in (rect.y + 1..).zip(shown) {
@@ -138,14 +143,26 @@ pub fn paint(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect, buf: 
             Line::Total => paint_totals(pen, view, buf),
             Line::Struck(i) => paint_struck(pen, view, i, buf),
             Line::Note(i) => pen.text(buf, 0, TEXT_W, &view.notes[i]),
-            side_line => {
-                let sides = view.sides.iter().zip(SIDES).zip([0, RIGHT]);
-                for ((side, by), dx) in sides {
-                    let pen = Pen { x: x + dx, ..pen };
-                    paint_side_line(pen, view, (side, by), side_line, buf);
+            Line::Arms if view.swap.is_some() => {
+                for o in swap_arrows(rect.x + 1, y, inks(ctx).text) {
+                    buf.add_overlay(o);
                 }
+                paint_sides(pen, view, line, buf);
             }
+            side_line => paint_sides(pen, view, side_line, buf),
         }
+    }
+}
+
+/// Row `line` of both sides' columns, from `pen`.
+fn paint_sides(pen: Pen<'_>, view: &ForecastView, line: Line, buf: &mut GlyphBuffer) {
+    let sides = view.sides.iter().zip(SIDES).zip([0, RIGHT]);
+    for ((side, by), dx) in sides {
+        let pen = Pen {
+            x: pen.x + dx,
+            ..pen
+        };
+        paint_side_line(pen, view, (side, by), line, buf);
     }
 }
 

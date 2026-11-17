@@ -93,6 +93,10 @@ pub enum TipTrigger {
     /// its weapon kind's trait (a spear on a mounted unit, a bow on a
     /// flying one), not by a spell's element (ticket 0489).
     FirstEffective,
+    /// The forecast is open and left and right swap the weapon: its unit
+    /// has more than one weapon (or spell) to attack with there (ticket
+    /// 0463).
+    FirstWeaponSwap,
     /// The Load Game list opens with a save in it, where saves can be
     /// exported (ticket 0874).
     FirstLoadGame,
@@ -222,6 +226,7 @@ mod tests {
             TipTrigger::ZoomAvailable,
             TipTrigger::FirstWadeInReach,
             TipTrigger::FirstEffective,
+            TipTrigger::FirstWeaponSwap,
             TipTrigger::FirstLoadGame,
             TipTrigger::FirstProfileScreen,
         ] {

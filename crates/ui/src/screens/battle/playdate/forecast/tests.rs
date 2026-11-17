@@ -335,6 +335,32 @@ fn effective_spear_forecast_snapshot() {
     ));
 }
 
+/// Ticket 0463: with a weapon to swap to, the `◂▸` mark in the cell
+/// before the attacker's weapon and the hint in the bottom of the frame.
+#[test]
+fn a_weapon_to_swap_to_is_marked_and_named_in_the_frame() {
+    let (plain, _) = painted(&view(20, |_| {}));
+    assert_eq!(plain.overlays().len(), 0);
+    let v = view(20, |v| v.swap = Some("Left/Right weapon".into()));
+    let (buf, at) = painted(&v);
+    let bottom = row(&buf, at.y + at.h - 1);
+    assert!(bottom.contains(" Left/Right weapon "), "{bottom}");
+    let arms = rows(&buf)
+        .iter()
+        .position(|r| r.contains("Iron S"))
+        .unwrap();
+    let marks: Vec<(i32, i32)> = buf
+        .overlays()
+        .iter()
+        .map(|o| (o.rect.x / 8, o.rect.y / 16))
+        .collect();
+    assert_eq!(marks.len(), 10);
+    let arms = i32::try_from(arms).unwrap();
+    assert!(marks.iter().all(|&m| m == (at.x + 1, arms)), "{marks:?}");
+    assert!(buf.overlays().iter().all(|o| o.color == ink("text")));
+    assert_snapshot!(rows(&buf).join("\n"));
+}
+
 #[test]
 fn steel_sword_forecast_snapshot() {
     // Its short name (0498) is too wide for the Playdate's 10 cells with

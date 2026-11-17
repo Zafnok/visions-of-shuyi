@@ -853,6 +853,57 @@ counter`, and confirms (the uses moved under the weapon in 0480,
    └─────────────────────────────────┘
   ```
 
+### Showing that left / right swap the weapon (0463)
+
+Decided 2026-11-17, ticket 0463. Nick, Chapter 1 playtest round 3 (0804),
+on the Arts menu:
+
+> "so swapping weapons on forecast menu feels quite hidden as a feature it
+> should be more obvious idk how also the guide should probably mention
+> it"
+
+Shown the real forecast in both looks with ◄ ► arrows on the weapon (A),
+`Left/Right weapon` in the bottom border (B) and both, he picked "A + B
+but figure out a way to make it fit better within the column". Of the
+two fits then shown (smaller arrows either side, or a pair before the
+name), he picked **the pair before the name**. For the guide he picked
+**a tip** (D) over a line in the Attacking lesson (C).
+
+- **When left / right swap the weapon** (the unit has more than one
+  weapon, or weapon and spell, it can use there; see the keys above),
+  the forecast shows:
+  - a small `◂▸` mark in the empty cell just before the attacker's
+    weapon, in the highlight colour; the weapon's name keeps its width;
+  - `Left/Right weapon` in the bottom of the forecast's frame, with the
+    player's own keys, in the highlight colour.
+- **With one weapon to attack with**, neither shows (left / right then
+  change the target). The help line under the map says the same as
+  before (`Left/Right swap`).
+- The **Playdate** shows the same mark before the weapon and the same
+  hint in the bottom of its window, with its own buttons' names.
+- **The tip** (*Swapping weapons*, at the Full tutorial level, once per
+  profile): the first time a forecast opens where left / right swap the
+  weapon. See `tutorial.md`, *Tips*.
+
+```
+ ╔════════ Forecast ══════════╗
+ ║                            ║
+ ║ Test Lord     Brigand      ║
+ ║◂▸Iron Sword 20 Iron Axe 20 ║   (◂▸ is drawn inside the cell before
+ ║ HP 19 → 11    HP 20 → 3    ║    the name, not as two letters)
+ ║ ...                        ║
+ ╚════ Left/Right weapon ═════╝
+```
+
+*Claude's starting rules (Nick can veto; for the Act 1 playtest, 1064):*
+
+- The hint shows the same words (`weapon`) when left / right swap between
+  a weapon and a spell (after pointing at an enemy).
+- The whole hint is in the highlight colour; key caps (0254) will style
+  its key names like every other hint's.
+- An art's forecast shows the mark and hint too, when the art can be used
+  with more than one weapon.
+
 ## Worked example (for 0312's tests)
 
 Example W1 from `weapons-and-items.md` (Swordsman, Iron Sword 20/20, rank D,

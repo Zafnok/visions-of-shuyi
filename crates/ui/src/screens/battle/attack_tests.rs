@@ -143,6 +143,9 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     );
     assert_eq!(names(&h), "Test Lord | Raider");
     assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
+    // The forecast says so too, in the player's keys (0463).
+    let swap = shown_forecast(&h).swap;
+    assert_eq!(swap.as_deref(), Some("Left/Right weapon"));
     h.keys("Right");
     assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
     assert_eq!(names(&h), "Test Lord | Raider");
@@ -251,8 +254,10 @@ fn forecast_with_no_counter_and_a_kill_snapshot() {
     h.keys("Right Right Down Down f f f");
     assert_eq!(names(&h), "Test Archer | Brigand");
     assert_eq!(shown_forecast(&h).no_counter.as_deref(), Some("no counter"));
-    // One bow: nothing to swap, every cursor key picks the target.
+    // One bow: nothing to swap, every cursor key picks the target, and
+    // the forecast has no swap mark or hint (0463).
     assert_eq!(help(&h), "arrows next target · f attack · d back");
+    assert_eq!(shown_forecast(&h).swap, None);
     assert_snapshot!(h.snapshot());
 }
 

@@ -370,7 +370,12 @@ fn the_forecast_shows_its_tip() {
     frame(&mut s, &mut c, &[], 1.0);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
-    assert_eq!(dismiss_all(&mut s, &mut c), [TipTrigger::FirstForecast]);
+    // The lord has two swords: the swap tip follows (0463).
+    let seen = dismiss_all(&mut s, &mut c);
+    assert_eq!(
+        seen,
+        [TipTrigger::FirstForecast, TipTrigger::FirstWeaponSwap]
+    );
     // The forecast is still there under the dismissed tip.
     assert!(matches!(s.mode(), Mode::Targeting(_)));
     // A tip waits out the combat that follows.
@@ -1091,4 +1096,34 @@ fn the_unseen_tips_are_those_not_shown_yet_and_none_while_tips_are_off() {
     c.game.tips_enabled = false;
     press(&mut s, &mut c, &[]);
     assert_eq!(s.tips.unseen(&c).count(), 0);
+}
+
+/// Ticket 0463: the lord's forecast with its two swords shows the
+/// Swapping weapons tip, once; it names the keys that swap.
+#[test]
+fn a_forecast_with_a_weapon_to_swap_to_shows_the_swap_tip_once() {
+    let mut c = tipped();
+    let mut s = kinds(&c, |_| {});
+    let seen = attack_raider(&mut s, &mut c);
+    assert!(seen.contains(&TipTrigger::FirstWeaponSwap), "{seen:?}");
+    let tip = c.game.content.tips.for_trigger(TipTrigger::FirstWeaponSwap);
+    let tip = tip.unwrap();
+    assert_eq!(tip.id, "weapon_swap");
+    assert!(tip.how.as_deref().unwrap_or("").contains("{CursorLeft}"));
+    // Back out and in again: not twice.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(dismiss_all(&mut s, &mut c), []);
+}
+
+/// With one sword, nothing to swap: no tip (the forecast's own tip still
+/// shows).
+#[test]
+fn a_forecast_with_one_weapon_has_no_swap_tip() {
+    let mut c = tipped();
+    let mut s = kinds(&c, |u| u[0].loadout.weapons[1] = None);
+    let seen = attack_raider(&mut s, &mut c);
+    assert!(!seen.contains(&TipTrigger::FirstWeaponSwap), "{seen:?}");
+    assert!(seen.contains(&TipTrigger::FirstForecast), "{seen:?}");
 }

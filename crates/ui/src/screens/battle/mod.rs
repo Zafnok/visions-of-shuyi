@@ -98,8 +98,9 @@ use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::shop::{ShopScreen, ShopVisit};
 use self::tips::TipState;
 use self::view::{
-    BannerView, BattleMenuView, BattleView, DialogView, InfoView, MapInfoView, MenuHeader,
-    MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView, QuestionView,
+    BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
+    MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView,
+    QuestionView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -966,6 +967,9 @@ impl BattleScreen {
                 fired.push(TipTrigger::FirstForecast);
                 if !forecast::kind_effects(state, t).is_empty() {
                     fired.push(TipTrigger::FirstEffective);
+                }
+                if t.can_swap() {
+                    fired.push(TipTrigger::FirstWeaponSwap);
                 }
             }
             Mode::Idle { .. } => {
@@ -2254,15 +2258,15 @@ impl BattleScreen {
     fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
         let km = ctx.help_keys();
         let plain = |key| ctx.text_with(key, &[]);
-        // A hint for two keys that are not one action: `←/→ swap`.
-        let pair = |key, a, b| {
-            let keys = format!("{}/{}", key_name(km, a), key_name(km, b));
-            ctx.text_with(key, &[("keys", &keys)])
-        };
         let mut hints = if t.can_swap() {
+            let target = format!(
+                "{}/{}",
+                key_name(km, Action::CursorUp),
+                key_name(km, Action::CursorDown)
+            );
             vec![
-                pair("battle.hint.swap", Action::CursorLeft, Action::CursorRight),
-                pair("battle.hint.target", Action::CursorUp, Action::CursorDown),
+                Self::swap_hint(ctx, "battle.hint.swap"),
+                ctx.text_with("battle.hint.target", &[("keys", &target)]),
             ]
         } else {
             vec![plain("battle.hint.next_target")]
@@ -2273,6 +2277,16 @@ impl BattleScreen {
         }));
         hints.push(plain("battle.hint.back"));
         hints.join(SEPARATOR)
+    }
+
+    /// The text `key` with `{keys}` the keys that swap the weapon, as two
+    /// keys that are not one action: `Left/Right swap` in the help line,
+    /// `Left/Right weapon` on the forecast (0463).
+    fn swap_hint(ctx: &Ctx, key: &str) -> String {
+        let km = ctx.help_keys();
+        let (left, right) = (Action::CursorLeft, Action::CursorRight);
+        let keys = format!("{}/{}", key_name(km, left), key_name(km, right));
+        ctx.text_with(key, &[("keys", &keys)])
     }
 
     /// The help line while browsing, over what is under the cursor; `back`
@@ -2630,7 +2644,12 @@ impl BattleScreen {
             }),
             _ => None,
         };
-        let forecast = self.forecast().and_then(|t| forecast::view(told, t));
+        let forecast = self.forecast().and_then(|t| {
+            let swap = t
+                .can_swap()
+                .then(|| Self::swap_hint(ctx, "battle.forecast.swap"));
+            forecast::view(told, t).map(|f| ForecastView { swap, ..f })
+        });
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let progress = self
             .progress()

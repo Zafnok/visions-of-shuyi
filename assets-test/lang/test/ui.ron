@@ -1315,6 +1315,7 @@
     (key: "battle.until.enemy", source: "until Enemy phase", text: "UNTIL ENEMY PHASE"),
     (key: "battle.until.other", source: "until Other phase", text: "UNTIL OTHER PHASE"),
     (key: "battle.forecast.title", source: "Forecast", text: "FORECAST"),
+    (key: "battle.forecast.swap", source: "{keys} weapon", text: "{keys} WEAPON"),
     (key: "battle.forecast.broken", source: "(broken)", text: "(BROKEN)"),
     (key: "battle.forecast.resist", source: "(resist)", text: "(RESIST)"),
     (key: "battle.forecast.heals", source: "heals {n}", text: "HEALS {n}"),
