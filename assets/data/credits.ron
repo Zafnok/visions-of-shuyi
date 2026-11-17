@@ -64,6 +64,15 @@
          source: "http://hi79.web.fc2.com/", license: "Custom (Shironejiya)",
          private: ["battlers/brigand.", "battlers/raider.", "battlers/red_captain."]),
 
+        // Pixel Flag's Paladin (0446): the riders in the combat scene, the
+        // enemy's and Tamsin's, recoloured. Bought on BOOTH; its terms ask
+        // for no credit, but every bought work has one (THIRD_PARTY_ASSETS.md).
+        (id: "pixel_flag", group: Art,
+         title: "Classes and Mobs pixel-art TRPG pieces",
+         author: "Pixel Flag",
+         source: "https://booth.pm/ja/items/7851483", license: "Custom (Pixel Flag)",
+         private: ["battlers/rider.", "battlers/sergeant."]),
+
         // The AI voice tools that made the voice clips (0722, ADR-0107).
         // Hidden from the list: the credits screen shows them under its
         // own heading, with the line that the voices are AI-generated,
