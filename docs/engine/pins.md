@@ -422,7 +422,7 @@ Nothing for the game: 3 PRs (#440, #443, #444). #440 keeps the engine's template
 
 Nothing for the game: 5 PRs (#446, #447, #449, #450, #458). #450 is engine ticket 3215 alone (key caps), which 0254 still waits for; #446 and #447 are the engine's own compile-time budget and disclosure test; #449 keeps the `in-house-sound` feature doing nothing, with no change the game sees; #458 removes the engine's research scripts.
 
-## 2026-11-17: 1ccb1acc → e738ffc2 (18 engine PRs), #PRNUM
+## 2026-11-17: 1ccb1acc → e738ffc2 (18 engine PRs), #732
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
