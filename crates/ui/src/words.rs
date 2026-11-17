@@ -7,7 +7,7 @@
 
 use crate::prelude::*;
 use alloc::sync::Arc;
-use core::fmt::Display;
+use shuyi_ui::text::Args;
 
 use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip, WorldMapDef};
 use trpg_core::lead::LEAD_ID;
@@ -56,6 +56,10 @@ impl Language {
     }
 }
 
+/// The tag of the language the game is written in, English: the text
+/// [`Words::ENGLISH`] gives, and whose plural rules its messages follow.
+pub const SOURCE_LANG: &str = "en";
+
 impl<'a> Words<'a> {
     /// English: every text as the data has it.
     pub const ENGLISH: Words<'static> = Words { pack: None };
@@ -90,8 +94,12 @@ impl<'a> Words<'a> {
     /// [`text`](Self::text) with each `{name}` that `args` names replaced
     /// by its value. It names no key: text with `{Confirm}` in it is
     /// asked of [`Ctx::text_with`](crate::Ctx::text_with).
-    pub fn text_with(self, key: &str, args: &[(&str, &dyn Display)]) -> String {
-        crate::tips::fill_values(self.text(key), args)
+    pub fn text_with(self, key: &str, args: &Args<'_>) -> String {
+        let (text, lang) = match self.pack {
+            Some((lang, code)) => lang.text_in(code, key),
+            None => (self.text(key), SOURCE_LANG),
+        };
+        crate::tips::fill_values(text, lang, args)
     }
 
     /// The name of `class`.
@@ -364,6 +372,11 @@ mod tests {
 
     /// Ticket 0243: screen text where there is no `Ctx`.
     #[test]
+    fn the_source_language_is_the_engines_default() {
+        assert_eq!(SOURCE_LANG, LangCode::default().as_str());
+    }
+
+    #[test]
     fn screen_text_is_asked_by_key_in_either_language() {
         let c = ctx();
         let code = test();
@@ -372,7 +385,7 @@ mod tests {
         assert_eq!(words.text("battle.menu.attack"), "ATTACK");
         // What the pack lacks is English.
         assert_eq!(words.text("title.credits"), "Credits");
-        let values: [(&str, &dyn Display); 2] = [("turn", &2), ("limit", &8)];
+        let values: [(&str, &dyn shuyi_ui::text::ToArg); 2] = [("turn", &2), ("limit", &8)];
         assert_eq!(
             Words::ENGLISH.text_with("battle.turn_of", &values),
             "Turn 2/8"

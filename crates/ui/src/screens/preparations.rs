@@ -42,7 +42,7 @@ pub use view::{
     PackView, PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
 };
 
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     ArmourWeight, BattleSetup, Equipped, GearSlot, ItemDef, ItemId, PrepError, PrepUnit,
@@ -427,7 +427,7 @@ impl PreparationsScreen {
                     let detail = match (slot, items.get(id)) {
                         (GearSlot::Armour, Some(ItemDef::Armour(a))) => {
                             let bonus = bonus_text(ctx.words(), &a.bonus);
-                            let detail = [("bonus", &bonus as &dyn Display), ("weight", &a.weight)];
+                            let detail = [("bonus", &bonus as &dyn ToArg), ("weight", &a.weight)];
                             ctx.text_with("prep.armour_detail", &detail)
                         }
                         (GearSlot::Accessory, Some(ItemDef::Accessory(a))) => {
@@ -529,7 +529,7 @@ impl PreparationsScreen {
     /// `Pack 3/6`.
     pub fn pack_header(&self, ctx: &Ctx) -> String {
         let pack = &self.prep.setup.pack;
-        let args: [(&str, &dyn Display); 2] = [("packed", &pack.items.len()), ("cap", &pack.cap)];
+        let args: [(&str, &dyn ToArg); 2] = [("packed", &pack.items.len()), ("cap", &pack.cap)];
         ctx.text_with("prep.pack_header", &args)
     }
 
@@ -610,16 +610,16 @@ impl PreparationsScreen {
             );
         let line = match (before, gear) {
             (Some(now), false) => {
-                let args: [(&str, &dyn Display); 3] =
+                let args: [(&str, &dyn ToArg); 3] =
                     [("now", &now), ("then", &then), ("weapon", &weapon)];
                 ctx.text_with("prep.speed_change", &args)
             }
             (Some(now), true) => {
-                let args: [(&str, &dyn Display); 2] = [("now", &now), ("then", &then)];
+                let args: [(&str, &dyn ToArg); 2] = [("now", &now), ("then", &then)];
                 ctx.text_with("prep.speed_change_gear", &args)
             }
             (None, false) => {
-                let args: [(&str, &dyn Display); 2] = [("now", &then), ("weapon", &weapon)];
+                let args: [(&str, &dyn ToArg); 2] = [("now", &then), ("weapon", &weapon)];
                 ctx.text_with("prep.speed", &args)
             }
             (None, true) => ctx.text_with("prep.speed_gear", &[("now", &then)]),
@@ -761,7 +761,7 @@ impl PreparationsScreen {
         if let (Some(why), Some(unit)) = (row.unusable, self.unit()) {
             let reason = reason_text(ctx, why);
             let name = ctx.words().unit(unit);
-            let args: [(&str, &dyn Display); 2] = [("unit", &name), ("reason", &reason)];
+            let args: [(&str, &dyn ToArg); 2] = [("unit", &name), ("reason", &reason)];
             self.message = Some(ctx.text_with("prep.cant", &args));
         }
     }
@@ -777,7 +777,7 @@ impl PreparationsScreen {
                 ctx.audio.menu(MenuSound::Denied);
                 if e == PrepError::PackFull {
                     let pack = &self.prep.setup.pack;
-                    let args: [(&str, &dyn Display); 2] =
+                    let args: [(&str, &dyn ToArg); 2] =
                         [("packed", &pack.items.len()), ("cap", &pack.cap)];
                     self.message = Some(ctx.text_with("prep.pack_full", &args));
                 }
@@ -930,7 +930,7 @@ impl PreparationsScreen {
             Tab::Fight => {
                 let units = self.prep.setup.player_units().count();
                 let pack = self.pack_header(ctx);
-                let args: [(&str, &dyn Display); 2] = [("units", &units), ("pack", &pack)];
+                let args: [(&str, &dyn ToArg); 2] = [("units", &units), ("pack", &pack)];
                 PrepBody::Fight(ctx.text_with("prep.ready", &args))
             }
         };

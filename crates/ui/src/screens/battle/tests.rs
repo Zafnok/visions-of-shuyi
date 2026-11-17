@@ -178,7 +178,7 @@ fn help_depends_on_what_is_hovered() {
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
         s.help(&c),
-        "wasd move · j menu · l next unit · u rewind · k menu · Space end turn"
+        "w\u{a0}a\u{a0}s\u{a0}d move · j menu · l next unit · u rewind · k menu · Space end turn"
     );
     s.cursor.jump(Pos::new(3, 5));
     assert_eq!(
@@ -892,7 +892,10 @@ fn help_follows_the_mode() {
     frame(&mut s, &mut c, &[], 1.0, false);
     assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
     c.use_layout(crate::input::LEFT_HANDED);
-    assert_eq!(s.help(&c), "wasd choose · j confirm · k back");
+    assert_eq!(
+        s.help(&c),
+        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back"
+    );
 }
 
 #[test]

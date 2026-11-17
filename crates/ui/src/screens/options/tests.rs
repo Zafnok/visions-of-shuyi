@@ -547,7 +547,10 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     .unwrap();
     let changed = c.settings().clone();
     let mut s = on(Row::RestoreDefaults);
-    assert_eq!(s.help(&c).plain(), "wasd move · j restore · k back");
+    assert_eq!(
+        s.help(&c).plain(),
+        "w\u{a0}a\u{a0}s\u{a0}d move · j restore · k back"
+    );
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.asking(), Some(Question::RestoreDefaults.key()));
     press(&mut s, &mut c, &[Action::Cancel]);

@@ -61,7 +61,7 @@ pub fn set_up(ctx: &Ctx) -> SetUp {
         let numbered = lang.text(&LangCode::default(), PROFILE_NUMBERED_TEXT);
         let n = profiles.current().get();
         // check-text: not a data name (the player's own)
-        p.name != shuyi_ui::text::fill_values(numbered, &[("n", &n)])
+        p.name != shuyi_ui::text::fill_values(numbered, crate::words::SOURCE_LANG, &[("n", &n)])
     });
     // The layout picked on a first launch is saved in the settings too.
     let kept_options = storage

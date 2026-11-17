@@ -68,7 +68,7 @@ pub mod walk;
 use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::cell::{RefCell, RefMut};
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -2193,7 +2193,7 @@ impl BattleScreen {
                 let km = ctx.help_keys();
                 let [accept, also] = split_keys::help_end_turn_accept_actions(km);
                 let (accept, also) = (key_name(km, accept), key_name(km, also));
-                let keys = [("accept", &accept as &dyn Display), ("also", &also)];
+                let keys = [("accept", &accept as &dyn ToArg), ("also", &also)];
                 return ctx.text_with("battle.help.end_turn", &keys);
             }
             Mode::Info { .. } => "battle.help.info",

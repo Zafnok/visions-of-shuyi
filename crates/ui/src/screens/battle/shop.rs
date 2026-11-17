@@ -29,6 +29,7 @@
 //! (ADR-0054).
 
 use crate::prelude::*;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     ArmourWeight, BattleState, Command, Gold, ItemDef, ItemId, Pos, SellFrom, Shop, ShopKind,
@@ -507,7 +508,7 @@ impl ShopScreen {
         let offer = offers.get(*line)?;
         let item = ctx.words().item(&offer.item, self.preview.items());
         let gold = gold_text(offer.gold);
-        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        let args: [(&str, &dyn ToArg); 2] = [("item", &item), ("gold", &gold)];
         Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 

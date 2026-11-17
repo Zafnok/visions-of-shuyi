@@ -46,6 +46,7 @@
 //! chapters.
 use crate::prelude::*;
 
+use alloc::borrow::Cow;
 use alloc::collections::BTreeMap;
 pub use shuyi_assets::bundle::LoadFile;
 
@@ -218,7 +219,7 @@ impl Folder {
         );
         for path in changed.iter().filter(|path| embeds(self.read.name, path)) {
             if let Some(bytes) = watched.bytes(path)
-                && read.bytes(path) != Some(bytes)
+                && read.bytes(path).as_deref() != Some(&*bytes)
             {
                 // Always taken: the game's view is a layer made at run time.
                 let _ = self.read.replace(path, bytes.to_vec());
@@ -461,7 +462,7 @@ pub fn left_out(path: &str) -> bool {
 /// Returns the UTF-8 contents of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), or `None` if it is missing or not valid UTF-8.
 pub fn file(path: &str) -> Option<&'static str> {
-    install().file(path)
+    install().file(path).map(lent)
 }
 
 /// The test files' own file at `path`, with its human-facing name, when
@@ -469,13 +470,29 @@ pub fn file(path: &str) -> Option<&'static str> {
 /// build with the test files (ADR-0057). [`file()`] reads the story's.
 /// `None` without test files, and for a path only one of the two has.
 pub fn test_part(path: &str) -> Option<(String, &'static str)> {
-    install().test_part(path)
+    install()
+        .test_part(path)
+        .map(|(name, text)| (name, lent(text)))
 }
 
 /// Returns the raw bytes of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), e.g. an image, or `None` if it is missing.
 pub fn bytes(path: &str) -> Option<&'static [u8]> {
-    install().bytes(path)
+    install().bytes(path).map(lent)
+}
+
+/// A file the bundle hands out, kept for the rest of the run: every layer
+/// of the game's lends its files (`Cow::Borrowed`, engine ticket 2262), so
+/// this copies nothing; a file a layer read on demand (none does) would be
+/// leaked, as the loaders keep `&'static` text.
+fn lent<T: ?Sized + ToOwned>(file: Cow<'static, T>) -> &'static T
+where
+    T::Owned: Into<Box<T>>,
+{
+    match file {
+        Cow::Borrowed(file) => file,
+        Cow::Owned(file) => Box::leak(file.into()),
+    }
 }
 
 /// Lists the paths (relative to `assets/`, `/`-separated, sorted) of every
@@ -901,9 +918,9 @@ mod tests {
                 continue;
             }
             if crate::playdate_images::kind_of(path).is_some() {
-                let png = all.bytes(path).and_then(crate::image::png_size);
+                let png = all.bytes(path).and_then(|png| crate::image::png_size(&png));
                 let bits = playdate.bytes(path).unwrap_or_default();
-                let source = shuyi_assets::bitmap::bitmap_sizes(bits).map(|(_, source)| source);
+                let source = shuyi_assets::bitmap::bitmap_sizes(&bits).map(|(_, source)| source);
                 let source = source.map(|(w, h)| (u32::from(w), u32::from(h)));
                 assert_eq!(source, png, "{path}");
             } else {
@@ -930,7 +947,7 @@ mod tests {
         // rim round its 52 × 31 blocks, 3 pixels each.
         let bitmap = |path| {
             let bytes = playdate.bytes(path).unwrap_or_default();
-            let bitmap = shuyi_assets::bitmap::Bitmap::parse(bytes).ok();
+            let bitmap = shuyi_assets::bitmap::Bitmap::parse(&bytes).ok();
             bitmap.map(|b| (b.width(), b.height(), b.styles(), b.mask().is_some()))
         };
         assert_eq!(
@@ -1026,11 +1043,11 @@ mod tests {
         ];
         assert_eq!(marks, expected);
         let bundle = Bundle::new(read);
-        assert_eq!(bundle.file("data/b.ron"), Some("assets"));
-        assert_eq!(bundle.file("data/c.ron"), Some("disk"));
+        assert_eq!(bundle.file("data/b.ron").as_deref(), Some("assets"));
+        assert_eq!(bundle.file("data/c.ron").as_deref(), Some("disk"));
         assert_eq!(bundle.display_path("data/c.ron"), "assets-test/data/c.ron");
         assert!(folder.replace("data/c.ron", b"saved".to_vec()));
-        assert_eq!(bundle.file("data/c.ron"), Some("saved"));
+        assert_eq!(bundle.file("data/c.ron").as_deref(), Some("saved"));
     }
 
     /// The game reads a folder from disk as a build embeds it, without its
@@ -1058,9 +1075,9 @@ mod tests {
         let changed: Vec<String> = changed.iter().map(|&p| p.to_owned()).collect();
         assets.take(&changed);
         let read = Bundle::new(vec![assets.read]);
-        assert_eq!(read.file("data/a.ron"), Some("new"));
-        assert_eq!(read.file("data/new.ron"), Some("new"));
-        assert_eq!(read.file("README.md"), None);
+        assert_eq!(read.file("data/a.ron").as_deref(), Some("new"));
+        assert_eq!(read.file("data/new.ron").as_deref(), Some("new"));
+        assert_eq!(read.file("README.md").as_deref(), None);
     }
 
     /// The process's folders (the app reads them once, at the start) are
@@ -1078,7 +1095,7 @@ mod tests {
         assert!(watched.replace("data/a.ron", b"new".to_vec()));
         take_changes(&["data/a.ron".to_owned()]);
         let read = Bundle::new(vec![folders[0].read]);
-        assert_eq!(read.file("data/a.ron"), Some("new"));
+        assert_eq!(read.file("data/a.ron").as_deref(), Some("new"));
     }
 
     /// A file of the content replaces `assets/`'s at its path and is shown
@@ -1088,7 +1105,10 @@ mod tests {
         static CONTENT: &[(&str, &[u8])] = &[("data/palette.ron", b"the content's")];
         let content = Layer::table(CONTENT_DISPLAY_ROOT, CONTENT);
         let bundle = Bundle::new(layers_with(Some(content)));
-        assert_eq!(bundle.file("data/palette.ron"), Some("the content's"));
+        assert_eq!(
+            bundle.file("data/palette.ron").as_deref(),
+            Some("the content's")
+        );
         let shown = bundle.display_path("data/palette.ron");
         assert_eq!(shown, "assets-private/content/data/palette.ron");
         assert!(bundle.is_private(&shown));
@@ -1235,7 +1255,7 @@ mod tests {
         use_pack(Layer::table(DISPLAY_ROOT, OTHER));
         let read = Bundle::new(vec![packed_layer()]);
         assert_eq!(read.files_under(""), ["data/x.ron"]);
-        assert_eq!(read.bytes("data/x.ron"), Some(&b"(a: 1)"[..]));
+        assert_eq!(read.bytes("data/x.ron").as_deref(), Some(&b"(a: 1)"[..]));
         assert_eq!(read.display_path("data/x.ron"), "assets/data/x.ron");
     }
 }

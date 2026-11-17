@@ -153,14 +153,14 @@ fn rebound_keys_and_a_controller_work() {
     h.keys("s j");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert!(
-        shows(&h, "wasd choose · j open · k leave"),
+        shows(&h, "w a s d choose · j open · k leave"),
         "{}",
         h.snapshot()
     );
     h.pad("DpadRight South South DpadRight East");
     // After a button press the help names the controller's buttons.
     assert!(shows(&h, "D-pad/L-stick choose · "), "{}", h.snapshot());
-    assert!(!shows(&h, "wasd choose"));
+    assert!(!shows(&h, "w a s d choose"));
     let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.packed(), [(ItemId::new("elixir"), 1)]);

@@ -203,7 +203,10 @@ fn help_names_the_layout_keys_and_what_confirm_does() {
     s.update(&mut c, &input(&[Action::Confirm]));
     assert_eq!(s.help(&c), "arrows scroll · f auto-scroll · d back");
     c.use_layout(crate::input::LEFT_HANDED);
-    assert_eq!(s.help(&c), "wasd scroll · j auto-scroll · k back");
+    assert_eq!(
+        s.help(&c),
+        "w\u{a0}a\u{a0}s\u{a0}d scroll · j auto-scroll · k back"
+    );
 }
 
 /// An update with no actions after `dt` seconds.

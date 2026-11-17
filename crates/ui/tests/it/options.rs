@@ -381,7 +381,7 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(layout(&h), Some(LEFT_HANDED));
     assert!(shows(&h, "Left-handed"));
-    assert!(shows(&h, "wasd move · j open · k back"));
+    assert!(shows(&h, "w a s d move · j open · k back"));
     h.keys("f Up d");
     assert_eq!(h.screens(), ["title", "options"]);
     // And back, with the left-handed keys: the picker opens on

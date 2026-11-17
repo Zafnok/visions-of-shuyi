@@ -14,7 +14,7 @@
 //! `Objective` ([`MapEntry::SHORTCUTS`], [`shortcuts`]).
 
 use crate::prelude::*;
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{BattleState, Faction, Objective, Phase, Pos, Turn, UnitId};
 
@@ -209,7 +209,7 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
             let name = format!("{:name_w$}", words.unit(u));
             let hp = format!("{:>5}", format!("{}/{}", u.hp, u.stats.hp));
             let line = [
-                ("name", &name as &dyn Display),
+                ("name", &name as &dyn ToArg),
                 ("hp", &hp),
                 ("status", &status),
             ];

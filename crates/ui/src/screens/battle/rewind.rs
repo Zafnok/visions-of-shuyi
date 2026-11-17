@@ -8,7 +8,7 @@
 //! skin paints it (ADR-0054).
 
 use crate::prelude::*;
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 use trpg_content::MapLook;
 use trpg_core::{
@@ -300,7 +300,7 @@ pub fn charges_text(words: Words<'_>, left: u8, charges: u8) -> String {
     } else {
         "battle.rewind.charges.many"
     };
-    let counts = [("left", &left as &dyn Display), ("charges", &charges)];
+    let counts = [("left", &left as &dyn ToArg), ("charges", &charges)];
     words.text_with(key, &counts)
 }
 

@@ -463,10 +463,13 @@ jobs:
       - name: Bench
         env:
           # target/what/scenario, or target/package, of each known finding.
+          # battle-cursor-sweep only until ticket 1285 (engine#3219's
+          # faster text fill) brings it back under and takes it out.
           KNOWN_OVER: >-
             playdate/frame-instructions/battle-attack
             playdate/frame-instructions/battle-enemy-turn
             playdate/frame-instructions/dialogue-portrait
+            playdate/frame-instructions/battle-cursor-sweep
         run: |
           set +e
           cargo shuyi bench --out dist/bench 2>&1 | tee bench.log

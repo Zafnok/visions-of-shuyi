@@ -21,7 +21,7 @@ expression: h.snapshot()
                                                                                                     
             ╔═ ► Left-handed ══════════════════════════════════════════════════════════╗            
             ║                                                                          ║            
-            ║                                                 wasd        move         ║            
+            ║                                                 w a s d     move         ║            
             ║                                                 j           select       ║            
             ║  [q][w][e][r][t][y][u][i][o][p]       [↑]       k/Escape    back         ║            
             ║   [a][s][d][f][g][h][j][k][l][;]   [←][↓][→]    ;           prev unit    ║            
@@ -54,7 +54,7 @@ aaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaahhfffffffffffffffhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaa
 aaaaaaaaaaaahddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddhaaaaaaaaaaaa
-aaaaaaaaaaaahdddddddddddddddddddddddddddddddddddddddddddddddddeeeedddddddddddddddddddddhaaaaaaaaaaaa
+aaaaaaaaaaaahdddddddddddddddddddddddddddddddddddddddddddddddddeeeeeeeddddddddddddddddddhaaaaaaaaaaaa
 aaaaaaaaaaaahdddddddddddddddddddddddddddddddddddddddddddddddddfddddddddddddddddddddddddhaaaaaaaaaaaa
 aaaaaaaaaaaahddggggeggggggggggggggfggfggfggfgdddddddgggdddddddffffffffdddddddddddddddddhaaaaaaaaaaaa
 aaaaaaaaaaaahdddgeggeggegggggggggggfggfggfggfgdddgggggggggddddfddddddddddddddddddddddddhaaaaaaaaaaaa

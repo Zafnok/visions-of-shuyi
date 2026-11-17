@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0250", "engine#3215"]
+blocked_by: ["0250"]
 nick_input: none
 completed:
 ---
@@ -31,8 +31,12 @@ builds it first:
   `help_line_styled`, `Ctx::text_styled`, `print_styled`), the engine's
   own screens switched over, and the palette's `key` / `key_bg`;
 - engine#3215: the key-cap style a theme turns on (box, bold, capitals,
-  even margins, room around a cap), a bold face in the font atlas, and
-  the direction cluster with its picture.
+  even margins, room around a cap; engine PR #463), engine#3216 a bold
+  face in the font atlas (`font-atlas --bold`, #468), and engine#3217
+  the direction cluster with its picture (`KeyCapStyle::with_arrows`,
+  `TextRole::Arrows`, #477). All three are in the pin since the pin
+  move of 2026-11-17, which also made `{Cursor}` on other keys read
+  `w a s d` (a space between keys).
 
 This ticket is the game's half: move the pin past both, switch the
 game's own hints to styled text and turn the style on. The mockups'
@@ -48,8 +52,8 @@ playtest's checklist (1064).
 ## Scope
 
 **In:**
-- Move the engine pin past engine#3215 (`engine-change` §7); fix what
-  the pin move breaks. (engine#2347 is in the pin since the pin move of
+- ~~Move the engine pin past engine#3215 (`engine-change` §7); fix what
+  the pin move breaks.~~ Done by the pin move of 2026-11-17. (engine#2347 is in the pin since the pin move of
   2026-11-16, which already switched the game's call sites to its
   `StyledText` with no key roles: `.into()` and `.plain()`.)
 - The game's views that name keys hold `StyledText`, built with
@@ -86,8 +90,8 @@ playtest's checklist (1064).
 1. List every place the game names a key to the player:
    `grep -rn "key_name\|all_key_names\|cursor_keys_name\|help_line\|text_with\|help_keys" crates/ui/src crates/app/src`
    (leave out tests and the debug tools, which 2347 leaves plain too).
-2. Move the pin (`engine-change` §7, `engine-pin` skill for the PRs it
-   passes); build and fix.
+2. ~~Move the pin (`engine-change` §7, `engine-pin` skill for the PRs it
+   passes); build and fix.~~ Done by the pin move of 2026-11-17.
 3. Switch each view from step 1 to `StyledText`; tests that compared a
    hint with a string compare its `plain()`.
 4. Add the bold face and build the atlas; add the cluster picture;

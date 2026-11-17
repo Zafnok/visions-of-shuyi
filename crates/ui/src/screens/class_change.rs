@@ -32,7 +32,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 pub use view::{
     ClassChangeBody, ClassChangeView, ColumnView, ColumnsView, QuestionView, SealView, StatRowView,
 };
@@ -382,7 +382,7 @@ impl ClassChangeScreen {
     fn question(&self, ctx: &Ctx, ask: &Ask<bool>, class: &ClassDef) -> QuestionView {
         let words = ctx.words();
         let (unit, class_name) = (words.unit(&self.unit), words.class(class));
-        let args: [(&str, &dyn Display); 2] = [("unit", &unit), ("class", &class_name)];
+        let args: [(&str, &dyn ToArg); 2] = [("unit", &unit), ("class", &class_name)];
         let (seal, held) = self.seal_of(ctx, class);
         QuestionView {
             ask: ask.view_with_keys(ctx, ctx.help_keys(), &args),

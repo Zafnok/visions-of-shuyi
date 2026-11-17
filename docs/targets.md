@@ -125,7 +125,14 @@ unit no longer searches every enemy's moves: the cursor sweep's costliest
 frame went from 2.28 to 1.37 million on the colour targets and from 3.05
 to 2.26 million on the Playdate.
 
-Until it lands, CI's `bench` job reports these three as warnings
+- **The Playdate's cursor sweep, for now (1285).** The engine pin move
+  of 2026-11-17 (PR #732) made every text fill parse a message (engine
+  #476): about 80k instructions more per Playdate frame, and the sweep
+  went from 1,982,686 to 2,050,631. Engine ticket 3219 fills plain text
+  without it; 1285 moves the pin past it and takes the sweep out of
+  `KNOWN_OVER` again.
+
+Until they land, CI's `bench` job reports these four as warnings
 (`KNOWN_OVER` in `.github/workflows/ci.yml`, read by
 `scripts/bench-known-over.sh`). Any other number over its budget, or a
 scenario that doesn't play, still fails the job. The job isn't part of

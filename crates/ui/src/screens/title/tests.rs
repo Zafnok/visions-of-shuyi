@@ -420,7 +420,10 @@ fn texts_name_the_layout_keys() {
     let mut c = ctx();
     assert_eq!(TitleScreen::help(&c), "arrows move · f select · d back");
     c.use_layout(crate::input::LEFT_HANDED);
-    assert_eq!(TitleScreen::help(&c), "wasd move · j select · k back");
+    assert_eq!(
+        TitleScreen::help(&c),
+        "w\u{a0}a\u{a0}s\u{a0}d move · j select · k back"
+    );
     c.use_layout(crate::input::RIGHT_HANDED);
     c.keymap = crate::input::Keymap::new(
         crate::input::Action::ALL
