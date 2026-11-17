@@ -2539,11 +2539,7 @@ impl BattleScreen {
             }
             // The focused area skill's reach (0482): the allies standing in
             // it are the ones it would reach.
-            Mode::List { menu, .. } => {
-                if let Some(Line::Skill(c)) = menu.value(menu.focus()) {
-                    scene.tint(c.area.iter().copied(), range::HEAL);
-                }
-            }
+            Mode::List { .. } => scene.tint(self.reach_shown().iter().copied(), range::HEAL),
             _ => {}
         }
     }
@@ -2715,7 +2711,20 @@ impl BattleScreen {
             menu,
             place,
             header,
+            clear_of: self.reach_shown().to_vec(),
         })
+    }
+
+    /// The focused area skill's reach in the Skill list (0482), which the
+    /// map tints and the list keeps clear of (0492); none otherwise.
+    fn reach_shown(&self) -> &[Pos] {
+        match &self.mode {
+            Mode::List { menu, .. } => match menu.value(menu.focus()) {
+                Some(Line::Skill(c)) => &c.area,
+                _ => &[],
+            },
+            _ => &[],
+        }
     }
 
     /// The side panel: the terrain and the unit under the cursor (as

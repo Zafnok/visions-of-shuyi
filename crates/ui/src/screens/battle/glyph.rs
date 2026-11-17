@@ -216,8 +216,35 @@ pub fn menu_origin_in(area: Rect, tile: Rect, (w, h): (i32, i32)) -> (i32, i32) 
     (left.max(area.x), my)
 }
 
-/// Paints the menu `m` beside where the map skin has `tile` of the scene,
-/// with its header in the top border.
+/// The smallest rectangle holding `tile` and every rectangle of `clear`:
+/// what a menu that keeps clear of an area skill's reach goes beside
+/// (ticket 0492), with [`menu_origin_in`]'s rule, so the list sits just
+/// past the reach's edge.
+pub fn beside_all(tile: Rect, clear: impl IntoIterator<Item = Rect>) -> Rect {
+    clear.into_iter().fold(tile, |a, r| {
+        let (x, y) = (a.x.min(r.x), a.y.min(r.y));
+        let right = (a.x + a.w).max(r.x + r.w);
+        let bottom = (a.y + a.h).max(r.y + r.h);
+        Rect::new(x, y, right - x, bottom - y)
+    })
+}
+
+/// The cells beside which the map skin paints `m` in `area`: its tile's,
+/// grown to hold the tiles it keeps clear of that the camera shows.
+pub fn menu_anchor(
+    tile_cells: impl Fn(trpg_core::Pos) -> Option<Rect>,
+    m: &BattleMenuView,
+    tile: trpg_core::Pos,
+) -> Option<Rect> {
+    let cells = tile_cells(tile)?;
+    Some(beside_all(
+        cells,
+        m.clear_of.iter().filter_map(|&p| tile_cells(p)),
+    ))
+}
+
+/// Paints the menu `m` beside where the map skin has `tile` of the scene
+/// (and the reach it keeps clear of), with its header in the top border.
 fn paint_menu_beside(
     ctx: &Ctx,
     view: &BattleView,
@@ -225,7 +252,8 @@ fn paint_menu_beside(
     tile: trpg_core::Pos,
     buf: &mut GlyphBuffer,
 ) {
-    let Some(cells) = ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
+    let skin = &ctx.game.map_skin;
+    let Some(cells) = menu_anchor(|p| skin.tile_cells(&view.scene, MAP_VIEW, p), m, tile) else {
         return;
     };
     let (x, y) = menu_origin(cells, menu::glyph::size(ctx, &m.menu));

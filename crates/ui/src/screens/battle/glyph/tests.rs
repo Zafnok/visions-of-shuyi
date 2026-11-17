@@ -71,6 +71,30 @@ fn menus_go_right_of_the_tile_unless_they_would_leave_the_view() {
     assert_eq!(menu_origin(Rect::new(58, 4, 4, 2), (10, 4)), (47, 3));
 }
 
+/// A menu that keeps clear of an area skill's reach goes beside the whole
+/// reach (ticket 0492): right of it, or left of it at the view's right
+/// edge.
+#[test]
+fn a_menu_goes_beside_the_reach_it_keeps_clear_of() {
+    // Inspire's radius-2 diamond around the glyph tile at (x, 10).
+    let reach = |x: i32| {
+        let near = (-2..=2_i32).flat_map(|dx| (-2..=2_i32).map(move |dy| (dx, dy)));
+        near.filter(|&(dx, dy)| dx.abs() + dy.abs() <= 2 && (dx, dy) != (0, 0))
+            .map(move |(dx, dy)| Rect::new(x + 2 * dx, 10 + dy, 2, 1))
+    };
+    let tile = Rect::new(20, 10, 2, 1);
+    let anchor = beside_all(tile, reach(20));
+    assert_eq!(anchor, Rect::new(16, 8, 10, 5));
+    // Right of the reach, its first item level with the reach's top row.
+    assert_eq!(menu_origin(anchor, (10, 4)), (27, 7));
+    // No reach: beside the tile, as every menu.
+    assert_eq!(beside_all(tile, []), tile);
+    // At the view's right edge (the map's): left of the reach.
+    let edge = beside_all(Rect::new(64, 10, 2, 1), reach(64));
+    assert_eq!(edge, Rect::new(60, 8, 10, 5));
+    assert_eq!(menu_origin(edge, (10, 4)), (49, 7));
+}
+
 #[test]
 fn the_menu_is_painted_one_cell_right_of_its_units_tile() {
     let mut c = ctx();

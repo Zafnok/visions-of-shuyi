@@ -117,6 +117,9 @@ pub struct BattleMenuView {
     pub place: MenuPlace,
     /// What it shows in its top border, if anything.
     pub header: Option<MenuHeader>,
+    /// The tiles it keeps clear of besides its own: the focused area
+    /// skill's reach in the Skill list (ticket 0492), most often none.
+    pub clear_of: Vec<Pos>,
 }
 
 /// Where a menu opens.

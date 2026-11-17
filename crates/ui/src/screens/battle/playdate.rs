@@ -27,7 +27,7 @@ pub mod stage;
 use crate::prelude::*;
 
 use super::banner::BannerKind;
-use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_origin_in};
+use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_anchor, menu_origin_in};
 use super::layout::map_area;
 use super::notes::{unwrap_notes, wrap_notes};
 use super::objective;
@@ -286,7 +286,8 @@ fn paint_message(
 }
 
 /// Paints the menu `m` beside where the map skin has `tile`, as on the PC:
-/// right of it, or left where it would run off the screen.
+/// right of it, or left where it would run off the screen, past the reach
+/// it keeps clear of (0492).
 fn paint_menu_beside(
     ctx: &Ctx,
     view: &BattleView,
@@ -295,7 +296,7 @@ fn paint_menu_beside(
     buf: &mut GlyphBuffer,
 ) {
     let area = map_area(ctx);
-    let Some(cells) = tile_cells(ctx, &view.scene, area, tile) else {
+    let Some(cells) = menu_anchor(|p| tile_cells(ctx, &view.scene, area, p), m, tile) else {
         return;
     };
     let info = view.map_info.as_ref();
