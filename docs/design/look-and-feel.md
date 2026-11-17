@@ -524,8 +524,9 @@ so they aren't in this repository (ADR-0032).
   background and back once a second; the terrain glyph or unit letter in
   that cell gives way to it. Only while browsing. The glyph look's view is
   35 × 30 tiles, so no map the game has today shows them.
-- The **side panel shows the unit under the cursor** (name, class, level, HP,
-  stats, weapon, terrain). That's where class and full numbers are read.
+- The **side panel shows the unit under the cursor**: name, class, level,
+  HP, stats, weapon and combat numbers, under the terrain. That's where
+  class and full numbers are read (*Side panel* below, ticket 0078).
 - Class symbols (`†`, `»`, `}`, …) were tried and rejected: the font's symbols
   are too small and generic. Custom-drawn class icons may be explored later
   (ticket 1006); until then, initials are the rule.
@@ -654,6 +655,108 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
   rule, not rendered for Nick)*.
 - The Combat Arts list and art line (0414) go above this forecast; that
   ticket works out the combined box.
+
+### Side panel
+
+Decided 2026-11-16, ticket 0078 (built by 0484). A friend's playtest of
+the Act 1 build, passed on by Nick (2026-11-07): "Make stats easier to
+see, rather than needing to go to unit info or leveling up (we can
+workshop ideas)". Until then the panel showed the terrain, then the
+unit's name, class and level, HP and faction, and the gold: no stats and
+no weapon, though this page said it showed both. Nobody had decided to
+leave them out.
+
+Nick saw Chapter 1's map at its start, hovering Ellery and a Brigand, in
+both looks, with: A. stats and weapon on the panel; B. combat numbers on
+it instead; E. both together; D. a window over the map beside the unit;
+and the Playdate's corner window with stats, and with stats and combat
+numbers. (A key that flips the panel was offered for the Playdate; the
+PC's panel has room for everything.)
+
+> [which:] "E: A + B on panel" … [the same for enemies?] "if the
+> standard for Fire Emblem is that you can open a stat panel on enemy and
+> all info is not hidden then we can keep it the same" [it is: the GBA
+> games open an enemy's stat pages, items included] … [the Playdate:]
+> "probably stay as name + HP, but what button do you propose to switch
+> to full window given we don't have many buttons avail on Playdate? I
+> think it might be worth exploring but only if there's a good option
+> available." [shown hold B + Up, no button, crank forward:] "No flip
+> button" … [unit info shows Ellery's Def 4 without her Leather Vest's
+> +2; fights use 6:] "can u switch armor during a battle? I don't think so
+> right, so prob with gear" [right: armor and accessories change only at
+> Preparations]
+
+**On the PC, both looks** (the panel is the same in both), from the top:
+
+```
+Road
+DEF +0  AVO +0
+
+Ellery
+Exile  Lv 1
+HP 19/19   ##########
+Player
+
+Str   8     Mag   1
+Dex   7     Spd   7
+Def   6     Res   5
+Mov   5
+
+Iron Sword        20/20
+Atk  13     Hit 104
+Crit  3     Avo  14
+AS    5
+
+Gold 0
+```
+
+- **The terrain and the unit block stay as they were**: terrain name and
+  bonuses; name in faction colour, class and level, HP with its bar,
+  faction.
+- **Then the stats**, two to a row: Str, Mag, Dex, Spd, Def, Res, then
+  Mov. They are **the numbers a fight uses**: with the equipped armor and
+  accessory (Nick: "prob with gear") and the timed effects, so Ellery's
+  Def reads 6 with her Leather Vest, not 4. Unit info shows the same
+  numbers (built by 0484 too).
+- **Then the equipped weapon** (or attack spell) and its uses, as the
+  menus' top border names it (`Iron Sword 20/20`).
+- **Then the combat numbers**, two to a row: Atk, Hit, Crit, Avo, AS.
+  They are the unit's side of any fight, before the target counts:
+  - `Atk` = Str (Mag for a magic weapon or spell) + the weapon's might;
+  - `Hit` = the weapon's hit + Dex × 2;
+  - `Crit` = the weapon's crit + Dex / 2;
+  - `Avo` = Spd × 2 + the avoid of the terrain the unit stands on (+15
+    with a gauntlet);
+  - `AS` = attack speed;
+  
+  by the formulas in `stats-and-combat.md` and `weapons-and-items.md`,
+  with a broken weapon's penalties. The forecast still gives the
+  numbers of one fight against one target.
+- **The same for every unit**, enemies included (Fire Emblem shows an
+  enemy's full stats too).
+- *The agent's starting rules (Nick can veto; on the Act 1 playtest's
+  checklist, 1064):*
+  - Labels are dim, values bright; labels in mixed case as in the
+    forecast. A blank row between the unit block, the stats and the
+    weapon.
+  - `Hit` shows above 100 when it is (Ellery: 104), and `AS` below 0
+    (the Brigand's Iron Axe is heavy for him: `AS -1`), as the formulas
+    give them; neither is cut.
+  - A unit with no weapon or attack spell in hand shows `--` for the
+    weapon, `Atk`, `Hit` and `Crit`; `Avo` and `AS` still show.
+  - Stats raised or lowered by a timed effect are marked as on unit info;
+    gear doesn't mark them.
+  - Skill bonuses count when they hold in any fight: timed effects, the
+    equipped weapon's passive, an ally's aura reaching the unit where it
+    stands. One that holds only in some fights (when attacking, against a
+    kind of unit) isn't counted, as the Preparations' speed line leaves
+    out bonuses that only apply in a fight.
+- **The Playdate doesn't change** (Nick: "No flip button"): the corner
+  window stays name and HP, and the full numbers are on Unit info,
+  from the map menu.
+- **Not chosen:** combat numbers alone (B), a window over the map (D:
+  it covers the units around the one under the cursor), a key that flips
+  the panel.
 
 ### Portraits and battle art (bought)
 
@@ -785,8 +888,8 @@ sprites.
     Narration (no face, no name) sits in the same box from the same
     column as speech, on the first text row, in the dim narration colour
     (ticket 0740; it was centred before).
-  - **Not** in the battle side panel or hover. That panel shows stats only
-    (Nick dropped the mini portrait).
+  - **Not** in the battle side panel or hover (Nick dropped the mini
+    portrait). What the panel shows is in *Side panel*.
 
 #### Combat screen
 
