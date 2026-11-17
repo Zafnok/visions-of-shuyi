@@ -746,7 +746,7 @@ mod tests {
         assert!(lent.starts_with(b"\x89PNG"));
         assert_eq!(Some(lent), bytes(atlas).as_deref());
         assert_eq!(lent_bytes("fonts/nope.png"), None);
-        let info = PackInfo::new("t", None, Default::default());
+        let info = PackInfo::new("t", None, shuyi_core::ContentHash::default());
         let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
         let packed: &'static [u8] = pack::write(&info, &files).leak();
         let index = Index::read(packed, "t").unwrap();
