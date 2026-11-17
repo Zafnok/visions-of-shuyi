@@ -1,0 +1,16 @@
+---
+source: crates/ui/src/screens/battle/playdate/tests.rs
+expression: shown
+---
+
+
+╔═════════════════════════════════════════╗
+║                                         ║
+║                OBJECTIVE                ║
+║                                         ║
+║  Win:   Defeat Silas Hendry             ║
+║  Lose:  3 of 5 houses burn              ║
+║  or     Ellery falls                    ║
+║  Bonus: Save 4 or 5 houses for rewards  ║
+║                                         ║
+╚═════════════════════════════════════════╝

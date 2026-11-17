@@ -27,7 +27,7 @@ fn title() -> Harness {
 /// In Quick Battle in the test language, its banner closed.
 fn quick_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
@@ -226,7 +226,7 @@ fn a_generic_unit_and_terrain_are_named_by_the_pack() {
 #[test]
 fn a_tip_in_the_test_language() {
     let mut h = title();
-    h.with_tips().keys("Down f Left f f");
+    h.with_tips().keys("Down f Left f f f");
     assert_snapshot!(h.snapshot());
     assert!(shows(&h, "YOUR MOVE"));
     assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR ONTO"));
@@ -261,7 +261,7 @@ fn a_weapon_list_is_painted_in_the_test_language() {
         h
     };
     let mut english = Harness::with_layout(RIGHT_HANDED);
-    english.keys("Down f Left f f");
+    english.keys("Down f Left f f f");
     let english = equip_list(english);
     let test = equip_list(quick_battle());
     assert!(shows(&english, "* Iron Sword "));

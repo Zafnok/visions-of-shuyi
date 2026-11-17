@@ -45,8 +45,8 @@ fn record_quick_battle() -> SessionRecord {
     // right-handed layout.
     h.keys("z f");
     // Quick Battle, then Preparations: Left wraps to `Fight!`; Confirm
-    // closes the turn's banner.
-    h.keys("Down f Left f f");
+    // closes the objective's banner, Confirm the turn's.
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The debug menu, "Save session" (above the engine's debug view, its
     // last entry), and back.

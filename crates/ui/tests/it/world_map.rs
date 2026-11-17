@@ -88,11 +88,11 @@ fn skip_scene(h: &mut Harness) {
     h.keys("d f");
 }
 
-/// From the battle's start (its notes and banner), wins the test battle,
+/// From the battle's start (its notes and banners), wins the test battle,
 /// through its results and victory scene.
 fn win(h: &mut Harness) {
     assert_eq!(h.top_screen(), "battle");
-    h.keys("f f");
+    h.keys("f f f");
     let seize = Command::Act {
         unit: LEAD,
         dest: FORT,
@@ -202,7 +202,8 @@ fn win_a_story_battle_then_the_acts_final_one() {
     walk(&mut h);
     skip_scene(&mut h);
     assert_eq!(h.top_screen(), "battle");
-    h.keys("f f");
+    // Its notes, its objective's banner (0481) and turn 1's.
+    h.keys("f f f");
     let seize = Command::Act {
         unit: LEAD,
         dest: FORT,

@@ -558,7 +558,7 @@ mod tests {
     fn map_scene_in_is_sized_for_the_area() {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.map_scene_in(Rect::new(0, 0, 10, 4)), None);
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         let lord = Pos::new(3, 5);
         let small = h.map_scene_in(Rect::new(0, 0, 10, 4)).unwrap();
         assert_eq!(small.size, (5, 4));
@@ -587,7 +587,7 @@ mod tests {
         );
         assert_eq!(h.path(), [] as [trpg_core::Pos; 0]);
         // The Quick Battle: the cursor on the lord, nothing selected.
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         let (lord, plain, fort) = (Pos::new(3, 5), Pos::new(4, 5), Pos::new(5, 5));
         assert_eq!(h.cursor_tile(), Some(lord));
         let unit = h.unit_at(lord).unwrap();
