@@ -1127,7 +1127,8 @@ like shit". What the search was held to after that:
 
 | Fighter | Combat picture | Size | Map sprite | Source |
 | ------- | -------------- | ---- | ---------- | ------ |
-| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders (not imported yet: ticket 0499; today the Tiny Tales knight on foot) | Pixel Flag; MattWalkden |
+| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1, today's rider sprite) | Pixel Flag; Tiny Tales |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
