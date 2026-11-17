@@ -760,7 +760,9 @@ list beside the forecast (ticket 0414).
 Example: the lord stands beside a brigand. Its action menu reads `Attack`,
 `Arts`, `Skill`, `Item`, `Equip`, `Wait`. `Arts` lists Flowing Cut and Guard
 Break. The player picks Guard Break, then the brigand, sees the forecast
-with `Guard Break (20 → 16)` and `no counter`, and confirms.
+with `Guard Break` at the top, `20 → 16` under the Iron Sword and `no
+counter`, and confirms (the uses moved under the weapon in 0480,
+`look-and-feel.md`).
 
 - **`Arts` is an entry of the action menu, under `Attack`** (Nick: "Action
   menu only", like Fire Emblem: Three Houses). It is the only way to an art:
@@ -779,10 +781,11 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
   `broken` (the weapon), `1 uses left` (a spell active that needs two),
   `out of range` (nobody it reaches from that tile). A dimmed line can't be
   chosen. An art that costs more durability than is left stays usable; the
-  forecast shows it breaking the weapon (`Guard Break (3 → 0)`).
+  forecast shows it breaking the weapon (`3 → 0` under it).
 - **Then the target**, with the forecast: the numbers **with** the art
-  applied, plus a line with the art's name and the durability change, e.g.
-  `Guard Break (20 → 16)`. Effects that aren't numbers are spelled out:
+  applied, plus a line with the art's name (`Guard Break`) and, under
+  the weapon, the durability change (`20 → 16`; ticket 0480 moved it there
+  from the art's line). Effects that aren't numbers are spelled out:
   `no counter`, `pierces`, `pins: Mov −3`, `slows: Spd −3`,
   `stance: avoid +20`.
 - **The forecast's keys are the same in every weapon forecast** (Nick: "Same
@@ -828,9 +831,10 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
 
   ```
    ╔════════ Forecast ══════════╗
-   ║ Guard Break (20 → 16)      ║
+   ║ Guard Break                ║
    ║ Test Lord     Brigand      ║
-   ║ Iron Sword    Iron Axe     ║
+   ║ Iron Sword    Iron Axe 20  ║
+   ║ 20 → 16                    ║
    ║ Hit   100     Hit   --     ║
    ║  8 dmg  →  1   no counter  ║
    ║  9 dmg  →  2               ║

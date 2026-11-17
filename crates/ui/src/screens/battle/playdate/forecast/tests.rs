@@ -9,7 +9,7 @@ use crate::screens::battle::forecast;
 use crate::screens::battle::forecast::tests::targeting;
 use crate::screens::battle::playdate::tests::ctx;
 use crate::screens::battle::testing::skirmish;
-use crate::screens::battle::view::SkillLineView;
+use crate::screens::battle::view::{LeftView, SkillLineView};
 use crate::screens::playdate::tests::{blank, c as ink, cell, find, row, rows};
 use crate::words::Words;
 use crate::{ConsoleSizes, ConsoleSpec};
@@ -78,9 +78,9 @@ fn the_rows_are_the_pcs_two_columns_strikes_and_totals() {
         [
             "╔═ Forecast ════════════╗",
             "║ Test Lord  Brigand    ║",
-            "║ Iron Sword Iron Axe   ║",
-            "║ 20/20      20/20      ║",
-            "║ HP 19 ██▒▒ HP 20 █▒▒▒ ║",
+            "║ Iron S… 20 Iron A… 20 ║",
+            "║ HP 19 → 11 HP 20 → 3  ║",
+            "║ ██████▒▒▒▒ ██▒▒▒▒▒▒▒▒ ║",
             "║ Hit  96    Hit  65    ║",
             "║ Crit 3     Crit 0     ║",
             "╟───────────────────────╢",
@@ -118,8 +118,9 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
     );
     assert_eq!(cell(&buf, x, 10).fg, ink("window_text_off"));
     assert_eq!(cell(&buf, x, 8).fg, ink("text"));
-    // The brigand's 3 of 20 HP: one cell, all of it lost.
-    assert_eq!(find(&buf, 4, "HP  3 ▒   "), Some(x + RIGHT));
+    // The brigand's 3 of 20 HP: two cells of 10, all of them lost.
+    assert_eq!(find(&buf, 3, "HP  3 → 0"), Some(x + RIGHT));
+    assert_eq!(find(&buf, 4, "▒▒        "), Some(x + RIGHT));
     // In pixels: the skull is drawn black over the white inside.
     let frame = shown(&buf);
     let picture = braille(&frame);
@@ -144,11 +145,49 @@ fn an_effective_strike_has_its_mark_and_a_skill_its_line() {
     });
     let (buf, at) = painted(&v);
     let x = at.x + 2;
-    assert_eq!(find(&buf, 1, "Keen Edge (20 → 17)"), Some(x));
-    // The rest moves down a row: the first strike is on row 9.
+    assert_eq!(find(&buf, 1, "Keen Edge  "), Some(x));
+    // The uses it spends under the lord's weapon, whose name is then
+    // alone; the brigand's uses stay after its weapon's.
     assert_eq!(find(&buf, 2, &v.sides[0].name), Some(x));
+    assert_eq!(find(&buf, 3, "Iron Sword Iron A… 20"), Some(x));
+    assert_eq!(find(&buf, 4, "20 → 17"), Some(x));
+    // Two rows more than the screen has: the rules go, so the first
+    // strike is on row 9.
+    assert!(rows(&buf).iter().all(|r| !r.contains('╟')));
     assert_eq!(cell(&buf, x + 6, 9).glyph, '!');
     assert_eq!(cell(&buf, x + 6, 11).glyph, ' ');
+}
+
+#[test]
+fn a_broken_weapon_says_so_under_it_and_the_bar_blinks() {
+    let v = view(20, |v| {
+        v.sides[1].left = Some(LeftView::Broken("(broken)".into()));
+    });
+    let (buf, at) = painted(&v);
+    let rx = at.x + 2 + RIGHT;
+    assert_eq!(find(&buf, 2, "Iron Axe  "), Some(rx));
+    assert_eq!(find(&buf, 3, "(broken)"), Some(rx));
+    assert_eq!(find(&buf, 4, "HP 20 → 3"), Some(rx));
+    // On the blink's other half the HP that would be lost is black too.
+    let mut c = ctx();
+    c.clock_s = crate::screens::battle::glyph::forecast::LOST_BLINK_S;
+    let scene = plains(&c);
+    let mut full = blank();
+    paint(&c, &scene, &view(20, |_| {}), SCREEN, &mut full);
+    assert_eq!(find(&full, 4, "██████████ ██████████"), Some(at.x + 2));
+}
+
+#[test]
+fn a_unit_left_with_hp_keeps_a_black_cell() {
+    let v = view(20, |v| {
+        v.sides[1].hp = crate::screens::battle::view::ForecastHp {
+            now: 28,
+            after: 1,
+            max: 28,
+        };
+    });
+    let (buf, at) = painted(&v);
+    assert_eq!(find(&buf, 4, "█▒▒▒▒▒▒▒▒▒"), Some(at.x + 2 + RIGHT));
 }
 
 #[test]

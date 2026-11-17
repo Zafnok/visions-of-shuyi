@@ -5,9 +5,9 @@ expression: "forecast_snapshot(&mut c, state, 0)"
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Mage     Frost Element║
-                                                                      ║ Fire          Frost        ║
-                                                                      ║ 10/10         10/10        ║
-                                                                      ║ HP 16 ████▒   HP 30 ██▒▒▒  ║
+                                                                      ║ Fire 10       Frost 10     ║
+                                                                      ║ HP 16 → 13    HP 30 → 13   ║
+                                                                      ║ ██████████▒▒  █████▒▒▒▒▒▒▒ ║
                                                                       ║ Hit  90       Hit  93      ║
                                                                       ║ Crit 1        Crit 1       ║
                                                                       ║                            ║
@@ -39,8 +39,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffffffffb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhidddggddddjjiiiddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiidddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhjjddiiiiijjjjjjjdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -76,8 +76,8 @@ e = fg:player bg:panel_bg
 f = fg:enemy bg:panel_bg
 g = fg:text_dim bg:panel_bg
 h = fg:hp_high bg:panel_bg
-i = fg:hp_low bg:panel_bg
-j = fg:hp_mid bg:panel_bg
+i = fg:hp_mid bg:panel_bg
+j = fg:hp_low bg:panel_bg
 k = fg:water bg:sea
 l = fg:water bg:water_bg
 m = fg:grass bg:grass_bg

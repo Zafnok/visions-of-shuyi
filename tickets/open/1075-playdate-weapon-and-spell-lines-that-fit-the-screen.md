@@ -65,7 +65,12 @@ What is left to judge by playing goes on 1064's checklist.
 
 **Out (do not do):**
 - Any change to what the PC shows.
-- The forecast, the unit info screen (1039).
+- The forecast, the unit info screen (1039). Since 0480 the Playdate's
+  forecast puts a weapon's uses after its name in its 10-cell column, the
+  name cut to fit (`Iron S… 20`; `playdate/forecast.rs`, `arms_text`).
+  If the answer here cuts names another way, the forecast may follow it.
+  0498 gives each long weapon a short name (`Stl Swo`, Nick's example)
+  for lines too narrow for the full one; the lists here may use it.
 
 ## Implementation steps
 

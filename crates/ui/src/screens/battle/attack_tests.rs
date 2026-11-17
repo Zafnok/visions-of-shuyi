@@ -235,6 +235,13 @@ fn forecast_with_a_double_and_a_counter_snapshot() {
     assert_snapshot!(lord_on_brigand(20).snapshot());
 }
 
+/// Ticket 0480: the brigand at 12 HP falls to the lord's second strike,
+/// after its counter: `HP 12 → 0`, the skull on strike 3.
+#[test]
+fn forecast_of_a_kill_after_a_counter_snapshot() {
+    assert_snapshot!(lord_on_brigand(12).snapshot());
+}
+
 /// The archer, two tiles below the brigand: it hits twice and the brigand
 /// can't counter. The brigand at 12 HP falls to the second arrow: a skull.
 #[test]

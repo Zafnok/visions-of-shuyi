@@ -3,25 +3,25 @@ source: crates/ui/src/screens/battle/art_tests.rs
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔═════════ Forecast ═════════╗
-                                                                      ║ Arrow Rain (20 → 12)       ║
+                                                                      ║ Arrow Rain                 ║
                                                                       ║ Test Archer   Brigand      ║
-                                                                      ║ Iron Bow      Iron Axe     ║
-                                                                      ║ 20/20         20/20        ║
-                                                                      ║ HP 17 █████   HP 20 ███▒▒  ║
+                                                                      ║ Iron Bow      Iron Axe 20  ║
+                                                                      ║ 20 → 12                    ║
+                                                                      ║ HP 17 → 17    HP 20 → 12   ║
+                                                                      ║ ████████████  ███████▒▒▒▒▒ ║
                                                                       ║ Hit  91       Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
-                                                                      ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈≈≈....····Ra♣♣♣♣^^^^^^                      ║  8 ×1     Total            ║
-                    ≈≈≈≈≈≈====····LoBrBr♣♣♣♣....                      ║                            ║
-                    ..≈≈≈≈..··..............╦╦..                      ║ Brigand   Hit  91  20 → 12 ║
-                    ....······......Ar▓▓▓▓▓▓▓▓..                      ║ Raider    Hit  91  22 → 15 ║
-                    ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║ Brigand   Hit  91  20 → 12 ║
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║ one strike each            ║
-                                                                      ║                            ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  1   no counter ║
+                    ≈≈≈≈≈≈≈≈....····Ra♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
+                    ≈≈≈≈≈≈====····LoBrBr♣♣♣♣....                      ║  8 ×1     Total            ║
+                    ..≈≈≈≈..··..............╦╦..                      ║                            ║
+                    ....······......Ar▓▓▓▓▓▓▓▓..                      ║ Brigand   Hit  91  20 → 12 ║
+                    ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║ Raider    Hit  91  22 → 15 ║
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║ Brigand   Hit  91  20 → 12 ║
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
+                                                                      ║ one strike each            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -36,25 +36,25 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
  arrows next target · f attack · d back                                                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdccccccccccccccccccccdddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdccccccccccdddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeeeedddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggddddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiijjddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddgdccddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiidddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhhhddiiiiiiijjjjjdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrrrssnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkllllttttrrrruuvvvvnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmmmxxyyyyyyyymmaaaaaaaaaaaaaaaaaaaaaabdffffffddddgggddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmyyzzwwyymmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnrrxxxxmmmmmmmmyyzzzzyymmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmvvyyyyAAyymmaaaaaaaaaaaaaaaaaaaaaabdBBBBBBBBBBBBBBBddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
+aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrrrssnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaakkllllttttrrrruuvvvvnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmmmxxyyyyyyyymmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmyyzzwwyymmaaaaaaaaaaaaaaaaaaaaaabdffffffddddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnrrxxxxmmmmmmmmyyzzzzyymmaaaaaaaaaaaaaaaaaaaaaabdfffffffdddgggddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmvvyyyyAAyymmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdBBBBBBBBBBBBBBBddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

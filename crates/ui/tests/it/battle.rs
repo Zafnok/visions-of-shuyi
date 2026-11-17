@@ -558,8 +558,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
     assert!(shows(&h, "Guard Break     −4 dur  D"));
     // Guard Break: its forecast on the brigand, which can't counter.
     h.keys("Down f");
-    assert_eq!(panel(&h)[0], "Guard Break (20 → 16)");
+    assert_eq!(panel(&h)[0], "Guard Break");
     assert_eq!(panel(&h)[1], "Test Lord     Brigand");
+    // The uses it spends under the sword (0480).
+    assert_eq!(panel(&h)[3], "20 → 16");
     assert!(shows(&h, "no counter"));
     assert!(!shows(&h, "Flowing Cut"));
     // Cancel goes back to the arts menu, on Guard Break; Confirm again.

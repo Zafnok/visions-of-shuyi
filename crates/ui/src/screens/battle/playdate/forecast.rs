@@ -2,22 +2,26 @@
 //! `docs/design/playdate.md`, *Layout*): a window down one side of the
 //! screen, the side away from the two units, with every line of the PC's
 //! forecast (`look-and-feel.md`, *Attack forecast*): the attacker in the
-//! left column and the target in the right, names, arms, what is left of
-//! them, HP with a bar shading what would be lost, Hit and Crit; the
+//! left column and the target in the right, names, arms and their uses
+//! (an art's cost or `(broken)` on a row under them), `HP 19 → 6` over a
+//! bar blinking what would be lost (ticket 0480), Hit and Crit; the
 //! strikes numbered down the middle, `!` after an effective one, the
 //! skull on the kill and the strikes after it in grey dots; then the
 //! totals, a row per unit an art strikes and the notes. Too many rows for
 //! the screen: the rules go first, then the last notes.
 
 use crate::prelude::*;
-use trpg_core::Side;
+use trpg_core::{Side, StatValue};
 
-use super::{hp_bar, tile_cells};
+use super::tile_cells;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
-use crate::screens::battle::glyph::forecast::skull;
-use crate::screens::battle::view::{ForecastSideView, ForecastView, LeftView};
+use crate::screens::battle::glyph::forecast::{
+    SIDES, Under, lost_shaded, skull, under, uses_after_name,
+};
+use crate::screens::battle::units::{lit_fill, meter_cells};
+use crate::screens::battle::view::{ForecastSideView, ForecastView};
 use crate::screens::playdate::{self as pd, cut, inks, to_i32, to_usize};
 
 /// The window's width, in cells: half the screen, so the two sides it can
@@ -37,8 +41,8 @@ const NUMBER: i32 = 10;
 /// Widest text across the window.
 const TEXT_W: usize = 21;
 
-/// Length of each side's HP bar, in cells.
-const HP_BAR_CELLS: i32 = 4;
+/// Length of each side's HP bar, in cells: its column (0480).
+const HP_BAR_CELLS: i32 = 10;
 
 /// A row of the forecast, top to bottom.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,8 +50,9 @@ enum Line {
     Skill,
     Names,
     Arms,
-    Left,
+    Under,
     Hp,
+    Bar,
     Hit,
     Crit,
     Affinity,
@@ -64,10 +69,11 @@ fn lines(view: &ForecastView, room: usize) -> Vec<Line> {
     let mut lines = Vec::new();
     lines.extend(view.skill.as_ref().map(|_| Line::Skill));
     lines.extend([Line::Names, Line::Arms]);
-    if view.sides.iter().any(|s| s.left.is_some()) {
-        lines.push(Line::Left);
+    let mut sides = view.sides.iter().zip(SIDES);
+    if sides.any(|(s, by)| under(view, s, by).is_some()) {
+        lines.push(Line::Under);
     }
-    lines.extend([Line::Hp, Line::Hit, Line::Crit]);
+    lines.extend([Line::Hp, Line::Bar, Line::Hit, Line::Crit]);
     if view.sides.iter().any(|s| s.affinity.is_some()) {
         lines.push(Line::Affinity);
     }
@@ -133,8 +139,10 @@ pub fn paint(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect, buf: 
             Line::Struck(i) => paint_struck(pen, view, i, buf),
             Line::Note(i) => pen.text(buf, 0, TEXT_W, &view.notes[i]),
             side_line => {
-                for (side, dx) in view.sides.iter().zip([0, RIGHT]) {
-                    paint_side_line(Pen { x: x + dx, ..pen }, view, side, side_line, buf);
+                let sides = view.sides.iter().zip(SIDES).zip([0, RIGHT]);
+                for ((side, by), dx) in sides {
+                    let pen = Pen { x: x + dx, ..pen };
+                    paint_side_line(pen, view, (side, by), side_line, buf);
                 }
             }
         }
@@ -165,23 +173,62 @@ impl Pen<'_> {
     }
 }
 
-/// The art's or combat active's line: `Guard Break (20 → 16)`.
+/// The art's or combat active's line: `Guard Break` (the uses it spends
+/// show under the weapon, 0480).
 fn paint_skill(pen: Pen<'_>, view: &ForecastView, buf: &mut GlyphBuffer) {
-    let Some(skill) = &view.skill else {
-        return;
+    if let Some(skill) = &view.skill {
+        // check-text: not a data name (the view's own)
+        pen.text(buf, 0, TEXT_W, &skill.name);
+    }
+}
+
+/// The weapon's name and its uses after it (`Iron S… 20`), the name cut to
+/// leave them room.
+fn arms_text(name: &str, uses: Option<u32>) -> String {
+    match uses {
+        Some(uses) => {
+            let uses = uses.to_string();
+            let room = COLUMN_W.saturating_sub(uses.chars().count() + 1);
+            format!("{} {uses}", cut(name, room))
+        }
+        None => cut(name, COLUMN_W),
+    }
+}
+
+/// The HP bar at `pen`, [`HP_BAR_CELLS`] long: `after`
+/// HP black, the HP that would be lost (`hp - after`) a checker, or black
+/// on the blink's other half, the rest white. A unit with HP keeps a cell
+/// (`lit_fill`).
+fn paint_bar(
+    pen: Pen<'_>,
+    buf: &mut GlyphBuffer,
+    (hp, after, max): (StatValue, StatValue, StatValue),
+) {
+    let ink = inks(pen.ctx);
+    let (kept, _) = lit_fill(after, max, HP_BAR_CELLS);
+    let (shown, _) = lit_fill(hp.max(after), max, HP_BAR_CELLS);
+    let full = Cell::new('█', ink.text, ink.inside);
+    let lost = if lost_shaded(pen.ctx.clock_s) {
+        Cell::new('▒', ink.text, ink.inside)
+    } else {
+        full
     };
-    let cost = skill
-        .durability
-        .map_or_else(String::new, |(from, to)| format!(" ({from} → {to})"));
-    // check-text: not a data name (the view's own)
-    pen.text(buf, 0, TEXT_W, &format!("{}{cost}", skill.name));
+    let empty = Cell::new(' ', ink.text, ink.inside);
+    meter_cells(
+        buf,
+        Rect::new(pen.x, pen.y, HP_BAR_CELLS, 1),
+        shown,
+        lost,
+        empty,
+    );
+    meter_cells(buf, Rect::new(pen.x, pen.y, shown, 1), kept, full, lost);
 }
 
 /// `side`'s part of the row `line`, in its column.
 fn paint_side_line(
     pen: Pen<'_>,
     view: &ForecastView,
-    side: &ForecastSideView,
+    (side, by): (&ForecastSideView, Side),
     line: Line,
     buf: &mut GlyphBuffer,
 ) {
@@ -189,20 +236,26 @@ fn paint_side_line(
     match line {
         // check-text: not a data name (the view's own)
         Line::Names => pen.text(buf, 0, COLUMN_W, &side.name),
-        Line::Arms => pen.text(buf, 0, COLUMN_W, &side.weapon),
-        Line::Left => match &side.left {
-            Some(LeftView::Broken(broken)) => pen.text(buf, 0, COLUMN_W, broken),
-            Some(LeftView::Count { left, max }) => {
-                pen.text(buf, 0, COLUMN_W, &format!("{left}/{max}"));
+        Line::Arms => {
+            let uses = uses_after_name(view, side, by);
+            pen.text(buf, 0, COLUMN_W, &arms_text(&side.weapon, uses));
+        }
+        Line::Under => match under(view, side, by) {
+            Some(Under::Spends(from, to)) => {
+                pen.text(buf, 0, COLUMN_W, &format!("{from} → {to}"));
             }
+            Some(Under::Broken(broken)) => pen.text(buf, 0, COLUMN_W, broken),
             None => {}
         },
         Line::Hp => {
             let hp = side.hp;
             pen.text(buf, 0, 2, &view.hp_name);
-            pen.text(buf, 3, 2, &format!("{:>2}", hp.now));
-            let at = (pen.x + 6, pen.y);
-            hp_bar(pen.ctx, buf, at, HP_BAR_CELLS, (hp.now, hp.after, hp.max));
+            let change = format!("{:>2} → {}", hp.now, hp.after);
+            pen.text(buf, 3, COLUMN_W - 3, &change);
+        }
+        Line::Bar => {
+            let hp = side.hp;
+            paint_bar(pen, buf, (hp.now, hp.after, hp.max));
         }
         Line::Hit => {
             pen.text(buf, 0, 4, &view.hit_name);

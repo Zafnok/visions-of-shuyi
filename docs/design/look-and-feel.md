@@ -640,7 +640,8 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
 - **Mixed-case labels:** `HP`, `Hit`, `Crit`. A side that can't counter shows
   `--` for Hit and Crit.
 - **HP bars:** `HP 19` and a short bar. The part of the bar the unit would
-  lose **if every strike hit** (no crits) is shaded in `hp_low`.
+  lose **if every strike hit** (no crits) is shaded in `hp_low`. *Changed
+  by 0480 (below): `HP 19 → 6` and a 12-cell bar on its own row.*
 - **Strikes in the order they happen**, one per row, numbered down the
   middle: the attacker's on the left (`8 dmg →`), the target's counters on
   the right (`← 9 dmg`). `no counter` in the right column when it can't.
@@ -654,6 +655,75 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
   rule, not rendered for Nick)*.
 - The Combat Arts list and art line (0414) go above this forecast; that
   ticket works out the combined box.
+
+#### HP after the fight, and the weapon's uses (0480)
+
+Decided 2026-11-16, ticket 0480, over two rounds of `frame-png` renders of
+three fights (a plain exchange, a double with a counter, a kill) in both
+looks. A friend's playtest of the Act 1 build had found the forecast "hard
+to parse visually … i.e. for seeing how much expected HP enemy will have at
+the end". Options shown: A, the HP now and after as numbers (Fire Emblem:
+Three Houses' forecast gives each unit's remaining HP); B, a longer bar
+whose lost part blinks (Into the Breach's health pips flash the damage to
+come); C, the strikes folded into one damage line per side; D, labelled
+columns down the middle (Fire Emblem's GBA forecast).
+
+> [HP after the fight:] "A + B" … [the strike list:] "Keep strike list" …
+> [the weapon's durability:] "beside the weapon, or under when a art is
+> used which drains dura, and then shows uses depleting like hp" …
+> [round 2, an art's cost:] "E. Numbers only" … [the rest of round 2:]
+> "just make sure unless the HP is expected 0 it doesn't show 0 cells lit
+> up. its confusing if you're expected to live with 2 hp left and it
+> floors to 0 cells"
+
+Example: Ellery (19 HP) attacks a Raider (28 HP) with an Iron Sword that
+has 20 uses left. Each column reads, top to bottom:
+
+```
+Ellery          Raider
+Iron Sword 20   Iron Axe 20
+HP 19 → 6       HP 28 → 21
+████▒▒▒▒▒▒▒▒    █████████▒▒▒
+Hit  92         Hit  71
+Crit 2          Crit 1
+```
+
+- **HP now → after, as numbers:** `HP 19 → 6`, the HP if every strike
+  hits (no crits). The after number is in its HP colour (`hp_high`,
+  `hp_mid`, `hp_low`, as the bar), and a unit that falls shows a `0` in
+  `hp_low`.
+- **The bar has its own row under it, 12 cells** (it was 5 beside the HP).
+  The HP that would be lost **blinks**: shaded in `hp_low`, then full in
+  the HP colour of now, and so on.
+- **A unit that lives keeps at least one cell lit** (Nick, round 2): with
+  2 HP left of 28 the bar shows one cell, never none. Only an after of 0
+  shows no kept cell. The same holds for the HP it has now.
+- **The strike list stays** as 0404 decided: numbered, in the order they
+  happen, the skull on the kill, the totals.
+- **The weapon's uses go after its name:** `Iron Sword 20` (the uses left,
+  no `/20`; a spell's uses the same way: `Fire 10`). There is no row of
+  its own any more, so nothing above the HP reads like HP.
+- **An art that spends durability** shows the uses going down **on a row
+  under the weapon**, like the HP: `Iron Sword`, then `20 → 16`, the after
+  number in the highlight colour (round 2's E; F, with a second blinking
+  bar, was not picked). The art's line at the top shows only its name,
+  `Guard Break` (it read `Guard Break (20 → 16)`). An art that breaks the
+  weapon shows `3 → 0`. Both columns move down a row, so the two sides
+  stay level.
+- *Claude's starting rules (Nick can veto):*
+  - The blink is half a second shaded, half a second full, from the
+    shaded half (*tunable*).
+  - A broken weapon shows `(broken)` in `hp_low` on the row under it, as
+    the art's cost does (0404's starting rule, moved).
+  - The row under Crit stays for the affinity (`(resist)`, `heals 9`) and
+    is blank without one; 0333's armour mark, if it adds one, goes there.
+  - A weapon's name too long to fit with its uses is cut with `…`
+    (`Steel Swo… 25`). Nick, asked: "use shortened names rather than
+    truncated i.e. Stl Swo / probably need some mapping from long to short
+    name": ticket 0498 adds short names; the cut stands until then.
+  - The Playdate's window gets the same lines in its 10-cell columns: the
+    weapon's name cut to fit its uses (`Iron S… 20`) and a 10-cell bar
+    on its own row; the lost part blinks between the checker and black.
 
 ### Portraits and battle art (bought)
 
