@@ -87,6 +87,7 @@ pub(super) fn classes() -> Arc<ClassTable> {
 
 fn blade(might: i32) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
+        short_name: None,
         name: "Blade".into(),
         kind: WeaponKind::Sword,
         rank: WeaponRank::E,

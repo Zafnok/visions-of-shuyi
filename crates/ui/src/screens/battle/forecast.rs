@@ -37,21 +37,42 @@ enum Left {
     Uses(u32, u32),
 }
 
+/// What a side fights with.
+#[derive(Default)]
+struct Arms {
+    /// Its name (empty with nothing).
+    name: String,
+    /// A weapon's short name, if it has one.
+    short: Option<String>,
+    /// What is left of it.
+    left: Option<Left>,
+}
+
 /// What `unit` fights with when it uses `with` (a weapon's slot or a
-/// spell; nothing for `None`): its name and what is left of it.
-fn arms(
-    (state, words): (&BattleState, Words<'_>),
-    unit: &Unit,
-    with: Option<&Equipped>,
-) -> (String, Option<Left>) {
+/// spell; nothing for `None`).
+fn arms((state, words): (&BattleState, Words<'_>), unit: &Unit, with: Option<&Equipped>) -> Arms {
+    let short = |slot: usize| {
+        let def = &unit.loadout.weapon(slot)?.def;
+        words.short_name(def, state.items()).map(str::to_owned)
+    };
     let found = match with {
-        Some(Equipped::Weapon(slot)) => weapon_durability(state, words, unit.id, *slot)
-            .map(|(name, left, max)| (name, Left::Durability(left, max))),
-        Some(Equipped::Spell(id)) => spell_uses(state, words, unit.id, id)
-            .map(|(name, left, max)| (name, Left::Uses(left, max))),
+        Some(Equipped::Weapon(slot)) => {
+            weapon_durability(state, words, unit.id, *slot).map(|(name, left, max)| Arms {
+                name,
+                short: short(*slot),
+                left: Some(Left::Durability(left, max)),
+            })
+        }
+        Some(Equipped::Spell(id)) => {
+            spell_uses(state, words, unit.id, id).map(|(name, left, max)| Arms {
+                name,
+                short: None,
+                left: Some(Left::Uses(left, max)),
+            })
+        }
         None => None,
     };
-    found.map_or((String::new(), None), |(name, left)| (name, Some(left)))
+    found.unwrap_or_default()
 }
 
 /// The marker for the target's affinity to a side's attack: `(resist)`, or
@@ -71,20 +92,16 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
     let attacker = state.unit(t.sel.unit)?;
     let target = state.unit(t.target())?;
     let p = &t.preview;
-    let (weapon, left) = arms((state, words), attacker, Some(&t.with));
-    let (counter, counter_left) = arms((state, words), target, target.loadout.equipped.as_ref());
     let attacker_side = Column {
         unit: attacker,
-        weapon,
-        left,
+        arms: arms((state, words), attacker, Some(&t.with)),
         numbers: Some(p.forecast.attacker),
         hp_after: p.plan.attacker_hp,
         by: Side::Attacker,
     };
     let target_side = Column {
         unit: target,
-        weapon: counter,
-        left: counter_left,
+        arms: arms((state, words), target, target.loadout.equipped.as_ref()),
         numbers: p.forecast.defender,
         hp_after: p.plan.defender_hp,
         by: Side::Defender,
@@ -260,9 +277,7 @@ struct Column<'a> {
     /// The unit.
     unit: &'a Unit,
     /// What it fights with.
-    weapon: String,
-    /// What is left of it.
-    left: Option<Left>,
+    arms: Arms,
     /// Its numbers (`None`: it can't strike back).
     numbers: Option<SideForecast>,
     /// Its HP if every strike hit.
@@ -276,15 +291,20 @@ struct Column<'a> {
 fn side_view(words: Words<'_>, p: &AttackPreview, side: Column<'_>) -> ForecastSideView {
     let (unit, numbers) = (side.unit, side.numbers);
     let broken =
-        numbers.is_some_and(|n| n.broken) || matches!(side.left, Some(Left::Durability(0, _)));
+        numbers.is_some_and(|n| n.broken) || matches!(side.arms.left, Some(Left::Durability(0, _)));
     let left = if broken {
         Some(LeftView::Broken(
             words.text("battle.forecast.broken").to_owned(),
         ))
     } else {
-        side.left.map(
-            |(Left::Durability(left, max) | Left::Uses(left, max))| LeftView::Count { left, max },
-        )
+        side.arms
+            .left
+            .map(
+                |(Left::Durability(left, max) | Left::Uses(left, max))| LeftView::Count {
+                    left,
+                    max,
+                },
+            )
     };
     let total = numbers.map(|_| {
         let mine = p.plan.strikes.iter().filter(|s| s.by == side.by);
@@ -296,7 +316,9 @@ fn side_view(words: Words<'_>, p: &AttackPreview, side: Column<'_>) -> ForecastS
     ForecastSideView {
         name: words.unit(unit).to_owned(),
         faction: unit.faction,
-        weapon: side.weapon,
+        // check-text: not a data name (`arms` named it through `words`)
+        weapon: side.arms.name,
+        short: side.arms.short,
         left,
         hp: ForecastHp {
             now: unit.hp,

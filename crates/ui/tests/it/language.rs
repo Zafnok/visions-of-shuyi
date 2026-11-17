@@ -305,8 +305,9 @@ fn a_fight_names_everything_in_the_test_language() {
     assert!(shows(&h, "Test Lord     BRIGAND"));
     assert!(shows(&h, "IRON SWORD"));
     h.keys("Right");
-    // Cut to leave its uses room (0480; 0498 gives it a short name).
-    assert!(shows(&h, "Steel Swo…"));
+    // Too long for its uses: its short name, in the pack (0498).
+    assert!(shows(&h, "STL SWORD 25"));
+    assert!(!shows(&h, "Steel Swo…"));
     h.keys("Left");
     assert!(shows(&h, "IRON SWORD"));
     assert!(!shows(&h, "Iron Sword"));

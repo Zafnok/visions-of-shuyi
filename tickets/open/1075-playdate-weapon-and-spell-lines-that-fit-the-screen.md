@@ -69,8 +69,11 @@ What is left to judge by playing goes on 1064's checklist.
   forecast puts a weapon's uses after its name in its 10-cell column, the
   name cut to fit (`Iron S… 20`; `playdate/forecast.rs`, `arms_text`).
   If the answer here cuts names another way, the forecast may follow it.
-  0498 gives each long weapon a short name (`Stl Swo`, Nick's example)
-  for lines too narrow for the full one; the lists here may use it.
+  0498 gave the six weapons too long for the PC's forecast a short name
+  (`Stl Sword`, `Hound Axe`: `short_name` in the items file,
+  `Words::short_name`, `look-and-feel.md` *Short weapon names*); the
+  lists here may use it. Most are still wider than the Playdate's 7 cells
+  before `20`, where the forecast cuts the short name (`Stl Sw… 25`).
 
 ## Implementation steps
 

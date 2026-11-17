@@ -21,6 +21,7 @@ use crate::screens::battle::units::{faction_color, lit_fill, meter_cells};
 use crate::screens::battle::view::{
     ForecastSideView, ForecastView, LeftView, SkillLineView, StruckView,
 };
+use crate::screens::playdate::cut;
 
 /// Left column (the attacker).
 pub const LEFT_X: i32 = TEXT_X;
@@ -185,32 +186,37 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     paint_notes(ctx, &view.notes, total_row + 2 + rows + gap, buf);
 }
 
-/// The weapon's name at `(x, y)`, dimmed, and its uses after it (`Iron
-/// Sword 20`). A name too long to leave them room is cut with `…`
-/// (`Steel Swo… 25`) until 0498 gives it a short name.
+/// The name `side`'s weapon shows on a line of `column` cells with `uses`
+/// after it (ticket 0498): its name if that fits, else its short name if
+/// that fits (`Stl Sword 25`), else the shorter of the two cut with `…`
+/// (the Playdate's `Stl Sw… 25`).
+pub fn weapon_name(side: &ForecastSideView, uses: Option<u32>, column: usize) -> String {
+    let taken = uses.map_or(0, |u| u.to_string().len() + 1);
+    let room = column.saturating_sub(taken);
+    if side.weapon.chars().count() <= room {
+        return side.weapon.clone();
+    }
+    // `cut` leaves a short name that fits as it is.
+    cut(side.short.as_deref().unwrap_or(&side.weapon), room)
+}
+
+/// `side`'s weapon at `(x, y)`, dimmed, and its uses after it (`Iron
+/// Sword 20`), named as [`weapon_name`] says.
 fn paint_weapon(
     ctx: &Ctx,
     buf: &mut GlyphBuffer,
     (x, y): (i32, i32),
-    name: &str,
+    side: &ForecastSideView,
     uses: Option<u32>,
 ) {
     let c = |u| ctx.palette.get(u);
-    let Some(uses) = uses else {
-        print_clipped(buf, (x, y), COLUMN_W, name, c(UiColor::TextDim));
-        return;
-    };
-    let uses = uses.to_string();
-    let room = COLUMN_W.saturating_sub(uses.chars().count() + 1);
-    let shown: String = if name.chars().count() > room {
-        let kept: String = name.chars().take(room.saturating_sub(1)).collect();
-        format!("{kept}…")
-    } else {
-        name.to_owned()
-    };
-    print_clipped(buf, (x, y), room, &shown, c(UiColor::TextDim));
-    let at = x + i32::try_from(shown.chars().count() + 1).unwrap_or(0);
-    print_clipped(buf, (at, y), uses.len(), &uses, c(UiColor::Text));
+    let shown = weapon_name(side, uses, COLUMN_W);
+    print_clipped(buf, (x, y), COLUMN_W, &shown, c(UiColor::TextDim));
+    if let Some(uses) = uses {
+        let uses = uses.to_string();
+        let at = x + i32::try_from(shown.chars().count() + 1).unwrap_or(0);
+        print_clipped(buf, (at, y), uses.len(), &uses, c(UiColor::Text));
+    }
 }
 
 /// `before → after` from `(x, y)`: `before` in the text colour, the arrow
@@ -284,7 +290,7 @@ fn paint_side(
     // check-text: not a data name (the view's own)
     print_clipped(buf, (x, NAME_ROW), COLUMN_W, &side.name, name_fg);
     let uses = uses_after_name(view, side, by);
-    paint_weapon(ctx, buf, (x, WEAPON_ROW), &side.weapon, uses);
+    paint_weapon(ctx, buf, (x, WEAPON_ROW), side, uses);
     match under(view, side, by) {
         Some(Under::Spends(from, to)) => {
             let (from, to) = (from.to_string(), to.to_string());

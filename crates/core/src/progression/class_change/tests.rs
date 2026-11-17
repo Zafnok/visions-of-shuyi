@@ -204,6 +204,7 @@ fn classes() -> ClassTable {
 fn items() -> ItemTable {
     let weapon = |name: &str, kind| {
         ItemDef::Weapon(WeaponDef {
+            short_name: None,
             name: name.into(),
             kind,
             rank: E,

@@ -334,3 +334,20 @@ fn effective_spear_forecast_snapshot() {
 "
     ));
 }
+
+#[test]
+fn steel_sword_forecast_snapshot() {
+    // Its short name (0498) is too wide for the Playdate's 10 cells with
+    // its uses, so it is the short name that is cut.
+    let v = view(20, |v| {
+        v.sides[0].weapon = "Steel Sword".into();
+        v.sides[0].short = Some("Stl Sword".into());
+        v.sides[0].left = Some(LeftView::Count { left: 25, max: 25 });
+    });
+    let (buf, _) = painted(&v);
+    assert!(rows(&buf).iter().any(|r| r.contains("Stl Sw… 25")));
+    assert_snapshot!(rows(&buf).join(
+        "
+"
+    ));
+}
