@@ -12,7 +12,8 @@ use crate::screen::tests::ctx;
 use crate::screens::battle::BattleScreen;
 use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
 use crate::screens::battle::view::{
-    BannerView, MessageView, ObjectiveView, PanelUnitView, QuestionView, TerrainView,
+    BannerView, MenuHeader, MessageView, ObjectiveView, PanelCellView, PanelUnitView, QuestionView,
+    TerrainView, UsesView,
 };
 
 /// The glyphs of row `y` from column `from`, `n` of them.
@@ -170,6 +171,7 @@ fn the_panel_cuts_long_lines_and_names_an_enemy_in_its_colour() {
             hp: 20,
             max: 20,
             faction_name: "Enemy".to_owned(),
+            ..ellery_panel(true)
         }),
         gold: "Gold 0".to_owned(),
     };
@@ -181,6 +183,177 @@ fn the_panel_cuts_long_lines_and_names_an_enemy_in_its_colour() {
     // Full HP: a whole bar.
     let bar = cells(&buf, UNIT_ROW + 2, HP_BAR_X, HP_BAR_CELLS);
     assert_eq!(bar, "██████████");
+}
+
+/// Ellery on Chapter 1's start, as `look-and-feel.md` *Side panel* shows
+/// her; `armed`: her Iron Sword in hand, or nothing.
+fn ellery_panel(armed: bool) -> PanelUnitView {
+    let cells = |pairs: &[(&str, &str)]| -> Vec<PanelCellView> {
+        pairs
+            .iter()
+            .map(|&(name, value)| PanelCellView {
+                name: name.to_owned(),
+                value: value.to_owned(),
+                changed: false,
+            })
+            .collect()
+    };
+    let (atk, hit, crit) = if armed {
+        ("13", "104", "3")
+    } else {
+        ("--", "--", "--")
+    };
+    PanelUnitView {
+        name: "Ellery".to_owned(),
+        faction: Faction::Player,
+        class_level: "Exile  Lv 1".to_owned(),
+        hp_name: "HP".to_owned(),
+        hp: 19,
+        max: 19,
+        faction_name: "Player".to_owned(),
+        stats: cells(&[
+            ("Str", "8"),
+            ("Mag", "1"),
+            ("Dex", "7"),
+            ("Spd", "7"),
+            ("Def", "6"),
+            ("Res", "5"),
+            ("Mov", "5"),
+        ]),
+        weapon: armed.then(|| MenuHeader {
+            name: "Iron Sword".to_owned(),
+            uses: Some(UsesView {
+                text: "20/20".to_owned(),
+                spent: false,
+            }),
+        }),
+        no_weapon: "--".to_owned(),
+        combat: cells(&[
+            ("Atk", atk),
+            ("Hit", hit),
+            ("Crit", crit),
+            ("Avo", "14"),
+            ("AS", "5"),
+        ]),
+    }
+}
+
+/// The side panel painted over `quick` with `unit` under the cursor.
+fn panel_with(unit: PanelUnitView) -> GlyphBuffer {
+    let c = ctx();
+    let mut buf = render(&quick(), &c);
+    let panel = PanelView {
+        selected: false,
+        terrain: Some(TerrainView {
+            name: "Road".to_owned(),
+            bonuses: "DEF +0  AVO +0".to_owned(),
+            heals: None,
+        }),
+        unit: Some(unit),
+        gold: "Gold 0".to_owned(),
+    };
+    paint_panel(&c, &panel, &mut buf);
+    buf
+}
+
+/// The side panel's rows, from the terrain to the gold, trimmed.
+fn panel_text(buf: &GlyphBuffer) -> String {
+    (TERRAIN_ROW..=GOLD_ROW)
+        .map(|y| panel_row(buf, y))
+        .collect::<Vec<_>>()
+        .join(
+            "
+",
+        )
+        .trim_end()
+        .to_owned()
+}
+
+#[test]
+fn the_panel_paints_the_stats_weapon_and_combat_numbers_as_designed() {
+    let buf = panel_with(ellery_panel(true));
+    let rows: Vec<_> = (STATS_ROW..STATS_ROW + 9)
+        .map(|y| panel_row(&buf, y))
+        .collect();
+    // `look-and-feel.md` *Side panel*, line for line.
+    assert_eq!(
+        rows,
+        [
+            "Str   8     Mag   1",
+            "Dex   7     Spd   7",
+            "Def   6     Res   5",
+            "Mov   5",
+            "",
+            "Iron Sword        20/20",
+            "Atk  13     Hit 104",
+            "Crit  3     Avo  14",
+            "AS    5",
+        ]
+    );
+    assert_eq!(panel_row(&buf, UNIT_ROW + 4), "");
+    // Names dim, numbers lit.
+    let p = game_palette();
+    let fg = |x: i32, y: i32| buf.get(x, y).unwrap().fg;
+    assert_eq!(fg(TEXT_X, STATS_ROW), p.get(UiColor::TextDim));
+    assert_eq!(fg(TEXT_X + 6, STATS_ROW), p.get(UiColor::Text));
+    assert_eq!(
+        fg(TEXT_X + PANEL_CELL_GAP, STATS_ROW + 6),
+        p.get(UiColor::TextDim)
+    );
+    assert_eq!(
+        fg(TEXT_X + PANEL_CELL_GAP + 6, STATS_ROW + 6),
+        p.get(UiColor::Text)
+    );
+}
+
+#[test]
+fn a_raised_stat_and_spent_uses_have_their_colours() {
+    let mut unit = ellery_panel(true);
+    unit.stats[4].changed = true;
+    if let Some(uses) = unit.weapon.as_mut().and_then(|w| w.uses.as_mut()) {
+        uses.text = "0/20".to_owned();
+        uses.spent = true;
+    }
+    let buf = panel_with(unit);
+    let p = game_palette();
+    let fg = |x: i32, y: i32| buf.get(x, y).unwrap().fg;
+    assert_eq!(fg(TEXT_X + 6, STATS_ROW + 2), p.get(UiColor::Effect));
+    assert_eq!(fg(TEXT_X + 22, STATS_ROW + 5), p.get(UiColor::HpLow));
+}
+
+#[test]
+fn panel_snapshots_an_ally_an_enemy_and_a_unit_with_nothing_in_hand() {
+    let brigand = PanelUnitView {
+        name: "Brigand".to_owned(),
+        faction: Faction::Enemy,
+        class_level: "Brigand  Lv 1".to_owned(),
+        hp: 20,
+        max: 20,
+        faction_name: "Enemy".to_owned(),
+        weapon: Some(MenuHeader {
+            name: "Iron Axe".to_owned(),
+            uses: Some(UsesView {
+                text: "20/20".to_owned(),
+                spent: false,
+            }),
+        }),
+        combat: ellery_panel(true)
+            .combat
+            .into_iter()
+            .zip(["14", "79", "1", "8", "-1"])
+            .map(|(cell, value)| PanelCellView {
+                value: value.to_owned(),
+                ..cell
+            })
+            .collect(),
+        ..ellery_panel(true)
+    };
+    insta::assert_snapshot!("panel_ally", panel_text(&panel_with(ellery_panel(true))));
+    insta::assert_snapshot!("panel_enemy", panel_text(&panel_with(brigand)));
+    insta::assert_snapshot!(
+        "panel_unarmed",
+        panel_text(&panel_with(ellery_panel(false)))
+    );
 }
 
 #[test]

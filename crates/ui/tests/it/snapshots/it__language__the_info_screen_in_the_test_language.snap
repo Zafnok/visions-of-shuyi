@@ -13,8 +13,8 @@ expression: h.snapshot()
 ║ │                      │   MAG   1                                                               ║
 ║ │                      │   DEX   7                    ARMOR                                      ║
 ║ │                      │   SPD   7                      Leather Vest                             ║
-║ │                      │   DEF   4                      DEF +2  RES +2                           ║
-║ └──────────────────────┘   RES   3                                                               ║
+║ │                      │   DEF   6                      DEF +2  RES +2                           ║
+║ └──────────────────────┘   RES   5                                                               ║
 ║                                                       ACCESSORY                                  ║
 ║  MOV 5  foot                                            --                                       ║
 ║                            SKILLS                                                                ║

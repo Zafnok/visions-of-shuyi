@@ -1287,6 +1287,101 @@ proptest! {
 }
 
 // ---------------------------------------------------------------------------
+// One-sided numbers (ticket 0484): the side panel's.
+
+#[test]
+fn one_sided_numbers_of_ellery_on_a_road() {
+    // `look-and-feel.md` *Side panel*: Str 8, Dex 7, Spd 7, an Iron Sword
+    // and a Leather Vest (weight 1) on a road.
+    let mut ellery = combatant(
+        stats([19, 8, 1, 7, 7, 6, 5]),
+        Some(weapon(WeaponKind::Sword)),
+        &PLAIN,
+    );
+    ellery.armour_weight = 1;
+    let one = ellery.one_sided(&rules());
+    assert_eq!(
+        one,
+        OneSided {
+            atk: Some(13),
+            hit: Some(104),
+            crit: Some(3),
+            avoid: 14,
+            attack_speed: 5,
+        }
+    );
+}
+
+#[test]
+fn one_sided_numbers_without_a_weapon_keep_avoid_and_speed() {
+    let unarmed = combatant(stats([19, 8, 1, 7, 7, 6, 5]), None, &FOREST);
+    let one = unarmed.one_sided(&rules());
+    assert_eq!((one.atk, one.hit, one.crit), (None, None, None));
+    assert_eq!((one.avoid, one.attack_speed), (34, 7));
+}
+
+#[test]
+fn one_sided_numbers_count_a_broken_weapon_and_magic() {
+    let mut tome = typeless(DamageType::Magical, 6, 80, 5, (1, 2));
+    tome.broken = true;
+    let mage = combatant(stats([18, 2, 9, 6, 5, 2, 7]), Some(tome), &PLAIN);
+    let one = mage.one_sided(&rules());
+    // Mag 9 + might 6 / 2; hit 80 - 20 + 12; crit 5 + 3.
+    assert_eq!((one.atk, one.hit, one.crit), (Some(12), Some(72), Some(8)));
+}
+
+fn combatant(
+    stats: Stats,
+    weapon: Option<WeaponStats>,
+    terrain: &'static TerrainRules,
+) -> CombatantInput<'static> {
+    CombatantInput {
+        stats,
+        tags: UnitTags::default(),
+        affinities: Vec::new(),
+        weapon,
+        weapon_rank: WeaponRank::E,
+        armour_weight: 0,
+        terrain,
+        mods: CombatMods::default(),
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(500))]
+
+    /// The forecast is the one-sided numbers less the target's: hit less
+    /// its avoid, crit less its Dex / 4, then clamped; damage is Atk less
+    /// its Def or Res and terrain Def, when nothing multiplies or halves it.
+    #[test]
+    fn forecast_is_the_one_sided_numbers_less_the_targets(a in spec(), d in spec(), distance in 1..=2u32) {
+        let rules = rules();
+        let (a, d) = (build(&a), build(&d));
+        let Some(f) = forecast(&rules, &a, &d, distance) else {
+            return Ok(());
+        };
+        let (one, theirs) = (a.one_sided(&rules), d.one_sided(&rules));
+        let (hit, crit, atk) = (one.hit.expect("armed"), one.crit.expect("armed"), one.atk.expect("armed"));
+        prop_assert_eq!(f.attacker.hit, percent(hit - theirs.avoid));
+        if f.attacker.affinity != Some(Affinity::Absorb) {
+            prop_assert_eq!(f.attacker.crit, percent(crit - d.stats.dex / rules.crit_avoid_dex_divisor));
+        }
+        let weapon = a.weapon.as_ref().expect("armed");
+        let plain = !f.attacker.effective
+            && f.attacker.affinity.is_none()
+            && !matches!(weapon.trait_, WeaponTrait::AxeMinDamage(_));
+        if plain {
+            let mitigation = match weapon.damage_type {
+                DamageType::Physical => d.stats.def,
+                DamageType::Magical => d.stats.res,
+            };
+            let terrain = if d.tags.flying { 0 } else { StatValue::from(d.terrain.defense) };
+            prop_assert_eq!(f.attacker.damage, (atk - mitigation - terrain).max(0));
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Skill modifiers (ticket 0311).
 
 fn modded(mut c: CombatantInput<'static>, mods: CombatMods) -> CombatantInput<'static> {

@@ -12,15 +12,15 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║ HP 20/20   ██████████      ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
-                                                                      ║                            ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║                            ║
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      ║                            ║
+                                                                      ║ Str   7     Mag   0        ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ Dex   4     Spd   2        ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ Def  13     Res   1        ║
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      ║ Mov   4                    ║
                     ..≈≈≈≈..··..............╦╦..                      ║                            ║
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      ║                            ║
-                    ..♣♣··Lo..╦┌───────────────────────────────┐      ║                            ║
-                    ♣♣♣♣··MaKn.│ Brace       0/3  no uses left │      ║                            ║
-                    ♣♣♠♠··.....│ Fortify     2/2               │      ║                            ║
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      ║ Iron Spear        20/20    ║
+                    ..♣♣··Lo..╦┌───────────────────────────────┐      ║ Atk  14     Hit  88        ║
+                    ♣♣♣♣··MaKn.│ Brace       0/3  no uses left │      ║ Crit  2     Avo   4        ║
+                    ♣♣♠♠··.....│ Fortify     2/2               │      ║ AS   -4                    ║
                                ├───────────────────────────────┤      ║                            ║
                                │ self: Def +8 Res +8           │      ║                            ║
                                └───────────────────────────────┘      ║                            ║
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjjjjjjjjjssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjttoooojjjjrrjjuuuuuuuujjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoovvjjsbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoovvvvjbgggggggggggggggggwwwwwwwwwwwwwgbaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjjjbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxbaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoovvjjsbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoovvvvjbgggggggggggggggggwwwwwwwwwwwwwgbaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjjjjbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxbaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcccccccccccccccccccccccccccccccbaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccccccccccccccccccccccb

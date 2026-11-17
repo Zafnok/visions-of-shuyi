@@ -1738,6 +1738,77 @@ fn leadership_reaches_other_allies_within_two_tiles_once() {
     assert_eq!(hits(&s, 6, p(1, 1), 3), (60, 50));
 }
 
+// ---- The side panel's numbers (ticket 0484) --------------------------------------
+
+#[test]
+fn stat_card_counts_only_the_bonuses_that_hold_in_any_fight() {
+    let guard = TimedEffect {
+        source: EffectSource::Skill(sk("guarding")),
+        mods: TimedMods {
+            stats: vec![(StatKind::Def, 3)],
+            ..Default::default()
+        },
+        until: Phase::Enemy,
+    };
+    let lord = Unit {
+        effects: vec![guard],
+        ..learned(
+            lord(1, p(0, 0)),
+            &["focus", "fury", "steadfast", "charge", "sky_dodge"],
+        )
+    };
+    let s = start(setup(vec![
+        lord,
+        learned(unit(2, Faction::Player, p(0, 2)), &["leadership"]),
+        unit(3, Faction::Enemy, p(1, 0)),
+    ]));
+    let card = |id| {
+        let unit = s.unit(UnitId(id)).expect("on the map");
+        (unit.clone(), s.stat_card(unit).expect("a card"))
+    };
+    let (unit, mine) = card(1);
+    // Guard's Def +3 counts and is marked; Steadfast's Def +2 (outside its
+    // phase only) doesn't.
+    assert_eq!(mine.stats.def, unit.stats.def + 3);
+    assert_eq!(mine.without_effects.def, unit.stats.def);
+    // Focus (a sword in hand) and Leadership (2 tiles away) count; Fury
+    // (full HP), Charge and Sky Dodge don't.
+    let (target, theirs) = card(3);
+    let f = forecast_of(&s, 1, p(0, 0), attack(3));
+    let clamp = |n: StatValue| u8::try_from(n.clamp(0, 100)).unwrap_or(0);
+    let hit = mine.numbers.hit.expect("armed");
+    let crit = mine.numbers.crit.expect("armed");
+    assert_eq!(f.attacker.hit, clamp(hit - theirs.numbers.avoid));
+    assert_eq!(f.attacker.crit, clamp(crit - target.stats.dex / 4));
+    assert_eq!(crit, unit.stats.dex / 2 + 10);
+}
+
+#[test]
+fn a_disarmed_unit_has_no_attack_on_its_card() {
+    let disarmed = TimedEffect {
+        source: EffectSource::Skill(sk("disarm")),
+        mods: TimedMods {
+            disarmed: true,
+            ..Default::default()
+        },
+        until: Phase::Enemy,
+    };
+    let s = start(setup(vec![
+        Unit {
+            effects: vec![disarmed],
+            ..lord(1, p(0, 0))
+        },
+        unit(3, Faction::Enemy, p(4, 0)),
+    ]));
+    let card = s
+        .stat_card(s.unit(UnitId(1)).expect("on the map"))
+        .expect("a card");
+    assert_eq!(
+        (card.numbers.atk, card.numbers.hit, card.numbers.crit),
+        (None, None, None)
+    );
+}
+
 // ---- Timed effects -------------------------------------------------------------
 
 #[test]

@@ -12,15 +12,15 @@ expression: h.snapshot()
    ║                                                             ║    │ HP 19/19   ██████████      │
    ║ MOVE THE CURSOR: ARROWS. PICK UP A UNIT: f                  ║    │ PLAYER                     │
    ║ NEXT UNIT TO ACT: s. A UNIT'S DETAILS: e                    ║    │                            │
-   ║                                                             ║    │                            │
-   ║ f CLOSE                                                     ║    │                            │
-   ╚═════════════════════════════════════════════════════════════╝    │                            │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │                            │
+   ║                                                             ║    │ STR   6     MAG   1        │
+   ║ f CLOSE                                                     ║    │ DEX   7     SPD   7        │
+   ╚═════════════════════════════════════════════════════════════╝    │ DEF   6     RES   5        │
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ MOV   5                    │
                     ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │                            │
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │                            │
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │                            │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │                            │
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │ IRON SWORD        20/20    │
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ ATK  11     HIT 104        │
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ CRIT  3     AVO  14        │
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    5                    │
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
@@ -45,15 +45,15 @@ aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddd
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddffffffffffddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdggggggdddddddddddddddddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdgggggggdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabdgggggggdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdgggddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabdggggddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabdggdddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

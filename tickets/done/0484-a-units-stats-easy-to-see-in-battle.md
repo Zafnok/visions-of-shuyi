@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0078"]
 nick_input: none
-completed:
+completed: 2026-11-16
 ---
 
 # 0484 — A unit's stats are easy to see in battle
@@ -113,16 +113,16 @@ Expected size: about 200 production lines (a core function of ~60 like
 
 ## Acceptance criteria
 
-- [ ] Hovering a unit gives the panel view the stats, weapon line and
+- [x] Hovering a unit gives the panel view the stats, weapon line and
       combat numbers of *Side panel*, and the stats equal unit info's
       for that unit (test on an ally with armor and an enemy).
-- [ ] Unit info shows gear-adjusted stats (Ellery's Def 6 at Chapter 1's
+- [x] Unit info shows gear-adjusted stats (Ellery's Def 6 at Chapter 1's
       start).
-- [ ] The combat numbers agree with the forecast (the property test of
+- [x] The combat numbers agree with the forecast (the property test of
       step 1).
-- [ ] The glyph skin paints them in both looks (snapshots; `frame-png`
+- [x] The glyph skin paints them in both looks (snapshots; `frame-png`
       pictures in the PR); the Playdate's corners are unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -132,4 +132,52 @@ Expected size: about 200 production lines (a core function of ~60 like
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done.**
+
+- **Core:** `CombatantInput::one_sided` (`combat.rs`) gives Atk, Hit,
+  Crit, Avo and AS before a target counts (`OneSided`). The forecast's
+  `side` now builds its might, power stat, hit and crit from the same
+  helpers (`might`, `power_stat`, `own_hit`, `own_crit`), so the formulas
+  live once. `BattleState::stat_card` (`battle/skills.rs`) returns the
+  stats a fight uses, the same without timed effects, and the one-sided
+  numbers (`StatCard`). `Condition::holds_in_any_fight` and
+  `standing_passive_bonuses` (`skill.rs`) pick the passives that count.
+- **Unit info** (both the PC screen and the Playdate's pages) lists the
+  stat card's stats: gear now counts (Ellery's Def 6), and only a timed
+  effect marks a stat.
+- **Side panel:** `PanelUnitView` gained `stats`, `weapon`, `no_weapon`
+  and `combat` (`PanelCellView`); `paint_panel_unit` paints them two to a
+  row as *Side panel* lays out, line for line (a test checks it against
+  the doc's Ellery block). New text keys `battle.panel.atk/hit/crit/avo/
+  as/none` (English and the test pack).
+- `art_list::unit_header` (and `weapon_durability_of`, `spell_uses_of`)
+  read a unit as given, so a downed unit under the cursor still names its
+  weapon.
+- Snapshots: the new panel rows show in every battle frame with a unit
+  under the cursor; unit info's Def/Res/Str now include gear. A script
+  checked that every other snapshot change is inside the side panel.
+
+- Pictures: `docs/screenshots/0484-*.png` (Chapter 1's start, Ellery and
+  the Brigand six tiles right and two up, both looks): every number is the
+  one 0078's mockups gave.
+- Friction: estimate 220 production lines, measured 297 (1.35×), under 2×.
+
+**The agent's starting rules** (where *Side panel* is silent; for the Act
+1 playtest, 1064):
+
+- Passives that hold in any fight: always-on ones, ones tied to the
+  weapon in hand, and "HP at most half" while the unit's HP is at most
+  half now. Not counted: outside its own phase (Steadfast), after moving
+  (Charge), against a weapon kind (Sky Dodge).
+- A support partner's hit/avoid bonus counts when the partner stands in
+  range, like an ally's aura.
+- Mov on the panel and unit info is what the unit moves with (timed
+  effects count; a passive's combat-only Mov doesn't).
+- A disarmed unit shows `--` for its weapon, Atk, Hit and Crit.
+- A doubled crit (an art's) and a Spear Wall's counter hit only count in
+  their fight, so the panel leaves them out.
+- The weapon's uses end at column 23 of the panel, as the doc's mockup
+  draws them; a timed-effect stat shows in the effect colour, as on unit
+  info; a weapon with no uses left shows them in the warning colour, as
+  in the menus' top border.
+

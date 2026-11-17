@@ -136,6 +136,20 @@ impl Condition {
             Condition::AgainstWeaponKind(kind) => ctx.opponent_weapon == Some(kind),
         }
     }
+
+    /// Whether the condition holds in `ctx` whoever the fight is against,
+    /// whenever it comes: not one that needs a phase, a move or an
+    /// opponent's weapon (ticket 0484's side panel).
+    pub fn holds_in_any_fight(self, ctx: &SkillContext) -> bool {
+        match self {
+            Condition::Always | Condition::WeaponKindEquipped(_) | Condition::HpAtMostHalf => {
+                self.holds(ctx)
+            }
+            Condition::NotOwnPhase
+            | Condition::MovedAtLeast(_)
+            | Condition::AgainstWeaponKind(_) => false,
+        }
+    }
 }
 
 /// One effect of a passive skill.
@@ -566,13 +580,28 @@ impl Bonuses {
 /// The bonuses of the passives in `usable` whose conditions hold in `ctx`.
 /// [`PassiveEffect::SpellMight`] counts only when fighting with a spell.
 pub fn passive_bonuses(usable: &[&SkillDef], ctx: &SkillContext) -> Bonuses {
+    passive_bonuses_when(usable, ctx, Condition::holds)
+}
+
+/// The bonuses of the passives in `usable` that hold in any fight in
+/// `ctx` ([`Condition::holds_in_any_fight`]).
+pub fn standing_passive_bonuses(usable: &[&SkillDef], ctx: &SkillContext) -> Bonuses {
+    passive_bonuses_when(usable, ctx, Condition::holds_in_any_fight)
+}
+
+/// The bonuses of the passives in `usable` whose conditions pass `holds`.
+fn passive_bonuses_when(
+    usable: &[&SkillDef],
+    ctx: &SkillContext,
+    holds: fn(Condition, &SkillContext) -> bool,
+) -> Bonuses {
     let mut out = Bonuses::default();
     for effect in usable.iter().flat_map(|s| s.passive_effects()) {
         match effect {
-            PassiveEffect::StatWhile { stat, amount, when } if when.holds(ctx) => {
+            PassiveEffect::StatWhile { stat, amount, when } if holds(*when, ctx) => {
                 out.add_stat(*stat, *amount);
             }
-            PassiveEffect::CombatMod { mods, when } if when.holds(ctx) => out.combat.add(mods),
+            PassiveEffect::CombatMod { mods, when } if holds(*when, ctx) => out.combat.add(mods),
             PassiveEffect::SpellMight(might) if ctx.spell => out.combat.might += might,
             _ => {}
         }
