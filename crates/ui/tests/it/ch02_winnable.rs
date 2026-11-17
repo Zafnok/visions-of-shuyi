@@ -95,7 +95,7 @@ pub fn chapter_2_won(h: &mut Harness) {
     );
     h.keys("Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert_eq!(battle(h).units().len(), 6 + 15, "six and 15 enemies");
+    assert_eq!(battle(h).units().len(), 6 + 13, "six and 13 enemies");
     playthrough::play_in_game(h, &winning_commands());
     playthrough::on_to_the_save_prompt(h);
 }
