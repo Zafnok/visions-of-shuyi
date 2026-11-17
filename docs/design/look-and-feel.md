@@ -992,6 +992,13 @@ sprites.
     Company's archers** are the same picture with dark hair and red in
     their clothes, so they aren't her twins.
   - **The female lead's** top is blue, as in her portrait (0706).
+  - **The Rider** (decided 2026-11-16, ticket 0446, on renders of the
+    intro's fight shot): the **Red Company's riders** are the Paladin
+    with its gold trim, lance and cloth in red, like their guard; **Tamsin**
+    keeps the gold trim and lance, and her tabard and saddle cloth are a
+    clear red, her own colour (she wore the Red Company's red). Nick, on
+    three options (as bought, Veyne blue, faded brick red): "prob a bit
+    more red than A or C", then the reddest of three.
   - A **class's picture is what the enemy's soldiers of that class look
     like**; a named character of the player's who shares it gets their own
     recolour *(Claude's rule for how the files are set up; in Chapter 1
@@ -1098,8 +1105,17 @@ like shit". What the search was held to after that:
   - **Pixel Flag (ぴくせるふらっぐ商店)**, *ドット絵TRPGのコマ「クラスと
     モブ」全64種*, <https://booth.pm/ja/items/7851483>, ¥500. Commercial
     use and edits allowed, no resale or redistribution, no credit needed,
-    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin. **Not
-    bought yet.**
+    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin.
+    **Bought 2026-11-16** (ticket 0446). The whole pack is ours, so check
+    it before buying another picture: 64 chibi pieces about 40 px tall,
+    most facing the viewer, which the side-on rule above rules out
+    without Nick's OK. Turned to one side are a gunner and two archers
+    on foot, and three riders: a mounted archer, a cavalryman with a
+    sword, and the Paladin. The rest are knights and fighters
+    (templar, dragoon, valkyrie, samurai, viking, pirate and others),
+    mages and clerics, and townsfolk (king, queen, maid, villagers, a
+    dog and a cat). The private library's `pixel-flag/INDEX.md` lists
+    each one with its size.
   - **MattWalkden**, *Fantasy Battle Pack*,
     <https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want.
     "Royalty free commercial and personal license"; "No generative AI was
@@ -1800,9 +1816,7 @@ black.
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
 - Combat screen (ticket 0413 decided where it is shown, the backdrop, the
   motions, the sizes and the Chapter 1 recolours): which backdrop each
-  terrain gets (today mountains or fields, Claude's starting rule); the
-  riders, who show a plain figure until Pixel Flag's Paladin is bought
-  (ticket 0446).
+  terrain gets (today mountains or fields, Claude's starting rule).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in
