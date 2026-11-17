@@ -26,6 +26,7 @@ use shuyi::assets::bundle::Layer;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, Window};
 use trpg_content::{bundle, font};
+use trpg_ui::console::{ConsoleSizes, ConsoleSpec};
 
 use crate::app_info::APP;
 
@@ -37,8 +38,8 @@ const _: () = assert!(
      alone, with `-p trpg-story-preview` (ADR-0057)"
 );
 
-/// The game's window.
-const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(APP.window_icon);
+/// The game's window: its console at 2x plus a margin (ticket 1283).
+const WINDOW: Window = Window::console(APP.name, ConsoleSpec::PC, 2, 40).with_icon(APP.window_icon);
 
 /// The folder of scripts a writer's clone of the mirror has at its root.
 const DIALOGUE: &str = "dialogue";
