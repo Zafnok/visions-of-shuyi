@@ -21,9 +21,9 @@ pub(crate) fn english(label: &Label) -> String {
     match label {
         Label::Text(text) => text.clone(),
         Label::Key { key, args } => {
-            let args: Vec<(&str, &dyn core::fmt::Display)> = args
+            let args: Vec<(&str, &dyn shuyi_ui::text::ToArg)> = args
                 .iter()
-                .map(|(name, value)| (name.as_str(), value as &dyn core::fmt::Display))
+                .map(|(name, value)| (name.as_str(), value as &dyn shuyi_ui::text::ToArg))
                 .collect();
             crate::words::Words::ENGLISH.text_with(key, &args)
         }

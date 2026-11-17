@@ -24,7 +24,7 @@ use super::skills::skill_name;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 /// One line of the spell list.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -299,7 +299,7 @@ pub fn spell_effect_text(words: Words<'_>, terrain: &TerrainTable, def: &SpellDe
         let name = |id| terrain.get(id).map_or("", |t| words.terrain(t));
         let from: Vec<&str> = effect.from.iter().map(|&id| name(id)).collect();
         let keys = [
-            ("from", &from.join("/") as &dyn Display),
+            ("from", &from.join("/") as &dyn ToArg),
             ("to", &name(effect.to)),
         ];
         parts.push(words.text_with("battle.spell.desc.terrain", &keys));
@@ -338,7 +338,7 @@ pub fn spell_menu(
                 Some(active) => {
                     let active = skill_name(state, words, active);
                     let keys = [
-                        ("spell", &words.spell(def) as &dyn Display),
+                        ("spell", &words.spell(def) as &dyn ToArg),
                         ("active", &active),
                     ];
                     words.text_with("battle.spell.with_active", &keys)

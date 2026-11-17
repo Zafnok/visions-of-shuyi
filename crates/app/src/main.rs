@@ -49,7 +49,7 @@ fn config() -> AppConfig {
     let mut config = AppConfig::new(
         WINDOW,
         STORAGE_NAME,
-        bundle::bytes,
+        |path| bundle::bytes(path).map(std::borrow::Cow::Borrowed),
         font::ATLAS_PNG_PATH,
         trpg_content::audio::files(None),
     );

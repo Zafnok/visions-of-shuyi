@@ -555,7 +555,7 @@ fn a_tip_names_the_keys_the_player_has_bound() {
     c.use_layout(LEFT_HANDED);
     let mut s = quick();
     press(&mut s, &mut c, &[]);
-    assert!(shows(&s, &c, "Move the cursor: wasd. Pick up a unit: j"));
+    assert!(shows(&s, &c, "Move the cursor: w a s d. Pick up a unit: j"));
     assert_eq!(s.help(&c), "j close");
 }
 

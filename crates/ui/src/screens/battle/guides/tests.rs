@@ -216,14 +216,17 @@ fn the_text_names_the_keys_the_player_has_bound() {
     press(&mut s, &mut c, &[Action::CursorDown]);
     let lines = s.guides().unwrap().list_view(&c).lines;
     assert!(
-        lines.contains(&"Move the cursor: wasd".to_owned()),
+        lines.contains(&"Move the cursor: w\u{a0}a\u{a0}s\u{a0}d".to_owned()),
         "{lines:?}"
     );
     assert!(
         lines.contains(&"Open Options from the map menu: k".to_owned()),
         "{lines:?}"
     );
-    assert_eq!(s.guides().unwrap().view(&c).help, "wasd choose · k close");
+    assert_eq!(
+        s.guides().unwrap().view(&c).help,
+        "w\u{a0}a\u{a0}s\u{a0}d choose · k close"
+    );
 }
 
 #[test]

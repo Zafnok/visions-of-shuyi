@@ -644,7 +644,7 @@ impl lint::Cargo for QuietCargo {
 #[test]
 fn lint_fences_the_rules_crate() {
     let project = project();
-    assert_eq!(project.config.rules.as_deref(), Some("trpg-core"));
+    assert_eq!(project.config.rules, ["trpg-core"]);
     let cargo = QuietCargo::default();
     let answer = lint::lint(&cargo, &project, &lint::LintInput::default());
     assert!(answer.ok, "{:?}", answer.result);
@@ -761,7 +761,7 @@ fn the_demo_edition_holds_the_full_games_files_and_its_canaries_only_the_later_c
         paths
             .iter()
             .filter_map(|p| bundle::story_only(|| b.file(p)))
-            .map(str::to_owned)
+            .map(String::from)
             .collect()
     };
     let whole = texts(bundle::install());
@@ -831,7 +831,7 @@ fn the_trial_edition_is_the_demo_less_the_scripts_with_no_later_name() {
             .iter()
             .filter(|p| scripts || !p.starts_with("dialogue/"))
             .filter_map(|p| bundle::story_only(|| b.file(p)))
-            .map(str::to_owned)
+            .map(String::from)
             .collect()
     };
     let whole = texts(bundle::install(), true);
@@ -992,9 +992,13 @@ fn committed_atlas_is_up_to_date() {
     let fonts = SOURCES.map(|source| root.join(source));
     let chars =
         AtlasChars::of_lang(&lang().lang, &rules.required_glyphs).with_wide(&rules.wide_glyphs);
-    let msg =
-        shuyi_cli::font_atlas::run(rules, project.config.command(), &fonts, &[], &dir, &chars)
-            .unwrap();
+    let mut options = shuyi_cli::font_atlas::RunOptions::default();
+    options.rules = rules.clone();
+    options.command = project.config.command().to_owned();
+    options.fonts = fonts.to_vec();
+    options.out_dir = dir.clone();
+    options.chars = chars;
+    let msg = shuyi_cli::font_atlas::run(&options).unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
     let rerun = "rerun `cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf \
@@ -1418,7 +1422,7 @@ fn the_baked_pack_holds_every_file_of_the_embedded_bundle_with_the_same_bytes() 
     assert!(paths.len() > 100, "{paths:?}");
     assert!(paths.contains(&"data/keymap.ron"), "{paths:?}");
     for path in &paths {
-        assert_eq!(pack.get(path), embedded.bytes(path), "{path}");
+        assert_eq!(pack.get(path), embedded.bytes(path).as_deref(), "{path}");
     }
     let packed: Vec<&str> = pack.files().iter().map(|f| f.path.as_str()).collect();
     assert_eq!(packed, paths);

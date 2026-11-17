@@ -175,7 +175,7 @@ impl Pictures {
         let mut pictures = BTreeMap::new();
         for job in jobs(&files, read)? {
             let png = bundle.bytes(job.path).unwrap_or_default();
-            let file = convert_png(png, &job).map_err(|e| format!("{}: {e}", job.path))?;
+            let file = convert_png(&png, &job).map_err(|e| format!("{}: {e}", job.path))?;
             pictures.insert(job.path.to_string(), file);
         }
         Ok(Self(pictures))

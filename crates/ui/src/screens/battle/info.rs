@@ -83,7 +83,7 @@ pub fn bonus_text(words: Words<'_>, bonus: &Stats) -> String {
 }
 
 /// A class and a level on one line: `Knight  Lv 3`.
-pub fn class_level(words: Words<'_>, class: &str, level: impl core::fmt::Display) -> String {
+pub fn class_level(words: Words<'_>, class: &str, level: impl shuyi_ui::text::ToArg) -> String {
     words.text_with(
         "battle.class_level",
         &[("class", &class), ("level", &level)],

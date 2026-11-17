@@ -30,10 +30,9 @@ public:
   built fresh. A faster first build, and the hard links cost no disk.
 
 The engine's own `cargo xtask trim-targets` and `seed-target --into`
-are thin wrappers over them. The game's `crates/xtask` already depends
-on `shuyi-cli`, so it can wrap them the same way today; engine ticket
-3403 will later give every game `cargo shuyi trim-targets` and
-`seed-target`. The game's worktrees are the biggest users of Nick's
+are thin wrappers over them. Engine ticket 3403 (engine PR #460) gives
+every game `cargo shuyi trim-targets` and `seed-target`, and is in the
+pin since the pin move of 2026-11-17, so the game needs no wrapper. The game's worktrees are the biggest users of Nick's
 disk (10+ GB each, `AGENTS.md`); `cargo xtask clean-merged-targets`
 (ticket 0113) only frees the ones whose PR merged, and 1271 compresses
 them.
@@ -45,12 +44,10 @@ None.
 ## Scope
 
 **In:**
-- `cargo xtask trim-targets [--idle-days N] [--dry-run] [--stale-hashes]`
-  over `shuyi_cli::worktrees::trim`, with the game's roots (`target/`).
-  If engine#3403 has landed at the pin by then, use its `cargo shuyi
-  trim-targets` instead and write no wrapper.
-- `cargo xtask seed-target --into <worktree>` over
-  `shuyi_cli::worktrees::seed` (or `cargo shuyi seed-target`, as above).
+- `cargo shuyi trim-targets` (engine#3403, at the pin) on the game's
+  worktrees, with the game's roots (`target/`) if `shuyi.ron` must name
+  them; no wrapper in `crates/xtask`.
+- `cargo shuyi seed-target --into <worktree>`, as above.
 - The `work-ticket` skill seeds a new worktree before its first build,
   beside `cargo shuyi private-assets`; `AGENTS.md`'s environment section
   names both commands beside `clean-merged-targets`.
@@ -67,22 +64,21 @@ None.
   PR whether the game's should, and file a ticket if so).
 - Changing the engine's module (an engine ticket, `engine-change`).
 
-Estimate: About 80 production lines (two thin wrappers and their
-usage), minus `clean_targets.rs` if it goes.
+Estimate: About 10 production lines (`shuyi.ron`, if anything), minus
+`clean_targets.rs` if it goes.
 
 ## Implementation steps
 
-1. Read `shuyi_cli::worktrees` and the engine's `crates/xtask/src/trim.rs`
-   at the pin; check whether 3403 has landed.
-2. Add the wrappers (or switch to `cargo shuyi`), the skill and
-   `AGENTS.md` lines.
+1. Read `cargo shuyi trim-targets --help` and `seed-target --help` and
+   the pack skill `shuyi-worktrees` at the pin.
+2. Add the skill and `AGENTS.md` lines.
 3. Run `trim-targets --dry-run`, then for real; seed a new worktree;
    measure.
 4. `run-gates`.
 
 ## Acceptance criteria
 
-- `cargo xtask trim-targets --dry-run` lists the game's idle worktrees
+- `cargo shuyi trim-targets --dry-run` lists the game's idle worktrees
   and what it would free, and never names the current worktree.
 - A worktree seeded with `seed-target` builds and passes `cargo test
   --workspace`.
@@ -90,8 +86,8 @@ usage), minus `clean_targets.rs` if it goes.
 
 ## Tests required
 
-The wrappers' argument parsing, as `clean_targets.rs`'s is tested; the
-walks themselves are the engine's and tested there.
+None of the game's own if no wrapper is written: the commands are the
+engine's and tested there.
 
 ## Completion notes
 

@@ -110,12 +110,12 @@ fn left_handed_wasd_moves_and_j_confirms() {
     h.keys("s w j");
     assert_eq!(h.top_screen(), "mode_select");
     // The help text names the left-handed keys.
-    assert!(h.snapshot().contains("wasd choose · j select · k back"));
+    assert!(h.snapshot().contains("w a s d choose · j select · k back"));
     h.keys("k");
     assert_eq!(h.top_screen(), "title");
     assert_eq!(
         title_help(&h).as_deref(),
-        Some("wasd move · j select · k back")
+        Some("w\u{a0}a\u{a0}s\u{a0}d move · j select · k back")
     );
     // Right-handed keys do nothing now.
     h.keys("f Down");
