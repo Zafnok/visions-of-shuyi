@@ -16,7 +16,7 @@ use trpg_core::{
     SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag, WEAPON_SLOTS, WeaponTrait,
 };
 
-use super::attack::{AttackFrom, spell_uses, weapon_durability};
+use super::attack::{AttackFrom, spell_uses_of, weapon_durability_of};
 use super::info::stat_name;
 use super::mode::Line;
 use super::skills::{effect_text, mods_text, skill_cost, skill_name, timed_text};
@@ -538,9 +538,19 @@ pub fn header(
     (state, words): (&BattleState, Words<'_>),
     (unit, with): (UnitId, &Equipped),
 ) -> Option<MenuHeader> {
+    unit_header((state, words), state.unit(unit)?, with)
+}
+
+/// [`header`] for `unit` as given, on the map or not (a downed unit in the
+/// side panel, 0484).
+pub fn unit_header(
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+    with: &Equipped,
+) -> Option<MenuHeader> {
     let (name, left, max) = match with {
-        Equipped::Weapon(slot) => weapon_durability(state, words, unit, *slot),
-        Equipped::Spell(spell) => spell_uses(state, words, unit, spell),
+        Equipped::Weapon(slot) => weapon_durability_of(state, words, unit, *slot),
+        Equipped::Spell(spell) => spell_uses_of(state, words, unit, spell),
     }?;
     Some(MenuHeader {
         name,

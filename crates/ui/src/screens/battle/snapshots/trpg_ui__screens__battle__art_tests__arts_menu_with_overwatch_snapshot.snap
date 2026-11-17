@@ -12,15 +12,15 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║ HP 17/17   ██████████      ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
-                                                                      ║                            ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║                            ║
-                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║                            ║
+                                                                      ║ Str   5     Mag   0        ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ Dex   7     Spd   5        ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ Def   5     Res   3        ║
+                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║ Mov   5                    ║
                     ..≈≈≈≈..··..............╦╦..                      ║                            ║
-                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
-                    ..♣♣··.┌─ Iron Bow 20/20 ────────────────────────┐║                            ║
-                    ♣♣♣♣··M│ Close Shot      −2 dur  E               │║                            ║
-                    ♣♣♠♠··.│ Pinning Shot    −3 dur  D               │║                            ║
+                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║ Iron Bow          20/20    ║
+                    ..♣♣··.┌─ Iron Bow 20/20 ────────────────────────┐║ Atk  11     Hit  99        ║
+                    ♣♣♣♣··M│ Close Shot      −2 dur  E               │║ Crit  3     Avo  10        ║
+                    ♣♣♠♠··.│ Pinning Shot    −3 dur  D               │║ AS    4                    ║
                            │ Rending Arrow   −4 dur  C               │║                            ║
                            │ Overwatch       −5 dur  B  ends action  │║                            ║
                            │ Vault           −1 dur  active          │║                            ║
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoorroossjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoorroossjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjjjjjjjjjttjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjssuuvvvvvvvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoojbbddddddddddccccccbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkooubcccccccccccccccccccccccccccccccccccccccccbbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojbcccccccccccccccccccccccccccccccccccccccccbbccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoojbbddddddddddccccccbbbbbbbbbbbbbbbbbbbbbbbbbbcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkooubcccccccccccccccccccccccccccccccccccccccccbbcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojbcccccccccccccccccccccccccccccccccccccccccbbcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabcccccccccccccccccccccccccccccccccccccccccbbccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbbccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabcccccccccccccccccccccccccccccccccccccccccbbccccccccccccccccccccccccccccb

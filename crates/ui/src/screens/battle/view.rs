@@ -189,6 +189,28 @@ pub struct PanelUnitView {
     pub max: StatValue,
     /// The name of its faction.
     pub faction_name: String,
+    /// Its stats as a fight uses them, gear included: Str, Mag, Dex, Spd,
+    /// Def, Res, Mov (0484).
+    pub stats: Vec<PanelCellView>,
+    /// Its equipped weapon or attack spell and the uses left
+    /// (`Iron Sword 20/20`); `None` with nothing in hand.
+    pub weapon: Option<MenuHeader>,
+    /// What it shows with nothing in hand (`--`).
+    pub no_weapon: String,
+    /// Its side of any fight: Atk, Hit, Crit, Avo, AS (`--` for the
+    /// first three with nothing in hand).
+    pub combat: Vec<PanelCellView>,
+}
+
+/// One name and number of the side panel (`Str 8`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PanelCellView {
+    /// The name.
+    pub name: String,
+    /// The number as shown (`104`, `-1`, `--`).
+    pub value: String,
+    /// Whether a timed effect raised or lowered it.
+    pub changed: bool,
 }
 
 /// A box over the map.

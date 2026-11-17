@@ -12,15 +12,15 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       │ HP 19/19   ██████████      │
                                                                       │ Player                     │
                                                                       │                            │
-                                                                      │                            │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
-                    ≈≈≈≈≈≈╔═ Objective ════╗^^^^                      │                            │
-                    ≈≈≈≈≈≈║                ║....                      │                            │
+                                                                      │ Str   6     Mag   1        │
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │ Dex   7     Spd   7        │
+                    ≈≈≈≈≈≈╔═ Objective ════╗^^^^                      │ Def   6     Res   5        │
+                    ≈≈≈≈≈≈║                ║....                      │ Mov   5                    │
                     ..≈≈≈≈║ Rout the enemy ║╦╦..                      │                            │
-                    ....Ar║ Turn 1         ║▓▓..                      │                            │
-                    ..♣♣··║                ║▓▓..                      │                            │
-                    ♣♣♣♣··╚════════════════╝▓▓..                      │                            │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │                            │
+                    ....Ar║ Turn 1         ║▓▓..                      │ Iron Sword        20/20    │
+                    ..♣♣··║                ║▓▓..                      │ Atk  11     Hit 104        │
+                    ♣♣♣♣··╚════════════════╝▓▓..                      │ Crit  3     Avo  14        │
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    5                    │
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiibbdddddddddddbbbbbmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiibccccccccccccccccbjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiibbdddddddddddbbbbbmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiibccccccccccccccccbjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiibccccccccccccccccboojjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjppbccccccccccccccccbqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkrrbccccccccccccccccbqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkrrbbbbbbbbbbbbbbbbbbqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkllrrjjjjjjjjjjssqqqqttqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkrrbccccccccccccccccbqqjjaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkrrbbbbbbbbbbbbbbbbbbqqjjaaaaaaaaaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkllrrjjjjjjjjjjssqqqqttqqjjaaaaaaaaaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb

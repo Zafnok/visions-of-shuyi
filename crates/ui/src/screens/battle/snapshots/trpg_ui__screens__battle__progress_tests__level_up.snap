@@ -12,15 +12,15 @@ expression: h.snapshot()
      ║ │                                │  LEVEL UP!            ║     │ HP 3/20    ██░░░░░░░░      │
      ║ │                                │                       ║     │ Enemy                      │
      ║ │                                │  Test Lord            ║     │                            │
-     ║ │                                │  Lv 1 → 2             ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ │                                │  HP   19 → 20  +1     ║     │                            │
-     ║ │                                │  Str   6              ║     │                            │
+     ║ │                                │  Lv 1 → 2             ║     │ Str   6     Mag   0        │
+     ║ │                                │                       ║     │ Dex   2     Spd   4        │
+     ║ │                                │  HP   19 → 20  +1     ║     │ Def   3     Res   0        │
+     ║ │                                │  Str   6              ║     │ Mov   5                    │
      ║ │                                │  Mag   1              ║     │                            │
-     ║ │                                │  Dex   7              ║     │                            │
-     ║ │                                │  Spd   7 → 8   +1     ║     │                            │
-     ║ │                                │  Def   4              ║     │                            │
-     ║ │                                │  Res   3              ║     │                            │
+     ║ │                                │  Dex   7              ║     │ Iron Axe          20/20    │
+     ║ │                                │  Spd   7 → 8   +1     ║     │ Atk  14     Hit  79        │
+     ║ │                                │  Def   4              ║     │ Crit  1     Avo   8        │
+     ║ │                                │  Res   3              ║     │ AS   -1                    │
      ║ │                                │                       ║     │                            │
      ║ │                                │                       ║     │                            │
      ║ │                                │                       ║     │                            │
@@ -45,15 +45,15 @@ aaaaaecbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccceaaaaabccccccccc
 aaaaaecbccccccccccccccccccccccccccccccccbccdddddddddcccccccccccceaaaaabccccccccccccgghhhhhhhhccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabchhhhhccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbcciiiiiiiiicccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabccccccccccccccccccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabchhhccccccccchhhccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabchhhccccccccchhhccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabchhhccccccccchhhccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabchhhccccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabchhhccccccccchhhccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabchhhhcccccccchhhccccccccccccb
+aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabchhcccccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
 aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb

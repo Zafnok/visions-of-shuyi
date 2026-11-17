@@ -24,7 +24,7 @@ use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use super::units::{faction_color, paint_hp_bar};
 use super::view::{
     BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
-    PanelUnitView, PanelView,
+    PanelCellView, PanelUnitView, PanelView,
 };
 use super::{PopupKind, stage};
 use crate::color::{Rgb, UiColor};
@@ -60,6 +60,19 @@ pub const GOLD_ROW: i32 = SIDE_PANEL.y + SIDE_PANEL.h - 2;
 
 /// Column of the side panel's HP bar, after `HP 999/999 `.
 pub const HP_BAR_X: i32 = TEXT_X + 11;
+
+/// Row of a unit's first stats in the side panel, a blank row under its
+/// block (0484).
+pub const STATS_ROW: i32 = UNIT_ROW + 5;
+
+/// Width of one name and number in the side panel (`Hit 104`).
+pub const PANEL_CELL_W: usize = 7;
+
+/// Columns from the first name and number of a row to the second.
+pub const PANEL_CELL_GAP: i32 = 12;
+
+/// Width of the weapon line: its uses end there (`Iron Sword        20/20`).
+pub const PANEL_WEAPON_W: usize = 23;
 
 /// Banner box width, in cells.
 pub const BANNER_W: i32 = 24;
@@ -354,6 +367,70 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         &unit.faction_name,
         c(UiColor::TextDim),
     );
+    // A blank row, the stats, a blank row, the weapon, the combat numbers.
+    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW);
+    let weapon_row = below + 1;
+    match &unit.weapon {
+        Some(weapon) => paint_panel_weapon(ctx, weapon, buf, weapon_row),
+        None => print_clipped(
+            buf,
+            (TEXT_X, weapon_row),
+            TEXT_W,
+            &unit.no_weapon,
+            c(UiColor::Text),
+        ),
+    }
+    paint_panel_cells(ctx, &unit.combat, buf, weapon_row + 1);
+}
+
+/// Paints `cells` two to a row from row `top`, the names dim and the
+/// numbers lit (a timed effect's in its colour) and right-aligned; the row
+/// after the last.
+fn paint_panel_cells(ctx: &Ctx, cells: &[PanelCellView], buf: &mut GlyphBuffer, top: i32) -> i32 {
+    let c = |u| ctx.palette.get(u);
+    let mut y = top;
+    for row in cells.chunks(2) {
+        for (x, cell) in [TEXT_X, TEXT_X + PANEL_CELL_GAP].into_iter().zip(row) {
+            // check-text: not a data name (the view's own)
+            let name = &cell.name;
+            print_clipped(buf, (x, y), PANEL_CELL_W, name, c(UiColor::TextDim));
+            let name_w = name.chars().count();
+            let value = format!(
+                "{:>w$}",
+                cell.value,
+                w = PANEL_CELL_W.saturating_sub(name_w)
+            );
+            let color = if cell.changed {
+                UiColor::Effect
+            } else {
+                UiColor::Text
+            };
+            let at = x + i32::try_from(name_w).unwrap_or(0);
+            print_clipped(buf, (at, y), PANEL_CELL_W, &value, c(color));
+        }
+        y += 1;
+    }
+    y
+}
+
+/// Paints the weapon line: its name, then its uses right-aligned (in the
+/// warning colour once none are left).
+fn paint_panel_weapon(ctx: &Ctx, weapon: &MenuHeader, buf: &mut GlyphBuffer, y: i32) {
+    let c = |u| ctx.palette.get(u);
+    let uses = weapon.uses.as_ref();
+    let uses_w = uses.map_or(0, |u| u.text.chars().count());
+    let name_w = PANEL_WEAPON_W.saturating_sub(uses_w + 1).min(TEXT_W);
+    // check-text: not a data name (the view's own)
+    print_clipped(buf, (TEXT_X, y), name_w, &weapon.name, c(UiColor::Text));
+    if let Some(uses) = uses {
+        let color = if uses.spent {
+            UiColor::HpLow
+        } else {
+            UiColor::Text
+        };
+        let at = TEXT_X + i32::try_from(PANEL_WEAPON_W - uses_w).unwrap_or(0);
+        print_clipped(buf, (at, y), uses_w, &uses.text, c(color));
+    }
 }
 
 /// Paints the boxes over the map: the unit list, the objective page (the

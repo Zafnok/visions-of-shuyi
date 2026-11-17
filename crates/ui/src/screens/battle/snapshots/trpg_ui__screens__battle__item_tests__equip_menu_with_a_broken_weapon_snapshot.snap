@@ -12,15 +12,15 @@ expression: buf.to_snapshot(&c.palette)
                                                                       ║ HP 19/19   ██████████      ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
-                                                                      ║                            ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║                            ║
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      ║                            ║
+                                                                      ║ Str   6     Mag   1        ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ Dex   7     Spd   7        ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ Def   6     Res   5        ║
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      ║ Mov   5                    ║
                     ..≈≈≈≈..··..............╦╦..                      ║                            ║
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      ║                            ║
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      ║                            ║
-        ┌────────────────────────────────────────────────────────────┐║                            ║
-        │ * Iron Sword   Mt 5 Hit 90 Crit 0 Wt 2 Rng1 12/20          │║                            ║
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      ║ Iron Sword        12/20    ║
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      ║ Atk  11     Hit 104        ║
+        ┌────────────────────────────────────────────────────────────┐║ Crit  3     Avo  14        ║
+        │ * Iron Sword   Mt 5 Hit 90 Crit 0 Wt 2 Rng1 12/20          │║ AS    5                    ║
         │   Steel Sword  Mt 8 Hit 75 Crit 0 Wt 4 Rng1  0/25 (broken) │║                            ║
         └────────────────────────────────────────────────────────────┘║                            ║
                                                                       ║                            ║
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjjjjjjjjjssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjttoooojjjjrrjjuuuuuuuujjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoovvjjssjjjjjjuuwwssuujjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
-aaaaaaaabxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxbbccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoovvjjssjjjjjjuuwwssuujjaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcggggccccccccgggccccccccccccb
+aaaaaaaabxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxbbcggcccccccccccccccccccccccccb
 aaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccccyyyyyyyycbbccccccccccccccccccccccccccccb
 aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
