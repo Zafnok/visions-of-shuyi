@@ -224,6 +224,13 @@ D the side panel):
   the unit's path end (not its own tile) take the **heal** tint; moving the
   focus off it clears them (*the agent's starting rule*: a friend's
   playtest asked for a range indicator; Act 1 playtest, 1064).
+  **The Skill list goes beside the reach, not over it** (decided
+  2026-11-17, ticket 0492: Nick was shown the list beside the unit, beside
+  the reach, kept in place with the map slid, and in a fixed corner, in
+  both looks, and picked "A: beside the reach"): while an area line is
+  focused, the list goes one cell past the reach's edge, right of it or
+  left where it would leave the map view, by the same rule as every menu
+  beside its unit (0454); on the PC and the Playdate.
 - **Colour themes** (ticket 0806): Options has a **Colors** row with four
   palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
   parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
