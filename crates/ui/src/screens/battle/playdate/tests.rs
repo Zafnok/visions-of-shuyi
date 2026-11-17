@@ -86,6 +86,9 @@ fn browsing_shows_the_unit_top_left_and_the_terrain_top_right_and_no_help_bar() 
     let view = s.view(&c);
     let panel = view.panel.clone().unwrap();
     let (unit, terrain) = (panel.unit.unwrap(), panel.terrain.unwrap());
+    // The corner window shows no stats, so the view doesn't work them out
+    // (0484: they cost the Playdate's frame time).
+    assert!(unit.stats.is_empty() && unit.combat.is_empty() && unit.weapon.is_none());
     let buf = painted(&c, &view);
     // The unit's window in the top-left corner: its name, then its HP.
     let hp = format!("{} {}/{}", unit.hp_name, unit.hp, unit.max);

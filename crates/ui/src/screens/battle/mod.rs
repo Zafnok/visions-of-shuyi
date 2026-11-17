@@ -107,7 +107,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
@@ -2647,7 +2647,9 @@ impl BattleScreen {
         BattleView {
             menu: self.menu_view(words),
             popups: self.popups.clone(),
-            panel: forecast.is_none().then(|| self.panel_view(words)),
+            panel: forecast
+                .is_none()
+                .then(|| self.panel_view(words, ctx.game.skin_set == SkinSet::Glyph)),
             stage,
             dialog: self.dialog_view(ctx),
             notes,
@@ -2717,17 +2719,18 @@ impl BattleScreen {
     }
 
     /// The side panel: the terrain and the unit under the cursor (as
-    /// drawn, during a playback).
-    fn panel_view(&self, words: Words<'_>) -> PanelView {
+    /// drawn, during a playback); with its `numbers` (stats, weapon,
+    /// combat numbers) where the skin paints them, the PC's (0484).
+    fn panel_view(&self, words: Words<'_>, numbers: bool) -> PanelView {
         let pos = self.cursor.pos;
         let told = (&self.state, words);
         let selected = self.mode.selection().is_some();
         if self.playing() {
             let shown = self.shown_units();
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
-            panel::view(told, pos, hovered.map(|(u, _)| u), selected)
+            panel::view(told, pos, hovered.map(|(u, _)| u), (selected, numbers))
         } else {
-            panel::view(told, pos, self.looked_at(), selected)
+            panel::view(told, pos, self.looked_at(), (selected, numbers))
         }
     }
 

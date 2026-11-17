@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/glyph/tests.rs
-expression: buf.to_snapshot(&c.palette)
+expression: buf.to_snapshot(&ctx.palette)
 ---
                                                                       ┌────────────────────────────┐
                                                                       │ Plain                      │
@@ -12,15 +12,15 @@ expression: buf.to_snapshot(&c.palette)
                                                                       │ HP 19/19   ██████████      │
                                                                       │ Player                     │
                                                                       │                            │
-             ╔═════════════════════════════════════════╗              │                            │
-             ║                                         ║              │                            │
-             ║                OBJECTIVE                ║              │                            │
-             ║                                         ║              │                            │
+             ╔═════════════════════════════════════════╗              │ Str   6     Mag   1        │
+             ║                                         ║              │ Dex   7     Spd   7        │
+             ║                OBJECTIVE                ║              │ Def   6     Res   5        │
+             ║                                         ║              │ Mov   5                    │
              ║  Win:   Defeat Silas Hendry             ║              │                            │
-             ║  Lose:  3 of 5 houses burn              ║              │                            │
-             ║  or     Ellery falls                    ║              │                            │
-             ║  Bonus: Save 4 or 5 houses for rewards  ║              │                            │
-             ║                                         ║              │                            │
+             ║  Lose:  3 of 5 houses burn              ║              │ Iron Sword        20/20    │
+             ║  or     Ellery falls                    ║              │ Atk  11     Hit 104        │
+             ║  Bonus: Save 4 or 5 houses for rewards  ║              │ Crit  3     Avo  14        │
+             ║                                         ║              │ AS    5                    │
              ╚═════════════════════════════════════════╝              │                            │
                                                                       │                            │
                                                                       │                            │
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaecccccccccccccccceeeeeeeeecccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaecccccccccccccccceeeeeeeeecccccccccccccccceaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaeccddddccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaeccdddddcccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeccddccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeccddddddccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaeccddccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaeccddddddccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaeccccccccccccccccccccccccccccccccccccccccceaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb

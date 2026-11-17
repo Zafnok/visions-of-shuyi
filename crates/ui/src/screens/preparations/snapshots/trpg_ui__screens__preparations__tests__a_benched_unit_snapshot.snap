@@ -10,7 +10,7 @@ expression: h.snapshot()
 │ Test Knight  ││ Weapon     -                     ││ Steel Spear     can't use spears             │
 │ Test Archer  ││ Weapon     -                     ││ Iron Axe        can't use axes               │
 │ Test Mage    ││ Armor      Leather Vest          ││ Iron Sword      can't use swords             │
-│ Test Scout   ││ Accessory  -                     ││ Iron Bow        20/20  from Test Archer      │
+│ Test Scout   ││ Accessory  -                     ││ Ar Iron Bow        20/20  from Test Archer   │
 │              ││                                  ││                                              │
 │              ││ E  Mt 6  Hit 85  Crit 0  Rng 2   ││                                              │
 │              ││ Wt 3                             ││                                              │

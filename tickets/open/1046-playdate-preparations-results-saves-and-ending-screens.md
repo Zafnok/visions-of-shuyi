@@ -61,6 +61,10 @@ it):
   item under the cursor, one line on the PC (cut at its two-space gaps
   when too wide). Paint it under the slots, above the speed line, cut to
   fit the Playdate's width by its own rule.
+- Preparations' swap rows (what another unit holds) have `holder`
+  (0479): the PC paints the holder's face, or its map letters without
+  one. The Playdate shows the holder by its own rule: the row's
+  `from Test Scout` text is enough.
 
 **Out (do not do):**
 - Screens 1044 and 1045 cover.

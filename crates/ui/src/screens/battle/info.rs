@@ -99,6 +99,24 @@ pub(super) fn range_text(min: u32, max: u32) -> String {
     }
 }
 
+/// The stats unit info lists: the numbers a fight uses, gear included
+/// (0484); only a timed effect marks a stat as raised or lowered.
+fn listed_stats((state, words): (&BattleState, Words<'_>), unit: &Unit) -> Vec<InfoStatView> {
+    let (shown, without_effects) = state.stat_card(unit).map_or_else(
+        || (effect_bonuses(&unit.effects).apply(unit.stats), unit.stats),
+        |card| (card.stats, card.without_effects),
+    );
+    StatKind::GROWABLE
+        .into_iter()
+        .filter(|&k| k != StatKind::Hp)
+        .map(|kind| InfoStatView {
+            name: stat_name(words, kind).to_owned(),
+            value: shown.get(kind),
+            changed: shown.get(kind) != without_effects.get(kind),
+        })
+        .collect()
+}
+
 /// What the info screen of `unit` of `state` shows.
 pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView {
     let class = state.classes().get(&unit.class);
@@ -112,17 +130,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
     });
     let tags = class.map(|c| c.tags).unwrap_or_default();
     let affinities = class.map(|c| c.affinities.as_slice()).unwrap_or_default();
-    // Timed effects count: a raised or lowered stat is marked.
-    let shown = effect_bonuses(&unit.effects).apply(unit.stats);
-    let listed = StatKind::GROWABLE
-        .into_iter()
-        .filter(|&k| k != StatKind::Hp)
-        .map(|kind| InfoStatView {
-            name: stat_name(words, kind).to_owned(),
-            value: shown.get(kind),
-            changed: shown.get(kind) != unit.stats.get(kind),
-        })
-        .collect();
+    let listed = listed_stats((state, words), unit);
     let effects = unit
         .effects
         .iter()
@@ -425,7 +433,10 @@ mod tests {
         });
         let raised = view((&state, Words::ENGLISH), &lord);
         let def = raised.stats.iter().find(|s| s.name == "Def").unwrap();
-        assert_eq!((def.value, def.changed), (lord.stats.def + 2, true));
+        // Its Leather Vest counts too, and isn't marked.
+        let plain_def = plain.stats.iter().find(|s| s.name == "Def").unwrap();
+        assert!(plain_def.value > lord.stats.def && !plain_def.changed);
+        assert_eq!((def.value, def.changed), (plain_def.value + 2, true));
         let str_ = raised.stats.iter().find(|s| s.name == "Str").unwrap();
         assert_eq!((str_.value, str_.changed), (lord.stats.str, false));
         assert_eq!(raised.effects.len(), 1);
