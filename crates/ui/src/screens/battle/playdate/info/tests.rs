@@ -54,8 +54,8 @@ fn the_first_page_is_the_unit_its_stats_and_its_effects() {
             BLANK,
             "║ Stats                                          ║",
             "║ Str   6   Spd   7                              ║",
-            "║ Mag   1   Def   4                              ║",
-            "║ Dex   7   Res   3                              ║",
+            "║ Mag   1   Def   6                              ║",
+            "║ Dex   7   Res   5                              ║",
             BLANK,
             BLANK,
             BLANK,
@@ -84,11 +84,11 @@ fn the_first_page_is_the_unit_its_stats_and_its_effects() {
     );
     assert_eq!(
         shown[8],
-        "║ Mag   1   Def   4       Str +2                 ║"
+        "║ Mag   1   Def   6       Str +2                 ║"
     );
     assert_eq!(
         shown[9],
-        "║ Dex   7   Res   3       until your next turn   ║"
+        "║ Dex   7   Res   5       until your next turn   ║"
     );
     let buf = painted(&v);
     let lit = cell(&buf, 8, 7);

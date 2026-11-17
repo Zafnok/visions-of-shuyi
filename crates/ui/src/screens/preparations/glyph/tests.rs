@@ -6,6 +6,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action::{Confirm, CursorDown, CursorUp};
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::preparations::tests::{screen, update};
+use crate::screens::preparations::view::HolderView;
 use crate::screens::preparations::{Tab, TabView, UnitRowView};
 use crate::widgets::AskView;
 
@@ -57,7 +58,33 @@ fn item(name: &str, detail: &str, usable: bool) -> ItemRowView {
         name: name.to_owned(),
         detail: detail.to_owned(),
         usable,
+        holder: None,
     }
+}
+
+/// A row of `label`'s vest, with the face `portrait` if any.
+fn swap(label: &str, portrait: Option<&str>) -> ItemRowView {
+    let holder = HolderView {
+        character: None,
+        portrait: portrait.map(str::to_owned),
+        label: label.to_owned(),
+    };
+    ItemRowView {
+        holder: Some(holder),
+        ..item("Leather Vest", "from Them", true)
+    }
+}
+
+/// [`view`] with `rows` in the stock, the cursor on row `cursor`.
+fn with_stock(rows: Vec<ItemRowView>, cursor: usize) -> PreparationsView {
+    let mut v = view();
+    if let PrepBody::Loadouts(LoadoutsView {
+        gear: Some(gear), ..
+    }) = &mut v.body
+    {
+        gear.stock = list("Stock: armor", rows, cursor, ListState::Focused);
+    }
+    v
 }
 
 /// A Loadouts tab made by hand: the second of three units chosen, the
@@ -296,4 +323,111 @@ fn a_long_list_scrolls_inside_its_box() {
     update(&mut s, &mut c, &[CursorDown]);
     assert!(drawn_row(&s, &c, 4).starts_with("│ Test Lord"));
     assert!(drawn_row(&s, &c, 26).starts_with("│ Extra 17"));
+}
+
+/// A swap row with a face is three rows tall: the face at its left, its
+/// text on its middle row (0479).
+#[test]
+fn a_swap_row_starts_with_the_holders_face() {
+    let c = ctx();
+    let rows = vec![
+        item("Chain Mail", "×1  Def +3", true),
+        swap("Lo", Some("test_lord")),
+        swap("Sc", None),
+    ];
+    let buf = painted(&c, &with_stock(rows, 0));
+    let (cw, ch) = buf.spec().cell_px();
+    let at = (STOCK_BOX.x + 2, STOCK_BOX.y + 2);
+    let faces: Vec<_> = buf.sprites().iter().map(|s| (s.dest, s.layer)).collect();
+    let dest = PxRect::new(at.0 * cw, at.1 * ch, FACE_PX, FACE_PX);
+    assert_eq!(faces, [(dest, Layer::Under)]);
+    let skip = usize::try_from(STOCK_BOX.x).unwrap();
+    let text = |y| row(&buf, y).chars().skip(skip).collect::<String>();
+    assert_eq!(text(5).trim_matches('│').trim(), "");
+    assert!(text(6).contains("│        Leather Vest"), "{}", text(6));
+    // The holder with no face: its map letters on one row, in the
+    // player's colour.
+    assert!(text(8).starts_with("│ Sc Leather Vest"), "{}", text(8));
+    let player = c.palette.get(UiColor::Player);
+    assert_eq!(colours(&buf, STOCK_BOX.x + 2, 8).0, player);
+    assert_eq!(text(9).trim_matches('│').trim(), "");
+}
+
+/// On the cursor's bar the letters take the bar's text colour.
+#[test]
+fn the_letters_on_the_bar_are_the_bars_colour() {
+    let c = ctx();
+    let buf = painted(&c, &with_stock(vec![swap("Sc", None)], 0));
+    let (fg, bg) = colours(&buf, STOCK_BOX.x + 2, STOCK_BOX.y + 1);
+    assert_eq!((fg, bg), colours(&buf, STOCK_BOX.x + 6, STOCK_BOX.y + 1));
+    assert_eq!(bg, c.palette.get(UiColor::PanelBorderFocus));
+}
+
+/// Rows hidden below show `▼` at the box's bottom right, rows hidden
+/// above `▲` at its top right (Nick, 0479).
+#[test]
+fn arrows_show_rows_hidden_above_and_below() {
+    let c = ctx();
+    let faces = || (0..10).map(|_| swap("Lo", Some("test_lord"))).collect();
+    let mark = |buf: &GlyphBuffer, y| buf.get(STOCK_BOX.x + STOCK_BOX.w - 2, y).map(|c| c.glyph);
+    let (top, bottom) = (STOCK_BOX.y + 1, STOCK_BOX.y + STOCK_BOX.h - 2);
+    // Ten rows of three in 23: the first seven show.
+    let first = painted(&c, &with_stock(faces(), 0));
+    assert_eq!(
+        (mark(&first, top), mark(&first, bottom)),
+        (Some(' '), Some('▼'))
+    );
+    let middle = painted(&c, &with_stock(faces(), 8));
+    assert_eq!(
+        (mark(&middle, top), mark(&middle, bottom)),
+        (Some('▲'), Some('▼'))
+    );
+    let last = painted(&c, &with_stock(faces(), 9));
+    assert_eq!(
+        (mark(&last, top), mark(&last, bottom)),
+        (Some('▲'), Some(' '))
+    );
+    // A short list has neither.
+    let short = painted(&c, &with_stock(vec![swap("Sc", None)], 0));
+    assert_eq!(
+        (mark(&short, top), mark(&short, bottom)),
+        (Some(' '), Some(' '))
+    );
+}
+
+/// Rows that fill the box exactly all show, the last on its bottom row,
+/// with no arrow.
+#[test]
+fn rows_that_just_fit_all_show() {
+    let c = ctx();
+    let inner = STOCK_BOX.h - 2;
+    let rows = (0..inner)
+        .map(|i| item(&format!("Row {i}"), "", true))
+        .collect();
+    let buf = painted(&c, &with_stock(rows, 0));
+    let bottom = STOCK_BOX.y + inner;
+    let skip = usize::try_from(STOCK_BOX.x).unwrap();
+    let last: String = row(&buf, bottom).chars().skip(skip).collect();
+    assert!(last.starts_with("│ Row 22 "), "{last}");
+    let mark = buf
+        .get(STOCK_BOX.x + STOCK_BOX.w - 2, bottom)
+        .map(|c| c.glyph);
+    assert_eq!(mark, Some(' '));
+}
+
+#[test]
+fn the_stock_window_moves_only_once_the_cursor_leaves_it() {
+    let heights = [1, 3, 3, 3];
+    let starts: Vec<usize> = (0..4).map(|f| stock_window_start(&heights, f, 5)).collect();
+    assert_eq!(starts, [0, 0, 2, 3]);
+    assert_eq!(stock_window_start(&[], 0, 5), 0);
+    // A row taller than the box still shows from its top.
+    assert_eq!(stock_window_start(&[1, 9], 1, 5), 1);
+}
+
+#[test]
+fn a_face_is_drawn_48_pixels_keeping_its_shape() {
+    assert_eq!(face_size((64, 64)), (48, 48));
+    assert_eq!(face_size((32, 32)), (48, 48));
+    assert_eq!(face_size((64, 32)), (48, 24));
 }

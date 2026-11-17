@@ -648,6 +648,12 @@
     "battle.portrait": "portrait",
     "battle.panel.terrain": "DEF {defense}  AVO {avoid}",
     "battle.panel.heals": "Heals {percent}% HP",
+    "battle.panel.atk": "Atk",
+    "battle.panel.hit": "Hit",
+    "battle.panel.crit": "Crit",
+    "battle.panel.avo": "Avo",
+    "battle.panel.as": "AS",
+    "battle.panel.none": "--",
 
     // The battle: the lists of weapons, arts, spells, skills and items.
     // `{name}` and the numbers come padded, so the columns line up.
