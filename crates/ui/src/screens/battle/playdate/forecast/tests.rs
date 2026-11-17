@@ -178,6 +178,23 @@ fn a_broken_weapon_says_so_under_it_and_the_bar_blinks() {
 }
 
 #[test]
+fn an_hp_line_stays_in_its_column() {
+    // No Act 1 unit has 100 HP, but a line that long is cut at its column,
+    // leaving the strikes' numbers' column and the target's alone.
+    let v = view(20, |v| {
+        v.sides[0].hp = crate::screens::battle::view::ForecastHp {
+            now: 100,
+            after: 100,
+            max: 100,
+        };
+    });
+    let (buf, at) = painted(&v);
+    let x = at.x + 2;
+    assert_eq!(cell(&buf, x + NUMBER, 3).glyph, ' ');
+    assert_eq!(find(&buf, 3, "HP 20 → 3"), Some(x + RIGHT));
+}
+
+#[test]
 fn a_unit_left_with_hp_keeps_a_black_cell() {
     let v = view(20, |v| {
         v.sides[1].hp = crate::screens::battle::view::ForecastHp {

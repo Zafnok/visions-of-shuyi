@@ -63,6 +63,7 @@ fn the_rows_of_a_forecast() {
     // The title in the top border.
     assert!(text(&buf, SIDE_PANEL.x, SIDE_PANEL.y, 30).contains(" Forecast "));
     assert_eq!(row(&buf, SKILL_ROW), "");
+    assert_eq!((NAME_ROW, WEAPON_ROW, UNDER_ROW, HP_ROW), (2, 3, 4, 4));
     assert_eq!(text(&buf, LEFT_X, NAME_ROW, 9), "Test Lord");
     assert_eq!(text(&buf, RIGHT_X, NAME_ROW, 7), "Brigand");
     // The uses after the weapon's name, not on a row of their own (0480).

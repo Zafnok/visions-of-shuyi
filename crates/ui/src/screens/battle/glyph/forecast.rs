@@ -41,14 +41,17 @@ const SKILL_W: usize = 26;
 /// Row of the names; the weapons and their uses follow.
 pub const NAME_ROW: i32 = SIDE_PANEL.y + 2;
 
+/// Row of the weapons and their uses (`Iron Sword 20`).
+pub const WEAPON_ROW: i32 = NAME_ROW + 1;
+
 /// Row under the weapons: the uses an art spends (`20 → 16`) or
 /// `(broken)`, when a side has either. The rows from the HP line down then
 /// move down one ([`shift`]).
-pub const UNDER_ROW: i32 = NAME_ROW + 2;
+pub const UNDER_ROW: i32 = WEAPON_ROW + 1;
 
-/// Row of the HP line (`HP 19 → 6`) without a row under the weapons; the
-/// bar, hit and crit follow.
-pub const HP_ROW: i32 = NAME_ROW + 2;
+/// Row of the HP line (`HP 19 → 6`) without a row under the weapons (so
+/// the row under them, when there is none); the bar, hit and crit follow.
+pub const HP_ROW: i32 = UNDER_ROW;
 
 /// Row of the affinity marker (`(resist)`, `heals 9`), under the crit.
 pub const AFFINITY_ROW: i32 = HP_ROW + 4;
@@ -281,7 +284,7 @@ fn paint_side(
     // check-text: not a data name (the view's own)
     print_clipped(buf, (x, NAME_ROW), COLUMN_W, &side.name, name_fg);
     let uses = uses_after_name(view, side, by);
-    paint_weapon(ctx, buf, (x, NAME_ROW + 1), &side.weapon, uses);
+    paint_weapon(ctx, buf, (x, WEAPON_ROW), &side.weapon, uses);
     match under(view, side, by) {
         Some(Under::Spends(from, to)) => {
             let (from, to) = (from.to_string(), to.to_string());
