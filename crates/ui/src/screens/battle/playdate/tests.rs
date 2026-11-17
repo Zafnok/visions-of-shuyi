@@ -200,6 +200,7 @@ fn a_menu_shows_its_header_suffixes_grey_items_and_the_focused_note() {
     let m = BattleMenuView {
         menu: MenuView::new(vec![cut, guard]),
         place: MenuPlace::Centred,
+        clear_of: Vec::new(),
         header: Some(MenuHeader {
             name: "Iron Sword".into(),
             uses: Some(UsesView {
@@ -231,6 +232,7 @@ fn a_menu_too_long_for_the_screen_scrolls_with_its_focus_and_marks_the_rest() {
         BattleMenuView {
             menu: MenuView::new(items),
             place: MenuPlace::Centred,
+            clear_of: Vec::new(),
             header: None,
         }
     };
@@ -419,6 +421,7 @@ fn the_unit_list_opens_in_the_middle_of_the_screen() {
     let menu = BattleMenuView {
         menu: MenuView::new(items),
         place: MenuPlace::Centred,
+        clear_of: Vec::new(),
         header: None,
     };
     let size = menu_size(&c, &menu.menu, SCREEN);
@@ -439,6 +442,7 @@ fn a_menu_with_notes_scrolls_sooner_its_note_rows_kept() {
     let m = BattleMenuView {
         menu: MenuView::new(items),
         place: MenuPlace::Centred,
+        clear_of: Vec::new(),
         header: None,
     };
     // 11 items, the rule and the note fill the 15 rows.
@@ -458,6 +462,7 @@ fn the_focus_bar_header_note_and_long_lines_stay_inside_the_frame() {
     let m = BattleMenuView {
         menu: MenuView::new(vec![item(&long, Some(&"n".repeat(60)), true, true)]),
         place: MenuPlace::Centred,
+        clear_of: Vec::new(),
         header: Some(MenuHeader {
             name: "y".repeat(60),
             uses: None,
