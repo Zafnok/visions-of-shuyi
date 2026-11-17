@@ -1162,8 +1162,8 @@ like shit". What the search was held to after that:
 
 | Fighter | Combat picture | Size | Map sprite | Source |
 | ------- | -------------- | ---- | ---------- | ------ |
-| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders (not imported yet: ticket 0499; today the Tiny Tales knight on foot) | Pixel Flag; MattWalkden |
-| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1, today's rider sprite) | Pixel Flag; Tiny Tales |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders, red (ticket 0499): the **lance rider** for the Rider, Lancer, High Lancer, Iron Rider and Juggernaut, the **bow rider** for the Outrider and Windrunner; 24×24 frames, a little bigger than a Tiny Tales sprite | Pixel Flag; MattWalkden |
+| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1), named for every mounted class in the tileset's `on_foot` (0499); drawn once 0334 puts the rider's state in the map scene | Pixel Flag; Tiny Tales |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
@@ -1236,8 +1236,15 @@ like shit". What the search was held to after that:
     <https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want.
     "Royalty free commercial and personal license"; "No generative AI was
     used". Idle, move, attack and death in 4 directions ("as long as they
-    are animated same as rest of our units MattWalkden looks good"). Read
-    the licence file in the download for edits before the first use.
+    are animated same as rest of our units MattWalkden looks good").
+    Downloaded 2026-11-17 (ticket 0499); its licence file allows use in
+    a commercial game and edits, never handing the files out on their
+    own. The private library's `mattwalkden/INDEX.md` lists the whole
+    pack: lance, sword and bow riders, armoured lance and axe knights on
+    foot, spear, sword and axe fighters, an archer, a thief and a wizard
+    (each in blue, green and red, most in three skin tones), plus a
+    tileset and battle UI pieces. Check it before buying another map
+    sprite.
 - **Not usable, so nobody rechecks:** SRPG Studio's bundled art and every
   edit of it (its terms allow it only in games made with SRPG Studio);
   RPG Maker stock-character lookalikes; Fire Emblem fan sprites (reworks

@@ -137,8 +137,16 @@ playing goes on the Act 1 playtest's checklist (1064).
   - **The map (ADR-0038):** the map scene's `UnitView`
     (`crates/ui/src/map_view/scene.rs` ~:86) gets `on_foot: bool`. The
     skins paint **nothing new** (0089 decides the glyph mark and the
-    combat picture; 0499 brings the mounted map sprites and may pick
-    the on-foot picture from this field).
+    combat picture), but for one thing 0499 left to this ticket: **the
+    sprite skin must pick the picture on foot**. 0499 made the mounted
+    classes' map sprites MattWalkden's riders and named the Tiny Tales
+    knight on foot for each of them in the tileset's `units.on_foot`
+    (`Tileset::on_foot_picture(&ClassId)`,
+    `crates/content/src/tileset.rs`); `paint_pictures`
+    (`crates/ui/src/map_view/sprite/units.rs`) uses it in place of
+    `unit_picture` for a unit whose `on_foot` is true (a named
+    character's own picture first, as `unit_picture` does), with a
+    test that reads the scene and the tileset.
   - The side panel shows the unit's Mov and Spd on foot (it reads the
     unit, so this is a test that it does).
   - The forecast's `!` (effective) goes away by itself for a rider on

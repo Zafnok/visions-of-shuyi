@@ -94,7 +94,10 @@ A unit **picture** is written one of two ways, and a file may mix them:
 - `(column, row)`: a cell of the tileset's own `image`, in `unit_px` steps
   from `units_origin_px`;
 - `(image: "units/fighter_male.png", frame: (1, 0))`: a frame of an image
-  file of its own, in `unit_px` steps from that image's top-left.
+  file of its own, in `unit_px` steps from that image's top-left. Add
+  `frame_px: (24, 24)` for a picture whose frames are another size than
+  `unit_px` (MattWalkden's riders, ticket 0499); it counts its frames, its
+  walking sheet's included, in those steps, and is drawn at that size.
 
 **A walking sheet.** Add `walk: true` to a picture with an image of its
 own, `(image: "units/fighter_male.png", frame: (1, 0), walk: true)`, to
@@ -126,7 +129,10 @@ on the glyph skin's 16×16 tiles, and only the units are pictures:
 ```
 
 - A unit's picture is its **character's**, else its **class's**, else the
-  **fallback**. The lead's goes by the gender the player picked first:
+  **fallback**.
+- `units` may also hold `on_foot: { "rider": (image: …, frame: …) }`: a
+  mounted class's picture for a rider **off the horse** (0083), by class.
+  Ticket 0334 makes the skin draw it; until then it is only checked. The lead's goes by the gender the player picked first:
   `characters` may name `lead_m` and `lead_f` as well as `lead`.
 - It is drawn at its own size, centred across its tile, its feet on top
   of the 2-pixel HP bar: a picture taller than a tile reaches into the
@@ -149,7 +155,8 @@ its name:
   fallback) must lie inside its image;
 - each side of `tile_px` and `unit_px` must be 8 to 64 px;
 - an image with `walk: true` must be big enough for 3 × 4 frames of
-  `unit_px`;
+  `unit_px` (or the picture's `frame_px`), and each side of a `frame_px`
+  must be 8 to 64 px;
 - `terrain` needs `tile_px` and `image`; `tile_px` without `terrain` is an
   error; a `(column, row)` picture needs `image`;
 - with `terrain`, **every terrain in `terrain.ron` must have a tile**
