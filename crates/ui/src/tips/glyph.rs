@@ -65,12 +65,11 @@ fn wrapped(lines: &[StyledText], room: usize, widths: &CellWidths) -> Vec<Styled
         if paragraph.iter().all(|l| l.width(widths) <= room) {
             rows.extend_from_slice(paragraph);
         } else {
+            // The lines one after another, a space after each: the wrap
+            // breaks at spaces and keeps none at a row's ends.
             let mut joined = StyledText::new();
-            for (j, line) in paragraph.iter().enumerate() {
-                if j > 0 {
-                    joined.push_plain(" ");
-                }
-                joined.append(line);
+            for line in paragraph {
+                joined.append(line).push_plain(" ");
             }
             rows.extend(wrap_styled(&joined, room, widths));
         }

@@ -104,6 +104,22 @@ fn the_theme_turns_on_bold_capital_caps_with_the_arrow_cluster() {
 }
 
 #[test]
+fn the_frame_measures_a_key_as_its_cap_and_the_arrows_as_their_picture() {
+    let mut c = ctx();
+    let mut text = StyledText::new();
+    text.push_key("f")
+        .push_plain(" pick · ")
+        .push_arrows("arrows");
+    let caps = c.key_caps().expect("on the PC");
+    let cap = 1 + usize::from(caps.extra_cells());
+    let arrows = usize::from(caps.arrows_cells().expect("the picture"));
+    assert_eq!(text.width(&frame_widths(&c)), cap + 8 + arrows);
+    // With no caps, the words' own cells.
+    c.game.key_caps = false;
+    assert_eq!(text.width(&frame_widths(&c)), text.width(c.widths()));
+}
+
+#[test]
 fn a_placeholder_fills_in_key_spans_and_the_arrow_keys_as_one() {
     let mut c = ctx();
     let filled = |c: &Ctx| crate::tips::fill_styled(c, "{Cursor} move · {Confirm} pick");
