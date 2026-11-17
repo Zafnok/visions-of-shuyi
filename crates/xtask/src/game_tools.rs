@@ -266,7 +266,7 @@ impl GameTools for Trpg {
         // Built once for the session, as the device's are: a session runs
         // once in a tool program.
         let atlas = Box::leak(Box::new(h.game().ctx().game.content.font.clone()));
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH).unwrap_or_default();
         let font = onebit::Font::new(atlas, bits)?;
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
         let shades = onebit::playdate_map()?;
@@ -538,7 +538,7 @@ fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String>
     };
     if start.playdate {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
-        let font = onebit::Font::new(&ctx.game.content.font, bits)?;
+        let font = onebit::Font::new(&ctx.game.content.font, &bits)?;
         let mut frame = Box::new([0; FRAME_BYTES]);
         // The pictures the Playdate's build makes (ticket 1040).
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
@@ -555,7 +555,7 @@ fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String>
 fn painted(ctx: &Ctx, buffer: &GlyphBuffer, scale: u32) -> Result<Image, String> {
     let painter = Painter::new(
         ctx.game.content.font.clone(),
-        trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
+        &trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
         &ctx.game.content.images,
         trpg_content::bundle::bytes,
         ctx.palette.get(UiColor::Black),

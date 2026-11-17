@@ -101,7 +101,7 @@ impl TerrainDef {
                 "file not found in asset bundle",
             )]
         })?;
-        Self::from_source(&display, source, palette)
+        Self::from_source(&display, &source, palette)
     }
 
     /// Parses and validates terrain `source`, attributing errors to `file`.

@@ -32,7 +32,7 @@ pub fn font() -> Result<onebit::Font<'static>, String> {
     })?;
     let atlas: &'static FontAtlasDef = Box::leak(Box::new(atlas));
     // check-text: not player text (a build problem for the log)
-    let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH)
+    let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH)
         .ok_or_else(|| alloc::format!("{ATLAS_1BIT_PATH} is not in the bundle"))?;
     Ok(onebit::Font::new(atlas, bits)?)
 }

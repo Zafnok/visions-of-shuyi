@@ -25,7 +25,7 @@ pub fn load() -> Result<Names, Vec<ContentError>> {
     let names = formats::load(NAMES_PATH)?;
     let display = bundle::display_path(NAMES_PATH);
     match bundle::test_part(NAMES_PATH) {
-        Some((file, part)) => with_part(names, &display, &file, part),
+        Some((file, part)) => with_part(names, &display, &file, &part),
         None => Ok(names),
     }
 }

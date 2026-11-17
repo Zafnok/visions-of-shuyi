@@ -159,7 +159,7 @@ impl<'a> Scripts<'a> {
 /// refuse the whole manifest. Tips have no test files.
 fn shipped_lessons() -> LessonTable {
     let source = trpg_content::bundle::file(LESSONS_PATH).unwrap_or_default();
-    lesson::from_source(LESSONS_PATH, source, lesson::Refs::default()).unwrap_or_default()
+    lesson::from_source(LESSONS_PATH, &source, lesson::Refs::default()).unwrap_or_default()
 }
 
 /// The scenes of the story's scripts, `<root>/assets/dialogue/*.dlg` with

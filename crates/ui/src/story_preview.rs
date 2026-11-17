@@ -454,7 +454,7 @@ impl Screen<Shuyi> for StoryPreview {
 ///
 /// The content's problems, or the palette's.
 pub fn ctx() -> Result<Ctx, String> {
-    let loaded = trpg_content::load_with_some_scripts::<&str>(&[]);
+    let loaded = trpg_content::load_with_some_scripts::<&str, &str>(&[]);
     let content = loaded.content.map_err(|e| e.to_string())?;
     let keys = crate::lang_keys::check_ui_text_keys(trpg_content::bundle::install());
     keys.map_err(|e| ContentErrors(e).to_string())?;
