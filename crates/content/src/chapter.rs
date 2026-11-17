@@ -205,7 +205,7 @@ pub fn load_new_game(
     let file = bundle::display_path(NEW_GAME_PATH);
     let source = bundle::file(NEW_GAME_PATH)
         .ok_or_else(|| vec![ContentError::new(&file, "file not found in asset bundle")])?;
-    new_game_from_source(&file, source, chapters, characters, items)
+    new_game_from_source(&file, &source, chapters, characters, items)
 }
 
 /// Parses and checks New Game `source` (errors attributed to `file`): the

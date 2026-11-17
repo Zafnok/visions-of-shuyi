@@ -7,6 +7,8 @@ use crate::prelude::*;
 
 pub use shuyi_assets::onebit::PatternMapDef;
 
+use alloc::borrow::Cow;
+
 use crate::bundle;
 use crate::error::ContentError;
 use crate::palette::PaletteDef;
@@ -19,7 +21,7 @@ pub const PLAYDATE_PALETTE_PATH: &str = "data/palettes/playdate.ron";
 pub const PLAYDATE_MAP_PATH: &str = "data/palettes/playdate@onebit.ron";
 
 /// The file at `path` in the asset bundle, with its name as shown.
-fn file(path: &str) -> Result<(String, &'static str), Vec<ContentError>> {
+fn file(path: &str) -> Result<(String, Cow<'static, str>), Vec<ContentError>> {
     let display = bundle::display_path(path);
     let source = bundle::file(path).ok_or_else(|| {
         vec![ContentError::new(
@@ -34,7 +36,7 @@ fn file(path: &str) -> Result<(String, &'static str), Vec<ContentError>> {
 /// drawn in one bit.
 pub fn load_playdate_map() -> Result<PatternMapDef, Vec<ContentError>> {
     let (display, source) = file(PLAYDATE_MAP_PATH)?;
-    PatternMapDef::from_source(&display, source)
+    PatternMapDef::from_source(&display, &source)
 }
 
 /// Loads the Playdate's palette. It must have every colour of `base` (the
@@ -43,7 +45,7 @@ pub fn load_playdate_map() -> Result<PatternMapDef, Vec<ContentError>> {
 pub fn load_playdate(base: &PaletteDef) -> Result<PaletteDef, Vec<ContentError>> {
     let (display, source) = file(PLAYDATE_PALETTE_PATH)?;
     let required: Vec<&str> = base.colors.keys().map(String::as_str).collect();
-    PaletteDef::from_source(&display, source, &required)
+    PaletteDef::from_source(&display, &source, &required)
 }
 
 #[cfg(test)]

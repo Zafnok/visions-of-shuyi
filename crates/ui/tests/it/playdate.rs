@@ -292,7 +292,7 @@ impl OneBit {
     }
 
     fn check(&mut self, h: &Harness) {
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH);
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH);
         let Some(font) = bits.and_then(|bits| onebit::Font::new(&self.atlas, bits).ok()) else {
             panic!("no one-bit font");
         };

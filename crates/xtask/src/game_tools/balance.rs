@@ -47,7 +47,7 @@ pub fn plan(
     let path = format!("{BATTLES_DIR}/{id}.ron");
     let source = bundle::file(&path).ok_or_else(|| format!("no battle \"{id}\""))?;
     let shown = bundle::display_path(&path);
-    let text = BattleText::parse(&shown, id, source).map_err(|e| e.to_string())?;
+    let text = BattleText::parse(&shown, id, &source).map_err(|e| e.to_string())?;
     let battle = TunedBattle::new(text, content);
 
     let knobs = knobs(&battle)?;

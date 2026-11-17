@@ -26,7 +26,7 @@ fn as_authored_it_is_the_file_itself() {
     assert_eq!(text().text(), FILE);
     for path in crate::bundle::files_in(super::super::BATTLES_DIR) {
         let source = crate::bundle::file(path).unwrap_or_default();
-        let parsed = BattleText::parse(path, "", source).unwrap_or_else(|e| panic!("{e}"));
+        let parsed = BattleText::parse(path, "", &source).unwrap_or_else(|e| panic!("{e}"));
         assert_eq!(parsed.text(), source, "{path}");
         assert!(!parsed.entries().is_empty(), "{path}");
     }
