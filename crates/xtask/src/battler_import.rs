@@ -156,6 +156,30 @@ const fn shironejiya(id: &'static str, source: &'static str) -> Picture {
     }
 }
 
+/// A Pixel Flag picture: faces left, on a clear background, at 1.5×.
+const fn pixel_flag(id: &'static str, source: &'static str) -> Picture {
+    Picture {
+        id,
+        source,
+        faces: Faces::Left,
+        scale: (3, 2),
+        keyed: false,
+        tints: &[],
+    }
+}
+
+/// Pixel Flag's Paladin, the picture of every mounted class (ticket 0040).
+const PALADIN: &str = "pixel-flag/64x64/24.png";
+
+/// The Paladin's gold trim, teal tabard and saddle cloth in the enemy's
+/// red, as the Church Knight's ([`GOLD_TO_RED`]). Its steel (209° and up,
+/// greyer) stays; its plume and pennant are red already.
+const PALADIN_TO_RED: [Tint; 2] = [GOLD_TO_RED[0], tint((190.0, 205.0), 0.5, 2.0, 1.0, 1.3)];
+/// Tamsin's: the teal cloth in a clear red, her own colour, with the gold
+/// trim kept so she isn't the enemy's rider (Nick, ticket 0446: "a bit
+/// more red", then the reddest of three).
+const SERGEANT: [Tint; 1] = [tint((190.0, 205.0), 0.5, 4.0, 1.1, 1.7)];
+
 const ARCHER: &str = "tiny-tales/characters/heroes/Archer/battler.png";
 
 /// The Church Knight: the Guard class and the retainer.
@@ -169,10 +193,8 @@ const fn church_knight(id: &'static str) -> Picture {
 /// Every class and named character of the Quick Battle and Chapter 1 with
 /// a bought picture (Nick's choices, ticket 0413). A class's picture is
 /// what the enemy's soldiers of that class look like; a named
-/// character of the player's who shares it has their own row. The Rider
-/// has none yet (Pixel Flag's Paladin isn't bought): it keeps the public
-/// placeholder.
-pub const BATTLERS: [Picture; 14] = [
+/// character of the player's who shares it has their own row.
+pub const BATTLERS: [Picture; 16] = [
     // The lead, by gender; the Exile class as the male lead.
     tiny(
         "exile",
@@ -227,6 +249,9 @@ pub const BATTLERS: [Picture; 14] = [
     shironejiya("brigand", "shironejiya/monster_s/m_s_bandanna05_b.png"),
     shironejiya("raider", "shironejiya/monster_s/m_s_fighter04_a.png"),
     shironejiya("red_captain", "shironejiya/monster_s/m_s_bandanna05.png"),
+    // The Rider is the Paladin in the enemy's red; Tamsin has her own.
+    tinted(pixel_flag("rider", PALADIN), &PALADIN_TO_RED),
+    tinted(pixel_flag("sergeant", PALADIN), &SERGEANT),
 ];
 
 /// Each backdrop's file name in `game/battlebacks/` and the bought

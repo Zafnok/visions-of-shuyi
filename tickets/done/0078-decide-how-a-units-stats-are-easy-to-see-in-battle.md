@@ -5,10 +5,10 @@ type: design-decision
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-16
 ---
 
 # 0078 — Decide: how a unit's stats are easy to see in battle
@@ -79,10 +79,11 @@ Playdate (its panel is small): the same pick, or the flip key only?
 
 ## Acceptance criteria
 
-- [ ] Nick's answer is recorded verbatim in `look-and-feel.md`, and the
+- [x] Nick's answer is recorded verbatim in `look-and-feel.md`, and the
       lines that disagreed with the game are fixed.
-- [ ] 0484's text is updated with what to build.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] 0484's text is updated with what to build.
+- [x] All gates in the `run-gates` skill pass (the ones that read docs
+      and tickets locally; the code is unchanged, CI runs the rest).
 
 ## Tests required
 
@@ -90,4 +91,37 @@ None (a decision); `cargo xtask ticket-lint`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Decided 2026-11-16, in two rounds**, recorded in `look-and-feel.md`,
+*Side panel*:
+
+- **E: stats and combat numbers on the side panel.** Under today's unit
+  block: Str Mag Dex Spd Def Res Mov, the equipped weapon with its uses,
+  then Atk Hit Crit Avo AS. Same panel in both looks.
+- **Enemies the same** (Nick: if Fire Emblem shows an enemy's full stats,
+  keep it the same; the GBA games do).
+- **Stats with gear** (Nick: "prob with gear"): armor and accessories
+  change only at Preparations. Unit info showed them without gear (Def 4
+  where fights use 6); 0484 now fixes unit info too, so the two agree.
+- **The Playdate doesn't change** (Nick: "No flip button"): name and HP
+  in the corner; full numbers via Unit info in the map menu.
+
+**Mockups:** throwaway edits to the panel view and the glyph and
+Playdate skins, picked by an environment variable, rendered with
+`cargo shuyi frame-png` (private art) on Chapter 1's start, hovering
+Ellery and a Brigand, both looks; every number was checked against unit
+info and the weapon's own numbers. Reverted; the pictures show bought
+art and weren't committed. Real-game claims kept to the GBA Fire
+Emblems; Three Houses, Engage and Triangle Strategy couldn't be
+confirmed, so they weren't cited, and no game was claimed for the flip
+key or the hover window.
+
+**The agent's starting rules** (Nick can veto; on 1064's checklist):
+labels dim and values bright, mixed case; Hit shown above 100 and AS
+below 0 as the formulas give them; `--` for the weapon, Atk, Hit and
+Crit with nothing in hand; only timed effects mark a stat; skill
+bonuses count only when they hold in any fight (timed effects, the
+weapon's passive, an ally's aura where the unit stands).
+
+**0484** is updated: what to build, a pure core function for the
+one-sided numbers (so `ui` copies no formula), unit info's stats with
+gear, the Playdate out. No new tickets.

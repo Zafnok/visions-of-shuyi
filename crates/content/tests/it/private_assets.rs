@@ -183,7 +183,8 @@ fn every_bought_file_has_a_credit() {
         art,
         [
             "Tiny Tales",
-            "Shironejiya battle pictures (the materials in this game may not be reused)"
+            "Shironejiya battle pictures (the materials in this game may not be reused)",
+            "Classes and Mobs pixel-art TRPG pieces"
         ]
     );
 }
