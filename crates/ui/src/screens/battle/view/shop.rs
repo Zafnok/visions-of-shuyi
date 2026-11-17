@@ -5,6 +5,7 @@
 
 use crate::prelude::*;
 use crate::widgets::AskView;
+use shuyi_ui::text::StyledText;
 
 /// The whole shop screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,8 +30,8 @@ pub struct ShopScreenView {
     pub selling: Option<SellConfirmView>,
     /// The question before selling a special weapon, while it is asked.
     pub special: Option<AskView<bool>>,
-    /// The help line: what the keys do.
-    pub help: String,
+    /// The help line: what the keys do, each key in a key span.
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
 }
@@ -77,7 +78,7 @@ impl ShopScreenView {
             texts.push(ask.text.clone());
             texts.extend(ask.answers.iter().map(|a| a.label.clone()));
         }
-        texts.push(self.help.clone());
+        texts.push(self.help.plain());
         texts
     }
 }

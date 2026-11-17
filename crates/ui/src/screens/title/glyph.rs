@@ -317,7 +317,8 @@ fn paint_note(ctx: &Ctx, note: &NoteView, menu: Rect, solid: f32, buf: &mut Glyp
         .map(|f| (f, NOTE_FACE_CELLS, 1.0 - solid));
     let x = paint_frame_sized(ctx, rect, &note.title, face, buf);
     if let Some((heading, lines)) = rows.split_first() {
-        paint_text(ctx, (x, rect.y + 1), heading, lines, buf);
+        let lines: Vec<_> = lines.iter().map(|l| l.as_str().into()).collect();
+        paint_text(ctx, (x, rect.y + 1), heading, &lines, buf);
     }
     buf.dim(rect, solid);
 }

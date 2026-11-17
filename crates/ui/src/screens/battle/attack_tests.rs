@@ -51,7 +51,7 @@ fn view(h: &Harness) -> BattleView {
 
 /// The help line.
 fn help(h: &Harness) -> String {
-    view(h).help
+    view(h).help.plain()
 }
 
 /// The message line; empty with none.

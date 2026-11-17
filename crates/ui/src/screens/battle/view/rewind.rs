@@ -3,6 +3,7 @@
 //! by [`RewindScreen::list_view`](super::super::rewind::RewindScreen::list_view).
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 
 use crate::map_view::MapScene;
 use crate::tips::LessonView;
@@ -19,8 +20,8 @@ pub struct RewindScreenView {
     pub list: RewindView,
     /// The lesson about rewinding, while one is on screen.
     pub lesson: Option<LessonView>,
-    /// The help line: what the keys do now.
-    pub help: String,
+    /// The help line: what the keys do now, each key in a key span.
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
 }

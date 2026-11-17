@@ -66,7 +66,7 @@ accccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
-ghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
+ghhihhhhiiiiiiiiiiiihiiiiiiiihiiiiiggggggggggggggggggggggggggggggggggggggggggggggggggggggggiiiiiiiig
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text_highlight bg:panel_bg
@@ -75,4 +75,5 @@ d = fg:text_dim bg:panel_bg
 e = fg:panel_bg bg:panel_border_focus
 f = fg:panel_border_focus bg:panel_bg
 g = fg:text bg:black
-h = fg:text_dim bg:black
+h = fg:text bg:key_bg
+i = fg:text_dim bg:black

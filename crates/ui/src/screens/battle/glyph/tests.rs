@@ -517,12 +517,12 @@ fn the_bar_has_the_message_left_the_toggles_right_and_the_help_under() {
     let c = ctx();
     let message = |kind| {
         painted(&quick(), |v| {
-            v.status = "zoom · danger".to_owned();
+            v.status = "zoom · danger".into();
             v.message = Some(MessageView {
                 text: "Said".to_owned(),
                 kind,
             });
-            v.help = "the help".to_owned();
+            v.help = "the help".into();
             v.debug_hint = Some("F2 debug".to_owned());
         })
     };

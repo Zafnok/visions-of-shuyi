@@ -902,6 +902,10 @@ fn the_notices_name_the_games_works_and_license_texts() {
     }
 }
 
+/// Terminus's bold face, the atlas's bold glyphs for key caps (ticket
+/// 0254), relative to the repo root.
+const BOLD: &str = "assets-src/fonts/ter-u16b.bdf";
+
 /// The font sources the committed atlas is built from, relative to the
 /// repo root: Terminus, then our own extra glyphs (the controller
 /// buttons, the building tiles).
@@ -998,12 +1002,13 @@ fn committed_atlas_is_up_to_date() {
     options.fonts = fonts.to_vec();
     options.out_dir = dir.clone();
     options.chars = chars;
+    options.bold = Some(root.join(BOLD));
     let msg = shuyi_cli::font_atlas::run(&options).unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
-    let rerun = "rerun `cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf \
-                 assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf \
-                 assets/fonts`";
+    let rerun = "rerun `cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf \
+                 assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf \
+                 assets-src/fonts/tile-shapes.bdf assets/fonts`";
     assert_eq!(
         read(&dir.join("atlas.ron")),
         read(&root.join("assets/fonts/atlas.ron")),
@@ -1033,8 +1038,9 @@ fn the_one_bit_atlas_matches_the_png() {
     let bits = fs::read(fonts.join(ONE_BIT_FILE)).unwrap();
     let to_usize = |v: u32| usize::try_from(v).unwrap();
     let rows = to_usize(def.cell_h);
-    assert_eq!(bits.len(), def.glyphs.len() * rows);
-    for (&c, &index) in &def.glyphs {
+    // The regular glyphs and the bold ones (key caps, ticket 0254).
+    assert_eq!(bits.len(), (def.glyphs.len() + def.bold.len()) * rows);
+    for (&c, &index) in def.glyphs.iter().chain(&def.bold) {
         let cell = def.cell_rect(index);
         for row in 0..cell.h {
             let byte = bits[to_usize(index) * rows + to_usize(row)];

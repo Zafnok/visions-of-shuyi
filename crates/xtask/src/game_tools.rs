@@ -505,8 +505,10 @@ fn harness(start: &Start) -> Result<Harness, String> {
         // `--pad` presses the Playdate's buttons, and text names them.
         h.use_pad(PadKind::Playdate);
     }
-    // And as `app` shows it: with the idle motion on.
+    // And as `app` shows it: with the idle motion on, and the keys in
+    // hints as key caps.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
+    h.with_key_caps();
     if start.tips {
         h.with_tips().with_lessons();
     }

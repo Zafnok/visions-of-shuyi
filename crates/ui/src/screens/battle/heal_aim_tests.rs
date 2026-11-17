@@ -56,7 +56,11 @@ fn archer_max(state: &BattleState) -> StatValue {
 
 /// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    h.battle().expect("a battle").view(h.game().ctx()).help
+    h.battle()
+        .expect("a battle")
+        .view(h.game().ctx())
+        .help
+        .plain()
 }
 
 /// The lines of the open spell list and whether each can be picked.
