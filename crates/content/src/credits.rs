@@ -138,7 +138,10 @@ mod tests {
             .filter(|c| !c.private.is_empty())
             .collect();
         let ids: Vec<&str> = bought.iter().map(|c| c.id.as_str()).collect();
-        assert_eq!(ids, ["tiny_tales", "shironejiya", "pixel_flag"]);
+        assert_eq!(
+            ids,
+            ["tiny_tales", "shironejiya", "pixel_flag", "mattwalkden"]
+        );
         assert!(bought.iter().all(|c| c.group == CreditGroup::Art));
         assert!(bought[0].covers("units/witch.png"));
         // Each combat picture is its own artist's (0413).
@@ -153,6 +156,17 @@ mod tests {
         );
         assert!(
             !bought[0].covers("battlers/rider.png") && !bought[2].covers("battlers/brigand.png")
+        );
+        // The mounted map sprites are MattWalkden's (0499), the knight on
+        // foot Tiny Tales'.
+        for rider in ["units/lance_cavalier.png", "units/mounted_archer.png"] {
+            assert!(
+                bought[3].covers(rider) && !bought[0].covers(rider),
+                "{rider}"
+            );
+        }
+        assert!(
+            bought[0].covers("units/knight_m1.png") && !bought[3].covers("units/knight_m1.png")
         );
         #[cfg(not(feature = "private-assets"))]
         assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
