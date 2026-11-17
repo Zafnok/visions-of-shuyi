@@ -651,3 +651,14 @@ fn the_export_tip_is_pushed_on_the_first_update() {
     let mut again = SlotPickerScreen::load(&c);
     assert_eq!(format!("{:?}", again.update(&mut c, &frame)), "None");
 }
+
+/// Ticket 1282: an army's size is one plural message, its English as
+/// before for 0, 1, 2 and 5 units.
+#[test]
+fn the_army_message_reads_as_before_for_each_count() {
+    let c = ctx();
+    assert_eq!(army_text(&c, 0), "0 units");
+    assert_eq!(army_text(&c, 1), "1 unit");
+    assert_eq!(army_text(&c, 2), "2 units");
+    assert_eq!(army_text(&c, 5), "5 units");
+}

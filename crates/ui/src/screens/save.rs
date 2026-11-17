@@ -534,12 +534,7 @@ pub fn mode_name(ctx: &Ctx, mode: GameMode) -> &str {
 
 /// An army of `n` as text: `1 unit`, `3 units`.
 pub fn army_text(ctx: &Ctx, n: usize) -> String {
-    let key = if n == 1 {
-        "save.army.one"
-    } else {
-        "save.army.many"
-    };
-    ctx.text_with(key, &[("count", &n)])
+    ctx.text_with("save.army", &[("count", &n)])
 }
 
 impl Screen<Shuyi> for SlotPickerScreen {
