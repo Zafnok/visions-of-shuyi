@@ -659,8 +659,7 @@ fn the_objective_banner_snapshot() {
 
 /// A banner wider or taller than the screen keeps inside its window: a
 /// line too wide is cut (with `…`) two cells short of the frame, and the
-/// lines stop
-/// above its bottom border.
+/// lines stop above its bottom border.
 #[test]
 fn an_objective_banner_too_big_for_the_screen_stays_in_its_window() {
     let s = quick();
