@@ -30,6 +30,8 @@ its tests (641 lines), plus a workflow loop. This ticket removes those
 copies, as the original 1180 required
 ([ADR-0095](../../docs/adr/0095-playtest-personas-plan-their-turn-and-score-what-a-player-sees.md)).
 
+**The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/xtask/src/playtest.rs`.
+
 ## Nick input
 
 None. Reports and seeded results are verified against the existing

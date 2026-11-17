@@ -83,7 +83,7 @@ mode*); the `docs/design/README.md` row; the implementation tickets.
 4. Record each answer verbatim and as a rule.
 5. Write the implementation tickets (`write-ticket`): runs in core (state,
    drafts, saved runs in their own slots), the title menu entry and screens,
-   and generating each fight with 0510's tool at play time. Say in each
+   and generating each fight at play time with 1277's floor generator (0510's tool is authoring-time only). Say in each
    which open tickets they need (0509, 0510, 0047's tickets).
 
 ## Acceptance criteria
