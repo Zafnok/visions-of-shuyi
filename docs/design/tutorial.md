@@ -188,6 +188,16 @@ for Nick to veto.
   fliers, for both sides, and that the forecast's `!` means it applies. At
   every level the forecast's note (`Spear ×2 vs Mounted`) and the unit
   info screen's weapon ranks say the same. *Claude's starting rule.*
+- **Swapping weapons** (0463; Nick, playtest round 3: "swapping weapons on
+  forecast menu feels quite hidden as a feature [...] the guide should
+  probably mention it"; he picked a tip over a line in the Attacking
+  lesson), at Full, the first time a forecast opens where left / right
+  swap the weapon (the unit has more than one weapon, or a weapon and a
+  spell, to attack with there). She says the unit carries more than one
+  weapon and each can be tried right in the forecast, the numbers changing
+  to match; the instructions name the keys (`Swap weapon: {CursorLeft}
+  {CursorRight}`). The forecast itself shows it at every level
+  (`combat-arts.md`, *Showing that left / right swap the weapon*).
 - **A tip or a lesson:** one fact with nothing to tick off is a tip; a
   lesson is for something the player does, step by step. *Claude's
   starting rule* (0483).

@@ -3,20 +3,20 @@ source: crates/ui/src/screens/battle/art_tests.rs
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔═════════ Forecast ═════════╗
-                                                                      ║ Guard Break (20 → 16)      ║
+                                                                      ║ Guard Break                ║
                                                                       ║ Test Lord     Brigand      ║
-                                                                      ║ Iron Sword    Iron Axe     ║
-                                                                      ║ 20/20         20/20        ║
-                                                                      ║ HP 19 █████   HP 20 █▒▒▒▒  ║
+                                                                      ║ Iron Sword    Iron Axe 20  ║
+                                                                      ║ 20 → 16                    ║
+                                                                      ║ HP 19 → 19    HP 20 → 3    ║
+                                                                      ║ ████████████  ██▒▒▒▒▒▒▒▒▒▒ ║
                                                                       ║ Hit  100      Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
-                                                                      ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  9 dmg   →  2              ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ 17 ×2     Total            ║
-                    ..≈≈≈≈..··..............╦╦..                      ║                            ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  1   no counter ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  9 dmg   →  2              ║
+                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ ────────────────────────── ║
+                    ..≈≈≈≈..··..............╦╦..                      ║ 17 ×2     Total            ║
                     ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
                     ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
                     ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
@@ -31,25 +31,25 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ╚════════════════════════════╝
+                                                                      ╚════ Left/Right weapon ═════╝
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  Left/Right swap · Up/Down target · f attack · d back                                      F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccccccccccccccccddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccccccddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggggddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiiiiddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddgdccddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhhhddiiiiiiiiiiiidb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
+aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
 aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyzzvvyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammmmqqxxxxllllllllyyzzzzyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -64,7 +64,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbcccccccccccccccccccbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBa
 aBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBa
 --- legend ---
@@ -113,3 +113,13 @@ over  287,221 3x1  cursor
 over  287,219 1x3  cursor
 over  301,221 3x1  cursor
 over  303,219 1x3  cursor
+over  570,53 1x1  text_highlight
+over  572,53 1x1  text_highlight
+over  569,54 2x1  text_highlight
+over  572,54 2x1  text_highlight
+over  568,55 3x1  text_highlight
+over  572,55 3x1  text_highlight
+over  569,56 2x1  text_highlight
+over  572,56 2x1  text_highlight
+over  570,57 1x1  text_highlight
+over  572,57 1x1  text_highlight

@@ -424,6 +424,82 @@ impl CombatantInput<'_> {
         // A debuff stops at 0, and never lowers an avoid already below it.
         (avoid - self.mods.avoid_debuff).max(avoid.min(0))
     }
+
+    /// The weapon's might with the skill bonus, halved when broken (`None`
+    /// without a weapon).
+    fn might(&self, rules: &CombatRules) -> Option<StatValue> {
+        let weapon = self.weapon.as_ref()?;
+        let might = weapon.might + self.mods.might;
+        Some(if weapon.broken {
+            might / rules.broken_might_divisor
+        } else {
+            might
+        })
+    }
+
+    /// The stat that powers its strikes with `weapon`: Str, or Mag for a
+    /// magic weapon or spell, unless a skill says otherwise.
+    fn power_stat(&self, weapon: &WeaponStats) -> StatValue {
+        let power = match weapon.damage_type {
+            DamageType::Physical => PowerStat::Str,
+            DamageType::Magical => PowerStat::Mag,
+        };
+        match self.mods.power.unwrap_or(power) {
+            PowerStat::Str => self.stats.str,
+            PowerStat::Mag => self.stats.mag,
+            PowerStat::Higher => self.stats.str.max(self.stats.mag),
+        }
+    }
+
+    /// Its own hit, before the target's avoid counts.
+    fn own_hit(&self, rules: &CombatRules) -> Option<StatValue> {
+        let weapon = self.weapon.as_ref()?;
+        let broken_penalty = if weapon.broken {
+            rules.broken_hit_penalty
+        } else {
+            0
+        };
+        Some(weapon.hit - broken_penalty + self.stats.dex * rules.hit_per_dex + self.mods.hit)
+    }
+
+    /// Its own crit, before the target's Dex counts (and before a doubling).
+    fn own_crit(&self, rules: &CombatRules) -> Option<StatValue> {
+        let weapon = self.weapon.as_ref()?;
+        Some(weapon.crit + self.stats.dex / rules.crit_dex_divisor + self.mods.crit)
+    }
+
+    /// Its side of any fight, standing where it stands, before a target
+    /// counts (ticket 0484, `look-and-feel.md` *Side panel*).
+    pub fn one_sided(&self, rules: &CombatRules) -> OneSided {
+        OneSided {
+            atk: self
+                .weapon
+                .as_ref()
+                .zip(self.might(rules))
+                .map(|(w, might)| self.power_stat(w) + might),
+            hit: self.own_hit(rules),
+            crit: self.own_crit(rules),
+            avoid: self.avoid(rules, false),
+            attack_speed: self.attack_speed(rules),
+        }
+    }
+}
+
+/// One unit's combat numbers before a target counts: what the side panel
+/// shows. A fight's forecast against a target with no fight-only bonus is
+/// `hit - the target's avoid` and `crit - the target's Dex / 4`, clamped.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct OneSided {
+    /// The power stat plus the weapon's might (`None` without a weapon).
+    pub atk: Option<StatValue>,
+    /// The weapon's hit plus Dex × 2 (`None` without a weapon).
+    pub hit: Option<StatValue>,
+    /// The weapon's crit plus Dex / 2 (`None` without a weapon).
+    pub crit: Option<StatValue>,
+    /// Avoid on the tile it stands on.
+    pub avoid: StatValue,
+    /// Attack speed.
+    pub attack_speed: StatValue,
 }
 
 /// One side's numbers in the forecast.
@@ -602,21 +678,12 @@ fn side(
     let weak_mult = (affinity == Some(Affinity::Weak)).then_some(rules.weak_multiplier);
     let eff_mult = tag_mult.max(weak_mult).unwrap_or(1).max(1);
 
-    let might = weapon.might + a.mods.might;
-    let might = if weapon.broken {
-        might / rules.broken_might_divisor
-    } else {
-        might
+    let might = a.might(rules)?;
+    let mitigation = match weapon.damage_type {
+        DamageType::Physical => MitigationStat::Def,
+        DamageType::Magical => MitigationStat::Res,
     };
-    let (power, mitigation) = match weapon.damage_type {
-        DamageType::Physical => (PowerStat::Str, MitigationStat::Def),
-        DamageType::Magical => (PowerStat::Mag, MitigationStat::Res),
-    };
-    let power_stat = match a.mods.power.unwrap_or(power) {
-        PowerStat::Str => a.stats.str,
-        PowerStat::Mag => a.stats.mag,
-        PowerStat::Higher => a.stats.str.max(a.stats.mag),
-    };
+    let power_stat = a.power_stat(weapon);
     let mitigation_stat = match a.mods.mitigation.unwrap_or(mitigation) {
         MitigationStat::Def => b.stats.def,
         MitigationStat::Res => b.stats.res,
@@ -638,23 +705,12 @@ fn side(
         damage
     };
 
-    let broken_penalty = if weapon.broken {
-        rules.broken_hit_penalty
-    } else {
-        0
-    };
-    let hit = weapon.hit - broken_penalty
-        + a.stats.dex * rules.hit_per_dex
-        + a.mods.hit
-        + b.mods.hit_taken
-        - b.avoid(rules, a.mods.ignore_terrain);
+    let hit = a.own_hit(rules)? + b.mods.hit_taken - b.avoid(rules, a.mods.ignore_terrain);
     let crit = if affinity == Some(Affinity::Absorb) {
         0
     } else {
-        let crit = weapon.crit + a.stats.dex / rules.crit_dex_divisor
-            - b.stats.dex / rules.crit_avoid_dex_divisor
-            + a.mods.crit
-            + b.mods.crit_taken;
+        let crit =
+            a.own_crit(rules)? - b.stats.dex / rules.crit_avoid_dex_divisor + b.mods.crit_taken;
         if a.mods.double_crit { crit * 2 } else { crit }
     };
     let strikes = if a.mods.single_strike {

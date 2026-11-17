@@ -390,6 +390,7 @@ mod tests {
     fn feature_items() -> ItemTable {
         let mut items = ItemTable::default();
         let weapon = trpg_core::WeaponDef {
+            short_name: None,
             name: "Sword".into(),
             kind: trpg_core::WeaponKind::Sword,
             rank: trpg_core::WeaponRank::E,

@@ -12,15 +12,15 @@ expression: "tip(Some(PadKind::Nintendo)).snapshot()"
    ║                                                             ║    │ HP 19/19   ██████████      │
    ║ Move the cursor: D-pad/L-stick. Pick up a unit: A           ║    │ Player                     │
    ║ Next unit to act: R. A unit's details: X                    ║    │                            │
-   ║                                                             ║    │                            │
-   ║ A close                                                     ║    │                            │
-   ╚═════════════════════════════════════════════════════════════╝    │                            │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │                            │
+   ║                                                             ║    │ Str   6     Mag   1        │
+   ║ A close                                                     ║    │ Dex   7     Spd   7        │
+   ╚═════════════════════════════════════════════════════════════╝    │ Def   6     Res   5        │
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ Mov   5                    │
                     ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │                            │
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │                            │
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │                            │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │                            │
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │ Iron Sword        20/20    │
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ Atk  11     Hit 104        │
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ Crit  3     Avo  14        │
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    5                    │
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
@@ -45,15 +45,15 @@ aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddd
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddffffffffffddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdggggggdddddddddddddddddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdgggggggdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabdgggggggdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdgggddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabdggggddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabdggdddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -98,14 +98,14 @@ over  289,222 14x2  hp_high
 over  273,254 14x2  hp_high
 over  289,302 14x2  hp_high
 over  209,286 14x2  hp_high
-over  207,256 3x1  #7b7152
-over  207,256 1x3  #7b7152
-over  221,256 3x1  #7b7152
-over  223,256 1x3  #7b7152
-over  207,269 3x1  #7b7152
-over  207,267 1x3  #7b7152
-over  221,269 3x1  #7b7152
-over  223,267 1x3  #7b7152
+over  207,256 3x1  #807555
+over  207,256 1x3  #807555
+over  221,256 3x1  #807555
+over  223,256 1x3  #807555
+over  207,269 3x1  #807555
+over  207,267 1x3  #807555
+over  221,269 3x1  #807555
+over  223,267 1x3  #807555
 over  268,249 5x3  black
 over  264,250 6x3  black
 over  260,251 6x3  black

@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0478"]
 nick_input: decision
-completed:
+completed: 2026-11-16
 ---
 
 # 0479 — Who holds an item, at a glance, on the Loadouts swap rows
@@ -92,11 +92,11 @@ only what the game really does.
 
 ## Acceptance criteria
 
-- [ ] Nick's pick is recorded in `weapons-and-items.md`.
-- [ ] Each swap row in the view names its holder (test).
-- [ ] The picked look is painted on the swap rows, glyph and picture
+- [x] Nick's pick is recorded in `weapons-and-items.md`.
+- [x] Each swap row in the view names its holder (test).
+- [x] The picked look is painted on the swap rows, glyph and picture
       looks (`frame-png` pictures in the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -105,4 +105,46 @@ only what the game really does.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick's pick** (2026-11-16, on `frame-png` pictures of the knight's
+armor swap list, four holders, with the bought art): A, the dialogue
+face, "but I think it probably needs to be scaled smaller". Of half size,
+three quarters and a crop of the head at full size, he took three
+quarters ("looks best"), and asked for "arrows for scrolling if more
+characters live off screen". Recorded in `weapons-and-items.md`
+(*Loadout (per unit)*) and the portrait list of `look-and-feel.md`.
+
+**Done:**
+- `ItemRowView.holder: Option<HolderView>` on each swap row: the
+  character, its portrait's id (the lead's by gender) when the game has
+  one, and its map letters. The stock's own rows have none.
+- The glyph skin paints a swap row with a face three rows tall: the
+  neutral face as one sprite under the glyphs, 48×48 (a 64×64 face at
+  three quarters; any other size fitted to 48 keeping its shape), the
+  item on the middle row. A holder without a face (the build without the
+  bought art, or a unit with no portrait) gets its map letters in the
+  player's colour on a one-row row.
+- The stock list scrolls by its rows' heights and shows `▲` / `▼` at
+  its right edge while rows are hidden above or below (the credits'
+  marks). Only this list: the other Preparations lists are unchanged.
+- 1046 (Playdate Preparations, not done) gets a line: the Playdate shows
+  the holder by its own rule; the `from Test Scout` text is enough.
+
+**Deviations:**
+- The ticket's "glyph stand-in when sprites are off": Preparations has
+  no picture skin and the map look setting is the battle map's, so the
+  stand-in is chosen by whether there is a face to draw (the public
+  build's units have none but the test lord and knight), not by that
+  setting, as the dialogue log's faces are.
+- Scaling to 48×48 is not a whole scale; `draw_portrait_in` only does
+  whole scales, so the skin adds the sprite itself (a few lines).
+
+**Starting rules** (the agent's, for the Act 1 playtest, 1064):
+- The face is the portrait's neutral expression.
+- The row keeps `from Test Lord` beside the face, as in the pictures
+  Nick picked from.
+
+Engine friction: estimate 90, measured 141 (1.6×), under 2×; signals:
+workaround no · third copy no · budget no.
+PR size: estimate 400, measured 387 before these notes.
+
+Follow-up tickets: none.

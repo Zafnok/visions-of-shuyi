@@ -226,7 +226,17 @@ pub fn weapon_durability(
     unit: UnitId,
     slot: usize,
 ) -> Option<(String, u32, u32)> {
-    let copy = state.unit(unit)?.loadout.weapon(slot)?;
+    weapon_durability_of(state, words, state.unit(unit)?, slot)
+}
+
+/// [`weapon_durability`] of `unit` as given, on the map or not.
+pub fn weapon_durability_of(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: &Unit,
+    slot: usize,
+) -> Option<(String, u32, u32)> {
+    let copy = unit.loadout.weapon(slot)?;
     let def = state.items().weapon(&copy.def)?;
     let name = words.item(&copy.def, state.items()).to_owned();
     Some((name, copy.durability_left, def.durability))
@@ -239,8 +249,18 @@ pub fn spell_uses(
     unit: UnitId,
     spell: &SpellId,
 ) -> Option<(String, u32, u32)> {
+    spell_uses_of(state, words, state.unit(unit)?, spell)
+}
+
+/// [`spell_uses`] of `unit` as given, on the map or not.
+pub fn spell_uses_of(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: &Unit,
+    spell: &SpellId,
+) -> Option<(String, u32, u32)> {
     let def = state.spells().get(spell)?;
-    let left = state.unit(unit)?.spells.uses_left(spell);
+    let left = unit.spells.uses_left(spell);
     Some((
         words.spell(def).to_owned(),
         u32::from(left),

@@ -422,3 +422,20 @@ fn houses_survive_a_save() {
     assert!(!plain.contains("village"), "{plain}");
     assert!(!plain.contains("raider"), "{plain}");
 }
+
+/// Ticket 0481: the rewards a win can give, one per house past the
+/// minimum, as far as the rewards go.
+#[test]
+fn the_rewards_on_offer_are_capped_by_the_houses_past_the_minimum() {
+    let on_offer = |minimum, rewards: usize| {
+        let s = village(villagers(), goal(minimum, vec![Loot::Gold(10); rewards]));
+        s.village().map(Village::rewards_on_offer)
+    };
+    assert_eq!(on_offer(1, 0), Some(0));
+    assert_eq!(on_offer(1, 1), Some(1));
+    assert_eq!(on_offer(1, 2), Some(2));
+    // Three rewards, two houses past the minimum.
+    assert_eq!(on_offer(1, 3), Some(2));
+    // Every house needed: none past it.
+    assert_eq!(on_offer(3, 2), Some(0));
+}

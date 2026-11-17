@@ -27,6 +27,8 @@ accept arbitrary plain data. Screen `campaign()`/`view()` methods hold
 this game's meaning. This needs no new engine operation or game concepts
 in the engine (ADR-0063, ADR-0054).
 
+**The hook chain** (2026-11-16, either order): if 1275 (the forge) lands first, the town-shop scene data includes the Forge tab's rows and its `note`. If 1281 lands first, the world-map scene includes the delve mark, and after 1279 the hunt's and the rival column's marks.
+
 ## Nick input
 
 None. Tests inspect scene/state data. No new UI or design decision, and

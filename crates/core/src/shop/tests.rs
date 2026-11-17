@@ -15,6 +15,7 @@ use crate::weapon::{WeaponKind, WeaponRank};
 
 fn weapon(price: u32, durability: u32) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
+        short_name: None,
         name: "w".into(),
         kind: WeaponKind::Sword,
         rank: WeaponRank::E,

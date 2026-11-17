@@ -319,23 +319,14 @@ fn evacuating_a_house_saves_it() {
     let (state, _) = BattleState::new(setup);
     let id = state.units().iter().find(|u| u.is_lord).unwrap().id;
     let mut s = menu_open(&mut c, state);
-    let line = |s: &Stacked| super::super::loot::village_text(s.state(), Words::ENGLISH);
-    let total = village.houses.len();
-    let before = format!(
-        "Save at least {} of {total} houses (0 saved, 0 lost)",
-        village.minimum
-    );
-    assert_eq!(line(&s).as_deref(), Some(before.as_str()));
+    let line = |s: &Stacked| super::super::objective::village_count(s.state(), Words::ENGLISH);
+    assert_eq!(line(&s).as_deref(), Some("Houses: 0 saved, 0 lost"));
     choose(&mut s, &mut c, MenuEntry::Evacuate);
     assert_eq!(s.toast(), Some("House saved."));
     let saved = s.state().village().unwrap().house(house);
     assert_eq!(saved, Some(HouseState::Saved));
     assert!(s.state().unit(id).unwrap().acted);
-    let after = format!(
-        "Save at least {} of {total} houses (1 saved, 0 lost)",
-        village.minimum
-    );
-    assert_eq!(line(&s).as_deref(), Some(after.as_str()));
+    assert_eq!(line(&s).as_deref(), Some("Houses: 1 saved, 0 lost"));
 }
 
 #[test]

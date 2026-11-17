@@ -796,3 +796,62 @@ fn every_ally_in_the_shown_reach_gets_the_buff() {
     inspired.sort();
     assert_eq!(inspired, reached);
 }
+
+/// The menu window painted over the map view of `buf`: from its top-left
+/// corner (`┌` with a border right of it and below it) to its bottom-right.
+fn window(buf: &GlyphBuffer) -> crate::glyph_buffer::Rect {
+    let view = super::layout::MAP_VIEW;
+    let at = |x, y| buf.get(x, y).map_or(' ', |c| c.glyph);
+    let (x, y) = (view.y..view.y + view.h)
+        .flat_map(|y| (view.x..view.x + view.w).map(move |x| (x, y)))
+        .find(|&(x, y)| at(x, y) == '┌' && at(x + 1, y) == '─' && at(x, y + 1) == '│')
+        .expect("a window over the map");
+    let right = (x..view.x + view.w).find(|&x| at(x, y) == '┐');
+    let bottom = (y..view.y + view.h).find(|&y| at(x, y) == '└');
+    let (right, bottom) = (right.unwrap(), bottom.unwrap());
+    crate::glyph_buffer::Rect::new(x, y, right - x + 1, bottom - y + 1)
+}
+
+/// With Inspire focused, the Skill list goes beside its reach, not over it
+/// (ticket 0492): no tile of the scene's heal range is under the window.
+#[test]
+fn the_skill_list_keeps_clear_of_the_focused_reach() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(3, 5), "inspire", |_| {});
+    let buf = render(&s, &c);
+    let list = window(&buf);
+    let scene = s.scene(&c);
+    let reach = heal_range(&s, &c);
+    assert_eq!(reach.len(), 12);
+    for tile in reach {
+        let cells = c
+            .game
+            .map_skin
+            .tile_cells(&scene, super::layout::MAP_VIEW, tile)
+            .expect("the reach is in view");
+        assert_eq!(list.intersect(&cells), None, "{tile:?} under {list:?}");
+    }
+    // Just past the reach: one cell right of its right edge, 2 tiles
+    // right of the lord's path end at (4, 5).
+    let end = c
+        .game
+        .map_skin
+        .tile_cells(&scene, super::layout::MAP_VIEW, p(6, 5));
+    assert_eq!(list.x, end.unwrap().x + 2 + 1);
+}
+
+/// A skill with no area leaves the list where every menu goes: one cell
+/// right of the unit's tile.
+#[test]
+fn a_skill_with_no_area_leaves_the_list_beside_the_unit() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(3, 5), "brace", |_| {});
+    let list = window(&render(&s, &c));
+    let scene = s.scene(&c);
+    let unit = c
+        .game
+        .map_skin
+        .tile_cells(&scene, super::layout::MAP_VIEW, p(4, 5));
+    let unit = unit.unwrap();
+    assert_eq!(list.x, unit.x + unit.w + 1);
+}

@@ -224,6 +224,13 @@ D the side panel):
   the unit's path end (not its own tile) take the **heal** tint; moving the
   focus off it clears them (*the agent's starting rule*: a friend's
   playtest asked for a range indicator; Act 1 playtest, 1064).
+  **The Skill list goes beside the reach, not over it** (decided
+  2026-11-17, ticket 0492: Nick was shown the list beside the unit, beside
+  the reach, kept in place with the map slid, and in a fixed corner, in
+  both looks, and picked "A: beside the reach"): while an area line is
+  focused, the list goes one cell past the reach's edge, right of it or
+  left where it would leave the map view, by the same rule as every menu
+  beside its unit (0454); on the PC and the Playdate.
 - **Colour themes** (ticket 0806): Options has a **Colors** row with four
   palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
   parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
@@ -524,8 +531,9 @@ so they aren't in this repository (ADR-0032).
   background and back once a second; the terrain glyph or unit letter in
   that cell gives way to it. Only while browsing. The glyph look's view is
   35 × 30 tiles, so no map the game has today shows them.
-- The **side panel shows the unit under the cursor** (name, class, level, HP,
-  stats, weapon, terrain). That's where class and full numbers are read.
+- The **side panel shows the unit under the cursor**: name, class, level,
+  HP, stats, weapon and combat numbers, under the terrain. That's where
+  class and full numbers are read (*Side panel* below, ticket 0078).
 - Class symbols (`†`, `»`, `}`, …) were tried and rejected: the font's symbols
   are too small and generic. Custom-drawn class icons may be explored later
   (ticket 1006); until then, initials are the rule.
@@ -637,10 +645,14 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
 - While a target is chosen, the forecast **replaces the side panel** (double
   border, title `Forecast`): the attacker in the left column, the target in
   the right, names in faction colour, weapon names dimmed under them.
+  *Added by 0463: when left / right swap the weapon, a `◂▸` mark before
+  the attacker's weapon and `Left/Right weapon` in the bottom border
+  (`combat-arts.md`, *Showing that left / right swap the weapon*).*
 - **Mixed-case labels:** `HP`, `Hit`, `Crit`. A side that can't counter shows
   `--` for Hit and Crit.
 - **HP bars:** `HP 19` and a short bar. The part of the bar the unit would
-  lose **if every strike hit** (no crits) is shaded in `hp_low`.
+  lose **if every strike hit** (no crits) is shaded in `hp_low`. *Changed
+  by 0480 (below): `HP 19 → 6` and a 12-cell bar on its own row.*
 - **Strikes in the order they happen**, one per row, numbered down the
   middle: the attacker's on the left (`8 dmg →`), the target's counters on
   the right (`← 9 dmg`). `no counter` in the right column when it can't.
@@ -654,6 +666,212 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
   rule, not rendered for Nick)*.
 - The Combat Arts list and art line (0414) go above this forecast; that
   ticket works out the combined box.
+
+#### HP after the fight, and the weapon's uses (0480)
+
+Decided 2026-11-16, ticket 0480, over two rounds of `frame-png` renders of
+three fights (a plain exchange, a double with a counter, a kill) in both
+looks. A friend's playtest of the Act 1 build had found the forecast "hard
+to parse visually … i.e. for seeing how much expected HP enemy will have at
+the end". Options shown: A, the HP now and after as numbers (Fire Emblem:
+Three Houses' forecast gives each unit's remaining HP); B, a longer bar
+whose lost part blinks (Into the Breach's health pips flash the damage to
+come); C, the strikes folded into one damage line per side; D, labelled
+columns down the middle (Fire Emblem's GBA forecast).
+
+> [HP after the fight:] "A + B" … [the strike list:] "Keep strike list" …
+> [the weapon's durability:] "beside the weapon, or under when a art is
+> used which drains dura, and then shows uses depleting like hp" …
+> [round 2, an art's cost:] "E. Numbers only" … [the rest of round 2:]
+> "just make sure unless the HP is expected 0 it doesn't show 0 cells lit
+> up. its confusing if you're expected to live with 2 hp left and it
+> floors to 0 cells"
+
+Example: Ellery (19 HP) attacks a Raider (28 HP) with an Iron Sword that
+has 20 uses left. Each column reads, top to bottom:
+
+```
+Ellery          Raider
+Iron Sword 20   Iron Axe 20
+HP 19 → 6       HP 28 → 21
+████▒▒▒▒▒▒▒▒    █████████▒▒▒
+Hit  92         Hit  71
+Crit 2          Crit 1
+```
+
+- **HP now → after, as numbers:** `HP 19 → 6`, the HP if every strike
+  hits (no crits). The after number is in its HP colour (`hp_high`,
+  `hp_mid`, `hp_low`, as the bar), and a unit that falls shows a `0` in
+  `hp_low`.
+- **The bar has its own row under it, 12 cells** (it was 5 beside the HP).
+  The HP that would be lost **blinks**: shaded in `hp_low`, then full in
+  the HP colour of now, and so on.
+- **A unit that lives keeps at least one cell lit** (Nick, round 2): with
+  2 HP left of 28 the bar shows one cell, never none. Only an after of 0
+  shows no kept cell. The same holds for the HP it has now.
+- **The strike list stays** as 0404 decided: numbered, in the order they
+  happen, the skull on the kill, the totals.
+- **The weapon's uses go after its name:** `Iron Sword 20` (the uses left,
+  no `/20`; a spell's uses the same way: `Fire 10`). There is no row of
+  its own any more, so nothing above the HP reads like HP.
+- **An art that spends durability** shows the uses going down **on a row
+  under the weapon**, like the HP: `Iron Sword`, then `20 → 16`, the after
+  number in the highlight colour (round 2's E; F, with a second blinking
+  bar, was not picked). The art's line at the top shows only its name,
+  `Guard Break` (it read `Guard Break (20 → 16)`). An art that breaks the
+  weapon shows `3 → 0`. Both columns move down a row, so the two sides
+  stay level.
+- *Claude's starting rules (Nick can veto):*
+  - The blink is half a second shaded, half a second full, from the
+    shaded half (*tunable*).
+  - A broken weapon shows `(broken)` in `hp_low` on the row under it, as
+    the art's cost does (0404's starting rule, moved).
+  - The row under Crit stays for the affinity (`(resist)`, `heals 9`) and
+    is blank without one; 0333's armour mark, if it adds one, goes there.
+  - The Playdate's window gets the same lines in its 10-cell columns, the
+    weapon's name fitted to its uses as below (`Iron S… 20`) and a
+    10-cell bar on its own row; the lost part blinks between the checker
+    and black.
+
+#### Short weapon names (0498)
+
+Decided 2026-11-17, ticket 0498, over `frame-png` renders of three
+forecasts (Steel Sword against Fordwarden's Spear, Steel Gauntlets and
+Houndmaster's Axe) on the PC and the Playdate. 0480 cut a name too long
+for its uses with `…`; Nick, asked then: "use shortened names rather than
+truncated i.e. Stl Swo / probably need some mapping from long to short
+name". Options shown: A, vowels dropped (`Stl Swd`, `Hndmst Axe`); B, the
+first word shortened and the kind kept (`Stl Sword`, `Hound Axe`); C,
+seven letters for every weapon so the Playdate never cuts (`Stl Swd`,
+`Hnd Axe`, `Irn Swd`).
+
+> [style:] "B. First word shortened" … [a weapon whose name fits:] "Keep
+> the full name"
+
+- **A weapon too long for its line has a short name, written by hand**
+  (`short_name` in the items file, translated like its name):
+
+  | Weapon | Short name |
+  | ------ | ---------- |
+  | Steel Sword | Stl Sword |
+  | Steel Spear | Stl Spear |
+  | Iron Gauntlets | Iron Gntlt |
+  | Steel Gauntlets | Stl Gntlt |
+  | Houndmaster's Axe | Hound Axe |
+  | Fordwarden's Spear | Ford Spear |
+
+- **The forecast shows the full name when it fits** with the uses after
+  it (`Iron Sword 20`, `Moonblade 30`), else the short name (`Stl Sword
+  25`). The PC's 13-cell column fits every weapon one way or the other.
+- *Claude's starting rules (Nick can veto):*
+  - A new weapon whose name doesn't fit gets a short name in the same
+    style; the content check refuses one wider than the line less its
+    uses.
+  - Where even the short name doesn't fit (the Playdate's 10 cells), the
+    short name is cut with `…` (`Stl Sw… 25`); a weapon without one is
+    cut by its full name (`Iron S… 20`).
+
+### Side panel
+
+Decided 2026-11-16, ticket 0078 (built by 0484). A friend's playtest of
+the Act 1 build, passed on by Nick (2026-11-07): "Make stats easier to
+see, rather than needing to go to unit info or leveling up (we can
+workshop ideas)". Until then the panel showed the terrain, then the
+unit's name, class and level, HP and faction, and the gold: no stats and
+no weapon, though this page said it showed both. Nobody had decided to
+leave them out.
+
+Nick saw Chapter 1's map at its start, hovering Ellery and a Brigand, in
+both looks, with: A. stats and weapon on the panel; B. combat numbers on
+it instead; E. both together; D. a window over the map beside the unit;
+and the Playdate's corner window with stats, and with stats and combat
+numbers. (A key that flips the panel was offered for the Playdate; the
+PC's panel has room for everything.)
+
+> [which:] "E: A + B on panel" … [the same for enemies?] "if the
+> standard for Fire Emblem is that you can open a stat panel on enemy and
+> all info is not hidden then we can keep it the same" [it is: the GBA
+> games open an enemy's stat pages, items included] … [the Playdate:]
+> "probably stay as name + HP, but what button do you propose to switch
+> to full window given we don't have many buttons avail on Playdate? I
+> think it might be worth exploring but only if there's a good option
+> available." [shown hold B + Up, no button, crank forward:] "No flip
+> button" … [unit info shows Ellery's Def 4 without her Leather Vest's
+> +2; fights use 6:] "can u switch armor during a battle? I don't think so
+> right, so prob with gear" [right: armor and accessories change only at
+> Preparations]
+
+**On the PC, both looks** (the panel is the same in both), from the top:
+
+```
+Road
+DEF +0  AVO +0
+
+Ellery
+Exile  Lv 1
+HP 19/19   ##########
+Player
+
+Str   8     Mag   1
+Dex   7     Spd   7
+Def   6     Res   5
+Mov   5
+
+Iron Sword        20/20
+Atk  13     Hit 104
+Crit  3     Avo  14
+AS    5
+
+Gold 0
+```
+
+- **The terrain and the unit block stay as they were**: terrain name and
+  bonuses; name in faction colour, class and level, HP with its bar,
+  faction.
+- **Then the stats**, two to a row: Str, Mag, Dex, Spd, Def, Res, then
+  Mov. They are **the numbers a fight uses**: with the equipped armor and
+  accessory (Nick: "prob with gear") and the timed effects, so Ellery's
+  Def reads 6 with her Leather Vest, not 4. Unit info shows the same
+  numbers (built by 0484 too).
+- **Then the equipped weapon** (or attack spell) and its uses, as the
+  menus' top border names it (`Iron Sword 20/20`).
+- **Then the combat numbers**, two to a row: Atk, Hit, Crit, Avo, AS.
+  They are the unit's side of any fight, before the target counts:
+  - `Atk` = Str (Mag for a magic weapon or spell) + the weapon's might;
+  - `Hit` = the weapon's hit + Dex × 2;
+  - `Crit` = the weapon's crit + Dex / 2;
+  - `Avo` = Spd × 2 + the avoid of the terrain the unit stands on (+15
+    with a gauntlet);
+  - `AS` = attack speed;
+  
+  by the formulas in `stats-and-combat.md` and `weapons-and-items.md`,
+  with a broken weapon's penalties. The forecast still gives the
+  numbers of one fight against one target.
+- **The same for every unit**, enemies included (Fire Emblem shows an
+  enemy's full stats too).
+- *The agent's starting rules (Nick can veto; on the Act 1 playtest's
+  checklist, 1064):*
+  - Labels are dim, values bright; labels in mixed case as in the
+    forecast. A blank row between the unit block, the stats and the
+    weapon.
+  - `Hit` shows above 100 when it is (Ellery: 104), and `AS` below 0
+    (the Brigand's Iron Axe is heavy for him: `AS -1`), as the formulas
+    give them; neither is cut.
+  - A unit with no weapon or attack spell in hand shows `--` for the
+    weapon, `Atk`, `Hit` and `Crit`; `Avo` and `AS` still show.
+  - Stats raised or lowered by a timed effect are marked as on unit info;
+    gear doesn't mark them.
+  - Skill bonuses count when they hold in any fight: timed effects, the
+    equipped weapon's passive, an ally's aura reaching the unit where it
+    stands. One that holds only in some fights (when attacking, against a
+    kind of unit) isn't counted, as the Preparations' speed line leaves
+    out bonuses that only apply in a fight.
+- **The Playdate doesn't change** (Nick: "No flip button"): the corner
+  window stays name and HP, and the full numbers are on Unit info,
+  from the map menu.
+- **Not chosen:** combat numbers alone (B), a window over the map (D:
+  it covers the units around the one under the cursor), a key that flips
+  the panel.
 
 ### Portraits and battle art (bought)
 
@@ -785,8 +1003,11 @@ sprites.
     Narration (no face, no name) sits in the same box from the same
     column as speech, on the first text row, in the dim narration colour
     (ticket 0740; it was centred before).
-  - **Not** in the battle side panel or hover. That panel shows stats only
-    (Nick dropped the mini portrait).
+  - **Not** in the battle side panel or hover (Nick dropped the mini
+    portrait). What the panel shows is in *Side panel*.
+  - **Preparations, Loadouts:** a three-quarter face (48×48) at the
+    start of each row that names another unit's item (Nick, ticket 0479;
+    `weapons-and-items.md`, *Loadout (per unit)*).
 
 #### Combat screen
 
@@ -889,6 +1110,13 @@ sprites.
     Company's archers** are the same picture with dark hair and red in
     their clothes, so they aren't her twins.
   - **The female lead's** top is blue, as in her portrait (0706).
+  - **The Rider** (decided 2026-11-16, ticket 0446, on renders of the
+    intro's fight shot): the **Red Company's riders** are the Paladin
+    with its gold trim, lance and cloth in red, like their guard; **Tamsin**
+    keeps the gold trim and lance, and her tabard and saddle cloth are a
+    clear red, her own colour (she wore the Red Company's red). Nick, on
+    three options (as bought, Veyne blue, faded brick red): "prob a bit
+    more red than A or C", then the reddest of three.
   - A **class's picture is what the enemy's soldiers of that class look
     like**; a named character of the player's who shares it gets their own
     recolour *(Claude's rule for how the files are set up; in Chapter 1
@@ -937,7 +1165,8 @@ like shit". What the search was held to after that:
 
 | Fighter | Combat picture | Size | Map sprite | Source |
 | ------- | -------------- | ---- | ---------- | ------ |
-| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders (not imported yet: ticket 0499; today the Tiny Tales knight on foot) | Pixel Flag; MattWalkden |
+| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1, today's rider sprite) | Pixel Flag; Tiny Tales |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
@@ -995,8 +1224,17 @@ like shit". What the search was held to after that:
   - **Pixel Flag (ぴくせるふらっぐ商店)**, *ドット絵TRPGのコマ「クラスと
     モブ」全64種*, <https://booth.pm/ja/items/7851483>, ¥500. Commercial
     use and edits allowed, no resale or redistribution, no credit needed,
-    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin. **Not
-    bought yet.**
+    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin.
+    **Bought 2026-11-16** (ticket 0446). The whole pack is ours, so check
+    it before buying another picture: 64 chibi pieces about 40 px tall,
+    most facing the viewer, which the side-on rule above rules out
+    without Nick's OK. Turned to one side are a gunner and two archers
+    on foot, and three riders: a mounted archer, a cavalryman with a
+    sword, and the Paladin. The rest are knights and fighters
+    (templar, dragoon, valkyrie, samurai, viking, pirate and others),
+    mages and clerics, and townsfolk (king, queen, maid, villagers, a
+    dog and a cat). The private library's `pixel-flag/INDEX.md` lists
+    each one with its size.
   - **MattWalkden**, *Fantasy Battle Pack*,
     <https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want.
     "Royalty free commercial and personal license"; "No generative AI was
@@ -1651,6 +1889,53 @@ are open (*Open sub-questions*).
 - On the Key bindings screen the caps are the key names in the slot
   columns; a slot being captured keeps its prompt in plain text.
 
+### The objective at a battle's start
+
+Decided 2026-11-17, ticket 0481, on mockups of Chapter 1's and Chapter 2's
+start in both looks. A playtester (passed on by Nick, 2026-11-07):
+
+> "The battles should explain the objective without needing to go to the
+> objective in the options menu (i.e. a brief popup banner at the start
+> of battle so ch2 isn't a surprise)"
+
+Shown: A, the phase banner's look with the parts joined by a gold `AND`;
+B, labelled `Win:` / `Lose:` lines, as Fire Emblem: Three Houses lists a
+battle's victory and defeat conditions, up for a few seconds; C, B's panel
+waiting for Confirm. Nick picked **C**, with the Objective page using the
+same wording (yes), then a `Bonus:` line for the village's rewards
+(recommended option, picked).
+
+- When a battle starts (after the pre-battle talk and the battle notes,
+  before turn 1's `PLAYER PHASE`), an `OBJECTIVE` panel in the middle of
+  the map: a double frame in the player's colour, the title, then one line
+  per part, its label in a column in the highlight colour (gold in the
+  default theme), the text after it in the text colour:
+
+  ```
+  ╔═════════════════════════════════════════╗
+  ║                OBJECTIVE                ║
+  ║  Win:   Defeat Silas Hendry             ║
+  ║  Lose:  3 of 5 houses burn              ║
+  ║  or     Ellery falls                    ║
+  ║  Bonus: Save 4 or 5 houses for rewards  ║
+  ╚═════════════════════════════════════════╝
+  ```
+
+- It stays until Confirm (help `continue`); no other key does anything
+  under it. It is not timed.
+- The lines (`turn-structure.md`, *The objective at a battle's start*):
+  `Win:` and the objective; `Lose:` and the first thing that loses it,
+  then `or` and each other one; `Bonus:` in a battle with a village whose
+  houses past the minimum give rewards.
+- The map menu's Objective page shows the same lines (the labels in a
+  column, in the page's text colour), then the village's count
+  (`Houses: 1 saved, 0 lost`) and the turn.
+- The same in the picture look (the panel is drawn over the bought map as
+  the phase banner is) and on the Playdate (a window in its inks, the
+  labels in a column; a line too wide for the screen is cut).
+- It shows on a fresh start and on Retry or Restart; not after a rewind,
+  nor on a suspended battle carried on (*the agent's starting rule*, 0481).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side
@@ -1697,9 +1982,7 @@ black.
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
 - Combat screen (ticket 0413 decided where it is shown, the backdrop, the
   motions, the sizes and the Chapter 1 recolours): which backdrop each
-  terrain gets (today mountains or fields, Claude's starting rule); the
-  riders, who show a plain figure until Pixel Flag's Paladin is bought
-  (ticket 0446).
+  terrain gets (today mountains or fields, Claude's starting rule).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in

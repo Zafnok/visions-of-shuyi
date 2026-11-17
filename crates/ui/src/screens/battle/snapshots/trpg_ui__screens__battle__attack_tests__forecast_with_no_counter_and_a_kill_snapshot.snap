@@ -5,9 +5,9 @@ expression: h.snapshot()
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Archer   Brigand      ║
-                                                                      ║ Iron Bow      Iron Axe     ║
-                                                                      ║ 20/20         20/20        ║
-                                                                      ║ HP 17 █████   HP 12 █▒▒░░  ║
+                                                                      ║ Iron Bow 20   Iron Axe 20  ║
+                                                                      ║ HP 17 → 17    HP 12 → 4    ║
+                                                                      ║ ████████████  ██▒▒▒▒▒░░░░░ ║
                                                                       ║ Hit  91       Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
@@ -39,8 +39,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeeeedddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggddddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiiggddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhhhddiiiiiiigggggdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

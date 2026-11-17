@@ -11,12 +11,20 @@ use trpg_ui::map_view::range;
 use trpg_ui::screens::BattleScreen;
 
 /// At the title with the right-handed layout, then Quick Battle, still
-/// under turn 1's `PLAYER PHASE` banner.
-fn quick_battle_banner() -> Harness {
+/// under its objective's banner (0481).
+fn quick_battle_objective() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    h
+}
+
+/// [`quick_battle_objective`], the objective's banner closed: under turn
+/// 1's `PLAYER PHASE` banner.
+fn quick_battle_banner() -> Harness {
+    let mut h = quick_battle_objective();
+    h.keys("f");
     h
 }
 
@@ -28,9 +36,27 @@ fn quick_battle() -> Harness {
     h
 }
 
-/// A battle opens on turn 1's `PLAYER PHASE` banner (ticket 0435): only
-/// Confirm does anything while it is up, and it closes by itself after a
-/// second.
+/// A battle opens on its objective's banner (ticket 0481): only Confirm
+/// does anything while it is up, and it never closes by itself.
+#[test]
+fn quick_battle_opens_on_its_objective_until_confirmed() {
+    let mut h = quick_battle_objective();
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(shows(&h, "Rout the enemy"));
+    assert_eq!(help(&h), "f continue");
+    h.keys("Right d Space");
+    h.wait(5.0);
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(!shows(&h, "PHASE"));
+    h.keys("f");
+    assert!(!shows(&h, "OBJECTIVE"));
+    assert!(shows(&h, "PLAYER PHASE"));
+    assert_eq!(h.cursor_tile(), Some(LORD));
+}
+
+/// After its objective, a battle shows turn 1's `PLAYER PHASE` banner
+/// (ticket 0435): only Confirm does anything while it is up, and it closes
+/// by itself after a second.
 #[test]
 fn quick_battle_opens_on_the_player_phase_banner() {
     let mut h = quick_battle_banner();
@@ -77,7 +103,7 @@ fn quick_battle_in_every_theme() {
     for theme in Theme::ALL {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         h.ctx_mut().change_settings(|s| s.theme = theme).unwrap();
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         let snapshot = h.snapshot();
         let legend = snapshot.split("--- overlays ---").next().unwrap_or("");
@@ -558,8 +584,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
     assert!(shows(&h, "Guard Break     −4 dur  D"));
     // Guard Break: its forecast on the brigand, which can't counter.
     h.keys("Down f");
-    assert_eq!(panel(&h)[0], "Guard Break (20 → 16)");
+    assert_eq!(panel(&h)[0], "Guard Break");
     assert_eq!(panel(&h)[1], "Test Lord     Brigand");
+    // The uses it spends under the sword (0480).
+    assert_eq!(panel(&h)[3], "20 → 16");
     assert!(shows(&h, "no counter"));
     assert!(!shows(&h, "Flowing Cut"));
     // Cancel goes back to the arts menu, on Guard Break; Confirm again.
@@ -618,7 +646,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
 fn tips_show_when_switched_on() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_tips().keys("Down f Left f");
-    // The start tip waits for the `PLAYER PHASE` banner.
+    // The start tip waits for the objective's and `PLAYER PHASE` banners.
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(!shows(&h, "Your move"));
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"));
     assert!(!shows(&h, "Your move"));
     h.keys("f");
@@ -654,6 +685,8 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     h.keys("f f f Up f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    assert!(shows(&h, "OBJECTIVE"));
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"));
     // Closing the banner starts the scene: no tip under it.
     h.keys("f");

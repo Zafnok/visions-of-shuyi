@@ -535,7 +535,7 @@ fn back_from_a_battle_the_menu_shows_and_the_song_starts_over() {
     wait_until(&mut h, 20.0);
     assert_alone_at(&h, 20.0);
     // Skip, then Quick Battle: `Fight!`, the banner.
-    h.keys("z Down f Left f f");
+    h.keys("z Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     wait(&mut h, 40.0);
     assert!(song(&h).is_nan(), "the battle's music");

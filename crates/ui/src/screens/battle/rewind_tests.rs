@@ -38,7 +38,12 @@ fn press(s: &mut Stacked, c: &mut Ctx, actions: &[Action], wait: f32) {
 /// before the attack.
 fn attacked(c: &mut Ctx, charges: u8) -> (Stacked, BattleState) {
     let start = skirmish_charged(c, 20, charges);
-    let mut s = Stacked::new(BattleScreen::new(start.clone()));
+    let s = Stacked::new(BattleScreen::new(start.clone()));
+    (attack_on(c, s), start)
+}
+
+/// `s` after the lord's sword attack on the brigand, played out.
+fn attack_on(c: &mut Ctx, mut s: Stacked) -> Stacked {
     // Select the lord, one step right, move there.
     press(&mut s, c, &[Confirm, CursorRight, Confirm], 0.5);
     // Attack (the iron sword), the brigand, attack, skip the playback
@@ -60,7 +65,7 @@ fn attacked(c: &mut Ctx, charges: u8) -> (Stacked, BattleState) {
             ..
         }
     ));
-    (s, start)
+    s
 }
 
 /// The rewind screen on `h` (ADR-0054: read from its view).
@@ -106,6 +111,26 @@ fn attack_then_rewind_restores_exactly_the_state_before_the_attack() {
     assert_eq!(s.history().charges_left(), 2);
     assert!(s.history().is_empty());
     assert!(matches!(s.mode(), super::mode::Mode::Idle { .. }));
+}
+
+/// Acceptance (0481): the objective's banner shows when the battle
+/// starts, and a rewind to its start doesn't bring it back.
+#[test]
+fn a_rewind_doesnt_show_the_objective_again() {
+    use super::banner::BannerKind;
+    let mut c = ctx();
+    let start = skirmish_charged(&c, 20, 3);
+    let mut s = Stacked::new(BattleScreen::start(start.clone(), &[]));
+    assert_eq!(s.banner().map(|b| b.kind), Some(BannerKind::Objective));
+    press(&mut s, &mut c, &[Confirm], 0.0);
+    assert_eq!(s.banner(), None);
+    let mut s = attack_on(&mut c, s);
+    press(&mut s, &mut c, &[Rewind, Confirm, Confirm], 0.0);
+    assert!(s.rewind().is_none());
+    assert_eq!(ron(s.state()), ron(&start));
+    assert_eq!(s.banner(), None);
+    press(&mut s, &mut c, &[], 5.0);
+    assert_eq!(s.banner(), None);
 }
 
 #[test]

@@ -4073,6 +4073,7 @@ mod village;
 
 use arts::{ArtStrike, ArtUse, check_arts_allowed};
 pub use arts::{AttackPreview, PlannedMove, StrikePreview};
+pub use skills::StatCard;
 use skills::{ActiveUse, AttackPlan, Fight, SkillStep};
 pub use triggers::{GameMode, TileRect, Trigger, TriggerWhen, Who};
 pub(crate) use village::burns;

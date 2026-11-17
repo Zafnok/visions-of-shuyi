@@ -117,6 +117,7 @@ fn new_game_reads_what_each_screen_pops_with() {
 #[test]
 fn retry_goes_back_to_preparations_as_they_were_left() {
     use crate::input::Action::{Confirm, CursorLeft, CursorRight};
+    use crate::screens::battle::banner::BannerKind;
     let mut c = ctx();
     let flow = FlowScreen::quick_battle(&mut c).unwrap_or_else(|| panic!("no quick battle"));
     let mut stack = stacked(&mut c, flow);
@@ -131,6 +132,12 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
         &[Cancel, CursorRight, CursorRight, CursorRight, Confirm],
     );
     assert_eq!(stack.names(), ["game_flow", "battle"]);
+    // It opens on the objective's banner (0481).
+    let objective = |s: &ScreenStack| {
+        let battle = s.find::<BattleScreen>();
+        battle.and_then(BattleScreen::banner).map(|b| b.kind) == Some(BannerKind::Objective)
+    };
+    assert!(objective(&stack));
     let elixir = [trpg_core::ItemId::new("elixir")];
     let pack = |s: &ScreenStack| {
         let battle = s.find::<BattleScreen>();
@@ -148,9 +155,10 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
     let prep = prep.unwrap_or_else(|| panic!("no prep"));
     assert_eq!(prep.setup().pack.items, elixir);
     assert_eq!(prep.setup().stock.count(&elixir[0]), 1);
-    // Fight! again: the same battle.
+    // Fight! again: the same battle, its objective shown again (0481).
     update(&mut stack, &mut c, &[CursorLeft, Confirm]);
     assert_eq!(pack(&stack).as_deref(), Some(&elixir[..]));
+    assert!(objective(&stack));
 }
 
 /// A battle without Preparations starts straight away, with its default
@@ -240,9 +248,9 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut h = harness(c, flow);
-    // Skip the intro, close the battle notes and turn 1's banner; the lead
-    // seizes the fort.
-    h.keys("d f f f");
+    // Skip the intro, close the battle notes, the objective's banner and
+    // turn 1's; the lead seizes the fort.
+    h.keys("d f f f f");
     assert_eq!(h.top_screen(), "battle");
     let seize = Command::Act {
         unit: UnitId(1),

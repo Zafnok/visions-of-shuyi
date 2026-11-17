@@ -587,6 +587,7 @@
     "battle.banner.enemy_phase": "ENEMY PHASE",
     "battle.banner.other_phase": "OTHER PHASE",
     "battle.banner.victory": "VICTORY",
+    "battle.banner.objective": "OBJECTIVE",
     "battle.banner.defeat": "DEFEAT",
     "battle.turn": "Turn {turn}",
     "battle.turn_of": "Turn {turn}/{limit}",
@@ -636,8 +637,18 @@
     "battle.objective.seize_objective": "Seize the objective",
     "battle.objective.survive": "Survive {turns} turns",
     "battle.objective.escape": "Get everyone to the exit ({out}/{total} out)",
-    "battle.objective.village": "Save at least {minimum} of {total} houses ({saved} saved, {lost} lost)",
+    "battle.objective.village": "Houses: {saved} saved, {lost} lost",
     "battle.objective.escape_to": "Get everyone to {place} ({out}/{total} out)",
+    "battle.objective.lose_houses": "{burn} of {total} houses burn",
+    "battle.objective.lose_turn": "Turn {limit} ends",
+    "battle.objective.lose_lead": "{name} falls",
+    "battle.objective.win_label": "Win:",
+    "battle.objective.lose_label": "Lose:",
+    "battle.objective.or": "or",
+    "battle.objective.bonus_label": "Bonus:",
+    "battle.objective.bonus_one": "Save {from} houses for a reward",
+    "battle.objective.bonus_two": "Save {from} or {to} houses for rewards",
+    "battle.objective.bonus_many": "Save {from} to {to} houses for rewards",
     "battle.notes.title": "BATTLE NOTES",
     "battle.notes.heading": "Battle notes",
 
@@ -648,6 +659,12 @@
     "battle.portrait": "portrait",
     "battle.panel.terrain": "DEF {defense}  AVO {avoid}",
     "battle.panel.heals": "Heals {percent}% HP",
+    "battle.panel.atk": "Atk",
+    "battle.panel.hit": "Hit",
+    "battle.panel.crit": "Crit",
+    "battle.panel.avo": "Avo",
+    "battle.panel.as": "AS",
+    "battle.panel.none": "--",
 
     // The battle: the lists of weapons, arts, spells, skills and items.
     // `{name}` and the numbers come padded, so the columns line up.
@@ -763,6 +780,7 @@
 
     // The battle: the attack forecast and the combat playback.
     "battle.forecast.title": "Forecast",
+    "battle.forecast.swap": "{keys} weapon",
     "battle.forecast.broken": "(broken)",
     "battle.forecast.resist": "(resist)",
     "battle.forecast.heals": "heals {n}",

@@ -5,10 +5,10 @@ type: content
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["0413"]
 nick_input: setup
-completed:
+completed: 2026-11-16
 ---
 
 # 0446 — Riders' combat picture (Pixel Flag's Paladin)
@@ -83,12 +83,12 @@ own recolour).
 
 ## Acceptance criteria
 
-- [ ] In a `private-assets` build a Rider's fight shows the Paladin on
+- [x] In a `private-assets` build a Rider's fight shows the Paladin on
       both sides, in different colours, facing each other.
-- [ ] `cargo test -p trpg-content --features private-assets --test it
+- [x] `cargo test -p trpg-content --features private-assets --test it
       private_assets::` passes (every bought file has a credit).
-- [ ] Nick was sent a render and chose the colours.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Nick was sent a render and chose the colours.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -98,5 +98,36 @@ own recolour).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Nick bought the pack on 2026-11-16 (the zip `icons_trpg001.zip`).
+
+- **The pack** is in the private repository: `library/pixel-flag/` (the
+  64 pictures at 64×64, their 8× copies, the sheet), `terms.txt` (the
+  item page's terms as read today: commercial use and edits allowed, no
+  redistribution, no credit needed) and `INDEX.md`, **a catalogue of
+  all 64 pieces** with the shop's name, what each shows, its size and
+  whether it faces the viewer or turns to the side. Nick asked for it so
+  a later picture comes from what's bought before buying another.
+  `look-and-feel.md` (*The sources and their terms*) sums it up and
+  points there. The zip as bought is in `originals/pixel-flag/`.
+- **The rows**: `rider` (the class: the Red Company's riders) and
+  `sergeant` (Tamsin), the Paladin (no. 24) at 1.5×, facing left, not
+  keyed (a clear background). 96 px tall once scaled, under the 138 px
+  ground line.
+- **Colours (Nick, on renders of the intro's fight shot pointed at the
+  Chapter 1 fort road's rider):** the enemy's Paladin has its gold trim,
+  lance and cloth in red, like the Red Company's guard. Tamsin keeps the
+  gold trim and lance; her tabard and saddle cloth are a clear red. Three
+  options first (as bought, Veyne blue, faded brick red); Nick: "prob a
+  bit more red than A or C"; then the reddest of three. Recorded in
+  `look-and-feel.md` (*Who is recoloured in Chapter 1*).
+- Credit `pixel_flag` in `credits.ron` (the terms ask for none; every
+  bought work has one anyway), its row in `THIRD_PARTY_ASSETS.md`, and
+  the two credits tests that list the bought works.
+- **Deviation:** the enemy's recolour was not named in the ticket (it
+  said "the Red Company's colours"). Recolouring only the teal cloth left
+  the two riders almost the same on screen, so the trim and lance went
+  red too, the Church Knight's own recolour (`GOLD_TO_RED`).
+- The render was made by pointing the intro cinematic's fight shot at
+  the rider for one local run; that edit was undone and is in no commit.
+
+No starting rules. Nothing for the Act 1 playtest beyond the look.

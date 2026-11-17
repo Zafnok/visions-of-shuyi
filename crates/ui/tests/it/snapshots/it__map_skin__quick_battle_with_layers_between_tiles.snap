@@ -12,15 +12,15 @@ expression: h.snapshot()
                                                                       ║ HP 19/19   ██████████      ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
+                                                                      ║ Str   6     Mag   1        ║
+                                                                      ║ Dex   7     Spd   7        ║
+                                                                      ║ Def   6     Res   5        ║
+                                                                      ║ Mov   5                    ║
                                                                       ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
+                                                                      ║ Iron Sword        20/20    ║
+                                                                      ║ Atk  11     Hit 104        ║
+                                                                      ║ Crit  3     Avo  14        ║
+                                                                      ║ AS    5                    ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -343,14 +343,14 @@ over  208,268 6x4  black
 over  208,266 4x6  black
 over  218,268 6x4  black
 over  220,266 4x6  black
-over  209,257 4x2  #e8d59b
-over  209,257 2x4  #e8d59b
-over  219,257 4x2  #e8d59b
-over  221,257 2x4  #e8d59b
-over  209,269 4x2  #e8d59b
-over  209,267 2x4  #e8d59b
-over  219,269 4x2  #e8d59b
-over  221,267 2x4  #e8d59b
+over  209,257 4x2  #e1ce96
+over  209,257 2x4  #e1ce96
+over  219,257 4x2  #e1ce96
+over  221,257 2x4  #e1ce96
+over  209,269 4x2  #e1ce96
+over  209,267 2x4  #e1ce96
+over  219,269 4x2  #e1ce96
+over  221,267 2x4  #e1ce96
 over  277,247 5x3  black
 over  273,248 6x3  black
 over  269,249 6x3  black

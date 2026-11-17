@@ -32,7 +32,7 @@ fn the_record_in_a_battle_holds_its_history() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`; Confirm
     // closes the turn's banner. The lord moves one tile right and waits.
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     h.keys("f Right f").wait(1.0).keys("f").wait(1.0);
     let text = crash_record(h.game()).unwrap();
     let record: BattleRecord = ron::from_str(&text).unwrap();

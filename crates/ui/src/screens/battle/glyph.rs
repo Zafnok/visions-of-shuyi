@@ -23,10 +23,10 @@ use super::banner::BannerKind;
 use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use super::units::{faction_color, paint_hp_bar};
 use super::view::{
-    BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
-    PanelUnitView, PanelView,
+    BannerView, BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind,
+    NotesView, ObjectiveLine, PanelCellView, PanelUnitView, PanelView,
 };
-use super::{PopupKind, stage};
+use super::{PopupKind, objective, stage};
 use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
@@ -60,6 +60,19 @@ pub const GOLD_ROW: i32 = SIDE_PANEL.y + SIDE_PANEL.h - 2;
 
 /// Column of the side panel's HP bar, after `HP 999/999 `.
 pub const HP_BAR_X: i32 = TEXT_X + 11;
+
+/// Row of a unit's first stats in the side panel, a blank row under its
+/// block (0484).
+pub const STATS_ROW: i32 = UNIT_ROW + 5;
+
+/// Width of one name and number in the side panel (`Hit 104`).
+pub const PANEL_CELL_W: usize = 7;
+
+/// Columns from the first name and number of a row to the second.
+pub const PANEL_CELL_GAP: i32 = 12;
+
+/// Width of the weapon line: its uses end there (`Iron Sword        20/20`).
+pub const PANEL_WEAPON_W: usize = 23;
 
 /// Banner box width, in cells.
 pub const BANNER_W: i32 = 24;
@@ -203,8 +216,35 @@ pub fn menu_origin_in(area: Rect, tile: Rect, (w, h): (i32, i32)) -> (i32, i32) 
     (left.max(area.x), my)
 }
 
-/// Paints the menu `m` beside where the map skin has `tile` of the scene,
-/// with its header in the top border.
+/// The smallest rectangle holding `tile` and every rectangle of `clear`:
+/// what a menu that keeps clear of an area skill's reach goes beside
+/// (ticket 0492), with [`menu_origin_in`]'s rule, so the list sits just
+/// past the reach's edge.
+pub fn beside_all(tile: Rect, clear: impl IntoIterator<Item = Rect>) -> Rect {
+    clear.into_iter().fold(tile, |a, r| {
+        let (x, y) = (a.x.min(r.x), a.y.min(r.y));
+        let right = (a.x + a.w).max(r.x + r.w);
+        let bottom = (a.y + a.h).max(r.y + r.h);
+        Rect::new(x, y, right - x, bottom - y)
+    })
+}
+
+/// The cells beside which the map skin paints `m` in `area`: its tile's,
+/// grown to hold the tiles it keeps clear of that the camera shows.
+pub fn menu_anchor(
+    tile_cells: impl Fn(trpg_core::Pos) -> Option<Rect>,
+    m: &BattleMenuView,
+    tile: trpg_core::Pos,
+) -> Option<Rect> {
+    let cells = tile_cells(tile)?;
+    Some(beside_all(
+        cells,
+        m.clear_of.iter().filter_map(|&p| tile_cells(p)),
+    ))
+}
+
+/// Paints the menu `m` beside where the map skin has `tile` of the scene
+/// (and the reach it keeps clear of), with its header in the top border.
 fn paint_menu_beside(
     ctx: &Ctx,
     view: &BattleView,
@@ -212,7 +252,8 @@ fn paint_menu_beside(
     tile: trpg_core::Pos,
     buf: &mut GlyphBuffer,
 ) {
-    let Some(cells) = ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
+    let skin = &ctx.game.map_skin;
+    let Some(cells) = menu_anchor(|p| skin.tile_cells(&view.scene, MAP_VIEW, p), m, tile) else {
         return;
     };
     let (x, y) = menu_origin(cells, menu::glyph::size(ctx, &m.menu));
@@ -354,6 +395,70 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         &unit.faction_name,
         c(UiColor::TextDim),
     );
+    // A blank row, the stats, a blank row, the weapon, the combat numbers.
+    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW);
+    let weapon_row = below + 1;
+    match &unit.weapon {
+        Some(weapon) => paint_panel_weapon(ctx, weapon, buf, weapon_row),
+        None => print_clipped(
+            buf,
+            (TEXT_X, weapon_row),
+            TEXT_W,
+            &unit.no_weapon,
+            c(UiColor::Text),
+        ),
+    }
+    paint_panel_cells(ctx, &unit.combat, buf, weapon_row + 1);
+}
+
+/// Paints `cells` two to a row from row `top`, the names dim and the
+/// numbers lit (a timed effect's in its colour) and right-aligned; the row
+/// after the last.
+fn paint_panel_cells(ctx: &Ctx, cells: &[PanelCellView], buf: &mut GlyphBuffer, top: i32) -> i32 {
+    let c = |u| ctx.palette.get(u);
+    let mut y = top;
+    for row in cells.chunks(2) {
+        for (x, cell) in [TEXT_X, TEXT_X + PANEL_CELL_GAP].into_iter().zip(row) {
+            // check-text: not a data name (the view's own)
+            let name = &cell.name;
+            print_clipped(buf, (x, y), PANEL_CELL_W, name, c(UiColor::TextDim));
+            let name_w = name.chars().count();
+            let value = format!(
+                "{:>w$}",
+                cell.value,
+                w = PANEL_CELL_W.saturating_sub(name_w)
+            );
+            let color = if cell.changed {
+                UiColor::Effect
+            } else {
+                UiColor::Text
+            };
+            let at = x + i32::try_from(name_w).unwrap_or(0);
+            print_clipped(buf, (at, y), PANEL_CELL_W, &value, c(color));
+        }
+        y += 1;
+    }
+    y
+}
+
+/// Paints the weapon line: its name, then its uses right-aligned (in the
+/// warning colour once none are left).
+fn paint_panel_weapon(ctx: &Ctx, weapon: &MenuHeader, buf: &mut GlyphBuffer, y: i32) {
+    let c = |u| ctx.palette.get(u);
+    let uses = weapon.uses.as_ref();
+    let uses_w = uses.map_or(0, |u| u.text.chars().count());
+    let name_w = PANEL_WEAPON_W.saturating_sub(uses_w + 1).min(TEXT_W);
+    // check-text: not a data name (the view's own)
+    print_clipped(buf, (TEXT_X, y), name_w, &weapon.name, c(UiColor::Text));
+    if let Some(uses) = uses {
+        let color = if uses.spent {
+            UiColor::HpLow
+        } else {
+            UiColor::Text
+        };
+        let at = TEXT_X + i32::try_from(PANEL_WEAPON_W - uses_w).unwrap_or(0);
+        print_clipped(buf, (at, y), uses_w, &uses.text, c(color));
+    }
 }
 
 /// Paints the boxes over the map: the unit list, the objective page (the
@@ -367,13 +472,12 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
-            let mut lines = vec![
-                (o.objective.clone(), UiColor::Text),
-                (o.turn.clone(), UiColor::Text),
-            ];
-            if let Some(village) = &o.village {
-                lines.insert(1, (village.clone(), UiColor::Text));
-            }
+            let mut lines: Vec<_> = objective::padded(&o.lines)
+                .into_iter()
+                .chain(o.village.clone())
+                .chain([o.turn.clone()])
+                .map(|l| (l, UiColor::Text))
+                .collect();
             if let Some(notes) = &o.notes {
                 lines.push((String::new(), UiColor::Text));
                 lines.push((notes.title.clone(), UiColor::TextDim));
@@ -518,12 +622,17 @@ pub const fn banner_color(kind: BannerKind) -> UiColor {
         },
         BannerKind::Outcome(Outcome::Victory) => UiColor::TextHighlight,
         BannerKind::Outcome(Outcome::Defeat) => UiColor::HpLow,
+        BannerKind::Objective => UiColor::Player,
     }
 }
 
 /// Paints the banner centred on the map view, in a double box of its
 /// colour.
-fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuffer) {
+fn paint_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
+    if banner.kind == BannerKind::Objective {
+        paint_objective_banner(ctx, banner, buf);
+        return;
+    }
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let rect = Rect::new(
@@ -538,6 +647,49 @@ fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuff
     let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
     buf.print_centred(row(2), &banner.title, c(color));
     buf.print_centred(row(3), &banner.subtitle, c(UiColor::Text));
+}
+
+/// The objective banner's size for `lines` under `title`: the lines,
+/// their labels in a column ([`objective::label_width`]), a border and two
+/// blank columns each side; the title, a blank row, the lines and a blank
+/// row between borders.
+pub fn objective_banner_size(title: &str, lines: &[ObjectiveLine]) -> (i32, i32) {
+    let cells = |s: &str| i32::try_from(s.chars().count()).unwrap_or(0);
+    let w = objective::padded(lines)
+        .iter()
+        .map(|l| cells(l))
+        .chain([cells(title)])
+        .max()
+        .unwrap_or(0);
+    let rows = i32::try_from(lines.len()).unwrap_or(0);
+    (w + 6, rows + 6)
+}
+
+/// Paints the objective banner (0481) centred on the map view: the title
+/// in the banner's colour, then each line, its label highlighted.
+fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let (w, h) = objective_banner_size(&banner.title, &banner.lines);
+    let rect = Rect::new(
+        MAP_VIEW.x + (MAP_VIEW.w - w) / 2,
+        MAP_VIEW.y + (MAP_VIEW.h - h) / 2,
+        w,
+        h,
+    );
+    let color = banner_color(banner.kind);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(rect, &look.with_border(c(color)), None);
+    buf.print_centred(
+        Rect::new(rect.x, rect.y + 2, rect.w, 1),
+        &banner.title,
+        c(color),
+    );
+    let indent = i32::try_from(objective::label_width(&banner.lines)).unwrap_or(0);
+    for (y, l) in (rect.y + 4..).zip(&banner.lines) {
+        buf.print(rect.x + 3, y, &l.label, c(UiColor::TextHighlight), bg);
+        buf.print(rect.x + 3 + indent, y, &l.text, c(UiColor::Text), bg);
+    }
 }
 
 /// Paints the bar under the map and panel: the toggles' state at the right
@@ -565,4 +717,4 @@ fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

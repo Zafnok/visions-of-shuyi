@@ -426,7 +426,8 @@ recruit joins outside battle.
   Houndmaster's Axe → **0332** · **0080** how the army gets through
   armour → **0333** · **0081** a bigger EXP cut for a level gap →
   **0610** · **0082** Chapter 2's houses within reach → **0867** ·
-  **0083** getting off and back on a horse → **0334** · **0084**
+  ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 →
+  **0334** (its look, not blocking: **0089**, **0499**) · **0084**
   Chapter 3's throne and its guards → **0868**. Without a decision:
   **0527** the bots report units that can't hurt the enemy or fall
   behind (first, so the balance tickets show per-unit numbers before
@@ -535,11 +536,12 @@ Design answers unblock most of the rules work. Suggested order:
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
-   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
+   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
+10. After the writer audition (0766), the storefront hook (Nick, 2026-11-16: legendary beasts hidden at the bottom of dungeon delves, fought as a raid, with timed parries and a stolen turn): **0085** element states on tiles · **0086** timed presses and Steal the Turn · **0087** legendary beasts, their hunts, their parts and forging (the story answer goes private) · **0088** dungeon delves; then **0772** the beasts in the story documents (after 0087, with the writer)
 
 No sign-offs after merge any more (Nick, 2026-10-21): he checks design
 (the `00xx` tickets and questions asked before building) and plays the
@@ -605,6 +607,26 @@ early so every later PR is checked by them.
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
   Parked far-future ideas: hub activities (1004), pair abilities (1005).
+- **The storefront hook** (Nick, 2026-11-16, after five rounds of hook
+  research): legendary beasts hidden at the bottom of dungeon delves,
+  hunted against a rival column and fought as a raid. It stands on three
+  battle systems that make the enemy's turn the exciting part. Design
+  first (Nick's queue, row 10: 0085–0088, then 0772 with the writer).
+  Building starts after the Act 1 playtest (1064), with tickets on one
+  row able to run side by side:
+  1. **1091** element states on tiles · **1092** timed presses in the
+     rules · **1095** the beast army and its Beast Phase · **1099**
+     materials and forging gated by chapter · **1277** dungeon delves
+  2. **1093** the timing ring and bar in the combat frame (also after
+     1078, the Playdate's fight at 30 frames a second) · **1096**
+     beasts on several tiles with parts · **1275** the forge at the
+     blacksmith · **1278** dark floors and light · **1281** delves on
+     screen (the world-map mark, the party picker, the floors' flow)
+  3. **1094** Steal the Turn · **1097** aiming at a part · **1279** beast
+     hunts on the world map
+  4. **1098** a broken part as terrain or material → **1276** the grinder
+     bot and the shop-only balance check
+  5. **1280** the first legendary beast, the frost wyrm's lair
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
   ahead of the engine carve. Since 2026-10-16 the carve comes first and the
   port second: the note at the top): 1026 technical test (do the rules build for

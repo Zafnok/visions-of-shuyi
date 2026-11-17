@@ -12,15 +12,15 @@ expression: buf.to_snapshot(&c.palette)
                                                                       │ HP 19/19   ██████████      │
                                                                       │ Player                     │
                                                                       │                            │
-                                                                      │                            │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      │                            │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │                            │
+                                                                      │ Str   6     Mag   1        │
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │ Dex   7     Spd   7        │
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      │ Def   6     Res   5        │
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ Mov   5                    │
                     ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar···┌────────────────┐.                      │                            │
-                    ..♣♣··Lo.│ Units          │.                      │                            │
-                    ♣♣♣♣··MaK│ Objective      │.                      │                            │
-                    ♣♣♠♠··...│ Guides         │.                      │                            │
+                    ....Ar···┌────────────────┐.                      │ Iron Sword        20/20    │
+                    ..♣♣··Lo.│ Units          │.                      │ Atk  11     Hit 104        │
+                    ♣♣♣♣··MaK│ Objective      │.                      │ Crit  3     Avo  14        │
+                    ♣♣♠♠··...│ Guides         │.                      │ AS    5                    │
                              │ Options        │                       │                            │
                              │ Suspend        │                       │                            │
                              │ Restart Battle │                       │                            │
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjjjjjjjjjssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjttooobbbbbbbbbbbbbbbbbbjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoouujbvvvvvvvvvvvvvvvvbjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoouuubccccccccccccccccbjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjbccccccccccccccccbjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoouujbvvvvvvvvvvvvvvvvbjaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoouuubccccccccccccccccbjaaaaaaaaaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjjbccccccccccccccccbjaaaaaaaaaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb

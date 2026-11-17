@@ -48,6 +48,7 @@ pub mod magic;
 pub mod map_menu;
 pub mod mode;
 pub mod notes;
+pub mod objective;
 pub mod panel;
 pub mod path;
 pub mod playback;
@@ -74,7 +75,7 @@ use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
     LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, ThreatAreas,
-    ThreatPlanner, TileSet, Unit, UnitId, danger_zone, next_command, threats_at,
+    ThreatPlanner, TileSet, Turn, Unit, UnitId, danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -97,8 +98,9 @@ use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::shop::{ShopScreen, ShopVisit};
 use self::tips::TipState;
 use self::view::{
-    BattleMenuView, BattleView, DialogView, InfoView, MapInfoView, MenuHeader, MenuPlace,
-    MessageKind, MessageView, NotesView, ObjectiveView, PanelView, QuestionView,
+    BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
+    MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView,
+    QuestionView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -106,7 +108,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
@@ -633,6 +635,9 @@ impl BattleScreen {
         if !screen.state.battle_notes().is_empty() && screen.state.outcome().is_none() {
             screen.queue.push_back(Queued::Notes);
         }
+        if screen.state.outcome().is_none() {
+            screen.queue.push_back(Queued::Banner(Banner::OBJECTIVE));
+        }
         screen.queue.extend(events.iter().filter_map(|e| match e {
             Event::SceneTriggered { .. } => SceneCue::of(e).map(Queued::Scene),
             _ => Banner::for_event(e).map(Queued::Banner),
@@ -962,6 +967,9 @@ impl BattleScreen {
                 fired.push(TipTrigger::FirstForecast);
                 if !forecast::kind_effects(state, t).is_empty() {
                     fired.push(TipTrigger::FirstEffective);
+                }
+                if t.can_swap() {
+                    fired.push(TipTrigger::FirstWeaponSwap);
                 }
             }
             Mode::Idle { .. } => {
@@ -1359,7 +1367,7 @@ impl BattleScreen {
                 Transition::pop_with(BattleEnd::Won(state, self.history.charges_left()))
             }
             BannerKind::Outcome(Outcome::Defeat) => self.game_over(ctx, false),
-            BannerKind::Phase { .. } => Transition::None,
+            BannerKind::Phase { .. } | BannerKind::Objective => Transition::None,
         }
     }
 
@@ -2153,7 +2161,7 @@ impl BattleScreen {
             return Some(progress::help(ctx, p));
         }
         let key = match self.banner()?.kind {
-            BannerKind::Outcome(_) => "battle.help.continue",
+            BannerKind::Outcome(_) | BannerKind::Objective => "battle.help.continue",
             BannerKind::Phase { .. } => "battle.help.skip",
         };
         Some(ctx.text_with(key, &[]))
@@ -2250,15 +2258,15 @@ impl BattleScreen {
     fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
         let km = ctx.help_keys();
         let plain = |key| ctx.text_with(key, &[]);
-        // A hint for two keys that are not one action: `←/→ swap`.
-        let pair = |key, a, b| {
-            let keys = format!("{}/{}", key_name(km, a), key_name(km, b));
-            ctx.text_with(key, &[("keys", &keys)])
-        };
         let mut hints = if t.can_swap() {
+            let target = format!(
+                "{}/{}",
+                key_name(km, Action::CursorUp),
+                key_name(km, Action::CursorDown)
+            );
             vec![
-                pair("battle.hint.swap", Action::CursorLeft, Action::CursorRight),
-                pair("battle.hint.target", Action::CursorUp, Action::CursorDown),
+                Self::swap_hint(ctx, "battle.hint.swap"),
+                ctx.text_with("battle.hint.target", &[("keys", &target)]),
             ]
         } else {
             vec![plain("battle.hint.next_target")]
@@ -2269,6 +2277,16 @@ impl BattleScreen {
         }));
         hints.push(plain("battle.hint.back"));
         hints.join(SEPARATOR)
+    }
+
+    /// The text `key` with `{keys}` the keys that swap the weapon, as two
+    /// keys that are not one action: `Left/Right swap` in the help line,
+    /// `Left/Right weapon` on the forecast (0463).
+    fn swap_hint(ctx: &Ctx, key: &str) -> String {
+        let km = ctx.help_keys();
+        let (left, right) = (Action::CursorLeft, Action::CursorRight);
+        let keys = format!("{}/{}", key_name(km, left), key_name(km, right));
+        ctx.text_with(key, &[("keys", &keys)])
     }
 
     /// The help line while browsing, over what is under the cursor; `back`
@@ -2535,11 +2553,7 @@ impl BattleScreen {
             }
             // The focused area skill's reach (0482): the allies standing in
             // it are the ones it would reach.
-            Mode::List { menu, .. } => {
-                if let Some(Line::Skill(c)) = menu.value(menu.focus()) {
-                    scene.tint(c.area.iter().copied(), range::HEAL);
-                }
-            }
+            Mode::List { .. } => scene.tint(self.reach_shown().iter().copied(), range::HEAL),
             _ => {}
         }
     }
@@ -2630,7 +2644,12 @@ impl BattleScreen {
             }),
             _ => None,
         };
-        let forecast = self.forecast().and_then(|t| forecast::view(told, t));
+        let forecast = self.forecast().and_then(|t| {
+            let swap = t
+                .can_swap()
+                .then(|| Self::swap_hint(ctx, "battle.forecast.swap"));
+            forecast::view(told, t).map(|f| ForecastView { swap, ..f })
+        });
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let progress = self
             .progress()
@@ -2643,12 +2662,14 @@ impl BattleScreen {
         BattleView {
             menu: self.menu_view(words),
             popups: self.popups.clone(),
-            panel: forecast.is_none().then(|| self.panel_view(words)),
+            panel: forecast
+                .is_none()
+                .then(|| self.panel_view(words, ctx.game.skin_set == SkinSet::Glyph)),
             stage,
             dialog: self.dialog_view(ctx),
             notes,
             noted: self.noted(),
-            banner: self.banner().map(|b| b.view(words, limit)),
+            banner: self.banner().map(|b| self.banner_view(b, words, limit)),
             tip: self.tip_view(ctx),
             lesson: self.lesson_view(ctx),
             lessons_end: self.lessons_end_view(ctx),
@@ -2709,26 +2730,49 @@ impl BattleScreen {
             menu,
             place,
             header,
+            clear_of: self.reach_shown().to_vec(),
         })
     }
 
+    /// The focused area skill's reach in the Skill list (0482), which the
+    /// map tints and the list keeps clear of (0492); none otherwise.
+    fn reach_shown(&self) -> &[Pos] {
+        match &self.mode {
+            Mode::List { menu, .. } => match menu.value(menu.focus()) {
+                Some(Line::Skill(c)) => &c.area,
+                _ => &[],
+            },
+            _ => &[],
+        }
+    }
+
     /// The side panel: the terrain and the unit under the cursor (as
-    /// drawn, during a playback).
-    fn panel_view(&self, words: Words<'_>) -> PanelView {
+    /// drawn, during a playback); with its `numbers` (stats, weapon,
+    /// combat numbers) where the skin paints them, the PC's (0484).
+    fn panel_view(&self, words: Words<'_>, numbers: bool) -> PanelView {
         let pos = self.cursor.pos;
         let told = (&self.state, words);
         let selected = self.mode.selection().is_some();
         if self.playing() {
             let shown = self.shown_units();
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
-            panel::view(told, pos, hovered.map(|(u, _)| u), selected)
+            panel::view(told, pos, hovered.map(|(u, _)| u), (selected, numbers))
         } else {
-            panel::view(told, pos, self.looked_at(), selected)
+            panel::view(told, pos, self.looked_at(), (selected, numbers))
         }
     }
 
     /// The box over the map: the objective page (the battle notes under
     /// it) or a yes/no question.
+    /// What `banner` shows; the objective's with its lines (0481).
+    fn banner_view(&self, banner: &Banner, words: Words<'_>, limit: Option<Turn>) -> BannerView {
+        let mut view = banner.view(words, limit);
+        if banner.kind == BannerKind::Objective {
+            view.lines = objective::lines(&self.state, self.exit_name.as_deref(), words);
+        }
+        view
+    }
+
     fn dialog_view(&self, ctx: &Ctx) -> Option<DialogView> {
         let words = ctx.words();
         let question = |question: String| {
@@ -2746,12 +2790,8 @@ impl BattleScreen {
                 });
                 Some(DialogView::Objective(ObjectiveView {
                     title: ctx.text("battle.objective.title").to_owned(),
-                    objective: map_menu::objective_text(
-                        &self.state,
-                        self.exit_name.as_deref(),
-                        words,
-                    ),
-                    village: loot::village_text(&self.state, words),
+                    lines: objective::lines(&self.state, self.exit_name.as_deref(), words),
+                    village: objective::village_count(&self.state, words),
                     turn: map_menu::turn_text(&self.state, words),
                     notes: under,
                 }))

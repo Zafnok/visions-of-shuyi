@@ -55,7 +55,7 @@ fn skip_scenes(h: &mut Harness) {
 
 /// Chapter 1 from New Game in Classic at tutorial `level`, with the lessons
 /// on (as the game has them) but those of `without`, so a test reaches the
-/// one it is about: turn 1, its scenes skipped and its banner closed, the
+/// one it is about: turn 1, its scenes skipped and its banners closed, the
 /// cursor on the lead.
 fn chapter_1(level: TutorialLevel, without: &[&str]) -> Harness {
     let h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
@@ -75,7 +75,8 @@ fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Ha
     lessons.retain(|l| !without.contains(&l.id.as_str()));
     h.keys("f f").keys(downs(level)).keys("f Up f");
     skip_scenes(&mut h);
-    h.keys("f");
+    // The objective's banner, then `PLAYER PHASE`.
+    h.keys("f f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(0.1);

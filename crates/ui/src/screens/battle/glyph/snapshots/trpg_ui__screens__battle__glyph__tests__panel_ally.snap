@@ -1,0 +1,32 @@
+---
+source: crates/ui/src/screens/battle/glyph/tests.rs
+expression: panel_text(&panel_with(ellery_panel(true)))
+---
+Road
+DEF +0  AVO +0
+
+
+Ellery
+Exile  Lv 1
+HP 19/19   ██████████
+Player
+
+Str   8     Mag   1
+Dex   7     Spd   7
+Def   6     Res   5
+Mov   5
+
+Iron Sword        20/20
+Atk  13     Hit 104
+Crit  3     Avo  14
+AS    5
+
+
+
+
+
+
+
+
+
+Gold 0

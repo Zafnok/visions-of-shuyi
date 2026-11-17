@@ -381,8 +381,9 @@ fn a_button_closes_the_layout_picker_without_choosing() {
 #[test]
 fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     let mut h = Harness::at_prompt();
-    // The prompt, then Quick Battle, `Fight!` and the phase banner.
-    h.pad("South DpadDown South DpadLeft South South");
+    // The prompt, then Quick Battle, `Fight!`, the objective's banner and
+    // the phase banner.
+    h.pad("South DpadDown South DpadLeft South South South");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.pad("DpadRight");
     let cursor = h.cursor_tile();

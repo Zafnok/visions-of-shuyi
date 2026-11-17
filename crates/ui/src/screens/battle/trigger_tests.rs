@@ -85,7 +85,11 @@ fn a_scene_at_the_battles_start_plays_after_the_banner_and_tips_wait() {
         ..setup(&c, map, units, Objective::Rout { turn_limit: None })
     });
     let mut s = BattleScreen::start(state, &events);
-    // The events' order: the phase starts (its banner), then the scene.
+    // The objective's banner first (0481), then the events' order: the
+    // phase starts (its banner), then the scene.
+    assert!(s.banner().is_some());
+    assert_eq!(s.queued_scene(), None);
+    assert_eq!(frame(&mut s, &mut c, &[Action::Confirm], 0.0), "None");
     assert!(s.banner().is_some());
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 0.0), "None");
@@ -98,11 +102,11 @@ fn a_scene_at_the_battles_start_plays_after_the_banner_and_tips_wait() {
     assert_eq!(s.shown_tip(), None);
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 0.0), "None");
-    // Without events, `start` is `new`.
+    // Without events, `start` has only the objective's banner (0481).
     let q = quick_battle(&c.game.content).unwrap();
     let s = BattleScreen::start(q, &[]);
     assert_eq!(s.queued_scene(), None);
-    assert_eq!(s.banner(), None);
+    assert_eq!(s.banner().map(|b| b.kind), Some(BannerKind::Objective));
 }
 
 #[test]
@@ -608,7 +612,9 @@ fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
     let standing: Vec<Pos> = s.state().units().iter().map(|u| u.pos).collect();
     assert_eq!(drawn, standing);
     assert_ne!(drawn, [] as [trpg_core::Pos; 0]);
+    // Past the objective's banner (0481), then the phase banner.
     let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+    assert!(matches!(s.update(&mut c, &input), Transition::None));
     let Transition::Push(screen) = s.update(&mut c, &input) else {
         panic!("no scene");
     };

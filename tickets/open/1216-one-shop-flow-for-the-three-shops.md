@@ -39,6 +39,8 @@ calls `Campaign::trade` at once. A shop is this game's concept, so this
 is a game-side structure (ADR-0092), with no engine change. 1215
 then puts the one sale stepper on the engine's how-many question.
 
+**The hook chain** (2026-11-16, either order): if 1275 (the forge) lands first, move its Forge tab and the shop view's `note` field into the shared shop flow too.
+
 ## Nick input
 
 None. No change a player sees: the snapshots stay the same.

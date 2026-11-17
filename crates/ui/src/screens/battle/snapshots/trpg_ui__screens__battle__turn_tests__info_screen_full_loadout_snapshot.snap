@@ -9,12 +9,12 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ │                      │   HP 6/20    ███░░░░░░░        --                                       ║
 ║ │                      │                                                                         ║
 ║ │                      │   Stats                        --                                       ║
-║ │       portrait       │   Str   7                                                               ║
+║ │       portrait       │   Str   9                                                               ║
 ║ │                      │   Mag   0                                                               ║
 ║ │                      │   Dex   4                    Armor                                      ║
 ║ │                      │   Spd   2                      Chain Mail                               ║
-║ │                      │   Def   9                      Def +4  Res +1                           ║
-║ └──────────────────────┘   Res   0                                                               ║
+║ │                      │   Def  13                      Def +4  Res +1                           ║
+║ └──────────────────────┘   Res   1                                                               ║
 ║                                                       Accessory                                  ║
 ║  Mov 4  armored                                         Power Ring                               ║
 ║  Armored                   Skills                       Str +2                                   ║

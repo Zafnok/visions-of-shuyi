@@ -5,9 +5,9 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Mage     Frost Element║
-                                                                      ║ Frost         Frost        ║
-                                                                      ║ 10/10         10/10        ║
-                                                                      ║ HP 16 ████▒   HP 30 █████  ║
+                                                                      ║ Frost 10      Frost 10     ║
+                                                                      ║ HP 16 → 13    HP 30 → 30   ║
+                                                                      ║ ██████████▒▒  ████████████ ║
                                                                       ║ Hit  95       Hit  93      ║
                                                                       ║ Crit 0        Crit 1       ║
                                                                       ║ heals 6                    ║
@@ -39,8 +39,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffffffffb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhidddggddddhhhhhddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdhhdddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhiiddhhhhhhhhhhhhdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccddddddddddddddddddddb

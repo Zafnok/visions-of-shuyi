@@ -73,8 +73,11 @@ fn close_notes(h: &mut Harness) {
     assert!(!notes_open(h));
 }
 
-/// Closes the `PLAYER PHASE` banner that follows the notes.
+/// Closes the objective's banner (0481) and the `PLAYER PHASE` banner
+/// that follow the notes.
 fn close_banner(h: &mut Harness) {
+    assert!(shows(h, "OBJECTIVE"));
+    h.keys("f");
     assert!(shows(h, "PLAYER PHASE"));
     h.keys("f");
     assert!(!shows(h, "PLAYER PHASE"));

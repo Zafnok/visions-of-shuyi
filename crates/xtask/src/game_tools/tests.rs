@@ -264,7 +264,8 @@ fn the_prompt_start_draws_another_title() {
 fn tips_show_with_the_tips_option() {
     let dir = temp_dir("tips");
     let render = |extra: &[&str]| {
-        let mut all = vec!["t.png", "--keys", "Down f Left f f", "--scale", "1"];
+        // Quick Battle, Fight!, the objective's banner (0481), turn 1's.
+        let mut all = vec!["t.png", "--keys", "Down f Left f f f", "--scale", "1"];
         all.extend_from_slice(extra);
         run(&dir, &parse(&all).unwrap()).unwrap();
         fs::read(dir.join("t.png")).unwrap()
@@ -341,6 +342,11 @@ fn the_crank_and_buttons_after_the_steps_open_the_rewind_screen() {
         "0.1",
         "--pad",
         "DpadLeft East",
+        "--wait",
+        "0.1",
+        // The objective's banner (0481), then turn 1's.
+        "--pad",
+        "East",
         "--wait",
         "0.1",
         "--pad",

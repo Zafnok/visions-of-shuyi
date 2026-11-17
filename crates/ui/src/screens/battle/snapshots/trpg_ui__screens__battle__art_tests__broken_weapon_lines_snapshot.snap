@@ -12,15 +12,15 @@ expression: "format!(\"{list}\\n=== forecast ===\\n{forecast}\")"
                                                                       ║ HP 19/19   ██████████      ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
-                                                                      ║                            ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║                            ║
-                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║                            ║
+                                                                      ║ Str   6     Mag   1        ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ Dex   7     Spd   7        ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ Def   6     Res   5        ║
+                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ Mov   5                    ║
                     ..≈≈≈≈..┌─ Iron Sword broken ────────────────────┐║                            ║
-                    ....····│ Flowing Cut     −2 dur  E       broken │║                            ║
-                    ..♣♣··..│ Guard Break     −4 dur  D       broken │║                            ║
-                    ♣♣♣♣··Ma│ Keen Edge       −3 dur  active  broken │║                            ║
-                    ♣♣♠♠··..├────────────────────────────────────────┤║                            ║
+                    ....····│ Flowing Cut     −2 dur  E       broken │║ Iron Sword       broken    ║
+                    ..♣♣··..│ Guard Break     −4 dur  D       broken │║ Atk   8     Hit  84        ║
+                    ♣♣♣♣··Ma│ Keen Edge       −3 dur  active  broken │║ Crit  3     Avo  14        ║
+                    ♣♣♠♠··..├────────────────────────────────────────┤║ AS    5                    ║
                             │ follow-up ×3/2                         │║                            ║
                             └────────────────────────────────────────┘║                            ║
                                                                       ║                            ║
@@ -45,15 +45,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooorrssjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooorrssjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjbbddddddddddddtttttttbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjjjoooobuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuubbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoojjbggggggggggggggggggggggggggggggggtttttttgbbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoovvbggggggggggggggggggggggggggggggggtttttttgbbccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjjjoooobuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuubbccccccccccccccccccttttttccccb
+aaaaaaaaaaaaaaaaaaaajjkkoojjbggggggggggggggggggggggggggggggggtttttttgbbcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoovvbggggggggggggggggggggggggggggggggtttttttgbbcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccccccccccbbccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -149,19 +149,19 @@ over  278,187 3x2  text_highlight
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Lord     Brigand      ║
-                                                                      ║ Iron Sword    Iron Axe     ║
-                                                                      ║ (broken)      20/20        ║
-                                                                      ║ HP 19 ███▒▒   HP 20 ██▒▒▒  ║
+                                                                      ║ Iron Sword    Iron Axe 20  ║
+                                                                      ║ (broken)                   ║
+                                                                      ║ HP 19 → 11    HP 20 → 9    ║
+                                                                      ║ ███████▒▒▒▒▒  █████▒▒▒▒▒▒▒ ║
                                                                       ║ Hit  76       Hit  65      ║
                                                                       ║ Crit 3        Crit 0       ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
-                                                                      ║  5 dmg   →  1              ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║             2 ←  8 dmg     ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  6 dmg   →  3              ║
-                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ ────────────────────────── ║
-                    ..≈≈≈≈..··..............╦╦..                      ║ 11 ×2     Total  8 ×1      ║
-                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  5 dmg   →  1              ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║             2 ←  8 dmg     ║
+                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║  6 dmg   →  3              ║
+                    ..≈≈≈≈..··..............╦╦..                      ║ ────────────────────────── ║
+                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║ 11 ×2     Total  8 ×1      ║
                     ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
                     ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
                     ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
@@ -183,18 +183,18 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggggddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddiiihhdddggddddiihhhddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhdddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdiiddddggddddgdiddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdiiiiiiihhhhhddiiiiihhhhhhhdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
+aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
 aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyzzvvyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammmmqqxxxxllllllllyyzzzzyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaammnnqqllllllllllwwyyyyAAyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

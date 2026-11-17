@@ -77,8 +77,9 @@ fn the_d_pad_a_and_b_play_from_the_title_into_the_first_battle() {
     // Then down to Start, and A.
     h.pad("DpadDown East");
     skip_scenes(&mut h);
-    // The battle's banner (A), then its opening scene.
-    h.pad("East");
+    // The battle's banners (A, A: its objective's, turn 1's), then its
+    // opening scene.
+    h.pad("East East");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), None);
@@ -377,10 +378,10 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     let mut h = Harness::first_launch_and(playdate);
     h.use_pad(PadKind::Playdate);
     // A to New Game, Classic and the familiarity answer, the name as it
-    // is, Start; past the scenes and the banner.
+    // is, Start; past the scenes and the banners.
     h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -418,7 +419,7 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
 
 /// The first battle on the Playdate, lessons off: New Game,
 /// Classic, the familiarity answer, the name as it is, Start, past the
-/// scenes and the banner, with the cursor on the lead.
+/// scenes and the banners, with the cursor on the lead.
 fn first_battle() -> Harness {
     first_battle_and(|_| {})
 }
@@ -432,7 +433,7 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     h.use_pad(PadKind::Playdate);
     h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -751,7 +752,7 @@ fn the_system_menu_entries_work_where_they_can() {
     h.pad("West");
     assert!(!log_open(&h));
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -779,18 +780,18 @@ fn the_system_menu_entries_work_where_they_can() {
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
-/// The debug Quick Battle on the Playdate's skins, past its banner, the
-/// cursor on the lord.
+/// The debug Quick Battle on the Playdate's skins, past its objective's
+/// banner and its phase banner, the cursor on the lord.
 fn quick_battle_on_the_playdate() -> Harness {
     let mut h = Harness::first_launch_and(playdate_skins);
     h.use_pad(PadKind::Playdate);
     // A ends the title's wait; Quick Battle, then Preparations: left wraps
-    // to `Fight!`; A closes the banner.
+    // to `Fight!`; A closes the objective's banner, A the phase banner.
     h.pad("East DpadDown East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.pad("DpadLeft East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.pad("East");
+    h.pad("East East");
     h
 }
 

@@ -94,6 +94,9 @@ pub const WEAPON_SLOTS: usize = 3;
 pub struct WeaponDef {
     /// Display name.
     pub name: String,
+    /// The name shown where [`WeaponDef::name`] is too wide for its line
+    /// (`Stl Sword`, the attack forecast's columns), if it has one.
+    pub short_name: Option<String>,
     /// Weapon kind; its trait comes from [`ItemTable::traits`].
     pub kind: WeaponKind,
     /// Lowest rank that can wield it.
