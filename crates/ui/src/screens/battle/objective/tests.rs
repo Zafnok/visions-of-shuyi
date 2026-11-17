@@ -198,3 +198,24 @@ fn the_village_count_is_only_in_a_village() {
     let q = quick_with(&c, Objective::Rout { turn_limit: None });
     assert_eq!(village_count(&q, Words::ENGLISH), None);
 }
+
+/// The lead is the player's lord, not the first player unit listed.
+#[test]
+fn the_lead_is_the_players_lord() {
+    let c = ctx();
+    let q = quick_battle(&c.game.content).unwrap();
+    let mut units = q.units().to_vec();
+    units.reverse();
+    let first = units
+        .iter()
+        .find(|u| u.faction == trpg_core::Faction::Player);
+    assert!(first.is_some_and(|u| !u.is_lord), "{first:?}");
+    let s = battle_with(
+        &c,
+        q.map().clone(),
+        units,
+        Objective::Rout { turn_limit: None },
+    );
+    let l = lines(&s, None, Words::ENGLISH);
+    assert_eq!(shown(&l)[1], ("Lose:", "Test Lord falls"));
+}

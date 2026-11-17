@@ -656,3 +656,35 @@ fn the_objective_banner_snapshot() {
         insta::assert_snapshot!(format!("objective_banner_{i}"), shown);
     }
 }
+
+/// A banner wider or taller than the screen keeps inside its window: a
+/// line too wide is cut (with `…`) two cells short of the frame, and the
+/// lines stop
+/// above its bottom border.
+#[test]
+fn an_objective_banner_too_big_for_the_screen_stays_in_its_window() {
+    let s = quick();
+    let long = "x".repeat(80);
+    let buf = painted_with(&s, |v| {
+        v.banner = Some(BannerView {
+            kind: BannerKind::Objective,
+            title: "OBJECTIVE".into(),
+            subtitle: String::new(),
+            lines: (0..20)
+                .map(|_| ObjectiveLine {
+                    label: "or".into(),
+                    text: long.clone(),
+                })
+                .collect(),
+        });
+    });
+    let shown = rows(&buf);
+    let top = shown.iter().position(|r| r.starts_with('╔')).unwrap();
+    let bottom = shown.iter().rposition(|r| r.starts_with('╚')).unwrap();
+    // The whole screen: 50 cells, 15 rows.
+    assert_eq!((top, bottom), (0, 14));
+    assert_eq!(shown[top + 4], format!("║  or {}…  ║", "x".repeat(40)));
+    // The last line is the row above the blank one over the border.
+    assert!(shown[bottom - 2].contains("or x"), "{}", shown[bottom - 2]);
+    assert_eq!(shown[bottom - 1], format!("║{}║", " ".repeat(48)));
+}
