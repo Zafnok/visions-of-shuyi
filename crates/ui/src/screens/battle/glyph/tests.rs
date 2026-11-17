@@ -12,8 +12,8 @@ use crate::screen::tests::ctx;
 use crate::screens::battle::BattleScreen;
 use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
 use crate::screens::battle::view::{
-    BannerView, MenuHeader, MessageView, ObjectiveView, PanelCellView, PanelUnitView, QuestionView,
-    TerrainView, UsesView,
+    BannerView, MenuHeader, MessageView, ObjectiveLine, ObjectiveView, PanelCellView,
+    PanelUnitView, QuestionView, TerrainView, UsesView,
 };
 
 /// The glyphs of row `y` from column `from`, `n` of them.
@@ -69,6 +69,30 @@ fn menus_go_right_of_the_tile_unless_they_would_leave_the_view() {
     // its top row.
     assert_eq!(menu_origin(Rect::new(10, 4, 4, 2), (10, 4)), (15, 3));
     assert_eq!(menu_origin(Rect::new(58, 4, 4, 2), (10, 4)), (47, 3));
+}
+
+/// A menu that keeps clear of an area skill's reach goes beside the whole
+/// reach (ticket 0492): right of it, or left of it at the view's right
+/// edge.
+#[test]
+fn a_menu_goes_beside_the_reach_it_keeps_clear_of() {
+    // Inspire's radius-2 diamond around the glyph tile at (x, 10).
+    let reach = |x: i32| {
+        let near = (-2..=2_i32).flat_map(|dx| (-2..=2_i32).map(move |dy| (dx, dy)));
+        near.filter(|&(dx, dy)| dx.abs() + dy.abs() <= 2 && (dx, dy) != (0, 0))
+            .map(move |(dx, dy)| Rect::new(x + 2 * dx, 10 + dy, 2, 1))
+    };
+    let tile = Rect::new(20, 10, 2, 1);
+    let anchor = beside_all(tile, reach(20));
+    assert_eq!(anchor, Rect::new(16, 8, 10, 5));
+    // Right of the reach, its first item level with the reach's top row.
+    assert_eq!(menu_origin(anchor, (10, 4)), (27, 7));
+    // No reach: beside the tile, as every menu.
+    assert_eq!(beside_all(tile, []), tile);
+    // At the view's right edge (the map's): left of the reach.
+    let edge = beside_all(Rect::new(64, 10, 2, 1), reach(64));
+    assert_eq!(edge, Rect::new(60, 8, 10, 5));
+    assert_eq!(menu_origin(edge, (10, 4)), (49, 7));
 }
 
 #[test]
@@ -413,6 +437,7 @@ fn banners_take_their_phases_colour_and_are_centred_on_the_map() {
             kind: lost,
             title: "DEFEAT".to_owned(),
             subtitle: String::new(),
+            lines: Vec::new(),
         });
     });
     // A 24 × 6 box in the middle of the 70 × 30 map view.
@@ -459,7 +484,10 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
     let buf = painted(&quick(), |v| {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "OBJECTIVE".to_owned(),
-            objective: "Rout the enemy".to_owned(),
+            lines: vec![ObjectiveLine {
+                label: "Win:".to_owned(),
+                text: "Rout the enemy".to_owned(),
+            }],
             village: None,
             turn: "Turn 1".to_owned(),
             notes: Some(NotesView {
@@ -472,7 +500,7 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
         .find(|&y| row(&buf, y).contains(" OBJECTIVE "))
         .unwrap();
     let rows: Vec<String> = (top + 2..top + 7).map(|y| row(&buf, y)).collect();
-    assert!(rows[0].contains("║ Rout the enemy"), "{}", rows[0]);
+    assert!(rows[0].contains("║ Win: Rout the enemy"), "{}", rows[0]);
     assert!(rows[1].contains("║ Turn 1"), "{}", rows[1]);
     assert!(rows[3].contains("║ Notes"), "{}", rows[3]);
     assert!(rows[4].contains("║ • A note."), "{}", rows[4]);
@@ -522,4 +550,66 @@ fn the_screens_draw_paints_its_view() {
     let mut buf = render(&s, &c);
     paint(&c, &s.view(&c), &mut buf);
     assert_eq!(drawn.to_snapshot(&c.palette), buf.to_snapshot(&c.palette));
+}
+
+/// The objective banner (0481) with `lines`, each `(label, text)`.
+fn objective_banner(lines: &[(&str, &str)]) -> BannerView {
+    BannerView {
+        kind: BannerKind::Objective,
+        title: "OBJECTIVE".to_owned(),
+        subtitle: String::new(),
+        lines: lines
+            .iter()
+            .map(|&(label, text)| ObjectiveLine {
+                label: label.to_owned(),
+                text: text.to_owned(),
+            })
+            .collect(),
+    }
+}
+
+/// A battle like Chapter 1's (win, and the lead's fall) and one like
+/// Chapter 2's (its village too, and the bonus).
+pub(crate) const OBJECTIVES: [&[(&str, &str)]; 2] = [
+    &[("Win:", "Defeat Harl Coster"), ("Lose:", "Ellery falls")],
+    &[
+        ("Win:", "Defeat Silas Hendry"),
+        ("Lose:", "3 of 5 houses burn"),
+        ("or", "Ellery falls"),
+        ("Bonus:", "Save 4 or 5 houses for rewards"),
+    ],
+];
+
+/// Acceptance (0481): the objective banner, its labels in a column in the
+/// highlight colour, its texts lined up after them.
+#[test]
+fn the_objective_banner_snapshot() {
+    let ctx = ctx();
+    for (i, lines) in OBJECTIVES.into_iter().enumerate() {
+        let buf = painted(&quick(), |v| v.banner = Some(objective_banner(lines)));
+        insta::assert_snapshot!(
+            format!("objective_banner_{i}"),
+            buf.to_snapshot(&ctx.palette)
+        );
+        let (width, height) = objective_banner_size("OBJECTIVE", &objective_banner(lines).lines);
+        let (left, top) = (
+            MAP_VIEW.x + (MAP_VIEW.w - width) / 2,
+            MAP_VIEW.y + (MAP_VIEW.h - height) / 2,
+        );
+        assert_eq!(buf.get(left, top).unwrap().glyph, '╔');
+        let palette = &ctx.palette;
+        assert_eq!(
+            buf.get(left + 3, top + 4).unwrap().fg,
+            palette.get(UiColor::TextHighlight)
+        );
+        assert_eq!(
+            buf.get(left + 3, top + 5).unwrap().fg,
+            palette.get(UiColor::TextHighlight)
+        );
+        assert_eq!(
+            buf.get(left + 9, top + 4).unwrap().fg,
+            palette.get(UiColor::Text)
+        );
+        assert_eq!(cells(&buf, top + 5, left + 3, 6), "Lose: ");
+    }
 }

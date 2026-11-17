@@ -60,13 +60,18 @@ fn to_battle_answering_voices(h: &mut Harness, answer: &str) {
 }
 
 /// From the lead screen: the default lead, the intro scene skipped, the
-/// battle notes and turn 1's banner closed.
+/// battle notes, the objective's banner and turn 1's banner closed.
 fn from_the_lead(h: &mut Harness) {
     h.keys("Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.keys("f").wait(0.1).keys("f").wait(0.1);
+    h.keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1);
 }
 
 fn battle(h: &Harness) -> &BattleScreen {

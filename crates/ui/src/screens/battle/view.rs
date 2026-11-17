@@ -117,6 +117,9 @@ pub struct BattleMenuView {
     pub place: MenuPlace,
     /// What it shows in its top border, if anything.
     pub header: Option<MenuHeader>,
+    /// The tiles it keeps clear of besides its own: the focused area
+    /// skill's reach in the Skill list (ticket 0492), most often none.
+    pub clear_of: Vec<Pos>,
 }
 
 /// Where a menu opens.
@@ -227,10 +230,10 @@ pub enum DialogView {
 pub struct ObjectiveView {
     /// Its title.
     pub title: String,
-    /// What wins the battle.
-    pub objective: String,
-    /// The village's houses to save, with how many are saved and lost
-    /// (0409), in a battle with a village.
+    /// What wins and loses the battle, as its banner says (0481).
+    pub lines: Vec<ObjectiveLine>,
+    /// How many of the village's houses are saved and lost (0409), in a
+    /// battle with a village.
     pub village: Option<String>,
     /// The turn, with the limit if there is one.
     pub turn: String,
@@ -266,6 +269,18 @@ pub struct BannerView {
     pub title: String,
     /// The line beneath (the turn), empty for an outcome.
     pub subtitle: String,
+    /// The objective banner's lines (0481), empty for the others.
+    pub lines: Vec<ObjectiveLine>,
+}
+
+/// A line of the objective (0481), on its banner and its page: a
+/// highlighted label, then its text.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ObjectiveLine {
+    /// The label: `Win:`, `Lose:`, `or`, `Bonus:`.
+    pub label: String,
+    /// The rest of the line.
+    pub text: String,
 }
 
 /// The line over the help.
@@ -327,7 +342,9 @@ impl BattleView {
         }
         match &self.dialog {
             Some(DialogView::Objective(o)) => {
-                texts.extend([o.title.as_str(), &o.objective, &o.turn]);
+                texts.push(o.title.as_str());
+                texts.extend(o.lines.iter().flat_map(|l| [l.label.as_str(), &l.text]));
+                texts.push(&o.turn);
                 texts.extend(o.village.as_deref());
                 if let Some(n) = &o.notes {
                     texts.extend(note_texts(n));

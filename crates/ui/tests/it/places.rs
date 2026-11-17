@@ -154,7 +154,7 @@ fn chapter_1s_last_scene_is_drawn_over_its_place() {
 #[test]
 fn the_battle_map_behind_a_battles_scene_is_darkened() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let before = h.game().buffer().clone();
     h.keys("F2 Down Down Down f");

@@ -16,7 +16,7 @@ use trpg_ui::screens::battle::layout::MAP_VIEW;
 fn quick_battle(channel: bool, tools: bool) -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`; the banner.
-    h.keys("Down f Left f").keys("f");
+    h.keys("Down f Left f f").keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.ctx_mut().debug_tools = tools;
     h.ctx_mut().debug_view = DebugView::default();

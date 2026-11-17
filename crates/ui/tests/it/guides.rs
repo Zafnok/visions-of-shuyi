@@ -36,7 +36,13 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.keys("f").wait(0.1).keys("f").wait(0.1);
+    // The notes, the objective's banner, turn 1's banner.
+    h.keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1);
     let level = h
         .flow()
         .and_then(|f| f.campaign_now(h.game().ctx()))

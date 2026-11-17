@@ -8,6 +8,7 @@ use trpg_core::{GameMode, LeadGender, LeadProfile, Phase, Pos, UnitId};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::info;
+use super::objective;
 use super::testing::{Stacked, wait};
 use super::tests::{frame, lord_menu, quick, step};
 use super::view::{
@@ -143,7 +144,12 @@ fn the_objective_page_shows_the_goal_and_the_turn_and_closes() {
     let Some(DialogView::Objective(page)) = s.view(&c).dialog else {
         panic!("{:?}", s.mode());
     };
-    assert_eq!(page.objective, "Rout the enemy");
+    let shown: Vec<_> = page
+        .lines
+        .iter()
+        .map(|l| (l.label.as_str(), l.text.as_str()))
+        .collect();
+    assert_eq!(shown[0], ("Win:", "Rout the enemy"));
     assert_eq!(page.turn, "Turn 1");
     // The Quick Battle has no notes.
     assert_eq!(page.notes, None);
@@ -204,6 +210,8 @@ fn quick_start(c: &Ctx) -> BattleScreen {
 fn a_phase_banner_shows_then_expires() {
     let mut c = ctx();
     let mut s = quick_start(&c);
+    // After the objective's banner (0481).
+    frame(&mut s, &mut c, &[Action::Confirm], 0.0, false);
     assert_eq!(
         s.view(&c).banner,
         Some(BannerView {
@@ -213,6 +221,7 @@ fn a_phase_banner_shows_then_expires() {
             },
             title: "PLAYER PHASE".to_owned(),
             subtitle: "Turn 1".to_owned(),
+            lines: Vec::new(),
         })
     );
     frame(&mut s, &mut c, &[], PHASE_BANNER_S * 1.1, false);
@@ -408,4 +417,35 @@ fn without_the_stage_the_fight_box_plays_then_the_exp_bar_and_both_go() {
     // Then it closes by itself.
     frame(&mut s, &mut c, &[], 2.0, false);
     assert_eq!(parts(&s, &c), (None, None, false));
+}
+
+/// Acceptance (0481): the objective's banner and the map menu's Objective
+/// page show the same lines, built by one function; the page adds the
+/// village's count and the turn.
+#[test]
+fn the_objective_banner_and_page_show_the_same_lines() {
+    let mut c = ctx();
+    let mut s = quick_start(&c);
+    let banner = s.view(&c).banner.expect("the objective banner");
+    assert_eq!(banner.kind, BannerKind::Objective);
+    frame(
+        &mut s,
+        &mut c,
+        &[Action::Confirm, Action::Confirm],
+        0.0,
+        false,
+    );
+    assert_eq!(s.view(&c).banner, None);
+    step(
+        &mut s,
+        &mut c,
+        &[Action::Cancel, Action::CursorDown, Action::Confirm],
+    );
+    let Some(DialogView::Objective(page)) = s.view(&c).dialog else {
+        panic!("{:?}", s.mode());
+    };
+    assert_eq!(page.lines, banner.lines);
+    let built = objective::lines(s.state(), None, Words::ENGLISH);
+    assert_eq!(page.lines, built);
+    assert_eq!((page.village, page.turn.as_str()), (None, "Turn 1"));
 }

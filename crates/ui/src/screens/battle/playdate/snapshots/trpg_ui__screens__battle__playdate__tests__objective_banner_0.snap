@@ -1,0 +1,15 @@
+---
+source: crates/ui/src/screens/battle/playdate/tests.rs
+expression: shown
+---
+
+
+
+╔════════════════════════════╗
+║                            ║
+║         OBJECTIVE          ║
+║                            ║
+║  Win:  Defeat Harl Coster  ║
+║  Lose: Ellery falls        ║
+║                            ║
+╚════════════════════════════╝

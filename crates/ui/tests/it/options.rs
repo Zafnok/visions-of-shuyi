@@ -61,10 +61,10 @@ fn options() -> Harness {
 
 /// From Options with changes, kept, back at the title (still on its
 /// Options item), the Quick
-/// Battle (its Preparations: Left wraps to `Fight!`) with its `PLAYER
-/// PHASE` banner closed.
+/// Battle (its Preparations: Left wraps to `Fight!`) with its objective's
+/// and `PLAYER PHASE` banners closed.
 fn into_quick_battle(h: &mut Harness) {
-    h.keys(KEEP).keys("Up f Left f f");
+    h.keys(KEEP).keys("Up f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
@@ -72,7 +72,7 @@ fn into_quick_battle(h: &mut Harness) {
 /// Guides, Options).
 fn options_in_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f Left f f d Down Down Down f");
+    h.keys("Down f Left f f f d Down Down Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     h
 }
@@ -289,7 +289,7 @@ fn the_cursor_row_changes_the_battle_cursor() {
     h.keys(KEEP).keys("d");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
     let mut h = relaunch(h);
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
 }
 
@@ -491,7 +491,7 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
     // Options in the battle: Casual, and no message about Preparations.
-    h.keys("f d Down Down Down f Up Up Up Up f");
+    h.keys("f f d Down Down Down f Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     assert!(shows(&h, "Casual") && !shows(&h, "Preparations"));
     assert_eq!(mode(&h), Some(GameMode::Casual));
@@ -515,10 +515,10 @@ fn a_switch_at_the_first_preparations_starts_the_battle_in_casual() {
 fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     let mut h = title();
     // New Game, Casual, Not familiar, the default lead; skip the intro scene; close the
-    // battle notes and the banner.
+    // battle notes and the banners.
     h.keys("f Down f f Up f");
     assert_eq!(h.top_screen(), "dialogue");
-    h.keys("d f f f");
+    h.keys("d f f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(mode(&h), Some(GameMode::Casual));
     h.keys("d Down Down Down f Up Up Up Up");

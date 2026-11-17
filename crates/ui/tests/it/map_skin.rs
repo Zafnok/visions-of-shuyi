@@ -33,7 +33,7 @@ type Step = (&'static str, f32);
 /// attacks it, the fight is rewound, the turn ends, the enemy phase plays,
 /// and turn 2 starts.
 const SCRIPT: [Step; 16] = [
-    ("Down f Left f", 0.0),
+    ("Down f Left f f", 0.0),
     ("f", 0.0),
     ("f Right Right Right Up", 0.0),
     ("f", 1.0),
@@ -155,7 +155,7 @@ fn quick_battle_at_dusk_shades_the_ground_only() {
         if let Some(light) = light {
             light_quick_battle(&mut h, light);
         }
-        h.keys("Down f Left f f f");
+        h.keys("Down f Left f f f f");
         assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         h
     };
@@ -215,10 +215,10 @@ fn quick_battle_with_layers_between_tiles() {
     at_zoom(&mut h, MapZoom::X1);
     h.with_map_skin("test_auto");
     // Past Preparations (Fight!) and the battle's notes; then the lord.
-    h.keys("Down f Left f f f");
+    h.keys("Down f Left f f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut glyphs = Harness::with_layout(RIGHT_HANDED);
-    glyphs.keys("Down f Left f f f");
+    glyphs.keys("Down f Left f f f f");
     // What is shown is what the glyph skin shows.
     assert_eq!(h.map_text(), glyphs.map_text());
     let scene = h.map_scene().unwrap();
@@ -235,10 +235,10 @@ fn quick_battle_with_layers_between_tiles() {
 fn quick_battle_with_sprite_units_on_glyph_terrain() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite_units");
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut glyphs = Harness::with_layout(RIGHT_HANDED);
-    glyphs.keys("Down f Left f f");
+    glyphs.keys("Down f Left f f f");
     // What is shown is what the glyph skin shows.
     assert_eq!(h.map_text(), glyphs.map_text());
     assert_snapshot!(h.snapshot());
@@ -253,7 +253,7 @@ fn quick_battle_with_sprite_units_on_glyph_terrain() {
 fn quick_battle_with_sprite_units_after_two_actions() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite_units");
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     // The knight, at (4, 6): Skill, Brace.
     h.keys("Right Down f f Up Up Up f f").wait(1.0);
     // The archer, at (2, 4): to (5, 4), Arts, Pinning Shot.
@@ -289,7 +289,7 @@ type Seen = Vec<(Pos, Facing, (f32, f32), u8)>;
 fn lord_walk(skin: &str) -> (Vec<Pos>, Seen) {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin(skin);
-    h.keys("Down f Left f f f Right Right Right Up");
+    h.keys("Down f Left f f f f Right Right Right Up");
     let path = h.path();
     let lord = h.battle().map(|b| b.state().units()[0].id);
     h.keys("f");

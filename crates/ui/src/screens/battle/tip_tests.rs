@@ -181,9 +181,12 @@ fn the_start_tip_waits_for_the_first_player_phase_banner() {
         turn: 1,
         phase: Phase::Player,
     }];
-    // The banner closes by itself: the tip shows.
+    // The objective's banner waits for Confirm (0481); the phase banner
+    // after it closes by itself: the tip shows.
     let mut s = BattleScreen::start(state.clone(), &events);
     press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), None);
+    press(&mut s, &mut c, &[Action::Confirm]);
     assert!(s.banner().is_some());
     assert_eq!(s.shown_tip(), None);
     assert!(!shows(&s, &c, "Your move"));
@@ -196,6 +199,8 @@ fn the_start_tip_waits_for_the_first_player_phase_banner() {
     // The Confirm that closes the banner doesn't also close the tip.
     let mut c = tipped();
     let mut s = BattleScreen::start(state, &events);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), None);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));

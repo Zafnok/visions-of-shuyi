@@ -27,7 +27,7 @@ fn battle_with(mut h: Harness, skin: &str, keys: &str) -> Harness {
 
 /// [`battle_with`] the right-handed layout's keys.
 fn battle_in(h: Harness, skin: &str) -> Harness {
-    battle_with(h, skin, "Down f Left f f")
+    battle_with(h, skin, "Down f Left f f f")
 }
 
 /// A new game's Quick Battle under the skin `skin`.

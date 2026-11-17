@@ -55,12 +55,14 @@ fn to_notes() -> Harness {
     h
 }
 
-/// [`to_notes`], and the battle notes closed, then the `PLAYER PHASE`
-/// banner after them.
+/// [`to_notes`], and the battle notes closed, then the objective's banner
+/// (0481) and the `PLAYER PHASE` banner after them.
 fn to_battle() -> Harness {
     let mut h = to_notes();
     h.keys("f");
     assert!(!notes_open(&h));
+    assert!(h.snapshot().contains("OBJECTIVE"));
+    h.keys("f");
     assert!(h.snapshot().contains("PLAYER PHASE"));
     assert!(h.snapshot().contains("Turn 1/3"));
     h.keys("f");
@@ -295,7 +297,8 @@ fn shows(h: &Harness, text: &str) -> bool {
 fn retry_after_a_defeat_restarts_the_battle() {
     let mut h = to_battle();
     let start = battle(&h);
-    // A move, rewound (a charge spent), then the turn limit runs out.
+    // A move, rewound (a charge spent: no objective banner again, 0481),
+    // then the turn limit runs out.
     send(
         &mut h,
         &Command::Act {
@@ -306,6 +309,8 @@ fn retry_after_a_defeat_restarts_the_battle() {
     );
     h.keys("r f f");
     assert_eq!(charges(&h), 2);
+    let banner = h.battle().and_then(|b| b.banner().map(|b| b.kind));
+    assert_eq!(banner, None);
     for _ in 0..6 {
         send(&mut h, &Command::EndPhase);
     }
@@ -321,6 +326,9 @@ fn retry_after_a_defeat_restarts_the_battle() {
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
     assert!(notes_open(&h));
+    // The objective's banner shows again (0481), then `PLAYER PHASE`.
+    h.keys("f");
+    assert!(shows(&h, "OBJECTIVE"), "{}", h.snapshot());
     h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"), "{}", h.snapshot());
     assert!(shows(&h, "Turn 1/3"));
@@ -471,6 +479,9 @@ fn restart_battle_from_the_map_menu() {
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
     assert!(notes_open(&h));
+    // The objective's banner shows again (0481), then `PLAYER PHASE`.
+    h.keys("f");
+    assert!(shows(&h, "OBJECTIVE"), "{}", h.snapshot());
     h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"), "{}", h.snapshot());
     assert!(shows(&h, "Turn 1/3"));
@@ -504,7 +515,10 @@ fn battle_notes_show_at_the_start_and_on_the_objective_page() {
     assert!(!shows(&h, "BATTLE NOTES"));
     assert!(!shows(&h, "Brigand: guards"));
     assert_eq!(battle(&h), start);
-    // Then turn 1's `PLAYER PHASE` banner (0435), then the map.
+    // Then the objective's banner (0481), turn 1's `PLAYER PHASE` banner
+    // (0435), then the map.
+    assert!(shows(&h, "OBJECTIVE"), "{}", h.snapshot());
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"), "{}", h.snapshot());
     assert!(shows(&h, "Turn 1/3"));
     h.keys("f");
@@ -539,10 +553,13 @@ fn the_phase_banner_waits_for_the_battle_notes() {
     assert!(notes_open(&h));
     assert!(!banner(&h));
     assert!(!shows(&h, "PHASE"));
-    // The banners come in order: turn 1's player phase, then the enemy's.
+    // The banners come in order: the objective's (0481), turn 1's player
+    // phase, then the enemy's.
     h.keys("f");
     assert!(!notes_open(&h));
     assert!(banner(&h));
+    assert!(shows(&h, "OBJECTIVE"), "{}", h.snapshot());
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"), "{}", h.snapshot());
     assert!(!shows(&h, "ENEMY PHASE"));
     h.keys("f");
@@ -561,7 +578,9 @@ fn no_notes_box_for_a_battle_without_notes() {
     assert_eq!(battle(&h).battle_notes(), []);
     assert!(!notes_open(&h));
     assert!(!shows(&h, "BATTLE NOTES"));
-    // It opens on the `PLAYER PHASE` banner.
+    // It opens on the objective's banner, then `PLAYER PHASE`.
+    assert!(shows(&h, "OBJECTIVE"), "{}", h.snapshot());
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"), "{}", h.snapshot());
     h.keys("f");
     // The Objective page: only the objective and the turn.
@@ -626,9 +645,9 @@ fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     skip_scene(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(music(&h), ["title", "battle_easy"]);
-    // The battle notes closed, and the banner after them. A move, rewound;
-    // then a whole turn: enemy phase, player phase.
-    h.keys("f f");
+    // The battle notes closed, and the banners after them. A move,
+    // rewound; then a whole turn: enemy phase, player phase.
+    h.keys("f f f");
     send(
         &mut h,
         &Command::Act {
@@ -715,8 +734,8 @@ fn restart_battle_asks_for_the_battles_music_again() {
     }
     h.keys("f f f Up f");
     skip_scene(&mut h);
-    // The battle notes closed.
-    h.keys("f");
+    // The battle notes and the objective's banner closed.
+    h.keys("f f");
     h.wait(2.0).clear_audio();
     h.keys("d Down Down Down Down Down f f f").wait(2.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -747,8 +766,9 @@ fn each_familiarity_answer_sets_the_level_and_gates_the_tips() {
         let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
         let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
         assert_eq!(campaign.tutorial, level);
-        // The battle notes closed, then past the turn's banner.
-        h.keys("f").wait(2.0);
+        // The battle notes and the objective's banner closed, then past
+        // the turn's banner.
+        h.keys("f f").wait(2.0);
         let screen = h.battle();
         let shown = screen.and_then(trpg_ui::screens::battle::BattleScreen::shown_tip);
         assert_eq!(shown, tip, "{level:?}");
@@ -782,10 +802,10 @@ fn a_tip_not_shown_before_a_retry_shows_after_it() {
         h.keys("f");
     }
     assert_eq!(h.top_screen(), "game_over");
-    // Retry: the notes, the banner, then the tip.
+    // Retry: the notes, the banners, then the tip.
     h.wait(2.1).keys("Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.keys("f f").wait(0.1);
+    h.keys("f f f").wait(0.1);
     assert_eq!(shown(&h), Some(TipTrigger::FirstBattleStart));
 }
 
@@ -847,9 +867,10 @@ fn the_next_chapter_follows_a_victory() {
     // New Game, Classic, Not familiar, Start.
     h.keys("f f f Up f");
     skip_scene(&mut h);
-    // The battle notes, turn 1's banner, then the VICTORY banner.
+    // The battle notes, the objective's and turn 1's banners, then the
+    // VICTORY banner.
     seize(&mut h);
-    h.keys("f f");
+    h.keys("f f f");
     past_results(&mut h);
     skip_scene(&mut h);
     decline_save(&mut h);

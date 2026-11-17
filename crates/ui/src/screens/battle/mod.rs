@@ -48,6 +48,7 @@ pub mod magic;
 pub mod map_menu;
 pub mod mode;
 pub mod notes;
+pub mod objective;
 pub mod panel;
 pub mod path;
 pub mod playback;
@@ -74,7 +75,7 @@ use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
     LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, ThreatAreas,
-    ThreatPlanner, TileSet, Unit, UnitId, danger_zone, next_command, threats_at,
+    ThreatPlanner, TileSet, Turn, Unit, UnitId, danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -97,8 +98,9 @@ use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::shop::{ShopScreen, ShopVisit};
 use self::tips::TipState;
 use self::view::{
-    BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView, MenuHeader,
-    MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView, QuestionView,
+    BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
+    MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView,
+    QuestionView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -632,6 +634,9 @@ impl BattleScreen {
         let mut screen = Self::new(state);
         if !screen.state.battle_notes().is_empty() && screen.state.outcome().is_none() {
             screen.queue.push_back(Queued::Notes);
+        }
+        if screen.state.outcome().is_none() {
+            screen.queue.push_back(Queued::Banner(Banner::OBJECTIVE));
         }
         screen.queue.extend(events.iter().filter_map(|e| match e {
             Event::SceneTriggered { .. } => SceneCue::of(e).map(Queued::Scene),
@@ -1362,7 +1367,7 @@ impl BattleScreen {
                 Transition::pop_with(BattleEnd::Won(state, self.history.charges_left()))
             }
             BannerKind::Outcome(Outcome::Defeat) => self.game_over(ctx, false),
-            BannerKind::Phase { .. } => Transition::None,
+            BannerKind::Phase { .. } | BannerKind::Objective => Transition::None,
         }
     }
 
@@ -2156,7 +2161,7 @@ impl BattleScreen {
             return Some(progress::help(ctx, p));
         }
         let key = match self.banner()?.kind {
-            BannerKind::Outcome(_) => "battle.help.continue",
+            BannerKind::Outcome(_) | BannerKind::Objective => "battle.help.continue",
             BannerKind::Phase { .. } => "battle.help.skip",
         };
         Some(ctx.text_with(key, &[]))
@@ -2548,11 +2553,7 @@ impl BattleScreen {
             }
             // The focused area skill's reach (0482): the allies standing in
             // it are the ones it would reach.
-            Mode::List { menu, .. } => {
-                if let Some(Line::Skill(c)) = menu.value(menu.focus()) {
-                    scene.tint(c.area.iter().copied(), range::HEAL);
-                }
-            }
+            Mode::List { .. } => scene.tint(self.reach_shown().iter().copied(), range::HEAL),
             _ => {}
         }
     }
@@ -2668,7 +2669,7 @@ impl BattleScreen {
             dialog: self.dialog_view(ctx),
             notes,
             noted: self.noted(),
-            banner: self.banner().map(|b| b.view(words, limit)),
+            banner: self.banner().map(|b| self.banner_view(b, words, limit)),
             tip: self.tip_view(ctx),
             lesson: self.lesson_view(ctx),
             lessons_end: self.lessons_end_view(ctx),
@@ -2729,7 +2730,20 @@ impl BattleScreen {
             menu,
             place,
             header,
+            clear_of: self.reach_shown().to_vec(),
         })
+    }
+
+    /// The focused area skill's reach in the Skill list (0482), which the
+    /// map tints and the list keeps clear of (0492); none otherwise.
+    fn reach_shown(&self) -> &[Pos] {
+        match &self.mode {
+            Mode::List { menu, .. } => match menu.value(menu.focus()) {
+                Some(Line::Skill(c)) => &c.area,
+                _ => &[],
+            },
+            _ => &[],
+        }
     }
 
     /// The side panel: the terrain and the unit under the cursor (as
@@ -2750,6 +2764,15 @@ impl BattleScreen {
 
     /// The box over the map: the objective page (the battle notes under
     /// it) or a yes/no question.
+    /// What `banner` shows; the objective's with its lines (0481).
+    fn banner_view(&self, banner: &Banner, words: Words<'_>, limit: Option<Turn>) -> BannerView {
+        let mut view = banner.view(words, limit);
+        if banner.kind == BannerKind::Objective {
+            view.lines = objective::lines(&self.state, self.exit_name.as_deref(), words);
+        }
+        view
+    }
+
     fn dialog_view(&self, ctx: &Ctx) -> Option<DialogView> {
         let words = ctx.words();
         let question = |question: String| {
@@ -2767,12 +2790,8 @@ impl BattleScreen {
                 });
                 Some(DialogView::Objective(ObjectiveView {
                     title: ctx.text("battle.objective.title").to_owned(),
-                    objective: map_menu::objective_text(
-                        &self.state,
-                        self.exit_name.as_deref(),
-                        words,
-                    ),
-                    village: loot::village_text(&self.state, words),
+                    lines: objective::lines(&self.state, self.exit_name.as_deref(), words),
+                    village: objective::village_count(&self.state, words),
                     turn: map_menu::turn_text(&self.state, words),
                     notes: under,
                 }))

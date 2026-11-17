@@ -35,7 +35,7 @@ fn skip_scenes(h: &mut Harness) {
 }
 
 /// Chapter 1 from New Game in Classic at `Full` on a fresh profile, with
-/// the tips and lessons on: turn 1, its scenes skipped and its banner
+/// the tips and lessons on: turn 1, its scenes skipped and its banners
 /// closed, the start tip closed, the cursor on the lead and the cursor
 /// lesson open.
 fn chapter_1() -> Harness {
@@ -43,7 +43,8 @@ fn chapter_1() -> Harness {
     h.with_lessons().with_tips();
     h.keys("f f f Up f");
     skip_scenes(&mut h);
-    h.keys("f");
+    // The objective's banner, then `PLAYER PHASE`.
+    h.keys("f f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(0.1);
