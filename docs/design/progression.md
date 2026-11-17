@@ -1002,7 +1002,9 @@ Design intent behind the numbers:
   weakness. The tier-3 Flier takes the numbers the old tier-3 Storm Lancer
   had (*tunable*), so a Lancer promoting into it gains HP, Mag, Dex, Spd and
   Res, and keeps its Str and Def. **Mounted** classes have high Mov, and spears (×2) are their
-  weakness.
+  weakness. A mounted unit can get off its horse for a while, to be safe
+  from spears: on foot it has Mov −2 and Spd +2 (`terrain.md`, *Getting
+  off and back on a horse*, ticket 0083).
 
 ### Generic units (enemies and generic allies)
 

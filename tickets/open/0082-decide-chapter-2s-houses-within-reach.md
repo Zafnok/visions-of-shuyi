@@ -123,8 +123,9 @@ roughly), reachable by a good plan, or easy?
   at ×3 does about 20 to a weak flier).
 - **G. Combinations, or describe your own** (for example A with D).
 
-If 0083 (dismounting) lets a rider on foot wade, say that Tamsin on foot
-could cross the river at 5 too.
+0083 decided (2026-11-17) that a rider on foot moves as a foot unit
+(Mov 5 for Tamsin) and can wade at 5: say that Tamsin on foot can cross
+the river too, but it takes her whole move.
 
 ## Scope
 

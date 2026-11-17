@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 0083 — Decide: getting off and back on a horse
@@ -136,11 +136,11 @@ text updated with what to build.
 
 ## Acceptance criteria
 
-- [ ] Nick's answer and words are in the design files named above;
+- [x] Nick's answer and words are in the design files named above;
       `docs/design/README.md` has the row.
-- [ ] 0334's text says exactly what to build (and names a purchase
+- [x] 0334's text says exactly what to build (and names a purchase
       ticket if one is needed).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -148,4 +148,46 @@ None (a decision); `cargo xtask ticket-lint`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Decided 2026-11-17 over four rounds (the AskUserQuestion pop-up), with
+`frame-png` mockups in the scratchpad (a throwaway `zz_dismount` battle
+on the Salt Road map and an env-var mock in the glyph skin and the action
+menu, reverted; nothing committed).
+
+- **Rules** (round 1, with Tamsin's numbers): "Three Houses trade" (on
+  foot: foot movement, Mov 7 → 5, Spd +2, no `Mounted`, same weapons,
+  stats and skills); "Before or after moving" (Three Houses: free, not
+  both in one turn, never after acting); "Simplest set" (every horse
+  class, Iron Rider and Juggernaut walk as Armored, ride indoors as now,
+  enemies never get off, each battle starts mounted). Recorded in
+  `terrain.md`, *Getting off and back on a horse*, with pointers in
+  `weapons-and-items.md` (*Unit tags*) and `progression.md`.
+- **Control:** "menu line, with optional, not bound by default key".
+- **Look:** in the picture look, mounted units' map sprites today are the
+  Tiny Tales knight **on foot** (MattWalkden's riders, picked in 0040,
+  were never imported). After seeing the store samples Nick said yes to
+  MattWalkden's riders for mounted units: ticket **0499** (a free
+  download Nick makes first). The glyph mark: Nick rejected seven
+  mockups (corner dot, bar over, horse legs, horseshoe in the corner,
+  capitals, horseshoe behind the letters, small horseshoe under them)
+  and said "defer glyphs. dont need to block mechanic on it." Ticket
+  **0089** holds the glyph mark and the combat picture on foot; 0334
+  doesn't wait for either.
+- The Fire Emblem facts were checked on the Fire Emblem Wiki's
+  *Dismount* page (in the browser pane; automated fetches are refused).
+- **0334** now says exactly what to build: no longer blocked on a
+  decision, skins paint nothing new, and it has an estimate (1,700–2,000)
+  with a split rule. **0082** now says that a rider on foot can wade.
+  **1064** waits for 0499 too (riders on and off the horse should look
+  different in the playtest); 0089 isn't on it, because Nick deferred it.
+
+**The agent's starting rules** (gameplay rules where Nick's answer was
+silent):
+- Mov −2 on foot for every mounted class (Tamsin's 7 → 5 was shown; the
+  others follow: Lancer 8 → 6, Iron Rider 6 → 4).
+- Spd +2 on foot for every mounted class (Three Houses' cavalry value,
+  shown for Tamsin).
+- A rider can't get back on while standing where a horse can't go (in a
+  river).
+- Getting off before moving and then back on after moving in one turn is
+  not allowed (one change a turn, the Three Houses rule as Nick picked
+  it).

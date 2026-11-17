@@ -180,7 +180,9 @@ That is class data for ticket 0005.
 
 **Unit tags.** Classes carry tags (ticket 0005/0302 data): `Mounted` (land
 cavalry), `Flying`, `Armored`. Flying units are **not** `Mounted` (spears are
-for land cavalry). `Armored` is used by effective weapons added later
+for land cavalry). A rider who has got off their horse has no `Mounted` tag
+until they get back on (`terrain.md`, *Getting off and back on a horse*,
+ticket 0083). `Armored` is used by effective weapons added later
 (e.g. an FE-style Armorslayer) and by class design.
 
 **Effectiveness.** A weapon lists `effective: [(tag, multiplier)]`; its type
