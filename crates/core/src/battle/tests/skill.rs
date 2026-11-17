@@ -1783,6 +1783,45 @@ fn stat_card_counts_only_the_bonuses_that_hold_in_any_fight() {
     assert_eq!(crit, unit.stats.dex / 2 + 10);
 }
 
+/// The stat card of unit `id` of `s`.
+fn card_of(s: &BattleState, id: u32) -> crate::battle::StatCard {
+    s.stat_card(s.unit(UnitId(id)).expect("on the map"))
+        .expect("a card")
+}
+
+#[test]
+fn stat_card_counts_spell_might_with_a_spell_in_hand_only() {
+    let caster = |skills: &[&str]| {
+        let mut u = learned(mage(lord(1, p(0, 0)), &["bolt"]), skills);
+        u.loadout.equipped = Some(Equipped::Spell(SpellId::new("bolt")));
+        u
+    };
+    let atk = |u: Unit| {
+        let s = start(setup(vec![u, unit(3, Faction::Enemy, p(7, 4))]));
+        card_of(&s, 1).numbers.atk.expect("armed")
+    };
+    // Black Magic adds 1 might to spells…
+    assert_eq!(atk(caster(&["black_magic"])), atk(caster(&[])) + 1);
+    // …and nothing to a weapon.
+    let fighter = |skills: &[&str]| learned(lord(1, p(0, 0)), skills);
+    assert_eq!(atk(fighter(&["black_magic"])), atk(fighter(&[])));
+}
+
+#[test]
+fn stat_card_counts_fury_at_half_hp_or_less() {
+    let crit = |hp_left: Option<StatValue>| {
+        let mut u = learned(lord(1, p(0, 0)), &["fury"]);
+        if let Some(hp) = hp_left {
+            u.hp = hp;
+        }
+        let s = start(setup(vec![u, unit(3, Faction::Enemy, p(7, 4))]));
+        card_of(&s, 1).numbers.crit.expect("armed")
+    };
+    let max = lord(1, p(0, 0)).stats.hp;
+    assert_eq!(crit(Some(max / 2)), crit(None) + 15);
+    assert_eq!(crit(Some(max / 2 + 1)), crit(None));
+}
+
 #[test]
 fn a_disarmed_unit_has_no_attack_on_its_card() {
     let disarmed = TimedEffect {

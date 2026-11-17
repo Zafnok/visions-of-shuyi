@@ -307,6 +307,20 @@ fn the_panel_paints_the_stats_weapon_and_combat_numbers_as_designed() {
 }
 
 #[test]
+fn a_long_weapon_name_is_cut_a_space_before_its_uses() {
+    let mut unit = ellery_panel(true);
+    if let Some(w) = unit.weapon.as_mut() {
+        w.name = "W".repeat(30);
+    }
+    let buf = panel_with(unit);
+    // 23 columns: 17 of the name, a space, `20/20`.
+    assert_eq!(
+        panel_row(&buf, STATS_ROW + 5),
+        format!("{} 20/20", "W".repeat(17))
+    );
+}
+
+#[test]
 fn a_raised_stat_and_spent_uses_have_their_colours() {
     let mut unit = ellery_panel(true);
     unit.stats[4].changed = true;
