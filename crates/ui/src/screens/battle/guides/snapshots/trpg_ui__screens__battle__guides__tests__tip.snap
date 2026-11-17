@@ -4,13 +4,12 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Played on the keys              │  Exporting a profile                                           ║
-║ Finding your units              │                                                                ║
-║ Selecting a unit                │  A profile can go out to a file of its own, with all its       ║
-║ Attacking                       │  saves, options and keys: handy for a new computer.            ║
-║ Ending the turn                 │                                                                ║
-║ Rewind                          │  Export the profile under the cursor: e                        ║
-║ Threat arrows                   │                                                                ║
+║ Finding your units              │  Exporting a profile                                           ║
+║ Selecting a unit                │                                                                ║
+║ Attacking                       │  A profile can go out to a file of its own, with all its       ║
+║ Ending the turn                 │  saves, options and keys: handy for a new computer.            ║
+║ Rewind                          │                                                                ║
+║ Threat arrows                   │  Export the profile under the cursor: e                        ║
 ║ Combat Arts                     │                                                                ║
 ║ Spells that change tiles        │                                                                ║
 ║ Moving the cursor               │                                                                ║
@@ -28,6 +27,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
 ║ Weapon kinds                    │                                                                ║
+║ Swapping weapons                │                                                                ║
 ║ Exporting a save                │                                                                ║
 ║ Exporting a profile             │                                                                ║
 ║                                 │                                                                ║

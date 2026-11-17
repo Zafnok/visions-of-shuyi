@@ -769,6 +769,7 @@
 
     // The battle: the attack forecast and the combat playback.
     "battle.forecast.title": "Forecast",
+    "battle.forecast.swap": "{keys} weapon",
     "battle.forecast.broken": "(broken)",
     "battle.forecast.resist": "(resist)",
     "battle.forecast.heals": "heals {n}",

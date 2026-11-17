@@ -31,7 +31,7 @@ expression: unkillable.snapshot()
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                                                                      ╚════════════════════════════╝
+                                                                      ╚════ Left/Right weapon ═════╝
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  Left/Right swap · Up/Down target · f attack · d back                                      F2 debug 
 --- colours ---
@@ -64,7 +64,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbcccccccccccccccccccbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBa
 aBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBa
 --- legend ---
@@ -114,6 +114,16 @@ over  287,221 3x1  cursor
 over  287,219 1x3  cursor
 over  301,221 3x1  cursor
 over  303,219 1x3  cursor
+over  570,53 1x1  text_highlight
+over  572,53 1x1  text_highlight
+over  569,54 2x1  text_highlight
+over  572,54 2x1  text_highlight
+over  568,55 3x1  text_highlight
+over  572,55 3x1  text_highlight
+over  569,56 2x1  text_highlight
+over  572,56 2x1  text_highlight
+over  570,57 1x1  text_highlight
+over  572,57 1x1  text_highlight
 over  634,164 4x1  hp_low
 over  633,165 6x1  hp_low
 over  632,166 8x1  hp_low

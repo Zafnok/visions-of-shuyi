@@ -6,7 +6,9 @@
 //! the attacker's on the left and the target's on the right, `!` after an
 //! effective one, a skull on the kill and the strikes after it dimmed;
 //! then the totals, a row per unit an art strikes (`Hound  Hit 82  11 →
-//! 4`, the name in its faction colour) and the notes.
+//! 4`, the name in its faction colour) and the notes. When left and right
+//! swap the weapon, a `◂▸` mark before the attacker's and `Left/Right
+//! weapon` in the bottom border (Nick, 0463).
 
 use crate::prelude::*;
 use trpg_core::{Side, StatValue};
@@ -161,6 +163,30 @@ pub fn skull(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
     runs
 }
 
+/// Widths of the rows of each triangle of the swap mark, top to bottom,
+/// in pixels.
+const SWAP_ROWS: [i32; 5] = [1, 2, 3, 2, 1];
+
+/// Where the swap mark's right triangle starts inside its cell, in pixels
+/// (the left one ends a pixel before it).
+const SWAP_GAP_X: i32 = 4;
+
+/// The swap mark drawn in the cell at `(x, y)` in `color`: a small `◂▸`
+/// pair, in the cell before the attacker's weapon, when left and right
+/// swap it (Nick, 0463). One overlay per row of each triangle.
+pub fn swap_arrows(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
+    let (cw, ch) = ConsoleSpec::PC.cell_px();
+    let height = i32::try_from(SWAP_ROWS.len()).unwrap_or(0);
+    let top = y * ch + (ch - height) / 2;
+    let mut runs = Vec::new();
+    for (dy, w) in (0..).zip(SWAP_ROWS) {
+        let left = Rect::new(x * cw + SWAP_GAP_X - 1 - w, top + dy, w, 1);
+        let right = Rect::new(x * cw + SWAP_GAP_X, top + dy, w, 1);
+        runs.extend([left, right].map(|r| Overlay::new(r, color, Layer::Over)));
+    }
+    runs
+}
+
 /// Paints the forecast `view` over the side panel.
 pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
@@ -172,6 +198,19 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     buf.print_centred(top, &title, c(UiColor::TextHighlight));
     for ((side, by), x) in view.sides.iter().zip(SIDES).zip([LEFT_X, RIGHT_X]) {
         paint_side(ctx, view, (side, by), x, buf);
+    }
+    if let Some(swap) = &view.swap {
+        let hi = c(UiColor::TextHighlight);
+        for o in swap_arrows(LEFT_X - 1, WEAPON_ROW, hi) {
+            buf.add_overlay(o);
+        }
+        let bottom = Rect::new(
+            SIDE_PANEL.x,
+            SIDE_PANEL.y + SIDE_PANEL.h - 1,
+            SIDE_PANEL.w,
+            1,
+        );
+        buf.print_centred(bottom, &format!(" {swap} "), hi);
     }
     if let Some(skill) = &view.skill {
         paint_skill(ctx, skill, buf);

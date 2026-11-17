@@ -638,6 +638,9 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
 - While a target is chosen, the forecast **replaces the side panel** (double
   border, title `Forecast`): the attacker in the left column, the target in
   the right, names in faction colour, weapon names dimmed under them.
+  *Added by 0463: when left / right swap the weapon, a `◂▸` mark before
+  the attacker's weapon and `Left/Right weapon` in the bottom border
+  (`combat-arts.md`, *Showing that left / right swap the weapon*).*
 - **Mixed-case labels:** `HP`, `Hit`, `Crit`. A side that can't counter shows
   `--` for Hit and Crit.
 - **HP bars:** `HP 19` and a short bar. The part of the bar the unit would
