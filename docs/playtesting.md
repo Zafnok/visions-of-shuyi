@@ -491,6 +491,44 @@ length of the hold and with little else. Tried and not kept: roofs lv 11
 with Survive 9 (67, 67; Normal 27, 46); the officer lv 12 (71, 74, no
 change).
 
+After 0864 (2026-11-17). Tamsin Spd 6 and Def 6 (Nick's pick) broke
+Chapter 1's recording, and the new one (won on turn 10, nobody lost)
+leaves Chapter 2 the Lead lv 5, retainer lv 4, sergeant lv 6, poacher lv 3,
+keeper lv 2, heretic lv 3, where the old one left the sergeant lv 8 and
+the Lead lv 1. Chapter 1 played the same:
+
+```
+ch01         seeds 1–100
+casual       53/100  band 30–55% ✓
+normal       51/100  band 50–75% ✓
+hardcore     69/100  band 50–75% ✓
+hardcore turns median 6 (normal 9) lower ✓
+```
+
+Chapter 2 fell to 15 / 15 / 12 (blocked), and a Chapter 1 recording made
+with no change to Tamsin gave 14 / 37 / 46: its bands had leaned on the
+old recording's level-8 sergeant, the one unit that reached the west house
+on the Hounds' first turn (ticket 0531). Enemy levels didn't bring it back
+(the autobalance's best after 2.5 hours, every Hound 4 levels down: 34 /
+45 / 76); "save 2 of 5" did (37 / 60 / 70), but Nick kept 3 of 5 and asked
+that no house burn on the first turn. So the west house's raider starts
+at 1,15, two turns away, and 0524's second raider beside it and the ford's
+at 7,9 are gone (each reached a house on the first turn; wherever the
+ford's stood, it burned one or opened the ford to Hendry):
+
+```
+ch02         seeds 1–100            seeds 101–200
+casual       48/100  band 30–55% ✓  36/100 ✓
+normal       50/100  band 50–75% ✓  58/100 ✓
+hardcore     65/100  band 50–75% ✓  63/100 ✓
+hardcore turns median 5 (normal 4) lower ✗    5 (normal 4) lower ✗
+```
+
+Chapters 2 to 5 were recorded again after it, and the later armies moved:
+ch03 68 ⚠ / 70 / 42 ✗, aldwater 100 / 50 ✗ / 80, ch04 50 / 32 ✗ / 31 ✗,
+salt_road 100 / 94 / 96 ⚠, ch05 51 / 15 ✗ / 11 ✗ (seeds 1–100). Ticket
+0876 brings them back.
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and

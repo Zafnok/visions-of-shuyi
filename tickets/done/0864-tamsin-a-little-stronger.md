@@ -5,10 +5,10 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 0864 — Tamsin a little stronger
@@ -96,11 +96,11 @@ return to round 2's Tamsin.
 
 ## Acceptance criteria
 
-- [ ] Nick's pick is recorded in `chapter-1.md` with the tables.
-- [ ] Tamsin's data is what he picked (the content tests pass).
-- [ ] The bots are in their bands on Chapters 1 and 2 (the playtest
+- [x] Nick's pick is recorded in `chapter-1.md` with the tables.
+- [x] Tamsin's data is what he picked (the content tests pass).
+- [x] The bots are in their bands on Chapters 1 and 2 (the playtest
       command's report in the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -109,4 +109,50 @@ return to round 2's Tamsin.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick chose Spd +1 and Def +1** ("spd + 1, def + 1", A and half of B):
+Tamsin is Spd 6, Def 6 (were 5, 5) in `characters.ron` (the private
+content). The tables, the options and his words are in `chapter-1.md`,
+*Tamsin a little stronger*; her sheet holds no stat numbers, so it is
+unchanged.
+
+- **Doubling.** Her attack speed is 2 (was 1): in Chapter 1 she still
+  doubles only the Guard, with 2 more Avoid and 1 less damage per hit.
+  The Iron Sword (D) would have doubled 10 of 14 again.
+- **Bots, Chapter 1** (seeds 1–100): 53 ✓ / 51 ✓ / 69 ✓ (was 53 / 60 /
+  68). Options A, B and C barely moved how often the bots lose her: they
+  send her in first on her Mov 7.
+- **Chapter 2 retuned (Nick: "Retune Ch2 in this PR"; "I'd want to keep
+  3/5 houses"; "figure out positioning so they don't burn it the first
+  turn").** Spd 6 broke Chapter 1's recorded win, and the new recording
+  leaves Chapter 2 another army (Tamsin lv 6, the lead lv 5, where the old
+  one had Tamsin 8 and the lead 1). Chapter 2 fell to 15 / 15 / 12
+  (blocked), and a recording with no change to Tamsin did the same (14 /
+  37 / 46): its bands leaned on one recording, which is ticket **0531**.
+  The fix in `ch02.ron`: the west house's raider starts at (1, 15), two
+  turns away, and 0524's second west raider (1, 13) and the ford's raider
+  (7, 9) are gone; 13 Hounds (was 15). Bots: 48 / 50 / 65 on seeds 1–100,
+  36 / 58 / 63 on 101–200, all in band. Hardcore isn't faster than Normal
+  there (5 turns vs 4); it wasn't on `main` either (5 vs 5).
+- **What was tried for Chapter 2 and dropped:** the second west raider
+  removed (18 / 35 / 8); the south-bank raiders levels 3–4 (10–17 /
+  18–30 / 46–62); the ford raider a plain fighter, or on the north bank
+  (where it burned the north-west house on turn 1), or at (9, 9) (where
+  it waded the ford and burned the big house); the autobalance, 71 and
+  107 evaluations (best: every Hound 4 levels down, 34 / 45 / 76); "save
+  2 of 5" (37 / 60 / 70, which Nick turned down).
+- **Recordings.** Every winning playthrough from Chapter 1 to Chapter 5
+  (with Aldwater and the Salt Road) was recorded again; each wins with
+  nobody lost: ch01 turn 10, ch02 turn 2 (5 of 5 houses), ch03 turn 7,
+  aldwater 3, ch04 12, salt_road 3, ch05 10. `ch02_winnable` counts 13
+  Hounds (was 15).
+- **Later chapters moved** with the new armies (seeds 1–100): ch03 68 ⚠ /
+  70 / 42 ✗, aldwater 100 / 50 ✗ / 80, ch04 50 / 32 ✗ / 31 ✗, salt_road
+  100 / 94 / 96 ⚠, ch05 51 / 15 ✗ / 11 ✗. None is blocked. Ticket
+  **0876** brings them back (both follow-ups are in 1064's `blocked_by`
+  and the roadmap).
+- **The agent's starting rules** (for the Act 1 playtest, 1064): the
+  Chapter 2 placement and the two raiders removed are the agent's, to
+  Nick's "positioning" ask; the ford house is no longer threatened on the
+  first turn either.
+- Engine friction: none, no Rust code (data, recordings and one test's
+  count).
