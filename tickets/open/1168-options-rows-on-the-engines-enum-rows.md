@@ -29,6 +29,8 @@ and its one-bit skin) at 519 production lines against an estimate of
   question repeats the engine's literal text key. That part needs no
   engine change.
 
+**The hook chain** (2026-11-16, either order): if 1093 lands first, its Timed presses row moves to the engine's enum rows with the others.
+
 ## Nick input
 
 None.

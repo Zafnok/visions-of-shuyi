@@ -23,6 +23,8 @@ Nick (2026-10-29): "we can also use itch io icons for the pixel look
 rather than in house renders... the symbol plates specifically, but it can
 be a follow up".
 
+**The hook chain** (2026-11-16, either order): the delve mark (1281) and the hunt's and rival column's marks (1279) need icons too. If those tickets land first, add their marks to this ticket's table; they say so on their side.
+
 ## Nick input
 
 **Decision, before building:** which icon set. Search itch.io (and the

@@ -606,6 +606,26 @@ early so every later PR is checked by them.
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
   Parked far-future ideas: hub activities (1004), pair abilities (1005).
+- **The storefront hook** (Nick, 2026-11-16, after five rounds of hook
+  research): legendary beasts hidden at the bottom of dungeon delves,
+  hunted against a rival column and fought as a raid. It stands on three
+  battle systems that make the enemy's turn the exciting part. Design
+  first (Nick's queue, row 10: 0085–0088, then 0772 with the writer).
+  Building starts after the Act 1 playtest (1064), with tickets on one
+  row able to run side by side:
+  1. **1091** element states on tiles · **1092** timed presses in the
+     rules · **1095** the beast army and its Beast Phase · **1099**
+     materials and forging gated by chapter · **1277** dungeon delves
+  2. **1093** the timing ring and bar in the combat frame (also after
+     1078, the Playdate's fight at 30 frames a second) · **1096**
+     beasts on several tiles with parts · **1275** the forge at the
+     blacksmith · **1278** dark floors and light · **1281** delves on
+     screen (the world-map mark, the party picker, the floors' flow)
+  3. **1094** Steal the Turn · **1097** aiming at a part · **1279** beast
+     hunts on the world map
+  4. **1098** a broken part as terrain or material → **1276** the grinder
+     bot and the shop-only balance check
+  5. **1280** the first legendary beast, the frost wyrm's lair
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
   ahead of the engine carve. Since 2026-10-16 the carve comes first and the
   port second: the note at the top): 1026 technical test (do the rules build for

@@ -49,6 +49,8 @@ report (damage dealt, kills, EXP and level for each playable unit, and a
 per-unit table). If 0527 is done, carry those measures over in the move;
 if not, nothing to do (0527 builds them on whichever runner is there).
 
+**The hook chain** (2026-11-16, either order): if this lands after 1095, the bots' targets stay "units hostile to the player", never `Faction::Enemy` alone, because beasts are a third hostile army. If it lands after 1276, carry over the `grinder` field of `Targets` and `targets.ron` and the grinder margin.
+
 ## Nick input
 
 None. Persona choices and reports remain unchanged, verified by tests and
