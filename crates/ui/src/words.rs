@@ -118,6 +118,16 @@ impl<'a> Words<'a> {
         }
     }
 
+    /// The short name of weapon `id` of `items` (`Stl Sword`), shown where
+    /// its name doesn't fit, if it has one (ticket 0498).
+    pub fn short_name(self, id: &ItemId, items: &'a ItemTable) -> Option<&'a str> {
+        let english = items.weapon(id)?.short_name.as_deref()?;
+        Some(match self.pack {
+            Some((lang, code)) => lang.short_name(code, id, english),
+            None => english,
+        })
+    }
+
     /// The name of the passive of weapon `id` of `items`, if it has one.
     pub fn passive(self, id: &'a ItemId, items: &'a ItemTable) -> Option<&'a str> {
         let english = items.weapon(id)?.passive()?.name.as_str();
@@ -454,6 +464,14 @@ mod tests {
         assert_eq!(item("nope"), "nope");
         let nope = ItemId::new("nope");
         assert_eq!(Words::ENGLISH.item(&nope, &content.items), "nope");
+        // A weapon's short name (0498): translated, English, or none.
+        let short = |id: &str| words.short_name(&ItemId::new(id), &content.items);
+        assert_eq!(short("steel_sword"), Some("STL SWORD"));
+        assert_eq!(short("steel_spear"), Some("Stl Spear"));
+        assert_eq!(short("iron_sword"), None);
+        assert_eq!(short("potion"), None);
+        let english = Words::ENGLISH.short_name(&ItemId::new("steel_sword"), &content.items);
+        assert_eq!(english, Some("Stl Sword"));
         let spell = |id: &str| content.spells.spells.values().find(|s| s.id.0 == id);
         assert_eq!(spell("fire").map(|s| words.spell(s)), Some("FIRE"));
         assert_eq!(spell("frost").map(|s| words.spell(s)), Some("Frost"));

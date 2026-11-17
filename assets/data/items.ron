@@ -19,6 +19,9 @@
 //   SwordFollowUp | Effective(tag, multiplier) | AxeMinDamage(n) | GauntletAvoid(n) | None
 // weapons: range is (min, max) in tiles; damage_type defaults to Physical;
 //   effective: extra (tag, multiplier) pairs beyond the kind's trait.
+//   short_name: Some("Stl Sword") is the name the attack forecast shows
+//     where `name` and its uses don't fit its line (look-and-feel.md,
+//     ticket 0498): 1 to 13 cells less a space and the durability's digits.
 //   arts: the weapon's own arts (weapon arts in arts.ron, rank: None).
 //   special: true makes it a special weapon (combat-arts.md, Special
 //     weapons): no shop stocks it, and selling it asks first. Only a special
@@ -59,17 +62,17 @@
     ],
     weapons: [
         (id: "iron_sword", name: "Iron Sword", kind: Sword, rank: E, might: 5, hit: 90, crit: 0, weight: 2, range: (1, 1), durability: 20, price: 460),
-        (id: "steel_sword", name: "Steel Sword", kind: Sword, rank: D, might: 8, hit: 75, crit: 0, weight: 4, range: (1, 1), durability: 25, price: 600),
+        (id: "steel_sword", name: "Steel Sword", short_name: Some("Stl Sword"), kind: Sword, rank: D, might: 8, hit: 75, crit: 0, weight: 4, range: (1, 1), durability: 25, price: 600),
         (id: "iron_spear", name: "Iron Spear", kind: Spear, rank: E, might: 7, hit: 80, crit: 0, weight: 4, range: (1, 1), durability: 20, price: 360),
-        (id: "steel_spear", name: "Steel Spear", kind: Spear, rank: D, might: 10, hit: 70, crit: 0, weight: 6, range: (1, 1), durability: 25, price: 480),
+        (id: "steel_spear", name: "Steel Spear", short_name: Some("Stl Spear"), kind: Spear, rank: D, might: 10, hit: 70, crit: 0, weight: 6, range: (1, 1), durability: 25, price: 480),
         (id: "iron_axe", name: "Iron Axe", kind: Axe, rank: E, might: 8, hit: 75, crit: 0, weight: 6, range: (1, 1), durability: 20, price: 270),
         (id: "steel_axe", name: "Steel Axe", kind: Axe, rank: D, might: 11, hit: 65, crit: 0, weight: 8, range: (1, 1), durability: 25, price: 360),
         (id: "iron_bow", name: "Iron Bow", kind: Bow, rank: E, might: 6, hit: 85, crit: 0, weight: 3, range: (2, 2), durability: 20, price: 540),
         (id: "steel_bow", name: "Steel Bow", kind: Bow, rank: D, might: 9, hit: 70, crit: 0, weight: 5, range: (2, 2), durability: 25, price: 720),
-        (id: "iron_gauntlets", name: "Iron Gauntlets", kind: Gauntlet, rank: E, might: 3, hit: 95, crit: 5, weight: 1, range: (1, 1), durability: 20, price: 400),
-        (id: "steel_gauntlets", name: "Steel Gauntlets", kind: Gauntlet, rank: D, might: 5, hit: 85, crit: 5, weight: 2, range: (1, 1), durability: 25, price: 560),
-        (id: "houndmasters_axe", name: "Houndmaster's Axe", kind: Axe, rank: D, might: 10, hit: 70, crit: 5, weight: 7, range: (1, 1), durability: 25, price: 900, arts: ["pack_hunt"], special: true),
-        (id: "fordwardens_spear", name: "Fordwarden's Spear", kind: Spear, rank: E, might: 6, hit: 80, crit: 0, weight: 5, range: (1, 2), durability: 20, price: 800, arts: ["hold_the_ford"], special: true),
+        (id: "iron_gauntlets", name: "Iron Gauntlets", short_name: Some("Iron Gntlt"), kind: Gauntlet, rank: E, might: 3, hit: 95, crit: 5, weight: 1, range: (1, 1), durability: 20, price: 400),
+        (id: "steel_gauntlets", name: "Steel Gauntlets", short_name: Some("Stl Gntlt"), kind: Gauntlet, rank: D, might: 5, hit: 85, crit: 5, weight: 2, range: (1, 1), durability: 25, price: 560),
+        (id: "houndmasters_axe", name: "Houndmaster's Axe", short_name: Some("Hound Axe"), kind: Axe, rank: D, might: 10, hit: 70, crit: 5, weight: 7, range: (1, 1), durability: 25, price: 900, arts: ["pack_hunt"], special: true),
+        (id: "fordwardens_spear", name: "Fordwarden's Spear", short_name: Some("Ford Spear"), kind: Spear, rank: E, might: 6, hit: 80, crit: 0, weight: 5, range: (1, 2), durability: 20, price: 800, arts: ["hold_the_ford"], special: true),
         (id: "moonblade", name: "Moonblade", kind: Sword, rank: C, might: 10, hit: 85, crit: 0, weight: 4, range: (1, 1), durability: 30, price: 3000, arts: ["moonwave"], special: true, passive: Some((name: "Moonlit", mitigation: Some(Res)))),
     ],
     armour: [

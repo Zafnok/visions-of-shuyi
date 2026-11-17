@@ -783,6 +783,7 @@ fn weapon(min: u32, max: u32, might: StatValue) -> ItemId {
 
 fn sword(name: &str) -> WeaponDef {
     WeaponDef {
+        short_name: None,
         name: name.into(),
         kind: WeaponKind::Sword,
         rank: WeaponRank::E,

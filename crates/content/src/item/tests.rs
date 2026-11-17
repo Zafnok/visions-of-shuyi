@@ -27,6 +27,7 @@ fn row(
     (range, durability, price): (u32, u32, u32),
 ) -> WeaponDef {
     WeaponDef {
+        short_name: None,
         name: name.into(),
         kind,
         rank,
@@ -159,7 +160,13 @@ fn weapons_match_the_design() {
     let table: Vec<_> = table.into_iter().chain(special_weapons()).collect();
     let t = items();
     for (key, expected) in &table {
-        assert_eq!(t.weapon(&id(key)), Some(expected), "{key}");
+        // The short names are the look's (look-and-feel.md, 0498), not
+        // the design's tables.
+        let got = t.weapon(&id(key)).map(|w| WeaponDef {
+            short_name: None,
+            ..w.clone()
+        });
+        assert_eq!(got.as_ref(), Some(expected), "{key}");
     }
     let weapons = t
         .items
@@ -167,6 +174,22 @@ fn weapons_match_the_design() {
         .filter(|d| matches!(d, ItemDef::Weapon(_)))
         .count();
     assert_eq!(weapons, table.len());
+}
+
+/// Every weapon shows whole on the attack forecast's line with its uses,
+/// or has a short name that does (ticket 0498; the load checks it fits).
+#[test]
+fn every_weapon_fits_the_forecasts_line_by_name_or_short_name() {
+    let t = items();
+    for (key, item) in &t.items {
+        let ItemDef::Weapon(w) = item else { continue };
+        let fits = crate::lang::text_width(&w.name) <= short_name_room(w.durability);
+        assert!(
+            fits || w.short_name.is_some(),
+            "{} needs a short_name",
+            key.0
+        );
+    }
 }
 
 #[test]
@@ -477,6 +500,35 @@ fn kind_and_rule_errors() {
     assert_eq!(
         errors(&file(&zero, KINDS, "", REST)),
         ["it.ron:2: rank_exp must be above 0 and strictly increasing"]
+    );
+}
+
+#[test]
+fn a_short_name_fits_the_forecasts_line_with_the_uses() {
+    let with = |short: &str| {
+        file(
+            RULES,
+            KINDS,
+            &weapon("w", &format!(", short_name: Some({short:?})")),
+            REST,
+        )
+    };
+    // 13 cells less ` 20`: 10.
+    assert_eq!(short_name_room(20), 10);
+    assert_eq!(short_name_room(100), 9);
+    let t = from_source("it.ron", &with("Stl Sword")).unwrap_or_default();
+    assert_eq!(
+        t.weapon(&id("w")).and_then(|w| w.short_name.as_deref()),
+        Some("Stl Sword")
+    );
+    assert!(from_source("it.ron", &with("Iron Gntlt")).is_ok());
+    let wide = "weapon \"w\": short_name \"Iron Gntlts\" must be 1 to 10 cells (the forecast's line, less its uses)";
+    assert_eq!(errors(&with("Iron Gntlts")), [format!("it.ron:5: {wide}")]);
+    let empty = errors(&with(" "));
+    assert_eq!(empty.len(), 1);
+    assert!(
+        empty[0].contains("short_name \" \" must be 1 to 10 cells"),
+        "{empty:?}"
     );
 }
 

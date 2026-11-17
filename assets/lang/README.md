@@ -63,6 +63,7 @@ Keys chosen by hand, `screen.thing` (`title.new_game`), listed in
 | ---- | --- | ---------------- |
 | A class's name | `classes.<id>.name` | `data/classes.ron` |
 | An item's name (weapon, armour, accessory, consumable, seal) | `items.<id>.name` | `data/items.ron` |
+| A weapon's short name, where its name doesn't fit (0498) | `items.<id>.short` | `data/items.ron` (`short_name`) |
 | A spell's name | `spells.<id>.name` | `data/spells.ron` |
 | A skill's name | `skills.<id>.name` | `data/skills.ron` |
 | A Combat Art's name | `arts.<id>.name` | `data/arts.ron` |
