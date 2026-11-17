@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 1283 — The window sized by the console, with `Window::console`
@@ -63,4 +63,10 @@ The size test above.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `WINDOW` in `crates/app` and `crates/story-preview` is now
+  `Window::console(APP.name, ConsoleSpec::PC, 2, 40)` with the icon as
+  before: the game's console (100 × 32 cells of 8 × 16 = 800 × 512) at
+  2x plus a 40-pixel margin each way, so 1640 × 1064 as before.
+- Test: `the_window_first_opens_at_1640_by_1064` in `crates/app/src/tests.rs`
+  (the story preview has no test module; it uses the same expression).
+- No deviations, no follow-up tickets, no gameplay rules decided.

@@ -44,6 +44,13 @@ fn the_window_has_an_icon() {
     assert_eq!(WINDOW.title, "Visions of Shuyi");
 }
 
+/// Acceptance (1283): the window, sized by the console, first opens at
+/// 1640 x 1064, as it did when the numbers were written by hand.
+#[test]
+fn the_window_first_opens_at_1640_by_1064() {
+    assert_eq!((WINDOW.width, WINDOW.height), (1640, 1064));
+}
+
 /// Acceptance (1199): the name and the storage name players' saves depend
 /// on, as literals, and the version `release.yml` tags.
 #[test]
