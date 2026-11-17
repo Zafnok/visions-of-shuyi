@@ -890,6 +890,9 @@ sprites.
     (ticket 0740; it was centred before).
   - **Not** in the battle side panel or hover (Nick dropped the mini
     portrait). What the panel shows is in *Side panel*.
+  - **Preparations, Loadouts:** a three-quarter face (48×48) at the
+    start of each row that names another unit's item (Nick, ticket 0479;
+    `weapons-and-items.md`, *Loadout (per unit)*).
 
 #### Combat screen
 

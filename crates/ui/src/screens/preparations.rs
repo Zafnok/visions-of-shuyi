@@ -38,8 +38,8 @@ pub mod view;
 
 use crate::prelude::*;
 pub use view::{
-    ConsumableRowView, GearView, ItemRowView, ListState, ListView, LoadoutsView, PackView,
-    PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
+    ConsumableRowView, GearView, HolderView, ItemRowView, ListState, ListView, LoadoutsView,
+    PackView, PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
 };
 
 use core::fmt::Display;
@@ -148,6 +148,26 @@ pub struct StockRow {
     pub detail: String,
     /// Why the unit can't use it, if it can't.
     pub unusable: Option<Unusable>,
+    /// Who holds it, on a row of another unit's item.
+    pub holder: Option<HolderView>,
+}
+
+/// Who `unit` is on a swap row: its character, its portrait (the lead's
+/// by the gender picked) if the game has one, and its map letters.
+fn holder_view(ctx: &Ctx, unit: &Unit) -> HolderView {
+    let portrait = unit.character.as_ref().and_then(|id| {
+        let id = ctx.game.lead.portrait_for(&id.0);
+        ctx.game
+            .content
+            .portraits
+            .contains_key(id)
+            .then(|| id.to_owned())
+    });
+    HolderView {
+        character: unit.character.clone(),
+        portrait,
+        label: unit.map_label.clone(),
+    }
 }
 
 /// Why a unit can't use an item, as the player reads it: `needs rank D`.
@@ -353,6 +373,7 @@ impl PreparationsScreen {
                 name: ctx.text(PUT_BACK).to_owned(),
                 detail: String::new(),
                 unusable: None,
+                holder: None,
             });
         }
         let row = |item: StockItem, id: &ItemId, name: String, detail: String| {
@@ -363,6 +384,7 @@ impl PreparationsScreen {
                 name,
                 detail,
                 unusable,
+                holder: None,
             }
         };
         match slot {
@@ -474,6 +496,7 @@ impl PreparationsScreen {
                     name,
                     detail,
                     unusable: None,
+                    holder: Some(holder_view(ctx, unit)),
                 });
             }
         }
@@ -990,6 +1013,7 @@ impl PreparationsScreen {
             name: r.name,
             detail: r.detail,
             usable: r.unusable.is_none(),
+            holder: r.holder,
         });
         let stock = ListView {
             title: title.to_owned(),

@@ -471,6 +471,51 @@ fn loadouts_tab_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// The knight's armour slot: the stock's armour, then the vests and the
+/// robe the other four hold, the lord's with his face (0479).
+#[test]
+fn loadouts_swap_list_snapshot() {
+    let mut h = harness();
+    h.keys("f Down f Up Up f Down Down Down Down");
+    assert_snapshot!(h.snapshot());
+}
+
+/// Each row of another unit's item names its holder: the character, its
+/// face if the game has one, and its map letters; the stock's rows name
+/// none (0479).
+#[test]
+fn each_swap_row_names_its_holder() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The knight's armour slot.
+    let keys = [Confirm, CursorDown, Confirm, CursorUp, CursorUp, Confirm];
+    update(&mut s, &mut c, &keys);
+    let view = s.view(&c);
+    let holders: Vec<_> = gear(&view)
+        .stock
+        .rows
+        .iter()
+        .map(|row| {
+            let holder = row.holder.as_ref()?;
+            let id = holder.character.as_ref().map(|id| id.0.as_str());
+            Some((id, holder.portrait.as_deref(), holder.label.as_str()))
+        })
+        .collect();
+    assert_eq!(
+        holders,
+        [
+            None,
+            None,
+            None,
+            None,
+            Some((Some("test_lord"), Some("test_lord"), "Lo")),
+            Some((Some("test_archer"), None, "Ar")),
+            Some((Some("test_mage"), None, "Ma")),
+            Some((Some("test_scout"), None, "Sc")),
+        ]
+    );
+}
+
 #[test]
 fn pack_tab_at_the_cap_snapshot() {
     let mut h = harness();
@@ -780,6 +825,7 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
         name: name.to_owned(),
         detail: detail.to_owned(),
         usable,
+        holder: None,
     };
     assert_eq!(
         rows,
