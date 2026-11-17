@@ -160,6 +160,12 @@ Expected size: about 200 production lines (a core function of ~60 like
 - Pictures: `docs/screenshots/0484-*.png` (Chapter 1's start, Ellery and
   the Brigand six tiles right and two up, both looks): every number is the
   one 0078's mockups gave.
+- The Playdate skin's panel view leaves the numbers out (the corner
+  window never shows them): building them every frame put the Playdate
+  bench 2% over its frame budget.
+- The Chapter 1 lessons snapshot in the private repository shows the new
+  panel: Zafnok/visions-of-shuyi-assets#8, which merges first; the pin
+  then moves to its merge.
 - Friction: estimate 220 production lines, measured 297 (1.35×), under 2×.
 
 **The agent's starting rules** (where *Side panel* is silent; for the Act

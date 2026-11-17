@@ -29,12 +29,14 @@ fn signed(n: i8) -> String {
 }
 
 /// What the panel shows of the terrain of `pos` and `unit` (the unit shown
-/// there, if any); `selected` while a unit is selected.
+/// there, if any); `selected` while a unit is selected; with the unit's
+/// stats, weapon and combat numbers if `numbers` (the Playdate's corner
+/// window shows none: they cost its frame time for nothing).
 pub fn view(
     (state, words): (&BattleState, Words<'_>),
     pos: Pos,
     unit: Option<&Unit>,
-    selected: bool,
+    (selected, numbers): (bool, bool),
 ) -> PanelView {
     let terrain = state
         .map()
@@ -53,15 +55,40 @@ pub fn view(
     PanelView {
         selected,
         terrain,
-        unit: unit.map(|u| unit_view((state, words), u)),
+        unit: unit.map(|u| unit_view((state, words), u, numbers)),
         gold: words.text_with("battle.shop.gold", &[("gold", &gold_text(state.gold()))]),
     }
 }
 
 /// The unit block: name, class and level, HP, faction; then its stats,
 /// weapon and combat numbers (0484, `look-and-feel.md` *Side panel*).
-fn unit_view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> PanelUnitView {
+fn unit_view(
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+    numbers: bool,
+) -> PanelUnitView {
     let class = words.class_of(&unit.class, state.classes());
+    let mut view = PanelUnitView {
+        name: words.unit(unit).to_owned(),
+        faction: unit.faction,
+        class_level: class_level(words, class, unit.level),
+        hp_name: stat_name(words, StatKind::Hp).to_owned(),
+        hp: unit.hp,
+        max: unit.stats.hp,
+        faction_name: faction_name(words, unit.faction).to_owned(),
+        stats: Vec::new(),
+        weapon: None,
+        no_weapon: String::new(),
+        combat: Vec::new(),
+    };
+    if numbers {
+        add_numbers((state, words), unit, &mut view);
+    }
+    view
+}
+
+/// Adds `unit`'s stats, weapon and combat numbers to `view`.
+fn add_numbers((state, words): (&BattleState, Words<'_>), unit: &Unit, view: &mut PanelUnitView) {
     let card = state.stat_card(unit);
     let none = words.text("battle.panel.none");
     let stat_cells = PANEL_STATS
@@ -103,19 +130,10 @@ fn unit_view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> PanelUni
         .as_ref()
         .filter(|_| numbers.is_some_and(|n| n.atk.is_some()))
         .and_then(|with| art_list::unit_header((state, words), unit, with));
-    PanelUnitView {
-        name: words.unit(unit).to_owned(),
-        faction: unit.faction,
-        class_level: class_level(words, class, unit.level),
-        hp_name: stat_name(words, StatKind::Hp).to_owned(),
-        hp: unit.hp,
-        max: unit.stats.hp,
-        faction_name: faction_name(words, unit.faction).to_owned(),
-        stats: stat_cells,
-        weapon,
-        no_weapon: none.to_owned(),
-        combat,
-    }
+    view.stats = stat_cells;
+    view.weapon = weapon;
+    none.clone_into(&mut view.no_weapon);
+    view.combat = combat;
 }
 
 /// The stats the panel lists, in order.
