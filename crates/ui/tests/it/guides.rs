@@ -78,6 +78,12 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     );
     h.keys("Up Up");
     let screen = h.snapshot();
+    assert!(
+        screen.contains("This unit carries more than one weapon"),
+        "{screen}"
+    );
+    h.keys("Up");
+    let screen = h.snapshot();
     assert!(screen.contains("A spear's might counts double"), "{screen}");
     h.keys("Up");
     let screen = h.snapshot();

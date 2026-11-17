@@ -139,6 +139,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         struck: struck((state, words), attacker.id, p),
         notes,
         tiles: [t.sel.dest(), target.pos],
+        swap: None,
     })
 }
 

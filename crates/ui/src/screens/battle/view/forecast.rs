@@ -38,6 +38,11 @@ pub struct ForecastView {
     /// for a skin that keeps the forecast clear of them (the Playdate's,
     /// ticket 1039).
     pub tiles: [Pos; 2],
+    /// The hint that left and right swap the weapon (`Left/Right weapon`,
+    /// in the player's keys), when they do: the unit has more than one
+    /// weapon (or spell) to swap to (ticket 0463). The skins then mark the
+    /// attacker's weapon too.
+    pub swap: Option<String>,
 }
 
 /// The chosen art's or combat active's line.

@@ -25,7 +25,10 @@
 // or flying unit, never a mounted or armored one), FirstEffective (the
 // forecast is open and a strike of either side is effective by its weapon
 // kind: a spear on a mounted unit, a bow on a flying one; not a spell on an
-// element its target is Weak to). Outside battle (ticket 0874): FirstLoadGame
+// element its target is Weak to), FirstWeaponSwap (the
+// forecast is open and left and right swap the weapon: the unit has more
+// than one weapon or spell to attack with there, ticket 0463). Outside
+// battle (ticket 0874): FirstLoadGame
 // (the Load Game list opens with a save in it), FirstProfileScreen (the
 // Profile screen opens); not where saves can't be exported (the Playdate).
 // At most one tip per trigger.
@@ -155,6 +158,16 @@
 triple against fliers, yours and theirs alike. A ! in
 the forecast means it's working; a unit's details say more.",
             face: "sly",
+        ),
+        (
+            id: "weapon_swap",
+            trigger: FirstWeaponSwap,
+            title: "Swapping weapons",
+            text: "This unit carries more than one weapon, and you can try
+each of them right here in the forecast. The numbers
+change to match before you commit to the attack.",
+            how: "Swap weapon: {CursorLeft} {CursorRight}",
+            face: "neutral",
         ),
         (
             id: "export_save",
