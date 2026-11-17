@@ -141,7 +141,9 @@ Like Fire Emblem on the GBA.
     rows. With one unit in each half it goes on the attacker's half, so
     the target stays in view. It has every line of the PC's: names, arms,
     what is left of them, HP with a 4-cell bar (HP kept black, HP that
-    would be lost a checker, the rest white), Hit, Crit, the strikes
+    would be lost a checker, the rest white; 0480 made it `HP 19 → 6`
+    over a 10-cell bar whose lost part blinks, and put the uses after the
+    weapon's name: `look-and-feel.md`, *Attack forecast*), Hit, Crit, the strikes
     numbered down the middle, `!` on an effective one, the skull (black)
     on the kill and the strikes after it in grey dots, the totals and the
     art's notes. If they don't fit the screen, the rules between the

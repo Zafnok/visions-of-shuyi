@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-16
 ---
 
 # 0480 — A battle forecast that is easier to read
@@ -106,13 +106,13 @@ on the forecast.
 
 ## Acceptance criteria
 
-- [ ] Nick's pick is recorded in `look-and-feel.md`.
-- [ ] The forecast shows each side's HP after the fight in the way he
+- [x] Nick's pick is recorded in `look-and-feel.md`.
+- [x] The forecast shows each side's HP after the fight in the way he
       picked; a test on the view for a kill (after = 0), a double and a
       miss-free exchange.
-- [ ] The glyph and Playdate skins paint it (snapshots; `frame-png`
+- [x] The glyph and Playdate skins paint it (snapshots; `frame-png`
       pictures in the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -121,4 +121,68 @@ on the forecast.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Nick picked over two rounds of `frame-png` pictures (three fights staged
+in a throwaway battle, glyph and picture looks, a blinking GIF):
+
+- **Round 1:** A + B (`HP 19 → 6` and a 12-cell bar whose lost part
+  blinks), keep the strike list, and the uses "beside the weapon, or under
+  when a art is used which drains dura, and then shows uses depleting like
+  hp".
+- **Round 2:** an art's cost as numbers only, `20 → 16` under the weapon
+  (E; F, with a second blinking bar, was not picked); and "unless the HP
+  is expected 0 it doesn't show 0 cells lit up".
+
+Recorded in `look-and-feel.md` (*Attack forecast*, *HP after the fight,
+and the weapon's uses (0480)*), with the examples in `combat-arts.md` and
+`playdate.md` brought in line.
+
+Built in both skins; the view needed no new fields (`ForecastHp.after`
+and `SkillLineView.durability` already carried the numbers):
+
+- `glyph/forecast.rs`: `Iron Sword 20` on the weapon's row; a row under
+  the weapons only for an art's cost or `(broken)` (both columns move
+  down with it); `HP 19 → 6` (the after number in its HP colour, `0` in
+  `hp_low`); the 12-cell bar on its own row, the lost part shaded then
+  full every half second (`lost_shaded`, from the clock as the skin's
+  motion); the art's line only its name. The picture look uses the same
+  panel.
+- `playdate/forecast.rs`: the same lines in 10-cell columns (`Iron S…
+  20`, `HP 19 → 11`, a 10-cell bar, the lost part a checker then black).
+- `units.rs`, `lit_fill`: the forecast's bars keep one cell for a unit
+  with HP (Nick's round-2 rule). The side panel's and the map's bars are
+  unchanged.
+
+**Follow-up: 0498.** 6 of the 14 weapons don't fit their name and uses
+in a 13-cell column (Steel Sword 25 is 14). Nick, asked: "use shortened
+names rather than truncated i.e. Stl Swo / probably need some mapping
+from long to short name". That needs a short name in the item data and
+its translation (a content change in the private repository) and his
+pick of the names, so it is ticket 0498. Until then the name is cut with
+`…` (`Steel Swo… 25`), as the Playdate's already were.
+
+0333 is still open: the row under Crit (the affinity's, blank without
+one) is where its mark can go. 1075 is open: its Context now says the
+Playdate's forecast cuts a weapon's name to fit its uses.
+
+*The agent's starting rules (Nick can veto; for the Act 1 playtest,
+1064):*
+
+- The blink is half a second shaded, then half a second full, starting
+  shaded.
+- `(broken)` shows on the row under the weapon (0404's starting rule,
+  moved).
+- A weapon's or spell's uses after its name are in the text colour (the
+  name stays dimmed); a spell's uses show the same way (`Fire 10`).
+- A long weapon name is cut with `…` to fit its uses, on the PC as on
+  the Playdate, until 0498's short names.
+- The Playdate blinks the lost HP between its checker and black.
+- The one-lit-cell rule also holds for the HP a unit has now.
+
+Pictures: `docs/screenshots/0480-forecast.png` (the three fights and
+Guard Break) and `0480-forecast-playdate.png` (the double, in both halves
+of the blink, and Guard Break), cropped to the forecast so no map of the
+content is committed (ADR-0118).
+
+Engine friction: estimate 120 production lines (two skins' side blocks,
+judged by 0404's `paint_side` and `paint_bar`), measured 206 added (1.7×),
+under 2×. PR size: 924 changed lines.

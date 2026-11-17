@@ -5,9 +5,9 @@ expression: h.snapshot()
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Lord     Brigand      ║
-                                                                      ║ Moonblade     Iron Axe     ║
-                                                                      ║ 30/30         20/20        ║
-                                                                      ║ HP 19 ███▒▒   HP 20 ▒▒▒▒▒  ║
+                                                                      ║ Moonblade 30  Iron Axe 20  ║
+                                                                      ║ HP 19 → 11    HP 20 → 0    ║
+                                                                      ║ ████████████  ████████████ ║
                                                                       ║ Hit  91       Hit  65      ║
                                                                       ║ Crit 3        Crit 0       ║
                                                                       ║                            ║
@@ -39,21 +39,21 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggggggdddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhiidddggddddiiiiiddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdjjjjjjjjjjjjddjjjjjjjjjjjjdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyzzvvyyllaaaaaaaaaaaaaaaaaaaaaabdAAAAAAAAAAAAAAAAAddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmqqxxxxllllllllyyzzzzyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnqqllllllllllwwyyyyBByyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkllllttttrrrruuvvmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmxxyyzzzzzzzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmzzAAwwzzmmaaaaaaaaaaaaaaaaaaaaaabdBBBBBBBBBBBBBBBBBddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnrryyyymmmmmmmmzzAAAAzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmxxzzzzCCzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
-aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDa
+aDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -77,26 +77,27 @@ f = fg:enemy bg:panel_bg
 g = fg:text_dim bg:panel_bg
 h = fg:hp_mid bg:panel_bg
 i = fg:hp_low bg:panel_bg
-j = fg:water bg:sea
-k = fg:water bg:water_bg
-l = fg:grass bg:grass_bg
-m = fg:forest bg:forest_bg
-n = fg:thicket bg:thicket_bg
-o = fg:mountain bg:mountain_bg
-p = fg:peak bg:peak_bg
-q = fg:road bg:road_bg
-r = fg:enemy bg:#50281d
-s = fg:wood bg:water_bg
-t = fg:player bg:road_bg
-u = fg:enemy bg:#4c271c
-v = fg:fort bg:fort_bg
-w = fg:enemy bg:grass_bg
-x = fg:player bg:grass_bg
-y = fg:stone bg:stone_bg
-z = fg:floor bg:floor_bg
-A = fg:effect bg:panel_bg
-B = fg:wood bg:stone_bg
-C = fg:text_dim bg:black
+j = fg:hp_high bg:panel_bg
+k = fg:water bg:sea
+l = fg:water bg:water_bg
+m = fg:grass bg:grass_bg
+n = fg:forest bg:forest_bg
+o = fg:thicket bg:thicket_bg
+p = fg:mountain bg:mountain_bg
+q = fg:peak bg:peak_bg
+r = fg:road bg:road_bg
+s = fg:enemy bg:#50281d
+t = fg:wood bg:water_bg
+u = fg:player bg:road_bg
+v = fg:enemy bg:#4c271c
+w = fg:fort bg:fort_bg
+x = fg:enemy bg:grass_bg
+y = fg:player bg:grass_bg
+z = fg:stone bg:stone_bg
+A = fg:floor bg:floor_bg
+B = fg:effect bg:panel_bg
+C = fg:wood bg:stone_bg
+D = fg:text_dim bg:black
 --- overlays ---
 over  273,222 14x2  hp_high
 over  225,286 14x2  hp_high

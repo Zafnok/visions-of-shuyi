@@ -3,21 +3,21 @@ source: crates/ui/src/screens/battle/art_tests.rs
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔═════════ Forecast ═════════╗
-                                                                      ║ Pinning Shot (20 → 17)     ║
+                                                                      ║ Pinning Shot               ║
                                                                       ║ Test Archer   Brigand      ║
-                                                                      ║ Iron Bow      Iron Axe     ║
-                                                                      ║ 20/20         20/20        ║
-                                                                      ║ HP 17 █████   HP 20 ███▒▒  ║
+                                                                      ║ Iron Bow      Iron Axe 20  ║
+                                                                      ║ 20 → 17                    ║
+                                                                      ║ HP 17 → 17    HP 20 → 12   ║
+                                                                      ║ ████████████  ███████▒▒▒▒▒ ║
                                                                       ║ Hit  91       Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
-                                                                      ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  8 ×1     Total            ║
-                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║                            ║
-                    ..≈≈≈≈..··..............╦╦..                      ║ pins: Mov −3               ║
-                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  1   no counter ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
+                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║  8 ×1     Total            ║
+                    ..≈≈≈≈..··..............╦╦..                      ║                            ║
+                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║ pins: Mov −3               ║
                     ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
                     ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
                     ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
@@ -36,24 +36,24 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
  arrows next target · f attack · d back                                                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdccccccccccccccccccccccdddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdccccccccccccdddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeeeedddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggddddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiijjddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddgdccddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiidddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhhhddiiiiiiijjjjjdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkllllttttrruurrvvmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabdxxxxxxxxxxxxdddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmyyzzAAAAAAAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmAABBwwAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnrrzzzzmmmmmmmmAABBBBAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmyyAAAACCAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
+aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaakkllllttttrruurrvvmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmxxyyzzzzzzzzmmaaaaaaaaaaaaaaaaaaaaaabdAAAAAAAAAAAAdddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmzzBBwwzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnrryyyymmmmmmmmzzBBBBzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmxxzzzzCCzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -91,10 +91,10 @@ t = fg:wood bg:water_bg
 u = fg:player bg:road_bg
 v = fg:enemy bg:#4c271c
 w = fg:fort bg:fort_bg
-x = fg:effect bg:panel_bg
-y = fg:enemy bg:grass_bg
-z = fg:player bg:grass_bg
-A = fg:stone bg:stone_bg
+x = fg:enemy bg:grass_bg
+y = fg:player bg:grass_bg
+z = fg:stone bg:stone_bg
+A = fg:effect bg:panel_bg
 B = fg:floor bg:floor_bg
 C = fg:wood bg:stone_bg
 D = fg:text_dim bg:black

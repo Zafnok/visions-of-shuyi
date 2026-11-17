@@ -6,7 +6,7 @@ use super::*;
 use crate::screen::tests::ctx;
 use crate::screens::battle::attack::weapon_choices;
 use crate::screens::battle::mode::Selection;
-use crate::screens::battle::testing::skirmish;
+use crate::screens::battle::testing::{battle, quick_units, skirmish};
 
 /// The skirmish's lord at (7, 2) targeting the brigand (at
 /// `brigand_hp`) with its iron sword.
@@ -159,6 +159,40 @@ fn the_kill_and_the_strikes_after_it_are_flagged() {
     assert_eq!(flags[0], (true, false));
     assert!(flags[1..].iter().all(|&f| f == (false, true)), "{flags:?}");
     assert_eq!(v.sides[1].hp.after, 0);
+}
+
+/// Each side's HP now and after, and its max, of `v`.
+fn hp(v: &ForecastView) -> [(StatValue, StatValue, StatValue); 2] {
+    v.sides.each_ref().map(|s| (s.hp.now, s.hp.after, s.hp.max))
+}
+
+/// What each side strikes, in order, of `v`.
+fn order(v: &ForecastView) -> Vec<Side> {
+    v.strikes.iter().map(|s| s.by).collect()
+}
+
+#[test]
+fn the_hp_after_a_double_with_a_counter_a_kill_and_a_plain_exchange() {
+    let c = ctx();
+    let (a, d) = (Side::Attacker, Side::Defender);
+    // The lord doubles the brigand, which counters between: 8 + 9 and 8.
+    let state = skirmish(&c, 20);
+    let double = shown(&state, &targeting(&state));
+    assert_eq!(order(&double), [a, d, a]);
+    assert_eq!(hp(&double), [(19, 11, 19), (20, 3, 20)]);
+    // At 3 HP the brigand falls to the first strike: 0 after, and the lord
+    // keeps all its HP.
+    let state = skirmish(&c, 3);
+    let kill = shown(&state, &targeting(&state));
+    assert_eq!(hp(&kill), [(19, 19, 19), (3, 0, 20)]);
+    // The lord no faster than the brigand: one strike each.
+    let (map, mut units) = quick_units(&c);
+    (units[0].pos, units[2].pos) = (Pos::new(6, 2), Pos::new(8, 4));
+    units[0].stats.spd = units[3].stats.spd;
+    let state = battle(&c, map, units);
+    let plain = shown(&state, &targeting(&state));
+    assert_eq!(order(&plain), [a, d]);
+    assert_eq!(hp(&plain), [(19, 11, 19), (20, 12, 20)]);
 }
 
 #[test]

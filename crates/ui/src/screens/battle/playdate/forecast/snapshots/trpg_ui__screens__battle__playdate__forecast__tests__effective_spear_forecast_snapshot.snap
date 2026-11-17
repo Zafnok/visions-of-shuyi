@@ -4,9 +4,9 @@ expression: "rows(&buf).join(\"\n\")"
 ---
 ╔═ Forecast ════════════╗
 ║ Test Lord  Brigand    ║
-║ Iron Sword Iron Axe   ║
-║ 20/20      20/20      ║
-║ HP 19 ██▒▒ HP 20 █▒▒▒ ║
+║ Iron S… 20 Iron A… 20 ║
+║ HP 19 → 11 HP 20 → 3  ║
+║ ██████▒▒▒▒ ██▒▒▒▒▒▒▒▒ ║
 ║ Hit  96    Hit  65    ║
 ║ Crit 3     Crit 0     ║
 ╟───────────────────────╢

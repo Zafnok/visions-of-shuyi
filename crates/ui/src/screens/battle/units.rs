@@ -39,6 +39,18 @@ pub fn hp_fill(hp: StatValue, max: StatValue, full: i32) -> (i32, UiColor) {
     (i32::try_from(width).unwrap_or(0), color)
 }
 
+/// [`hp_fill`] for the forecast's bars (ticket 0480): a unit with HP left
+/// keeps at least one cell lit, so 2 HP of 28 never reads as none.
+pub fn lit_fill(hp: StatValue, max: StatValue, full: i32) -> (i32, UiColor) {
+    let (cells, color) = hp_fill(hp, max, full);
+    let lit = if hp > 0 && max > 0 {
+        cells.max(1)
+    } else {
+        cells
+    };
+    (lit.min(full.max(0)), color)
+}
+
 /// A bar across `rect` with its first `filled` cells `full` and the rest
 /// `empty`: the engine's [`GlyphBuffer::meter`] given cells already
 /// rounded, so each bar keeps its own rule (an HP bar, [`hp_fill`], rounds
@@ -93,5 +105,19 @@ mod tests {
         assert_eq!(hp_bar(99, 30), (16, HpHigh));
         assert_eq!(hp_bar(5, 0), (0, HpLow));
         assert_eq!(hp_bar(5, -3), (0, HpLow));
+    }
+
+    #[test]
+    fn a_forecast_bar_keeps_a_cell_for_a_unit_with_hp() {
+        use UiColor::{HpHigh, HpLow};
+        // 1 of 28 rounds to no cell of 12, but a unit that lives shows one.
+        assert_eq!(hp_fill(1, 28, 12), (0, HpLow));
+        assert_eq!(lit_fill(1, 28, 12), (1, HpLow));
+        assert_eq!(lit_fill(14, 28, 12), (6, UiColor::HpMid));
+        assert_eq!(lit_fill(28, 28, 12), (12, HpHigh));
+        // None for a fall, a bar of no cells, or no max.
+        assert_eq!(lit_fill(0, 28, 12), (0, HpLow));
+        assert_eq!(lit_fill(1, 28, 0), (0, HpLow));
+        assert_eq!(lit_fill(5, 0, 12), (0, HpLow));
     }
 }
