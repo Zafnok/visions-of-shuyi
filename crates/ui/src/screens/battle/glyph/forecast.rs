@@ -193,15 +193,11 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
 pub fn weapon_name(side: &ForecastSideView, uses: Option<u32>, column: usize) -> String {
     let taken = uses.map_or(0, |u| u.to_string().len() + 1);
     let room = column.saturating_sub(taken);
-    let fits = |name: &str| name.chars().count() <= room;
-    if fits(&side.weapon) {
+    if side.weapon.chars().count() <= room {
         return side.weapon.clone();
     }
-    match side.short.as_deref() {
-        Some(short) if fits(short) => short.to_owned(),
-        Some(short) => cut(short, room),
-        None => cut(&side.weapon, room),
-    }
+    // `cut` leaves a short name that fits as it is.
+    cut(side.short.as_deref().unwrap_or(&side.weapon), room)
 }
 
 /// `side`'s weapon at `(x, y)`, dimmed, and its uses after it (`Iron
