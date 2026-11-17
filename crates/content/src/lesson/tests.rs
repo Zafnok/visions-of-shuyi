@@ -81,6 +81,7 @@ fn the_lessons_conditions_load_and_say_which_need_a_unit() {
         ("CursorMoved", DoneWhen::CursorMoved, false),
         ("ActionMenuOpened", DoneWhen::ActionMenuOpened, true),
         ("ArtsOpened", DoneWhen::ArtsOpened, true),
+        ("ArtAttacked", DoneWhen::ArtAttacked, true),
         ("TileAimed", DoneWhen::TileAimed, true),
         ("ThreatPointed", DoneWhen::ThreatPointed, true),
         ("SafePointed", DoneWhen::SafePointed, true),

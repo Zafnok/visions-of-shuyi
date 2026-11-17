@@ -573,7 +573,7 @@ fn focused_note(s: &BattleScreen) -> Option<String> {
 }
 
 /// Moving down the arts menu changes the effect under it to the next
-/// line's.
+/// line's, each said to be an attack (ticket 0490).
 #[test]
 fn the_arts_menu_describes_the_focused_line() {
     let mut c = ctx();
@@ -591,9 +591,9 @@ fn the_arts_menu_describes_the_focused_line() {
     assert_eq!(
         seen,
         [
-            "follow-up ×3/2",
-            "+10 hit; no counter",
-            "Sword: +30 hit +10 crit"
+            "Attack: follow-up ×3/2",
+            "Attack: +10 hit; no counter",
+            "Attack: Sword: +30 hit +10 crit"
         ]
     );
 }
