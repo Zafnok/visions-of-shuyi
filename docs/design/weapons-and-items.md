@@ -373,6 +373,18 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
   mage's Linen Robe, and she can't wear his Chain Mail), it goes to the
   stock instead; and the list only
   shows other units' items that this unit can use.
+- **Who holds it, at a glance** (Nick, ticket 0479, 2026-11-16, after a
+  friend's playtest asked for "a mini icon of character portrait"): each
+  swap row starts with the holder's face, the dialogue face shrunk to
+  three quarters (48×48 pixels, a row three lines tall), then the item
+  and `from Test Scout`. Nick picked it over the face at full size ("needs
+  to be scaled smaller"), half size, a crop of the head, the map sprite
+  and the name alone. When the list runs past its box it shows arrows
+  (Nick: "should have arrows for scrolling if more characters live off
+  screen"): `▲` at the top while rows are hidden above, `▼` at the bottom
+  while rows are hidden below. A unit with no face (a build without the
+  bought art) shows its map letters (`Sc`) in the player's colour on a
+  one-line row instead.
 - A unit can only be given **gear it can use**: a weapon of a kind its
   class uses, at a rank it has, and armour of a weight its class wears.
   Anything else is shown dimmed with the reason (`needs rank D`,
