@@ -395,6 +395,26 @@ fn arrows_show_rows_hidden_above_and_below() {
     );
 }
 
+/// Rows that fill the box exactly all show, the last on its bottom row,
+/// with no arrow.
+#[test]
+fn rows_that_just_fit_all_show() {
+    let c = ctx();
+    let inner = STOCK_BOX.h - 2;
+    let rows = (0..inner)
+        .map(|i| item(&format!("Row {i}"), "", true))
+        .collect();
+    let buf = painted(&c, &with_stock(rows, 0));
+    let bottom = STOCK_BOX.y + inner;
+    let skip = usize::try_from(STOCK_BOX.x).unwrap();
+    let last: String = row(&buf, bottom).chars().skip(skip).collect();
+    assert!(last.starts_with("│ Row 22 "), "{last}");
+    let mark = buf
+        .get(STOCK_BOX.x + STOCK_BOX.w - 2, bottom)
+        .map(|c| c.glyph);
+    assert_eq!(mark, Some(' '));
+}
+
 #[test]
 fn the_stock_window_moves_only_once_the_cursor_leaves_it() {
     let heights = [1, 3, 3, 3];
