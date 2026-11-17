@@ -200,3 +200,39 @@ fn rewind_declares_its_actions() {
     let screen = screen(1, 0);
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::REWIND);
 }
+
+/// Ticket 1282: the charges line is one plural message, its English as
+/// before for 0, 1, 2 and 5 charges.
+#[test]
+fn the_charges_message_reads_as_before_for_each_count() {
+    let line = |charges: u8| charges_text(Words::ENGLISH, charges.min(1), charges);
+    assert_eq!(line(0), "No charges left");
+    assert_eq!(line(1), "1 of 1 charge left");
+    assert_eq!(line(2), "1 of 2 charges left");
+    assert_eq!(line(5), "1 of 5 charges left");
+}
+
+/// Ticket 1282: the rewind question is one plural message, its English as
+/// before for 0, 1, 2 and 5 charges left.
+#[test]
+fn the_use_message_reads_as_before_for_each_count() {
+    let ask = |left: u8| Words::ENGLISH.text_with("battle.rewind.use", &[("left", &left)]);
+    assert_eq!(ask(0), "Use 1 of 0 charges?");
+    assert_eq!(ask(1), "Use 1 of 1 charge?");
+    assert_eq!(ask(2), "Use 1 of 2 charges?");
+    assert_eq!(ask(5), "Use 1 of 5 charges?");
+}
+
+/// Ticket 1282: a combat's hits are one plural message, its English as
+/// before for 0, 1, 2 and 5 hits.
+#[test]
+fn the_hits_message_reads_as_before_for_each_count() {
+    let hits = |n: usize| {
+        let counts = [("n", &n as &dyn ToArg), ("dmg", &7)];
+        Words::ENGLISH.text_with("battle.rewind.hits", &counts)
+    };
+    assert_eq!(hits(0), "missed");
+    assert_eq!(hits(1), "hit, 7 dmg");
+    assert_eq!(hits(2), "2 hits, 7 dmg");
+    assert_eq!(hits(5), "5 hits, 7 dmg");
+}

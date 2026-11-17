@@ -13,6 +13,7 @@ use trpg_core::{BattleState, Faction};
 use super::map_menu::objective_text;
 use super::view::ObjectiveLine;
 use crate::words::Words;
+use shuyi_ui::text::ToArg;
 
 /// The objective's lines for `state`: `Win:` and what wins it, then
 /// `Lose:` and the first thing that loses it, then `or` and each other
@@ -46,14 +47,17 @@ pub fn lines(state: &BattleState, exit: Option<&str>, words: Words<'_>) -> Vec<O
 /// houses for rewards`, `Save 4 to 6 houses for rewards`.
 fn bonus(state: &BattleState, words: Words<'_>) -> Option<String> {
     let v = state.village()?;
-    let (from, to) = (v.minimum() + 1, v.minimum() + v.rewards_on_offer());
-    let key = match v.rewards_on_offer() {
-        0 => return None,
-        1 => "battle.objective.bonus_one",
-        2 => "battle.objective.bonus_two",
-        _ => "battle.objective.bonus_many",
-    };
-    Some(words.text_with(key, &[("from", &from), ("to", &to)]))
+    let rewards = v.rewards_on_offer();
+    if rewards == 0 {
+        return None;
+    }
+    let (from, to) = (v.minimum() + 1, v.minimum() + rewards);
+    let args = [
+        ("rewards", &rewards as &dyn ToArg),
+        ("from", &from),
+        ("to", &to),
+    ];
+    Some(words.text_with("battle.objective.bonus", &args))
 }
 
 /// What loses the battle, each its own part: `3 of 5 houses burn`,

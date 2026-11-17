@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 1282 — Plural messages in place of the one-and-many key pairs
@@ -75,4 +75,28 @@ A test per merged message for 0, 1, 2 and 5 against today's English.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Each key group became one plural message (ADR-0129 of the engine), and
+the code passes the count it already had; no screen picks a key by a
+count any more:
+
+- `save.army` (`{count, plural, one … other …}`);
+- `battle.end_turn_question` (by `ready`);
+- `battle.rewind.charges` (by `charges`, as before: `1 of 2 charges
+  left`) and `battle.rewind.use` (by `left`);
+- `battle.objective.bonus` (`=1`, `=2`, `other`), which now also gets
+  the count of rewards on offer as `rewards`; no rewards still shows no
+  bonus line, before the message;
+- found by the search: `battle.rewind.missed` / `.hit` / `.hits`, the
+  rewind list's combat summary chosen by the count of hits, folded into
+  `battle.rewind.hits` (`=0 {missed}`, `one`, `other`).
+
+14 English keys became 6. The `test` pack's entries follow (the plural
+keywords stay lower case, the words in capitals). There are no other
+packs in `assets/lang/` or the content. The class-change hint shown when
+there is more than one class, and the shops' `×N`, aren't count-chosen
+keys and stay.
+
+A test per message checks 0, 1, 2 and 5 against the old English
+(`the_*_reads_as_before_for_each_count`); the snapshots didn't change.
+
+No gameplay rules decided.

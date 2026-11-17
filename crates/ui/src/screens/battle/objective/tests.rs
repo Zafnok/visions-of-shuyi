@@ -219,3 +219,25 @@ fn the_lead_is_the_players_lord() {
     let l = lines(&s, None, Words::ENGLISH);
     assert_eq!(shown(&l)[1], ("Lose:", "Test Lord falls"));
 }
+
+/// Ticket 1282: the bonus is one plural message, its English as before
+/// for 0, 1, 2 and 5 rewards on offer.
+#[test]
+fn the_bonus_message_reads_as_before_for_each_count() {
+    let c = ctx();
+    let bonus = |rewards: usize| {
+        let s = village(&c, |s| {
+            let v = s.village.as_mut().unwrap();
+            v.minimum = 0;
+            v.rewards = vec![Loot::Gold(100); rewards];
+        });
+        let l = lines(&s, None, Words::ENGLISH);
+        l.iter()
+            .find(|l| l.label == "Bonus:")
+            .map(|l| l.text.clone())
+    };
+    assert_eq!(bonus(0), None);
+    assert_eq!(bonus(1).as_deref(), Some("Save 1 houses for a reward"));
+    assert_eq!(bonus(2).as_deref(), Some("Save 1 or 2 houses for rewards"));
+    assert_eq!(bonus(5).as_deref(), Some("Save 1 to 5 houses for rewards"));
+}

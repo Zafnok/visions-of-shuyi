@@ -300,12 +300,7 @@ pub fn shown_limit(state: &BattleState) -> Option<Turn> {
 
 /// The end-turn question for `ready` units still ready.
 pub fn end_turn_question(words: Words<'_>, ready: usize) -> String {
-    let key = if ready == 1 {
-        "battle.end_turn_question.one"
-    } else {
-        "battle.end_turn_question.many"
-    };
-    words.text_with(key, &[("ready", &ready)])
+    words.text_with("battle.end_turn_question", &[("ready", &ready)])
 }
 
 #[cfg(test)]
@@ -316,6 +311,17 @@ mod tests {
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::{battle_with, wait};
     use crate::widgets::menu::{english, text_of};
+
+    /// Ticket 1282: the end-turn question is one plural message, its
+    /// English as before for 0, 1, 2 and 5 units ready.
+    #[test]
+    fn the_end_turn_question_reads_as_before_for_each_count() {
+        let ask = |n| end_turn_question(Words::ENGLISH, n);
+        assert_eq!(ask(0), "End turn with 0 units ready?");
+        assert_eq!(ask(1), "End turn with 1 unit ready?");
+        assert_eq!(ask(2), "End turn with 2 units ready?");
+        assert_eq!(ask(5), "End turn with 5 units ready?");
+    }
 
     fn labels(menu: &Menu<MapEntry>) -> Vec<(String, bool)> {
         menu.items()
