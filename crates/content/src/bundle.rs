@@ -735,6 +735,29 @@ mod tests {
         assert_eq!(file("data/does_not_exist.ron"), None);
     }
 
+    /// Ticket 1284: `lent_bytes` is a file's bytes where its layer lends
+    /// them, and `None` for a missing file or one a layer reads each time
+    /// it is asked (a pack read file by file), which it never copies.
+    #[test]
+    fn lent_bytes_are_what_a_layer_lends_and_never_a_file_read_on_demand() {
+        use shuyi_assets::pack::{self, Content, InMemory, Index, PackInfo};
+        let atlas = "fonts/atlas.png";
+        let lent = lent_bytes(atlas).unwrap_or_default();
+        assert!(lent.starts_with(b"\x89PNG"));
+        assert_eq!(Some(lent), bytes(atlas).as_deref());
+        assert_eq!(lent_bytes("fonts/nope.png"), None);
+        let info = PackInfo::new("t", None, Default::default());
+        let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
+        let packed: &'static [u8] = pack::write(&info, &files).leak();
+        let index = Index::read(packed, "t").unwrap();
+        let source: &'static InMemory = Box::leak(Box::new(InMemory::new(packed)));
+        let on_demand = leaked(vec![index.into_layer(DISPLAY_ROOT, source)]);
+        reading(on_demand, || {
+            assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
+            assert_eq!(lent_bytes("a.txt"), None);
+        });
+    }
+
     #[test]
     fn reads_binary_file() {
         let png = bytes("fonts/atlas.png").unwrap_or_default();
