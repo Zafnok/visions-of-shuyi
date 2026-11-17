@@ -1850,6 +1850,53 @@ are open (*Open sub-questions*).
 - On the Key bindings screen the caps are the key names in the slot
   columns; a slot being captured keeps its prompt in plain text.
 
+### The objective at a battle's start
+
+Decided 2026-11-17, ticket 0481, on mockups of Chapter 1's and Chapter 2's
+start in both looks. A playtester (passed on by Nick, 2026-11-07):
+
+> "The battles should explain the objective without needing to go to the
+> objective in the options menu (i.e. a brief popup banner at the start
+> of battle so ch2 isn't a surprise)"
+
+Shown: A, the phase banner's look with the parts joined by a gold `AND`;
+B, labelled `Win:` / `Lose:` lines, as Fire Emblem: Three Houses lists a
+battle's victory and defeat conditions, up for a few seconds; C, B's panel
+waiting for Confirm. Nick picked **C**, with the Objective page using the
+same wording (yes), then a `Bonus:` line for the village's rewards
+(recommended option, picked).
+
+- When a battle starts (after the pre-battle talk and the battle notes,
+  before turn 1's `PLAYER PHASE`), an `OBJECTIVE` panel in the middle of
+  the map: a double frame in the player's colour, the title, then one line
+  per part, its label in a column in the highlight colour (gold in the
+  default theme), the text after it in the text colour:
+
+  ```
+  ╔═════════════════════════════════════════╗
+  ║                OBJECTIVE                ║
+  ║  Win:   Defeat Silas Hendry             ║
+  ║  Lose:  3 of 5 houses burn              ║
+  ║  or     Ellery falls                    ║
+  ║  Bonus: Save 4 or 5 houses for rewards  ║
+  ╚═════════════════════════════════════════╝
+  ```
+
+- It stays until Confirm (help `continue`); no other key does anything
+  under it. It is not timed.
+- The lines (`turn-structure.md`, *The objective at a battle's start*):
+  `Win:` and the objective; `Lose:` and the first thing that loses it,
+  then `or` and each other one; `Bonus:` in a battle with a village whose
+  houses past the minimum give rewards.
+- The map menu's Objective page shows the same lines (the labels in a
+  column, in the page's text colour), then the village's count
+  (`Houses: 1 saved, 0 lost`) and the turn.
+- The same in the picture look (the panel is drawn over the bought map as
+  the phase banner is) and on the Playdate (a window in its inks, the
+  labels in a column; a line too wide for the screen is cut).
+- It shows on a fresh start and on Retry or Restart; not after a rewind,
+  nor on a suspended battle carried on (*the agent's starting rule*, 0481).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side

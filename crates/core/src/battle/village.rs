@@ -88,6 +88,12 @@ impl Village {
         self.houses.get(&pos).copied()
     }
 
+    /// How many rewards a win can give: one per house standing past the
+    /// minimum, as far as the rewards go (ticket 0481's bonus line).
+    pub fn rewards_on_offer(&self) -> u32 {
+        count(self.rewards.len()).min(self.total().saturating_sub(self.minimum))
+    }
+
     /// How many houses there are.
     pub fn total(&self) -> u32 {
         count(self.houses.len())

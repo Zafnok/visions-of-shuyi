@@ -12,8 +12,8 @@ use crate::screen::tests::ctx;
 use crate::screens::battle::BattleScreen;
 use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
 use crate::screens::battle::view::{
-    BannerView, MenuHeader, MessageView, ObjectiveView, PanelCellView, PanelUnitView, QuestionView,
-    TerrainView, UsesView,
+    BannerView, MenuHeader, MessageView, ObjectiveLine, ObjectiveView, PanelCellView,
+    PanelUnitView, QuestionView, TerrainView, UsesView,
 };
 
 /// The glyphs of row `y` from column `from`, `n` of them.
@@ -437,6 +437,7 @@ fn banners_take_their_phases_colour_and_are_centred_on_the_map() {
             kind: lost,
             title: "DEFEAT".to_owned(),
             subtitle: String::new(),
+            lines: Vec::new(),
         });
     });
     // A 24 × 6 box in the middle of the 70 × 30 map view.
@@ -483,7 +484,10 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
     let buf = painted(&quick(), |v| {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "OBJECTIVE".to_owned(),
-            objective: "Rout the enemy".to_owned(),
+            lines: vec![ObjectiveLine {
+                label: "Win:".to_owned(),
+                text: "Rout the enemy".to_owned(),
+            }],
             village: None,
             turn: "Turn 1".to_owned(),
             notes: Some(NotesView {
@@ -496,7 +500,7 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
         .find(|&y| row(&buf, y).contains(" OBJECTIVE "))
         .unwrap();
     let rows: Vec<String> = (top + 2..top + 7).map(|y| row(&buf, y)).collect();
-    assert!(rows[0].contains("║ Rout the enemy"), "{}", rows[0]);
+    assert!(rows[0].contains("║ Win: Rout the enemy"), "{}", rows[0]);
     assert!(rows[1].contains("║ Turn 1"), "{}", rows[1]);
     assert!(rows[3].contains("║ Notes"), "{}", rows[3]);
     assert!(rows[4].contains("║ • A note."), "{}", rows[4]);
@@ -546,4 +550,66 @@ fn the_screens_draw_paints_its_view() {
     let mut buf = render(&s, &c);
     paint(&c, &s.view(&c), &mut buf);
     assert_eq!(drawn.to_snapshot(&c.palette), buf.to_snapshot(&c.palette));
+}
+
+/// The objective banner (0481) with `lines`, each `(label, text)`.
+fn objective_banner(lines: &[(&str, &str)]) -> BannerView {
+    BannerView {
+        kind: BannerKind::Objective,
+        title: "OBJECTIVE".to_owned(),
+        subtitle: String::new(),
+        lines: lines
+            .iter()
+            .map(|&(label, text)| ObjectiveLine {
+                label: label.to_owned(),
+                text: text.to_owned(),
+            })
+            .collect(),
+    }
+}
+
+/// A battle like Chapter 1's (win, and the lead's fall) and one like
+/// Chapter 2's (its village too, and the bonus).
+pub(crate) const OBJECTIVES: [&[(&str, &str)]; 2] = [
+    &[("Win:", "Defeat Harl Coster"), ("Lose:", "Ellery falls")],
+    &[
+        ("Win:", "Defeat Silas Hendry"),
+        ("Lose:", "3 of 5 houses burn"),
+        ("or", "Ellery falls"),
+        ("Bonus:", "Save 4 or 5 houses for rewards"),
+    ],
+];
+
+/// Acceptance (0481): the objective banner, its labels in a column in the
+/// highlight colour, its texts lined up after them.
+#[test]
+fn the_objective_banner_snapshot() {
+    let ctx = ctx();
+    for (i, lines) in OBJECTIVES.into_iter().enumerate() {
+        let buf = painted(&quick(), |v| v.banner = Some(objective_banner(lines)));
+        insta::assert_snapshot!(
+            format!("objective_banner_{i}"),
+            buf.to_snapshot(&ctx.palette)
+        );
+        let (width, height) = objective_banner_size("OBJECTIVE", &objective_banner(lines).lines);
+        let (left, top) = (
+            MAP_VIEW.x + (MAP_VIEW.w - width) / 2,
+            MAP_VIEW.y + (MAP_VIEW.h - height) / 2,
+        );
+        assert_eq!(buf.get(left, top).unwrap().glyph, '╔');
+        let palette = &ctx.palette;
+        assert_eq!(
+            buf.get(left + 3, top + 4).unwrap().fg,
+            palette.get(UiColor::TextHighlight)
+        );
+        assert_eq!(
+            buf.get(left + 3, top + 5).unwrap().fg,
+            palette.get(UiColor::TextHighlight)
+        );
+        assert_eq!(
+            buf.get(left + 9, top + 4).unwrap().fg,
+            palette.get(UiColor::Text)
+        );
+        assert_eq!(cells(&buf, top + 5, left + 3, 6), "Lose: ");
+    }
 }

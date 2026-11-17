@@ -23,10 +23,10 @@ use super::banner::BannerKind;
 use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use super::units::{faction_color, paint_hp_bar};
 use super::view::{
-    BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
-    PanelCellView, PanelUnitView, PanelView,
+    BannerView, BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind,
+    NotesView, ObjectiveLine, PanelCellView, PanelUnitView, PanelView,
 };
-use super::{PopupKind, stage};
+use super::{PopupKind, objective, stage};
 use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
@@ -472,13 +472,12 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
-            let mut lines = vec![
-                (o.objective.clone(), UiColor::Text),
-                (o.turn.clone(), UiColor::Text),
-            ];
-            if let Some(village) = &o.village {
-                lines.insert(1, (village.clone(), UiColor::Text));
-            }
+            let mut lines: Vec<_> = objective::padded(&o.lines)
+                .into_iter()
+                .chain(o.village.clone())
+                .chain([o.turn.clone()])
+                .map(|l| (l, UiColor::Text))
+                .collect();
             if let Some(notes) = &o.notes {
                 lines.push((String::new(), UiColor::Text));
                 lines.push((notes.title.clone(), UiColor::TextDim));
@@ -623,12 +622,17 @@ pub const fn banner_color(kind: BannerKind) -> UiColor {
         },
         BannerKind::Outcome(Outcome::Victory) => UiColor::TextHighlight,
         BannerKind::Outcome(Outcome::Defeat) => UiColor::HpLow,
+        BannerKind::Objective => UiColor::Player,
     }
 }
 
 /// Paints the banner centred on the map view, in a double box of its
 /// colour.
-fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuffer) {
+fn paint_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
+    if banner.kind == BannerKind::Objective {
+        paint_objective_banner(ctx, banner, buf);
+        return;
+    }
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let rect = Rect::new(
@@ -643,6 +647,49 @@ fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuff
     let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
     buf.print_centred(row(2), &banner.title, c(color));
     buf.print_centred(row(3), &banner.subtitle, c(UiColor::Text));
+}
+
+/// The objective banner's size for `lines` under `title`: the lines,
+/// their labels in a column ([`objective::label_width`]), a border and two
+/// blank columns each side; the title, a blank row, the lines and a blank
+/// row between borders.
+pub fn objective_banner_size(title: &str, lines: &[ObjectiveLine]) -> (i32, i32) {
+    let cells = |s: &str| i32::try_from(s.chars().count()).unwrap_or(0);
+    let w = objective::padded(lines)
+        .iter()
+        .map(|l| cells(l))
+        .chain([cells(title)])
+        .max()
+        .unwrap_or(0);
+    let rows = i32::try_from(lines.len()).unwrap_or(0);
+    (w + 6, rows + 6)
+}
+
+/// Paints the objective banner (0481) centred on the map view: the title
+/// in the banner's colour, then each line, its label highlighted.
+fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let (w, h) = objective_banner_size(&banner.title, &banner.lines);
+    let rect = Rect::new(
+        MAP_VIEW.x + (MAP_VIEW.w - w) / 2,
+        MAP_VIEW.y + (MAP_VIEW.h - h) / 2,
+        w,
+        h,
+    );
+    let color = banner_color(banner.kind);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(rect, &look.with_border(c(color)), None);
+    buf.print_centred(
+        Rect::new(rect.x, rect.y + 2, rect.w, 1),
+        &banner.title,
+        c(color),
+    );
+    let indent = i32::try_from(objective::label_width(&banner.lines)).unwrap_or(0);
+    for (y, l) in (rect.y + 4..).zip(&banner.lines) {
+        buf.print(rect.x + 3, y, &l.label, c(UiColor::TextHighlight), bg);
+        buf.print(rect.x + 3 + indent, y, &l.text, c(UiColor::Text), bg);
+    }
 }
 
 /// Paints the bar under the map and panel: the toggles' state at the right
@@ -670,4 +717,4 @@ fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

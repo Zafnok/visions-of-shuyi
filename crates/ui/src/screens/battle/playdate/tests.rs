@@ -14,7 +14,7 @@ use crate::screens::battle::banner::BannerKind;
 use crate::screens::battle::notes::{NOTE_WIDTH, wrap_notes};
 use crate::screens::battle::tests::{lord_menu, quick, step};
 use crate::screens::battle::view::{
-    BoxFighterView, FightBoxView, ObjectiveView, QuestionView, UsesView,
+    BoxFighterView, FightBoxView, ObjectiveLine, ObjectiveView, QuestionView, UsesView,
 };
 use crate::screens::battle::{BattleScreen, HealPopup, PopupKind};
 use crate::screens::playdate::tests::{blank, c as ink, cell, find, is_bar, pd_ctx, row, rows};
@@ -280,7 +280,10 @@ fn the_objective_page_wraps_its_notes_to_the_screen_under_its_title() {
     let buf = painted_with(&s, |v| {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "Objective".into(),
-            objective: "Rout the enemy".into(),
+            lines: vec![ObjectiveLine {
+                label: "Win:".into(),
+                text: "Rout the enemy".into(),
+            }],
             village: None,
             turn: "Turn 1".into(),
             notes: Some(NotesView {
@@ -297,7 +300,7 @@ fn the_objective_page_wraps_its_notes_to_the_screen_under_its_title() {
     let at = |dy: usize| shown[top + dy].as_str();
     // Wrapped again at the 46 cells inside a window across the screen.
     let line = |text: &str| format!("║ {text:<44} ║");
-    assert_eq!(at(1), line("Rout the enemy"));
+    assert_eq!(at(1), line("Win: Rout the enemy"));
     assert_eq!(at(2), line("Turn 1"));
     assert_eq!(at(4), line("Notes"));
     assert_eq!(at(5), line("• Burn the forest to cut off the ambush"));
@@ -347,6 +350,7 @@ fn a_banner_is_a_window_in_the_middle_of_the_screen() {
             },
             title: "ENEMY PHASE".into(),
             subtitle: "Turn 1".into(),
+            lines: Vec::new(),
         });
     });
     // 24 × 6 in the middle of the 50 × 15 screen.
@@ -629,4 +633,62 @@ fn the_battles_playdate_paint_draws_the_forecast_the_fight_box_and_the_exp_bar()
         }));
     });
     assert!(find(&buf, 1, "EXP").is_some(), "{:?}", rows(&buf));
+}
+
+/// Acceptance (0481): the objective banner fits the Playdate's screen, in
+/// its inks, labels in a column.
+#[test]
+fn the_objective_banner_snapshot() {
+    use crate::screens::battle::glyph::tests::OBJECTIVES;
+    let s = quick();
+    for (i, lines) in OBJECTIVES.into_iter().enumerate() {
+        let buf = painted_with(&s, |v| {
+            v.banner = Some(BannerView {
+                kind: BannerKind::Objective,
+                title: "OBJECTIVE".into(),
+                subtitle: String::new(),
+                lines: lines
+                    .iter()
+                    .map(|&(label, text)| ObjectiveLine {
+                        label: label.into(),
+                        text: text.into(),
+                    })
+                    .collect(),
+            });
+        });
+        let shown = rows(&buf).join("\n");
+        assert!(shown.contains("║  Lose: "), "{shown}");
+        insta::assert_snapshot!(format!("objective_banner_{i}"), shown);
+    }
+}
+
+/// A banner wider or taller than the screen keeps inside its window: a
+/// line too wide is cut (with `…`) two cells short of the frame, and the
+/// lines stop above its bottom border.
+#[test]
+fn an_objective_banner_too_big_for_the_screen_stays_in_its_window() {
+    let s = quick();
+    let long = "x".repeat(80);
+    let buf = painted_with(&s, |v| {
+        v.banner = Some(BannerView {
+            kind: BannerKind::Objective,
+            title: "OBJECTIVE".into(),
+            subtitle: String::new(),
+            lines: (0..20)
+                .map(|_| ObjectiveLine {
+                    label: "or".into(),
+                    text: long.clone(),
+                })
+                .collect(),
+        });
+    });
+    let shown = rows(&buf);
+    let top = shown.iter().position(|r| r.starts_with('╔')).unwrap();
+    let bottom = shown.iter().rposition(|r| r.starts_with('╚')).unwrap();
+    // The whole screen: 50 cells, 15 rows.
+    assert_eq!((top, bottom), (0, 14));
+    assert_eq!(shown[top + 4], format!("║  or {}…  ║", "x".repeat(40)));
+    // The last line is the row above the blank one over the border.
+    assert!(shown[bottom - 2].contains("or x"), "{}", shown[bottom - 2]);
+    assert_eq!(shown[bottom - 1], format!("║{}║", " ".repeat(48)));
 }

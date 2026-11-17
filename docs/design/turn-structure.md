@@ -352,9 +352,51 @@ banner). Turn limits are **optional and per map**; most maps have none.
 - **Any other objective "within N turns"** (Rout, Defeat boss, Seize, ...):
   the player **loses** if the objective isn't complete when turn `N`'s last
   phase ends. Completing it at any point up to then wins.
-- A map shows its limit in the objective text, e.g. `Seize the gate (Turn 3/8)`.
+- A map shows its limit with the turn (`Turn 3/8`) and on the objective's
+  lines as a way to lose (`Lose: Turn 8 ends`, below).
 - Loss conditions from `death-and-difficulty.md` (0006) are checked the same
   way (after every action and at every phase boundary).
+
+## The objective at a battle's start
+
+Decided: 2026-11-17
+Source: ticket 0481 (the look: `look-and-feel.md`, *The objective at a
+battle's start*)
+
+A playtester on Chapter 2, passed on by Nick (2026-11-07):
+
+> "The end condition for ch2 doesn't make much sense, it seems you need
+> to both clear houses as well as kill the boss, it seemed from our
+> workshopping it would be one or the other but it seems to be both.
+> Make it more clear once the banner displays (AND or OR condition
+> properly highlighted)"
+
+Asked whether to keep 0069's rule (win by defeating Hendry; lose once too
+many houses burn), quoting 0069 ("it should be a real race not an
+optional one... save the village with a minimum number houses allowed to
+pass"), Nick first picked "either one wins", then:
+
+> "actually, revert. it should be AND but more clear. Since we give
+> optional rewards for 4 and 5 houses."
+
+So **Chapter 2 stays AND**: defeating Hendry wins; the battle is lost once
+fewer houses than the minimum can still stand. The houses past the
+minimum are a bonus. What changed is how it reads: the village is worded
+as a way to lose, and its rewards as a bonus.
+
+Every battle's objective is shown as lines, the same on the banner at its
+start and on the map menu's Objective page:
+
+- `Win:` what wins it: `Defeat Silas Hendry`, `Rout the enemy`, `Seize
+  the Fort`, `Survive 8 turns`, `Get everyone to the exit (0/5 out)`.
+- `Lose:` the first way to lose, then `or` and each other, in this order:
+  the village, `3 of 5 houses burn` (the houses that, once burned, leave
+  fewer than the minimum standing); the turn limit, `Turn 8 ends`; the
+  lead, `Ellery falls`. (The whole army falling isn't listed: the lead
+  falls with it.)
+- `Bonus:` in a battle with a village whose houses past the minimum give
+  rewards: `Save 4 houses for a reward`, `Save 4 or 5 houses for
+  rewards`, `Save 4 to 6 houses for rewards` (*the agent's wording*).
 
 ## Act 1's battle rules: escape, save the village, bosses who get away
 

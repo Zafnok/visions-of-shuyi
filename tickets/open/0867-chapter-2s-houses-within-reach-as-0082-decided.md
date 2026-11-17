@@ -94,10 +94,11 @@ the Act 1 playtest's checklist (1064).
     army. Tables in `docs/playtesting.md`.
 
 **Out (do not do):**
-- **0481** (the objective shown when a battle starts, with AND / OR):
-  either order. It reads the minimum and the objective from the battle
-  file, so a new minimum shows by itself; if 0481 is done first, check
-  its Chapter 2 snapshot and refresh it on purpose.
+- **0481** (the objective shown when a battle starts): done. Its lines
+  (`Lose: 3 of 5 houses burn`, `Bonus: Save 4 or 5 houses for
+  rewards`) are built from the battle file's minimum and rewards, so a
+  new minimum shows by itself; its snapshots use lines of their own, so
+  nothing needs refreshing.
 - **0528** (enemies close in): either order; whichever lands second
   re-runs Chapter 2's bands with the other in.
 - The house's look in the picture look (0471, art Nick buys).

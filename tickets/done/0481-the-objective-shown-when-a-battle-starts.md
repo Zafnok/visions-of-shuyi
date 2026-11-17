@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 0481 — The objective shown when a battle starts
@@ -128,17 +128,17 @@ Chapter 1's and Chapter 2's start, both looks:
 
 ## Acceptance criteria
 
-- [ ] Nick's answers are recorded in `turn-structure.md` and
+- [x] Nick's answers are recorded in `turn-structure.md` and
       `look-and-feel.md`.
-- [ ] Starting Chapter 1 shows the objective banner once before the
+- [x] Starting Chapter 1 shows the objective banner once before the
       first phase banner (Harness test reading the view).
-- [ ] Chapter 2's banner shows both parts with the join he picked
+- [x] Chapter 2's banner shows both parts with the join he picked
       highlighted, and the village part reads as a condition to fail
       (test on the built lines; `frame-png` picture in the PR).
-- [ ] A rewind doesn't show it again; a Retry does (test).
-- [ ] The Objective page and the banner build their lines with the same
+- [x] A rewind doesn't show it again; a Retry does (test).
+- [x] The Objective page and the banner build their lines with the same
       function (one test on both).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -149,4 +149,54 @@ Chapter 1's and Chapter 2's start, both looks:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick's answers** (recorded in `turn-structure.md` and `look-and-feel.md`,
+*The objective at a battle's start*), on `frame-png` mockups of Chapter 1's
+and Chapter 2's start in both looks:
+
+1. **Chapter 2's rule:** he first picked "either one wins", then: "actually,
+   revert. it should be AND but more clear. Since we give optional rewards
+   for 4 and 5 houses." So no core change and no follow-up ticket: Hendry's
+   defeat wins, 3 of the 5 houses burning loses, the 4th and 5th house are
+   a bonus.
+2. **The look:** C, the Win/Lose panel waiting for Confirm, plus (asked
+   after his revert) a `Bonus:` line for the village's rewards.
+3. **The Objective page** uses the same wording: yes.
+
+**Built:**
+- `battle/objective.rs`: `lines()` builds `Win:` / `Lose:` / `or` /
+  `Bonus:` lines from the battle's objective, village, turn limit and lead;
+  the banner and the Objective page both call it (`village_count` adds
+  `Houses: 1 saved, 0 lost` to the page). It replaces `loot::village_text`.
+- `BannerKind::Objective`, queued by `BattleScreen::start` after the battle
+  notes and before turn 1's events (so before `PLAYER PHASE` and any turn-1
+  scene); only Confirm closes it (help `f continue`). Retry and Restart
+  rebuild the screen with `start`, so it shows again; a rewind clears the
+  queue and `resume` (a suspended battle) never queues it.
+- Painted by the glyph skin (the picture look uses the same panel over its
+  map) and the Playdate skin (its inks; a line too wide is cut, the longest
+  today is 43 of 50 cells).
+- `Village::rewards_on_offer()` in core (the rewards a win can give, capped
+  at the houses past the minimum).
+- Tests: the lines for each objective kind, with a village, a turn limit
+  and the bonus's wording; start shows it once before `PLAYER PHASE` and
+  only Confirm closes it (unit and Harness integration); the banner and the
+  page give the same lines; a rewind doesn't show it, Retry and Restart
+  do; glyph and Playdate snapshots. Every older test that entered a battle
+  presses Confirm once more; snapshots that changed only show the cursor's
+  pulse one frame later, plus the Objective page's new lines.
+- The snapshots use lines of their own, not Chapter 1's or 2's (ADR-0118: tests
+  keep to their own data); the PR's pictures are `frame-png` of the real
+  chapters, cropped to the panel.
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+- The losses are listed village first, then the turn limit, then the lead;
+  the whole army falling isn't listed (the lead falls with it).
+- The bonus reads `Save 4 houses for a reward` / `Save 4 or 5 houses for
+  rewards` / `Save 4 to 6 houses for rewards`.
+- No banner when a suspended battle is carried on, nor after a rewind.
+- The debug `--battle` start (`cargo shuyi frame-png`, the bench) still
+  opens without it, as before (it builds the screen with `new`).
+
+**Engine friction:** the estimate was written after the code, not before
+(about 150 production lines, judged by `banner.rs` plus one paint per
+skin); measured 199 added (1.3×), under 2×.

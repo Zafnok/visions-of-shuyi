@@ -201,10 +201,10 @@ fn a_rebound_button_plays_a_battle() {
     // Quick Battle (one up from Options) with the new Confirm (through
     // Preparations: left wraps to `Fight!`), and the same with the
     // keyboard.
-    h.pad("DpadUp RightStickPress DpadLeft RightStickPress RightStickPress");
+    h.pad("DpadUp RightStickPress DpadLeft RightStickPress RightStickPress RightStickPress");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut keys = Harness::with_layout(RIGHT_HANDED);
-    keys.keys("Down f Left f f");
+    keys.keys("Down f Left f f f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
     // Pick the unit under the cursor and move it one tile.
     h.pad("RightStickPress DpadRight RightStickPress");

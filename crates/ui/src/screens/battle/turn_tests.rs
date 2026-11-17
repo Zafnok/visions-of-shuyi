@@ -84,7 +84,7 @@ fn wait_unit(s: &mut BattleScreen, index: usize) {
 fn phase_banner(s: &BattleScreen) -> Option<(Phase, u32)> {
     match s.banner()?.kind {
         BannerKind::Phase { phase, turn } => Some((phase, turn)),
-        BannerKind::Outcome(_) => None,
+        BannerKind::Outcome(_) | BannerKind::Objective => None,
     }
 }
 
@@ -687,13 +687,56 @@ fn quick_start(c: &Ctx) -> (BattleState, Vec<Event>) {
     BattleState::new(campaign.battle_setup(def, &c.game.content.tables()))
 }
 
+/// Acceptance (0481): a battle just started shows its objective's banner
+/// once, before turn 1's `PLAYER PHASE`; it waits for Confirm, which does
+/// nothing else.
+#[test]
+fn a_battle_just_started_opens_on_its_objective_until_confirmed() {
+    let mut c = ctx();
+    let (state, events) = quick_start(&c);
+    let mut s = BattleScreen::start(state, &events);
+    let objective =
+        |s: &BattleScreen, c: &Ctx| s.view(c).banner.filter(|b| b.kind == BannerKind::Objective);
+    let shown = objective(&s, &c).expect("the objective banner");
+    assert_eq!(shown.title, "OBJECTIVE");
+    assert_eq!(shown.lines[0].text, "Rout the enemy");
+    assert_eq!(s.help(&c), "f continue");
+    // Keys other than Confirm are ignored, and it never closes by itself.
+    let before = s.cursor().pos;
+    press(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
+    frame(&mut s, &mut c, &[], 60.0);
+    assert!(objective(&s, &c).is_some());
+    assert_eq!(s.cursor().pos, before);
+    assert_eq!(s.mode(), &Mode::default());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(objective(&s, &c), None);
+    assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
+    assert_eq!(s.mode(), &Mode::default());
+    // Once: not again after the phase banner, nor on the next turn.
+    frame(&mut s, &mut c, &[], PHASE_BANNER_S * 1.1);
+    assert_eq!(s.banner(), None);
+    press(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
+    for _ in 0..200 {
+        assert_eq!(objective(&s, &c), None);
+        frame(&mut s, &mut c, &[], 0.5);
+    }
+}
+
+/// `start` with `events`, past the objective's banner.
+fn started(c: &mut Ctx, state: BattleState, events: &[Event]) -> BattleScreen {
+    let mut s = BattleScreen::start(state, events);
+    assert_eq!(s.banner().map(|b| b.kind), Some(BannerKind::Objective));
+    press(&mut s, c, &[Action::Confirm]);
+    s
+}
+
 #[test]
 fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     let mut c = ctx();
     let (state, events) = quick_start(&c);
     // A screen on a given state (a unit test, a debug tool) has none.
     assert_eq!(BattleScreen::new(state.clone()).banner(), None);
-    let mut s = BattleScreen::start(state.clone(), &events);
+    let mut s = started(&mut c, state.clone(), &events);
     assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
     assert!(s.view(&c).shows("PLAYER PHASE"));
     assert!(s.view(&c).shows("Turn 1"));
@@ -713,7 +756,7 @@ fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     assert_ne!(s.cursor().pos, before);
     // Or on Confirm, which does nothing else (the cursor is on the lord:
     // a second Confirm selects it).
-    let mut s = BattleScreen::start(state, &events);
+    let mut s = started(&mut c, state, &events);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
     assert_eq!(s.mode(), &Mode::default());

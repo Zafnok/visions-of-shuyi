@@ -26,9 +26,11 @@ pub mod stage;
 
 use crate::prelude::*;
 
+use super::banner::BannerKind;
 use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_anchor, menu_origin_in};
 use super::layout::map_area;
 use super::notes::{unwrap_notes, wrap_notes};
+use super::objective;
 use super::units::{hp_fill, meter_cells};
 use super::view::{
     BannerView, BattleMenuView, BattleView, DialogView, MapInfoView, MenuHeader, MenuPlace,
@@ -61,10 +63,11 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
-            let mut lines = vec![o.objective.clone(), o.turn.clone()];
-            if let Some(village) = &o.village {
-                lines.insert(1, village.clone());
-            }
+            let mut lines: Vec<String> = objective::padded(&o.lines)
+                .into_iter()
+                .chain(o.village.clone())
+                .chain([o.turn.clone()])
+                .collect();
             if let Some(notes) = &o.notes {
                 lines.push(String::new());
                 lines.push(notes.title.clone());
@@ -458,6 +461,10 @@ fn paint_box(ctx: &Ctx, view: &BattleView, title: &str, lines: &[String], buf: &
 /// Paints the banner in a window in the middle of `area`, its big line
 /// over its second (the turn).
 fn paint_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut GlyphBuffer) {
+    if banner.kind == BannerKind::Objective {
+        paint_objective_banner(ctx, banner, area, buf);
+        return;
+    }
     let ink = inks(ctx);
     let rect = Rect::new(
         area.x + (area.w - BANNER_W) / 2,
@@ -469,6 +476,28 @@ fn paint_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut GlyphBuffe
     let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
     buf.print_centred(row(2), &banner.title, ink.text);
     buf.print_centred(row(3), &banner.subtitle, ink.text);
+}
+
+/// Paints the objective banner (0481) in a window in the middle of
+/// `area`, as the glyph skin does but in the Playdate's inks: the title,
+/// then each line, its label in a column. A line too wide for the screen
+/// is cut.
+fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut GlyphBuffer) {
+    let ink = inks(ctx);
+    let (w, h) = glyph::objective_banner_size(&banner.title, &banner.lines);
+    let (w, h) = (w.min(area.w), h.min(area.h));
+    let rect = Rect::new(area.x + (area.w - w) / 2, area.y + (area.h - h) / 2, w, h);
+    pd::window(ctx, buf, rect, "");
+    buf.print_centred(
+        Rect::new(rect.x, rect.y + 2, rect.w, 1),
+        &banner.title,
+        ink.text,
+    );
+    let room = to_usize(rect.w - 6);
+    let rows = (rect.y + 4..rect.y + rect.h - 2).zip(objective::padded(&banner.lines));
+    for (y, line) in rows {
+        buf.print(rect.x + 3, y, &cut(&line, room), ink.text, ink.inside);
+    }
 }
 
 #[cfg(test)]

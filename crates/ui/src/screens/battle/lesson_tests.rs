@@ -366,8 +366,12 @@ fn the_lesson_waits_for_the_notes_and_the_banner() {
     assert!(!s.notes_open() && s.banner().is_some());
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
-    // Keys while waiting tick nothing.
+    // Keys while waiting tick nothing; the objective's banner (0481), then
+    // the phase banner.
     press(&mut s, &mut c, &[Action::CursorUp]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(s.banner().is_some());
+    assert_eq!(s.shown_lesson(), None);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
