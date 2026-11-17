@@ -8,6 +8,8 @@
 pub mod units;
 
 use shuyi_ui::grid::glyph::GlyphSkin;
+
+use crate::settings::ThreatArrows;
 use shuyi_ui::grid::skin::{MapColors, UnitPainter};
 
 use super::edges::{self, Side};
@@ -34,7 +36,8 @@ pub const MAP_COLORS: MapColors = MapColors::new(
 /// then the ranges tinting it, then the units (a highlighted one with its
 /// tile's colours swapped), the path and the cursor; over them all, the
 /// threat arrows and marks.
-pub const GLYPH: GlyphSkin = GlyphSkin::new(MAP_COLORS, GLYPH_WALK, units::HP_BAR_H);
+pub const GLYPH: GlyphSkin = GlyphSkin::new(MAP_COLORS, GLYPH_WALK, units::HP_BAR_H)
+    .with_threat_shape(ThreatArrows::Arcs.shape());
 
 /// This game's units as the glyph skin shows them ([`units::draw_unit`]),
 /// a highlighted one with its tile's colours swapped; over them, the edge

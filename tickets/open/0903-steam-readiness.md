@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0816", "0902", "0906", "0908", "1064"]
+blocked_by: ["0816", "0902", "0906", "0908", "0922", "1064"]
 nick_input: setup
 completed:
 ---
@@ -26,7 +26,8 @@ them and waits for 0220 and 0815).
 
 **Blocker added 2026-10-16:** 0908, the polish of the title's sparks and
 the threat arrows that Nick wants "before release" (Chapter 1 playtest
-round 3).
+round 3). The sparks moved to 0922 (2026-11-17: a campfire, its
+crackle and embers in their place), so 0922 blocks this too.
 
 **Machine-made content (added 2026-10-03, either order with 0907):** if the
 build has AI-generated voices, a machine-translated language or both

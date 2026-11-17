@@ -112,6 +112,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
         Row::EnemyPhaseSpeed,
         Row::AutoEnd,
         Row::Cursor,
+        Row::ThreatArrows,
         Row::PortraitStyle,
         Row::Intro,
         Row::MusicVolume,
@@ -242,6 +243,10 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::MapLook, s.game.map_look != before.game.map_look),
             (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
             (
+                Row::ThreatArrows,
+                s.game.threat_arrows != before.game.threat_arrows,
+            ),
+            (
                 Row::PortraitStyle,
                 s.game.portrait_style != before.game.portrait_style,
             ),
@@ -299,6 +304,7 @@ fn rows_show_their_values() {
             "Corners*",
             "Pictures*",
             "2×*",
+            "Arcs*",
             "Dots*",
             "On*",
             "On*",
@@ -327,6 +333,7 @@ fn rows_show_their_values() {
         s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
         s.game.map_look = MapLook::Glyphs;
         s.game.map_zoom = MapZoom::X1;
+        s.game.threat_arrows = crate::ThreatArrows::Straight;
         s.theme = Theme::ALL[2];
     })
     .unwrap();
@@ -343,6 +350,7 @@ fn rows_show_their_values() {
     assert_eq!(value(&c, Row::EnemyPhaseSpeed), named(fast));
     assert_eq!(value(&c, Row::MapLook), named(MapLook::Glyphs.key()));
     assert_eq!(value(&c, Row::MapZoom), "1×*");
+    assert_eq!(value(&c, Row::ThreatArrows), "Straight*");
     assert_eq!(value(&c, Row::Theme), named(Theme::ALL[2].key()));
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");

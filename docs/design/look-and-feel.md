@@ -626,6 +626,33 @@ over each enemy, a red frame around each enemy, lines and marks). The rule
     on the map view's top row it is moved down to stay inside the view.
   - Neither moves or blinks.
 
+**Changed 2026-11-17 (ticket 0908, before the Steam release):** three
+rounds of renders over the Chapter 1 map, both looks. Round 1, four
+tunings of today's arrow (thicker, a bigger head, brighter or deeper red,
+starting at the tile's edge): "ur thinking too much in the box, several
+games use a more 3D opacity effect with blinking and such for the attack
+range tiles and for threats". Round 2, moving and see-through (breathing,
+pulses flowing to the tile, a glowing core, the tile blinking): "these
+are more creative but start to sacrifice readability … how do modern
+SRPGs handle it?". Round 3, from how other tactics games do it (arcs like
+Fire Emblem: Three Houses and Triangle Strategy, dotted arcs like
+Wildermyth, arcs and a framed tile like XCOM 2's flank shield), still and
+solid: "lets do I as default, K as option, and A as an option too".
+
+- **Arcs by default:** each arrow is an **arc bowing up the screen** over
+  what lies between, from the enemy (its tile's middle in the picture
+  look, its tile's edge in the glyph look, as before) to just short of
+  the tile's middle: a 2-pixel line with a 1-pixel dark edge, bowed by
+  0.4 of the distance between the two, ending 4 pixels short in a filled
+  head 6 pixels long (*tunable*: the engine's `grid::threat`, ticket
+  3220).
+- **An option, Arcs + tile:** the same arcs, and a 1-pixel frame in the
+  arrow's colour inside the threatened tile, edged dark.
+- **An option, Straight:** the straight arrows above, unchanged.
+- The `!` marks are unchanged in all three. The Playdate draws the same
+  shapes in black edged in white.
+- The player picks in Options (`options.md`, *Threat arrows*).
+
 ### Attack forecast
 
 Decided 2026-09-27, ticket 0404, over three rounds of renders (the ticket's

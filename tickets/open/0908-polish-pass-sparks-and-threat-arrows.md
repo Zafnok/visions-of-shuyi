@@ -1,17 +1,17 @@
 ---
 id: "0908"
-title: "Polish before the Steam release: the title's sparks and the threat arrows' look"
+title: "Threat arrows as arcs by default, with arcs + tile and straight as options"
 type: tuning
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
-blocked_by: []
+status: in-progress
+blocked_by: ["engine#3220"]
 nick_input: decision
 completed:
 ---
 
-# 0908 — Polish before release: sparks and threat arrows
+# 0908 — Threat arrows as arcs, with two options
 
 ## Context
 
@@ -35,6 +35,19 @@ so `blocked_by` has 1118 and 1050.
 **Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
 into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 `blocked_by` any more.
+
+**Sparks moved to 0922 (2026-11-17):** shown four tunings of the sparks,
+Nick asked for more than tuning (a campfire picture, a fire-burning
+ambience, a fade into the cinematic); that is ticket 0922, with the
+sparks redone as embers rising from the fire. The move and attack ranges'
+look went to 0923. This ticket keeps the threat arrows.
+
+**Picked 2026-11-17 (three rounds):** arcs by default, with "Arcs + tile"
+and today's straight arrows as options in Options (`look-and-feel.md`,
+*Threat arrows*; `options.md`, *Threat arrows*). The arcs are drawn by
+the engine: engine ticket 3220 (Nick: "Yes, file and open"), so this
+ticket's PR moves the pin past it, in a session of its own after Nick
+merges the engine PR and confirms.
 
 ## Nick input
 

@@ -147,8 +147,10 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     scene.push_unit(brigand(p(5, 3)));
     scene.path = vec![p(2, 2), p(3, 2)];
     scene.cursor = Some(CursorView::new(p(3, 2), 1.0, CursorStyle::Corners));
+    // Straight arrows (an option since ticket 0908; the default is below).
+    let straight = MapSkin::glyph().with_threat_arrows(crate::ThreatArrows::Straight);
     let mut buf = blank();
-    MapSkin::glyph().paint(&c, &scene, area, &mut buf);
+    straight.paint(&c, &scene, area, &mut buf);
     let before = buf.overlays();
     let threat = ThreatView {
         tile: p(3, 2),
@@ -156,7 +158,7 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     };
     scene.threat = Some(threat.clone());
     let mut with = blank();
-    MapSkin::glyph().paint(&c, &scene, area, &mut with);
+    straight.paint(&c, &scene, area, &mut with);
     // No cell changes: the arrows are drawn over the glyphs.
     for y in 0..32 {
         for x in 0..100 {
@@ -188,6 +190,23 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     assert_eq!(yellow[0].rect, Rect::new(134, 84, 3, 6));
     assert_eq!(yellow[1].rect, Rect::new(134, 91, 3, 2));
     assert_eq!(yellow.len(), 2);
+    // By default, and with each option, the skin draws that option's shape.
+    let mut arcs = blank();
+    MapSkin::glyph().paint(&c, &scene, area, &mut arcs);
+    let shaped =
+        |shape| threat::threat_overlays_shaped(&threat, &grid, threat::Start::Edge, shape, colors);
+    assert_eq!(&arcs.overlays()[before.len()..], shaped(threat::Shape::Arc));
+    for arrows in crate::ThreatArrows::ALL {
+        let mut buf = blank();
+        MapSkin::glyph()
+            .with_threat_arrows(arrows)
+            .paint(&c, &scene, area, &mut buf);
+        assert_eq!(
+            &buf.overlays()[before.len()..],
+            shaped(arrows.shape()),
+            "{arrows:?}"
+        );
+    }
 }
 
 /// The building tiles (ticket 0322): the house, the gate and the throne

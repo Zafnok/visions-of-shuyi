@@ -24,6 +24,7 @@ pub mod units;
 
 use alloc::rc::Rc;
 
+use shuyi_ui::grid::glyph::GlyphSkin;
 use shuyi_ui::grid::skin::UnitPainter;
 use shuyi_ui::grid::sprite::SpriteSkin;
 use trpg_content::Tileset;
@@ -49,8 +50,13 @@ impl MapSkin {
     /// to every [`MapZoom`]), `"sprite_units"` when only the units. Its
     /// walk is slower than the glyph skin's: a sprite is seen to walk.
     pub fn sprite(tileset: Tileset) -> Self {
+        Self::sprite_on(tileset, GLYPH)
+    }
+
+    /// [`sprite`](Self::sprite), its colours and threat arrows `glyph`'s.
+    pub(super) fn sprite_on(tileset: Tileset, glyph: GlyphSkin) -> Self {
         let zooms = MapZoom::ALL.map(MapZoom::factor);
-        let grid = SpriteSkin::new(tileset.terrain.clone(), GLYPH, SPRITE_WALK).with_zooms(&zooms);
+        let grid = SpriteSkin::new(tileset.terrain.clone(), glyph, SPRITE_WALK).with_zooms(&zooms);
         Self::new(Rc::new(grid), Units::Sprite(Rc::new(tileset)))
     }
 }
@@ -348,11 +354,18 @@ pub(crate) mod tests {
             skin.paint(&c, &scene, area, &mut buf);
             let grid = skin.grid(&scene, area);
             let arrows = threat(p(0, 0), &[p(1, 1)]);
-            let expect: Vec<Item> =
-                threat::threat_overlays(&arrows, &grid, threat::Start::Middle, colors)
-                    .into_iter()
-                    .map(Item::Rect)
-                    .collect();
+            // Arcs, the default (ticket 0908).
+            let shape = threat::Shape::Arc;
+            let expect: Vec<Item> = threat::threat_overlays_shaped(
+                &arrows,
+                &grid,
+                threat::Start::Middle,
+                shape,
+                colors,
+            )
+            .into_iter()
+            .map(Item::Rect)
+            .collect();
             assert!(expect.len() > 4, "{}", skin.name());
             assert_eq!(&buf.items()[before..], expect, "{}", skin.name());
             // The mark is over the brigand's tile, in the highlight colour.

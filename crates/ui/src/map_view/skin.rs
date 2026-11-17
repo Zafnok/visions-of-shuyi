@@ -15,7 +15,7 @@ use super::scene::{MapScene, TerrainLooks, UnitView};
 use super::sprite::SpriteUnits;
 use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::screen::Ctx;
-use crate::settings::MapZoom;
+use crate::settings::{MapZoom, ThreatArrows};
 
 /// Calls `paint` with what the kit's skins paint with in `ctx`: its
 /// palette, this game's terrains and its lights.
@@ -98,6 +98,23 @@ impl MapSkin {
     pub fn at_zoom(&self, zoom: MapZoom) -> Option<Self> {
         let grid = self.grid.at_zoom(zoom.factor())?;
         Some(Self::new(grid, self.units.clone()))
+    }
+
+    /// The same skin, at the same zoom, drawing the threat arrows as
+    /// `arrows` (ticket 0908).
+    pub fn with_threat_arrows(&self, arrows: ThreatArrows) -> Self {
+        let shape = arrows.shape();
+        let skin = match &self.units {
+            Units::Glyph => Self::new(Rc::new(GLYPH.with_threat_shape(shape)), Units::Glyph),
+            Units::OneBit => Self::new(Rc::new(ONE_BIT.with_threat_shape(shape)), Units::OneBit),
+            Units::Sprite(tileset) => {
+                Self::sprite_on(Tileset::clone(tileset), GLYPH.with_threat_shape(shape))
+            }
+        };
+        match self.zoom() {
+            Some(zoom) => skin.at_zoom(zoom).unwrap_or(skin),
+            None => skin,
+        }
     }
 
     /// Paints `scene` into the cells of `area`, its units by the painter of
