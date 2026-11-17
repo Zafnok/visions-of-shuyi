@@ -63,6 +63,9 @@ pub struct ForecastSideView {
     pub faction: Faction,
     /// What it fights with (empty with nothing).
     pub weapon: String,
+    /// The weapon's short name, shown where `weapon` doesn't fit with its
+    /// uses (ticket 0498), if it has one.
+    pub short: Option<String>,
     /// What is left of it, if anything is known.
     pub left: Option<LeftView>,
     /// Its HP now, after the attack if every strike hit, and its max.

@@ -457,6 +457,17 @@ fn the_names_table_of_a_language_has_the_packs_names() {
     assert_eq!(lang.names(&code("xx"), &renamed), renamed);
 }
 
+/// A weapon's short name (0498): the pack's, or the English given.
+#[test]
+fn the_test_pack_translates_a_weapons_short_name() {
+    let content = crate::load_embedded().unwrap();
+    let (test, en) = (code(TEST), LangCode::default());
+    let steel = ItemId::new("steel_sword");
+    let short = |code| content.lang.short_name(code, &steel, "Stl Sword");
+    assert_eq!(short(&test), "STL SWORD");
+    assert_eq!(short(&en), "Stl Sword");
+}
+
 #[test]
 fn the_test_pack_translates_a_little_of_every_kind() {
     let content = crate::load_embedded().unwrap();

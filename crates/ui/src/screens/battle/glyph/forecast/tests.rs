@@ -8,6 +8,7 @@ use crate::screens::battle::forecast::tests::targeting;
 use crate::screens::battle::testing::skirmish;
 use crate::screens::battle::view::{ForecastHp, TotalView};
 use crate::words::Words;
+use insta::assert_snapshot;
 
 /// The lord's forecast against the brigand at `brigand_hp`, changed by
 /// `change`.
@@ -384,4 +385,55 @@ fn the_swap_mark_is_two_triangles_pointing_apart() {
     assert_eq!(widths, SWAP_ROWS);
     assert!(left.iter().all(|o| o.rect.x + o.rect.w == SWAP_GAP_X - 1));
     assert!(right.iter().all(|o| o.rect.x == SWAP_GAP_X));
+}
+
+/// The lord's forecast with a Steel Sword of 25 uses, its short name
+/// `short` (ticket 0498).
+fn steel(short: Option<&str>) -> ForecastView {
+    view(20, |v| {
+        v.sides[0].weapon = "Steel Sword".into();
+        v.sides[0].short = short.map(Into::into);
+        v.sides[0].left = Some(LeftView::Count { left: 25, max: 25 });
+    })
+}
+
+#[test]
+fn a_weapon_shows_its_name_or_its_short_name_or_is_cut() {
+    // The PC's 13 cells leave 10 for the name before ` 25`.
+    let v = steel(Some("Stl Sword"));
+    assert_eq!(weapon_name(&v.sides[0], Some(25), COLUMN_W), "Stl Sword");
+    // With no uses after it, the whole name fits.
+    assert_eq!(weapon_name(&v.sides[0], None, COLUMN_W), "Steel Sword");
+    // A short name too wide too (the Playdate's 10 cells) is cut itself.
+    assert_eq!(weapon_name(&v.sides[0], Some(25), 10), "Stl Sw…");
+    // No short name: the name is cut.
+    let bare = steel(None);
+    assert_eq!(
+        weapon_name(&bare.sides[0], Some(25), COLUMN_W),
+        "Steel Swo…"
+    );
+    // A name that fits keeps it, short name or not.
+    let iron = view(20, |v| v.sides[0].short = Some("Irn Swd".into()));
+    assert_eq!(
+        weapon_name(&iron.sides[0], Some(20), COLUMN_W),
+        "Iron Sword"
+    );
+}
+
+#[test]
+fn the_columns_width_is_the_one_the_content_checks_short_names_by() {
+    assert_eq!(COLUMN_W, trpg_content::item::WEAPON_LINE_CELLS);
+}
+
+#[test]
+fn steel_sword_forecast_snapshot() {
+    let buf = render(&steel(Some("Stl Sword")));
+    assert_eq!(text(&buf, LEFT_X, WEAPON_ROW, 13), "Stl Sword 25 ");
+    let rows: Vec<String> = (SIDE_PANEL.y..SIDE_PANEL.y + 12)
+        .map(|y| row(&buf, y))
+        .collect();
+    assert_snapshot!(rows.join(
+        "
+"
+    ));
 }

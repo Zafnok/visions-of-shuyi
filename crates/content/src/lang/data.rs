@@ -70,6 +70,11 @@ fn name_key(file: &str, id: &str) -> String {
     format!("{file}.{id}.name")
 }
 
+/// The key of weapon `id`'s short name (`items.steel_sword.short`).
+fn short_name_key(id: &str) -> String {
+    format!("items.{id}.short")
+}
+
 /// The key of tip `id`'s title.
 fn tip_title_key(id: &str) -> String {
     format!("tips.{id}.title")
@@ -222,6 +227,12 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
     for (display, rules) in terrain.display.terrains.iter().zip(&terrain.rules.terrains) {
         name("terrain", &display.id, &rules.name);
     }
+    for id in tables.items.items.keys() {
+        let short = tables.items.weapon(id).and_then(|w| w.short_name.as_ref());
+        if let Some(short) = short {
+            data.insert(short_name_key(&id.0), short.clone());
+        }
+    }
     for tip in &tables.tips.tips {
         data.insert(tip_title_key(&tip.id), tip.title.clone());
         data.insert(tip_text_key(&tip.id), tip.text.clone());
@@ -272,6 +283,12 @@ impl Lang {
     /// the items file.
     pub fn item_name<'a>(&'a self, code: &LangCode, id: &ItemId, english: &'a str) -> &'a str {
         self.0.data_text(code, || name_key("items", &id.0), english)
+    }
+
+    /// The short name of weapon `id` in language `code`; `english` is its
+    /// `short_name` in the items file.
+    pub fn short_name<'a>(&'a self, code: &LangCode, id: &ItemId, english: &'a str) -> &'a str {
+        self.0.data_text(code, || short_name_key(&id.0), english)
     }
 
     /// The name of weapon `id`'s passive in language `code`; `english` is

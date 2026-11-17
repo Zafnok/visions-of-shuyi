@@ -20,7 +20,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::forecast::{
-    SIDES, Under, lost_shaded, skull, swap_arrows, under, uses_after_name,
+    SIDES, Under, lost_shaded, skull, swap_arrows, under, uses_after_name, weapon_name,
 };
 use crate::screens::battle::units::{lit_fill, meter_cells};
 use crate::screens::battle::view::{ForecastSideView, ForecastView};
@@ -199,16 +199,13 @@ fn paint_skill(pen: Pen<'_>, view: &ForecastView, buf: &mut GlyphBuffer) {
     }
 }
 
-/// The weapon's name and its uses after it (`Iron S… 20`), the name cut to
-/// leave them room.
-fn arms_text(name: &str, uses: Option<u32>) -> String {
+/// `side`'s weapon and its uses after it (`Stl Swd 25`), named as
+/// [`weapon_name`] says for a column of [`COLUMN_W`].
+fn arms_text(side: &ForecastSideView, uses: Option<u32>) -> String {
+    let name = weapon_name(side, uses, COLUMN_W);
     match uses {
-        Some(uses) => {
-            let uses = uses.to_string();
-            let room = COLUMN_W.saturating_sub(uses.chars().count() + 1);
-            format!("{} {uses}", cut(name, room))
-        }
-        None => cut(name, COLUMN_W),
+        Some(uses) => format!("{name} {uses}"),
+        None => name,
     }
 }
 
@@ -255,7 +252,7 @@ fn paint_side_line(
         Line::Names => pen.text(buf, 0, COLUMN_W, &side.name),
         Line::Arms => {
             let uses = uses_after_name(view, side, by);
-            pen.text(buf, 0, COLUMN_W, &arms_text(&side.weapon, uses));
+            pen.text(buf, 0, COLUMN_W, &arms_text(side, uses));
         }
         Line::Under => match under(view, side, by) {
             Some(Under::Spends(from, to)) => {

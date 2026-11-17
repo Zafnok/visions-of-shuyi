@@ -1,4 +1,5 @@
-// The test pack's data text (ticket 0235): a few names, a tip (its text
+// The test pack's data text (ticket 0235): a few names (and a weapon's
+// short name, 0498), a tip (its text
 // and its how, 0475), a lesson's
 // title and first item (0456), a chapter title, a battle note and an exit name (0324), each the English in capitals. Everything else
 // in the data is missing here, so it shows in English.
@@ -8,6 +9,7 @@
     (key: "items.iron_sword.name", source: "Iron Sword", text: "IRON SWORD"),
     (key: "items.potion.name", source: "Potion", text: "POTION"),
     (key: "items.iron_axe.name", source: "Old Axe", text: "OLD AXE"),
+    (key: "items.steel_sword.short", source: "Stl Sword", text: "STL SWORD"),
     (key: "classes.guard.name", source: "Guard", text: "GUARD"),
     // A generic unit is named after its class: the brigands are BRIGAND.
     (key: "classes.brigand.name", source: "Brigand", text: "BRIGAND"),

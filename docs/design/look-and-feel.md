@@ -728,13 +728,48 @@ Crit 2          Crit 1
     the art's cost does (0404's starting rule, moved).
   - The row under Crit stays for the affinity (`(resist)`, `heals 9`) and
     is blank without one; 0333's armour mark, if it adds one, goes there.
-  - A weapon's name too long to fit with its uses is cut with `…`
-    (`Steel Swo… 25`). Nick, asked: "use shortened names rather than
-    truncated i.e. Stl Swo / probably need some mapping from long to short
-    name": ticket 0498 adds short names; the cut stands until then.
-  - The Playdate's window gets the same lines in its 10-cell columns: the
-    weapon's name cut to fit its uses (`Iron S… 20`) and a 10-cell bar
-    on its own row; the lost part blinks between the checker and black.
+  - The Playdate's window gets the same lines in its 10-cell columns, the
+    weapon's name fitted to its uses as below (`Iron S… 20`) and a
+    10-cell bar on its own row; the lost part blinks between the checker
+    and black.
+
+#### Short weapon names (0498)
+
+Decided 2026-11-17, ticket 0498, over `frame-png` renders of three
+forecasts (Steel Sword against Fordwarden's Spear, Steel Gauntlets and
+Houndmaster's Axe) on the PC and the Playdate. 0480 cut a name too long
+for its uses with `…`; Nick, asked then: "use shortened names rather than
+truncated i.e. Stl Swo / probably need some mapping from long to short
+name". Options shown: A, vowels dropped (`Stl Swd`, `Hndmst Axe`); B, the
+first word shortened and the kind kept (`Stl Sword`, `Hound Axe`); C,
+seven letters for every weapon so the Playdate never cuts (`Stl Swd`,
+`Hnd Axe`, `Irn Swd`).
+
+> [style:] "B. First word shortened" … [a weapon whose name fits:] "Keep
+> the full name"
+
+- **A weapon too long for its line has a short name, written by hand**
+  (`short_name` in the items file, translated like its name):
+
+  | Weapon | Short name |
+  | ------ | ---------- |
+  | Steel Sword | Stl Sword |
+  | Steel Spear | Stl Spear |
+  | Iron Gauntlets | Iron Gntlt |
+  | Steel Gauntlets | Stl Gntlt |
+  | Houndmaster's Axe | Hound Axe |
+  | Fordwarden's Spear | Ford Spear |
+
+- **The forecast shows the full name when it fits** with the uses after
+  it (`Iron Sword 20`, `Moonblade 30`), else the short name (`Stl Sword
+  25`). The PC's 13-cell column fits every weapon one way or the other.
+- *Claude's starting rules (Nick can veto):*
+  - A new weapon whose name doesn't fit gets a short name in the same
+    style; the content check refuses one wider than the line less its
+    uses.
+  - Where even the short name doesn't fit (the Playdate's 10 cells), the
+    short name is cut with `…` (`Stl Sw… 25`); a weapon without one is
+    cut by its full name (`Iron S… 20`).
 
 ### Side panel
 
@@ -1130,7 +1165,8 @@ like shit". What the search was held to after that:
 
 | Fighter | Combat picture | Size | Map sprite | Source |
 | ------- | -------------- | ---- | ---------- | ------ |
-| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders (not imported yet: ticket 0499; today the Tiny Tales knight on foot) | Pixel Flag; MattWalkden |
+| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1, today's rider sprite) | Pixel Flag; Tiny Tales |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |

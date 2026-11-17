@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0480"]
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 0498 — Short weapon names where a line is too narrow
@@ -79,12 +79,12 @@ name in narrow lines.
 
 ## Acceptance criteria
 
-- [ ] Nick's short names are recorded in `look-and-feel.md`.
-- [ ] Every weapon in the game's data shows on a forecast line whole or by
+- [x] Nick's short names are recorded in `look-and-feel.md`.
+- [x] Every weapon in the game's data shows on a forecast line whole or by
       its short name, never cut, on the PC; on the Playdate where its
       short name fits 10 cells.
-- [ ] A test fails if a weapon's short name is too wide for a column.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A test fails if a weapon's short name is too wide for a column.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -94,5 +94,64 @@ name in narrow lines.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Nick picked from `frame-png` pictures of three forecasts (Ellery's Steel
+Sword against Fordwarden's Spear, Steel Gauntlets and Houndmaster's Axe,
+in a throwaway staged battle, PC and Playdate): **B, the first word
+shortened and the kind kept**, and a weapon whose full name fits keeps it.
+Not picked: A, vowels dropped (`Stl Swd`, `Hndmst Axe`); C, seven letters
+for every weapon so the Playdate never cuts. Recorded in
+`look-and-feel.md`, *Short weapon names (0498)*.
+
+| Weapon | Short name |
+| ------ | ---------- |
+| Steel Sword | Stl Sword |
+| Steel Spear | Stl Spear |
+| Iron Gauntlets | Iron Gntlt |
+| Steel Gauntlets | Stl Gntlt |
+| Houndmaster's Axe | Hound Axe |
+| Fordwarden's Spear | Ford Spear |
+
+Built:
+
+- `WeaponDef::short_name` (core, beside `name`); `short_name:
+  Some("..")` in the items file, documented in its header (the items
+  format has no `README.md`; its header is where the format lives),
+  checked on load: not blank, and at most `WEAPON_LINE_CELLS` (13) less a
+  space and the durability's digits (`item::short_name_room`). A test
+  checks every weapon in the game's data fits by name or short name, and
+  one that the UI's `COLUMN_W` is the content's 13.
+- The language key `items.<id>.short` (`Lang::short_name`, the README's
+  table, the `test` pack's `items.steel_sword.short`) and
+  `Words::short_name`.
+- The forecast view carries the weapon's short name
+  (`ForecastSideView::short`); both skins pick the name with one function,
+  `glyph/forecast.rs` `weapon_name`: the full name if it fits with its
+  uses, else the short name, else cut with `…`.
+- Data: the private repository (Zafnok/visions-of-shuyi-assets#9) and the
+  public stand-in.
+- 1075's Out section now says the short names exist.
+
+**The Playdate:** none of B's names fits its 7 cells before `25`, so
+there the short name is cut (`Stl Sw… 25`, `Hound … 25`). The acceptance
+criterion "where its short name fits 10 cells" holds trivially. If Nick
+wants the Playdate's forecast uncut, the short names would need a second,
+7-cell form (option C was that); 1075 decides the Playdate's lists and
+may revisit it.
+
+*The agent's starting rules (Nick can veto; for the Act 1 playtest,
+1064):*
+
+- Where even the short name doesn't fit (the Playdate), the short name is
+  cut, not the full name (`Stl Sw… 25` rather than `Steel … 25`: more of
+  the weapon shows). The pictures Nick saw cut the full name there.
+- A weapon with no uses after it (an art spending them, broken) gets the
+  same rule against the whole column, so a long name shows its short name
+  rather than being clipped without `…`.
+
+The private pull request is based on the game's pin, not on the private
+`main`: `main` also carries 0484's content commit, whose game PR (#720)
+hadn't merged. After both merge, the pin moves to the private `main`.
+
+Engine friction: estimate 70 production lines (a field, its check, a
+language key, a `Words` method and one picker for two skins, judged by
+0480's `paint_weapon`), measured 112 added (1.6×), under 2×.

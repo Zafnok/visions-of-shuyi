@@ -47,6 +47,7 @@ fn arts() -> ArtTable {
 
 fn weapon(kind: WeaponKind, rank: WeaponRank, arts: &[&str]) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
+        short_name: None,
         name: "W".into(),
         kind,
         rank,

@@ -17,6 +17,7 @@ pub(crate) fn id(s: &str) -> ItemId {
 
 fn weapon(kind: WeaponKind, rank: WeaponRank, range: (u32, u32)) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
+        short_name: None,
         name: "W".into(),
         kind,
         rank,
