@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: setup
-completed:
+completed: 2026-11-17
 ---
 
 # 0499 — MattWalkden's riders as the mounted units' map sprite
@@ -86,13 +86,13 @@ goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] Mounted units are drawn on the map as a MattWalkden rider in the
+- [x] Mounted units are drawn on the map as a MattWalkden rider in the
       picture look (`frame-png` picture in the PR, cropped).
-- [ ] The pack is in `THIRD_PARTY_ASSETS.md` and `credits.ron`, and its
+- [x] The pack is in `THIRD_PARTY_ASSETS.md` and `credits.ron`, and its
       licence allows commercial use.
-- [ ] A rider on foot still has the knight (via 0334's state, or a named
+- [x] A rider on foot still has the knight (via 0334's state, or a named
       on-foot picture 0334 picks up).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,4 +102,50 @@ goes on the Act 1 playtest's checklist (1064).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **The pack** (Nick put the zip in the session; *Fantasy Battle Pack
+  06-07-25*): its licence file allows use "as a component part of an
+  artistic or commercial work" and edits, and forbids handing the files
+  out on their own, like our other bought art (ADR-0040). It is in the
+  private library, `library/mattwalkden/`, with `terms.txt` (the licence
+  in text) and **`INDEX.md`, a catalog of the whole pack**: lance, sword
+  and bow riders; lance and axe knights on foot; spear, sword and axe
+  fighters, an archer, a thief and a wizard (each in blue, green and
+  red, most in three skin tones, with idle, move, attack and death in
+  three directions); a 16×16 tileset; cursor, path arrows and range
+  tiles; a critical-hit flash. The zip is in `originals/mattwalkden/`.
+  `THIRD_PARTY_ASSETS.md` and `credits.ron` have it.
+- **What the map shows:** every mounted class is a MattWalkden rider: the
+  **red lance rider** for the Rider, Lancer, High Lancer, Iron Rider and
+  Juggernaut, the **red bow rider** for the Outrider and Windrunner (the
+  pack has no axe rider). `cargo xtask map-sprite-import` cuts them into
+  the game's walking sheet: the pack's first three move frames per
+  facing; left is the pack's right-facing row mirrored (it has no left);
+  its half-transparent drop shadow is dropped, since the skin draws its
+  own outline round the shape.
+- **Deviation: 24×24 frames, not 16×20.** The riders are about 20 px wide
+  with the horse, so a 16×20 cut would lose the lance and the tail, and
+  scaling pixel art down ruins it. The tileset format gained
+  `frame_px` on a picture (its frames' size, walking sheet included); the
+  skin already drew a picture at its own size, centred on its tile. A
+  rider is 4 px wider on each side than its tile and about as tall above
+  it as a Tiny Tales sprite.
+- **On foot:** 0334 isn't done, so the tileset names the Tiny Tales knight
+  (`knight_m1`) for each mounted class in a new `units.on_foot` table
+  (`Tileset::on_foot_picture`), checked like any picture but not drawn
+  yet; 0334's map bullet now says the skin must pick it.
+- **Private repository:** the art is on its branch
+  `t0499-mattwalkden-riders` (Zafnok/visions-of-shuyi-assets#11), and the
+  pin points at that branch's commit for CI. That pull request merges
+  first; then `cargo shuyi private-assets --pin` moves the pin to its
+  merge on `main` before this one merges (`content-change`).
+- **Starting rules (the agent's), for the Act 1 playtest (1064):**
+  - **Red for every rider, ours and theirs**, as bought: the Red
+    Company's riders are red in the combat scene (0446) and Tamsin's
+    colour is red; the outline still says the side. No pixel recolour.
+  - **The light-skinned, short-haired variant** for the class picture.
+  - **The move frames for stepping on the spot too** (like every unit):
+    a rider that can still act trots on the spot; one that has acted
+    stands on the middle move frame.
+  - **The Iron Rider and Juggernaut** (plate armour) are the lance rider
+    too; nothing in the pack is an armoured horseman.
+  - **Every mounted class on foot is the knight**, the bow riders too.

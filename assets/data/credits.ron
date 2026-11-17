@@ -49,7 +49,12 @@
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
-            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/", "units/",
+            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/",
+            // The map sprites, but the riders (MattWalkden's, below).
+            "units/adventurer_m1.", "units/archer.", "units/church_cleric.",
+            "units/church_knight.", "units/fighter_female.", "units/fighter_m1.",
+            "units/fighter_male.", "units/fire_elemental.", "units/ice_elemental.",
+            "units/knight_m1.", "units/warrior_m1.", "units/witch.",
             "worldmaps/act1.png",
          ]),
 
@@ -72,6 +77,15 @@
          author: "Pixel Flag",
          source: "https://booth.pm/ja/items/7851483", license: "Custom (Pixel Flag)",
          private: ["battlers/rider.", "battlers/sergeant."]),
+
+        // MattWalkden's riders (0499): the mounted classes' map sprites,
+        // cut to the game's walking sheet. Pay what you want on itch.io;
+        // no credit asked, but every bought work has one.
+        (id: "mattwalkden", group: Art,
+         title: "Fantasy Battle Pack",
+         author: "MattWalkden",
+         source: "https://mattwalkden.itch.io/fantasy-battle-pack", license: "Custom (MattWalkden)",
+         private: ["units/lance_cavalier.", "units/mounted_archer."]),
 
         // The AI voice tools that made the voice clips (0722, ADR-0107).
         // Hidden from the list: the credits screen shows them under its

@@ -809,6 +809,48 @@ mod tests {
         }
     }
 
+    /// Ticket 0499: a mounted class's picture is the rider the tileset
+    /// names for it, in frames of its own size (`MattWalkden`'s riders are
+    /// 24 × 24, the tileset's `unit_px` 16 × 20), centred on its tile. The
+    /// picture on foot the tileset names apart isn't picked until ticket
+    /// 0334 puts the rider's state in the scene.
+    #[test]
+    fn a_mounted_class_is_its_rider_in_frames_of_the_riders_size() {
+        let c = ctx();
+        let mut tileset = c.game.content.tilesets["test_units"].clone();
+        let brigand = ClassId("brigand".into());
+        let (on_foot, image) = (tileset.classes[&brigand], tileset.fallback.image);
+        let rect = ImageRect {
+            x: 24,
+            y: 0,
+            w: 24,
+            h: 24,
+        };
+        tileset
+            .classes
+            .insert(brigand.clone(), Picture { image, rect });
+        tileset.on_foot.insert(brigand.clone(), on_foot);
+        tileset.walking.insert(image);
+        let skin = MapSkin::sprite(tileset);
+        for (facing, frame, src) in [
+            (Facing::Down, 1, Rect::new(24, 0, 24, 24)),
+            (Facing::Left, 2, Rect::new(48, 24, 24, 24)),
+            (Facing::Up, 0, Rect::new(0, 72, 24, 24)),
+        ] {
+            let mut scene = plains(&c);
+            scene.push_unit(walking(unit(1, p(1, 1)), facing, frame, (0.0, 0.0)));
+            assert_eq!(scene.units[0].class, brigand);
+            // Tile (1, 1) is 32..48 × 32..48: 4 px over each side, its feet
+            // on the HP bar.
+            let drawn = painted(&c, &skin, &scene).sprites();
+            assert_eq!(drawn.len(), 5);
+            assert_eq!(drawn[4].dest, Rect::new(28, 22, 24, 24));
+            for s in &drawn {
+                assert_eq!((s.image, s.src), (image, src), "{facing:?} {frame}");
+            }
+        }
+    }
+
     #[test]
     fn an_offset_is_whole_pixels_of_the_tile_a_tile_at_most() {
         assert_eq!(offset_px((0.0, 0.0), (16, 16)), (0, 0));

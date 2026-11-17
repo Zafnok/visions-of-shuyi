@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use trpg_content::tileset::{TilesetRefs, parse_tileset};
 
 use super::*;
-use crate::map_sprite_import::For;
+use crate::map_sprite_import::{For, Source};
 
 /// A Tiled tileset file like the bought ones: 4 × 2 tiles of 16 px, two
 /// terrains with tiles and one without, a tile whose corners mix two
@@ -595,16 +595,27 @@ fn what_the_bought_files_lack_is_named_with_its_layer() {
     );
 }
 
-const UNITS: [MapSprite; 2] = [
+const UNITS: [MapSprite; 4] = [
     MapSprite {
         who: For::Class("exile"),
         name: "a",
-        source: "heroes/A/map_sprite.png",
+        source: Source::Copy("heroes/A/map_sprite.png"),
+    },
+    // A rider cut from the battle pack, and its picture on foot (0499).
+    MapSprite {
+        who: For::Class("brigand"),
+        name: "horse",
+        source: Source::Cut("Lance/Lance_Red1.png"),
+    },
+    MapSprite {
+        who: For::OnFoot("brigand"),
+        name: "a",
+        source: Source::Copy("heroes/A/map_sprite.png"),
     },
     MapSprite {
         who: For::Fallback,
         name: "a",
-        source: "heroes/A/map_sprite.png",
+        source: Source::Copy("heroes/A/map_sprite.png"),
     },
 ];
 
@@ -623,18 +634,25 @@ fn the_tileset_file_is_one_the_game_reads() {
     ));
     assert!(text.contains("    looks: {\n        \"indoor\": (\n"));
     assert!(text.ends_with(
-        "        fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n    ),\n)\n"
+        "        fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n        \
+         on_foot: {\n            \
+         \"brigand\": (image: \"units/a.png\", frame: (1, 0), walk: true),\n        },\n    ),\n)\n"
     ));
     // The game's loader takes it, with the packed image and the unit's
     // sheet in the bundle.
     let (width, height, rgba) = &imported.image;
     let png = encode_png(*width, *height, rgba).unwrap();
-    let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
-    sheet.extend(48u32.to_be_bytes());
-    sheet.extend(80u32.to_be_bytes());
+    let header = |w: u32, h: u32| {
+        let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+        sheet.extend(w.to_be_bytes());
+        sheet.extend(h.to_be_bytes());
+        sheet
+    };
+    let (sheet, horse) = (header(48, 80), header(72, 96));
     let files = [
         ("tilesets/tiny_tales.png", png.as_slice()),
         ("units/a.png", sheet.as_slice()),
+        ("units/horse.png", horse.as_slice()),
     ];
     let content = trpg_content::load_embedded().unwrap();
     let refs = TilesetRefs {
@@ -644,7 +662,7 @@ fn the_tileset_file_is_one_the_game_reads() {
         characters: &content.characters,
     };
     let read = parse_tileset("tiny_tales.ron", "tiny_tales", &text, &refs).unwrap();
-    let terrain = read.terrain.unwrap();
+    let terrain = read.terrain.clone().unwrap();
     assert_eq!(terrain.tile_px, (16, 16));
     assert_eq!(terrain.look.layers.len(), 3);
     assert_eq!(terrain.looks["indoor"].layers.len(), 1);
@@ -652,6 +670,11 @@ fn the_tileset_file_is_one_the_game_reads() {
         terrain.look.tiles.len(),
         content.terrain.display.terrains.len()
     );
+    // The rider's 24 × 24 standing frame, and the class's picture on foot.
+    let brigand = trpg_core::ClassId("brigand".to_owned());
+    let rect = read.classes[&brigand].rect;
+    assert_eq!((rect.x, rect.y, rect.w, rect.h), (24, 0, 24, 24));
+    assert_eq!(read.on_foot_picture(&brigand), Some(read.fallback));
 }
 
 #[test]

@@ -68,7 +68,9 @@ fn bought_portraits_are_cut_busts_or_faces() {
 
 /// The bought map sprites (`cargo xtask map-sprite-import`, ADR-0049): the
 /// game's tileset is there, and each of its unit pictures is the standing
-/// frame of a 48×80 sheet.
+/// frame of a 48×80 sheet, but the mounted classes': the standing frame of
+/// a 72×96 sheet of `MattWalkden`'s riders, cut to 24×24 frames (0499),
+/// each with the knight on foot named apart.
 #[test]
 fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
     let content = match trpg_content::load_embedded() {
@@ -77,17 +79,41 @@ fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
     };
     let tileset = &content.tilesets["tiny_tales"];
     let pictures = tileset.classes.values().chain(tileset.characters.values());
+    let pictures = pictures.chain(tileset.on_foot.values());
+    let mut riders = 0;
     for picture in pictures.chain([&tileset.fallback]) {
         let path = picture.image.path();
         let size = content
             .images
             .info(picture.image)
             .map(|i| (i.width, i.height));
-        assert_eq!(size, Some((48, 80)), "{path}");
         let rect = picture.rect;
-        assert_eq!((rect.x, rect.y, rect.w, rect.h), (16, 0, 16, 20), "{path}");
+        let rect = (rect.x, rect.y, rect.w, rect.h);
+        if size == Some((72, 96)) {
+            riders += 1;
+            assert_eq!(rect, (24, 0, 24, 24), "{path}");
+        } else {
+            assert_eq!(size, Some((48, 80)), "{path}");
+            assert_eq!(rect, (16, 0, 16, 20), "{path}");
+        }
     }
     assert!(tileset.classes.len() >= 10);
+    // Every mounted class: a rider, and the knight on foot.
+    assert_eq!(riders, tileset.on_foot.len());
+    for (class, on_foot) in &tileset.on_foot {
+        assert!(
+            content.classes.get(class).is_some_and(|c| c.tags.mounted),
+            "{class:?}"
+        );
+        assert_eq!(on_foot.image.path(), "units/knight_m1.png");
+        let rider = tileset.classes[class].image.path();
+        assert!(rider == "units/lance_cavalier.png" || rider == "units/mounted_archer.png");
+    }
+    assert!(
+        tileset
+            .on_foot
+            .contains_key(&trpg_core::ClassId("rider".into()))
+    );
 }
 
 /// The bought terrain tiles (`cargo xtask tileset-import`, ADR-0052): the
@@ -184,7 +210,8 @@ fn every_bought_file_has_a_credit() {
         [
             "Tiny Tales",
             "Shironejiya battle pictures (the materials in this game may not be reused)",
-            "Classes and Mobs pixel-art TRPG pieces"
+            "Classes and Mobs pixel-art TRPG pieces",
+            "Fantasy Battle Pack"
         ]
     );
 }
