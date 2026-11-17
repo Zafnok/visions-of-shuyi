@@ -33,6 +33,13 @@ before anything is built for the game:
 - 1007 builds the world map as nodes and menus, and 1003 builds camp as
   screens.
 
+- Nick, 2026-11-16 (the hook research that filed 0085–0088): exploration
+  "like Legend of Zelda", with secrets opened by fire, ice or a push,
+  belongs to "overworld free roam stuff… not part of any specific
+  battle". He also wants dungeon delves as world-map nodes (0088). Delves
+  stay grid floors whatever this ticket decides. Show this as part of
+  option C or D below.
+
 Why it matters beyond the game: the engine's free-movement mode
 (engine ADR-0003; engine tickets 1119–1125, parked in [Shuyi
 Engine](https://github.com/Zafnok/shuyi-engine/blob/main/docs/ROADMAP.md)) is paid for by the game only if
