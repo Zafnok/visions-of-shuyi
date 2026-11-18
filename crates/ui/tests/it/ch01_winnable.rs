@@ -102,8 +102,11 @@ fn chapter_1_plays_from_new_game_into_chapter_2() {
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.gold, 1000, "the clear gold");
     assert_eq!(campaign.roster.len(), 6, "nobody was lost");
-    // "Save your progress?" No: Chapter 2's first scene.
+    // "Save your progress?" No: Chapter 2's title card (0812), then its
+    // first scene.
     h.keys("Down f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch02"));
     assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);

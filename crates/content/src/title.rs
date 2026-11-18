@@ -1,8 +1,9 @@
 //! The title screen's art (`assets/title/`, ticket 0811, ADR-0059): the
 //! logo, a picture of the game's name, and the backdrops one of which is
 //! behind it each launch, and the words `GAME OVER` as a picture for the
-//! Game Over screen (ticket 0830). `content` reads only each image's
-//! size; the screens draw them as sprites (ADR-0038). Format:
+//! Game Over screen (ticket 0830), and the chapter title card's lettering
+//! (ticket 0812, [`lettering`]). `content` reads only
+//! each image's size; the screens draw them as sprites (ADR-0038). Format:
 //! `assets/title/README.md`.
 use crate::prelude::*;
 
@@ -12,6 +13,7 @@ use crate::battler::BACKDROP_PX;
 use crate::bundle;
 use crate::error::ContentError;
 use crate::image::{ImageId, ImageTable};
+use crate::lettering::{self, Lettering};
 use crate::ron_loader::parse_ron;
 
 /// Directory of the title art inside the asset bundle.
@@ -36,6 +38,18 @@ pub struct TitleArt {
     /// its size in its own pixels; `None` if the file names none (the
     /// Game Over screen then shows the words as text).
     pub game_over: Option<(ImageId, (u32, u32))>,
+    /// The chapter title card's lettering (0812); `None` if the file
+    /// names none (the card then shows its lines in the cell font).
+    pub lettering: Option<Lettering>,
+}
+
+/// The chapter card's two glyph sheets, by file stem in the title
+/// directory.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LetteringFile {
+    heading: String,
+    line: String,
 }
 
 #[derive(Deserialize)]
@@ -46,6 +60,8 @@ struct TitleFile {
     backdrops: Vec<String>,
     #[serde(default)]
     game_over: Option<String>,
+    #[serde(default)]
+    lettering: Option<LetteringFile>,
 }
 
 /// Loads the embedded title art file, checking each image against
@@ -91,11 +107,30 @@ pub fn from_source(
         .game_over
         .as_deref()
         .and_then(|relative| check("game_over".to_owned(), check_logo(relative, images)));
+    // A bundle that leaves the sheets out on purpose (the Playdate's,
+    // `playdate-bundle.txt`, which lists both) has no lettering.
+    let wanted = raw.lettering.as_ref().filter(|s| {
+        let heading = format!("{TITLE_DIR}/{}.ron", s.heading);
+        !bundle::left_out(&heading)
+    });
+    let lettering = wanted.and_then(|stems| {
+        let mut sheet = |stem: &str| {
+            lettering::sheet(TITLE_DIR, stem, images)
+                .map_err(|e| errors.extend(e))
+                .ok()
+        };
+        let (heading, line) = (sheet(&stems.heading), sheet(&stems.line));
+        Some(Lettering {
+            heading: heading?,
+            line: line?,
+        })
+    });
     if errors.is_empty() {
         Ok(TitleArt {
             logo,
             backdrops,
             game_over,
+            lettering,
         })
     } else {
         Err(errors)
@@ -192,6 +227,11 @@ mod tests {
         assert_eq!(Some(size), images.info(words).map(|i| (i.width, i.height)));
         // As wide as the logo: the two line up on the Game Over screen.
         assert_eq!(size.0, art.logo.unwrap().1.0);
+        let lettering = art.lettering.unwrap();
+        assert_eq!(lettering.heading.image.path(), "title/chapter_name.png");
+        assert_eq!(lettering.line.image.path(), "title/chapter_line.png");
+        // The name is the bigger of the two.
+        assert!(lettering.heading.atlas.cell_h > lettering.line.atlas.cell_h);
     }
 
     #[test]
@@ -212,8 +252,9 @@ mod tests {
         // Backdrops are optional.
         let art = from_source(FILE, r#"(logo: "logo.png")"#, &images).unwrap();
         assert_eq!(art.backdrops, []);
-        // So are the Game Over words.
+        // So are the Game Over words and the chapter card's lettering.
         assert_eq!(art.game_over, None);
+        assert_eq!(art.lettering, None);
         let art = from_source(
             FILE,
             r#"(logo: "logo.png", game_over: Some("logo.png"))"#,
@@ -261,6 +302,17 @@ mod tests {
             [format!(
                 "{FILE}: logo: assets/title/none.png is not a PNG image in the assets"
             )]
+        );
+    }
+
+    #[test]
+    fn missing_lettering_sheets_are_reported() {
+        assert_eq!(
+            messages(r#"(logo: "logo.png", lettering: Some((heading: "n", line: "l")))"#),
+            [
+                "assets/title/n.ron: file not found in asset bundle",
+                "assets/title/l.ron: file not found in asset bundle",
+            ]
         );
     }
 

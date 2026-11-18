@@ -117,8 +117,11 @@ fn the_recorded_playthrough_wins_chapter_4() {
 /// up to the Act 1 world map as Chapter 5 begins, after its road south.
 pub fn chapter_4_won(h: &mut Harness) {
     chapter_3_won(h);
-    // "Save your progress?" No; a scene, then the map.
+    // "Save your progress?" No; the title card (0812), a scene, then the
+    // map.
     h.keys("Down f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue", "{}", h.snapshot());
     skip_scenes(h);
     assert_eq!(

@@ -83,8 +83,12 @@ fn close_banner(h: &mut Harness) {
     assert!(!shows(h, "PLAYER PHASE"));
 }
 
-/// Skips the scene on screen: Cancel, then Confirm on "Skip scene?".
+/// Skips the scene on screen, after the chapter's title card (0812):
+/// Cancel, then Confirm on "Skip scene?".
 fn skip_scene(h: &mut Harness) {
+    if h.top_screen() == "chapter_card" {
+        h.keys("f");
+    }
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
 }
