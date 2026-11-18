@@ -1,6 +1,7 @@
 # ADR-0007: Testing strategy
 
-- **Status:** Accepted; behaviour tests read the map scene, per ADR-0038
+- **Status:** Accepted; behaviour tests read the map scene, per ADR-0038;
+  snapshots show their test's region (rule 5, ticket 1290)
 - **Date:** 2026-09-25
 
 ## Context
@@ -45,6 +46,13 @@ Supporting measures:
    then fix it.
 4. Tests must not depend on wall-clock time, real files outside `assets/`, or
    unseeded randomness.
+5. A snapshot shows the region its test is about (`Harness::snapshot_of`, a
+   battle's `MAP_VIEW`, `SIDE_PANEL` or `HELP_BAR`), so a change elsewhere
+   on the screen leaves it alone; only a test of the whole screen takes the
+   whole frame, and says so. Motion holds still in tests: with
+   `Ctx::idle_motion` off (the Harness's default) every looping motion
+   draws at its start, and only a test of a motion turns it on. A private
+   snapshot (ADR-0118 §3) shows only the private part.
 
 ## Consequences
 
