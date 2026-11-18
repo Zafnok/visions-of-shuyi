@@ -773,3 +773,34 @@ fn a_heal_aimed_at_the_unit_shows_the_change_on_its_hp_line() {
     assert_eq!(after, "   ");
     assert!(bar_x + HP_BAR_CELLS <= TEXT_X + to_i32(TEXT_W));
 }
+
+#[test]
+fn a_long_hp_change_line_keeps_its_bar_inside_the_panel() {
+    // `HP 999 → 999/999` leaves 9 cells for the bar, not 10.
+    let big = PanelUnitView {
+        hp: 999,
+        max: 999,
+        hp_then: Some(999),
+        ..ellery_panel(true)
+    };
+    let buf = panel_with(big);
+    let hp_row = UNIT_ROW + 2;
+    let line = "HP 999 → 999/999";
+    assert_eq!(panel_row(&buf, hp_row), format!("{line} {}", "█".repeat(9)));
+    // Not one cell past the text width; the blank column before the
+    // border stays blank.
+    let edge = TEXT_X + to_i32(TEXT_W);
+    assert_eq!(cells(&buf, hp_row, edge - 9, 9), "█".repeat(9));
+    assert_eq!(cells(&buf, hp_row, edge, 1), " ");
+    // A name so long no cell is left: no bar, and nothing past the line.
+    let full = PanelUnitView {
+        hp_name: "Hit Points".to_owned(),
+        hp: 999,
+        max: 9999,
+        hp_then: Some(999),
+        ..ellery_panel(true)
+    };
+    let buf = panel_with(full);
+    assert_eq!(panel_row(&buf, hp_row), "Hit Points 999 → 999/9999");
+    assert_eq!(cells(&buf, hp_row, edge, 1), " ");
+}

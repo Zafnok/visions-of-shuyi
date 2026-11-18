@@ -450,15 +450,19 @@ fn paint_panel_hp(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, y: i32
         ),
     };
     print_clipped(buf, (TEXT_X, y), TEXT_W, &hp, c(color));
-    // The bar where it always is, or after a longer line, kept inside.
+    // The bar where it always is, or after a longer line, kept inside
+    // (none when no cell is left: the meter draws no cell then).
     let text_end = TEXT_X + to_i32(hp.chars().count()) + 1;
     let x = HP_BAR_X.max(text_end);
     let cells = HP_BAR_CELLS.min(TEXT_X + to_i32(TEXT_W) - x);
-    if cells > 0 {
-        let bg = c(UiColor::PanelBg);
-        let bar = Rect::new(x, y, cells, 1);
-        paint_hp_bar(buf, &ctx.palette, bar, (shown, unit.max), bg);
-    }
+    let bar = Rect::new(x, y, cells, 1);
+    paint_hp_bar(
+        buf,
+        &ctx.palette,
+        bar,
+        (shown, unit.max),
+        c(UiColor::PanelBg),
+    );
 }
 
 /// Paints `cells` two to a row from row `top`, the names dim and the

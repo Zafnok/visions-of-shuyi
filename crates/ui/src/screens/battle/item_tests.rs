@@ -683,3 +683,26 @@ fn a_potion_aimed_at_an_ally_shows_on_its_hp_line_in_the_side_panel() {
     let max = knight.max;
     assert_eq!((knight.hp, knight.hp_then), (max - 12, Some(max)));
 }
+
+#[test]
+fn a_potion_aimed_with_another_unit_under_the_cursor_shows_the_block() {
+    let mut c = ctx();
+    let state = hurt_pair(&c, 0, 12, &["potion"]);
+    let mut s = lord_menu(&mut c, state);
+    step(&mut s, &mut c, &ITEM);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::ItemTarget(_)), "{:?}", s.mode());
+    // The cursor on the lord, not the knight it is aimed at: the knight's
+    // HP line isn't in the panel, so the block says it (1286).
+    s.cursor.jump(p(3, 5));
+    let panel = s.view(&c).panel.expect("the side panel");
+    let lord = panel.unit.expect("the lord");
+    assert_eq!((lord.name.as_str(), lord.hp_then), ("Test Lord", None));
+    let preview = panel.preview.expect("the preview block");
+    assert_eq!(preview.title, "Potion");
+    assert!(
+        preview.text.starts_with("Potion on Test Knight: HP "),
+        "{}",
+        preview.text
+    );
+}
