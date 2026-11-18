@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDa
-aDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDEEEEEEEEEEEEEEEEEEEEDDDDDDDDDDDEEEEEEEEEEEEEEa
+aDDDDDDEEEEEEEEEEEEEEEDEEEEEEEEDEEEEEaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaEEEEEEEEa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -97,7 +97,8 @@ z = fg:stone bg:stone_bg
 A = fg:fire bg:fire_bg
 B = fg:floor bg:floor_bg
 C = fg:wood bg:stone_bg
-D = fg:text_dim bg:black
+D = fg:text bg:key_bg
+E = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  161,270 14x2  hp_high

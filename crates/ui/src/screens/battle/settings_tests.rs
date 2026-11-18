@@ -127,7 +127,7 @@ fn a_setting_changed_mid_battle_holds_from_the_next_frame() {
     c.change_settings(|s| s.game.auto_end_turn = true).unwrap();
     s.update(&mut c, &idle);
     assert!(s.auto_end());
-    assert!(s.status(&c).ends_with("auto-end: ON"));
+    assert!(s.status(&c).plain().ends_with("auto-end: ON"));
 }
 
 /// Nick: holding Confirm doesn't speed up on top of Fast animations; it

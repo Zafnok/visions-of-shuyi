@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaauuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuua
-auuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuaaaaaaaaaaaaaaaaaaaaaauuuuuuuua
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaauvvvvvvvvvvvvvvvvvvvvuuuuuuuuuuuvvvvvvvvvvvvvva
+auvvvvvvvvvvuvvvvvvvvuvvvvvvvvvvvvvuvvvvvvvvvvuvvvvvvvvuuuuuvvvvvvvvvaaaaaaaaaaaaaaaaaaaaaavvvvvvvva
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -88,7 +88,8 @@ q = fg:fort bg:fort_bg
 r = fg:stone bg:stone_bg
 s = fg:floor bg:floor_bg
 t = fg:wood bg:stone_bg
-u = fg:text_dim bg:black
+u = fg:text bg:key_bg
+v = fg:text_dim bg:black
 --- overlays ---
 over  sprite 272,185 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
 over  sprite 272,187 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy

@@ -179,7 +179,7 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         let shown = s.guides().expect("the list is open").view(&c);
         let guides = &shown.list;
         assert_eq!(guides.heading, "Moving the cursor", "{level:?}");
-        assert_eq!(shown.help, "arrows choose · d close");
+        assert_eq!(shown.help.plain(), "arrows choose · d close");
         // No tip or lesson shows over it.
         assert_eq!(s.shown_tip(), None, "{level:?}");
         assert_eq!(s.shown_lesson(), None, "{level:?}");
@@ -224,7 +224,7 @@ fn the_text_names_the_keys_the_player_has_bound() {
         "{lines:?}"
     );
     assert_eq!(
-        s.guides().unwrap().view(&c).help,
+        s.guides().unwrap().view(&c).help.plain(),
         "w\u{a0}a\u{a0}s\u{a0}d choose · k close"
     );
 }

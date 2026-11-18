@@ -18,7 +18,7 @@ expression: h.snapshot()
   │  09    Empty                       ╔════════════════════╗                                    │  
   │  10    Empty                       ║                    ║                                    │  
   │  11    Empty                       ║ Overwrite slot 02? ║                                    │  
-  │  12    Empty                       ║ f yes / d no       ║                                    │  
+  │  12    Empty                       ║ F  yes / D  no     ║                                    │  
   │  13    Empty                       ║                    ║                                    │  
   │  14    Empty                       ╚════════════════════╝                                    │  
   │  15    Empty                                                                                 │  
@@ -51,7 +51,7 @@ aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 aabddddddddeeeeedddddddddddddddddddddddhhhhhhhhhhhhhhhhhhhhhhddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddhddddddddddddddddddddhddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddhddddddddddddddddddddhddddddddddddddddddddddddddddddddddddbaa
-aabddddddddeeeeedddddddddddddddddddddddhdeeeeeeeeeeeedddddddhddddddddddddddddddddddddddddddddddddbaa
+aabddddddddeeeeedddddddddddddddddddddddhdddeeeeeeeddeeedddddhddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddhddddddddddddddddddddhddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddhhhhhhhhhhhhhhhhhhhhhhddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
@@ -77,3 +77,17 @@ f = fg:panel_bg bg:panel_border_focus
 g = fg:hp_low bg:panel_bg
 h = fg:panel_border_focus bg:panel_bg
 i = fg:text_dim bg:black
+--- overlays ---
+under 329,257 13x14  key_bg
+under 329,256 13x1  key_edge
+under 329,271 13x1  key_edge
+under 328,257 1x14  key_edge
+under 342,257 1x14  key_edge
+under 401,257 13x14  key_bg
+under 401,256 13x1  key_edge
+under 401,271 13x1  key_edge
+under 400,257 1x14  key_edge
+under 414,257 1x14  key_edge
+--- glyph styles ---
+41,16  +3,+0 bold
+50,16  +3,+0 bold

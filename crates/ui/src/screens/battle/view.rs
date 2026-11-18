@@ -20,6 +20,8 @@ mod shop;
 
 use crate::prelude::*;
 
+use shuyi_ui::text::StyledText;
+
 use trpg_core::{Faction, Pos, StatValue};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};
@@ -78,10 +80,10 @@ pub struct BattleView {
     /// being aimed, or the toast.
     pub message: Option<MessageView>,
     /// The toggles' state (zoom, danger zone, auto-end), each with its
-    /// key.
-    pub status: String,
-    /// The help line: what the keys do now.
-    pub help: String,
+    /// key (each key in a key span, ticket 0254).
+    pub status: StyledText,
+    /// The help line: what the keys do now (each key in a key span).
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
     /// The attack forecast, while an attack or a spell is aimed at an
@@ -306,7 +308,11 @@ impl BattleView {
     /// Every line of text the view shows, for tests asking whether the
     /// screen shows something.
     pub fn texts(&self) -> Vec<String> {
-        let mut texts: Vec<String> = self.own_texts().into_iter().map(str::to_owned).collect();
+        let mut texts = vec![self.status.plain(), self.help.plain()];
+        texts.extend(self.tip.iter().map(|t| t.close.plain()));
+        let items = self.lesson.iter().flat_map(|l| &l.items);
+        texts.extend(items.map(|i| i.label.plain()));
+        texts.extend(self.own_texts().into_iter().map(str::to_owned));
         // The menu's lines, in English.
         let menu = self.menu.iter().flat_map(|m| &m.menu.items);
         texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
@@ -325,7 +331,7 @@ impl BattleView {
 
     /// The lines of text of the parts with no view type of their own.
     fn own_texts(&self) -> Vec<&str> {
-        let mut texts: Vec<&str> = vec![&self.status, &self.help];
+        let mut texts: Vec<&str> = Vec::new();
         if let Some(h) = self.menu.as_ref().and_then(|m| m.header.as_ref()) {
             texts.push(&h.name);
             texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));
@@ -360,13 +366,12 @@ impl BattleView {
             texts.extend([b.title.as_str(), &b.subtitle]);
         }
         if let Some(t) = &self.tip {
-            texts.extend([t.title.as_str(), &t.heading, &t.close]);
+            texts.extend([t.title.as_str(), &t.heading]);
             texts.extend(t.lines.iter().map(String::as_str));
         }
         if let Some(l) = &self.lesson {
             texts.extend([l.title.as_str(), &l.heading, &l.progress]);
             texts.extend(l.lines.iter().map(String::as_str));
-            texts.extend(l.items.iter().map(|i| i.label.as_str()));
         }
         texts.extend(self.message.as_ref().map(|m| m.text.as_str()));
         texts

@@ -414,7 +414,7 @@ impl PreparationsScreen {
             empty: ctx.text(empty).to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),
-            help: String::new(),
+            help: shuyi_ui::text::StyledText::new(),
             debug_hint: None,
         }
     }

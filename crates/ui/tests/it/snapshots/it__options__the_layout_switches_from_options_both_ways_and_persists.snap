@@ -66,7 +66,7 @@ aaaaaaaaaaaaheeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddeeeeeee
 aaaaaaaaaaaaheeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedeeeeeeeeeeeeeeeeeeeeeeeehaaaaaaaaaaaa
 aaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiijiiiijjjjjjjjjjijjjjjjjjijjjjjaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:text_highlight bg:black
@@ -76,4 +76,5 @@ e = fg:text bg:panel_bg
 f = fg:player bg:panel_bg
 g = fg:text_dim bg:panel_bg
 h = fg:panel_border bg:panel_bg
-i = fg:text_dim bg:black
+i = fg:text bg:key_bg
+j = fg:text_dim bg:black
