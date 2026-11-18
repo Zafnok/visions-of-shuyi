@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 0490 — Vix's Arts lesson shows that an art is an attack
@@ -120,16 +120,16 @@ and doable rule, data, a note key), plus tests.
 
 ## Acceptance criteria
 
-- [ ] Opening Arts ticks the first item; the lesson stays open (Harness
+- [x] Opening Arts ticks the first item; the lesson stays open (Harness
       test, `ch01_lessons.rs`).
-- [ ] Attacking with an art ticks the second and closes the lesson; a
+- [x] Attacking with an art ticks the second and closes the lesson; a
       plain Attack doesn't (tests).
-- [ ] The turn can't end while the lesson is open and a unit could still
+- [x] The turn can't end while the lesson is open and a unit could still
       use an art; it is put away when none can (tests, as 0464's).
-- [ ] The Arts menu's note reads `Attack: …` on an art line (view test in
+- [x] The Arts menu's note reads `Attack: …` on an art line (view test in
       `screens/battle/art_tests.rs`); an action art keeps "ends action".
-- [ ] The lesson's text passes the lesson checks and names no key.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The lesson's text passes the lesson checks and names no key.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -140,4 +140,43 @@ and doable rule, data, a note key), plus tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `DoneWhen::ArtAttacked` (`trpg-content`): ticked when a command
+  `Act` with `UnitAction::Attack` carrying an art or an active is fought
+  (`art_list::attacks_with_art`, noticed beside `Attacked`). Doable when
+  some unit left has an art line it could attack with from a tile it can
+  reach: the `ArtsOpened` rule minus an art used as an action of its own
+  (Overwatch), which is no attack. `needs_unit`.
+- The lesson `combat_arts` (public stand-in and the private
+  `content/data/lessons.ron`, private PR
+  `Zafnok/visions-of-shuyi-assets` branch `t0490-arts-lesson-attack`):
+  items "Open Arts in the unit's menu" and "Attack with an art", text
+  "An art is an attack, not a buff: one fight, / every strike boosted. It
+  costs weapon wear." (the ticket's draft).
+- The Arts menu's note under the list reads `Attack: <effect>` (key
+  `battle.art.note.attack`); Overwatch keeps its effect alone. The menu
+  grows by the note's width where needed (one column for the Quick
+  Battle lord's).
+- Tests: the two Chapter 1 tests (`ch01_lessons.rs`: opening Arts ticks
+  one of two and keeps the lesson; an art attack closes it; a plain
+  attack doesn't and the lesson is put away; the turn can't end while it
+  is open), `finish_short` attacks with the Sergeant's art, a private
+  snapshot of the lesson box over the Arts menu, the doable and
+  notice unit tests, the menu-note test.
+- Voice: 0476 is done, so the new text needed a clip or
+  `every_lesson_and_tip_the_guide_says_has_a_clip` fails: made with
+  `cargo xtask voice generate --scene vix` on the local voice lab
+  (`vix_fb8784ee`, audit clean: 7.1 s, no long pause), the old clip
+  removed, both in the private PR.
+
+*The agent's starting rules* (for the Act 1 playtest, 1064):
+- The lesson asks for two things: open Arts, then attack with an art (a
+  weapon active from the Arts menu counts too). A plain attack ticks
+  nothing.
+- Vix's text: "An art is an attack, not a buff: one fight, every strike
+  boosted. It costs weapon wear." It no longer says "or uses per
+  battle".
+- The note under the Arts menu starts with `Attack:` for every line that
+  attacks, e.g. `Attack: +10 hit; no counter`.
+
+- Engine friction: estimate 70 production lines (the ticket's 60-100,
+  judged by `ArtsOpened`'s own notice and doable rule), measured 43: under 2x.

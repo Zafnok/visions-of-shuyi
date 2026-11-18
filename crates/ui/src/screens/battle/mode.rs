@@ -38,7 +38,7 @@ use shuyi_ui::input::frame_seconds;
 
 use trpg_core::{
     BattleState, Command, Equipped, Faction, Phase, Pos, Reach, TileSet, UnitAction, UnitId,
-    attack_tiles, path_cost, reachable, threat_area,
+    attack_tiles, path_cost, reachable, threat_tiles,
 };
 
 use super::ai_phase::AiAction;
@@ -890,11 +890,12 @@ fn is_ready_player(state: &BattleState, id: UnitId) -> bool {
     })
 }
 
-/// The threat area of unit `id` ([`threat_area`] with its attack ranges).
+/// What unit `id` threatens ([`threat_tiles`] with its attack ranges: one
+/// that never moves only from its own tile).
 fn threat_of(state: &BattleState, id: UnitId) -> Option<Threat> {
     let unit = state.unit(id)?;
     let ranges = state.threat_ranges(unit);
-    let area = threat_area(
+    let area = threat_tiles(
         state.map(),
         state.terrain(),
         state.classes(),

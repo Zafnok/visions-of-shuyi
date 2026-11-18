@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
-blocked_by: ["0084"]
+blocked_by: ["0084", "0527", "0531"]
 nick_input: answer-first
 completed:
 ---

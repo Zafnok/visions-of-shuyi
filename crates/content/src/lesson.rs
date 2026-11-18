@@ -84,6 +84,9 @@ pub enum DoneWhen {
     ActionMenuOpened,
     /// A unit's arts menu opened.
     ArtsOpened,
+    /// A unit of the player's attacked with an art or a weapon active from
+    /// its arts menu, and the fight was fought (ticket 0490).
+    ArtAttacked,
     /// A spell was aimed at a tile (one it would change).
     TileAimed,
     /// A selected unit's path pointed at a tile an enemy could attack it
@@ -110,6 +113,7 @@ impl DoneWhen {
                 | Self::Attacked
                 | Self::ActionMenuOpened
                 | Self::ArtsOpened
+                | Self::ArtAttacked
                 | Self::TileAimed
                 | Self::ThreatPointed
                 | Self::SafePointed
@@ -130,6 +134,7 @@ enum RawDone {
     CursorMoved,
     ActionMenuOpened,
     ArtsOpened,
+    ArtAttacked,
     TileAimed,
     ThreatPointed,
     SafePointed,
@@ -151,6 +156,7 @@ impl RawDone {
             Self::CursorMoved => DoneWhen::CursorMoved,
             Self::ActionMenuOpened => DoneWhen::ActionMenuOpened,
             Self::ArtsOpened => DoneWhen::ArtsOpened,
+            Self::ArtAttacked => DoneWhen::ArtAttacked,
             Self::TileAimed => DoneWhen::TileAimed,
             Self::ThreatPointed => DoneWhen::ThreatPointed,
             Self::SafePointed => DoneWhen::SafePointed,

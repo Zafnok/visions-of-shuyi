@@ -306,6 +306,64 @@ fn info_and_danger_zone_keys() {
     assert_eq!(toggles(&h), "w danger zone: ON · Shift+Space auto-end: OFF");
 }
 
+/// The Quick Battle's Frost Elemental never moves (ticket 0450): the
+/// danger zone and the range shown when it is picked are only what it
+/// reaches from its tile, not what it could reach after walking its Mov.
+#[test]
+fn the_frost_elemental_threatens_only_from_its_tile() {
+    use trpg_core::ai::AiBehavior;
+    use trpg_core::{threat_area, threat_tiles};
+    let mut h = quick_battle();
+    h.keys("w");
+    let state = h.battle().unwrap().state().clone();
+    let elemental = state
+        .units()
+        .iter()
+        .find(|u| u.ai == AiBehavior::Stationary)
+        .unwrap()
+        .clone();
+    assert_eq!(elemental.pos, Pos::new(8, 7));
+    let area = |id, still: bool| {
+        let unit = state.unit(id).unwrap();
+        let ranges = state.threat_ranges(unit);
+        let (map, terrain, classes) = (state.map(), state.terrain(), state.classes());
+        let get = if still { threat_tiles } else { threat_area };
+        get(map, terrain, classes, state.units(), id, &ranges).unwrap()
+    };
+    // Four tiles from it, out of every other enemy's reach, yet in what it
+    // could reach if it walked.
+    let others: Vec<_> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Enemy && u.id != elemental.id)
+        .map(|u| area(u.id, false))
+        .collect();
+    let walked = area(elemental.id, false);
+    let far: Vec<Pos> = state
+        .map()
+        .tiles
+        .positions()
+        .filter(|&t| Pos::manhattan(t, elemental.pos) == 4)
+        .filter(|&t| others.iter().all(|a| !a.contains(t)))
+        .filter(|&t| walked.contains(t))
+        .collect();
+    assert_eq!(far, [Pos::new(10, 5)], "a tile of the walled fort");
+    let near = Pos::new(8, 6);
+    assert!(area(elemental.id, true).contains(near));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::DANGER), "{t:?}");
+    }
+    assert!(h.tints_at(near).contains(&range::DANGER));
+    // Picked, its range is the same few tiles.
+    h.keys("w");
+    go(&mut h, elemental.pos);
+    h.keys("f");
+    assert!(h.tints_at(near).contains(&range::ATTACK));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::ATTACK), "{t:?}");
+    }
+}
+
 /// The info screen, the map menu, the end-turn prompt and a banner only
 /// draw glyphs the font has.
 #[test]

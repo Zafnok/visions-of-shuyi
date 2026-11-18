@@ -6,7 +6,7 @@ milestone: M2 Core rules
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
-blocked_by: ["0079"]
+blocked_by: ["0079", "0527", "0531"]
 nick_input: answer-first
 completed:
 ---

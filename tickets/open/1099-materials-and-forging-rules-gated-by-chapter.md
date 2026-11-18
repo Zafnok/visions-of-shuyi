@@ -158,8 +158,10 @@ checklist (1064) or the next playtest after this chain.
    forged or not of `from`'s kind (if 0087 keeps the kind), a material
    that isn't one, an unknown tier or trait, more traits than 0087
    allows, and **a forged weapon over its tier's cap** by more than 0087's
-   allowance (might, hit, crit). Add `assets/data/forge.ron` to
-   `.github/playtest-levers.sh`.
+   allowance (might, hit, crit). Add the real table,
+   `assets-private/content/data/forge.ron`, to
+   `.github/playtest-levers.sh`'s content arm (0172), and the stand-in
+   `assets/data/forge.ron` only if the content has no forge table.
 9. **Data**: the public stand-in `assets/data/forge.ron` and the
    materials and traits in `assets/data/items.ron` (plain, no story
    names), each format described in the file's comment as `basic_shop.ron`

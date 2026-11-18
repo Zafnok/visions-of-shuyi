@@ -1339,6 +1339,9 @@ impl BattleScreen {
             .any(|e| matches!(e, Event::CombatResolved { .. }))
         {
             self.notice(DoneWhen::Attacked);
+            if art_list::attacks_with_art(cmd) {
+                self.notice(DoneWhen::ArtAttacked);
+            }
         }
     }
 

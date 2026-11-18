@@ -227,12 +227,13 @@ in `look-and-feel.md` *Screen layout*, the open sub-question removed):
 
 - The message part grew past the ticket's three options because Nick
   picked a new one (above).
-- One test snapshot in the private repository changed (the Chapter 1
-  lessons box: the toggles hidden under it): pull request
-  Zafnok/visions-of-shuyi-assets on branch
-  `t0445-battle-help-bar-toggles`, merging first. Its private `main` also
-  has 0490's change to the same snapshot (other rows); whichever of 0445
-  and 0490 merges second moves the pin past both.
+- Two test snapshots in the private repository changed, row 30 only (the
+  toggles hidden under the lessons' box): the Chapter 1 lessons box
+  (Zafnok/visions-of-shuyi-assets#15) and 0490's Combat Arts lesson,
+  which merged in the meantime (#17).
+- 0254 (key caps) merged into `main` while this was open: the help and
+  the toggles are styled text, and the end-turn column is measured as the
+  frame measures it, a key cap's extra cells included.
 - Tests that compare help text now read it through `unpadded` (the
   padding read as a separator); the columns themselves are checked by the
   new `help_bar_tests`.
@@ -258,4 +259,4 @@ in `look-and-feel.md` *Screen layout*, the open sub-question removed):
 Engine friction: estimate 150 production lines (judged by the map menu's
 info box, `MapInfoView`, and its paint), measured 170 (1.1×), under 2×;
 signals: workaround no · third copy no · budget no.
-PR size: estimate 900, measured 1,070.
+PR size: estimate 900, measured 1,201.
