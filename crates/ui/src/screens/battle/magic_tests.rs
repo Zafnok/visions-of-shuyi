@@ -1759,7 +1759,7 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     let path = h.path();
     let end = *path.last().unwrap();
     assert_eq!(Pos::manhattan(end, elemental), 2);
-    let help = |h: &Harness| h.battle().unwrap().view(h.game().ctx()).help;
+    let help = |h: &Harness| h.battle().unwrap().view(h.game().ctx()).help.plain();
     assert_eq!(help(&h), "arrows move · f cast · d cancel");
     // Confirm walks there and opens the forecast of Fire, the equipped
     // spell, on it.

@@ -81,7 +81,10 @@ Artifacts, checked at the same commit: `ci.yml`'s `export` (no content),
 `playtest.yml`'s `build` uploads `target/release/xtask`, which links
 `trpg-content` and so embeds the content, kept one day. ADR-0117 §4
 accepted it knowingly; this ticket leaves it (Out), and its check names
-it as the one allowed.
+it as the one allowed. 0174, 0177 and 0185 may change the jobs first
+(`coverage` becomes `sonar`; new `demo-edition` and `private-assets`;
+the web export moves into `bench`): audit the jobs as they are on
+`main`; step 4's check covers every job either way.
 
 ## Nick input
 
@@ -106,8 +109,8 @@ description.
 
 **Out (do not do):**
 - The engine and its templates (engine#2596 did them).
-- `playtest.yml`'s `playtest-xtask` artifact (ADR-0117 §4 accepted it; a
-  ticket of its own if it should change).
+- `playtest.yml`'s `playtest-xtask` artifact: 0178 encrypts it and
+  narrows step 4's exception to `target/release/xtask.enc`.
 - Logs that quote a line of the content (ADR-0117 §4 accepted them).
 - The fork approval setting (`first_time_contributors`): a repository
   setting is Nick's.
@@ -189,7 +192,9 @@ description.
    - it has no `actions/upload-artifact` step whose `path` is under
      `target/` or `dist/`, except the one ADR-0117 §4 allows,
      `playtest.yml` job `build`, path `target/release/xtask`, named in a
-     constant with that reference;
+     constant with that reference, and `release.yml` job `package`'s
+     `dist/release/kept/*` (reports and SHA-256 only, checked by its
+     "Check the reports hold no content" step);
    - the failure names the workflow, the job and the step.
 
    Then a second test feeding it three small made-up workflows (one

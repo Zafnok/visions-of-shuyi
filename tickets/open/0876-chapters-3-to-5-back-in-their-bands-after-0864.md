@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0864"]
+blocked_by: ["0864", "0531", "0527", "0528"]
 nick_input: none
 completed:
 ---
@@ -46,6 +46,22 @@ Why the bands move this much: each chapter's army comes from one recorded
 win, and a new recording spreads the EXP differently. 0531 is about that;
 this ticket only brings the chapters back.
 
+**Why it waits** (retrospective of PRs #616–#735, T2:
+`docs/research/retro-2026-11-17-prs-616-735.md`). #623 (0529) tuned
+ch04 and ch05 into band, and six days later #731 (0864) re-recorded and
+threw that away. This is the fourth back-in-bands ticket (0524, 0855,
+0529). So it waits for what would move the armies or the enemies again
+and needs no Nick decision: 0531 (a stable army), 0527 (per-unit numbers
+to see who falls short, as Lane I asks of every balance ticket) and 0528
+(the enemies' AI, which re-records and retunes every battle itself).
+After those, start by measuring: Chapters 3–5 may already be close.
+
+It does **not** wait for 0333, 0610, 0870, 0867 or 0868, though they
+also change the balance and re-record: each waits on a decision of
+Nick's (0080, 0081, 0870's own, 0082, 0084), and waiting on them would
+hold this ticket for as long as those take. Each of them re-runs the
+bands itself when it lands.
+
 ## Nick input
 
 None. Verified by the bots' reports in the PR (as 0529 and 0855); what is
@@ -69,13 +85,16 @@ left to judge by playing goes on the Act 1 playtest's checklist (1064).
 **Out (do not do):**
 - Chapters 1 and 2, and Tamsin (0864, Nick's decisions).
 - The bands or the success rules (`targets.ron`).
-- How the bots build the army (0531). Either order: if 0531 is done
-  first, tune against its armies; if not, against the recordings'.
+- How the bots build the army (0531, done first: tune against its
+  armies).
+- The report's intervals (0532). Either order: if 0532 is done, a band
+  is met when no ✗ or ⚠ shows; if not, check both seed ranges as below.
 
 ## Implementation steps
 
-1. Read `docs/playtesting.md` (*The army*, Chapters 3–5), 0864's, 0529's
-   and 0524's Completion notes.
+1. Read `docs/playtesting.md` (*The army*, Chapters 3–5), 0864's, 0529's,
+   0524's, 0531's and 0528's Completion notes. Run the five battles
+   first: the table above is from before 0531 and 0528.
 2. `cargo run --release -q -p xtask -- playtest ch05 --bot hardcore` and
    `… ch04 …`; read the tries that fail.
 3. Fix a bot fault if there is one (with a test in `crates/bots`), then

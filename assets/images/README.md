@@ -18,6 +18,7 @@ with its own directory and sidecar files (portraits, 0711; combat pictures,
 | File | What |
 | ---- | ---- |
 | `effect_marks.png` | 14×7: the arrows a sprite map skin puts on a unit under a timed effect (ADR-0049, `docs/design/look-and-feel.md`): an **up arrow** for a bonus, then a **down arrow** for a penalty, each 5×5 with a 1-pixel dark edge. Our own picture, in the palette's `effect_bonus`, `effect_penalty` and `black` |
+| `key_arrows.png` | 24×16: the arrow keys as one picture, four 8×8 key caps in an upside-down T, each with its arrow, which a hint draws in place of the word `arrows` for the cursor on the arrow keys (ticket 0254, `docs/design/look-and-feel.md`, *Key names in hints*). Our own picture, drawn by hand in the default theme's `key_bg`, `key_edge` and `key` (the same in every theme) |
 
 The test image is a test file, in `assets-test/images/` (ADR-0057):
 

@@ -23,8 +23,10 @@
 //! (Nick, PR #87: "cancel can do the same as confirm on these screens").
 
 use crate::prelude::*;
+
 use alloc::collections::BTreeMap;
 use shuyi_ui::HurryClock;
+use shuyi_ui::text::StyledText;
 
 use trpg_content::Portrait;
 use trpg_core::lead::LeadProfile;
@@ -539,14 +541,14 @@ impl Progress {
 
 /// The help line of an EXP bar, level-up or class page: skip and fast while
 /// it plays, then continue.
-pub fn help(ctx: &Ctx, p: &Progress) -> String {
+pub fn help(ctx: &Ctx, p: &Progress) -> StyledText {
     playing_help(ctx, p.page_played())
 }
 
 /// The help line of something that plays by itself (an EXP bar, the
 /// results): skip and fast until it has `played`, then continue.
-pub(crate) fn playing_help(ctx: &Ctx, played: bool) -> String {
-    ctx.text_with(
+pub(crate) fn playing_help(ctx: &Ctx, played: bool) -> StyledText {
+    ctx.text_styled(
         if played {
             "battle.help.continue"
         } else {

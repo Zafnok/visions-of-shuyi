@@ -331,7 +331,12 @@ fn no_title_note_without_files_a_player_reaches() {
 fn tip(h: &Harness) -> Option<(String, String)> {
     let tip = h.game().screen::<TipScreen>()?;
     let view = tip.view(h.game().ctx())?;
-    Some((view.heading, view.how.join("\n")))
+    let how: Vec<String> = view
+        .how
+        .iter()
+        .map(shuyi_ui::text::StyledText::plain)
+        .collect();
+    Some((view.heading, how.join("\n")))
 }
 
 /// Acceptance (0874): the first time Load Game opens with a save in it,

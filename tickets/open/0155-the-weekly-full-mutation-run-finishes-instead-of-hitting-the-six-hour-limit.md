@@ -31,6 +31,13 @@ no nextest, no timeout and no plan.
 The repository is public, so the minutes are free today. The wasted hours
 still hold 4 of the 40 concurrent jobs every Monday morning.
 
+The retro of PRs #616–#735 (2026-11-17,
+`docs/research/retro-2026-11-17-prs-616-735.md`, T9) found the weekly run
+hasn't finished in 8 weeks: the scheduled runs of 11-16, 11-09, 11-02,
+10-26, 10-12 and 10-05 were cancelled at the limit, and those of 10-19
+and 09-28 failed. It asks for this ticket next in the CI work, and for
+the schedule off until it lands.
+
 ## Nick input
 
 None.
@@ -38,6 +45,10 @@ None.
 ## Scope
 
 **In:**
+- First, the schedule off: the `cron` line of `mutants.yml` commented
+  out (with a line naming this ticket), `workflow_dispatch` kept, so no
+  more 6-hour runs burn while the rest is built. It comes back on only
+  once a hand-run of the new plan finishes (step 7).
 - The weekly run planned like the PR gate: as many shards as it takes at
   60 mutants or fewer each (ADR-0100), with nextest and the PR gate's
   per-mutant timeout. GitHub allows up to 256 jobs in a matrix. If the
@@ -56,24 +67,32 @@ None.
 
 ## Implementation steps
 
-1. Read `.github/workflows/mutants.yml` (`plan`, `baseline`, `pr`,
+1. Comment out the `schedule:` cron in `.github/workflows/mutants.yml`
+   (keep `workflow_dispatch`) as the branch's first commit. If the rest
+   of this ticket can't land within the week, split that one-line change
+   off as its own ticket and PR first (`write-ticket`).
+2. Read `.github/workflows/mutants.yml` (`plan`, `baseline`, `pr`,
    `mutants-result`, `weekly-baseline`, `weekly`), ADR-0047 and ADR-0100.
-2. Make `plan` (or a `weekly-plan` job) count the whole workspace's mutants
+3. Make `plan` (or a `weekly-plan` job) count the whole workspace's mutants
    (`cargo mutants --list`) and emit the shard matrix for a full run, as it
    does for `--in-diff`.
-3. Point `weekly` at that matrix, with `--test-tool=nextest`, the same
+4. Point `weekly` at that matrix, with `--test-tool=nextest`, the same
    `--timeout`, `timeout-minutes: 150`, and an artifact per shard.
-4. Add a result job that merges the shards' `missed.txt` and fails only on
+5. Add a result job that merges the shards' `missed.txt` and fails only on
    a job error, not on missed mutants (the weekly run reports; it gates
    nothing).
-5. Run the workflow by hand (`gh workflow run mutants.yml`), watch it once,
+6. Run the workflow by hand (`gh workflow run mutants.yml`), watch it once,
    and put its run link and the shard count in the completion notes.
+7. Only if that run finished within the limit, turn the cron back on.
+   Otherwise leave it off and say so in the completion notes.
 
 ## Acceptance criteria
 
 - [ ] A `workflow_dispatch` run of the full mutation run finishes with
       every shard under 150 minutes (run linked in the completion notes).
 - [ ] Its merged report lists the missed mutants in one artifact or summary.
+- [ ] The Monday cron is on only if that run finished; while it is off,
+      `mutants.yml` names this ticket beside it.
 - [ ] The PR gate's jobs are unchanged (`git diff` shows no change to `pr`
       or `mutants-result` beyond shared steps).
 - [ ] zizmor passes on the changed workflow.
@@ -81,7 +100,7 @@ None.
 
 ## Tests required
 
-- None in Rust. The workflow is checked by its run (step 5) and zizmor.
+- None in Rust. The workflow is checked by its run (step 6) and zizmor.
 
 ## Completion notes
 

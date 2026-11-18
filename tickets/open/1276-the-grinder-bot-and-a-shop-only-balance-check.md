@@ -135,7 +135,8 @@ merge: verified by tests and the bots' reports in the PR.
 7. The report: an `army · grinder …` line (what was forged, for whom) and
    one margin line per persona; `--grinder` on the playtest command (off
    by default), and CI's playtest job passes it for story battles.
-   `assets/data/forge.ron` is a lever (1099 added it; check).
+   `assets-private/content/data/forge.ron` is a lever (1099 added it,
+   after 0172; check).
 8. Tests use the test files, never the private content: `grind` on a
    campaign built in `crates/bots/src/testkit.rs` with 1099's test
    materials and recipes; and a test battle with a `bots_army` (a

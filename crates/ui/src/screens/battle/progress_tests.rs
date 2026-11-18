@@ -67,7 +67,11 @@ const TARGET_KEYS: &str = "f Down f d";
 
 /// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    h.battle().expect("a battle").view(h.game().ctx()).help
+    h.battle()
+        .expect("a battle")
+        .view(h.game().ctx())
+        .help
+        .plain()
 }
 
 /// Whether the battle on `h` shows `s` (in its view).

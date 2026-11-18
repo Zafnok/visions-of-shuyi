@@ -207,7 +207,7 @@ impl ResultsScreen {
             Some(pages) if self.paging => pages.page_played(),
             _ => self.filled(),
         };
-        playing_help(ctx, played)
+        playing_help(ctx, played).plain()
     }
 
     /// The screen as it is now, as plain data for a skin to paint

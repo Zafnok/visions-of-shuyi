@@ -17,6 +17,13 @@
     "panel_border": "#6a5a40",
     "panel_border_focus": "#c89a50",
 
+    // Key caps (ticket 0254, look-and-feel.md *Key names in hints*): a
+    // key's name in a hint, in `key`, on a box of `key_bg` with a 1 px
+    // `key_edge`, a shade lighter than the panel. Tunable.
+    "key": "#d0c4a8",
+    "key_bg": "#4a402e",
+    "key_edge": "#807052",
+
     // Factions: player blue, enemy red, ally green, neutral yellow
     "player": "#7ea8e0",
     "enemy": "#d46a50",

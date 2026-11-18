@@ -48,13 +48,32 @@ army a player brings). If the fix changes that meaning (for example an
   reference army per chapter (as the side quests' `bots_army` does),
   levelled by the EXP the chapters before it pay; or a recorder that
   spreads the EXP the way the personas do.
+- The bots crate stops reading the UI's test fixtures:
+  `crates/bots/src/arrival.rs` (lines 26–50) `include_str!`s the seven
+  `crates/ui/tests/it/fixtures/*_winning.ron`. Whatever the army is built
+  from becomes the bots' own data (for example under `crates/bots/`).
+  The UI's replay tests keep their fixtures, and re-recording one of
+  them no longer moves an army by itself.
 - Show it on 0864's case: Chapter 1 recorded with two different seeds
-  gives Chapter 2 reports within the noise (±5) of each other.
+  gives Chapter 2 reports within the noise of each other. Measure on
+  seeds 1–400: at 100 tries a rate carries about ±10 points of noise,
+  at 400 about ±5 (retrospective T2,
+  `docs/research/retro-2026-11-17-prs-616-735.md`).
+- A tolerance check that keeps it so, cheap enough for CI (the form is
+  the agent's, after the fix): if the army no longer reads any
+  recording, a test that it is built from the bots' data alone; if it
+  still reads recordings, a test that two recordings of a chapter with
+  different seeds give every later chapter's army within a set margin
+  (levels, or the bots' rates on a short run), with the margin stated
+  in the ADR.
 - `docs/playtesting.md`, *The army*.
 
 **Out (do not do):**
-- Retuning any chapter (0876 and later tuning tickets).
+- Retuning any chapter (0876 and later tuning tickets; 0876 waits for
+  this one).
 - The bands, the success rules, the personas' play.
+- The report's 95% intervals (0532). Either order: if 0532 is done, read
+  "within the noise" from its intervals; if not, use seeds 1–400.
 
 ## Implementation steps
 
@@ -72,7 +91,10 @@ army a player brings). If the fix changes that meaning (for example an
 
 - [ ] Chapter 2's three success rates move by no more than about 5
       points between armies built from Chapter 1 recordings with
-      different seeds (numbers in the PR).
+      different seeds, on seeds 1–400 (numbers in the PR).
+- [ ] No `include_str!` (or any other read) in `crates/bots` names a
+      path under `crates/ui/tests`.
+- [ ] The tolerance check in Scope runs in CI and passes.
 - [ ] An ADR records the choice; `docs/playtesting.md` says how the army
       is built.
 - [ ] All gates in the `run-gates` skill pass.
@@ -81,6 +103,7 @@ army a player brings). If the fix changes that meaning (for example an
 
 - Unit: the army builder (the same content gives the same army; two
   recordings give one army, or the reports say which army each try used).
+- Unit or integration: the tolerance check.
 - The bots' playtest runs (reported in the PR).
 
 ## Completion notes

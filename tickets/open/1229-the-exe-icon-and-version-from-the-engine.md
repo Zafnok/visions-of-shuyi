@@ -58,6 +58,9 @@ release package check and the engine's resource test.
 - `crates/app/build.rs`: `embed_windows_resources` (both `cfg`s) goes;
   its wasm `--allow-undefined` line stays. The `winresource` build
   dependency goes from `crates/app/Cargo.toml` and `Cargo.lock`.
+- `crates/story-preview/build.rs` copies that function and embeds
+  `icon.ico` too (ticket 1269): it goes, or moves to the engine's
+  export, in the same PR, with its `winresource` dependency.
 - The module docs of `icon.rs` and `build.rs`, and any doc that says
   where the exe's icon comes from, name the engine's export.
 

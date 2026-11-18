@@ -18,9 +18,11 @@ use trpg_ui::screens::dialogue::log::{LogView, RowKind};
 /// narration, the archer (surprised), the lord (sad), then the archer's
 /// line the three replies answer.
 fn intro_in(layout: Layout) -> Harness {
-    let ctx = Ctx::embedded()
+    let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(layout);
+    // The text box's keys as their words (ticket 0254).
+    ctx.game.key_caps = false;
     let game = trpg_ui::game::start_on_scene(ctx, "test", LeadGender::Male)
         .unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)

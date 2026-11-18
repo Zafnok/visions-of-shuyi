@@ -35,6 +35,19 @@ The retro of 2026-11-08 found four things in the game's pin moves:
   get past a flaky print/parse failure "at either pin". Open ticket
   0759's Out forbids exactly that, and 0759 wasn't named.
 
+The retro of PRs #616–#735 (2026-11-17,
+`docs/research/retro-2026-11-17-prs-616-735.md`, T6) found the second push
+still there (#624, #638, #641, #700, #706, #732: 6 of 10 pin PRs in 7
+days) and two more costs:
+
+- **Pins move about once a day.** `engine-watch.yml` runs hourly (`cron:
+  "17 * * * *"`) and on every engine `main` push, and files an issue as
+  soon as any PR changes the public API. 10 pin PRs in 7 days, each a
+  full CI and Playtest run; issue #733 opened 4 minutes after #732
+  merged.
+- **The ledger is 64 KB.** `docs/engine/pins.md` is 442 lines; 60 rows
+  say `nothing to change`, and 42 lines run past 400 characters.
+
 ## Nick input
 
 None.
@@ -55,9 +68,23 @@ None.
   not a break. Name its ticket and leave it; never narrow a generator or
   a test in the pin PR. A diff adding `prop_filter` or `prop_assume`
   names a ticket in its commit (a check in the tickets job).
+- The watcher batches pins: it files (or reopens) at most one
+  `engine-pin` issue a day, sooner only when an engine PR unblocks a
+  game ticket. A public API change alone waits for the day's batch. The
+  rule goes in `classify` (`crates/engine-watch/src/lib.rs`) beside the
+  48-hour wait, whichever trigger ran; the hourly cron stays a backstop.
+  ADR-0096 §2 amended (`write-adr`).
+- A compact ledger: an engine PR that needs nothing from the game takes
+  one short line (or joins the `Nothing for the game: N PRs` count),
+  and details are written only where the game acts (`fixed:` with a
+  change, `adopt →`, `unblocks`). `engine-pin --check` fails a row over
+  about 200 characters in the newest section. The existing sections are
+  compacted once, and the format at the top of `pins.md` and the
+  `engine-pin` skill's example say so.
 
 **Out (do not do):**
-- The watcher's report (1254).
+- The watcher's report (1254): its sections and wording. Only the rule
+  for when an issue is filed changes here.
 - Undoing #557's `prop_filter` (0759 does it).
 
 ## Implementation steps
@@ -70,6 +97,13 @@ None.
 4. Add the `prop_filter`/`prop_assume` check.
 5. Update `engine-pin`, `work-ticket` and `engine-change`, then run
    `pwsh -File scripts/sync-agent-skills.ps1`.
+6. Add the once-a-day batch to `classify` (an unblock still files at
+   once), with unit tests in `crates/engine-watch/src/tests.rs`, and
+   amend ADR-0096 §2.
+7. Teach the ledger rules (`crates/engine-watch/src/ledger.rs`) the
+   short "needs nothing" line and the row-length cap, compact
+   `docs/engine/pins.md` once, and update its format note, ADR-0096 §6
+   and the `engine-pin` skill.
 
 ## Acceptance criteria
 
@@ -77,6 +111,12 @@ None.
       the first push.
 - [ ] A second open PR changing `shuyi-engine.rev`, not stacked, fails.
 - [ ] "Unblocks 1228" with 1228 still `blocked` fails `--check`.
+- [ ] A second public API change within a day of the last `engine-pin`
+      issue files nothing; an engine PR that unblocks a game ticket
+      files at once (unit tests).
+- [ ] `docs/engine/pins.md` keeps no `nothing to change` row with a
+      long explanation, and a newest-section row over the cap fails
+      `--check`.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

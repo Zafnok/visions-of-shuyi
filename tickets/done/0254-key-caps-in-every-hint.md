@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0250"]
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 0254 — Key caps in every hint
@@ -110,17 +110,17 @@ the other screens to a new ticket blocked by this one.
 
 ## Acceptance criteria
 
-- [ ] Every key name a player sees on the PC (both layouts, keyboard)
+- [x] Every key name a player sees on the PC (both layouts, keyboard)
       is a `Key` span: a test lists each switched view's hint spans and
       finds the keys `key_name` and its siblings give, in order.
-- [ ] A help-bar snapshot and `frame-png` pictures show the caps as
+- [x] A help-bar snapshot and `frame-png` pictures show the caps as
       decided: bold capitals, even margins, `.` and `,` after a cap
       whole, the arrow cluster in a tip, four caps for a cursor bound to
       W A S D.
-- [ ] With a controller in use, hints read as today (0255).
-- [ ] The Playdate build's hints read as today (0256).
-- [ ] `cargo shuyi check-keys` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] With a controller in use, hints read as today (0255).
+- [x] The Playdate build's hints read as today (0256).
+- [x] `cargo shuyi check-keys` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -132,4 +132,70 @@ the other screens to a new ticket blocked by this one.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done on 2026-11-17, **split** as the ticket's *Split* says: the game names
+keys in about 270 places in 55 files, not the 15 the estimate counted, so
+this PR turns the style on and switches the battle and the three places
+the pictures show; **0257** switches the other screens.
+
+- **The style** (`Shuyi::key_caps`): bold, single letters in capitals,
+  2 px margin, not on a one-bit screen, the arrow keys as the picture
+  `assets/images/key_arrows.png` (24 × 16, four 8 × 8 caps, drawn by
+  hand for this in the default theme's key colours, the same picture in
+  every theme). The engine's own screens (Options, Key bindings, its
+  questions) draw caps from here on too.
+- **Colours** (*tunable*): the default theme has the mockup's box
+  `#4a402e`, edge `#807052`, name `#d0c4a8` (its `text`). The other
+  themes got a box a shade lighter than their panel and an edge lighter
+  again (Painterly `#24403f`/`#4e7a78`, Moonlit `#283244`/`#5a6a84`);
+  Parchment is light, so its box is lighter than the panel (`#f0e6cc`) and
+  its edge darker ink (`#8a7454`). The Playdate's palette names them but
+  draws no caps.
+- **Bold face:** Terminus Bold `ter-u16b.bdf` from the same 4.49.1 release
+  (its regular face is byte-for-byte the one already here), the atlas
+  rebuilt with `--bold` (547 bold glyphs); `THIRD_PARTY_ASSETS.md` names it;
+  the credits' Terminus entry covers both faces.
+- **Switched to key spans:** the battle's help bar and toggles, its
+  Guides, rewind and shop screens (and the town's shop, which shares it),
+  the EXP pages' help; the text box's corner; the tip, lesson and
+  end-of-lessons boxes (the guide's spoken lines name no key and stay
+  plain). `widgets::help` holds the helpers, `tips::fill_styled` fills a
+  tip's placeholders in spans.
+- **Controller and not mapped:** a controller's buttons and `! not
+  mapped` read as plain text, as before (`widgets::help::for_player`,
+  also in `Shuyi::key_text_styled`, so the engine's screens follow it).
+- **Tests:** `tests/it/key_caps.rs` (each switched view's keys in order,
+  W A S D as four key spans in a tip, the controller, snapshots of the
+  help bar, text box corner, a tip and Options with caps),
+  `widgets/help/tests.rs`. The test harness draws keys as words
+  (`Shuyi::key_caps` off) so tests of what a hint says read its words;
+  a test of the look calls `Harness::with_key_caps`, and `cargo shuyi
+  frame-png` always draws caps. About 100 snapshots changed only in the
+  key cells' colours (the palette's `key` and `key_bg`); four private
+  ones in `Zafnok/visions-of-shuyi-assets` (its PR is linked in this
+  PR).
+- **Engine friction:** the engine wraps plain text only, so the tip boxes
+  wrap styled text with the game's `widgets::help::wrap_styled` (about 40
+  lines), a marked workaround; a styled `word_wrap` would be an engine
+  ticket (not filed: engine steps need Nick's OK).
+- `look-and-feel.md` unchanged: the build matches it. One detail as the
+  engine builds it: a cap takes one cell more than its name, so `F select`
+  reads `F␣␣select` in cells and a `.` after a cap sits one cell from it.
+
+*Claude's starting rules* (none are gameplay): the other themes' cap
+colours above; the arrows picture keeps the default theme's colours in
+every theme.
+
+Pictures (`cargo shuyi frame-png`, glyph look, cropped clear of the map
+and the script, ADR-0118): `docs/screenshots/0254-help-bar.png`,
+`0254-text-box-corner.png`, `0254-tip-arrows.png`, `0254-tip-wasd.png`.
+The picture look was not rendered: the caps are drawn the same in both
+looks (the frame draws them, not the map skin), and it needs the bought
+art. Acceptance "every key name a player sees" holds for the switched
+views; the rest is 0257's.
+
+Size: the ticket's estimate was about 600 production lines (no separate
+estimate was written before coding); measured 323 added, 122 removed
+(`code-lines`), under it. PR size 1,323 changed lines.
+
+For the Act 1 playtest (1064): whether the caps read well in each theme,
+and the arrow cluster's size beside text.
