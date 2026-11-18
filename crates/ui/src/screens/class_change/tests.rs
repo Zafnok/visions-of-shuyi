@@ -3,6 +3,7 @@
 //! one of every seal. They read the view and the state; where the skin
 //! puts things is tested in `glyph::tests`.
 
+use crate::screens::battle::layout::{ABOVE_HELP_ROW, snap};
 use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
@@ -601,7 +602,7 @@ fn the_demo_needs_its_test_character() {
 fn promotion_choice_snapshot() {
     let c = ctx();
     let s = demo(&c, ChangeKind::Promote);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -609,7 +610,7 @@ fn promotion_question_snapshot() {
     let mut c = ctx();
     let mut s = demo(&c, ChangeKind::Promote);
     step(&mut s, &mut c, &[CursorRight, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -617,7 +618,7 @@ fn promotion_result_snapshot() {
     let mut c = ctx();
     let mut s = demo(&c, ChangeKind::Promote);
     step(&mut s, &mut c, &[Confirm, Confirm, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -627,7 +628,7 @@ fn reclass_choice_snapshot() {
     for _ in 0..5 {
         step(&mut s, &mut c, &[CursorRight]);
     }
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -636,7 +637,7 @@ fn reclass_result_snapshot() {
     let mut s = demo(&c, ChangeKind::Reclass);
     step(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
     step(&mut s, &mut c, &[Confirm, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]

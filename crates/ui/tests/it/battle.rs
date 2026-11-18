@@ -88,12 +88,12 @@ fn quick_battle_opens_on_the_player_phase_banner() {
 /// banner just closed: `test_small.map`
 /// centred in the viewport, four ready player units and four enemies, all
 /// at full HP, the cursor on the lord, the side panel showing the lord and
-/// its tile, and the help line.
+/// its tile (its help bar is `key_caps`' look test).
 #[test]
 fn quick_battle_renders() {
     let h = quick_battle();
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    // The whole frame: this test is about the whole screen (1290).
+    // The whole screen but its help bar, whose look is `key_caps`' (1290).
     assert_snapshot!(h.snapshot());
 }
 
@@ -119,7 +119,7 @@ fn quick_battle_in_every_theme() {
             (0..32).any(|y| (0..100).any(|x| bg(x, y) == Some(grass.clone()))),
             "{theme:?} shows no grass_bg"
         );
-        // The whole frame: a theme colours the whole screen (1290).
+        // The whole screen but its help bar: a theme colours all of it (1290).
         insta::with_settings!({snapshot_suffix => format!("{theme:?}")}, {
             assert_snapshot!(snapshot);
         });

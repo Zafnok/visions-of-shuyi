@@ -14,7 +14,7 @@ use trpg_core::{
 use super::art_list::Technique;
 use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
 use super::items::{can_equip, equip_choices, equip_menu};
-use super::layout::{MAP_VIEW, MESSAGE_ROW, SIDE_PANEL, snap};
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, MESSAGE_ROW, SIDE_PANEL, snap};
 use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
     spell_choices, spell_effect_text, spell_label, spell_menu, target_pos,
@@ -1428,8 +1428,8 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
     assert!(elemental.affinities.contains(&pair("Fire", "Weak")));
     let frost = spells(&elemental);
     assert!(frost.iter().any(|s| s.0 == "Frost" && s.1), "{frost:?}");
-    // The whole frame: the info screen covers the screen (1290).
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 // ---- Harness: the whole flow with the default keys --------------------------------

@@ -598,7 +598,11 @@ fn panel_shows_healing_terrain_and_whole_names() {
 #[test]
 fn hover_unit_on_forest_snapshot() {
     let c = ctx();
-    assert_snapshot!(render(&knight_in_forest(), &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(
+        &render(&knight_in_forest(), &c),
+        &c,
+        layout::SIDE_PANEL
+    ));
 }
 
 /// Hovering an empty plain: terrain only.
@@ -610,7 +614,7 @@ fn hover_empty_plain_snapshot() {
     let shown = panel(&s, &c);
     assert_eq!(shown.terrain.map(|t| t.name).as_deref(), Some("Plain"));
     assert_eq!(shown.unit, None);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::SIDE_PANEL));
 }
 
 #[test]

@@ -9,7 +9,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, Objective, Phase, Pos, SkillId, UnitAction, UnitId};
 
 use super::BattleScreen;
-use super::layout::{MAP_VIEW, snap};
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
@@ -336,8 +336,8 @@ fn the_info_screen_lists_skills_with_markers_costs_and_timed_effects() {
         effects.iter().any(|r| r == "until Player phase"),
         "{effects:?}"
     );
-    // The whole frame: the info screen covers the screen (1290).
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&buf, &c, ABOVE_HELP_BAR));
 }
 
 #[test]

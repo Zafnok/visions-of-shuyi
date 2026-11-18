@@ -6,7 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
-use super::layout::{MAP_VIEW, snap};
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::testing::{Stacked, battle_with, skirmish, through_ai_phases, wait};
 use super::*;
 use crate::color::Rgb;
@@ -315,8 +315,8 @@ fn info_screen_full_loadout_snapshot() {
     assert_eq!(info.accessory.item, Some(ring));
     assert!(info.spells.iter().any(|s| s.name == "Fire"));
     assert!(info.weapons[0].as_ref().is_some_and(|w| w.broken.is_some()));
-    // The whole frame: the info screen covers the screen (1290).
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 /// The lord's info screen.
@@ -325,8 +325,8 @@ fn info_screen_snapshot() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Info]);
-    // The whole frame: the info screen covers the screen (1290).
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 // Map menu.
