@@ -14,13 +14,14 @@ expression: h.snapshot()
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
-                    │   Intro                     Off                          │                    
-                    │   Open t╔══════════════════════════════════════╗         │                    
-                    │   Colors║                                      ║         │                    
-                    │   Music ║ Restore every option to its default? ║         │                    
-                    │   Sound ║ f yes / d no                         ║         │                    
-                    │   Voices║                                      ║         │                    
-                    │   Voice ╚══════════════════════════════════════╝         │                    
+                    │   Threat arrows             Arcs                         │                    
+                    │   Intro ╔══════════════════════════════════════╗         │                    
+                    │   Open t║                                      ║         │                    
+                    │   Colors║ Restore every option to its default? ║         │                    
+                    │   Music ║ f yes / d no                         ║         │                    
+                    │   Sound ║                                      ║         │                    
+                    │   Voices╚══════════════════════════════════════╝         │                    
+                    │   Voice volume              █████████▒  97               │                    
                     │   Voice on hover in the log On                           │                    
                     │   Auto-advance              Off                          │                    
                     │                                                          │                    
@@ -30,7 +31,6 @@ expression: h.snapshot()
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
                     └──────────────────────────────────────────────────────────┘                    
-                                                                                                    
                                                                                                     
                                                                                                     
                                             f yes · d no                                            
@@ -61,9 +61,9 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddhhhhhhhhhhhhhhhhhhddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafiiiiiiifiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

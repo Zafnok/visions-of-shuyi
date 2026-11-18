@@ -102,6 +102,7 @@ impl MapSkin {
 
     /// The same skin, at the same zoom, drawing the threat arrows as
     /// `arrows` (ticket 0908).
+    #[must_use]
     pub fn with_threat_arrows(&self, arrows: ThreatArrows) -> Self {
         let shape = arrows.shape();
         let skin = match &self.units {

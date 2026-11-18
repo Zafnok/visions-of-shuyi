@@ -746,6 +746,7 @@ mod tests {
     /// save then, and saved by name otherwise.
     #[test]
     fn the_threat_arrows_default_to_arcs_and_round_trip() {
+        use shuyi_ui::grid::threat::Shape::{Arc, ArcAndFrame, Straight};
         let s = Settings::default();
         assert_eq!(s.game.threat_arrows, ThreatArrows::Arcs);
         assert!(!s.to_ron().contains("threat_arrows"));
@@ -760,9 +761,8 @@ mod tests {
         assert!(straight.to_ron().contains("threat_arrows: Some(Straight)"));
         let keys = ThreatArrows::ALL.map(ThreatArrows::key);
         assert_eq!(keys[0], "options.threat_arrows.arcs");
-        use shuyi_ui::grid::threat::Shape;
         let shapes = ThreatArrows::ALL.map(ThreatArrows::shape);
-        assert_eq!(shapes, [Shape::Arc, Shape::ArcAndFrame, Shape::Straight]);
+        assert_eq!(shapes, [Arc, ArcAndFrame, Straight]);
     }
 
     #[test]

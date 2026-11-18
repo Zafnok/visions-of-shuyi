@@ -3,7 +3,6 @@ source: crates/ui/tests/it/options.rs
 expression: h.snapshot()
 ---
                                                                                                     
-                                                                                                    
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
                     │   Text speed              ◄ Normal ►                     │                    
@@ -13,6 +12,7 @@ expression: h.snapshot()
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
+                    │   Threat arrows             Arcs                         │                    
                     │   Intro                     On                           │                    
                     │   Open towns on arrival     On                           │                    
                     │   Colors                    Earthy painterly             │                    
@@ -36,10 +36,10 @@ expression: h.snapshot()
                                   arrows move · f change · d back                                   
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeedddddddddddddfdccccccdfdddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa

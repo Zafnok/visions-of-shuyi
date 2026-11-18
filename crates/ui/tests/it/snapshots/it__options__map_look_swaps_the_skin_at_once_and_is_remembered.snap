@@ -3,7 +3,6 @@ source: crates/ui/tests/it/options.rs
 expression: h.snapshot()
 ---
                                                                                                     
-                                                                                                    
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
                     │   Text speed                Normal                       │                    
@@ -15,6 +14,7 @@ expression: h.snapshot()
                     │   Cursor                    Corners                      │                    
                     │   Map look                ◄ Pictures ►                   │                    
                     │   Map zoom                  2×                           │                    
+                    │   Threat arrows             Arcs                         │                    
                     │   Intro                     On                           │                    
                     │   Open towns on arrival     On                           │                    
                     │   Colors                    Earthy painterly             │                    
@@ -36,7 +36,6 @@ expression: h.snapshot()
                                        move · F  change · D  back                                   
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
@@ -47,6 +46,7 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeedddddddddddddddfdccccccccdfdddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
