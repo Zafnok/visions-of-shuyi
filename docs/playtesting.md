@@ -186,12 +186,25 @@ only reported. CI plays every battle in `assets/battles` with `--bot all`
 terrain, supports, the new game), the rules (`crates/core`), how content
 becomes a battle (`crates/content`), the bots, the engine pin, or the
 playtest itself. The list is `.github/playtest-levers.sh` (ticket 0514);
-"Run workflow" on the Actions page always plays. It fails only on a
-blocked battle, or one not played; the tables are in the summary of the
-`playtest` job. Each battle plays in a job of its own (`play (ch03)`),
+the content modules no battle reads (credits, tips, languages, audio,
+voice, fonts, pictures, palettes, portraits, cinematics, the keymap) are
+not levers, and an edit to a lever's comments or in-file tests doesn't
+play (ticket 0173). "Run workflow" on the Actions page always plays. It
+fails only on a blocked battle, or one not played; the tables are in the
+summary of the `playtest` job. Playtest is advisory: no ruleset requires
+it (ADR-0014). Each battle plays in a job of its own (`play (ch03)`),
 all three personas in one run, and `playtest` gathers their reports
 (ticket 0530: one job playing every battle in turn ran past its 150
-minutes once Act 1 had 14 battles). A push to `main`
+minutes once Act 1 had 14 battles). The slowest battles (`SPLIT_BATTLES`
+in the workflow: ch03 and side_company_ledger) play in two jobs of 50
+tries, `play (ch03 1/2)` and `play (ch03 2/2)`, and `merge (ch03)` joins
+them with `cargo xtask playtest --merge a.json b.json` into the report
+one run of 100 gives. Each set of inputs is played once (ticket 0173):
+the seeds are fixed, so `detect` hashes the inputs
+(`.github/playtest-inputs.sh`) and reuses the reports of a run with the
+same hash, from the cache or, on the push to `main` that merges a pull
+request, from that pull request's last run; the summary's first line
+says which. A push to `main`
 is never cancelled by the next one, so every push's own changes are
 judged (ticket 0515); a pull request's newer commit cancels its older run.
 

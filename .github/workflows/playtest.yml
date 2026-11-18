@@ -5,20 +5,34 @@ name: Playtest
 # blocked: the Casual persona succeeds in under 20% of tries
 # (docs/design/playtest-bots.md, "What a miss does"). A band missed (✗ too
 # hard, ⚠ too easy) is only reported, in the summary of the `playtest`
-# job.
+# job. Playtest is advisory (ADR-0014): no ruleset requires it.
 #
 # Each battle is played in a job of its own (ticket 0530): `build` makes
 # xtask once and lists the battles, `play` plays one battle per job, and
 # `playtest` gathers their reports into one summary. It fails when a
 # battle is blocked or was not played (its job failed or ran out of time).
+# The slowest battles (SPLIT_BATTLES below, ticket 0173) are played in two
+# jobs of 50 tries each (seeds 1–50 and 51–100), and `merge` joins their
+# tries into the report one job of 100 would give (`xtask playtest
+# --merge`).
 #
 # It plays only when a balance lever changed (ticket 0514): the battles and
 # maps, the number tables in assets/data, the rules, how content becomes a
 # battle, the bots, the engine pin, or the playtest itself. The list is
-# .github/playtest-levers.sh. That holds for pull requests and for pushes
-# to main; "Run workflow" (workflow_dispatch) always plays. As ADR-0014
-# asks, the workflow always runs and reports, and the job is skipped by
-# `if:` (never by a workflow-level `paths` filter).
+# .github/playtest-levers.sh; an edit to a lever's comments or in-file
+# tests doesn't play (ticket 0173). That holds for pull requests and for
+# pushes to main; "Run workflow" (workflow_dispatch) always plays. As
+# ADR-0014 asks, the workflow always runs and reports, and the job is
+# skipped by `if:` (never by a workflow-level `paths` filter).
+#
+# Each input is played once (ticket 0173): the seeds are fixed, so the
+# same inputs give the same reports. `detect` hashes them
+# (.github/playtest-inputs.sh) and reuses the reports of an earlier run
+# with the same hash: from the cache (a PR's earlier commit, or main's
+# earlier push), or, on a push to main, from the merged PR's last
+# Playtest run (a push can't read a PR's cache). Then `build`, `play` and
+# `merge` are skipped and `playtest` judges the reused reports, so a
+# reused blocked battle still fails. "Run workflow" never reuses.
 #
 # A push to main is never cancelled by the next push (ticket 0515): each
 # push diffs only its own commits, so a cancelled run's balance change
@@ -49,8 +63,15 @@ jobs:
   detect:
     name: detect
     runs-on: ubuntu-latest
+    # actions: read finds the merged PR's run and downloads its reports.
+    permissions:
+      contents: read
+      actions: read
     outputs:
       play: ${{ steps.classify.outputs.play }}
+      run_play: ${{ steps.reuse.outputs.run_play }}
+      reused: ${{ steps.reuse.outputs.reused }}
+      inputs: ${{ steps.inputs.outputs.inputs }}
     steps:
       # Enough history for the diff: on pull_request HEAD is the PR merge
       # commit and HEAD^1 the base tip; on push, the commits pushed.
@@ -80,22 +101,118 @@ jobs:
               echo "play=true" >> "$GITHUB_OUTPUT"
               exit 0 ;;
           esac
+          # The range is passed too, to skip comment and test edits.
           # shellcheck disable=SC2086 # the range is two words on purpose
-          git diff --name-only --no-renames $range | bash .github/playtest-levers.sh | tee levers.txt
+          git diff --name-only --no-renames $range | bash .github/playtest-levers.sh $range | tee levers.txt
           grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
+      # The content's tree is one of the inputs (ADR-0117).
+      - uses: ./.github/actions/private-assets
+        if: steps.classify.outputs.play == 'true'
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - name: Hash the inputs
+        id: inputs
+        if: steps.classify.outputs.play == 'true'
+        run: |
+          set -euo pipefail
+          inputs=$(bash .github/playtest-inputs.sh)
+          echo "Inputs: $inputs"
+          echo "inputs=$inputs" >> "$GITHUB_OUTPUT"
+      - name: Reuse the reports from the cache
+        id: cache
+        if: steps.classify.outputs.play == 'true' && github.event_name != 'workflow_dispatch'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: reports
+          key: playtest-reports-${{ steps.inputs.outputs.inputs }}
+      # A push to main can't read a PR's cache: it takes the merged PR's
+      # last run's reports if that run passed with the same inputs.
+      - name: Reuse the merged PR's reports
+        id: pr-run
+        if: >-
+          steps.classify.outputs.play == 'true' && github.event_name == 'push' &&
+          steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          INPUTS: ${{ steps.inputs.outputs.inputs }}
+        run: |
+          set -euo pipefail
+          head=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[0].head.ref // empty')
+          if [ -z "$head" ]; then
+            echo "No pull request merged this commit: play."
+            exit 0
+          fi
+          read -r run conclusion < <(gh run list -R "$REPO" --workflow playtest.yml \
+            --event pull_request --branch "$head" --limit 1 \
+            --json databaseId,conclusion --jq '.[0] | "\(.databaseId) \(.conclusion)"') || true
+          if [ -z "${run:-}" ] || [ "$conclusion" != success ]; then
+            echo "The last Playtest run of $head (${run:-none}) didn't pass: play."
+            exit 0
+          fi
+          if ! gh run download "$run" -R "$REPO" -n playtest-inputs -D pr-inputs; then
+            echo "Run $run kept no inputs (it played nothing): play."
+            exit 0
+          fi
+          if [ "$(cat pr-inputs/inputs.txt)" != "$INPUTS" ]; then
+            echo "Run $run played other inputs ($(cat pr-inputs/inputs.txt)): play."
+            exit 0
+          fi
+          gh run download "$run" -R "$REPO" -p 'playtest-report-*' -D pr-reports
+          mkdir -p reports
+          cp pr-reports/*/* reports/
+          echo "Reusing the reports of run $run."
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+      - name: Decide whether to play
+        id: reuse
+        env:
+          PLAY: ${{ steps.classify.outputs.play }}
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+          RUN: ${{ steps.pr-run.outputs.run }}
+        run: |
+          set -euo pipefail
+          if [ "$PLAY" != true ]; then
+            echo "run_play=false" >> "$GITHUB_OUTPUT"
+          elif [ "$CACHE_HIT" = true ]; then
+            echo "reused=cache" >> "$GITHUB_OUTPUT"
+            echo "run_play=false" >> "$GITHUB_OUTPUT"
+          elif [ -n "$RUN" ]; then
+            echo "reused=$RUN" >> "$GITHUB_OUTPUT"
+            echo "run_play=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_play=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.reuse.outputs.reused != ''
+        with:
+          name: playtest-report-reused
+          path: reports/
+          retention-days: 7
+          if-no-files-found: error
 
   # Builds xtask once for every battle job, and lists the battles: every
   # file in assets/battles and the content's battles/, so a new battle is
   # played without editing this workflow (ticket 0530). The xtask artifact
   # embeds the private content (ADR-0117): it is kept for a day only.
+  # The matrix plays each battle of SPLIT_BATTLES in two parts.
   build:
     name: build
     needs: detect
-    if: needs.detect.outputs.play == 'true'
+    if: needs.detect.outputs.run_play == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # The battles that set how long a PR waits (20–33 minutes each,
+      # ticket 0173): played in two jobs of 50 tries.
+      SPLIT_BATTLES: ch03 side_company_ledger
     outputs:
       battles: ${{ steps.battles.outputs.battles }}
+      matrix: ${{ steps.battles.outputs.matrix }}
+      split: ${{ steps.battles.outputs.split }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -116,8 +233,24 @@ jobs:
           battles=$(for file in assets/battles/*.ron assets-private/content/battles/*.ron; do
             if [ -f "$file" ]; then basename "$file" .ron; fi
           done | sort -u | jq -R . | jq -sc .)
+          # One job per battle, two (seeds 1 and 51, 50 tries each) for a
+          # split one.
+          matrix=$(jq -c --arg split "$SPLIT_BATTLES" '
+            ($split | split(" ")) as $s
+            | [ .[] as $b
+                | if ($s | any(.[]; . == $b))
+                  then ({battle: $b, part: 1, parts: 2, seed: 1, runs: 50},
+                        {battle: $b, part: 2, parts: 2, seed: 51, runs: 50})
+                  else {battle: $b, part: 1, parts: 1, seed: 1, runs: 100}
+                  end ]' <<< "$battles")
+          split=$(jq -c '[.[] | select(.parts > 1) | .battle] | unique' <<< "$matrix")
           echo "$battles"
-          echo "battles=$battles" >> "$GITHUB_OUTPUT"
+          echo "Split: $split"
+          {
+            echo "battles=$battles"
+            echo "matrix=$matrix"
+            echo "split=$split"
+          } >> "$GITHUB_OUTPUT"
       - run: rustup show
       # No target/ in the cache (ticket 0171): this job checks out the private
       # content (ADR-0117), a build here embeds it, and a fork's pull request
@@ -135,14 +268,15 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-  # One job per battle (ticket 0530): one job playing them all in turn ran
-  # past its 150 minutes once the Act 1 skirmishes came (14 battles, and a
-  # CI machine's speed varies about 2x). A battle's three personas stay in
-  # one `--bot all` run: the targets' "faster" check compares two of them.
-  # The slowest battle (ch03) took 29 minutes on a slow machine.
-  # max-parallel leaves room for the other workflows' jobs.
+  # One job per battle (ticket 0530), two for a split one (ticket 0173):
+  # one job playing them all in turn ran past its 150 minutes once the Act
+  # 1 skirmishes came (14 battles, and a CI machine's speed varies about
+  # 2x). A battle's three personas stay in one `--bot all` run, in every
+  # part: the targets' "faster" check compares two of them. The slowest
+  # battle (ch03) took 29 minutes on a slow machine. max-parallel leaves
+  # room for the other workflows' jobs.
   play:
-    name: play (${{ matrix.battle }})
+    name: play (${{ matrix.battle }}${{ matrix.parts > 1 && format(' {0}/{1}', matrix.part, matrix.parts) || '' }})
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -150,7 +284,7 @@ jobs:
       fail-fast: false
       max-parallel: 8
       matrix:
-        battle: ${{ fromJSON(needs.build.outputs.battles) }}
+        include: ${{ fromJSON(needs.build.outputs.matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -170,6 +304,7 @@ jobs:
           name: playtest-xtask
           path: target/release
       - name: Play the battle
+        if: matrix.parts == 1
         env:
           BATTLE: ${{ matrix.battle }}
         run: |
@@ -184,13 +319,39 @@ jobs:
           status=0
           target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
           echo "$status" > "reports/$BATTLE.status"
+      # A part's half of the tries can't judge the floor: only `merge`
+      # does, so its exit code is only shown. Its report is the JSON.
+      - name: Play one part of the battle
+        if: matrix.parts > 1
+        env:
+          BATTLE: ${{ matrix.battle }}
+          PART: ${{ matrix.part }}
+          SEED: ${{ matrix.seed }}
+          RUNS: ${{ matrix.runs }}
+        run: |
+          set -euo pipefail
+          chmod +x target/release/xtask
+          mkdir -p parts
+          status=0
+          target/release/xtask playtest "$BATTLE" --bot all --runs "$RUNS" --seed "$SEED" \
+            --json "parts/$BATTLE-$PART.json" | grep -v '^try ' || status=$?
+          echo "Part $PART exited $status (judged by merge)."
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.parts > 1
+        with:
+          name: playtest-part-${{ matrix.battle }}-${{ matrix.part }}
+          path: parts/
+          retention-days: 1
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.parts == 1
         with:
           name: playtest-report-${{ matrix.battle }}
           path: reports/
           retention-days: 7
           if-no-files-found: error
       - name: Fail if the battle is blocked
+        if: matrix.parts == 1
         env:
           BATTLE: ${{ matrix.battle }}
         run: |
@@ -200,11 +361,61 @@ jobs:
             exit 1
           fi
 
+  # Joins a split battle's parts into its report (ticket 0173), judged as
+  # one run of 100 tries.
+  merge:
+    name: merge (${{ matrix.battle }})
+    needs: [build, play]
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.build.outputs.split != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        battle: ${{ fromJSON(needs.build.outputs.split) }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: playtest-xtask
+          path: target/release
+      # A missing part leaves the battle without a report: "not played".
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          pattern: playtest-part-${{ matrix.battle }}-*
+          path: parts
+          merge-multiple: true
+      - name: Merge the parts
+        env:
+          BATTLE: ${{ matrix.battle }}
+        run: |
+          set -euo pipefail
+          chmod +x target/release/xtask
+          for part in 1 2; do
+            if [ ! -f "parts/$BATTLE-$part.json" ]; then
+              echo "::error::$BATTLE: part $part has no report (its job failed or ran out of time)"
+              exit 1
+            fi
+          done
+          mkdir -p reports
+          status=0
+          target/release/xtask playtest --merge "parts/$BATTLE-1.json" "parts/$BATTLE-2.json" \
+            | tee "reports/$BATTLE.txt" || status=$?
+          echo "$status" > "reports/$BATTLE.status"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playtest-report-${{ matrix.battle }}
+          path: reports/
+          retention-days: 7
+          if-no-files-found: error
+
   # Gathers every battle's report into one summary, in the battles'
-  # order, and fails when a battle is blocked or was not played.
+  # order, and fails when a battle is blocked or was not played. When
+  # every battle has a report, it keeps them under the inputs' hash (the
+  # cache, and the `playtest-inputs` artifact a push to main looks for).
   playtest:
     name: playtest
-    needs: [detect, build, play]
+    needs: [detect, build, play, merge]
     if: ${{ !cancelled() && needs.detect.outputs.play == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -218,22 +429,39 @@ jobs:
           path: reports
           merge-multiple: true
       - name: Gather the reports
+        id: gather
         env:
+          REUSED: ${{ needs.detect.outputs.reused }}
           BUILD: ${{ needs.build.result }}
           BATTLES: ${{ needs.build.outputs.battles }}
         run: |
           set -euo pipefail
-          if [ "$BUILD" != success ] || [ -z "$BATTLES" ]; then
-            echo "::error::the build of xtask failed: no battle was played"
-            exit 1
+          if [ -n "$REUSED" ]; then
+            if [ "$REUSED" = cache ]; then
+              echo "Reports reused from cache: these inputs were played before, nothing was played on this run." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "Reports reused from run $REUSED (the merged pull request's, same inputs): nothing was played on this run." >> "$GITHUB_STEP_SUMMARY"
+            fi
+            BATTLES=$(for file in reports/*.status; do
+              if [ -f "$file" ]; then basename "$file" .status; fi
+            done | jq -R . | jq -sc .)
+          else
+            echo "Played on this run." >> "$GITHUB_STEP_SUMMARY"
+            if [ "$BUILD" != success ] || [ -z "$BATTLES" ]; then
+              echo "::error::the build of xtask failed: no battle was played"
+              echo "failed=1" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
           failed=0
+          complete=true
           for battle in $(jq -r '.[]' <<< "$BATTLES"); do
             echo "### $battle" >> "$GITHUB_STEP_SUMMARY"
             if [ ! -f "reports/$battle.status" ]; then
               echo "::error::$battle: not played (its job failed or ran out of time)"
               echo "Not played: its job failed or ran out of time." >> "$GITHUB_STEP_SUMMARY"
               failed=1
+              complete=false
               continue
             fi
             {
@@ -248,4 +476,39 @@ jobs:
               failed=1
             fi
           done
-          exit $failed
+          if [ "$BATTLES" = "[]" ]; then
+            echo "::error::no battle has a report"
+            failed=1
+            complete=false
+          fi
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+          echo "complete=$complete" >> "$GITHUB_OUTPUT"
+      # The reports hold no build: only the battles' text and statuses.
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: steps.gather.outputs.complete == 'true' && needs.detect.outputs.reused != 'cache'
+        continue-on-error: true
+        with:
+          path: reports
+          key: playtest-reports-${{ needs.detect.outputs.inputs }}
+      - name: Write the inputs' hash
+        if: steps.gather.outputs.complete == 'true'
+        env:
+          INPUTS: ${{ needs.detect.outputs.inputs }}
+        run: |
+          mkdir -p inputs
+          echo "$INPUTS" > inputs/inputs.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.gather.outputs.complete == 'true'
+        with:
+          name: playtest-inputs
+          path: inputs/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Fail if a battle is blocked or was not played
+        env:
+          FAILED: ${{ steps.gather.outputs.failed }}
+        run: |
+          if [ "$FAILED" != 0 ]; then
+            echo "Failed: see the summary for the battle."
+            exit 1
+          fi

@@ -731,3 +731,100 @@ fn run_fails_on_an_unknown_battle_or_a_missing_file() {
     assert!(!root.join("target").exists());
     std::fs::remove_dir_all(&root).unwrap();
 }
+
+// ---- Merging parts (ticket 0173) ----------------------------------------------
+
+/// Two parts of a run, seeds 1–2 and 3–4, give the tries, checks and
+/// `blocked` of one run of seeds 1–4.
+#[test]
+fn merged_parts_are_one_run() {
+    let whole = play_quick(&quick(Bot::All, 4));
+    let first = play_quick(&quick(Bot::All, 2));
+    let second = play_quick(&Options {
+        seed: 3,
+        ..quick(Bot::All, 2)
+    });
+    // In either order: the tries are sorted by seed.
+    let merged = merge(vec![second.clone(), first.clone()]).unwrap();
+    assert_eq!(merged.report, whole.report);
+    assert_eq!(merged.battle, whole.battle);
+    assert_eq!(merged.army, whole.army);
+    let names = |r: &Record| r.played.iter().map(|p| p.name.clone()).collect::<Vec<_>>();
+    assert_eq!(names(&merged), names(&whole));
+    let average = f64::midpoint(
+        first.played[0].seconds_per_try,
+        second.played[0].seconds_per_try,
+    );
+    assert!((merged.played[0].seconds_per_try - average).abs() < 1e-9);
+    // One part alone is itself.
+    assert_eq!(merge(vec![first.clone()]).unwrap(), first);
+}
+
+#[test]
+fn a_blocked_merge_is_blocked() {
+    // Casual can't win the Quick Battle in one turn: under its floor.
+    let part = |seed| {
+        play_quick(&Options {
+            seed,
+            turn_cap: 1,
+            ..quick(Bot::Casual, 1)
+        })
+    };
+    let (first, second) = (part(1), part(2));
+    assert!(first.report.blocked && second.report.blocked);
+    assert!(merge(vec![first, second]).unwrap().report.blocked);
+}
+
+#[test]
+fn mismatched_parts_are_an_error() {
+    let first = play_quick(&quick(Bot::All, 1));
+    let error = |other: Record| merge(vec![first.clone(), other]).unwrap_err();
+    let mut other = first.clone();
+    other.battle = "ch01".to_owned();
+    assert_eq!(
+        error(other),
+        "part 2 differs from part 1 in its battle: not parts of one run"
+    );
+    let mut other = first.clone();
+    other.turn_cap += 1;
+    assert!(error(other).contains("turn cap"));
+    let mut other = first.clone();
+    other.army.gold += 1;
+    assert!(error(other).contains("army"));
+    let mut other = first.clone();
+    other.tier = "Hard".to_owned();
+    assert!(error(other).contains("tier"));
+    assert!(error(play_quick(&quick(Bot::Normal, 1))).contains("bots"));
+    let mut other = first.clone();
+    other.report.checks.pop();
+    assert!(error(other).contains("checks"));
+    assert_eq!(
+        merge(Vec::new()).unwrap_err(),
+        "--merge needs at least one report"
+    );
+}
+
+#[test]
+fn merge_files_reads_the_json_reports() {
+    let dir = temp_dir("merge");
+    let write = |name: &str, record: &Record| {
+        let path = dir.join(name);
+        std::fs::write(&path, serde_json::to_string(record).unwrap()).unwrap();
+        path
+    };
+    let first = play_quick(&quick(Bot::All, 1));
+    let second = play_quick(&Options {
+        seed: 2,
+        ..quick(Bot::All, 1)
+    });
+    let paths = [write("a.json", &first), write("b.json", &second)];
+    let ran = merge_files(&paths).unwrap();
+    let merged = merge(vec![first, second]).unwrap();
+    assert_eq!(ran.text, render(&merged, None));
+    assert_eq!(ran.blocked, merged.report.blocked);
+    let missing = merge_files(&[dir.join("none.json")]).unwrap_err();
+    assert!(missing.contains("none.json"), "{missing}");
+    std::fs::write(dir.join("bad.json"), "{").unwrap();
+    assert!(merge_files(&[dir.join("bad.json")]).is_err());
+    std::fs::remove_dir_all(&dir).unwrap();
+}
