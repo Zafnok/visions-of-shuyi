@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0077", "0722", "0754", "0750", "0762"]
+blocked_by: ["0077", "0722", "0754", "0750", "0762", "0766", "0180"]
 nick_input: none
 completed:
 ---
@@ -28,6 +28,16 @@ critical path*): a human writer is being hired (0766) and may reword
 every line. A line's id is a hash of its words, so a clip or a
 translation made before the rewrite is redone after it. Don't start
 this ticket while 0766 is open without asking Nick.
+
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): 0766 is now in `blocked_by`, so the guard above is in the
+ticket graph too. Whether the Act 1 playtest (1064) is voiced past
+Chapter 1 is asked in 0184; if Nick answers that it should be, on the
+scripts that exist, take 0766 out of `blocked_by` then. 0180 is in
+`blocked_by` as well: each clip is a hand-written line in `shuyi.ron`'s
+disclosure lists (383 `voice` lines today for 123 clips), and about
+1,000 more clips would add over 3,000 lines by hand; 0180 writes them.
 
 ## Nick input
 
