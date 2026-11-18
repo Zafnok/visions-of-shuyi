@@ -164,7 +164,7 @@ step 5 and the CI job as a second ticket blocked by this one.
       before and after.
 - [x] `cargo xtask playtest --help` and `cargo shuyi check-keys` still
       work.
-- [ ] CI's `tickets` job no longer builds the game (its log shows no
+- [x] CI's `tickets` job no longer builds the game (its log shows no
       `Compiling trpg-ui`), and the `cargo shuyi` steps run in their own
       job.
 - [x] The ADR is written and listed in `docs/adr/README.md`.
@@ -220,9 +220,11 @@ step 5 and the CI job as a second ticket blocked by this one.
   mention of `main.rs` was left, since both crates have one.
 - **Cold build of `cargo build -p xtask`** (Nick's machine, empty
   `target/`, debug): before, 80 crates in 2 min 21 s; after, 15 crates in
-  15 s. CI's `tickets` job on `main` before: its first cargo step
+  15 s. CI's `tickets` job: on `main` before, its first cargo step
   (`ticket-lint`, which built the game) took 1 min 46 s of the job's
-  3 min 05 s.
+  3 min 05 s; on this PR (09e61a63), its first cargo step (`pr-size`)
+  took 7 s and the job 1 min 17 s. The game's build moved to
+  `shuyi-checks` (`check-keys`, its first step: 1 min 45 s of 2 min 27 s).
 - **Friction:** estimate 250 production lines, measured 700 added
   (2.8×), accepted: 573 of them are `main.rs`'s game commands moved to
   `trpg-tools`' new `main.rs` (the removed column), about 130 are new.
