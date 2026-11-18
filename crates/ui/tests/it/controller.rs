@@ -39,7 +39,7 @@ fn help_rows(h: &Harness) -> String {
         let row: String = (0..100)
             .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
             .collect();
-        row.trim().trim_end_matches("F2 debug").trim().to_owned()
+        crate::unpadded(row.trim().trim_end_matches("F2 debug"))
     };
     format!("{}\n{}", row(30), row(31))
 }

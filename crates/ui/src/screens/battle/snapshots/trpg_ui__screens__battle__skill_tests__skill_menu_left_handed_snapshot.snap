@@ -32,7 +32,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║                            ║
                                                                       ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
-                                                     o danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  w a s d choose · j confirm · k back                                                       F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -65,7 +65,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaxyyyyyyyyyyyyyyyyyyyyxxxxxxxxxxxyyyyyyyyyyyyyya
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 axyxyxyxyyyyyyyyyyxyyyyyyyyyyyxyyyyyaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyya
 --- legend ---
 a = fg:text bg:black

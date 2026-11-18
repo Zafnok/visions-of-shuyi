@@ -75,12 +75,26 @@ fn the_battle_help_bar_holds_the_keys_key_name_gives_in_order() {
         "{}",
         view.help.plain()
     );
+    let status = toggles(&view);
     assert_eq!(
-        keys(&view.status),
+        keys(&status),
         [name(Action::DangerZone), name(Action::ToggleAutoEnd)],
         "{}",
-        view.status.plain()
+        status.plain()
     );
+}
+
+/// The toggles' row of `view` (ticket 0445) as one line: the left hint,
+/// then auto-end; empty while it is hidden.
+fn toggles(view: &trpg_ui::screens::battle::view::BattleView) -> StyledText {
+    let Some(row) = view.toggles.as_ref() else {
+        return StyledText::new();
+    };
+    let mut line = row.left.clone();
+    if let Some((auto_end, _)) = &row.auto_end {
+        line.push_plain(" · ").append(auto_end);
+    }
+    line
 }
 
 /// The help bar drawn: bold capitals in boxes (a picture to review).
@@ -90,6 +104,23 @@ fn the_battle_help_bar_draws_its_keys_as_caps() {
     let snap = h.snapshot();
     // `f select` as a cap `F` and the room after it.
     assert!(snap.contains("Space  end turn"), "{snap}");
+    // Auto-end starts where end turn does, counting the caps' cells
+    // (ticket 0445).
+    let rows: Vec<&str> = snap.lines().collect();
+    let column = |row: &str, text: &str| row.find(text).map(|at| row[..at].chars().count());
+    let toggles = rows
+        .iter()
+        .find(|r| r.contains("auto-end:"))
+        .expect("the toggles' row");
+    let help = rows
+        .iter()
+        .find(|r| r.contains("end turn"))
+        .expect("the help row");
+    assert_eq!(
+        column(toggles, "Shift+Space"),
+        column(help, "Space  end turn"),
+        "{snap}"
+    );
     assert_snapshot!(snap);
 }
 
@@ -167,12 +198,12 @@ fn a_controller_s_buttons_read_as_text_with_no_caps() {
     h.wait(0.5);
     let ctx = h.game().ctx();
     let view = battle(&h).view(ctx);
-    let tip = view.tip.expect("the first tip");
+    let tip = view.tip.clone().expect("the first tip");
     assert_eq!(keys(&tip.close), [] as [String; 0]);
     assert_eq!(tip.close.plain(), "A close");
     assert!(tip.how.iter().all(|l| keys(l).is_empty()));
     assert_eq!(keys(&view.help), [] as [String; 0]);
-    assert_eq!(keys(&view.status), [] as [String; 0]);
+    assert_eq!(keys(&toggles(&view)), [] as [String; 0]);
 }
 
 /// Options, an engine screen, draws its keys as caps too.
