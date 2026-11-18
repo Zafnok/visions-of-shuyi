@@ -37,6 +37,14 @@ ticket names `engine#NNNN`. It trips only in the PR that moves the pin
 past the ticket, or that adds such a marker: the PR that should deal
 with it.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md), *Processes that slow us
+down*): this ticket folds into 0181's one PR-checks CI job, which runs
+`engine-pin --check` (not `--offline`) beside `cargo xtask check-pr`, the
+checks of 0151, 1174 and 1257. What stays here is the check itself:
+`stale_markers` in `crates/engine-watch/src/lib.rs` and its line in
+`engine-pin --check`, the issue checklist and the skill. Either order with
+0181: the job picks the check up wherever `engine-pin --check` runs.
+
 ## Nick input
 
 None.

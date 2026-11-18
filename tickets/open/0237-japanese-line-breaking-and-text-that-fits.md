@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0235", "0236", "engine#2302"]
+blocked_by: ["0235", "0236"]
 nick_input: none
 completed:
 ---
@@ -31,6 +31,13 @@ placeholder in one piece, lets the source language's `ui.ron` give a
 key the width of its place (`max_cells`), and adds an **overflow** list
 to `lang-status`. This ticket is the game's half: the game's own
 wrapping routines, the widths of its places and its layouts.
+
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): engine#2302 is in the engine's `tickets/done/` at the
+game's pin (`e738ffc`), so it is off `blocked_by`. What still blocks
+this is 0236, which waits on Nick's 0042 (a Japanese font); 0184 queues
+that question.
 
 ## Nick input
 

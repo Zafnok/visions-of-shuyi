@@ -57,6 +57,7 @@ pub fn view(
         terrain,
         unit: unit.map(|u| unit_view((state, words), u, numbers)),
         gold: words.text_with("battle.shop.gold", &[("gold", &gold_text(state.gold()))]),
+        preview: None,
     }
 }
 
@@ -75,6 +76,7 @@ fn unit_view(
         hp_name: stat_name(words, StatKind::Hp).to_owned(),
         hp: unit.hp,
         max: unit.stats.hp,
+        hp_then: None,
         faction_name: faction_name(words, unit.faction).to_owned(),
         stats: Vec::new(),
         weapon: None,

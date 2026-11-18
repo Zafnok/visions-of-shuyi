@@ -427,7 +427,7 @@ recruit joins outside battle.
   armour → **0333** · **0081** a bigger EXP cut for a level gap →
   **0610** · **0082** Chapter 2's houses within reach → **0867** ·
   ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 →
-  **0334** (its look, not blocking: **0089**, ~~**0499**~~ done) · **0084**
+  **0335** one list of what a unit can do → **0334** (its look, not blocking: **0089**, ~~**0499**~~ done) · **0084**
   Chapter 3's throne and its guards → **0868**. Without a decision:
   **0527** the bots report units that can't hurt the enemy or fall
   behind (first, so the balance tickets show per-unit numbers before

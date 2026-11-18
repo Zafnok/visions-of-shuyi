@@ -30,6 +30,16 @@ changes is kept. This ticket puts it in the real game: the campaign's
 roster and stock (`core::campaign::Campaign`, ticket 0801), opened from a
 between-battle menu.
 
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): promotion is built but can't be reached even after this
+ticket. The private `items.ron` defines three seals (`tier_2_seal`,
+`tier_3_seal`, `reclass_seal`), and no shop, battle, world-map node or
+chapter in Act 1 gives one (`seal` appears in no battle, skirmish,
+chapter or world-map file; `basic_shop.ron` names it only in a
+comment). So 0184 asks Nick first whether Act 1 promotes at all, and if
+so where seals come from. Until that answer, nothing is decided here.
+
 ## Nick input
 
 **Answer first** (ask with the `ask-nick` skill, in this ticket, before
@@ -41,6 +51,13 @@ or both. Chapter 1 has no Preparations screen (`chapter-1.md`), so also ask
 whether Chapter 1's "between battles" (after the victory scenes, before the
 next chapter) needs the entry, or whether nobody can promote that early
 anyway (no unit masters a class in Chapter 1, `progression.md`).
+
+Either order with 0184: if 0184 has recorded Nick's answer on whether
+Act 1 promotes, read it first. If he said Act 1 doesn't promote, say so
+in the Completion notes, take 0606 off 1064's and 1067's `blocked_by`,
+and stop. If he said it does and named where seals come from, that
+placement needs its own content ticket (`write-ticket`), which 1064
+waits on; this ticket still only wires the screen.
 
 No check after merge (Nick, 2026-10-21: he checks only design and the
 full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi

@@ -468,6 +468,8 @@ fn panel_shows_the_terrain_and_unit_under_the_cursor() {
     );
     assert_eq!((unit.hp, unit.max), (knight.hp, knight.stats.hp));
     assert_eq!((knight.hp, knight.stats.hp), (9, 20));
+    // Nothing is aimed: no preview, no HP change (1286).
+    assert_eq!((shown.preview, unit.hp_then), (None, None));
     // An enemy: its faction.
     let mut s = s;
     s.cursor.jump(Pos::new(8, 2));

@@ -1,17 +1,17 @@
 ---
 id: "0173"
-title: Playtest CI skips comment and test edits, plays each input once, and splits its slowest battles
+title: Playtest CI splits its slowest battles on the engine's workflow and is documented as advisory
 type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["1207"]
 nick_input: none
 completed:
 ---
 
-# 0173 — Playtest CI skips comment and test edits, plays each input once, and splits its slowest battles
+# 0173 — Playtest CI splits its slowest battles on the engine's workflow and is documented as advisory
 
 ## Context
 
@@ -30,16 +30,25 @@ side_company_ledger (20–33 min each) set how long a PR waits.
 
 0172 makes the private content's pin a lever. This ticket does the rest.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B5 with 1180, 1207, 1170, 0182 and 1294): building this CI on
+the game's own playtest wrapper means 1207 ports it again. Order: 1180,
+then 1207, then this. The levers (steps 1–2) and the report reuse
+(steps 3–5) fold into 1207, which does them on the engine's reusable
+workflow; they stay written here as 1207's spec. If 1207's re-estimate
+leaves them out (ADR-0101), they come back to this ticket, still after
+1207. The file name keeps the old title so links hold.
+
 ## Nick input
 
 None.
 
 ## Scope
 
-**In:** narrower code levers and their test; reuse of a report whose
-inputs hash the same (cache, and the merged PR's run on `main`); ch03 and
-side_company_ledger split into two try ranges and merged; ADR-0014 and
-`docs/playtesting.md` say Playtest is advisory.
+**In:** ch03 and side_company_ledger split into two try ranges and
+merged, on the engine's playtest workflow after 1207; ADR-0014 and
+`docs/playtesting.md` say Playtest is advisory. Steps 1–5 only if 1207
+handed them back.
 
 **Out (do not do):**
 - `assets-private.rev` as a lever, the content's lever paths, `demo.yml`
@@ -47,12 +56,21 @@ side_company_ledger split into two try ranges and merged; ADR-0014 and
 - Making Playtest required (a ruleset setting, Nick's).
 - The xtask artifact (0178) and `target/` caches (0171).
 - Skipping `detect` on a draft PR (0174). Either order: merge the `if:`.
-- The engine's playtest workflow (1207). Persona, band or try changes.
+- Moving to the engine's playtest workflow (1207). Persona, band or try
+  changes.
 
 ## Implementation steps
 
-Expected size: about 90 lines of shell, 120 of workflow, 60 of Rust, 150
-of tests and 30 of docs.
+Expected size (all seven steps): about 90 lines of shell, 120 of
+workflow, 60 of Rust, 150 of tests and 30 of docs. With steps 1–5 in
+1207, about 60 of workflow, 60 of Rust, 60 of tests and 30 of docs.
+
+Steps 1–5 are done by 1207 (see Context). Step 6 is written against the
+game's old `crates/xtask/src/playtest.rs`, which 1207 deletes: put the
+merge where 1207 leaves the playtest command. If the engine's
+`shuyi playtest` and reusable workflow can't run part of a stage's tries
+and merge the parts, that is an engine change first (ask Nick before
+filing it, the `engine-change` skill), not game code.
 
 1. **Levers** (`.github/playtest-levers.sh`). Add `*_tests.rs` to line
    25. Before line 31, skip the content modules the battle never reads.
@@ -129,6 +147,10 @@ of tests and 30 of docs.
    reuse by input hash.
 
 ## Acceptance criteria
+
+The lever test, the merge-diff replay, and the "reused from cache" and
+"reused from run" checks go to 1207 with steps 1–5. This ticket keeps
+the `--merge` test, the split jobs on its own PR, `zizmor` and the gates.
 
 - [ ] A unix-only test `playtest_levers_skip_comments_tests_and_presentation`
       sits in `crates/xtask/src/main.rs`'s tests (beside 0172's, if it

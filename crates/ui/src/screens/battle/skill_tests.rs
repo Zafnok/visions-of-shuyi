@@ -857,3 +857,30 @@ fn a_skill_with_no_area_leaves_the_list_beside_the_unit() {
     let unit = unit.unwrap();
     assert_eq!(list.x, unit.x + unit.w + 1);
 }
+
+#[test]
+fn a_skill_aimed_at_a_unit_tops_the_side_panel_with_its_preview() {
+    let mut c = ctx();
+    let state = battle(&c, |units| {
+        units[0].pos = p(6, 2);
+        learn(&c, &mut units[0], "shove");
+    });
+    let mut s = lord_menu(&mut c, state);
+    focus_entry(&mut s, &mut c, MenuEntry::Skill);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let i = menu.skills().iter().position(|c| c.skill.0 == "shove");
+    focus_line(&mut s, &mut c, i.expect("Shove"));
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::SkillTarget(_)), "{:?}", s.mode());
+    let panel = s.view(&c).panel.expect("the side panel");
+    // Shove, then the line over the help bar too (1286); the raider's
+    // HP line is as ever.
+    let preview = panel.preview.expect("the preview");
+    assert_eq!(preview.title, "Shove");
+    assert!(preview.text.starts_with("Shove on Raider (8 → 7 uses)"));
+    let raider = panel.unit.expect("the raider");
+    assert_eq!(raider.hp_then, None);
+}
