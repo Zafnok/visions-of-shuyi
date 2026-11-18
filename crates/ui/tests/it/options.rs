@@ -156,6 +156,8 @@ fn the_title_opens_options_and_cancel_closes_it() {
     assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
     // No campaign: no Game mode row.
     assert!(!shows(&h, "Game mode"));
+    // The options list's one look snapshot (1290): every other test here
+    // reads the view, or crops to what it changed.
     assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
@@ -173,7 +175,6 @@ fn the_map_menu_opens_options_over_the_battle() {
     // The Quick Battle is a Classic campaign: its mode shows.
     assert!(shows(&h, "Game mode"));
     assert!(shows(&h, "Classic"));
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     // Back in the map menu, still on Options.
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -329,7 +330,6 @@ fn volumes_reach_the_mixer_and_persist() {
         typing: true,
     };
     assert_eq!(value(&h, Row::MusicVolume), typed);
-    assert_snapshot!(h.snapshot());
     // The game's keys do nothing while it is open; nothing changes yet.
     h.keys("Down d");
     assert_eq!(h.screens(), ["title", "options"]);
@@ -372,7 +372,6 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     // The layout in use is focused, and Cancel backs out unchanged.
     assert!(shows(&h, "► Right-handed"));
     assert!(shows(&h, "d back"));
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(layout(&h), Some(RIGHT_HANDED));
@@ -466,7 +465,6 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     h.keys("f");
     assert!(shows(&h, "Switch to Casual? This can't be undone."));
     assert!(shows(&h, "f yes / d no"));
-    assert_snapshot!(h.snapshot());
     // No: still Classic, still in Options.
     h.keys("d");
     assert_eq!(
@@ -551,7 +549,6 @@ fn the_tutorial_set_to_none_at_preparations_stops_the_tips() {
     assert_eq!(value(&h, Row::Tutorial), setting("Full"));
     h.keys("Right Right");
     assert_eq!(value(&h, Row::Tutorial), setting("None"));
-    assert_snapshot!(h.snapshot());
     h.keys(KEEP);
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
@@ -656,7 +653,6 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
         "{}",
         h.snapshot()
     );
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(settings(&h), changed);
     h.keys("f f");
@@ -716,7 +712,13 @@ fn the_help_line_fits_on_every_pad() {
         h.use_pad(kind);
         // Onto Game mode, whose hint is the longest.
         h.pad("DpadUp DpadUp DpadUp DpadUp");
-        let help = h.snapshot().lines().nth(31).unwrap_or("").trim().to_owned();
+        let help = h
+            .snapshot_whole()
+            .lines()
+            .nth(31)
+            .unwrap_or("")
+            .trim()
+            .to_owned();
         assert!(help.contains("switch to Casual"), "{kind:?}: {help}");
         assert!(help.contains("back"), "{kind:?}: {help}");
         assert!(help.chars().count() <= 100, "{kind:?}: {help}");
@@ -756,7 +758,6 @@ fn map_look_swaps_the_skin_at_once_and_is_remembered() {
     h.keys(TO_CURSOR);
     h.keys("Down");
     assert_eq!(value(&h, Row::MapLook), setting("Pictures"));
-    assert_snapshot!(h.snapshot());
     h.keys("Right");
     assert_eq!(value(&h, Row::MapLook), setting("Glyphs"));
     assert_eq!(settings(&h).game.map_look, MapLook::Glyphs);
@@ -815,7 +816,6 @@ fn colors_swap_the_palette_at_once_and_are_remembered() {
     h.keys("Down Down f");
     h.keys(TO_THEME);
     assert_eq!(value(&h, Row::Theme), setting("Earthy painterly"));
-    assert_snapshot!(h.snapshot());
 
     let mut seen = vec![earthy.clone()];
     for (key, theme, name) in [
@@ -948,7 +948,9 @@ fn leaving_options_at_preparations_asks_whether_to_keep_the_changes() {
 fn the_question_on_leaving_with_changes() {
     let mut h = options();
     h.keys("Right d");
-    assert_snapshot!(h.snapshot());
+    // The question's box alone, centred over the list (1290).
+    let question = trpg_ui::glyph_buffer::Rect::new(34, 13, 31, 6);
+    assert_snapshot!(h.snapshot_of(question));
 }
 
 /// A kept change is there after a restart; a discarded one isn't.

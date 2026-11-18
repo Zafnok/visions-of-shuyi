@@ -76,28 +76,28 @@ fn file_of(entries: &[(&str, String)]) -> Vec<u8> {
 /// The title's `Profile` item opened, and the import key pressed.
 fn import_from_profile(h: &mut Harness) {
     h.keys("Down Down Down Down f");
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
     h.keys("Space");
-    assert_eq!(h.top_screen(), "save_import", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "save_import", "{}", h.snapshot_whole());
 }
 
 /// The title's `Load Game` opened, the cursor moved `down`, and the import
 /// key pressed.
 fn import_from_load_game(h: &mut Harness, down: usize) {
     h.keys("Down f");
-    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot_whole());
     for _ in 0..down {
         h.keys("Down");
     }
     h.keys("Space");
-    assert_eq!(h.top_screen(), "save_import", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "save_import", "{}", h.snapshot_whole());
 }
 
 /// The Import screen's view.
 fn view(h: &Harness) -> ImportView {
     let screen = h.game().screen::<ImportScreen>();
     let view = screen.map(|s| s.view(h.game().ctx()));
-    view.unwrap_or_else(|| panic!("no import screen: {}", h.snapshot()))
+    view.unwrap_or_else(|| panic!("no import screen: {}", h.snapshot_whole()))
 }
 
 /// Each row's label and verdict.
@@ -185,14 +185,14 @@ fn the_report_gives_each_save_its_verdict_and_import_writes_the_ready_one() {
     // Nothing is written before the answer.
     assert_eq!(profile_names(&h), ["Player 1"]);
     h.keys("Left f");
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
     assert_eq!(profile_names(&h), ["Player 1", "Odo"]);
     assert_eq!(keys_of(&h, 2), ["slot_01"]);
     assert!(
-        h.snapshot()
+        h.snapshot_whole()
             .contains("Added the profile Odo: 1 imported, 2 refused"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
 }
 
@@ -230,10 +230,10 @@ fn a_file_of_another_build_imports_when_its_saves_are_this_version() {
     assert_eq!(keys_of(&h, 2), ["slot_04", "slot_09", "tips_seen"]);
     // The notice counts the saves, not the tips seen.
     assert!(
-        h.snapshot()
+        h.snapshot_whole()
             .contains("Added the profile Player 1 2: 2 imported, 0 refused"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
 }
 
@@ -378,7 +378,7 @@ fn the_file_is_dropped_on_a_desktop_and_picked_on_the_web() {
     h.keys("d");
     // No answer queued: the player closes the picker, and is back.
     h.keys("Space").wait(0.05);
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
 }
 
 /// Acceptance: the Profile screen's export of a profile, imported as a new
@@ -442,9 +442,10 @@ fn load_game_takes_one_save_into_this_profile() {
     let picker = h.game().screen::<SlotPickerScreen>();
     assert_eq!(picker.map(SlotPickerScreen::focused_slot), Some(3));
     assert!(
-        h.snapshot().contains("Imported the save into slot 03"),
+        h.snapshot_whole()
+            .contains("Imported the save into slot 03"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     assert!(matches!(slots_of(&h)[2], Slot::Saved(_)));
     assert_eq!(profile_names(&h), ["Player 1"]);
@@ -576,11 +577,15 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     // The row that adds a profile names no import key with no room.
     h.keys("Up");
     assert!(
-        h.snapshot().contains("arrows move · d back"),
+        h.snapshot_whole().contains("arrows move · d back"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
-    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
+    assert!(
+        !h.snapshot_whole().contains("import"),
+        "{}",
+        h.snapshot_whole()
+    );
 
     // The last place taken while the report is open: Import says so.
     let mut h = launch([1]);
@@ -613,9 +618,10 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     h.keys("Left f");
     assert_eq!(profile_names(&h), ["Player 1"]);
     assert!(
-        h.snapshot().contains("Nothing was imported: 1 refused"),
+        h.snapshot_whole()
+            .contains("Nothing was imported: 1 refused"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
 
     let mut h = launch([1]);
@@ -623,9 +629,17 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
     h.keys("Down Down Down Down f Space");
     assert_eq!(h.top_screen(), "profiles");
     // No help line names the key there, on a profile or the row that adds one.
-    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
+    assert!(
+        !h.snapshot_whole().contains("import"),
+        "{}",
+        h.snapshot_whole()
+    );
     h.keys("Down");
-    assert!(!h.snapshot().contains("import"), "{}", h.snapshot());
+    assert!(
+        !h.snapshot_whole().contains("import"),
+        "{}",
+        h.snapshot_whole()
+    );
 }
 
 /// A picker that couldn't open the file, and a file of another version
@@ -671,8 +685,8 @@ fn the_add_row_names_the_import_key() {
     let mut h = launch([1]);
     h.keys("Down Down Down Down f Down");
     assert!(
-        h.snapshot().contains("f add · Space import · d back"),
+        h.snapshot_whole().contains("f add · Space import · d back"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
 }

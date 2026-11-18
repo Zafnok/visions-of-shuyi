@@ -102,7 +102,7 @@ fn toggles(view: &trpg_ui::screens::battle::view::BattleView) -> StyledText {
 #[test]
 fn the_battle_help_bar_draws_its_keys_as_caps() {
     let h = battle_in(RIGHT_HANDED, false);
-    let snap = h.snapshot();
+    let snap = h.snapshot_whole();
     // `f select` as a cap `F` and the room after it.
     assert!(snap.contains("Space  end turn"), "{snap}");
     // Auto-end starts where end turn does, counting the caps' cells
@@ -215,5 +215,7 @@ fn options_draws_its_keys_as_caps() {
     // The title's menu: Options is its third entry.
     h.keys("Down Down f");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_snapshot!(h.snapshot());
+    // The help line alone, the bottom row: the look snapshot of the help
+    // line every screen but the battle's draws there (1290).
+    assert_snapshot!(h.snapshot_of(trpg_ui::glyph_buffer::Rect::new(0, 31, 100, 1)));
 }

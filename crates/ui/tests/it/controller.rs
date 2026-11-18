@@ -61,12 +61,16 @@ fn shows(h: &Harness, text: &str) -> bool {
 fn same_in_battle(keys: &str, buttons: &str) {
     let mut with_keys = quick_battle();
     let mut with_pad = quick_battle();
-    let start = with_keys.snapshot();
+    let start = with_keys.snapshot_whole();
     with_keys.keys(keys).wait(0.5);
     with_pad.pad(buttons).wait(0.5);
     assert_eq!(with_pad.screens(), with_keys.screens(), "{buttons}");
-    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot(), "{buttons}");
-    assert_ne!(with_keys.snapshot(), start, "{keys} did nothing");
+    assert_eq!(
+        as_keys(&mut with_pad),
+        with_keys.snapshot_whole(),
+        "{buttons}"
+    );
+    assert_ne!(with_keys.snapshot_whole(), start, "{keys} did nothing");
 }
 
 #[test]
@@ -91,7 +95,7 @@ fn the_title_menu_works_with_a_pad() {
 fn quick_battle_starts_the_same_from_a_pad() {
     let mut h = title();
     h.pad("DpadDown South DpadLeft South South South");
-    assert_eq!(as_keys(&mut h), quick_battle().snapshot());
+    assert_eq!(as_keys(&mut h), quick_battle().snapshot_whole());
 }
 
 #[test]
@@ -129,7 +133,7 @@ fn unused_buttons_do_nothing() {
     let mut idle = quick_battle();
     idle.keys("z z z z z z");
     // Buttons that do nothing don't switch the help to button names.
-    assert_eq!(h.snapshot(), idle.snapshot());
+    assert_eq!(h.snapshot_whole(), idle.snapshot_whole());
 }
 
 #[test]
@@ -148,19 +152,19 @@ fn start_twice_ends_the_turn() {
 fn a_held_dpad_moves_the_cursor_like_a_held_arrow() {
     let mut with_keys = quick_battle();
     let mut with_pad = quick_battle();
-    let start = with_keys.snapshot();
+    let start = with_keys.snapshot_whole();
     with_keys.hold("Right", 1.0);
     with_pad.hold_pad("DpadRight", 1.0);
-    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot());
-    assert_ne!(with_pad.snapshot(), start);
+    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot_whole());
+    assert_ne!(with_pad.snapshot_whole(), start);
     // Released, it stops.
-    let stopped = with_pad.snapshot();
+    let stopped = with_pad.snapshot_whole();
     with_pad.wait(1.0);
-    assert_eq!(with_pad.snapshot(), stopped);
+    assert_eq!(with_pad.snapshot_whole(), stopped);
     // The left stick repeats the same way.
     let mut with_stick = quick_battle();
     with_stick.hold_pad("LeftStickRight", 1.0);
-    assert_eq!(with_stick.snapshot(), stopped);
+    assert_eq!(with_stick.snapshot_whole(), stopped);
 }
 
 /// The lord walks next to the near brigand and fights it, pad only: the
@@ -175,7 +179,7 @@ fn the_lord_fights_the_near_brigand_with_a_pad() {
         .pad("South DpadRight DpadRight DpadRight DpadUp South")
         .wait(0.5);
     with_pad.pad("South South South East South").wait(0.5);
-    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot());
+    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot_whole());
     assert_eq!(with_pad.sounds(), with_keys.sounds());
     assert_ne!(with_pad.sounds(), [] as [std::string::String; 0]);
 }
@@ -189,12 +193,12 @@ fn holding_confirm_on_the_pad_fast_forwards_like_the_key() {
     let mut with_pad = quick_battle();
     with_pad.keys("f Right Right Right Up f").wait(0.5);
     with_pad.keys("f f f").hold_pad("South", 0.3);
-    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot());
+    assert_eq!(as_keys(&mut with_pad), with_keys.snapshot_whole());
     // Held is faster than not held.
     let mut unheld = quick_battle();
     unheld.keys("f Right Right Right Up f").wait(0.5);
     unheld.keys("f f f").wait(0.3 + FRAME_DT);
-    assert_ne!(with_pad.snapshot(), unheld.snapshot());
+    assert_ne!(with_pad.snapshot_whole(), unheld.snapshot_whole());
 }
 
 #[test]
@@ -208,7 +212,7 @@ fn keys_and_buttons_work_side_by_side() {
     mixed.keys("f").pad("DpadUp").keys("d").pad("East");
     let mut keys_only = quick_battle();
     keys_only.keys("f Up d d");
-    assert_eq!(as_keys(&mut mixed), keys_only.snapshot());
+    assert_eq!(as_keys(&mut mixed), keys_only.snapshot_whole());
     // The pad was pressed last, so the map menu's help names its buttons.
     assert!(shows(&mixed, "B back"));
     assert!(!shows(&mixed, "d back"));
@@ -233,12 +237,12 @@ fn a_button_ends_the_titles_wait() {
     let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     // Pressing the right stick in is bound to nothing: it still counts.
     h.pad("RightStickPress");
-    assert_eq!(h.snapshot(), title().snapshot());
+    assert_eq!(h.snapshot_whole(), title().snapshot_whole());
     let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(h.sounds(), [] as [std::string::String; 0]);
-    assert_eq!(as_keys(&mut h), title().snapshot());
+    assert_eq!(as_keys(&mut h), title().snapshot_whole());
     // The title's help names the pad's buttons from then on.
     assert!(shows(&h, "A select"));
     h.pad("South");
@@ -415,7 +419,7 @@ fn a_key_for_confirm_end_turn_leaves_start_twice_ending_the_turn() {
     h.pad("Start");
     assert!(shows(&h, "Start yes"));
     h.pad("Start");
-    assert!(shows(&h, "ENEMY PHASE"), "{}", h.snapshot());
+    assert!(shows(&h, "ENEMY PHASE"), "{}", h.snapshot_whole());
 }
 
 /// The longest battle help bar (an enemy's range shown, the cursor on an

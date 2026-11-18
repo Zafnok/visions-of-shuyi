@@ -33,7 +33,6 @@ expression: h.snapshot()
 ≈ ≈     ≈  ≈           ≈≈    ≈  ≈        ≈ ≈     ≈≈    ≈≈  ≈≈≈  ≈   ≈ ║                            ║
        ≈                   ≈  ≈≈    ≈    ≈    ≈   ≈≈ ≈ ≈            ≈ ╚════════════════════════════╝
                                                                                                     
- arrows choose · f open · d back                                                                    
 --- colours ---
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcdccccdccccdccccdccccdcccceeeeeeeeefffffffffffeeeeeeeeee
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccdccccdccccdccccdccccdeghhhhhhhhhhhhhhhhhhhhggggggge
@@ -65,7 +64,6 @@ aaaaaaaaaaaaaaaaaaaaaaaaasaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeggggggggg
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
 tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
 --- legend ---
 a = fg:water bg:sea

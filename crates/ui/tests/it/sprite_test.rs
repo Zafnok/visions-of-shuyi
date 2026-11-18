@@ -39,7 +39,7 @@ fn the_debug_menu_opens_the_sprite_test_and_cancel_closes_it() {
 #[test]
 fn every_sprite_is_one_snapshot_line() {
     let h = opened();
-    let snapshot = h.snapshot();
+    let snapshot = h.snapshot_whole();
     let lines: Vec<&str> = snapshot
         .lines()
         .skip_while(|&l| l != "--- overlays ---")
@@ -66,10 +66,10 @@ fn every_sprite_is_one_snapshot_line() {
 #[test]
 fn the_help_line_names_the_button_after_a_controller_press() {
     let mut h = opened();
-    let keys = h.snapshot();
+    let keys = h.snapshot_whole();
     assert!(keys.contains("d back"), "{keys}");
     h.use_pad(PadKind::Xbox).pad("DpadDown");
-    let pad = h.snapshot();
+    let pad = h.snapshot_whole();
     assert!(pad.contains("B back"), "{pad}");
     h.pad("East");
     assert_eq!(h.top_screen(), "debug_menu");

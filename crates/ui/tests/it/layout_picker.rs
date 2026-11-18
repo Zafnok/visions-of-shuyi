@@ -60,7 +60,7 @@ fn every_glyph_drawn_is_in_the_font() {
     let mut h = picker();
     for script in ["", "Down"] {
         h.keys(script);
-        let snap = h.snapshot();
+        let snap = h.snapshot_whole();
         let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
         for g in glyphs.chars().filter(|&c| c != '\n') {
             assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");
@@ -110,7 +110,10 @@ fn left_handed_wasd_moves_and_j_confirms() {
     h.keys("s w j");
     assert_eq!(h.top_screen(), "mode_select");
     // The help text names the left-handed keys.
-    assert!(h.snapshot().contains("w a s d choose · j select · k back"));
+    assert!(
+        h.snapshot_whole()
+            .contains("w a s d choose · j select · k back")
+    );
     h.keys("k");
     assert_eq!(h.top_screen(), "title");
     assert_eq!(

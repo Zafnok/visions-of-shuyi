@@ -1,92 +1,25 @@
 ---
 source: crates/ui/tests/it/key_caps.rs
-expression: h.snapshot()
+expression: "h.snapshot_of(trpg_ui::glyph_buffer::Rect::new(0, 31, 100, 1))"
 ---
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                    ┌─ Options ────────────────────────────────────────────────┐                    
-                    │                                                          │                    
-                    │   Text speed              ◄ Normal ►                     │                    
-                    │   Animation speed           Normal                       │                    
-                    │   Combat animations         On                           │                    
-                    │   Enemy phase speed         Normal                       │                    
-                    │   Auto-end turn             Off                          │                    
-                    │   Fullscreen                Off                          │                    
-                    │   Cursor                    Corners                      │                    
-                    │   Intro                     On                           │                    
-                    │   Open towns on arrival     On                           │                    
-                    │   Colors                    Earthy painterly             │                    
-                    │   Music volume              █████████▒  97               │                    
-                    │   Sound volume              █████████▒  97               │                    
-                    │   Voices (AI-generated)     On                           │                    
-                    │   Voice volume              █████████▒  97               │                    
-                    │   Voice on hover in the log On                           │                    
-                    │   Auto-advance              Off                          │                    
-                    │                                                          │                    
-                    │   Layout                    Right-handed                 │                    
-                    │   Key bindings                                           │                    
-                    │                                                          │                    
-                    │   Reset tips                                             │                    
-                    │   Restore defaults                                       │                    
-                    └──────────────────────────────────────────────────────────┘                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
                                        move · F  change · D  back                                   
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeedddddddddddddfdccccccdfdddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaggggggggaaggggggggggaagggggaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbaabbbbbbbbbbaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text_highlight bg:panel_bg
-d = fg:text bg:panel_bg
-e = fg:panel_bg bg:panel_border_focus
-f = fg:text_dim bg:panel_bg
-g = fg:text_dim bg:black
+b = fg:text_dim bg:black
 --- overlays ---
-over  sprite 280,496 24x16  images/key_arrows.png 0,0 24x16
-under 369,497 13x14  key_bg
-under 369,496 13x1  key_edge
-under 369,511 13x1  key_edge
-under 368,497 1x14  key_edge
-under 382,497 1x14  key_edge
-under 465,497 13x14  key_bg
-under 465,496 13x1  key_edge
-under 465,511 13x1  key_edge
-under 464,497 1x14  key_edge
-under 478,497 1x14  key_edge
+over  sprite 280,0 24x16  images/key_arrows.png 0,0 24x16
+under 369,1 13x14  key_bg
+under 369,0 13x1  key_edge
+under 369,15 13x1  key_edge
+under 368,1 1x14  key_edge
+under 382,1 1x14  key_edge
+under 465,1 13x14  key_bg
+under 465,0 13x1  key_edge
+under 465,15 13x1  key_edge
+under 464,1 1x14  key_edge
+under 478,1 1x14  key_edge
 --- glyph styles ---
-46,31  +3,+0 bold
-58,31  +3,+0 bold
+46,0  +3,+0 bold
+58,0  +3,+0 bold
