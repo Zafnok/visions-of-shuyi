@@ -134,11 +134,15 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
 /// the content when it is there (ADR-0117).
 fn shuyi_main(args: Vec<String>) -> u8 {
     match args.split_first() {
-        Some((name, rest)) if name == "check-keys" || name == "lint" => {
-            shuyi(name, rest.iter().cloned())
-        }
+        Some((name, rest)) if scans_the_content(name) => shuyi(name, rest.iter().cloned()),
         _ => shuyi_cli::main_with(args.into_iter(), Some(&game_tools::Trpg)),
     }
+}
+
+/// Whether `cargo shuyi <command>` runs on the project with the content in
+/// what it scans ([`content_layer::project`]): `check-keys` and `lint`.
+fn scans_the_content(command: &str) -> bool {
+    command == "check-keys" || command == "lint"
 }
 
 /// Runs the Shuyi tool `command` with `args` on this repository's project,
@@ -185,10 +189,15 @@ fn readme_pictures(args: &[String]) -> u8 {
 
 /// `skill-pack [--check]`: the pinned engine's skill pack in `.claude/skills/`.
 fn skill_pack(args: &[String]) -> u8 {
+    skill_pack_in(&repo_root(), args)
+}
+
+/// `skill-pack` with the repo at `root`.
+fn skill_pack_in(root: &Path, args: &[String]) -> u8 {
     let pack = shuyi_cli::skills::Pack::embedded();
     match args {
-        [] => report(skill_pack::write(&repo_root(), &pack)),
-        [flag] if flag == "--check" => match skill_pack::check(&repo_root(), &pack) {
+        [] => report(skill_pack::write(root, &pack)),
+        [flag] if flag == "--check" => match skill_pack::check(root, &pack) {
             Ok(said) => {
                 println!("{said}");
                 0
@@ -782,6 +791,34 @@ mod tests {
     #[test]
     fn dispatch_with_no_command_prints_usage_and_fails() {
         assert_eq!(dispatch(std::iter::empty()), 2);
+    }
+
+    /// `check-keys` and `lint` read the content when it is there; the other
+    /// commands run on the project as `shuyi.ron` gives it.
+    #[test]
+    fn only_check_keys_and_lint_scan_the_content() {
+        assert!(scans_the_content("check-keys"));
+        assert!(scans_the_content("lint"));
+        assert!(!scans_the_content("check-text"));
+        assert!(!scans_the_content("frame-png"));
+    }
+
+    /// With no arguments the pack is written; then `--check` passes; any
+    /// other argument is refused.
+    #[test]
+    fn skill_pack_writes_checks_and_rejects_bad_arguments() {
+        let dir = env::temp_dir().join(format!("trpg-tools-skill-pack-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".claude/skills")).unwrap();
+        assert_eq!(skill_pack_in(&dir, &args(&["--check"])), 1);
+        assert_eq!(skill_pack_in(&dir, &[]), 0);
+        assert_eq!(skill_pack_in(&dir, &args(&["--check"])), 0);
+        assert_eq!(skill_pack_in(&dir, &args(&["--bogus"])), 2);
+        assert_eq!(
+            dispatch(args(&["skill-pack", "--check", "x"]).into_iter()),
+            2
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
