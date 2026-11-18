@@ -133,10 +133,13 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
 /// run on the project as [`content_layer::project`] makes it, so they scan
 /// the content when it is there (ADR-0117).
 fn shuyi_main(args: Vec<String>) -> u8 {
-    match args.split_first() {
-        Some((name, rest)) if scans_the_content(name) => shuyi(name, rest.iter().cloned()),
-        _ => shuyi_cli::main_with(args.into_iter(), Some(&game_tools::Trpg)),
+    let layered = args
+        .split_first()
+        .filter(|(name, _)| scans_the_content(name));
+    if let Some((name, rest)) = layered {
+        return shuyi(name, rest.iter().cloned());
     }
+    shuyi_cli::main_with(args.into_iter(), Some(&game_tools::Trpg))
 }
 
 /// Whether `cargo shuyi <command>` runs on the project with the content in
@@ -818,6 +821,10 @@ mod tests {
             dispatch(args(&["skill-pack", "--check", "x"]).into_iter()),
             2
         );
+        // A skills folder that is a file can't be written: the error, 1.
+        std::fs::remove_dir_all(dir.join(".claude/skills")).unwrap();
+        std::fs::write(dir.join(".claude/skills"), "not a folder").unwrap();
+        assert_eq!(skill_pack_in(&dir, &[]), 1);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
