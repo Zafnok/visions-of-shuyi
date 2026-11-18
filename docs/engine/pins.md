@@ -441,7 +441,7 @@ Nothing for the game: 5 PRs (#446, #447, #449, #450, #458). #450 is engine ticke
 
 Nothing for the game: 6 PRs (#461, #464, #466, #467, #470, #473). #461 ships the pack skill `shuyi-worktrees`, copied here by `skill-pack`, which 1274 follows; #464 and #473 are the research behind 2262 and 2263 (#478, #479); #466 and #470 research a code pad in a web page; #467 holds tickets only.
 
-## 2026-11-18: e738ffc2 → 60a7ca47 (23 engine PRs), #PRNUM
+## 2026-11-18: e738ffc2 → 60a7ca47 (23 engine PRs), #761
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
