@@ -1107,3 +1107,24 @@ fn opening_the_unit_menu_searches_the_move_once() {
     assert!(!menu.values().contains(&MenuEntry::Skill));
     assert_eq!(searches() - before, 1);
 }
+
+/// Ticket 0490: only a line that attacks and can be chosen is an art to
+/// attack with. Overwatch alone, usable, isn't; an attacking line that is
+/// dimmed isn't.
+#[test]
+fn an_art_to_attack_with_is_a_usable_line_that_attacks() {
+    use super::art_list::can_attack_with_art;
+    let c = ctx();
+    let state = ranger(&c, 20);
+    let archer = state.unit(UnitId(3)).unwrap().pos;
+    let all = art_lines(&state, UnitId(3), archer);
+    let is_action = |l: &&super::art_list::ArtLine| l.technique.is_action(&state);
+    let mut overwatch = all.iter().find(is_action).unwrap().clone();
+    overwatch.slots = vec![0];
+    let mut attack = all.iter().find(|l| !is_action(l)).unwrap().clone();
+    attack.slots = vec![];
+    assert!(!can_attack_with_art(&state, &[overwatch.clone()]));
+    assert!(!can_attack_with_art(&state, &[attack.clone()]));
+    attack.slots = vec![0];
+    assert!(can_attack_with_art(&state, &[overwatch, attack]));
+}
