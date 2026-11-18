@@ -128,6 +128,27 @@ fn past_results(h: &mut Harness) {
     h.keys("f f");
 }
 
+/// Acceptance (1293): while the results show, the victory scene's first
+/// lines are kept (the battle let its own go as it left), and they still
+/// are when the scene asks for its first.
+#[test]
+fn the_victory_scenes_first_lines_are_kept_while_the_results_show() {
+    use crate::voice::{keep, kept, kept_before_playing, manifest, plain_scene};
+    let mut h = to_battle();
+    let texts = ["Won.", "Well won.", "Home.", "Rest."];
+    let won = plain_scene(h.ctx_mut(), "test_victory", &texts);
+    let clips: Vec<_> = won.iter().map(|(l, t)| (l, t.as_str())).collect();
+    h.ctx_mut().set_voice_manifest(&manifest(&clips));
+    let won: Vec<_> = won.into_iter().map(|(l, _)| l).collect();
+    seize(&mut h);
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
+    assert_eq!(kept(&h).last(), Some(&keep(&won[..3])));
+    h.keys("f f");
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
+    assert_eq!(kept_before_playing(&h, &won[0]), Some(keep(&won[..3])));
+}
+
 /// Answers "Save your progress?" with No.
 fn decline_save(h: &mut Harness) {
     assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);

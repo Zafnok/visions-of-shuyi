@@ -310,6 +310,33 @@ reaction. The dialogue log's cursor says the line it moves onto unless
 *Voice on hover in the log* is off. The debug menu's **Voice test** says
 the test scene's voiced lines, one per press, without the screen.
 
+That preload comes as the scene starts, and the first line is said on
+the same frame: on the web, where a clip is fetched, it would miss the
+0.3 s. So a scene's first 3 lines (`DialogueScreen::first_lines`) are
+kept loaded (`ctx.keep_voices`) a screen before it starts, by whoever
+knows it comes next (ticket 1293, `crates/ui/src/flow/first_lines.rs`):
+
+- The title keeps New Game's opening scene's while it is on top.
+- The Load Game list keeps those and the first scene of each save it
+  lists (a chapter save's next chapter's; a world-map save plays none).
+- The game flow, each time it shows a screen, keeps the first lines of
+  the scene it shows, if it is one, and of the scene it knows comes
+  after it: the next scene waiting (the next intro scene; the victory
+  scenes while the results show), New Game's opening during the
+  questions and the lead screen, the next chapter's at the save prompt
+  and in camp. So picking New Game or a save narrows the set to that
+  path's lines, and a scene's lines stay kept until its own screen has
+  asked for them. Before a battle it keeps nothing; the battle keeps
+  its own set.
+
+Not covered: a scene with no screen before it whose lines the flow
+couldn't see coming (one a world-map battle opens with: the map doesn't
+know where the army goes; a scene the battle plays over itself; a
+victory scene when a battle has no results to show); ticket 1296 takes
+the battle's scenes and the world map's. A line whose
+words change with the lead's gender is kept in the clip of the lead
+the title knows (the last one played) until the lead is picked.
+
 The battle screen (ticket 0476) says the guide's line as a lesson's or a
 tip's box comes on screen; the box going, or another taking its place,
 stops it. A box back on screen after a pause (a combat playing over an

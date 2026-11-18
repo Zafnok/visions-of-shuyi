@@ -5,7 +5,7 @@ type: bug
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: none
 completed:
@@ -104,11 +104,11 @@ kept set, three call sites), judged by `guide_voice.rs`.
 
 ## Acceptance criteria
 
-- [ ] A test shows the title screen hands `keep_voices` the opening
+- [x] A test shows the title screen hands `keep_voices` the opening
       scene's first 3 voiced lines (read from the test `Ctx`).
-- [ ] A test shows the Load Game list keeps each save's first lines and
+- [x] A test shows the Load Game list keeps each save's first lines and
       picking one narrows the set to that save's.
-- [ ] A test shows the opening scene's first line is in the kept set when
+- [x] A test shows the opening scene's first line is in the kept set when
       the dialogue screen first asks for it.
 - [ ] In a web build served with every clip held 0.5 s (as 0494 did:
       a local server that delays each `.ogg`, in the browser pane), New
@@ -126,4 +126,95 @@ kept set, three call sites), judged by `guide_voice.rs`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**What changed.** `DialogueScreen::first_lines` gives a scene's first
+3 lines from its first box (that box's, then `coming_lines`). The new
+`crates/ui/src/flow/first_lines.rs` holds the lookup and the owner of
+a kept set:
+
+- `opening_scene(ctx, Start)` answers "the scene this start leads into"
+  for New Game (its first chapter's first intro scene with anything to
+  say for the army; a world-map chapter's opening scene) and for a save
+  (a chapter save's next chapter's; a world-map save, or a save of the
+  last chapter, none). It builds the scene as `FlowScreen::play` does
+  (lead, those present), so a scene the army has nobody for is passed
+  over as the flow passes it over.
+- `KeptVoices` sends `ctx.keep_voices` only when its set changed, or
+  on the first call after `covered()`. With voices off it sends
+  nothing and is due again once they are on (New Game asks about voices
+  after the title).
+
+Who keeps what: the **title** keeps New Game's first lines while on
+top (again after a screen over it); the **Load Game list** keeps
+those plus each listed save's (again after an import). The **flow**,
+each time it pushes a screen (`push_next`), keeps the first lines of
+the scene it pushes, if it is one, plus those of the scene it knows
+comes after it (`coming_lines`): the next scene waiting (the next
+intro scene; the victory scenes while the results show), New Game's
+opening during the mode, familiarity, voices and lead screens, the next
+chapter's at the save prompt and the save picker, and the chapter camp
+goes on to. Picking New Game or a save therefore narrows the set to
+that path's lines. The flow always resends on a push: the battle may
+have replaced the set in between.
+
+**Step 4 / the battle.** The engine drops a load the moment a new
+kept set leaves it out, so a scene's own lines stay in the flow's set
+when the flow pushes the scene (its first frame asks for line 1). No
+screen between a pick and the scene sends an empty set; the battle
+sends one when it leaves, and the flow's push of the results (or the
+next screen) right after keeps the victory scenes' lines, which
+`the_victory_scenes_first_lines_are_kept_while_the_results_show`
+checks.
+
+**Not covered** (filed as **1296**): scenes the battle plays over
+itself from its triggers (`ch01_first_turn`, the boss and death
+scenes), and a world-map battle's intro (the map pops straight into
+it). Also not covered, and not filed: a victory scene when a battle
+gives no results (never in the game's chapters), and a gendered line
+among New Game's first 3, kept in the clip of the lead the title knows
+(the last save's, or the default) until the lead is picked; Chapter
+1's first gendered line is its 7th.
+
+**Tests.** Unit (`flow/first_lines/tests.rs`): New Game's and a
+chapter save's lines, a save with no scene, a scene passed over,
+`KeptVoices` (sent once, changes, duplicates and unvoiced lines left
+out, covered, an empty set only to let one go, voices off), and the
+title's first frame read from the test `Ctx`. Integration
+(`tests/it/voice.rs`): title → New Game → the opening scene, the last
+set kept before the first `PlayVoice` holds its first 3 lines; the
+Load Game list keeps New Game's and the save's, and loading narrows to
+the save's before its box asks. `tests/it/flow.rs`: the victory scene's
+lines kept while the results show.
+
+**Web check.** `cargo shuyi web` (non-release), served by a Python
+server holding every `.ogg` 0.5 s with `Cache-Control: no-store`,
+logging each request, in the browser pane (hidden; frames driven by a
+`MessageChannel` loop). With the private content, New Game is Chapter
+1. The log, in seconds from the server's start:
+
+- 16.9: `ch01_intro_bac90108`, `_6b303648`, `_706633d0` (the intro's
+  first three lines, the Thornmarch line among them), asked for by the
+  title, before any key.
+- 71.1: the scene starts (New Game, Classic, not familiar, voices yes,
+  a lead): `ch01_prebattle_91081df4`, `_81957f69`, `_1d315e4f` (the next
+  scene's first three, kept by the flow), `ch01_intro_8061933e` (the
+  dialogue's own preload of line 4) and the scene's music. No request
+  for line 1: its clip was loaded 54 s before its box ("Three years
+  after the Ash Peace...") showed, so it plays at once.
+- 111.2: the prebattle scene starts (the intro skipped, its choice
+  answered): only `ch01_prebattle_7072f12a` (its line 4). Its first
+  line, Maud's box on screen, was loaded at 71 s.
+
+A loaded save's first line wasn't checked on the web: Chapter 2, where
+a save after Chapter 1 goes on, has no clips yet, so there is nothing
+to fetch. The save path is checked by the harness test above; the last
+acceptance box for the web stays unticked for that half. Whether the
+opening sounds right goes on the Act 1 playtest's checklist (1064).
+
+**Engine friction:** estimate 90 (`guide_voice.rs`'s keep logic, a
+lookup and three call sites), measured 164 (1.8×), under 2×. Signals:
+workaround no · third copy no · budget no.
+
+**Follow-up tickets:** 1296 (the battle's scenes and a world-map
+battle's intro).
+
+No gameplay rule was decided.
