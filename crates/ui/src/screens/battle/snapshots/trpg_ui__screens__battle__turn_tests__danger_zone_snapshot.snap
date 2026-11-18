@@ -32,8 +32,8 @@ expression: buf.to_snapshot(&c.palette)
                                                                       │                            │
                                                                       │ Gold 3 000                 │
                                                                       └────────────────────────────┘
-                                                      w danger zone: ON · Shift+Space auto-end: OFF 
- f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 
+ w danger zone: ON                                                    Shift+Space auto-end: OFF     
+ f select · e info · s next unit · r rewind · d menu             Space end turn            F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaHIIIIIIIIIIIIIIIIIIIHHHHHHHHHHHIIIIIIIIIIIIIIa
-aHIIIIIIIIIIHIIIIIIIIHIIIIIIIIIIIIIHIIIIIIIIIIHIIIIIIIIHHHHHIIIIIIIIIaaaaaaaaaaaaaaaaaaaaaaIIIIIIIIa
+aHIIIIIIIIIIIIIIIIaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaHHHHHHHHHHHIIIIIIIIIIIIIIaaaaa
+aHIIIIIIIIIIHIIIIIIIIHIIIIIIIIIIIIIHIIIIIIIIIIHIIIIIIIIIIIIIIIIIIHHHHHIIIIIIIIIaaaaaaaaaaaaIIIIIIIIa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg

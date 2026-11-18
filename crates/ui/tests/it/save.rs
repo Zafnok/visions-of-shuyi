@@ -83,8 +83,12 @@ fn close_banner(h: &mut Harness) {
     assert!(!shows(h, "PLAYER PHASE"));
 }
 
-/// Skips the scene on screen: Cancel, then Confirm on "Skip scene?".
+/// Skips the scene on screen, after the chapter's title card (0812):
+/// Cancel, then Confirm on "Skip scene?".
 fn skip_scene(h: &mut Harness) {
+    if h.top_screen() == "chapter_card" {
+        h.keys("f");
+    }
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
 }
@@ -668,11 +672,10 @@ fn a_storage_that_refuses_everything_still_plays_and_says_why_it_cant_save() {
     let before = battle_text(&h);
     suspend(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert!(
-        shows(&h, &format!("Save storage error: {REFUSED}")),
-        "{}",
-        h.snapshot()
-    );
+    // A warning, in a box wrapped inside the map (0445).
+    let last = REFUSED.rsplit(' ').next().unwrap_or_default();
+    assert!(shows(&h, "Save storage error:"), "{}", h.snapshot());
+    assert!(shows(&h, &format!("│ {last}")), "{}", h.snapshot());
     assert_eq!(battle_text(&h), before);
     h.wait(2.0);
     // A save in a slot after the victory says why too, and the slots stay.

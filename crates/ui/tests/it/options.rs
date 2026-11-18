@@ -517,6 +517,8 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     // New Game, Casual, Not familiar, the default lead; skip the intro scene; close the
     // battle notes and the banners.
     h.keys("f Down f f Up f");
+    // The chapter's title card (0812).
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);

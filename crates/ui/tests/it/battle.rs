@@ -217,9 +217,9 @@ fn wait_all(h: &mut Harness, units: usize) {
 #[test]
 fn a_full_turn_of_waits_ends_with_auto_end_and_starts_turn_two() {
     let mut h = quick_battle();
-    // Auto-end on (off by default): a message says so.
+    // Auto-end on (off by default): a note over the map says so.
     h.keys("Shift+Space");
-    assert!(row(&h, 30).starts_with("Auto-end: ON"), "{}", row(&h, 30));
+    assert!(row(&h, 29).starts_with("Auto-end: ON"), "{}", row(&h, 29));
     wait_all(&mut h, 4);
     // The enemy phase's banner, then the enemies act, then the player's
     // turn 2.
@@ -297,9 +297,13 @@ fn info_and_danger_zone_keys() {
     assert!(shows(&h, "Test Mage"));
     h.keys("d");
     assert!(!shows(&h, "Weapon ranks"));
-    assert!(row(&h, 30).ends_with("w danger zone: OFF · Shift+Space auto-end: OFF"));
+    let toggles = |h: &Harness| crate::unpadded(&row(h, 30));
+    assert_eq!(
+        toggles(&h),
+        "w danger zone: OFF · Shift+Space auto-end: OFF"
+    );
     h.keys("w");
-    assert!(row(&h, 30).ends_with("w danger zone: ON · Shift+Space auto-end: OFF"));
+    assert_eq!(toggles(&h), "w danger zone: ON · Shift+Space auto-end: OFF");
 }
 
 /// The Quick Battle's Frost Elemental never moves (ticket 0450): the
@@ -457,11 +461,10 @@ fn next_unit_jumps_between_ready_units() {
 /// The key-help line, left of the right-aligned debug hint.
 fn help(h: &Harness) -> String {
     let buf = h.game().buffer();
-    (0..90)
+    let row = (0..90)
         .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+        .collect::<String>();
+    crate::unpadded(&row)
 }
 
 /// The lord (at (3, 5)) selected, the path steered two tiles right onto
@@ -763,6 +766,11 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }

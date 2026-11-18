@@ -186,3 +186,61 @@ fn styled_lines_split_at_line_breaks_keeping_roles() {
     assert_eq!(lines.len(), 2);
     assert_eq!(spans(&lines[1]), [("b: ".into(), ' '), ("d".into(), 'k')]);
 }
+
+/// `words` as plain hints.
+fn hints(words: &[&str]) -> Vec<StyledText> {
+    words.iter().map(|w| StyledText::from(*w)).collect()
+}
+
+const NARROW: CellWidths = CellWidths::NARROW;
+
+#[test]
+fn hint_column_counts_the_hints_and_separators_before() {
+    let h = hints(&["f select", "e info", "Space end turn"]);
+    assert_eq!(hint_column(&h, 0, &NARROW), 0);
+    assert_eq!(hint_column(&h, 1, &NARROW), 11);
+    let line = join_hints(h.iter().cloned()).plain();
+    let at = line.find("Space").unwrap();
+    assert_eq!(hint_column(&h, 2, &NARROW), line[..at].chars().count());
+}
+
+#[test]
+fn hint_column_counts_cells_not_bytes() {
+    // `→` and `×` take three and two bytes, one cell each.
+    let h = hints(&["q zoom: 2×", "a → b", "end"]);
+    assert_eq!(hint_column(&h, 2, &NARROW), 10 + 3 + 5 + 3);
+}
+
+#[test]
+fn hint_column_counts_a_key_caps_extra_cells() {
+    let mut select = StyledText::new();
+    select.push_key("f").push_plain(" select");
+    let h = vec![select, StyledText::from("end")];
+    let capped = NARROW.clone().with_key_cap_cells(Some(2));
+    assert_eq!(hint_column(&h, 1, &NARROW), 8 + 3);
+    assert_eq!(hint_column(&h, 1, &capped), 8 + 2 + 3);
+}
+
+#[test]
+fn hint_column_is_not_fooled_by_a_label_with_the_same_words() {
+    let h = hints(&["x end turn soon", "Space end turn"]);
+    assert_eq!(hint_column(&h, 1, &NARROW), 18);
+}
+
+#[test]
+fn pad_last_hint_moves_the_last_hint_to_the_column() {
+    let h = hints(&["f select", "Space end turn"]);
+    let line = pad_last_hint(&h, 20, &NARROW).plain();
+    assert_eq!(line, format!("f select{}Space end turn", " ".repeat(12)));
+    assert_eq!(line.find("Space"), Some(20));
+}
+
+#[test]
+fn pad_last_hint_never_pulls_a_hint_left() {
+    let h = hints(&["f select", "Space end turn"]);
+    let joined = join_hints(h.iter().cloned());
+    assert_eq!(pad_last_hint(&h, 5, &NARROW), joined);
+    assert_eq!(pad_last_hint(&h, 11, &NARROW), joined);
+    assert_eq!(pad_last_hint(&hints(&["one"]), 9, &NARROW).plain(), "one");
+    assert_eq!(pad_last_hint(&[], 9, &NARROW), StyledText::new());
+}

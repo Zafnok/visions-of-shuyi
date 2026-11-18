@@ -32,7 +32,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │ Gold 3 000                 │
                                                                       └────────────────────────────┘
-                                                   W  danger zone: OFF · Shift+Space  auto-end: OFF 
+                                                                                                    
  F  close                                                                                  F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -65,7 +65,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvvvvvvvvvvvvvvaaaaaaaaaaaavvvvvvvvvvvvvva
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaavvvvvvaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvva
 --- legend ---
 a = fg:text bg:black
@@ -172,16 +172,6 @@ under 41,176 13x1  key_edge
 under 41,191 13x1  key_edge
 under 40,177 1x14  key_edge
 under 54,177 1x14  key_edge
-under 409,481 13x14  key_bg
-under 409,480 13x1  key_edge
-under 409,495 13x1  key_edge
-under 408,481 1x14  key_edge
-under 422,481 1x14  key_edge
-under 585,481 93x14  key_bg
-under 585,480 93x1  key_edge
-under 585,495 93x1  key_edge
-under 584,481 1x14  key_edge
-under 678,481 1x14  key_edge
 under 9,497 13x14  key_bg
 under 9,496 13x1  key_edge
 under 9,511 13x1  key_edge
@@ -192,16 +182,4 @@ under 22,497 1x14  key_edge
 23,9  +3,+0 bold
 45,9  +3,+0 bold
 5,11  +3,+0 bold
-51,30  +3,+0 bold
-73,30  +3,+0 bold
-74,30  +3,+0 bold
-75,30  +3,+0 bold
-76,30  +3,+0 bold
-77,30  +3,+0 bold
-78,30  +3,+0 bold
-79,30  +3,+0 bold
-80,30  +3,+0 bold
-81,30  +3,+0 bold
-82,30  +3,+0 bold
-83,30  +3,+0 bold
 1,31  +3,+0 bold

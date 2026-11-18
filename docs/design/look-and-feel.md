@@ -1943,12 +1943,95 @@ same wording (yes), then a `Bonus:` line for the village's rewards
 - It shows on a fresh start and on Retry or Restart; not after a rewind,
   nor on a suspended battle carried on (*the agent's starting rule*, 0481).
 
+### The chapter title card
+
+Decided 2026-11-17, ticket 0812, on mockups at the game's size in palette
+D. Shown: A, no card (the chapter opens on its first scene); B, the
+chapter's number and name centred on black; C, B with a frame like the
+phase banner's or with rules. Nick: *"let me see the 2 C variants with
+perhaps different font choices to better accentuate a title card"*; then,
+of the framed card and the card with rules each in three letterings
+(spaced capitals, a big numeral, big block letters): *"I like C1
+framed/lettering and C3 big block name the best but I wonder if we could
+explore other fonts I think a titlecard is fine to break from our
+established one font for everything"*. Of six open-licensed fonts (two
+pixel blackletters, a pixel sans, Cinzel, IM Fell English SC, Grenze
+Gotisch) he liked Jacquard 24, Cinzel and IM Fell English best, picked
+**the rules** over the frame, then **Cinzel**, and Cinzel for the
+`Chapter 1` line too (over IM Fell English).
+
+- When a chapter starts (New Game, the next chapter, a loaded chapter
+  save), before its first scene, the screen is black with two rules
+  across its middle, each a double line broken by a small diamond in the
+  dim border colour (`══════ ◆ ══════`); between them `Chapter 1` in
+  Cinzel Medium in the text colour, and under it the chapter's name in
+  Cinzel Bold, larger, in the highlight colour (gold in the default
+  theme). Both come from the chapter file's `title` (`Chapter 1: The
+  Letter`), split at its first `: `.
+- The name is in Cinzel, the only text in the game that isn't the cell
+  font (Nick: a title card may break from one font for everything). The
+  longest Act 1 name (`The Hound's Country`) fits on one line.
+- It closes by itself after a few seconds, or on Confirm or Cancel (the
+  ticket's rule).
+- The same in the picture look (the card covers the screen; there is no
+  map behind it).
+
+*The agent's starting rules (Nick can veto):*
+
+- The card stays up **3 seconds** (*tunable*, `chapter_card.rs`).
+- A world-map chapter shows it before its opening scenes; arriving at a
+  battle on the world map doesn't show it again. Restarting or retrying
+  a battle doesn't either.
+- A title without `: ` shows whole as the name, with no line above.
+- A language whose title has a character Cinzel lacks shows both lines in
+  the cell font, in the same places.
+- On the Playdate the card is the same in its inks, in the cell font (its
+  screen is too small for Cinzel's name at this size).
+- The debug Quick Battle shows no card (it goes straight to its battle).
+
+As built: [`0812-chapter-card.png`](../screenshots/0812-chapter-card.png)
+and, on the Playdate,
+[`0812-chapter-card-playdate.png`](../screenshots/0812-chapter-card-playdate.png).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side
 panel on the right (single-line; **double-line** when a unit is selected), a
 status line on top (chapter, objective, phase and turn, rewinds), and a 2-row
 message and key-help bar at the bottom.
+
+**The bottom bar** (ticket 0445; Nick, 2026-10-04 and 2026-11-17, from
+rendered frames of the Quick Battle):
+
+```
+ w danger zone: OFF                                      Shift+Space auto-end: OFF
+ f select · e info · s next unit · r rewind · d menu     Space end turn    F2 debug
+```
+
+- The toggles' row: the danger-zone hint from the left edge, where the key
+  help starts ("left align the w danger zone hint"); in the picture look
+  the zoom hint goes first, before it (`q zoom: 2× · w danger zone: OFF`).
+- While browsing, `end turn` is always in one column, padded out to the
+  longest of the browsing help lines, and the auto-end hint sits right
+  above it ("align shift+space auto-end to a column with space end
+  turn"). When the key help has no `end turn` (a unit selected, a menu,
+  a prompt, aiming, a fight, the enemy phase) both toggle hints are
+  hidden. Nick picked this over auto-end following `end turn` wherever it
+  lands.
+- Messages (Nick: "toast in a different part like a new row under or on
+  top of the banner which appears briefly"; then "for INFO level like
+  Auto-End ON it can be 1, for WARN/ERR level messages probably 4 but
+  left aligned"):
+  - a brief note (`Auto-end: ON`, what a unit picked up) shows on a
+    shaded strip over the map's bottom row, just above the bar;
+  - a warning or an error (the save failing) shows in a small box at the
+    bottom left of the map, just above the bar; a long one wraps inside
+    the map's width ("Wrap inside the map");
+  - what a spell, item or skill will do while you aim it, and a fight's
+    lines, stay where they were, at the left of the toggles' row ("as it
+    is today but make it not conflict with any new additions"); the toggle
+    hints are hidden then, so nothing meets. Nick also wants the preview
+    in the side panel "somehow": its own ticket (1286).
 
 ## Theme palettes for ticket 0806 (*mockup values, tunable*)
 
@@ -1994,11 +2077,6 @@ black.
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in
   the terrain table above, the burning stand-in first.
-- The battle screen's bottom two rows: the danger-zone hint on the left
-  and the auto-end hint in a column with `end turn` (Nick, 2026-10-04);
-  where a message goes, and what auto-end lines up with when the key help
-  has no `end turn`, are for him to pick from rendered options (ticket
-  0445).
 - Key names in hints with a controller (coloured buttons or the
   platform's icons, ticket 0255) and on the Playdate's one-bit screen
   (ticket 0256): the keyboard's key caps are decided (*Key names in

@@ -15,6 +15,15 @@ use crate::harness::Harness;
 use crate::map_view::CursorStyle;
 use crate::screen::tests::ctx;
 
+/// `help` with the spaces that line its end-turn hint up (0445) read as
+/// the separator they stand for, so a test can name the hints in order.
+pub(super) fn unpadded(help: &str) -> String {
+    match help.split_once("   ") {
+        Some((start, end)) => format!("{start} · {}", end.trim_start()),
+        None => help.to_owned(),
+    }
+}
+
 pub(super) fn quick() -> BattleScreen {
     BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
@@ -148,41 +157,41 @@ fn help_depends_on_what_is_hovered() {
     let mut s = BattleScreen::new(state);
     // On the lord, ready to act.
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "f select · e info · s next unit · r rewind · d menu · Space end turn"
     );
     // On the archer, who has acted, and on an enemy.
     s.cursor.jump(Pos::new(2, 4));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · e info · s next unit · r rewind · d menu · Space end turn"
     );
     s.cursor.jump(Pos::new(8, 2));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn"
     );
     // An enemy's range shown: Cancel hides it.
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f range · e info · s next unit · r rewind · d hide range · Space end turn"
     );
     step(&mut s, &mut c, &[Action::Cancel]);
     // On an empty tile.
     s.cursor.jump(Pos::new(0, 0));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "w\u{a0}a\u{a0}s\u{a0}d move · j menu · l next unit · u rewind · k menu · Space end turn"
     );
     s.cursor.jump(Pos::new(3, 5));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "j select · i info · l next unit · u rewind · k menu · Space end turn"
     );
 }
@@ -196,7 +205,7 @@ fn help_shows_not_mapped_for_an_action_with_no_key() {
     c.set_layout_bindings(crate::input::RIGHT_HANDED, keys)
         .unwrap();
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "f select · !\u{a0}not\u{a0}mapped info · s next unit · r rewind · d menu · Space end turn"
     );
 }

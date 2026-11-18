@@ -180,5 +180,34 @@ pub fn wrap_styled(text: &StyledText, room: usize, widths: &CellWidths) -> Vec<S
     rows
 }
 
+/// The cell, counted from the line's start as `widths` measure it, where
+/// hint `index` of `hints` starts once they are [joined](join_hints)
+/// (0445): the cells of the hints before it and of their separators, a
+/// key cap's extra cells included. Counted from the hints themselves,
+/// never by searching the joined line, so a label that happens to contain
+/// another hint's words can't confuse it.
+pub fn hint_column(hints: &[StyledText], index: usize, widths: &CellWidths) -> usize {
+    let before = hints.iter().take(index);
+    let cells: usize = before.map(|h| h.width(widths)).sum();
+    cells + index * StyledText::from(SEPARATOR).width(widths)
+}
+
+/// `hints` [joined](join_hints), the last one moved right to start in
+/// cell `column`, with spaces in place of its separator; where it would
+/// start there anyway or later, just joined. Empty `hints` give an empty
+/// line.
+pub fn pad_last_hint(hints: &[StyledText], column: usize, widths: &CellWidths) -> StyledText {
+    let Some((last, rest)) = hints.split_last() else {
+        return StyledText::new();
+    };
+    if rest.is_empty() || hint_column(hints, rest.len(), widths) >= column {
+        return join_hints(hints.iter().cloned());
+    }
+    let mut line = join_hints(rest.iter().cloned());
+    let pad = column - line.width(widths);
+    line.push_plain(&" ".repeat(pad)).append(last);
+    line
+}
+
 #[cfg(test)]
 mod tests;
