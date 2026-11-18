@@ -108,7 +108,8 @@ fn browsing_shows_the_unit_top_left_and_the_terrain_top_right_and_no_help_bar() 
     assert_eq!((name.fg, name.bg), (ink("text"), ink("panel_bg")));
     // No help bar, no toggles: the map goes to the bottom row.
     let all = rows(&buf).concat();
-    assert!(!all.contains(view.help.trim()) && !all.contains(view.status.trim()));
+    let (help, status) = (view.help.plain(), view.status.plain());
+    assert!(!all.contains(help.trim()) && !all.contains(status.trim()));
 }
 
 #[test]

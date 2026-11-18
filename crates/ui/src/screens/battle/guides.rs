@@ -143,7 +143,7 @@ impl GuidesScreen {
     pub fn view(&self, ctx: &Ctx) -> GuidesScreenView {
         GuidesScreenView {
             list: self.list_view(ctx),
-            help: ctx.text_with(HELP, &[]),
+            help: ctx.text_styled(HELP, &[]),
             debug_hint: crate::screens::debug_hint(ctx),
         }
     }

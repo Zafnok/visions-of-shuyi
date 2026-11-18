@@ -195,11 +195,11 @@ pub fn load(
             "file not found in asset bundle",
         )]
     })?;
-    let table = from_source(&display, source, classes, items, names)?;
+    let table = from_source(&display, &source, classes, items, names)?;
     match bundle::test_part(CHARACTERS_PATH) {
         Some((file, source)) => {
-            let part = from_source(&file, source, classes, items, names)?;
-            with_part(table, part, &display, &file, source)
+            let part = from_source(&file, &source, classes, items, names)?;
+            with_part(table, part, &display, &file, &source)
         }
         None => Ok(table),
     }

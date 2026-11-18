@@ -1350,6 +1350,7 @@ dependencies = [
  "proptest",
  "serde",
  "shuyi-assets",
+ "shuyi-core",
  "trpg-content",
  "trpg-core",
 ]

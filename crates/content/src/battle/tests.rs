@@ -1078,7 +1078,7 @@ fn random_pool_rejects_each_narrative_or_unique_loot_feature() {
     let c = content();
     let b = &c.battles["test_random_meadow"];
     let source = bundle::file("battles/test_random_meadow.ron").expect("file");
-    let raw = || parse_ron::<RawBattle>("pool", source).expect("parse");
+    let raw = || parse_ron::<RawBattle>("pool", &source).expect("parse");
     assert!(pool_fits(&raw(), b, 6));
     let reject = |change: fn(&mut RawBattle)| {
         let mut r = raw();

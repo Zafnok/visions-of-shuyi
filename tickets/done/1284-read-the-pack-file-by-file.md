@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 1284 — Read the game's pack file by file
@@ -80,4 +80,50 @@ file changed refuses that file and reads the rest.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Measured, and `Pack::open` kept.** The engine's `asset_memory`
+program (`examples/hello-grid`, at the pin `e738ffc2`, `--release`,
+`--folder` of the files a release bakes: `assets/` with the content over
+it, 166 files) on the game's pack: 776,966 bytes (6,890 of header and
+index), 1.14 MB unpacked.
+
+| Way | Peak heap | Resident heap |
+| --- | --------- | ------------- |
+| Read whole and kept (what `pack_beside_program` and the packed build's `startup` do today) | 4.11 MB | 3.86 MB |
+| File by file (`Index::read`, `Index::into_layer` over `InMemory`), measured | 2.23 MB | 1.97 MB |
+| File by file, with the pack's 0.78 MB read into the heap for `InMemory` (as the packed build would hold it) | about 3.0 MB | about 2.75 MB |
+
+The gain the packed build could take is about 1.1 MB, on the desktop and
+on the web alike: both read the same pack whole into the heap (the web's
+fetched by the page), and on `wasm32` only the table's pointers shrink
+(its 8.9 KB). That is under the few MB the ticket set, so `startup`
+keeps `Pack::open` (`shuyi_app::pack_beside_program`). The rest of the
+gain (the pack's own 0.78 MB) needs a source that reads the file from
+disk or as it arrives, engine 2265, out of scope here. Switching would
+also have needed an engine change: the engine has no public way to get
+the bytes beside the program without opening them (`read_beside` is
+private to `pack_file.rs`).
+
+**The loaders are off `&'static`.** `bundle::file`, `bytes` and
+`test_part` hand out the bundle's `Cow`; `lent` is gone, and nothing in
+`crates/content` copies or leaks a file it is handed: every loader parses
+from a borrow of the `Cow` and keeps what it parsed. The script loaders
+(`load_with_scripts`, `load_with_some_scripts`, `dialogue::from_sources`,
+`camp::from_sources`) take any text (`AsRef<str>`), so a caller can pass
+the bundle's `Cow`s. `AppConfig::new` takes `bundle::bytes` as is.
+
+The Playdate's one-bit font and pictures keep their bytes borrowed for
+the whole run (ADR-0128 §3: the one-bit frame reads a picture where the
+bundle lends it), so they read through a new `bundle::lent_bytes`: the
+bytes where the layer lends them, `None` where a layer would read the
+file on demand. It copies and leaks nothing; every Playdate layer lends.
+
+**Tests.** `crates/xtask/src/game_tools/tests.rs`: the baked pack read
+file by file reads every file the embedded bundle holds with the same
+bytes, and the content loads from it as from the tables (the scenes,
+battles and chapters equal: the loaders work over a layer that hands
+files out owned); and a pack with one file changed after the bake refuses
+that file (it reads as missing, `Layer::problems` lists it once) and
+reads every other.
+
+No gameplay rule was decided. No follow-up ticket: reading the pack from
+disk is engine 2265, already filed.

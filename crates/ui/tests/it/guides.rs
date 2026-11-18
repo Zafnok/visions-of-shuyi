@@ -27,6 +27,8 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
     ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    // The help's keys as their words (ticket 0254).
+    ctx.game.key_caps = false;
     let mut h = Harness::from_game(trpg_ui::game::start(ctx));
     h.with_lessons();
     // New Game in Classic, the familiarity answer two rows below "Not

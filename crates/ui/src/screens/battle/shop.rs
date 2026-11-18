@@ -637,7 +637,7 @@ impl ShopScreen {
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &offers),
             special: self.special_view(ctx, &offers),
-            help: ctx.text_with(
+            help: ctx.text_styled(
                 match (self.selling, &self.special, tabs.len()) {
                     (Some(_), ..) => HELP_SELL,
                     (None, Some(_), _) => HELP_SPECIAL,

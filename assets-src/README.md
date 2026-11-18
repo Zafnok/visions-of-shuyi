@@ -6,6 +6,7 @@ write their output into `assets/`.
 | Path | What | Tool |
 | ---- | ---- | ---- |
 | `fonts/ter-u16n.bdf` | Terminus Font 4.49.1, 8×16 medium (OFL-1.1, see `assets/fonts/Terminus-LICENSE.txt`), unmodified | `cargo shuyi font-atlas` → `assets/fonts/atlas.{png,ron}` |
+| `fonts/ter-u16b.bdf` | Terminus Font 4.49.1, 8×16 bold, the same release and license, unmodified: the bold of key caps (ticket 0254) | the same command, after `--bold` |
 | `fonts/pad-shapes.bdf` | Our own glyphs added to the atlas: the PlayStation buttons' shapes `✕ ◯ □ △` (ticket 0220, `assets/fonts/README.md`) | the same command, passed after the font |
 | `fonts/Cinzel-Bold.ttf`, `fonts/Cinzel-Medium.ttf` | Cinzel (OFL-1.1, see `assets/fonts/Cinzel-LICENSE.txt`) at weights 700 and 500: static instances of Google Fonts' `Cinzel[wght].ttf`, made with `python -m fontTools.varLib.instancer Cinzel[wght].ttf wght=700` (and `wght=500`). The chapter title card's lettering (ticket 0812, ADR-0128) | `cargo xtask lettering` → `assets/title/chapter_{name,line}.{png,ron}` |
 | `audio/import.py` | Downloads and converts the chosen third-party music and sounds (ticket 0214, ADR-0027; originals git-ignored, see `audio/README.md`) | `python assets-src/audio/import.py` → `music/*.ogg`, `assets/audio/sfx/*.ogg` |

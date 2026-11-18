@@ -265,13 +265,15 @@ impl Content {
 /// game's bundle first ([`bundle::install`]).
 pub fn load_embedded() -> Result<Content, ContentErrors> {
     bundle::install();
-    load::<&str>(None)
+    load::<&str, &str>(None)
 }
 
 /// [`load_embedded`] with `scripts`, `(file name, source)` pairs, as the
 /// dialogue files instead of the bundle's: every check a script goes
 /// through, on scripts as they are on disk (`cargo xtask check-script`).
-pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content, ContentErrors> {
+pub fn load_with_scripts<F: AsRef<str>, S: AsRef<str>>(
+    scripts: &[(F, S)],
+) -> Result<Content, ContentErrors> {
     bundle::install();
     load(Some(scripts))
 }
@@ -292,14 +294,16 @@ pub struct SomeScripts {
 /// world-map place may name a scene the scripts don't have. Those scenes
 /// are listed in [`SomeScripts::not_here`] instead.
 #[cfg(feature = "std")]
-pub fn load_with_some_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> SomeScripts {
+pub fn load_with_some_scripts<F: AsRef<str>, S: AsRef<str>>(scripts: &[(F, S)]) -> SomeScripts {
     let (content, not_here) = dialogue::with_some_scenes(|| load_with_scripts(scripts));
     SomeScripts { content, not_here }
 }
 
 /// Loads and validates everything; the dialogue files are `scripts`, or
 /// the bundle's when `None`.
-fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
+fn load<F: AsRef<str>, S: AsRef<str>>(
+    scripts: Option<&[(F, S)]>,
+) -> Result<Content, ContentErrors> {
     let early = Early::load();
     let scripts = early.scripts(scripts);
     early.finish(scripts)
@@ -361,7 +365,7 @@ impl StagedLoad {
     pub fn finish(self) -> Result<Content, ContentErrors> {
         let (cast, faces, known, cues) = self.early.script_refs();
         let scripts = match self.dialogue {
-            None => self.early.scripts::<&str>(None),
+            None => self.early.scripts::<&str, &str>(None),
             Some(load) => load.finish(cast, faces, known, cues),
         };
         self.early.finish(scripts)
@@ -461,7 +465,10 @@ impl Early {
     }
 
     /// The dialogue: `scripts`, or the bundle's files when `None`.
-    fn scripts<F: AsRef<str>>(&self, scripts: Option<&[(F, &str)]>) -> Loading<dialogue::Scripts> {
+    fn scripts<F: AsRef<str>, S: AsRef<str>>(
+        &self,
+        scripts: Option<&[(F, S)]>,
+    ) -> Loading<dialogue::Scripts> {
         let (cast, faces, known, cues) = self.script_refs();
         match scripts {
             Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
@@ -1229,6 +1236,7 @@ fn assemble(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::borrow::Cow;
 
     fn ok_terrain() -> Result<TerrainDef, Vec<ContentError>> {
         TerrainDef::load(crate::palette::load().ok().as_ref())
@@ -1945,7 +1953,7 @@ mod tests {
     #[test]
     fn scripts_given_replace_the_bundles() {
         let paths = bundle::files_in(dialogue::DIALOGUE_DIR);
-        let files: Vec<(String, &str)> = paths
+        let files: Vec<(String, Cow<'static, str>)> = paths
             .into_iter()
             .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
             .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
@@ -1957,7 +1965,10 @@ mod tests {
         assert_eq!(same.battles, embedded.battles);
         // A scene more.
         let mut more = files.clone();
-        more.push(("draft.dlg".to_owned(), "@scene draft\n> Hello.\n@end\n"));
+        more.push((
+            "draft.dlg".to_owned(),
+            "@scene draft\n> Hello.\n@end\n".into(),
+        ));
         let with_draft = load_with_scripts(&more).unwrap();
         assert!(with_draft.dialogue.get("draft").is_some());
         assert_eq!(
@@ -1967,14 +1978,17 @@ mod tests {
         // Checked against the game's characters: a speaker who isn't one
         // is an error.
         let mut stranger = files.clone();
-        stranger.push(("who.dlg".to_owned(), "@scene who\nnobody: Hello.\n@end\n"));
+        stranger.push((
+            "who.dlg".to_owned(),
+            "@scene who\nnobody: Hello.\n@end\n".into(),
+        ));
         let errors = load_with_scripts(&stranger).unwrap_err();
         assert_eq!(
             errors.0,
             [ContentError::new("who.dlg", "unknown character \"nobody\"").at(2, None)]
         );
         // A broken script is reported under the name given.
-        more.push(("bad.dlg".to_owned(), "@scene bad\n@end\n"));
+        more.push(("bad.dlg".to_owned(), "@scene bad\n@end\n".into()));
         let errors = load_with_scripts(&more).unwrap_err();
         assert_eq!(
             errors.0,
@@ -1989,7 +2003,7 @@ mod tests {
     }
 
     /// The bundle's dialogue files, each named as a problem names it.
-    fn bundle_scripts() -> Vec<(String, &'static str)> {
+    fn bundle_scripts() -> Vec<(String, Cow<'static, str>)> {
         let paths = bundle::files_in(dialogue::DIALOGUE_DIR);
         paths
             .into_iter()
@@ -2003,7 +2017,7 @@ mod tests {
     /// every other problem is still found.
     #[test]
     fn a_load_of_some_scripts_notes_the_scenes_not_there() {
-        let none = load_with_some_scripts::<&str>(&[]);
+        let none = load_with_some_scripts::<&str, &str>(&[]);
         let content = none.content.unwrap();
         assert!(content.dialogue.scenes.is_empty());
         let embedded = load_embedded().unwrap();
@@ -2014,7 +2028,7 @@ mod tests {
         assert!(!none.not_here.is_empty());
         assert!(none.not_here.is_subset(&every), "{:?}", none.not_here);
         // Every scene the strict load of no script misses is noted.
-        let strict = load_with_scripts::<&str>(&[]).unwrap_err();
+        let strict = load_with_scripts::<&str, &str>(&[]).unwrap_err();
         let noted = |e: &&ContentError| none.not_here.iter().any(|id| e.message.contains(id));
         assert!(strict.0.iter().all(|e| noted(&e)), "{strict}");
         // Every script there: nothing is noted, and the content is the game's.
@@ -2029,7 +2043,7 @@ mod tests {
             [ContentError::new("who.dlg", "unknown character \"nobody\"").at(2, None)]
         );
         // The load after is strict again.
-        assert!(load_with_scripts::<&str>(&[]).is_err());
+        assert!(load_with_scripts::<&str, &str>(&[]).is_err());
     }
 
     /// The embedded scripts pass the presence check (ADR-0055); with the
@@ -2133,7 +2147,7 @@ mod tests {
             .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
             .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
             .collect::<Vec<_>>();
-        files.push(("bad.dlg".to_owned(), bad));
+        files.push(("bad.dlg".to_owned(), bad.into()));
         let errors = load_with_scripts(&files).unwrap_err();
         assert_eq!(
             errors.0,

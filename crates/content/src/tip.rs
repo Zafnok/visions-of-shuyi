@@ -140,7 +140,7 @@ pub fn load(faces: Option<&BTreeMap<String, Portrait>>) -> Result<TipTable, Vec<
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, faces)
+    from_source(&display, &source, faces)
 }
 
 /// Parses and validates tips `source`, attributing errors to `file`, each

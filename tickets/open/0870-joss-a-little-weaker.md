@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["0527", "0531"]
 nick_input: decision
 completed:
 ---

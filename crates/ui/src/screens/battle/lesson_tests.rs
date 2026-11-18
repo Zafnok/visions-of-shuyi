@@ -102,7 +102,7 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
         ("Vix", "Moving the cursor")
     );
     assert_eq!(view.lines[0], "Move the cursor one tile each way.");
-    let labels: Vec<&str> = view.items.iter().map(|i| i.label.as_str()).collect();
+    let labels: Vec<String> = view.items.iter().map(|i| i.label.plain()).collect();
     assert_eq!(
         labels,
         [

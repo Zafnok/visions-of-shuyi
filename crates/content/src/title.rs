@@ -70,7 +70,7 @@ pub fn load(images: &ImageTable) -> Result<TitleArt, Vec<ContentError>> {
     let file = bundle::display_path(TITLE_PATH);
     let source = bundle::file(TITLE_PATH)
         .ok_or_else(|| vec![ContentError::new(&file, "file not found in asset bundle")])?;
-    from_source(&file, source, images)
+    from_source(&file, &source, images)
 }
 
 /// Parses title art `source` (errors attributed to `file`), checking each

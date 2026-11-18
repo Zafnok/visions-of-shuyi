@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: fable-5.1 / gpt-6-astra
 effort: high
 status: blocked
-blocked_by: ["1003", "0743", "0750"]
+blocked_by: ["1003", "0743", "0750", "0766"]
 nick_input: none
 completed:
 ---

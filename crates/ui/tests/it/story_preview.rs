@@ -438,10 +438,14 @@ fn a_trial_packet_of_two_scenes_plays_both_with_no_problem_about_the_others() {
 #[test]
 fn every_script_of_the_game_plays_with_no_problem_and_every_rule_checked() {
     let paths = trpg_content::bundle::files_in("dialogue");
-    let files: Vec<(&str, &str)> = paths
+    let texts: Vec<_> = paths
         .into_iter()
         .filter(|p| p.ends_with(trpg_content::dialogue::DIALOGUE_EXTENSION))
         .filter_map(|p| Some((p.strip_prefix("dialogue/")?, trpg_content::bundle::file(p)?)))
+        .collect();
+    let files: Vec<(&str, &str)> = texts
+        .iter()
+        .map(|(name, text)| (*name, text.as_ref()))
         .collect();
     assert!(files.len() > 5, "{files:?}");
     let (h, _) = preview_of(&files);

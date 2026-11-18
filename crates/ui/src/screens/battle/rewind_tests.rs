@@ -76,7 +76,7 @@ fn shown(h: &Harness) -> RewindView {
 /// The help line of the rewind screen on `h` (ADR-0054: read from its
 /// view).
 fn help(h: &Harness) -> String {
-    open(h).view(h.game().ctx()).help
+    open(h).view(h.game().ctx()).help.plain()
 }
 
 /// The rewind screen open on `h`.

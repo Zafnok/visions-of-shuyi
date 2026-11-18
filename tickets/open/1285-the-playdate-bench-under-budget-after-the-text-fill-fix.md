@@ -39,7 +39,8 @@ None.
   it passes).
 - Take `playdate/frame-instructions/battle-cursor-sweep` back out of
   `KNOWN_OVER` in `.github/workflows/ci.yml` (and its line in
-  `docs/targets.md`'s *Over budget*).
+  `docs/targets.md`'s *Over budget*); if 0185 is done, out of
+  `bench/known-over.txt` instead.
 - CI's `bench` job passes: the Playdate's `battle-cursor-sweep` under
   2,000,000 instructions, and the other scenarios at or below their
   numbers before PR #732 (`docs/targets.md`'s table brought up to date).
@@ -57,7 +58,8 @@ Estimate: none beyond the pin move's fixes.
 
 ## Acceptance criteria
 
-- `KNOWN_OVER` no longer names `battle-cursor-sweep`, and CI's `bench`
+- `KNOWN_OVER` (or 0185's `bench/known-over.txt`) no longer names
+  `battle-cursor-sweep`, and CI's `bench`
   job is green on the pin move's PR.
 
 ## Tests required

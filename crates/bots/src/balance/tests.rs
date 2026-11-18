@@ -12,7 +12,7 @@ static CONTENT: LazyLock<Arc<Content>> = LazyLock::new(|| Arc::new(content().clo
 fn battle(id: &str) -> (TunedBattle, Vec<Box<dyn Knob<TunedBattle>>>) {
     let path = format!("battles/{id}.ron");
     let source = trpg_content::bundle::file(&path).unwrap_or_else(|| panic!("no {path}"));
-    let text = BattleText::parse(&path, id, source).unwrap_or_else(|e| panic!("{e}"));
+    let text = BattleText::parse(&path, id, &source).unwrap_or_else(|e| panic!("{e}"));
     let battle = TunedBattle::new(text, Arc::clone(&CONTENT));
     let knobs = knobs(&battle).unwrap_or_else(|e| panic!("{e}"));
     (battle, knobs)
@@ -356,7 +356,7 @@ fn a_generated_battle_keeps_its_enemies_near_its_level_and_a_pool_battle_only_ch
     let id = "test_random_meadow";
     let content = Arc::new(trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}")));
     let source = trpg_content::bundle::file(&format!("battles/{id}.ron")).expect("the file");
-    let text = BattleText::parse(id, id, source).unwrap_or_else(|e| panic!("{e}"));
+    let text = BattleText::parse(id, id, &source).unwrap_or_else(|e| panic!("{e}"));
     let battle = TunedBattle::new(text, content);
     let fixed = generated_knobs(&battle, false).unwrap_or_else(|e| panic!("{e}"));
     assert!(fixed.iter().all(|k| k.name() != "unnamed enemies' level"));
