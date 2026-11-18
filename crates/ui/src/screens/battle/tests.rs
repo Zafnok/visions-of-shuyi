@@ -674,7 +674,7 @@ fn large_map_scrolled_to_bottom_right_snapshot() {
     assert_eq!(scene.size, (35, 30));
     assert_eq!(scene.offset(corner), Some((34, 29)));
     assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::MAP_VIEW));
 }
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.

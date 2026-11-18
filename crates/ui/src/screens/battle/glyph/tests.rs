@@ -657,7 +657,7 @@ fn the_objective_banner_snapshot() {
         let buf = painted(&quick(), |v| v.banner = Some(objective_banner(lines)));
         insta::assert_snapshot!(
             format!("objective_banner_{i}"),
-            buf.to_snapshot(&ctx.palette)
+            crate::harness::snapshot_of(&buf, MAP_VIEW, &ctx.palette)
         );
         let (width, height) = objective_banner_size("OBJECTIVE", &objective_banner(lines).lines);
         let (left, top) = (

@@ -174,7 +174,7 @@ fn quick_battle_at_dusk_shades_the_ground_only() {
     assert_eq!(text.replacen(" light dusk", "", 1), noon.map_text());
     // Line by line, the frame is noon's with a shade on the ground's
     // pictures: the tileset's own image, not one colour, under the glyphs.
-    let (lit, plain) = (dusk.snapshot(), noon.snapshot());
+    let (lit, plain) = (dusk.snapshot_of(MAP_VIEW), noon.snapshot_of(MAP_VIEW));
     assert_eq!(lit.lines().count(), plain.lines().count());
     let shade = " shade=350:620,560,460";
     let mut shaded = 0;

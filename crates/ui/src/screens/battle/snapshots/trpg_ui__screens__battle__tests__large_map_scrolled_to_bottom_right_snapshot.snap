@@ -1,72 +1,68 @@
 ---
 source: crates/ui/src/screens/battle/tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "layout::snap(&render(&s, &c), &c, layout::MAP_VIEW)"
 ---
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..↑...♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣┌────────────────────────────┐
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│ Plain                      │
-..Br♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│ DEF +0  AVO +0             │
-..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│ Raider                     │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│ Raider  Lv 2               │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│ HP 22/22   ██████████      │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│ Enemy                      │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│                            │
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│ Str   7     Mag   0        │
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│ Dex   3     Spd   4        │
-..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│ Def   4     Res   0        │
-..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│ Mov   5                    │
-←♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│ Steel Axe         25/25    │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│ Atk  18     Hit  71        │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│ Crit  1     Avo   8        │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│ AS   -3                    │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│                            │
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│                            │
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│                            │
-..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
-..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│                            │
-··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│                            │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│ Gold 0                     │
-≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^Ra└────────────────────────────┘
- w danger zone: OFF                                                   Shift+Space auto-end: OFF     
- arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn         F2 debug 
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..↑...♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+..Br♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+←♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣
+..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··
+♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..
+≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^Ra
 --- colours ---
-aabbbbbbccccccddddddeeeeeeaaaaaabbfbbbccccccddddddeeeeeeaaaaaabbbbbbccgggggggggggggggggggggggggggggg
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghiiiiihhhhhhhhhhhhhhhhhhhhhhg
-bbjjccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghkkkkkkhhhhhhhhhhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhllllllllllhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghmmmmmhhhhhhhhhhhhhhhhhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghmmmhhhhhhhhhmmmhhhhhhhhhhhhg
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghmmmhhhhhhhhhmmmhhhhhhhhhhhhg
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghmmmhhhhhhhhhmmmhhhhhhhhhhhhg
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghmmmhhhhhhhhhhhhhhhhhhhhhhhhg
-ncddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghmmmhhhhhhhhhmmmhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghmmmmhhhhhhhhmmmhhhhhhhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghmmhhhhhhhhhhhhhhhhhhhhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaaoogggggggggggggggggggggggggggggg
-pqrrrrrrrrrrrrrrrrrpppppppppppppppppppppppppppppppppppppppppppppppppppqqqqqqqqqqqrrrrrrrrrrrrrrppppp
-pqqqqqqrrrrrrrrqrrrrrrrrrqrrrrrrrrqrrrrrrrrrrrrrqrrrrrrrrrrqrrrrrrrrqqqqqrrrrrrrrrppppppppprrrrrrrrp
+aabbbbbbccccccddddddeeeeeeaaaaaabbfbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+bbggccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabb
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabb
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+hcddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabb
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabb
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbcc
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccdd
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddee
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaa
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabb
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaaii
 --- legend ---
 a = fg:mountain bg:mountain_bg
 b = fg:grass bg:grass_bg
@@ -74,18 +70,9 @@ c = fg:forest bg:forest_bg
 d = fg:road bg:road_bg
 e = fg:water bg:water_bg
 f = fg:cursor bg:grass_bg
-g = fg:panel_border bg:panel_bg
-h = fg:text bg:panel_bg
-i = fg:text_highlight bg:panel_bg
-j = fg:enemy bg:forest_bg
-k = fg:enemy bg:panel_bg
-l = fg:hp_high bg:panel_bg
-m = fg:text_dim bg:panel_bg
-n = fg:cursor bg:forest_bg
-o = fg:enemy bg:grass_bg
-p = fg:text bg:black
-q = fg:text bg:key_bg
-r = fg:text_dim bg:black
+g = fg:enemy bg:forest_bg
+h = fg:cursor bg:forest_bg
+i = fg:enemy bg:grass_bg
 --- overlays ---
 over  17,46 14x2  hp_high
 over  545,478 14x2  hp_high

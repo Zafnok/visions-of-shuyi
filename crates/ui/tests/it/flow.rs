@@ -383,6 +383,7 @@ fn game_over_opens_with_its_animation() {
     let first = game_over(&h);
     assert!(first.progress < 16, "{}", first.progress);
     assert_eq!((first.menu, first.help), (None, None));
+    // The whole frame: the animation darkens the whole screen (1290).
     assert_snapshot!("game_over_first_frame", h.snapshot());
     h.wait(1.0);
     let middle = game_over(&h);

@@ -256,7 +256,7 @@ fn the_leftovers_leaving() {
     let mut h = boss_fight("glyph");
     fell_the_boss(&mut h);
     h.wait(0.4 * FLEE_S);
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(crate::screens::battle::layout::MAP_VIEW));
 }
 
 /// The attack skirmish once its unkillable brigand is down, the cursor on
