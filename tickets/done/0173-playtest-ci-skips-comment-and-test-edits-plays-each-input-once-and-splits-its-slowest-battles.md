@@ -141,7 +141,7 @@ of tests and 30 of docs.
       checks and `blocked` as one whole run. Mismatched parts are an error.
 - [x] The merge diffs of #658, #677, #718, #725 and #728 go through the
       new script. The notes name the real lever for each that still plays.
-- [ ] This PR's Playtest shows `play (ch03 1/2)`, `play (ch03 2/2)` and
+- [x] This PR's Playtest shows `play (ch03 1/2)`, `play (ch03 2/2)` and
       `merge (ch03)`, with one ch03 table. After a docs-only push, the
       next run says "reused from cache" and has no `build`.
 - [ ] After the merge, the `main` run says "reused from run <id>". If it
@@ -199,7 +199,11 @@ the same for side_company_ledger, with one table per battle, and saved
 `playtest-reports-9628b566…`. The next docs-only push (run 44232479153)
 played again, rightly: `main` had moved under the PR (0450 changed
 `crates/core`), so the merge commit's inputs hashed differently
-(`d772bae2…`). The reuse from cache and on `main` are checked in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
+(`d772bae2…`). Run 44243501811 played the merge with `main` in full and saved
+`playtest-reports-58f996ed…`; its re-run (attempt 2, same merge commit,
+same inputs) restored the cache, skipped `build`, `play` and `merge`, and
+its summary says "Reports reused from cache". The reuse on `main`
+is checked after the merge. Minutes the Nov 10–17 runs would have saved, roughly:
 the ~37 main replays (~5,563 job-minutes, per the retro) plus about
 4 PR runs at 127–149 each (#658, #677, #718, #728) ≈ 6,100 of 15,424.
 The split adds a little (one merge job, two runners' setup for two
