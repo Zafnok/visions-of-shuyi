@@ -679,3 +679,33 @@ fn the_objective_banner_snapshot() {
         assert_eq!(cells(&buf, top + 5, left + 3, 6), "Lose: ");
     }
 }
+
+#[test]
+fn a_short_warning_is_a_box_of_three_rows() {
+    let buf = bar(None, Some(MessageView::warning("No room".to_owned())));
+    let bottom = HELP_BAR.y - 1;
+    assert_eq!(buf.get(MAP_VIEW.x, bottom - 2).unwrap().glyph, '┌');
+    assert_eq!(cells(&buf, bottom - 1, MAP_VIEW.x, 11), "│ No room │");
+    assert_eq!(buf.get(MAP_VIEW.x, bottom).unwrap().glyph, '└');
+}
+
+#[test]
+fn a_note_wider_than_the_map_wraps_onto_a_second_row_above() {
+    // 69 characters: one more than the 68 a row of the map holds.
+    let text = format!("{} {}", "a".repeat(34), "b".repeat(34));
+    let buf = bar(None, Some(MessageView::note(text)));
+    let row = |y| cells(&buf, y, MAP_VIEW.x, MAP_VIEW.w);
+    assert_eq!(
+        row(HELP_BAR.y - 2).trim_end(),
+        format!(" {}", "a".repeat(34))
+    );
+    assert_eq!(
+        row(HELP_BAR.y - 1).trim_end(),
+        format!(" {}", "b".repeat(34))
+    );
+    // A note of 68 fits on one row.
+    let text = format!("{} {}", "a".repeat(34), "b".repeat(33));
+    let buf = bar(None, Some(MessageView::note(text.clone())));
+    let one = cells(&buf, HELP_BAR.y - 1, MAP_VIEW.x, MAP_VIEW.w);
+    assert_eq!(one.trim_end(), format!(" {text}"));
+}

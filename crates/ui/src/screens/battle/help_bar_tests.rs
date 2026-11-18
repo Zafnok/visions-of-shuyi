@@ -211,6 +211,13 @@ fn auto_end_falls_back_one_separator_after_danger_zone() {
     // In its column when it fits.
     let t = TogglesView::new("d".to_owned(), "auto-end".to_owned(), 40);
     assert_eq!(t.auto_end, Some(("auto-end".to_owned(), 40)));
+    // The row holds 98 characters (columns 1 to 98 of 100): ending on the
+    // 98th fits, one more falls back.
+    assert_eq!(TogglesView::ROOM, 98);
+    let t = TogglesView::new("d".to_owned(), "auto-end".to_owned(), 90);
+    assert_eq!(t.auto_end, Some(("auto-end".to_owned(), 90)));
+    let t = TogglesView::new("d".to_owned(), "auto-end!".to_owned(), 90);
+    assert_eq!(t.auto_end, Some(("auto-end!".to_owned(), 1 + sep)));
     // Left out when it fits nowhere.
     let long = "x".repeat(TogglesView::ROOM);
     let t = TogglesView::new(long.clone(), "auto-end".to_owned(), 40);
