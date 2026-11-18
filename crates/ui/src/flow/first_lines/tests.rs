@@ -235,3 +235,19 @@ fn lines_are_wanted_only_with_voices_on_and_clips_found() {
     assert!(!KeptVoices::wanted(&plain));
     assert!(!KeptVoices::default().due(&plain));
 }
+
+/// The slot picker keeps lines only when it loads: saving after a
+/// chapter, the flow keeps the next chapter's itself.
+#[test]
+fn the_slot_picker_keeps_lines_only_when_it_loads() {
+    use crate::screens::save::SlotPickerScreen;
+    let (mut c, one, _) = voiced();
+    let frame = || FrameInput::new(vec![], 0.0, vec![]);
+    let campaign = first_chapter_cleared(&c).campaign;
+    let mut saving = SlotPickerScreen::save(&c, campaign);
+    saving.update(&mut c, &frame());
+    assert_eq!(kept(&mut c), []);
+    let mut loading = SlotPickerScreen::load(&c);
+    loading.update(&mut c, &frame());
+    assert_eq!(kept(&mut c), [keep(&one[..3])]);
+}
