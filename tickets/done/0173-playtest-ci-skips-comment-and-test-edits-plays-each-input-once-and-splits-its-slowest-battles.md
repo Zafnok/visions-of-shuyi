@@ -196,9 +196,10 @@ same cases were run by hand on Windows with the script and all matched.
 **This PR's runs.** Playtest run 44223934350 (head 45ea02e6) played
 `play (ch03 1/2)` (15 min), `play (ch03 2/2)` (17 min) and `merge (ch03)`,
 the same for side_company_ledger, with one table per battle, and saved
-`playtest-reports-9628b566…`. The commit that added these notes is the
-docs-only push whose run should say "reused from cache"; the `main`
-reuse after merge is checked in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
+`playtest-reports-9628b566…`. The next docs-only push (run 44232479153)
+played again, rightly: `main` had moved under the PR (0450 changed
+`crates/core`), so the merge commit's inputs hashed differently
+(`d772bae2…`). The reuse from cache and on `main` are checked in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
 the ~37 main replays (~5,563 job-minutes, per the retro) plus about
 4 PR runs at 127–149 each (#658, #677, #718, #728) ≈ 6,100 of 15,424.
 The split adds a little (one merge job, two runners' setup for two
