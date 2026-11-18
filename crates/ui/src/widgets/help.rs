@@ -21,9 +21,9 @@ pub type HelpKeys<'a> = crate::input::help_keys::HelpKeys<'a, Action>;
 /// characters of the hints before it and their separators. Counted from
 /// the hints themselves, never by searching the joined line, so a label
 /// that happens to contain another hint's words can't confuse it.
-pub fn hint_column(hints: &[String], index: usize) -> usize {
+pub fn hint_column(hints: &[impl AsRef<str>], index: usize) -> usize {
     let before = hints.iter().take(index);
-    let chars: usize = before.map(|h| h.chars().count()).sum();
+    let chars: usize = before.map(|h| h.as_ref().chars().count()).sum();
     chars + index * SEPARATOR.chars().count()
 }
 
@@ -31,16 +31,20 @@ pub fn hint_column(hints: &[String], index: usize) -> usize {
 /// in `column`, with spaces in place of its separator; where it would
 /// start there anyway or later, just joined. Empty `hints` give an empty
 /// line.
-pub fn pad_last_hint(hints: &[String], column: usize) -> String {
+pub fn pad_last_hint(hints: &[impl AsRef<str>], column: usize) -> String {
     let Some((last, rest)) = hints.split_last() else {
         return String::new();
     };
+    let join = |hints: &[_]| -> String {
+        let hints: Vec<&str> = hints.iter().map(AsRef::as_ref).collect();
+        hints.join(SEPARATOR)
+    };
     if rest.is_empty() || hint_column(hints, rest.len()) >= column {
-        return hints.join(SEPARATOR);
+        return join(hints);
     }
-    let start = rest.join(SEPARATOR);
+    let start = join(rest);
     let pad = column - start.chars().count();
-    format!("{start}{:pad$}{last}", "")
+    format!("{start}{:pad$}{}", "", last.as_ref())
 }
 
 #[cfg(test)]
@@ -88,6 +92,6 @@ mod tests {
         assert_eq!(pad_last_hint(&h, 5), h.join(SEPARATOR));
         assert_eq!(pad_last_hint(&h, 11), h.join(SEPARATOR));
         assert_eq!(pad_last_hint(&hints(&["one"]), 9), "one");
-        assert_eq!(pad_last_hint(&[], 9), "");
+        assert_eq!(pad_last_hint(&[] as &[&str], 9), "");
     }
 }

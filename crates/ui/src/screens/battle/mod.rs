@@ -2303,30 +2303,39 @@ impl BattleScreen {
     /// the longest of the four forms puts it, the others padded with
     /// spaces up to it. Returns the line and that column.
     fn help_idle(&self, ctx: &Ctx, back: &str) -> (String, usize) {
-        let (moves, info) = (Some("battle.hint.move"), Some("battle.hint.info"));
-        let (next, end) = (Some("battle.hint.next_unit"), Some("battle.hint.end_turn"));
-        let rewind = self.can_open_rewind().then_some("battle.hint.rewind");
-        let back = Some(back);
-        let (select, range) = (Some("battle.hint.select"), Some("battle.hint.range"));
-        let menu = Some("battle.hint.open_menu");
+        // Each hint's text once: the four forms share them, and this runs
+        // every frame (the Playdate's frame budget, `cargo shuyi bench`).
+        let text = |key: &str| ctx.text_with(key, &[]);
+        let [moves, select, range, info, menu, next, back, end] = [
+            "battle.hint.move",
+            "battle.hint.select",
+            "battle.hint.range",
+            "battle.hint.info",
+            "battle.hint.open_menu",
+            "battle.hint.next_unit",
+            back,
+            "battle.hint.end_turn",
+        ]
+        .map(|key| Some(text(key)));
+        let rewind = self.can_open_rewind().then(|| text("battle.hint.rewind"));
+        let hint = Option::as_deref;
+        let tail = [hint(&next), hint(&rewind), hint(&back), hint(&end)];
+        let (moves, info) = (hint(&moves), hint(&info));
         // Over a ready unit of ours, an enemy, another unit, an empty tile.
         let forms = [
-            [None, select, info, next, rewind, back, end],
-            [moves, range, info, next, rewind, back, end],
-            [moves, None, info, next, rewind, back, end],
-            [moves, menu, None, next, rewind, back, end],
-        ];
+            [None, hint(&select), info],
+            [moves, hint(&range), info],
+            [moves, None, info],
+            [moves, hint(&menu), None],
+        ]
+        .map(|head| -> Vec<&str> { head.into_iter().chain(tail).flatten().collect() });
         let form = match self.hovered() {
             Some(u) if self.is_ready(u) && u.faction == Faction::Player => 0,
             Some(u) if u.faction != Faction::Player => 1,
             Some(_) => 2,
             None => 3,
         };
-        let forms = forms.map(|keys| -> Vec<String> {
-            let keys = keys.into_iter().flatten();
-            keys.map(|key| ctx.text_with(key, &[])).collect()
-        });
-        let end_of = |hints: &Vec<String>| hint_column(hints, hints.len() - 1);
+        let end_of = |hints: &Vec<&str>| hint_column(hints, hints.len() - 1);
         let column = forms.iter().map(end_of).max().unwrap_or(0);
         (pad_last_hint(&forms[form], column), column)
     }
