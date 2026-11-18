@@ -46,7 +46,7 @@ pub fn sheet(dir: &str, stem: &str, images: &ImageTable) -> Result<Sheet, Vec<Co
     let file = bundle::display_path(&ron);
     let source = bundle::file(&ron)
         .ok_or_else(|| vec![ContentError::new(&file, "file not found in asset bundle")])?;
-    let atlas = from_source(&file, source, &png, bundle::bytes(&png))?;
+    let atlas = from_source(&file, &source, &png, bundle::bytes(&png).as_deref())?;
     let image = images.id(&png).ok_or_else(|| {
         let shown = bundle::display_path(&png);
         vec![ContentError::new(
