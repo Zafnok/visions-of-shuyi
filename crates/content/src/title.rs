@@ -107,11 +107,12 @@ pub fn from_source(
         .game_over
         .as_deref()
         .and_then(|relative| check("game_over".to_owned(), check_logo(relative, images)));
-    // A bundle that leaves the sheets out on purpose (the Playdate's) has
-    // no lettering.
-    let sheet_out = |stem: &str| bundle::left_out(&format!("{TITLE_DIR}/{stem}.ron"));
-    let wanted = raw.lettering.as_ref();
-    let wanted = wanted.filter(|s| !sheet_out(&s.heading) && !sheet_out(&s.line));
+    // A bundle that leaves the sheets out on purpose (the Playdate's,
+    // `playdate-bundle.txt`, which lists both) has no lettering.
+    let wanted = raw.lettering.as_ref().filter(|s| {
+        let heading = format!("{TITLE_DIR}/{}.ron", s.heading);
+        !bundle::left_out(&heading)
+    });
     let lettering = wanted.and_then(|stems| {
         let mut sheet = |stem: &str| {
             lettering::sheet(TITLE_DIR, stem, images)
