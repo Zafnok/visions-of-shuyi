@@ -46,6 +46,11 @@ fn note(path: &str, found: bool) {
 /// Skips every scene on screen: B, then A on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.pad("East");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -160,11 +165,13 @@ fn play_chapter_1() -> Vec<String> {
             _ => None,
         });
     let tracks = started.chain(in_scenes).collect();
-    // "Save your progress?" (No): Chapter 2 starts (0848), with its first
-    // scene.
+    // "Save your progress?" (No): Chapter 2 starts (0848), with its title
+    // card (0812), then its first scene.
     h.pad("DpadDown East");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch02"));
+    assert_eq!(h.screens(), ["title", "game_flow", "chapter_card"]);
+    h.pad("East");
     assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
     tracks
 }

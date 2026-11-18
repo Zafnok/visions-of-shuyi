@@ -19,6 +19,7 @@ mod engine;
 mod game_tools;
 mod icon;
 mod leaks;
+mod lettering;
 mod lines;
 mod map_sprite_import;
 mod mentions;
@@ -70,6 +71,7 @@ test-card                          write the sprite test image, assets-test/imag
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 edge-marks                         write the map's edge arrows, assets/images/edge_marks.png\n  \
+lettering                          bake the chapter card's Cinzel sheets, assets/title/chapter_*\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
@@ -121,6 +123,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("edge-marks") => edge_marks(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
+        Some("lettering") => lettering(&args.collect::<Vec<_>>()),
         Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -613,6 +616,23 @@ fn effect_marks(args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("effect-marks: {e}");
+            1
+        }
+    }
+}
+
+fn lettering(args: &[String]) -> u8 {
+    if !args.is_empty() {
+        eprintln!("usage: cargo xtask lettering");
+        return 2;
+    }
+    match lettering::run(&repo_root()) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("lettering: {e}");
             1
         }
     }
@@ -1598,6 +1618,12 @@ mod tests {
     fn edge_marks_rejects_args() {
         assert_eq!(edge_marks(&args(&["--bogus"])), 2);
         assert_eq!(dispatch(args(&["edge-marks", "x"]).into_iter()), 2);
+    }
+
+    #[test]
+    fn lettering_rejects_args() {
+        assert_eq!(lettering(&args(&["--bogus"])), 2);
+        assert_eq!(dispatch(args(&["lettering", "x"]).into_iter()), 2);
     }
 
     #[test]

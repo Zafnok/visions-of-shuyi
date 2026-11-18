@@ -48,6 +48,11 @@ fn playdate(ctx: &mut Ctx) {
 /// Skips every scene on screen: B, then A on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.pad("East");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -338,9 +343,10 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     one_bit.check(&h);
     h.pad("DpadDown DpadDown East");
     one_bit.check(&h);
-    // The opening scene, a line typing out a frame at a time.
+    // The chapter's title card (0812), then the opening scene, a line
+    // typing out a frame at a time.
     let mut saw_dialogue = false;
-    for _ in 0..40 {
+    for _ in 0..140 {
         h.wait(1.0 / 30.0);
         one_bit.check(&h);
         saw_dialogue |= h.top_screen() == "dialogue";
@@ -693,7 +699,9 @@ fn the_pcs_map_menu_has_no_shortcut_entries() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("f f f Up f");
     for _ in 0..8 {
-        if h.top_screen() == "dialogue" {
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+        } else if h.top_screen() == "dialogue" {
             h.keys("d f");
         } else if h.battle().is_some() {
             h.keys("f");

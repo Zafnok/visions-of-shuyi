@@ -60,7 +60,8 @@ fn chapter_1s_prebattle_scene_is_drawn_over_its_battles_field() {
         return;
     };
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
-    h.keys("f f f Up f");
+    // The lead, then the chapter's title card (0812).
+    h.keys("f f f Up f f");
     assert_eq!(dialogue(&h).player().scene_id(), "ch01_intro");
     assert_eq!(place(&h), None);
     // Skip the intro (skipping stops at each reply choice: the first

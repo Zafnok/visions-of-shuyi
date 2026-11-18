@@ -268,8 +268,9 @@ fn the_world_map_draws_its_keys_as_caps() {
         stock: Vec::new(),
     };
     let mut h = Harness::from_game(trpg_ui::game::start(ctx));
-    // New Game in Classic with the default lead.
-    h.keys("f f f Up f");
+    // New Game in Classic with the default lead, then Confirm on the
+    // chapter's title card (0812).
+    h.keys("f f f Up f f");
     assert_eq!(h.top_screen(), "world_map");
     h.with_key_caps();
     let map = h.screen::<WorldMapScreen>().expect("the world map");

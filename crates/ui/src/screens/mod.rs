@@ -3,6 +3,7 @@
 pub mod actions;
 pub mod battle;
 pub mod camp;
+pub mod chapter_card;
 pub mod class_change;
 pub mod credits;
 pub mod dialogue;
@@ -28,6 +29,7 @@ pub mod world_map;
 use crate::prelude::*;
 pub use battle::BattleScreen;
 pub use camp::CampScreen;
+pub use chapter_card::ChapterCardScreen;
 pub use class_change::{ChangeKind, ClassChangeScreen};
 pub use credits::CreditsScreen;
 pub use dialogue::DialogueScreen;
