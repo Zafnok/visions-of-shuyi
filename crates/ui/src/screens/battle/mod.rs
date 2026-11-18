@@ -98,8 +98,8 @@ use self::shop::{ShopScreen, ShopVisit};
 use self::tips::TipState;
 use self::view::{
     BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
-    MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView,
-    QuestionView, TogglesView,
+    MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelPreviewView,
+    PanelView, QuestionView, TogglesView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -2822,13 +2822,51 @@ impl BattleScreen {
         let pos = self.cursor.pos;
         let told = (&self.state, words);
         let selected = self.mode.selection().is_some();
-        if self.playing() {
+        let mut view = if self.playing() {
             let shown = self.shown_units();
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
             panel::view(told, pos, hovered.map(|(u, _)| u), (selected, numbers))
         } else {
             panel::view(told, pos, self.looked_at(), (selected, numbers))
+        };
+        // A heal aimed at the unit shown: its HP line says it (Nick, 1286).
+        let healed = self
+            .aimed_heal()
+            .filter(|(id, _)| self.looked_at().is_some_and(|u| u.id == *id) && !self.playing());
+        match (healed, view.unit.as_mut()) {
+            (Some((_, gain)), Some(unit)) => unit.hp_then = Some(unit.hp + gain),
+            _ => view.preview = self.panel_preview(words),
         }
+        view
+    }
+
+    /// The unit a heal or potion being aimed is aimed at, and the HP it
+    /// would gain.
+    fn aimed_heal(&self) -> Option<(UnitId, StatValue)> {
+        match &self.mode {
+            Mode::CastTarget(t) => t.heal(&self.state),
+            Mode::ItemTarget(t) => t.heal(&self.state),
+            _ => None,
+        }
+    }
+
+    /// What the spell, item or skill being aimed will do, under its name,
+    /// for the side panel: the line `message` shows (1286).
+    fn panel_preview(&self, words: Words<'_>) -> Option<PanelPreviewView> {
+        let state = &self.state;
+        let (title, text) = match &self.mode {
+            Mode::CastTarget(t) => {
+                let def = state.spells().get(t.spell())?;
+                (words.spell(def).to_owned(), t.preview(state, words)?)
+            }
+            Mode::ItemTarget(t) => (t.name(state, words), t.preview(state, words)),
+            Mode::SkillTarget(t) => (
+                skills::skill_name(state, words, t.skill()),
+                t.preview(state, words),
+            ),
+            _ => return None,
+        };
+        Some(PanelPreviewView { title, text })
     }
 
     /// The box over the map: the objective page (the battle notes under

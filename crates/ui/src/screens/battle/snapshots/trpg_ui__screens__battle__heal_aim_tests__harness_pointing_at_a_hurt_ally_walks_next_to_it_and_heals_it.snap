@@ -9,7 +9,7 @@ expression: h.snapshot()
                                                                       ║                            ║
                                                                       ║ Test Archer                ║
                                                                       ║ Archer  Lv 1               ║
-                                                                      ║ HP 5/17    ███░░░░░░░      ║
+                                                                      ║ HP 5 → 17/17 ██████████    ║
                                                                       ║ Player                     ║
                                                                       ║                            ║
                                                                       ║ Str   5     Mag   0        ║
@@ -42,7 +42,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeeeeeccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccfffgggggggccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcddddddddddddcffffffffffccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
@@ -73,7 +73,7 @@ b = fg:panel_border bg:panel_bg
 c = fg:text bg:panel_bg
 d = fg:text_highlight bg:panel_bg
 e = fg:player bg:panel_bg
-f = fg:hp_low bg:panel_bg
+f = fg:hp_high bg:panel_bg
 g = fg:text_dim bg:panel_bg
 h = fg:water bg:sea
 i = fg:water bg:water_bg

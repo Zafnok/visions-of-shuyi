@@ -22,7 +22,7 @@ use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
-use super::view::{ForecastView, InfoView, LeftView};
+use super::view::{ForecastView, InfoView, LeftView, PanelPreviewView};
 use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
 use crate::FrameInput;
 use crate::audio::MenuSound;
@@ -1886,4 +1886,44 @@ fn a_spell_the_defender_cant_counter_shows_no_counter() {
     let shown = fire_on_the_brigand(&mut c);
     assert_eq!(shown.sides[0].weapon, "Fire");
     assert_eq!(shown.no_counter.as_deref(), Some("no counter"));
+}
+
+/// The side panel of `s`.
+fn side_panel(s: &BattleScreen, c: &Ctx) -> super::view::PanelView {
+    s.view(c).panel.expect("the side panel")
+}
+
+#[test]
+fn a_spell_aimed_at_a_tile_tops_the_side_panel_with_its_preview() {
+    let mut c = ctx();
+    let state = field(&c, 0);
+    let mut s = casting(&mut c, state, 0);
+    step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);
+    let panel = side_panel(&s, &c);
+    // Fire, then the line over the help bar too (1286).
+    assert_eq!(
+        panel.preview,
+        Some(PanelPreviewView {
+            title: "Fire".to_owned(),
+            text: "Forest → Burning (1 round)".to_owned(),
+        })
+    );
+    assert_eq!(panel.terrain.map(|t| t.name).as_deref(), Some("Forest"));
+    let buf = render(&s, &c);
+    assert_eq!(text(&buf, 1, 30, 40), "Forest → Burning (1 round)");
+}
+
+#[test]
+fn a_heal_aimed_at_an_ally_shows_on_its_hp_line_in_the_side_panel() {
+    let mut c = ctx();
+    let state = field(&c, 18);
+    let s = casting(&mut c, state, 2);
+    let panel = side_panel(&s, &c);
+    // Nick (1286): the HP line says it, with no block over it.
+    assert_eq!(panel.preview, None);
+    let knight = panel.unit.expect("the knight");
+    assert_eq!((knight.hp, knight.hp_then), (2, Some(18)));
+    let buf = render(&s, &c);
+    assert!(shows(&buf, "HP 2 → 18/20"));
+    assert_eq!(text(&buf, 1, 30, 40), "Heal on Test Knight: HP 2 → 18");
 }

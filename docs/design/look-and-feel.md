@@ -873,6 +873,41 @@ Gold 0
   it covers the units around the one under the cursor), a key that flips
   the panel.
 
+**While a spell, item or skill is aimed** (decided 2026-11-17, ticket
+1286). Nick saw Fire aimed at a forest and a Potion aimed at a hurt
+archer with: (a) a block at the top of the panel (the name, the preview
+line, a rule) over the tile and unit; (b) the same above `Gold`; (c) for
+a heal on a unit, its HP line showing the change with the preview line
+under it, and (a) elsewhere.
+
+> [asked how (a) and (c) differ, then:] "I like C but I don't like the
+> redundancy of showing HP 6 -> 17/17 as well as the line under it saying
+> potion on test archer... I think just the top line is better for a
+> potion use case. Otherwise, like A has it for inanimate objs like a
+> forest is good."
+
+```
+Fire                              Road
+Forest → Burning (1 round)        DEF +0  AVO +0
+──────────────────────────
+Forest                            Test Archer
+DEF +1  AVO +20                   Archer  Lv 1
+                                  HP 6 → 17/17 ##########
+                                  Player
+```
+
+- **A heal or potion aimed at a unit** (the Heal spell, a Potion, an
+  Elixir): the unit's HP line says it, `HP 6 → 17/17` in the highlight
+  colour, its bar showing the HP the heal leaves, after the line. No
+  block and no preview line in the panel.
+- **Anything else aimed** (a spell at a tile, a skill at a unit): a block
+  at the top of the panel, the name in the highlight colour, the preview
+  line under it wrapped to the panel (never cut), then a rule; the tile
+  and unit follow as when browsing.
+- The line over the help bar stays as it is in both cases (*Screen
+  layout*). Attacks and attack spells at an enemy keep their forecast,
+  which replaces the panel.
+
 ### Portraits and battle art (bought)
 
 Decided 2026-09-30, ticket 0021 (it replaces the 2026-09-25 rule that
@@ -1981,7 +2016,8 @@ rendered frames of the Quick Battle):
     lines, stay where they were, at the left of the toggles' row ("as it
     is today but make it not conflict with any new additions"); the toggle
     hints are hidden then, so nothing meets. Nick also wants the preview
-    in the side panel "somehow": its own ticket (1286).
+    in the side panel "somehow": ticket 1286, *Side panel* (*While a
+    spell, item or skill is aimed*).
 
 ## Theme palettes for ticket 0806 (*mockup values, tunable*)
 
