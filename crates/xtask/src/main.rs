@@ -1205,7 +1205,7 @@ mod tests {
         }
         git(&["add", "-A"]);
         git(&["commit", "-qm", "head"]);
-        let changed = git(&["diff", "--name-only", "--no-renames", "HEAD^", "HEAD"]);
+        let diffed_paths = git(&["diff", "--name-only", "--no-renames", "HEAD^", "HEAD"]);
         let script = repo_root().join(".github/playtest-levers.sh");
         let mut child = Command::new("bash")
             .arg(script)
@@ -1215,7 +1215,8 @@ mod tests {
             .stdout(std::process::Stdio::piped())
             .spawn()
             .unwrap();
-        std::io::Write::write_all(&mut child.stdin.take().unwrap(), changed.as_bytes()).unwrap();
+        std::io::Write::write_all(&mut child.stdin.take().unwrap(), diffed_paths.as_bytes())
+            .unwrap();
         let out = child.wait_with_output().unwrap();
         assert!(out.status.success(), "{out:?}");
         std::fs::remove_dir_all(&dir).unwrap();
