@@ -22,14 +22,14 @@ own Playdate front end its target facts from
 can't `include_str!` a file of a git dependency.
 `crates/ui/src/platform.rs` (`playdate_facts`, 12 production lines)
 parses it, and `the_playdates_facts_are_the_engines`
-(`crates/xtask/src/game_tools/tests.rs`) exists only to keep the copy
+(`crates/tools/src/game_tools/tests.rs`) exists only to keep the copy
 equal to the engine's at the pin.
 [engine#3091](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/3091-built-in-target-profiles-readable-from-no-std.md)
 adds `shuyi_assets::target::builtin(id)` and
 `shuyi_ui::PlatformFacts::builtin(id)`, readable from `no_std`.
 
 Users of `playdate_facts`: `crates/playdate/src/start.rs:27`,
-`crates/ui/tests/it/playdate.rs:41`, `crates/xtask/src/game_tools.rs:332`
+`crates/ui/tests/it/playdate.rs:41`, `crates/tools/src/game_tools.rs:332`
 and the test above.
 
 **Either order with 1170** (the Playdate front end on the engine's

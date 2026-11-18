@@ -200,9 +200,9 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 - **From 1182 (folded in by the 2026-11-17 sweep):** delete the game's
   `--then-pad` option, `Start::after`, `enum After`, the loop after
   `script.play` and the three `engine-friction: engine#2540` markers in
-  `crates/xtask/src/game_tools.rs`; rewrite
+  `crates/tools/src/game_tools.rs`; rewrite
   `the_crank_and_buttons_after_the_steps_open_the_rewind_screen` in
-  `crates/xtask/src/game_tools/tests.rs` on the engine's ordered steps
+  `crates/tools/src/game_tools/tests.rs` on the engine's ordered steps
   (`--crank -30 --pad East`); fix any doc that names `--then-pad`.
   1182's steps and acceptance criteria are this ticket's, and this PR
   moves 1182 to `done/` with a line saying where it went. Doing both

@@ -8,7 +8,7 @@ name: Playtest
 # job.
 #
 # Each battle is played in a job of its own (ticket 0530): `build` makes
-# xtask once and lists the battles, `play` plays one battle per job, and
+# the game's tool program once and lists the battles, `play` plays one battle per job, and
 # `playtest` gathers their reports into one summary. It fails when a
 # battle is blocked or was not played (its job failed or ran out of time).
 #
@@ -84,9 +84,10 @@ jobs:
           git diff --name-only --no-renames $range | bash .github/playtest-levers.sh | tee levers.txt
           grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
 
-  # Builds xtask once for every battle job, and lists the battles: every
-  # file in assets/battles and the content's battles/, so a new battle is
-  # played without editing this workflow (ticket 0530). The xtask artifact
+  # Builds the game's tool program, trpg-tools (ADR-0129), once for every
+  # battle job, and lists the battles: every file in assets/battles and the
+  # content's battles/, so a new battle is played without editing this
+  # workflow (ticket 0530). The trpg-tools artifact
   # embeds the private content (ADR-0117): it is kept for a day only.
   build:
     name: build
@@ -127,11 +128,11 @@ jobs:
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - run: cargo build --release --locked -p xtask
+      - run: cargo build --release --locked -p trpg-tools
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playtest-xtask
-          path: target/release/xtask
+          name: playtest-tools
+          path: target/release/trpg-tools
           retention-days: 1
           if-no-files-found: error
 
@@ -163,11 +164,11 @@ jobs:
           art: "false"
           content: "true"
           required: "true"
-      # xtask finds the repository from the path it was built at, which is
+      # trpg-tools finds the repository from the path it was built at, which is
       # this same checkout path on every runner.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: playtest-xtask
+          name: playtest-tools
           path: target/release
       - name: Play the battle
         env:
@@ -175,14 +176,14 @@ jobs:
         run: |
           set -euo pipefail
           # An artifact loses the file's mode.
-          chmod +x target/release/xtask
+          chmod +x target/release/trpg-tools
           mkdir -p reports
           # A blocked battle exits non-zero. The step keeps going so the
           # report is uploaded and the next step names the battle (ticket
           # 0169): `|| status=$?` stops `-e` (the runner's `bash -e` too)
-          # ending the step here, and with pipefail it is xtask's code.
+          # ending the step here, and with pipefail it is trpg-tools' code.
           status=0
-          target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
+          target/release/trpg-tools playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
           echo "$status" > "reports/$BATTLE.status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -224,7 +225,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$BUILD" != success ] || [ -z "$BATTLES" ]; then
-            echo "::error::the build of xtask failed: no battle was played"
+            echo "::error::the build of trpg-tools failed: no battle was played"
             exit 1
           fi
           failed=0

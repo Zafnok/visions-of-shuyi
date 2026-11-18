@@ -20,10 +20,10 @@ The retrospective of PRs #616–#735
 found content checks that pass in CI without checking anything:
 
 - **Voice.** `every_lesson_and_tip_the_guide_says_has_a_clip`
-  (`crates/xtask/src/voice/tests.rs:1171`) returns at once when
+  (`crates/tools/src/voice/tests.rs:1171`) returns at once when
   `voice/en/` has no manifest, and
   `the_disclosure_list_names_the_music_voices_and_licenses_a_package_ships`
-  (`crates/xtask/src/game_tools/tests.rs:722`) `continue`s past a missing
+  (`crates/tools/src/game_tools/tests.rs:722`) `continue`s past a missing
   `voice/`. CI never has `voice/`: every test job passes `art: "false"`,
   and `.github/actions/private-assets` copies `voice/` only with the art.
   #664's notes say the clip check is skipped in CI.
@@ -71,7 +71,7 @@ None.
    `"true"` adds `voice` to the sparse folders and runs the existing
    "Put the voice clips beside the game" copy (widen that step's `if:`).
    It sets no `features` output (the art is still out).
-2. **Test helper.** In `crates/xtask/src/voice.rs`, add
+2. **Test helper.** In `crates/tools/src/voice.rs`, add
    `#[cfg(test)] pub(crate) fn voice_or_skip(root: &Path, needed: bool) -> bool`:
    `true` when `root/voice` is a folder; otherwise it panics if `needed`,
    else prints a skip line naming `cargo shuyi private-assets` and

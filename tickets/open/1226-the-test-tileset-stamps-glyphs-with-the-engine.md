@@ -19,7 +19,7 @@ From the game/engine boundary audit of 2026-11-03. `cargo xtask
 test-tileset` (0433), `test-auto` and `test-units` draw the public test
 pictures in `assets-test/tilesets/` with a canvas of their own:
 `Canvas` (`new`, `set`, `get`, `stamp`, `stamp_at`) and `blend` in
-`crates/xtask/src/test_tileset.rs:112-196`, reused by
+`crates/tools/src/test_tileset.rs:112-196`, reused by
 `test_auto.rs:153-183` and `test_units.rs:89-101`. It is the engine's
 `glyph-tiles` stamp again, with the same rounded integer blend and the
 same centring, but the engine's was private. One difference: on a clear

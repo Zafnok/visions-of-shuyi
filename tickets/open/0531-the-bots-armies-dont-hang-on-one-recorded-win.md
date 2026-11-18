@@ -127,7 +127,7 @@ army a player brings). If the fix changes that meaning (for example an
 
 ## Implementation steps
 
-1. Read `crates/bots/src/arrival.rs`, `crates/xtask/src/playtest.rs`
+1. Read `crates/bots/src/arrival.rs`, `crates/tools/src/playtest.rs`
    (`stage`), `crates/ui/tests/it/playthrough.rs` and 0864's Completion
    notes.
 2. Measure the spread first: record Chapter 1 with three seeds (the

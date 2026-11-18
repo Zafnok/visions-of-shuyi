@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 0188 — The process checks build in seconds, because xtask no longer builds the game
@@ -156,19 +156,19 @@ step 5 and the CI job as a second ticket blocked by this one.
 
 ## Acceptance criteria
 
-- [ ] `cargo tree -p xtask -e normal` names no `trpg-ui`, `trpg-bots`,
+- [x] `cargo tree -p xtask -e normal` names no `trpg-ui`, `trpg-bots`,
       `trpg-content`, `trpg-core` or `trpg-writer`.
-- [ ] `cargo xtask ticket-lint`, `pr-size`, `check-mentions`,
+- [x] `cargo xtask ticket-lint`, `pr-size`, `check-mentions`,
       `engine-pin --check --offline` and `skill-pack --check` pass from a
       clean `target/`, and the Completion notes give the cold build time
       before and after.
-- [ ] `cargo xtask playtest --help` and `cargo shuyi check-keys` still
+- [x] `cargo xtask playtest --help` and `cargo shuyi check-keys` still
       work.
 - [ ] CI's `tickets` job no longer builds the game (its log shows no
       `Compiling trpg-ui`), and the `cargo shuyi` steps run in their own
       job.
-- [ ] The ADR is written and listed in `docs/adr/README.md`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The ADR is written and listed in `docs/adr/README.md`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -180,5 +180,56 @@ step 5 and the CI job as a second ticket blocked by this one.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Two crates** (ADR-0129, amending ADR-0089 §4). `xtask` keeps
+  `ticket-lint`, `check-mentions`, `check-leaks`, `engine`, `engine-pin`,
+  `clean-merged-targets`, `code-lines`, `pr-size` and the repository's
+  own tests (workflow guard, workflow YAML, Markdown read by code, one
+  test program per crate, lints, the bots' fence); its dependencies are
+  `trpg-engine-watch`, `serde_json`, `serde_norway` and `mutants`, and a
+  test keeps out every other `trpg-*` and `shuyi-*` crate. `trpg-tools`
+  (`crates/tools`) has the rest, moved with `git mv` (history kept), its
+  insta snapshot renamed for the new crate name.
+- **Measured first:** `shuyi-cli` brings in `shuyi-ui` and
+  `shuyi-platform`, so the light crate doesn't depend on it.
+  `content_layer`'s file listing went to a small library in xtask
+  (`xtask::content_layer`, with the two folders written out) that
+  `check-leaks` and `trpg-tools` share, and a `trpg-tools` test keeps the
+  two folders equal to `trpg_content::bundle`'s. **`skill-pack` stays in
+  `trpg-tools`** (deviation the ticket allowed): the pack is embedded in
+  `shuyi-cli`. `cargo xtask skill-pack --check` works through the
+  forwarding, and CI runs it in the new job.
+- **Forwarding, for good:** `cargo xtask <moved command>` runs
+  `cargo run -q -p trpg-tools -- <command> <args>`, with `--release` and
+  `--features private-assets` when xtask was built that way (so the
+  docs' `cargo run --release -p xtask -- playtest …` still plays an
+  optimized build). The names are `xtask::FORWARDED`; a `trpg-tools` test
+  checks the list against its own usage both ways. The usage text now
+  lists `icon`, `skirmish`, `check-script` and `voice`, which it lacked.
+- **Config and CI:** `shuyi.ron`'s `game` and the `shuyi` alias name
+  `trpg-tools`. The `tickets` job runs only xtask's checks; the new
+  `shuyi-checks` job runs `check-keys`, `skill-pack --check`,
+  `check-skills`, `check-text`, `check --target all`, `app-info --check`
+  and `lint` with the same content checkout and no cached `target/`, and
+  `ci-result` needs it. `playtest.yml` builds and uploads `trpg-tools`
+  (the workflow guard's allowed upload follows), `playtest-levers.sh`
+  and `changes.yml` name the moved files, `.cargo/mutants.toml`'s comment
+  too. `mutants.yml` excludes packages by name only for `trpg-app` and
+  `trpg-story-preview`, so it needed nothing.
+- **Paths:** the open tickets and live docs that named a moved file
+  (`crates/xtask/src/<file>`) now name `crates/tools/src/<file>`; a
+  mention of `main.rs` was left, since both crates have one.
+- **Cold build of `cargo build -p xtask`** (Nick's machine, empty
+  `target/`, debug): before, 80 crates in 2 min 21 s; after, 15 crates in
+  15 s. CI's `tickets` job on `main` before: its first cargo step
+  (`ticket-lint`, which built the game) took 1 min 46 s of the job's
+  3 min 05 s.
+- **Friction:** estimate 250 production lines, measured 700 added
+  (2.8×), accepted: 573 of them are `main.rs`'s game commands moved to
+  `trpg-tools`' new `main.rs` (the removed column), about 130 are new.
+  Logged in `docs/engine/friction.md`.
+- **PR size:** about 3,100 changed lines, over the ticket's 2,000. Almost
+  2,100 of them are `main.rs`'s game half moving to a new file, which git
+  counts as removed and added. Splitting off the CI job (step 5, about
+  60 lines) would not bring it under, so it ships whole.
+- **Not filed:** an engine command for the ticket lint and `pr-size`
+  (ADR-0129, *Consequences*): an engine step that needs Nick's OK first.

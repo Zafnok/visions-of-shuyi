@@ -29,7 +29,7 @@ and #699 failed on a list mismatch. See retro T17 in
 [the retrospective](../../docs/research/retro-2026-11-17-prs-616-735.md).
 
 The tests that keep the lists equal to the computed sets are in
-`crates/xtask/src/game_tools/tests.rs`:
+`crates/tools/src/game_tools/tests.rs`:
 `the_disclosure_list_names_the_music_voices_and_licenses_a_package_ships`
 (line 712), `the_demo_edition_holds_the_full_games_files_and_its_canaries_only_the_later_chapters`
 (740), `the_trial_edition_is_the_demo_less_the_scripts_with_no_later_name`

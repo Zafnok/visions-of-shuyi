@@ -30,7 +30,7 @@ while IFS= read -r path; do
     assets/data/terrain.ron|assets/data/basic_shop.ron|assets/chapters/*) ;;
     crates/core/src/*|crates/content/src/*|crates/bots/*) ;;
     shuyi-engine.rev) ;;
-    crates/xtask/src/playtest.rs|.github/workflows/playtest.yml|.github/playtest-levers.sh) ;;
+    crates/tools/src/playtest.rs|.github/workflows/playtest.yml|.github/playtest-levers.sh) ;;
     *) continue ;;
   esac
   echo "plays: $path"

@@ -25,7 +25,7 @@ Engine 2532 already owns playtest plans, entrant groups, threads, defaults,
 timing and reports; 2533 owns summaries and history; 2021 owns the reusable
 workflow. All three shipped before the game's 2026-10-25 engine pin move
 to `b4591a81`, and the current pin has passed them. The game still copies
-those responsibilities in `crates/xtask/src/playtest.rs` (664 lines) and
+those responsibilities in `crates/tools/src/playtest.rs` (664 lines) and
 its tests (641 lines), plus a workflow loop. This ticket removes those
 copies, as the original 1180 required
 ([ADR-0095](../../docs/adr/0095-playtest-personas-plan-their-turn-and-score-what-a-player-sees.md)).
@@ -37,7 +37,7 @@ growing. `playtest.rs` is now 747 lines and its tests 733;
 0173's levers and report reuse (its steps 1–5) fold in here, on the
 engine's workflow, so playtest CI is built once.
 
-**The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/xtask/src/playtest.rs`.
+**The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/tools/src/playtest.rs`.
 
 ## Nick input
 
@@ -47,7 +47,7 @@ command, not by a new gameplay sign-off.
 ## Scope
 
 **In:**
-- `Trpg::playtest_plan` in `crates/xtask/src/game_tools.rs`, reusing its
+- `Trpg::playtest_plan` in `crates/tools/src/game_tools.rs`, reusing its
   existing `playtest_stages` and `playtest_defaults` (100 tries, seed 1,
   turn cap 60). Stage ids are the battles in `assets/battles/`; build a
   `BattleStage` from that battle's player slots and the same lead/army
@@ -62,7 +62,7 @@ command, not by a new gameplay sign-off.
   most fallen unit, items median/max and turns median. The engine
   supplies seconds per try, `was ...`, previous date/commit, history,
   report serialization, `--brief`, groups and threads.
-- Delete the old `crates/xtask/src/playtest.rs` and its generic wrapper
+- Delete the old `crates/tools/src/playtest.rs` and its generic wrapper
   tests, the module/dispatch/help in `main.rs`, and the old command's
   direct CLI tests there. Retain game-specific construction and semantic
   regression coverage through the new plan and `crates/xtask/tests/cli.rs`.
@@ -85,7 +85,7 @@ command, not by a new gameplay sign-off.
   narrower code levers, the comment/test-only lever stripping and their
   unix-only test; the input hash and report reuse (cache, and the merged
   PR's run on `main`). Write the hash's file list against the plan's
-  paths, not the deleted `crates/xtask/src/playtest.rs`. The seed-range
+  paths, not the deleted `crates/tools/src/playtest.rs`. The seed-range
   split and its merge stay in 0173, after this ticket.
   Preserve 0530's split too: one job per battle (all its personas in
   one run) and a job that gathers their summaries, since one job
@@ -112,7 +112,7 @@ command, not by a new gameplay sign-off.
   only to move the engine pin.
 
 **From 1240 (done):** `Trpg::playtest_plan` exists (`plays::plan` in
-`crates/xtask/src/game_tools/plays.rs`) with the plain `baseline` run in
+`crates/tools/src/game_tools/plays.rs`) with the plain `baseline` run in
 Classic, no checks, and its play record written by the `Recorded`
 entrant's `record`: grow that plan with the stages, personas, checks and
 summary here, keeping its record. The `Recorded` wrapper forwards four
@@ -180,7 +180,7 @@ drop them, and say so in 0173.
 
 - [ ] The pin is past the three named engine tickets and the plan runs;
       `cargo xtask ticket-lint --check-engine` passes.
-- [ ] `crates/xtask/src/playtest.rs` and its wrapper tests are gone;
+- [ ] `crates/tools/src/playtest.rs` and its wrapper tests are gone;
       `cargo xtask playtest` reports unknown command or xtask usage.
 - [ ] New-command persona and baseline runs on the same seeds give the
       old command's per-try measures and check verdicts, including both

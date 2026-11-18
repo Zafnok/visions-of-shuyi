@@ -101,7 +101,7 @@ moves in a session of its own once he confirms.
    `band_check_flags_too_easy_and_too_hard` in
    `crates/bots/src/playtest/tests.rs` (lines 61–86: 29 and 60 become
    `Maybe`, 20 stays `Below`) and `render_matches_the_layout` in
-   `crates/xtask/src/playtest/tests.rs` (line 271). In
+   `crates/tools/src/playtest/tests.rs` (line 271). In
    `docs/playtesting.md`, *Reading the report*, explain the interval
    and the marks, with the noise at 100 and 200 tries.
 5. Add the `work-ticket` bullet and sync the skill loaders.

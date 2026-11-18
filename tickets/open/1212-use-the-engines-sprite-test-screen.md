@@ -22,7 +22,7 @@ debug tool (ticket 0231, ADR-0038) is `SpriteTestScreen` in
 box drawn after it. `docs/engine/boundary.md` (the
 `debug/sprite_test.rs` row) says it stayed in the carve (1112) because
 "it draws this game's test card"; but the card is the engine's
-(`crates/xtask/src/test_card.rs` only writes `shuyi_cli::test_card`'s
+(`crates/tools/src/test_card.rs` only writes `shuyi_cli::test_card`'s
 pixels to `assets-test/images/test_card.png`), and the screen names no
 game concept. It is the same kind of tool as the scene camera, which
 moved to `shuyi_ui::debug` in 1154.

@@ -66,7 +66,7 @@ workflow, 60 of Rust, 150 of tests and 30 of docs. With steps 1–5 in
 1207, about 60 of workflow, 60 of Rust, 60 of tests and 30 of docs.
 
 Steps 1–5 are done by 1207 (see Context). Step 6 is written against the
-game's old `crates/xtask/src/playtest.rs`, which 1207 deletes: put the
+game's old `crates/tools/src/playtest.rs`, which 1207 deletes: put the
 merge where 1207 leaves the playtest command. If the engine's
 `shuyi playtest` and reusable workflow can't run part of a stage's tries
 and merge the parts, that is an engine change first (ask Nick before
@@ -77,7 +77,7 @@ filing it, the `engine-change` skill), not game code.
    Candidates are credits, tip, title, lang, audio, voice, font, image,
    palette, playdate_images, playdate_palette, portrait, cinematic and
    keymap (`x.rs` and `x/*`). Keep one only if a `grep` shows
-   `crates/core`, `crates/bots` and `crates/xtask/src/playtest.rs` never
+   `crates/core`, `crates/bots` and `crates/tools/src/playtest.rs` never
    use its types. Check dialogue.rs the same way, since a scene can add
    a unit or an item. `bundle.rs` stays a lever.
 2. **Comment and test edits.** The script takes optional `BASE HEAD`
@@ -92,7 +92,7 @@ filing it, the `engine-change` skill), not game code.
 3. **Input hash** (`.github/playtest-inputs.sh`): one sha256 of
    `git ls-files -s` over `Cargo.toml`, `Cargo.lock`,
    `rust-toolchain.toml`, `shuyi-engine.rev`, `crates/{core,content,bots}`,
-   `crates/xtask/Cargo.toml`, `crates/xtask/src/playtest.rs`, `assets/`,
+   `crates/xtask/Cargo.toml`, `crates/tools/src/playtest.rs`, `assets/`,
    `assets-test/`, `crates/ui/tests/it/fixtures/`, `playtest.yml` and
    both scripts, plus `git -C assets-private rev-parse HEAD:content`.
    It is wider than the levers on purpose: a miss only costs a play,
@@ -122,7 +122,7 @@ filing it, the `engine-change` skill), not game code.
    `playtest-inputs`. Reports hold no build: 0171's check allows a cache
    whose path isn't `target`.
 6. **Split.**
-   - `crates/xtask/src/playtest.rs` gets `--merge <json>...`. It reads
+   - `crates/tools/src/playtest.rs` gets `--merge <json>...`. It reads
      `--json` `Record`s and requires the same battle, tier, turn cap,
      army and checks in each. It passes every part's `report.entrants`
      and the first part's checks to `shuyi_core::bots::playtest::judge`,

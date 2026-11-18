@@ -124,7 +124,7 @@ pasted into `docs/playtesting.md` and the PR.
 ## Implementation steps
 
 1. Read `measures.rs`, `playtest.rs`, `arrival.rs` and how `cargo xtask
-   playtest` prints (`crates/xtask/src/game_tools.rs` ~:300).
+   playtest` prints (`crates/tools/src/game_tools.rs` ~:300).
 2. Add the per-unit counts to `BattleMeasures` and the named measures to
    `BattleMeasure::finish`.
 3. Write `can_hurt` and the level-by-chapter table from the arrival army.

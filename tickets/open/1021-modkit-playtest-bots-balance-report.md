@@ -54,7 +54,7 @@ dev tool unless asked); the trained bot (0507); a GUI.
 
 ## Implementation steps
 
-1. Read ADR-0033, `crates/bots/`, `crates/xtask/src/playtest*` and 1016's
+1. Read ADR-0033, `crates/bots/`, `crates/tools/src/playtest*` and 1016's
    crate.
 2. Move the report's shared parts so both `xtask` and `modkit` call one
    function (keep `cargo xtask playtest`'s output unchanged).
