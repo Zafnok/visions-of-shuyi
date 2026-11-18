@@ -4,7 +4,7 @@ title: "One check-if-loaded helper in the content load graph: the six check_* ad
 type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
-effort: low
+effort: medium
 status: todo
 blocked_by: []
 nick_input: none
@@ -37,6 +37,20 @@ loading*, leaves cross-checks to the game). `Loaded` and `assemble`
 stay: `load_worldmaps` and `data_text` read earlier results through
 `Loaded` before `Content` exists.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+*The content loader is one large hand-ordered file*, confirmed):
+`lib.rs` is 2,267 lines (1,234 before `#[cfg(test)]` at :1235), 86
+commits, 28 since 2026-10-15. Three structs move in step: `Content`
+(37 fields, :119), `Early` (18, :385) and `Loaded` (31, :1135), with 9
+`type` aliases threading optional results and 20 `ok_*` test fixtures.
+About 6 tables were added in the last month (#682, #530, #483, #477,
+#475, #307), each a 15 to 30 line edit at several sites in this file.
+The deeper fix is an engine content graph (kinds that declare what they
+need, loaded in order, every error gathered); none exists, and an
+engine ticket waits on Nick's yes. Until then this ticket also takes a
+game-side step: one table list that generates the parallel fields
+(below, *Table list*).
+
 **Either order with 1013** (mods merge tables by id), which runs these
 same checks on the merged tables (its step 4). If 1013 is done, the
 helper wraps the merged loaders' results the same way; if not, 1013's
@@ -52,11 +66,23 @@ None.
 - Two private helpers in `crates/content/src/lib.rs` and the eight
   call sites on them. Every check, and which failures skip it, unchanged.
 - Rewriting the adapters' tests onto the helper.
+- **Table list** (2026-11-17): a `macro_rules!` in `crates/content/src/`
+  (e.g. `tables.rs`) that takes one row per table (field name, type,
+  where it's loaded: `Early` or after) and writes the matching fields
+  of `Content`, `Early` and `Loaded`, and the `take` per field in
+  `assemble`. A new table is one row there plus its loader. If a macro
+  reads worse than the code it replaces, split `lib.rs` instead
+  (`load.rs` for `Early`/`load`, `assemble.rs` for `Loaded`/`assemble`,
+  the fixtures in `tests.rs`) and say why in the PR; either way
+  `lib.rs` is under 1,000 lines.
 
 **Out (do not do):**
-- `Loaded`, `assemble`, `take` and the `let … else` skip blocks of
-  `load_story`, `load_tilesets` and the cinematic loaders (they carry
-  their own skip rules and are short).
+- What `Loaded`, `assemble` and `take` do (the table list only writes
+  them out), and the `let … else` skip blocks of `load_story`,
+  `load_tilesets` and the cinematic loaders (they carry their own skip
+  rules and are short).
+- The engine content graph (an engine ticket, only once Nick says yes;
+  `engine-change`).
 - The per-table loaders' own error idioms (`class.rs`, `spell.rs`, …):
   1223 moves them onto the engine's error helpers.
 - An engine `shuyi_assets::error` helper (optional; not worth a ticket
@@ -70,7 +96,9 @@ if not, add a line to that row here, and 1233 leaves it.
 ## Implementation steps
 
 Expected size: about 100 production lines removed and 20 added (net
-about −80), and about 40 test lines removed.
+about −80), and about 40 test lines removed; the table list about 60
+lines added and 150 removed, or about 1,200 lines moved by the split.
+About 800 changed lines with the macro, about 1,600 with the split.
 
 1. Add, near `load`:
    ```rust
@@ -101,7 +129,10 @@ about −80), and about 40 test lines removed.
    the dependency failed, the result failed) and keep, in each table's
    test, only the case where its check finds an error, called through
    `checked`.
-5. Measure with `cargo xtask code-lines` and put the numbers in the PR
+5. **Table list.** Write the macro (or the split), move every table onto
+   it, and check that adding a test table is one row and a loader
+   (a unit test with a fixture table).
+6. Measure with `cargo xtask code-lines` and put the numbers in the PR
    (ADR-0092).
 
 ## Acceptance criteria
@@ -114,6 +145,8 @@ about −80), and about 40 test lines removed.
 - [ ] The three `checked` tests pass, and each table's error case still
       reports its check's errors.
 - [ ] `embedded_content_loads` passes unchanged.
+- [ ] `Content`, `Early` and `Loaded` fields are written once, in the
+      table list (or `lib.rs` is under 1,000 lines after the split).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

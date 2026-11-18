@@ -34,6 +34,15 @@ that, it missed things:
 - **The boundary map is stale.** `docs/engine/boundary.md` was last
   changed on 2026-10-22, and its refresh (1233) is still open.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md), *Processes that slow us
+down*): this ticket's checks fold into 0181. The row checker over
+`docs/engine/friction.md` and the warning on a diff into code an
+`engine#`-blocked ticket replaces run inside 0181's `cargo xtask
+check-pr`, in one CI job with the checks of 0151, 1174 and 1239, not as
+a `check-friction` command of their own. What stays here: `engine-pin`
+step 4 (an adoption records the lines removed), 1233's text, and filling
+the empty rows. If this is worked before 0181, do only those parts.
+
 ## Nick input
 
 None.
@@ -41,13 +50,12 @@ None.
 ## Scope
 
 **In:**
-- `cargo xtask check-friction`: every row of `docs/engine/friction.md`
-  has an estimate and a measured number. A row marked adopted has the
-  lines removed. It runs in the tickets job.
-- A CI warning on a PR that changes a file an open `engine#`-blocked
-  ticket names in its Scope or steps as the code it replaces. The
-  warning names that ticket, so the session either adds to the engine
-  ticket or explains in the PR why the copy must grow.
+- The row checker and the diff warning are 0181's `cargo xtask
+  check-pr` (see the 2026-11-17 line): every row of
+  `docs/engine/friction.md` has an estimate and a measured number (an
+  adopted row, the lines removed), and a PR that changes a file an open
+  `engine#`-blocked ticket names as the code it replaces gets a warning
+  naming that ticket. Not this ticket's code.
 - `engine-pin` step 4: an adoption records the lines removed in the
   friction row.
 - 1233's text says when it re-runs: after every boundary audit, and at
@@ -59,24 +67,22 @@ None.
 
 ## Implementation steps
 
-1. Write the row checker over `friction.md`'s table.
-2. Build an index of open tickets with `engine#` blockers and the file
-   paths their text names. Warn when the PR's diff touches one.
-3. Update `engine-pin`, `engine-friction` and 1233, then run `pwsh -File
+1. Update `engine-pin`, `engine-friction` and 1233, then run `pwsh -File
    scripts/sync-agent-skills.ps1`.
-4. Fill the rows the checker finds empty, from the PRs they name.
+2. Fill the empty rows of `friction.md` from the PRs they name (with
+   0181's `check-pr` if it has landed, else by reading the table).
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask check-friction` fails a row with no estimate, and
-      passes on the filled log.
-- [ ] A diff touching `crates/playdate/src/…` named by an open
-      engine-blocked ticket warns with its id (a fixture test).
+- [ ] Every row of `docs/engine/friction.md` has an estimate and a
+      measured number, and `engine-pin` step 4 records an adoption's
+      lines removed.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the row checker and the file-path index.
+- None beyond the gates: docs and skills (the checker's tests are
+  0181's).
 
 ## Completion notes
 

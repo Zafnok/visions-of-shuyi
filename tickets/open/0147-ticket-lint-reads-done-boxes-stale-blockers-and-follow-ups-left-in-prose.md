@@ -52,6 +52,25 @@ ticket 2023).
 
 The engine's twin is engine#2059.
 
+2026-11-17 friction sweep
+([report](../../docs/research/friction-2026-11-17.md), *Should be engine
+features*, "Ticket lint and pr-size are forked between the repos"): the
+engine's lint at the pin (e738ffc, `crates/xtask/src/tickets.rs`, whose
+header says it was ported from the game's lint) already has three of
+these checks, from engine 2023 and 2059, both done:
+`check_done_boxes`, `check_blocked_with_done_blockers` and
+`check_prose_follow_ups` (with its `FOLLOW_UP_PHRASES` list and a `No
+ticket: <why>` escape). This ticket ports those three with their tests
+instead of designing new ones, adapting `game#` ids to `engine#` ids;
+only the Nick-quote warning is the game's own. One difference to keep
+from the engine: its stale-blocked check passes a `blocked` ticket with
+an empty `blocked_by`, which matches `tickets/README.md` (a written
+reason that names who unblocks it), so this ticket drops its own
+"empty `blocked_by` is an error". Bucket siblings (process and
+tooling): 0181 ports the engine's `Parked:` and size checks the same
+way; 0188 may move `tickets.rs` into a light crate (either order: the
+port goes wherever the file is).
+
 ## Nick input
 
 None.
@@ -65,27 +84,33 @@ None.
   "✗", "not met" or "misses" is an error too.
 - An error for a ticket that is `status: blocked` when every
   `blocked_by` id is done, and for engine ids, also inside the pinned
-  revision (`--check-engine`, which reads the engine). Also an error for
-  `blocked` with an empty `blocked_by`.
+  revision (`--check-engine`, which reads the engine). A `blocked`
+  ticket with an empty `blocked_by` passes, as in the engine.
 - A warning for a phrase in a done ticket's completion notes that
-  promises later work with no ticket id on the line: "not done here",
-  "must check", "will need", "no ticket", "for now", "follow-up",
-  "worth a ticket".
+  promises later work with no ticket id on the line: the engine's
+  `FOLLOW_UP_PHRASES`, plus any of "not done here", "must check", "will
+  need", "no ticket", "for now", "follow-up", "worth a ticket" it lacks.
 - A warning when a done ticket's completion notes quote Nick (`Nick,
   20`) and its `nick_input` is `none`.
 - Fix the done tickets the box check finds, in the same PR: tick them
   where the PR body shows the box met, or write the miss form.
 
 **Out (do not do):**
-- The engine's lint (engine#2059).
+- Changing the engine's lint.
+- Making the lint an engine command any game can run (an engine step,
+  only with Nick's OK).
 
 ## Implementation steps
 
-1. Port `check_done_boxes` from the engine's `crates/xtask/src/tickets.rs`.
-2. Add the stale-blocked check beside `check_engine_ids`. It reuses the
-   pinned engine checkout `cargo xtask engine` makes, or `gh api` for
-   the engine's `tickets/done` at `shuyi-engine.rev`.
-3. Add the two warnings, run only on tickets the PR moves to `done/`.
+1. Port `check_done_boxes` from the engine's `crates/xtask/src/tickets.rs`
+   at the pin, with its tests.
+2. Port `check_blocked_with_done_blockers` beside `check_engine_ids`,
+   with its tests. For `engine#` ids it reuses the pinned engine checkout
+   `cargo xtask engine` makes, or `gh api` for the engine's
+   `tickets/done` at `shuyi-engine.rev`.
+3. Port `check_prose_follow_ups` (and `notes_units`, `FOLLOW_UP_PHRASES`)
+   and add the Nick-quote warning, both run only on tickets the PR moves
+   to `done/`.
 4. Run the lint over `tickets/done` and fix what it finds.
 
 ## Acceptance criteria

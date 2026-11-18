@@ -29,28 +29,56 @@ help_line_styled, join_hints, text_with_keys, frame_widths,
 wrap_styled}`, `tips::fill_styled`, `ctx.text_styled`, and the
 `keyboard-input` skill's *Key caps*.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+*Help bars are whole sentences per screen state*): the help bars are
+whole sentences per screen state. `assets/lang/en/ui.ron` has about 114
+help keys, `{Cancel} back` is written out 66 times, and some keys are
+combinations of the same hints (`save.help.load`, `load_import`,
+`load_folder`, `load_export`, `load_export_folder`, ~:177–181;
+`profile.help.list`, `list_export`, `list_export_folder`, `add_import`,
+~:57–60). 16 views keep `help: String`. Switching each sentence to
+styled text walks every screen once, and 0255, 0256 and 0445 would
+walk them again. So this ticket's approach changes: views carry a
+**hint list** into `widgets/help.rs`, and the combination keys go.
+
 ## Nick input
 
 None: decided in 0250.
 
 ## Scope
 
-**In:** every other view whose text names a key for the player switched
-to `StyledText` and painted with `print_styled`:
-- Preparations and its shop (`screens/preparations*`), the world map
-  (`screens/world_map*`), camp, the save and load screens and the save
-  import (`screens/save*`, `save_import.rs`), class change
-  (`screens/class_change*`, with `progress::help`), results, game over,
-  title, lead select, mode select, familiarity, credits, profiles, the
-  voices question, the dialogue log;
-- in the battle: the forecast's `Left/Right weapon` hint
-  (`ForecastView::swap`), the art, skill, magic, item and map menus'
-  hints, the objective page, the info screen and the EXP pages
-  (`progress.rs`), the battle notes;
+**In:**
+- **Hint lists.** A help bar in a view is an ordered list of hints,
+  each `(action or actions, verb text key, shown: bool)` (e.g. a
+  `HelpBar` type in `crates/ui/src/widgets/help.rs`), built from
+  verb-only text keys (`hint.back`, `hint.import`, …). One function in
+  `widgets/help.rs` turns it into the styled line (key caps, the
+  separator, fitting the row), on top of `help_line_styled`. A hint the
+  state doesn't allow is `shown: false`, not a second text key.
+- The combination keys go: one hint list per screen state replaces
+  `save.help.load*`, `profile.help.list*` and `profile.help.add*`, and
+  every other help key that only differs by which hints are shown. The
+  test pack loses them too (or 0258's derived pack does).
+- Every other view whose text names a key for the player switched
+  to `StyledText` and painted with `print_styled`:
+  - Preparations and its shop (`screens/preparations*`), the world map
+    (`screens/world_map*`), camp, the save and load screens and the save
+    import (`screens/save*`, `save_import.rs`), class change
+    (`screens/class_change*`, with `progress::help`), results, game over,
+    title, lead select, mode select, familiarity, credits, profiles, the
+    voices question, the dialogue log;
+  - in the battle: the forecast's `Left/Right weapon` hint
+    (`ForecastView::swap`), the art, skill, magic, item and map menus'
+    hints, the objective page, the info screen and the EXP pages
+    (`progress.rs`), the battle notes;
 - each view's test lists its key spans (as `tests/it/key_caps.rs`
   does), and a snapshot of a few with `Harness::with_key_caps`.
 
-**Out:** the debug tools (plain, as the engine leaves them); a
+**Out:** the battle's own help bars, already styled by 0254: move them
+onto hint lists only where a screen state's bar is a combination key;
+otherwise either order with a later sweep. The save screens' own
+actions (0259): either order, whichever lands second names the other's
+actions. The debug tools (plain, as the engine leaves them); a
 controller's buttons (0255) and the Playdate (0256); the engine's
 styled word wrap (`widgets::help::wrap_styled` is the game's workaround
 until the engine has one).
@@ -59,12 +87,16 @@ until the engine has one).
 
 1. `grep -rn "key_name\|all_key_names\|cursor_keys_name\|help_line\|text_with" crates/ui/src`
    (not tests or `debug/`), less what 0254 switched.
-2. Switch each view, its skin and its tests (`plain()` where a test
-   compares words).
-3. Snapshots, `cargo shuyi frame-png` of Preparations and the world map,
+2. Add the hint list and its painter to `widgets/help.rs`, with tests,
+   then the verb-only keys in both language packs.
+3. Switch each view to a hint list (help bars) or styled text (other
+   text naming a key), its skin and its tests (`plain()` where a test
+   compares words). Delete each combination key it replaces.
+4. Snapshots, `cargo shuyi frame-png` of Preparations and the world map,
    the gates.
 
-**Expected size:** about 700 production lines, plus tests and snapshots.
+**Expected size:** about 700 production lines, plus tests and snapshots
+(the hint list adds about 80 and removes the combination keys' text).
 **Split:** past 2,000 changed lines, ship Preparations, the world map and
 saves, and move the rest to a new ticket.
 
@@ -74,12 +106,19 @@ saves, and move the rest to a new ticket.
       of step 1 finds only `.plain()` for tests, the Playdate's skins and
       the debug tools.
 - [ ] A test per switched view finds the keys `key_name` gives, in order.
+- [ ] `grep -n "help.load_\|help.list_\|help.add_" assets/lang/en/ui.ron`
+      finds nothing, and no view outside the battle, the debug tools and
+      the story preview has a `help: String` field.
+- [ ] The Load Game list on the web (no saves folder to open) gives the
+      desktop's hint list with the folder hint `shown: false`, not
+      another text key (test).
 - [ ] With a controller in use, hints read as today.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: each switched view's key spans.
+- Unit: the hint list's painter (shown and hidden hints, the separator,
+  fitting); each switched view's key spans.
 - Snapshot: Preparations and the world map with key caps.
 
 ## Completion notes
