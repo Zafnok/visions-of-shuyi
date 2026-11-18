@@ -73,7 +73,7 @@ shuyi reveal prepare`) on the captures it shows.
    zip). The action knows Linux and Windows; add macOS's build (its
    `darwin-amd64` zip and SHA-256) for the `mac` job, and the Linux job runs
    in the sniper container (check `unzip` and `curl` are there).
-2. `BUTLER_API_KEY` passed via env; without it the push steps say so and are skipped, green, as `demo.yml` does.
+2. `BUTLER_API_KEY` passed via env; without it the push steps say so and are skipped, green, as `demo.yml` does. They also have `if: needs.check-version.outputs.dry_run == 'false'`, so a dry run (by hand, or a PR that changes `release.yml`, 0175) pushes nothing.
 3. Document the itch project settings above in `docs/releasing.md` (beside
    "The demo's itch.io pages").
 
