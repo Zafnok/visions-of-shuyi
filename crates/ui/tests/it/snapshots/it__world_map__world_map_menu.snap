@@ -33,7 +33,6 @@ expression: h.snapshot()
 ≈ ≈     ≈  ≈           ≈≈    ≈  ≈        ≈ ≈     ≈≈    ≈≈  ≈≈≈  ≈   ≈ ║                            ║
        ≈                   ≈  ≈≈    ≈    ≈    ≈   ≈≈ ≈ ≈            ≈ ╚════════════════════════════╝
                                                                                                     
-     choose · F  open · D  back                                                                     
 --- colours ---
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcdccccdccccdccccdccccdcccceeeeeeeeeffffffffffffeeeeeeeee
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccdccccdccccdccccdccccdeghhhhhhhhhhhhhhhhhhhhggggggge
@@ -65,7 +64,6 @@ aaaaaaaaaaaaaaaaaaaaaaaaasaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeggggggggg
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaegggggggggggggggggggggggggggge
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
 tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt
 --- legend ---
 a = fg:water bg:sea
@@ -123,25 +121,11 @@ under 236,80 16x16  text_dim
 under 372,224 16x16  text_dim
 under 196,416 16x16  fort
 under 188,256 24x16  player
-over  187,256 3x1  #d7c590
-over  187,256 1x3  #d7c590
-over  210,256 3x1  #d7c590
-over  212,256 1x3  #d7c590
-over  187,271 3x1  #d7c590
-over  187,269 1x3  #d7c590
-over  210,271 3x1  #d7c590
-over  212,269 1x3  #d7c590
-over  sprite 8,496 24x16  images/key_arrows.png 0,0 24x16
-under 113,497 13x14  key_bg
-under 113,496 13x1  key_edge
-under 113,511 13x1  key_edge
-under 112,497 1x14  key_edge
-under 126,497 1x14  key_edge
-under 193,497 13x14  key_bg
-under 193,496 13x1  key_edge
-under 193,511 13x1  key_edge
-under 192,497 1x14  key_edge
-under 206,497 1x14  key_edge
---- glyph styles ---
-14,31  +3,+0 bold
-24,31  +3,+0 bold
+over  187,256 3x1  cursor
+over  187,256 1x3  cursor
+over  210,256 3x1  cursor
+over  212,256 1x3  cursor
+over  187,271 3x1  cursor
+over  187,269 1x3  cursor
+over  210,271 3x1  cursor
+over  212,269 1x3  cursor

@@ -23,7 +23,7 @@ only to report a PR **in the gap** that completes a marker's ticket
 looks at the marker again.
 
 The game/engine boundary audit of 2026-11-03 (finding records#4) found
-both of today's markers stale: `crates/xtask/src/game_tools.rs` (lines
+both of today's markers stale: `crates/tools/src/game_tools.rs` (lines
 77, 126, 280) cites engine#2540 and `crates/ui/src/screens/camp/music.rs:97`
 cites engine#2341, and both engine tickets are in the engine's
 `tickets/done/` at the pin. Here both happen to have a game ticket (1182

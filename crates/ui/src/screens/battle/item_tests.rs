@@ -7,6 +7,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattlePack, BattleState, Equipped, ItemId, Objective, Pos, StatValue, UnitId};
 
 use super::items::{ItemTargeting, item_targets, pack_groups};
+use super::layout::{MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_packed, quick_units};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
@@ -359,7 +360,7 @@ fn pack_menu_snapshot() {
     step(&mut s, &mut c, &ITEM);
     let buf = render(&s, &c);
     assert!(text(&buf, 30, 15, 40).contains("Pack 4/6"));
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 #[test]
@@ -375,7 +376,7 @@ fn item_target_snapshot() {
     let buf = render(&s, &c);
     let message = text(&buf, 1, 30, 60);
     assert!(message.contains(": HP "), "{message}");
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 #[test]
@@ -405,7 +406,7 @@ fn equip_menu_with_a_broken_weapon_snapshot() {
         c.palette.get(UiColor::HpLow)
     );
     assert!(text(&buf, 0, row, i32::from(ConsoleSpec::PC.cols)).contains("0/25"));
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 /// The Quick Battle's units 1 (lord) and 2 (knight) placed at `lord` and

@@ -80,7 +80,7 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 **In:**
 - Joss's portrait (`cargo xtask portrait-import <Thief folder> defector`),
-  map sprite (`crates/xtask/src/map_sprite_import.rs`'s table, then
+  map sprite (`crates/tools/src/map_sprite_import.rs`'s table, then
   `cargo xtask map-sprite-import` and `cargo xtask tileset-import`) and
   combat picture (`cargo xtask battler-import`, recoloured as above).
 - Hendry's generator face (`cargo xtask portrait-import --generator`),

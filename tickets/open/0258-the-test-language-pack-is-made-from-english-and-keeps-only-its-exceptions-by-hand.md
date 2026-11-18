@@ -44,7 +44,7 @@ edited the test pack (57 at today's path, 12 at the old
 month. A missed copy fails the build: `crates/content/src/lang.rs:225-226`
 (`the_embedded_languages_load`) asserts `status.missing ==
 ["title.credits"]` and `status.stale == ["title.continue"]`, and
-`crates/xtask/src/game_tools/tests.rs:425-437`
+`crates/tools/src/game_tools/tests.rs:425-437`
 (`the_test_pack_has_stale_missing_and_orphaned_text`) asserts the
 lang-status report ends `" missing, 2 stale, 1 orphaned"` and its
 missing list starts with `title.credits`.

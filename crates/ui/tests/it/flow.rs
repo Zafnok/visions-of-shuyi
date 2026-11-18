@@ -15,6 +15,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);
@@ -403,6 +404,8 @@ fn game_over_opens_with_its_animation() {
     let first = game_over(&h);
     assert!(first.progress < 16, "{}", first.progress);
     assert_eq!((first.menu, first.help), (None, None));
+    // The whole screen but its help line: the animation darkens all of it
+    // (1290).
     assert_snapshot!("game_over_first_frame", h.snapshot());
     h.wait(1.0);
     let middle = game_over(&h);
@@ -502,7 +505,7 @@ fn restart_battle_from_the_map_menu() {
         "{}",
         h.snapshot()
     );
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
     // Back out to the menu, then confirm.
     h.keys("d");
     assert!(!shows(&h, "Restart the battle"));
@@ -532,7 +535,7 @@ fn battle_notes_show_at_the_start_and_on_the_objective_page() {
     assert!(shows(&h, "  nearer than the fight."));
     assert!(shows(&h, "• Seize the fort within 3 turns: send your lead"));
     assert!(shows(&h, "f close"));
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
     // No key but Confirm does anything: no map menu, no cursor move, no
     // end of turn.
     let cursor = |h: &Harness| h.battle().map(|b| b.cursor().pos);
@@ -564,7 +567,10 @@ fn battle_notes_show_at_the_start_and_on_the_objective_page() {
     assert!(shows(&h, "• Brigand: guards the road, but the fort is"));
     assert!(shows(&h, "• Seize the fort within 3 turns: send your lead"));
     assert!(!shows(&h, "BATTLE NOTES"));
-    assert_snapshot!("objective_page_lists_the_battle_notes", h.snapshot());
+    assert_snapshot!(
+        "objective_page_lists_the_battle_notes",
+        h.snapshot_of(MAP_VIEW)
+    );
     h.keys("d d");
     assert!(!shows(&h, "Battle notes"));
 }

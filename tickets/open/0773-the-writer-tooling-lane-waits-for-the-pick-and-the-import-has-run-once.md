@@ -27,7 +27,7 @@ found two things in Lane J (`docs/ROADMAP.md`, *J. A human writer*):
   remade 41 Chapter 1 clips for lines the writer may rewrite.
 - **The approved import has never run.** #679 (ticket 0168) could test
   only the refusal: "GitHub doesn't allow approving your own pull
-  request". `cargo xtask story-import` (`crates/xtask/src/story_import.rs`,
+  request". `cargo xtask story-import` (`crates/tools/src/story_import.rs`,
   `check_pull` at line 166 wants `OWNER`'s latest review to be
   `APPROVED`) has never pushed an assets branch, and the sync's step that
   closes the mirror's pull request (`.github/workflows/story-mirror.yml`,

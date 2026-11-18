@@ -17,7 +17,7 @@ completed:
 
 Game PRs #483 and #495 shipped the world map and random training groups;
 #477 expanded camp. The 2026-11-01 audit found that the game's CLI/MCP
-scene adapter (`crates/xtask/src/game_tools.rs`, `scene`) still requires a
+scene adapter (`crates/tools/src/game_tools.rs`, `scene`) still requires a
 `BattleScreen`, so those screens answer "no battle on screen".
 Ticket 1181 intentionally covered battles only; this expands that adapter
 as gameplay has expanded, without claiming an unmet 1181 criterion.

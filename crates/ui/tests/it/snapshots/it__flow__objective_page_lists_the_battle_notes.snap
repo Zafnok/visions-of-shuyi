@@ -1,92 +1,84 @@
 ---
 source: crates/ui/tests/it/flow.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-                                                                      ┌────────────────────────────┐
-                                                                      │ Plain                      │
-                                                                      │ DEF +0  AVO +0             │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Ellery                     │
-                                                                      │ Exile  Lv 1                │
-                                                                      │ HP 19/19   ██████████      │
-                                                                      │ Player                     │
-                                                                      │                            │
-                                                                      │ Str   8     Mag   1        │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │ Dex   7     Spd   7        │
-                    ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^                      │ Def   6     Res   5        │
-                    ≈≈≈≈≈≈====······....♣♣♣♣....                      │ Mov   5                    │
-                    ..≈≈≈≈..··......Br......╦╦..                      │                            │
-         ╔═ Objective ═════════════════════════════════════╗          │ Iron Sword        20/20    │
-         ║                                                 ║          │ Atk  13     Hit 104        │
-         ║ Win:  Seize the Fort                            ║          │ Crit  3     Avo  14        │
-         ║ Lose: Turn 3 ends                               ║          │ AS    5                    │
-         ║ or    Ellery falls                              ║          │                            │
-         ║ Turn 1/3                                        ║          │                            │
-         ║                                                 ║          │                            │
-         ║ Battle notes                                    ║          │                            │
-         ║ • Brigand: guards the road, but the fort is     ║          │                            │
-         ║   nearer than the fight.                        ║          │                            │
-         ║ • Seize the fort within 3 turns: send your lead ║          │                            │
-         ║   straight there.                               ║          │                            │
-         ║                                                 ║          │                            │
-         ╚═════════════════════════════════════════════════╝          │ Gold 0                     │
-                                                                      └────────────────────────────┘
-                                                                                                    
- d back                                                                                    F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      
+                    ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^                      
+                    ≈≈≈≈≈≈====······....♣♣♣♣....                      
+                    ..≈≈≈≈..··......Br......╦╦..                      
+         ╔═ Objective ═════════════════════════════════════╗          
+         ║                                                 ║          
+         ║ Win:  Seize the Fort                            ║          
+         ║ Lose: Turn 3 ends                               ║          
+         ║ or    Ellery falls                              ║          
+         ║ Turn 1/3                                        ║          
+         ║                                                 ║          
+         ║ Battle notes                                    ║          
+         ║ • Brigand: guards the road, but the fort is     ║          
+         ║   nearer than the fight.                        ║          
+         ║ • Seize the fort within 3 turns: send your lead ║          
+         ║   straight there.                               ║          
+         ║                                                 ║          
+         ╚═════════════════════════════════════════════════╝          
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeecccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooooookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiippppoooooojjjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjqqjjjjjjrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabbdddddddddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabcggggccccccccgggccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabcggcccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcggggggggggggccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-astttttaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatttttttta
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbccccddddiiiiiieeeeggggggaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbccccjjjjiiiiiiddddeeeeddddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddccccddiiddddddkkddddddllddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaammnnnnnnnnnnnmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamoppppppppppppoooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaamooooooooooooooooooooooooooooooooooooooooooooooooomaaaaaaaaaa
+aaaaaaaaammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:water bg:sea
-i = fg:water bg:water_bg
-j = fg:grass bg:grass_bg
-k = fg:forest bg:forest_bg
-l = fg:thicket bg:thicket_bg
-m = fg:mountain bg:mountain_bg
-n = fg:peak bg:peak_bg
-o = fg:road bg:road_bg
-p = fg:wood bg:water_bg
-q = fg:grass_bg bg:enemy
-r = fg:fort bg:fort_bg
-s = fg:text bg:key_bg
-t = fg:text_dim bg:black
+b = fg:water bg:sea
+c = fg:water bg:water_bg
+d = fg:grass bg:grass_bg
+e = fg:forest bg:forest_bg
+f = fg:thicket bg:thicket_bg
+g = fg:mountain bg:mountain_bg
+h = fg:peak bg:peak_bg
+i = fg:road bg:road_bg
+j = fg:wood bg:water_bg
+k = fg:grass_bg bg:enemy
+l = fg:fort bg:fort_bg
+m = fg:panel_border bg:panel_bg
+n = fg:text_highlight bg:panel_bg
+o = fg:text bg:panel_bg
+p = fg:text_dim bg:panel_bg
 --- overlays ---
 over  289,238 14x2  hp_high

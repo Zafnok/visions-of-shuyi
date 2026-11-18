@@ -42,7 +42,7 @@ const LEFT_X: i32 = 1;
 /// Left column of the right frame.
 const RIGHT_X: i32 = 65;
 /// The text box.
-const TEXT_BOX: Rect = Rect::new(0, 25, 100, 7);
+pub const TEXT_BOX: Rect = Rect::new(0, 25, 100, 7);
 /// Left column of the text.
 const TEXT_X: i32 = 4;
 /// First text row.

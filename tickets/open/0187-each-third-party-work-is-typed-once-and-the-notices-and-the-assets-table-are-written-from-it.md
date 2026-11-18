@@ -36,7 +36,7 @@ is typed three or four times, then cross-checked by tests:
 - Tests that keep them equal: `every_third_party_asset_has_a_credit`
   (`crates/content/src/credits.rs:200`, by source link) and
   `the_notices_name_the_games_works_and_license_texts`
-  (`crates/xtask/src/game_tools/tests.rs:868`).
+  (`crates/tools/src/game_tools/tests.rs:868`).
 - Tests that list the bought packs by name, so a new pack edits them:
   `the_embedded_file_loads_and_merges_with_the_audio_manifest`
   (`credits.rs:140-144`, `assert_eq!(ids, ["tiny_tales", "shironejiya",

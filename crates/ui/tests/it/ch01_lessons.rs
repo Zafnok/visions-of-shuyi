@@ -411,11 +411,9 @@ fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_on_an_art_attack() {
     assert_eq!(battle(&h).lesson_ticks(), [true, false]);
     assert_eq!(shown(&h), Some("combat_arts"));
     assert!(!done(&h).contains(&"combat_arts".to_owned()));
-    // The lesson's box over the Arts menu, its note an attack: drawn over
-    // Chapter 1's map, so the picture is the private repository's.
-    if let Some(dir) = trpg_content::bundle::content_tests() {
-        assert_private_snapshot!(dir, h.snapshot());
-    }
+    // The lesson's box over the Arts menu, its note an attack: the box
+    // alone, without Chapter 1's map (1290).
+    insta::assert_snapshot!(lesson_box(&h));
     // The focused art, at the Brigand.
     h.keys("f").wait(1.0);
     assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
@@ -716,6 +714,15 @@ fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
     assert!(basics.is_empty(), "{basics:?}");
 }
 
+/// The lesson's box on screen, or the box at the end of the lessons, as a
+/// snapshot of those cells alone (1290).
+fn lesson_box(h: &Harness) -> String {
+    let ctx = h.game().ctx();
+    let view = battle(h).view(ctx);
+    let area = trpg_ui::screens::battle::glyph::lesson_box(ctx, &view);
+    h.snapshot_of(area.unwrap_or_else(|| panic!("no lesson box")))
+}
+
 /// Whether the guide's box at the end of the lessons is up (0465).
 fn end_box(h: &Harness) -> bool {
     battle(h).lessons_end_shown(h.game().ctx())
@@ -800,18 +807,14 @@ fn back_on_turn_1(h: &mut Harness) {
 /// while it is up; "Keep going" closes it for good and the battle goes on.
 #[test]
 fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
-    // The box is drawn over Chapter 1's map: its picture is the private
-    // repository's (ADR-0118 §3).
-    let Some(dir) = trpg_content::bundle::content_tests() else {
+    if skip_without_the_game() {
         return;
-    };
+    }
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     assert!(end_box(&h), "{}", h.snapshot());
-    // The cursor's pulse as the stored picture has it: the press the box
-    // waits for since 0495 moved its phase.
-    h.wait(32.0 / 60.0);
-    assert_private_snapshot!(dir, h.snapshot());
+    // The box alone, without Chapter 1's map (1290).
+    insta::assert_snapshot!(lesson_box(&h));
     let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
     assert_eq!(view.focus, 0);
     assert_eq!(

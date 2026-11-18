@@ -31,8 +31,10 @@ commands, which mirror CI (ADR-0014), and its own environment.
 - The `no_std` build needs the Playdate's target once:
   `rustup target add thumbv7em-none-eabihf`.
 - `cargo shuyi <command>` is Shuyi Engine's tools (`shuyi-cli`, ADR-0089,
-  run through `cargo xtask shuyi` with this game's), on this repository's
-  `shuyi.ron`; `cargo xtask` keeps the repository's own commands.
+  run by the game's tool program `trpg-tools` with this game's), on this
+  repository's `shuyi.ron`; `cargo xtask` keeps the repository's own
+  commands, builds without the game and runs `trpg-tools`' by their old
+  names (ADR-0129).
 - The engine is pinned by revision (`docs/engine/README.md`). With the
   local checkout on (`cargo xtask engine`), the gates build on
   `shuyi-engine/` and `--locked` fails because `Cargo.lock` names the
@@ -102,7 +104,12 @@ cargo run -p trpg-app --features private-assets
 
 ## Snapshots (insta)
 
-`shuyi-gates` *Snapshots* holds the rule. Here a failing snapshot test
+`shuyi-gates` *Snapshots* holds the rule. Here a snapshot shows its
+test's region (`Harness::snapshot_of`), never the help bar unless it is
+the help bar's own look test (`Harness::snapshot` leaves it out), a
+behavior test asserts the view, motion is still in tests
+(`idle_motion` off) and a private snapshot shows only the private part
+(ADR-0007, rule 5). A failing snapshot test
 writes `*.snap.new`: read it, then `cargo insta accept` if the change was
 meant. `cargo insta review` is interactive and won't work in this
 environment.

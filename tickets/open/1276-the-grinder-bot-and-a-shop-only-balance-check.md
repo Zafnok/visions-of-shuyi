@@ -31,7 +31,7 @@ differ from the sketch here, the decision wins.
 What it builds on:
 
 - **The bots' army** (`docs/playtesting.md`, *The army*):
-  `crates/xtask/src/playtest.rs` `stage` builds a `BattleStage` (a
+  `crates/tools/src/playtest.rs` `stage` builds a `BattleStage` (a
   `BattleSetup` per mode, `crates/bots/src/playtest.rs`) for the playtest
   and the autobalance alike; a story battle's army comes from
   `trpg_bots::arrival` (`crates/bots/src/arrival.rs`: earlier chapters won
@@ -54,8 +54,8 @@ What it builds on:
 
 **Either order with 1207** (the engine's playtest command): if 1207 is in
 `done/`, the grinder entrants go in `Trpg::playtest_plan`
-(`crates/xtask/src/game_tools/plays.rs`) and the margin is a summary item
-there; if not, they go in `crates/xtask/src/playtest.rs` (`Bot`, `stage`,
+(`crates/tools/src/game_tools/plays.rs`) and the margin is a summary item
+there; if not, they go in `crates/tools/src/playtest.rs` (`Bot`, `stage`,
 `render`) and 1207 carries them over with the rest. Either order with 1180
 the same way (`Targets` moves there).
 

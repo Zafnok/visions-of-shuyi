@@ -59,7 +59,7 @@ of tests and 30 of docs.
    Candidates are credits, tip, title, lang, audio, voice, font, image,
    palette, playdate_images, playdate_palette, portrait, cinematic and
    keymap (`x.rs` and `x/*`). Keep one only if a `grep` shows
-   `crates/core`, `crates/bots` and `crates/xtask/src/playtest.rs` never
+   `crates/core`, `crates/bots` and `crates/tools/src/playtest.rs` never
    use its types. Check dialogue.rs the same way, since a scene can add
    a unit or an item. `bundle.rs` stays a lever.
 2. **Comment and test edits.** The script takes optional `BASE HEAD`
@@ -74,7 +74,7 @@ of tests and 30 of docs.
 3. **Input hash** (`.github/playtest-inputs.sh`): one sha256 of
    `git ls-files -s` over `Cargo.toml`, `Cargo.lock`,
    `rust-toolchain.toml`, `shuyi-engine.rev`, `crates/{core,content,bots}`,
-   `crates/xtask/Cargo.toml`, `crates/xtask/src/playtest.rs`, `assets/`,
+   `crates/xtask/Cargo.toml`, `crates/tools/src/playtest.rs`, `assets/`,
    `assets-test/`, `crates/ui/tests/it/fixtures/`, `playtest.yml` and
    both scripts, plus `git -C assets-private rev-parse HEAD:content`.
    It is wider than the levers on purpose: a miss only costs a play,
@@ -104,7 +104,7 @@ of tests and 30 of docs.
    `playtest-inputs`. Reports hold no build: 0171's check allows a cache
    whose path isn't `target`.
 6. **Split.**
-   - `crates/xtask/src/playtest.rs` gets `--merge <json>...`. It reads
+   - `crates/tools/src/playtest.rs` gets `--merge <json>...`. It reads
      `--json` `Record`s and requires the same battle, tier, turn cap,
      army and checks in each. It passes every part's `report.entrants`
      and the first part's checks to `shuyi_core::bots::playtest::judge`,

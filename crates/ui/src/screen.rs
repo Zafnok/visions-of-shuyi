@@ -46,6 +46,16 @@ use crate::words::{Language, Words};
 pub use shuyi_ui::ctx::{DEFAULT_MUSIC_SEED, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard};
 pub use shuyi_ui::screen::{Screen, ScreenResult};
 
+/// The clock a looping motion (a pulse, a blink, units stepping in place)
+/// reads: `ctx`'s, or 0 when [`Ctx::idle_motion`](shuyi_ui::Ctx::idle_motion)
+/// is off, so a test's frame shows every loop at its start (1290).
+pub fn loop_clock_s(ctx: &Ctx) -> f64 {
+    match ctx.idle_motion {
+        IdleMotion::On => ctx.clock_s,
+        IdleMotion::Off => 0.0,
+    }
+}
+
 /// What every screen shares: Shuyi Engine's services and this game's part,
 /// [`Ctx::game`](shuyi_ui::Ctx::game) ([`Shuyi`]).
 pub type Ctx = shuyi_ui::Ctx<Shuyi>;

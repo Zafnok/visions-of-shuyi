@@ -60,7 +60,7 @@ What the scenes and the bible say the fights hold:
 2026-11-17 friction sweep
 ([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
 bucket B1): the skirmish generator (`cargo xtask skirmish new`, 0510:
-`crates/xtask/src/skirmish.rs` and `crates/bots/src/skirmish.rs`, about
+`crates/tools/src/skirmish.rs` and `crates/bots/src/skirmish.rs`, about
 1,440 lines) has made none of Act 1's battles. All 9 non-story battles
 were made by hand, and none of the 34 `skirmish_*` templates in
 `characters.ron` is placed. So this ticket builds its first skirmish

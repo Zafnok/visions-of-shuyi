@@ -114,8 +114,8 @@ checklist page.
 
 Expected size: about 350 production lines (one module reading the
 loaded `trpg_content::Content`, the private folders and the voice
-manifest, and a table printer), judged by `crates/xtask/src/lines.rs`
-and the `status` part of `crates/xtask/src/voice.rs`; about 250 lines
+manifest, and a table printer), judged by `crates/tools/src/lines.rs`
+and the `status` part of `crates/tools/src/voice.rs`; about 250 lines
 of tests.
 
 1. New module `crates/xtask/src/act1_coverage.rs` (and

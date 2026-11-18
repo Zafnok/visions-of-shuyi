@@ -24,7 +24,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use crate::content_layer::{self, STORY};
+use xtask::content_layer::{self, STORY};
 
 /// How many words in a row of a line make a quote: fewer find common
 /// phrases ("at the end of the") all over the documents.
@@ -327,7 +327,19 @@ pub fn command(root: &Path, args: &[String]) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::content_layer::tests::repo;
+    use std::path::PathBuf;
+
+    /// A repository of `files` under the system's temp folder.
+    fn repo(name: &str, files: &[(&str, &str)]) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("xtask-leaks-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        for (path, text) in files {
+            let path = dir.join(path);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, text).unwrap();
+        }
+        dir
+    }
 
     /// A script of the made-up story the tests look for.
     const SCRIPT: &str = "\

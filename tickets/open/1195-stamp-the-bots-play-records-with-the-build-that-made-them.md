@@ -26,8 +26,8 @@ a content change is reported as the cause, not as a desync, and
 `playtest` keeps the stamp in its history. `--any-stamp` runs it
 anyway. The skill pack's `shuyi-debug-replay` explains this.
 
-The game doesn't use it yet. `Trpg` (`crates/xtask/src/game_tools.rs`)
-has no `made`, and its `PlayRecord` (`crates/xtask/src/game_tools/plays.rs`)
+The game doesn't use it yet. `Trpg` (`crates/tools/src/game_tools.rs`)
+has no `made`, and its `PlayRecord` (`crates/tools/src/game_tools/plays.rs`)
 carries only a format `version`. A record the bots wrote before a
 balance change replays as if the rules broke. The engine's `grid`
 template shows the pattern (`made()` in its `game` crate's `lib.rs`).
@@ -54,14 +54,14 @@ None.
   the same helper.
 - Moving where the record is written: done by 1240, which writes it
   from the engine's `playtest` try (`Recorded::record` in
-  `crates/xtask/src/game_tools/plays.rs`). Fill `made` there, not in
+  `crates/tools/src/game_tools/plays.rs`). Fill `made` there, not in
   `plays::bots` (gone), and test it through `playtest`.
 - Stamping saves (the engine's save stamps are its own business).
 - Baked packs (the game bakes none).
 
 ## Implementation steps
 
-1. In `crates/xtask/src/game_tools/plays.rs` (or a small `made.rs`
+1. In `crates/tools/src/game_tools/plays.rs` (or a small `made.rs`
    beside it), add `pub fn made() -> Made`, built once in a `OnceLock`:
    `Made::new(concat!("visions-of-shuyi ", env!("CARGO_PKG_VERSION")),
    trpg_content::bundle::install().fingerprint())`. Mark the build

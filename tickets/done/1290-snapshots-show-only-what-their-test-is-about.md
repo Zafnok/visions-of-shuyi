@@ -5,10 +5,10 @@ type: infra
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 1290 — Snapshots show only what their test is about, with the cursor's pulse held still
@@ -159,31 +159,31 @@ None. Tests only; what a player sees doesn't change.
 
 ## Acceptance criteria
 
-- [ ] Unit test `the_battle_holds_still_without_idle_motion`: with
+- [x] Unit test `the_battle_holds_still_without_idle_motion`: with
       `c.clock_s = 0.5`, a 0.5 s update and `idle_motion` off, the scene
       has cursor brightness 1 and `clock_ms` 0. With it on, they are
       `BLINK_MIN` and 500.
-- [ ] A unit test crops a 3 × 2 region with `snapshot_of` (cells and a
+- [x] A unit test crops a 3 × 2 region with `snapshot_of` (cells and a
       sprite's moved `dest`).
-- [ ] `grep -n "32.0 / 60.0" crates/ui/tests/it/ch01_lessons.rs` finds
+- [x] `grep -n "32.0 / 60.0" crates/ui/tests/it/ch01_lessons.rs` finds
       nothing.
-- [ ] `grep -nE "assert_private_snapshot!\(dir, (\"[a-z0-9_]+\", )?h\.snapshot\(\)\)" crates/ui/tests/it/ch01_lessons.rs crates/ui/tests/it/places.rs crates/ui/tests/it/world_map.rs`
+- [x] `grep -nE "assert_private_snapshot!\(dir, (\"[a-z0-9_]+\", )?h\.snapshot\(\)\)" crates/ui/tests/it/ch01_lessons.rs crates/ui/tests/it/places.rs crates/ui/tests/it/world_map.rs`
       finds nothing.
-- [ ] Check (a) fails fewer than 10 snapshot tests, none of them private.
+- [x] Check (a) fails fewer than 10 snapshot tests, none of them private.
       Check (b) fails none. Both counts are in the completion notes.
-- [ ] (2026-11-17 sweep) Check (c), a throwaway change to the help bar's
+- [x] (2026-11-17 sweep) Check (c), a throwaway change to the help bar's
       hint style, fails no more snapshot tests than there are screen
       families with a help-bar look snapshot. Count in the completion
       notes.
-- [ ] (2026-11-17 sweep) Adding a throwaway options row fails at most
+- [x] (2026-11-17 sweep) Adding a throwaway options row fails at most
       the options list's look snapshot (plus any test that asserts the
       row count).
-- [ ] (2026-11-17 sweep) No test in `tests/it/options.rs` both asserts
+- [x] (2026-11-17 sweep) No test in `tests/it/options.rs` both asserts
       behavior and ends in a whole-screen snapshot.
-- [ ] `assets-private.rev` is at the private PR's merge, and
+- [x] `assets-private.rev` is at the private PR's merge, and
       `cargo xtask check-leaks` passes.
-- [ ] ADR-0007 and `run-gates` state the rule.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] ADR-0007 and `run-gates` state the rule.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -193,5 +193,71 @@ None. Tests only; what a player sees doesn't change.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **Still loops.** `screen::loop_clock_s(ctx)` is the clock a loop reads:
+  `ctx.clock_s`, or 0 with `idle_motion` off. The battle's map clock (edge
+  arrows, effect marks, units stepping), both forecasts' lost-HP blink,
+  the battle cursor (brightness 1), the notes' blink and the world map's
+  cursor pulse all hold at their start. Tests of a motion turn it on.
+- **Crop helper.** `harness::snapshot_of(buf, area, palette)` and
+  `Harness::snapshot_of(area)`; battle unit tests use `layout::snap` and
+  the new `layout::MESSAGE_ROW`. Deviation: `blit` also carries painted
+  pictures, so only a backdrop is left out (the doc comment says so).
+- **Crops.** About 60 snapshot asserts now show `MAP_VIEW`, `SIDE_PANEL`,
+  `HELP_BAR` or the message row. Whole frames stay, with a comment, for
+  `quick_battle_renders`, `quick_battle_in_every_theme`, the info screens
+  and Game Over's first frame. Beyond the ticket's files, check (a) found
+  six more in `act1`, `ai_phase`, `glyph`, `heal_aim` and `tests.rs` and
+  `map_skin`'s dusk test; they are cropped too.
+- **Private snapshots.** Both `ch01_lessons` shots now snapshot the lesson
+  box alone (new `battle::glyph::lesson_box`), which is public UI text, so
+  they are public `assert_snapshot!`s (`check-leaks` passes) and their
+  private files are deleted. The wait at `:750-752` is gone. `places`
+  crops to the rows over the text box (`dialogue::glyph::TEXT_BOX`, now
+  public), `world_map` to `world_map::glyph::MAP`, and the logo shot to
+  the rows over the menu (`title::glyph::MENU_ROW`, now public).
+- **One test changed its keys:** `controller::each_default_button_does_what_its_key_does`
+  played `f Up d`, which ends where it started; only the pulse used to
+  differ. It now plays `f Up d Up`.
+- **Check (a)** (one more row in `paint_panel`, private assets checked
+  out): 7 snapshot tests fail, none private: the panel's own
+  (`panel_snapshots_…`, `hover_empty_plain`, `hover_unit_on_forest`,
+  `a_downed_unit_under_the_cursor_shows_in_the_side_panel`) and the
+  whole-screen ones (`quick_battle_renders`, `quick_battle_in_every_theme`,
+  `game_over_opens_with_its_animation`).
+  **Check (b)** (`h.wait(1.0 / 60.0)` before all 12 snapshots of
+  `battle.rs` and `controller.rs`): 0 fail.
+- **Step 9, the help bar** (added to the ticket by the 2026-11-17 friction
+  sweep while the PR was open; done in the same PR). The game's
+  `Harness::snapshot` shadows the engine's and leaves out the top
+  screen's help rows (`harness::help_rows`): the battle's two on the
+  battle and the rewind, none on a conversation, a cinematic, the title
+  before its menu or the Playdate, else the bottom row. A corner-anchored
+  crop keeps the backdrop. `snapshot_whole` keeps everything; tests that
+  read help text out of the frame, or compare with the engine's
+  `snapshot_as`, use it. Battle unit tests crop to `ABOVE_HELP_BAR` /
+  `ABOVE_HELP_ROW` (shop, guides, class change) or the side panel (the
+  two hover tests). All 125 snapshots this re-blessed were checked to
+  have lost only their bottom rows, each a help line or blank.
+- **Look snapshots of the help bar:** the battle's
+  (`key_caps::the_battle_help_bar_draws_its_keys_as_caps`, `HELP_BAR`),
+  the bottom help line's (`key_caps::options_draws_its_keys_as_caps`,
+  now the bottom row) and the text box's corner (dialogue, whole).
+- **Options:** `the_title_opens_options_and_cancel_closes_it` is the list's
+  one look snapshot. Eight behavior tests lose their trailing snapshot
+  (their view and text asserts stay), and the leave question crops to its
+  box.
+- **Check (c)** (the help line recolored in the battle's `paint_help`,
+  shared by the battle, guides, rewind and shop, and in Game Over's): 1
+  snapshot test fails, the battle help bar's look test, against 3 families
+  with a help-bar look snapshot. One colour assert on the toggles row
+  fails too (`glyph::tests::the_toggles_row_…`), a look assert, not a
+  snapshot. (A first try that prefixed the hints' text broke a few
+  dozen text asserts on the help, so it measured nothing about snapshots.)
+- **Options-row check** (a 26th row): 2 snapshot tests fail, the options
+  list's look snapshot and the Playdate's (`playdate_options`, that skin's
+  own look of the list); the other failures walk the rows by count.
+  Deviation: one look snapshot per skin, not one in all.
+- Friction (whole ticket): estimate 60 production lines (40 + the sweep's
+  20), measured 96 (1.6×), under 2×.
+- No gameplay rules decided. Nothing changes for a player: the platforms
+  turn idle motion on.

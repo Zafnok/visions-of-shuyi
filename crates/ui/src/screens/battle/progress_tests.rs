@@ -11,6 +11,7 @@ use trpg_core::{
 };
 
 use super::banner::Banner;
+use super::layout::MAP_VIEW;
 use super::mode::Mode;
 use super::progress::{PROGRESS_TIMINGS, Page};
 use super::testing::{answer, battle, quick_units, wait};
@@ -126,7 +127,7 @@ fn a_level_up_fills_the_bar_then_shows_the_events_numbers() {
         panic!("the bar: {:?}", page(&h))
     };
     assert_eq!((name.as_str(), exp, max), ("Test Lord", shown, 100));
-    assert_snapshot!("exp_bar", h.snapshot());
+    assert_snapshot!("exp_bar", h.snapshot_of(MAP_VIEW));
     // Then the level-up page, its stats appearing one by one.
     h.wait(PROGRESS_TIMINGS.exp_hold);
     let page = level_up(&h);
@@ -148,7 +149,7 @@ fn a_level_up_fills_the_bar_then_shows_the_events_numbers() {
         .collect();
     assert_eq!(level_up(&h).stats, rows);
     assert_eq!(help(&h), "f continue");
-    assert_snapshot!("level_up", h.snapshot());
+    assert_snapshot!("level_up", h.snapshot_of(MAP_VIEW));
     // Confirm closes it: browsing again.
     h.keys("f");
     assert!(!shows(&h, "LEVEL UP!"));
@@ -339,7 +340,7 @@ fn mastery_shows_the_banner_after_the_exp_bar() {
     assert!(shows(&h, "Exile  CL 9 → 10"));
     assert!(shows(&h, "CLASS MASTERED!"));
     assert_eq!(help(&h), "f continue");
-    assert_snapshot!("class_mastered", h.snapshot());
+    assert_snapshot!("class_mastered", h.snapshot_of(MAP_VIEW));
     h.keys("f");
     assert!(!shows(&h, "CLASS MASTERED!"));
 }

@@ -14,6 +14,7 @@ use trpg_core::{
 use super::art_list::Technique;
 use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
 use super::items::{can_equip, equip_choices, equip_menu};
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, MESSAGE_ROW, SIDE_PANEL, snap};
 use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
     spell_choices, spell_effect_text, spell_label, spell_menu, target_pos,
@@ -436,7 +437,7 @@ fn spell_list_snapshot() {
     // The mage is drawn where it stands, with no cursor on the map.
     assert_eq!(s.mode().drawn_pos(MAGE), Some(p(0, 4)));
     assert_eq!(s.mode().selection().map(|sel| sel.unit), Some(MAGE));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// Every spell says what its line doesn't, in a few words (0453).
@@ -725,7 +726,7 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
 fn forecast_snapshot(c: &mut Ctx, state: BattleState, line: usize) -> String {
     let s = casting(c, state, line);
     assert_eq!(targeting(&s).target(), on_unit(7));
-    render(&s, c).to_snapshot(&c.palette)
+    snap(&render(&s, c), c, SIDE_PANEL)
 }
 
 /// Ticket 0489: Fire on a target Weak to it is effective, but not by a
@@ -761,7 +762,7 @@ fn forecast_of_frost_on_an_absorbing_target_snapshot() {
     assert_eq!(t.preview.forecast.attacker.affinity, Some(Affinity::Absorb));
     let marker = forecast_of(&s, &c).sides[0].affinity.clone();
     assert_eq!(marker, Some(format!("heals {healed}")));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 #[test]
@@ -783,7 +784,7 @@ fn forecast_of_fire_on_a_resisting_target_snapshot() {
     let shown = forecast_of(&s, &c);
     assert_eq!(shown.sides[0].affinity.as_deref(), Some("(resist)"));
     assert!(!shown.strikes[0].effective);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 // ---- Casting on a tile -----------------------------------------------------------
@@ -834,7 +835,12 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
     let changes = targeting(&s).tile_changes(s.state());
     let burning = c.game.content.terrain.display.id_of("burning").unwrap();
     assert_eq!(changes, [(p(1, 5), burning), (p(0, 6), burning)]);
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let (map, message) = (snap(&buf, &c, MAP_VIEW), snap(&buf, &c, MESSAGE_ROW));
+    assert_snapshot!(format!(
+        "{map}
+=== message ===
+{message}"
+    ));
 }
 
 #[test]
@@ -972,7 +978,7 @@ fn burning_burnt_and_ice_tiles_snapshot() {
     assert_eq!(looks(&c, &scene, 1, 5), "burnt");
     assert_eq!(looks(&c, &scene, 1, 3), "ice");
     assert_eq!(looks(&c, &scene, 0, 6), "burning");
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 #[test]
@@ -1422,7 +1428,8 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
     assert!(elemental.affinities.contains(&pair("Fire", "Weak")));
     let frost = spells(&elemental);
     assert!(frost.iter().any(|s| s.0 == "Frost" && s.1), "{frost:?}");
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 // ---- Harness: the whole flow with the default keys --------------------------------

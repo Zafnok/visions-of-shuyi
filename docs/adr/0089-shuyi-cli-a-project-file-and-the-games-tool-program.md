@@ -1,6 +1,6 @@
 # ADR-0089: Shuyi's tools: `shuyi-cli`, a project file (`shuyi.ron`) and the game's tool program
 
-- **Status:** Accepted
+- **Status:** Accepted; §4 amended by ADR-0129 (the game's tool program is `trpg-tools`; xtask is the process tool)
 - **Date:** 2026-10-18
 - **Related tickets:** 1117
 - **Extends:** ADR-0063 (an engine and a game), ADR-0038 §4 (`frame-png`),
