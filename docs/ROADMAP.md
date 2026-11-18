@@ -115,7 +115,7 @@ fantasy dialogue compelling → **0737** the Chapter 1 script written again
 from the beats (0719, 0722 and 0726 now wait for it) → **0742** other music
 for three scenes · **0738** the places' round 3 notes (longer openings, no
 outline on actors, a lighter study, the party at the toll-fort) · **0739**
-how much faces dim over a place (kept as they are) → **0774** the web build darkens the study's faces and boxes · **0740** narration left-aligned (after engine#2305) · **0741**
+how much faces dim over a place · **0740** narration left-aligned (after engine#2305) · **0741**
 the pre-battle place reads as the chapel green · **0843** the intro's fixes
 (longer news, shorter fight hold, hit sounds, the logo on the chord, a
 start through black) · **0844** a setting to turn the intro off · **0446**
@@ -405,7 +405,7 @@ recruit joins outside battle.
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
   **0846** · the rest of round 3's tickets: **0254** (0250 decided), **0318**,
   **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
-  **0738**, **0739** → **0774**, **0741**, **0842**, **0843**, **0844**, **0847**.
+  **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.
   Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
   **0470**, **0472** (a downed unit's panel; the objective line fits),
   **0735**.

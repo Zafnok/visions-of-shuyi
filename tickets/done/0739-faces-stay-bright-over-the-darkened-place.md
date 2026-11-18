@@ -109,10 +109,12 @@ faces during narration at full brightness / hidden / dimmed; the place at
   title fades the cinematic only while it comes in from black at its
   start, over a map shot. No talk shot is ever faded as a whole (the
   ticket's reading of `cinematic.rs` predates the engine carve).
-- **What Nick actually saw** is a web-only bug: the study's night light
-  darkens the faces and text boxes. `cargo shuyi frame-png` (picture,
-  glyph and Playdate looks) draws them as bright as over the yard, so the
-  game's view and skin are right and the fault is in the live renderer.
-  Filed as **0774** (added to 1064's `blocked_by` and the roadmap).
+- **What Nick actually saw** was the study's faces and text boxes dark
+  in the web build of the October playtest. Checked 2026-11-18: in
+  today's build they are as bright as over the yard, in the web build
+  (its canvas read back in the browser), the desktop window (the engine's
+  capture mode: the window matches the raster exactly) and `cargo shuyi
+  frame-png` (picture, glyph and Playdate looks). Shown the web capture,
+  Nick confirmed it was the old build: nothing left to fix.
 - Recorded in `docs/design/look-and-feel.md`, *Places behind
   conversations*, "The faces over a darkened place".
