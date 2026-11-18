@@ -24,7 +24,7 @@ use shuyi_core::{Bot, Evaluate, Order, PlanSettings, TurnPlan};
 use trpg_core::{
     AiBehavior, AiWeights, BattleState, CastTarget, Command, Faction, GameMode, ItemId, Objective,
     Outcome, Phase, Pos, SideForecast, SpellId, Unit, UnitAction, UnitId, legal_commands,
-    next_command, threat_area,
+    next_command, threat_area, threat_tiles,
 };
 
 /// Points for each thing a playout changed, added up into its score
@@ -399,26 +399,17 @@ fn threats(state: &BattleState) -> Vec<Threat<'_>> {
         .filter(|u| u.faction.is_hostile_to(Faction::Player));
     enemies
         .filter_map(|e| {
-            let reach = ranges(e);
-            let strikes: Box<dyn Fn(Pos) -> bool> = if e.ai == AiBehavior::Stationary {
-                let from = e.pos;
-                Box::new(move |at| {
-                    let d = Pos::manhattan(from, at);
-                    reach.iter().any(|&(min, max)| (min..=max).contains(&d))
-                })
-            } else {
-                let units = state.units();
-                let area = threat_area(
-                    state.map(),
-                    state.terrain(),
-                    state.classes(),
-                    units,
-                    e.id,
-                    &reach,
-                )
-                .ok()?;
-                Box::new(move |at| area.contains(at))
-            };
+            // What the danger zone counts for it (ticket 0450).
+            let area = threat_tiles(
+                state.map(),
+                state.terrain(),
+                state.classes(),
+                state.units(),
+                e.id,
+                &ranges(e),
+            )
+            .ok()?;
+            let strikes: Box<dyn Fn(Pos) -> bool> = Box::new(move |at| area.contains(at));
             Some((e.id, strikes))
         })
         .collect()

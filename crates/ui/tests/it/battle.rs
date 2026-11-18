@@ -217,9 +217,9 @@ fn wait_all(h: &mut Harness, units: usize) {
 #[test]
 fn a_full_turn_of_waits_ends_with_auto_end_and_starts_turn_two() {
     let mut h = quick_battle();
-    // Auto-end on (off by default): a message says so.
+    // Auto-end on (off by default): a note over the map says so.
     h.keys("Shift+Space");
-    assert!(row(&h, 30).starts_with("Auto-end: ON"), "{}", row(&h, 30));
+    assert!(row(&h, 29).starts_with("Auto-end: ON"), "{}", row(&h, 29));
     wait_all(&mut h, 4);
     // The enemy phase's banner, then the enemies act, then the player's
     // turn 2.
@@ -297,9 +297,71 @@ fn info_and_danger_zone_keys() {
     assert!(shows(&h, "Test Mage"));
     h.keys("d");
     assert!(!shows(&h, "Weapon ranks"));
-    assert!(row(&h, 30).ends_with("w danger zone: OFF · Shift+Space auto-end: OFF"));
+    let toggles = |h: &Harness| crate::unpadded(&row(h, 30));
+    assert_eq!(
+        toggles(&h),
+        "w danger zone: OFF · Shift+Space auto-end: OFF"
+    );
     h.keys("w");
-    assert!(row(&h, 30).ends_with("w danger zone: ON · Shift+Space auto-end: OFF"));
+    assert_eq!(toggles(&h), "w danger zone: ON · Shift+Space auto-end: OFF");
+}
+
+/// The Quick Battle's Frost Elemental never moves (ticket 0450): the
+/// danger zone and the range shown when it is picked are only what it
+/// reaches from its tile, not what it could reach after walking its Mov.
+#[test]
+fn the_frost_elemental_threatens_only_from_its_tile() {
+    use trpg_core::ai::AiBehavior;
+    use trpg_core::{threat_area, threat_tiles};
+    let mut h = quick_battle();
+    h.keys("w");
+    let state = h.battle().unwrap().state().clone();
+    let elemental = state
+        .units()
+        .iter()
+        .find(|u| u.ai == AiBehavior::Stationary)
+        .unwrap()
+        .clone();
+    assert_eq!(elemental.pos, Pos::new(8, 7));
+    let area = |id, still: bool| {
+        let unit = state.unit(id).unwrap();
+        let ranges = state.threat_ranges(unit);
+        let (map, terrain, classes) = (state.map(), state.terrain(), state.classes());
+        let get = if still { threat_tiles } else { threat_area };
+        get(map, terrain, classes, state.units(), id, &ranges).unwrap()
+    };
+    // Four tiles from it, out of every other enemy's reach, yet in what it
+    // could reach if it walked.
+    let others: Vec<_> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Enemy && u.id != elemental.id)
+        .map(|u| area(u.id, false))
+        .collect();
+    let walked = area(elemental.id, false);
+    let far: Vec<Pos> = state
+        .map()
+        .tiles
+        .positions()
+        .filter(|&t| Pos::manhattan(t, elemental.pos) == 4)
+        .filter(|&t| others.iter().all(|a| !a.contains(t)))
+        .filter(|&t| walked.contains(t))
+        .collect();
+    assert_eq!(far, [Pos::new(10, 5)], "a tile of the walled fort");
+    let near = Pos::new(8, 6);
+    assert!(area(elemental.id, true).contains(near));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::DANGER), "{t:?}");
+    }
+    assert!(h.tints_at(near).contains(&range::DANGER));
+    // Picked, its range is the same few tiles.
+    h.keys("w");
+    go(&mut h, elemental.pos);
+    h.keys("f");
+    assert!(h.tints_at(near).contains(&range::ATTACK));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::ATTACK), "{t:?}");
+    }
 }
 
 /// The info screen, the map menu, the end-turn prompt and a banner only
@@ -399,11 +461,10 @@ fn next_unit_jumps_between_ready_units() {
 /// The key-help line, left of the right-aligned debug hint.
 fn help(h: &Harness) -> String {
     let buf = h.game().buffer();
-    (0..90)
+    let row = (0..90)
         .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+        .collect::<String>();
+    crate::unpadded(&row)
 }
 
 /// The lord (at (3, 5)) selected, the path steered two tiles right onto
@@ -705,6 +766,11 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }

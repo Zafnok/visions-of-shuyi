@@ -52,7 +52,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -79,7 +84,13 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
+      # Its cost: about +3 to +6 minutes a leg (0171's measure, macOS the most).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -108,7 +119,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - name: Test the crates that read the changed docs
@@ -135,7 +151,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       # No artifact of it: it embeds the private content, and a public
       # repository's artifacts can be downloaded by anyone (ADR-0117).
       - run: cargo shuyi web --release
@@ -163,7 +184,12 @@ jobs:
           required: "true"
       - run: rustup show
       - run: rustup target add thumbv7em-none-eabihf
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
@@ -198,7 +224,12 @@ jobs:
           required: "true"
       - run: rustup show
       - run: rustup target add thumbv7em-none-eabihf
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install the ARM compiler
         timeout-minutes: 8
         # No Recommends: they pull in the C++ standard library
@@ -256,7 +287,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo doc --workspace --no-deps --locked
@@ -283,7 +319,12 @@ jobs:
           required: "true"
       - run: rustup show
       - run: rustup component add llvm-tools-preview
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
@@ -326,7 +367,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       # A warning on a PR past about 3,000 changed lines; never a failure,
       # and only the number on an engine-pin/ or sonar/ PR (ADR-0101).
       - name: Report the PR's size
@@ -451,8 +497,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends libasound2-dev libx11-dev libxi-dev \
             libgl1-mesa-dev libudev-dev valgrind
           valgrind --version
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
+      # Its cost: about +3.5 minutes (0171's measure).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          cache-targets: false
           key: bench
       - name: The web package the export job made
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

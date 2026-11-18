@@ -19,6 +19,7 @@ mod engine;
 mod game_tools;
 mod icon;
 mod leaks;
+mod lettering;
 mod lines;
 mod map_sprite_import;
 mod mentions;
@@ -43,6 +44,8 @@ mod tileset_ron;
 mod title_art;
 mod voice;
 mod voice_test;
+#[cfg(test)]
+mod workflow_guard;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -68,6 +71,7 @@ test-card                          write the sprite test image, assets-test/imag
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 edge-marks                         write the map's edge arrows, assets/images/edge_marks.png\n  \
+lettering                          bake the chapter card's Cinzel sheets, assets/title/chapter_*\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
@@ -119,6 +123,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("edge-marks") => edge_marks(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
+        Some("lettering") => lettering(&args.collect::<Vec<_>>()),
         Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -611,6 +616,23 @@ fn effect_marks(args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("effect-marks: {e}");
+            1
+        }
+    }
+}
+
+fn lettering(args: &[String]) -> u8 {
+    if !args.is_empty() {
+        eprintln!("usage: cargo xtask lettering");
+        return 2;
+    }
+    match lettering::run(&repo_root()) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("lettering: {e}");
             1
         }
     }
@@ -1116,6 +1138,54 @@ mod tests {
         // A file name in playdate_images' test of a made-up bundle, not read.
         assert!(read.remove("assets/battlers/README.md").is_some());
         assert_eq!(listed, read, "changes.yml's `read by` lines");
+    }
+
+    /// No workflow job that checks out the private files keeps a build of
+    /// them in the Actions cache or an artifact, which a fork's pull request
+    /// can read (ADR-0117 §4, ticket 0171).
+    #[test]
+    fn no_job_with_private_files_caches_or_uploads_a_build() {
+        let dir = repo_root().join(".github/workflows");
+        let mut problems = Vec::new();
+        let mut guarded = 0;
+        for entry in std::fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_none_or(|e| e != "yml") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap();
+            let file = path.file_name().unwrap().to_string_lossy().into_owned();
+            guarded += text.matches("Swatinem/rust-cache@").count();
+            problems.extend(workflow_guard::check(&file, &text));
+        }
+        assert!(guarded >= 10, "{guarded}");
+        assert!(
+            problems.is_empty(),
+            "{}",
+            problems.join(
+                "
+"
+            )
+        );
+        // Each upload the check allows is still there.
+        for (file, job, upload) in workflow_guard::ALLOWED_UPLOADS {
+            let text = std::fs::read_to_string(dir.join(file)).unwrap();
+            assert!(
+                text.contains(&format!(
+                    "
+  {job}:
+"
+                )),
+                "{file}: {job}"
+            );
+            assert!(
+                text.contains(&format!(
+                    "path: {upload}
+"
+                )),
+                "{file}: {upload}"
+            );
+        }
     }
 
     /// Cargo links every file directly under a crate's `tests/` as its own
@@ -1725,6 +1795,12 @@ mod tests {
     fn edge_marks_rejects_args() {
         assert_eq!(edge_marks(&args(&["--bogus"])), 2);
         assert_eq!(dispatch(args(&["edge-marks", "x"]).into_iter()), 2);
+    }
+
+    #[test]
+    fn lettering_rejects_args() {
+        assert_eq!(lettering(&args(&["--bogus"])), 2);
+        assert_eq!(dispatch(args(&["lettering", "x"]).into_iter()), 2);
     }
 
     #[test]

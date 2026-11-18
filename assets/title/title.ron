@@ -4,6 +4,10 @@
     logo: "logo.png",
     // The words on the Game Over screen, in the logo's lettering (0830).
     game_over: Some("game_over.png"),
+    // The chapter title card's lettering (0812): Cinzel, baked by
+    // `cargo xtask lettering` into chapter_name.{png,ron} and
+    // chapter_line.{png,ron} here.
+    lettering: Some((heading: "chapter_name", line: "chapter_line")),
     backdrops: [
         "fields_a_dusk.png",
         "fields_a_night.png",

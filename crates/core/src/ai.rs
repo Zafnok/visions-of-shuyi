@@ -40,8 +40,10 @@
 //!    attacks, if it can. Else it moves to the tile outside the danger zone
 //!    if it can, then nearest (Manhattan) to an ally, then cheapest to
 //!    reach, then the lowest `(y, x)`, and waits. The danger zone is every
-//!    tile a hostile unit could attack this turn
-//!    ([`danger_zone`]).
+//!    tile a hostile unit could attack this turn if it walked its full Mov
+//!    first, even one that never moves (the player's danger zone,
+//!    [`danger_zone`](crate::movement::danger_zone), counts that one only
+//!    from its tile since ticket 0450; the AI kept the old rule).
 //! 2. [`Aggressive`](AiBehavior::Aggressive): attacks if it can. Else it
 //!    moves to the tile with the lowest flow distance (then cheapest to
 //!    reach, so it stays put rather than move for nothing, then lowest
@@ -189,7 +191,7 @@ use crate::combat::{CombatHp, Forecast, Side, base_damage, strike_order, striker
 use crate::geom::{Grid, Pos};
 use crate::item::{Equipped, WEAPON_SLOTS};
 use crate::magic::Affinity;
-use crate::movement::{Reach, TileSet, danger_zone, reachable};
+use crate::movement::{Reach, TileSet, ai_danger_zone, reachable};
 use crate::skill::{ActiveEffect, SkillCost, SkillId, SkillKind};
 use crate::spell::{SpellId, SpellKind};
 use crate::stats::{StatKind, StatValue};
@@ -904,7 +906,7 @@ impl<'a> Planner<'a> {
         let state = self.state;
         let mut dangers = self.dangers.borrow_mut();
         Rc::clone(dangers.entry(faction).or_insert_with(|| {
-            let zone = danger_zone(
+            let zone = ai_danger_zone(
                 state.map(),
                 state.terrain(),
                 state.classes(),

@@ -1123,6 +1123,7 @@
     (key: "battle.art.source.weapon", source: "weapon", text: "WEAPON"),
     (key: "battle.art.source.active", source: "active", text: "ACTIVE"),
     (key: "battle.art.ends_action", source: "ends action", text: "ENDS ACTION"),
+    (key: "battle.art.note.attack", source: "Attack: {effect}", text: "ATTACK: {effect}"),
     (key: "battle.art.note.no_counter", source: "no counter", text: "NO COUNTER"),
     (key: "battle.art.note.pierces", source: "pierces", text: "PIERCES"),
     (key: "battle.art.note.area", source: "one strike each", text: "ONE STRIKE EACH"),

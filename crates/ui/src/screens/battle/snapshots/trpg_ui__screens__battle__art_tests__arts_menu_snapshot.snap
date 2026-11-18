@@ -16,13 +16,13 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                     ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ Dex   7     Spd   7        ║
                     ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ Def   6     Res   5        ║
                     ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ Mov   5                    ║
-                    ..≈≈≈≈..··....┌─ Iron Sword 20/20 ─────────────┐  ║                            ║
-                    ....······....│ Flowing Cut     −2 dur  E      │  ║ Iron Sword        20/20    ║
-                    ..♣♣··....╦╦..│ Guard Break     −4 dur  D      │  ║ Atk  11     Hit 104        ║
-                    ♣♣♣♣··MaKn....│ Keen Edge       −3 dur  active │  ║ Crit  3     Avo  14        ║
-                    ♣♣♠♠··........├────────────────────────────────┤  ║ AS    5                    ║
-                                  │ +10 hit; no counter            │  ║                            ║
-                                  └────────────────────────────────┘  ║                            ║
+                    ..≈≈≈≈..··....┌─ Iron Sword 20/20 ──────────────┐ ║                            ║
+                    ....······....│ Flowing Cut     −2 dur  E       │ ║ Iron Sword        20/20    ║
+                    ..♣♣··....╦╦..│ Guard Break     −4 dur  D       │ ║ Atk  11     Hit 104        ║
+                    ♣♣♣♣··MaKn....│ Keen Edge       −3 dur  active  │ ║ Crit  3     Avo  14        ║
+                    ♣♣♠♠··........├─────────────────────────────────┤ ║ AS    5                    ║
+                                  │ Attack: +10 hit; no counter     │ ║                            ║
+                                  └─────────────────────────────────┘ ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -32,7 +32,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       ║                            ║
                                                                       ║ Gold 0                     ║
                                                                       ╚════════════════════════════╝
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  arrows choose · f confirm · d back                                                        F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -49,13 +49,13 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggccccc
 aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
 aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
 aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooorrssjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjbbddddddddddddccccccbbbbbbbbbbbbbbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjbccccccccccccccccccccccccccccccccbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoojjjjttjjbuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuubaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoovvvvjjjjbccccccccccccccccccccccccccccccccbaabcggggccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabcggcccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjbbddddddddddddccccccbbbbbbbbbbbbbbbabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjbcccccccccccccccccccccccccccccccccbabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoojjjjttjjbuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuubabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoovvvvjjjjbcccccccccccccccccccccccccccccccccbabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbabcggcccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcccccccccccccccccccccccccccccccccbabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -65,7 +65,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawxxxxxxxxxxxxxxxxxxxxwwwwwwwwwwwxxxxxxxxxxxxxxa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 awwwwwwxxxxxxxxxxwxxxxxxxxxxxwxxxxxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaxxxxxxxxa
 --- legend ---
 a = fg:text bg:black

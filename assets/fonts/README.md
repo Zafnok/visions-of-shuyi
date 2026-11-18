@@ -1,6 +1,9 @@
 # Fonts
 
-The game draws every cell with one bitmap font (ADR-0003, ADR-0018).
+The game draws every cell with one bitmap font (ADR-0003, ADR-0018). The
+one exception is the chapter title card's lettering, Cinzel, baked into
+glyph sheets in `assets/title/` (ticket 0812, ADR-0128; its licence is
+`Cinzel-LICENSE.txt` here).
 
 ## Choice: Terminus 8×16 (`ter-u16n`, medium weight)
 
@@ -27,6 +30,7 @@ Why Terminus:
 | `atlas.ron` | `FontAtlasDef`: cell size, columns and `char → cell index` map |
 | `atlas_1bit.bin` | The same glyphs packed one bit a pixel for the Playdate (ADR-0074): each glyph in cell index order, 16 bytes (a byte a row, the highest bit the left pixel, a set bit the glyph), so the device never decodes a PNG |
 | `Terminus-LICENSE.txt` | The font's licence (OFL-1.1), shipped with the game |
+| `Cinzel-LICENSE.txt` | Cinzel's licence (OFL-1.1), the chapter card's lettering (`assets/title/README.md`), shipped with the game |
 
 The three atlas files are **generated**; never edit them by hand. The sources are
 in `assets-src/fonts/` (outside `assets/`, so they aren't embedded in the

@@ -11,6 +11,7 @@ use super::BattleScreen;
 use super::playback::{Beat, Playback, TIMINGS};
 use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
+use super::tests::unpadded;
 use super::view::{BattleView, ForecastView, ProgressView};
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
@@ -338,7 +339,7 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
     assert_eq!(hovered(&h), "");
     assert_eq!(message(&h), "");
     assert_eq!(
-        help(&h),
+        unpadded(&help(&h)),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
 }

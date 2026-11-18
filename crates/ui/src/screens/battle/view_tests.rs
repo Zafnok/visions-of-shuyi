@@ -32,7 +32,10 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     let s = quick();
     let view = s.view(&c);
     assert!(view.panel.is_some());
-    assert_eq!(view.status, s.status(&c));
+    let toggles = view.toggles.as_ref().unwrap();
+    let auto_end = &toggles.auto_end.as_ref().unwrap().0;
+    let row = format!("{} · {}", toggles.left.plain(), auto_end.plain());
+    assert_eq!(row, s.status(&c).plain());
     assert_eq!(view.help, s.help_styled(&c));
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
     assert_eq!(view.scene, s.scene(&c));
