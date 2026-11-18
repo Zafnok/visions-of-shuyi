@@ -294,7 +294,7 @@ impl Harness {
         snapshot_of(game.buffer(), area, &game.ctx().palette)
     }
 
-    /// The current frame without its help bar ([`help_rows`]), in the
+    /// The current frame without the top screen's help rows, in the
     /// snapshot format: what most snapshots show, so a change to the help
     /// bar re-blesses only its own look tests (1290). It shadows the
     /// engine's [`Core::snapshot`]; [`snapshot_whole`](Self::snapshot_whole)
