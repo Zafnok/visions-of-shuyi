@@ -141,14 +141,9 @@ pub fn bake(font: &[u8], px: f32) -> Result<Sheet, String> {
         }
         ink.glyphs.insert(*c, on);
     }
-    let def = FontAtlasDef {
-        cell_w,
-        cell_h,
-        columns: COLUMNS,
-        ink: ink_of(&ink, &glyphs),
-        glyphs,
-        ..FontAtlasDef::default()
-    };
+    let font_ink = ink_of(&ink, &glyphs);
+    let mut def = FontAtlasDef::new(cell_w, cell_h, glyphs, COLUMNS);
+    def.ink = font_ink;
     Ok(Sheet {
         def,
         size: (width, height),

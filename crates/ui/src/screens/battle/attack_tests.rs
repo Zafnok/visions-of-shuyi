@@ -57,13 +57,13 @@ fn help(h: &Harness) -> String {
 
 /// The message line; empty with none.
 fn message(h: &Harness) -> String {
-    view(h).message.map(|m| m.text).unwrap_or_default()
+    view(h).message.map_or_default(|m| m.text)
 }
 
 /// The name of the unit the side panel shows; empty with none.
 fn hovered(h: &Harness) -> String {
     let unit = view(h).panel.and_then(|p| p.unit);
-    unit.map(|u| u.name).unwrap_or_default()
+    unit.map_or_default(|u| u.name)
 }
 
 /// The HP the side panel shows of its unit (`HP 9/20`).

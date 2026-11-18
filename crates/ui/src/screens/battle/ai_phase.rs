@@ -102,8 +102,7 @@ impl AiAction {
             before
                 .iter()
                 .find(|u| u.id == unit)
-                .map(|u| vec![u.pos])
-                .unwrap_or_default()
+                .map_or_default(|u| vec![u.pos])
         } else {
             path
         };

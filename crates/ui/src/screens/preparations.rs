@@ -1042,7 +1042,7 @@ impl PreparationsScreen {
         ConsumableRowView {
             name: self.item_name(words, id),
             count,
-            effect: effect.map(|e| effect_text(words, e)).unwrap_or_default(),
+            effect: effect.map_or_default(|e| effect_text(words, e)),
         }
     }
 

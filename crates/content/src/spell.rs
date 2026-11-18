@@ -604,7 +604,7 @@ mod tests {
             .find(|(_, c)| !c.spells.is_empty())
             .unwrap_or_else(|| panic!("no class with spells"));
         let errors = check_references(&SpellTable::default(), &real, &CharacterTable::default());
-        let first = errors.first().map(ToString::to_string).unwrap_or_default();
+        let first = errors.first().map_or_default(ToString::to_string);
         let line = bundle::file(CLASSES_PATH)
             .and_then(|src| line_of(&src, &format!("id: \"{}\"", id.0)))
             .unwrap_or(0);

@@ -72,9 +72,7 @@ fn texts(view: &LogView) -> Vec<&str> {
 /// The expression of the portrait on the left on screen.
 fn left_expression(h: &Harness) -> String {
     let view = dialogue(h).player().current();
-    view.left
-        .map(|p| p.expression.to_owned())
-        .unwrap_or_default()
+    view.left.map_or_default(|p| p.expression.to_owned())
 }
 
 #[test]

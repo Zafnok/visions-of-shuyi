@@ -230,7 +230,7 @@ mod tests {
         let tip = |id: &str| {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
             let how = tip.and_then(|t| t.how.as_deref());
-            how.map(|h| h.replace('\n', " ")).unwrap_or_default()
+            how.map_or_default(|h| h.replace('\n', " "))
         };
         let default = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let mut split = content

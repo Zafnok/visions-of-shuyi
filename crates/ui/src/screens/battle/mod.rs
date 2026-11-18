@@ -798,7 +798,7 @@ impl BattleScreen {
             Queued::Flight(f) => Some(f),
             _ => None,
         });
-        waiting.map(|f| f.views(self.pace.0)).unwrap_or_default()
+        waiting.map_or_default(|f| f.views(self.pace.0))
     }
 
     /// Asks for the outcome's music as its banner comes on screen (0809,

@@ -1120,7 +1120,7 @@ fn the_unseen_tips_are_those_not_shown_yet_and_none_while_tips_are_off() {
     let shown = s
         .shown_tip()
         .and_then(|t| c.game.content.tips.for_trigger(t));
-    let shown = shown.map(|t| t.id.clone()).unwrap_or_default();
+    let shown = shown.map_or_default(|t| t.id.clone());
     let unseen: Vec<String> = s.tips.unseen(&c).map(|t| t.id.clone()).collect();
     assert_eq!(unseen.len(), c.game.content.tips.tips.len() - 1);
     assert!(!unseen.contains(&shown), "{shown} was shown");

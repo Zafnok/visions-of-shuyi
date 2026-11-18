@@ -602,7 +602,7 @@ impl ShopScreen {
                 enabled: false,
             };
         }
-        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let stats = def.map_or_default(|def| stat_line(words, def));
         let detail = match (&offer.txn, offer.durability) {
             (ShopTxn::Repair { .. }, Some((left, max))) => format!("{left}/{max} → {max}/{max}"),
             (_, Some((left, max))) => format!("{left}/{max}  {stats}"),
@@ -629,7 +629,7 @@ impl ShopScreen {
                 "battle.shop.gold",
                 &[("gold", &gold_text(self.preview.gold()))],
             ),
-            unit: unit.map(|u| words.unit(u).to_owned()).unwrap_or_default(),
+            unit: unit.map_or_default(|u| words.unit(u).to_owned()),
             tabs: tabs.iter().map(|t| ctx.text(t.key()).to_owned()).collect(),
             tab: self.tab,
             lines: offers.iter().map(|o| self.line(words, o)).collect(),

@@ -257,7 +257,7 @@ pub fn units(sprites: &[MapSprite]) -> String {
         _ => None,
     });
     let fallback = sprites.iter().find(|s| s.who == For::Fallback);
-    let fallback = fallback.map(entry).unwrap_or_default();
+    let fallback = fallback.map_or_default(entry);
     format!(
         "    unit_px: ({}, {}),\n    units: (\n        \
          characters: {{\n{characters}        }},\n        classes: {{\n{classes}        }},\n        \

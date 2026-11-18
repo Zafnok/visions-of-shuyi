@@ -247,10 +247,15 @@ fn a_name_in_a_pack_is_not_empty_and_holds_no_brace() {
             "xx/data.ron: \"names.keep\": a name can't hold a brace",
         ]
     );
+    // An unclosed `{` is also not a message, which the engine reports
+    // first (engine 2261).
     let ron = r#"[(key: "names.keep", source: "Heth Keep", text: "{Burg")]"#;
     assert_eq!(
         data_errors(ron),
-        ["xx/data.ron: \"names.keep\": a name can't hold a brace"]
+        [
+            "xx/data.ron: \"names.keep\": the text isn't a message: at character 5: expected `}` or `,` after the argument's name",
+            "xx/data.ron: \"names.keep\": a name can't hold a brace",
+        ]
     );
     // Any other data text may be anything, even empty.
     let ron = r#"[(key: "items.potion.name", source: "Potion", text: "")]"#;

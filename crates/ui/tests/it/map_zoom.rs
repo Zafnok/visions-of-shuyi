@@ -281,7 +281,7 @@ fn a_menu_opens_beside_its_unit_at_twice_the_size() {
 
 /// The sides the map goes on past in the map scene: left, right, up, down.
 fn more(h: &Harness) -> [bool; 4] {
-    let m = h.map_scene().map(|s| s.more).unwrap_or_default();
+    let m = h.map_scene().map_or_default(|s| s.more);
     [m.left(), m.right(), m.up(), m.down()]
 }
 

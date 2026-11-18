@@ -236,8 +236,7 @@ fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
         .ask
         .keys
         .as_ref()
-        .map(shuyi_ui::text::StyledText::plain)
-        .unwrap_or_default();
+        .map_or_default(shuyi_ui::text::StyledText::plain);
     let lines = [
         (question.ask.text.as_str(), UiColor::Text),
         (question.cost.as_str(), UiColor::Text),

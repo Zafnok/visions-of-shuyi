@@ -205,7 +205,7 @@ impl Content {
     /// terrain); the look of a map that names none if it is no file's.
     pub fn map_look(&self, map: &BattleMap) -> MapLook {
         let file = self.maps.values().find(|def| def.map == *map);
-        file.map(|def| def.look.clone()).unwrap_or_default()
+        file.map_or_default(|def| def.look.clone())
     }
 
     /// How `battle`'s map looks: [its map's look](Self::map_look), in the

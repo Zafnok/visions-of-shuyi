@@ -384,11 +384,7 @@ fn report_load(running: &mut Running) {
     // SAFETY: one thread (see `Front`).
     let reads = unsafe { (*READS.0.get()).take() }.unwrap_or_default();
     LOADED.store(true, Ordering::Relaxed);
-    let mut lines: Vec<String> = running
-        .report
-        .take()
-        .map(|report| report.log)
-        .unwrap_or_default();
+    let mut lines: Vec<String> = running.report.take().map_or_default(|report| report.log);
     lines.extend(report::loaded(
         LOAD_MS.load(Ordering::Relaxed),
         game_stack::high_water(),

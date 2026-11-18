@@ -361,7 +361,7 @@ impl TownScreen {
                 enabled: false,
             };
         }
-        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let stats = def.map_or_default(|def| stat_line(words, def));
         let detail = match (&d.trade, d.durability) {
             (TownTrade::RepairStock(_) | TownTrade::RepairHeld { .. }, Some((left, max))) => {
                 let whose = d.holder.and_then(|i| self.campaign.roster.get(i));

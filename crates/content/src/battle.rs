@@ -322,9 +322,7 @@ pub fn light_of(
 /// reports that).
 pub fn unit_names(battle: &str) -> BTreeMap<String, UnitId> {
     let path = format!("{BATTLES_DIR}/{battle}{EXTENSION}");
-    bundle::file(&path)
-        .map(|source| unit_names_of(&source))
-        .unwrap_or_default()
+    bundle::file(&path).map_or_default(|source| unit_names_of(&source))
 }
 
 /// The enemies battle file `source` gives an `id`, by it, as their unit

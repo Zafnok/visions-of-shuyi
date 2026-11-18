@@ -273,8 +273,7 @@ pub fn weapon_name(state: &BattleState, words: Words<'_>, unit: UnitId, slot: us
     state
         .unit(unit)
         .and_then(|u| u.loadout.weapon(slot))
-        .map(|w| words.item(&w.def, state.items()).to_owned())
-        .unwrap_or_default()
+        .map_or_default(|w| words.item(&w.def, state.items()).to_owned())
 }
 
 /// Picking a target for an attack with one weapon or attack spell, with the
