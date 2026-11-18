@@ -121,7 +121,9 @@ What else the session checked, so the next one need not:
 - **The disclosure:** `shuyi.ron`'s `allowed_pack_entries` is empty
   ("no package holds a pack") and `allowed_files` lists no `audio/` or
   `music/` `.pda`: the Playdate's pack entries and baked files need
-  their lines.
+  their lines. Either order with 0180: if it is done, add them to
+  `cargo xtask disclosure`'s sources and run it; if not, write them by
+  hand, and 0180 generates them later.
 
 The original ticket also promised deleting 754 lines of audio tooling
 and 1,422 lines of exporter tooling, besides all platform modules/tests.

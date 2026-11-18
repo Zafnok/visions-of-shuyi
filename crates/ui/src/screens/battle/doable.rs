@@ -7,7 +7,7 @@
 use trpg_content::DoneWhen;
 use trpg_core::{BattleState, CastTarget, Faction, Phase, TerrainId, Unit};
 
-use super::art_list::{art_lines, can_use_art};
+use super::art_list::{art_lines, can_attack_with_art, can_use_art};
 use super::magic::{knows_spells, spell_choices};
 use super::mode::Selection;
 
@@ -22,6 +22,9 @@ pub struct Doable {
     attack: Option<bool>,
     /// Some unit left has an art it could use from a tile it can reach.
     art: Option<bool>,
+    /// Some unit left has an art or active it could attack with from a
+    /// tile it can reach.
+    art_attack: Option<bool>,
     /// Some unit left could aim a spell at a tile from a tile it can reach.
     tile_spell: Option<bool>,
 }
@@ -35,6 +38,9 @@ impl Doable {
                 .attack
                 .get_or_insert_with(|| any_left(state, reaches_enemy)),
             DoneWhen::ArtsOpened => *self.art.get_or_insert_with(|| any_left(state, has_art)),
+            DoneWhen::ArtAttacked => *self
+                .art_attack
+                .get_or_insert_with(|| any_left(state, attacks_with_art)),
             DoneWhen::TileAimed => *self
                 .tile_spell
                 .get_or_insert_with(|| any_left(state, aims_tile)),
@@ -85,6 +91,18 @@ fn has_art(state: &BattleState, sel: &Selection) -> bool {
             .stoppable()
             .iter()
             .any(|dest| can_use_art(&art_lines(state, sel.unit, dest)))
+}
+
+/// Whether `sel` has an art or an active it could attack with from some
+/// tile it can stop on: [`has_art`] but for an art used as an action of
+/// its own (Overwatch), which is no attack (ticket 0490).
+fn attacks_with_art(state: &BattleState, sel: &Selection) -> bool {
+    reaches_enemy(state, sel)
+        && sel
+            .reach
+            .stoppable()
+            .iter()
+            .any(|dest| can_attack_with_art(state, &art_lines(state, sel.unit, dest)))
 }
 
 /// Whether `sel` has a spell it could aim at a tile from some tile it can
@@ -151,6 +169,7 @@ mod tests {
             DoneWhen::ForecastOpened,
             DoneWhen::Attacked,
             DoneWhen::ArtsOpened,
+            DoneWhen::ArtAttacked,
             DoneWhen::TileAimed,
         ] {
             assert!(can(&s, done), "{done:?}");
@@ -161,6 +180,7 @@ mod tests {
         assert!(can(&s, DoneWhen::Attacked));
         assert!(can(&s, DoneWhen::ForecastOpened));
         assert!(!can(&s, DoneWhen::ArtsOpened));
+        assert!(!can(&s, DoneWhen::ArtAttacked));
         assert!(can(&s, DoneWhen::TileAimed));
         assert!(can(&s, DoneWhen::ThreatPointed));
         assert!(can(&s, DoneWhen::UnitMoved));
@@ -211,5 +231,6 @@ mod tests {
         }
         assert!(can(&s, DoneWhen::Attacked));
         assert!(!can(&s, DoneWhen::ArtsOpened));
+        assert!(!can(&s, DoneWhen::ArtAttacked));
     }
 }

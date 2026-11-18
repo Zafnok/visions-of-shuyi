@@ -18,7 +18,8 @@
 // A lesson is only up when a unit still to act that turn could do what it
 // asks (ticket 0464): attack (ForecastOpened, Attacked) needs one that could
 // reach an enemy, ArtsOpened one with an art it could use from a tile it can
-// reach, TileAimed one that could aim a spell at a tile, the other unit items
+// reach, ArtAttacked one with an art or active it could attack with from
+// one, TileAimed one that could aim a spell at a tile, the other unit items
 // any unit. One whose turn to open comes when nobody can doesn't open, and
 // waits for its trigger to fire again, that turn or later. One open is put
 // away the moment nobody left can, and comes back the next time its trigger
@@ -53,7 +54,8 @@
 // done_when: Pressed("<Action>") (the battle used that action, e.g.
 // Pressed("CursorUp"), Pressed("Info"), Pressed("NextUnit")), CursorMoved
 // (any way), UnitSelected, UnitMoved (where the unit goes was picked),
-// ActionMenuOpened, ArtsOpened, ForecastOpened, Attacked, TileAimed (a spell
+// ActionMenuOpened, ArtsOpened, ArtAttacked (attacked with an art or an
+// active from the Arts menu), ForecastOpened, Attacked, TileAimed (a spell
 // aimed at a tile), ThreatPointed / SafePointed (a selected unit's path
 // pointed at a tile with / without threat arrows), RewindOpened,
 // RewindClosed, OptionsOpened, TurnEnded.
@@ -165,10 +167,11 @@
             level: Short,
             trigger: ArtsAvailable,
             title: "Combat Arts",
-            text: "Arts are heavy hitters with their own menu.\nThey cost weapon wear, or uses per battle.",
+            text: "An art is an attack, not a buff: one fight,\nevery strike boosted. It costs weapon wear.",
             face: "sly",
             items: [
                 (label: "Open Arts in the unit's menu", done_when: ArtsOpened),
+                (label: "Attack with an art", done_when: ArtAttacked),
             ],
         ),
         (

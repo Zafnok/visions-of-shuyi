@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 0450 — Danger zone of an enemy that never moves
@@ -86,18 +86,18 @@ it):
 
 ## Acceptance criteria
 
-- [ ] A `core` unit test: a `Stationary` unit with Mov 5 and a range 1–2
+- [x] A `core` unit test: a `Stationary` unit with Mov 5 and a range 1–2
       weapon has a threat area of the 13 tiles within 2 of it; the same
       unit as `Guard` or `Aggressive` has the full area.
-- [ ] A property test: for any scene, a tile is in the danger zone exactly
+- [x] A property test: for any scene, a tile is in the danger zone exactly
       when `threats_at` lists someone for a unit standing on it (for tiles
       the unit can stand on).
-- [ ] A test in `crates/ui/tests/it/` reads `MapScene`: in the Quick Battle
+- [x] A test in `crates/ui/tests/it/` reads `MapScene`: in the Quick Battle
       with the danger zone on, a tile 4 away from the Frost Elemental and
       out of every other enemy's reach is not tinted `RangeKind::Danger`.
-- [ ] The AI soak test and `ch01_winnable` pass unchanged (the AI plays the
+- [x] The AI soak test and `ch01_winnable` pass unchanged (the AI plays the
       same).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -109,5 +109,39 @@ it):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `core` has one place that says what a unit threatens:
+  `threat_tiles` in `crates/core/src/movement.rs`. For a `Stationary`
+  unit it is its own tile plus every tile at a distance one of its ranges
+  covers (nothing with no ranges); for every other unit it is
+  `threat_area`, unchanged. `danger_zone`, `threats_at`, the threat
+  planner and the battle's threat areas (1251, 1259) all use it, so
+  `threats_at` lost its own `Stationary` branch.
+- The range shown for a picked enemy (`threat_of` in
+  `crates/ui/src/screens/battle/mode.rs`) and the persona bots' `threats`
+  (`crates/bots/src/persona.rs`; 1180 isn't done) call `threat_tiles`.
+- **Deviation: the AI keeps the old rule.** The AI's healer uses the
+  danger zone to pick a safe tile, so it now calls a crate-private
+  `ai_danger_zone`, the old union of `threat_area`s (an enemy that never
+  moves counted as if it walked). The AI soak test and `ch01_winnable`
+  pass unchanged.
+- One edge changed in `threats_at`: a unit asked about the tile a
+  stationary enemy stands on is now threatened by it (its own tile is
+  in what it threatens, as a moving enemy's is). No unit can stand there,
+  so nothing a player sees changes. A tile off the map is never
+  threatened by it now, as for a moving enemy (the property test against
+  the planner found the two disagreeing there; its seed is kept in
+  `proptest-regressions`).
+- Tests: two unit tests and a property test in `movement/tests.rs`
+  (danger zone holds a free tile exactly when `threats_at` lists someone
+  for the unit standing on it, with stationary units and random ranges);
+  `the_frost_elemental_threatens_only_from_its_tile` in
+  `crates/ui/tests/it/battle.rs` reads the scene's tints for the danger
+  zone and for the picked elemental. The Quick Battle danger-zone
+  snapshot changed: the tiles round the Frost Elemental beyond its
+  range lost the danger tint, read and accepted.
+- Pictures: `docs/screenshots/0450-danger-zone.png`,
+  `docs/screenshots/0450-picked-elemental.png`.
+- No starting rules: the ticket and Fire Emblem's boss ranges settled it.
+- For the Act 1 playtest (1064): in Chapter 1, switch the danger zone on
+  and look at the keep; pick Harl to see his own range. Both should be the
+  few tiles round him, not a wide area.

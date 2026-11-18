@@ -21,7 +21,7 @@ expression: "format!(\"{list}\\n=== forecast ===\\n{forecast}\")"
                     ..♣♣··..│ Guard Break     −4 dur  D       broken │║ Atk   8     Hit  84        ║
                     ♣♣♣♣··Ma│ Keen Edge       −3 dur  active  broken │║ Crit  3     Avo  14        ║
                     ♣♣♠♠··..├────────────────────────────────────────┤║ AS    5                    ║
-                            │ follow-up ×3/2                         │║                            ║
+                            │ Attack: follow-up ×3/2                 │║                            ║
                             └────────────────────────────────────────┘║                            ║
                                                                       ║                            ║
                                                                       ║                            ║

@@ -70,6 +70,12 @@ command, not by a new gameplay sign-off.
   all --brief`. Missing plans are errors, not `allow-no-plan` successes.
   Preserve 0514's lever filtering and 0515's concurrency: each push runs
   to completion; a newer PR commit may cancel its previous run.
+  Preserve what 0172, 0173 and 0174 added, if done: the lever
+  expansion from the `assets-private.rev` pins (0172); the
+  comment/test-only lever stripping, the report reuse by input hash and
+  the seed-range split with its `merge` job (0173; if the engine can't
+  split a stage and merge, that is an engine ticket first); the draft
+  skip and `ready_for_review` (0174).
   Preserve 0530's split too: one job per battle (all its personas in
   one run) and a job that gathers their summaries, since one job
   playing every stage in turn runs out of time. If the engine's
