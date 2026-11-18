@@ -828,6 +828,20 @@ mod tests {
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// `voice`: its help, 2 for arguments it can't read, 1 for a run that
+    /// fails (a scene or a language the game doesn't have).
+    #[test]
+    fn voice_help_bad_args_and_a_failed_run() {
+        assert_eq!(voice(&args(&["status", "--help"])), 0);
+        assert_eq!(voice(&args(&["--bogus"])), 2);
+        assert_eq!(voice(&args(&["status", "--lang"])), 2);
+        assert_eq!(voice(&args(&["status", "--lang", "zz"])), 1);
+        assert_eq!(
+            dispatch(args(&["voice", "status", "--scene", "no_such_scene"]).into_iter()),
+            1
+        );
+    }
+
     #[test]
     fn dispatch_with_unknown_command_fails() {
         assert_eq!(dispatch(args(&["bogus"]).into_iter()), 2);
