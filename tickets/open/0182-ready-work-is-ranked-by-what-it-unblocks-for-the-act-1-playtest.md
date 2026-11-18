@@ -34,9 +34,25 @@ it. This ticket adds the check so it can't come back.
 Readiness is already defined (`tickets/README.md`, *Picking the next
 ticket*); this ticket uses that rule as is.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B5 with 1180, 1207, 0173, 1170 and 1294):
+- **1064's blocker list is kept by hand.** It held 163 ids on `adb04590`
+  (more are being added) and 42 commits have edited it, so parallel sessions conflict on one line.
+  The ROADMAP's lane lists are hand-kept the same way. Steps 8–9 derive
+  both from a `path:` field.
+- **Playdate order is a ranking call.** Speed tickets 1057 and 1068 (both
+  on 1064) and 1078 land on Playdate code that 1170 disconnects, and
+  1170 is listed *Off the path*. Ranking by what a ticket unblocks would
+  put 1170 before them, which reverses the retro's choice to take 1170
+  off 1068's `blocked_by`. Which comes first on the Act 1 gate is
+  Nick's ranking call, not this tool's: the output shows the question
+  (step 10) and never reorders it.
+
 ## Nick input
 
-None.
+None to build it. The tool surfaces one open ranking question (step 10):
+does Playdate speed work (1057, 1068, 1078) wait for 1170? It goes to
+Nick with his other questions (0184), and this ticket doesn't answer it.
 
 ## Scope
 
@@ -48,8 +64,15 @@ None.
   paragraph names is in 1064's transitive `blocked_by`.
 - `work-ticket` §1 and `tickets/README.md` *Picking the next ticket*:
   with no ticket named, take the top of `ready-tickets`.
+- A `path:` frontmatter field (`act1`, optional, with an optional
+  `lane:` letter), 1064's `blocked_by` derived from it, and the
+  ROADMAP's lane lists generated from the same fields (steps 8–9).
+- A printed note when a ready chain ticket edits code that a ready
+  off-path ticket retires (step 10).
 
 **Out (do not do):**
+- Deciding whether Playdate speed work waits for 1170, or whether the
+  Playdate is on the 1064 gate at all: Nick's calls (0184).
 - `status: blocked` against `blocked_by` (0147 does it). The `parked`
   status (0181): it isn't `todo`, so a parked ticket is never ready.
 - Ranking Nick's decisions and stating their cost (0184). Here
@@ -114,9 +137,31 @@ None.
    row, and say in one sentence why. A ticket off the chain is worked
    only when the user names it. Mirror it in `tickets/README.md` and
    run `pwsh -File scripts/sync-agent-skills.ps1 -Check`.
+8. **`path: act1`.** Add `path` and `lane` to `TicketFields` (optional;
+   `path` is `act1` or absent, `lane` one capital letter). In this PR,
+   set `path: act1` on every ticket in 1064's `blocked_by` when this
+   ticket starts (163 on `adb04590`), and `lane:` where the ROADMAP's *Act 1 critical path* puts it
+   in a lane. `cargo xtask ticket-lint --fix-path` rewrites 1064's
+   `blocked_by` as the sorted ids of open and done tickets with
+   `path: act1`; plain `ticket-lint` fails when they differ. A new path
+   ticket then edits only its own file. Say so in `write-ticket` and
+   1064's Context.
+9. **ROADMAP lanes.** Between `<!-- lane X: generated -->` and
+   `<!-- /lane X -->` markers, the same `--fix-path` writes each lane's
+   tickets (bold id, title, ~~struck~~ when done) in `blocked_by` order.
+   The prose around a list stays hand-written. The lint fails on a
+   stale list. Convert the lanes whose lists are plain ids; leave a lane
+   whose order is written in prose for a later pass and name it in the
+   completion notes.
+10. **Retiring code.** Read an optional `retires:` list of paths on a
+    ticket (1170 gets `crates/playdate/src/pd/`; 1204–1206 their
+    paths). Under the list, print one line per ready chain ticket whose
+    Scope names a retired path: `1068 edits code 1170 retires; which
+    goes first is Nick's ranking call (0184)`. Never change the rank.
 
 Expected size: about 180 production lines (`ready.rs` about 130, the
-lint about 50) and 200 lines of tests.
+lint about 50) and 200 lines of tests, plus about 120 production and
+120 test lines for steps 8–10 and one frontmatter line on each of those tickets.
 
 ## Acceptance criteria
 
@@ -130,6 +175,11 @@ lint about 50) and 200 lines of tests.
       case), and passes on `main`.
 - [ ] `work-ticket` §1 and `tickets/README.md` name the command, and
       `sync-agent-skills.ps1 -Check` passes.
+- [ ] 1064's `blocked_by` equals the `path: act1` tickets, `ticket-lint`
+      fails on a fixture where they differ or a generated lane list is
+      stale, and `--fix-path` makes both pass again.
+- [ ] On `main` the output prints the 1170 line for 1057 and 1068 (or
+      says why not) and their rank is the same with and without it.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
@@ -141,7 +191,8 @@ lint about 50) and 200 lines of tests.
 - Unit (`tickets.rs`): bold ids and both kinds of range are read from
   a fixture paragraph; plain numbers and engine numbers are not; the
   off-path error names the chain blocker; a missing paragraph is an
-  error.
+  error; `path`/`lane` read and rejected when malformed; 1064's list
+  and a lane block regenerated from fixture tickets.
 
 ## Completion notes
 

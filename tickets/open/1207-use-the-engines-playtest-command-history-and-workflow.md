@@ -30,6 +30,13 @@ its tests (641 lines), plus a workflow loop. This ticket removes those
 copies, as the original 1180 required
 ([ADR-0095](../../docs/adr/0095-playtest-personas-plan-their-turn-and-score-what-a-player-sees.md)).
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B5 with 1180, 0173, 1170, 0182 and 1294): the copy keeps
+growing. `playtest.rs` is now 747 lines and its tests 733;
+`playtest.yml` is 251 (it was 94). Order: 1180, then this, then 0173.
+0173's levers and report reuse (its steps 1–5) fold in here, on the
+engine's workflow, so playtest CI is built once.
+
 **The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/xtask/src/playtest.rs`.
 
 ## Nick input
@@ -70,17 +77,22 @@ command, not by a new gameplay sign-off.
   all --brief`. Missing plans are errors, not `allow-no-plan` successes.
   Preserve 0514's lever filtering and 0515's concurrency: each push runs
   to completion; a newer PR commit may cancel its previous run.
-  Preserve what 0172, 0173 and 0174 added, if done: the lever
-  expansion from the `assets-private.rev` pins (0172); the
-  comment/test-only lever stripping, the report reuse by input hash and
-  the seed-range split with its `merge` job (0173; if the engine can't
-  split a stage and merge, that is an engine ticket first); the draft
-  skip and `ready_for_review` (0174).
+  Preserve what 0172 and 0174 added, if done: the lever expansion from
+  the `assets-private.rev` pins (0172; if not done, whichever lands
+  second merges the other's lever-script lines); the draft skip and
+  `ready_for_review` (0174).
+- **From 0173 (its steps 1–5 and their acceptance criteria):** the
+  narrower code levers, the comment/test-only lever stripping and their
+  unix-only test; the input hash and report reuse (cache, and the merged
+  PR's run on `main`). Write the hash's file list against the plan's
+  paths, not the deleted `crates/xtask/src/playtest.rs`. The seed-range
+  split and its merge stay in 0173, after this ticket.
   Preserve 0530's split too: one job per battle (all its personas in
   one run) and a job that gathers their summaries, since one job
   playing every stage in turn runs out of time. If the engine's
   reusable workflow can't split by stage, that is an engine ticket
-  first.
+  first (the 2026-11-17 sweep found it can't yet, a per-battle matrix;
+  ask Nick before filing it, the `engine-change` skill).
 - Replace the deleted wrapper's path in `.github/playtest-levers.sh`
   with the plan's new paths. Ensure `engine-pin` moves the reusable
   workflow's engine SHA with the dependency pin, using its existing
@@ -153,12 +165,16 @@ change that row here, and 1233 leaves it.
    `cargo xtask ticket-lint --check-engine`.
 
 **Expected size:** about 80–100 new production lines for the plan and
-about 1,305 deleted wrapper/test lines, plus a small replacement workflow,
+about 1,480 deleted wrapper/test lines (1,305 when written), plus a small replacement workflow,
 focused CLI tests, dispatch removal, docs and the ticket move. Plan about
 1,950–2,000 total changed lines, including deletions and tests, rather
 than counting added production lines alone. Re-estimate before coding;
 if the full diff no longer fits, split a standalone piece without
-dropping any acceptance requirement (ADR-0101).
+dropping any acceptance requirement (ADR-0101). 0173's steps 1–5 add
+about 90 lines of shell, 60 of workflow and 150 of tests, about 2,300
+in all, which is over the 2,000 plan: if the re-estimate stays over,
+hand them back to 0173 (after this ticket) before coding rather than
+drop them, and say so in 0173.
 
 ## Acceptance criteria
 
@@ -183,6 +199,8 @@ dropping any acceptance requirement (ADR-0101).
 - [ ] The lever regression tests still skip art/dialogue-only changes
       and play for the new plan's changes; push runs cannot cancel one
       another, and the next pin update moves the workflow SHA too.
+- [ ] 0173's lever, merge-diff and reuse criteria pass here (unless
+      handed back to 0173 for size; the completion notes say which).
 - [ ] Against 1180's recorded pre-migration baseline, combined
       `trpg-bots` and `xtask` production lines are down by at least 700,
       measured with `cargo xtask code-lines`, with no relocated copies.

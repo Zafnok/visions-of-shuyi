@@ -6,7 +6,7 @@ milestone: M2 Core rules
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0083"]
+blocked_by: ["0083", "0335"]
 nick_input: none
 completed:
 ---
@@ -69,6 +69,12 @@ turn-7 riders).
   mounted map sprites are 0499's. This ticket puts the state in the map
   scene and paints nothing new.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+*A new unit action fans out*): 0335 comes first. It makes
+`BattleState::actions_at(unit, dest)` the one list the action menu, the
+bots' candidates (`legal.rs`) and the AI read, so Dismount / Mount is a
+row there (an `ActionKind`), not a new rule in `menu_entries`.
+
 ## Nick input
 
 None (0083 answered it). Nothing is asked here. Verified by tests, `cargo shuyi
@@ -116,10 +122,12 @@ playing goes on the Act 1 playtest's checklist (1064).
   before; say so in `docs/playtesting.md`). Their threat model reads the
   mount state through the one place.
 - **UI (`crates/ui`):**
-  - The action menu entry: one `MenuEntry` (`Dismount`, or `Mount` when
-    on foot) in `crates/ui/src/screens/battle/mode.rs` (`menu_entries`
-    ~:343, `item` ~:156–210), shown only for a unit whose class is
-    mounted and that hasn't changed this turn, with its help line
+  - The action menu entry: `Dismount`, or `Mount` when on foot, decided
+    in core by 0335's `actions_at` (a new `ActionKind`, mounted class,
+    not changed this turn, not after acting; "Mount" not on a tile a
+    horse can't enter) and shown by `menu_entries`
+    (`crates/ui/src/screens/battle/mode.rs`) through 0335's kind-to-text
+    table, never a check of its own in the UI, with its help line
     (`battle.help.*`, `crates/ui/src/screens/battle/mod.rs` ~:2089) and
     its text in `assets/lang/en/ui.ron`. **Before moving:** choosing it
     with the unit's own tile as the destination sends `SetMount` and goes
@@ -218,7 +226,8 @@ action and the scene field. 1064's `blocked_by` then names both.
 
 - Unit: the command's and the `Act` field's acceptance and refusals,
   movement, tags, Mov and Spd on foot, combat effectiveness, the AI
-  reading the state (`crates/core`).
+  reading the state, and `actions_at` offering Dismount / Mount exactly
+  when the change is accepted (`crates/core`).
 - Property: getting off on one turn and back on the next leaves the unit
   as it was; a refused command changes nothing.
 - Snapshot / integration: the action menu with the entry; the scene with
