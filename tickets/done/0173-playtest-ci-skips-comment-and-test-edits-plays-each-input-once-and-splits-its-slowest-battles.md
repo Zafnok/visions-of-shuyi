@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 0173 — Playtest CI skips comment and test edits, plays each input once, and splits its slowest battles
@@ -130,24 +130,24 @@ of tests and 30 of docs.
 
 ## Acceptance criteria
 
-- [ ] A unix-only test `playtest_levers_skip_comments_tests_and_presentation`
+- [x] A unix-only test `playtest_levers_skip_comments_tests_and_presentation`
       sits in `crates/xtask/src/main.rs`'s tests (beside 0172's, if it
       has landed). It builds temp git repos and gets `play=false` for a
       comment-only `credits.rs`, a comment in `terrain.ron`, an in-file
       `mod tests` edit and `lang/data_tests.rs`. It gets `play=true` for
       a code line in `crates/core/src/combat.rs`, a new file and a
       `*_winning.ron`. It fails without the stripping (tried, noted).
-- [ ] A `--merge` test: two parts of a test battle give the same tries,
+- [x] A `--merge` test: two parts of a test battle give the same tries,
       checks and `blocked` as one whole run. Mismatched parts are an error.
-- [ ] The merge diffs of #658, #677, #718, #725 and #728 go through the
+- [x] The merge diffs of #658, #677, #718, #725 and #728 go through the
       new script. The notes name the real lever for each that still plays.
 - [ ] This PR's Playtest shows `play (ch03 1/2)`, `play (ch03 2/2)` and
       `merge (ch03)`, with one ch03 table. After a docs-only push, the
       next run says "reused from cache" and has no `build`.
 - [ ] After the merge, the `main` run says "reused from run <id>". If it
       played instead (main moved), the notes say why.
-- [ ] `zizmor` passes on `playtest.yml`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `zizmor` passes on `playtest.yml`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -156,6 +156,54 @@ of tests and 30 of docs.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: modules skipped and
-why, which retro PRs still play, run ids, and the minutes the Nov 10–17
-runs would have saved.)*
+**Done.** `.github/playtest-levers.sh` skips `*_tests.rs` and the content
+modules no battle reads, and, given `BASE HEAD` (the workflow passes its
+range), skips a `.rs`/`.ron` lever whose edit is only comments, blank
+lines or a column-0 in-file test module. `.github/playtest-inputs.sh`
+hashes the inputs; `detect` checks out the content, restores
+`reports/` from the cache under that hash, and on a push to `main` with no
+hit takes the merged PR's last passing run's reports when its
+`playtest-inputs` artifact matches. On a hit `build`, `play` and `merge`
+are skipped and `playtest` judges the reused reports (a blocked one still
+fails). `cargo xtask playtest --merge <json>...` joins parts;
+`SPLIT_BATTLES: ch03 side_company_ledger` plays those in two parts of 50
+(seeds 1 and 51) and a `merge` job writes their report. ADR-0014 has a
+Playtest row (advisory) and a dated note; `docs/playtesting.md` updated.
+
+**Modules skipped, and why.** credits, tip, title, lang, audio, voice,
+font, image, palette, playdate_images, playdate_palette, portrait,
+cinematic, keymap (`x.rs` and `x/*`): no `x::` path or exported type of
+theirs appears in `crates/core`, `crates/bots` or
+`crates/xtask/src/playtest.rs`. The battle modules of `crates/content`
+name a few of them only to check references or to draw (`battle.rs`'s
+`AudioManifest` for music cues, `item.rs`'s `lang::text_width`,
+`terrain.rs`'s palette and glyphs, `battler.rs`'s images).
+**dialogue stays a lever**: the bots' army reads `content.dialogue` and
+`Stage::Joins` (a scene brings a unit in). `bundle.rs` stays.
+
+**Retro PRs through the new script** (their merge commit's diff):
+#658 skips (every lever touched only in comments or test modules), #677
+skips (a comment in `terrain.ron`), #718 skips (`credits.rs` and a test file), #728 skips (`tip.rs`), #725 **still plays**: it adds
+`short_name` to core's `WeaponDef` and edits `assets/data/items.ron` and
+`crates/content/src/item.rs`, real levers by path (a field the rules never
+read, but the script can't know that).
+
+**Stripping test.** With `strip()` replaced by `cat`, a comment-only edit
+of a lever plays (tried by hand in Git Bash); the unix-only Rust test then
+fails on its first skip case. The Rust test doesn't run on Windows; the
+same cases were run by hand on Windows with the script and all matched.
+
+**Not checked yet (CI):** this PR's own runs (split jobs, merge, cache
+reuse after a docs-only push) and the `main` reuse after merge: their run
+ids go in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
+the ~37 main replays (~5,563 job-minutes, per the retro) plus about
+4 PR runs at 127–149 each (#658, #677, #718, #728) ≈ 6,100 of 15,424.
+The split adds a little (one merge job, two runners' setup for two
+battles) but cuts the PR's wait from ch03's 20–33 minutes to about half.
+
+**Engine friction:** estimate 60 production lines of Rust (the ticket's
+figure; I didn't write my own before coding, a slip), measured 93
+(1.6×), under 2×. **PR size:** ticket estimate ~450, measured ~800 (the
+workflow grew to 300 changed lines with the reuse and merge jobs).
+
+No gameplay rule was decided.
