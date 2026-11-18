@@ -27,6 +27,11 @@ const FOREST: Pos = Pos::new(2, 10);
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }

@@ -63,6 +63,9 @@ fn to_battle_answering_voices(h: &mut Harness, answer: &str) {
 /// battle notes, the objective's banner and turn 1's banner closed.
 fn from_the_lead(h: &mut Harness) {
     h.keys("Up f");
+    // The chapter's title card (0812), then its scene.
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
