@@ -205,6 +205,13 @@ the ~37 main replays (~5,563 job-minutes, per the retro) plus about
 The split adds a little (one merge job, two runners' setup for two
 battles) but cuts the PR's wait from ch03's 20–33 minutes to about half.
 
+**Friction sweep, 2026-11-17.** The sweep (merged to `main` while this
+PR was open) moved steps 1–5 to 1207, to be built on the engine's
+workflow, and put 0173 after 1207, so that playtest CI would be built
+only once. This PR was already done and green, so Nick chose on
+2026-11-18 to land it as built: the savings start now, and 1207 carries
+it over (its notes say what to keep).
+
 **Engine friction:** estimate 60 production lines of Rust (the ticket's
 figure; I didn't write my own before coding, a slip), measured 93
 (1.6×), under 2×. **PR size:** ticket estimate ~450, measured ~800 (the

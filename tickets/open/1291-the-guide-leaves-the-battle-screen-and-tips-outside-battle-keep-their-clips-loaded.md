@@ -37,6 +37,21 @@ This is the `engine-friction` skill's outcome 3, a game-side structure
 (ADR-0092): nothing here names an engine gap. Not on the Act 1 critical
 path.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+*`BattleScreen` takes most of the UI work* and *Each tip is a Rust enum
+variant*): `mod.rs` is 3,596 lines and `BattleScreen` has 41 fields; 70
+of the last 121 UI commits touched `screens/battle/`, 36 of them
+`mod.rs`. Two more clusters move out with the guide. **Threat display**,
+4 fields: `danger`, `threats`, `planner`, `areas` (`self.` 19 times in
+`mod.rs`; #526, #593, #610). **Playback effects**, 6 fields: `popups`,
+`flashes`, `cues`, `walked`, `pace`, `ai_speed` (with `queue`, which
+stays: see *Out*). And each tip is still a Rust enum
+variant: `TipTrigger` (`crates/content/src/tip.rs:60`) has 22, and a
+tip's PR is 9 to 20 files and 130 to 300 lines. Most of its conditions
+look at the screen (a forecast open, the zoom available), so core's
+`TriggerWhen` fits about 3 of them; a registry of named predicates in
+this ticket's `triggers.rs` fits all of them.
+
 ## Nick input
 
 None. Nothing a player sees changes. Whether the Load Game tip is heard
@@ -51,11 +66,46 @@ in the completion notes.
 - `GuideVoice` and its `voiced()` fixture moved under `crate::tips`;
   `TipScreen` on `GuideVoice` and `keep_voices`.
 - The title keeps the out-of-battle tips' lines loaded.
+- `ThreatView` (the 4 threat-display fields and their methods) in
+  `screens/battle/threat.rs`, and the playback-effect fields above with
+  their per-frame ticks in a struct of their own (e.g. `Effects` in
+  `screens/battle/effects.rs`; `Playback` and `playback.rs` are already
+  the combat timeline of 0404), each its own struct as `Guide` is;
+  `BattleScreen` routes to them.
+- **Tip triggers by name.** In `battle/triggers.rs`, a registry of named
+  predicates (`fn(&BattleScreen) -> bool`, or over `Moment` and the
+  state), one row per trigger, keyed by the name `tips.ron` already
+  writes (`FirstBattleStart`, …; lessons name them too).
+  `TipTrigger` in `crates/content` becomes a name type with no list of
+  its own: the registry is the list of known names, and a ui test that
+  loads the tips and the lessons fails on a name with no row (the
+  content crate can't see the ui's registry). So a new tip is a
+  `tips.ron` entry, its text and one predicate row, with no edit to
+  `crates/content`. The names stay the same strings,
+  so the tips a profile has seen (`profile.rs`, `save.rs`) still read.
+  The name type meets the bounds of the engine's `Tip<T>` and
+  `TipTable<T>` (`tip.rs:122`–`125`). About 100 test lines name
+  `TipTrigger::FirstBattleStart` and the rest (`tip_tests.rs` 52): keep
+  those paths compiling (e.g. associated constants of the name type),
+  so the test files change only where a test is about the registry.
+  Lessons (`battle/lessons.rs`) keep their own `DoneWhen` conditions.
 - A row in `docs/engine/friction.md` (outcome 3).
+
+**Split** (ADR-0101): with the two structs and the registry this ticket
+is about 2,000 changed lines. If the estimate passes 2,000 before
+coding, the trigger registry goes to a new ticket (`write-ticket`,
+`blocked_by` this one) and this ticket keeps the three structs.
+
+**Either order with 1081** (Vix explains the world map, which is waiting
+on Nick's decision anyway): if 1081 lands first it adds its trigger the
+old way and this ticket converts it with the rest; if this ticket lands
+first, 1081 adds a predicate row. 1081 need not wait.
 
 **Out (do not do):**
 - Battle notes, banners, the objective page and the scene queue
-  (`queue: VecDeque<Queued>`): they are the battle's flow, not the guide.
+  (`queue: VecDeque<Queued>`): they are the battle's flow, not the guide
+  or the playback. (The retro's T25 counted the objective and notes
+  with the guide; they stay out here to keep this PR's size.)
 - The scenes' first voice lines kept from the title and each save
   (1293). Either order works, but the engine keeps one set: if 1293 is
   done, add the tips' lines to its set; if this lands first, 1293 adds
@@ -120,14 +170,29 @@ in the completion notes.
    `covered()` when a screen goes over it. The clip is then loaded before
    Profile or Load Game opens its box. A later `keep_voices` from that box
    replaces the set; the title sends it again when it is back on top.
-8. **Measure.** Expected size: about +60 production lines net (`Moment`,
-   the forwards, the title's keep), with about 500 lines moved. About
-   1,500 changed lines in `cargo xtask pr-size`. Add the friction row.
+8. **Threat display and playback.** Move the 4 threat fields into
+   `ThreatView` (`threat.rs`) with the code that fills and drops them
+   (the danger zone, the kept threat arrows, the planner, the areas);
+   move the playback-effect fields into their struct (`effects.rs`) with
+   their per-frame ticks. `BattleScreen` keeps one field of each.
+9. **Trigger registry.** Turn `TipTrigger`'s variants into names; build
+   the registry in `triggers.rs` from the `detect_*` functions moved in
+   step 5; a ui test fails on a name the tips or lessons use that has
+   no row.
+10. **Measure.** Expected size: about +140 production lines net
+   (`Moment`, the forwards, the title's keep, the two structs' routing,
+   the registry), with about 900 lines moved. About 2,000 changed lines
+   in `cargo xtask pr-size` (see *Split*). Add the friction row.
 
 ## Acceptance criteria
 
-- [ ] `wc -l crates/ui/src/screens/battle/mod.rs` is at least 400 lines
+- [ ] `wc -l crates/ui/src/screens/battle/mod.rs` is at least 700 lines
       under 3,595.
+- [ ] `BattleScreen` has no `danger`, `threats`, `planner`, `areas`,
+      `popups`, `flashes`, `cues`, `walked`, `pace` or `ai_speed` field.
+- [ ] Adding a tip trigger needs no edit in `crates/content/src/tip.rs`
+      (a test tip with a new name and predicate row, in `tests/it`), and a
+      name with no predicate row fails a ui test.
 - [ ] `grep -nE "fn (due_tip|coming_guide_lines|lesson_moment|lessons_end_key|settle_lessons|tick_lessons|notice_mode|triggers_now)\b" crates/ui/src/screens/battle/mod.rs`
       finds nothing.
 - [ ] `grep -rn "screens::battle" crates/ui/src/tips` finds nothing.
@@ -139,7 +204,8 @@ in the completion notes.
       with tips off.
 - [ ] `ch01_tips`, `ch01_lessons`, `lessons` and `save_files` in
       `tests/it` pass. The first three files are unchanged; `save_files.rs`
-      only gains the test below.
+      only gains the test below. (If the registry is split off, as
+      *Split* allows, the same holds for its ticket.)
 - [ ] A row for 1291 in `docs/engine/friction.md`, outcome 3.
 - [ ] All gates in the `run-gates` skill pass.
 
@@ -147,7 +213,9 @@ in the completion notes.
 
 - Unit: `GuideVoice`'s five tests, moved unchanged. `TipScreen`'s voice
   test rewritten for keep, play, stop, let go. A title test for the
-  kept tip lines.
+  kept tip lines. The threat and playback tests that exist pass
+  unchanged. The registry: every name the tips and lessons use has a
+  row, and an unknown name fails.
 - Integration (Harness): in `tests/it/save_files.rs`, beside
   `each_export_tip_shows_once_per_profile_naming_the_export_key`, a
   launch with a voiced manifest and tips on. Before the box's

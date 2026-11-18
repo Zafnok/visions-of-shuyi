@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["0510"]
+blocked_by: ["0510", "1090"]
 nick_input: none
 completed:
 ---
@@ -28,6 +28,16 @@ loadouts, and a spawned group overwrites every level and may use fewer
 enemies than the file lists. So `--kind random` has only the class knob
 today, which can't balance a one-class pool at all: positions and terrain
 are what it needs.
+
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): the generator has made none of Act 1's battles (all 9
+non-story battles were made by hand, and none of the 34 `skirmish_*`
+templates is placed). This ticket is parked behind 1090, which builds
+its first skirmish with `cargo xtask skirmish new` and says in its
+Completion notes what the tool lacked. Read those first: rewrite this
+ticket's Scope to what they name, or close it as won't-do (and drop the
+unused templates) if they say the tool isn't worth growing.
 
 ## Nick input
 

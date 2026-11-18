@@ -15,6 +15,9 @@ completed:
 
 ## Context
 
+2026-11-17 friction sweep: folded into 1170 (its engine blocker,
+engine#2540, is pinned); 1170 moves this ticket to `done/`.
+
 Ticket 1039 needed a picture of the Playdate's rewind screen, which only
 the crank opens. The engine's `frame-png` script (`shuyi_cli::frame_png`)
 had `--keys`, `--pad` and `--wait` but no crank step, so the game added two
