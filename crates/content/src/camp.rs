@@ -71,15 +71,15 @@ pub fn load(refs: CampRefs) -> Result<Vec<CampEvent>, Vec<ContentError>> {
 
 /// Parses and validates camp files, `(file name, source)` in order: their
 /// events, one list. Reports every problem found.
-pub fn from_sources<F: AsRef<str>>(
-    files: &[(F, &str)],
+pub fn from_sources<F: AsRef<str>, S: AsRef<str>>(
+    files: &[(F, S)],
     refs: CampRefs,
 ) -> Result<Vec<CampEvent>, Vec<ContentError>> {
     let mut errors = Vec::new();
     let mut seen = BTreeSet::new();
     let mut events = Vec::new();
     for (file, source) in files {
-        let file = file.as_ref();
+        let (file, source) = (file.as_ref(), source.as_ref());
         let raw: RawFile = match parse_ron(file, source) {
             Ok(raw) => raw,
             Err(e) => {

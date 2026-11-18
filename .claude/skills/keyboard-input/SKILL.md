@@ -113,6 +113,18 @@ Beyond the engine's rules:
 - Help bars: `widgets::help::{key_name, all_key_names, cursor_keys_name,
   help_line}`, given `ctx.help_keys()`. Never pass a bare keymap (it
   doesn't compile) and never branch on `ctx.device` in a screen.
+- **Key caps** (ticket 0254, `docs/design/look-and-feel.md`, *Key names
+  in hints*): a hint the player sees holds `StyledText`, each key's name
+  in a key span, so the frame draws it as a key cap. Build it with
+  `ctx.text_styled`, `widgets::help::{action_key, key_pair,
+  help_line_styled, join_hints, text_with_keys}` and
+  `tips::fill_styled`; paint it with `buf.print_styled` and
+  `ctx.palette.text_colors_on(fg, bg)`, and measure it with
+  `widgets::help::frame_widths(ctx)` (a cap takes more cells than its
+  name). Never push a key span by hand: these helpers keep a
+  controller's buttons and `! not mapped` plain (`for_player`). Tests of
+  what a hint says read its `plain()`; the harness draws keys as words
+  unless `Harness::with_key_caps` (a test of the look).
 - For other bindings, or the keyboard's keys, start from it:
   `ctx.help_keys().of(&keymap)`, `ctx.help_keys().on_keyboard()`.
   `HelpKeys::new` and `HelpKeys::keyboard` give the English words: tests

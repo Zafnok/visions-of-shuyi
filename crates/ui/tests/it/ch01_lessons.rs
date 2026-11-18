@@ -810,7 +810,7 @@ fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
     let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
     assert_eq!(view.focus, 0);
     assert_eq!(
-        view.lines[1],
+        view.lines[1].plain(),
         "Need a reminder? Guides, in the map menu (d)."
     );
     // It holds the keys: the map doesn't move, Cancel and End turn do nothing.

@@ -82,7 +82,7 @@ pub fn load(movement_types: Option<&[String]>) -> Result<ClassTable, Vec<Content
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, movement_types)
+    from_source(&display, &source, movement_types)
 }
 
 /// Parses and validates class-table `source`, attributing errors to `file`.

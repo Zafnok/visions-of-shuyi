@@ -3,6 +3,7 @@
 //! [`GuidesScreen::list_view`](super::super::guides::GuidesScreen::list_view).
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 
 /// The whole Guides screen: the list over the map and the side panel, the
 /// help and the debug hint. Built by
@@ -11,8 +12,8 @@ use crate::prelude::*;
 pub struct GuidesScreenView {
     /// The list.
     pub list: GuidesView,
-    /// The help line: what the keys do.
-    pub help: String,
+    /// The help line: what the keys do, each key in a key span.
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
 }

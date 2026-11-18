@@ -786,7 +786,7 @@ mod tests {
         let bought = read(BACKDROPS_RON).unwrap_or_else(|e| panic!("{e:?}"));
         // By day it is the public file.
         let public = trpg_content::bundle::file(BACKDROPS_PATH).unwrap();
-        let public = read(public).unwrap_or_else(|e| panic!("{e:?}"));
+        let public = read(&public).unwrap_or_else(|e| panic!("{e:?}"));
         assert_eq!(
             (&bought.default, &bought.terrain),
             (&public.default, &public.terrain)

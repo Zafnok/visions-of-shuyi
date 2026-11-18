@@ -81,7 +81,7 @@ pub fn load(terrain: Option<&TerrainDisplayTable>) -> Result<SpellTable, Vec<Con
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, terrain)
+    from_source(&display, &source, terrain)
 }
 
 /// Parses and validates spell `source`, attributing errors to `file`, with
@@ -219,7 +219,7 @@ pub fn check_references(
         }
         let display = bundle::display_path(path);
         let e = ContentError::new(&display, format!("{what}: unknown spell \"{}\"", spell.0));
-        let line = bundle::file(path).and_then(|src| line_of(src, &format!("id: \"{owner}\"")));
+        let line = bundle::file(path).and_then(|src| line_of(&src, &format!("id: \"{owner}\"")));
         errors.push(match line {
             Some(l) => e.at(l, None),
             None => e,
@@ -606,7 +606,7 @@ mod tests {
         let errors = check_references(&SpellTable::default(), &real, &CharacterTable::default());
         let first = errors.first().map(ToString::to_string).unwrap_or_default();
         let line = bundle::file(CLASSES_PATH)
-            .and_then(|src| line_of(src, &format!("id: \"{}\"", id.0)))
+            .and_then(|src| line_of(&src, &format!("id: \"{}\"", id.0)))
             .unwrap_or(0);
         assert_ne!(mage.spells, [] as [(u8, trpg_core::SpellId); 0]);
         assert!(

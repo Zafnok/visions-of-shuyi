@@ -208,7 +208,7 @@ pub fn check_references(skills: &SkillTable, classes: &ClassTable) -> Vec<Conten
             };
             let e = ContentError::new(&display, format!("class \"{}\": {problem}", id.0));
             let line = bundle::file(CLASSES_PATH)
-                .and_then(|src| line_of(src, &format!("id: \"{}\"", id.0)));
+                .and_then(|src| line_of(&src, &format!("id: \"{}\"", id.0)));
             errors.push(match line {
                 Some(l) => e.at(l, None),
                 None => e,

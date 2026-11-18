@@ -22,7 +22,7 @@ pub struct Pictures {
 impl Pictures {
     /// The one-bit pictures of `table`'s images in the game's bundle.
     pub fn new(table: &ImageTable) -> Self {
-        Self::from_files(table, trpg_content::bundle::bytes)
+        Self::from_files(table, trpg_content::bundle::lent_bytes)
     }
 
     /// The one-bit pictures of `table`'s images, each file's bytes from
@@ -136,7 +136,7 @@ mod tests {
                 .flat_map(|p| &p.expressions)
                 .map(|e| e.image.path().to_owned())
                 .map(|path| {
-                    let bytes = bundle::bytes(&path);
+                    let bytes = bundle::lent_bytes(&path);
                     (path, bytes)
                 })
                 .collect();
@@ -168,7 +168,11 @@ mod tests {
         let (table, pictures, bits) = on_the_playdate(|| {
             let table = trpg_content::image::load().unwrap_or_default();
             let pictures = Pictures::new(&table);
-            (table, pictures, bundle::bytes(face).unwrap_or_default())
+            (
+                table,
+                pictures,
+                bundle::lent_bytes(face).unwrap_or_default(),
+            )
         });
         let bitmap = Bitmap::parse(bits).unwrap();
         let id = table.id(face).unwrap();
@@ -181,7 +185,7 @@ mod tests {
             Layer::Over,
         ));
         let atlas = trpg_content::font::load().unwrap();
-        let font_bits = bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
+        let font_bits = bundle::lent_bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
         let font = Font::new(&atlas, font_bits).unwrap();
         let mut frame = Box::new([0u8; FRAME_BYTES]);
         let shades = playdate_map().unwrap();

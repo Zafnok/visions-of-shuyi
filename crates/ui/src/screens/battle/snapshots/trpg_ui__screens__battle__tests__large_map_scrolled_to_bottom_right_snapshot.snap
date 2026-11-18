@@ -65,8 +65,8 @@ ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhh
 ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
 eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
 eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaaoogggggggggggggggggggggggggggggg
-pppppppppppppppppppppppppppppppppppppppppppppppppppppqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp
-pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpppppppppqqqqqqqqp
+pppppppppppppppppppppppppppppppppppppppppppppppppppppqrrrrrrrrrrrrrrrrrrrrqqqqqqqqqqqrrrrrrrrrrrrrrp
+pqqqqqqrrrrrrrrqrrrrrrrrrqrrrrrrrrqrrrrrrrrrrrrrqrrrrrrrrrrqrrrrrrrrqqqqqrrrrrrrrrppppppppprrrrrrrrp
 --- legend ---
 a = fg:mountain bg:mountain_bg
 b = fg:grass bg:grass_bg
@@ -84,7 +84,8 @@ m = fg:text_dim bg:panel_bg
 n = fg:cursor bg:forest_bg
 o = fg:enemy bg:grass_bg
 p = fg:text bg:black
-q = fg:text_dim bg:black
+q = fg:text bg:key_bg
+r = fg:text_dim bg:black
 --- overlays ---
 over  17,46 14x2  hp_high
 over  545,478 14x2  hp_high

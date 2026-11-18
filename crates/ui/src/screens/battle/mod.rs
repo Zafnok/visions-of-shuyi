@@ -68,7 +68,6 @@ pub mod walk;
 use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::cell::{RefCell, RefMut};
-use shuyi_ui::text::ToArg;
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -113,9 +112,10 @@ use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, LessonsEndView, TipView};
-use crate::widgets::help::{SEPARATOR, key_name};
+use crate::widgets::help::{action_key, join_hints, key_pair, text_with_keys};
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
+use shuyi_ui::text::StyledText;
 
 /// The battle screen's skins (ADR-0083): the PC's glyph look, the
 /// Playdate's map over the whole screen with its corner pop-ups (ticket
@@ -2156,9 +2156,9 @@ impl BattleScreen {
 
     /// The help line of a tip, the battle notes, EXP or level-up page, or
     /// banner on screen.
-    fn overlay_help(&self, ctx: &Ctx) -> Option<String> {
+    fn overlay_help(&self, ctx: &Ctx) -> Option<StyledText> {
         if self.shown_tip().is_some() || self.notes_open() {
-            return Some(ctx.text_with("battle.help.close", &[]));
+            return Some(ctx.text_styled("battle.help.close", &[]));
         }
         if let Some(p) = self.progress() {
             return Some(progress::help(ctx, p));
@@ -2167,18 +2167,27 @@ impl BattleScreen {
             BannerKind::Outcome(_) | BannerKind::Objective => "battle.help.continue",
             BannerKind::Phase { .. } => "battle.help.skip",
         };
-        Some(ctx.text_with(key, &[]))
+        Some(ctx.text_styled(key, &[]))
     }
 
     /// The help line for the mode and what is under the cursor, e.g. `f
     /// select · e info · s next unit · r rewind · d back` over a ready unit while
-    /// browsing. Key names come from the keymap.
+    /// browsing. Key names come from the keymap; [`help_styled`] has each
+    /// in a key span.
+    ///
+    /// [`help_styled`]: Self::help_styled
     pub fn help(&self, ctx: &Ctx) -> String {
+        self.help_styled(ctx).plain()
+    }
+
+    /// [`help`](Self::help), each key's name in a key span, drawn as a
+    /// key cap (ticket 0254).
+    pub fn help_styled(&self, ctx: &Ctx) -> StyledText {
         if let Some(line) = self.overlay_help(ctx) {
             return line;
         }
         if self.lessons_end_shown(ctx) {
-            return ctx.text_with("battle.lessons_end.help", &[]);
+            return ctx.text_styled("battle.lessons_end.help", &[]);
         }
         let key = match &self.mode {
             Mode::Idle { threat } => {
@@ -2195,9 +2204,9 @@ impl BattleScreen {
             Mode::EndTurnPrompt { .. } => {
                 let km = ctx.help_keys();
                 let [accept, also] = split_keys::help_end_turn_accept_actions(km);
-                let (accept, also) = (key_name(km, accept), key_name(km, also));
-                let keys = [("accept", &accept as &dyn ToArg), ("also", &also)];
-                return ctx.text_with("battle.help.end_turn", &keys);
+                let (accept, also) = (action_key(km, accept), action_key(km, also));
+                let keys = [("accept", &accept), ("also", &also)];
+                return text_with_keys(ctx, "battle.help.end_turn", &keys);
             }
             Mode::Info { .. } => "battle.help.info",
             Mode::Selected(sel) => {
@@ -2251,25 +2260,21 @@ impl BattleScreen {
                 }
             }
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The help line while picking an attack's target: the cursor keys
     /// pick the target, or left/right swap the weapon or spell and up/down
     /// pick the target when several can make the attack (0430, 0442).
     /// Confirm reads `cast` for a spell.
-    fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
+    fn help_targeting(ctx: &Ctx, t: &Targeting) -> StyledText {
         let km = ctx.help_keys();
-        let plain = |key| ctx.text_with(key, &[]);
+        let plain = |key| ctx.text_styled(key, &[]);
         let mut hints = if t.can_swap() {
-            let target = format!(
-                "{}/{}",
-                key_name(km, Action::CursorUp),
-                key_name(km, Action::CursorDown)
-            );
+            let target = key_pair(km, Action::CursorUp, Action::CursorDown);
             vec![
                 Self::swap_hint(ctx, "battle.hint.swap"),
-                ctx.text_with("battle.hint.target", &[("keys", &target)]),
+                text_with_keys(ctx, "battle.hint.target", &[("keys", &target)]),
             ]
         } else {
             vec![plain("battle.hint.next_target")]
@@ -2279,22 +2284,20 @@ impl BattleScreen {
             Equipped::Spell(_) => "battle.hint.cast",
         }));
         hints.push(plain("battle.hint.back"));
-        hints.join(SEPARATOR)
+        join_hints(hints)
     }
 
     /// The text `key` with `{keys}` the keys that swap the weapon, as two
     /// keys that are not one action: `Left/Right swap` in the help line,
     /// `Left/Right weapon` on the forecast (0463).
-    fn swap_hint(ctx: &Ctx, key: &str) -> String {
-        let km = ctx.help_keys();
-        let (left, right) = (Action::CursorLeft, Action::CursorRight);
-        let keys = format!("{}/{}", key_name(km, left), key_name(km, right));
-        ctx.text_with(key, &[("keys", &keys)])
+    fn swap_hint(ctx: &Ctx, key: &str) -> StyledText {
+        let keys = key_pair(ctx.help_keys(), Action::CursorLeft, Action::CursorRight);
+        text_with_keys(ctx, key, &[("keys", &keys)])
     }
 
     /// The help line while browsing, over what is under the cursor; `back`
     /// is the hint of the Cancel key.
-    fn help_idle(&self, ctx: &Ctx, back: &str) -> String {
+    fn help_idle(&self, ctx: &Ctx, back: &str) -> StyledText {
         let (moves, info) = (Some("battle.hint.move"), Some("battle.hint.info"));
         let (next, end) = (Some("battle.hint.next_unit"), Some("battle.hint.end_turn"));
         let rewind = self.can_open_rewind().then_some("battle.hint.rewind");
@@ -2315,15 +2318,14 @@ impl BattleScreen {
             }
         };
         let hints = hints.into_iter().flatten();
-        let hints: Vec<String> = hints.map(|key| ctx.text_with(key, &[])).collect();
-        hints.join(SEPARATOR)
+        join_hints(hints.map(|key| ctx.text_styled(key, &[])))
     }
 
     /// The toggles' state for the message row: the Zoom map key and
     /// `zoom: 2×` (only under a map skin that can zoom), the Danger zone
     /// key and `danger zone: OFF`, then the Auto-end key and
     /// `auto-end: ON`, each key named from the active keymap.
-    pub fn status(&self, ctx: &Ctx) -> String {
+    pub fn status(&self, ctx: &Ctx) -> StyledText {
         let zoom = ctx.game.map_skin.zoom().map(|zoom| match zoom {
             MapZoom::X1 => "battle.status.zoom_x1",
             MapZoom::X2 => "battle.status.zoom_x2",
@@ -2338,12 +2340,8 @@ impl BattleScreen {
         } else {
             "battle.status.auto_end_off"
         };
-        let hints: Vec<String> = zoom
-            .into_iter()
-            .chain([danger, auto])
-            .map(|key| ctx.text_with(key, &[]))
-            .collect();
-        hints.join(SEPARATOR)
+        let hints = zoom.into_iter().chain([danger, auto]);
+        join_hints(hints.map(|key| ctx.text_styled(key, &[])))
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -2650,7 +2648,7 @@ impl BattleScreen {
         let forecast = self.forecast().and_then(|t| {
             let swap = t
                 .can_swap()
-                .then(|| Self::swap_hint(ctx, "battle.forecast.swap"));
+                .then(|| Self::swap_hint(ctx, "battle.forecast.swap").plain());
             forecast::view(told, t).map(|f| ForecastView { swap, ..f })
         });
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
@@ -2679,7 +2677,7 @@ impl BattleScreen {
             message: self.message(),
             status: self.status(ctx),
             scene: self.scene(ctx),
-            help: self.help(ctx),
+            help: self.help_styled(ctx),
             debug_hint: super::debug_hint(ctx),
             forecast,
             info,

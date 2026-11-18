@@ -289,8 +289,10 @@ pub fn load(refs: Refs<'_>) -> Result<LessonTable, Vec<ContentError>> {
         )]
     })?;
     let part = bundle::test_part(LESSONS_PATH);
-    let part = part.as_ref().map(|(file, source)| (file.as_str(), *source));
-    from_sources(&display, source, part, refs)
+    let part = part
+        .as_ref()
+        .map(|(file, source)| (file.as_str(), source.as_ref()));
+    from_sources(&display, &source, part, refs)
 }
 
 /// Parses and validates lessons `source`, attributing errors to `file`.

@@ -168,7 +168,7 @@ pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec
             let source = bundle::file(&path).unwrap_or_default();
             light_error(
                 &bundle::display_path(&path),
-                source,
+                &source,
                 &def.look.light,
                 lighting,
             )

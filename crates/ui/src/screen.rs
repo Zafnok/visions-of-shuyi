@@ -21,8 +21,12 @@ use core::fmt;
 
 use shuyi_ui::GameData;
 use shuyi_ui::frame::color::Palette;
+use shuyi_ui::frame::glyph_buffer::PxRect;
+use shuyi_ui::frame::key_cap::KeyCapStyle;
 use shuyi_ui::input::help_keys::HelpKeys;
+use shuyi_ui::text::StyledText;
 use trpg_content::dialogue;
+use trpg_content::image::KEY_ARROWS_PATH;
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
 use trpg_content::{
@@ -159,6 +163,12 @@ pub struct Shuyi {
     /// "Thanks for playing" and "Export save?", and the title has no Load
     /// Game.
     pub demo: bool,
+    /// Whether a key's name in a hint is drawn as a key cap (ticket 0254,
+    /// [`key_caps`](GameData::key_caps)): on in the game. The test
+    /// harness turns them off, so a test of what a hint says reads its
+    /// words; a test of the look turns them on
+    /// ([`Harness::with_key_caps`](crate::harness::Harness::with_key_caps)).
+    pub key_caps: bool,
 }
 
 impl Shuyi {
@@ -180,6 +190,7 @@ impl Shuyi {
             lessons: Lessons::Off,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
             demo: trpg_content::bundle::is_demo(),
+            key_caps: true,
         }
     }
 
@@ -243,6 +254,49 @@ impl GameData for Shuyi {
     /// map, `{Action}` that action's key ([`crate::tips::fill_text`]).
     fn key_text(&self, name: &str, keys: HelpKeys<'_, Action>) -> Option<String> {
         crate::tips::key_text(name, keys)
+    }
+
+    /// [`key_text`](GameData::key_text) in spans as the engine gives them
+    /// (the arrow keys one span, drawn as their picture), but plain on a
+    /// controller and for a key not mapped
+    /// ([`for_player`](crate::widgets::help::for_player)).
+    fn key_text_styled(&self, name: &str, keys: HelpKeys<'_, Action>) -> Option<StyledText> {
+        let text = self.key_text(name, keys)?;
+        let mut styled = shuyi_ui::input::help_keys::cursor_keys_styled(keys);
+        if styled.plain() != text {
+            styled = StyledText::new();
+            styled.push_key(&text);
+        }
+        Some(crate::widgets::help::for_player(keys, &styled))
+    }
+
+    /// Key caps as Nick decided them in 0250 (`docs/design/look-and-feel.md`,
+    /// *Key names in hints*): bold, a single letter in capitals, 2 px round
+    /// the letters, in the theme's `key`, `key_bg` and `key_edge`; the
+    /// arrow keys as the picture of the arrow cluster
+    /// ([`KEY_ARROWS_PATH`]). None on the Playdate's one-bit screen (0256).
+    fn key_caps(&self) -> Option<KeyCapStyle> {
+        if !self.key_caps {
+            return None;
+        }
+        let caps = KeyCapStyle::new()
+            .with_bold(true)
+            .with_capitals(true)
+            .with_margin_px(2)
+            .with_one_bit(false);
+        let images = &self.content.images;
+        let arrows = images.id(KEY_ARROWS_PATH).and_then(|id| {
+            let info = images.info(id)?;
+            let (w, h) = (
+                i32::try_from(info.width).ok()?,
+                i32::try_from(info.height).ok()?,
+            );
+            Some((id, PxRect::new(0, 0, w, h)))
+        });
+        Some(match arrows {
+            Some((id, src)) => caps.with_arrows(id, src),
+            None => caps,
+        })
     }
 
     /// The clip for the lead's gender, where the words differ.

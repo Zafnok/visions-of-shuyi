@@ -65,7 +65,7 @@ cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 cdddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeeeeedddedfddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddfeeeedddfdgddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 --- legend ---
 a = fg:text bg:black
@@ -73,4 +73,5 @@ b = fg:text_highlight bg:black
 c = fg:panel_border bg:panel_bg
 d = fg:text bg:panel_bg
 e = fg:text_dim bg:panel_bg
-f = fg:text_highlight bg:panel_bg
+f = fg:text bg:key_bg
+g = fg:text_highlight bg:panel_bg

@@ -8,6 +8,7 @@
 //! skin paints it (ADR-0054).
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use shuyi_ui::text::ToArg;
 
 use trpg_content::MapLook;
@@ -224,7 +225,7 @@ impl RewindScreen {
     }
 
     /// The help line: what the keys do on the list or at the prompt.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let key = if self.confirming {
             "battle.rewind.help.confirm"
         } else if self.can_rewind() {
@@ -234,7 +235,7 @@ impl RewindScreen {
         } else {
             "battle.rewind.help.browse"
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The whole screen (ADR-0054): the map, the list, the lesson, the

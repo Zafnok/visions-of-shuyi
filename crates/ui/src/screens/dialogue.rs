@@ -43,7 +43,7 @@ use crate::screen::{Ctx, FrameInput, Screen, Shuyi, SkinSet, Transition};
 use crate::screens::Skins;
 use crate::settings::{AutoAdvance, LogVoice};
 use crate::widgets::Ask;
-use crate::widgets::help::key_name;
+use crate::widgets::help::{action_key, key_name};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
 use log::{LogView, RowKind};
@@ -941,8 +941,8 @@ impl DialogueScreen {
     fn wait_view(&self, ctx: &Ctx) -> WaitView {
         let km = ctx.help_keys();
         let log_mapped = key_name(km, Action::DialogueLog) != km.not_mapped();
-        let mut wait = WaitView::new(key_name(km, Action::Confirm), self.text.marker_lit());
-        wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]).into());
+        let mut wait = WaitView::new(action_key(km, Action::Confirm), self.text.marker_lit());
+        wait.log_hint = log_mapped.then(|| ctx.text_styled("dialogue.log_hint", &[]));
         wait
     }
 }

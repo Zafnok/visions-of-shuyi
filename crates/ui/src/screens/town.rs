@@ -430,7 +430,7 @@ impl TownScreen {
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),
-            help: ctx.text_with(help, &[]),
+            help: ctx.text_styled(help, &[]),
             debug_hint: crate::screens::debug_hint(ctx),
         }
     }

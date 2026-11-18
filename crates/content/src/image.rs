@@ -29,6 +29,13 @@ pub const EFFECT_MARKS_PATH: &str = "images/effect_marks.png";
 /// map goes on past it (ticket 0449).
 pub const EDGE_MARKS_PATH: &str = "images/edge_marks.png";
 
+/// Path of the arrow cluster inside the bundle: a 24×16 picture of the
+/// four arrow keys as a keyboard has them, four 8×8 key caps in an
+/// upside-down T, each with its arrow, which a hint draws for the cursor's
+/// keys when they are the arrows (ticket 0254, `docs/design/look-and-feel.md`,
+/// *Key names in hints*). Our own picture, in the default theme's key colours.
+pub const KEY_ARROWS_PATH: &str = "images/key_arrows.png";
+
 /// Reads the size of every PNG in the embedded bundle (the font atlas
 /// aside, which [`crate::font`] checks), reporting every bad file.
 pub fn load() -> Result<ImageTable, Vec<ContentError>> {

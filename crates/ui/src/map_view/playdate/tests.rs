@@ -77,7 +77,7 @@ pub(crate) fn painted(ctx: &Ctx, scene: &MapScene) -> GlyphBuffer {
 /// The game's one-bit font.
 pub(crate) fn font() -> Font<'static> {
     let atlas = Box::leak(Box::new(trpg_content::font::load().unwrap()));
-    let bits = trpg_content::bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
+    let bits = trpg_content::bundle::lent_bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
     Font::new(atlas, bits).unwrap()
 }
 
