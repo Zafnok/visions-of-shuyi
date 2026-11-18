@@ -29,6 +29,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
+use trpg_ui::screens::title::glyph::MENU_ROW;
 use trpg_ui::screens::title::{TITLE_CINEMATIC, TitleView};
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
@@ -672,7 +673,9 @@ fn the_storyboard_plays_shot_by_shot() {
     wait_until(&mut h, 125.0);
     assert_eq!(shows(&h), Shows::Menu(255));
     assert!((time(&h) - 125.0).abs() < 0.05, "{}", time(&h));
-    assert_private_snapshot!(dir, "title_cinematic_12_logo", h.snapshot());
+    // The logo over the field, without the public menu under it (1290).
+    let over_the_menu = Rect::new(0, 0, 100, MENU_ROW);
+    assert_private_snapshot!(dir, "title_cinematic_12_logo", h.snapshot_of(over_the_menu));
     // 1 (0:00), seen from the first loop on: the party where the battle
     // starts, nobody moving, the camera drifting to them at 3×.
     wait(&mut h, SONG - 125.0 + 3.0);

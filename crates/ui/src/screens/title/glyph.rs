@@ -34,7 +34,7 @@ pub const BACKDROP_ZOOM: i32 = 2;
 /// its edges to fill the console's width, in backdrop pixels.
 pub const EDGE_PX: i32 = 32;
 /// Top row of the menu box.
-const MENU_ROW: i32 = 18;
+pub const MENU_ROW: i32 = 18;
 /// Row of the "press any key or button" line.
 const PROMPT_ROW: i32 = 20;
 /// Cells between the menu box and the guide's note right of it (0842).

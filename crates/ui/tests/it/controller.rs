@@ -10,6 +10,7 @@ use insta::assert_snapshot;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::input::{Action, Chord, Device, PadKind};
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 
 fn title() -> Harness {
     Harness::with_layout(RIGHT_HANDED)
@@ -99,9 +100,10 @@ fn each_default_button_does_what_its_key_does() {
     same_in_battle("Right Right Up", "DpadRight DpadRight DpadUp");
     same_in_battle("Left Down", "LeftStickLeft LeftStickDown");
     same_in_battle("Right Up", "LeftStickRight LeftStickUp");
-    // Confirm selects the lord; Cancel drops the selection again.
+    // Confirm selects the lord; Cancel drops the selection again, the
+    // cursor back on the lord (then up a tile, so the frame differs).
     same_in_battle("f", "South");
-    same_in_battle("f Up d", "South DpadUp East");
+    same_in_battle("f Up d Up", "South DpadUp East DpadUp");
     // Cancel with nothing to cancel opens the map menu.
     same_in_battle("d", "East");
     // Shoulders: next and previous ready unit.
@@ -342,10 +344,13 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
     let sony = tip(Some(PadKind::PlayStation));
     assert!(shows(&sony, "D-pad/L-stick. Pick up a unit: ✕"));
     assert!(shows(&sony, "✕ close"));
-    assert_snapshot!("tip_keyboard", keys.snapshot());
-    assert_snapshot!("tip_xbox", xbox.snapshot());
-    assert_snapshot!("tip_playstation", sony.snapshot());
-    assert_snapshot!("tip_nintendo", tip(Some(PadKind::Nintendo)).snapshot());
+    assert_snapshot!("tip_keyboard", keys.snapshot_of(MAP_VIEW));
+    assert_snapshot!("tip_xbox", xbox.snapshot_of(MAP_VIEW));
+    assert_snapshot!("tip_playstation", sony.snapshot_of(MAP_VIEW));
+    assert_snapshot!(
+        "tip_nintendo",
+        tip(Some(PadKind::Nintendo)).snapshot_of(MAP_VIEW)
+    );
     // Pressing a key while the tip is up switches it back to keys.
     let mut h = tip(Some(PadKind::PlayStation));
     h.keys("z");

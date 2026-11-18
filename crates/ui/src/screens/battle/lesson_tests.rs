@@ -577,7 +577,7 @@ fn the_lesson_box_snapshot() {
     h.wait(0.1).keys("Left Up");
     let battle = h.battle().expect("a battle");
     assert_eq!(battle.lesson_ticks(), [true, false, true, false]);
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// A Harness on `state` whose only lesson asks for `items`, open after a

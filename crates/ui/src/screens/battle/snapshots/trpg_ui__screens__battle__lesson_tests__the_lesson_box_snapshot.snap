@@ -1,96 +1,90 @@
 ---
 source: crates/ui/src/screens/battle/lesson_tests.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-            ╔═ Vix ══════════════════════════════════════╗            ┌────────────────────────────┐
-            ║                                            ║            │ Road                       │
-            ║ Moving the cursor                          ║            │ DEF +0  AVO +0             │
-            ║ Move the cursor one tile each way.         ║            │                            │
-            ║ The turn can't end until the list is done. ║            │                            │
-            ║                                            ║            │ Test Archer                │
-            ║ [x] Move it up: Up                         ║            │ Archer  Lv 1               │
-            ║ [ ] Move it down: Down                     ║            │ HP 17/17   ██████████      │
-            ║ [x] Move it left: Left                     ║            │ Player                     │
-            ║ [ ] Move it right: Right                   ║            │                            │
-            ║                                            ║            │ Str   5     Mag   0        │
-            ║ 2 of 4 done                                ║            │ Dex   7     Spd   5        │
-            ╚════════════════════════════════════════════╝            │ Def   5     Res   3        │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ Mov   5                    │
-                    ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │ Iron Bow          20/20    │
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ Atk  11     Hit  99        │
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ Crit  3     Avo  10        │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    2                    │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Gold 3 000                 │
-                                                                      └────────────────────────────┘
- w danger zone: OFF                                                 Shift+Space auto-end: OFF       
- f select · e info · s next unit · r rewind · d menu                Space end turn         F2 debug 
+            ╔═ Vix ══════════════════════════════════════╗            
+            ║                                            ║            
+            ║ Moving the cursor                          ║            
+            ║ Move the cursor one tile each way.         ║            
+            ║ The turn can't end until the list is done. ║            
+            ║                                            ║            
+            ║ [x] Move it up: Up                         ║            
+            ║ [ ] Move it down: Down                     ║            
+            ║ [x] Move it left: Left                     ║            
+            ║ [ ] Move it right: Right                   ║            
+            ║                                            ║            
+            ║ 2 of 4 done                                ║            
+            ╚════════════════════════════════════════════╝            
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      
+                    ..≈≈≈≈..··..............╦╦..                      
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdccccdddddddddddddddddddddddb
-aaaaaaaaaaaabdcccccccccccccccccddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdeeeeeeeeeeeddddddddddddddddb
-aaaaaaaaaaaabdfffdgggggggggggghhdddddddddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaabdddddddddddddddddddhhhhdddddddddddddddddddddbaaaaaaaaaaaabddddddddddddffffffffffddddddb
-aaaaaaaaaaaabdfffdgggggggggggggghhhhdddddddddddddddddddddbaaaaaaaaaaaabdggggggdddddddddddddddddddddb
-aaaaaaaaaaaabddddddddddddddddddddhhhhhdddddddddddddddddddbaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaabdgggggggggggddddddddddddddddddddddddddddddddbaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaaiijjjjkkkkllllllmmnnoooonnnnaaaaaaaaaaaaaaaaaaaaaabdgggddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannjjjjnnllnnnnnnnnnnnnnnppnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnqqllllnnnnmmnnrrrrrrrrnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoollssnnppnnnnnnrrttpprrnnaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaaoooollssssnnnnnnnnrrttttrrnnaaaaaaaaaaaaaaaaaaaaaabdggggddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaaoouullnnnnnnnnnnmmrrrrvvrrnnaaaaaaaaaaaaaaaaaaaaaabdggdddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-ahwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhwwwwwwwwwwwwwwaaaaaaa
-ahwwwwwwwwwwhwwwwwwwwhwwwwwwwwwwwwwhwwwwwwwwwwhwwwwwwwwwwwwwwwwwwwwwhhhhhwwwwwwwwwaaaaaaaaawwwwwwwwa
+aaaaaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdcccccccccccccccccddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdeeedffffffffffffggdddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdddddddddddddddddddggggdddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdeeedffffffffffffffggggdddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddgggggdddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdfffffffffffddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
 c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:text bg:key_bg
-i = fg:water bg:sea
-j = fg:water bg:water_bg
-k = fg:wood bg:water_bg
-l = fg:road bg:road_bg
-m = fg:enemy bg:grass_bg
-n = fg:grass bg:grass_bg
-o = fg:forest bg:forest_bg
-p = fg:fort bg:fort_bg
-q = fg:player bg:road_bg
-r = fg:stone bg:stone_bg
-s = fg:player bg:grass_bg
-t = fg:floor bg:floor_bg
-u = fg:thicket bg:thicket_bg
-v = fg:wood bg:stone_bg
-w = fg:text_dim bg:black
+e = fg:hp_high bg:panel_bg
+f = fg:text_dim bg:panel_bg
+g = fg:text bg:key_bg
+h = fg:water bg:sea
+i = fg:water bg:water_bg
+j = fg:wood bg:water_bg
+k = fg:road bg:road_bg
+l = fg:enemy bg:grass_bg
+m = fg:grass bg:grass_bg
+n = fg:forest bg:forest_bg
+o = fg:fort bg:fort_bg
+p = fg:player bg:road_bg
+q = fg:stone bg:stone_bg
+r = fg:player bg:grass_bg
+s = fg:floor bg:floor_bg
+t = fg:thicket bg:thicket_bg
+u = fg:wood bg:stone_bg
 --- overlays ---
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high

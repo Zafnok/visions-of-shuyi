@@ -11,6 +11,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 
@@ -227,7 +228,7 @@ fn a_generic_unit_and_terrain_are_named_by_the_pack() {
 fn a_tip_in_the_test_language() {
     let mut h = title();
     h.with_tips().keys("Down f Left f f f");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
     assert!(shows(&h, "YOUR MOVE"));
     assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR ONTO"));
     // The tip's instructions too (0475). Key names are still the player's;

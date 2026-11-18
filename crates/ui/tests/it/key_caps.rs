@@ -11,6 +11,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, LEFT_HANDED, PadKind, RIGHT_HANDED};
 use trpg_ui::screens::battle::BattleScreen;
+use trpg_ui::screens::battle::layout::{HELP_BAR, MAP_VIEW};
 use trpg_ui::screens::dialogue::DialogueScreen;
 use trpg_ui::widgets::help::{cursor_keys_name, key_name};
 
@@ -121,7 +122,7 @@ fn the_battle_help_bar_draws_its_keys_as_caps() {
         column(help, "Space  end turn"),
         "{snap}"
     );
-    assert_snapshot!(snap);
+    assert_snapshot!(h.snapshot_of(HELP_BAR));
 }
 
 /// The text box's corner: Confirm's key and the log's, as caps.
@@ -170,7 +171,7 @@ fn a_tip_draws_the_arrow_keys_as_their_picture() {
         arrows.iter().any(|s| s.image.path() == KEY_ARROWS_PATH),
         "no arrow cluster among {arrows:?}"
     );
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// Acceptance (0254): with the cursor on W A S D, a tip names it as four
@@ -184,7 +185,7 @@ fn a_cursor_on_w_a_s_d_is_four_key_spans_in_a_tip() {
     assert_eq!(cursor_keys_name(km), "w a s d");
     let how: Vec<String> = tip.how.iter().flat_map(keys).collect();
     assert_eq!(how[..4], ["w", "a", "s", "d"], "{how:?}");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// Acceptance (0254, 0255): with a controller in use, a hint names its

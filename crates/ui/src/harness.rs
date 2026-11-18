@@ -25,10 +25,12 @@
 
 use core::ops::{Deref, DerefMut};
 
+use crate::color::{Palette, Rgb};
+use crate::console::ConsoleSpec;
 use crate::flow::FlowScreen;
 use crate::game::Game;
 use crate::game::system_menu::SystemMenuEntry;
-use crate::glyph_buffer::Rect;
+use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::input::{Layout, PadKind, RIGHT_HANDED};
 use crate::map_view::{MapScene, RangeName, TerrainLooks, UnitView, skin_named};
 use crate::profiles::ProfileId;
@@ -284,6 +286,14 @@ impl Harness {
         self.screen_mut()
     }
 
+    /// The cells `area` of the current frame cover, in the snapshot format
+    /// ([`snapshot_of`]): a snapshot of what a test is about, which a
+    /// change elsewhere on the screen leaves alone (1290).
+    pub fn snapshot_of(&self, area: Rect) -> String {
+        let game = self.game();
+        snapshot_of(game.buffer(), area, &game.ctx().palette)
+    }
+
     /// What the battle on the stack shows on its map (ADR-0038), as
     /// [`battle`](Self::battle) finds it. Assert on this (or on the
     /// battle's state), not on cells and colours, to check what happened.
@@ -378,6 +388,28 @@ impl Harness {
     }
 }
 
+/// The cells of `buf` that `area` covers, in the snapshot format of
+/// [`GlyphBuffer::to_snapshot`], their top-left cell at `(0, 0)`: a buffer
+/// the size of `area`, with `buf`'s cell size and wide characters, that
+/// `buf` is copied into ([`GlyphBuffer::blit`]). Sprites, rectangles and
+/// painted items come along, clipped and moved by `area`'s corner; a
+/// wide character the edge cuts becomes a space. A backdrop doesn't come
+/// along, so a test of one keeps the whole frame. The part of `area`
+/// off `buf` is blank.
+pub fn snapshot_of(buf: &GlyphBuffer, area: Rect, palette: &Palette) -> String {
+    const BLANK: Cell = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+    let spec = buf.spec();
+    let size = |v: i32| u16::try_from(v.max(0)).unwrap_or(u16::MAX);
+    let crop = ConsoleSpec {
+        cols: size(area.w),
+        rows: size(area.h),
+        ..spec
+    };
+    let mut out = GlyphBuffer::with_spec(crop, BLANK).with_widths(buf.widths().clone());
+    out.blit(buf, -area.x, -area.y);
+    out.to_snapshot(palette)
+}
+
 /// [`Harness::map_scene`] on the engine's Harness, for the tools that
 /// hold one (ticket 1181).
 pub fn map_scene(h: &Core) -> Option<MapScene> {
@@ -430,6 +462,52 @@ mod tests {
     use crate::map_view::range;
     use crate::screen::KeyPrompt;
     use std::time::Duration;
+
+    #[test]
+    fn snapshot_of_crops_cells_and_moves_sprites() {
+        use crate::glyph_buffer::{Layer, Sprite};
+        let (ink, ground) = (Rgb::new(255, 255, 255), Rgb::new(0, 0, 64));
+        let mut buf = GlyphBuffer::new(6, 4, Cell::new('.', ink, ground));
+        buf.print(2, 1, "abc", ink, ground);
+        buf.print(2, 2, "def", ink, ground);
+        // A one-cell sprite on `e`, at (3, 2): (24, 32) in pixels.
+        let ctx = crate::screen::tests::ctx();
+        let image = ctx
+            .game
+            .content
+            .images
+            .id(trpg_content::image::TEST_CARD_PATH)
+            .unwrap();
+        let cell = Rect::new(0, 0, 8, 16);
+        buf.add_sprite(Sprite::new(
+            image,
+            cell,
+            Rect::new(24, 32, 8, 16),
+            Layer::Over,
+        ));
+        let palette = &ctx.palette;
+        let crop = snapshot_of(&buf, Rect::new(2, 1, 3, 2), palette);
+        let mut want = GlyphBuffer::new(3, 2, Cell::new('.', ink, ground));
+        want.print(0, 0, "abc", ink, ground);
+        want.print(0, 1, "def", ink, ground);
+        // Moved by the area's corner: (1, 1) in cells, (8, 16) in pixels.
+        want.add_sprite(Sprite::new(
+            image,
+            cell,
+            Rect::new(8, 16, 8, 16),
+            Layer::Over,
+        ));
+        assert_eq!(crop, want.to_snapshot(palette));
+        assert!(
+            crop.starts_with(
+                "abc
+def
+"
+            ),
+            "{crop}"
+        );
+        assert!(crop.contains("8,16"), "{crop}");
+    }
 
     #[test]
     fn use_pad_sets_the_kind_of_pad_pressed_and_snapshot_as_only_looks() {
@@ -540,7 +618,7 @@ mod tests {
         let state = quick_battle(&embedded_ctx().game.content).unwrap();
         let h = Harness::with_screen(Box::new(BattleScreen::new(state)));
         let bare = h.map_scene().unwrap();
-        // The same map; only the cursor's pulse is a frame behind.
+        // The same map, with the cursor on the same tile.
         assert_eq!((bare.tiles, bare.units), (scene.tiles, scene.units));
         assert_eq!(bare.cursor.map(|c| c.pos), scene.cursor.map(|c| c.pos));
         assert!(h.battle().is_some());

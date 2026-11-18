@@ -9,6 +9,7 @@ use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::range;
 use trpg_ui::screens::BattleScreen;
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 
 /// At the title with the right-handed layout, then Quick Battle, still
 /// under its objective's banner (0481).
@@ -84,7 +85,7 @@ fn quick_battle_opens_on_the_player_phase_banner() {
 }
 
 /// The Quick Battle screen at the start of the battle, its `PLAYER PHASE`
-/// banner just closed (the cursor a little into its pulse): `test_small.map`
+/// banner just closed: `test_small.map`
 /// centred in the viewport, four ready player units and four enemies, all
 /// at full HP, the cursor on the lord, the side panel showing the lord and
 /// its tile, and the help line.
@@ -92,6 +93,7 @@ fn quick_battle_opens_on_the_player_phase_banner() {
 fn quick_battle_renders() {
     let h = quick_battle();
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    // The whole frame: this test is about the whole screen (1290).
     assert_snapshot!(h.snapshot());
 }
 
@@ -117,6 +119,7 @@ fn quick_battle_in_every_theme() {
             (0..32).any(|y| (0..100).any(|x| bg(x, y) == Some(grass.clone()))),
             "{theme:?} shows no grass_bg"
         );
+        // The whole frame: a theme colours the whole screen (1290).
         insta::with_settings!({snapshot_suffix => format!("{theme:?}")}, {
             assert_snapshot!(snapshot);
         });
@@ -482,7 +485,7 @@ fn lord_path() -> Harness {
 fn selected_unit_with_ranges_and_path_snapshot() {
     let h = lord_path();
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The lord walked to the fort, its action menu open beside it.
@@ -491,7 +494,7 @@ fn action_menu_snapshot() {
     let mut h = lord_path();
     h.keys("f").wait(0.5);
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 #[test]

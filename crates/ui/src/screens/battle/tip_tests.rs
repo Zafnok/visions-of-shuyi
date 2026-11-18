@@ -9,6 +9,7 @@ use trpg_content::TipTrigger;
 use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
 
 use super::banner::PHASE_BANNER_S;
+use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::testing::{Stacked, battle_with, skirmish, skirmish_charged, through_ai_phases};
 use super::*;
 use crate::color::Rgb;
@@ -576,7 +577,7 @@ fn the_start_tip_renders() {
     let mut c = tipped();
     let mut s = quick();
     press(&mut s, &mut c, &[]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 // ---- Skills, magic and terrain (ticket 0458) -----------------------------------
@@ -1020,7 +1021,7 @@ fn effective_spear_forecast_snapshot() {
         rider_raider(u);
     });
     attack_raider(&mut s, &mut c);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 /// Ticket 0495: two tips due at once come up one at a time. The second

@@ -17,7 +17,7 @@ use super::{TEXT_X, print_clipped};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PanelLook, Rect};
-use crate::screen::Ctx;
+use crate::screen::{Ctx, loop_clock_s};
 use crate::screens::battle::layout::SIDE_PANEL;
 use crate::screens::battle::units::{faction_color, lit_fill, meter_cells};
 use crate::screens::battle::view::{
@@ -351,7 +351,7 @@ fn paint_side(
     let (now, after) = (format!("{:>2}", hp.now), hp.after.to_string());
     let after_fg = c(lit_fill(hp.after, hp.max, HP_BAR_CELLS).1);
     paint_change(ctx, buf, (x + 3, hp_row), (&now, &after), after_fg);
-    let shaded = lost_shaded(ctx.clock_s);
+    let shaded = lost_shaded(loop_clock_s(ctx));
     paint_bar(
         ctx,
         buf,

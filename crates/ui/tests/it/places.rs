@@ -17,9 +17,13 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{MapScene, Place};
 use trpg_ui::screens::DialogueScreen;
-use trpg_ui::screens::dialogue::glyph::PLACE_BRIGHTNESS;
+use trpg_ui::screens::dialogue::glyph::{PLACE_BRIGHTNESS, TEXT_BOX};
 
 use crate::playthrough::{battle, play_in_game, skip_scenes};
+
+/// The screen over the text box: the place, the faces and the scene's
+/// caption. A snapshot shows these alone, not the talk or its keys (1290).
+const PLACE: Rect = Rect::new(0, 0, 100, TEXT_BOX.y);
 
 /// The dialogue screen playing (a battle's, or the game flow's).
 fn dialogue(h: &Harness) -> &DialogueScreen {
@@ -80,7 +84,7 @@ fn chapter_1s_prebattle_scene_is_drawn_over_its_battles_field() {
     assert!(shown.is_some_and(|s| s.units.is_empty()));
     // The first line typed out.
     h.wait(5.0);
-    assert_private_snapshot!(dir, h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot_of(PLACE));
 }
 
 /// After the battle, over the battle's field.
@@ -129,7 +133,7 @@ fn chapter_1s_intro_is_drawn_over_its_place_after_its_captions() {
     assert_eq!(bare(place(&h)), Some(yard));
     assert_eq!(ctx.game.content.maps["harrowby_yard"].look.light, "dawn");
     h.wait(5.5);
-    assert_private_snapshot!(dir, h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot_of(PLACE));
 }
 
 /// The scene after the chapter (0733): its place indoors, at night
@@ -195,7 +199,7 @@ fn chapter_1s_last_scene_is_darkened_less_than_its_others() {
     h.wait(5.0);
     assert!(!dialogue(&h).is_opening());
     assert_eq!(dialogue(&h).view(h.game().ctx()).bright, Some(0.6));
-    assert_private_snapshot!(dir, h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot_of(PLACE));
     for scene in ["ch01_intro", "ch01_prebattle", "ch01_victory"] {
         let mut h = preview(scene);
         for _ in 0..4 {
@@ -272,5 +276,5 @@ fn the_victory_shows_who_is_left_standing_and_fades_into_the_dark() {
     let behind = talk.place.map(|p| p.units.len());
     assert_eq!(behind, Some(6), "they stay behind the talk");
     h.wait(5.0);
-    assert_private_snapshot!(dir, h.snapshot());
+    assert_private_snapshot!(dir, h.snapshot_of(PLACE));
 }

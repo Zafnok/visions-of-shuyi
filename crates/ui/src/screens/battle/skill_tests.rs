@@ -9,6 +9,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, Objective, Phase, Pos, SkillId, UnitAction, UnitId};
 
 use super::BattleScreen;
+use super::layout::{MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
@@ -335,6 +336,7 @@ fn the_info_screen_lists_skills_with_markers_costs_and_timed_effects() {
         effects.iter().any(|r| r == "until Player phase"),
         "{effects:?}"
     );
+    // The whole frame: the info screen covers the screen (1290).
     assert_snapshot!(buf.to_snapshot(&c.palette));
 }
 
@@ -359,7 +361,7 @@ fn skill_menu_snapshot() {
     let mut s = knight_menu(&mut c, 20);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// The `Skill` menu in the left-handed layout (0208): the same list and
@@ -371,7 +373,7 @@ fn skill_menu_left_handed_snapshot() {
     let mut s = knight_menu(&mut c, 20);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// What the focused line of the `Skill` menu says it does (ticket 0429).
@@ -473,7 +475,7 @@ fn a_skill_with_no_uses_left_is_dimmed_with_the_reason() {
 fn skill_menu_with_no_uses_left_snapshot() {
     let mut c = ctx();
     let s = spent_brace_menu(&mut c);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 #[test]

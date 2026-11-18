@@ -13,6 +13,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::{PadKind, RIGHT_HANDED};
 use trpg_ui::save::slot_key;
 use trpg_ui::screen::SkinSet;
+use trpg_ui::screens::world_map::glyph::MAP;
 use trpg_ui::screens::{TownScreen, WorldMapScreen};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
@@ -420,7 +421,8 @@ fn act1_the_army_walks_chapter_4s_open_places() {
         assert!(def.is_shown(shown, &start), "{shown} shows, greyed");
         assert!(!def.is_open(shown, &start), "{shown} isn't open");
     }
-    assert_private_snapshot!(dir, "act1_start", h.snapshot());
+    // The map alone, without its panel or help (1290).
+    assert_private_snapshot!(dir, "act1_start", h.snapshot_of(MAP));
     // Next place: `valley_road`, then `millhaven`.
     h.keys("s f");
     walk(&mut h);

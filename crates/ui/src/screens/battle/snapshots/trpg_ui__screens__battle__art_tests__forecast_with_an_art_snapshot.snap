@@ -1,126 +1,85 @@
 ---
 source: crates/ui/src/screens/battle/art_tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, SIDE_PANEL)"
 ---
-                                                                      ╔═════════ Forecast ═════════╗
-                                                                      ║ Guard Break                ║
-                                                                      ║ Test Lord     Brigand      ║
-                                                                      ║ Iron Sword    Iron Axe 20  ║
-                                                                      ║ 20 → 16                    ║
-                                                                      ║ HP 19 → 19    HP 20 → 3    ║
-                                                                      ║ ████████████  ██▒▒▒▒▒▒▒▒▒▒ ║
-                                                                      ║ Hit  100      Hit  --      ║
-                                                                      ║ Crit 3        Crit --      ║
-                                                                      ║                            ║
-                                                                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  9 dmg   →  2              ║
-                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║ ────────────────────────── ║
-                    ..≈≈≈≈..··..............╦╦..                      ║ 17 ×2     Total            ║
-                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
-                    ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ╚════ Left/Right weapon ═════╝
-                                                                                                    
- Left/Right swap · Up/Down target · f attack · d back                                      F2 debug 
+╔═════════ Forecast ═════════╗
+║ Guard Break                ║
+║ Test Lord     Brigand      ║
+║ Iron Sword    Iron Axe 20  ║
+║ 20 → 16                    ║
+║ HP 19 → 19    HP 20 → 3    ║
+║ ████████████  ██▒▒▒▒▒▒▒▒▒▒ ║
+║ Hit  100      Hit  --      ║
+║ Crit 3        Crit --      ║
+║                            ║
+║ ────────────────────────── ║
+║  8 dmg   →  1   no counter ║
+║  9 dmg   →  2              ║
+║ ────────────────────────── ║
+║ 17 ×2     Total            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+╚════ Left/Right weapon ═════╝
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccccccddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggggddddggggggggdddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddgdccddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdiddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhhhddiiiiiiiiiiiidb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqttuullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyzzvvyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmqqxxxxllllllllyyzzzzyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnqqllllllllllwwyyyyAAyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbcccccccccccccccccccbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aBBBBCBBBBBCCCCCCCCBBCBBBBCCCCCCCCCCBCCCCCCCCCCBCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
+aaaaaaaaaabbbbbbbbbbaaaaaaaaaa
+acbbbbbbbbbbbcccccccccccccccca
+acdddddddddccccceeeeeeecccccca
+acffffffffffccccffffffffccccca
+accccfcbbcccccccccccccccccccca
+acffccccfcggccccffccccfchcccca
+acggggggggggggcchhhhhhhhhhhhca
+acfffcccccccccccfffcccccccccca
+acffffccccccccccffffccccccccca
+acccccccccccccccccccccccccccca
+acaaaaaaaaaaaaaaaaaaaaaaaaaaca
+accccccccccfccfcccffffffffffca
+accccccccccfccfcccccccccccccca
+acaaaaaaaaaaaaaaaaaaaaaaaaaaca
+acccccccccccfffffcccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+aaaaabbbbbbbbbbbbbbbbbbbaaaaaa
 --- legend ---
-a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text_highlight bg:panel_bg
-d = fg:text bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:enemy bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:hp_high bg:panel_bg
-i = fg:hp_low bg:panel_bg
-j = fg:water bg:sea
-k = fg:water bg:water_bg
-l = fg:grass bg:grass_bg
-m = fg:forest bg:forest_bg
-n = fg:thicket bg:thicket_bg
-o = fg:mountain bg:mountain_bg
-p = fg:peak bg:peak_bg
-q = fg:road bg:road_bg
-r = fg:enemy bg:#50281d
-s = fg:wood bg:water_bg
-t = fg:player bg:road_bg
-u = fg:enemy bg:#4c271c
-v = fg:fort bg:fort_bg
-w = fg:enemy bg:grass_bg
-x = fg:player bg:grass_bg
-y = fg:stone bg:stone_bg
-z = fg:floor bg:floor_bg
-A = fg:wood bg:stone_bg
-B = fg:text bg:key_bg
-C = fg:text_dim bg:black
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:player bg:panel_bg
+e = fg:enemy bg:panel_bg
+f = fg:text_dim bg:panel_bg
+g = fg:hp_high bg:panel_bg
+h = fg:hp_low bg:panel_bg
 --- overlays ---
-over  273,222 14x2  hp_high
-over  225,286 14x2  hp_high
-over  289,254 14x2  hp_high
-over  289,222 14x2  hp_high
-over  273,254 14x2  hp_high
-over  273,206 14x2  hp_high
-over  289,302 14x2  hp_high
-over  209,286 14x2  hp_high
-over  287,208 3x1  cursor
-over  287,208 1x3  cursor
-over  301,208 3x1  cursor
-over  303,208 1x3  cursor
-over  287,221 3x1  cursor
-over  287,219 1x3  cursor
-over  301,221 3x1  cursor
-over  303,219 1x3  cursor
-over  570,53 1x1  text_highlight
-over  572,53 1x1  text_highlight
-over  569,54 2x1  text_highlight
-over  572,54 2x1  text_highlight
-over  568,55 3x1  text_highlight
-over  572,55 3x1  text_highlight
-over  569,56 2x1  text_highlight
-over  572,56 2x1  text_highlight
-over  570,57 1x1  text_highlight
-over  572,57 1x1  text_highlight
+over  10,53 1x1  text_highlight
+over  12,53 1x1  text_highlight
+over  9,54 2x1  text_highlight
+over  12,54 2x1  text_highlight
+over  8,55 3x1  text_highlight
+over  12,55 3x1  text_highlight
+over  9,56 2x1  text_highlight
+over  12,56 2x1  text_highlight
+over  10,57 1x1  text_highlight
+over  12,57 1x1  text_highlight

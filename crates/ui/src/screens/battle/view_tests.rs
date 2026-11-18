@@ -324,6 +324,7 @@ fn info_supports_snapshot() {
     let c = ctx();
     let mut h = Harness::with_screen(Box::new(bonded_quick(&c)));
     h.keys("e");
+    // The whole frame: the info screen covers the screen (1290).
     insta::assert_snapshot!(h.snapshot());
 }
 

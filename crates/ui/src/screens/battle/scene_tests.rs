@@ -22,7 +22,7 @@ use crate::input::Action;
 use crate::map_view::glyph::GLYPH;
 use crate::map_view::{CursorStyle, Facing, MapScene, MapSkin, RangeName, UnitView, Units, range};
 use crate::screen::tests::ctx;
-use crate::screen::{Ctx, FrameInput, Screen};
+use crate::screen::{Ctx, FrameInput, IdleMotion, Screen};
 use shuyi_ui::grid::skin::{GridSkin, Looks, UnitPainter, WalkSpeeds};
 
 fn p(x: i32, y: i32) -> Pos {
@@ -62,6 +62,7 @@ fn ranges(scene: &MapScene) -> Vec<(RangeName, usize)> {
 #[test]
 fn browsing_shows_the_terrain_the_units_and_the_cursor() {
     let mut c = ctx();
+    c.idle_motion = IdleMotion::On;
     let s = quick();
     let scene = s.scene(&c);
     // The game's clock, in milliseconds, for a skin's moving marks.
@@ -119,8 +120,29 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
 }
 
 #[test]
+fn the_battle_holds_still_without_idle_motion() {
+    // Half a second in: the cursor's pulse at its faintest, the map's
+    // clock at 500 ms, when the loops run; at their start when they don't.
+    for (motion, brightness, clock_ms) in [
+        (IdleMotion::Off, 1.0, 0),
+        (IdleMotion::On, super::cursor::BLINK_MIN, 500),
+    ] {
+        let mut c = ctx();
+        c.idle_motion = motion;
+        c.clock_s = 0.5;
+        let mut s = quick();
+        wait(&mut s, &mut c, 0.5);
+        let scene = s.scene(&c);
+        let cursor = scene.cursor.unwrap();
+        assert!((cursor.brightness - brightness).abs() < 1e-6, "{motion:?}");
+        assert_eq!(scene.clock_ms, clock_ms, "{motion:?}");
+    }
+}
+
+#[test]
 fn the_cursor_has_the_players_style_and_its_pulse() {
     let mut c = ctx();
+    c.idle_motion = IdleMotion::On;
     c.change_settings(|s| s.game.cursor_style = CursorStyle::TileGlow)
         .unwrap();
     let mut s = quick();
@@ -864,6 +886,7 @@ fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
 #[test]
 fn a_unit_that_can_act_steps_on_the_spot_and_an_acted_one_stands_still() {
     let mut c = ctx();
+    c.idle_motion = IdleMotion::On;
     let s = quick();
     let frames = |c: &Ctx| -> Vec<u8> { s.scene(c).units.iter().map(|u| u.frame).collect() };
     let count = s.scene(&c).units.len();

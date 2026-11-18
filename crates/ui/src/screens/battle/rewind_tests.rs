@@ -333,6 +333,7 @@ fn skipping_is_silent() {
 #[test]
 fn the_scene_is_the_map_before_the_highlighted_action() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let (mut s, start) = attacked(&mut c, 3);
     let now = s.scene(&c);
     assert_eq!(

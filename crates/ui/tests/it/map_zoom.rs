@@ -9,6 +9,7 @@ use trpg_core::Pos;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, PadKind};
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 use trpg_ui::settings::MapZoom;
 
 /// The tiles the test tileset shows at 1× and at 2×.
@@ -268,7 +269,7 @@ fn quick_battle_at_twice_the_size() {
     let mut h = quick_battle("sprite");
     h.keys("f");
     assert_eq!(view(&h), VIEW_X2);
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The same at 2× with the lord's action menu open: beside its tile.
@@ -276,7 +277,7 @@ fn quick_battle_at_twice_the_size() {
 fn a_menu_opens_beside_its_unit_at_twice_the_size() {
     let mut h = quick_battle("sprite");
     h.keys("f f");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The sides the map goes on past in the map scene: left, right, up, down.

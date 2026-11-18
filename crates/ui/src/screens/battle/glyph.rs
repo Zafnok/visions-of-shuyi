@@ -136,6 +136,20 @@ fn clear_at_bottom(ctx: &Ctx, scene: &MapScene, tile: trpg_core::Pos) -> bool {
     tile.is_some_and(in_top_half)
 }
 
+/// Where `view`'s lesson box, or the box at the end of the lessons, is
+/// painted, if one is up: for a test's snapshot of the box alone (1290).
+pub fn lesson_box(ctx: &Ctx, view: &BattleView) -> Option<Rect> {
+    let widths = crate::widgets::help::frame_widths(ctx);
+    let scene = &view.scene;
+    if let Some(lesson) = &view.lesson {
+        let at_bottom = lesson_at_bottom(ctx, scene, lesson);
+        return Some(tip_box::glyph::lesson_rect(lesson, at_bottom, &widths));
+    }
+    let end = view.lessons_end.as_ref()?;
+    let at_bottom = clear_at_bottom(ctx, scene, end.clear_of);
+    Some(tip_box::glyph::lessons_end_rect(end, at_bottom, &widths))
+}
+
 /// Paints the box at the end of the lessons over the map that shows `scene`,
 /// clear of the cursor's tile.
 pub fn paint_lessons_end(ctx: &Ctx, scene: &MapScene, end: &LessonsEndView, buf: &mut GlyphBuffer) {

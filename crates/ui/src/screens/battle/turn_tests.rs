@@ -6,6 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
+use super::layout::{MAP_VIEW, snap};
 use super::testing::{Stacked, battle_with, skirmish, through_ai_phases, wait};
 use super::*;
 use crate::color::Rgb;
@@ -210,7 +211,7 @@ fn danger_zone_snapshot() {
     let mut s = quick();
     press(&mut s, &mut c, &[Action::DangerZone]);
     let buf = render(&s, &c);
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 // Info screen.
@@ -314,6 +315,7 @@ fn info_screen_full_loadout_snapshot() {
     assert_eq!(info.accessory.item, Some(ring));
     assert!(info.spells.iter().any(|s| s.name == "Fire"));
     assert!(info.weapons[0].as_ref().is_some_and(|w| w.broken.is_some()));
+    // The whole frame: the info screen covers the screen (1290).
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
@@ -323,6 +325,7 @@ fn info_screen_snapshot() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Info]);
+    // The whole frame: the info screen covers the screen (1290).
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
@@ -520,7 +523,7 @@ fn map_menu_snapshot() {
     press(&mut s, &mut c, &[Action::Cancel]);
     let buf = render(&s, &c);
     assert_in_font(&buf);
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 /// The unit list, the objective and the end-turn question, centred on
@@ -530,19 +533,19 @@ fn map_menu_boxes_snapshot() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Cancel, Action::Confirm]);
-    assert_snapshot!("unit_list", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("unit_list", snap(&render(&s, &c), &c, MAP_VIEW));
     press(
         &mut s,
         &mut c,
         &[Action::Cancel, Action::CursorDown, Action::Confirm],
     );
-    assert_snapshot!("objective", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("objective", snap(&render(&s, &c), &c, MAP_VIEW));
     press(
         &mut s,
         &mut c,
         &[Action::Cancel, Action::Cancel, Action::EndTurn],
     );
-    assert_snapshot!("end_turn_prompt", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("end_turn_prompt", snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 // Ending the turn.
@@ -816,7 +819,7 @@ fn phase_banner_snapshot() {
     );
     through_ai_phases(&mut s, &mut c, 30.0);
     assert_eq!(phase_banner(&s), Some((Phase::Player, 2)));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 #[test]

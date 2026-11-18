@@ -170,6 +170,7 @@ fn a_broken_weapon_says_so_under_it_and_the_bar_blinks() {
     assert_eq!(find(&buf, 4, "HP 20 → 3"), Some(rx));
     // On the blink's other half the HP that would be lost is black too.
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     c.clock_s = crate::screens::battle::glyph::forecast::LOST_BLINK_S;
     let scene = plains(&c);
     let mut full = blank();

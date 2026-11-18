@@ -18,7 +18,7 @@ use trpg_core::{Side, StatValue};
 use super::tile_cells;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
-use crate::screen::Ctx;
+use crate::screen::{Ctx, loop_clock_s};
 use crate::screens::battle::glyph::forecast::{
     SIDES, Under, lost_shaded, skull, swap_arrows, under, uses_after_name, weapon_name,
 };
@@ -222,7 +222,7 @@ fn paint_bar(
     let (kept, _) = lit_fill(after, max, HP_BAR_CELLS);
     let (shown, _) = lit_fill(hp.max(after), max, HP_BAR_CELLS);
     let full = Cell::new('█', ink.text, ink.inside);
-    let lost = if lost_shaded(pen.ctx.clock_s) {
+    let lost = if lost_shaded(loop_clock_s(pen.ctx)) {
         Cell::new('▒', ink.text, ink.inside)
     } else {
         full

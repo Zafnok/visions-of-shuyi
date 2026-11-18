@@ -266,6 +266,7 @@ fn cursor_moves_one_tile_per_step_and_stays_on_the_map() {
 #[test]
 fn cursor_pulses_with_frame_time() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = quick();
     s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
     assert!((s.cursor().brightness() - cursor::BLINK_MIN).abs() < 1e-6);
