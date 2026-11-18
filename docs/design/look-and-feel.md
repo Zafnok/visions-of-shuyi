@@ -1943,6 +1943,56 @@ same wording (yes), then a `Bonus:` line for the village's rewards
 - It shows on a fresh start and on Retry or Restart; not after a rewind,
   nor on a suspended battle carried on (*the agent's starting rule*, 0481).
 
+### The chapter title card
+
+Decided 2026-11-17, ticket 0812, on mockups at the game's size in palette
+D. Shown: A, no card (the chapter opens on its first scene); B, the
+chapter's number and name centred on black; C, B with a frame like the
+phase banner's or with rules. Nick: *"let me see the 2 C variants with
+perhaps different font choices to better accentuate a title card"*; then,
+of the framed card and the card with rules each in three letterings
+(spaced capitals, a big numeral, big block letters): *"I like C1
+framed/lettering and C3 big block name the best but I wonder if we could
+explore other fonts I think a titlecard is fine to break from our
+established one font for everything"*. Of six open-licensed fonts (two
+pixel blackletters, a pixel sans, Cinzel, IM Fell English SC, Grenze
+Gotisch) he liked Jacquard 24, Cinzel and IM Fell English best, picked
+**the rules** over the frame, then **Cinzel**, and Cinzel for the
+`Chapter 1` line too (over IM Fell English).
+
+- When a chapter starts (New Game, the next chapter, a loaded chapter
+  save), before its first scene, the screen is black with two rules
+  across its middle, each a double line broken by a small diamond in the
+  dim border colour (`══════ ◆ ══════`); between them `Chapter 1` in
+  Cinzel Medium in the text colour, and under it the chapter's name in
+  Cinzel Bold, larger, in the highlight colour (gold in the default
+  theme). Both come from the chapter file's `title` (`Chapter 1: The
+  Letter`), split at its first `: `.
+- The name is in Cinzel, the only text in the game that isn't the cell
+  font (Nick: a title card may break from one font for everything). The
+  longest Act 1 name (`The Hound's Country`) fits on one line.
+- It closes by itself after a few seconds, or on Confirm or Cancel (the
+  ticket's rule).
+- The same in the picture look (the card covers the screen; there is no
+  map behind it).
+
+*The agent's starting rules (Nick can veto):*
+
+- The card stays up **3 seconds** (*tunable*, `chapter_card.rs`).
+- A world-map chapter shows it before its opening scenes; arriving at a
+  battle on the world map doesn't show it again. Restarting or retrying
+  a battle doesn't either.
+- A title without `: ` shows whole as the name, with no line above.
+- A language whose title has a character Cinzel lacks shows both lines in
+  the cell font, in the same places.
+- On the Playdate the card is the same in its inks, in the cell font (its
+  screen is too small for Cinzel's name at this size).
+- The debug Quick Battle shows no card (it goes straight to its battle).
+
+As built: [`0812-chapter-card.png`](../screenshots/0812-chapter-card.png)
+and, on the Playdate,
+[`0812-chapter-card-playdate.png`](../screenshots/0812-chapter-card-playdate.png).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side

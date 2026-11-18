@@ -35,6 +35,8 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     // familiar" (None), the default lead, the intro scene skipped, the
     // battle notes and turn 1's banner closed.
     h.keys("f f Down Down f Up f");
+    // The chapter's title card (0812).
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);

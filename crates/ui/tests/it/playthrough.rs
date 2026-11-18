@@ -47,6 +47,11 @@ pub fn play(state: &mut BattleState, content: &Content, commands: &[Command]) {
 /// other.
 pub fn skip_scenes(h: &mut Harness) {
     for _ in 0..12 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }

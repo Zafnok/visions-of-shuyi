@@ -2,7 +2,7 @@
 //! scenes and battle to the result; and saving and loading it (0802).
 //!
 //! ```text
-//! New Game → mode → familiarity → (voices?) → lead → [chapter: intro scenes → (Camp → Preparations) → battle
+//! New Game → mode → familiarity → (voices?) → lead → [chapter: title card (0812) → intro scenes → (Camp → Preparations) → battle
 //!     ├─ victory → apply the result → the results (0810: gold, rewind
 //!     │            bonus, level ups) → victory scenes
 //!     │            → "Save your progress?" (→ slot picker)
@@ -102,7 +102,6 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::{Place, UnitView, left_standing};
 use crate::save::{self, SUSPEND_KEY, SaveError};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, ScreenResult, Shuyi, Transition};
-use crate::screens::CampScreen;
 use crate::screens::battle::BattleEnd;
 use crate::screens::familiarity::FamiliarityScreen;
 use crate::screens::game_over::ToBeContinuedScreen;
@@ -112,6 +111,7 @@ use crate::screens::preparations::PreparationsScreen;
 use crate::screens::save::{SavePromptScreen, SlotOutcome, SlotPickerScreen};
 use crate::screens::voices_question::VoicesQuestionScreen;
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen, WorldBattle, WorldMapScreen};
+use crate::screens::{CampScreen, ChapterCardScreen};
 use crate::storage::Storage;
 pub use first_lines::{KeptVoices, Start, opening_lines, opening_scene};
 use first_lines::{chapter_opening, first_told};
@@ -200,6 +200,8 @@ enum Stage {
     Voices(GameMode, TutorialLevel),
     /// The lead's gender and name, in the mode and tutorial level picked.
     Lead(GameMode, TutorialLevel),
+    /// A chapter's title card (0812), before its first scene.
+    ChapterCard,
     /// A chapter's scene.
     Scene,
     /// Camp: the supports and camp events, between battles (1003).
@@ -596,9 +598,9 @@ impl FlowScreen {
         }
     }
 
-    /// Starts chapter `id` with its intro scenes; a world-map chapter on
-    /// its map instead, after its opening scenes (its intro scenes play
-    /// when the army arrives). A chapter
+    /// Starts chapter `id` with its title card (0812) and its intro
+    /// scenes; a world-map chapter on its map instead, after its card and
+    /// its opening scenes (its intro scenes play when the army arrives). A chapter
     /// missing from the content (validation rules it out) ends the flow at
     /// "To be continued".
     fn start_chapter(&mut self, ctx: &mut Ctx, id: &str) {
@@ -614,14 +616,20 @@ impl FlowScreen {
             }
             self.scenes = chapter.opening_scenes.iter().cloned().collect();
             self.then = Then::WorldMap;
+        } else {
+            self.scenes = chapter.intro_scenes.iter().cloned().collect();
+            self.then = Then::Battle;
+        }
+        // Its title card first (0812), then its scenes; but not the debug
+        // Quick Battle's, which goes straight to its battle.
+        if id == QUICK_CHAPTER {
             self.chapter = Some(chapter);
             self.next_scene(ctx);
             return;
         }
-        self.scenes = chapter.intro_scenes.iter().cloned().collect();
-        self.then = Then::Battle;
+        let card = ChapterCardScreen::new(ctx, &chapter);
         self.chapter = Some(chapter);
-        self.next_scene(ctx);
+        self.show(Stage::ChapterCard, Box::new(card));
     }
 
     /// Plays the next scene waiting, or goes on to what follows them.
@@ -939,7 +947,7 @@ impl FlowScreen {
                     self.show(Stage::Familiarity(mode), Box::new(screen));
                 }
             }
-            Stage::Scene | Stage::Results => self.next_scene(ctx),
+            Stage::ChapterCard | Stage::Scene | Stage::Results => self.next_scene(ctx),
             Stage::Camp => {
                 if let Some(mut campaign) = result.and_then(ScreenResult::take::<Campaign>) {
                     Self::take_in(&mut campaign, ctx, self.started_at);
