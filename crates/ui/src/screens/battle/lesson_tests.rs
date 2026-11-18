@@ -405,11 +405,44 @@ fn a_tip_comes_first_then_tips_wait_for_the_open_lesson() {
     // Keys go to the map, not the tip.
     press(&mut s, &mut c, &CURSORS);
     assert_eq!(s.shown_lesson(), None);
-    // The lesson done, the tip waits for the next press on the map (0495),
-    // so a key meant for the lesson never closes it; still selecting, it
-    // is in its moment.
+    // The lesson done while still selecting: the tip's trigger still
+    // fires and nothing is in the way, so it comes up at once (1292). It
+    // is drawn before a key can close it (0495).
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
+}
+
+/// Ticket 1292: a tip that fires while a lesson is up doesn't show after
+/// the lesson once its moment has passed (the unit put back down); still
+/// unseen, it shows the next time its trigger fires (the next unit
+/// selected), with nothing in the way.
+#[test]
+fn a_tip_that_fired_under_a_lesson_waits_for_its_trigger() {
+    let mut c = lessoned();
+    c.game.tips_enabled = true;
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(s.lesson_open());
+    // Selecting the lord under the lesson: no tip then.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), None);
-    press(&mut s, &mut c, &[Action::CursorLeft]);
+    // Put back down, and the lesson finished on the map: still no tip.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert!(matches!(s.mode(), Mode::Idle { .. }));
+    press(&mut s, &mut c, &CURSORS);
+    press(&mut s, &mut c, &[]);
+    assert!(!s.lesson_open());
+    assert_eq!(s.shown_lesson(), None);
+    assert_eq!(s.shown_tip(), None);
+    let seen = crate::storage::Storage::read(&c.storage, crate::tips::TIPS_SEEN_KEY);
+    let seen = seen.ok().flatten();
+    assert!(!seen.unwrap_or_default().contains("unit_selected"));
+    // The next unit selected: *Moving a unit* comes up.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
 }

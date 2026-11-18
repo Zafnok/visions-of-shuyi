@@ -230,24 +230,31 @@ key; C. a key of its own), he picked **A. Modal, but safe**:
 
 - A tip takes the keys until **Confirm or Cancel** closes it, as before,
   and only a press made while it is up closes it.
-- A tip comes up **in its moment** (selecting a unit, the forecast…). One
-  that missed its moment (it fired while a lesson was up, while another
-  tip was, or while a screen was over the battle) waits until the player
-  is **back on the map with no menu open**. For example: back from
-  Options, the map menu is still open; the D that closes it closes the
-  menu, and the tip comes up on the map after it.
-- **One at a time:** after a tip is closed, a lesson is done, or a screen
-  the player opened from the battle (Options, Guides, Rewind, a shop) goes,
-  the next tip waits for a **press on the map** (a cursor move, a unit
-  picked, a menu opened). For example: selecting a unit for the first time
-  brings up *Moving a unit*; closed, *Skills* comes up at the next press.
+- A tip comes up **only in its moment** (selecting a unit, the forecast…).
+  Nick, 2026-11-17, after playing ("why are Vix's tip triggers so random,
+  they don't flow very well, like they pop up after a delay and stuff"),
+  replacing the queue and the wait for a press that 0495 had: "how about
+  just try again showing on its moment rather than randomly delaying in a
+  queue waiting for a key press" (1292). So:
+  - If a tip's moment passes while it can't show (a lesson, another tip
+    or a screen over the battle is in the way), it isn't kept waiting: it
+    stays unseen, and shows **the next time its trigger fires** with
+    nothing in the way. For example: selecting a unit for the first time
+    while a lesson is up brings up no tip then; the next time a unit is
+    selected with no lesson up, *Moving a unit* comes up.
+  - **No tip waits for a press on the map.** When one closes, another
+    whose moment is still on comes up at once: selecting a unit that has a
+    skill brings up *Moving a unit*; closed, *Skills* follows straight
+    away.
+  - Back from Options (or any screen over the battle), no tip comes up
+    that fired before or under it; the D that closes the map menu closes
+    the menu.
 - *Claude's starting rules:* a lesson done goes straight to the next
-  lesson, never to a tip between them, so on turn 1 the tips that fired
-  during the lessons come after the last of that run (once the player is
-  back on the map). The box at the end of the lessons waits for a press on
-  the map after the last lesson, like a tip. A scene that plays over the
-  battle doesn't make the next tip wait for a press (the battle-start tip
-  still comes up as the first scene ends).
+  lesson, never to a tip between them. A combat's playback doesn't end a
+  tip's moment: the level-up tip, fired by a combat, shows once the map
+  is back after it. The box at the end of the lessons still waits for a
+  press on the map after the last lesson (0465, 0495), so a key meant for
+  the lesson never answers it.
 
 ### Guides (in the menu)
 
@@ -326,3 +333,4 @@ How the split works (0475):
 - **0465** the guide's box at the end of the lessons.
 - **0466** the zoom tip.
 - **0495** how a tip box is put away, and one at a time.
+- **1292** a tip that misses its moment waits for the next one.
