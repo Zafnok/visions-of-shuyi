@@ -12,7 +12,7 @@ use trpg_core::{
     UnitAction, UnitId,
 };
 use trpg_ui::ShuyiCtx;
-use trpg_ui::audio::{AudioRequest, pick_from_pool};
+use trpg_ui::audio::pick_from_pool;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::layout::MAP_VIEW;
@@ -631,7 +631,7 @@ fn no_notes_box_for_a_battle_without_notes() {
 fn music(h: &Harness) -> Vec<String> {
     h.audio_requests()
         .iter()
-        .filter(|r| !matches!(r, AudioRequest::PlaySound { .. }))
+        .filter(|r| crate::is_music(r))
         .map(|r| r.cue().unwrap_or("-").to_owned())
         .collect()
 }

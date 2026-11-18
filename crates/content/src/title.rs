@@ -41,6 +41,30 @@ pub struct TitleArt {
     /// The chapter title card's lettering (0812); `None` if the file
     /// names none (the card then shows its lines in the cell font).
     pub lettering: Option<Lettering>,
+    /// The campfire in the title's corner (ticket 0922); `None` if the
+    /// file names none or the build leaves it out (the Playdate's): the
+    /// title then has no fire and no crackle.
+    pub campfire: Option<Campfire>,
+}
+
+/// A picture that moves by itself: its frames side by side in one image,
+/// left to right, each as wide as the image over their count.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Campfire {
+    /// The image of the frames.
+    pub image: ImageId,
+    /// One frame's size in its own pixels, width × height.
+    pub frame: (u32, u32),
+    /// How many frames, at least 1.
+    pub frames: u32,
+}
+
+/// A strip of frames by file name in the title directory.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StripFile {
+    file: String,
+    frames: u32,
 }
 
 /// The chapter card's two glyph sheets, by file stem in the title
@@ -62,6 +86,8 @@ struct TitleFile {
     game_over: Option<String>,
     #[serde(default)]
     lettering: Option<LetteringFile>,
+    #[serde(default)]
+    campfire: Option<StripFile>,
 }
 
 /// Loads the embedded title art file, checking each image against
@@ -125,12 +151,23 @@ pub fn from_source(
             line: line?,
         })
     });
+    // The Playdate's bundle leaves the fire out (ticket 0922).
+    let wanted = raw
+        .campfire
+        .as_ref()
+        .filter(|strip| !bundle::left_out(&format!("{TITLE_DIR}/{}", strip.file)));
+    let campfire = wanted.and_then(|strip| {
+        check_strip(strip, images)
+            .map_err(|problem| errors.push(ContentError::new(file, format!("campfire: {problem}"))))
+            .ok()
+    });
     if errors.is_empty() {
         Ok(TitleArt {
             logo,
             backdrops,
             game_over,
             lettering,
+            campfire,
         })
     } else {
         Err(errors)
@@ -162,6 +199,25 @@ fn check_logo(relative: &str, images: &ImageTable) -> Result<(ImageId, (u32, u32
         ));
     }
     Ok((id, (w, h)))
+}
+
+/// The strip of frames `strip` names, or what is wrong with it: its image
+/// must be in `images`, and as wide as a whole number of its frames, one
+/// or more.
+fn check_strip(strip: &StripFile, images: &ImageTable) -> Result<Campfire, String> {
+    let (image, (w, h)) = find(&strip.file, images)?;
+    let frames = strip.frames;
+    if frames == 0 || w % frames != 0 {
+        return Err(format!(
+            "{} is {w} px wide, not {frames} frames of a whole width",
+            strip.file
+        ));
+    }
+    Ok(Campfire {
+        image,
+        frame: (w / frames, h),
+        frames,
+    })
 }
 
 /// The backdrop at `relative`, or what is wrong with it: it must be in
@@ -232,6 +288,53 @@ mod tests {
         assert_eq!(lettering.line.image.path(), "title/chapter_line.png");
         // The name is the bigger of the two.
         assert!(lettering.heading.atlas.cell_h > lettering.line.atlas.cell_h);
+        // The campfire: four frames of 26×52 (ticket 0922).
+        let fire = art.campfire.unwrap();
+        assert_eq!(fire.image.path(), "title/campfire.png");
+        assert_eq!((fire.frame, fire.frames), ((26, 52), 4));
+    }
+
+    #[test]
+    fn a_campfire_is_a_strip_of_whole_frames() {
+        let images = images();
+        let art = from_source(
+            FILE,
+            r#"(logo: "logo.png", campfire: Some((file: "logo.png", frames: 4)))"#,
+            &images,
+        )
+        .unwrap();
+        let fire = Campfire {
+            image: images.id("title/logo.png").unwrap(),
+            frame: (25, 34),
+            frames: 4,
+        };
+        assert_eq!(art.campfire, Some(fire));
+        // One frame is the whole picture; none named, no fire.
+        let one = r#"(logo: "logo.png", campfire: Some((file: "a.png", frames: 1)))"#;
+        let art = from_source(FILE, one, &images).unwrap();
+        assert_eq!(
+            art.campfire.map(|c| (c.frame, c.frames)),
+            Some(((336, 248), 1))
+        );
+        let art = from_source(FILE, r#"(logo: "logo.png")"#, &images).unwrap();
+        assert_eq!(art.campfire, None);
+        for (frames, wide) in [(3, 100), (0, 100)] {
+            let source = format!(
+                r#"(logo: "logo.png", campfire: Some((file: "logo.png", frames: {frames})))"#
+            );
+            assert_eq!(
+                messages(&source),
+                [format!(
+                    "{FILE}: campfire: logo.png is {wide} px wide, not {frames} frames of a whole width"
+                )]
+            );
+        }
+        assert_eq!(
+            messages(r#"(logo: "logo.png", campfire: Some((file: "none.png", frames: 2)))"#),
+            [format!(
+                "{FILE}: campfire: assets/title/none.png is not a PNG image in the assets"
+            )]
+        );
     }
 
     #[test]

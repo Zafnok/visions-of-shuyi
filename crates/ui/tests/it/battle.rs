@@ -840,8 +840,7 @@ fn nothing_changes_the_music(h: &mut Harness) {
     let cues = h.audio_requests();
     play_into_turn_two(h);
     let music = |all: Vec<AudioRequest>| -> Vec<AudioRequest> {
-        let sound = |r: &AudioRequest| matches!(r, AudioRequest::PlaySound { .. });
-        all.into_iter().filter(|r| !sound(r)).collect()
+        all.into_iter().filter(crate::is_music).collect()
     };
     assert_eq!(music(h.audio_requests()), music(cues));
 }

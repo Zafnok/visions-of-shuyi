@@ -81,4 +81,5 @@ under sprite 0,0 64x496  title/fields_b_day.png 0,0 32x248 flip
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip clip=736,0 64x288
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip clip=736,384 64x112
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip clip=768,288 32x96
+under sprite 40,288 104x208  title/campfire.png 0,0 26x52
 over  sprite 192,16 416x248  title/logo.png 0,0 52x31

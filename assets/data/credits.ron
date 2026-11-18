@@ -90,6 +90,11 @@
          source: "https://mattwalkden.itch.io/fantasy-battle-pack", license: "Custom (MattWalkden)",
          private: ["units/lance_cavalier.", "units/mounted_archer."]),
 
+        // The title screen's campfire (0922).
+        (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
+         author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",
+         license: "CC0-1.0"),
+
         // The AI voice tools that made the voice clips (0722, ADR-0107).
         // Hidden from the list: the credits screen shows them under its
         // own heading, with the line that the voices are AI-generated,

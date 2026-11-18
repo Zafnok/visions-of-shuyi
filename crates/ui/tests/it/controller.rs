@@ -241,7 +241,7 @@ fn a_button_ends_the_titles_wait() {
     let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
+    assert_eq!(crate::one_shots(&h), [] as [std::string::String; 0]);
     assert_eq!(as_keys(&mut h), title().snapshot_whole());
     // The title's help names the pad's buttons from then on.
     assert!(shows(&h, "A select"));

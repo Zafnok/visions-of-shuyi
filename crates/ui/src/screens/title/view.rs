@@ -34,8 +34,8 @@ pub struct TitleView {
     /// The cinematic behind everything; `None` while the title shows its
     /// own picture alone.
     pub cinematic: Option<CinematicView>,
-    /// How solid the title's own picture (the backdrop, the sparks, the
-    /// logo) is, up to [`FULL`], over the cinematic if one shows, else
+    /// How solid the title's own picture (the backdrop, the campfire and
+    /// its embers, the logo) is, up to [`FULL`], over the cinematic if one shows, else
     /// over black: it goes to black before the cinematic (ticket 0843).
     pub picture: u8,
     /// How solid the menu, its notice, the prompt and the help line are,
@@ -45,10 +45,11 @@ pub struct TitleView {
     /// The picture behind the logo this launch; `None` when the game has
     /// none.
     pub backdrop: Option<ImageId>,
-    /// The sparks drifting up the screen, as how long the title has been
-    /// shown, in milliseconds: that alone places them. `None`: no sparks
+    /// The campfire's frames and the embers rising from it (ticket 0922),
+    /// as how long the title has been shown, in milliseconds: that alone
+    /// places them. `None`: no embers, and the fire stands still
     /// ([`Ctx::idle_motion`](crate::screen::Ctx::idle_motion) is off).
-    pub sparks: Option<u32>,
+    pub embers: Option<u32>,
     /// The "press any key" prompt, while the screen waits for a key; the
     /// menu is not shown meanwhile.
     pub prompt: Option<String>,

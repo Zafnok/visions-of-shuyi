@@ -168,8 +168,15 @@ mod tests {
         assert!(
             bought[0].covers("units/knight_m1.png") && !bought[3].covers("units/knight_m1.png")
         );
+        // Without the bought art, the free campfire alone (0922).
         #[cfg(not(feature = "private-assets"))]
-        assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
+        assert_eq!(
+            credits
+                .in_group(CreditGroup::Art)
+                .map(|c| c.title.as_str())
+                .collect::<Vec<_>>(),
+            ["Idylwild's Chromatic Campfires"]
+        );
         // Without the manifest: the file's entries alone.
         let alone = load(None).unwrap_or_default();
         assert_ne!(alone.entries, [] as [shuyi_assets::credits::CreditEntry; 0]);

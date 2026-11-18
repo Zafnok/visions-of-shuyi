@@ -5,10 +5,10 @@ type: feature
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-18
 ---
 
 # 0922 — The title's campfire: a fire picture, its crackle and embers
@@ -81,12 +81,12 @@ fade), judged by 0811 (the title art).
 
 ## Acceptance criteria
 
-- [ ] Nick picked the fire, the embers, the crackle and the fade; recorded.
-- [ ] The title shows the campfire, its embers and plays the crackle; all
+- [x] Nick picked the fire, the embers, the crackle and the fade; recorded.
+- [x] The title shows the campfire, its embers and plays the crackle; all
       three fade as the cinematic starts.
-- [ ] The new picture and sound are credited (`credits.ron` / `audio.ron`,
+- [x] The new picture and sound are credited (`credits.ron` / `audio.ron`,
       `THIRD_PARTY_ASSETS.md` or the bought art's `private` list).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -97,4 +97,59 @@ fade), judged by 0811 (the title art).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick's picks** (two rounds of moving renders of the real title with the
+bought backdrops, and recordings; his words are in `look-and-feel.md`,
+*Title screen*, *The campfire, its embers and its crackle*):
+
+- **Fire:** Idylwild's *Chromatic Campfires* (OpenGameArt, CC0), the
+  orange fire with smoke, four frames: `assets/title/campfire.png`, named
+  in `title.ron` (`campfire: Some((file, frames))`, a new optional field,
+  checked by the loader: a whole number of frames wide).
+- **Place:** the bottom-left corner, 4×.
+- **Embers:** "Rise": 26 embers from the flames, fading 8 to 15 rows up.
+  `ember` replaces `spark` (`title/glyph.rs`); the view's `sparks` field
+  is now `embers` (and the cinematic's `Frame::Logo`).
+- **Crackle:** Nick downloaded two Freesound recordings himself and asked
+  for "less popping and a higher volume base sound", with a compressor;
+  of four strengths he picked the light one (4:1) of HECKFRICKER's
+  *Campfire 02* (CC0). `assets-src/audio/import.py` makes
+  `assets/audio/sfx/campfire_02.ogg` from the HQ preview: the same chain
+  he heard (compressor, limiter, ffmpeg's loudness normaliser), 40 s from
+  1:00, its next 2 s crossfaded into its start so that it loops. Cue
+  `title_campfire`, looped, volume 32: about 15 dB under the title song
+  ("in between -12 and -18").
+- **Fade:** "With the picture": the fire and embers go to black with the
+  rest in 0.2 s and the crackle fades out over the same 0.2 s
+  (`FIRE_FADE_MS`; the engine's `stop_sound` fade, no engine change).
+- **Playdate:** "decide later, followup ticket": **0924**. Its bundle
+  leaves `title/campfire.png` out, and a title with no campfire plays no
+  crackle.
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+
+- The fire's frame time (140 ms) and a gentle flicker (0.8 to 1.0
+  brightness).
+- With idle motion off (Options), the fire stands still on its first
+  frame and no embers rise.
+- The crackle starts with the title song (on the first press, as the
+  song) and comes back with the picture: on the cinematic's logo shot,
+  also in the silence after a skip, and when a press brings the menu back.
+- Opening the game (New Game, Load Game, Continue, Quick Battle) fades the
+  crackle out like the picture's fade; Options, Profile and Credits keep it
+  playing, as they keep the music.
+
+**Deviations:** the ticket's "3–4 crackle loops" became Nick's own two
+recordings at four compressor strengths (his request). Freesound needs a
+login, so Nick downloaded the originals; the importer uses the public HQ
+preview of the one he picked.
+
+**Also changed:** the credits (`credits.ron` gains the first free Art
+credit, so a gate build's credits screen now has an Art section, and its
+test says so), `THIRD_PARTY_ASSETS.md`, `assets/NOTICES-game.txt`, the
+pack lists in `shuyi.ron`, the private audio manifest
+(`Zafnok/visions-of-shuyi-assets`, merged first), the kept Quick Battle
+session (its frames now carry the crackle) and nine snapshots (one sprite
+line each: the fire). Tests that listed every sound now take only the
+sounds played once (`one_shots` in `tests/it/main.rs`), or music only.
+
+Engine friction: estimate 250, measured 218 (0.9×), under 2×.

@@ -1511,12 +1511,9 @@ Shown `of` pale with the bars gold, and with the bars pale too:
   - It stays for the whole launch: back from a battle or Game Over, the
     title shows the same picture.
   - The lettering is the same on every backdrop.
-- **Sparks drift up the screen** (Nick: "it looks more dynamic than a
-  static background this way"; "we might tune it a bit later"): 46 small
-  dots and stars in warm colours, each rising 9 or 18 rows a second and
-  swaying a cell or two (*all tunable*, `title/glyph.rs`). They pass
-  behind the logo and the menu, and show from the first frame, before the
-  first press too *(Claude's starting rule)*.
+- **A campfire burns in the bottom-left corner, and embers rise from it**
+  (ticket 0922, below). The 0811 sparks (46 dots drifting up the whole
+  screen) are gone: the embers took their place.
 - **The title music starts at once** on the first press, as before (Nick:
   "A"): the song's own opening is quiet and rising.
 - **Layout:** the logo at the top; under it the menu, or `Press any key or
@@ -1530,6 +1527,66 @@ Shown `of` pale with the bars gold, and with the bars pale too:
   placeholder: the bought pictures aren't in it (ADR-0040).
 - The intro cinematic's last shot (`title-screen.md`, *Intro cinematic*)
   and the Game Over animation (ticket 0830) use this logo.
+
+#### The campfire, its embers and its crackle
+
+Decided 2026-11-18, ticket 0922, over two rounds of moving renders of the
+real title with the bought backdrops, and 30-second recordings to listen
+to. Screenshot of the built screen:
+[`0922-title.png`](../screenshots/0922-title.png). Nick, on the 0908 sparks: "we can probably enhance the title screen
+some more in general, with additional sfx (fire burn) ambience and a
+sprite of a campfire or smth which fades out when the cinematic plays
+too".
+
+Round 1 (the fire: 1 Idylwild's stone ring, 2 the same with smoke, 3
+ArlanTR's bright outlined flames, 4 crad's crossed logs, 5 the bought
+brazier; where: left of the menu at 3×, under the menu at 2×, the corner
+at 4×, beside the logo at 2×, two either side of the menu; the embers:
+today's sparks, rise, few, tall, mix; the crackle: his own two Freesound
+picks, raw and at three compressor strengths, after "I want less popping
+and a higher volume base sound I think he said to use a compressor for
+that"):
+
+> 2 Idylwild + smoke; Corner, 4×; [the embers:] render each with my prev
+> selections
+
+Round 2 (the five embers again with that fire and place; the loudness
+under the song: 6, 12 or 18 dB under; the fade: with the picture, the
+sound lingering, a slower fade, the crackle staying):
+
+> [Embers:] Rise. [Crackle:] 2 light, and make sure it's volume controlled
+> so it mixes well with the title music and doesn't overtake it.
+> [Loudness:] prob in between -12 and -18 somewhere around there.
+> [Fade:] With the picture.
+
+- **The fire** is Idylwild's *Chromatic Campfires* (CC0), the orange fire
+  in its ring of stones with a column of smoke over it, four frames
+  (`assets/title/campfire.png`). It stands in the **bottom-left corner**,
+  4× (104×208 screen pixels), on the row over the help line. A frame
+  every 140 ms, and it flickers a little darker now and then *(both
+  tunable)*. With idle motion off (Options) it stands still on its first
+  frame and no embers rise *(Claude's starting rule)*.
+- **The embers rise from the fire** ("Rise"): 26 dots and stars in warm
+  colours, each from near the middle of the flames, 6 to 11 rows a
+  second, drifting a few cells to one side and swaying; bright for the
+  first half of their rise, then fading out 8 to 15 rows up *(all
+  tunable, `title/glyph.rs`)*. They show from the first frame, before the
+  first press too, as the sparks did.
+- **The crackle** is HECKFRICKER's *Campfire 02* (Freesound, CC0), 40
+  seconds of it looped, under the light compressor Nick picked (4:1) so
+  the bed is louder and the pops quieter. It plays about **15 dB under the
+  title song** ("in between -12 and -18"; the cue's volume in
+  `audio.ron`, *tunable*). It starts with the song, on the first press.
+- **They go with the picture** ("With the picture"): when the title goes
+  idle, the fire and the embers go to black with the logo and the
+  backdrop in 0.2 seconds, and the crackle fades out over the same 0.2
+  seconds; the cinematic then comes in as before. On the cinematic's last
+  shot, the logo, the fire is back, and so is the crackle (in the
+  silence after a skip too) *(Claude's starting rule: the logo shot is
+  the title's picture)*. Starting a game fades the crackle out the same
+  way.
+- **The Playdate's title** stays as it is for now (Nick: "decide later,
+  followup ticket"): ticket 0924.
 
 ### Game Over screen
 
@@ -2129,8 +2186,8 @@ black.
 
 ## Open sub-questions
 
-- Title screen: the sparks may be tuned after Nick has seen them in the
-  game (ticket 0811).
+- The Playdate's title: whether it gets the campfire, its crackle or
+  neither (ticket 0924).
 - Selection arrows `►Al◄` next to another unit: whole-glyph arrows would hide
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
 - Combat screen (ticket 0413 decided where it is shown, the backdrop, the
