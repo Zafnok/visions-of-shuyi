@@ -32,8 +32,8 @@ expression: snap
                                                                       │                            │
                                                                       │ Gold 3 000                 │
                                                                       └────────────────────────────┘
-                                                   W  danger zone: OFF · Shift+Space  auto-end: OFF 
- F  select · E  info · S  next unit · R  rewind · D  menu · Space  end turn                F2 debug 
+ W  danger zone: OFF                                                  Shift+Space  auto-end: OFF    
+ F  select · E  info · S  next unit · R  rewind · D  menu             Space  end turn      F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyyyyyyyyyyyyyyaaaaaaaaaaaayyyyyyyyyyyyyya
-aaayyyyyyyyyyaayyyyyyyyaayyyyyyyyyyyyyaayyyyyyyyyyaayyyyyyyyaaaaaayyyyyyyyyaaaaaaaaaaaaaaaayyyyyyyya
+aaayyyyyyyyyyyyyyyyyaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyyyyyyyyaaaa
+aaayyyyyyyyyyaayyyyyyyyaayyyyyyyyyyyyyaayyyyyyyyyyaayyyyyyyyyyyyyyyyyyaaaaaayyyyyyyyyaaaaaayyyyyyyya
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -155,16 +155,16 @@ over  222,260 1x1  enemy
 over  277,227 5x11  black
 over  278,228 3x6  text_highlight
 over  278,235 3x2  text_highlight
-under 409,481 13x14  key_bg
-under 409,480 13x1  key_edge
-under 409,495 13x1  key_edge
-under 408,481 1x14  key_edge
-under 422,481 1x14  key_edge
-under 585,481 93x14  key_bg
-under 585,480 93x1  key_edge
-under 585,495 93x1  key_edge
-under 584,481 1x14  key_edge
-under 678,481 1x14  key_edge
+under 9,481 13x14  key_bg
+under 9,480 13x1  key_edge
+under 9,495 13x1  key_edge
+under 8,481 1x14  key_edge
+under 22,481 1x14  key_edge
+under 561,481 93x14  key_bg
+under 561,480 93x1  key_edge
+under 561,495 93x1  key_edge
+under 560,481 1x14  key_edge
+under 654,481 1x14  key_edge
 under 9,497 13x14  key_bg
 under 9,496 13x1  key_edge
 under 9,511 13x1  key_edge
@@ -190,13 +190,16 @@ under 401,496 13x1  key_edge
 under 401,511 13x1  key_edge
 under 400,497 1x14  key_edge
 under 414,497 1x14  key_edge
-under 481,497 45x14  key_bg
-under 481,496 45x1  key_edge
-under 481,511 45x1  key_edge
-under 480,497 1x14  key_edge
-under 526,497 1x14  key_edge
+under 561,497 45x14  key_bg
+under 561,496 45x1  key_edge
+under 561,511 45x1  key_edge
+under 560,497 1x14  key_edge
+under 606,497 1x14  key_edge
 --- glyph styles ---
-51,30  +3,+0 bold
+1,30  +3,+0 bold
+70,30  +3,+0 bold
+71,30  +3,+0 bold
+72,30  +3,+0 bold
 73,30  +3,+0 bold
 74,30  +3,+0 bold
 75,30  +3,+0 bold
@@ -205,16 +208,13 @@ under 526,497 1x14  key_edge
 78,30  +3,+0 bold
 79,30  +3,+0 bold
 80,30  +3,+0 bold
-81,30  +3,+0 bold
-82,30  +3,+0 bold
-83,30  +3,+0 bold
 1,31  +3,+0 bold
 13,31  +3,+0 bold
 23,31  +3,+0 bold
 38,31  +3,+0 bold
 50,31  +3,+0 bold
-60,31  +3,+0 bold
-61,31  +3,+0 bold
-62,31  +3,+0 bold
-63,31  +3,+0 bold
-64,31  +3,+0 bold
+70,31  +3,+0 bold
+71,31  +3,+0 bold
+72,31  +3,+0 bold
+73,31  +3,+0 bold
+74,31  +3,+0 bold

@@ -8,11 +8,11 @@ use shuyi_ui::input::fit::ScreenActions;
 use shuyi_ui::input::{NAVIGATION, UiAction, ui_actions};
 
 use super::{
-    BattleScreen, CampScreen, ClassChangeScreen, CreditsScreen, DemoEndScreen, DialogueScreen,
-    FamiliarityScreen, GameOverScreen, ImportScreen, KeyBindingsScreen, LayoutPickerScreen,
-    LeadSelectScreen, ModeSelectScreen, OptionsScreen, PreparationsScreen, ProfileScreen,
-    ResultsScreen, SavePromptScreen, SlotPickerScreen, ToBeContinuedScreen, TownScreen,
-    VoicesQuestionScreen, WorldMapScreen,
+    BattleScreen, CampScreen, ChapterCardScreen, ClassChangeScreen, CreditsScreen, DemoEndScreen,
+    DialogueScreen, FamiliarityScreen, GameOverScreen, ImportScreen, KeyBindingsScreen,
+    LayoutPickerScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen, PreparationsScreen,
+    ProfileScreen, ResultsScreen, SavePromptScreen, SlotPickerScreen, ToBeContinuedScreen,
+    TownScreen, VoicesQuestionScreen, WorldMapScreen,
     battle::{guides::GuidesScreen, rewind::RewindScreen, shop::ShopScreen},
 };
 use crate::debug::{
@@ -114,6 +114,8 @@ pub const VOICES_QUESTION: &[Action] = LIST;
 pub const GAME_OVER: &[Action] = &Action::ALL;
 /// What the to be continued screen reacts to.
 pub const TO_BE_CONTINUED: &[Action] = &[Confirm];
+/// What the chapter title card reacts to: either closes it (0812).
+pub const CHAPTER_CARD: &[Action] = &[Confirm, Cancel];
 /// What the lead select screen reacts to.
 pub const LEAD_SELECT: &[Action] = GRID;
 /// What the mode select screen reacts to.
@@ -171,7 +173,7 @@ pub const WORLD_MAP: &[Action] = &[
 /// Every screen the game can show, for `check --target`: the game's by the
 /// table above, the engine's by the widgets they declare themselves with.
 pub fn every_screen() -> Vec<ScreenActions<Action>> {
-    let own: [(&'static str, &[Action]); 30] = [
+    let own: [(&'static str, &[Action]); 31] = [
         (CinematicScreen::NAME, CINEMATIC),
         (PortraitViewerScreen::NAME, PORTRAIT_VIEWER),
         (ScenePreviewScreen::NAME, SCENE_PREVIEW),
@@ -183,6 +185,7 @@ pub fn every_screen() -> Vec<ScreenActions<Action>> {
         (RewindScreen::NAME, REWIND),
         (ShopScreen::NAME, SHOP),
         (CampScreen::NAME, CAMP),
+        (ChapterCardScreen::NAME, CHAPTER_CARD),
         (ClassChangeScreen::NAME, CLASS_CHANGE),
         (CreditsScreen::NAME, CREDITS),
         (DialogueScreen::NAME, DIALOGUE),
@@ -254,7 +257,7 @@ mod tests {
             assert!(found.next().is_none(), "{name} twice");
             screen.actions.clone().unwrap_or_default()
         };
-        assert_eq!(screens.len(), 37);
+        assert_eq!(screens.len(), 38);
         assert_eq!(listed(BattleScreen::NAME), BATTLE);
         assert_eq!(
             listed(ImportScreen::NAME),

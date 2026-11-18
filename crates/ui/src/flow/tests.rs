@@ -8,6 +8,7 @@ use crate::screen::ScreenStack;
 use crate::screen::tests::ctx;
 use crate::screens::GameOverScreen;
 use crate::screens::battle::progress::stat_row;
+use crate::screens::chapter_card::ChapterCardView;
 
 /// Playtime counts the seconds since the campaign began, carrying on
 /// from what it had (a loaded campaign, 0802).
@@ -104,6 +105,13 @@ fn new_game_reads_what_each_screen_pops_with() {
     let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.mode, GameMode::Casual);
     assert_eq!(campaign.tutorial, TutorialLevel::Short);
+    // The chapter's title card (0812), then on Confirm its first scene.
+    let card = stack.find::<ChapterCardScreen>().map(|s| s.view().clone());
+    let chapter = c.game.content.chapters.get(&campaign.chapter);
+    let title = chapter.map(|ch| c.words().chapter_title(ch).to_owned());
+    assert_eq!(card, title.as_deref().map(ChapterCardView::of_title));
+    assert_eq!(card.map(|v| v.heading).as_deref(), Some("Test Chapter"));
+    update(&mut stack, &mut c, &[Confirm]);
     assert_eq!(top(&stack), "dialogue");
     // Back from the mode screen: the flow is over.
     let flow = FlowScreen::new_game(&c);
@@ -172,7 +180,10 @@ fn a_battle_without_preparations_starts_at_once() {
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut stack = stacked(&mut c, flow);
-    // Skip the intro scene: Cancel, then Confirm.
+    // Close the chapter card, then skip the intro scene: Cancel, then
+    // Confirm.
+    assert_eq!(top(&stack), "chapter_card");
+    update(&mut stack, &mut c, &[crate::input::Action::Confirm]);
     update(&mut stack, &mut c, &[Cancel]);
     update(&mut stack, &mut c, &[crate::input::Action::Confirm]);
     assert_eq!(top(&stack), "battle");
@@ -248,9 +259,9 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut h = harness(c, flow);
-    // Skip the intro, close the battle notes, the objective's banner and
-    // turn 1's; the lead seizes the fort.
-    h.keys("d f f f f");
+    // Close the chapter card, skip the intro, close the battle notes, the
+    // objective's banner and turn 1's; the lead seizes the fort.
+    h.keys("f d f f f f");
     assert_eq!(h.top_screen(), "battle");
     let seize = Command::Act {
         unit: UnitId(1),
@@ -314,8 +325,9 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut h = harness(c, flow);
-    // Skip the intro, close the battle notes and turn 1's banner.
-    h.keys("d f f f");
+    // Close the chapter card, skip the intro, close the battle notes and
+    // turn 1's banner.
+    h.keys("f d f f f");
     assert_eq!(h.top_screen(), "battle");
     let act = |h: &mut Harness, unit, dest, action| {
         let battle = h.battle_mut();
