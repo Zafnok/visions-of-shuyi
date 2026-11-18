@@ -1,6 +1,6 @@
 //! The unit info screen (ticket 0405): everything about one unit, over the
-//! map and side panel. A portrait (a placeholder until portraits exist,
-//! 0703), then the unit's name, level, EXP, HP and stats as plain numbers
+//! map and side panel. The character's portrait in its first (neutral)
+//! expression (ticket 1295; a placeholder for a unit with none), then the unit's name, level, EXP, HP and stats as plain numbers
 //! (`Str 7`; no class caps, ticket 0423), and its loadout, spells and
 //! skills. Under the weapon ranks, the class's elemental affinities
 //! (`Fire  Weak`, ticket 0410), then its support partners and ranks
@@ -8,6 +8,10 @@
 //! [`view`] says what it shows; the battle skin paints it (ADR-0054).
 
 use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
+use trpg_content::Portrait;
+use trpg_core::lead::LeadProfile;
 use trpg_core::skill::effect_bonuses;
 use trpg_core::{
     Affinity, BattleState, EffectSource, Element, StatKind, Stats, TimedEffect, Unit, UnitTags,
@@ -24,8 +28,26 @@ use super::view::{
     InfoWeaponView,
 };
 use crate::input::Action;
+use crate::tips::view::FaceView;
 use crate::words::Words;
 use trpg_content::Names;
+
+/// The face the info screen shows of `unit` (ticket 1295): its
+/// character's portrait (the lead's is the picked gender's) in the
+/// portrait's first expression, its neutral one; `None` for a unit with
+/// no portrait.
+pub fn face(
+    (portraits, lead): (&BTreeMap<String, Portrait>, &LeadProfile),
+    unit: &Unit,
+) -> Option<FaceView> {
+    let id = unit.character.as_ref().map(|c| c.0.as_str());
+    let (id, art) = super::progress::portrait_of(portraits, lead, id)?;
+    Some(FaceView {
+        portrait: id.to_owned(),
+        // check-text: not a data name (an expression's)
+        expression: art.expressions.first()?.name.clone(),
+    })
+}
 
 /// The stat's short name, as the design docs write it.
 pub fn stat_name(words: Words<'_>, kind: StatKind) -> &str {
@@ -144,6 +166,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
     let rules = state.items().combat_rules();
     InfoView {
         portrait: text("battle.portrait"),
+        face: None,
         name: words.unit(unit).to_owned(),
         faction: unit.faction,
         class_level: class_level(words, class_name, unit.level),
@@ -340,6 +363,42 @@ fn spells(state: &BattleState, words: Words<'_>, unit: &Unit) -> Vec<InfoSpellVi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_named_characters_face_is_its_portraits_neutral_one() {
+        use crate::screen::tests::ctx;
+        use crate::screens::battle::quick_battle;
+        use trpg_core::lead::{LEAD_ID, LeadGender};
+        use trpg_core::{CharacterId, Faction};
+        let c = ctx();
+        let state = quick_battle(&c.game.content).unwrap();
+        let portraits = &c.game.content.portraits;
+        let face = |gender, unit: &Unit| {
+            let lead = LeadProfile::new("Ren", gender);
+            face((portraits, &lead), unit).map(|f| (f.portrait, f.expression))
+        };
+        let pair = |id: &str| Some((id.to_owned(), "neutral".to_owned()));
+        let lord = state
+            .units()
+            .iter()
+            .find(|u| u.character.is_some())
+            .unwrap();
+        let id = lord.character.as_ref().unwrap().0.clone();
+        assert_eq!(face(LeadGender::Male, lord), pair(&id));
+        let mut lead = lord.clone();
+        lead.character = Some(CharacterId(LEAD_ID.into()));
+        assert_eq!(face(LeadGender::Male, &lead), pair("lead_m"));
+        assert_eq!(face(LeadGender::Female, &lead), pair("lead_f"));
+        let generic = state
+            .units()
+            .iter()
+            .find(|u| u.faction == Faction::Enemy && u.character.is_none())
+            .unwrap();
+        assert_eq!(face(LeadGender::Male, generic), None);
+        // A character with no portrait: no face, the placeholder.
+        lead.character = Some(CharacterId("nobody".into()));
+        assert_eq!(face(LeadGender::Male, &lead), None);
+    }
 
     #[test]
     fn tags_elements_and_affinities_are_named() {

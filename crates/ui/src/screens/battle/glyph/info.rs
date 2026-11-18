@@ -1,5 +1,7 @@
 //! The glyph look of the unit info screen: a double box over the map and
-//! side panel, a 24 × 12 portrait area on the left (a placeholder box), Mov,
+//! side panel, a 24 × 12 portrait area on the left (the unit's face drawn
+//! to fit it, as on the level-up page, ticket 1295; a placeholder box and
+//! label for a unit with none), Mov,
 //! tags, weapon ranks (each with its kind's trait, ticket 0489),
 //! affinities and supports under it; name, class, EXP, HP with a
 //! bar, stats, timed effects and skills in the middle; weapons, armour,
@@ -7,6 +9,7 @@
 
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
@@ -98,15 +101,25 @@ pub fn paint(ctx: &Ctx, view: &InfoView, buf: &mut GlyphBuffer) {
     buf.draw_box(INFO, BoxStyle::Double, border, bg);
     let dim = palette.get(UiColor::TextDim);
     buf.draw_box(PORTRAIT, BoxStyle::Single, dim, bg);
+    let inside = (PORTRAIT.x + 1, PORTRAIT.y + 1);
+    let room = (PORTRAIT.w - 2, PORTRAIT.h - 2);
+    let drawn = view.face.as_ref().is_some_and(|face| {
+        let art = ctx.game.content.portraits.get(&face.portrait);
+        art.is_some_and(|art| {
+            draw_portrait_in(buf, inside, room, art, &face.expression, 0.0, false)
+        })
+    });
     let mut pen = Pen { buf, palette, bg };
-    let label = &view.portrait;
-    let w = i32::try_from(label.len()).unwrap_or(0);
-    pen.text(
-        PORTRAIT.x + (PORTRAIT.w - w) / 2,
-        PORTRAIT.y + PORTRAIT.h / 2,
-        label,
-        UiColor::TextDim,
-    );
+    if !drawn {
+        let label = &view.portrait;
+        let w = i32::try_from(label.len()).unwrap_or(0);
+        pen.text(
+            PORTRAIT.x + (PORTRAIT.w - w) / 2,
+            PORTRAIT.y + PORTRAIT.h / 2,
+            label,
+            UiColor::TextDim,
+        );
+    }
     paint_left(&mut pen, view);
     paint_middle(&mut pen, view);
     paint_right(&mut pen, view);

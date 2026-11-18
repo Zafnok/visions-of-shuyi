@@ -9,7 +9,7 @@ expression: h.snapshot()
 ║ │                      │   HP 19/19   ██████████        Steel Sword                        25/25 ║
 ║ │                      │                                Mt 8  Hit 75  Crit 0  Rng 1  Wt 4        ║
 ║ │                      │   Stats                        --                                       ║
-║ │       portrait       │   Str   6                                                               ║
+║ │                      │   Str   6                                                               ║
 ║ │                      │   Mag   1                                                               ║
 ║ │                      │   Dex   7                    Armor                                      ║
 ║ │                      │   Spd   7                      Leather Vest                             ║
@@ -42,7 +42,7 @@ abcbbbbbbbbbbbbbbbbbbbbbbcbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccc
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbcccbbbbbbbbffffffffffbbbbbbeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbccccccccbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -77,3 +77,5 @@ f = fg:hp_high bg:panel_bg
 g = fg:text bg:black
 h = fg:text bg:key_bg
 i = fg:text_dim bg:black
+--- overlays ---
+under sprite 32,32 160x160  portraits/test_lord/neutral.png 0,0 32x32
