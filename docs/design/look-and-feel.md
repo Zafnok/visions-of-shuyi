@@ -1720,6 +1720,35 @@ battle as they were.
   (`ch01.md`, *After the fight*). The battle map already had the noon
   light; it read as early morning because it was darkened at once.
 
+**The faces over a darkened place** (decided 2026-11-18, ticket 0739).
+Round 3 asked why the faces were darkened with the place. Nick was shown
+real frames of the yard and the study with the bought portraits: the
+listener not dimmed, dimmed to 80% or as today (55%); faces at full
+brightness, hidden or dimmed during narration; and the place at 40%, 50%
+and 60%. His answers:
+
+> [the listener:] "I have no problem with the listener face as it is
+> today. the concern is that the ambient lighting bleeds into the dialogue
+> boxes. like in the study"
+>
+> [narration:] "again no concern here"
+>
+> [the place:] "this is not the problem. the problem is the study has its
+> dialogue boxes being a ridiculously low brightness." (seen in the web
+> build)
+
+- **The listener stays dimmed as today** (about 55% of full colour), and
+  so do both faces while a narration box is up.
+- **The place stays at 40%** (the study at 60%, above).
+- **The place's light never reaches the faces, the name plates or the text
+  box.** The study's night light shades the floor and walls only. Nick
+  saw them dark in the study in the October playtest's web build; today's
+  web build and desktop window draw them as bright as over the yard
+  (checked 2026-11-18, and Nick confirmed it was the old build).
+- The title cinematic's talk shots are drawn by the same skin, so they
+  follow these rules. They are never faded as a whole: the cinematic
+  fades in from black only at its start, over a map shot.
+
 *Claude's starting rules (Nick can veto):*
 
 - The place behind the talk is at **about 40% of its brightness**, a
