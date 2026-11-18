@@ -1325,3 +1325,22 @@ fn world_map_declares_its_actions() {
     let screen = screen(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::WORLD_MAP);
 }
+
+/// The cursor pulses from when it last moved while idle motion is on, and
+/// holds at full brightness while it is off, as in a test's frame (1290).
+#[test]
+fn the_cursor_pulses_from_its_last_move_only_with_idle_motion() {
+    use crate::screen::IdleMotion;
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    ctx.clock_s = 2.0;
+    s.point(&mut ctx, "bridge");
+    // Half a second after the move: the pulse at its faintest.
+    ctx.clock_s = 2.5;
+    let faintest = pulse(0.5);
+    assert!(faintest < 0.9, "{faintest}");
+    ctx.idle_motion = IdleMotion::On;
+    assert!((s.view(&ctx).cursor_brightness - faintest).abs() < 1e-4);
+    ctx.idle_motion = IdleMotion::Off;
+    assert!((s.view(&ctx).cursor_brightness - 1.0).abs() < 1e-4);
+}
