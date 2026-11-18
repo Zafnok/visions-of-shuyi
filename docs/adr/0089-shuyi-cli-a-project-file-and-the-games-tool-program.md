@@ -56,7 +56,8 @@ served the engine's `shuyi-app`, but lived in the game's `web/`.
 4. **This game's tool program is xtask** (`crates/xtask/src/game_tools.rs`,
    `Trpg`). `cargo xtask` keeps the repository's own commands
    (`ticket-lint`, `clean-merged-targets`, `check-engine-boundary`, the
-   bought-art imports, `title-art`, `effect-marks`, `playtest`,
+   bought-art imports, `title-art`, `effect-marks` (deleted by ticket
+   0191), `playtest`,
    `test-tileset`, `sfx`, `icon`, `playdate`, `lines`, `check-script`, …)
    and forwards the moved commands' old names to `shuyi_cli::run` with
    `Trpg`, so old habits and scripts keep working.
@@ -81,6 +82,7 @@ served the engine's `shuyi-app`, but lived in the game's `web/`.
   as one does the credits file's paths.
 - The test card's pixels moved with `frame-png`'s tests
   (`shuyi_cli::test_card`); `cargo xtask test-card` still writes the file.
+  *Amended 2026-11-18 (ticket 0191): `test-card` was deleted; the file stays.*
 - `lines` and `check-script` stay in xtask: they read the game's dialogue
   with its directives, which `GameTools` doesn't give yet.
 - `new`, `doctor` and the JSON contract (1129) and MCP (1133) build on

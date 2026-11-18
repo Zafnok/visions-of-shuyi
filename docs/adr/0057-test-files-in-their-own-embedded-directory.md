@@ -45,6 +45,7 @@ The test files are in `assets-test/`, at the path they had under `assets/`
 (`assets-test/maps/test_small.map`). `assets-test/README.md` lists them.
 The tools that make test files (`cargo xtask test-card`, `test-tileset`)
 write there (`bundle::test_display_path`).
+*Amended 2026-11-18 (ticket 0191): `test-card` was deleted; `assets/images/README.md` says how to restore it.*
 
 ### 2. It is a layer of the bundle, in debug builds and with `test-fixtures`
 
