@@ -341,6 +341,18 @@ enum Opened {
     Shop(UnitId, Pos),
 }
 
+/// What a lesson just done holds back (0465, 0495, 1292).
+#[derive(Debug, Clone, Copy, Default)]
+struct AfterLesson {
+    /// Whether the box at the end of the lessons waits for a press on the
+    /// map: a lesson was just done, so a key meant for it never answers
+    /// the box.
+    end_waits: bool,
+    /// Whether a lesson was just done with another in line: it goes
+    /// straight to that one, never to a tip between them, until it opens.
+    next_first: bool,
+}
+
 /// The battle screen: the player browses the map with the cursor, selects
 /// and moves units ([`Mode`]), opens the map menu, ends the turn; phase and
 /// outcome banners show as the battle goes on, and the outcome's closes the
@@ -407,8 +419,11 @@ pub struct BattleScreen {
     /// One-time tips waiting to show (0406).
     tips: TipState,
     /// The kind of [`mode`](Self::mode) the queued tips were in their
-    /// moment for (0495): when it changes, they wait for the map.
-    tip_mode: Option<core::mem::Discriminant<Mode>>,
+    /// moment for, and whether it plays back a command: when it changes,
+    /// they are dropped (1292), unless it was a playback.
+    tip_mode: Option<(core::mem::Discriminant<Mode>, bool)>,
+    /// What a lesson just done holds back.
+    after_lesson: AfterLesson,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
     /// The guide's voice for the box on screen (0476).
@@ -574,6 +589,7 @@ impl BattleScreen {
             queue: VecDeque::new(),
             tips: TipState::default(),
             tip_mode: None,
+            after_lesson: AfterLesson::default(),
             lessons: LessonState::default(),
             guide_voice: GuideVoice::default(),
             end_focus: 0,
@@ -1058,19 +1074,19 @@ impl BattleScreen {
     }
 
     /// The tip on screen, if any: the first queued whose moment has come
-    /// (`due_tip`), unless an open lesson is on screen:
-    /// tips wait for it (0456).
+    /// (`due_tip`), unless an open lesson is on screen, or the next lesson
+    /// after one just done: tips wait for it (0456).
     pub fn shown_tip(&self) -> Option<TipTrigger> {
-        let lesson_up = self.lessons.is_open() && self.lesson_moment();
+        let lesson_up = self.lesson_first() && self.lesson_moment();
         self.due_tip().filter(|_| !lesson_up)
     }
 
     /// The first queued tip whose moment has come, if any. Tips wait out a
     /// combat's playback, a scene queued, a screen over the battle (a
     /// scene playing, the rewind screen) and the battle notes; the
-    /// enemy-phase tip shows as
-    /// that phase begins (over its banner), the others once a player phase
-    /// is browsing without a banner.
+    /// enemy-phase tip shows as that phase begins (over its banner), the
+    /// others in a player phase without a banner. Only a tip still queued
+    /// is in its moment ([`take_in_tips`](Self::take_in_tips), 1292).
     fn due_tip(&self) -> Option<TipTrigger> {
         if self.playing()
             || self.progress.is_some()
@@ -1080,24 +1096,25 @@ impl BattleScreen {
         {
             return None;
         }
-        let browsing = matches!(self.mode, Mode::Idle { .. });
         self.tips.queued().find(|&t| {
-            let moment = t == TipTrigger::FirstEnemyPhase
-                || (self.state.phase() == Phase::Player && self.banner().is_none());
-            // One on screen stays; another comes up only after a press on
-            // the map, and outside browsing only in its own moment (0495).
-            let ready = !self.tips.waiting() && (browsing || self.tips.is_fresh(t));
-            moment && (self.tips.on_screen(t) || ready)
+            t == TipTrigger::FirstEnemyPhase
+                || (self.state.phase() == Phase::Player && self.banner().is_none())
         })
     }
 
     /// At the frame's start: the queued tips' moment passes if the kind of
-    /// mode changed (0495: a tip that couldn't come up in it waits for the
-    /// map), then the tips and lessons the battle's state fired are queued.
+    /// mode changed, and those not on screen are dropped (1292: they show
+    /// the next time their trigger fires), then the tips and lessons the
+    /// battle's state fired are queued. A playback (a combat, an AI action)
+    /// ends the moment of none: a level-up's tip, fired as its combat
+    /// starts, shows once the map is back.
     fn take_in_tips(&mut self, ctx: &mut Ctx) {
-        let now = core::mem::discriminant(&self.mode);
+        let playback = matches!(self.mode, Mode::Combat(_) | Mode::AiAction(_));
+        let now = (core::mem::discriminant(&self.mode), playback);
         if self.tip_mode != Some(now) {
-            self.tips.go_stale();
+            if !self.tip_mode.is_some_and(|(_, was)| was) {
+                self.tips.go_stale();
+            }
             self.tip_mode = Some(now);
         }
         self.detect_tips(ctx);
@@ -1182,8 +1199,14 @@ impl BattleScreen {
     /// so it comes after the tip of the same moment.
     pub fn shown_lesson(&self) -> Option<&str> {
         let id = self.lessons.current()?;
-        let clear = self.lessons.is_open() || self.due_tip().is_none();
+        let clear = self.lesson_first() || self.due_tip().is_none();
         (self.lesson_moment() && clear).then_some(id)
+    }
+
+    /// Whether the lesson in play goes before any tip: it is open, or it
+    /// comes straight after one just done.
+    fn lesson_first(&self) -> bool {
+        self.lessons.is_open() || (self.after_lesson.next_first && self.lessons.current().is_some())
     }
 
     /// Whether the lesson in play is open: shown once and not done yet.
@@ -1213,7 +1236,7 @@ impl BattleScreen {
     /// it, so it never cuts into what the last lesson had the player doing.
     pub fn lessons_end_shown(&self, ctx: &Ctx) -> bool {
         matches!(self.mode, Mode::Idle { .. })
-            && !self.tips.waiting()
+            && !self.after_lesson.end_waits
             && self.queue.is_empty()
             && self.lesson_moment()
             && self.due_tip().is_none()
@@ -1347,15 +1370,17 @@ impl BattleScreen {
 
     /// Ticks the lesson in play's items for what was noticed since last
     /// time; one that is done closes, and the campaign keeps it.
-    /// A lesson done makes the next tip wait for a press on the map
-    /// (0495), so a key meant for the next lesson never closes it.
+    /// A lesson done makes the box at the end of the lessons wait for a
+    /// press on the map (0495), so a key meant for the lesson never answers
+    /// it.
     fn tick_lessons(&mut self, ctx: &mut Ctx) {
         let was_open = self.lessons.is_open();
         for done in core::mem::take(&mut self.noticed) {
             self.lessons.tick(ctx, done);
         }
         if was_open && !self.lessons.is_open() {
-            self.tips.wait_for_play();
+            self.after_lesson.end_waits = true;
+            self.after_lesson.next_first = self.lessons.current().is_some();
         }
     }
 
@@ -2055,10 +2080,6 @@ impl BattleScreen {
             self.notice(DoneWhen::OptionsOpened);
         }
         self.tick_lessons(ctx);
-        // Back from it, the next tip waits for a press on the map (0495):
-        // the press that closed the screen, or the one after, is for the
-        // menu the player came back to, never a box.
-        self.tips.wait_for_play();
         Transition::Push(match opened {
             Opened::Options => Box::new(crate::screens::options::screen()),
             Opened::Guides => Box::new(GuidesScreen::new(&ctx.game.content)),
@@ -3102,8 +3123,9 @@ impl BattleScreen {
                 }
                 continue;
             }
-            // A press on the map: the next box may come up (0495).
-            self.tips.played();
+            // A press on the map: the box at the end of the lessons may
+            // come up (0495).
+            self.after_lesson.end_waits = false;
             // The zoom is the player's view, not a move: in any phase.
             if action == Action::ZoomMap {
                 self.toggle_zoom(ctx);
@@ -3192,6 +3214,7 @@ impl BattleScreen {
         self.settle_lessons();
         if self.shown_lesson().is_some() {
             self.lessons.mark_open();
+            self.after_lesson.next_first = false;
         }
         Transition::None
     }
