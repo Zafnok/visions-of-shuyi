@@ -818,6 +818,11 @@ counter`, and confirms (the uses moved under the weapon in 0480,
     it doesn't swap.
   - A line with a spell active shows only `Fire + Overcast` and its cost;
     the spell's uses and numbers are on the spell's own line, above it.
+  - The focused line's effect under the menu says it is an attack:
+    `Attack: crit +20`, `Attack: +10 hit; no counter` (ticket 0490, after
+    Nick's playtest: a player took arts for buffs that end the turn). An
+    art used as an action of its own (Overwatch) keeps its effect alone;
+    its line reads `ends action`.
 - The arts menu (Quick Battle's lord):
 
   ```
