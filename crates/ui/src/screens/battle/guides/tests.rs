@@ -3,6 +3,7 @@
 //! menu at every tutorial level, closed by Cancel.
 
 use crate::input::LEFT_HANDED;
+use crate::screens::battle::layout::{ABOVE_HELP_ROW, snap};
 use crate::screens::battle::testing::Values as _;
 use insta::assert_snapshot;
 use trpg_core::TutorialLevel;
@@ -233,9 +234,9 @@ fn the_text_names_the_keys_the_player_has_bound() {
 fn the_list_renders() {
     let mut c = ctx();
     let mut s = opened(&mut c);
-    assert_snapshot!("lesson", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("lesson", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
     press(&mut s, &mut c, &[Action::CursorUp]);
-    assert_snapshot!("tip", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("tip", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]

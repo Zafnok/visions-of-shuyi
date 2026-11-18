@@ -1,99 +1,87 @@
 ---
 source: crates/ui/src/screens/battle/ai_phase_tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "super::layout::snap(&render(&s, &c), &c, super::layout::MAP_VIEW)"
 ---
-                                                                      ┌────────────────────────────┐
-                                                                      │ Plain                      │
-                                                                      │ DEF +0  AVO +0             │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Brigand                    │
-                                                                      │ Brigand  Lv 1              │
-                                                                      │ HP 20/20   ██████████      │
-                                                                      │ Enemy                      │
-                                                                      │                            │
-                                                                      │ Str   6     Mag   0        │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │ Dex   2     Spd   4        │
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      │ Def   3     Res   0        │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ Mov   5                    │
-                    ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar····..Br....▓▓▓▓▓▓▓▓..                      │ Iron Axe          20/20    │
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ Atk  14     Hit  79        │
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ Crit  1     Avo   8        │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS   -1                    │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Gold 3 000                 │
-                                                                      └────────────────────────────┘
-                                                                                                    
- hold f fast                                                                               F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      
+                    ..≈≈≈≈..··..............╦╦..                      
+                    ....Ar····..Br....▓▓▓▓▓▓▓▓..                      
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggggccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooorrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjjjjjjjjjssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjjjttoooojjrrjjjjuuuuuuuujjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoovvjjssjjjjjjuuwwssuujjaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoovvvvjjjjjjjjuuwwwwuujjaaaaaaaaaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjjjrruuuuxxuujjaaaaaaaaaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ayyyyyzyyyyyaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyya
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbccccddddiijjiieeeeggggggaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbcccckkkkiiiiiillddeeeeddddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddccccddiiddddddddddddddmmddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddddnniiiiddllddddooooooooddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddeeiippddmmddddddooqqmmooddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeeeiippppddddddddooqqqqooddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeffiiddddddddddlloooorrooddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:enemy bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:water bg:sea
-i = fg:water bg:water_bg
-j = fg:grass bg:grass_bg
-k = fg:forest bg:forest_bg
-l = fg:thicket bg:thicket_bg
-m = fg:mountain bg:mountain_bg
-n = fg:peak bg:peak_bg
-o = fg:road bg:road_bg
-p = fg:enemy bg:road_bg
-q = fg:wood bg:water_bg
-r = fg:enemy bg:grass_bg
-s = fg:fort bg:fort_bg
-t = fg:player bg:road_bg
-u = fg:stone bg:stone_bg
-v = fg:player bg:grass_bg
-w = fg:floor bg:floor_bg
-x = fg:wood bg:stone_bg
-y = fg:text_dim bg:black
-z = fg:text bg:key_bg
+b = fg:water bg:sea
+c = fg:water bg:water_bg
+d = fg:grass bg:grass_bg
+e = fg:forest bg:forest_bg
+f = fg:thicket bg:thicket_bg
+g = fg:mountain bg:mountain_bg
+h = fg:peak bg:peak_bg
+i = fg:road bg:road_bg
+j = fg:enemy bg:road_bg
+k = fg:wood bg:water_bg
+l = fg:enemy bg:grass_bg
+m = fg:fort bg:fort_bg
+n = fg:player bg:road_bg
+o = fg:stone bg:stone_bg
+p = fg:player bg:grass_bg
+q = fg:floor bg:floor_bg
+r = fg:wood bg:stone_bg
 --- overlays ---
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high

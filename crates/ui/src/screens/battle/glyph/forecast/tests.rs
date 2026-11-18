@@ -212,6 +212,7 @@ fn strikes_after_the_kill_are_dimmed_and_the_bars_shade_the_loss() {
 fn lord_bar(now: StatValue, after: StatValue, max: StatValue, clock_s: f64) -> String {
     let v = view(20, |v| v.sides[0].hp = ForecastHp { now, after, max });
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     c.clock_s = clock_s;
     let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
@@ -239,6 +240,7 @@ fn the_hp_that_would_be_lost_blinks_shaded_then_full() {
         };
     });
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     c.clock_s = LOST_BLINK_S;
     let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);

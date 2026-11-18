@@ -41,15 +41,15 @@ fn a_scrolled_page() {
 #[test]
 fn the_list_rolls_by_itself() {
     let mut h = credits();
-    let top = h.snapshot();
+    let top = h.snapshot_whole();
     assert!(top.contains("arrows scroll · f pause · d back"));
     // It rests at the top for two seconds first.
     h.wait(1.5);
-    assert_eq!(h.snapshot(), top);
+    assert_eq!(h.snapshot_whole(), top);
     // Then a row every half second: after 4.6 s in all, five or six rows
     // (the frames' times don't add up exactly), so the first entry is gone.
     h.wait(3.1);
-    let rolled = h.snapshot();
+    let rolled = h.snapshot_whole();
     assert_ne!(rolled, top);
     assert!(!glyphs(&rolled).contains("\"A Slave To No One"));
     assert!(glyphs(&rolled).contains("\"Battle Theme A\" by cynicmusic"));
@@ -65,12 +65,12 @@ fn the_list_rolls_by_itself() {
 fn confirm_stops_and_restarts_the_rolling() {
     let mut h = credits();
     h.wait(3.0).keys("f");
-    let stopped = h.snapshot();
+    let stopped = h.snapshot_whole();
     assert!(stopped.contains("arrows scroll · f auto-scroll · d back"));
     h.wait(5.0);
-    assert_eq!(h.snapshot(), stopped);
+    assert_eq!(h.snapshot_whole(), stopped);
     h.keys("f").wait(2.0);
-    let rolling = h.snapshot();
+    let rolling = h.snapshot_whole();
     assert!(rolling.contains("f pause"));
     assert_ne!(
         glyphs(&rolling).lines().nth(3),
@@ -82,14 +82,14 @@ fn confirm_stops_and_restarts_the_rolling() {
 #[test]
 fn after_the_last_row_the_list_starts_again_from_the_top() {
     let mut h = credits();
-    let top = h.snapshot();
+    let top = h.snapshot_whole();
     let rows = glyphs(&top).lines().count();
     assert_eq!(rows, 32);
     // Roll until the bottom is on screen (well under two minutes).
     let mut bottom = None;
     for _ in 0..240 {
         h.wait(0.5);
-        let snapshot = h.snapshot();
+        let snapshot = h.snapshot_whole();
         if !glyphs(&snapshot).contains('▼') {
             bottom = Some(snapshot);
             break;
@@ -99,15 +99,15 @@ fn after_the_last_row_the_list_starts_again_from_the_top() {
     assert!(glyphs(&bottom).contains("\"Terminus Font\" by Dimitar Toshkov Zhekov"));
     // It rests there, then shows the top again.
     h.wait(1.0);
-    assert_eq!(h.snapshot(), bottom);
+    assert_eq!(h.snapshot_whole(), bottom);
     h.wait(1.5);
-    assert_eq!(h.snapshot(), top);
+    assert_eq!(h.snapshot_whole(), top);
 }
 
 #[test]
 fn cancel_returns_to_the_title() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    let title = h.snapshot();
+    let title = h.snapshot_whole();
     h.keys("Down Down Down Down f");
     assert_eq!(h.top_screen(), "credits");
     h.keys("Down Down d");
@@ -115,7 +115,7 @@ fn cancel_returns_to_the_title() {
     // Credits is still focused; back up at New Game it is the title as it
     // was.
     h.keys("Up Up Up Up");
-    assert_eq!(h.snapshot(), title);
+    assert_eq!(h.snapshot_whole(), title);
     // Escape also backs out; Confirm doesn't leave.
     h.keys("Down Down Down Down f f");
     assert_eq!(h.top_screen(), "credits");
@@ -127,27 +127,27 @@ fn cancel_returns_to_the_title() {
 #[test]
 fn scrolling_stops_at_both_ends() {
     let mut h = credits();
-    assert!(h.snapshot().contains("f pause"));
+    assert!(h.snapshot_whole().contains("f pause"));
     // Up has nowhere to go, but it still stops the rolling.
     h.keys("Up");
-    let top = h.snapshot();
+    let top = h.snapshot_whole();
     assert!(top.contains("f auto-scroll"));
     assert!(glyphs(&top).contains('▼') && !glyphs(&top).contains('▲'));
     h.wait(5.0).keys("Up");
-    assert_eq!(h.snapshot(), top);
+    assert_eq!(h.snapshot_whole(), top);
     h.keys("Down");
-    let one_down = h.snapshot();
+    let one_down = h.snapshot_whole();
     assert_ne!(one_down, top);
     assert!(glyphs(&one_down).contains('▲') && glyphs(&one_down).contains('▼'));
     h.keys("Up");
-    assert_eq!(h.snapshot(), top);
+    assert_eq!(h.snapshot_whole(), top);
     // Long enough to reach the end, and then some.
     h.hold("Down", 9.0);
-    let bottom = h.snapshot();
+    let bottom = h.snapshot_whole();
     assert!(glyphs(&bottom).contains('▲') && !glyphs(&bottom).contains('▼'));
     assert!(glyphs(&bottom).contains("\"Terminus Font\" by Dimitar Toshkov Zhekov"));
     h.keys("Down");
-    assert_eq!(h.snapshot(), bottom);
+    assert_eq!(h.snapshot_whole(), bottom);
 }
 
 #[test]
@@ -158,7 +158,7 @@ fn every_credit_can_be_scrolled_to() {
     let mut seen = String::new();
     let mut last = String::new();
     loop {
-        let snapshot = h.snapshot();
+        let snapshot = h.snapshot_whole();
         if snapshot == last {
             break;
         }
@@ -182,7 +182,7 @@ fn every_glyph_drawn_is_in_the_font() {
     let mut h = credits();
     let mut last = String::new();
     loop {
-        let snapshot = h.snapshot();
+        let snapshot = h.snapshot_whole();
         if snapshot == last {
             break;
         }

@@ -102,7 +102,12 @@ cargo run -p trpg-app --features private-assets
 
 ## Snapshots (insta)
 
-`shuyi-gates` *Snapshots* holds the rule. Here a failing snapshot test
+`shuyi-gates` *Snapshots* holds the rule. Here a snapshot shows its
+test's region (`Harness::snapshot_of`), never the help bar unless it is
+the help bar's own look test (`Harness::snapshot` leaves it out), a
+behavior test asserts the view, motion is still in tests
+(`idle_motion` off) and a private snapshot shows only the private part
+(ADR-0007, rule 5). A failing snapshot test
 writes `*.snap.new`: read it, then `cargo insta accept` if the change was
 meant. `cargo insta review` is interactive and won't work in this
 environment.

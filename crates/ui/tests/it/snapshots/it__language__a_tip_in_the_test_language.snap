@@ -1,96 +1,89 @@
 ---
 source: crates/ui/tests/it/language.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-                                                                      ┌────────────────────────────┐
-   ╔═ VIX ═══════════════════════════════════════════════════════╗    │ Plain                      │
-   ║                                                             ║    │ DEF +0  AVO +0             │
-   ║ YOUR MOVE                                                   ║    │                            │
-   ║ OVER TO YOU. STEER THE CURSOR ONTO ONE OF YOUR UNITS AND    ║    │                            │
-   ║ PICK IT UP. YOU CAN JUMP STRAIGHT TO WHOEVER CAN STILL ACT, ║    │ Test Lord                  │
-   ║ AND LOOK ANYONE OVER TO SEE WHAT YOU'RE WORKING WITH.       ║    │ Exile  LV 1                │
-   ║                                                             ║    │ HP 19/19   ██████████      │
-   ║ MOVE THE CURSOR: ARROWS. PICK UP A UNIT: f                  ║    │ PLAYER                     │
-   ║ NEXT UNIT TO ACT: s. A UNIT'S DETAILS: e                    ║    │                            │
-   ║                                                             ║    │ STR   6     MAG   1        │
-   ║ f CLOSE                                                     ║    │ DEX   7     SPD   7        │
-   ╚═════════════════════════════════════════════════════════════╝    │ DEF   6     RES   5        │
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ MOV   5                    │
-                    ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │ IRON SWORD        20/20    │
-                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ ATK  11     HIT 104        │
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ CRIT  3     AVO  14        │
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    5                    │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ GOLD 3 000                 │
-                                                                      └────────────────────────────┘
-                                                                                                    
- f CLOSE                                                                                   F2 debug 
+                                                                      
+   ╔═ VIX ═══════════════════════════════════════════════════════╗    
+   ║                                                             ║    
+   ║ YOUR MOVE                                                   ║    
+   ║ OVER TO YOU. STEER THE CURSOR ONTO ONE OF YOUR UNITS AND    ║    
+   ║ PICK IT UP. YOU CAN JUMP STRAIGHT TO WHOEVER CAN STILL ACT, ║    
+   ║ AND LOOK ANYONE OVER TO SEE WHAT YOU'RE WORKING WITH.       ║    
+   ║                                                             ║    
+   ║ MOVE THE CURSOR: ARROWS. PICK UP A UNIT: f                  ║    
+   ║ NEXT UNIT TO ACT: s. A UNIT'S DETAILS: e                    ║    
+   ║                                                             ║    
+   ║ f CLOSE                                                     ║    
+   ╚═════════════════════════════════════════════════════════════╝    
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      
+                    ..≈≈≈≈..··..............╦╦..                      
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdcccccddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdcccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdeeeeeeeeeddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddffffffffffddddddb
-aaabddddddddddddddddddggggggddddddddddddddddddgddddddddddddddddddbaaaabdhhhhhhdddddddddddddddddddddb
-aaabdddddddddddddddddddgddddddddddddddddddddgddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdhhhdddddddddhhhddddddddddddb
-aaabdghhhhhhdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdhhhdddddddddhhhddddddddddddb
-aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdhhhdddddddddhhhddddddddddddb
-aaaaaaaaaaaaaaaaaaaaiijjjjkkkkllllllmmnnoooonnnnaaaaaaaaaaaaaaaaaaaaaabdhhhddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannjjjjnnllnnnnnnnnnnnnnnppnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnqqllllnnnnmmnnrrrrrrrrnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoollssnnppnnnnnnrrttpprrnnaaaaaaaaaaaaaaaaaaaaaabdhhhdddddddddhhhddddddddddddb
-aaaaaaaaaaaaaaaaaaaaoooollssssnnnnnnnnrrttttrrnnaaaaaaaaaaaaaaaaaaaaaabdhhhhddddddddhhhddddddddddddb
-aaaaaaaaaaaaaaaaaaaaoouullnnnnnnnnnnmmrrrrvvrrnnaaaaaaaaaaaaaaaaaaaaaabdhhdddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-agwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdcccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabddddddddddddddddddeeeeeeddddddddddddddddddeddddddddddddddddddbaaaa
+aaabdddddddddddddddddddeddddddddddddddddddddeddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdeffffffdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaa
+aaaaaaaaaaaaaaaaaaaagghhhhiiiijjjjjjkkllmmmmllllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaallhhhhlljjllllllllllllllnnllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaalllloojjjjllllkkllppppppppllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaallmmjjqqllnnllllllpprrnnppllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaammmmjjqqqqllllllllpprrrrppllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaammssjjllllllllllkkppppttppllaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
 c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text bg:key_bg
-h = fg:text_dim bg:panel_bg
-i = fg:water bg:sea
-j = fg:water bg:water_bg
-k = fg:wood bg:water_bg
-l = fg:road bg:road_bg
-m = fg:enemy bg:grass_bg
-n = fg:grass bg:grass_bg
-o = fg:forest bg:forest_bg
-p = fg:fort bg:fort_bg
-q = fg:player bg:road_bg
-r = fg:stone bg:stone_bg
-s = fg:player bg:grass_bg
-t = fg:floor bg:floor_bg
-u = fg:thicket bg:thicket_bg
-v = fg:wood bg:stone_bg
-w = fg:text_dim bg:black
+e = fg:text bg:key_bg
+f = fg:text_dim bg:panel_bg
+g = fg:water bg:sea
+h = fg:water bg:water_bg
+i = fg:wood bg:water_bg
+j = fg:road bg:road_bg
+k = fg:enemy bg:grass_bg
+l = fg:grass bg:grass_bg
+m = fg:forest bg:forest_bg
+n = fg:fort bg:fort_bg
+o = fg:player bg:road_bg
+p = fg:stone bg:stone_bg
+q = fg:player bg:grass_bg
+r = fg:floor bg:floor_bg
+s = fg:thicket bg:thicket_bg
+t = fg:wood bg:stone_bg
 --- overlays ---
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high
@@ -99,14 +92,14 @@ over  289,222 14x2  hp_high
 over  273,254 14x2  hp_high
 over  289,302 14x2  hp_high
 over  209,286 14x2  hp_high
-over  207,256 3x1  #e8d59b
-over  207,256 1x3  #e8d59b
-over  221,256 3x1  #e8d59b
-over  223,256 1x3  #e8d59b
-over  207,269 3x1  #e8d59b
-over  207,267 1x3  #e8d59b
-over  221,269 3x1  #e8d59b
-over  223,267 1x3  #e8d59b
+over  207,256 3x1  cursor
+over  207,256 1x3  cursor
+over  221,256 3x1  cursor
+over  223,256 1x3  cursor
+over  207,269 3x1  cursor
+over  207,267 1x3  cursor
+over  221,269 3x1  cursor
+over  223,267 1x3  cursor
 over  268,249 5x3  black
 over  264,250 6x3  black
 over  260,251 6x3  black

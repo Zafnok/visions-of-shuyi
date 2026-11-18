@@ -33,7 +33,6 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                           F  yes · D  no                                           
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
@@ -66,7 +65,6 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiaaiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -76,7 +74,6 @@ e = fg:text_dim bg:panel_bg
 f = fg:panel_bg bg:panel_border_focus
 g = fg:hp_low bg:panel_bg
 h = fg:panel_border_focus bg:panel_bg
-i = fg:text_dim bg:black
 --- overlays ---
 under 329,257 13x14  key_bg
 under 329,256 13x1  key_edge
@@ -88,18 +85,6 @@ under 401,256 13x1  key_edge
 under 401,271 13x1  key_edge
 under 400,257 1x14  key_edge
 under 414,257 1x14  key_edge
-under 345,497 13x14  key_bg
-under 345,496 13x1  key_edge
-under 345,511 13x1  key_edge
-under 344,497 1x14  key_edge
-under 358,497 1x14  key_edge
-under 417,497 13x14  key_bg
-under 417,496 13x1  key_edge
-under 417,511 13x1  key_edge
-under 416,497 1x14  key_edge
-under 430,497 1x14  key_edge
 --- glyph styles ---
 41,16  +3,+0 bold
 50,16  +3,+0 bold
-43,31  +3,+0 bold
-52,31  +3,+0 bold

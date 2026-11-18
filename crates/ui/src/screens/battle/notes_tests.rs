@@ -225,6 +225,7 @@ fn the_start_tip_waits_for_the_notes() {
 #[test]
 fn the_noted_unit_blinks_while_the_notes_are_up() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = started(&c);
     let lead = UnitId(1);
     assert!(picked_out(&s, &c, BRIGAND));
@@ -293,6 +294,7 @@ fn a_command_behind_the_notes_waits_for_them() {
 #[test]
 fn the_scene_highlights_the_noted_unit_as_it_blinks() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = started(&c);
     assert!(s.notes_open());
     let highlighted = |s: &BattleScreen, c: &Ctx| -> Vec<UnitId> {

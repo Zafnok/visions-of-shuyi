@@ -56,13 +56,13 @@ fn launch_on_the_web() -> Harness {
 /// Load Game, Quick Battle, Options, Profile.
 fn open_profile(h: &mut Harness) {
     h.keys("Down Down Down Down f");
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
 }
 
 /// The title's `Load Game` opened.
 fn open_load_game(h: &mut Harness) {
     h.keys("Down f");
-    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot_whole());
 }
 
 /// The one file offered: its name and its entries' keys.
@@ -85,7 +85,7 @@ fn stored(h: &Harness) -> BTreeSet<String> {
 }
 
 fn shows(h: &Harness, text: &str) -> bool {
-    h.snapshot()
+    h.snapshot_whole()
         .lines()
         .take(32)
         .any(|line| line.contains(text))
@@ -102,7 +102,7 @@ fn the_profile_screen_exports_the_whole_profile() {
     assert!(
         shows(&h, "e export · Space import · x open folder"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     h.keys("e");
     let (name, entries) = offered(&h);
@@ -117,7 +117,7 @@ fn the_profile_screen_exports_the_whole_profile() {
             "Exported visions-of-shuyi-player-1-1.ron to the exports folder"
         ),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     // Moving on puts the notice away.
     h.keys("Down");
@@ -148,7 +148,7 @@ fn load_game_exports_one_save_after_asking_about_the_options() {
     assert!(
         shows(&h, "e export · Space import · x open folder"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     h.keys("Down e");
     let view = h
@@ -190,7 +190,7 @@ fn an_empty_slot_has_nothing_to_export() {
     open_load_game(&mut h);
     h.keys("Down Down e");
     assert_eq!(h.offered(), [] as [(String, String); 0]);
-    assert!(!shows(&h, "e export"), "{}", h.snapshot());
+    assert!(!shows(&h, "e export"), "{}", h.snapshot_whole());
 }
 
 /// Acceptance: the place line reads the folder on a desktop; the web
@@ -202,7 +202,7 @@ fn the_place_line_shows_the_folder_on_a_desktop_only() {
     assert!(
         shows(&h, &format!("Saves are kept in {FOLDER}")),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     assert_snapshot!("load_game_on_a_desktop", h.snapshot());
     let mut h = launch();
@@ -219,11 +219,11 @@ fn the_place_line_shows_the_folder_on_a_desktop_only() {
 
     let mut h = launch_on_the_web();
     open_profile(&mut h);
-    assert!(!shows(&h, "Saves are kept"), "{}", h.snapshot());
+    assert!(!shows(&h, "Saves are kept"), "{}", h.snapshot_whole());
     assert!(
         shows(&h, "e export · Space import · d back"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
     assert_snapshot!("profile_on_the_web", h.snapshot());
     let mut h = launch_on_the_web();
@@ -232,7 +232,7 @@ fn the_place_line_shows_the_folder_on_a_desktop_only() {
     assert!(
         shows(&h, "f load · e export · Space import · d back"),
         "{}",
-        h.snapshot()
+        h.snapshot_whole()
     );
 }
 
@@ -348,7 +348,7 @@ fn each_export_tip_shows_once_per_profile_naming_the_export_key() {
     let mut h = launch();
     h.with_tips();
     open_under_a_tip(&mut h, "Down f");
-    let (heading, how) = tip(&h).unwrap_or_else(|| panic!("{}", h.snapshot()));
+    let (heading, how) = tip(&h).unwrap_or_else(|| panic!("{}", h.snapshot_whole()));
     assert_eq!(heading, "Exporting a save");
     assert_eq!(how, "Export the save under the cursor: e");
     assert_snapshot!("load_game_export_tip", h.snapshot());
@@ -356,7 +356,7 @@ fn each_export_tip_shows_once_per_profile_naming_the_export_key() {
     assert_eq!(h.top_screen(), "save_slots");
     // Seen: Load Game opens alone from now on.
     h.keys("d f");
-    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "save_slots", "{}", h.snapshot_whole());
     open_under_a_tip(&mut h, "d Down Down Down f");
     let (heading, how) = tip(&h).unwrap_or_else(|| panic!("no tip"));
     assert_eq!(heading, "Exporting a profile");
@@ -365,7 +365,7 @@ fn each_export_tip_shows_once_per_profile_naming_the_export_key() {
     h.keys("d");
     assert_eq!(h.top_screen(), "profiles");
     h.keys("d f");
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
 
     // Another profile has not seen them; the left-handed keymap names its
     // own key.
@@ -384,7 +384,7 @@ fn each_export_tip_shows_once_per_profile_naming_the_export_key() {
 fn open_under_a_tip(h: &mut Harness, keys: &str) {
     // Load Game is opened by the game flow, a frame after the key.
     h.keys(keys).wait(0.02);
-    assert_eq!(h.top_screen(), "tip", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "tip", "{}", h.snapshot_whole());
 }
 
 /// The Profile screen's tip needs no save; where nothing can be exported
@@ -404,5 +404,5 @@ fn the_profile_tip_needs_no_save_and_no_tip_shows_without_files() {
     h.ctx_mut().platform.storage_place = StoragePlace::Unknown;
     open_load_game(&mut h);
     h.keys("d Down Down Down f");
-    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot());
+    assert_eq!(h.top_screen(), "profiles", "{}", h.snapshot_whole());
 }

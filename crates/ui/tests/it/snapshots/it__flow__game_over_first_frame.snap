@@ -33,7 +33,6 @@ expression: h.snapshot()
                                                                       │ Gold 0                     │
                                                                       └────────────────────────────┘
  w danger zone: OFF                                      Shift+Space auto-end: OFF                  
- arrows move · e info · s next unit · d menu             Space end turn                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
@@ -66,7 +65,6 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 awxxxxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaa
-awwwwwwxxxxxxxxwxxxxxxxxwxxxxxxxxxxxxxwxxxxxxxxxxxxxxxxxxwwwwwxxxxxxxxxaaaaaaaaaaaaaaaaaaaaxxxxxxxxa
 --- legend ---
 a = fg:#cbc0a4 bg:black
 b = fg:#68583f bg:#1b1612
@@ -96,11 +94,11 @@ x = fg:#7d725e bg:black
 over  209,270 14x2  #87ac4e
 over  209,286 14x2  #87ac4e
 over  289,238 14x2  #87ac4e
-over  207,256 3x1  #c7b785
-over  207,256 1x3  #c7b785
-over  221,256 3x1  #c7b785
-over  223,256 1x3  #c7b785
-over  207,269 3x1  #c7b785
-over  207,267 1x3  #c7b785
-over  221,269 3x1  #c7b785
-over  223,267 1x3  #c7b785
+over  207,256 3x1  #ebd79c
+over  207,256 1x3  #ebd79c
+over  221,256 3x1  #ebd79c
+over  223,256 1x3  #ebd79c
+over  207,269 3x1  #ebd79c
+over  207,267 1x3  #ebd79c
+over  221,269 3x1  #ebd79c
+over  223,267 1x3  #ebd79c

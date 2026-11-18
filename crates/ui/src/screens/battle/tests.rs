@@ -266,6 +266,7 @@ fn cursor_moves_one_tile_per_step_and_stays_on_the_map() {
 #[test]
 fn cursor_pulses_with_frame_time() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = quick();
     s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
     assert!((s.cursor().brightness() - cursor::BLINK_MIN).abs() < 1e-6);
@@ -597,7 +598,11 @@ fn panel_shows_healing_terrain_and_whole_names() {
 #[test]
 fn hover_unit_on_forest_snapshot() {
     let c = ctx();
-    assert_snapshot!(render(&knight_in_forest(), &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(
+        &render(&knight_in_forest(), &c),
+        &c,
+        layout::SIDE_PANEL
+    ));
 }
 
 /// Hovering an empty plain: terrain only.
@@ -609,7 +614,7 @@ fn hover_empty_plain_snapshot() {
     let shown = panel(&s, &c);
     assert_eq!(shown.terrain.map(|t| t.name).as_deref(), Some("Plain"));
     assert_eq!(shown.unit, None);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::SIDE_PANEL));
 }
 
 #[test]
@@ -675,7 +680,7 @@ fn large_map_scrolled_to_bottom_right_snapshot() {
     assert_eq!(scene.size, (35, 30));
     assert_eq!(scene.offset(corner), Some((34, 29)));
     assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::MAP_VIEW));
 }
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.

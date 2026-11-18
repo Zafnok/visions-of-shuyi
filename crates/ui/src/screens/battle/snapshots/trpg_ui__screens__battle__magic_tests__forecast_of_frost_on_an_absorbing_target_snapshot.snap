@@ -1,117 +1,74 @@
 ---
 source: crates/ui/src/screens/battle/magic_tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, SIDE_PANEL)"
 ---
-                                                                      ╔═════════ Forecast ═════════╗
-                                                                      ║                            ║
-                                                                      ║ Test Mage     Frost Element║
-                                                                      ║ Frost 10      Frost 10     ║
-                                                                      ║ HP 16 → 13    HP 30 → 30   ║
-                                                                      ║ ██████████▒▒  ████████████ ║
-                                                                      ║ Hit  95       Hit  93      ║
-                                                                      ║ Crit 0        Crit 1       ║
-                                                                      ║ heals 6                    ║
-                                                                      ║ ────────────────────────── ║
-                                                                      ║ +6 hp    →  1              ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║             2 ←  3 dmg     ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
-                    ▒▒≈≈≈≈====······....♣♣♣♣....                      ║  6 ×1     Total  3 ×1      ║
-                    ..▒▒≈≈..··..............╦╦..                      ║                            ║
-                    MaFrBr····....Br..▓▓▓▓▓▓▓▓..                      ║                            ║
-                    Kn♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      ║                            ║
-                    ♣♣♣♣··..Ar........▓▓░░░░▓▓..                      ║                            ║
-                    ♣♣♠♠··............▓▓▓▓▐▌▓▓..                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ╚════════════════════════════╝
-                                                                                                    
- arrows next target · f cast · d back                                                      F2 debug 
+╔═════════ Forecast ═════════╗
+║                            ║
+║ Test Mage     Frost Element║
+║ Frost 10      Frost 10     ║
+║ HP 16 → 13    HP 30 → 30   ║
+║ ██████████▒▒  ████████████ ║
+║ Hit  95       Hit  93      ║
+║ Crit 0        Crit 1       ║
+║ heals 6                    ║
+║ ────────────────────────── ║
+║ +6 hp    →  1              ║
+║             2 ←  3 dmg     ║
+║ ────────────────────────── ║
+║  6 ×1     Total  3 ×1      ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+║                            ║
+╚════════════════════════════╝
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffffffffb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddgdhhddddggddddgdhhdddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhhhhhhiiddhhhhhhhhhhhhdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaasskkkkttttqqqqqqllllmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallsskkllqqlllllllllllllluullaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaavvwwxxqqqqllllyyllzzzzzzzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaavvmmqqvvlluullllllzzAAuuzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmqqllvvllllllllzzAAAAzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnqqllllllllllllzzzzBBzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aCCCCCCDDDDDDDDDDDDDDDCDDDDDDDDCDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
+aaaaaaaaaabbbbbbbbbbaaaaaaaaaa
+acccccccccccccccccccccccccccca
+acdddddddddccccceeeeeeeeeeeeea
+acfffffcccccccccfffffcccccccca
+acffccccfcggccccffccccfcggccca
+acgggggggggghhccggggggggggggca
+acfffcccccccccccfffcccccccccca
+acffffccccccccccffffccccccccca
+acbbbbbbbcccccccccccccccccccca
+acaaaaaaaaaaaaaaaaaaaaaaaaaaca
+accccccccccfccfcccccccccccccca
+acccccccccccccfcfcccccccccccca
+acaaaaaaaaaaaaaaaaaaaaaaaaaaca
+acccccccccccfffffcccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
-a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text_highlight bg:panel_bg
-d = fg:text bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:enemy bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:hp_high bg:panel_bg
-i = fg:hp_low bg:panel_bg
-j = fg:water bg:sea
-k = fg:water bg:water_bg
-l = fg:grass bg:grass_bg
-m = fg:forest bg:forest_bg
-n = fg:thicket bg:thicket_bg
-o = fg:mountain bg:mountain_bg
-p = fg:peak bg:peak_bg
-q = fg:road bg:road_bg
-r = fg:enemy bg:road_bg
-s = fg:ice bg:ice_bg
-t = fg:wood bg:water_bg
-u = fg:fort bg:fort_bg
-v = fg:player bg:grass_bg
-w = fg:enemy bg:#4c271c
-x = fg:enemy bg:#50281d
-y = fg:enemy bg:grass_bg
-z = fg:stone bg:stone_bg
-A = fg:floor bg:floor_bg
-B = fg:wood bg:stone_bg
-C = fg:text bg:key_bg
-D = fg:text_dim bg:black
---- overlays ---
-over  209,270 14x2  hp_high
-over  161,270 14x2  hp_high
-over  225,286 14x2  hp_high
-over  193,254 14x2  hp_high
-over  273,254 14x2  hp_high
-over  273,206 14x2  hp_high
-over  177,254 14x2  hp_high
-over  161,254 14x2  hp_high
-over  175,240 3x1  cursor
-over  175,240 1x3  cursor
-over  189,240 3x1  cursor
-over  191,240 1x3  cursor
-over  175,253 3x1  cursor
-over  175,251 1x3  cursor
-over  189,253 3x1  cursor
-over  191,251 1x3  cursor
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:player bg:panel_bg
+e = fg:enemy bg:panel_bg
+f = fg:text_dim bg:panel_bg
+g = fg:hp_high bg:panel_bg
+h = fg:hp_low bg:panel_bg

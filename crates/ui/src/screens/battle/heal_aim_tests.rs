@@ -188,7 +188,7 @@ fn harness_pointing_at_a_hurt_ally_walks_next_to_it_and_heals_it() {
     });
     assert!(shown, "{line}");
     assert_eq!(h.cursor_tile(), Some(p(1, 6)));
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(crate::screens::battle::layout::MAP_VIEW));
     // Confirm heals.
     h.keys("f").wait(3.0);
     let after = h.battle().unwrap().state();

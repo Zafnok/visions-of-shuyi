@@ -4,6 +4,7 @@
 //! gold at (8, 3) and one with an Elixir at (9, 3)) and the village test
 //! battle.
 
+use crate::screens::battle::layout::{ABOVE_HELP_ROW, snap};
 use insta::assert_snapshot;
 use trpg_core::{
     BattlePack, BattleSetup, BattleState, GameMode, HouseState, ItemId, LeadGender, LeadProfile,
@@ -347,7 +348,7 @@ fn render(s: &Stacked, c: &Ctx) -> GlyphBuffer {
 fn the_shop_renders() {
     let mut c = ctx();
     let s = shop_open(&mut c, ARMOURY, 1250);
-    assert_snapshot!("armoury_buy", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("armoury_buy", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -355,7 +356,10 @@ fn the_blacksmith_renders() {
     let mut c = ctx();
     let mut s = menu_open(&mut c, worn_at(BLACKSMITH, 1250, Some(12)));
     choose(&mut s, &mut c, MenuEntry::Shop);
-    assert_snapshot!("blacksmith_repair", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(
+        "blacksmith_repair",
+        snap(&render(&s, &c), &c, ABOVE_HELP_ROW)
+    );
 }
 
 /// The Vendor's Sell tab with 3 Potions in the pack, the Potions'
@@ -429,7 +433,7 @@ fn the_sale_renders() {
     let mut c = ctx();
     let mut s = selling_potions(&mut c);
     press(&mut s, &mut c, &[Action::CursorUp]);
-    assert_snapshot!("sell_confirm", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("sell_confirm", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -651,7 +655,7 @@ fn only_yes_sells_a_special_weapon() {
 fn the_special_sale_renders() {
     let mut c = ctx();
     let s = selling_the_moonblade(&mut c);
-    assert_snapshot!("sell_special", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("sell_special", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 // ---- Specialty stores (0320) -------------------------------------------------
@@ -742,7 +746,7 @@ fn a_vendor_pays_half_and_gives_no_reason() {
 fn the_tailor_sell_list_renders() {
     let mut c = ctx();
     let s = tailor_sell(&mut c);
-    assert_snapshot!("tailor_sell", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("tailor_sell", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 /// Each specialty store names its goods when it refuses an item; the

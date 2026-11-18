@@ -56,7 +56,9 @@ use super::camp::music::{CampMusic, FADE_OUT_MS, ask};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
+use crate::screen::{
+    Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition,
+};
 use crate::screens::town::TownScreen;
 use crate::screens::{CampScreen, SlotPickerScreen};
 use crate::settings::{MapLook, TownsOpen};
@@ -900,7 +902,11 @@ impl WorldMapScreen {
             }),
         };
         #[expect(clippy::cast_possible_truncation, reason = "a fraction of a second")]
-        let since = (ctx.clock_s - self.moved_at).max(0.0) as f32;
+        let since = match ctx.idle_motion {
+            IdleMotion::On => (ctx.clock_s - self.moved_at).max(0.0) as f32,
+            // Held at its start for a test's frame (1290).
+            IdleMotion::Off => 0.0,
+        };
         WorldMapView {
             map: map.id.clone(),
             places,

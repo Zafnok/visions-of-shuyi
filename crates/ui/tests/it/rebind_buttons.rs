@@ -167,7 +167,7 @@ fn a_button_moved_off_confirm_blocks_leaving_until_it_has_one_again() {
 #[test]
 fn a_hold_backs_out_a_tap_binds_and_clear_empties() {
     let mut h = open(PadKind::Xbox);
-    let before = h.snapshot();
+    let before = h.snapshot_whole();
     h.pad(TO_INFO).pad("DpadRight South South");
     assert!(has(&h, Action::Info, "Press a button…"));
     h.hold_pad("RightStickPress", 1.2);
@@ -176,7 +176,7 @@ fn a_hold_backs_out_a_tap_binds_and_clear_empties() {
     h.pad("DpadLeft")
         .pad(INFO_TO_CONFIRM)
         .pad("DpadUp DpadUp DpadUp DpadUp");
-    assert_eq!(h.snapshot(), before, "nothing changed");
+    assert_eq!(h.snapshot_whole(), before, "nothing changed");
     // A hold just short of the time is a tap.
     h.pad(TO_INFO).pad("DpadRight South South");
     h.hold_pad("RightStickPress", 0.8);
@@ -215,11 +215,11 @@ fn a_rebound_button_plays_a_battle() {
         keys.snapshot_as(Device::Keyboard)
     );
     // The old button does nothing any more.
-    let before = h.snapshot();
+    let before = h.snapshot_whole();
     h.pad("South");
-    assert_eq!(h.snapshot(), before);
+    assert_eq!(h.snapshot_whole(), before);
     // The help bar names the new button.
-    assert!(h.snapshot().contains("RS "), "{}", h.snapshot());
+    assert!(h.snapshot_whole().contains("RS "), "{}", h.snapshot_whole());
 }
 
 #[test]
@@ -234,11 +234,11 @@ fn a_stick_direction_can_be_bound_like_a_button() {
         ["DpadUp", "LeftStickUp", "RightStickUp"]
     );
     // It moves the debug menu's cursor up, from "Key bindings".
-    let before = h.snapshot();
+    let before = h.snapshot_whole();
     h.pad("RightStickUp");
-    assert_ne!(h.snapshot(), before);
+    assert_ne!(h.snapshot_whole(), before);
     h.pad("DpadDown");
-    assert_eq!(h.snapshot(), before);
+    assert_eq!(h.snapshot_whole(), before);
 }
 
 /// Acceptance: switching right/left-handed leaves the buttons unchanged.
@@ -350,7 +350,7 @@ fn every_glyph_drawn_is_in_the_font() {
     for kind in [PadKind::Xbox, PadKind::PlayStation, PadKind::Nintendo] {
         let mut h = open(kind);
         h.pad("South");
-        let snap = h.snapshot();
+        let snap = h.snapshot_whole();
         let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
         for g in glyphs.chars().filter(|&c| c != '\n') {
             assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");

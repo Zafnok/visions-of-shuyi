@@ -107,7 +107,9 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
+use crate::screen::{
+    Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition, loop_clock_s,
+};
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
@@ -1532,7 +1534,7 @@ impl BattleScreen {
         let tiles = &self.state.map().tiles;
         let size = (i32::from(tiles.width()), i32::from(tiles.height()));
         let mut scene = terrain_scene(&self.state, Pos::new(0, 0), size);
-        self.add_units(&mut scene);
+        self.add_units(&mut scene, self.notes_t);
         Place {
             tiles: tiles.clone(),
             look: self.look.clone(),
@@ -2448,7 +2450,11 @@ impl BattleScreen {
             }
         }
         self.add_ranges(&mut scene);
-        self.add_units(&mut scene);
+        let notes_t = match ctx.idle_motion {
+            IdleMotion::On => self.notes_t,
+            IdleMotion::Off => 0.0,
+        };
+        self.add_units(&mut scene, notes_t);
         animate(&mut scene, self.mode.gait());
         scene.cursor = self.cursor_view(ctx).filter(|c| scene.contains(c.pos));
         if let Mode::Selected(sel) = &self.mode {
@@ -2642,10 +2648,11 @@ impl BattleScreen {
     /// Adds the units to `scene`, each where it is drawn; during a combat's
     /// playback or an AI action, as [`shown_units`](Self::shown_units) has
     /// them. While the battle notes are up, the units they are about blink:
-    /// they are highlighted in the on half of the blink.
-    fn add_units(&self, scene: &mut MapScene) {
+    /// they are highlighted in the on half of the blink, `notes_t` seconds
+    /// after they came up.
+    fn add_units(&self, scene: &mut MapScene, notes_t: f32) {
         if !self.playing() {
-            let blink = self.notes_shown() && notes::blink_on(self.notes_t);
+            let blink = self.notes_shown() && notes::blink_on(notes_t);
             for unit in self.state.units().iter().chain(self.state.down()) {
                 let noted = blink && notes::is_noted(self.state.battle_notes(), unit.id);
                 let view = UnitView::of(unit).at(self.drawn_pos(unit));
@@ -2699,9 +2706,14 @@ impl BattleScreen {
             | Mode::AiAction(_)
             | Mode::MapMenu { .. } => {}
         }
+        // Its pulse is held at its start when idle motion is off (1290).
+        let brightness = match ctx.idle_motion {
+            IdleMotion::On => self.cursor.brightness(),
+            IdleMotion::Off => 1.0,
+        };
         Some(CursorView::new(
             pos,
-            self.cursor.brightness(),
+            brightness,
             ctx.settings().game.cursor_style,
         ))
     }
@@ -3036,10 +3048,10 @@ fn fit_camera(
 }
 
 /// Whole milliseconds of `ctx`'s clock, which only goes forward: a map
-/// scene's clock.
+/// scene's clock. 0 when idle motion is off ([`loop_clock_s`]).
 fn clock_ms(ctx: &Ctx) -> u64 {
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    let ms = (ctx.clock_s.max(0.0) * 1000.0) as u64;
+    let ms = (loop_clock_s(ctx).max(0.0) * 1000.0) as u64;
     ms
 }
 

@@ -183,7 +183,11 @@ fn enemy_mid_move_snapshot() {
         panic!("{:?}", s.mode());
     };
     assert!(a.walking() && a.walker_pos() != a.start());
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(super::layout::snap(
+        &render(&s, &c),
+        &c,
+        super::layout::MAP_VIEW
+    ));
 }
 
 #[test]

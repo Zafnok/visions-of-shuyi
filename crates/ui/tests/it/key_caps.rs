@@ -12,6 +12,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, LEFT_HANDED, PadKind, RIGHT_HANDED};
 use trpg_ui::screens::battle::BattleScreen;
+use trpg_ui::screens::battle::layout::{HELP_BAR, MAP_VIEW};
 use trpg_ui::screens::dialogue::DialogueScreen;
 use trpg_ui::screens::{PreparationsScreen, WorldMapScreen};
 use trpg_ui::widgets::help::{cursor_keys_name, key_name, key_spans, spans_of};
@@ -104,7 +105,7 @@ fn toggles(view: &trpg_ui::screens::battle::view::BattleView) -> StyledText {
 #[test]
 fn the_battle_help_bar_draws_its_keys_as_caps() {
     let h = battle_in(RIGHT_HANDED, false);
-    let snap = h.snapshot();
+    let snap = h.snapshot_whole();
     // `f select` as a cap `F` and the room after it.
     assert!(snap.contains("Space  end turn"), "{snap}");
     // Auto-end starts where end turn does, counting the caps' cells
@@ -124,7 +125,7 @@ fn the_battle_help_bar_draws_its_keys_as_caps() {
         column(help, "Space  end turn"),
         "{snap}"
     );
-    assert_snapshot!(snap);
+    assert_snapshot!(h.snapshot_of(HELP_BAR));
 }
 
 /// The text box's corner: Confirm's key and the log's, as caps.
@@ -173,7 +174,7 @@ fn a_tip_draws_the_arrow_keys_as_their_picture() {
         arrows.iter().any(|s| s.image.path() == KEY_ARROWS_PATH),
         "no arrow cluster among {arrows:?}"
     );
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// Acceptance (0254): with the cursor on W A S D, a tip names it as four
@@ -187,7 +188,7 @@ fn a_cursor_on_w_a_s_d_is_four_key_spans_in_a_tip() {
     assert_eq!(cursor_keys_name(km), "w a s d");
     let how: Vec<String> = tip.how.iter().flat_map(keys).collect();
     assert_eq!(how[..4], ["w", "a", "s", "d"], "{how:?}");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// Acceptance (0254, 0255): with a controller in use, a hint names its
@@ -217,7 +218,9 @@ fn options_draws_its_keys_as_caps() {
     // The title's menu: Options is its third entry.
     h.keys("Down Down f");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_snapshot!(h.snapshot());
+    // The help line alone, the bottom row: the look snapshot of the help
+    // line every screen but the battle's draws there (1290).
+    assert_snapshot!(h.snapshot_of(trpg_ui::glyph_buffer::Rect::new(0, 31, 100, 1)));
 }
 
 /// Preparations (ticket 0257): its help line's keys in key spans, in
