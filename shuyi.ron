@@ -1,6 +1,6 @@
 // Shuyi Engine's project file (ticket 1117): what `cargo shuyi <command>`
-// (the engine's tools, `shuyi-cli`, run by xtask with this game's; ticket
-// 1131) scans and builds in this repository. Paths are from this folder. `cargo xtask` still takes the
+// (the engine's tools, `shuyi-cli`, run by trpg-tools with this game's;
+// tickets 1131, 0188) scans and builds in this repository. Paths are from this folder. `cargo xtask` still takes the
 // old names of these commands and runs them with this file.
 (
     command: "cargo shuyi",
@@ -22,13 +22,14 @@
         },
     ),
 
-    // The game's tool program: every command that runs the game
+    // The game's tool program (ADR-0129): every command that runs the game
     // (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's
-    // session) runs in xtask as `cargo run -p xtask -- shuyi <command>`,
-    // the engine's tools with the game's (crates/xtask/src/game_tools.rs;
-    // ticket 1181). For a picture of the bought art:
-    // `cargo run -p xtask --features private-assets -- frame-png …`.
-    game: (package: "xtask", args: ["shuyi"]),
+    // session) runs in trpg-tools as
+    // `cargo run -p trpg-tools -- shuyi <command>`, the engine's tools with
+    // the game's (crates/tools/src/game_tools.rs; ticket 1181). For a
+    // picture of the bought art:
+    // `cargo run -p trpg-tools --features private-assets -- frame-png …`.
+    game: (package: "trpg-tools", args: ["shuyi"]),
 
     // The pure rules (ADR-0004): `lint` fences this package.
     rules: Some("trpg-core"),

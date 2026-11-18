@@ -37,7 +37,7 @@ Bots:
 
 ### The army
 
-The army a bot fields (`crates/xtask/src/playtest.rs`, `stage`: the
+The army a bot fields (`crates/tools/src/playtest.rs`, `stage`: the
 playtest and the autobalance build it the same way) is, for a battle:
 
 - **with a `bots_army`** (a generated skirmish, a side quest, an optional
@@ -565,7 +565,7 @@ until every band is met or its budget runs out. Only the battle changes,
 never the bots (`docs/design/playtest-bots.md`, *Autobalancing*). The
 search and the command are Shuyi Engine's (`autobalance`, `Knob`,
 engine#2127; `shuyi autobalance`, engine#2541); the game gives the plan
-(`crates/xtask/src/game_tools/balance.rs`) and the knobs
+(`crates/tools/src/game_tools/balance.rs`) and the knobs
 (`crates/bots/src/balance.rs`).
 
 **What it may change** depends on the battle file's `kind`
@@ -733,7 +733,7 @@ weapons. Layouts and the position, reinforcement and terrain knobs are ticket
     `trpg-app` never depend on it, and it never depends on them (a test in
     `xtask` checks the manifests). `personas.ron` and `targets.ron` are
     beside it, dev tooling too, not game content.
-  - `crates/xtask/src/playtest.rs`: the command. It loads the battle and
+  - `crates/tools/src/playtest.rs`: the command. It loads the battle and
     the two files, plays the tries on threads with the engine's
     `play_tries`, judges them once with `judge`, and writes the report,
     the JSON and the history.

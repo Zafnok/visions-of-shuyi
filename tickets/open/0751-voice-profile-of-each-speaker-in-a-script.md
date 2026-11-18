@@ -30,7 +30,7 @@ ticket adds the number beside it: a report per speaker, for a scene or a
 chapter, that a writer reads during the critique pass. It is a report,
 never a gate: prose can't be gated.
 
-Builds on `cargo xtask lines` (`crates/xtask/src/lines.rs`), which already
+Builds on `cargo xtask lines` (`crates/tools/src/lines.rs`), which already
 lists every line of a scene with its speaker.
 
 ## Nick input

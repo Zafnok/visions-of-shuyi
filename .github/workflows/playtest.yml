@@ -8,12 +8,12 @@ name: Playtest
 # job. Playtest is advisory (ADR-0014): no ruleset requires it.
 #
 # Each battle is played in a job of its own (ticket 0530): `build` makes
-# xtask once and lists the battles, `play` plays one battle per job, and
+# the game's tool program once and lists the battles, `play` plays one battle per job, and
 # `playtest` gathers their reports into one summary. It fails when a
 # battle is blocked or was not played (its job failed or ran out of time).
 # The slowest battles (SPLIT_BATTLES below, ticket 0173) are played in two
 # jobs of 50 tries each (seeds 1–50 and 51–100), and `merge` joins their
-# tries into the report one job of 100 would give (`xtask playtest
+# tries into the report one job of 100 would give (`trpg-tools playtest
 # --merge`).
 #
 # It plays only when a balance lever changed (ticket 0514): the battles and
@@ -194,9 +194,10 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # Builds xtask once for every battle job, and lists the battles: every
-  # file in assets/battles and the content's battles/, so a new battle is
-  # played without editing this workflow (ticket 0530). The xtask artifact
+  # Builds the game's tool program, trpg-tools (ADR-0129), once for every
+  # battle job, and lists the battles: every file in assets/battles and the
+  # content's battles/, so a new battle is played without editing this
+  # workflow (ticket 0530). The trpg-tools artifact
   # embeds the private content (ADR-0117): it is kept for a day only.
   # The matrix plays each battle of SPLIT_BATTLES in two parts.
   build:
@@ -260,11 +261,11 @@ jobs:
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - run: cargo build --release --locked -p xtask
+      - run: cargo build --release --locked -p trpg-tools
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playtest-xtask
-          path: target/release/xtask
+          name: playtest-tools
+          path: target/release/trpg-tools
           retention-days: 1
           if-no-files-found: error
 
@@ -297,11 +298,11 @@ jobs:
           art: "false"
           content: "true"
           required: "true"
-      # xtask finds the repository from the path it was built at, which is
+      # trpg-tools finds the repository from the path it was built at, which is
       # this same checkout path on every runner.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: playtest-xtask
+          name: playtest-tools
           path: target/release
       - name: Play the battle
         if: matrix.parts == 1
@@ -310,14 +311,14 @@ jobs:
         run: |
           set -euo pipefail
           # An artifact loses the file's mode.
-          chmod +x target/release/xtask
+          chmod +x target/release/trpg-tools
           mkdir -p reports
           # A blocked battle exits non-zero. The step keeps going so the
           # report is uploaded and the next step names the battle (ticket
           # 0169): `|| status=$?` stops `-e` (the runner's `bash -e` too)
-          # ending the step here, and with pipefail it is xtask's code.
+          # ending the step here, and with pipefail it is trpg-tools' code.
           status=0
-          target/release/xtask playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
+          target/release/trpg-tools playtest "$BATTLE" --bot all | tee "reports/$BATTLE.txt" || status=$?
           echo "$status" > "reports/$BATTLE.status"
       # A part's half of the tries can't judge the floor: only `merge`
       # does, so its exit code is only shown. Its report is the JSON.
@@ -330,10 +331,10 @@ jobs:
           RUNS: ${{ matrix.runs }}
         run: |
           set -euo pipefail
-          chmod +x target/release/xtask
+          chmod +x target/release/trpg-tools
           mkdir -p parts
           status=0
-          target/release/xtask playtest "$BATTLE" --bot all --runs "$RUNS" --seed "$SEED" \
+          target/release/trpg-tools playtest "$BATTLE" --bot all --runs "$RUNS" --seed "$SEED" \
             --json "parts/$BATTLE-$PART.json" | grep -v '^try ' || status=$?
           echo "Part $PART exited $status (judged by merge)."
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -376,7 +377,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: playtest-xtask
+          name: playtest-tools
           path: target/release
       # A missing part leaves the battle without a report: "not played".
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -390,7 +391,7 @@ jobs:
           BATTLE: ${{ matrix.battle }}
         run: |
           set -euo pipefail
-          chmod +x target/release/xtask
+          chmod +x target/release/trpg-tools
           for part in 1 2; do
             if [ ! -f "parts/$BATTLE-$part.json" ]; then
               echo "::error::$BATTLE: part $part has no report (its job failed or ran out of time)"
@@ -399,7 +400,7 @@ jobs:
           done
           mkdir -p reports
           status=0
-          target/release/xtask playtest --merge "parts/$BATTLE-1.json" "parts/$BATTLE-2.json" \
+          target/release/trpg-tools playtest --merge "parts/$BATTLE-1.json" "parts/$BATTLE-2.json" \
             | tee "reports/$BATTLE.txt" || status=$?
           echo "$status" > "reports/$BATTLE.status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -448,7 +449,7 @@ jobs:
           else
             echo "Played on this run." >> "$GITHUB_STEP_SUMMARY"
             if [ "$BUILD" != success ] || [ -z "$BATTLES" ]; then
-              echo "::error::the build of xtask failed: no battle was played"
+              echo "::error::the build of trpg-tools failed: no battle was played"
               echo "failed=1" >> "$GITHUB_OUTPUT"
               exit 0
             fi

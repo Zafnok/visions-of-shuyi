@@ -13,8 +13,8 @@ use std::collections::BTreeMap;
 /// The one build ADR-0117 §4 lets leave a job as an artifact, and two
 /// uploads under `dist/` that hold no build: (workflow file, job, path).
 pub const ALLOWED_UPLOADS: &[(&str, &str, &str)] = &[
-    // ADR-0117 §4: the playtest's xtask, kept one day.
-    ("playtest.yml", "build", "target/release/xtask"),
+    // ADR-0117 §4: the playtest's trpg-tools, kept one day.
+    ("playtest.yml", "build", "target/release/trpg-tools"),
     // The bench's numbers and table, no program (ticket 1244).
     ("ci.yml", "bench", "dist/bench"),
     // The release's reports and SHA-256; its own step checks no other file
@@ -315,7 +315,7 @@ mod tests {
         assert!(problems[1].contains("uploads `dist/export/web`"));
         assert!(problems[2].contains("caches `target`"));
         // The one ADR-0117 §4 allows is allowed only where it is.
-        let allowed = text.replace("x\n", "xtask\n");
+        let allowed = text.replace("x\n", "trpg-tools\n");
         let in_playtest = check("playtest.yml", &allowed);
         assert_eq!(in_playtest.len(), 2, "{in_playtest:#?}");
         assert_eq!(check("other.yml", &allowed).len(), 3);

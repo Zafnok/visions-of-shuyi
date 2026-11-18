@@ -343,7 +343,9 @@ jobs:
 
   # Ticket hygiene is cheap and tickets are docs, so this always runs (never
   # gated on `needs.changes`; ADR-0014) rather than being skipped on
-  # docs-only PRs, which is exactly the case it needs to check.
+  # docs-only PRs, which is exactly the case it needs to check. Only xtask's
+  # own checks: xtask builds without the game in seconds (ADR-0129); the
+  # checks that run the game's tool program are `shuyi-checks` below.
   tickets:
     name: tickets
     runs-on: ubuntu-latest
@@ -368,8 +370,8 @@ jobs:
           required: "true"
       - run: rustup show
       # No target/ in the cache (ticket 0171): this job checks out the private
-      # content (ADR-0117), a build here embeds it, and a fork's pull request
-      # can restore main's cache.
+      # content (ADR-0117). xtask embeds none of it (ADR-0129), but the cache
+      # rule is per job, and xtask builds in seconds without one.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           cache-targets: false
@@ -397,9 +399,6 @@ jobs:
       # read from the content checked out above (ADR-0118).
       - name: Check that no public file shows the content
         run: cargo xtask check-leaks
-      # No key hard-coded in game code or player text (keyboard-input skill).
-      - name: Check for hard-coded keys
-        run: cargo shuyi check-keys
       # The engine's pinned commit is the same in shuyi-engine.rev,
       # Cargo.toml and Cargo.lock, and the lock isn't the local checkout's
       # (ADR-0063 §8, ticket 1131).
@@ -407,7 +406,39 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo xtask engine-pin --check
-      # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097).
+
+  # The checks that run the game's tool program, trpg-tools (ADR-0129):
+  # Shuyi's tools with the game's, which build the game. Split from
+  # `tickets` so the process checks above don't wait for that build. Like
+  # `tickets`, never gated on `needs.changes`.
+  shuyi-checks:
+    name: shuyi-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
+      # No key hard-coded in game code or player text (keyboard-input skill).
+      - name: Check for hard-coded keys
+        run: cargo shuyi check-keys
+      # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097),
+      # which trpg-tools embeds with the engine's tools: xtask runs it there
+      # (ADR-0129).
       - name: Check the engine's skill pack
         run: cargo xtask skill-pack --check
       # Every skill in .claude/skills keeps the engine's skill rules (ADR-0097).
@@ -548,7 +579,7 @@ jobs:
     # Not `bench` yet: its first run found numbers over their budgets, which
     # tickets 1247, 1248 and 1249 bring under (1248 still open); 1250 adds it here. Until
     # then it runs, posts its table and shows red without blocking.
-    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, export]
+    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, shuyi-checks, export]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled

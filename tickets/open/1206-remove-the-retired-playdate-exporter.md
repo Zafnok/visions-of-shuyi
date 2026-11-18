@@ -18,7 +18,7 @@ completed:
 The 2026-11-01 audit split oversized 1170 into functional adoption and
 bounded deletions. 1203 replaces audio conversion; 1170 makes actual
 device/Simulator builds use `shuyi export playdate`, disconnecting the
-old `crates/xtask/src/playdate.rs` planner. This ticket removes its roughly
+old `crates/tools/src/playdate.rs` planner. This ticket removes its roughly
 1,422 source/test lines and any now-unneeded converter wrapper. No second
 SDK build plan, packaging algorithm or audio converter should survive.
 

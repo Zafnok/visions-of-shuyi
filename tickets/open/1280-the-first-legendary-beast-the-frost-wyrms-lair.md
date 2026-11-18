@@ -65,7 +65,7 @@ What it builds on:
   `crates/content/src/battler.rs`) and a `map_sprite.png` (a 48 × 80
   sheet of 16 × 20 frames, as every bought map sprite). Combat pictures
   come in through the table `BATTLERS` of `cargo xtask battler-import`
-  (`crates/xtask/src/battler_import.rs`) and map sprites through
+  (`crates/tools/src/battler_import.rs`) and map sprites through
   `SPRITES` of `cargo xtask map-sprite-import`. ADR-0051: the credit in
   `assets/data/credits.ron` names the new private files with a narrow
   `private` path, or `cargo shuyi private-assets --pin` refuses the pin.

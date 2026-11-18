@@ -77,10 +77,10 @@ The Brawler part needs no answer. Verified by the check's test and
 
 **In:**
 - Brawler's combat picture: a row in `BATTLERS`
-  (`crates/xtask/src/battler_import.rs`) with the `shironejiya` helper,
+  (`crates/tools/src/battler_import.rs`) with the `shironejiya` helper,
   `m_s_martial03.png` at 1.25×, and `cargo xtask battler-import`.
 - Brawler's map sprite: a starting pick from the bundle's Human NPC
-  Advanced sprites in `crates/xtask/src/map_sprite_import.rs`, and its
+  Advanced sprites in `crates/tools/src/map_sprite_import.rs`, and its
   row in `look-and-feel.md`'s *Which sprite each unit is* table marked as
   a starting pick for Nick to change, as the others are.
 - Credits: the new files in the `shironejiya` and Tiny Tales credits'

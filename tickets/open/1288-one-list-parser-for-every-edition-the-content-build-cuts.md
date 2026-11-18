@@ -135,7 +135,7 @@ Expected size: about 100 lines written, about 250 removed (net −150).
       tests may change their text.
 - [ ] `crates/ui/tests/it/demo.rs`, the bundle tests in
       `crates/content/src/bundle.rs`, `crates/playdate/src/chapter_1.rs`'s
-      tests and `crates/xtask/src/game_tools/tests.rs`'s disclosure tests
+      tests and `crates/tools/src/game_tools/tests.rs`'s disclosure tests
       pass.
 - [ ] `cargo xtask code-lines` shows `crates/content` smaller than on main.
 - [ ] `cargo build -p trpg-content` passes with `SHUYI_CONTENT` set to

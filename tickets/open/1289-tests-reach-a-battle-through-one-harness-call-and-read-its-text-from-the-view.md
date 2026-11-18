@@ -65,7 +65,7 @@ None. Tests only; nothing a player sees changes.
 - The pad path (`tests/it/playdate.rs`'s `quick_battle_on_the_playdate`)
   and story battles (`skip_scenes`, the `chNN_*` tests). A
   `new_game_to_first_battle` helper waits until a third copy shows up.
-- `crates/xtask/src/game_tools/tests.rs` and the `crates/ui/README.md`
+- `crates/tools/src/game_tools/tests.rs` and the `crates/ui/README.md`
   example. They test `frame-png --keys` scripts as text.
 - A lint against new local helpers.
 - Speeding the tests up (0128).

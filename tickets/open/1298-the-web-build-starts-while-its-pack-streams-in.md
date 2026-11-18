@@ -29,7 +29,7 @@ reads a file not yet there answers `Progress::Wait` (engine #501, 3316).
 The game's release build of the desktops and the web reads `assets/`
 (with the content laid over it) from the pack beside the program
 (ADR-0120; `crates/app/src/main.rs`'s `startup`, `packed` feature), baked
-by `crates/xtask/src/game_tools.rs`'s `pack_bake`, which names no folder
+by `crates/tools/src/game_tools.rs`'s `pack_bake`, which names no folder
 first. 1284 measured that pack at 776,966 bytes; the bought art is inside
 the `.wasm`, not the pack.
 

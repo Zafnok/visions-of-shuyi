@@ -92,7 +92,7 @@ while IFS= read -r path; do
     crates/content/src/keymap.rs|crates/content/src/keymap/*) continue ;;
     crates/core/src/*|crates/content/src/*|crates/bots/*) ;;
     shuyi-engine.rev) ;;
-    crates/xtask/src/playtest.rs|.github/workflows/playtest.yml|.github/playtest-levers.sh) ;;
+    crates/tools/src/playtest.rs|.github/workflows/playtest.yml|.github/playtest-levers.sh) ;;
     .github/playtest-inputs.sh) ;;
     *) continue ;;
   esac

@@ -17,7 +17,7 @@ content=$(git -C assets-private rev-parse HEAD:content)
   git ls-files -s -- \
     Cargo.toml Cargo.lock rust-toolchain.toml shuyi-engine.rev \
     crates/core crates/content crates/bots \
-    crates/xtask/Cargo.toml crates/xtask/src/playtest.rs \
+    crates/tools/Cargo.toml crates/tools/src/playtest.rs \
     assets assets-test crates/ui/tests/it/fixtures \
     .github/workflows/playtest.yml .github/playtest-levers.sh .github/playtest-inputs.sh
   echo "content $content"

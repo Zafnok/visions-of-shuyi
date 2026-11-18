@@ -235,8 +235,9 @@ mod tests {
     #[test]
     fn the_real_repo_has_the_pinned_engine_s_pack() {
         let root = crate::repo_root();
-        // With the local checkout on, xtask embeds the checkout's pack.
-        if root.join(crate::engine::PATCH_FILE).exists() {
+        // With the local checkout on (`cargo xtask engine`, which writes
+        // xtask's `engine::PATCH_FILE`), this embeds the checkout's pack.
+        if root.join(".cargo/engine-patch.toml").exists() {
             return;
         }
         assert_eq!(problems(&root, &Pack::embedded()), Vec::<String>::new());

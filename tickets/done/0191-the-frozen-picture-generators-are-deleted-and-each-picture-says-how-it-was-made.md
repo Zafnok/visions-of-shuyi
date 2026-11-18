@@ -69,7 +69,7 @@ None.
 ## Scope
 
 **In:**
-- Delete `crates/xtask/src/test_card.rs`, `edge_marks.rs` and
+- Delete `crates/tools/src/test_card.rs`, `edge_marks.rs` and
   `effect_marks.rs`, their `mod` lines, their `main.rs` wrappers, their
   `USAGE` lines and their tests in `main.rs`.
 - Before deleting, record each tool's last commit:

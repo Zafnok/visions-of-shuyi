@@ -15,7 +15,7 @@ completed:
 
 ## Context
 
-`crates/xtask/src/game_tools/tests.rs`,
+`crates/tools/src/game_tools/tests.rs`,
 `the_test_pack_keeps_the_test_text_and_lists_a_files_lines`, checks
 that a `lang-status` report limited to dialogue leaves no test text out
 with `assert!(!dialogue.contains("left out"))`. The report prints every
@@ -50,7 +50,7 @@ None.
 
 1. Read the test and the report format in the engine's `lang_status.rs`
    at the pin.
-2. Narrow the assertion; run `cargo test -p xtask`.
+2. Narrow the assertion; run `cargo test -p trpg-tools`.
 
 ## Acceptance criteria
 

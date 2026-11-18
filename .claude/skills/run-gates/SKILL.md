@@ -31,8 +31,10 @@ commands, which mirror CI (ADR-0014), and its own environment.
 - The `no_std` build needs the Playdate's target once:
   `rustup target add thumbv7em-none-eabihf`.
 - `cargo shuyi <command>` is Shuyi Engine's tools (`shuyi-cli`, ADR-0089,
-  run through `cargo xtask shuyi` with this game's), on this repository's
-  `shuyi.ron`; `cargo xtask` keeps the repository's own commands.
+  run by the game's tool program `trpg-tools` with this game's), on this
+  repository's `shuyi.ron`; `cargo xtask` keeps the repository's own
+  commands, builds without the game and runs `trpg-tools`' by their old
+  names (ADR-0129).
 - The engine is pinned by revision (`docs/engine/README.md`). With the
   local checkout on (`cargo xtask engine`), the gates build on
   `shuyi-engine/` and `--locked` fails because `Cargo.lock` names the
