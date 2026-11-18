@@ -1,0 +1,105 @@
+name: Cache audit (temporary, ticket 0171)
+
+# Temporary: restores main's rust-cache caches as a fork's pull request
+# could, with no key of its own, and prints counts only: never a file's
+# name or contents. Deleted before the PR is ready (ticket 0171).
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  LINUX_PATHS: |
+    /home/runner/.cargo/bin
+    /home/runner/.cargo/.crates.toml
+    /home/runner/.cargo/.crates2.json
+    /home/runner/.cargo/registry
+    /home/runner/.cargo/git
+    /home/runner/work/visions-of-shuyi/visions-of-shuyi/target
+  MACOS_PATHS: |
+    /Users/runner/.cargo/bin
+    /Users/runner/.cargo/.crates.toml
+    /Users/runner/.cargo/.crates2.json
+    /Users/runner/.cargo/registry
+    /Users/runner/.cargo/git
+    /Users/runner/work/visions-of-shuyi/visions-of-shuyi/target
+  WINDOWS_PATHS: |
+    C:\Users\runneradmin\.cargo\bin
+    C:\Users\runneradmin\.cargo\.crates.toml
+    C:\Users\runneradmin\.cargo\.crates2.json
+    C:\Users\runneradmin\.cargo\registry
+    C:\Users\runneradmin\.cargo\git
+    D:\a\visions-of-shuyi\visions-of-shuyi\target
+
+jobs:
+  audit:
+    name: audit (${{ matrix.key }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-clippy-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-test-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: windows-latest, paths: WINDOWS_PATHS, key: v0-rust-test-Windows_NT-x64-6e22454c-7b3c7a25 }
+          - { os: macos-latest, paths: MACOS_PATHS, key: v0-rust-test-Darwin-arm64-a38dd7d7-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-wasm-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-no-std-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-playdate-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-docs-Linux-x64-0c88e82e-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-coverage-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-tickets-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-bench-bench-Linux-x64-cdee7d24-7b3c7a25 }
+          - { os: ubuntu-latest, paths: LINUX_PATHS, key: v0-rust-build-Linux-x64-a74c6f26-7b3c7a25 }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          key: ${{ matrix.key }}
+          path: ${{ env[matrix.paths] }}
+          fail-on-cache-miss: true
+      - name: Count the workspace's builds in target
+        run: |
+          set -euo pipefail
+          if [ ! -d target ]; then echo "target: none"; exit 0; fi
+          echo "files in target: $(find target -type f | wc -l)"
+          echo "workspace names: $(find target \( -name 'trpg_*' -o -name 'trpg-*' -o -name 'libtrpg_*' -o -name 'visions-of-shuyi*' -o -name 'xtask*' \) | wc -l)"
+          echo "out/onebit-content files: $(find target -path '*/out/onebit-content/*' -type f | wc -l)"
+          echo "target/playdate files: $(find target/playdate -type f 2>/dev/null | wc -l)"
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - name: Look for the content's bytes in target
+        run: |
+          set -euo pipefail
+          if [ ! -d target ]; then echo "target: none"; exit 0; fi
+          # A needle is one line (grep -F reads each line as its own
+          # pattern) of 30 bytes or more that no public file holds, as the
+          # public files are embedded in every build.
+          pick() {
+            sed 's/^[[:space:]]*//; s/[[:space:]]*$//' "$@" | awk 'length($0) >= 30' | sort -u |
+              while IFS= read -r l; do
+                if ! grep -rqF -- "$l" assets assets-test; then printf '%s' "$l"; break; fi
+              done
+          }
+          look() {
+            printf '%s needle: ' "$1"
+            if [ -z "$2" ]; then echo "none to look for"
+            elif grep -rqaF -- "$2" target; then echo found; else echo absent; fi
+          }
+          for kind in battles dialogue maps chapters; do
+            file=$(find "assets-private/content/$kind" -type f 2>/dev/null | sort | awk 'NR == 1')
+            if [ -z "$file" ]; then echo "$kind needle: no files"; continue; fi
+            look "$kind" "$(pick "$file")"
+          done
