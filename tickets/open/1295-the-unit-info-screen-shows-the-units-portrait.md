@@ -1,5 +1,5 @@
 ---
-id: "1286"
+id: "1295"
 title: "The unit info screen shows the unit's portrait"
 type: bug
 milestone: M3 Battle UI
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1286 — The unit info screen shows the unit's portrait
+# 1295 — The unit info screen shows the unit's portrait
 
 ## Context
 
