@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 1292 — A tip that misses its moment waits for the next one, not for a key press
@@ -116,18 +116,18 @@ the tests.
 
 ## Acceptance criteria
 
-- [ ] A tip that fires while a lesson is up doesn't show after the
+- [x] A tip that fires while a lesson is up doesn't show after the
       lesson; it shows the next time its trigger fires with nothing in
       the way (test).
-- [ ] Two tips fired by one moment: closing the first brings up the
+- [x] Two tips fired by one moment: closing the first brings up the
       second at once, with no key press between (test).
-- [ ] Back from Options (or any screen over the battle), no tip comes up
+- [x] Back from Options (or any screen over the battle), no tip comes up
       that fired before or under it; a key pressed to close the map menu
       closes the menu, never a tip (the 0495 test, kept).
-- [ ] A dropped tip is still unseen in `TipsSeen` (test).
-- [ ] `docs/design/tutorial.md` states the new rule with Nick's words and
+- [x] A dropped tip is still unseen in `TipsSeen` (test).
+- [x] `docs/design/tutorial.md` states the new rule with Nick's words and
       date.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -137,4 +137,42 @@ the tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done as planned, with three small deviations:
+
+- `TipState` lost `fresh`, `waiting`, `wait_for_play`, `played`,
+  `waiting()` and `is_fresh`; `go_stale` now drops every queued tip but
+  the one on screen. `due_tip` is the old gates and the phase and banner
+  check alone.
+- **A playback ends no tip's moment** (deviation, needed): the level-up
+  tip fires as its combat starts, and the mode then goes Combat → Idle,
+  so dropping on every mode change would have dropped it at every
+  level-up and it would never show. A change *out of* a playback mode
+  (`Combat`, `AiAction`) drops nothing. Test:
+  `the_level_up_tip_comes_up_after_its_combat` (and checked it fails
+  without the exception).
+- **A trigger fired under a screen is not noted** (`TipState::fire`
+  ignores it while covered), so it can't be taken in on the frame the
+  screen goes.
+- **A lesson done still goes straight to the next lesson** (0465's order,
+  kept): the old press-wait was what kept a tip from coming up between
+  two lessons. Its replacement is a small flag, `AfterLesson::next_first`,
+  set when a lesson closes with another in line and cleared when that one
+  opens.
+- The end-of-lessons box still has a reason to wait for a press after the
+  last lesson (a key meant for the lesson must not answer it), so it keeps
+  that wait as its own flag, `AfterLesson::end_waits`.
+
+What the player sees changes in one place worth noting: backing out of
+the action menu to a unit still picked up is that unit's selection, so a
+*Moving a unit* tip that missed its moment under a lesson comes up there.
+
+*Claude's starting rules* (for the Act 1 playtest, 1064):
+- A combat's playback doesn't end a tip's moment: the level-up tip shows
+  once the map is back after the fight.
+- A lesson done goes straight to the next lesson, never to a tip between
+  them (as before).
+- The box at the end of the lessons waits for a press on the map after
+  the last lesson (as before).
+
+Whether the new timing feels right goes on the Act 1 playtest's
+checklist (1064).
