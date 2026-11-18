@@ -179,7 +179,9 @@ fn report(outcome: Result<String, String>) -> u8 {
 /// `readme-pictures` (ticket 1264): the README's intro animation, drawn by
 /// `frame-png` with the bought art.
 fn readme_pictures(args: &[String]) -> u8 {
-    if !cfg!(feature = "private-assets") {
+    // `not` in the cfg, not a `!`: without the art no test may draw the
+    // picture, and a mutant that deletes a `!` would draw it for minutes.
+    if cfg!(not(feature = "private-assets")) {
         eprintln!("readme-pictures: the picture shows the bought art; build with --features private-assets
 ");
         eprintln!("{}", readme_pictures::USAGE);
