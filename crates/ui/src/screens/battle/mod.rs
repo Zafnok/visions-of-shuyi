@@ -2716,7 +2716,14 @@ impl BattleScreen {
             lines: notes::note_lines(self.state.battle_notes(), words),
         });
         let limit = map_menu::shown_limit(&self.state);
-        let (help, end_turn) = self.help_parts(ctx);
+        // The Playdate's look has no help bar (ADR-0070 §4): building it
+        // there would only spend its frame budget.
+        let bar = ctx.game.skin_set == SkinSet::Glyph;
+        let (help, end_turn) = if bar {
+            self.help_parts(ctx)
+        } else {
+            (String::new(), None)
+        };
         let message = self.message();
         BattleView {
             menu: self.menu_view(words),
