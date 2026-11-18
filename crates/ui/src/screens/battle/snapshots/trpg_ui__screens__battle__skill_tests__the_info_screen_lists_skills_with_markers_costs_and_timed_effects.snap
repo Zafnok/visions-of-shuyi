@@ -9,7 +9,7 @@ expression: "snap(&buf, &c, ABOVE_HELP_BAR)"
 ║ │                      │   HP 20/20   ██████████        --                                       ║
 ║ │                      │                                                                         ║
 ║ │                      │   Stats   Effects              --                                       ║
-║ │       portrait       │   Str   7 Brace                                                         ║
+║ │                      │   Str   7 Brace                                                         ║
 ║ │                      │   Mag   0 Def +5 Res +5                                                 ║
 ║ │                      │   Dex   4 until Player phase Armor                                      ║
 ║ │                      │   Spd   2                      Chain Mail                               ║
@@ -40,7 +40,7 @@ abcbbbbbbbbbbbbbbbbbbbbbbcbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccc
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbcccbbbbbbbbffffffffffbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbeeeeeeebbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbccccccccbbbbbbbcbbbbbbbbbbbgggggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbgggggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbccccccccccccccccccbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -71,3 +71,5 @@ d = fg:player bg:panel_bg
 e = fg:text_highlight bg:panel_bg
 f = fg:hp_high bg:panel_bg
 g = fg:effect bg:panel_bg
+--- overlays ---
+under sprite 32,32 160x160  portraits/test_knight/neutral.png 0,0 32x32

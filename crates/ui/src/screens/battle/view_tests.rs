@@ -254,10 +254,16 @@ fn the_info_screen_is_the_units_and_closes() {
     step(&mut s, &mut c, &[Action::Info]);
     let info = s.view(&c).info.expect("the info screen");
     assert_eq!(info.name, "Test Lord");
-    assert_eq!(
-        info,
-        info::view((s.state(), c.words()), s.state().unit(UnitId(1)).unwrap())
-    );
+    let lord = s.state().unit(UnitId(1)).unwrap();
+    let faces = (&c.game.content.portraits, &c.game.lead);
+    let face = info::face(faces, lord);
+    // Its portrait's neutral face (1295).
+    let shown = face
+        .as_ref()
+        .map(|f| (f.portrait.as_str(), f.expression.as_str()));
+    assert_eq!(shown, Some(("test_lord", "neutral")));
+    let built = info::view((s.state(), c.words()), lord);
+    assert_eq!(info, InfoView { face, ..built });
     step(&mut s, &mut c, &[Action::Cancel]);
     assert!(s.view(&c).info.is_none());
 }

@@ -405,11 +405,44 @@ fn a_tip_comes_first_then_tips_wait_for_the_open_lesson() {
     // Keys go to the map, not the tip.
     press(&mut s, &mut c, &CURSORS);
     assert_eq!(s.shown_lesson(), None);
-    // The lesson done, the tip waits for the next press on the map (0495),
-    // so a key meant for the lesson never closes it; still selecting, it
-    // is in its moment.
+    // The lesson done while still selecting: the tip's trigger still
+    // fires and nothing is in the way, so it comes up at once (1292). It
+    // is drawn before a key can close it (0495).
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
+}
+
+/// Ticket 1292: a tip that fires while a lesson is up doesn't show after
+/// the lesson once its moment has passed (the unit put back down); still
+/// unseen, it shows the next time its trigger fires (the next unit
+/// selected), with nothing in the way.
+#[test]
+fn a_tip_that_fired_under_a_lesson_waits_for_its_trigger() {
+    let mut c = lessoned();
+    c.game.tips_enabled = true;
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(s.lesson_open());
+    // Selecting the lord under the lesson: no tip then.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), None);
-    press(&mut s, &mut c, &[Action::CursorLeft]);
+    // Put back down, and the lesson finished on the map: still no tip.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert!(matches!(s.mode(), Mode::Idle { .. }));
+    press(&mut s, &mut c, &CURSORS);
+    press(&mut s, &mut c, &[]);
+    assert!(!s.lesson_open());
+    assert_eq!(s.shown_lesson(), None);
+    assert_eq!(s.shown_tip(), None);
+    let seen = crate::storage::Storage::read(&c.storage, crate::tips::TIPS_SEEN_KEY);
+    let seen = seen.ok().flatten();
+    assert!(!seen.unwrap_or_default().contains("unit_selected"));
+    // The next unit selected: *Moving a unit* comes up.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
 }
@@ -773,4 +806,52 @@ fn her_coming_lines_hold_only_the_lessons_still_to_start_here() {
     for id in ["full_only", "elsewhere", "done"] {
         assert!(!lines.contains(&line(id)), "{id}");
     }
+}
+
+/// Tickets 0465 and 1292: a lesson done goes straight to the next lesson
+/// in line, never to a tip due between them (here the "Moving a unit" tip
+/// of the selection that finished the first lesson).
+#[test]
+fn a_lesson_done_goes_straight_to_the_next_never_to_a_tip() {
+    let mut c = lessoned();
+    c.game.tips_enabled = true;
+    c.game.content.lessons.lessons = vec![
+        lesson("first", LessonLevel::Full, &[DoneWhen::UnitSelected]),
+        lesson(
+            "second",
+            LessonLevel::Full,
+            &[DoneWhen::Pressed(Action::CursorUp)],
+        ),
+    ];
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_lesson(), Some("first"));
+    // Selecting the lord finishes the first lesson.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
+    assert_eq!(s.shown_lesson(), Some("second"));
+    assert_eq!(s.shown_tip(), None);
+    assert!(s.lesson_open());
+}
+
+/// Tickets 0465 and 0495: the box at the end of the lessons waits for a
+/// press on the map after the last lesson, so a key meant for the lesson
+/// never answers it.
+#[test]
+fn the_end_box_waits_for_a_press_after_the_last_lesson() {
+    let mut c = lessoned();
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &CURSORS);
+    press(&mut s, &mut c, &[]);
+    assert!(!s.lesson_open());
+    assert!(!s.lessons_end_shown(&c), "it waits for a press");
+    // A press on the map that changes nothing (Zoom, with glyphs).
+    press(&mut s, &mut c, &[Action::ZoomMap]);
+    assert!(s.lessons_end_shown(&c));
 }
