@@ -62,6 +62,16 @@ neither would fire (each of those rows but 0509 has a negative net),
 but nobody judged their leftovers, so step 7 runs that one short review
 per group here, once the columns exist.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md), *Processes that slow us
+down*): this ticket's check folds into 0181. `friction-check` (a sweep is
+due and none is filed) runs inside 0181's `cargo xtask check-pr`, in one
+CI job with the checks of 0151, 1257 and 1239, not as a command of its
+own. What stays here: the `Area` and `Net` columns and their backfill,
+`code-lines`' net column, the refactor rule, the ADR-0092 amendment, the
+second sweep ticket and step 7's reviews; with the `Area` column, add the
+area count to `check-pr`. Either order with 0181: if this is worked
+first, write the check as the function 0181's command will call.
+
 ## Nick input
 
 None.
@@ -75,7 +85,9 @@ None.
   and in the totals (step 2).
 - The refactor rule in the `engine-friction` skill (step 3).
 - `cargo xtask friction-check` (new `crates/xtask/src/friction_check.rs`),
-  run by the `run-gates` skill and CI beside ticket-lint (step 4).
+  run by the `run-gates` skill and CI beside ticket-lint (step 4); since
+  the 2026-11-17 line, a function 0181's `check-pr` calls in its CI job
+  (whichever lands second wires it).
 - A short amendment to ADR-0092 saying why this gate is allowed when a
   gate on the ratio is not (step 5).
 - The second sweep ticket, written now and blocked by the rest of the

@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0045", "0236", "0237", "engine#2303"]
+blocked_by: ["0045", "0236", "0237"]
 nick_input: none
 completed:
 ---
@@ -43,6 +43,12 @@ glyph up in the current language's set first and then in any other set
 that has it, widths by language, and the Chinese breaking rules. This
 ticket is the game's half: the Chinese font, the game's atlas and packs,
 and ADR-0045.
+
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): engine#2303 is in the engine's `tickets/done/` at the
+game's pin (`e738ffc`), so it is off `blocked_by`. What still blocks
+this is Nick's 0045 (and 0042 through 0236 and 0237); 0184 queues them.
 
 ## Nick input
 

@@ -39,6 +39,14 @@ draft #696). The import matters from the picked writer's first change,
 so this ticket must close before 0766's Setup step 5 adds them to the
 mirror.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B2 with 0184): 13 open tickets wait on 0766. Eight list it in
+`blocked_by` (0085–0088, 0772, 1073, 1083, 1084) and five say not to
+start before the writer's rewrite (0719, 0726, 0755, 0756, 0757). 1064
+lists 1073, 1083 and 1084, so the playtest waits on the hire too. The
+hire's date (or playing without it) is question 1 of 0184's first
+bundle; this ticket's lane rule holds until 0766 closes.
+
 ## Nick input
 
 **Decision** (asked with the question pop-up, one question at a time,
@@ -46,7 +54,8 @@ options plus "describe your own"; no technical questions):
 
 1. *Should new writer tools wait until you pick a writer?* Cost to put
    in front of him: the numbers above (about 6,500 lines and four fix
-   PRs in five days; two PRs on Act 1's path that week). Options:
+   PRs in five days; two PRs on Act 1's path that week; 13 open tickets
+   already waiting on the pick). Options:
    **close the lane** (new writer tools, demo polish and voice clips for
    lines the writer may rewrite are filed only when the hired writer or
    Nick asks; fixes for a bug an applicant reports still go ahead);
