@@ -5,10 +5,10 @@ type: tuning
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: ["engine#3223"]
 nick_input: decision
-completed:
+completed: 2026-11-18
 ---
 
 # 0908 — Threat arrows as arcs, with two options
@@ -66,9 +66,9 @@ settled).
 
 ## Acceptance criteria
 
-- [ ] Nick picked a look for each; recorded.
-- [ ] The values are set; the snapshots updated and reviewed.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Nick picked a look for each; recorded (the sparks' part moved to 0922).
+- [x] The values are set; the snapshots updated and reviewed.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -77,4 +77,33 @@ settled).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Three rounds with Nick (2026-11-17)**, on renders of the Chapter 1
+  battle in both looks:
+  1. Four tunings of today's arrow: "ur thinking too much in the box".
+  2. Four moving, see-through looks: "start to sacrifice readability".
+  3. Ideas from other tactics games, gathered by a research pass: Fire
+     Emblem: Three Houses / Engage and Triangle Strategy draw arcs, and
+     none rely on glow.
+
+  He picked **arcs by default**, with **Arcs + tile** and **Straight** as
+  options. His words and the numbers are in `look-and-feel.md`, *Threat
+  arrows*, and `options.md`, *Threat arrows*.
+- **The sparks moved to 0922.** Nick wanted a campfire, its crackle and
+  embers rather than a tuning. 0922 now blocks 0903 in this ticket's
+  place, so the sparks are still done before release. The move and attack
+  ranges' look became 0923.
+- **The arcs are the engine's** (engine ticket 3223, Zafnok/shuyi-engine#496,
+  merged; the pin passed it in #761). The game side covers the setting
+  (`ThreatArrows`), the Options row on both PC and Playdate,
+  `MapSkin::with_threat_arrows`, a skin rebuilt when the setting changes,
+  and `GLYPH`/`ONE_BIT` drawing arcs by default.
+- **Snapshots:** 17 unit and 31 integration snapshots changed. The changes
+  are the threat overlays (and the Playdate's arrow pixels), the new
+  Options row, and the question boxes over Options sitting one line lower.
+  The options tests' row paths step past the new row.
+- *Claude's starting rules:* the row sits under Map zoom on both the PC
+  and the Playdate, and a save from before it loads as Arcs.
+- Left to judge by playing (Act 1 playtest, 1064): whether the arcs read
+  well when three or more enemies threaten one tile.
+- Engine friction: estimate 120, measured 81 added production lines
+  (under 2×). PR size: 465.

@@ -28,6 +28,12 @@ engine change (`engine-change` skill; ask Nick before an engine ticket or
 PR). It should match the threat arrows' look 0908 settles, hence
 `blocked_by`.
 
+**From 0908 (done):** the threat arrows are arcs by default (solid, still,
+no glow or blinking), with "Arcs + tile" (a 1-pixel frame in the enemy
+colour inside the threatened tile) and "Straight" as options
+(`look-and-feel.md`, *Threat arrows*). Nick turned down see-through and
+blinking looks there for readability.
+
 ## Nick input
 
 **Decision** (`ask-nick`, before building), on moving renders of a real
