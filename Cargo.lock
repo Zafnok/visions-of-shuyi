@@ -1707,6 +1707,7 @@ dependencies = [
 name = "xtask"
 version = "0.3.0"
 dependencies = [
+ "fontdue",
  "gif",
  "insta",
  "mutants",

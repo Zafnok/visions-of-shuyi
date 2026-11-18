@@ -41,6 +41,7 @@ pub mod item;
 pub mod keymap;
 pub mod lang;
 pub mod lesson;
+pub mod lettering;
 pub mod lighting;
 pub mod map;
 pub mod names;

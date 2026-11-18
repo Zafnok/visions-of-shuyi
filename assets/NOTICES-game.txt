@@ -9,6 +9,12 @@ Terminus Font
   Version: 4.49.1, as a picture of its glyphs, with glyphs of our own added
   License: OFL-1.1
 
+Cinzel
+  Author: Natanael Gama, and the Cinzel Project Authors
+  Source: https://github.com/NDISCOVER/Cinzel
+  Version: Google Fonts' Cinzel[wght].ttf, at weights 700 and 500, as pictures of its glyphs
+  License: OFL-1.1
+
 New Sunrise
   Author: nene
   Source: https://opengameart.org/content/new-sunrise
