@@ -762,6 +762,32 @@ def
         assert_eq!(h.cursor_tile(), Some(lord));
     }
 
+    /// Ticket 0923: the scene says where and when the selected unit's
+    /// ranges opened, for a skin that spreads them out from it: the
+    /// lord's tile, kept while the cursor steers the path, gone once the
+    /// selection is cancelled. Without idle motion (the clock stands
+    /// still) they show at once.
+    #[test]
+    fn the_scene_says_where_the_ranges_opened() {
+        let mut h = Harness::with_layout(RIGHT_HANDED);
+        h.keys("Down f Left f f f");
+        let lord = Pos::new(3, 5);
+        let shown = |h: &Harness| h.map_scene().and_then(|s| s.ranges_shown);
+        h.keys("f");
+        assert_eq!(h.tints_at(lord), [range::MOVE]);
+        assert_eq!(shown(&h), None, "no idle motion");
+        h.keys("d");
+        h.ctx_mut().idle_motion = crate::screen::IdleMotion::On;
+        assert_eq!(shown(&h), None);
+        h.keys("f");
+        let opened = shown(&h).expect("the lord's ranges opened");
+        assert_eq!(opened.from, lord);
+        h.keys("Right Right");
+        assert_eq!(shown(&h), Some(opened));
+        h.keys("d");
+        assert_eq!(shown(&h), None);
+    }
+
     #[test]
     fn debug_screens_are_always_on() {
         let ctx = embedded_ctx().with_layout(RIGHT_HANDED);

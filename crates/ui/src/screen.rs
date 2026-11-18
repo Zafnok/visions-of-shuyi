@@ -341,21 +341,30 @@ impl GameData for Shuyi {
 
     /// Paints the battle map with the skin of the map look in the settings
     /// (ticket 0824), in the [`skin_set`](Self::skin_set), with their
-    /// threat arrows (ticket 0908), at their zoom (ticket 0439): a new skin
-    /// when the look or the arrows changed (or the settings were just
-    /// loaded), the same skin at the new zoom when only the zoom did.
+    /// threat arrows (ticket 0908) and range look (ticket 0923), at their
+    /// zoom (ticket 0439): a new skin when the look, the arrows or the
+    /// ranges changed (or the settings were just loaded), the same skin at
+    /// the new zoom when only the zoom did.
     fn apply_settings(&mut self, now: &Settings, before: Option<&Settings>) {
         let zoom = now.game.map_zoom;
-        let (look, arrows) = (now.game.map_look, now.game.threat_arrows);
+        let (look, arrows, ranges) = (
+            now.game.map_look,
+            now.game.threat_arrows,
+            now.game.range_style,
+        );
         let skin = match before {
-            Some(b) if b.game.map_look == look && b.game.threat_arrows == arrows => {
+            Some(b)
+                if b.game.map_look == look
+                    && b.game.threat_arrows == arrows
+                    && b.game.range_style == ranges =>
+            {
                 if b.game.map_zoom == zoom {
                     return;
                 }
                 self.map_skin.clone()
             }
             _ => crate::map_view::skin_for(self.skin_set, look, &self.content)
-                .with_threat_arrows(arrows),
+                .with_marks(arrows, ranges),
         };
         self.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
     }

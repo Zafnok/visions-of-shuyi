@@ -154,57 +154,111 @@ under sprite 352,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 448,384 48x48  tilesets/test.png 48,48 24x24
 under sprite 496,384 48x48  tilesets/test.png 48,48 24x24
-under sprite 208,48 48x48  tilesets/test.png 0,24 24x24 opacity=191 solid=attack_range
-under sprite 160,96 48x48  tilesets/test.png 0,24 24x24 opacity=191 solid=attack_range
-under sprite 208,96 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 256,96 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
-under sprite 16,144 48x48  tilesets/test.png 24,24 24x24 opacity=191 solid=attack_range
-under sprite 112,144 48x48  tilesets/test.png 0,24 24x24 opacity=191 solid=attack_range
-under sprite 160,144 48x48  tilesets/test.png 48,0 24x24 opacity=191 solid=move_range
-under sprite 208,144 48x48  tilesets/test.png 48,0 24x24 opacity=191 solid=move_range
-under sprite 256,144 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 304,144 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=attack_range
-under sprite 16,192 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 64,192 48x48  tilesets/test.png 0,24 24x24 opacity=191 solid=attack_range
-under sprite 112,192 48x48  tilesets/test.png 0,24 24x24 opacity=191 solid=attack_range
-under sprite 160,192 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 208,192 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 256,192 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 304,192 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 352,192 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
-under sprite 16,240 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 64,240 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 112,240 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 160,240 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 208,240 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 256,240 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 304,240 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 352,240 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
-under sprite 16,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 64,288 48x48  tilesets/test.png 96,0 24x24 opacity=191 solid=move_range
-under sprite 112,288 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 160,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 208,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 256,288 48x48  tilesets/test.png 48,24 24x24 opacity=191 solid=move_range
-under sprite 304,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 352,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 400,288 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
-under sprite 16,336 48x48  tilesets/test.png 96,0 24x24 opacity=191 solid=attack_range
-under sprite 64,336 48x48  tilesets/test.png 96,0 24x24 opacity=191 solid=move_range
-under sprite 112,336 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 160,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 208,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 256,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 304,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 352,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 400,336 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
-under sprite 64,384 48x48  tilesets/test.png 120,0 24x24 opacity=191 solid=attack_range
-under sprite 112,384 48x48  tilesets/test.png 24,0 24x24 opacity=191 solid=move_range
-under sprite 160,384 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 304,384 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
-under sprite 352,384 48x48  tilesets/test.png 0,0 24x24 opacity=191 solid=attack_range
+under sprite 208,48 48x48  tilesets/test.png 0,24 24x24 opacity=140 solid=attack_range
+under 256,52 4x48  #170b08
+under 208,48 48x2  #b69f9b
+under 254,48 2x48  #b69f9b
+under 208,48 2x48  #b69f9b
+under sprite 160,96 48x48  tilesets/test.png 0,24 24x24 opacity=140 solid=attack_range
+under 160,96 48x2  #b69f9b
+under 160,96 2x48  #b69f9b
+under sprite 208,96 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 256,96 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 304,100 4x48  #170b08
+under 256,96 48x2  #b69f9b
+under 302,96 2x48  #b69f9b
+under sprite 16,144 48x48  tilesets/test.png 24,24 24x24 opacity=140 solid=attack_range
+under 64,148 4x48  #170b08
+under 16,144 48x2  #b69f9b
+under 62,144 2x48  #b69f9b
+under 16,144 2x48  #b69f9b
+under sprite 112,144 48x48  tilesets/test.png 0,24 24x24 opacity=140 solid=attack_range
+under 112,144 48x2  #b69f9b
+under 112,144 2x48  #b69f9b
+under sprite 160,144 48x48  tilesets/test.png 48,0 24x24 opacity=140 solid=move_range
+under sprite 208,144 48x48  tilesets/test.png 48,0 24x24 opacity=140 solid=move_range
+under sprite 256,144 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 304,144 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=attack_range
+under 352,148 4x48  #170b08
+under 304,144 48x2  #b69f9b
+under 350,144 2x48  #b69f9b
+under sprite 16,192 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 16,192 2x48  #9fabbb
+under sprite 64,192 48x48  tilesets/test.png 0,24 24x24 opacity=140 solid=attack_range
+under 64,192 48x2  #b69f9b
+under sprite 112,192 48x48  tilesets/test.png 0,24 24x24 opacity=140 solid=attack_range
+under sprite 160,192 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 208,192 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 256,192 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 304,192 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 352,192 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 400,196 4x48  #170b08
+under 352,192 48x2  #b69f9b
+under 398,192 2x48  #b69f9b
+under sprite 16,240 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 16,240 2x48  #9fabbb
+under sprite 64,240 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 112,240 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 160,240 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 208,240 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 256,240 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 304,240 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 352,240 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 400,244 4x48  #170b08
+under 398,240 2x48  #b69f9b
+under sprite 16,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 16,288 2x48  #9fabbb
+under sprite 64,288 48x48  tilesets/test.png 96,0 24x24 opacity=140 solid=move_range
+under sprite 112,288 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 160,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 208,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 256,288 48x48  tilesets/test.png 48,24 24x24 opacity=140 solid=move_range
+under sprite 304,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 352,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 400,288 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 448,292 4x48  #170b08
+under 400,288 48x2  #b69f9b
+under 446,288 2x48  #b69f9b
+under sprite 16,336 48x48  tilesets/test.png 96,0 24x24 opacity=140 solid=attack_range
+under 20,384 48x4  #170b08
+under 16,382 48x2  #b69f9b
+under 16,336 2x48  #b69f9b
+under sprite 64,336 48x48  tilesets/test.png 96,0 24x24 opacity=140 solid=move_range
+under sprite 112,336 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under sprite 160,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 208,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 256,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 304,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 352,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under sprite 400,336 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 404,384 48x4  #170b08
+under 448,340 4x48  #170b08
+under 446,336 2x48  #b69f9b
+under 400,382 48x2  #b69f9b
+under sprite 64,384 48x48  tilesets/test.png 120,0 24x24 opacity=140 solid=attack_range
+under 68,432 48x4  #170b08
+under 64,430 48x2  #b69f9b
+under 64,384 2x48  #b69f9b
+under sprite 112,384 48x48  tilesets/test.png 24,0 24x24 opacity=140 solid=move_range
+under 116,432 48x4  #0b111a
+under 112,430 48x2  #9fabbb
+under sprite 160,384 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 164,432 48x4  #0b111a
+under 160,430 48x2  #9fabbb
+under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 212,432 48x4  #0b111a
+under 208,430 48x2  #9fabbb
+under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 260,432 48x4  #0b111a
+under 256,430 48x2  #9fabbb
+under sprite 304,384 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 308,432 48x4  #0b111a
+under 304,430 48x2  #9fabbb
+under sprite 352,384 48x48  tilesets/test.png 0,0 24x24 opacity=140 solid=attack_range
+under 356,432 48x4  #170b08
+under 400,388 4x48  #170b08
+under 398,384 2x48  #b69f9b
+under 352,430 48x2  #b69f9b
 over  sprite 352,90 48x48  tilesets/test.png 24,192 24x24 solid=enemy
 over  sprite 352,94 48x48  tilesets/test.png 24,192 24x24 solid=enemy
 over  sprite 350,92 48x48  tilesets/test.png 24,192 24x24 solid=enemy

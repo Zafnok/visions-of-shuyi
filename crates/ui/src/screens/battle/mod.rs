@@ -119,6 +119,7 @@ use crate::widgets::help::{
 };
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
+use shuyi_ui::grid::scene::RangesShown;
 use shuyi_ui::text::StyledText;
 
 /// The battle screen's skins (ADR-0083): the PC's glyph look, the
@@ -378,6 +379,10 @@ pub struct BattleScreen {
     mode: Mode,
     /// The danger zone, while shown (recomputed after every command).
     danger: Option<TileSet>,
+    /// Where and when the selected unit's ranges were opened, for a map
+    /// skin whose ranges spread out from it (ticket 0923): kept while the
+    /// same unit stays selected ([`note_ranges`](Self::note_ranges)).
+    ranges_shown: Option<RangesShown>,
     /// The threat arrows last worked out (0448): the unit and the tile
     /// they were for, and where the enemies stand
     /// ([`threat_enemies`]). Kept until the scene asks about another unit
@@ -581,6 +586,7 @@ impl BattleScreen {
             music: None,
             state,
             danger: None,
+            ranges_shown: None,
             threats: RefCell::new(None),
             planner: RefCell::new(None),
             areas: RefCell::new(None),
@@ -2450,6 +2456,7 @@ impl BattleScreen {
             }
         }
         self.add_ranges(&mut scene);
+        scene.ranges_shown = self.ranges_shown;
         let notes_t = match ctx.idle_motion {
             IdleMotion::On => self.notes_t,
             IdleMotion::Off => 0.0,
@@ -2578,6 +2585,24 @@ impl BattleScreen {
             .ok();
         }
         kept
+    }
+
+    /// Notes where and when the selected unit's ranges opened: its tile,
+    /// at this frame's clock, when a unit is newly selected; kept while
+    /// it stays selected; dropped otherwise (ticket 0923). Without idle
+    /// motion the clock stands still, so the ranges show at once.
+    fn note_ranges(&mut self, ctx: &Ctx) {
+        let from = match &self.mode {
+            Mode::Selected(sel) if ctx.idle_motion == IdleMotion::On => {
+                self.state.unit(sel.unit).map(|u| u.pos)
+            }
+            _ => None,
+        };
+        self.ranges_shown = match (from, self.ranges_shown) {
+            (Some(from), Some(kept)) if kept.from == from => Some(kept),
+            (Some(from), _) => Some(RangesShown::new(from, clock_ms(ctx))),
+            (None, _) => None,
+        };
     }
 
     /// Lays an escape map's exit area on `scene` (always), the danger zone
@@ -3250,6 +3275,7 @@ impl Screen<Shuyi> for BattleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.update_frame(ctx, input);
+        self.note_ranges(ctx);
         // Still on screen: its tip, if any, is seen (0467), and the guide
         // says what its box or the lesson's says (0476).
         let stays = matches!(transition, Transition::None);

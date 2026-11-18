@@ -653,6 +653,48 @@ solid: "lets do I as default, K as option, and A as an option too".
   shapes in black edged in white.
 - The player picks in Options (`options.md`, *Threat arrows*).
 
+### Range tiles
+
+Decided 2026-11-18, ticket 0923, over three rounds of moving renders of
+the Chapter 1 battle (a selected unit's ranges), both looks. Round 1,
+from other tactics games: today's still tints, see-through panels (Fire
+Emblem: Three Houses), edges only (XCOM 2), and the range spreading out
+from the unit then shimmering (Advance Wars): "spread and shimmer looks
+best but not in the first iteration so play around more with this as the
+base". Round 2, four takes on it (a stronger shimmer, a bright ring
+riding the spread, a glint band, the shimmer on the outline only): "D1
+and D3 look best but I don't like how theres 2 outlines one for blue one
+for red it looks amateur. I also saw some 3D like effects on another game
+that I wonder if we can use". Round 3, one outline around the whole
+range, with the stronger shimmer, the glint, each tile raised, or the
+whole range a raised slab: "can have each of these as options I think,
+and maybe H as the default". Asked whether players also get today's
+still tints: "Yes, add Still".
+
+- **When a unit is selected, its ranges spread out from it**, ring by
+  ring, about 45 ms a tile and fading in over 90 ms, so the whole range
+  is there in about a third of a second (*tunable*).
+- **One outline around the whole range**, the move and attack tiles
+  together: none where blue meets red. Each stretch is its tile's range
+  colour, lightened.
+- **The tint is lighter than before** (about 55–60% instead of 75%,
+  *tunable*), and moves in one of these looks, picked in Options
+  (`options.md`, *Range look*):
+  - **Slab (the default):** a glint band sweeps across the range about
+    every 2.4 s, and the whole range is a raised slab casting a dark
+    shadow below and to the right.
+  - **Shimmer:** a slow wave of brightness runs across the tiles.
+  - **Glint:** the glint band alone.
+  - **Raised tiles:** the glint, and each tile a raised panel, its top
+    and left edges lit and its bottom and right edges shaded.
+  - **Still:** today's 75% tints, nothing spreads or moves (above,
+    *Colour*).
+- *Claude's starting rules:* ranges that show without a unit being
+  selected (the danger zone, an area skill's reach) show at once, in
+  the same look, without the spread. On the Playdate's one-bit screen
+  the ranges spread out as above and are otherwise unchanged (it has no
+  see-through tints to shimmer or shade).
+
 ### Attack forecast
 
 Decided 2026-09-27, ticket 0404, over three rounds of renders (the ticket's

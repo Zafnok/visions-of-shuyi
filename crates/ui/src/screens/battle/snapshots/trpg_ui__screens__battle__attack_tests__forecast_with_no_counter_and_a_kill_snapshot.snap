@@ -84,7 +84,7 @@ q = fg:road bg:road_bg
 r = fg:enemy bg:road_bg
 s = fg:wood bg:water_bg
 t = fg:player bg:road_bg
-u = fg:enemy bg:#4c271c
+u = fg:enemy bg:#3f2419
 v = fg:fort bg:fort_bg
 w = fg:enemy bg:grass_bg
 x = fg:player bg:grass_bg
@@ -92,6 +92,12 @@ y = fg:stone bg:stone_bg
 z = fg:floor bg:floor_bg
 A = fg:wood bg:stone_bg
 --- overlays ---
+under 290,224 16x2  #170b08
+under 304,210 2x16  #170b08
+under 288,208 16x1  #855f58
+under 303,208 1x16  #855f58
+under 288,223 16x1  #855f58
+under 288,208 1x16  #855f58
 over  257,222 14x2  hp_high
 over  225,286 14x2  hp_high
 over  289,254 14x2  hp_high
