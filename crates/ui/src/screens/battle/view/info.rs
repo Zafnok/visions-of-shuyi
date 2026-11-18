@@ -4,6 +4,7 @@
 //! shows as many as it has room for.
 
 use crate::prelude::*;
+use crate::tips::view::FaceView;
 use trpg_core::{Faction, StatValue};
 
 /// A weapon kind on the info screen (ticket 0489): `Spear  D  ×2 vs
@@ -21,8 +22,14 @@ pub struct InfoRankView {
 /// The unit info screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InfoView {
-    /// What stands in the portrait's place (there is no portrait yet).
+    /// What stands in the portrait's place when there is no [`face`]
+    /// (a generic unit, or a character without a portrait).
+    ///
+    /// [`face`]: Self::face
     pub portrait: String,
+    /// The unit's portrait and expression, if it is a named character
+    /// with one (ticket 1295).
+    pub face: Option<FaceView>,
     /// The unit's name.
     pub name: String,
     /// Its faction.

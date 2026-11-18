@@ -2696,9 +2696,11 @@ impl BattleScreen {
             (Mode::Combat(pb), None) => playback::box_view(words, pb),
             _ => None,
         };
+        let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let info = match self.mode {
             Mode::Info { unit } => self.state.unit(unit).map(|u| InfoView {
                 page: self.info_page,
+                face: info::face(faces, u),
                 supports: info::supports(told, &ctx.game.content.names, u),
                 ..info::view(told, u)
             }),
@@ -2710,7 +2712,6 @@ impl BattleScreen {
                 .then(|| Self::swap_hint(ctx, "battle.forecast.swap").plain());
             forecast::view(told, t).map(|f| ForecastView { swap, ..f })
         });
-        let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let progress = self
             .progress()
             .and_then(|p| progress::view(words, faces, p));

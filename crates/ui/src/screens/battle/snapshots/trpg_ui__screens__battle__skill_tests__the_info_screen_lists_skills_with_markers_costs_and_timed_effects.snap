@@ -9,7 +9,7 @@ expression: buf.to_snapshot(&c.palette)
 ║ │                      │   HP 20/20   ██████████        --                                       ║
 ║ │                      │                                                                         ║
 ║ │                      │   Stats   Effects              --                                       ║
-║ │       portrait       │   Str   7 Brace                                                         ║
+║ │                      │   Str   7 Brace                                                         ║
 ║ │                      │   Mag   0 Def +5 Res +5                                                 ║
 ║ │                      │   Dex   4 until Player phase Armor                                      ║
 ║ │                      │   Spd   2                      Chain Mail                               ║
@@ -42,7 +42,7 @@ abcbbbbbbbbbbbbbbbbbbbbbbcbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccc
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbcccbbbbbbbbffffffffffbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbeeeeeeebbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbccccccccbbbbbbbcbbbbbbbbbbbgggggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbgggggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbccccccccccccccccccbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -78,3 +78,5 @@ g = fg:effect bg:panel_bg
 h = fg:text bg:black
 i = fg:text bg:key_bg
 j = fg:text_dim bg:black
+--- overlays ---
+under sprite 32,32 160x160  portraits/test_knight/neutral.png 0,0 32x32

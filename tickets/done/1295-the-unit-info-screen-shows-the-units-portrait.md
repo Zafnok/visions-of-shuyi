@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 1295 — The unit info screen shows the unit's portrait
@@ -89,16 +89,16 @@ skin's draw).
 
 ## Acceptance criteria
 
-- [ ] Opening unit info on a named character with a portrait shows its
+- [x] Opening unit info on a named character with a portrait shows its
       portrait in both looks; on the lead, the portrait of the picked
       gender.
-- [ ] A unit with no portrait still shows the placeholder box and label.
-- [ ] A test reads `InfoView::face` for a character with a portrait, the
+- [x] A unit with no portrait still shows the placeholder box and label.
+- [x] A test reads `InfoView::face` for a character with a portrait, the
       lead (both genders) and a generic unit.
-- [ ] A look test shows the info screen draws the portrait's picture
+- [x] A look test shows the info screen draws the portrait's picture
       (like `glyph/progress.rs`'s check that `buf` draws a picture of the
       portrait).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -110,4 +110,22 @@ skin's draw).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `progress::portrait_of` is now `pub(super)`; the new `info::face`
+  uses it and returns a `FaceView` with the portrait's first expression
+  (`neutral` for every portrait today). `InfoView` gained `face`; the
+  battle screen's view fills it (`mod.rs`, the `Mode::Info` arm), like
+  `supports`. `info::view` leaves it `None`.
+- The glyph skin keeps the single box and draws the face inside it with
+  `draw_portrait_in` (the inner 22 × 10 cells, at the largest whole
+  scale that fits, no dim, not mirrored); the placeholder label only
+  when there is no face or its portrait is missing. The PC's two looks
+  share this screen skin (only the map differs), so both show it.
+- Four info text snapshots changed: the `portrait` label left the box
+  and a sprite overlay line was added (`portraits/test_lord/neutral.png`,
+  `test_knight` in two).
+- Playdate (`playdate/info.rs`): left as it is. Its four pages fill the
+  window, with no free cell block for a face without moving anything.
+- No starting rules: the expression rule (first, neutral) is the
+  ticket's.
+- For the Act 1 playtest (1064): whether the face in the info box reads
+  well at its size, in both looks.
