@@ -91,7 +91,7 @@ use alloc::collections::VecDeque;
 use core::any::Any;
 
 use trpg_content::{
-    ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, joins, new_campaign, roster_units,
+    ChapterDef, LineId, MapLook, Scene, battle_campaign, deaths, joins, new_campaign, roster_units,
 };
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile, NodeKind,
@@ -113,6 +113,8 @@ use crate::screens::voices_question::VoicesQuestionScreen;
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen, WorldBattle, WorldMapScreen};
 use crate::screens::{CampScreen, ChapterCardScreen};
 use crate::storage::Storage;
+pub use first_lines::{KeptVoices, Start, opening_lines, opening_scene};
+use first_lines::{chapter_opening, first_told};
 
 /// The Preparations shop of `chapter`'s battle (ticket 0443): what its
 /// number unlocked; `None` for a chapter of no number.
@@ -291,6 +293,8 @@ pub struct FlowScreen {
     /// stood ([`left_standing`]), while its victory scenes play: their
     /// `@place battle` shows them (0738).
     survivors: Option<Vec<UnitView>>,
+    /// The first lines of the scenes coming, kept loaded (1293).
+    voices: KeptVoices,
 }
 
 impl FlowScreen {
@@ -317,6 +321,7 @@ impl FlowScreen {
             world_node: None,
             after_save: AfterSave::NextChapter,
             survivors: None,
+            voices: KeptVoices::default(),
         }
     }
 
@@ -457,6 +462,17 @@ impl FlowScreen {
         } else {
             ModeSwitch::Closed
         };
+        if self.next.is_some() {
+            // Each screen the flow shows: a screen over it may have
+            // replaced the set (the battle keeps its own).
+            self.voices.covered();
+            let lines = if KeptVoices::wanted(ctx) {
+                self.coming_lines(ctx)
+            } else {
+                Vec::new()
+            };
+            self.voices.keep(lines, ctx);
+        }
         if let Some(screen) = self.next.take() {
             return Transition::Push(screen);
         }
@@ -665,9 +681,7 @@ impl FlowScreen {
             .campaign
             .as_ref()
             .map_or_else(|| ctx.game.lead.clone(), |c| c.lead.clone());
-        let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
-            Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
-        });
+        let present = first_lines::present(self.campaign.as_ref());
         if let Some(campaign) = &mut self.campaign {
             let supports = &ctx.game.content.supports;
             let resolved = scene.resolved(&present);
@@ -698,6 +712,40 @@ impl FlowScreen {
             self.show(Stage::Scene, Box::new(screen));
         }
         plays
+    }
+
+    /// The lines to keep loaded as the flow shows its next screen (ticket
+    /// 1293): the first lines of the scene it shows, if it is one, then
+    /// those of the scene that comes after it where the flow knows it: the
+    /// next scene waiting, New Game's opening while the game is being set
+    /// up, the next chapter's at the save prompt, the chapter camp goes on
+    /// to. None before a battle or the world map.
+    fn coming_lines(&self, ctx: &Ctx) -> Vec<LineId> {
+        let shown = self.next.as_deref().and_then(|s| s.as_any());
+        let shown = shown.and_then(|s| s.downcast_ref::<DialogueScreen>());
+        let mut lines = shown.map_or_else(Vec::new, DialogueScreen::first_lines);
+        let campaign = self.campaign.as_ref();
+        let next_chapter = || self.chapter.as_ref().and_then(|c| c.next.as_deref());
+        let after = if self.scenes.is_empty() {
+            match self.stage {
+                Stage::Mode | Stage::Familiarity(_) | Stage::Voices(..) | Stage::Lead(..) => {
+                    opening_scene(ctx, Start::NewGame)
+                }
+                // Before "To be continued" (`AfterSave::TheEnd`) no
+                // chapter follows: none is kept.
+                Stage::SavePrompt | Stage::Slots(true) => {
+                    next_chapter().and_then(|id| chapter_opening(ctx, campaign, id))
+                }
+                Stage::Camp => {
+                    (self.after_camp.as_deref()).and_then(|id| chapter_opening(ctx, campaign, id))
+                }
+                _ => None,
+            }
+        } else {
+            first_told(ctx, campaign, &self.scenes)
+        };
+        lines.extend(after.map_or_else(Vec::new, |s| s.first_lines()));
+        lines
     }
 
     /// Opens camp, if it wasn't offered since the last battle and has
@@ -1060,5 +1108,6 @@ impl Screen<Shuyi> for FlowScreen {
 }
 
 mod demo;
+pub mod first_lines;
 #[cfg(test)]
 mod tests;

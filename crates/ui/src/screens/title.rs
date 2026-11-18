@@ -41,7 +41,7 @@ use super::{CreditsScreen, Skins, debug_hint, profile};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
-use crate::flow::FlowScreen;
+use crate::flow::{self, FlowScreen, KeptVoices, Start};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::profiles::{self, SetUp};
@@ -271,6 +271,9 @@ pub struct TitleScreen {
     /// last shown ([`refresh`](Self::refresh)): until it was, the guide's
     /// note shows beside the menu.
     set_up: SetUp,
+    /// New Game's first lines, kept loaded while the title is on top
+    /// (ticket 1293).
+    voices: KeptVoices,
 }
 
 impl TitleScreen {
@@ -300,6 +303,7 @@ impl TitleScreen {
             song: SongTime::default(),
             phase: Phase::MENU,
             set_up: SetUp::No,
+            voices: KeptVoices::default(),
         };
         title.refresh(ctx);
         title
@@ -649,6 +653,10 @@ impl Screen<Shuyi> for TitleScreen {
         if input.dt().is_finite() {
             self.time += input.dt().max(0.0);
         }
+        if self.voices.due(ctx) {
+            let lines = flow::opening_lines(ctx, Start::NewGame);
+            self.voices.keep(lines, ctx);
+        }
         if self.waiting(ctx) {
             // The key or button that ends the wait does nothing else (a
             // key with no layout chosen yet opens the layout picker over
@@ -726,9 +734,11 @@ impl Screen<Shuyi> for TitleScreen {
     /// Back on top: the screen that was over the title may have changed
     /// the saves (a game played, a profile picked), the options (the
     /// colours the cinematic is in) or the lead the cinematic shows, so it
-    /// is built again ([`refresh`](Self::refresh)).
+    /// is built again ([`refresh`](Self::refresh)). New Game's first
+    /// lines are kept again: that screen may have replaced them.
     fn uncovered(&mut self, ctx: &mut Ctx, _result: Option<ScreenResult>) -> Transition {
         self.refresh(ctx);
+        self.voices.covered();
         Transition::None
     }
 }

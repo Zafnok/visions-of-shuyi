@@ -27,10 +27,11 @@ use crate::widgets::help::HelpBar;
 use shuyi_ui::text::StyledText;
 pub use view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 
-use trpg_content::TipTrigger;
+use trpg_content::{LineId, TipTrigger};
 use trpg_core::{Campaign, GameMode, SaveFile};
 
 use crate::audio::MenuSound;
+use crate::flow::{self, KeptVoices, Start};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
@@ -185,6 +186,8 @@ pub struct SlotPickerScreen {
     /// Whether the guide's tip on exporting was looked at (ticket 0874):
     /// the first update does.
     tip_asked: bool,
+    /// The first lines of the scenes a load may start (1293).
+    voices: KeptVoices,
 }
 
 impl SlotPickerScreen {
@@ -230,6 +233,7 @@ impl SlotPickerScreen {
             notice: ExportNotice::default(),
             imported: None,
             tip_asked: false,
+            voices: KeptVoices::default(),
         }
     }
 
@@ -254,6 +258,19 @@ impl SlotPickerScreen {
     /// The focused slot's number (1 to [`SLOTS`](crate::save::SLOTS)).
     pub fn focused_slot(&self) -> usize {
         self.cursor.focus() + 1
+    }
+
+    /// The lines a load may start with (ticket 1293): New Game's, which
+    /// the title kept, and each listed save's first scene's
+    /// ([`flow::opening_lines`]).
+    fn opening_lines(&self, ctx: &Ctx) -> Vec<LineId> {
+        let mut lines = flow::opening_lines(ctx, Start::NewGame);
+        for slot in &self.slots {
+            if let Slot::Saved(summary) = slot {
+                lines.extend(flow::opening_lines(ctx, Start::Save(&summary.save)));
+            }
+        }
+        lines
     }
 
     /// Whether the picker saves (rather than loads).
@@ -556,6 +573,10 @@ impl Screen<Shuyi> for SlotPickerScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if !self.is_saving() && self.voices.due(ctx) {
+            let lines = self.opening_lines(ctx);
+            self.voices.keep(lines, ctx);
+        }
         if !core::mem::replace(&mut self.tip_asked, true)
             && let Some(tip) = self.export_tip(ctx)
         {
@@ -618,6 +639,7 @@ impl Screen<Shuyi> for SlotPickerScreen {
     /// After an import (0873): the slots read again, the cursor on the
     /// slot the save went into, and the import's notice.
     fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
+        self.voices.covered();
         let Some(done) = result.and_then(ScreenResult::take::<ImportDone>) else {
             return Transition::None;
         };
