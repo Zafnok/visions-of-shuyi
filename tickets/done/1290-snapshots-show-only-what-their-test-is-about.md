@@ -180,7 +180,7 @@ None. Tests only; what a player sees doesn't change.
       row count).
 - [x] (2026-11-17 sweep) No test in `tests/it/options.rs` both asserts
       behavior and ends in a whole-screen snapshot.
-- [ ] `assets-private.rev` is at the private PR's merge, and
+- [x] `assets-private.rev` is at the private PR's merge, and
       `cargo xtask check-leaks` passes.
 - [x] ADR-0007 and `run-gates` state the rule.
 - [x] All gates in the `run-gates` skill pass.
