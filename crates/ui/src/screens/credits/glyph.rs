@@ -10,7 +10,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::print_centred;
+use shuyi_ui::screens::print_centred_styled;
 
 /// The panel, in cells.
 const PANEL: Rect = Rect::new(2, 1, 96, 29);
@@ -71,7 +71,12 @@ pub fn paint(ctx: &Ctx, view: &CreditsView, buf: &mut GlyphBuffer) {
         buf.print(mark_x, last_y, &MORE_BELOW.to_string(), dim, bg);
     }
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, dim, black);
+    print_centred_styled(
+        buf,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(dim, black),
+    );
 }
 
 #[cfg(test)]

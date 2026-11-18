@@ -87,7 +87,7 @@ fn draws_the_rows_from_the_top_one_with_scroll_marks() {
     // The row above the bottom border stays blank.
     assert_eq!(row(&buf, 28).replace(' ', ""), "││");
     assert!(row(&buf, 29).starts_with("  └─"));
-    assert_eq!(row(&buf, 31).trim(), s.help(&c));
+    assert_eq!(row(&buf, 31).trim(), s.help(&c).plain());
 
     s.update(&mut c, &input(&[Action::CursorDown; 3]));
     let buf = draw(&s, &c);
@@ -113,7 +113,12 @@ fn rows_are_coloured_by_kind() {
     assert_eq!(fg(ENTRY_X, 5), p(UiColor::Text));
     assert_eq!(fg(DETAIL_X, 6), p(UiColor::TextDim));
     assert_eq!(fg(TEXT_END_X + 1, 27), p(UiColor::TextDim));
-    assert_eq!(fg(50, 31), p(UiColor::TextDim));
+    let row: String = (0..buf.width())
+        .filter_map(|x| buf.get(i32::from(x), 31).map(|cell| cell.glyph))
+        .collect();
+    let scroll = row.find("scroll").expect("the help line");
+    let at = i32::try_from(row[..scroll].chars().count()).unwrap_or(0);
+    assert_eq!(fg(at, 31), p(UiColor::TextDim));
 }
 
 /// The skin needs nothing but the view: a hand-made one paints.
@@ -128,7 +133,7 @@ fn a_hand_made_view_paints() {
         }],
         more_above: false,
         more_below: false,
-        help: "help".to_owned(),
+        help: "help".into(),
     };
     let mut buf = draw(&CreditsScreen::new(&c), &c);
     paint(&c, &view, &mut buf);

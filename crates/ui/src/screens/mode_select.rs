@@ -12,6 +12,7 @@ pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{ModeLineView, ModeSelectView};
 
 use trpg_core::GameMode;
@@ -72,8 +73,8 @@ impl ModeSelectScreen {
     }
 
     /// The bottom help line.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("mode_select.help", &[])
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("mode_select.help", &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint

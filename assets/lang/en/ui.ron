@@ -6,6 +6,22 @@
 // the player's keys (never write a key's name here); any other `{name}` is
 // a value the screen fills in.
 {
+    // One hint of a help bar each, `{Action} verb` (ticket 0257): a
+    // screen lists the hints its state shows (`widgets::help::HelpBar`)
+    // instead of a key per combination of them.
+    "hint.move": "{Cursor} move",
+    "hint.choose": "{Cursor} choose",
+    "hint.pick": "{Confirm} choose",
+    "hint.add": "{Confirm} add",
+    "hint.load": "{Confirm} load",
+    "hint.open": "{Confirm} open",
+    "hint.start_battle": "{Confirm} start the battle",
+    "hint.export": "{Info} export",
+    "hint.import": "{EndTurn} import",
+    "hint.open_folder": "{WorldFind} open folder",
+    "hint.back": "{Cancel} back",
+    "hint.leave": "{Cancel} leave",
+
     // The title screen.
     "title.press_any_key": "Press any key or button",
     // Where there is no keyboard (the Playdate, ticket 1044).
@@ -55,9 +71,6 @@
     "profile.message.too_many": "There can be at most {n} profiles.",
     "profile.message.not_saved": "The profiles couldn't be saved.",
     "profile.help.list": "{Cursor} move · {Confirm} choose · {Cancel} back",
-    "profile.help.list_export": "{Cursor} move · {Confirm} choose · {Info} export · {EndTurn} import · {Cancel} back",
-    "profile.help.list_export_folder": "{Cursor} move · {Confirm} choose · {Info} export · {EndTurn} import · {WorldFind} open folder · {Cancel} back",
-    "profile.help.add_import": "{Cursor} move · {Confirm} add · {EndTurn} import · {Cancel} back",
     "profile.help.add": "{Cursor} move · {Confirm} add · {Cancel} back",
     "profile.help.none": "{Cursor} move · {Cancel} back",
     "profile.help.actions": "{Cursor} move · {Confirm} select · {Cancel} back",
@@ -174,11 +187,6 @@
     "save.help.asking": "{Confirm} yes · {Cancel} no",
     "save.help.overwrite": "{Cursor} choose · {Confirm} overwrite · {Cancel} back",
     "save.help.save_here": "{Cursor} choose · {Confirm} save here · {Cancel} back",
-    "save.help.load_import": "{Cursor} choose · {Confirm} load · {EndTurn} import · {Cancel} back",
-    "save.help.load": "{Cursor} choose · {Confirm} load · {Cancel} back",
-    "save.help.load_folder": "{Cursor} choose · {Confirm} load · {EndTurn} import · {WorldFind} open folder · {Cancel} back",
-    "save.help.load_export": "{Cursor} choose · {Confirm} load · {Info} export · {EndTurn} import · {Cancel} back",
-    "save.help.load_export_folder": "{Cursor} choose · {Confirm} load · {Info} export · {EndTurn} import · {WorldFind} open folder · {Cancel} back",
     "save.help.export_question": "{Cursor} choose · {Confirm} export · {Cancel} back",
     "save.export_question": "Export your options and key bindings too?",
     "save.answer.yes": "Yes",
@@ -421,10 +429,6 @@
     "prep.pack_full": "The pack is full ({packed}/{cap}).",
     "prep.ready": "Units {units} · {pack}",
     "prep.leave_question": "Leave preparations?",
-    "prep.help.tabs": "{Cursor} choose · {Confirm} open",
-    "prep.help.tabs_leave": "{Cursor} choose · {Confirm} open · {Cancel} leave",
-    "prep.help.fight": "{Cursor} choose · {Confirm} start the battle",
-    "prep.help.fight_leave": "{Cursor} choose · {Confirm} start the battle · {Cancel} leave",
     "prep.help.units": "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} change gear · {Cancel} back",
     "prep.help.slots": "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} stock · {Cancel} back",
     "prep.help.stock": "{Cursor} choose · {PrevUnit} {NextUnit} unit · {Confirm} take · {Cancel} back",

@@ -145,8 +145,11 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     assert_eq!(names(&h), "Test Lord | Raider");
     assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
     // The forecast says so too, in the player's keys (0463).
-    let swap = shown_forecast(&h).swap;
-    assert_eq!(swap.as_deref(), Some("Left/Right weapon"));
+    let swap = shown_forecast(&h).swap.expect("the swap hint");
+    assert_eq!(swap.plain(), "Left/Right weapon");
+    // Ticket 0257: the two keys, each in a key span.
+    let keys = crate::widgets::help::spans_of(h.ctx().help_keys(), &["CursorLeft", "CursorRight"]);
+    assert_eq!(crate::widgets::help::key_spans(&swap), keys);
     h.keys("Right");
     assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
     assert_eq!(names(&h), "Test Lord | Raider");

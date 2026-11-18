@@ -18,6 +18,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{BonusView, GoldView, ResultsBody, ResultsView, RewindsView, TallyView, UnitView};
 
 use trpg_core::progression::EXP_PER_LEVEL;
@@ -202,12 +203,12 @@ impl ResultsScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let played = match &self.pages {
             Some(pages) if self.paging => pages.page_played(),
             _ => self.filled(),
         };
-        playing_help(ctx, played).plain()
+        playing_help(ctx, played)
     }
 
     /// The screen as it is now, as plain data for a skin to paint

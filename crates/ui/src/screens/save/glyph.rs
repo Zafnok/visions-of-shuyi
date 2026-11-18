@@ -13,6 +13,7 @@ use crate::screen::Ctx;
 use crate::screens::{centre_x, files, print_centred};
 use crate::widgets::ask::glyph as ask_glyph;
 use crate::widgets::menu::glyph as menu_glyph;
+use shuyi_ui::screens::print_centred_styled;
 
 /// Row of the question.
 const QUESTION_ROW: i32 = 10;
@@ -56,7 +57,12 @@ pub fn paint_prompt(ctx: &Ctx, view: &SavePromptView, buf: &mut GlyphBuffer) {
     let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
     menu_glyph::paint(ctx, &view.menu, buf, x, MENU_ROW);
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
+    print_centred_styled(
+        buf,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::TextDim), black),
+    );
 }
 
 /// Paints the slot picker over the whole of `buf`.
@@ -90,7 +96,12 @@ pub fn paint_slots(ctx: &Ctx, view: &SlotPickerView, buf: &mut GlyphBuffer) {
         ask_glyph::paint(&ctx.palette, question, buf);
     }
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, dim, black);
+    print_centred_styled(
+        buf,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(dim, black),
+    );
 }
 
 /// The column headings.

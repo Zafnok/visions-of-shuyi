@@ -44,7 +44,7 @@ fn the_portraits_side_by_side_the_name_start_and_the_help() {
         "Name   Ellery Veyne"
     );
     assert_eq!(shown[usize::try_from(START_ROW).unwrap()], "[ Start ]");
-    assert_eq!(shown[14], LeadSelectScreen::new().view(&c).help);
+    assert_eq!(shown[14], LeadSelectScreen::new().view(&c).help.plain());
 }
 
 #[test]

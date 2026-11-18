@@ -27,7 +27,7 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
     let ink = inks(ctx);
     let frame = buf.bounds();
     window(ctx, buf, frame, &view.title);
-    footer(ctx, buf, frame, &view.help);
+    footer(ctx, buf, frame, &view.help.plain());
 
     let text_w = to_usize(frame.w - 2 * TEXT_X) - INDENT.len();
     let mut laid: Vec<Laid> = view

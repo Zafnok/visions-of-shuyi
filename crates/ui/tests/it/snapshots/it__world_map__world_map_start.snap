@@ -33,7 +33,7 @@ expression: h.snapshot()
 ≈ ≈     ≈  ≈           ≈≈    ≈  ≈        ≈ ≈     ≈≈    ≈≈  ≈≈≈  ≈   ≈ ║                            ║
        ≈                   ≈  ≈≈    ≈    ≈    ≈   ≈≈ ≈ ≈            ≈ ╚════════════════════════════╝
                                                                                                     
- arrows choose · f enter · a s places · c army · x find · d menu                                    
+     choose · F  enter · A  S  places · C  army · X  find · D  menu                                 
 --- colours ---
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcdccccdccccdccccdccccdcccceeeeeeeeefffffffffffeeeeeeeeee
 aaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccdccccdccccdccccdccccdeghhhhhhhhhhhhhhhhhhhhggggggge
@@ -128,3 +128,41 @@ over  107,335 3x1  #c7b684
 over  107,333 1x3  #c7b684
 over  130,335 3x1  #c7b684
 over  132,333 1x3  #c7b684
+over  sprite 8,496 24x16  images/key_arrows.png 0,0 24x16
+under 113,497 13x14  key_bg
+under 113,496 13x1  key_edge
+under 113,511 13x1  key_edge
+under 112,497 1x14  key_edge
+under 126,497 1x14  key_edge
+under 201,497 13x14  key_bg
+under 201,496 13x1  key_edge
+under 201,511 13x1  key_edge
+under 200,497 1x14  key_edge
+under 214,497 1x14  key_edge
+under 225,497 13x14  key_bg
+under 225,496 13x1  key_edge
+under 225,511 13x1  key_edge
+under 224,497 1x14  key_edge
+under 238,497 1x14  key_edge
+under 321,497 13x14  key_bg
+under 321,496 13x1  key_edge
+under 321,511 13x1  key_edge
+under 320,497 1x14  key_edge
+under 334,497 1x14  key_edge
+under 401,497 13x14  key_bg
+under 401,496 13x1  key_edge
+under 401,511 13x1  key_edge
+under 400,497 1x14  key_edge
+under 414,497 1x14  key_edge
+under 481,497 13x14  key_bg
+under 481,496 13x1  key_edge
+under 481,511 13x1  key_edge
+under 480,497 1x14  key_edge
+under 494,497 1x14  key_edge
+--- glyph styles ---
+14,31  +3,+0 bold
+25,31  +3,+0 bold
+28,31  +3,+0 bold
+40,31  +3,+0 bold
+50,31  +3,+0 bold
+60,31  +3,+0 bold

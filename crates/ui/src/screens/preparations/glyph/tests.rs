@@ -134,7 +134,7 @@ fn view() -> PreparationsView {
         }),
         message: Some("No.".to_owned()),
         leave_question: None,
-        help: "help".to_owned(),
+        help: "help".into(),
     }
 }
 

@@ -418,10 +418,13 @@ fn outcome_in(screen: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -
 #[test]
 fn texts_name_the_layout_keys() {
     let mut c = ctx();
-    assert_eq!(TitleScreen::help(&c), "arrows move · f select · d back");
+    assert_eq!(
+        TitleScreen::help(&c).plain(),
+        "arrows move · f select · d back"
+    );
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
-        TitleScreen::help(&c),
+        TitleScreen::help(&c).plain(),
         "w\u{a0}a\u{a0}s\u{a0}d move · j select · k back"
     );
     c.use_layout(crate::input::RIGHT_HANDED);
@@ -434,7 +437,7 @@ fn texts_name_the_layout_keys() {
     );
     // Cancel with no key of its own (the fixed Esc isn't named).
     assert_eq!(
-        TitleScreen::help(&c),
+        TitleScreen::help(&c).plain(),
         "arrows move · f select · !\u{a0}not\u{a0}mapped back"
     );
 }
@@ -509,7 +512,7 @@ fn the_first_frame_shows_the_names_the_menu_and_the_help() {
     assert_eq!(view.prompt, None);
     assert_eq!(view.notice, None);
     assert_eq!(
-        view.help.as_deref(),
+        view.help.as_ref().map(StyledText::plain).as_deref(),
         Some("arrows move · f select · d back")
     );
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
@@ -1363,4 +1366,14 @@ fn the_set_up_note_wins_over_the_export_notes() {
     t.menu = t.menu.clone().focused(0);
     assert_eq!(t.items()[0], Continue);
     assert_eq!(t.view(&c).note, None);
+}
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = ctx();
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&TitleScreen::help(&c)), want);
 }

@@ -16,7 +16,6 @@
 //! a slot). Neither can be bound; see [`Chord::is_reserved`].
 //! `Shift+Escape` and `Shift+Delete` are ordinary chords.
 
-use crate::prelude::*;
 use trpg_content::keymap::format;
 
 use crate::screens::key_bindings::KeyRow;
@@ -186,16 +185,6 @@ pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
 /// Text key of the heading over the world map's actions (ticket 1007),
 /// another [`KeyGroup`] that may share keys with the rest.
 pub const WORLD_MAP_HEADING: &str = "key_bindings.world_map";
-
-/// The help line of a text box: `Enter done · Backspace delete · Escape
-/// cancel`, in `ctx`'s language.
-pub fn text_keys_help(ctx: &crate::screen::Ctx) -> String {
-    let [done, delete, cancel] = fixed::text_key_names();
-    ctx.text_with(
-        "text_box.help",
-        &[("done", &done), ("delete", &delete), ("cancel", &cancel)],
-    )
-}
 
 #[cfg(test)]
 mod tests {

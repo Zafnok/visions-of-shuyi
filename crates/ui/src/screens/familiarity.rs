@@ -11,6 +11,7 @@
 //! skins ([`SKINS`]) draw it.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::TutorialLevel;
 
 use crate::glyph_buffer::GlyphBuffer;
@@ -70,8 +71,8 @@ impl FamiliarityScreen {
     }
 
     /// The bottom help line.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("familiarity.help", &[])
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("familiarity.help", &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint

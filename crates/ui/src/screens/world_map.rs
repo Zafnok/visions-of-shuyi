@@ -46,6 +46,7 @@ pub mod view;
 
 use crate::prelude::*;
 use core::any::Any;
+use shuyi_ui::text::StyledText;
 
 use trpg_content::WorldMapDef;
 use trpg_core::{Campaign, LEAD_ID, NodeKind, Pos, WorldCommand, WorldEvent, WorldMap};
@@ -785,14 +786,14 @@ impl WorldMapScreen {
     }
 
     /// The help line for what is open.
-    fn help(&self, ctx: &Ctx) -> String {
+    fn help(&self, ctx: &Ctx) -> StyledText {
         let key = match &self.open {
             Open::Nothing if self.cursor == self.army_at() => "world_map.help.here",
             Open::Nothing => "world_map.help.map",
             Open::Menu(_) | Open::Town(..) => "world_map.help.menu",
             Open::Find(_) => "world_map.help.find",
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The shown places but the army's, as the view has them.
@@ -875,7 +876,7 @@ impl WorldMapScreen {
                     lines: Vec::new(),
                 },
                 list: None,
-                help: String::new(),
+                help: StyledText::new(),
             };
         };
         let map = &def.map;

@@ -12,6 +12,7 @@ use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::word_wrap;
+use shuyi_ui::text::StyledText;
 
 /// Column of a face's left edge.
 const FACE_X: i32 = 3;
@@ -45,16 +46,12 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
     buf.draw_box(panel, BoxStyle::Single, c(UiColor::PanelBorder), bg);
     let title = format!(" {} ", view.title);
     buf.print(panel.x + 3, panel.y, &title, c(UiColor::TextHighlight), bg);
-    let help = format!(" {} ", view.help);
-    let help_w = i32::try_from(help.chars().count()).unwrap_or(0);
+    let mut help = StyledText::from(" ");
+    help.append(&view.help).push_plain(" ");
+    let help_w = i32::try_from(help.width(buf.widths())).unwrap_or(0);
     let bottom = panel.y + panel.h - 1;
-    buf.print(
-        panel.x + panel.w - 3 - help_w,
-        bottom,
-        &help,
-        c(UiColor::TextDim),
-        bg,
-    );
+    let colors = ctx.palette.text_colors_on(c(UiColor::TextDim), bg);
+    buf.print_styled(panel.x + panel.w - 3 - help_w, bottom, &help, colors);
 
     let text_w = usize::try_from(panel.w - TEXT_X - 3).unwrap_or(1);
     let mut laid: Vec<Laid> = view

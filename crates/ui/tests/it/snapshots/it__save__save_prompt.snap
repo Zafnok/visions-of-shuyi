@@ -1,5 +1,5 @@
 ---
-source: crates/ui/tests/save.rs
+source: crates/ui/tests/it/save.rs
 expression: h.snapshot()
 ---
                                                                                                     
@@ -33,7 +33,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                      arrows choose · f select                                      
+                                           choose · F  select                                       
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -66,7 +66,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffffaafffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:text_highlight bg:black
@@ -74,3 +74,12 @@ c = fg:panel_border bg:panel_bg
 d = fg:panel_bg bg:panel_border_focus
 e = fg:text bg:panel_bg
 f = fg:text_dim bg:black
+--- overlays ---
+over  sprite 312,496 24x16  images/key_arrows.png 0,0 24x16
+under 417,497 13x14  key_bg
+under 417,496 13x1  key_edge
+under 417,511 13x1  key_edge
+under 416,497 1x14  key_edge
+under 430,497 1x14  key_edge
+--- glyph styles ---
+52,31  +3,+0 bold
