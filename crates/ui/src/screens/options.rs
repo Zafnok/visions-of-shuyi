@@ -46,7 +46,7 @@ use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
     AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, Settings,
-    TownsOpen,
+    ThreatArrows, TownsOpen,
 };
 use crate::tips::reset_tips;
 
@@ -129,6 +129,9 @@ pub enum Row {
     /// [`ShuyiSettings::map_zoom`](crate::ShuyiSettings::map_zoom) (only when
     /// the map can be zoomed).
     MapZoom,
+    /// [`ShuyiSettings::threat_arrows`](crate::ShuyiSettings::threat_arrows)
+    /// (ticket 0908).
+    ThreatArrows,
     /// [`ShuyiSettings::portrait_style`](crate::ShuyiSettings::portrait_style)
     /// (only on the Playdate).
     PortraitStyle,
@@ -171,7 +174,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 25] = [
+    pub const ALL: [Row; 26] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -181,6 +184,7 @@ impl Row {
         Row::Cursor,
         Row::MapLook,
         Row::MapZoom,
+        Row::ThreatArrows,
         Row::PortraitStyle,
         Row::Intro,
         Row::Towns,
@@ -212,6 +216,7 @@ impl Row {
             Row::Cursor => "options.row.cursor",
             Row::MapLook => "options.row.map_look",
             Row::MapZoom => "options.row.map_zoom",
+            Row::ThreatArrows => "options.row.threat_arrows",
             Row::PortraitStyle => "options.row.portrait_style",
             Row::Intro => "options.row.intro",
             Row::Towns => "options.row.towns",
@@ -259,6 +264,7 @@ impl Row {
             Row::EnemyPhaseSpeed => choice::<EnemyPhaseSpeed>(self),
             Row::MapLook => choice::<MapLook>(self),
             Row::MapZoom => choice::<MapZoom>(self),
+            Row::ThreatArrows => choice::<ThreatArrows>(self),
             Row::PortraitStyle => choice::<PortraitStyle>(self),
             Row::Theme => choice::<Theme>(self),
             Row::CombatAnimations => OptionRow::new(
@@ -564,6 +570,19 @@ impl Named for MapZoom {
     }
     fn put(self, s: &mut Settings) {
         s.game.map_zoom = self;
+    }
+}
+
+impl Named for ThreatArrows {
+    const ALL: &'static [Self] = &ThreatArrows::ALL;
+    fn key(self) -> &'static str {
+        ThreatArrows::key(self)
+    }
+    fn get(s: &Settings) -> Self {
+        s.game.threat_arrows
+    }
+    fn put(self, s: &mut Settings) {
+        s.game.threat_arrows = self;
     }
 }
 

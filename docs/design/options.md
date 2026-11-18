@@ -64,6 +64,17 @@ Nick's.
   to zoom (*Claude's starting rule*). `Restore defaults` puts it back to
   2×.
 
+### Threat arrows
+
+- **Threat arrows: Arcs / Arcs + tile / Straight** (ticket 0908;
+  `look-and-feel.md`, *Threat arrows*): how the arrows from the enemies
+  that could attack a tile are drawn. It starts at **Arcs** (Nick,
+  2026-11-17: "lets do I as default, K as option, and A as an option
+  too").
+- The row is under `Map zoom` on the PC and on the Playdate, and a save
+  from before it loads as Arcs *(Claude's starting rules)*. `Restore
+  defaults` puts it back to Arcs.
+
 ### Intro
 
 - **Intro: On / Off** (ticket 0844; `title-screen.md`, *Intro cinematic*):
