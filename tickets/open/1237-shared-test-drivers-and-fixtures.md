@@ -85,9 +85,11 @@ the fixture here.
 2. **tests/it support.** Add `support.rs` (`mod support;` in
    `main.rs`) with `skip_scenes` (moved from `playthrough.rs`),
    `title()` (`Harness::with_layout(RIGHT_HANDED)`), `quick_battle()`
-   (`"Down f Left f f"`, asserting the screens are `title`,
+   (`"Down f Left f f f"`, asserting the screens are `title`,
    `game_flow`, `battle`) and `battle(h) -> &BattleScreen`. Replace
    the copies; one with other steps (`map_zoom.rs`'s skin) stays.
+   1289 (blocked by this ticket) then replaces `quick_battle()` with
+   `Harness::quick_battle()`.
 3. **ClassDef fixture.** In `crates/core`: feature `testing = []`;
    `#[cfg(any(test, feature = "testing"))] pub mod testing` with
    `pub fn class(id: &str) -> ClassDef` (tier 1, move 4, default stats
