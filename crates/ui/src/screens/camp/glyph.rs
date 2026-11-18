@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 use crate::widgets::menu::glyph as menu_glyph;
+use shuyi_ui::screens::print_centred_styled;
 
 /// Row of the heading.
 const HEADING_ROW: i32 = 2;
@@ -50,5 +51,10 @@ pub fn paint(ctx: &Ctx, view: &CampView, buf: &mut GlyphBuffer) {
         }
     }
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
+    print_centred_styled(
+        buf,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::TextDim), black),
+    );
 }

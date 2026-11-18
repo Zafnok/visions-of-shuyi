@@ -17,6 +17,7 @@ pub mod rewind;
 pub mod shop;
 
 use crate::prelude::*;
+use shuyi_assets::font::CellWidths;
 use shuyi_ui::text::StyledText;
 use trpg_core::Phase;
 
@@ -544,20 +545,24 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
                 .into_iter()
                 .chain(o.village.clone())
                 .chain([o.turn.clone()])
-                .map(|l| (l, UiColor::Text))
+                .map(|l| (l.into(), UiColor::Text))
                 .collect();
             if let Some(notes) = &o.notes {
-                lines.push((String::new(), UiColor::Text));
-                lines.push((notes.title.clone(), UiColor::TextDim));
-                lines.extend(notes.lines.iter().map(|l| (l.clone(), UiColor::Text)));
+                lines.push((StyledText::new(), UiColor::Text));
+                lines.push((notes.title.as_str().into(), UiColor::TextDim));
+                let text = notes
+                    .lines
+                    .iter()
+                    .map(|l| (l.as_str().into(), UiColor::Text));
+                lines.extend(text);
             }
-            let (_, h) = dialog_size(&o.title, &lines);
+            let (_, h) = dialog_size(&o.title, &lines, buf.widths());
             let top = notes_top(ctx, view, h);
             draw_dialog_at(ctx, buf, &o.title, &lines, top);
         }
         Some(DialogView::Question(q)) => {
             let lines = [
-                (q.question.clone(), UiColor::Text),
+                (q.question.as_str().into(), UiColor::Text),
                 (q.answers.clone(), UiColor::TextDim),
             ];
             draw_dialog(ctx, buf, "", &lines);
@@ -580,9 +585,9 @@ fn paint_notes(ctx: &Ctx, view: &BattleView, notes: &NotesView, buf: &mut GlyphB
     let lines: Vec<_> = notes
         .lines
         .iter()
-        .map(|l| (l.clone(), UiColor::Text))
+        .map(|l| (l.as_str().into(), UiColor::Text))
         .collect();
-    let (_, h) = dialog_size(&notes.title, &lines);
+    let (_, h) = dialog_size(&notes.title, &lines, buf.widths());
     let top = notes_top(ctx, view, h);
     draw_dialog_at(ctx, buf, &notes.title, &lines, top);
 }
@@ -629,10 +634,10 @@ pub fn box_top_in(area: Rect, h: i32, rows: &[i32]) -> i32 {
 
 /// The size (width, height) of the [`draw_dialog`] box of `lines` under
 /// `title`, in cells.
-fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
+fn dialog_size(title: &str, lines: &[(StyledText, UiColor)], widths: &CellWidths) -> (i32, i32) {
     let widest = lines
         .iter()
-        .map(|(l, _)| l.chars().count())
+        .map(|(l, _)| l.width(widths))
         .chain(core::iter::once(title.chars().count() + 2))
         .max()
         .unwrap_or(0);
@@ -644,8 +649,8 @@ fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
 /// Draws a box of `lines` (text and colour) centred on the map view, one
 /// blank column and row inside a double border; `title` over the top
 /// border.
-fn draw_dialog(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, lines: &[(String, UiColor)]) {
-    let (_, h) = dialog_size(title, lines);
+fn draw_dialog(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, lines: &[(StyledText, UiColor)]) {
+    let (_, h) = dialog_size(title, lines, buf.widths());
     draw_dialog_at(ctx, buf, title, lines, centred_top(h));
 }
 
@@ -655,19 +660,20 @@ fn draw_dialog_at(
     ctx: &Ctx,
     buf: &mut GlyphBuffer,
     title: &str,
-    lines: &[(String, UiColor)],
+    lines: &[(StyledText, UiColor)],
     top: i32,
 ) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let (w, h) = dialog_size(title, lines);
+    let (w, h) = dialog_size(title, lines, buf.widths());
     let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
         .with_border(c(UiColor::PanelBorder))
         .with_title(c(UiColor::TextHighlight));
     buf.panel(rect, &look, Some(title).filter(|t| !t.is_empty()));
     for (y, (line, color)) in (rect.y + 2..).zip(lines) {
-        buf.print(rect.x + 2, y, line, c(*color), bg);
+        let colors = ctx.palette.text_colors_on(c(*color), bg);
+        buf.print_styled(rect.x + 2, y, line, colors);
     }
 }
 

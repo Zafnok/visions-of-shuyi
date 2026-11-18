@@ -4,6 +4,7 @@
 //! it ([`super::glyph::paint`] today); see ADR-0054.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,7 +20,7 @@ pub struct CreditsView {
     /// Whether the list goes on below these rows.
     pub more_below: bool,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// What a row of the list is, which sets how it stands out.

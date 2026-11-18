@@ -62,7 +62,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbcccccccccccccccccccbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbcBBBBcBBBBBccccccccbbbbbb
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -91,6 +91,7 @@ x = fg:player bg:grass_bg
 y = fg:stone bg:stone_bg
 z = fg:floor bg:floor_bg
 A = fg:wood bg:stone_bg
+B = fg:text bg:key_bg
 --- overlays ---
 over  273,222 14x2  hp_high
 over  225,286 14x2  hp_high

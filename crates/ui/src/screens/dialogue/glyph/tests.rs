@@ -534,7 +534,7 @@ fn the_open_log_covers_the_scene() {
         title: "Log".to_owned(),
         rows: vec![],
         back_to_latest: None,
-        help: "help keys".to_owned(),
+        help: "help keys".into(),
     };
     let view = DialogueView {
         log: Some(log.clone()),

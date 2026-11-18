@@ -27,6 +27,7 @@ pub mod song;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{CinematicView, NoteView, TitleView};
 
 use alloc::rc::Rc;
@@ -615,9 +616,10 @@ impl TitleScreen {
     }
 
     /// The bottom help line: the cursor keys `move`, the Confirm key
-    /// `select`, the Cancel key `back`, named from the active keymap.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("title.help", &[])
+    /// `select`, the Cancel key `back`, named from the active keymap, each
+    /// key in a key span.
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("title.help", &[])
     }
 }
 

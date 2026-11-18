@@ -4,6 +4,7 @@
 //! it ([`super::glyph::paint`]); see ADR-0054 and ADR-0099.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 
 use trpg_core::Pos;
 
@@ -95,5 +96,5 @@ pub struct WorldMapView {
     /// The menu, the Find list or a town's shops, when one is open.
     pub list: Option<ListView>,
     /// The help line.
-    pub help: String,
+    pub help: StyledText,
 }

@@ -2742,7 +2742,7 @@ impl BattleScreen {
         let forecast = self.forecast().and_then(|t| {
             let swap = t
                 .can_swap()
-                .then(|| Self::swap_hint(ctx, "battle.forecast.swap").plain());
+                .then(|| Self::swap_hint(ctx, "battle.forecast.swap"));
             forecast::view(told, t).map(|f| ForecastView { swap, ..f })
         });
         let progress = self
@@ -2919,7 +2919,7 @@ impl BattleScreen {
         let question = |question: String| {
             DialogView::Question(QuestionView {
                 question,
-                answers: ctx.text_with("battle.yes_no", &[]),
+                answers: ctx.text_styled("battle.yes_no", &[]),
             })
         };
         match &self.mode {

@@ -120,7 +120,7 @@ pub fn paint(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect, buf: 
     let rect = rect(ctx, scene, view, area);
     pd::window(ctx, buf, rect, &view.title);
     if let Some(swap) = &view.swap {
-        pd::footer(ctx, buf, rect, swap);
+        pd::footer(ctx, buf, rect, &swap.plain());
     }
     let x = rect.x + 2;
     let shown = lines(view, to_usize(rect.h - 2));

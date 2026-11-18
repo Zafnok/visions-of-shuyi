@@ -11,6 +11,7 @@
 //! weapon` in the bottom border (Nick, 0463).
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::{Side, StatValue};
 
 use super::{TEXT_X, print_clipped};
@@ -211,7 +212,13 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
             SIDE_PANEL.w,
             1,
         );
-        buf.print_centred(bottom, &format!(" {swap} "), hi);
+        let mut line = StyledText::from(" ");
+        line.append(swap).push_plain(" ");
+        let w = i32::try_from(line.width(buf.widths())).unwrap_or(0);
+        let x = bottom.x + (bottom.w - w) / 2;
+        // On the panel as it is: the cells keep its background.
+        let colors = |role| ctx.palette.text_colors(role, hi);
+        buf.print_styled(x, bottom.y, &line, colors);
     }
     if let Some(skill) = &view.skill {
         paint_skill(ctx, skill, buf);

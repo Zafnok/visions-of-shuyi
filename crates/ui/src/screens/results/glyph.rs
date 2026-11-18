@@ -12,7 +12,8 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS};
 use crate::screens::battle::layout::MAP_VIEW;
-use crate::screens::{centre_x, print_centred};
+use crate::screens::centre_x;
+use shuyi_ui::screens::print_centred_styled;
 
 /// The panel.
 const PANEL: Rect = Rect::new(14, 3, 72, 24);
@@ -56,7 +57,7 @@ pub fn paint(ctx: &Ctx, view: &ResultsView, buf: &mut GlyphBuffer) {
     }
     let bottom = i32::from(buf.height()) - 1;
     let (dim, bg) = (c(UiColor::TextDim), c(UiColor::Black));
-    print_centred(buf, bottom, &view.help, dim, bg);
+    print_centred_styled(buf, bottom, &view.help, ctx.palette.text_colors_on(dim, bg));
 }
 
 /// The gold, rewinds and bonus lines and the units' bars.

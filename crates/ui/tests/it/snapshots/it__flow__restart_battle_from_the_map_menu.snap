@@ -48,10 +48,10 @@ aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaijkkkkkkkkkkkkjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaijklllllllkllljjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaeeffllddddddddddddmmmmnnmmddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeffmmddddddddddddnnnnoonnddaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -74,7 +74,8 @@ g = fg:mountain bg:mountain_bg
 h = fg:peak bg:peak_bg
 i = fg:panel_border bg:panel_bg
 j = fg:text bg:panel_bg
-k = fg:text_dim bg:panel_bg
-l = fg:road bg:road_bg
-m = fg:stone bg:stone_bg
-n = fg:wood bg:stone_bg
+k = fg:text bg:key_bg
+l = fg:text_dim bg:panel_bg
+m = fg:road bg:road_bg
+n = fg:stone bg:stone_bg
+o = fg:wood bg:stone_bg

@@ -48,10 +48,10 @@ aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaijkkkkkkkkkkkkjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaijklllllllkllljjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaijjjjjjjjjjjjjjjjjjjjjjjjjjjjjjiaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaeeffllddddddddddmmnnnnoonnddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeffmmddddddddddnnooooppooddaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -74,10 +74,11 @@ g = fg:mountain bg:mountain_bg
 h = fg:peak bg:peak_bg
 i = fg:panel_border bg:panel_bg
 j = fg:text bg:panel_bg
-k = fg:text_dim bg:panel_bg
-l = fg:road bg:road_bg
-m = fg:enemy bg:grass_bg
-n = fg:stone bg:stone_bg
-o = fg:wood bg:stone_bg
+k = fg:text bg:key_bg
+l = fg:text_dim bg:panel_bg
+m = fg:road bg:road_bg
+n = fg:enemy bg:grass_bg
+o = fg:stone bg:stone_bg
+p = fg:wood bg:stone_bg
 --- overlays ---
 over  289,302 14x2  hp_high

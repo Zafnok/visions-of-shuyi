@@ -13,15 +13,17 @@ use trpg_content::ImageId;
 
 use super::view::{FULL, NoteView, TitleView};
 use crate::audio::splitmix64;
+use crate::color::Rgb;
 use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::{centre_x, paint_debug_hint, print_centred};
+use crate::screens::{centre_x, paint_debug_hint};
 use crate::tips::glyph::{MARGIN, paint_frame_sized, paint_text};
 use crate::widgets::menu::glyph as menu_glyph;
 use crate::widgets::word_wrap;
+use shuyi_ui::screens::print_centred_styled;
 
 /// Console pixels per logo pixel: a cell's width, the size of the blocks
 /// the lettering is made of.
@@ -272,12 +274,15 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         }
     }
     if let Some(help) = &view.help {
+        // Faded with the menu, its key caps too.
+        let fade = |(fg, bg): (Rgb, Option<Rgb>)| (fg.scale(solid), bg.map(|b| b.scale(solid)));
         if view.cinematic.is_some() {
             // Over the cinematic: its letters alone, no strip behind them.
-            let x = centre_x(buf, help.chars().count());
-            buf.print_fg(x, bottom, help, dim.scale(solid));
+            let colors = |role| fade(ctx.palette.text_colors(role, dim));
+            print_centred_styled(buf, bottom, help, colors);
         } else {
-            print_centred(buf, bottom, help, dim.scale(solid), c(UiColor::Black));
+            let on = ctx.palette.text_colors_on(dim, c(UiColor::Black));
+            print_centred_styled(buf, bottom, help, |role| fade(on(role)));
         }
     }
     if let Some(hint) = &view.debug_hint {
@@ -374,7 +379,7 @@ mod tests {
             ])),
             notice: None,
             note: None,
-            help: Some("help".to_owned()),
+            help: Some("help".into()),
             debug_hint: None,
         }
     }

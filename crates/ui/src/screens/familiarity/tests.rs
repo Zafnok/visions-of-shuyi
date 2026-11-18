@@ -115,3 +115,13 @@ fn familiarity_declares_its_actions() {
     let screen = FamiliarityScreen::new(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::FAMILIARITY);
 }
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = crate::screen::tests::ctx();
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&FamiliarityScreen::help(&c)), want);
+}

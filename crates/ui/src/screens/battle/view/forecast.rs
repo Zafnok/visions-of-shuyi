@@ -4,6 +4,7 @@
 //! [`forecast::view`](super::super::forecast::view).
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::{Faction, Pos, Side, StatValue};
 
 /// The attack forecast, filling the side panel while a target is aimed.
@@ -42,7 +43,7 @@ pub struct ForecastView {
     /// in the player's keys), when they do: the unit has more than one
     /// weapon (or spell) to swap to (ticket 0463). The skins then mark the
     /// attacker's weapon too.
-    pub swap: Option<String>,
+    pub swap: Option<StyledText>,
 }
 
 /// The chosen art's or combat active's line.

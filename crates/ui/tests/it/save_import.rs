@@ -571,7 +571,9 @@ fn a_file_with_nowhere_to_go_or_nothing_to_take_writes_nothing() {
         Some("There can be at most 8 profiles: delete one to import this file.")
     );
     assert!(report.question.is_none());
-    assert_eq!(report.help, "d back");
+    assert_eq!(report.help.plain(), "d back");
+    // Ticket 0257: the key in a key span.
+    assert_eq!(trpg_ui::widgets::help::key_spans(&report.help), ["d"]);
     h.keys("f");
     assert_eq!(h.top_screen(), "profiles");
     // The row that adds a profile names no import key with no room.

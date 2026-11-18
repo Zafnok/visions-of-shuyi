@@ -421,13 +421,13 @@ fn the_help_says_enter_on_the_army_and_travel_elsewhere() {
     let mut ctx = ctx();
     let mut s = screen(&ctx);
     assert!(
-        s.view(&ctx).help.contains("f enter"),
+        s.view(&ctx).help.plain().contains("f enter"),
         "{}",
         s.view(&ctx).help
     );
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert!(
-        s.view(&ctx).help.contains("f travel"),
+        s.view(&ctx).help.plain().contains("f travel"),
         "{}",
         s.view(&ctx).help
     );
@@ -684,7 +684,7 @@ fn the_picture_look_centres_a_short_level_and_ends_with_the_help() {
     let help: String = (1..40)
         .filter_map(|x| buf.get(x, bottom).map(|c| c.glyph))
         .collect();
-    let want = s.view(&ctx).help;
+    let want = s.view(&ctx).help.plain();
     assert!(
         want.starts_with(help.trim_end()) && !help.trim().is_empty(),
         "{help:?}"
@@ -1344,4 +1344,24 @@ fn the_cursor_pulses_from_its_last_move_only_with_idle_motion() {
     assert!((s.view(&ctx).cursor_brightness - faintest).abs() < 1e-4);
     ctx.idle_motion = IdleMotion::Off;
     assert!((s.view(&ctx).cursor_brightness - 1.0).abs() < 1e-4);
+}
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let names = [
+        "Cursor",
+        "Confirm",
+        "PrevUnit",
+        "NextUnit",
+        "WorldArmy",
+        "WorldFind",
+        "Cancel",
+    ];
+    let want = spans_of(ctx.help_keys(), &names);
+    assert_eq!(key_spans(&s.view(&ctx).help), want);
 }

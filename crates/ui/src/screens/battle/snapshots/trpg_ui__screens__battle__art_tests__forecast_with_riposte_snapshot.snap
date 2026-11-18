@@ -62,7 +62,7 @@ acccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccca
-aaaaabbbbbbbbbbbbbbbbbbbaaaaaa
+aaaaabjjjjbjjjjjbbbbbbbbaaaaaa
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text_highlight bg:panel_bg
@@ -73,6 +73,7 @@ f = fg:text_dim bg:panel_bg
 g = fg:hp_mid bg:panel_bg
 h = fg:hp_low bg:panel_bg
 i = fg:effect bg:panel_bg
+j = fg:text bg:key_bg
 --- overlays ---
 over  10,53 1x1  text_highlight
 over  12,53 1x1  text_highlight

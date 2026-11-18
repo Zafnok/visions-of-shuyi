@@ -116,7 +116,14 @@ fn three_boxes_in_the_log_lists_the_three_lines_in_order() {
     assert_eq!(focused, Some("Better late than... well."));
     assert_eq!(view.back_to_latest, None);
     assert_eq!(view.title, "Log");
-    assert_eq!(view.help, "arrows move · f go to this line · d close");
+    assert_eq!(
+        view.help.plain(),
+        "arrows move · f go to this line · d close"
+    );
+    // Ticket 0257: each key in a key span, in order.
+    let keys =
+        trpg_ui::widgets::help::spans_of(h.ctx().help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(trpg_ui::widgets::help::key_spans(&view.help), keys);
     // The text box waits underneath: Cancel closes the log.
     h.keys("d");
     assert!(!dialogue(&h).is_log_open());
