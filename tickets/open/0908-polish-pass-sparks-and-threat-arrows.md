@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: in-progress
-blocked_by: ["engine#3220"]
+blocked_by: ["engine#3223"]
 nick_input: decision
 completed:
 ---
@@ -45,7 +45,7 @@ look went to 0923. This ticket keeps the threat arrows.
 **Picked 2026-11-17 (three rounds):** arcs by default, with "Arcs + tile"
 and today's straight arrows as options in Options (`look-and-feel.md`,
 *Threat arrows*; `options.md`, *Threat arrows*). The arcs are drawn by
-the engine: engine ticket 3220 (Nick: "Yes, file and open"), so this
+the engine: engine ticket 3223 (Nick: "Yes, file and open"), so this
 ticket's PR moves the pin past it, in a session of its own after Nick
 merges the engine PR and confirms.
 

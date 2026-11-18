@@ -645,7 +645,7 @@ solid: "lets do I as default, K as option, and A as an option too".
   the tile's middle: a 2-pixel line with a 1-pixel dark edge, bowed by
   0.4 of the distance between the two, ending 4 pixels short in a filled
   head 6 pixels long (*tunable*: the engine's `grid::threat`, ticket
-  3220).
+  3223).
 - **An option, Arcs + tile:** the same arcs, and a 1-pixel frame in the
   arrow's colour inside the threatened tile, edged dark.
 - **An option, Straight:** the straight arrows above, unchanged.
