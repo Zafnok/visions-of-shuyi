@@ -56,6 +56,12 @@ in the completion notes.
 **Out (do not do):**
 - Battle notes, banners, the objective page and the scene queue
   (`queue: VecDeque<Queued>`): they are the battle's flow, not the guide.
+- The scenes' first voice lines kept from the title and each save
+  (1293). Either order works, but the engine keeps one set: if 1293 is
+  done, add the tips' lines to its set; if this lands first, 1293 adds
+  its lines to this one's.
+- Nick's new tip timing (1292). Either order: if 1292 is done, move its
+  smaller logic; if not, 1292 edits the moved code.
 - Moving `mod testing` (`mod.rs:3176`) to its own file; 1237's shared
   drivers. Either order with 1237.
 - The lessons' end box as the engine's `Ask`: 1185 item 5. Either order:

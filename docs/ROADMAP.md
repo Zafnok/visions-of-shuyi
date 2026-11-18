@@ -473,8 +473,12 @@ recruit joins outside battle.
 - **K. The Chapter 1 demo, before it goes to the writers** (Nick,
   2026-11-12, after 0915): **0494** Vix speaks every tip and lesson (three
   tips have no clip; her lines aren't preloaded on the web) · **0495** her
-  boxes don't take the keys meant for other screens (asks Nick). Both
-  before **0766** sends the demo out.
+  boxes don't take the keys meant for other screens (asks Nick) ·
+  from Nick's itch.io play (2026-11-17): **1286** the unit info screen
+  shows the unit's portrait · **1292** a tip that misses its moment waits
+  for the next one, not for a key press · **1293** a scene's first voice
+  lines are loaded before it starts. All before **0766** sends the demo
+  out.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
