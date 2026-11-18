@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 1293 — A scene's first voice lines are loaded before it starts, from the title and each save
@@ -115,7 +115,7 @@ kept set, three call sites), judged by `guide_voice.rs`.
       Game's first line and a loaded save's first scene line are fetched
       before their box shows, and play. Use the non-release web build
       (`cargo shuyi web`): a local `--release` build stalls on wasm-opt.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -155,6 +155,13 @@ chapter's at the save prompt and the save picker, and the chapter camp
 goes on to. Picking New Game or a save therefore narrows the set to
 that path's lines. The flow always resends on a push: the battle may
 have replaced the set in between.
+
+**After merging main's 0812** (a chapter's title card before its
+first scene, 3 s): the card is one more screen the flow pushes with the
+intro queued, so the flow keeps the intro's first lines while it shows;
+the two integration tests now pass the card, and the Load Game test
+checks the set is the save's alone from the card on. The web check
+below was made before that merge, without the card.
 
 **Step 4 / the battle.** The engine drops a load the moment a new
 kept set leaves it out, so a scene's own lines stay in the flow's set

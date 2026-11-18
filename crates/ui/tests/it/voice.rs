@@ -432,8 +432,11 @@ fn the_opening_scenes_first_line_is_kept_before_its_box_asks_for_it() {
     });
     h.wait(0.0);
     assert_eq!(kept(&h), [keep(&intro[..3])]);
-    // New Game, Classic, "Not familiar", voices on, a lead.
+    // New Game, Classic, "Not familiar", voices on, a lead, then the
+    // chapter's title card (0812).
     h.keys("f f f f Up f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     assert_eq!(
         kept_before_playing(&h, &intro[0]),
@@ -465,7 +468,12 @@ fn the_load_list_keeps_each_saves_first_lines_and_a_pick_narrows_them() {
     assert_eq!(h.top_screen(), "save_slots");
     let both: Vec<LineId> = one[..3].iter().chain(&two[..3]).cloned().collect();
     assert_eq!(kept(&h), [keep(&both)]);
+    // Its slot, then the next chapter's title card (0812): the set is
+    // the save's alone from there.
     h.clear_audio().keys("f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    assert_eq!(kept(&h), [keep(&two[..3])]);
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     assert_eq!(kept_before_playing(&h, &two[0]), Some(keep(&two[..3])));
 }

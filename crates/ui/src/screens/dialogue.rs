@@ -381,10 +381,11 @@ impl DialogueScreen {
         &self.player
     }
 
-    /// The first [`VOICES_AHEAD`] lines it says from the box it is at: that
-    /// box's, unless it is a choice, then those that come after it
-    /// ([`coming_lines`]). Kept loaded before the scene starts (ticket
-    /// 1293): the box's own clip is asked for on the scene's first frame.
+    /// The first 3 lines it says from the box it is at (as many as it
+    /// preloads ahead): that box's, unless it is a choice, then those that
+    /// come after it, as its preload names them. Kept loaded before the
+    /// scene starts (ticket 1293): the box's own clip is asked for on the
+    /// scene's first frame.
     pub fn first_lines(&self) -> Vec<LineId> {
         let on_screen = self.player.line().filter(|_| !self.player.is_choosing());
         let mut lines: Vec<LineId> = on_screen.cloned().into_iter().collect();

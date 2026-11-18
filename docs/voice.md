@@ -321,8 +321,9 @@ knows it comes next (ticket 1293, `crates/ui/src/flow/first_lines.rs`):
   lists (a chapter save's next chapter's; a world-map save plays none).
 - The game flow, each time it shows a screen, keeps the first lines of
   the scene it shows, if it is one, and of the scene it knows comes
-  after it: the next scene waiting (the next intro scene; the victory
-  scenes while the results show), New Game's opening during the
+  after it: the next scene waiting (a chapter's first while its title
+  card shows, ticket 0812; the next intro scene; the victory scenes
+  while the results show), New Game's opening during the
   questions and the lead screen, the next chapter's at the save prompt
   and in camp. So picking New Game or a save narrows the set to that
   path's lines, and a scene's lines stay kept until its own screen has
