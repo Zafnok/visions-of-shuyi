@@ -193,9 +193,12 @@ of a lever plays (tried by hand in Git Bash); the unix-only Rust test then
 fails on its first skip case. The Rust test doesn't run on Windows; the
 same cases were run by hand on Windows with the script and all matched.
 
-**Not checked yet (CI):** this PR's own runs (split jobs, merge, cache
-reuse after a docs-only push) and the `main` reuse after merge: their run
-ids go in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
+**This PR's runs.** Playtest run 44223934350 (head 45ea02e6) played
+`play (ch03 1/2)` (15 min), `play (ch03 2/2)` (17 min) and `merge (ch03)`,
+the same for side_company_ledger, with one table per battle, and saved
+`playtest-reports-9628b566…`. The commit that added these notes is the
+docs-only push whose run should say "reused from cache"; the `main`
+reuse after merge is checked in the PR. Minutes the Nov 10–17 runs would have saved, roughly:
 the ~37 main replays (~5,563 job-minutes, per the retro) plus about
 4 PR runs at 127–149 each (#658, #677, #718, #728) ≈ 6,100 of 15,424.
 The split adds a little (one merge job, two runners' setup for two
