@@ -80,7 +80,7 @@ fn view() -> SlotPickerView {
         question: None,
         export_question: None,
         place: None,
-        help: "help".to_owned(),
+        help: "help".into(),
     }
 }
 
@@ -90,7 +90,7 @@ fn the_prompt_is_a_question_a_menu_and_a_help_line() {
     let view = SavePromptView {
         question: "SAVE?".to_owned(),
         menu: MenuView::new(vec![item("Yes", true), item("No", false)]),
-        help: "help".to_owned(),
+        help: "help".into(),
     };
     let mut buf = stale(&c);
     paint_prompt(&c, &view, &mut buf);

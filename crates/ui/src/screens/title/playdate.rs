@@ -32,6 +32,7 @@ use crate::screen::Ctx;
 use crate::screens::battle::playdate::stage::{BACKDROP_SCALE, enlarged};
 use crate::screens::paint_debug_hint;
 use crate::screens::playdate::{self as pd, cells, centred, clear, menu_size};
+use shuyi_ui::text::StyledText;
 
 /// Screen pixels per block of the logo: its one-bit picture's
 /// (`trpg_content::playdate_images::LETTER_BLOCK`).
@@ -177,7 +178,8 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         }
         _ => {}
     }
-    let line = view.notice.as_ref().or(view.help.as_ref());
+    let help = view.help.as_ref().map(StyledText::plain);
+    let line = view.notice.as_ref().or(help.as_ref());
     if let Some(line) = line.filter(|_| solid) {
         centred(ctx, buf, bottom, line);
     }

@@ -28,7 +28,7 @@ fn log(rows: Vec<LogRow>) -> LogView {
         title: "Log".to_owned(),
         rows,
         back_to_latest: None,
-        help: "B close".to_owned(),
+        help: "B close".into(),
     }
 }
 

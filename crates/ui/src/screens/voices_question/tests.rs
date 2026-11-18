@@ -66,3 +66,14 @@ fn voices_question_declares_its_actions() {
     let screen = VoicesQuestionScreen::new(&ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::VOICES_QUESTION);
 }
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = ctx();
+    let help = VoicesQuestionScreen::new(&c).view(&c).help;
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&help), want);
+}

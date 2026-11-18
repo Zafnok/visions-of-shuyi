@@ -105,7 +105,10 @@ fn the_prompt_asks_yes_or_no() {
     let mut s = SavePromptScreen::new(&c);
     let no = [Action::CursorDown, Action::Confirm, Action::CursorUp];
     assert_eq!(popped(&mut s, &mut c, &no), Some(false));
-    assert_eq!(SavePromptScreen::help(&c), "arrows choose · f select");
+    assert_eq!(
+        SavePromptScreen::help(&c).plain(),
+        "arrows choose · f select"
+    );
 }
 
 #[test]
@@ -184,22 +187,22 @@ fn loading_opens_on_the_first_save() {
 fn a_full_slot_says_it_will_be_overwritten() {
     let mut c = saves();
     let mut s = SlotPickerScreen::save(&c, campaign(&c, "Mara", 0));
-    assert_eq!(s.help(&c), "arrows choose · f save here · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f save here · d back");
     // Slot 2 holds a save.
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(s.would_overwrite());
-    assert_eq!(s.help(&c), "arrows choose · f overwrite · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f overwrite · d back");
     assert_eq!(s.view(&c).help, s.help(&c));
     // Slot 3 is empty; slot 5 can't be read, and would be replaced too.
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(!s.would_overwrite());
-    assert_eq!(s.help(&c), "arrows choose · f save here · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f save here · d back");
     press(&mut s, &mut c, &[Action::CursorDown, Action::CursorDown]);
     assert_eq!(s.focused_slot(), 5);
     assert!(s.would_overwrite());
     // Loading never says it.
     let s = SlotPickerScreen::load(&c);
-    assert_eq!(s.help(&c), "arrows choose · f load · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f load · d back");
 }
 
 #[test]
@@ -343,7 +346,7 @@ fn the_view_names_the_columns_and_marks_the_focused_slot() {
     assert_eq!(focused[0].number, 2);
     assert_eq!(view.message, None);
     assert_eq!(view.question, None);
-    assert_eq!(view.help, "arrows choose · f load · d back");
+    assert_eq!(view.help.plain(), "arrows choose · f load · d back");
 }
 
 #[test]
@@ -352,7 +355,7 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
     let game = campaign(&c, "Mara", 77);
     let mut s = SlotPickerScreen::save(&c, game.clone());
     assert_eq!(s.view(&c).title, "Save");
-    assert_eq!(s.help(&c), "arrows choose · f save here · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f save here · d back");
     let saved = popped(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(saved, Some(SlotOutcome::Saved(1)));
     assert_eq!(sounds(&mut c), ["menu_select"]);
@@ -371,7 +374,7 @@ fn saving_over_a_slot_asks_first() {
     assert_eq!(press(&mut s, &mut c, &twice), "None");
     assert!(s.is_asking());
     assert_eq!(s.overwrite_question(&c), "Overwrite slot 02?");
-    assert_eq!(s.help(&c), "f yes · d no");
+    assert_eq!(s.help(&c).plain(), "f yes · d no");
     let question = s.view(&c).question.unwrap();
     assert_eq!(question.text, "Overwrite slot 02?");
     assert_eq!(
@@ -412,7 +415,7 @@ fn saving_over_a_slot_asks_first() {
 fn loading_takes_only_a_slot_that_can_be_read() {
     let mut c = saves();
     let mut s = SlotPickerScreen::load(&c).at(1);
-    assert_eq!(s.help(&c), "arrows choose · f load · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f load · d back");
     // An empty slot.
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert_eq!(sounds(&mut c), [DENIED]);
@@ -559,11 +562,17 @@ fn export_asks_then_offers_the_save_and_hears_where_it_went() {
     let mut s = SlotPickerScreen::load(&c);
     assert_eq!(s.focused_slot(), 2);
     assert!(s.view(&c).place.is_some());
-    assert_eq!(s.help(&c), c.text_with("save.help.load_export_folder", &[]));
+    assert_eq!(
+        s.help(&c).plain(),
+        c.text_with("save.help.load_export_folder", &[])
+    );
     press(&mut s, &mut c, &[Action::Info]);
     assert!(s.is_asking_export());
     assert!(s.view(&c).export_question.is_some());
-    assert_eq!(s.help(&c), c.text_with("save.help.export_question", &[]));
+    assert_eq!(
+        s.help(&c).plain(),
+        c.text_with("save.help.export_question", &[])
+    );
     // The key that asked isn't the answer, even pressed again.
     press(&mut s, &mut c, &[Action::Info]);
     assert!(s.is_asking_export());
@@ -611,7 +620,10 @@ fn export_is_only_for_a_save_that_loads() {
     assert_eq!(file_requests(&mut c), [] as [String; 0]);
 
     let mut s = SlotPickerScreen::load(&c).at(3);
-    assert_eq!(s.help(&c), c.text_with("save.help.load_folder", &[]));
+    assert_eq!(
+        s.help(&c).plain(),
+        c.text_with("save.help.load_folder", &[])
+    );
     press(&mut s, &mut c, &[Action::Info]);
     assert!(!s.is_asking_export());
 
@@ -620,7 +632,10 @@ fn export_is_only_for_a_save_that_loads() {
     };
     let mut s = SlotPickerScreen::load(&c);
     assert_eq!(s.view(&c).place, None);
-    assert_eq!(s.help(&c), c.text_with("save.help.load_export", &[]));
+    assert_eq!(
+        s.help(&c).plain(),
+        c.text_with("save.help.load_export", &[])
+    );
     press(&mut s, &mut c, &[Action::WorldFind]);
     assert_eq!(file_requests(&mut c), [] as [String; 0]);
 }
@@ -661,4 +676,18 @@ fn the_army_message_reads_as_before_for_each_count() {
     assert_eq!(army_text(&c, 1), "1 unit");
     assert_eq!(army_text(&c, 2), "2 units");
     assert_eq!(army_text(&c, 5), "5 units");
+}
+
+/// Ticket 0257: the save question and the slots name their keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_lines_hold_their_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = saves();
+    let km = c.help_keys();
+    let prompt = SavePromptScreen::help(&c);
+    assert_eq!(key_spans(&prompt), spans_of(km, &["Cursor", "Confirm"]));
+    let s = SlotPickerScreen::save(&c, campaign(&c, "Mara", 0));
+    let want = spans_of(km, &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&s.view(&c).help), want);
 }

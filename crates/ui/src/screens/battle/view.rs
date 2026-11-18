@@ -258,8 +258,8 @@ pub struct NotesView {
 pub struct QuestionView {
     /// What is asked.
     pub question: String,
-    /// How to answer, with the keys.
-    pub answers: String,
+    /// How to answer, each key in a key span.
+    pub answers: StyledText,
 }
 
 /// A phase or outcome banner.
@@ -313,6 +313,9 @@ impl BattleView {
         let items = self.lesson.iter().flat_map(|l| &l.items);
         texts.extend(items.map(|i| i.label.plain()));
         texts.extend(self.own_texts().into_iter().map(str::to_owned));
+        if let Some(DialogView::Question(q)) = &self.dialog {
+            texts.push(q.answers.plain());
+        }
         // The menu's lines, in English.
         let menu = self.menu.iter().flat_map(|m| &m.menu.items);
         texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
@@ -356,7 +359,7 @@ impl BattleView {
                     texts.extend(note_texts(n));
                 }
             }
-            Some(DialogView::Question(q)) => texts.extend([q.question.as_str(), &q.answers]),
+            Some(DialogView::Question(q)) => texts.push(&q.question),
             None => {}
         }
         if let Some(n) = &self.notes {

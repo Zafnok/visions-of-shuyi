@@ -31,7 +31,7 @@ fn log(rows: Vec<LogRow>) -> LogView {
         title: "Log".to_owned(),
         rows,
         back_to_latest: None,
-        help: "help keys".to_owned(),
+        help: "help keys".into(),
     }
 }
 

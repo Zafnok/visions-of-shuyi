@@ -7,12 +7,15 @@
 use insta::assert_snapshot;
 use shuyi_ui::text::{StyledText, TextRole};
 use trpg_content::image::KEY_ARROWS_PATH;
+use trpg_core::{CharacterId, LEAD_ID};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, LEFT_HANDED, PadKind, RIGHT_HANDED};
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::dialogue::DialogueScreen;
-use trpg_ui::widgets::help::{cursor_keys_name, key_name};
+use trpg_ui::screens::{PreparationsScreen, WorldMapScreen};
+use trpg_ui::widgets::help::{cursor_keys_name, key_name, key_spans, spans_of};
+use trpg_ui::{MemoryStorage, Storage};
 
 /// The keys of `text`, in order: `!` for the arrows picture.
 fn keys(text: &StyledText) -> Vec<String> {
@@ -183,5 +186,73 @@ fn options_draws_its_keys_as_caps() {
     // The title's menu: Options is its third entry.
     h.keys("Down Down f");
     assert_eq!(h.screens(), ["title", "options"]);
+    assert_snapshot!(h.snapshot());
+}
+
+/// Preparations (ticket 0257): its help line's keys in key spans, in
+/// order, drawn as caps (a picture to review).
+#[test]
+fn preparations_draws_its_keys_as_caps() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    h.with_key_caps();
+    // The title's menu: Quick Battle is its second entry.
+    h.keys("Down f");
+    assert_eq!(h.top_screen(), "preparations");
+    let prep = h.screen::<PreparationsScreen>().expect("preparations");
+    let ctx = h.game().ctx();
+    let want = spans_of(ctx.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&prep.view(ctx).help), want);
+    assert_snapshot!(h.snapshot());
+}
+
+/// Acceptance (0257): with a controller in use, Preparations names its
+/// buttons as plain text, as before key caps.
+#[test]
+fn preparations_on_a_controller_reads_as_text() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    h.with_key_caps();
+    h.use_pad(PadKind::Xbox).pad("DpadDown South");
+    let prep = h.screen::<PreparationsScreen>().expect("preparations");
+    let help = prep.view(h.game().ctx()).help;
+    assert_eq!(key_spans(&help), [] as [String; 0]);
+    // The Xbox pad names its A button for Confirm.
+    assert!(help.plain().contains("A open"), "{}", help.plain());
+}
+
+/// The world map (ticket 0257): its help line's keys drawn as caps, on
+/// the test world map New Game starts.
+#[test]
+fn the_world_map_draws_its_keys_as_caps() {
+    let mut storage = MemoryStorage::new();
+    if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
+        panic!("saving the layout: {e}");
+    }
+    let mut ctx = trpg_ui::Ctx::embedded()
+        .unwrap_or_else(|e| panic!("{e}"))
+        .with_storage(Box::new(storage));
+    ctx.game.content.new_game = trpg_content::NewGameDef {
+        first_chapter: "test_wm1".into(),
+        roster: vec![CharacterId(LEAD_ID.into())],
+        gold: 0,
+        stock: Vec::new(),
+    };
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
+    // New Game in Classic with the default lead.
+    h.keys("f f f Up f");
+    assert_eq!(h.top_screen(), "world_map");
+    h.with_key_caps();
+    let map = h.screen::<WorldMapScreen>().expect("the world map");
+    let ctx = h.game().ctx();
+    let names = [
+        "Cursor",
+        "Confirm",
+        "PrevUnit",
+        "NextUnit",
+        "WorldArmy",
+        "WorldFind",
+        "Cancel",
+    ];
+    let want = spans_of(ctx.help_keys(), &names);
+    assert_eq!(key_spans(&map.view(ctx).help), want);
     assert_snapshot!(h.snapshot());
 }

@@ -12,6 +12,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::{centre_x, print_centred};
 use crate::widgets::AskView;
+use shuyi_ui::screens::print_centred_styled;
 
 /// The panel, in cells: Load Game's.
 const PANEL: Rect = Rect::new(2, 1, 96, 26);
@@ -88,7 +89,12 @@ pub fn paint(ctx: &Ctx, view: &ImportView, buf: &mut GlyphBuffer) {
         print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
     }
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, dim, black);
+    print_centred_styled(
+        buf,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(dim, black),
+    );
 }
 
 /// The save `row` on console row `y`.

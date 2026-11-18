@@ -463,7 +463,7 @@ fn a_question_is_a_box_in_the_middle_of_the_map_its_answers_dim() {
     let buf = painted(&quick(), |v| {
         v.dialog = Some(DialogView::Question(QuestionView {
             question: "End the turn?".to_owned(),
-            answers: "yes / no".to_owned(),
+            answers: "yes / no".into(),
         }));
     });
     // 13 cells of text plus a blank and a border each side; 2 lines plus

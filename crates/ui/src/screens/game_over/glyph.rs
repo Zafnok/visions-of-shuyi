@@ -20,6 +20,8 @@ use crate::screens::{centre_x, print_centred};
 use crate::widgets::menu::glyph as menu_glyph;
 #[cfg(not(feature = "std"))]
 use shuyi_ui::float::Float;
+use shuyi_ui::screens::print_centred_styled;
+use shuyi_ui::text::StyledText;
 
 /// Row of "To be continued"'s heading.
 const HEADING_ROW: i32 = 10;
@@ -83,10 +85,13 @@ fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
 }
 
 /// Prints `help` on the bottom row of `buf`.
-fn paint_help(ctx: &Ctx, help: &str, buf: &mut GlyphBuffer) {
+fn paint_help(ctx: &Ctx, help: &StyledText, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, help, c(UiColor::TextDim), c(UiColor::Black));
+    let colors = ctx
+        .palette
+        .text_colors_on(c(UiColor::TextDim), c(UiColor::Black));
+    print_centred_styled(buf, bottom, help, colors);
 }
 
 /// Paints Game Over over the whole of `buf`. While the lost battle still
@@ -181,7 +186,7 @@ mod tests {
             heading: "OVER".to_owned(),
             progress,
             menu: over.then(|| MenuView::new(vec![item("Retry", true), item("Title", false)])),
-            help: over.then(|| "help".to_owned()),
+            help: over.then(|| "help".into()),
         }
     }
 
@@ -322,7 +327,7 @@ mod tests {
         let c = ctx();
         let view = ToBeContinuedView {
             heading: "TBC".to_owned(),
-            help: "help".to_owned(),
+            help: "help".into(),
         };
         let mut buf = blank(&c);
         paint_to_be_continued(&c, &view, &mut buf);

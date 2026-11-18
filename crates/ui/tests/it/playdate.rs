@@ -519,7 +519,7 @@ fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
     let Some(DialogView::Question(question)) = battle_view(&h).dialog else {
         panic!("no question: {:?}", battle(&h).mode());
     };
-    assert_eq!(question.answers, "A yes / B no");
+    assert_eq!(question.answers.plain(), "A yes / B no");
     // A: the enemy's phase, its banner over the map.
     h.pad("East");
     let banner = battle_view(&h).banner.map(|b| b.title);
@@ -1175,7 +1175,7 @@ fn b_with_left_or_right_steps_the_unit_in_the_loadouts() {
                 PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
                 _ => None,
             };
-            (s.focus(), unit.unwrap_or_default(), v.help)
+            (s.focus(), unit.unwrap_or_default(), v.help.plain())
         })
     };
     let (focus, unit, help) = shown(&h);

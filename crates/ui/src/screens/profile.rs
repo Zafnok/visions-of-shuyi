@@ -141,13 +141,13 @@ impl ProfileScreen {
             } else {
                 HELP_EXPORT
             };
-            list.help = ctx.text_with(key, &[]).into();
+            list.help = ctx.text_styled(key, &[]);
         } else if self.list_alone(ctx)
             && self.list.focused(ctx) == RowKind::Add
             && ctx.profiles().all().len() < MAX_PROFILES
             && ImportScreen::can_open(ctx)
         {
-            list.help = ctx.text_with(HELP_ADD_IMPORT, &[]).into();
+            list.help = ctx.text_styled(HELP_ADD_IMPORT, &[]);
         }
         if list.message.is_none() {
             list.message.clone_from(&self.imported);

@@ -37,6 +37,7 @@ pub mod shop;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{
     ConsumableRowView, GearView, HolderView, ItemRowView, ListState, ListView, LoadoutsView,
     PackView, PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
@@ -660,7 +661,7 @@ impl PreparationsScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let key = match (self.is_asking_leave(), self.focus, self.tab, self.can_leave) {
             (true, ..) => "prep.help.leaving",
             (_, Focus::Tabs, Tab::Fight, true) => "prep.help.fight_leave",
@@ -678,7 +679,7 @@ impl PreparationsScreen {
             }
             (_, Focus::Shop, ..) => shop::HELP,
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// Opens the shown tab (Confirm or Down on the tabs). Returns whether

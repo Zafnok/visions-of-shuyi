@@ -23,6 +23,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 
 use trpg_content::TipTrigger;
@@ -103,8 +104,8 @@ impl SavePromptScreen {
     }
 
     /// The bottom help line.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("save_prompt.help", &[])
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("save_prompt.help", &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint
@@ -428,7 +429,7 @@ impl SlotPickerScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         // A slot with something in it says so before it is chosen.
         let folder = save_files::place(&ctx.platform).is_some();
         let key = if self.is_asking_export() {
@@ -450,7 +451,7 @@ impl SlotPickerScreen {
         } else {
             "save.help.load"
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint

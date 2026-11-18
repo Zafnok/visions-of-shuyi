@@ -24,7 +24,7 @@ fn focus_and_help(h: &Harness) -> (Option<Layout>, String) {
 fn title_help(h: &Harness) -> Option<String> {
     let screen = h.game().screen::<TitleScreen>();
     let screen = screen.unwrap_or_else(|| panic!("no title screen"));
-    screen.view(h.game().ctx()).help
+    screen.view(h.game().ctx()).help.map(|h| h.plain())
 }
 
 /// A first launch with the picker open: no layout is chosen, so the first

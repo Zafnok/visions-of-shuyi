@@ -414,7 +414,8 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     let mut h = relaunch(h, true);
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
-    assert!(shows(&h, "arrows choose · f load · d back"));
+    // Key caps: the real game draws F and D as caps, the arrows as a picture.
+    assert!(shows(&h, "choose · F  load · D  back"));
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
     // Another game won: the slots open on slot 2, the first empty one.
@@ -423,10 +424,10 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     win(&mut h);
     let first = stored(&h, &slot_key(1));
     h.keys("f");
-    assert!(shows(&h, "f save here"), "{}", h.snapshot());
+    assert!(shows(&h, "F  save here"), "{}", h.snapshot());
     // Up to the full slot: it says so, and asks.
     h.keys("Up");
-    assert!(shows(&h, "f overwrite"), "{}", h.snapshot());
+    assert!(shows(&h, "F  overwrite"), "{}", h.snapshot());
     h.keys("f");
     assert!(shows(&h, "Overwrite slot 01?"), "{}", h.snapshot());
     assert_eq!(stored(&h, &slot_key(1)), first);

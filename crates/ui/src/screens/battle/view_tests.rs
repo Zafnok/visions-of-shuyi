@@ -13,7 +13,6 @@ use super::testing::{Stacked, wait};
 use super::tests::{frame, lord_menu, quick, step};
 use super::view::{
     BannerView, BattleMenuView, DialogView, MenuPlace, MessageKind, MessageView, NotesView,
-    QuestionView,
 };
 use super::*;
 use crate::harness::Harness;
@@ -165,13 +164,11 @@ fn the_end_turn_question_asks_and_goes() {
     let mut s = quick();
     wait(&mut s.state, 2);
     step(&mut s, &mut c, &[Action::EndTurn]);
-    assert_eq!(
-        s.view(&c).dialog,
-        Some(DialogView::Question(QuestionView {
-            question: "End turn with 3 units ready?".to_owned(),
-            answers: "f yes / d no".to_owned(),
-        }))
-    );
+    let Some(DialogView::Question(q)) = s.view(&c).dialog else {
+        panic!("no question");
+    };
+    assert_eq!(q.question, "End turn with 3 units ready?");
+    assert_eq!(q.answers.plain(), "f yes / d no");
     step(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.view(&c).dialog, None);
 }
@@ -192,6 +189,9 @@ fn restart_and_suspend_ask_first() {
             panic!("no question");
         };
         assert_eq!(q.question, question);
+        // Ticket 0257: the answers' keys in key spans.
+        let keys = crate::widgets::help::spans_of(c.help_keys(), &["Confirm", "Cancel"]);
+        assert_eq!(crate::widgets::help::key_spans(&q.answers), keys);
         step(&mut s, &mut c, &[Action::Cancel]);
         assert_eq!(s.view(&c).dialog, None);
     }

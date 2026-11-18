@@ -15,6 +15,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{GameOverView, ToBeContinuedView};
 
 use view::FULL;
@@ -110,8 +111,8 @@ impl GameOverScreen {
     }
 
     /// The bottom help line.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("game_over.help", &[])
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("game_over.help", &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint
@@ -172,8 +173,8 @@ impl ToBeContinuedScreen {
     pub const NAME: &'static str = "to_be_continued";
 
     /// The bottom help line.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("to_be_continued.help", &[])
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("to_be_continued.help", &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint
@@ -238,7 +239,7 @@ impl DemoEndScreen {
     pub fn view(&self, ctx: &Ctx) -> ToBeContinuedView {
         ToBeContinuedView {
             heading: self.heading.clone(),
-            help: ctx.text_with("demo_end.help", &[]),
+            help: ctx.text_styled("demo_end.help", &[]),
         }
     }
 }

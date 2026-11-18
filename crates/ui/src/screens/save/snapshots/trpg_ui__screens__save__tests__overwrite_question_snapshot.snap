@@ -33,7 +33,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                            f yes · d no                                            
+                                           F  yes · D  no                                           
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
@@ -66,7 +66,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiaaiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -88,6 +88,18 @@ under 401,256 13x1  key_edge
 under 401,271 13x1  key_edge
 under 400,257 1x14  key_edge
 under 414,257 1x14  key_edge
+under 345,497 13x14  key_bg
+under 345,496 13x1  key_edge
+under 345,511 13x1  key_edge
+under 344,497 1x14  key_edge
+under 358,497 1x14  key_edge
+under 417,497 13x14  key_bg
+under 417,496 13x1  key_edge
+under 417,511 13x1  key_edge
+under 416,497 1x14  key_edge
+under 430,497 1x14  key_edge
 --- glyph styles ---
 41,16  +3,+0 bold
 50,16  +3,+0 bold
+43,31  +3,+0 bold
+52,31  +3,+0 bold

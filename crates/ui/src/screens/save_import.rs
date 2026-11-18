@@ -21,6 +21,7 @@
 pub mod glyph;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 
 use shuyi_core::made::Part;
 use shuyi_ui::storage::bundle::{BundleError, Verdict};
@@ -149,7 +150,7 @@ pub struct ImportView {
     /// Why the file was refused, or the import failed.
     pub message: Option<String>,
     /// The bottom help line.
-    pub help: String,
+    pub help: StyledText,
 }
 
 impl ImportScreen {
@@ -311,7 +312,7 @@ impl ImportScreen {
             options: None,
             question: None,
             message: None,
-            help: ctx.text_with("save_import.help.back", &[]),
+            help: ctx.text_styled("save_import.help.back", &[]),
         };
         match &self.state {
             State::Waiting { picker } => {
@@ -333,7 +334,7 @@ impl ImportScreen {
                 view.question = ask.as_ref().map(|ask| ask.view(ctx));
                 view.message.clone_from(message);
                 if ask.is_some() {
-                    view.help = ctx.text_with("save_import.help.report", &[]);
+                    view.help = ctx.text_styled("save_import.help.report", &[]);
                 }
             }
         }

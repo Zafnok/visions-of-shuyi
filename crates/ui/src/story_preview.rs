@@ -21,6 +21,7 @@
 
 use crate::prelude::*;
 use core::cell::Cell as Count;
+use shuyi_ui::text::StyledText;
 
 use shuyi_assets::bundle::Layer;
 use shuyi_assets::dialogue::{DialogueFile, scripts_from_parsed};
@@ -202,8 +203,8 @@ pub struct ReferenceView {
     pub rows: Vec<ReferenceRow>,
     /// The first row shown.
     pub first: usize,
-    /// The help line.
-    pub help: String,
+    /// The help line, each key in a key span.
+    pub help: StyledText,
 }
 
 /// A row of the page of names and faces.
@@ -307,7 +308,7 @@ fn reference(ctx: &Ctx, first: usize) -> ReferenceView {
         title: ctx.text(REFERENCE_KEY).to_owned(),
         rows: reference_rows(ctx),
         first,
-        help: ctx.text_with(REFERENCE_HELP_KEY, &[]),
+        help: ctx.text_styled(REFERENCE_HELP_KEY, &[]),
     }
 }
 
@@ -398,7 +399,12 @@ fn paint_reference(ctx: &Ctx, view: &ReferenceView, buf: &mut GlyphBuffer) {
             }
         }
     }
-    buf.print(1, bottom, &view.help, dim, black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(dim, black),
+    );
 }
 
 impl Screen<Shuyi> for StoryPreview {

@@ -108,6 +108,30 @@ pub fn text_with_keys(ctx: &Ctx, key: &str, keys_args: &[(&str, &StyledText)]) -
     shuyi_ui::text::fill_styled_with(text, code, args, &[], lookup)
 }
 
+/// The keys of `text`, in order, a no-break space read as a space: what a
+/// test of a view's key spans compares with [`spans_of`] (ticket 0257).
+#[cfg(any(test, feature = "harness"))]
+pub fn key_spans(text: &StyledText) -> Vec<String> {
+    let key = |s: &&shuyi_ui::text::TextSpan| s.role.is_some();
+    let name = |s: &shuyi_ui::text::TextSpan| s.text.replace('\u{a0}', " ");
+    text.spans().iter().filter(key).map(name).collect()
+}
+
+/// What [`key_spans`] reads from a hint naming the keys of `actions` in
+/// order, each as [`key_name`] gives it: an action by its name in the
+/// keymap (`"Confirm"`), and `"Cursor"` for the cursor keys (one span for
+/// the arrows, four for W A S D).
+#[cfg(any(test, feature = "harness"))]
+pub fn spans_of(keys: HelpKeys<'_>, actions: &[&str]) -> Vec<String> {
+    let of = |name: &&str| match Action::from_name(name) {
+        Some(action) => vec![key_name(keys, action)],
+        // check-text: not player text (the cursor keys' placeholder name)
+        None if *name == "Cursor" => key_spans(&crate::input::help_keys::cursor_keys_styled(keys)),
+        None => panic!("no action {name:?}"),
+    };
+    actions.iter().flat_map(of).collect()
+}
+
 /// The frame's cell widths: `ctx`'s, with what its key caps take (a
 /// cap's extra cells, the arrow cluster's picture's), as the frame
 /// measures styled text.
