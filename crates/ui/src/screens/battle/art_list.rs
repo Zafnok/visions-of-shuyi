@@ -89,13 +89,11 @@ impl Technique {
             Technique::Art(id) => state
                 .arts()
                 .get(id)
-                .map(|a| art_effect_text(words, a))
-                .unwrap_or_default(),
+                .map_or_default(|a| art_effect_text(words, a)),
             Technique::Active(id) => state
                 .skills()
                 .get(id)
-                .map(|s| effect_text(words, s))
-                .unwrap_or_default(),
+                .map_or_default(|s| effect_text(words, s)),
         }
     }
 }
@@ -455,6 +453,27 @@ pub fn can_use_art(lines: &[ArtLine]) -> bool {
     lines.iter().any(ArtLine::usable)
 }
 
+/// Whether some line attacks with an art or an active and can be chosen:
+/// not an art used as an action of its own (Overwatch).
+pub fn can_attack_with_art(state: &BattleState, lines: &[ArtLine]) -> bool {
+    lines
+        .iter()
+        .any(|l| l.usable() && !l.technique.is_action(state))
+}
+
+/// Whether `cmd` is an attack chosen from the arts menu: a weapon's
+/// attack with an art or an active (ticket 0490, the lesson item
+/// `ArtAttacked`). A plain attack, a spell and an action art aren't.
+pub fn attacks_with_art(cmd: &Command) -> bool {
+    matches!(
+        cmd,
+        Command::Act {
+            action: UnitAction::Attack { art, active, .. },
+            ..
+        } if art.is_some() || active.is_some()
+    )
+}
+
 /// What a line costs: `−4 dur` or `+1 use` (empty for `Attack`). A cost in
 /// the skill's own uses reads `−1 use`, though no combat active has one.
 pub fn cost_label(state: &BattleState, words: Words<'_>, technique: &Technique) -> String {
@@ -493,7 +512,7 @@ const NAME_W: usize = 14;
 /// action` for an art used as an action of its own, a dimmed line with its
 /// reason after it, focused on the first line that can be chosen. The
 /// focused line's effect shows under the list (ticket 0429), dimmed lines
-/// too: the focus stops on them.
+/// too: the focus stops on them; an attack's reads `Attack: …` (0490).
 pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Menu<Line> {
     let items = lines
         .iter()
@@ -516,10 +535,22 @@ pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Me
                         .with_suffix(why, SuffixKind::Warning)
                 }
             };
-            item.with_note(c.technique.effect_text(state, words))
+            item.with_note(line_note(state, words, &c.technique))
         })
         .collect();
     Menu::new(items).browsing_disabled()
+}
+
+/// The note under the arts menu for a focused line: what it does, said
+/// to be an attack (`Attack: crit +20`, ticket 0490) unless it is an art
+/// used as an action of its own, whose line reads `ends action`.
+fn line_note(state: &BattleState, words: Words<'_>, technique: &Technique) -> String {
+    let effect = technique.effect_text(state, words);
+    if technique.is_action(state) {
+        effect
+    } else {
+        words.text_with("battle.art.note.attack", &[("effect", &effect)])
+    }
 }
 
 /// A weapon's durability as its lines show it: `20/20`, or `broken` at 0.
@@ -873,6 +904,28 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn only_an_attack_with_an_art_or_an_active_is_an_art_attack() {
+        let act = |t: &Technique, with: &Equipped| Command::Act {
+            unit: UnitId(1),
+            dest: Pos::new(0, 0),
+            action: t.action(UnitId(4), with),
+        };
+        let sword = Equipped::Weapon(0);
+        let art = Technique::Art(ArtId::new("guard_break"));
+        let active = Technique::Active(SkillId::new("keen_edge"));
+        assert!(attacks_with_art(&act(&art, &sword)));
+        assert!(attacks_with_art(&act(&active, &sword)));
+        assert!(!attacks_with_art(&act(&Technique::Attack, &sword)));
+        let fire = Equipped::Spell(trpg_core::SpellId::new("fire"));
+        let overcast = Technique::Active(SkillId::new("overcast"));
+        assert!(!attacks_with_art(&act(&overcast, &fire)));
+        let overwatch = ArtId::new("overwatch");
+        let cmd = action_art_command(UnitId(1), Pos::new(0, 0), &overwatch, 0);
+        assert!(!attacks_with_art(&cmd));
+        assert!(!attacks_with_art(&Command::EndPhase));
     }
 
     #[test]

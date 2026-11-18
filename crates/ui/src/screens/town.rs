@@ -361,7 +361,7 @@ impl TownScreen {
                 enabled: false,
             };
         }
-        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let stats = def.map_or_default(|def| stat_line(words, def));
         let detail = match (&d.trade, d.durability) {
             (TownTrade::RepairStock(_) | TownTrade::RepairHeld { .. }, Some((left, max))) => {
                 let whose = d.holder.and_then(|i| self.campaign.roster.get(i));
@@ -430,7 +430,7 @@ impl TownScreen {
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),
-            help: ctx.text_with(help, &[]),
+            help: ctx.text_styled(help, &[]),
             debug_hint: crate::screens::debug_hint(ctx),
         }
     }

@@ -97,8 +97,7 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
                 &question
                     .keys
                     .as_ref()
-                    .map(shuyi_ui::text::StyledText::plain)
-                    .unwrap_or_default(),
+                    .map_or_default(shuyi_ui::text::StyledText::plain),
             )
         })
         .unwrap();

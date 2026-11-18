@@ -614,7 +614,7 @@ fn selling_a_special_weapon_asks_first_on_no() {
     let answers: Vec<_> = ask.answers.iter().map(|a| a.label.as_str()).collect();
     assert_eq!(answers, ["No", "Yes"]);
     assert_eq!(ask.focused(), Some(false));
-    assert_eq!(view.help, ctx_help(&c));
+    assert_eq!(view.help.plain(), ctx_help(&c));
 }
 
 fn ctx_help(c: &Ctx) -> String {

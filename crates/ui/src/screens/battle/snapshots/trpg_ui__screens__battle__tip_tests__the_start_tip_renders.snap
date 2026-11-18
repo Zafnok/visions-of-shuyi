@@ -32,7 +32,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       │                            │
                                                                       │ Gold 3 000                 │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  f close                                                                                   F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -43,17 +43,17 @@ aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddd
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdeeeeeeeeeddddddddddddddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
 aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddffffffffffddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdggggggdddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
-aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
-aaabdgggggggdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
-aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdgggddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabdggggddddddddgggddddddddddddb
-aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabdggdddddddddddddddddddddddddb
+aaabddddddddddddddddddggggggddddddddddddddddddgddddddddddddddddddbaaaabdhhhhhhdddddddddddddddddddddb
+aaabdddddddddddddddddddgddddddddddddddddddddgddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdhhhdddddddddhhhddddddddddddb
+aaabdghhhhhhdddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdhhhdddddddddhhhddddddddddddb
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdhhhdddddddddhhhddddddddddddb
+aaaaaaaaaaaaaaaaaaaaiijjjjkkkkllllllmmnnoooonnnnaaaaaaaaaaaaaaaaaaaaaabdhhhddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannjjjjnnllnnnnnnnnnnnnnnppnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnqqllllnnnnmmnnrrrrrrrrnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoollssnnppnnnnnnrrttpprrnnaaaaaaaaaaaaaaaaaaaaaabdhhhdddddddddhhhddddddddddddb
+aaaaaaaaaaaaaaaaaaaaoooollssssnnnnnnnnrrttttrrnnaaaaaaaaaaaaaaaaaaaaaabdhhhhddddddddhhhddddddddddddb
+aaaaaaaaaaaaaaaaaaaaoouullnnnnnnnnnnmmrrrrvvrrnnaaaaaaaaaaaaaaaaaaaaaabdhhdddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvva
-avvvvvvvaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvva
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+agwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -74,22 +74,23 @@ c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
 e = fg:player bg:panel_bg
 f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:water bg:sea
-i = fg:water bg:water_bg
-j = fg:wood bg:water_bg
-k = fg:road bg:road_bg
-l = fg:enemy bg:grass_bg
-m = fg:grass bg:grass_bg
-n = fg:forest bg:forest_bg
-o = fg:fort bg:fort_bg
-p = fg:player bg:road_bg
-q = fg:stone bg:stone_bg
-r = fg:player bg:grass_bg
-s = fg:floor bg:floor_bg
-t = fg:thicket bg:thicket_bg
-u = fg:wood bg:stone_bg
-v = fg:text_dim bg:black
+g = fg:text bg:key_bg
+h = fg:text_dim bg:panel_bg
+i = fg:water bg:sea
+j = fg:water bg:water_bg
+k = fg:wood bg:water_bg
+l = fg:road bg:road_bg
+m = fg:enemy bg:grass_bg
+n = fg:grass bg:grass_bg
+o = fg:forest bg:forest_bg
+p = fg:fort bg:fort_bg
+q = fg:player bg:road_bg
+r = fg:stone bg:stone_bg
+s = fg:player bg:grass_bg
+t = fg:floor bg:floor_bg
+u = fg:thicket bg:thicket_bg
+v = fg:wood bg:stone_bg
+w = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high

@@ -60,11 +60,13 @@ fn the_export_key_exports_the_profile_under_the_cursor() {
     let mut h = on_a_desktop();
     let view = profile_screen(&h).view(h.game().ctx());
     assert_eq!(view.place.map(|p| p.path), Some("/saves".to_owned()));
-    let help = h
-        .game()
-        .ctx()
-        .text_with("profile.help.list_export_folder", &[]);
-    assert_eq!(view.list.help.plain(), help);
+    // Export, import and open folder all shown (0257).
+    let ctx = h.game().ctx();
+    let bar = profile_screen(&h)
+        .help_bar(ctx, true)
+        .expect("this game's bar");
+    assert!(bar.hints().iter().all(|(_, shown)| *shown), "{bar:?}");
+    assert_eq!(view.list.help, bar.line(ctx));
     h.keys("Down e");
     let names: Vec<&str> = h.offered().iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(names, ["visions-of-shuyi-mei-2.ron"]);

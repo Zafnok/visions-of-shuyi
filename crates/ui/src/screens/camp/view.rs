@@ -5,6 +5,7 @@
 
 use crate::prelude::*;
 use crate::widgets::MenuView;
+use shuyi_ui::text::StyledText;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,5 +26,5 @@ pub struct CampView {
     /// What is said instead of an empty list.
     pub empty: String,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }

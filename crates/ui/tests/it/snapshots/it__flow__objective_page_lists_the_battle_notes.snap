@@ -32,7 +32,7 @@ expression: h.snapshot()
          ║                                                 ║          │                            │
          ╚═════════════════════════════════════════════════╝          │ Gold 0                     │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  d back                                                                                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -65,8 +65,8 @@ aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccc
 aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaassssssssssssssssssssssssssssssssssssssssssssssa
-assssssaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaassssssssa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+astttttaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatttttttta
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -86,6 +86,7 @@ o = fg:road bg:road_bg
 p = fg:wood bg:water_bg
 q = fg:grass_bg bg:enemy
 r = fg:fort bg:fort_bg
-s = fg:text_dim bg:black
+s = fg:text bg:key_bg
+t = fg:text_dim bg:black
 --- overlays ---
 over  289,238 14x2  hp_high

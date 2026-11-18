@@ -1,0 +1,185 @@
+---
+source: crates/ui/tests/it/key_caps.rs
+expression: h.snapshot()
+---
+                                                                      ┌────────────────────────────┐
+   ╔═ Vix ═══════════════════════════════════════════════════════╗    │ Plain                      │
+   ║                                                             ║    │ DEF +0  AVO +0             │
+   ║ Your move                                                   ║    │                            │
+   ║ Over to you. Steer the cursor onto one of your units and    ║    │                            │
+   ║ pick it up. You can jump straight to whoever can still act, ║    │ Test Lord                  │
+   ║ and look anyone over to see what you're working with.       ║    │ Exile  Lv 1                │
+   ║                                                             ║    │ HP 19/19   ██████████      │
+   ║ Move the cursor:    . Pick up a unit: F                     ║    │ Player                     │
+   ║ Next unit to act: S . A unit's details: E                   ║    │                            │
+   ║                                                             ║    │ Str   6     Mag   1        │
+   ║ F  close                                                    ║    │ Dex   7     Spd   7        │
+   ╚═════════════════════════════════════════════════════════════╝    │ Def   6     Res   5        │
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      │ Mov   5                    │
+                    ..≈≈≈≈..··..............╦╦..                      │                            │
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      │ Iron Sword        20/20    │
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      │ Atk  11     Hit 104        │
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      │ Crit  3     Avo  14        │
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      │ AS    5                    │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │ Gold 3 000                 │
+                                                                      └────────────────────────────┘
+                                                                                                    
+ F  close                                                                                  F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdcccccddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdcccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdeeeeeeeeeddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddffffffffffddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdggggggdddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabddddddddddddddddddddddddddddb
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabdddggggggddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaabdgggdddddddddgggddddddddddddb
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaahhiiiijjjjkkkkkkllmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdgggddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammiiiimmkkmmmmmmmmmmmmmmoommaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmppkkkkmmmmllmmqqqqqqqqmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnkkrrmmoommmmmmqqssooqqmmaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnkkrrrrmmmmmmmmqqssssqqmmaaaaaaaaaaaaaaaaaaaaaabdggggddddddddgggddddddddddddb
+aaaaaaaaaaaaaaaaaaaannttkkmmmmmmmmmmllqqqquuqqmmaaaaaaaaaaaaaaaaaaaaaabdggdddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaavvvvvvaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvva
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:player bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:water bg:sea
+i = fg:water bg:water_bg
+j = fg:wood bg:water_bg
+k = fg:road bg:road_bg
+l = fg:enemy bg:grass_bg
+m = fg:grass bg:grass_bg
+n = fg:forest bg:forest_bg
+o = fg:fort bg:fort_bg
+p = fg:player bg:road_bg
+q = fg:stone bg:stone_bg
+r = fg:player bg:grass_bg
+s = fg:floor bg:floor_bg
+t = fg:thicket bg:thicket_bg
+u = fg:wood bg:stone_bg
+v = fg:text_dim bg:black
+--- overlays ---
+over  209,270 14x2  hp_high
+over  225,286 14x2  hp_high
+over  193,254 14x2  hp_high
+over  289,222 14x2  hp_high
+over  273,254 14x2  hp_high
+over  289,302 14x2  hp_high
+over  209,286 14x2  hp_high
+over  207,256 3x1  #807555
+over  207,256 1x3  #807555
+over  221,256 3x1  #807555
+over  223,256 1x3  #807555
+over  207,269 3x1  #807555
+over  207,267 1x3  #807555
+over  221,269 3x1  #807555
+over  223,267 1x3  #807555
+over  268,249 5x3  black
+over  264,250 6x3  black
+over  260,251 6x3  black
+over  256,252 6x3  black
+over  252,253 6x3  black
+over  248,254 6x3  black
+over  244,255 6x3  black
+over  240,256 6x3  black
+over  236,257 6x3  black
+over  232,258 6x3  black
+over  228,259 6x3  black
+over  224,260 6x3  black
+over  220,261 6x3  black
+over  218,262 4x3  black
+over  218,262 4x3  black
+over  220,263 4x3  black
+over  222,264 3x3  black
+over  218,262 3x3  black
+over  219,261 3x3  black
+over  220,260 3x3  black
+over  221,259 3x3  black
+over  269,250 3x1  enemy
+over  265,251 4x1  enemy
+over  261,252 4x1  enemy
+over  257,253 4x1  enemy
+over  253,254 4x1  enemy
+over  249,255 4x1  enemy
+over  245,256 4x1  enemy
+over  241,257 4x1  enemy
+over  237,258 4x1  enemy
+over  233,259 4x1  enemy
+over  229,260 4x1  enemy
+over  225,261 4x1  enemy
+over  221,262 4x1  enemy
+over  219,263 2x1  enemy
+over  219,263 2x1  enemy
+over  221,264 2x1  enemy
+over  223,265 1x1  enemy
+over  219,263 1x1  enemy
+over  220,262 1x1  enemy
+over  221,261 1x1  enemy
+over  222,260 1x1  enemy
+over  277,227 5x11  black
+over  278,228 3x6  text_highlight
+over  278,235 3x2  text_highlight
+over  sprite 176,128 24x16  images/key_arrows.png 0,0 24x16
+under 345,129 13x14  key_bg
+under 345,128 13x1  key_edge
+under 345,143 13x1  key_edge
+under 344,129 1x14  key_edge
+under 358,129 1x14  key_edge
+under 185,145 13x14  key_bg
+under 185,144 13x1  key_edge
+under 185,159 13x1  key_edge
+under 184,145 1x14  key_edge
+under 198,145 1x14  key_edge
+under 361,145 13x14  key_bg
+under 361,144 13x1  key_edge
+under 361,159 13x1  key_edge
+under 360,145 1x14  key_edge
+under 374,145 1x14  key_edge
+under 41,177 13x14  key_bg
+under 41,176 13x1  key_edge
+under 41,191 13x1  key_edge
+under 40,177 1x14  key_edge
+under 54,177 1x14  key_edge
+under 9,497 13x14  key_bg
+under 9,496 13x1  key_edge
+under 9,511 13x1  key_edge
+under 8,497 1x14  key_edge
+under 22,497 1x14  key_edge
+--- glyph styles ---
+43,8  +3,+0 bold
+23,9  +3,+0 bold
+45,9  +3,+0 bold
+5,11  +3,+0 bold
+1,31  +3,+0 bold

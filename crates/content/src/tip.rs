@@ -140,7 +140,7 @@ pub fn load(faces: Option<&BTreeMap<String, Portrait>>) -> Result<TipTable, Vec<
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, faces)
+    from_source(&display, &source, faces)
 }
 
 /// Parses and validates tips `source`, attributing errors to `file`, each
@@ -288,8 +288,12 @@ mod tests {
         assert_eq!(errors(&source), Vec::<String>::new());
         let source = source.replace(&title, &format!("{title}t"));
         assert_eq!(errors(&source).len(), 1, "{source}");
+        // Three lines over: the engine reports the problem once (engine
+        // 2261), beside the title's.
         let source = source.replace(&line, &format!("{line}x"));
-        assert_eq!(errors(&source).len(), 4);
+        let all = errors(&source);
+        assert_eq!(all.len(), 2, "{all:?}");
+        assert!(all.iter().any(|m| m.contains("over 60 cells")), "{all:?}");
     }
 
     /// Ticket 0455: a tip's face is the guide's expression, `smile` by

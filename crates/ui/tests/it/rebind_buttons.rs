@@ -48,7 +48,7 @@ fn reopen(h: &mut Harness) {
 /// closed back to it).
 fn reopen_from_options(h: &mut Harness) {
     let confirm = h.game().ctx().keymap.primary_button(Action::Confirm);
-    let confirm = confirm.map(|b| b.to_string()).unwrap_or_default();
+    let confirm = confirm.map_or_default(|b| b.to_string());
     h.pad(&format!("{confirm} DpadUp DpadUp DpadUp {confirm}"));
     assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
 }

@@ -171,8 +171,7 @@ impl SupportRules {
         ranks
             .into_iter()
             .max()
-            .map(|rank| *self.bonus.get(rank))
-            .unwrap_or_default()
+            .map_or_default(|rank| *self.bonus.get(rank))
     }
 }
 

@@ -66,7 +66,7 @@ impl Sources {
         let classes = class::load(Some(&terrain.rules.movement_types)).map_err(joined)?;
         let font = trpg_content::font::load().map_err(joined)?;
         let png = bundle::bytes(ATLAS_PNG_PATH).ok_or("the font atlas image is missing")?;
-        let (width, _, rgba) = decode_png(png)?;
+        let (width, _, rgba) = decode_png(&png)?;
         let color = |name: &str| {
             palette
                 .get(name)

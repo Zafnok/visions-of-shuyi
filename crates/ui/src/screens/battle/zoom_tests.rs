@@ -65,7 +65,7 @@ fn the_key_flips_the_skins_zoom_and_saves_it() {
     let (state, cursor) = (s.state().clone(), s.cursor().pos);
     assert_eq!(s.scene(&c).size, (11, 10));
     assert_eq!(
-        s.status(&c),
+        s.status(&c).plain(),
         "q zoom: 2× · w danger zone: OFF · Shift+Space auto-end: OFF"
     );
     press(&mut s, &mut c, &[Action::ZoomMap]);
@@ -73,9 +73,9 @@ fn the_key_flips_the_skins_zoom_and_saves_it() {
     assert_eq!(c.settings().game.map_zoom, MapZoom::X1);
     assert_eq!(s.scene(&c).size, (23, 20));
     assert!(
-        s.status(&c).starts_with("q zoom: 1× · "),
+        s.status(&c).plain().starts_with("q zoom: 1× · "),
         "{}",
-        s.status(&c)
+        s.status(&c).plain()
     );
     // Twice in one frame: back where it was.
     s.update(
@@ -105,7 +105,7 @@ fn under_the_glyph_skin_the_key_does_nothing_and_isnt_listed() {
     assert_eq!(c.settings().game.map_zoom, MapZoom::X2);
     assert_eq!(c.game.map_skin.zoom(), None);
     assert_eq!(
-        s.status(&c),
+        s.status(&c).plain(),
         "w danger zone: OFF · Shift+Space auto-end: OFF"
     );
     assert_eq!(s.scene(&c).size, (35, 30));

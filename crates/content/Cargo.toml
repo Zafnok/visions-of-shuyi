@@ -61,6 +61,10 @@ serde.workspace = true
 # Turns on `test-fixtures` for this crate's own tests in any profile.
 trpg-content = { path = ".", features = ["test-fixtures"] }
 proptest.workspace = true
+# `ContentHash`, for a test's pack (ticket 1284).
+shuyi-core.workspace = true
+# Decodes the arrow pictures, for the test of their colours (ticket 0191).
+shuyi-assets = { workspace = true, features = ["png"] }
 
 [package.metadata.cargo-machete]
 # Crate-boundary scaffolding (ADR-0004): wired up by later tickets, not yet

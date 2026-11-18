@@ -13,7 +13,6 @@ use super::testing::{Stacked, wait};
 use super::tests::{frame, lord_menu, quick, step};
 use super::view::{
     BannerView, BattleMenuView, DialogView, MenuPlace, MessageKind, MessageView, NotesView,
-    QuestionView,
 };
 use super::*;
 use crate::harness::Harness;
@@ -32,8 +31,11 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     let s = quick();
     let view = s.view(&c);
     assert!(view.panel.is_some());
-    assert_eq!(view.status, s.status(&c));
-    assert_eq!(view.help, s.help(&c));
+    let toggles = view.toggles.as_ref().unwrap();
+    let auto_end = &toggles.auto_end.as_ref().unwrap().0;
+    let row = format!("{} · {}", toggles.left.plain(), auto_end.plain());
+    assert_eq!(row, s.status(&c).plain());
+    assert_eq!(view.help, s.help_styled(&c));
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
     assert_eq!(view.scene, s.scene(&c));
     assert_eq!(view.menu, None);
@@ -165,13 +167,11 @@ fn the_end_turn_question_asks_and_goes() {
     let mut s = quick();
     wait(&mut s.state, 2);
     step(&mut s, &mut c, &[Action::EndTurn]);
-    assert_eq!(
-        s.view(&c).dialog,
-        Some(DialogView::Question(QuestionView {
-            question: "End turn with 3 units ready?".to_owned(),
-            answers: "f yes / d no".to_owned(),
-        }))
-    );
+    let Some(DialogView::Question(q)) = s.view(&c).dialog else {
+        panic!("no question");
+    };
+    assert_eq!(q.question, "End turn with 3 units ready?");
+    assert_eq!(q.answers.plain(), "f yes / d no");
     step(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.view(&c).dialog, None);
 }
@@ -192,6 +192,9 @@ fn restart_and_suspend_ask_first() {
             panic!("no question");
         };
         assert_eq!(q.question, question);
+        // Ticket 0257: the answers' keys in key spans.
+        let keys = crate::widgets::help::spans_of(c.help_keys(), &["Confirm", "Cancel"]);
+        assert_eq!(crate::widgets::help::key_spans(&q.answers), keys);
         step(&mut s, &mut c, &[Action::Cancel]);
         assert_eq!(s.view(&c).dialog, None);
     }
@@ -251,10 +254,16 @@ fn the_info_screen_is_the_units_and_closes() {
     step(&mut s, &mut c, &[Action::Info]);
     let info = s.view(&c).info.expect("the info screen");
     assert_eq!(info.name, "Test Lord");
-    assert_eq!(
-        info,
-        info::view((s.state(), c.words()), s.state().unit(UnitId(1)).unwrap())
-    );
+    let lord = s.state().unit(UnitId(1)).unwrap();
+    let faces = (&c.game.content.portraits, &c.game.lead);
+    let face = info::face(faces, lord);
+    // Its portrait's neutral face (1295).
+    let shown = face
+        .as_ref()
+        .map(|f| (f.portrait.as_str(), f.expression.as_str()));
+    assert_eq!(shown, Some(("test_lord", "neutral")));
+    let built = info::view((s.state(), c.words()), lord);
+    assert_eq!(info, InfoView { face, ..built });
     step(&mut s, &mut c, &[Action::Cancel]);
     assert!(s.view(&c).info.is_none());
 }
@@ -349,7 +358,7 @@ fn the_rewind_screen_shows_only_the_map_its_list_and_the_help() {
     s.press(&mut c, &[Action::Rewind]);
     let view = s.rewind().expect("the rewind screen").view(&c);
     assert_eq!(view.list.title, "Rewind");
-    assert_eq!(view.help, "d close");
+    assert_eq!(view.help.plain(), "d close");
     assert_eq!(view.lesson, None);
     s.press(&mut c, &[Action::Cancel]);
     assert!(s.rewind().is_none());

@@ -6,7 +6,7 @@ milestone: M2 Core rules
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
-blocked_by: ["0080"]
+blocked_by: ["0080", "0527", "0531"]
 nick_input: answer-first
 completed:
 ---

@@ -67,7 +67,11 @@ const TARGET_KEYS: &str = "f Down f d";
 
 /// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    h.battle().expect("a battle").view(h.game().ctx()).help
+    h.battle()
+        .expect("a battle")
+        .view(h.game().ctx())
+        .help
+        .plain()
 }
 
 /// Whether the battle on `h` shows `s` (in its view).
@@ -367,4 +371,32 @@ fn a_heal_goes_straight_to_the_exp_bar() {
     assert_eq!((exp.name.as_str(), exp.from), ("Test Knight", 0));
     press(&mut s, &mut c, &[], EXP_S + 0.1);
     assert!(s.progress().is_none());
+}
+
+/// Ticket 1292: the level-up tip, fired as its combat starts, keeps its
+/// moment through the combat's playback (a playback ends none), and
+/// comes up on the map once the level-up page is closed.
+#[test]
+fn the_level_up_tip_comes_up_after_its_combat() {
+    use Action::{Cancel, Confirm, CursorDown, CursorRight};
+    let mut c = ctx();
+    c.game.tips_enabled = true;
+    // Every other tip seen already, so none takes the keys on the way.
+    let tips = c.game.content.tips.tips.iter().map(|t| t.id.as_str());
+    let others = tips
+        .filter(|&id| id != "level_up")
+        .collect::<Vec<_>>()
+        .join("\n");
+    crate::storage::Storage::write(&mut c.storage, crate::tips::TIPS_SEEN_KEY, &others).unwrap();
+    let state = skirmish(&c, 99, None);
+    let mut s = BattleScreen::new(state);
+    press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.5);
+    press(&mut s, &mut c, &[Confirm, CursorDown, Confirm], 0.0);
+    assert!(matches!(s.mode(), Mode::Combat(_)));
+    press(&mut s, &mut c, &[Cancel], EXP_S + 5.0);
+    assert!(s.progress().is_some());
+    assert_eq!(s.shown_tip(), None);
+    press(&mut s, &mut c, &[Cancel], 0.5);
+    assert!(s.progress().is_none());
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLevelUp));
 }

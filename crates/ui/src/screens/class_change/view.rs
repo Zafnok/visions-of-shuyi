@@ -4,6 +4,7 @@
 //! a skin paints it ([`super::glyph::paint`] today); see ADR-0054.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::StatValue;
 
 use crate::screens::battle::view::ProgressView;
@@ -15,7 +16,7 @@ pub struct ClassChangeView {
     /// What fills the screen.
     pub body: ClassChangeBody,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// The columns, the change's result, or nothing.

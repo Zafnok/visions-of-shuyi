@@ -18,9 +18,11 @@ use trpg_ui::screens::dialogue::log::{LogView, RowKind};
 /// narration, the archer (surprised), the lord (sad), then the archer's
 /// line the three replies answer.
 fn intro_in(layout: Layout) -> Harness {
-    let ctx = Ctx::embedded()
+    let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(layout);
+    // The text box's keys as their words (ticket 0254).
+    ctx.game.key_caps = false;
     let game = trpg_ui::game::start_on_scene(ctx, "test", LeadGender::Male)
         .unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
@@ -70,9 +72,7 @@ fn texts(view: &LogView) -> Vec<&str> {
 /// The expression of the portrait on the left on screen.
 fn left_expression(h: &Harness) -> String {
     let view = dialogue(h).player().current();
-    view.left
-        .map(|p| p.expression.to_owned())
-        .unwrap_or_default()
+    view.left.map_or_default(|p| p.expression.to_owned())
 }
 
 #[test]
@@ -114,7 +114,14 @@ fn three_boxes_in_the_log_lists_the_three_lines_in_order() {
     assert_eq!(focused, Some("Better late than... well."));
     assert_eq!(view.back_to_latest, None);
     assert_eq!(view.title, "Log");
-    assert_eq!(view.help, "arrows move · f go to this line · d close");
+    assert_eq!(
+        view.help.plain(),
+        "arrows move · f go to this line · d close"
+    );
+    // Ticket 0257: each key in a key span, in order.
+    let keys =
+        trpg_ui::widgets::help::spans_of(h.ctx().help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(trpg_ui::widgets::help::key_spans(&view.help), keys);
     // The text box waits underneath: Cancel closes the log.
     h.keys("d");
     assert!(!dialogue(&h).is_log_open());

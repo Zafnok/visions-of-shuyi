@@ -202,7 +202,7 @@ pub fn load_all(
                 "file is missing or not valid UTF-8",
             )]
         })
-        .and_then(|source| parse_backdrops(&file, source, images, terrain, lighting));
+        .and_then(|source| parse_backdrops(&file, &source, images, terrain, lighting));
     assemble(battlers, errors, backdrops)
 }
 

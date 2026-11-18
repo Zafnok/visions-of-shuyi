@@ -43,7 +43,7 @@ use crate::screen::{Ctx, FrameInput, Screen, Shuyi, SkinSet, Transition};
 use crate::screens::Skins;
 use crate::settings::{AutoAdvance, LogVoice};
 use crate::widgets::Ask;
-use crate::widgets::help::key_name;
+use crate::widgets::help::{action_key, key_name};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
 use log::{LogView, RowKind};
@@ -379,6 +379,19 @@ impl DialogueScreen {
     /// The scene being played.
     pub fn player(&self) -> &DialoguePlayer {
         &self.player
+    }
+
+    /// The first 3 lines it says from the box it is at (as many as it
+    /// preloads ahead): that box's, unless it is a choice, then those that
+    /// come after it, as its preload names them. Kept loaded before the
+    /// scene starts (ticket 1293): the box's own clip is asked for on the
+    /// scene's first frame.
+    pub fn first_lines(&self) -> Vec<LineId> {
+        let on_screen = self.player.line().filter(|_| !self.player.is_choosing());
+        let mut lines: Vec<LineId> = on_screen.cloned().into_iter().collect();
+        lines.extend(coming_lines(&self.player));
+        lines.truncate(VOICES_AHEAD);
+        lines
     }
 
     /// The lines of the page on screen, in full.
@@ -941,8 +954,8 @@ impl DialogueScreen {
     fn wait_view(&self, ctx: &Ctx) -> WaitView {
         let km = ctx.help_keys();
         let log_mapped = key_name(km, Action::DialogueLog) != km.not_mapped();
-        let mut wait = WaitView::new(key_name(km, Action::Confirm), self.text.marker_lit());
-        wait.log_hint = log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[]).into());
+        let mut wait = WaitView::new(action_key(km, Action::Confirm), self.text.marker_lit());
+        wait.log_hint = log_mapped.then(|| ctx.text_styled("dialogue.log_hint", &[]));
         wait
     }
 }

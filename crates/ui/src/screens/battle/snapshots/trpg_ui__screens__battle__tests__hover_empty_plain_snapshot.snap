@@ -32,8 +32,8 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                                       │                            │
                                                                       │ Gold 3 000                 │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- arrows move · f menu · s next unit · r rewind · d menu · Space end turn                   F2 debug 
+ w danger zone: OFF                                                   Shift+Space auto-end: OFF     
+ arrows move · f menu · s next unit · r rewind · d menu              Space end turn        F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvva
-avvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvaaaaaaaaaaaaaaaaaaavvvvvvvva
+avwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaavvvvvvvvvvvwwwwwwwwwwwwwwaaaaa
+avvvvvvwwwwwwwwvwwwwwwwwvwwwwwwwwwwwwwvwwwwwwwwwwvwwwwwwwwwwwwwwwwwwwvvvvvwwwwwwwwwaaaaaaaawwwwwwwwa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -89,7 +89,8 @@ r = fg:stone bg:stone_bg
 s = fg:player bg:grass_bg
 t = fg:floor bg:floor_bg
 u = fg:wood bg:stone_bg
-v = fg:text_dim bg:black
+v = fg:text bg:key_bg
+w = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high

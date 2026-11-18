@@ -25,7 +25,7 @@ that ships has none of them.**
 | `portraits/test_lord*`, `portraits/test_knight*` | Placeholder portraits. The bought ones are in the private repository's `test/` folder (`assets-private/test/`), which is laid over this one the way `assets-private/game/` is laid over `assets/` |
 | `lang/test/` | The language pack the tests use: English in capitals. Never offered to players |
 | `tilesets/test*` | The generated test tilesets (`cargo xtask test-tileset`; `assets/tilesets/README.md` describes them) |
-| `images/test_card.png` | The sprite test card (`cargo xtask test-card`) |
+| `images/test_card.png` | The sprite test card. Generated; its tool was deleted (ticket 0191): `git show 61d537d2:crates/xtask/src/test_card.rs` |
 
 Each kind's format is described in the README of its directory under
 `assets/`.

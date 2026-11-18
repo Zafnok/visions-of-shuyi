@@ -199,12 +199,12 @@ fn cancel_closes_with_the_cancel_sound_and_other_actions_do_nothing() {
 fn help_names_the_layout_keys_and_what_confirm_does() {
     let mut c = ctx();
     let mut s = CreditsScreen::new(&c);
-    assert_eq!(s.help(&c), "arrows scroll · f pause · d back");
+    assert_eq!(s.help(&c).plain(), "arrows scroll · f pause · d back");
     s.update(&mut c, &input(&[Action::Confirm]));
-    assert_eq!(s.help(&c), "arrows scroll · f auto-scroll · d back");
+    assert_eq!(s.help(&c).plain(), "arrows scroll · f auto-scroll · d back");
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
-        s.help(&c),
+        s.help(&c).plain(),
         "w\u{a0}a\u{a0}s\u{a0}d scroll · j auto-scroll · k back"
     );
 }
@@ -537,13 +537,27 @@ fn a_list_that_fits_is_all_in_the_view() {
 fn the_view_help_follows_the_rolling() {
     let mut c = ctx();
     let mut s = CreditsScreen::new(&c);
-    assert_eq!(s.view(&c).help, "arrows scroll · f pause · d back");
+    assert_eq!(s.view(&c).help.plain(), "arrows scroll · f pause · d back");
     s.update(&mut c, &input(&[Action::Confirm]));
-    assert_eq!(s.view(&c).help, "arrows scroll · f auto-scroll · d back");
+    assert_eq!(
+        s.view(&c).help.plain(),
+        "arrows scroll · f auto-scroll · d back"
+    );
 }
 
 #[test]
 fn credits_declares_its_actions() {
     let screen = CreditsScreen::new(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::CREDITS);
+}
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = ctx();
+    let s = CreditsScreen::new(&c);
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&s.view(&c).help), want);
 }

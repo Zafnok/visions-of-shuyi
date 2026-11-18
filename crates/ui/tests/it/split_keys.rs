@@ -26,11 +26,10 @@ fn quick_battle_with(action: Action, key: &str) -> Harness {
 /// The key-help line, left of the right-aligned debug hint.
 fn help(h: &Harness) -> String {
     let buf = h.game().buffer();
-    (0..90)
+    let row = (0..90)
         .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+        .collect::<String>();
+    crate::unpadded(&row)
 }
 
 /// Whether some row of the screen contains `text`.

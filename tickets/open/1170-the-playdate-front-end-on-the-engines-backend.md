@@ -24,6 +24,17 @@ storage, audio, stack and exporter have now shipped in the engine:
 new feature implementation is needed for those pieces (but see
 *Blocked again* below).
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B5 with 1180, 1207, 0173, 0182 and 1294): this is the next
+Playdate ticket. Its three engine blockers (2388, 3096, 3097) and the
+run report (3090) are done and pinned (`docs/engine/pins.md`, the
+moves of 2026-11-05 and 2026-11-10); the ids stay as minimum revisions.
+Meanwhile `crates/playdate` is about 5,200 lines (Rust and the shim)
+and took 24 commits since 10-19, each one more copy the cutover must
+carry. 1182 (frame-png's crank, ready and about 30 lines) folds in here:
+see Scope. Speed tickets 1057, 1068 and 1078 land on code this ticket
+disconnects; whether they wait for it is a ranking call (0182).
+
 There is one real remaining engine prerequisite: the opt-in report a
 shipped game keeps. Current `shuyi_playdate::Driver` has no replacement
 for the game's loading-card/first-frame timestamps, slow bundle reads,
@@ -121,7 +132,9 @@ What else the session checked, so the next one need not:
 - **The disclosure:** `shuyi.ron`'s `allowed_pack_entries` is empty
   ("no package holds a pack") and `allowed_files` lists no `audio/` or
   `music/` `.pda`: the Playdate's pack entries and baked files need
-  their lines.
+  their lines. Either order with 0180: if it is done, add them to
+  `cargo xtask disclosure`'s sources and run it; if not, write them by
+  hand, and 0180 generates them later.
 
 The original ticket also promised deleting 754 lines of audio tooling
 and 1,422 lines of exporter tooling, besides all platform modules/tests.
@@ -151,6 +164,16 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 - `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
   loading card/data setup, one-bit look, saved settings and stack size.
   Use the engine's SDK, allocator, panic path, driver, storage and audio.
+- **From engine #501 (3316, the pin move of 2026-11-18):** the load in
+  steps goes through the engine's `App::load_steps`, so the game's own
+  step loop (`pd/entry.rs`'s `Step::Load` and `Loading`) goes. A step
+  that can report its units returns `Progress::Of { done, of }`, which
+  draws a bar on the engine's card (the Playdate's display redraws it
+  only when its filled part moves). The bar changes the card's look: ask
+  Nick (`ask-nick`, the card with and without the bar) before reporting
+  `Of`; without his yes, the steps report no count and the card looks as
+  today. The loading report's card time (`report.rs`'s `card_shown`)
+  stays.
 - Wire the game's project/audio/bake adapters and library feature to
   `shuyi export playdate`; preserve selected Playdate music, 4x4 Bayer
   stretch/dither policy, data folder and menu/keymap semantics. A/B moved
@@ -184,6 +207,17 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
   lessons naming these three actions on the Playdate read as the system
   menu, through the keymap (the `keyboard-input` skill), not a raw
   button name.
+- **From 1182 (folded in by the 2026-11-17 sweep):** delete the game's
+  `--then-pad` option, `Start::after`, `enum After`, the loop after
+  `script.play` and the three `engine-friction: engine#2540` markers in
+  `crates/xtask/src/game_tools.rs`; rewrite
+  `the_crank_and_buttons_after_the_steps_open_the_rewind_screen` in
+  `crates/xtask/src/game_tools/tests.rs` on the engine's ordered steps
+  (`--crank -30 --pad East`); fix any doc that names `--then-pad`.
+  1182's steps and acceptance criteria are this ticket's, and this PR
+  moves 1182 to `done/` with a line saying where it went. Doing both
+  here also settles their either-order check: the crank/pad sequence
+  and the help names are checked once, against the new keymap.
 
 **Out (do not do):**
 - Bulk deletion of disconnected files: 1204, 1205 and 1206 own the
@@ -208,12 +242,9 @@ placeholders for Danger Zone, Dialogue log and Options passing with the
 new `SystemMenuN` bindings; if not, nothing to do here (1060 then reads
 the bindings this ticket made).
 
-**Either order with 1182:** that ticket deletes the after-script pad
-workaround. If it is done first, keep its ordered engine crank/pad
-regression. The pin move of 2026-11-01 already moved A/B and its examples
-to East/West; 1182 still removes only its remaining wrapper. Whichever
-lands second checks the script and help names against the actual
-keymap/profile.
+**1182** is folded in (Scope). If a session did 1182 on its own first,
+keep its ordered engine crank/pad regression and check the script and
+help names against the new keymap/profile here.
 
 **Either order with 1221:** if 1221 is done, the one-bit pictures
 adapter starts from its `.meta` `convert` data and `ConvertSettings::make`
@@ -253,7 +284,8 @@ that call, or the engine backend's own facts; if not, keep whatever
 
 Expected size: about 250–350 added integration lines, about 75 removed
 with the system menu's two files, and small wiring removals, planned under 1,900 changed lines including tests/docs and the
-ticket move. Bulk source deletion is explicitly owned by 1204–1206.
+ticket move, plus about 30 removed and a small test rewrite from 1182
+(under 2,000 in all). Bulk source deletion is explicitly owned by 1204–1206.
 
 ## Acceptance criteria
 
@@ -275,6 +307,10 @@ ticket move. Bulk source deletion is explicitly owned by 1204–1206.
 - [ ] A button held when the system menu opens and let go in it is not
       held after the game resumes (`Game::set_resumed` on
       `kEventResume`, engine #260).
+- [ ] 1182's criteria pass: `cargo shuyi frame-png r.png --playdate --pad "DpadDown East" --wait 0.1 --pad "DpadLeft East" --wait 0.1 --pad East --crank -30`
+      shows the rewind screen, `--then-pad` is rejected, and no
+      `engine-friction: engine#2540`, `--then-pad`, `Start::after` or
+      `enum After` remains in `crates/` or current docs.
 - [ ] The exact retired-source lists are assigned to 1204–1206; the final
       physical under-200-production-line frontend criterion is in 1205.
 - [ ] All gates in the `run-gates` skill pass.

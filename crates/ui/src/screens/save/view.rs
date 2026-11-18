@@ -5,6 +5,7 @@
 //! paints it ([`super::glyph`] today); see ADR-0054.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::GameMode;
 
 use crate::screens::files::PlaceView;
@@ -18,7 +19,7 @@ pub struct SavePromptView {
     /// `Yes` and `No`.
     pub menu: MenuView,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// The slot picker, as it is this frame.
@@ -44,7 +45,7 @@ pub struct SlotPickerView {
     /// Where the saves are: on a desktop, loading (0872).
     pub place: Option<PlaceView>,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// The names of the slot columns.

@@ -48,6 +48,11 @@ fn playdate(ctx: &mut Ctx) {
 /// Skips every scene on screen: B, then A on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.pad("East");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -292,7 +297,7 @@ impl OneBit {
     }
 
     fn check(&mut self, h: &Harness) {
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH);
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH);
         let Some(font) = bits.and_then(|bits| onebit::Font::new(&self.atlas, bits).ok()) else {
             panic!("no one-bit font");
         };
@@ -338,9 +343,10 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     one_bit.check(&h);
     h.pad("DpadDown DpadDown East");
     one_bit.check(&h);
-    // The opening scene, a line typing out a frame at a time.
+    // The chapter's title card (0812), then the opening scene, a line
+    // typing out a frame at a time.
     let mut saw_dialogue = false;
-    for _ in 0..40 {
+    for _ in 0..140 {
         h.wait(1.0 / 30.0);
         one_bit.check(&h);
         saw_dialogue |= h.top_screen() == "dialogue";
@@ -519,7 +525,7 @@ fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
     let Some(DialogView::Question(question)) = battle_view(&h).dialog else {
         panic!("no question: {:?}", battle(&h).mode());
     };
-    assert_eq!(question.answers, "A yes / B no");
+    assert_eq!(question.answers.plain(), "A yes / B no");
     // A: the enemy's phase, its banner over the map.
     h.pad("East");
     let banner = battle_view(&h).banner.map(|b| b.title);
@@ -693,7 +699,9 @@ fn the_pcs_map_menu_has_no_shortcut_entries() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("f f f Up f");
     for _ in 0..8 {
-        if h.top_screen() == "dialogue" {
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+        } else if h.top_screen() == "dialogue" {
             h.keys("d f");
         } else if h.battle().is_some() {
             h.keys("f");
@@ -890,7 +898,7 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     h.pad("East");
     let rewind = view_of(&h, RewindScreen::view);
     assert!(rewind.list.prompt.is_some());
-    assert_eq!(rewind.help, "A rewind · B back");
+    assert_eq!(rewind.help.plain(), "A rewind · B back");
     h.pad("West West");
     assert!(h.screen::<RewindScreen>().is_none());
 }
@@ -1175,7 +1183,7 @@ fn b_with_left_or_right_steps_the_unit_in_the_loadouts() {
                 PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
                 _ => None,
             };
-            (s.focus(), unit.unwrap_or_default(), v.help)
+            (s.focus(), unit.unwrap_or_default(), v.help.plain())
         })
     };
     let (focus, unit, help) = shown(&h);

@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0512", "0250", "0254", "0318", "0446", "0449", "0461", "0462", "0463", "0465", "0466", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0842", "0843", "0844", "0845", "0846", "0847", "1039", "1041", "1043", "1044", "1046", "1058", "1060", "1062", "0313", "0409", "0443", "0606", "1003", "1007", "1008", "1065", "0319", "0511", "0506", "0509", "0510", "1038", "1042", "1051", "1056", "1057", "1059", "1066", "1067", "1068", "1069", "0743", "0744", "0252", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "0529", "1090", "1072", "1083", "1084", "1073", "1178", "0513", "0320", "0321", "0074", "1074", "0322", "0471", "0323", "0608", "1075", "0324", "0855", "0515", "0516", "0472", "1076", "1077", "0325", "0326", "0327", "0328", "0329", "0076", "1196", "0473", "0474", "0520", "0858", "1081", "1082", "1198", "0330", "0521", "0753", "1080", "0523", "1086", "0524", "1087", "0078", "0478", "0479", "0480", "0481", "0482", "0483", "0484", "0609", "0762", "0763", "0864", "0876", "0531", "0865", "0332", "0333", "0334", "0528", "0527", "0610", "0870", "0867", "0868", "0485", "0486", "0487", "0488", "0489", "0490", "0491", "0869", "1088", "1089", "0453", "0871", "0492", "0530", "0494", "0495", "0499"]
+blocked_by: ["0512", "0250", "0254", "0318", "0446", "0449", "0461", "0462", "0463", "0465", "0466", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0842", "0843", "0844", "0845", "0846", "0847", "1039", "1041", "1043", "1044", "1046", "1058", "1060", "1062", "0313", "0409", "0443", "0606", "1003", "1007", "1008", "1065", "0319", "0511", "0506", "0509", "0510", "1038", "1042", "1051", "1056", "1057", "1059", "1066", "1067", "1068", "1069", "0743", "0744", "0252", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "0529", "1090", "1072", "1083", "1084", "1073", "1178", "0513", "0320", "0321", "0074", "1074", "0322", "0471", "0323", "0608", "1075", "0324", "0855", "0515", "0516", "0472", "1076", "1077", "0325", "0326", "0327", "0328", "0329", "0076", "1196", "0473", "0474", "0520", "0858", "1081", "1082", "1198", "0330", "0521", "0753", "1080", "0523", "1086", "0524", "1087", "0078", "0478", "0479", "0480", "0481", "0482", "0483", "0484", "0609", "0762", "0763", "0864", "0876", "0531", "0865", "0332", "0333", "0334", "0528", "0527", "0610", "0870", "0867", "0868", "0485", "0486", "0487", "0488", "0489", "0490", "0491", "0869", "1088", "1089", "0453", "0871", "0492", "0530", "0494", "0495", "0499", "0183", "0773", "1295", "1292", "1293", "0861", "0862", "0866", "0877", "0878", "0335", "1296"]
 nick_input: sign-off
 completed:
 ---
@@ -50,6 +50,32 @@ Lane I in *Act 1 critical path* (0332–0334, 0453, 0485–0491, 0528,
 through them). Lane J, the human writer (0152, 0155–0160, 0764–0766, 0914, 0915), is
 not a blocker: the playtest runs on the scripts that exist.
 
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): the Chapter 3-5 art tickets 0861, 0862 and 0866 each said
+"1064 covers the look" but were not blockers here; they are now, with
+0877 (the per-chapter coverage report) and 0878 (class art). The sweep
+measured these gaps in the build this playtest would show. Each one
+**waits on Nick's answer in 0184** (wanted for this playtest, or
+deliberately left out and said so on the checklist page); none is
+decided here:
+
+- **Faces:** 12 portrait sets exist; 20 speakers placed on screen have
+  none. 0858, 0861, 0862 and 0866 cover the named cast; the minor
+  speakers have no ticket.
+- **Voices after Chapter 1:** 123 clips, all Chapter 1 or Vix; Chapters
+  2-8 are silent. 0757 waits on the writer (0766) and is not a blocker
+  here.
+- **Class art:** Swordsman, Brawler and Shadowblade draw the stand-in
+  figure (about 22% of placements); 0878 imports what is decided.
+- **Indoor backdrop:** the 4 indoor maps fight in front of the fields
+  backdrop; no interior picture is chosen.
+- **Promotion unreachable:** the promote and reclass screen is built,
+  but no shop, battle or chapter gives a seal (0606).
+- **Supports and camp empty:** `supports.ron` has no pairs and
+  `camp.ron` no events, so neither shows; their content is 1073, which
+  waits on 0766.
+
 ## Nick input
 
 **Playtest:** Nick plays Act 1 from New Game to "Act 1 ends" on the
@@ -69,13 +95,18 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
   --release`).
 - **The checklist**, published as a private claude.ai page that saves
   his answers (as 0804's round 3 did), with the links, the key
-  cheat-sheet from `keymap.ron`, the Playdate's buttons and crank, and
-  questions in play order. Collect them from:
+  cheat-sheet from `keymap.ron`, the Playdate's buttons and crank, a
+  short "known to be unfinished" list (the default output of `cargo
+  xtask act1-coverage`, 0877, with each gap Nick chose to leave out in
+  0184), and questions in play order. Collect them from:
   - the new Chapter 1 script (0737): ask about it first, as round 4
     would have;
   - every ticket in `tickets/done/` whose *Nick input* quotes a waived
-    sign-off (`grep -l "What the old sign-off asked" tickets/done`), and
-    the *the agent's starting rules* in their Completion notes;
+    sign-off (`grep -l "What the old sign-off asked" tickets/done`);
+  - the agent's starting rules from `cargo xtask playtest-notes
+    --by-area` (0183): `Seen in play:` items as questions grouped by
+    area, about 30 in all; `Not seen in play:` items under one heading,
+    kept unless Nick picks one to discuss;
   - 1050's questions: whether the enemy's pauses on the Playdate feel
     long, whether start-up feels slow (numbers from 0512's device run);
   - the new chapters' starting rules (0848–0854, 1070–1073) and the
@@ -104,6 +135,9 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
 6. Put a summary in the Completion notes: his words verbatim and the
    ticket each became (or "won't do" with the reason he agreed to), as
    0804 did.
+7. Set every `status: parked` ticket whose blockers are now all done
+   back to `todo` (`ticket-lint` warns "unpark it", 0181; a no-op
+   before 0181).
 
 ## Acceptance criteria
 

@@ -455,10 +455,11 @@ mod tests {
         );
         // "Voice test" stays on the menu.
         assert_eq!(outcome(&mut menu, &[CursorDown, Confirm]), "None");
-        // "Test world map" starts its flow (1007).
+        // "Test world map" starts its flow (1007), at its chapter's title
+        // card (0812).
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
-            "Push(world_map)"
+            "Push(chapter_card)"
         );
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),

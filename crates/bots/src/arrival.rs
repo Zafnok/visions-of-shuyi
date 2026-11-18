@@ -170,11 +170,7 @@ fn guards_on_the_way(
     // Each turn wins a place, so a way longer than the map has places
     // never ends: stop there.
     for _ in 0..map.nodes.len() {
-        let at = campaign
-            .world
-            .as_ref()
-            .map(|w| w.at.clone())
-            .unwrap_or_default();
+        let at = campaign.world.as_ref().map_or_default(|w| w.at.clone());
         let route = map.route(&at, &node.id, campaign);
         let guard = map.nodes.iter().find_map(|n| match &n.kind {
             NodeKind::FixedSkirmish {

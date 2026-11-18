@@ -11,6 +11,7 @@ use super::BattleScreen;
 use super::playback::{Beat, Playback, TIMINGS};
 use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
+use super::tests::unpadded;
 use super::view::{BattleView, ForecastView, ProgressView};
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
@@ -51,18 +52,18 @@ fn view(h: &Harness) -> BattleView {
 
 /// The help line.
 fn help(h: &Harness) -> String {
-    view(h).help
+    view(h).help.plain()
 }
 
 /// The message line; empty with none.
 fn message(h: &Harness) -> String {
-    view(h).message.map(|m| m.text).unwrap_or_default()
+    view(h).message.map_or_default(|m| m.text)
 }
 
 /// The name of the unit the side panel shows; empty with none.
 fn hovered(h: &Harness) -> String {
     let unit = view(h).panel.and_then(|p| p.unit);
-    unit.map(|u| u.name).unwrap_or_default()
+    unit.map_or_default(|u| u.name)
 }
 
 /// The HP the side panel shows of its unit (`HP 9/20`).
@@ -144,8 +145,11 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     assert_eq!(names(&h), "Test Lord | Raider");
     assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
     // The forecast says so too, in the player's keys (0463).
-    let swap = shown_forecast(&h).swap;
-    assert_eq!(swap.as_deref(), Some("Left/Right weapon"));
+    let swap = shown_forecast(&h).swap.expect("the swap hint");
+    assert_eq!(swap.plain(), "Left/Right weapon");
+    // Ticket 0257: the two keys, each in a key span.
+    let keys = crate::widgets::help::spans_of(h.ctx().help_keys(), &["CursorLeft", "CursorRight"]);
+    assert_eq!(crate::widgets::help::key_spans(&swap), keys);
     h.keys("Right");
     assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
     assert_eq!(names(&h), "Test Lord | Raider");
@@ -338,7 +342,7 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
     assert_eq!(hovered(&h), "");
     assert_eq!(message(&h), "");
     assert_eq!(
-        help(&h),
+        unpadded(&help(&h)),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
 }

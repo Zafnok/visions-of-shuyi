@@ -183,14 +183,16 @@ fn world_of(source: &str, made: &Generated) -> Result<WorldMapDef, String> {
     worldmap::from_source("test_world", "test_world", source, refs).map_err(|e| format!("{e:?}"))
 }
 
-fn world_source() -> &'static str {
-    trpg_content::bundle::file("worldmaps/test_world.ron").expect("the test world map's text")
+fn world_source() -> String {
+    trpg_content::bundle::file("worldmaps/test_world.ron")
+        .expect("the test world map's text")
+        .into_owned()
 }
 
 #[test]
 fn the_place_joins_the_map_by_a_road_and_passes_its_checks() {
     let made = generated(&request());
-    let text = add_place(world_source(), world(), &request(), &made.id).expect("added");
+    let text = add_place(&world_source(), world(), &request(), &made.id).expect("added");
     let def = world_of(&text, &made).unwrap_or_else(|e| panic!("{e}"));
     let node = def.map.node("skirmish_10_10").expect("the place");
     assert!(node.opens_when.is_empty() && !node.hidden);
@@ -205,7 +207,7 @@ fn a_place_for_one_chapter_opens_only_then_and_is_out_of_sight_otherwise() {
         ..request()
     };
     let made = generated(&request);
-    let text = add_place(world_source(), world(), &request, &made.id).expect("added");
+    let text = add_place(&world_source(), world(), &request, &made.id).expect("added");
     let def = world_of(&text, &made).unwrap_or_else(|e| panic!("{e}"));
     let lead = trpg_core::LeadProfile::new("Lead", trpg_core::LeadGender::Male);
     let mut campaign = trpg_core::Campaign::new_game(
@@ -238,7 +240,7 @@ fn the_road_never_starts_at_a_place_that_is_not_built() {
         .expect("its node");
     node.opens_when.push(NodeCondition::NotBuilt);
     let made = generated(&request());
-    let text = add_place(world_source(), &world, &request(), &made.id).expect("added");
+    let text = add_place(&world_source(), &world, &request(), &made.id).expect("added");
     assert!(
         !text.contains(&format!("(from: \"{nearest}\", to: \"skirmish_10_10\"")),
         "{text}"
@@ -251,7 +253,7 @@ fn the_road_starts_at_the_nearest_place_and_turns_only_when_it_must() {
     let road = |at| {
         let request = Request { at, ..request() };
         let made = generated(&request);
-        let text = add_place(world_source(), world(), &request, &made.id).expect("added");
+        let text = add_place(&world_source(), world(), &request, &made.id).expect("added");
         let to = format!("to: \"skirmish_{}_{}\"", at.0, at.1);
         let line = text.lines().find(|l| l.contains(&to)).expect("its road");
         line.trim().to_owned()
@@ -354,7 +356,7 @@ fn a_taken_cell_is_refused() {
         ..request()
     };
     let made = generated(&request);
-    assert!(add_place(world_source(), world(), &request, &made.id).is_err());
+    assert!(add_place(&world_source(), world(), &request, &made.id).is_err());
 }
 
 #[test]

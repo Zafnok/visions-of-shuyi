@@ -13,12 +13,11 @@ mod check_script;
 mod clean_targets;
 mod code_lines;
 mod content_layer;
-mod edge_marks;
-mod effect_marks;
 mod engine;
 mod game_tools;
 mod icon;
 mod leaks;
+mod lettering;
 mod lines;
 mod map_sprite_import;
 mod mentions;
@@ -34,7 +33,6 @@ mod skill_pack;
 mod skirmish;
 mod story_import;
 mod test_auto;
-mod test_card;
 mod test_tileset;
 mod test_units;
 mod tickets;
@@ -43,6 +41,8 @@ mod tileset_ron;
 mod title_art;
 mod voice;
 mod voice_test;
+#[cfg(test)]
+mod workflow_guard;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -64,10 +64,8 @@ code-lines [--base <ref>]          production Rust lines added and removed per c
 pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
 the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
-test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
-effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
-edge-marks                         write the map's edge arrows, assets/images/edge_marks.png\n  \
+lettering                          bake the chapter card's Cinzel sheets, assets/title/chapter_*\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
@@ -115,10 +113,8 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
-        Some("test-card") => test_card(&args.collect::<Vec<_>>()),
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
-        Some("edge-marks") => edge_marks(&args.collect::<Vec<_>>()),
-        Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
+        Some("lettering") => lettering(&args.collect::<Vec<_>>()),
         Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -426,23 +422,6 @@ fn parse_sfx_check(args: &[String]) -> Option<bool> {
     }
 }
 
-fn test_card(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask test-card");
-        return 2;
-    }
-    match test_card::run(&repo_root()) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("test-card: {e}");
-            1
-        }
-    }
-}
-
 fn test_tileset(args: &[String]) -> u8 {
     if !args.is_empty() {
         eprintln!("usage: cargo xtask test-tileset");
@@ -582,35 +561,18 @@ fn tileset_import_in(root: &Path, args: &[String]) -> u8 {
     }
 }
 
-fn edge_marks(args: &[String]) -> u8 {
+fn lettering(args: &[String]) -> u8 {
     if !args.is_empty() {
-        eprintln!("usage: cargo xtask edge-marks");
+        eprintln!("usage: cargo xtask lettering");
         return 2;
     }
-    match edge_marks::run(&repo_root()) {
+    match lettering::run(&repo_root()) {
         Ok(summary) => {
             println!("{summary}");
             0
         }
         Err(e) => {
-            eprintln!("edge-marks: {e}");
-            1
-        }
-    }
-}
-
-fn effect_marks(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask effect-marks");
-        return 2;
-    }
-    match effect_marks::run(&repo_root()) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("effect-marks: {e}");
+            eprintln!("lettering: {e}");
             1
         }
     }
@@ -664,6 +626,23 @@ fn playtest(args: &[String]) -> u8 {
     if args.iter().any(|a| a == "--help") {
         println!("{}", playtest::USAGE);
         return 0;
+    }
+    if args.first().is_some_and(|a| a == "--merge") {
+        let paths: Vec<PathBuf> = args[1..].iter().map(PathBuf::from).collect();
+        if paths.is_empty() {
+            eprintln!("--merge needs the parts' reports\n\n{}", playtest::USAGE);
+            return 2;
+        }
+        return match playtest::merge_files(&paths) {
+            Ok(ran) => {
+                print!("{}", ran.text);
+                u8::from(ran.blocked)
+            }
+            Err(e) => {
+                eprintln!("playtest --merge: {e}");
+                1
+            }
+        };
     }
     let options = match playtest::parse_args(args) {
         Ok(options) => options,
@@ -1101,6 +1080,54 @@ mod tests {
         assert_eq!(listed, read, "changes.yml's `read by` lines");
     }
 
+    /// No workflow job that checks out the private files keeps a build of
+    /// them in the Actions cache or an artifact, which a fork's pull request
+    /// can read (ADR-0117 §4, ticket 0171).
+    #[test]
+    fn no_job_with_private_files_caches_or_uploads_a_build() {
+        let dir = repo_root().join(".github/workflows");
+        let mut problems = Vec::new();
+        let mut guarded = 0;
+        for entry in std::fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_none_or(|e| e != "yml") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap();
+            let file = path.file_name().unwrap().to_string_lossy().into_owned();
+            guarded += text.matches("Swatinem/rust-cache@").count();
+            problems.extend(workflow_guard::check(&file, &text));
+        }
+        assert!(guarded >= 10, "{guarded}");
+        assert!(
+            problems.is_empty(),
+            "{}",
+            problems.join(
+                "
+"
+            )
+        );
+        // Each upload the check allows is still there.
+        for (file, job, upload) in workflow_guard::ALLOWED_UPLOADS {
+            let text = std::fs::read_to_string(dir.join(file)).unwrap();
+            assert!(
+                text.contains(&format!(
+                    "
+  {job}:
+"
+                )),
+                "{file}: {job}"
+            );
+            assert!(
+                text.contains(&format!(
+                    "path: {upload}
+"
+                )),
+                "{file}: {upload}"
+            );
+        }
+    }
+
     /// Cargo links every file directly under a crate's `tests/` as its own
     /// program (about 100 MB each), so each crate keeps one: new integration
     /// tests are modules of `tests/it/main.rs` (ticket 0114).
@@ -1136,6 +1163,164 @@ mod tests {
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// What `.github/playtest-levers.sh BASE HEAD` prints for a commit that
+    /// writes `changes` (path, text; `None` deletes) over `files`, in a
+    /// fresh git repository named `name`.
+    #[cfg(unix)]
+    fn levers_output(
+        name: &str,
+        files: &[(&str, &str)],
+        changes: &[(&str, Option<&str>)],
+    ) -> String {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("xtask-levers-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(&dir)
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@t",
+                    "-c",
+                    "commit.gpgsign=false",
+                ])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8(out.stdout).unwrap()
+        };
+        let write = |path: &str, text: Option<&str>| {
+            let file = dir.join(path);
+            match text {
+                Some(text) => {
+                    std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+                    std::fs::write(file, text).unwrap();
+                }
+                None => std::fs::remove_file(file).unwrap(),
+            }
+        };
+        git(&["init", "-q"]);
+        for (path, text) in files {
+            write(path, Some(text));
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        for (path, text) in changes {
+            write(path, *text);
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "head"]);
+        let diffed_paths = git(&["diff", "--name-only", "--no-renames", "HEAD^", "HEAD"]);
+        let script = repo_root().join(".github/playtest-levers.sh");
+        let mut child = Command::new("bash")
+            .arg(script)
+            .args(["HEAD^", "HEAD"])
+            .current_dir(&dir)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        std::io::Write::write_all(&mut child.stdin.take().unwrap(), diffed_paths.as_bytes())
+            .unwrap();
+        let out = child.wait_with_output().unwrap();
+        assert!(out.status.success(), "{out:?}");
+        std::fs::remove_dir_all(&dir).unwrap();
+        String::from_utf8(out.stdout).unwrap()
+    }
+
+    /// Ticket 0173: comments, in-file tests and the content no battle reads
+    /// don't play; code, a new file and a recorded playthrough do.
+    #[cfg(unix)]
+    #[test]
+    fn playtest_levers_skip_comments_tests_and_presentation() {
+        const COMBAT: &str = "\
+//! Combat.
+pub fn hit(a: u32) -> u32 {
+    // The base.
+    a + 1
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn hits() {
+        assert_eq!(super::hit(1), 2);
+    }
+}
+";
+        const TERRAIN: &str = "// Terrain.\n(\n    plains: 1,\n)\n";
+        const WINNING: &str = "(\n    moves: [1],\n)\n";
+        let files = [
+            ("crates/core/src/combat.rs", COMBAT),
+            ("crates/content/src/credits.rs", "pub fn credits() {}\n"),
+            ("crates/content/src/lang/data_tests.rs", "fn a() {}\n"),
+            ("assets/data/terrain.ron", TERRAIN),
+            ("crates/ui/tests/it/fixtures/ch01_winning.ron", WINNING),
+        ];
+        let plays = |name, changes: &[(&str, Option<&str>)]| {
+            let out = levers_output(name, &files, changes);
+            assert!(
+                out.ends_with("play=true\n") || out.ends_with("play=false\n"),
+                "{out}"
+            );
+            out.ends_with("play=true\n")
+        };
+        // Skipped.
+        let comment = COMBAT.replace("// The base.", "// The base, plus one.\n\n    // More.");
+        assert!(!plays(
+            "comment",
+            &[("crates/core/src/combat.rs", Some(&comment))]
+        ));
+        let test = COMBAT.replace("hit(1), 2", "hit(2), 3");
+        assert!(!plays(
+            "test",
+            &[("crates/core/src/combat.rs", Some(&test))]
+        ));
+        let credits = "// Who made it.\npub fn credits() {}\n";
+        assert!(!plays(
+            "credits",
+            &[("crates/content/src/credits.rs", Some(credits))]
+        ));
+        let terrain = TERRAIN.replace("plains: 1,", "// Open ground.\n    plains: 1,");
+        assert!(!plays(
+            "terrain",
+            &[("assets/data/terrain.ron", Some(&terrain))]
+        ));
+        let data_tests = ("crates/content/src/lang/data_tests.rs", Some("fn b() {}\n"));
+        assert!(!plays("data-tests", &[data_tests]));
+        // Played.
+        let code = COMBAT.replace("a + 1", "a + 2");
+        assert!(plays("code", &[("crates/core/src/combat.rs", Some(&code))]));
+        assert!(plays(
+            "new",
+            &[("crates/core/src/new.rs", Some("// New.\n"))]
+        ));
+        assert!(plays("deleted", &[("crates/core/src/combat.rs", None)]));
+        let winning = WINNING.replace("[1]", "[2]");
+        let fixture = "crates/ui/tests/it/fixtures/ch01_winning.ron";
+        assert!(plays("winning", &[(fixture, Some(&winning))]));
+        // A test module that isn't at column 0 is code.
+        let nested = COMBAT.replace("a + 1\n}", "a + 1\n    #[cfg(test)]\n    mod x {\n    }\n}");
+        assert!(plays(
+            "nested",
+            &[("crates/core/src/combat.rs", Some(&nested))]
+        ));
+        let out = levers_output(
+            "message",
+            &files,
+            &[("crates/core/src/combat.rs", Some(&test))],
+        );
+        assert!(
+            out.contains("skips: crates/core/src/combat.rs (comments or tests only)"),
+            "{out}"
+        );
+    }
+
     #[test]
     fn playtest_help_and_bad_args() {
         assert_eq!(playtest(&args(&["--help"])), 0);
@@ -1143,6 +1328,8 @@ mod tests {
         assert_eq!(playtest(&[]), 2);
         assert_eq!(playtest(&args(&["quick", "--runs", "0"])), 2);
         assert_eq!(dispatch(args(&["playtest", "--bogus", "1"]).into_iter()), 2);
+        assert_eq!(playtest(&args(&["--merge"])), 2);
+        assert_eq!(playtest(&args(&["--merge", "no/such/part.json"])), 1);
     }
 
     #[test]
@@ -1477,12 +1664,6 @@ mod tests {
     }
 
     #[test]
-    fn test_card_rejects_args() {
-        assert_eq!(test_card(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["test-card", "x"]).into_iter()), 2);
-    }
-
-    #[test]
     fn tileset_import_help_list_and_bad_args() {
         assert_eq!(tileset_import(&args(&["--help"])), 0);
         // The committed mapping file is read and listed.
@@ -1545,15 +1726,9 @@ mod tests {
     }
 
     #[test]
-    fn edge_marks_rejects_args() {
-        assert_eq!(edge_marks(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["edge-marks", "x"]).into_iter()), 2);
-    }
-
-    #[test]
-    fn effect_marks_rejects_args() {
-        assert_eq!(effect_marks(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["effect-marks", "x"]).into_iter()), 2);
+    fn lettering_rejects_args() {
+        assert_eq!(lettering(&args(&["--bogus"])), 2);
+        assert_eq!(dispatch(args(&["lettering", "x"]).into_iter()), 2);
     }
 
     #[test]

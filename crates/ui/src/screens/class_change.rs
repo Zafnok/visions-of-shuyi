@@ -50,9 +50,10 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::help::{SEPARATOR, key_name};
+use crate::widgets::help::{join_hints, key_pair, text_with_keys};
 use crate::widgets::{Ask, ListCursor};
 use crate::words::Words;
+use shuyi_ui::text::StyledText;
 
 /// Columns shown at once.
 pub const COLUMNS: usize = 4;
@@ -390,27 +391,22 @@ impl ClassChangeScreen {
         }
     }
 
-    /// The help line for the stage.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    /// The help line for the stage, each key in a key span.
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let km = ctx.help_keys();
         match &self.stage {
             Stage::Choosing => {
-                let pick = format!(
-                    "{}/{}",
-                    key_name(km, Action::CursorLeft),
-                    key_name(km, Action::CursorRight)
-                );
+                let pick = key_pair(km, Action::CursorLeft, Action::CursorRight);
                 let many = (self.options.len() > 1)
-                    .then(|| ctx.text_with("class_change.hint.class", &[("keys", &pick)]));
+                    .then(|| text_with_keys(ctx, "class_change.hint.class", &[("keys", &pick)]));
                 let can = self.focused().is_some_and(|o| o.after.is_ok());
-                let choose = can.then(|| ctx.text_with("class_change.hint.choose", &[]));
-                let back = Some(ctx.text_with("class_change.hint.back", &[]));
-                let hints: Vec<String> = [many, choose, back].into_iter().flatten().collect();
-                hints.join(SEPARATOR)
+                let choose = can.then(|| ctx.text_styled("class_change.hint.choose", &[]));
+                let back = Some(ctx.text_styled("class_change.hint.back", &[]));
+                join_hints([many, choose, back].into_iter().flatten())
             }
-            Stage::Confirming(_) => ctx.text_with("class_change.help.confirming", &[]),
+            Stage::Confirming(_) => ctx.text_styled("class_change.help.confirming", &[]),
             Stage::Result(p) => progress::help(ctx, p),
-            Stage::Done => String::new(),
+            Stage::Done => StyledText::new(),
         }
     }
 

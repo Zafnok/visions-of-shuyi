@@ -20,6 +20,9 @@ mod shop;
 
 use crate::prelude::*;
 
+use shuyi_assets::font::CellWidths;
+use shuyi_ui::text::StyledText;
+
 use trpg_core::{Faction, Pos, StatValue};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};
@@ -37,9 +40,11 @@ pub use self::rewind::{RewindScreenView, RewindView};
 pub use self::shop::{SellConfirmView, ShopLineView, ShopScreenView};
 use super::HealPopup;
 use super::banner::BannerKind;
+use super::layout::HELP_BAR;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
 use crate::tips::{LessonView, LessonsEndView, TipView};
+use crate::widgets::help::SEPARATOR;
 use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
@@ -77,11 +82,11 @@ pub struct BattleView {
     /// The line over the help: a combat's message, the preview of what is
     /// being aimed, or the toast.
     pub message: Option<MessageView>,
-    /// The toggles' state (zoom, danger zone, auto-end), each with its
-    /// key.
-    pub status: String,
-    /// The help line: what the keys do now.
-    pub help: String,
+    /// The toggles' row (zoom, danger zone, auto-end, each with its key in
+    /// a key span), while the help has its end-turn hint (0445).
+    pub toggles: Option<TogglesView>,
+    /// The help line: what the keys do now (each key in a key span).
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
     /// The attack forecast, while an attack or a spell is aimed at an
@@ -162,6 +167,20 @@ pub struct PanelView {
     pub unit: Option<PanelUnitView>,
     /// The party's gold (`Gold 1 250`, 0409).
     pub gold: String,
+    /// What the spell, item or skill being aimed will do (1286).
+    pub preview: Option<PanelPreviewView>,
+}
+
+/// The aimed spell, item or skill's preview in the side panel, at its
+/// top: the same line as over the help bar, under the name of what is
+/// aimed (1286). A heal aimed at a unit shows on its HP line instead
+/// ([`PanelUnitView::hp_then`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PanelPreviewView {
+    /// The spell, item or skill's name (`Fire`).
+    pub title: String,
+    /// What it will do (`Forest → Burning (1 round)`).
+    pub text: String,
 }
 
 /// A tile's terrain in the side panel.
@@ -190,6 +209,9 @@ pub struct PanelUnitView {
     pub hp: StatValue,
     /// Its max HP.
     pub max: StatValue,
+    /// Its HP after the heal or potion being aimed at it, shown on its HP
+    /// line (`HP 6 → 17/17`) in place of the preview block (1286).
+    pub hp_then: Option<StatValue>,
     /// The name of its faction.
     pub faction_name: String,
     /// Its stats as a fight uses them, gear included: Str, Mag, Dex, Spd,
@@ -256,8 +278,8 @@ pub struct NotesView {
 pub struct QuestionView {
     /// What is asked.
     pub question: String,
-    /// How to answer, with the keys.
-    pub answers: String,
+    /// How to answer, each key in a key span.
+    pub answers: StyledText,
 }
 
 /// A phase or outcome banner.
@@ -292,13 +314,73 @@ pub struct MessageView {
     pub kind: MessageKind,
 }
 
-/// What the message line says.
+impl MessageView {
+    /// A note for a moment, `text`.
+    pub fn note(text: String) -> Self {
+        let kind = MessageKind::Toast;
+        Self { text, kind }
+    }
+
+    /// A warning or an error for a moment, `text`.
+    pub fn warning(text: String) -> Self {
+        let kind = MessageKind::Warning;
+        Self { text, kind }
+    }
+}
+
+/// What a message is, which says where it shows (Nick, 0445).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageKind {
-    /// What a combat says or what the thing aimed will do.
+    /// What a combat says or what the thing aimed will do: at the left of
+    /// the toggles' row, while it lasts.
     Said,
-    /// A short message for a moment (a toggle flipped).
+    /// A note for a moment (a toggle flipped, a thing picked up): on a
+    /// strip over the map's bottom row.
     Toast,
+    /// A warning or an error for a moment (the save failed): in a box at
+    /// the map's bottom left, wrapped to the map's width.
+    Warning,
+}
+
+/// The toggles' row over the help (0445): the danger-zone hint (after the
+/// zoom hint, where the map can zoom) from where the help starts, and the
+/// auto-end hint starting in the cell where the help's end-turn hint
+/// starts. Columns count the frame's cells from where the help starts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TogglesView {
+    /// The zoom and danger-zone hints, at cell 0.
+    pub left: StyledText,
+    /// The auto-end hint and its cell; `None` if it can't fit on the row.
+    pub auto_end: Option<(StyledText, usize)>,
+}
+
+impl TogglesView {
+    /// The row for `left` and `auto_end` as `widths` measure them,
+    /// auto-end in cell `end_turn`; one separator after `left` instead if
+    /// that would overlap `left` or run off the row, and left out if it
+    /// doesn't fit there either.
+    pub fn new(
+        left: StyledText,
+        auto_end: StyledText,
+        end_turn: usize,
+        widths: &CellWidths,
+    ) -> Self {
+        let after = left.width(widths) + StyledText::from(SEPARATOR).width(widths);
+        let fits = |column: usize| column + auto_end.width(widths) <= Self::ROOM;
+        let column = if end_turn >= after && fits(end_turn) {
+            Some(end_turn)
+        } else {
+            fits(after).then_some(after)
+        };
+        Self {
+            left,
+            auto_end: column.map(|c| (auto_end, c)),
+        }
+    }
+
+    /// The cells the row has for its text: the bar's width, less a blank
+    /// cell at each end.
+    pub const ROOM: usize = HELP_BAR.w.unsigned_abs() as usize - 2;
 }
 
 #[cfg(test)]
@@ -306,7 +388,18 @@ impl BattleView {
     /// Every line of text the view shows, for tests asking whether the
     /// screen shows something.
     pub fn texts(&self) -> Vec<String> {
-        let mut texts: Vec<String> = self.own_texts().into_iter().map(str::to_owned).collect();
+        let mut texts = vec![self.help.plain()];
+        if let Some(t) = &self.toggles {
+            texts.push(t.left.plain());
+            texts.extend(t.auto_end.as_ref().map(|(a, _)| a.plain()));
+        }
+        texts.extend(self.tip.iter().map(|t| t.close.plain()));
+        let items = self.lesson.iter().flat_map(|l| &l.items);
+        texts.extend(items.map(|i| i.label.plain()));
+        texts.extend(self.own_texts().into_iter().map(str::to_owned));
+        if let Some(DialogView::Question(q)) = &self.dialog {
+            texts.push(q.answers.plain());
+        }
         // The menu's lines, in English.
         let menu = self.menu.iter().flat_map(|m| &m.menu.items);
         texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
@@ -325,7 +418,7 @@ impl BattleView {
 
     /// The lines of text of the parts with no view type of their own.
     fn own_texts(&self) -> Vec<&str> {
-        let mut texts: Vec<&str> = vec![&self.status, &self.help];
+        let mut texts: Vec<&str> = Vec::new();
         if let Some(h) = self.menu.as_ref().and_then(|m| m.header.as_ref()) {
             texts.push(&h.name);
             texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));
@@ -350,7 +443,7 @@ impl BattleView {
                     texts.extend(note_texts(n));
                 }
             }
-            Some(DialogView::Question(q)) => texts.extend([q.question.as_str(), &q.answers]),
+            Some(DialogView::Question(q)) => texts.push(&q.question),
             None => {}
         }
         if let Some(n) = &self.notes {
@@ -360,13 +453,12 @@ impl BattleView {
             texts.extend([b.title.as_str(), &b.subtitle]);
         }
         if let Some(t) = &self.tip {
-            texts.extend([t.title.as_str(), &t.heading, &t.close]);
+            texts.extend([t.title.as_str(), &t.heading]);
             texts.extend(t.lines.iter().map(String::as_str));
         }
         if let Some(l) = &self.lesson {
             texts.extend([l.title.as_str(), &l.heading, &l.progress]);
             texts.extend(l.lines.iter().map(String::as_str));
-            texts.extend(l.items.iter().map(|i| i.label.as_str()));
         }
         texts.extend(self.message.as_ref().map(|m| m.text.as_str()));
         texts

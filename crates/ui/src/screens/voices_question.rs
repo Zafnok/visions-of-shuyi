@@ -47,7 +47,7 @@ impl VoicesQuestionScreen {
         SavePromptView {
             question: ctx.text(QUESTION).to_owned(),
             menu: self.menu.view(),
-            help: ctx.text_with("voices_question.help", &[]),
+            help: ctx.text_styled("voices_question.help", &[]),
         }
     }
 }

@@ -1,0 +1,93 @@
+---
+source: crates/ui/tests/it/key_caps.rs
+expression: h.snapshot()
+---
+                                                                                                    
+  Preparations                 Loadouts      Pack      Shop      Options      Fight!                
+                                                                                                    
+┌─ Units ──────┐┌─ Test Lord · Exile ──────────────┐┌─ Stock: weapons ─────────────────────────────┐
+│ Test Lord    ││ Weapon     Iron Sword      20/20 ││ (put back in stock)                          │
+│ Test Knight  ││ Weapon     Steel Sword     25/25 ││ Steel Spear     can't use spears             │
+│ Test Archer  ││ Weapon     -                     ││ Iron Axe        can't use axes               │
+│ Test Mage    ││ Armor      Leather Vest          ││ Iron Sword      Mt 5 Hit 90 Wt 2 Rng1 20/20  │
+│ Test Scout   ││ Accessory  -                     ││                                              │
+│              ││                                  ││                                              │
+│              ││ AS 5 with Iron Sword             ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+│              ││                                  ││                                              │
+└──────────────┘└──────────────────────────────────┘└──────────────────────────────────────────────┘
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                      choose · F  open · D  leave                                   
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aabbbbbbbbbbbbaaaaaaaaaaaaaaaaccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ddeeeeeeedddddddddeeeeeeeeeeeeeeeeeeedddddddddddddddddeeeeeeeeeeeeeeeedddddddddddddddddddddddddddddd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddggggggggggggggggggggggggggggggggggggggggggggggd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddggggggggggggggggggggggggggggggggggggggggggggggd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dggggggggggggggddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dffffffffffffffddffffffffffffffffffffffffffffffffffddffffffffffffffffffffffffffffffffffffffffffffffd
+dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhaahhhhhhhhaahhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:text_highlight bg:black
+c = fg:panel_bg bg:panel_border_focus
+d = fg:panel_border bg:panel_bg
+e = fg:text_highlight bg:panel_bg
+f = fg:text bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:text_dim bg:black
+--- overlays ---
+over  sprite 272,496 24x16  images/key_arrows.png 0,0 24x16
+under 377,497 13x14  key_bg
+under 377,496 13x1  key_edge
+under 377,511 13x1  key_edge
+under 376,497 1x14  key_edge
+under 390,497 1x14  key_edge
+under 457,497 13x14  key_bg
+under 457,496 13x1  key_edge
+under 457,511 13x1  key_edge
+under 456,497 1x14  key_edge
+under 470,497 1x14  key_edge
+--- glyph styles ---
+47,31  +3,+0 bold
+57,31  +3,+0 bold

@@ -10,6 +10,7 @@ pub mod glyph;
 pub mod playdate;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_content::{LineId, Side};
 use trpg_core::LEAD_ID;
 
@@ -28,8 +29,8 @@ pub struct LogView {
     /// The row after them that jumps to the furthest line seen: only after
     /// a jump back.
     pub back_to_latest: Option<BackRow>,
-    /// The help line: what the keys do here.
-    pub help: String,
+    /// The help line: what the keys do here, each key in a key span.
+    pub help: StyledText,
 }
 
 impl LogView {
@@ -117,7 +118,7 @@ pub fn view(ctx: &Ctx, history: &History, focus: usize) -> LogView {
         title: ctx.text("dialogue.log.title").to_owned(),
         rows: rows.collect(),
         back_to_latest,
-        help: ctx.text_with("dialogue.log.help", &[]),
+        help: ctx.text_styled("dialogue.log.help", &[]),
     }
 }
 

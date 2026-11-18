@@ -5,6 +5,7 @@
 
 use crate::prelude::*;
 use crate::widgets::MenuView;
+use shuyi_ui::text::StyledText;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,7 +17,7 @@ pub struct ModeSelectView {
     /// The line explaining each mode, in the menu's order.
     pub lines: Vec<ModeLineView>,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// The line explaining one mode.

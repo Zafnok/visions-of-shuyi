@@ -51,6 +51,16 @@ pub fn fill_text(text: &str, lang: &str, keys: HelpKeys<'_>, args: &Args<'_>) ->
     shuyi_ui::text::fill(text, lang, args, |name| key_text(name, keys))
 }
 
+/// [`fill_placeholders`] in spans, as the player of `ctx` sees them: each
+/// key's name in a key span, drawn as a key cap (ticket 0254), the arrow
+/// keys one span ([`Shuyi`](crate::screen::Shuyi)'s `key_text_styled`).
+pub fn fill_styled(ctx: &crate::screen::Ctx, text: &str) -> shuyi_ui::text::StyledText {
+    use shuyi_ui::GameData;
+    let keys = ctx.help_keys();
+    let lookup = |name: &str| ctx.game.key_text_styled(name, keys);
+    shuyi_ui::text::fill_styled_with(text, SOURCE_LANG, &[], &[], lookup)
+}
+
 /// What a `{name}` placeholder that names a key says ([`fill_text`]):
 /// `{Cursor}` the cursor keys, `{Select}` the key that picks on the map
 /// ([`select_action`]: Confirm's while Select has no key), `{Action}` the
@@ -220,7 +230,7 @@ mod tests {
         let tip = |id: &str| {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
             let how = tip.and_then(|t| t.how.as_deref());
-            how.map(|h| h.replace('\n', " ")).unwrap_or_default()
+            how.map_or_default(|h| h.replace('\n', " "))
         };
         let default = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let mut split = content

@@ -57,6 +57,16 @@ What the scenes and the bible say the fights hold:
   exist.
 - *The Ossuary Gate*: wardens at a low gate in the hillside.
 
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): the skirmish generator (`cargo xtask skirmish new`, 0510:
+`crates/xtask/src/skirmish.rs` and `crates/bots/src/skirmish.rs`, about
+1,440 lines) has made none of Act 1's battles. All 9 non-story battles
+were made by hand, and none of the 34 `skirmish_*` templates in
+`characters.ron` is placed. So this ticket builds its first skirmish
+with the generator, to show whether it is enough. 0522 (more layouts
+and knobs for it) is parked until this result is in.
+
 ## Nick input
 
 None. No check after merge (Nick, 2026-10-21): `frame-png` pictures of
@@ -84,6 +94,13 @@ checklist.
   if 0852 has made her a unit; else 0852 adds her slots).
 - `cargo shuyi autobalance --stage <id> --apply` and `cargo xtask playtest
   <id> --bot all` for each; the reports in the PR.
+- The first skirmish (*Brennish Outriders* or *The Ossuary Gate*, an
+  optional one, so a weak result guards no path) generated with `cargo
+  xtask skirmish new --kind fixed` (`docs/playtesting.md`, *Generating
+  skirmishes*), then edited by hand only where the scene asks for
+  something the tool can't make. The Completion notes say what the tool
+  made, what had to be changed by hand and why, and whether 0522 should
+  go ahead, change, or be dropped together with the unused templates.
 
 **Out (do not do):**
 - Chapters 4 and 5's skirmishes (1071), the story battles (0852, 0853),
@@ -97,7 +114,9 @@ battles about 70 lines each, a winning fixture each, the tests, the
 ticket file).
 
 1. Read 1071's files and notes, the four scenes, `world-structure.md`.
-2. One skirmish at a time: map, battle, node, winning fixture.
+2. One skirmish at a time: map, battle, node, winning fixture. The first
+   one from `cargo xtask skirmish new --kind fixed`, as the Scope says;
+   keep its command line in the Completion notes.
 3. The arrival chain, as the Scope says for each order.
 4. Autobalance and playtest each; `frame-png` pictures.
 

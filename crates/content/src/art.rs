@@ -179,8 +179,8 @@ pub fn check_references(arts: &ArtTable, items: &ItemTable) -> Vec<ContentError>
                 Some(_) => continue,
             };
             let e = ContentError::new(&display, format!("weapon \"{}\": {problem}", id.0));
-            let line =
-                bundle::file(ITEMS_PATH).and_then(|src| line_of(src, &format!("id: \"{}\"", id.0)));
+            let line = bundle::file(ITEMS_PATH)
+                .and_then(|src| line_of(&src, &format!("id: \"{}\"", id.0)));
             errors.push(match line {
                 Some(l) => e.at(l, None),
                 None => e,

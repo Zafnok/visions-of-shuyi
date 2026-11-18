@@ -99,7 +99,12 @@ pub fn paint(ctx: &Ctx, view: &ClassChangeView, buf: &mut GlyphBuffer) {
         ClassChangeBody::Result(None) | ClassChangeBody::Done => {}
     }
     let bottom = i32::from(buf.height()) - 1;
-    buf.print(1, bottom, &view.help, c(UiColor::TextDim), black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::TextDim), black),
+    );
 }
 
 /// The title, the unit's line and the seals in stock for the focused
@@ -231,8 +236,7 @@ fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
         .ask
         .keys
         .as_ref()
-        .map(shuyi_ui::text::StyledText::plain)
-        .unwrap_or_default();
+        .map_or_default(shuyi_ui::text::StyledText::plain);
     let lines = [
         (question.ask.text.as_str(), UiColor::Text),
         (question.cost.as_str(), UiColor::Text),

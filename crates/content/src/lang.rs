@@ -130,7 +130,7 @@ pub fn english_ui() -> &'static BTreeMap<String, String> {
     static ENGLISH_UI: OnceBox<BTreeMap<String, String>> = OnceBox::new();
     ENGLISH_UI.get_or_init(|| {
         let path = format!("{LANG_DIR}/{}/ui.ron", LangCode::default());
-        let english = bundle::file(&path).map(|source| english_from_source(&path, source));
+        let english = bundle::file(&path).map(|source| english_from_source(&path, &source));
         Box::new(english.and_then(Result::ok).unwrap_or_default())
     })
 }
@@ -164,11 +164,13 @@ pub fn pack_from_files(
 pub fn load(data: Option<DataText>) -> Result<Lang, Vec<ContentError>> {
     let prefix = format!("{LANG_DIR}/");
     let paths = bundle::files_under(LANG_DIR);
+    let sources: Vec<_> = paths.iter().map(|path| bundle::file(path)).collect();
     let files: Vec<LangFile<'_>> = paths
         .iter()
-        .map(|path| LangFile {
+        .zip(&sources)
+        .map(|(path, source)| LangFile {
             path: path.strip_prefix(&prefix).unwrap_or(path),
-            source: bundle::file(path),
+            source: source.as_deref(),
         })
         .collect();
     from_files(&files, data, |path| {

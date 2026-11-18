@@ -76,7 +76,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
             paint_box(ctx, view, &o.title, &lines, buf);
         }
         Some(DialogView::Question(q)) => {
-            pd::ask(ctx, buf, &q.question, Answers::Hint(&q.answers));
+            pd::ask(ctx, buf, &q.question, Answers::Hint(&q.answers.plain()));
         }
         None => {}
     }

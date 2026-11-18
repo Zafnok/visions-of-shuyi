@@ -539,9 +539,9 @@ fn a_reclass_or_a_stowed_item_is_worth_stopping_for() {
 fn the_help_line_follows_the_page() {
     let c = ctx();
     let mut pb = progress();
-    assert_eq!(help(&c, &pb), "f skip · hold f fast");
+    assert_eq!(help(&c, &pb).plain(), "f skip · hold f fast");
     pb.confirm();
-    assert_eq!(help(&c, &pb), "f continue");
+    assert_eq!(help(&c, &pb).plain(), "f continue");
 }
 
 #[test]

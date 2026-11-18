@@ -7,6 +7,7 @@ use super::Tab;
 use crate::prelude::*;
 use crate::screens::battle::view::ShopScreenView;
 use crate::widgets::AskView;
+use shuyi_ui::text::StyledText;
 use trpg_core::CharacterId;
 
 /// The whole screen, as it is this frame.
@@ -27,7 +28,7 @@ pub struct PreparationsView {
     /// in the message's place, its keys on the help line.
     pub leave_question: Option<AskView<bool>>,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// One tab.

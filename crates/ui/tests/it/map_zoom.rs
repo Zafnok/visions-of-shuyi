@@ -240,6 +240,8 @@ fn the_left_handed_key_and_the_right_trigger_zoom_too() {
     let mut h = battle_with(left, "sprite", "s j a j j");
     h.keys("p");
     assert_eq!(skin_zoom(&h), Some(MapZoom::X1));
+    // The toggles show once the phase banner has gone (0445).
+    h.wait(3.0);
     assert!(status(&h).starts_with("p zoom: 1× · "), "{}", status(&h));
     for (kind, name) in [
         (PadKind::Xbox, "RT"),
@@ -249,6 +251,7 @@ fn the_left_handed_key_and_the_right_trigger_zoom_too() {
         let mut h = quick_battle("sprite");
         h.use_pad(kind).pad("RightTrigger");
         assert_eq!(skin_zoom(&h), Some(MapZoom::X1), "{kind:?}");
+        h.wait(3.0);
         let status = status(&h);
         assert!(
             status.starts_with(&format!("{name} zoom: 1× · ")),
@@ -278,7 +281,7 @@ fn a_menu_opens_beside_its_unit_at_twice_the_size() {
 
 /// The sides the map goes on past in the map scene: left, right, up, down.
 fn more(h: &Harness) -> [bool; 4] {
-    let m = h.map_scene().map(|s| s.more).unwrap_or_default();
+    let m = h.map_scene().map_or_default(|s| s.more);
     [m.left(), m.right(), m.up(), m.down()]
 }
 

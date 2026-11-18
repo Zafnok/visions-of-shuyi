@@ -399,9 +399,7 @@ fn menu_line(
     uses_left: u8,
     weapon: Option<(u32, u32)>,
 ) -> String {
-    let text = cost
-        .map(|c| cost_text(words, c, uses_left))
-        .unwrap_or_default();
+    let text = cost.map_or_default(|c| cost_text(words, c, uses_left));
     let weapon = match (cost, weapon) {
         (Some(SkillCost::Durability(_)), Some((left, max))) => {
             let weapon = words.text_with("battle.skill.weapon", &[("left", &left), ("max", &max)]);
@@ -449,7 +447,7 @@ pub fn skill_menu(
                 _ => item,
             };
             let skill = state.skills().get(&c.skill);
-            let note = skill.map(|s| effect_text(words, s)).unwrap_or_default();
+            let note = skill.map_or_default(|s| effect_text(words, s));
             item.with_note(note).with_value(Line::Skill(c.clone()))
         })
         .collect();

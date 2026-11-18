@@ -461,37 +461,36 @@ pub fn left_out(path: &str) -> bool {
 
 /// Returns the UTF-8 contents of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), or `None` if it is missing or not valid UTF-8.
-pub fn file(path: &str) -> Option<&'static str> {
-    install().file(path).map(lent)
+/// Borrowed from a layer that lends its files, owned from one that reads a
+/// file each time it is asked (engine ticket 2262): a loader that keeps
+/// text past its parse copies what it keeps.
+pub fn file(path: &str) -> Option<Cow<'static, str>> {
+    install().file(path)
 }
 
 /// The test files' own file at `path`, with its human-facing name, when
 /// the story has a file there too: the entries a data table gains in a
 /// build with the test files (ADR-0057). [`file()`] reads the story's.
 /// `None` without test files, and for a path only one of the two has.
-pub fn test_part(path: &str) -> Option<(String, &'static str)> {
-    install()
-        .test_part(path)
-        .map(|(name, text)| (name, lent(text)))
+pub fn test_part(path: &str) -> Option<(String, Cow<'static, str>)> {
+    install().test_part(path)
 }
 
 /// Returns the raw bytes of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), e.g. an image, or `None` if it is missing.
-pub fn bytes(path: &str) -> Option<&'static [u8]> {
-    install().bytes(path).map(lent)
+/// Borrowed or owned as [`file()`]'s text is.
+pub fn bytes(path: &str) -> Option<Cow<'static, [u8]>> {
+    install().bytes(path)
 }
 
-/// A file the bundle hands out, kept for the rest of the run: every layer
-/// of the game's lends its files (`Cow::Borrowed`, engine ticket 2262), so
-/// this copies nothing; a file a layer read on demand (none does) would be
-/// leaked, as the loaders keep `&'static` text.
-fn lent<T: ?Sized + ToOwned>(file: Cow<'static, T>) -> &'static T
-where
-    T::Owned: Into<Box<T>>,
-{
-    match file {
-        Cow::Borrowed(file) => file,
-        Cow::Owned(file) => Box::leak(file.into()),
+/// The bytes of the file at `path` where its layer lends them for the
+/// whole run (`Cow::Borrowed`), as the Playdate's one-bit font and pictures
+/// keep them (ADR-0128 §3); `None` for a file missing, or one a layer reads
+/// each time it is asked: nothing is copied or leaked.
+pub fn lent_bytes(path: &str) -> Option<&'static [u8]> {
+    match bytes(path)? {
+        Cow::Borrowed(bytes) => Some(bytes),
+        Cow::Owned(_) => None,
     }
 }
 
@@ -736,14 +735,37 @@ mod tests {
         assert_eq!(file("data/does_not_exist.ron"), None);
     }
 
+    /// Ticket 1284: `lent_bytes` is a file's bytes where its layer lends
+    /// them, and `None` for a missing file or one a layer reads each time
+    /// it is asked (a pack read file by file), which it never copies.
+    #[test]
+    fn lent_bytes_are_what_a_layer_lends_and_never_a_file_read_on_demand() {
+        use shuyi_assets::pack::{self, Content, InMemory, Index, PackInfo};
+        let atlas = "fonts/atlas.png";
+        let lent = lent_bytes(atlas).unwrap_or_default();
+        assert!(lent.starts_with(b"\x89PNG"));
+        assert_eq!(Some(lent), bytes(atlas).as_deref());
+        assert_eq!(lent_bytes("fonts/nope.png"), None);
+        let info = PackInfo::new("t", None, shuyi_core::ContentHash::default());
+        let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
+        let packed: &'static [u8] = pack::write(&info, &files).leak();
+        let index = Index::read(packed, "t").unwrap();
+        let source: &'static InMemory = Box::leak(Box::new(InMemory::new(packed)));
+        let on_demand = leaked(vec![index.into_layer(DISPLAY_ROOT, source)]);
+        reading(on_demand, || {
+            assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
+            assert_eq!(lent_bytes("a.txt"), None);
+        });
+    }
+
     #[test]
     fn reads_binary_file() {
         let png = bytes("fonts/atlas.png").unwrap_or_default();
         assert!(png.starts_with(b"\x89PNG"));
         assert_eq!(bytes("fonts/nope.png"), None);
         assert_eq!(
-            bytes("data/palette.ron").map(<[u8]>::len),
-            file("data/palette.ron").map(str::len)
+            bytes("data/palette.ron").map(|bytes| bytes.len()),
+            file("data/palette.ron").map(|text| text.len())
         );
     }
 

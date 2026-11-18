@@ -723,11 +723,7 @@ impl BattleState {
                 .as_ref()
                 .map(|a| a.durability)
                 .or(active_durability),
-            notes: step
-                .art
-                .as_ref()
-                .map(|a| a.effect.notes())
-                .unwrap_or_default(),
+            notes: step.art.as_ref().map_or_default(|a| a.effect.notes()),
             strikes,
         })
     }

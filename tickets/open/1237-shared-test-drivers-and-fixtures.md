@@ -1,6 +1,6 @@
 ---
 id: "1237"
-title: "Shared test drivers and fixtures: the battle screen's in battle::testing, a tests/it support module, a ClassDef fixture, and behavior tests on views"
+title: "Shared test drivers and fixtures: the battle screen's in battle::testing, a tests/it support module, fixtures for the content definitions, and behavior tests on views"
 type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
@@ -40,6 +40,24 @@ although shared modules exist:
   `ResultsScreen::view` (`screens/results.rs:216`) answer, as
   `ch01_lessons.rs:683` already does.
 
+2026-11-17 friction sweep
+([report](../../docs/research/friction-2026-11-17.md), bucket B3 with
+0258 and 0187): adding one field to a definition edits dozens of
+literals, so the fixture covers every definition, not only `ClassDef`.
+Re-counted on 2026-11-17 (`grep -rn "<Type> {" crates`, less the
+definitions): `ClassDef` 44 literals in 15 files, `SkillDef` 24 in 11,
+`SpellDef` 23 in 8, `ArtDef` 13 in 10, `BattleDef` 9 in 4; none derives
+`Default` (`class.rs:101`, `skill.rs:388`, `spell.rs:109`, `art.rs:375`,
+`campaign.rs:213`). About 37 local test builders (`fn class(`,
+`fn item(`, `fn spell(`, `fn skill(`, `fn sword(`) sit in about 30
+files, for example `core/src/art/tests.rs:90`, `spell/tests.rs:71` and
+`content/src/spell.rs:544`. #725 (one `ItemDef` field) added
+`short_name: None` 10 times across 9 files, and the hook tickets
+1095-1099 will add more fields. `trpg-content` has 62 `Raw*` serde
+types (`item.rs` 10, `battle.rs` 8, `worldmap.rs` 7); some only turn a
+`String` into an id, which the core id types could deserialize
+themselves (they derive `Deserialize`).
+
 ## Nick input
 
 None. Tests only; nothing a player sees changes.
@@ -49,11 +67,20 @@ None. Tests only; nothing a player sees changes.
 **In:**
 - Battle-screen drivers and `p` in `battle::testing`.
 - `crates/ui/tests/it/support.rs`.
-- A `testing` feature on `trpg-core` with a `ClassDef` fixture.
+- A `testing` feature on `trpg-core` with a `ClassDef` fixture, and
+  (2026-11-17) fixtures for `SkillDef`, `SpellDef`, `ArtDef`,
+  `BattleDef` and a weapon `ItemDef`, replacing the local test builders.
 - The banner/help asserts of `tests/it/battle.rs` and the results
   asserts of `flow.rs` on views.
-- Expected size: 0 production lines; about 450-500 test lines removed
-  (drivers about 300, `ClassDef` about 200), about 80 added.
+- (2026-11-17) Content `Raw*` structs whose conversion only turns
+  strings into ids: deserialize the core type directly (step 6).
+- Expected size: 0 production lines but the fixtures; about 450-500 test
+  lines removed (drivers about 300, `ClassDef` about 200), about 80
+  added. The 2026-11-17 additions: about 900 test lines removed and 150
+  added (the other definitions and the builders), and step 6 about
+  400-600 more. Plan about 2,000 without step 6: if the measured size
+  before step 6 passes about 1,500, file step 6 as its own ticket
+  (`write-ticket`, blocked by this one) instead of doing it here.
 
 **Out (do not do):**
 - The frame text helpers (`row`, `shows`, `text`, `help` over cells)
@@ -63,7 +90,11 @@ None. Tests only; nothing a player sees changes.
 - `lord_menu` variants whose key steps or return types differ, and
   drivers with another receiver (`Stacked`, `Mode`).
 - Look tests and snapshots: they keep reading cells.
-- `classes()` and `unit()` fixtures beyond the `ClassDef` literal.
+- `classes()` and `unit()` fixtures beyond the definition literals.
+- Deriving `Default` on a production type whose zero value isn't a
+  sensible game value (the fixtures live in `testing`).
+- The serde mirror enums of `content/src/enums.rs`: 1230 deletes them.
+  Either order: step 6 skips any `Raw*` type 1230 already removed.
 
 **Either order with 1232:** if 1232 is done, the `tests/it` files it
 deleted need no change here; if not, change them here as well, and
@@ -85,9 +116,11 @@ the fixture here.
 2. **tests/it support.** Add `support.rs` (`mod support;` in
    `main.rs`) with `skip_scenes` (moved from `playthrough.rs`),
    `title()` (`Harness::with_layout(RIGHT_HANDED)`), `quick_battle()`
-   (`"Down f Left f f"`, asserting the screens are `title`,
+   (`"Down f Left f f f"`, asserting the screens are `title`,
    `game_flow`, `battle`) and `battle(h) -> &BattleScreen`. Replace
    the copies; one with other steps (`map_zoom.rs`'s skin) stays.
+   1289 (blocked by this ticket) then replaces `quick_battle()` with
+   `Harness::quick_battle()`.
 3. **ClassDef fixture.** In `crates/core`: feature `testing = []`;
    `#[cfg(any(test, feature = "testing"))] pub mod testing` with
    `pub fn class(id: &str) -> ClassDef` (tier 1, move 4, default stats
@@ -101,7 +134,24 @@ the fixture here.
    `help`); in `flow.rs`, the results screen's asserts read its view.
    Keep cell reads that check the whole frame end to end, and say so in
    a comment.
-5. **Measure** with `cargo xtask code-lines` and `cargo xtask pr-size`.
+5. **The other definitions** (2026-11-17). Beside `testing::class`, add
+   `skill(id)`, `spell(id)`, `art(id)`, `battle(id)` and `sword(id)`
+   (a weapon `ItemDef`), each the smallest valid value, and rewrite
+   each test literal as `<Type> { <its own fields>, ..testing::x("id") }`.
+   Replace each local builder whose body is one of these with a call;
+   one that sets more stays as a thin wrapper over the fixture. A
+   builder in `trpg-content`'s or `trpg-ui`'s tests uses the same
+   dev-dependency feature.
+6. **Raw structs that only convert ids** (2026-11-17). List the `Raw*`
+   types of `crates/content/src` and, for each whose conversion only
+   wraps strings into core ids (no lookup, no check, no default worked
+   out from other fields), deserialize the core type directly and
+   delete the `Raw*` type and its conversion. Keep any `Raw*` type
+   whose conversion checks or looks something up, and list the kept
+   ones with their reason in the completion notes. Content errors must
+   keep their file and line (`cargo test -p trpg-content` covers them).
+   See the size note in *Scope* before starting this step.
+7. **Measure** with `cargo xtask code-lines` and `cargo xtask pr-size`.
 
 ## Acceptance criteria
 
@@ -112,6 +162,12 @@ the fixture here.
       completion notes.
 - [ ] `grep -rn "affinities: vec!\[\]," crates/core crates/content`
       finds only the fixture in `crates/core/src/testing.rs`.
+- [ ] `SkillDef`, `SpellDef`, `ArtDef` and `BattleDef` test literals
+      each name only their own fields and end with `..testing::`; the
+      number of local `fn class(` / `fn skill(` / `fn spell(` /
+      `fn sword(` test builders is down from about 37, each one left
+      named in the completion notes.
+- [ ] Step 6 is done, or filed as its own ticket blocked by this one.
 - [ ] `tests/it/battle.rs` asserts the banner and the help bar through
       `BattleView`.
 - [ ] The same tests pass, none removed (`cargo test --no-fail-fast`).

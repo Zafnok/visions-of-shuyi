@@ -331,13 +331,25 @@ impl Harness {
     /// The ranges the battle map shows on `pos` ([`MapScene::tints_at`]).
     pub fn tints_at(&self, pos: Pos) -> Vec<RangeName> {
         let scene = self.map_scene();
-        scene.map(|s| s.tints_at(pos)).unwrap_or_default()
+        scene.map_or_default(|s| s.tints_at(pos))
     }
 
     /// The selected unit's path on the battle map, its own tile first;
     /// empty with none.
     pub fn path(&self) -> Vec<Pos> {
-        self.map_scene().map(|s| s.path).unwrap_or_default()
+        self.map_scene().map_or_default(|s| s.path)
+    }
+
+    /// Draws a hint's keys as key caps, as the game does (they are words
+    /// in tests by default, ticket 0254).
+    pub fn with_key_caps(&mut self) -> &mut Self {
+        self.ctx_mut().game.key_caps = true;
+        // The frame on screen too, not only the next one: `snapshot_as`
+        // is the engine harness's public call that redraws, here with the
+        // same device, no time passing.
+        let device = self.ctx().device;
+        let _ = self.snapshot_as(device);
+        self
     }
 
     /// Turns the one-time tips on (they are off in tests by default).
@@ -395,6 +407,9 @@ fn embedded_ctx() -> Ctx {
     match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.debug_tools = true;
+            // A hint's keys as their words, not caps: tests read what it
+            // says ([`Harness::with_key_caps`] for its look).
+            ctx.game.key_caps = false;
             // New Game plays the small test chapter, not the story.
             ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
             ctx

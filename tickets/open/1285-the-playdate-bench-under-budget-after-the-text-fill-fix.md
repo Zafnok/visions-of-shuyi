@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["engine#3219"]
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -35,11 +35,12 @@ None.
 ## Scope
 
 **In:**
-- Move the engine pin past engine#3219 (`engine-pin` skill for the PRs
-  it passes).
+- ~~Move the engine pin past engine#3219 (`engine-pin` skill for the PRs
+  it passes).~~ (done by the pin move of 2026-11-18)
 - Take `playdate/frame-instructions/battle-cursor-sweep` back out of
   `KNOWN_OVER` in `.github/workflows/ci.yml` (and its line in
-  `docs/targets.md`'s *Over budget*).
+  `docs/targets.md`'s *Over budget*); if 0185 is done, out of
+  `bench/known-over.txt` instead.
 - CI's `bench` job passes: the Playdate's `battle-cursor-sweep` under
   2,000,000 instructions, and the other scenarios at or below their
   numbers before PR #732 (`docs/targets.md`'s table brought up to date).
@@ -51,13 +52,14 @@ Estimate: none beyond the pin move's fixes.
 
 ## Implementation steps
 
-1. Once engine#3219 is on the engine's `main`, run the `engine-pin`
-   skill.
+1. ~~Once engine#3219 is on the engine's `main`, run the `engine-pin`
+   skill.~~ (done by the pin move of 2026-11-18)
 2. Read the PR's `bench` summary; update `docs/targets.md`.
 
 ## Acceptance criteria
 
-- `KNOWN_OVER` no longer names `battle-cursor-sweep`, and CI's `bench`
+- `KNOWN_OVER` (or 0185's `bench/known-over.txt`) no longer names
+  `battle-cursor-sweep`, and CI's `bench`
   job is green on the pin move's PR.
 
 ## Tests required

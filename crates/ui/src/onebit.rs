@@ -62,7 +62,7 @@ mod tests {
     fn the_games_font_draws_its_glyphs() {
         let atlas = trpg_content::font::load().unwrap();
         let bits = trpg_content::bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
-        let font = Font::new(&atlas, bits).unwrap();
+        let font = Font::new(&atlas, &bits).unwrap();
         let mut b = GlyphBuffer::with_spec(
             ConsoleSpec::PLAYDATE,
             Cell::new(' ', c("text"), c("panel_bg")),

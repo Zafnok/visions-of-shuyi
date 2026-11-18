@@ -16,7 +16,6 @@
 //! this module names the game's files and folders.
 use crate::prelude::*;
 
-use alloc::borrow::Cow;
 use alloc::collections::BTreeSet;
 
 pub use shuyi_assets::audio::{
@@ -51,7 +50,7 @@ pub fn files(music: Option<&dyn Fn(&str) -> Bytes>) -> Files<'_> {
 
 /// The embedded sound file named `file` in the manifest.
 fn embedded_sound(file: &str) -> Bytes {
-    bundle::bytes(&sound_path(file)).map(Cow::Borrowed)
+    bundle::bytes(&sound_path(file))
 }
 
 /// How errors name the sound file named `file` in the manifest.
@@ -209,10 +208,10 @@ mod tests {
         assert!(files.music.is_none());
         let m = load().unwrap_or_default();
         let file = m.sounds.values().flat_map(|s| &s.files).next();
-        let file = file.map(String::as_str).unwrap_or_default();
+        let file = file.map_or_default(String::as_str);
         assert_eq!(
             (files.sound)(file).as_deref(),
-            bundle::bytes(&sound_path(file))
+            bundle::bytes(&sound_path(file)).as_deref()
         );
         assert!((files.sound)(file).is_some());
         assert_eq!((files.sound)("sfx/nope.wav"), None);
@@ -226,9 +225,13 @@ mod tests {
     fn every_music_file_is_in_the_music_folder() {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../music");
         assert!(dir.is_dir(), "the {MUSIC_DIR}/ folder is missing");
-        let exists = |f: &str| std::fs::read(dir.join(f)).ok().map(Cow::Owned);
+        let exists = |f: &str| {
+            std::fs::read(dir.join(f))
+                .ok()
+                .map(alloc::borrow::Cow::Owned)
+        };
         let source = bundle::file(AUDIO_PATH).unwrap_or_default();
-        let errors = match from_source("a.ron", source, &files(Some(&exists))) {
+        let errors = match from_source("a.ron", &source, &files(Some(&exists))) {
             Ok(_) => vec![],
             Err(e) => e.iter().map(ToString::to_string).collect(),
         };

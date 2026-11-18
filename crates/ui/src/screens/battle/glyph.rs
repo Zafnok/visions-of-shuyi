@@ -17,6 +17,8 @@ pub mod rewind;
 pub mod shop;
 
 use crate::prelude::*;
+use shuyi_assets::font::CellWidths;
+use shuyi_ui::text::StyledText;
 use trpg_core::Phase;
 
 use super::banner::BannerKind;
@@ -24,7 +26,7 @@ use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use super::units::{faction_color, paint_hp_bar};
 use super::view::{
     BannerView, BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind,
-    NotesView, ObjectiveLine, PanelCellView, PanelUnitView, PanelView,
+    NotesView, ObjectiveLine, PanelCellView, PanelPreviewView, PanelUnitView, PanelView,
 };
 use super::{PopupKind, objective, stage};
 use crate::color::{Rgb, UiColor};
@@ -32,6 +34,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
+use crate::screens::playdate::{to_i32, wrap as wrap_words};
 use crate::tips as tip_box;
 use crate::tips::{LessonView, LessonsEndView};
 use crate::widgets::menu::{self, MenuView};
@@ -152,7 +155,8 @@ pub fn paint_lesson(ctx: &Ctx, scene: &MapScene, lesson: &LessonView, buf: &mut 
 pub fn lesson_rect(ctx: &Ctx, view: &BattleView) -> Option<Rect> {
     let lesson = view.lesson.as_ref()?;
     let at_bottom = lesson_at_bottom(ctx, &view.scene, lesson);
-    Some(tip_box::glyph::lesson_rect(lesson, at_bottom))
+    let widths = crate::widgets::help::frame_widths(ctx);
+    Some(tip_box::glyph::lesson_rect(lesson, at_bottom, &widths))
 }
 
 /// Whether the cells `tile` are in the map view's top half: their middle
@@ -161,11 +165,14 @@ pub fn in_top_half(tile: Rect) -> bool {
     tile.y + tile.h / 2 < MAP_VIEW.y + MAP_VIEW.h / 2
 }
 
-/// Paints the help line `help` and the debug hint `hint`, if any, at the
-/// right of the help row.
-fn paint_help(ctx: &Ctx, help: &str, hint: Option<&String>, buf: &mut GlyphBuffer) {
+/// Paints the help line `help`, its keys as key caps, and the debug hint
+/// `hint`, if any, at the right of the help row.
+fn paint_help(ctx: &Ctx, help: &StyledText, hint: Option<&String>, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    buf.print(1, HELP_ROW, help, c(UiColor::TextDim), c(UiColor::Black));
+    let colors = ctx
+        .palette
+        .text_colors_on(c(UiColor::TextDim), c(UiColor::Black));
+    buf.print_styled(1, HELP_ROW, help, colors);
     if let Some(hint) = hint {
         paint_debug_hint(&ctx.palette, hint, buf, HELP_ROW);
     }
@@ -325,34 +332,28 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     };
     let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg));
     buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
+    // The aimed preview's block first; the rest moves down under it.
+    let dy = panel
+        .preview
+        .as_ref()
+        .map_or(0, |p| paint_panel_preview(ctx, p, buf));
+    let top = TERRAIN_ROW + dy;
     if let Some(t) = &panel.terrain {
         // check-text: not a data name (the view's own)
         print_clipped(
             buf,
-            (TEXT_X, TERRAIN_ROW),
+            (TEXT_X, top),
             TEXT_W,
             &t.name,
             c(UiColor::TextHighlight),
         );
-        print_clipped(
-            buf,
-            (TEXT_X, TERRAIN_ROW + 1),
-            TEXT_W,
-            &t.bonuses,
-            c(UiColor::Text),
-        );
+        print_clipped(buf, (TEXT_X, top + 1), TEXT_W, &t.bonuses, c(UiColor::Text));
         if let Some(heals) = &t.heals {
-            print_clipped(
-                buf,
-                (TEXT_X, TERRAIN_ROW + 2),
-                TEXT_W,
-                heals,
-                c(UiColor::Text),
-            );
+            print_clipped(buf, (TEXT_X, top + 2), TEXT_W, heals, c(UiColor::Text));
         }
     }
     if let Some(unit) = &panel.unit {
-        paint_panel_unit(ctx, unit, buf);
+        paint_panel_unit(ctx, unit, buf, dy);
     }
     print_clipped(
         buf,
@@ -363,11 +364,36 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     );
 }
 
-/// The unit block: name (faction colour), class and level, HP with a bar,
-/// faction.
-fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
+/// The aimed spell, item or skill's block at the top of the side panel
+/// (1286, `look-and-feel.md` *Side panel*): its name, what it will do
+/// wrapped to the panel, then a rule. The rows it takes.
+fn paint_panel_preview(ctx: &Ctx, preview: &PanelPreviewView, buf: &mut GlyphBuffer) -> i32 {
     let c = |u| ctx.palette.get(u);
-    let y = UNIT_ROW;
+    // check-text: not a data name (the view's own)
+    let title = &preview.title;
+    print_clipped(
+        buf,
+        (TEXT_X, TERRAIN_ROW),
+        TEXT_W,
+        title,
+        c(UiColor::TextHighlight),
+    );
+    let mut y = TERRAIN_ROW + 1;
+    for line in wrap_words(&preview.text, TEXT_W) {
+        print_clipped(buf, (TEXT_X, y), TEXT_W, &line, c(UiColor::Text));
+        y += 1;
+    }
+    let rule = "─".repeat(TEXT_W);
+    print_clipped(buf, (TEXT_X, y), TEXT_W, &rule, c(UiColor::PanelBorder));
+    // The title, the lines and the rule.
+    y + 1 - TERRAIN_ROW
+}
+
+/// The unit block: name (faction colour), class and level, HP with a bar,
+/// faction; `dy` rows down, under the aimed preview's block.
+fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, dy: i32) {
+    let c = |u| ctx.palette.get(u);
+    let y = UNIT_ROW + dy;
     // check-text: not a data name (the view's own)
     print_clipped(
         buf,
@@ -383,11 +409,7 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         &unit.class_level,
         c(UiColor::Text),
     );
-    let hp = format!("{} {}/{}", unit.hp_name, unit.hp, unit.max);
-    print_clipped(buf, (TEXT_X, y + 2), TEXT_W, &hp, c(UiColor::Text));
-    let bar = Rect::new(HP_BAR_X, y + 2, HP_BAR_CELLS, 1);
-    let bg = c(UiColor::PanelBg);
-    paint_hp_bar(buf, &ctx.palette, bar, (unit.hp, unit.max), bg);
+    paint_panel_hp(ctx, unit, buf, y + 2);
     print_clipped(
         buf,
         (TEXT_X, y + 3),
@@ -396,7 +418,7 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         c(UiColor::TextDim),
     );
     // A blank row, the stats, a blank row, the weapon, the combat numbers.
-    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW);
+    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW + dy);
     let weapon_row = below + 1;
     match &unit.weapon {
         Some(weapon) => paint_panel_weapon(ctx, weapon, buf, weapon_row),
@@ -409,6 +431,39 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         ),
     }
     paint_panel_cells(ctx, &unit.combat, buf, weapon_row + 1);
+}
+
+/// The HP line at row `y` with its bar: `HP 6/17`, or with a heal aimed
+/// at the unit `HP 6 → 17/17` lit, the bar after it showing the HP it
+/// would have (1286).
+fn paint_panel_hp(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, y: i32) {
+    let c = |u| ctx.palette.get(u);
+    let (hp, shown, color) = match unit.hp_then {
+        Some(then) => (
+            format!("{} {} → {}/{}", unit.hp_name, unit.hp, then, unit.max),
+            then,
+            UiColor::TextHighlight,
+        ),
+        None => (
+            format!("{} {}/{}", unit.hp_name, unit.hp, unit.max),
+            unit.hp,
+            UiColor::Text,
+        ),
+    };
+    print_clipped(buf, (TEXT_X, y), TEXT_W, &hp, c(color));
+    // The bar where it always is, or after a longer line, kept inside
+    // (none when no cell is left: the meter draws no cell then).
+    let text_end = TEXT_X + to_i32(hp.chars().count()) + 1;
+    let x = HP_BAR_X.max(text_end);
+    let cells = HP_BAR_CELLS.min(TEXT_X + to_i32(TEXT_W) - x);
+    let bar = Rect::new(x, y, cells, 1);
+    paint_hp_bar(
+        buf,
+        &ctx.palette,
+        bar,
+        (shown, unit.max),
+        c(UiColor::PanelBg),
+    );
 }
 
 /// Paints `cells` two to a row from row `top`, the names dim and the
@@ -476,20 +531,24 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
                 .into_iter()
                 .chain(o.village.clone())
                 .chain([o.turn.clone()])
-                .map(|l| (l, UiColor::Text))
+                .map(|l| (l.into(), UiColor::Text))
                 .collect();
             if let Some(notes) = &o.notes {
-                lines.push((String::new(), UiColor::Text));
-                lines.push((notes.title.clone(), UiColor::TextDim));
-                lines.extend(notes.lines.iter().map(|l| (l.clone(), UiColor::Text)));
+                lines.push((StyledText::new(), UiColor::Text));
+                lines.push((notes.title.as_str().into(), UiColor::TextDim));
+                let text = notes
+                    .lines
+                    .iter()
+                    .map(|l| (l.as_str().into(), UiColor::Text));
+                lines.extend(text);
             }
-            let (_, h) = dialog_size(&o.title, &lines);
+            let (_, h) = dialog_size(&o.title, &lines, buf.widths());
             let top = notes_top(ctx, view, h);
             draw_dialog_at(ctx, buf, &o.title, &lines, top);
         }
         Some(DialogView::Question(q)) => {
             let lines = [
-                (q.question.clone(), UiColor::Text),
+                (q.question.as_str().into(), UiColor::Text),
                 (q.answers.clone(), UiColor::TextDim),
             ];
             draw_dialog(ctx, buf, "", &lines);
@@ -512,9 +571,9 @@ fn paint_notes(ctx: &Ctx, view: &BattleView, notes: &NotesView, buf: &mut GlyphB
     let lines: Vec<_> = notes
         .lines
         .iter()
-        .map(|l| (l.clone(), UiColor::Text))
+        .map(|l| (l.as_str().into(), UiColor::Text))
         .collect();
-    let (_, h) = dialog_size(&notes.title, &lines);
+    let (_, h) = dialog_size(&notes.title, &lines, buf.widths());
     let top = notes_top(ctx, view, h);
     draw_dialog_at(ctx, buf, &notes.title, &lines, top);
 }
@@ -561,10 +620,10 @@ pub fn box_top_in(area: Rect, h: i32, rows: &[i32]) -> i32 {
 
 /// The size (width, height) of the [`draw_dialog`] box of `lines` under
 /// `title`, in cells.
-fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
+fn dialog_size(title: &str, lines: &[(StyledText, UiColor)], widths: &CellWidths) -> (i32, i32) {
     let widest = lines
         .iter()
-        .map(|(l, _)| l.chars().count())
+        .map(|(l, _)| l.width(widths))
         .chain(core::iter::once(title.chars().count() + 2))
         .max()
         .unwrap_or(0);
@@ -576,8 +635,8 @@ fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
 /// Draws a box of `lines` (text and colour) centred on the map view, one
 /// blank column and row inside a double border; `title` over the top
 /// border.
-fn draw_dialog(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, lines: &[(String, UiColor)]) {
-    let (_, h) = dialog_size(title, lines);
+fn draw_dialog(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, lines: &[(StyledText, UiColor)]) {
+    let (_, h) = dialog_size(title, lines, buf.widths());
     draw_dialog_at(ctx, buf, title, lines, centred_top(h));
 }
 
@@ -587,19 +646,20 @@ fn draw_dialog_at(
     ctx: &Ctx,
     buf: &mut GlyphBuffer,
     title: &str,
-    lines: &[(String, UiColor)],
+    lines: &[(StyledText, UiColor)],
     top: i32,
 ) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let (w, h) = dialog_size(title, lines);
+    let (w, h) = dialog_size(title, lines, buf.widths());
     let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
     let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
         .with_border(c(UiColor::PanelBorder))
         .with_title(c(UiColor::TextHighlight));
     buf.panel(rect, &look, Some(title).filter(|t| !t.is_empty()));
     for (y, (line, color)) in (rect.y + 2..).zip(lines) {
-        buf.print(rect.x + 2, y, line, c(*color), bg);
+        let colors = ctx.palette.text_colors_on(c(*color), bg);
+        buf.print_styled(rect.x + 2, y, line, colors);
     }
 }
 
@@ -692,29 +752,75 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer)
     }
 }
 
-/// Paints the bar under the map and panel: the toggles' state at the right
-/// of the message row, the message at its left, then the help row.
+/// Paints the bar under the map and panel (0445): the toggles' row, the
+/// danger-zone hint from where the help starts and auto-end above the
+/// help's end turn, or a combat's or a preview's line at its left; then
+/// the help row. A note or a warning is painted over the map just above
+/// the bar.
 fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
     buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
-    let w = i32::try_from(view.status.chars().count()).unwrap_or(0);
-    buf.print(
-        HELP_BAR.w - 1 - w,
-        HELP_BAR.y,
-        &view.status,
-        c(UiColor::TextDim),
-        black,
-    );
-    if let Some(m) = &view.message {
-        let color = match m.kind {
-            MessageKind::Said => UiColor::Text,
-            MessageKind::Toast => UiColor::TextHighlight,
-        };
-        buf.print(1, HELP_BAR.y, &m.text, c(color), black);
+    if let Some(t) = &view.toggles {
+        let colors = || ctx.palette.text_colors_on(c(UiColor::TextDim), black);
+        buf.print_styled(1, HELP_BAR.y, &t.left, colors());
+        if let Some((auto_end, column)) = &t.auto_end {
+            let x = 1 + i32::try_from(*column).unwrap_or(0);
+            buf.print_styled(x, HELP_BAR.y, auto_end, colors());
+        }
+    }
+    match &view.message {
+        Some(m) if m.kind == MessageKind::Said => {
+            buf.print(1, HELP_BAR.y, &m.text, c(UiColor::Text), black);
+        }
+        Some(m) if m.kind == MessageKind::Toast => paint_note(ctx, &m.text, buf),
+        Some(m) => paint_warning(ctx, &m.text, buf),
+        None => {}
     }
     paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
 }
+
+/// Paints a note on a shaded strip across the map's bottom rows, just
+/// above the bar: one row, more if it has to wrap to the map's width.
+fn paint_note(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
+    let lines = wrap_words(text, MESSAGE_W);
+    let rows = i32::try_from(lines.len()).unwrap_or(1);
+    let top = HELP_BAR.y - rows;
+    buf.fill_rect(
+        Rect::new(MAP_VIEW.x, top, MAP_VIEW.w, rows),
+        Cell::new(' ', fg, bg),
+    );
+    for (y, line) in (top..).zip(&lines) {
+        buf.print(MAP_VIEW.x + 1, y, line, fg, bg);
+    }
+}
+
+/// Paints a warning in a box at the map's bottom left, just above the
+/// bar, wrapped to fit inside the map.
+fn paint_warning(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
+    let lines = wrap_words(text, WARNING_W);
+    let cells = |s: &String| i32::try_from(s.chars().count()).unwrap_or(0);
+    let w = lines.iter().map(cells).max().unwrap_or(0) + 4;
+    let h = i32::try_from(lines.len()).unwrap_or(1) + 2;
+    let rect = Rect::new(MAP_VIEW.x, HELP_BAR.y - h, w, h);
+    let look = PanelLook::new(BoxStyle::Single, fg, bg);
+    buf.panel(rect, &look.with_border(fg), None);
+    for (y, line) in (rect.y + 1..).zip(&lines) {
+        buf.print(rect.x + 2, y, line, fg, bg);
+    }
+}
+
+/// The widest line of a note: the map's width less a blank column each
+/// side.
+const MESSAGE_W: usize = MAP_VIEW.w.unsigned_abs() as usize - 2;
+
+/// The widest line of a warning: the map's width less the box's border
+/// and a blank column each side.
+const WARNING_W: usize = MAP_VIEW.w.unsigned_abs() as usize - 4;
 
 #[cfg(test)]
 pub(crate) mod tests;

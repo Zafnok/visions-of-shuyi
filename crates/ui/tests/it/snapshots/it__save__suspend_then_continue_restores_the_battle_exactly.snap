@@ -33,7 +33,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                  arrows move · f select · d back                          F2 debug 
+                                       move · F  select · D  back                          F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -66,7 +66,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffaaffffffffffaafffffaaaaaaaaaaaaaaaaaaaaaaaaaaffffffffa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -82,3 +82,17 @@ under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=464,288 272x1
 under sprite 0,0 64x496  title/fields_b_day.png 0,0 32x248 flip
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip
 over  sprite 192,16 416x248  title/logo.png 0,0 52x31
+over  sprite 280,496 24x16  images/key_arrows.png 0,0 24x16
+under 369,497 13x14  key_bg
+under 369,496 13x1  key_edge
+under 369,511 13x1  key_edge
+under 368,497 1x14  key_edge
+under 382,497 1x14  key_edge
+under 465,497 13x14  key_bg
+under 465,496 13x1  key_edge
+under 465,511 13x1  key_edge
+under 464,497 1x14  key_edge
+under 478,497 1x14  key_edge
+--- glyph styles ---
+46,31  +3,+0 bold
+58,31  +3,+0 bold

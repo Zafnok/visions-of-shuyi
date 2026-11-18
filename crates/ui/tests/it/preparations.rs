@@ -290,7 +290,7 @@ fn help_and_unit(h: &Harness) -> (String, String) {
         PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
         _ => None,
     };
-    (view.help, unit.unwrap_or_default())
+    (view.help.plain(), unit.unwrap_or_default())
 }
 
 /// Ticket 0487: in a unit's slots, Next unit (`s`, right-handed) changes

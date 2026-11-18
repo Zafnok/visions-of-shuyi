@@ -95,7 +95,9 @@ leaves this ticket's out. Run it again whenever `main` moves.
   (ADR-0118 §2). A test that needs plot facts keeps them in
   `content/tests/`.
 - No build that embeds the content is uploaded as a workflow artifact
-  (ADR-0117 §4).
+  or kept in the Actions cache (ADR-0117 §4): a new job that checks out
+  the content gives its `rust-cache` step `cache-targets: false`, as the
+  xtask test `no_job_with_private_files_caches_or_uploads_a_build` checks.
 - **No bare `@word`** in either repository's titles, bodies, commits or
   comments: GitHub reads it as a mention. A dialogue directive goes in
   backticks (`` `@music` ``) or loses its `@`.

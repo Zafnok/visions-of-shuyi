@@ -189,14 +189,14 @@ fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
         );
         assert_eq!(stats_shown(page.as_deref()), 0);
         // The help is the page's: it is still revealing its stats.
-        assert_eq!(s.view(&c).help, "f skip · hold f fast");
+        assert_eq!(s.view(&c).help.plain(), "f skip · hold f fast");
         // It reveals its stats and then waits, however long.
         assert!(!wait(&mut s, 30.0));
         let ResultsBody::LevelUp(page) = s.view(&c).body else {
             panic!("the level-up page is up");
         };
         assert_eq!(stats_shown(page.as_deref()), 7);
-        assert_eq!(s.view(&c).help, "f continue");
+        assert_eq!(s.view(&c).help.plain(), "f continue");
         assert!(!press(&mut s, Action::CursorDown));
         assert!(press(&mut s, key), "{key:?} closes the last page");
     }
@@ -267,7 +267,10 @@ fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
     );
     assert_eq!(t.bonus, None);
     assert_eq!(t.units, [] as [crate::screens::results::view::UnitView; 0]);
-    assert_eq!(s.view(&ctx()).help, "f continue");
+    assert_eq!(s.view(&ctx()).help.plain(), "f continue");
+    // Ticket 0257: the key in a key span.
+    let help = s.view(&ctx()).help;
+    assert_eq!(crate::widgets::help::key_spans(&help), ["f"]);
     assert!(press(&mut s, Action::Confirm));
 }
 
@@ -319,7 +322,7 @@ fn rows_show_the_level_reached_and_mark_the_level_up() {
         ("EXP", 90, 100)
     );
     assert_eq!(first.level_up, None);
-    assert_eq!(s.view(&ctx()).help, "f skip · hold f fast");
+    assert_eq!(s.view(&ctx()).help.plain(), "f skip · hold f fast");
     wait(&mut s, INTRO_S + FILL_S * 0.5);
     // 100 EXP exactly: the level is reached.
     assert_eq!(shown(&s)[0], 100);
@@ -335,7 +338,7 @@ fn rows_show_the_level_reached_and_mark_the_level_up() {
     assert_eq!((units[1].level.as_str(), units[1].exp), ("Lv 1", 31));
     assert_eq!((units[2].level.as_str(), units[2].exp), ("Lv 1", 0));
     assert!(units[1].level_up.is_none() && units[2].level_up.is_none());
-    assert_eq!(s.view(&ctx()).help, "f continue");
+    assert_eq!(s.view(&ctx()).help.plain(), "f continue");
 }
 
 #[test]
