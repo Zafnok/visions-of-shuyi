@@ -110,7 +110,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
@@ -144,7 +149,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
@@ -222,7 +232,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
@@ -252,7 +267,12 @@ jobs:
           content: "true"
           required: "true"
       - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3

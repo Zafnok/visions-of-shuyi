@@ -5,10 +5,10 @@ type: bug
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-17
 ---
 
 # 0171 — The game's workflows cache no build that embeds its private content
@@ -210,20 +210,20 @@ description.
 
 ## Acceptance criteria
 
-- [ ] The Completion notes list, for each cache checked in step 1, its
+- [x] The Completion notes list, for each cache checked in step 1, its
       key, OS and counts, and say which case followed.
-- [ ] `.github/workflows/cache-audit.yml` is not in the merged tree.
-- [ ] Case A: every job in the table has `cache-targets: false`; `gh
+- [x] `.github/workflows/cache-audit.yml` is not in the merged tree.
+- [ ] Case A (after the merge: the deletion): every job in the table has `cache-targets: false`; `gh
       cache list --ref refs/heads/main` after the merge and the deletion
       shows no `v0-rust-` cache older than the merge commit for those
       jobs; the duration table is in the Completion notes.
 - [ ] Case B: every job in the table states both defaults with the
       comment.
-- [ ] `cargo test -p xtask no_job_with_private_files` passes, and fails
+- [x] `cargo test -p xtask no_job_with_private_files` passes, and fails
       when the guard is taken off one job (tried, and said in the notes).
-- [ ] ADR-0117 has the amendment.
-- [ ] `zizmor` (security.yml) still passes on the changed workflows.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] ADR-0117 has the amendment.
+- [x] `zizmor` (security.yml) still passes on the changed workflows.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -233,5 +233,92 @@ description.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Step 1, the audit (case A).** A temporary `cache-audit.yml` (run
+44205119959 on PR 741, then deleted in the same PR) restored each of
+`main`'s rust-cache caches by its exact key, with the paths rust-cache
+logged (`~/.cargo/{bin,.crates.toml,.crates2.json,registry,git}` and
+`target`), and printed counts only. The needles were one line each, of 30
+bytes or more and in no public file, from the first file of the content's
+`battles/`, `dialogue/`, `maps/` and `chapters/` (one line, not 64 bytes:
+`grep -F` reads each line of a multi-line needle as its own pattern, and
+the public files are embedded in every build).
+
+| Key (`…-7b3c7a25`) | OS | files in `target` | workspace names | `out/onebit-content` | `target/playdate` | needles |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `v0-rust-clippy-Linux-x64-cdee7d24` | Linux | 1507 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-test-Linux-x64-cdee7d24` | Linux | 1530 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-test-Windows_NT-x64-6e22454c` | Windows | 1655 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-test-Darwin-arm64-a38dd7d7` | macOS | 1448 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-wasm-Linux-x64-cdee7d24` | Linux | 1877 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-no-std-Linux-x64-cdee7d24` | Linux | 626 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-playdate-Linux-x64-cdee7d24` | Linux | 2015 | 0 | 0 | **363** | absent ×4 |
+| `v0-rust-docs-Linux-x64-0c88e82e` | Linux | 1368 | **24** | 0 | 0 | absent ×4 |
+| `v0-rust-coverage-Linux-x64-cdee7d24` | Linux | 2638 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-tickets-Linux-x64-cdee7d24` | Linux | 1014 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-bench-bench-Linux-x64-cdee7d24` | Linux | 2982 | 0 | 0 | 0 | absent ×4 |
+| `v0-rust-build-Linux-x64-a74c6f26` (playtest) | Linux | 986 | 0 | 0 | 0 | absent ×4 |
+
+rust-cache's cleaning does delete the workspace crates' builds in the
+profile folders, but it leaves folders of `target/` that are no profile:
+`playdate`'s cache holds `target/playdate/` (the packed device game,
+`pdex.bin` linked with `trpg-content` and the converted pictures and
+sounds; pdc compresses it, which is why the needles miss) and `docs`'s
+holds `target/doc/` (the workspace's rustdoc pages). Counts above 0, so
+**case A**. Not on `main` to check: `mutants.yml`'s and `story-kit.yml`'s
+caches (none listed on 2026-11-17; their scheduled runs' caches had been
+evicted). They get the same guard.
+
+**Step 2.** Every job of the table's `rust-cache` step has
+`cache-targets: false` with the comment (17 steps: `ci.yml` 10,
+`playtest.yml` 1, `mutants.yml` 4, `story-kit.yml` 2). The registry, git
+and installed tools stay cached. The caches are deleted after the merge
+(the commands are in the PR's description, "After merging").
+
+**Step 4.** `crates/xtask/src/workflow_guard.rs` (test-only) holds the
+check; `no_job_with_private_files_caches_or_uploads_a_build` in
+`main.rs`'s tests runs it over every workflow, and three made-up workflows
+test the check itself (passing; unguarded `rust-cache` and
+`cache-all-crates: "true"`; an upload of `target/release/x` and
+`dist/export/web` and an `actions/cache` of `target`). Taking
+`cache-targets: false` off `playtest.yml`'s `build` failed it with
+`playtest.yml: job `build`: step `Swatinem/rust-cache@…`: the job checks
+out the private files: …`; put back, it passes.
+
+**Deviation:** the check allows three uploads, not one. Besides
+`playtest.yml` `build` `target/release/xtask` (ADR-0117 §4), `ci.yml`
+`bench` uploads `dist/bench` (the numbers and table) and `release.yml`
+`package` uploads `dist/release/kept/*` (the reports and SHA-256, which
+its own step checks): both under `dist/`, neither a build. Each is in
+`ALLOWED_UPLOADS` with its reason, and the test checks each is still
+there.
+
+**Step 5.** ADR-0117 §4 has the amendment (its title now "…artifact or
+cache"; the ADR index row says so); §3's job list did not change. The
+`content-change` skill's "never in public" says a new job that checks out
+the content sets `cache-targets: false`, as the test checks.
+
+**Cost** (minutes, each job on `main`'s last three successful CI pushes
+before the change, and this PR's first run without the target cache,
+which also restored no registry: an upper bound; the merged runs keep the
+registry):
+
+| Job | before (3 runs) | mean | after (PR 741) | change |
+| --- | --- | ---: | ---: | ---: |
+| clippy | 1.3 / 1.0 / 1.6 | 1.3 | 1.9 | +0.6 |
+| test (Windows) | 14.6 / 14.0 / 10.3 | 13.0 | 18.5 | +5.5 |
+| test (Linux) | 10.9 / 8.2 / 10.7 | 9.9 | 13.5 | +3.6 |
+| test (macOS) | 9.2 / 10.6 / 8.9 | 9.6 | 15.6 | +6.0 |
+| wasm | 2.6 / 2.2 / 2.8 | 2.5 | 4.0 | +1.5 |
+| no-std | 1.3 / 1.0 / 1.6 | 1.3 | 2.0 | +0.7 |
+| playdate | 4.7 / 4.1 / 6.4 | 5.1 | 4.8 | -0.3 |
+| docs | 0.8 / 0.7 / 1.3 | 0.9 | 1.2 | +0.3 |
+| coverage | 13.5 / 9.9 / 9.3 | 10.9 | 12.4 | +1.5 |
+| tickets | 1.7 / 1.6 / 2.8 | 2.0 | 2.7 | +0.7 |
+| bench | 7.9 / 6.8 / 8.1 | 7.6 | 11.2 | +3.6 |
+| playtest `build` | 3.2 / 5.1 / 3.2 | 3.8 | 4.1 | +0.3 |
+
+About +1 to +6 minutes a job (the slowest: macOS `test` +6.0, Windows `test` +5.5, `bench` +3.6); `playdate` and `coverage` barely move, as most of their time is not the dependencies' build. The "after" runs `doc-tests` did not run (no docs-only change). Measure the merged runs again if the minutes matter: they keep the registry cache.
+
+Engine friction: estimate 200 lines (a text check of the workflows and its
+tests, like `mentions.rs`), measured 192 (1.0×), under 2×.
+PR size: estimate 500, measured 485.
