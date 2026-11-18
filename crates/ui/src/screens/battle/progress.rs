@@ -593,7 +593,7 @@ pub fn class_line(words: Words<'_>, page: &ClassPage) -> String {
 
 /// The portrait of the character `id`: the lead's id stands for the
 /// portrait of the gender the player picked.
-fn portrait_of<'a>(
+pub(super) fn portrait_of<'a>(
     portraits: &'a BTreeMap<String, Portrait>,
     lead: &LeadProfile,
     id: Option<&str>,
