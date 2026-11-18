@@ -43,13 +43,17 @@
 //!   terrain.
 //! - **Threat** ([`threat_area`]): stoppable tiles plus attack tiles for each
 //!   of the unit's weapon ranges. A unit with no ranges (no usable weapon)
-//!   threatens nothing. The **danger zone** ([`danger_zone`]) is the union of
-//!   the threat areas of every unit hostile to a faction.
+//!   threatens nothing. What a unit **threatens** ([`threat_tiles`]) is its
+//!   threat area, except that a unit whose AI never moves
+//!   ([`AiBehavior::Stationary`]) threatens only from where it stands: its
+//!   own tile and the tiles its ranges reach from it (ticket 0450). The
+//!   **danger zone** ([`danger_zone`]) is the union of what every unit
+//!   hostile to a faction threatens; the range shown for a picked enemy and
+//!   the persona bots use the same rule. The AI's own danger zone still
+//!   counts every unit as if it walked its full Mov.
 //! - **Threats to a tile** ([`threats_at`]): the units hostile to a unit
 //!   that could attack it next phase if it stood on a given tile: the tile is
-//!   in their threat area, worked out with the unit standing there. A unit
-//!   whose AI never moves ([`AiBehavior::Stationary`]) only counts the tiles
-//!   its ranges reach from where it stands.
+//!   in what they threaten, worked out with the unit standing there.
 //! - Every unit in the `units` slice occupies its tile; callers pass the
 //!   living units of the battle.
 
@@ -513,6 +517,43 @@ pub fn threat_area(
     Ok(area_of(&reach, ranges))
 }
 
+/// The tiles unit `unit` threatens this turn, as the player is shown them
+/// and the threat arrows count them: its [`threat_area`], except that one
+/// that never moves ([`AiBehavior::Stationary`]) threatens only from its
+/// own tile: that tile and every tile at a distance one of `ranges` covers
+/// (ticket 0450). Empty if `ranges` is empty.
+pub fn threat_tiles(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    unit: UnitId,
+    ranges: &[AttackRange],
+) -> Result<TileSet, MoveError> {
+    let Some(u) = units.iter().find(|u| u.id == unit) else {
+        return Err(MoveError::UnknownUnit(unit));
+    };
+    if u.ai != AiBehavior::Stationary {
+        return threat_area(map, terrain, classes, units, unit, ranges);
+    }
+    let tiles = &map.tiles;
+    let mut set = TileSet::new(tiles.width(), tiles.height());
+    if ranges.is_empty() {
+        return Ok(set);
+    }
+    for at in tiles.positions() {
+        let distance = Pos::manhattan(u.pos, at);
+        if distance == 0
+            || ranges
+                .iter()
+                .any(|&(min, max)| (min..=max).contains(&distance))
+        {
+            set.insert(at);
+        }
+    }
+    Ok(set)
+}
+
 /// The threat area of `reach` with attacks of `ranges` ([`threat_area`]).
 fn area_of(reach: &Reach, ranges: &[AttackRange]) -> TileSet {
     let stoppable = reach.stoppable();
@@ -526,7 +567,8 @@ fn area_of(reach: &Reach, ranges: &[AttackRange]) -> TileSet {
     set
 }
 
-/// The union of the threat areas of every unit hostile to `faction`, with
+/// The union of the tiles every unit hostile to `faction` threatens
+/// ([`threat_tiles`]: one that never moves only from its own tile), with
 /// each unit's attack ranges given by `ranges` (in a battle:
 /// [`Unit::threat_ranges`], the ranges of what it can attack with now).
 pub fn danger_zone(
@@ -537,28 +579,58 @@ pub fn danger_zone(
     faction: Faction,
     ranges: impl Fn(&Unit) -> Vec<AttackRange>,
 ) -> Result<TileSet, MoveError> {
+    zone_of(map, terrain, classes, units, faction, ranges, threat_tiles)
+}
+
+/// The AI's danger zone: the union of the [`threat_area`]s of every unit
+/// hostile to `faction`, one that never moves counted as if it walked its
+/// full Mov too ([`danger_zone`] before ticket 0450, kept so the AI plays
+/// the same).
+pub(crate) fn ai_danger_zone(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    faction: Faction,
+    ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+) -> Result<TileSet, MoveError> {
+    zone_of(map, terrain, classes, units, faction, ranges, threat_area)
+}
+
+/// What a unit threatens, worked out with every unit in place.
+type AreaFn = fn(
+    &BattleMap,
+    &TerrainTable,
+    &ClassTable,
+    &[Unit],
+    UnitId,
+    &[AttackRange],
+) -> Result<TileSet, MoveError>;
+
+/// The union of `area` for every unit hostile to `faction`.
+fn zone_of(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    faction: Faction,
+    ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+    area: AreaFn,
+) -> Result<TileSet, MoveError> {
     let mut zone = TileSet::new(map.tiles.width(), map.tiles.height());
     for u in units.iter().filter(|u| u.faction.is_hostile_to(faction)) {
-        zone.union_with(&threat_area(
-            map,
-            terrain,
-            classes,
-            units,
-            u.id,
-            &ranges(u),
-        )?);
+        zone.union_with(&area(map, terrain, classes, units, u.id, &ranges(u))?);
     }
     Ok(zone)
 }
 
 /// The units hostile to unit `unit` that could attack it in their next
 /// phase if it stood on `at` (`docs/design/turn-structure.md`, *Threat
-/// arrows*), in the order of `units`: `at` is in their [`threat_area`],
-/// worked out with `unit` on `at` instead of its own tile. Whether their AI
-/// would choose to doesn't matter, except that one that never moves
-/// ([`AiBehavior::Stationary`]) threatens only what its ranges reach from
-/// its own tile. `ranges` gives each unit's attack ranges, as for
-/// [`danger_zone`].
+/// arrows*), in the order of `units`: `at` is in their [`threat_tiles`]
+/// (one that never moves threatens only from its own tile), worked out
+/// with `unit` on `at` instead of its own tile. Whether their AI would
+/// choose to doesn't matter. `ranges` gives each unit's attack ranges, as
+/// for [`danger_zone`].
 pub fn threats_at(
     map: &BattleMap,
     terrain: &TerrainTable,
@@ -578,16 +650,7 @@ pub fn threats_at(
     }
     let mut out = Vec::new();
     for u in moved.iter().filter(|u| u.faction.is_hostile_to(faction)) {
-        let ranges = ranges(u);
-        let reaches = if u.ai == AiBehavior::Stationary {
-            let distance = Pos::manhattan(u.pos, at);
-            ranges
-                .iter()
-                .any(|&(min, max)| (min..=max).contains(&distance))
-        } else {
-            threat_area(map, terrain, classes, &moved, u.id, &ranges)?.contains(at)
-        };
-        if reaches {
+        if threat_tiles(map, terrain, classes, &moved, u.id, &ranges(u))?.contains(at) {
             out.push(u.id);
         }
     }
@@ -622,8 +685,9 @@ struct Threat {
 
 #[derive(Debug, Clone)]
 enum ThreatKind {
-    /// It never moves ([`AiBehavior::Stationary`]): its tile.
-    Stationary(Pos),
+    /// It never moves ([`AiBehavior::Stationary`]): what it threatens
+    /// from its tile ([`threat_tiles`]).
+    Stationary(TileSet),
     /// Its moves with the planner's unit off the map, and their threat
     /// area. `stops`: the planner's unit stops it next to itself.
     Moves {
@@ -685,7 +749,7 @@ impl ThreatPlanner {
             let ranges = ranges(u);
             let kept = areas.and_then(|a| a.moves_clear_of(u.id, target.pos, stops));
             let kind = if u.ai == AiBehavior::Stationary {
-                ThreatKind::Stationary(u.pos)
+                ThreatKind::Stationary(threat_tiles(map, terrain, classes, units, u.id, &ranges)?)
             } else if let Some((reach, kept_ranges, area)) = kept {
                 ThreatKind::Moves {
                     area: if *kept_ranges == ranges {
@@ -784,7 +848,7 @@ impl ThreatAreas {
         for u in units.iter().filter(|u| u.faction.is_hostile_to(faction)) {
             let ranges = ranges(u);
             let kind = if u.ai == AiBehavior::Stationary {
-                ThreatKind::Stationary(u.pos)
+                ThreatKind::Stationary(threat_tiles(map, terrain, classes, units, u.id, &ranges)?)
             } else {
                 let reach = reachable(map, terrain, classes, units, u.id)?;
                 ThreatKind::Moves {
@@ -809,8 +873,9 @@ impl ThreatAreas {
             return None;
         }
         let reaches = |threat: &&Threat| match &threat.kind {
-            ThreatKind::Stationary(pos) => threat.in_range(*pos, unit.pos),
-            ThreatKind::Moves { area, .. } => area.contains(unit.pos),
+            ThreatKind::Stationary(area) | ThreatKind::Moves { area, .. } => {
+                area.contains(unit.pos)
+            }
         };
         let threats = self.threats.iter().filter(reaches);
         Some(threats.map(|t| t.id).collect())
@@ -856,7 +921,7 @@ impl Threat {
     fn settles(&self, at: Pos) -> Option<bool> {
         let in_range = |from: Pos| self.in_range(from, at);
         let (reach, area, stops) = match &self.kind {
-            ThreatKind::Stationary(pos) => return Some(in_range(*pos)),
+            ThreatKind::Stationary(area) => return Some(area.contains(at)),
             ThreatKind::Moves { reach, area, stops } => (reach, area, *stops),
         };
         if !area.contains(at) {
