@@ -466,7 +466,11 @@ impl FlowScreen {
             // Each screen the flow shows: a screen over it may have
             // replaced the set (the battle keeps its own).
             self.voices.covered();
-            let lines = self.coming_lines(ctx);
+            let lines = if KeptVoices::wanted(ctx) {
+                self.coming_lines(ctx)
+            } else {
+                Vec::new()
+            };
             self.voices.keep(lines, ctx);
         }
         if let Some(screen) = self.next.take() {
@@ -727,9 +731,9 @@ impl FlowScreen {
                 Stage::Mode | Stage::Familiarity(_) | Stage::Voices(..) | Stage::Lead(..) => {
                     opening_scene(ctx, Start::NewGame)
                 }
-                Stage::SavePrompt | Stage::Slots(true)
-                    if self.after_save == AfterSave::NextChapter =>
-                {
+                // Before "To be continued" (`AfterSave::TheEnd`) no
+                // chapter follows: none is kept.
+                Stage::SavePrompt | Stage::Slots(true) => {
                     next_chapter().and_then(|id| chapter_opening(ctx, campaign, id))
                 }
                 Stage::Camp => {

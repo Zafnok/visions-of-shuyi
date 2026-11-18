@@ -28,10 +28,18 @@ pub struct KeptVoices {
 }
 
 impl KeptVoices {
+    /// Whether any line can be kept: voices are on and clips were found.
+    /// Without, finding the lines is skipped (the Playdate has none: the
+    /// title's first frame is in its frame budget, `cargo shuyi bench`).
+    pub fn wanted(ctx: &Ctx) -> bool {
+        ctx.settings().voices && ctx.has_voices()
+    }
+
     /// Whether a screen whose set doesn't change while it is on top
-    /// should send it now: not yet since it came on top, and voices on.
+    /// should send it now: not yet since it came on top, and
+    /// [`wanted`](Self::wanted).
     pub fn due(&self, ctx: &Ctx) -> bool {
-        !self.sent && ctx.settings().voices
+        !self.sent && Self::wanted(ctx)
     }
 
     /// A screen came over: the set is sent again once back on top (that

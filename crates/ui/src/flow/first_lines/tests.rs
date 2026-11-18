@@ -190,3 +190,48 @@ fn the_title_keeps_new_games_first_lines() {
     title.update(&mut c, &frame());
     assert_eq!(kept(&mut c), [keep(&one[..3])]);
 }
+
+/// What the flow keeps as it shows a screen that isn't a scene, by where
+/// it is (CI's mutants, PR #757): New Game's opening while the game is
+/// set up, the next chapter's at the save prompt, the chapter camp goes
+/// on to, nothing before a battle.
+#[test]
+fn the_flow_keeps_the_scene_after_the_screen_it_shows() {
+    use super::super::{FlowScreen, Stage};
+    let (c, one, two) = voiced();
+    let mut flow = FlowScreen::empty();
+    flow.chapter = c.game.content.chapters.get("test").cloned();
+    flow.campaign = Some(first_chapter_cleared(&c).campaign);
+    let at = |flow: &mut FlowScreen, stage: Stage| {
+        flow.stage = stage;
+        flow.coming_lines(&c)
+    };
+    assert_eq!(at(&mut flow, Stage::Mode), one[..3]);
+    assert_eq!(at(&mut flow, Stage::SavePrompt), two[..3]);
+    assert_eq!(at(&mut flow, Stage::Slots(true)), two[..3]);
+    assert_eq!(at(&mut flow, Stage::Battle), [] as [LineId; 0]);
+    // Camp breaks into the chapter it was opened for, or the battle.
+    assert_eq!(at(&mut flow, Stage::Camp), [] as [LineId; 0]);
+    flow.after_camp = Some("test2".into());
+    assert_eq!(at(&mut flow, Stage::Camp), two[..3]);
+    // The last chapter cleared: no chapter, nothing at the save prompt.
+    flow.chapter = flow.chapter.map(|mut ch| {
+        ch.next = None;
+        ch
+    });
+    assert_eq!(at(&mut flow, Stage::SavePrompt), [] as [LineId; 0]);
+}
+
+/// Lines are looked for only with voices on and clips found: a build
+/// without clips (the Playdate) skips the work.
+#[test]
+fn lines_are_wanted_only_with_voices_on_and_clips_found() {
+    let (mut c, _, _) = voiced();
+    assert!(KeptVoices::wanted(&c));
+    c.change_settings(|s| s.voices = false).unwrap();
+    assert!(!KeptVoices::wanted(&c));
+    let plain = ctx();
+    assert!(plain.settings().voices && !plain.has_voices());
+    assert!(!KeptVoices::wanted(&plain));
+    assert!(!KeptVoices::default().due(&plain));
+}
