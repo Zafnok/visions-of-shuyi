@@ -48,8 +48,12 @@ Supporting measures:
    unseeded randomness.
 5. A snapshot shows the region its test is about (`Harness::snapshot_of`, a
    battle's `MAP_VIEW`, `SIDE_PANEL` or `HELP_BAR`), so a change elsewhere
-   on the screen leaves it alone; only a test of the whole screen takes the
-   whole frame, and says so. Motion holds still in tests: with
+   on the screen leaves it alone. It never shows the help bar unless it is
+   the help bar's own look test: the game's `Harness::snapshot` leaves the
+   help rows out, and `snapshot_whole` (with a comment why) keeps them. A
+   test is a look test (one snapshot of one region) or a behavior test
+   (view or state asserts), never a behavior test that ends in a
+   whole-screen snapshot. Motion holds still in tests: with
    `Ctx::idle_motion` off (the Harness's default) every looping motion
    draws at its start, and only a test of a motion turns it on. A private
    snapshot (ADR-0118 §3) shows only the private part.
