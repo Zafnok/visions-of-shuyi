@@ -44,7 +44,11 @@ a persona plays its own\n  \
 --json <path>      also write the report as JSON\n  \
 --history <dir>    where every run is kept, to compare the next one with\n                     \
 (default target/playtest-history/)\n  \
---threads <n>      threads to play on (default: every core)";
+--threads <n>      threads to play on (default: every core)\n\n\
+cargo xtask playtest --merge <json>...\n\n\
+Joins the --json reports of one battle's parts (other seed ranges, the\n\
+same arguments otherwise) into one report, judged as one run, and prints\n\
+it. Exits with 1 when the battle is blocked.";
 
 /// Where runs are kept, from the repo root. Not committed.
 const DEFAULT_HISTORY: &str = "target/playtest-history";
@@ -309,6 +313,87 @@ pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
     Ok(Ran {
         text: render(&record, previous.as_ref()),
         blocked: record.report.blocked,
+    })
+}
+
+/// `--merge` (ticket 0173): reads the `--json` reports at `paths`, the
+/// parts of one battle's run, and joins them into one report.
+pub fn merge_files(paths: &[PathBuf]) -> Result<Ran, String> {
+    let records = paths
+        .iter()
+        .map(|path| {
+            let text =
+                std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
+            serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))
+        })
+        .collect::<Result<Vec<Record>, String>>()?;
+    let record = merge(records)?;
+    Ok(Ran {
+        text: render(&record, None),
+        blocked: record.report.blocked,
+    })
+}
+
+/// The parts of one battle's run (CI plays its slowest battles in two
+/// seed ranges, ticket 0173) as one record: every part's tries judged
+/// together by the first part's checks, so the checks and `blocked` are
+/// those of one run over all the tries. The parts must agree on the
+/// battle, tier, turn cap, army, who played and the checks; the time per
+/// try is their average. The date and commit are the first part's.
+pub fn merge(records: Vec<Record>) -> Result<Record, String> {
+    let mut parts = records.into_iter();
+    let first = parts.next().ok_or("--merge needs at least one report")?;
+    let checks: Vec<Check> = first
+        .report
+        .checks
+        .iter()
+        .map(|j| j.check.clone())
+        .collect();
+    let names =
+        |record: &Record| -> Vec<String> { record.played.iter().map(|p| p.name.clone()).collect() };
+    let mut played = first.played.clone();
+    let mut tries: Vec<NamedTries> = Vec::new();
+    let mut count = 1.0;
+    let mut add = |record: &Record| {
+        tries.extend(
+            record
+                .report
+                .entrants
+                .iter()
+                .map(|e| (e.name.clone(), e.tries.clone())),
+        );
+    };
+    add(&first);
+    for (index, part) in parts.enumerate() {
+        let part_checks: Vec<Check> = part.report.checks.iter().map(|j| j.check.clone()).collect();
+        let differs = [
+            ("battle", part.battle != first.battle),
+            ("tier", part.tier != first.tier),
+            ("turn cap", part.turn_cap != first.turn_cap),
+            ("army", part.army != first.army),
+            ("bots", names(&part) != names(&first)),
+            ("checks", part_checks != checks),
+        ];
+        if let Some((what, _)) = differs.iter().find(|(_, differs)| *differs) {
+            return Err(format!(
+                "part {} differs from part 1 in its {what}: not parts of one run",
+                index + 2
+            ));
+        }
+        for (sum, one) in played.iter_mut().zip(&part.played) {
+            sum.seconds_per_try += one.seconds_per_try;
+        }
+        count += 1.0;
+        add(&part);
+    }
+    for p in &mut played {
+        p.seconds_per_try /= count;
+    }
+    let report = judge(tries, &checks).map_err(|e| e.to_string())?;
+    Ok(Record {
+        played,
+        report,
+        ..first
     })
 }
 

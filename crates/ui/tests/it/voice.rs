@@ -6,6 +6,7 @@
 
 use shuyi_ui::audio::loudness::loudness;
 use trpg_content::{LineId, Variant};
+use trpg_core::{GameMode, SaveFile};
 use trpg_ui::AudioRequest;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::Gain;
@@ -13,6 +14,7 @@ use trpg_ui::audio::groups::{MASTER, MUSIC, VOICE};
 use trpg_ui::debug::TEST_SCENE;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::save::{self, slot_key};
 use trpg_ui::screens::options::{Row, shown_rows};
 use trpg_ui::settings::LogVoice;
 use trpg_ui::storage::Storage;
@@ -27,7 +29,7 @@ fn lines(h: &Harness) -> Vec<(LineId, String)> {
 }
 
 /// A manifest with one clip per `(line, spoken)`.
-fn manifest(clips: &[(&LineId, &str)]) -> String {
+pub(crate) fn manifest(clips: &[(&LineId, &str)]) -> String {
     let clip = |(line, spoken): &(&LineId, &str)| {
         format!(
             "(line: \"{line}\", spoken: \"{spoken}\", voice: \"v\", \
@@ -340,4 +342,138 @@ fn a_line_with_no_clip_doesnt_dip_the_music() {
         gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
         "{gains:?}"
     );
+}
+
+// ---- A scene's first lines kept before it starts (1293) --------------------
+
+/// Puts scene `id` in `ctx`'s content as plain narration, one line per
+/// text, and returns its lines.
+pub(crate) fn plain_scene(
+    ctx: &mut trpg_ui::Ctx,
+    id: &str,
+    texts: &[&str],
+) -> Vec<(LineId, String)> {
+    let mut source = format!("@scene {id}\n");
+    for t in texts {
+        source.push_str("> ");
+        source.push_str(t);
+        source.push('\n');
+    }
+    source.push_str("@end\n");
+    let (parsed, errors) = trpg_content::dialogue::parse_dlg("t.dlg", &source);
+    assert_eq!(errors, []);
+    let scene = parsed.into_iter().next().map(|p| p.scene);
+    let scene = scene.unwrap_or_else(|| panic!("no scene in {source}"));
+    let lines = scene.lines();
+    let lines = lines.iter().map(|l| (l.id.clone(), l.text.to_owned()));
+    let lines = lines.collect();
+    ctx.game.content.dialogue.scenes.insert(id.into(), scene);
+    lines
+}
+
+/// The test chapter's intro (4 lines) and a chapter `test2` after it, its
+/// intro `test_two` (4 lines), every line with a clip; the two intros'
+/// line ids.
+fn two_voiced_chapters(ctx: &mut trpg_ui::Ctx) -> (Vec<LineId>, Vec<LineId>) {
+    let one = plain_scene(ctx, "test_intro", &["One.", "Two.", "Three.", "Four."]);
+    let two = plain_scene(ctx, "test_two", &["Five.", "Six.", "Seven.", "Eight."]);
+    let chapters = &mut ctx.game.content.chapters;
+    let mut next = chapters["test"].clone();
+    next.id = "test2".into();
+    next.intro_scenes = vec!["test_two".into()];
+    next.next = None;
+    chapters.insert("test2".into(), next);
+    if let Some(test) = chapters.get_mut("test") {
+        test.next = Some("test2".into());
+    }
+    let clips: Vec<_> = one
+        .iter()
+        .chain(&two)
+        .map(|(l, t)| (l, t.as_str()))
+        .collect();
+    ctx.set_voice_manifest(&manifest(&clips));
+    assert_eq!(ctx.take_warnings(), [] as [String; 0]);
+    let ids = |lines: Vec<(LineId, String)>| lines.into_iter().map(|(l, _)| l).collect();
+    (ids(one), ids(two))
+}
+
+pub(crate) fn keep(lines: &[LineId]) -> AudioRequest {
+    let lines = lines.iter().map(|l| (l.clone(), Variant::None)).collect();
+    AudioRequest::KeepVoices { lines }
+}
+
+/// The sets kept so far, in order.
+pub(crate) fn kept(h: &Harness) -> Vec<AudioRequest> {
+    let keeps = h.audio_requests().into_iter();
+    keeps
+        .filter(|r| matches!(r, AudioRequest::KeepVoices { .. }))
+        .collect()
+}
+
+/// The last set kept before `line` was first asked for, and whether it
+/// was asked for at all.
+pub(crate) fn kept_before_playing(h: &Harness, line: &LineId) -> Option<AudioRequest> {
+    let requests = h.audio_requests();
+    let at = requests.iter().position(|r| *r == play(line))?;
+    requests[..at]
+        .iter()
+        .rfind(|r| matches!(r, AudioRequest::KeepVoices { .. }))
+        .cloned()
+}
+
+/// Acceptance (1293): the title keeps New Game's opening scene's first 3
+/// lines, and they are still kept, through the questions and the lead,
+/// when the scene asks for its first.
+#[test]
+fn the_opening_scenes_first_line_is_kept_before_its_box_asks_for_it() {
+    let mut intro = Vec::new();
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |ctx| {
+        intro = two_voiced_chapters(ctx).0;
+    });
+    h.wait(0.0);
+    assert_eq!(kept(&h), [keep(&intro[..3])]);
+    // New Game, Classic, "Not familiar", voices on, a lead, then the
+    // chapter's title card (0812).
+    h.keys("f f f f Up f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
+    assert_eq!(h.top_screen(), "dialogue");
+    assert_eq!(
+        kept_before_playing(&h, &intro[0]),
+        Some(keep(&intro[..3])),
+        "{:?}",
+        h.audio_requests()
+    );
+}
+
+/// Acceptance (1293): the Load Game list keeps New Game's and each save's
+/// first lines; loading a save narrows the set to its scene's, before its
+/// box asks for the first.
+#[test]
+fn the_load_list_keeps_each_saves_first_lines_and_a_pick_narrows_them() {
+    let mut lines = (Vec::new(), Vec::new());
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |ctx| {
+        lines = two_voiced_chapters(ctx);
+        let content = &ctx.game.content;
+        let campaign =
+            trpg_content::new_campaign(content, GameMode::Classic, ctx.game.lead.clone());
+        let file = SaveFile::chapter_cleared(campaign);
+        save::write(&mut ctx.storage, &slot_key(1), &file).unwrap();
+    });
+    let (one, two) = lines;
+    h.wait(0.0).clear_audio();
+    // Load Game.
+    h.keys("Down f");
+    h.wait(0.0);
+    assert_eq!(h.top_screen(), "save_slots");
+    let both: Vec<LineId> = one[..3].iter().chain(&two[..3]).cloned().collect();
+    assert_eq!(kept(&h), [keep(&both)]);
+    // Its slot, then the next chapter's title card (0812): the set is
+    // the save's alone from there.
+    h.clear_audio().keys("f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    assert_eq!(kept(&h), [keep(&two[..3])]);
+    h.keys("f");
+    assert_eq!(h.top_screen(), "dialogue");
+    assert_eq!(kept_before_playing(&h, &two[0]), Some(keep(&two[..3])));
 }

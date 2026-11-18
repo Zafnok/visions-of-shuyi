@@ -420,47 +420,56 @@ fn leaving_asks_first_and_only_when_allowed() {
         [] as [std::string::String; 0]
     );
     assert!(!s.is_asking_leave());
-    assert!(!s.help(&c).contains("leave"));
+    assert!(!s.help(&c).plain().contains("leave"));
 }
 
 #[test]
 fn help_names_the_players_keys() {
     let mut c = ctx();
     let mut s = screen(&c);
-    assert_eq!(s.help(&c), "arrows choose · f open · d leave");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f open · d leave");
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(
-        s.help(&c),
+        s.help(&c).plain(),
         "arrows choose · a s unit · f change gear · d back"
     );
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "arrows choose · a s unit · f stock · d back");
+    assert_eq!(
+        s.help(&c).plain(),
+        "arrows choose · a s unit · f stock · d back"
+    );
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "arrows choose · a s unit · f take · d back");
+    assert_eq!(
+        s.help(&c).plain(),
+        "arrows choose · a s unit · f take · d back"
+    );
     update(
         &mut s,
         &mut c,
         &[Cancel, Cancel, Cancel, CursorRight, Confirm],
     );
-    assert_eq!(s.help(&c), "arrows choose · f pack it · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f pack it · d back");
     update(&mut s, &mut c, &[Confirm, CursorRight]);
-    assert_eq!(s.help(&c), "arrows choose · f put back · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f put back · d back");
     update(&mut s, &mut c, &[Cancel, CursorRight]);
-    assert_eq!(s.help(&c), "arrows choose · f open · d leave");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f open · d leave");
     update(&mut s, &mut c, &[Confirm, CursorRight]);
     assert_eq!(
-        s.help(&c),
+        s.help(&c).plain(),
         "Up Down choose · Left Right buy, sell, repair · f confirm · d back"
     );
     update(&mut s, &mut c, &[Confirm]);
-    assert_eq!(s.help(&c), "Up Down how many · f sell · d back");
+    assert_eq!(s.help(&c).plain(), "Up Down how many · f sell · d back");
     update(&mut s, &mut c, &[Cancel, Cancel, CursorRight, CursorRight]);
-    assert_eq!(s.help(&c), "arrows choose · f start the battle · d leave");
+    assert_eq!(
+        s.help(&c).plain(),
+        "arrows choose · f start the battle · d leave"
+    );
     update(&mut s, &mut c, &[Cancel]);
-    assert_eq!(s.help(&c), "f yes / d no");
+    assert_eq!(s.help(&c).plain(), "f yes / d no");
     // The left-handed layout has other keys.
     c.use_layout(LEFT_HANDED);
-    assert_eq!(s.help(&c), "j yes / k no");
+    assert_eq!(s.help(&c).plain(), "j yes / k no");
 }
 
 #[test]
@@ -742,7 +751,7 @@ fn the_view_on_the_first_frame_is_the_loadouts_tab_with_the_cursor_on_the_tabs()
     );
     assert!(view.on_tabs);
     assert_eq!((&view.message, &view.leave_question), (&None, &None));
-    assert_eq!(view.help, "arrows choose · f open · d leave");
+    assert_eq!(view.help.plain(), "arrows choose · f open · d leave");
 
     // The army, the one left out of the battle last; nothing chosen yet.
     let units = &loadouts(&view).units;
@@ -789,7 +798,7 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
     assert_eq!(loadouts(&view).units.state, ListState::Focused);
     assert_eq!(gear(&view).slots.state, ListState::Idle);
     assert_eq!(
-        view.help,
+        view.help.plain(),
         "arrows choose · a s unit · f change gear · d back"
     );
 
@@ -959,7 +968,7 @@ fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
     );
     assert_eq!(tab.pack.state, ListState::Idle);
     assert_eq!(view.message.as_deref(), Some("The pack is full (6/6)."));
-    assert_eq!(view.help, "arrows choose · f pack it · d back");
+    assert_eq!(view.help.plain(), "arrows choose · f pack it · d back");
 
     // Over to the pack's second row.
     update(&mut s, &mut c, &[CursorRight, CursorDown]);
@@ -984,7 +993,10 @@ fn the_view_of_the_options_and_fight_tabs_and_the_leave_question() {
     assert_eq!(view.body, PrepBody::Fight("Units 4 · Pack 0/6".to_owned()));
     assert!(view.tabs[4].shown && view.on_tabs);
     assert_eq!(view.leave_question, None);
-    assert_eq!(view.help, "arrows choose · f start the battle · d leave");
+    assert_eq!(
+        view.help.plain(),
+        "arrows choose · f start the battle · d leave"
+    );
 
     update(&mut s, &mut c, &[Cancel]);
     let view = s.view(&c);
@@ -993,7 +1005,7 @@ fn the_view_of_the_options_and_fight_tabs_and_the_leave_question() {
         Some("Leave preparations?")
     );
     assert_eq!(view.message, None);
-    assert_eq!(view.help, "f yes / d no");
+    assert_eq!(view.help.plain(), "f yes / d no");
     update(&mut s, &mut c, &[Cancel]);
     assert_eq!(s.view(&c).leave_question, None);
 }
@@ -1084,7 +1096,7 @@ fn the_shop_sells_chapter_fives_basics_and_shows_the_gold() {
     assert_eq!(shop.lines[0].gold, "300");
     assert_eq!(shop.lines[0].detail, "Restore 20 HP");
     assert_eq!(
-        view.help,
+        view.help.plain(),
         "Up Down choose · Left Right buy, sell, repair · f confirm · d back"
     );
     // Cancel goes back to the tabs.
@@ -1184,7 +1196,7 @@ fn selling_asks_how_many_then_pays_half_price() {
     let selling = shop_of(&view).selling.clone().unwrap();
     assert_eq!((selling.count, selling.max), (3, 6));
     assert_eq!(selling.gold, "For 450 gold");
-    assert_eq!(view.help, "Up Down how many · f sell · d back");
+    assert_eq!(view.help.plain(), "Up Down how many · f sell · d back");
     assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     assert_eq!(s.selling(), None);
     assert_eq!(s.setup().gold, 3450);
@@ -1344,7 +1356,7 @@ fn selling_a_special_weapon_asks_first() {
         "{}",
         ask.text
     );
-    assert_eq!(view.help, "Left Right choose · f answer · d back");
+    assert_eq!(view.help.plain(), "Left Right choose · f answer · d back");
     // Cancel keeps it.
     assert_eq!(sounds(&mut s, &mut c, &[Cancel]), ["menu_cancel"]);
     assert_eq!((s.selling_special(), s.setup().gold), (None, 3000));
@@ -1572,4 +1584,15 @@ fn previous_unit_clamps_the_stock_row_to_a_shorter_list() {
         on(&s, &c),
         ("Test Lord".to_owned(), 3, rows - 1, Focus::Stock)
     );
+}
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = ctx();
+    let s = screen(&c);
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&s.view(&c).help), want);
 }

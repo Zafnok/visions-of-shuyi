@@ -46,6 +46,12 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
     frame(s, c, actions, 0.0);
 }
 
+/// Whether the profile has seen the tip `id` (0467).
+fn seen(c: &Ctx, id: &str) -> bool {
+    let seen = c.storage.read(TIPS_SEEN_KEY).ok().flatten();
+    seen.is_some_and(|s| s.lines().any(|l| l == id))
+}
+
 /// Whether some row of the rendered screen contains `text`.
 fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
     let buf = render(s, c);
@@ -58,7 +64,7 @@ fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
 }
 
 /// Dismisses every tip on screen, returning the triggers it took. After
-/// each, the next waits for a press on the map ([`play`], 0495).
+/// each, the next in its moment comes up at once (1292).
 fn dismiss_all(s: &mut BattleScreen, c: &mut Ctx) -> Vec<TipTrigger> {
     let mut seen = Vec::new();
     for _ in 0..10 {
@@ -68,16 +74,8 @@ fn dismiss_all(s: &mut BattleScreen, c: &mut Ctx) -> Vec<TipTrigger> {
         };
         seen.push(t);
         press(s, c, &[Action::Confirm]);
-        play(s, c);
     }
     panic!("tips never ran out: {seen:?}");
-}
-
-/// A press on the map that changes nothing: Zoom, on a map skin that
-/// can't zoom. A tip waiting for the player to do something may come up
-/// after it (0495).
-fn play(s: &mut BattleScreen, c: &mut Ctx) {
-    press(s, c, &[Action::ZoomMap]);
 }
 
 #[test]
@@ -479,8 +477,11 @@ fn tips_wait_for_the_player_phase_to_settle() {
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
 
+/// Ticket 1292: a tip fired under the rewind screen missed its moment. It
+/// doesn't come up when the screen goes; it stays unseen and shows the
+/// next time its trigger fires.
 #[test]
-fn tips_wait_while_the_rewind_screen_is_open() {
+fn a_tip_fired_under_the_rewind_screen_waits_for_its_trigger() {
     let mut c = tipped();
     let mut s = BattleScreen::new(skirmish_charged(&c, 100, 3));
     dismiss_all(&mut s, &mut c);
@@ -488,15 +489,19 @@ fn tips_wait_while_the_rewind_screen_is_open() {
     s.press(&mut c, &[Action::Rewind]);
     assert!(s.rewind().is_some());
     s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
-    s.press(&mut c, &[]);
-    assert_eq!(s.shown_tip(), None);
-    // Closed: the battle's next frame takes in the tip fired by hand, and
-    // it waits for a press on the map (0495): the press that closed the
-    // screen, or the next, is never the tip's.
-    s.press(&mut c, &[Action::Cancel]);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
-    s.press(&mut c, &[Action::ZoomMap]);
+    // Closed: no tip comes up, and the one fired under it is still unseen.
+    s.press(&mut c, &[Action::Cancel]);
+    assert!(s.rewind().is_none());
+    for _ in 0..3 {
+        s.frame(&mut c, &[], 0.1);
+        assert_eq!(s.shown_tip(), None);
+    }
+    assert!(!seen(&c, "low_hp"), "dropped unseen");
+    // Its trigger again, on the map: it comes up at once.
+    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
 
@@ -1023,33 +1028,51 @@ fn effective_spear_forecast_snapshot() {
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
-/// Ticket 0495: two tips due at once come up one at a time. The second
-/// waits for a press on the map after the first is closed, and comes up
-/// in its moment (still selecting), never straight after the first.
+/// Ticket 1292: two tips due at once come up one at a time. Closing the
+/// first brings up the second at once, still in their moment (selecting),
+/// with no press on the map between them.
 #[test]
-fn two_tips_due_at_once_come_up_one_press_apart() {
+fn two_tips_due_at_once_come_up_one_after_the_other() {
     let mut c = tipped();
     let mut s = quick();
     dismiss_all(&mut s, &mut c);
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
-    press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(s.shown_tip(), None);
-    press(&mut s, &mut c, &[]);
-    assert_eq!(s.shown_tip(), None, "the next waits for a press");
-    play(&mut s, &mut c);
+    // Confirm twice in one frame: the first closes it, and the second is
+    // not the next tip's, which was not on screen yet (0495).
+    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstSkillUnit));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstEnemyInRange));
 }
 
-/// Ticket 0495: a tip that comes due while a screen the player opened
-/// from the map menu (here Guides) is over the battle waits out the menu
-/// they come back to. Cancel closes the screen, Cancel again closes the
-/// menu, not the tip; the tip comes up on the map, and only a fresh press
-/// closes it.
+/// Ticket 1292: a tip that fires (by an event, here a level-up) while
+/// another tip is up waits for it in the same moment, and comes up as soon
+/// as that one is closed.
 #[test]
-fn a_tip_waits_out_the_map_menu_the_player_comes_back_to() {
+fn a_tip_behind_another_comes_up_as_it_closes() {
+    let mut c = tipped();
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+    s.tips.fire(TipTrigger::FirstLevelUp);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLevelUp));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), None);
+}
+
+/// Tickets 0495 and 1292: a tip that comes due while a screen the player
+/// opened from the map menu (here Guides) is over the battle missed its
+/// moment. Cancel closes the screen, Cancel again closes the menu, and no
+/// tip comes up; still unseen, it shows the next time its trigger fires,
+/// and only a press made while it is up closes it.
+#[test]
+fn a_tip_fired_under_a_screen_never_takes_the_menu_key() {
     let mut c = tipped();
     let mut s = quick();
     dismiss_all(&mut s, &mut c);
@@ -1062,22 +1085,29 @@ fn a_tip_waits_out_the_map_menu_the_player_comes_back_to() {
     );
     assert!(s.guides().is_some());
     s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
-    s.press(&mut c, &[]);
+    s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
-    // Back in the map menu: the tip waits.
+    // Back in the map menu: no tip.
     s.press(&mut c, &[Action::Cancel]);
     assert!(s.guides().is_none());
-    s.press(&mut c, &[]);
+    s.frame(&mut c, &[], 0.0);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
     assert_eq!(s.shown_tip(), None);
-    // Cancel closes the menu, and the tip comes up on the map.
+    // Cancel closes the menu; still no tip, and it is unseen.
     s.press(&mut c, &[Action::Cancel]);
     assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
+    s.frame(&mut c, &[], 0.0);
+    assert_eq!(s.shown_tip(), None);
+    assert!(!seen(&c, "low_hp"), "dropped unseen");
+    // Its trigger again: it comes up, and a key pressed in the frame it
+    // first shows doesn't close it; a fresh Cancel does.
+    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.press(&mut c, &[Action::Cancel]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
-    // A fresh Cancel closes it; the map stays as it was.
     s.press(&mut c, &[Action::Cancel]);
     assert_eq!(s.shown_tip(), None);
     assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
+    assert!(seen(&c, "low_hp"));
 }
 
 /// Acceptance (0494): the unseen tips, whose lines the guide may still

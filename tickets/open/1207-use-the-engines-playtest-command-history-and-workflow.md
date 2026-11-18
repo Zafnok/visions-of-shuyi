@@ -33,9 +33,11 @@ copies, as the original 1180 required
 2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
 bucket B5 with 1180, 0173, 1170, 0182 and 1294): the copy keeps
 growing. `playtest.rs` is now 747 lines and its tests 733;
-`playtest.yml` is 251 (it was 94). Order: 1180, then this, then 0173.
-0173's levers and report reuse (its steps 1–5) fold in here, on the
-engine's workflow, so playtest CI is built once.
+`playtest.yml` is 251 (it was 94). Order: 1180, then this.
+Nick chose on 2026-11-18 to land 0173 as built (PR #747) rather than
+wait for this ticket, so its levers, report reuse and seed-range split
+are on `main` already, on the game's workflow: this ticket carries them
+over to the engine's workflow rather than building them.
 
 **The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/tools/src/playtest.rs`.
 
@@ -81,12 +83,16 @@ command, not by a new gameplay sign-off.
   the `assets-private.rev` pins (0172; if not done, whichever lands
   second merges the other's lever-script lines); the draft skip and
   `ready_for_review` (0174).
-- **From 0173 (its steps 1–5 and their acceptance criteria):** the
-  narrower code levers, the comment/test-only lever stripping and their
-  unix-only test; the input hash and report reuse (cache, and the merged
-  PR's run on `main`). Write the hash's file list against the plan's
-  paths, not the deleted `crates/tools/src/playtest.rs`. The seed-range
-  split and its merge stay in 0173, after this ticket.
+- **From 0173 (done, PR #747):** keep `.github/playtest-levers.sh`
+  (the narrower code levers, the comment/test-only stripping) and its
+  unix-only test `playtest_levers_skip_comments_tests_and_presentation`;
+  `.github/playtest-inputs.sh` and the report reuse in `detect` (the
+  cache, and the merged PR's run on `main`); and the seed-range split
+  of `SPLIT_BATTLES` with its `merge` job. Rewrite the hash's file list
+  against the plan's paths, not the deleted
+  `crates/tools/src/playtest.rs`, and put `--merge` (today in that file)
+  where the engine's playtest command can join parts, or ask the engine
+  for it.
   Preserve 0530's split too: one job per battle (all its personas in
   one run) and a job that gathers their summaries, since one job
   playing every stage in turn runs out of time. If the engine's
@@ -170,11 +176,8 @@ focused CLI tests, dispatch removal, docs and the ticket move. Plan about
 1,950–2,000 total changed lines, including deletions and tests, rather
 than counting added production lines alone. Re-estimate before coding;
 if the full diff no longer fits, split a standalone piece without
-dropping any acceptance requirement (ADR-0101). 0173's steps 1–5 add
-about 90 lines of shell, 60 of workflow and 150 of tests, about 2,300
-in all, which is over the 2,000 plan: if the re-estimate stays over,
-hand them back to 0173 (after this ticket) before coding rather than
-drop them, and say so in 0173.
+dropping any acceptance requirement (ADR-0101). Carrying 0173's
+levers, reuse and split over is mostly moving lines, not writing them.
 
 ## Acceptance criteria
 
@@ -199,8 +202,9 @@ drop them, and say so in 0173.
 - [ ] The lever regression tests still skip art/dialogue-only changes
       and play for the new plan's changes; push runs cannot cancel one
       another, and the next pin update moves the workflow SHA too.
-- [ ] 0173's lever, merge-diff and reuse criteria pass here (unless
-      handed back to 0173 for size; the completion notes say which).
+- [ ] 0173's levers, report reuse and split still work on the engine's
+      workflow: its lever test passes, a docs-only push reuses from
+      cache, and ch03 still plays in two parts joined into one report.
 - [ ] Against 1180's recorded pre-migration baseline, combined
       `trpg-bots` and `xtask` production lines are down by at least 700,
       measured with `cargo xtask code-lines`, with no relocated copies.

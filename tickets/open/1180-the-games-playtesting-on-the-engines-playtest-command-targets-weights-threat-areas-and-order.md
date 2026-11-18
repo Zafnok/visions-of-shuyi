@@ -31,7 +31,8 @@ of these two tickets; no feature or policy is dropped.
 
 2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
 bucket B5 with 1207, 0173, 1170, 0182 and 1294): this goes first, then
-1207, then 0173, so playtest CI isn't built twice. Since the 10-25 pin
+1207. (0173 landed first anyway, Nick's choice on 2026-11-18: 1207
+carries its playtest CI over to the engine's workflow.) Since the 10-25 pin
 move the game's copies took 27 more commits, including speed work on
 the threat functions this ticket moves (#568, #593 and #610: searches
 kept for the battle, no path search per enemy each cursor step).

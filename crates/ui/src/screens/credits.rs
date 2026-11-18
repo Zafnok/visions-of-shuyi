@@ -17,6 +17,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{CreditRowKind, CreditRowView, CreditsView};
 
 use trpg_content::{CreditEntry, CreditGroup, Credits};
@@ -235,13 +236,13 @@ impl CreditsScreen {
     /// The bottom help line: the cursor keys `scroll`, the Confirm key
     /// `pause` while the list rolls and `auto-scroll` while it doesn't,
     /// the Cancel key `back`, named from the active keymap.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let key = if self.rolling {
             "credits.help.rolling"
         } else {
             "credits.help.stopped"
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint

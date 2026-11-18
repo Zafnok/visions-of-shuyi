@@ -112,6 +112,7 @@ each 5×5 with a 1-pixel dark edge) is written by `cargo xtask
 effect-marks` from the palette's `effect_bonus`, `effect_penalty` and
 `black`. The colours are baked in; a test fails if the committed file
 isn't what the tool makes. The skin draws it as a sprite item.
+*Amended 2026-11-18 (ticket 0191): `effect-marks` was deleted; a test checks the picture's colours against the palette, and `assets/images/README.md` says how to restore the tool.*
 
 ### 6. The game picks its map skin from what it has
 

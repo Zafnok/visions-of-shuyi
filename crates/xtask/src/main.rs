@@ -43,7 +43,7 @@ pr-size [--base <ref>] [--branch <name>] [--hook]\n                             
 the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n\n\
 the game's tool program, trpg-tools, runs these (they build the game; cargo xtask <command>\n\
 still runs each, and `cargo run -p trpg-tools -- --help` lists them):\n  \
-skill-pack, sfx, test-card, test-tileset, effect-marks, edge-marks, lettering, title-art,\n  \
+skill-pack, sfx, test-tileset, lettering, title-art,\n  \
 map-sprite-import, battler-import, tileset-import, playtest, skirmish, portrait-import,\n  \
 lines, check-script, story-import, voice, voice-test-clips, icon, playdate, playdate-images,\n  \
 readme-pictures, and Shuyi's tools: shuyi (`cargo shuyi`), check-keys, check-text,\n  \
@@ -835,6 +835,164 @@ mod tests {
     #[test]
     fn dispatch_runs_ticket_lint() {
         assert_eq!(dispatch(args(&["ticket-lint"]).into_iter()), 0);
+    }
+
+    /// What `.github/playtest-levers.sh BASE HEAD` prints for a commit that
+    /// writes `changes` (path, text; `None` deletes) over `files`, in a
+    /// fresh git repository named `name`.
+    #[cfg(unix)]
+    fn levers_output(
+        name: &str,
+        files: &[(&str, &str)],
+        changes: &[(&str, Option<&str>)],
+    ) -> String {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("xtask-levers-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(&dir)
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@t",
+                    "-c",
+                    "commit.gpgsign=false",
+                ])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8(out.stdout).unwrap()
+        };
+        let write = |path: &str, text: Option<&str>| {
+            let file = dir.join(path);
+            match text {
+                Some(text) => {
+                    std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+                    std::fs::write(file, text).unwrap();
+                }
+                None => std::fs::remove_file(file).unwrap(),
+            }
+        };
+        git(&["init", "-q"]);
+        for (path, text) in files {
+            write(path, Some(text));
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        for (path, text) in changes {
+            write(path, *text);
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "head"]);
+        let diffed_paths = git(&["diff", "--name-only", "--no-renames", "HEAD^", "HEAD"]);
+        let script = repo_root().join(".github/playtest-levers.sh");
+        let mut child = Command::new("bash")
+            .arg(script)
+            .args(["HEAD^", "HEAD"])
+            .current_dir(&dir)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        std::io::Write::write_all(&mut child.stdin.take().unwrap(), diffed_paths.as_bytes())
+            .unwrap();
+        let out = child.wait_with_output().unwrap();
+        assert!(out.status.success(), "{out:?}");
+        std::fs::remove_dir_all(&dir).unwrap();
+        String::from_utf8(out.stdout).unwrap()
+    }
+
+    /// Ticket 0173: comments, in-file tests and the content no battle reads
+    /// don't play; code, a new file and a recorded playthrough do.
+    #[cfg(unix)]
+    #[test]
+    fn playtest_levers_skip_comments_tests_and_presentation() {
+        const COMBAT: &str = "\
+//! Combat.
+pub fn hit(a: u32) -> u32 {
+    // The base.
+    a + 1
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn hits() {
+        assert_eq!(super::hit(1), 2);
+    }
+}
+";
+        const TERRAIN: &str = "// Terrain.\n(\n    plains: 1,\n)\n";
+        const WINNING: &str = "(\n    moves: [1],\n)\n";
+        let files = [
+            ("crates/core/src/combat.rs", COMBAT),
+            ("crates/content/src/credits.rs", "pub fn credits() {}\n"),
+            ("crates/content/src/lang/data_tests.rs", "fn a() {}\n"),
+            ("assets/data/terrain.ron", TERRAIN),
+            ("crates/ui/tests/it/fixtures/ch01_winning.ron", WINNING),
+        ];
+        let plays = |name, changes: &[(&str, Option<&str>)]| {
+            let out = levers_output(name, &files, changes);
+            assert!(
+                out.ends_with("play=true\n") || out.ends_with("play=false\n"),
+                "{out}"
+            );
+            out.ends_with("play=true\n")
+        };
+        // Skipped.
+        let comment = COMBAT.replace("// The base.", "// The base, plus one.\n\n    // More.");
+        assert!(!plays(
+            "comment",
+            &[("crates/core/src/combat.rs", Some(&comment))]
+        ));
+        let test = COMBAT.replace("hit(1), 2", "hit(2), 3");
+        assert!(!plays(
+            "test",
+            &[("crates/core/src/combat.rs", Some(&test))]
+        ));
+        let credits = "// Who made it.\npub fn credits() {}\n";
+        assert!(!plays(
+            "credits",
+            &[("crates/content/src/credits.rs", Some(credits))]
+        ));
+        let terrain = TERRAIN.replace("plains: 1,", "// Open ground.\n    plains: 1,");
+        assert!(!plays(
+            "terrain",
+            &[("assets/data/terrain.ron", Some(&terrain))]
+        ));
+        let data_tests = ("crates/content/src/lang/data_tests.rs", Some("fn b() {}\n"));
+        assert!(!plays("data-tests", &[data_tests]));
+        // Played.
+        let code = COMBAT.replace("a + 1", "a + 2");
+        assert!(plays("code", &[("crates/core/src/combat.rs", Some(&code))]));
+        assert!(plays(
+            "new",
+            &[("crates/core/src/new.rs", Some("// New.\n"))]
+        ));
+        assert!(plays("deleted", &[("crates/core/src/combat.rs", None)]));
+        let winning = WINNING.replace("[1]", "[2]");
+        let fixture = "crates/ui/tests/it/fixtures/ch01_winning.ron";
+        assert!(plays("winning", &[(fixture, Some(&winning))]));
+        // A test module that isn't at column 0 is code.
+        let nested = COMBAT.replace("a + 1\n}", "a + 1\n    #[cfg(test)]\n    mod x {\n    }\n}");
+        assert!(plays(
+            "nested",
+            &[("crates/core/src/combat.rs", Some(&nested))]
+        ));
+        let out = levers_output(
+            "message",
+            &files,
+            &[("crates/core/src/combat.rs", Some(&test))],
+        );
+        assert!(
+            out.contains("skips: crates/core/src/combat.rs (comments or tests only)"),
+            "{out}"
+        );
     }
 
     /// A moved command runs in `trpg-tools`, in xtask's profile, with the

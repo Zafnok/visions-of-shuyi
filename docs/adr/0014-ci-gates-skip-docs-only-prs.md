@@ -91,6 +91,16 @@ legs. Any new job added to such a workflow must be added to its aggregate's
 | Dependency updates | Dependabot (cargo + github-actions), grouped weekly | schedule | n/a | n/a | 0103 |
 | Secret scanning + push protection | GitHub built-in (repo setting) | always | n/a | n/a | 0103 |
 | Ticket hygiene | `cargo xtask ticket-lint` | PR, push | should run (tickets are docs) | `tickets` | 0106 |
+| Playtest (`playtest.yml`) | `cargo xtask playtest <battle> --bot all`, every battle | PR, push, "Run workflow" | skipped: plays only when a balance lever changed (`.github/playtest-levers.sh`) | ❌ (advisory: fails on a blocked battle, a band missed only warns) | 0514, 0530, 0173 |
+
+*Note, 2026-11-17 (ticket 0173):* Playtest reuses its reports when its
+inputs hash the same (`.github/playtest-inputs.sh`: the toolchain, the lock
+file, the engine pin, the rules, content and bots, the playtest command,
+the public, test and private content, the workflow). The seeds are fixed,
+so the same inputs give the same reports: a PR's later commit takes them
+from the cache, and the push to `main` that merges it from the PR's last
+run. A reused blocked battle still fails. Playtest stays advisory: making
+it required is a ruleset setting, Nick's call.
 
 Do not require checks that are not produced by a job in these workflows (for
 example the code-scanning `CodeQL` / `zizmor` result checks, or a SonarCloud app

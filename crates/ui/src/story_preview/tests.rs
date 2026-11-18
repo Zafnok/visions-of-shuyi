@@ -59,7 +59,7 @@ fn the_page_of_names_and_faces_has_its_title_rows_and_help() {
             title: "TITLE".to_owned(),
             rows,
             first: 1,
-            help: "HELP".to_owned(),
+            help: "HELP".into(),
         }),
         only_here: Some("never shown over the page".to_owned()),
         faces: None,

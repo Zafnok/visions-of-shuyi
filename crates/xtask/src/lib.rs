@@ -23,10 +23,7 @@ pub const FORWARDED: &[&str] = &[
     // The generators.
     "icon",
     "sfx",
-    "test-card",
     "test-tileset",
-    "edge-marks",
-    "effect-marks",
     "lettering",
     "title-art",
     "voice-test-clips",

@@ -167,6 +167,20 @@ pub struct PanelView {
     pub unit: Option<PanelUnitView>,
     /// The party's gold (`Gold 1 250`, 0409).
     pub gold: String,
+    /// What the spell, item or skill being aimed will do (1286).
+    pub preview: Option<PanelPreviewView>,
+}
+
+/// The aimed spell, item or skill's preview in the side panel, at its
+/// top: the same line as over the help bar, under the name of what is
+/// aimed (1286). A heal aimed at a unit shows on its HP line instead
+/// ([`PanelUnitView::hp_then`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PanelPreviewView {
+    /// The spell, item or skill's name (`Fire`).
+    pub title: String,
+    /// What it will do (`Forest → Burning (1 round)`).
+    pub text: String,
 }
 
 /// A tile's terrain in the side panel.
@@ -195,6 +209,9 @@ pub struct PanelUnitView {
     pub hp: StatValue,
     /// Its max HP.
     pub max: StatValue,
+    /// Its HP after the heal or potion being aimed at it, shown on its HP
+    /// line (`HP 6 → 17/17`) in place of the preview block (1286).
+    pub hp_then: Option<StatValue>,
     /// The name of its faction.
     pub faction_name: String,
     /// Its stats as a fight uses them, gear included: Str, Mag, Dex, Spd,
@@ -261,8 +278,8 @@ pub struct NotesView {
 pub struct QuestionView {
     /// What is asked.
     pub question: String,
-    /// How to answer, with the keys.
-    pub answers: String,
+    /// How to answer, each key in a key span.
+    pub answers: StyledText,
 }
 
 /// A phase or outcome banner.
@@ -380,6 +397,9 @@ impl BattleView {
         let items = self.lesson.iter().flat_map(|l| &l.items);
         texts.extend(items.map(|i| i.label.plain()));
         texts.extend(self.own_texts().into_iter().map(str::to_owned));
+        if let Some(DialogView::Question(q)) = &self.dialog {
+            texts.push(q.answers.plain());
+        }
         // The menu's lines, in English.
         let menu = self.menu.iter().flat_map(|m| &m.menu.items);
         texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
@@ -423,7 +443,7 @@ impl BattleView {
                     texts.extend(note_texts(n));
                 }
             }
-            Some(DialogView::Question(q)) => texts.extend([q.question.as_str(), &q.answers]),
+            Some(DialogView::Question(q)) => texts.push(&q.question),
             None => {}
         }
         if let Some(n) = &self.notes {

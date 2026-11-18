@@ -99,7 +99,12 @@ pub fn paint(ctx: &Ctx, view: &ClassChangeView, buf: &mut GlyphBuffer) {
         ClassChangeBody::Result(None) | ClassChangeBody::Done => {}
     }
     let bottom = i32::from(buf.height()) - 1;
-    buf.print(1, bottom, &view.help, c(UiColor::TextDim), black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::TextDim), black),
+    );
 }
 
 /// The title, the unit's line and the seals in stock for the focused

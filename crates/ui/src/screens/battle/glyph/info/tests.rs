@@ -7,9 +7,11 @@ use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
+use crate::screens::battle::glyph::progress::shows_face_of;
 use crate::screens::battle::info;
 use crate::screens::battle::quick_battle;
 use crate::screens::battle::view::{InfoEffectView, InfoRankView, InfoSkillView, InfoSpellView};
+use crate::tips::view::FaceView;
 use crate::words::Words;
 
 /// The quick battle's lord's info screen, changed by `change`, painted.
@@ -36,6 +38,60 @@ fn rank(kind: &str, trait_: Option<&str>) -> InfoRankView {
 
 fn text(buf: &GlyphBuffer, x: i32, y: i32, n: i32) -> String {
     (x..x + n).map(|x| buf.get(x, y).unwrap().glyph).collect()
+}
+
+#[test]
+fn a_unit_with_a_face_shows_its_portrait_in_the_box() {
+    let c = ctx();
+    let art = &c.game.content.portraits["test_lord"];
+    let buf = painted(|v| {
+        v.face = Some(FaceView {
+            portrait: "test_lord".into(),
+            expression: art.expressions[0].name.clone(),
+        });
+    });
+    assert!(shows_face_of(&buf, &c, "test_lord"));
+    // Inside the box, its border kept, and no placeholder label.
+    let sprites = buf.sprites();
+    let [sprite] = sprites.as_slice() else {
+        panic!("{sprites:?}")
+    };
+    let (cw, ch) = buf.spec().cell_px();
+    let inside = (PORTRAIT.x + 1) * cw..(PORTRAIT.x + PORTRAIT.w - 1) * cw;
+    assert!(inside.contains(&sprite.dest.x), "{sprite:?}");
+    assert!(sprite.dest.x + sprite.dest.w <= inside.end, "{sprite:?}");
+    let rows = (PORTRAIT.y + 1) * ch..=(PORTRAIT.y + PORTRAIT.h - 1) * ch;
+    assert!(rows.contains(&sprite.dest.y), "{sprite:?}");
+    assert!(
+        rows.contains(&(sprite.dest.y + sprite.dest.h)),
+        "{sprite:?}"
+    );
+    assert_eq!(buf.get(PORTRAIT.x, PORTRAIT.y).unwrap().glyph, '┌');
+    let mid = PORTRAIT.y + PORTRAIT.h / 2;
+    let row = text(&buf, PORTRAIT.x + 1, mid, PORTRAIT.w - 2);
+    assert_eq!(row.trim(), "");
+}
+
+#[test]
+fn a_unit_without_a_face_keeps_the_placeholder() {
+    let label_row = |buf: &GlyphBuffer| {
+        let mid = PORTRAIT.y + PORTRAIT.h / 2;
+        text(buf, PORTRAIT.x + 1, mid, PORTRAIT.w - 2)
+            .trim()
+            .to_owned()
+    };
+    let buf = painted(|v| v.face = None);
+    assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
+    assert_eq!(label_row(&buf), "portrait");
+    // A face whose portrait is missing: the placeholder too.
+    let buf = painted(|v| {
+        v.face = Some(FaceView {
+            portrait: "nobody".into(),
+            expression: "neutral".into(),
+        });
+    });
+    assert_eq!(buf.sprites(), [] as [shuyi_ui::frame::Sprite; 0]);
+    assert_eq!(label_row(&buf), "portrait");
 }
 
 #[test]

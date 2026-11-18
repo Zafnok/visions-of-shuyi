@@ -62,7 +62,7 @@ fn title_renders() {
     ];
     assert_eq!(labels, want);
     assert_eq!(focused.as_deref(), Some("New Game"));
-    let help = view(&h).help;
+    let help = view(&h).help.map(|h| h.plain());
     assert_eq!(help.as_deref(), Some("arrows move · f select · d back"));
     assert_snapshot!(h.snapshot());
 }
@@ -440,7 +440,7 @@ fn the_title_in_the_test_language() {
     assert_snapshot!(h.snapshot());
     let shown = view(&h);
     assert_eq!(
-        shown.help.as_deref(),
+        shown.help.map(|h| h.plain()).as_deref(),
         Some("ARROWS MOVE · f SELECT · d BACK")
     );
     let (labels, _) = menu(&h);

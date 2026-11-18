@@ -37,6 +37,8 @@ pub mod shop;
 pub mod view;
 
 use crate::prelude::*;
+use crate::widgets::help::HelpBar;
+use shuyi_ui::text::StyledText;
 pub use view::{
     ConsumableRowView, GearView, HolderView, ItemRowView, ListState, ListView, LoadoutsView,
     PackView, PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
@@ -660,13 +662,17 @@ impl PreparationsScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
-        let key = match (self.is_asking_leave(), self.focus, self.tab, self.can_leave) {
-            (true, ..) => "prep.help.leaving",
-            (_, Focus::Tabs, Tab::Fight, true) => "prep.help.fight_leave",
-            (_, Focus::Tabs, Tab::Fight, false) => "prep.help.fight",
-            (_, Focus::Tabs, _, true) => "prep.help.tabs_leave",
-            (_, Focus::Tabs, _, false) => "prep.help.tabs",
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
+        let key = match (self.is_asking_leave(), self.focus) {
+            (true, _) => "prep.help.leaving",
+            (_, Focus::Tabs) => {
+                let open = match self.tab {
+                    Tab::Fight => "hint.start_battle",
+                    _ => "hint.open",
+                };
+                let bar = HelpBar::new().hint("hint.choose").hint(open);
+                return bar.hint_if("hint.leave", self.can_leave).line(ctx);
+            }
             (_, Focus::Units, ..) => "prep.help.units",
             (_, Focus::Slots, ..) => "prep.help.slots",
             (_, Focus::Stock, ..) => "prep.help.stock",
@@ -678,7 +684,7 @@ impl PreparationsScreen {
             }
             (_, Focus::Shop, ..) => shop::HELP,
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// Opens the shown tab (Confirm or Down on the tabs). Returns whether

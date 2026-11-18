@@ -6,6 +6,7 @@
 
 use crate::prelude::*;
 use crate::widgets::MenuView;
+use shuyi_ui::text::StyledText;
 
 pub use crate::screens::title::view::FULL;
 
@@ -21,7 +22,7 @@ pub struct GameOverView {
     pub menu: Option<MenuView>,
     /// The help line: what the keys do here. `None` until the animation
     /// is over.
-    pub help: Option<String>,
+    pub help: Option<StyledText>,
 }
 
 /// "To be continued", as it is this frame.
@@ -30,5 +31,5 @@ pub struct ToBeContinuedView {
     /// The closing words.
     pub heading: String,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }

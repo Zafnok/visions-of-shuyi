@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0445"]
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 1286 — The aimed spell, item or skill's preview in the battle side panel too
@@ -84,14 +84,14 @@ wrap), judged by the map-info box of the map menu (`map_info`,
 
 ## Acceptance criteria
 
-- [ ] Aiming Fire at a forest in the Quick Battle, the side panel shows
+- [x] Aiming Fire at a forest in the Quick Battle, the side panel shows
       `Forest → Burning (1 round)` as Nick picked, and the bottom bar
       still shows it too.
-- [ ] The same for an item (a potion on an ally) and a skill.
-- [ ] A preview longer than the panel is wrapped, never cut or run over
+- [x] The same for an item (a potion on an ally) and a skill.
+- [x] A preview longer than the panel is wrapped, never cut or run over
       the border (a test).
-- [ ] `look-and-feel.md` records Nick's pick.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `look-and-feel.md` records Nick's pick.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,5 +102,48 @@ wrap), judged by the map-info box of the map menu (`map_info`,
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's pick** (2026-11-17, from frame-png pictures of Fire on a forest
+and a Potion on a hurt archer, after asking how (a) and (c) differ): (c)
+without the preview line under the HP line. A heal or potion aimed at a
+unit shows only on that unit's HP line (`HP 6 → 17/17`, lit, the bar at
+the healed HP); anything else aimed (a spell at a tile, a skill at a
+unit) gets (a)'s block at the top of the panel: the name, the preview
+wrapped to the panel, a rule. Recorded in `look-and-feel.md` *Side panel*.
+
+**Done:**
+- `PanelView::preview` (`PanelPreviewView`: title and text) and
+  `PanelUnitView::hp_then`, built in `BattleScreen::panel_view` from the
+  same `preview` calls the message uses; `CastTargeting::heal` and
+  `ItemTargeting::heal` (the healed unit and the gain), which the spell
+  and item preview lines now use too; `ItemTargeting::name`.
+- The glyph skin (`paint_panel`, also the picture look's panel) paints
+  the block and moves the tile and unit under it, and paints the HP
+  change with its bar after the longer line, kept inside the text width.
+- Tests: the panel view while aiming a spell at a tile, a heal at an
+  ally, a potion and a skill (Shove), and while not aiming; the skin's
+  long preview (wrapped, inside the border, a snapshot) and HP-change
+  line. Three snapshots changed and were read: the Fire tile one, the
+  item target and the heal-aim harness one.
+
+**Deviations:**
+- The skill frame for Nick wasn't rendered: no Quick Battle unit has a
+  skill that is aimed at someone else (Brace is used on oneself without
+  aiming). A skill aimed at a unit lays out as the tile case (the block),
+  which the Fire pictures showed; the skill's panel is covered by a test.
+- The HP bar moves after `HP 6 → 17/17` (the line is longer than
+  `HP 19/19`'s room); Nick's picture had it there too.
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+- The block's title is in the highlight colour, the same as the terrain
+  name; a rule in the border colour separates it from the tile.
+- A very long preview pushes the unit block down; at about eight wrapped
+  lines it would reach `Gold`. No preview today comes near that (the
+  longest, a skill with both costs, takes two or three).
+- The Playdate's corner window is unchanged (out of scope).
+
+**Friction:** 2.0× (estimate 60, measured 121), accepted: the estimate was
+for one block; Nick's pick has two layouts, and the heal's gain became a
+helper per targeting shared with the preview lines. Row in
+`docs/engine/friction.md`.
+
+**Follow-ups:** none.

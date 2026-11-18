@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0254"]
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 0257 — Key caps on the other screens
@@ -102,18 +102,18 @@ saves, and move the rest to a new ticket.
 
 ## Acceptance criteria
 
-- [ ] No view a player sees on the PC names a key in plain text: the grep
+- [x] No view a player sees on the PC names a key in plain text: the grep
       of step 1 finds only `.plain()` for tests, the Playdate's skins and
       the debug tools.
-- [ ] A test per switched view finds the keys `key_name` gives, in order.
-- [ ] `grep -n "help.load_\|help.list_\|help.add_" assets/lang/en/ui.ron`
+- [x] A test per switched view finds the keys `key_name` gives, in order.
+- [x] `grep -n "help.load_\|help.list_\|help.add_" assets/lang/en/ui.ron`
       finds nothing, and no view outside the battle, the debug tools and
       the story preview has a `help: String` field.
-- [ ] The Load Game list on the web (no saves folder to open) gives the
+- [x] The Load Game list on the web (no saves folder to open) gives the
       desktop's hint list with the folder hint `shown: false`, not
       another text key (test).
-- [ ] With a controller in use, hints read as today.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] With a controller in use, hints read as today.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -123,4 +123,79 @@ saves, and move the rest to a new ticket.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done on 2026-11-18, in one PR (no split). The friction sweep of
+2026-11-17 rewrote this ticket (hint lists) while its PR was open: the
+key spans below were done first, the hint lists after.
+
+- **Hint lists** (`widgets::help::HelpBar`): an ordered list of hints,
+  each `(text key, shown)`, whose `line` joins the shown ones with the
+  separator. One deviation from the scope's sketch: a hint is one text
+  key holding its own key and verb (`hint.back`: `{Cancel} back`), as the
+  battle's `battle.hint.*` already are, not an action plus a verb-only
+  key, so a language can put the key after the verb. Twelve shared
+  `hint.*` keys (English and the test pack). The combination keys are
+  gone: `save.help.load*` (the Load Game list's `load_bar`: export,
+  import and open folder shown as the state allows), `profile.help.
+  list_export*` and `add_import` (`ProfileScreen::help_bar`, over the
+  engine's own `profile.help.list`/`add`, which stay), and
+  Preparations' `prep.help.tabs*`/`fight*` (Leave shown when the
+  battle can be left). The other screens' help keys each name one
+  state's verbs, not a combination, so they stay one styled key each;
+  moving every bar onto `hint.*` keys is for a later sweep, as the
+  scope allows for the battle's. *Fitting* is the engine's: a line too
+  wide is cut at the row by `print_centred_styled` (no hint is dropped).
+
+- **Switched to key spans**, each view's help line a `StyledText` built
+  with `ctx.text_styled` (or `key_pair`, `text_with_keys`, `join_hints`
+  where the line is built from parts) and painted with the engine's
+  `print_centred_styled` or `print_styled`: title, mode select,
+  familiarity, lead select (and its text box's fixed keys, now the
+  engine's styled `text_keys_help`; the game's own copy is gone), the
+  voices question, the save question and the save/load slots, the save
+  import, game over, "To be continued" and the demo's end, credits, camp,
+  the world map (both skins), Preparations, class change, results, the
+  dialogue log, and the writer's preview's names page. In the battle: its
+  yes/no questions (the battle's dialog boxes now take styled lines) and
+  the forecast's `Left/Right weapon`. The rest the ticket listed in the
+  battle (the menus' hints, objective page, info screen, EXP pages,
+  notes) already show their keys only on the help bar 0254 switched.
+  The Profile screen's own lines and the engine's questions (`Ask`) were
+  already styled.
+- The title's help line fades with the menu, its caps too; over the
+  cinematic it keeps no strip behind its words, as before.
+- **Playdate skins** read `.plain()`, as the ticket says.
+- **Tests:** `widgets::help::{key_spans, spans_of}` (test and harness
+  builds only) read a hint's keys and what `key_name` names for a list of
+  actions; each switched view has a test that they agree, in order.
+  `tests/it/key_caps.rs` adds Preparations and the world map (the test
+  world map) with caps, as snapshots, and Preparations on a controller
+  (plain text, no key spans).
+- **Snapshots:** about 70 changed only in the key cells' colours (the
+  palette's `key` and `key_bg`, as in 0254). About ten from tests
+  that build the real game's context (key caps on) now draw the caps:
+  the save slots and question, the title, the world map's help line.
+  Two private ones (`it__world_map__act1_start`,
+  `it__title_cinematic__title_cinematic_12_logo`) in
+  `Zafnok/visions-of-shuyi-assets`, its PR linked in this PR, branched
+  from the current pin (the private `main` has 0490's content, whose game
+  PR is still open). One test (`save.rs`) read the slots' frame text and
+  now reads the caps.
+- **Picture:** `docs/screenshots/0257-preparations.png` (`cargo shuyi
+  frame-png --keys "Down f"`, the Quick Battle's test units). The world
+  map was not rendered with `frame-png`: its New Game plays the private
+  story, whose map and scenes may not be committed (ADR-0118); the
+  snapshot `it__key_caps__the_world_map_draws_its_keys_as_caps` shows the
+  test world map's help line with caps instead.
+- **Left plain:** the debug tools, as the ticket says; the battle's
+  `help()` (its words, for tests).
+
+Size: estimate 250 production lines (about 8 a screen for 20 screens and
+the battle's two hints, judged by 0254's town and rewind switches);
+measured 248 added, 131 removed (`code-lines`), 1.0×, before the hint
+lists; with them 316 added, 161 removed against 330 (the ticket adds
+about 80 for the hint list), 1.0×. PR size 1,234 changed lines.
+
+*Claude's starting rules:* none (no gameplay).
+
+For the Act 1 playtest (1064): whether the caps read well on the menus'
+centred help lines.

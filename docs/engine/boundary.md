@@ -261,13 +261,13 @@ analog sticks (today they are four digital directions).
 | `frame-png` | E | **Done (1117):** `shuyi-cli`, with the game's Harness from its tool program (`GameTools`). |
 | `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets` | E | **Done (1117):** `shuyi-cli`; paths and settings in the game's `shuyi.ron`. The old `cargo xtask` names forward to it. |
 | `lines`, `check-script` | E | Yes, with the dialogue format. |
-| `test-card`, `voice-test-clips` | E | Fixtures for the engine's own tests. |
+| `test-card` (deleted, 0191), `voice-test-clips` | E | Fixtures for the engine's own tests. |
 | `ticket-lint`, `clean-merged-targets` | E | No. These are our repository's workflow. |
 | `test-tileset` | K | Kit fixtures. |
 | `tileset-import` | M | The Tiled `.tsx` → corner-layers core is K. The bought-pack table is G. |
 | `sfx` | M | The synth (tone, burst, pulse, envelope) is E. The sounds are G. |
 | `icon` | M | Mostly E. |
-| `test-units`, `effect-marks`, `title-art`, `map-sprite-import`, `battler-import`, `portrait-import`, `playtest` | G | — |
+| `test-units`, `effect-marks` (deleted, 0191), `title-art`, `map-sprite-import`, `battler-import`, `portrait-import`, `playtest` | G | — |
 
 ## `bots`
 

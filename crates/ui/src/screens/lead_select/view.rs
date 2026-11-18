@@ -4,6 +4,7 @@
 //! paints it ([`super::glyph::paint`] today); see ADR-0054.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::LeadGender;
 
 use super::Row;
@@ -28,7 +29,7 @@ pub struct LeadSelectView {
     /// The letter grid, while open.
     pub grid: Option<GridView>,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// One gender, with its portrait.

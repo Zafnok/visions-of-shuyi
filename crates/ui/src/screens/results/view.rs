@@ -4,6 +4,7 @@
 //! it ([`super::glyph::paint`] today); see ADR-0054.
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::Gold;
 
 use crate::screens::battle::view::ProgressView;
@@ -14,7 +15,7 @@ pub struct ResultsView {
     /// What fills the screen.
     pub body: ResultsBody,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// The tally or a level-up page.

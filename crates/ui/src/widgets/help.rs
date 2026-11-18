@@ -108,6 +108,71 @@ pub fn text_with_keys(ctx: &Ctx, key: &str, keys_args: &[(&str, &StyledText)]) -
     shuyi_ui::text::fill_styled_with(text, code, args, &[], lookup)
 }
 
+/// A help bar as an ordered list of hints (the friction sweep of
+/// 2026-11-17, ticket 0257): each hint the text key of one `{Action} verb`
+/// (`hint.back`: `{Cancel} back`), and whether the screen's state shows
+/// it. A hint the state doesn't allow is left out of the line, never a
+/// second text key for the line without it. Each hint names its own keys,
+/// so a language may put the key after the verb.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct HelpBar(Vec<(&'static str, bool)>);
+
+impl HelpBar {
+    /// A bar with no hints.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// `self`, then the hint of text key `key`, shown.
+    #[must_use]
+    pub fn hint(self, key: &'static str) -> Self {
+        self.hint_if(key, true)
+    }
+
+    /// `self`, then the hint of text key `key`, shown only if `shown`.
+    #[must_use]
+    pub fn hint_if(mut self, key: &'static str, shown: bool) -> Self {
+        self.0.push((key, shown));
+        self
+    }
+
+    /// Every hint in order, with whether it is shown.
+    pub fn hints(&self) -> &[(&'static str, bool)] {
+        &self.0
+    }
+
+    /// The line: each shown hint in `ctx`'s language with the player's keys
+    /// in key spans ([`Ctx::text_styled`]), joined with [`SEPARATOR`].
+    pub fn line(&self, ctx: &Ctx) -> StyledText {
+        let shown = self.0.iter().filter(|(_, shown)| *shown);
+        join_hints(shown.map(|(key, _)| ctx.text_styled(key, &[])))
+    }
+}
+
+/// The keys of `text`, in order, a no-break space read as a space: what a
+/// test of a view's key spans compares with [`spans_of`] (ticket 0257).
+#[cfg(any(test, feature = "harness"))]
+pub fn key_spans(text: &StyledText) -> Vec<String> {
+    let key = |s: &&shuyi_ui::text::TextSpan| s.role.is_some();
+    let name = |s: &shuyi_ui::text::TextSpan| s.text.replace('\u{a0}', " ");
+    text.spans().iter().filter(key).map(name).collect()
+}
+
+/// What [`key_spans`] reads from a hint naming the keys of `actions` in
+/// order, each as [`key_name`] gives it: an action by its name in the
+/// keymap (`"Confirm"`), and `"Cursor"` for the cursor keys (one span for
+/// the arrows, four for W A S D).
+#[cfg(any(test, feature = "harness"))]
+pub fn spans_of(keys: HelpKeys<'_>, actions: &[&str]) -> Vec<String> {
+    let of = |name: &&str| match Action::from_name(name) {
+        Some(action) => vec![key_name(keys, action)],
+        // check-text: not player text (the cursor keys' placeholder name)
+        None if *name == "Cursor" => key_spans(&crate::input::help_keys::cursor_keys_styled(keys)),
+        None => panic!("no action {name:?}"),
+    };
+    actions.iter().flat_map(of).collect()
+}
+
 /// The frame's cell widths: `ctx`'s, with what its key caps take (a
 /// cap's extra cells, the arrow cluster's picture's), as the frame
 /// measures styled text.

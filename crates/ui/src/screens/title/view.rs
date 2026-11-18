@@ -5,6 +5,7 @@
 
 use crate::prelude::*;
 use alloc::rc::Rc;
+use shuyi_ui::text::StyledText;
 
 use trpg_content::ImageId;
 
@@ -60,8 +61,9 @@ pub struct TitleView {
     /// saves can be exported, while the cursor is on `Load Game` or
     /// `Profile` (0874). It takes no keys.
     pub note: Option<NoteView>,
-    /// The help line: what the keys do here (not shown with the prompt).
-    pub help: Option<String>,
+    /// The help line: what the keys do here (not shown with the prompt),
+    /// each key in a key span.
+    pub help: Option<StyledText>,
     /// The hint at the debug menu's key, in a build with debug tools.
     pub debug_hint: Option<String>,
 }

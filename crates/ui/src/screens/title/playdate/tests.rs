@@ -58,7 +58,7 @@ fn view(c: &Ctx) -> TitleView {
         menu: Some(MenuView::new(items)),
         notice: None,
         note: None,
-        help: Some("✛ move · Ⓐ select".to_owned()),
+        help: Some("✛ move · Ⓐ select".into()),
         debug_hint: None,
     }
 }

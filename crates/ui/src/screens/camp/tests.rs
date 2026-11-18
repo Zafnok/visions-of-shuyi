@@ -416,3 +416,14 @@ fn camp_declares_its_actions() {
     );
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::CAMP);
 }
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let ctx = ctx();
+    let s = CampScreen::new(&ctx, bonded(&ctx));
+    let want = spans_of(ctx.help_keys(), &["Cursor", "Confirm"]);
+    assert_eq!(key_spans(&s.view(&ctx).help), want);
+}

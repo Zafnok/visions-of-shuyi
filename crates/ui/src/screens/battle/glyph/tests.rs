@@ -13,7 +13,7 @@ use crate::screens::battle::BattleScreen;
 use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
 use crate::screens::battle::view::{
     BannerView, MenuHeader, MessageView, ObjectiveLine, ObjectiveView, PanelCellView,
-    PanelUnitView, QuestionView, TerrainView, TogglesView, UsesView,
+    PanelPreviewView, PanelUnitView, QuestionView, TerrainView, TogglesView, UsesView,
 };
 
 const NARROW: shuyi_assets::font::CellWidths = shuyi_assets::font::CellWidths::NARROW;
@@ -200,6 +200,7 @@ fn the_panel_cuts_long_lines_and_names_an_enemy_in_its_colour() {
             ..ellery_panel(true)
         }),
         gold: "Gold 0".to_owned(),
+        preview: None,
     };
     paint_panel(&c, &panel, &mut buf);
     assert_eq!(panel_row(&buf, TERRAIN_ROW), "A".repeat(TEXT_W));
@@ -236,6 +237,7 @@ fn ellery_panel(armed: bool) -> PanelUnitView {
         hp_name: "HP".to_owned(),
         hp: 19,
         max: 19,
+        hp_then: None,
         faction_name: "Player".to_owned(),
         stats: cells(&[
             ("Str", "8"),
@@ -266,6 +268,11 @@ fn ellery_panel(armed: bool) -> PanelUnitView {
 
 /// The side panel painted over `quick` with `unit` under the cursor.
 fn panel_with(unit: PanelUnitView) -> GlyphBuffer {
+    panel_aimed(unit, None)
+}
+
+/// [`panel_with`], with `preview` of what is aimed at the top (1286).
+fn panel_aimed(unit: PanelUnitView, preview: Option<PanelPreviewView>) -> GlyphBuffer {
     let c = ctx();
     let mut buf = render(&quick(), &c);
     let panel = PanelView {
@@ -277,6 +284,7 @@ fn panel_with(unit: PanelUnitView) -> GlyphBuffer {
         }),
         unit: Some(unit),
         gold: "Gold 0".to_owned(),
+        preview,
     };
     paint_panel(&c, &panel, &mut buf);
     buf
@@ -465,7 +473,7 @@ fn a_question_is_a_box_in_the_middle_of_the_map_its_answers_dim() {
     let buf = painted(&quick(), |v| {
         v.dialog = Some(DialogView::Question(QuestionView {
             question: "End the turn?".to_owned(),
-            answers: "yes / no".to_owned(),
+            answers: "yes / no".into(),
         }));
     });
     // 13 cells of text plus a blank and a border each side; 2 lines plus
@@ -710,4 +718,89 @@ fn a_note_wider_than_the_map_wraps_onto_a_second_row_above() {
     let buf = bar(None, Some(MessageView::note(text.clone())));
     let one = cells(&buf, HELP_BAR.y - 1, MAP_VIEW.x, MAP_VIEW.w);
     assert_eq!(one.trim_end(), format!(" {text}"));
+}
+
+#[test]
+fn a_long_aimed_preview_wraps_inside_the_panel_over_the_tile_and_unit() {
+    let c = ctx();
+    let text = "Shove on Brigand Captain of the Northern Hills (8 → 7 uses, 20 → 19)";
+    let preview = PanelPreviewView {
+        title: "Shove".to_owned(),
+        text: text.to_owned(),
+    };
+    let buf = panel_aimed(ellery_panel(true), Some(preview));
+    let lines = wrap_words(text, TEXT_W);
+    assert!(lines.len() > 2, "{lines:?}");
+    // Every line inside the text width, the words all there in order.
+    let rows: Vec<String> = (0..lines.len())
+        .map(|i| panel_row(&buf, TERRAIN_ROW + 1 + to_i32(i)))
+        .collect();
+    assert!(rows.iter().all(|r| r.chars().count() <= TEXT_W), "{rows:?}");
+    assert_eq!(rows.join(" "), text);
+    // Nothing reaches the border or the blank column before it.
+    let border = c.palette.get(UiColor::PanelBorder);
+    for y in SIDE_PANEL.y + 1..SIDE_PANEL.y + SIDE_PANEL.h - 1 {
+        let gap = cells(&buf, y, TEXT_X + to_i32(TEXT_W), 1);
+        assert_eq!(gap, " ", "row {y}");
+        let edge = buf.get(SIDE_PANEL.x + SIDE_PANEL.w - 1, y).unwrap();
+        assert_eq!(edge.fg, border, "row {y}");
+    }
+    insta::assert_snapshot!("panel_long_preview", panel_text(&buf));
+}
+
+#[test]
+fn a_heal_aimed_at_the_unit_shows_the_change_on_its_hp_line() {
+    let p = game_palette();
+    let hurt = PanelUnitView {
+        hp: 6,
+        max: 19,
+        hp_then: Some(16),
+        ..ellery_panel(true)
+    };
+    let buf = panel_with(hurt);
+    let hp_row = UNIT_ROW + 2;
+    assert!(panel_row(&buf, hp_row).starts_with("HP 6 → 16/19"));
+    let lit = buf.get(TEXT_X, hp_row).unwrap().fg;
+    assert_eq!(lit, p.get(UiColor::TextHighlight));
+    // The bar after the line, showing the HP the heal leaves, inside the
+    // panel's text width.
+    let bar_x = TEXT_X + to_i32("HP 6 → 16/19 ".chars().count());
+    // 16 of 19 HP: 8 of its 10 cells full, the rest drained.
+    let bar = cells(&buf, hp_row, bar_x, HP_BAR_CELLS);
+    assert!(bar.starts_with("████████"), "{bar}");
+    assert!(!bar.ends_with('█'), "{bar}");
+    let after = cells(&buf, hp_row, bar_x + HP_BAR_CELLS, 3);
+    assert_eq!(after, "   ");
+    assert!(bar_x + HP_BAR_CELLS <= TEXT_X + to_i32(TEXT_W));
+}
+
+#[test]
+fn a_long_hp_change_line_keeps_its_bar_inside_the_panel() {
+    // `HP 999 → 999/999` leaves 9 cells for the bar, not 10.
+    let big = PanelUnitView {
+        hp: 999,
+        max: 999,
+        hp_then: Some(999),
+        ..ellery_panel(true)
+    };
+    let buf = panel_with(big);
+    let hp_row = UNIT_ROW + 2;
+    let line = "HP 999 → 999/999";
+    assert_eq!(panel_row(&buf, hp_row), format!("{line} {}", "█".repeat(9)));
+    // Not one cell past the text width; the blank column before the
+    // border stays blank.
+    let edge = TEXT_X + to_i32(TEXT_W);
+    assert_eq!(cells(&buf, hp_row, edge - 9, 9), "█".repeat(9));
+    assert_eq!(cells(&buf, hp_row, edge, 1), " ");
+    // A name so long no cell is left: no bar, and nothing past the line.
+    let full = PanelUnitView {
+        hp_name: "Hit Points".to_owned(),
+        hp: 999,
+        max: 9999,
+        hp_then: Some(999),
+        ..ellery_panel(true)
+    };
+    let buf = panel_with(full);
+    assert_eq!(panel_row(&buf, hp_row), "Hit Points 999 → 999/9999");
+    assert_eq!(cells(&buf, hp_row, edge, 1), " ");
 }
