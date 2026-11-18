@@ -807,3 +807,51 @@ fn her_coming_lines_hold_only_the_lessons_still_to_start_here() {
         assert!(!lines.contains(&line(id)), "{id}");
     }
 }
+
+/// Tickets 0465 and 1292: a lesson done goes straight to the next lesson
+/// in line, never to a tip due between them (here the "Moving a unit" tip
+/// of the selection that finished the first lesson).
+#[test]
+fn a_lesson_done_goes_straight_to_the_next_never_to_a_tip() {
+    let mut c = lessoned();
+    c.game.tips_enabled = true;
+    c.game.content.lessons.lessons = vec![
+        lesson("first", LessonLevel::Full, &[DoneWhen::UnitSelected]),
+        lesson(
+            "second",
+            LessonLevel::Full,
+            &[DoneWhen::Pressed(Action::CursorUp)],
+        ),
+    ];
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_lesson(), Some("first"));
+    // Selecting the lord finishes the first lesson.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Selected(_)));
+    assert_eq!(s.shown_lesson(), Some("second"));
+    assert_eq!(s.shown_tip(), None);
+    assert!(s.lesson_open());
+}
+
+/// Tickets 0465 and 0495: the box at the end of the lessons waits for a
+/// press on the map after the last lesson, so a key meant for the lesson
+/// never answers it.
+#[test]
+fn the_end_box_waits_for_a_press_after_the_last_lesson() {
+    let mut c = lessoned();
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &CURSORS);
+    press(&mut s, &mut c, &[]);
+    assert!(!s.lesson_open());
+    assert!(!s.lessons_end_shown(&c), "it waits for a press");
+    // A press on the map that changes nothing (Zoom, with glyphs).
+    press(&mut s, &mut c, &[Action::ZoomMap]);
+    assert!(s.lessons_end_shown(&c));
+}
