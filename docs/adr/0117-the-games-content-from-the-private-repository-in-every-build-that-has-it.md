@@ -1,8 +1,8 @@
 # ADR-0117: The game's content from the private repository, in every build that has it
 
-- **Status:** Accepted (0156); extends ADR-0040 and ADR-0057
+- **Status:** Accepted (0156); extends ADR-0040 and ADR-0057; §4 amended 2026-11-17 (0171)
 - **Date:** 2026-11-12
-- **Related tickets:** 0153, 0156, 0157, 0158, 0159, 0160
+- **Related tickets:** 0153, 0156, 0157, 0158, 0159, 0160, 0171
 
 ## Context
 
@@ -100,7 +100,7 @@ stay as they were.
 `.gitignore` lists, so `.cargo/mutants.toml` sets `gitignore = false`: the
 mutants build with the content, as the unmutated run does.
 
-### 4. Nothing that embeds the content becomes a public artifact
+### 4. Nothing that embeds the content becomes a public artifact or cache
 
 Anyone signed in to GitHub can download a public repository's workflow
 artifacts. So:
@@ -113,6 +113,22 @@ artifacts. So:
 
 A failing test's log may still quote a line of the content. That is the
 price 0153 §3.2 accepted for checks on the real content.
+
+**Amendment (2026-11-17, ticket 0171): no artifact and no cache.** The
+Actions cache is as public as an artifact: a pull request's run may
+restore its base branch's caches, a fork's too, and its own workflow can
+print what they hold. `Swatinem/rust-cache` deletes the workspace crates'
+builds before it saves, but not every folder of `target/`: 0171's audit
+of `main`'s caches found the packed Playdate game (`target/playdate/`,
+363 files) in `playdate`'s and the workspace's `cargo doc` pages in
+`docs`'s. So every job that checks out the private files keeps **no
+`target/`** in its cache (`cache-targets: false`; the registry, git and
+installed tools stay cached), uploads no build but `playtest.yml`'s
+xtask above, and caches no `target` with `actions/cache`. The xtask test
+`no_job_with_private_files_caches_or_uploads_a_build` fails a workflow
+that doesn't (the allowed uploads are a constant beside it, in
+`crates/xtask/src/workflow_guard.rs`). Engine#2596 gave new games'
+templates the same guard.
 
 ### 5. The tools that read `assets/` from disk read the same view
 

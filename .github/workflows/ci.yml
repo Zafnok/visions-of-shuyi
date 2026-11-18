@@ -87,6 +87,7 @@ jobs:
       # No target/ in the cache (ticket 0171): this job checks out the private
       # content (ADR-0117), a build here embeds it, and a fork's pull request
       # can restore main's cache.
+      # Its cost: about +3 to +6 minutes a leg (0171's measure, macOS the most).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           cache-targets: false
@@ -499,6 +500,7 @@ jobs:
       # No target/ in the cache (ticket 0171): this job checks out the private
       # content (ADR-0117), a build here embeds it, and a fork's pull request
       # can restore main's cache.
+      # Its cost: about +3.5 minutes (0171's measure).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           cache-targets: false

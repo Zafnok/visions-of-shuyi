@@ -176,7 +176,10 @@ pub fn check(file: &str, text: &str) -> Vec<String> {
         }
         for step in &steps {
             let mut problem = |what: String| {
-                problems.push(format!("{file}: job `{job}`: step `{}`: {what}", step.label));
+                problems.push(format!(
+                    "{file}: job `{job}`: step `{}`: {what}",
+                    step.label
+                ));
             };
             match step.uses() {
                 Some("Swatinem/rust-cache") => {
@@ -283,7 +286,9 @@ mod tests {
         );
         let problems = check("made-up.yml", &text);
         assert_eq!(problems.len(), 2, "{problems:#?}");
-        assert!(problems[0].starts_with("made-up.yml: job `build`: step `Cache`: `cache-all-crates"));
+        assert!(
+            problems[0].starts_with("made-up.yml: job `build`: step `Cache`: `cache-all-crates")
+        );
         assert!(problems[1].starts_with(
             "made-up.yml: job `build`: step `Swatinem/rust-cache@abc`: the job checks out"
         ));

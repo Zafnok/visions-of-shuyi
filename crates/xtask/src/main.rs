@@ -1122,16 +1122,32 @@ mod tests {
             problems.extend(workflow_guard::check(&file, &text));
         }
         assert!(guarded >= 10, "{guarded}");
-        assert!(problems.is_empty(), "{}", problems.join("
-"));
+        assert!(
+            problems.is_empty(),
+            "{}",
+            problems.join(
+                "
+"
+            )
+        );
         // Each upload the check allows is still there.
         for (file, job, upload) in workflow_guard::ALLOWED_UPLOADS {
             let text = std::fs::read_to_string(dir.join(file)).unwrap();
-            assert!(text.contains(&format!("
+            assert!(
+                text.contains(&format!(
+                    "
   {job}:
-")), "{file}: {job}");
-            assert!(text.contains(&format!("path: {upload}
-")), "{file}: {upload}");
+"
+                )),
+                "{file}: {job}"
+            );
+            assert!(
+                text.contains(&format!(
+                    "path: {upload}
+"
+                )),
+                "{file}: {upload}"
+            );
         }
     }
 
