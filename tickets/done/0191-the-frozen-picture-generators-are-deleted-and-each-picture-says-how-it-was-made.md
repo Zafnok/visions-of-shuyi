@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 0191 — The frozen picture generators are deleted, and each picture says how it was made
@@ -126,15 +126,15 @@ Expected size: about 600 lines deleted, about 60 added.
 
 ## Acceptance criteria
 
-- [ ] The three files are gone, and `cargo xtask test-card` prints the
+- [x] The three files are gone, and `cargo xtask test-card` prints the
       unknown-command usage.
-- [ ] Each of the three pictures' README rows names its tool's last
+- [x] Each of the three pictures' README rows names its tool's last
       commit, and `git show <hash>:crates/xtask/src/<tool>.rs` prints the
       tool.
-- [ ] The color test fails when `effect_bonus` in `palette.ron` is
+- [x] The color test fails when `effect_bonus` in `palette.ron` is
       changed (tried locally, noted) and passes as committed.
-- [ ] The grep of step 5 finds only the notes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The grep of step 5 finds only the notes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -144,5 +144,27 @@ Expected size: about 600 lines deleted, about 60 added.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Deleted `test_card.rs`, `edge_marks.rs` and `effect_marks.rs` with their
+  `mod` lines, dispatch arms, wrappers, `USAGE` lines and `*_rejects_args`
+  tests (222 production lines and 13 + 3 tests). `cargo xtask test-card`
+  now prints `unknown command: test-card` and the usage (exit 2).
+- Last commits, recomputed: `test_card` 61d537d2, `edge_marks` 90f97cf4,
+  `effect_marks` 61d537d2; `git show <hash>:crates/xtask/src/<tool>.rs`
+  prints each. The README rows of `assets/images/`, `assets-test/` and
+  `assets-src/` name them; `edge_marks.png` got its row.
+- New test `image::tests::baked_pictures_are_drawn_in_their_palette_colors`
+  in `trpg-content`: every opaque pixel of the two arrow pictures is one of
+  its tool's palette colours, each colour is used, and no pixel is partly
+  see-through. Tried locally: `effect_bonus` set to `#70d8e9` fails it
+  ("images/effect_marks.png has [112, 216, 232] …"); as committed it passes.
+  `trpg-content` gains `shuyi-assets` with `png` as a dev-dependency to
+  decode them.
+- Deviations: ADR-0049 §5 also named `effect-marks` and its "test fails if
+  the committed file isn't what the tool makes", so it got the same
+  one-line amendment; `docs/engine/boundary.md` line 264 (`test-card`) too,
+  beside line 270. The doc comments of `TEST_CARD_PATH`,
+  `EFFECT_MARKS_PATH` and `EDGE_MARKS_PATH` no longer name the commands.
+- The step-5 grep finds only the ADRs' original text with its amendments
+  and the two boundary-table notes.
+- Engine friction: none, production code only removed (0 added).
+- No follow-up tickets. No gameplay rules decided.

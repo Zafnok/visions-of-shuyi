@@ -13,8 +13,6 @@ mod check_script;
 mod clean_targets;
 mod code_lines;
 mod content_layer;
-mod edge_marks;
-mod effect_marks;
 mod engine;
 mod game_tools;
 mod icon;
@@ -35,7 +33,6 @@ mod skill_pack;
 mod skirmish;
 mod story_import;
 mod test_auto;
-mod test_card;
 mod test_tileset;
 mod test_units;
 mod tickets;
@@ -67,10 +64,7 @@ code-lines [--base <ref>]          production Rust lines added and removed per c
 pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
 the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
-test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
-effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
-edge-marks                         write the map's edge arrows, assets/images/edge_marks.png\n  \
 lettering                          bake the chapter card's Cinzel sheets, assets/title/chapter_*\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
@@ -119,10 +113,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
-        Some("test-card") => test_card(&args.collect::<Vec<_>>()),
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
-        Some("edge-marks") => edge_marks(&args.collect::<Vec<_>>()),
-        Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
         Some("lettering") => lettering(&args.collect::<Vec<_>>()),
         Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
@@ -431,23 +422,6 @@ fn parse_sfx_check(args: &[String]) -> Option<bool> {
     }
 }
 
-fn test_card(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask test-card");
-        return 2;
-    }
-    match test_card::run(&repo_root()) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("test-card: {e}");
-            1
-        }
-    }
-}
-
 fn test_tileset(args: &[String]) -> u8 {
     if !args.is_empty() {
         eprintln!("usage: cargo xtask test-tileset");
@@ -582,40 +556,6 @@ fn tileset_import_in(root: &Path, args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("tileset-import: {e}");
-            1
-        }
-    }
-}
-
-fn edge_marks(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask edge-marks");
-        return 2;
-    }
-    match edge_marks::run(&repo_root()) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("edge-marks: {e}");
-            1
-        }
-    }
-}
-
-fn effect_marks(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask effect-marks");
-        return 2;
-    }
-    match effect_marks::run(&repo_root()) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("effect-marks: {e}");
             1
         }
     }
@@ -1547,12 +1487,6 @@ mod tests {
     }
 
     #[test]
-    fn test_card_rejects_args() {
-        assert_eq!(test_card(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["test-card", "x"]).into_iter()), 2);
-    }
-
-    #[test]
     fn tileset_import_help_list_and_bad_args() {
         assert_eq!(tileset_import(&args(&["--help"])), 0);
         // The committed mapping file is read and listed.
@@ -1615,21 +1549,9 @@ mod tests {
     }
 
     #[test]
-    fn edge_marks_rejects_args() {
-        assert_eq!(edge_marks(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["edge-marks", "x"]).into_iter()), 2);
-    }
-
-    #[test]
     fn lettering_rejects_args() {
         assert_eq!(lettering(&args(&["--bogus"])), 2);
         assert_eq!(dispatch(args(&["lettering", "x"]).into_iter()), 2);
-    }
-
-    #[test]
-    fn effect_marks_rejects_args() {
-        assert_eq!(effect_marks(&args(&["--bogus"])), 2);
-        assert_eq!(dispatch(args(&["effect-marks", "x"]).into_iter()), 2);
     }
 
     #[test]
