@@ -100,7 +100,7 @@ use self::tips::TipState;
 use self::view::{
     BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
     MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelView,
-    QuestionView,
+    QuestionView, TogglesView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -113,7 +113,7 @@ use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, LessonsEndView, TipView};
-use crate::widgets::help::{SEPARATOR, key_name};
+use crate::widgets::help::{SEPARATOR, hint_column, key_name, pad_last_hint};
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
 
@@ -389,8 +389,8 @@ pub struct BattleScreen {
     /// A command was applied: auto-end is checked once the screen is back
     /// to browsing.
     end_armed: bool,
-    /// A short message and the seconds it has left.
-    toast: Option<(String, f32)>,
+    /// A short message (a note or a warning) and the seconds it has left.
+    toast: Option<(MessageView, f32)>,
     /// Banners and scenes waiting to be shown, in the order of their
     /// events, the first on screen (after a combat's playback).
     queue: VecDeque<Queued>,
@@ -850,7 +850,7 @@ impl BattleScreen {
 
     /// The message shown for a moment, if any.
     pub fn toast(&self) -> Option<&str> {
-        self.toast.as_ref().map(|(t, _)| t.as_str())
+        self.toast.as_ref().map(|(t, _)| t.text.as_str())
     }
 
     /// Shows or hides the danger zone.
@@ -886,7 +886,7 @@ impl BattleScreen {
         } else {
             "battle.toast.auto_end_off"
         });
-        self.toast = Some((text.to_owned(), TOAST_S));
+        self.toast = Some((MessageView::note(text.to_owned()), TOAST_S));
     }
 
     /// A player unit's level-up in `events` fires [`TipTrigger::FirstLevelUp`].
@@ -1549,7 +1549,7 @@ impl BattleScreen {
     /// `message`.
     pub fn suspend_failed(&mut self, message: String) {
         self.leaving = None;
-        self.toast = Some((message, TOAST_S));
+        self.toast = Some((MessageView::warning(message), TOAST_S));
     }
 
     /// Applies `cmd` as if the player (or the AI) had sent it: scripted
@@ -1715,7 +1715,7 @@ impl BattleScreen {
             self.history.push(cmd.clone());
             self.note_level_ups(events);
             if let Some(line) = loot::line(&self.state, self.language.words(), events) {
-                self.toast = Some((line, TOAST_S));
+                self.toast = Some((MessageView::note(line), TOAST_S));
             }
             if was_player {
                 self.notice_events(cmd, events);
@@ -2171,11 +2171,18 @@ impl BattleScreen {
     /// select · e info · s next unit · r rewind · d back` over a ready unit while
     /// browsing. Key names come from the keymap.
     pub fn help(&self, ctx: &Ctx) -> String {
+        self.help_parts(ctx).0
+    }
+
+    /// [`help`](Self::help), and the column (in characters from the
+    /// line's start) where its end-turn hint starts, if it has one: only
+    /// the browsing help does (0445).
+    fn help_parts(&self, ctx: &Ctx) -> (String, Option<usize>) {
         if let Some(line) = self.overlay_help(ctx) {
-            return line;
+            return (line, None);
         }
         if self.lessons_end_shown(ctx) {
-            return ctx.text_with("battle.lessons_end.help", &[]);
+            return (ctx.text_with("battle.lessons_end.help", &[]), None);
         }
         let key = match &self.mode {
             Mode::Idle { threat } => {
@@ -2184,7 +2191,8 @@ impl BattleScreen {
                 } else {
                     "battle.hint.menu"
                 };
-                return self.help_idle(ctx, back);
+                let (line, end) = self.help_idle(ctx, back);
+                return (line, Some(end));
             }
             Mode::Objective => "battle.help.objective",
             Mode::RestartPrompt => "battle.help.restart",
@@ -2194,7 +2202,7 @@ impl BattleScreen {
                 let [accept, also] = split_keys::help_end_turn_accept_actions(km);
                 let (accept, also) = (key_name(km, accept), key_name(km, also));
                 let keys = [("accept", &accept as &dyn ToArg), ("also", &also)];
-                return ctx.text_with("battle.help.end_turn", &keys);
+                return (ctx.text_with("battle.help.end_turn", &keys), None);
             }
             Mode::Info { .. } => "battle.help.info",
             Mode::Selected(sel) => {
@@ -2229,12 +2237,12 @@ impl BattleScreen {
                 "battle.help.menu"
             }
             Mode::CastTarget(t) => match t.forecast() {
-                Some(forecast) => return Self::help_targeting(ctx, forecast),
+                Some(forecast) => return (Self::help_targeting(ctx, forecast), None),
                 None => "battle.help.cast_target",
             },
             Mode::ItemTarget(_) | Mode::SkillTarget(_) => "battle.help.use_target",
             Mode::TalkTarget(_) => "battle.help.talk_target",
-            Mode::Targeting(t) => return Self::help_targeting(ctx, t),
+            Mode::Targeting(t) => return (Self::help_targeting(ctx, t), None),
             Mode::Combat(_) => "battle.help.combat",
             Mode::AiAction(_) => "battle.help.ai",
             Mode::MoveAfter { unit, tiles } => {
@@ -2248,7 +2256,7 @@ impl BattleScreen {
                 }
             }
         };
-        ctx.text_with(key, &[])
+        (ctx.text_with(key, &[]), None)
     }
 
     /// The help line while picking an attack's target: the cursor keys
@@ -2290,37 +2298,44 @@ impl BattleScreen {
     }
 
     /// The help line while browsing, over what is under the cursor; `back`
-    /// is the hint of the Cancel key.
-    fn help_idle(&self, ctx: &Ctx, back: &str) -> String {
+    /// is the hint of the Cancel key. Its last hint, end turn, starts in
+    /// the same column whatever is under the cursor (Nick, 0445): where
+    /// the longest of the four forms puts it, the others padded with
+    /// spaces up to it. Returns the line and that column.
+    fn help_idle(&self, ctx: &Ctx, back: &str) -> (String, usize) {
         let (moves, info) = (Some("battle.hint.move"), Some("battle.hint.info"));
         let (next, end) = (Some("battle.hint.next_unit"), Some("battle.hint.end_turn"));
         let rewind = self.can_open_rewind().then_some("battle.hint.rewind");
         let back = Some(back);
-        let hints = match self.hovered() {
-            Some(u) if self.is_ready(u) && u.faction == Faction::Player => {
-                let select = Some("battle.hint.select");
-                [None, select, info, next, rewind, back, end]
-            }
-            Some(u) if u.faction != Faction::Player => {
-                let range = Some("battle.hint.range");
-                [moves, range, info, next, rewind, back, end]
-            }
-            Some(_) => [moves, None, info, next, rewind, back, end],
-            None => {
-                let menu = Some("battle.hint.open_menu");
-                [moves, menu, None, next, rewind, back, end]
-            }
+        let (select, range) = (Some("battle.hint.select"), Some("battle.hint.range"));
+        let menu = Some("battle.hint.open_menu");
+        // Over a ready unit of ours, an enemy, another unit, an empty tile.
+        let forms = [
+            [None, select, info, next, rewind, back, end],
+            [moves, range, info, next, rewind, back, end],
+            [moves, None, info, next, rewind, back, end],
+            [moves, menu, None, next, rewind, back, end],
+        ];
+        let form = match self.hovered() {
+            Some(u) if self.is_ready(u) && u.faction == Faction::Player => 0,
+            Some(u) if u.faction != Faction::Player => 1,
+            Some(_) => 2,
+            None => 3,
         };
-        let hints = hints.into_iter().flatten();
-        let hints: Vec<String> = hints.map(|key| ctx.text_with(key, &[])).collect();
-        hints.join(SEPARATOR)
+        let forms = forms.map(|keys| -> Vec<String> {
+            let keys = keys.into_iter().flatten();
+            keys.map(|key| ctx.text_with(key, &[])).collect()
+        });
+        let end_of = |hints: &Vec<String>| hint_column(hints, hints.len() - 1);
+        let column = forms.iter().map(end_of).max().unwrap_or(0);
+        (pad_last_hint(&forms[form], column), column)
     }
 
-    /// The toggles' state for the message row: the Zoom map key and
-    /// `zoom: 2×` (only under a map skin that can zoom), the Danger zone
-    /// key and `danger zone: OFF`, then the Auto-end key and
-    /// `auto-end: ON`, each key named from the active keymap.
-    pub fn status(&self, ctx: &Ctx) -> String {
+    /// The toggles' hints at the left of the message row: the Zoom map
+    /// key and `zoom: 2×` (only under a map skin that can zoom), then the
+    /// Danger zone key and `danger zone: OFF`, each key named from the
+    /// active keymap.
+    fn danger_hint(&self, ctx: &Ctx) -> String {
         let zoom = ctx.game.map_skin.zoom().map(|zoom| match zoom {
             MapZoom::X1 => "battle.status.zoom_x1",
             MapZoom::X2 => "battle.status.zoom_x2",
@@ -2330,17 +2345,50 @@ impl BattleScreen {
         } else {
             "battle.status.danger_off"
         };
-        let auto = if self.auto_end {
+        let hints: Vec<String> = zoom
+            .into_iter()
+            .chain([danger])
+            .map(|key| ctx.text_with(key, &[]))
+            .collect();
+        hints.join(SEPARATOR)
+    }
+
+    /// The Auto-end key and `auto-end: ON`, the key named from the active
+    /// keymap.
+    fn auto_end_hint(&self, ctx: &Ctx) -> String {
+        let key = if self.auto_end {
             "battle.status.auto_end_on"
         } else {
             "battle.status.auto_end_off"
         };
-        let hints: Vec<String> = zoom
-            .into_iter()
-            .chain([danger, auto])
-            .map(|key| ctx.text_with(key, &[]))
-            .collect();
-        hints.join(SEPARATOR)
+        ctx.text_with(key, &[])
+    }
+
+    /// The toggles' hints in one line, as they read left to right: zoom,
+    /// danger zone, auto-end.
+    #[cfg(test)]
+    pub fn status(&self, ctx: &Ctx) -> String {
+        [self.danger_hint(ctx), self.auto_end_hint(ctx)].join(SEPARATOR)
+    }
+
+    /// The toggles' row (0445): shown only while the help has its
+    /// end-turn hint (starting in column `end_turn`) and no combat or
+    /// preview line is up, auto-end above end turn.
+    fn toggles(
+        &self,
+        ctx: &Ctx,
+        end_turn: Option<usize>,
+        message: Option<&MessageView>,
+    ) -> Option<TogglesView> {
+        let column = end_turn?;
+        if message.is_some_and(|m| m.kind == MessageKind::Said) {
+            return None;
+        }
+        Some(TogglesView::new(
+            self.danger_hint(ctx),
+            self.auto_end_hint(ctx),
+            column,
+        ))
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -2659,6 +2707,8 @@ impl BattleScreen {
             lines: notes::note_lines(self.state.battle_notes(), words),
         });
         let limit = map_menu::shown_limit(&self.state);
+        let (help, end_turn) = self.help_parts(ctx);
+        let message = self.message();
         BattleView {
             menu: self.menu_view(words),
             popups: self.popups.clone(),
@@ -2673,10 +2723,10 @@ impl BattleScreen {
             tip: self.tip_view(ctx),
             lesson: self.lesson_view(ctx),
             lessons_end: self.lessons_end_view(ctx),
-            message: self.message(),
-            status: self.status(ctx),
+            toggles: self.toggles(ctx, end_turn, message.as_ref()),
+            message,
             scene: self.scene(ctx),
-            help: self.help(ctx),
+            help,
             debug_hint: super::debug_hint(ctx),
             forecast,
             info,
@@ -2865,12 +2915,7 @@ impl BattleScreen {
             text,
             kind: MessageKind::Said,
         };
-        let toast = || {
-            Some(MessageView {
-                text: self.toast()?.to_owned(),
-                kind: MessageKind::Toast,
-            })
-        };
+        let toast = || self.toast.as_ref().map(|(m, _)| m.clone());
         preview.map(said).or_else(toast)
     }
 }
@@ -3574,6 +3619,8 @@ mod tip_tests;
 #[cfg(test)]
 mod lesson_tests;
 
+#[cfg(test)]
+mod help_bar_tests;
 #[cfg(test)]
 mod turn_tests;
 

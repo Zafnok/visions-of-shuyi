@@ -37,9 +37,11 @@ pub use self::rewind::{RewindScreenView, RewindView};
 pub use self::shop::{SellConfirmView, ShopLineView, ShopScreenView};
 use super::HealPopup;
 use super::banner::BannerKind;
+use super::layout::HELP_BAR;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
 use crate::tips::{LessonView, LessonsEndView, TipView};
+use crate::widgets::help::SEPARATOR;
 use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
@@ -74,12 +76,13 @@ pub struct BattleView {
     pub lesson: Option<LessonView>,
     /// The guide's box at the end of the lessons (ticket 0465), over the map.
     pub lessons_end: Option<LessonsEndView>,
-    /// The line over the help: a combat's message, the preview of what is
-    /// being aimed, or the toast.
+    /// The message: a combat's line or the preview of what is being aimed
+    /// (on the toggles' row), or a note or a warning for a moment (over
+    /// the map, above the bar).
     pub message: Option<MessageView>,
-    /// The toggles' state (zoom, danger zone, auto-end), each with its
-    /// key.
-    pub status: String,
+    /// The toggles' row (zoom, danger zone, auto-end, each with its key),
+    /// while the help has its end-turn hint (0445).
+    pub toggles: Option<TogglesView>,
     /// The help line: what the keys do now.
     pub help: String,
     /// The debug tools' key, when they are on.
@@ -283,7 +286,7 @@ pub struct ObjectiveLine {
     pub text: String,
 }
 
-/// The line over the help.
+/// A message: a combat's line, a preview, a note or a warning.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MessageView {
     /// What it says.
@@ -292,13 +295,68 @@ pub struct MessageView {
     pub kind: MessageKind,
 }
 
-/// What the message line says.
+impl MessageView {
+    /// A note for a moment, `text`.
+    pub fn note(text: String) -> Self {
+        let kind = MessageKind::Toast;
+        Self { text, kind }
+    }
+
+    /// A warning or an error for a moment, `text`.
+    pub fn warning(text: String) -> Self {
+        let kind = MessageKind::Warning;
+        Self { text, kind }
+    }
+}
+
+/// What a message is, which says where it shows (Nick, 0445).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageKind {
-    /// What a combat says or what the thing aimed will do.
+    /// What a combat says or what the thing aimed will do: at the left of
+    /// the toggles' row, while it lasts.
     Said,
-    /// A short message for a moment (a toggle flipped).
+    /// A note for a moment (a toggle flipped, a thing picked up): on a
+    /// strip over the map's bottom row.
     Toast,
+    /// A warning or an error for a moment (the save failed): in a box at
+    /// the map's bottom left, wrapped to the map's width.
+    Warning,
+}
+
+/// The toggles' row over the help (0445): the danger-zone hint (after the
+/// zoom hint, where the map can zoom) from where the help starts, and the
+/// auto-end hint starting in the column where the help's end-turn hint
+/// starts. Columns count characters from where the help starts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TogglesView {
+    /// The zoom and danger-zone hints, at column 0.
+    pub left: String,
+    /// The auto-end hint and its column; `None` if it can't fit on the row.
+    pub auto_end: Option<(String, usize)>,
+}
+
+impl TogglesView {
+    /// The row for `left` and `auto_end`, auto-end in column `end_turn`;
+    /// one separator after `left` instead if that would overlap `left` or
+    /// run off the row, and left out if it doesn't fit there either.
+    pub fn new(left: String, auto_end: String, end_turn: usize) -> Self {
+        let cells = |s: &str| s.chars().count();
+        let after = cells(&left) + cells(SEPARATOR);
+        let fits = |column: usize| column + cells(&auto_end) <= Self::ROOM;
+        let column = if end_turn >= after && fits(end_turn) {
+            Some(end_turn)
+        } else {
+            fits(after).then_some(after)
+        };
+        Self {
+            left,
+            auto_end: column.map(|c| (auto_end, c)),
+        }
+    }
+
+    /// The characters the row has for its text: the bar's width, less a
+    /// blank column at each end.
+    pub const ROOM: usize = HELP_BAR.w.unsigned_abs() as usize - 2;
 }
 
 #[cfg(test)]
@@ -325,7 +383,11 @@ impl BattleView {
 
     /// The lines of text of the parts with no view type of their own.
     fn own_texts(&self) -> Vec<&str> {
-        let mut texts: Vec<&str> = vec![&self.status, &self.help];
+        let mut texts: Vec<&str> = vec![&self.help];
+        if let Some(t) = &self.toggles {
+            texts.push(&t.left);
+            texts.extend(t.auto_end.as_ref().map(|(a, _)| a.as_str()));
+        }
         if let Some(h) = self.menu.as_ref().and_then(|m| m.header.as_ref()) {
             texts.push(&h.name);
             texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));

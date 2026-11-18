@@ -390,7 +390,7 @@ fn engaging_the_rogue_plays_its_line_over_the_map_then_the_combat() {
     assert!(shows(&h, "That all you've got?"), "{}", h.snapshot());
     close_line(&mut h);
     h.wait(2.0);
-    assert!(shows(&h, "d menu · Space end turn"));
+    assert!(shows(&h, "Space end turn"));
     assert_eq!(h.screens(), ["battle"]);
 }
 
@@ -417,7 +417,7 @@ fn a_fallen_rogue_says_its_last_words_before_it_fades() {
     // Then it fades and the battle goes on.
     h.wait(3.0);
     assert_eq!(h.unit_at(ROGUE_AT), None);
-    assert!(shows(&h, "d menu · Space end turn"));
+    assert!(shows(&h, "Space end turn"));
 }
 
 #[test]
@@ -437,7 +437,7 @@ fn skipping_a_combat_still_stops_for_its_scenes() {
     assert_eq!(h.screens(), ["battle"]);
     // Then the lord's EXP bar (0602), and browsing again.
     h.wait(3.0);
-    assert!(shows(&h, "d menu · Space end turn"), "{}", h.snapshot());
+    assert!(shows(&h, "Space end turn"), "{}", h.snapshot());
 }
 
 #[test]

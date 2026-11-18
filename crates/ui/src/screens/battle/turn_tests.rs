@@ -366,7 +366,10 @@ fn the_battle_is_drawn_in_the_players_language() {
     assert!(shows(&shouted, "RESTART BATTLE"));
     assert_eq!(s.help(&c), "ARROWS CHOOSE · f CONFIRM · d BACK");
     assert!(shows(&shouted, "ARROWS CHOOSE"));
-    assert!(shows(&shouted, "DANGER ZONE: OFF"));
+    // The toggles are hidden while a menu is open (0445); their words
+    // come from the pack too.
+    assert!(!shows(&shouted, "DANGER ZONE"));
+    assert!(s.status(&c).contains("DANGER ZONE: OFF"));
     // Drawing changes nothing that is played.
     assert_eq!(s.mode(), &before);
 }

@@ -13,7 +13,7 @@ use crate::screens::battle::BattleScreen;
 use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
 use crate::screens::battle::view::{
     BannerView, MenuHeader, MessageView, ObjectiveLine, ObjectiveView, PanelCellView,
-    PanelUnitView, QuestionView, TerrainView, UsesView,
+    PanelUnitView, QuestionView, TerrainView, TogglesView, UsesView,
 };
 
 /// The glyphs of row `y` from column `from`, `n` of them.
@@ -512,33 +512,99 @@ fn the_objective_page_has_its_title_in_the_border_and_a_dim_notes_heading() {
     assert_eq!(buf.get(x, top).unwrap().fg, p.get(UiColor::TextHighlight));
 }
 
+/// The quick battle's view painted with `toggles`, `message`, the help
+/// `the help` and the debug hint.
+fn bar(toggles: Option<TogglesView>, message: Option<MessageView>) -> GlyphBuffer {
+    painted(&quick(), |v| {
+        v.toggles = toggles;
+        v.message = message;
+        v.help = "the help".to_owned();
+        v.debug_hint = Some("F2 debug".to_owned());
+    })
+}
+
 #[test]
-fn the_bar_has_the_message_left_the_toggles_right_and_the_help_under() {
+fn the_toggles_row_has_danger_zone_at_the_left_and_auto_end_in_its_column() {
     let c = ctx();
-    let message = |kind| {
-        painted(&quick(), |v| {
-            v.status = "zoom · danger".to_owned();
-            v.message = Some(MessageView {
-                text: "Said".to_owned(),
-                kind,
-            });
-            v.help = "the help".to_owned();
-            v.debug_hint = Some("F2 debug".to_owned());
-        })
-    };
-    let buf = message(MessageKind::Said);
-    let bar = cells(&buf, HELP_BAR.y, 0, HELP_BAR.w);
-    assert!(bar.starts_with(" Said "), "{bar}");
-    assert!(bar.ends_with(" zoom · danger "), "{bar}");
+    let toggles = TogglesView::new("zoom · danger".to_owned(), "auto".to_owned(), 30);
+    let buf = bar(Some(toggles), None);
+    let row = cells(&buf, HELP_BAR.y, 0, HELP_BAR.w);
+    assert_eq!(row.find("zoom · danger"), Some(1), "{row}");
+    let auto = row.find("auto").map(|at| row[..at].chars().count());
+    assert_eq!(auto, Some(31), "{row}");
     let help = cells(&buf, HELP_ROW, 0, HELP_BAR.w);
     assert!(help.starts_with(" the help "), "{help}");
     assert!(help.ends_with(" F2 debug "), "{help}");
     let p = &c.palette;
-    assert_eq!(buf.get(1, HELP_BAR.y).unwrap().fg, p.get(UiColor::Text));
+    assert_eq!(buf.get(1, HELP_BAR.y).unwrap().fg, p.get(UiColor::TextDim));
+    assert_eq!(buf.get(31, HELP_BAR.y).unwrap().fg, p.get(UiColor::TextDim));
     assert_eq!(buf.get(1, HELP_ROW).unwrap().fg, p.get(UiColor::TextDim));
-    let toast = message(MessageKind::Toast);
-    let lit = p.get(UiColor::TextHighlight);
-    assert_eq!(toast.get(1, HELP_BAR.y).unwrap().fg, lit);
+}
+
+#[test]
+fn a_preview_line_is_at_the_left_of_the_toggles_row() {
+    let c = ctx();
+    let said = MessageView {
+        text: "Forest → Burning".to_owned(),
+        kind: MessageKind::Said,
+    };
+    let buf = bar(None, Some(said));
+    let row = cells(&buf, HELP_BAR.y, 0, HELP_BAR.w);
+    assert_eq!(row.trim_end(), " Forest → Burning");
+    assert_eq!(
+        buf.get(1, HELP_BAR.y).unwrap().fg,
+        c.palette.get(UiColor::Text)
+    );
+    // Nothing over the map's bottom row.
+    let plain = bar(None, None);
+    let above = HELP_BAR.y - 1;
+    assert_eq!(cells(&buf, above, 0, 70), cells(&plain, above, 0, 70));
+}
+
+#[test]
+fn a_note_is_a_strip_over_the_maps_bottom_row() {
+    let c = ctx();
+    let toggles = TogglesView::new("danger".to_owned(), "auto".to_owned(), 30);
+    let note = MessageView::note("Auto-end: ON".to_owned());
+    let buf = bar(Some(toggles), Some(note));
+    let strip = cells(&buf, HELP_BAR.y - 1, MAP_VIEW.x, MAP_VIEW.w);
+    assert_eq!(strip.trim_end(), " Auto-end: ON");
+    let p = &c.palette;
+    for x in [MAP_VIEW.x, MAP_VIEW.x + MAP_VIEW.w - 1] {
+        assert_eq!(
+            buf.get(x, HELP_BAR.y - 1).unwrap().bg,
+            p.get(UiColor::PanelBg)
+        );
+    }
+    assert_eq!(
+        buf.get(1, HELP_BAR.y - 1).unwrap().fg,
+        p.get(UiColor::TextHighlight)
+    );
+    // The toggles stay where they are.
+    let row = cells(&buf, HELP_BAR.y, 0, HELP_BAR.w);
+    assert!(row.starts_with(" danger "), "{row}");
+}
+
+#[test]
+fn a_long_warning_wraps_in_a_box_inside_the_map() {
+    let text = "Save storage error: localStorage is turned off or blocked in this browser";
+    let buf = bar(None, Some(MessageView::warning(text.to_owned())));
+    // The box's bottom border is on the map's bottom row, its left on the
+    // map's left edge, and nothing passes the map's right edge.
+    let bottom = HELP_BAR.y - 1;
+    assert_eq!(buf.get(MAP_VIEW.x, bottom).unwrap().glyph, '└');
+    let rows: Vec<String> = (bottom - 3..=bottom)
+        .map(|y| cells(&buf, y, MAP_VIEW.x, MAP_VIEW.w))
+        .collect();
+    assert!(rows[0].starts_with('┌'), "{rows:?}");
+    let words: String = rows[1..3]
+        .iter()
+        .map(|r| r.trim_matches(|ch| ch == '│' || ch == ' '))
+        .collect::<Vec<_>>()
+        .join(" ");
+    assert_eq!(words.split_whitespace().collect::<Vec<_>>().join(" "), text);
+    assert!(rows[0].trim_end().ends_with('┐'), "{rows:?}");
+    assert!(rows[1].trim_end().ends_with('│'), "{rows:?}");
 }
 
 #[test]

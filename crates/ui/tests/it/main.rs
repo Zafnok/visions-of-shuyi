@@ -22,6 +22,14 @@ macro_rules! assert_private_snapshot {
     }};
 }
 
+/// `line` with each run of three or more spaces read as the separator
+/// `·`: the bar under the battle map lines its hints up in columns with
+/// spaces (ticket 0445), and a test names them in order.
+fn unpadded(line: &str) -> String {
+    let parts = line.split("   ").map(str::trim).filter(|p| !p.is_empty());
+    parts.collect::<Vec<_>>().join(" · ")
+}
+
 mod auto_advance;
 mod battle;
 mod ch01_lessons;

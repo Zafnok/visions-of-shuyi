@@ -32,7 +32,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│                            │
 ≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..│ Gold 0                     │
 ≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^Ra└────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+ w danger zone: OFF                                                 Shift+Space auto-end: OFF       
  arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn         F2 debug 
 --- colours ---
 aabbbbbbccccccddddddeeeeeeaaaaaabbfbbbccccccddddddeeeeeeaaaaaabbbbbbccgggggggggggggggggggggggggggggg
@@ -65,7 +65,7 @@ ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhh
 ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
 eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
 eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaaoogggggggggggggggggggggggggggggg
-pppppppppppppppppppppppppppppppppppppppppppppppppppppqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp
+pqqqqqqqqqqqqqqqqqqpppppppppppppppppppppppppppppppppppppppppppppppppqqqqqqqqqqqqqqqqqqqqqqqqqppppppp
 pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpppppppppqqqqqqqqp
 --- legend ---
 a = fg:mountain bg:mountain_bg

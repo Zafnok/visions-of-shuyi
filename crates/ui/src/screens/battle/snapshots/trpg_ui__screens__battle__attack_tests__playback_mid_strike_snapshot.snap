@@ -32,7 +32,7 @@ expression: h.snapshot()
 │                                                ││                                                │
 │ 8 dmg  Hit 96  Crit 3                          ││ 8 dmg  Hit 65  Crit 0                          │
 └────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  d skip · hold f fast                                                                      F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -65,7 +65,7 @@ caaaaaaaeeeeeeeeeeeeeeeeeeeeafffaaaaaaaaaaaaaaaaacdaaaaaaaeeeeeeeeeeeeeeeeefffaf
 caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad
 cafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaacdafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaad
 ccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddd
-ggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
 ghhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
 --- legend ---
 a = fg:text bg:panel_bg
