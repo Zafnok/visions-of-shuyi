@@ -17,6 +17,7 @@ pub mod rewind;
 pub mod shop;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 use trpg_core::Phase;
 
 use super::banner::BannerKind;
@@ -153,7 +154,8 @@ pub fn paint_lesson(ctx: &Ctx, scene: &MapScene, lesson: &LessonView, buf: &mut 
 pub fn lesson_rect(ctx: &Ctx, view: &BattleView) -> Option<Rect> {
     let lesson = view.lesson.as_ref()?;
     let at_bottom = lesson_at_bottom(ctx, &view.scene, lesson);
-    Some(tip_box::glyph::lesson_rect(lesson, at_bottom))
+    let widths = crate::widgets::help::frame_widths(ctx);
+    Some(tip_box::glyph::lesson_rect(lesson, at_bottom, &widths))
 }
 
 /// Whether the cells `tile` are in the map view's top half: their middle
@@ -162,11 +164,14 @@ pub fn in_top_half(tile: Rect) -> bool {
     tile.y + tile.h / 2 < MAP_VIEW.y + MAP_VIEW.h / 2
 }
 
-/// Paints the help line `help` and the debug hint `hint`, if any, at the
-/// right of the help row.
-fn paint_help(ctx: &Ctx, help: &str, hint: Option<&String>, buf: &mut GlyphBuffer) {
+/// Paints the help line `help`, its keys as key caps, and the debug hint
+/// `hint`, if any, at the right of the help row.
+fn paint_help(ctx: &Ctx, help: &StyledText, hint: Option<&String>, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    buf.print(1, HELP_ROW, help, c(UiColor::TextDim), c(UiColor::Black));
+    let colors = ctx
+        .palette
+        .text_colors_on(c(UiColor::TextDim), c(UiColor::Black));
+    buf.print_styled(1, HELP_ROW, help, colors);
     if let Some(hint) = hint {
         paint_debug_hint(&ctx.palette, hint, buf, HELP_ROW);
     }
@@ -703,11 +708,11 @@ fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let black = c(UiColor::Black);
     buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
     if let Some(t) = &view.toggles {
-        let dim = c(UiColor::TextDim);
-        buf.print(1, HELP_BAR.y, &t.left, dim, black);
+        let colors = || ctx.palette.text_colors_on(c(UiColor::TextDim), black);
+        buf.print_styled(1, HELP_BAR.y, &t.left, colors());
         if let Some((auto_end, column)) = &t.auto_end {
             let x = 1 + i32::try_from(*column).unwrap_or(0);
-            buf.print(x, HELP_BAR.y, auto_end, dim, black);
+            buf.print_styled(x, HELP_BAR.y, auto_end, colors());
         }
     }
     match &view.message {

@@ -34,8 +34,9 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     assert!(view.panel.is_some());
     let toggles = view.toggles.as_ref().unwrap();
     let auto_end = &toggles.auto_end.as_ref().unwrap().0;
-    assert_eq!(format!("{} · {auto_end}", toggles.left), s.status(&c));
-    assert_eq!(view.help, s.help(&c));
+    let row = format!("{} · {}", toggles.left.plain(), auto_end.plain());
+    assert_eq!(row, s.status(&c).plain());
+    assert_eq!(view.help, s.help_styled(&c));
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
     assert_eq!(view.scene, s.scene(&c));
     assert_eq!(view.menu, None);
@@ -351,7 +352,7 @@ fn the_rewind_screen_shows_only_the_map_its_list_and_the_help() {
     s.press(&mut c, &[Action::Rewind]);
     let view = s.rewind().expect("the rewind screen").view(&c);
     assert_eq!(view.list.title, "Rewind");
-    assert_eq!(view.help, "d close");
+    assert_eq!(view.help.plain(), "d close");
     assert_eq!(view.lesson, None);
     s.press(&mut c, &[Action::Cancel]);
     assert!(s.rewind().is_none());

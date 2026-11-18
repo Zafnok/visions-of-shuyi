@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-awwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaa
-awwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+awxxxxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaa
+awwwwwwxxxxxxxxwxxxxxxxxwxxxxxxxxxxxxxwxxxxxxxxxxxxxxxxxxwwwwwxxxxxxxxxaaaaaaaaaaaaaaaaaaaaxxxxxxxxa
 --- legend ---
 a = fg:#cbc0a4 bg:black
 b = fg:#68583f bg:#1b1612
@@ -90,7 +90,8 @@ s = fg:#979185 bg:#211f1f
 t = fg:#7ba4db bg:#1b1b10
 u = fg:#686056 bg:#191716
 v = fg:#976839 bg:#211f1f
-w = fg:#7d725e bg:black
+w = fg:#cbc0a4 bg:#483f2d
+x = fg:#7d725e bg:black
 --- overlays ---
 over  209,270 14x2  #87ac4e
 over  209,286 14x2  #87ac4e

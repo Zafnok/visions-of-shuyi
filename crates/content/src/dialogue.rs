@@ -543,8 +543,8 @@ impl ScriptsLoad {
 /// pairs. Reports every problem, ordered by file and line. Who may be gone
 /// when a scene plays isn't checked here: [`check_presence`] needs the
 /// battles and the roster.
-pub fn from_sources<F: AsRef<str>>(
-    files: &[(F, &str)],
+pub fn from_sources<F: AsRef<str>, S: AsRef<str>>(
+    files: &[(F, S)],
     characters: Option<&CharacterTable>,
     portraits: Option<&PortraitTable>,
     names: Option<&Names>,
@@ -554,8 +554,8 @@ pub fn from_sources<F: AsRef<str>>(
 }
 
 /// [`from_sources`], keeping where each scene was written.
-pub fn scripts_from_sources<F: AsRef<str>>(
-    files: &[(F, &str)],
+pub fn scripts_from_sources<F: AsRef<str>, S: AsRef<str>>(
+    files: &[(F, S)],
     characters: Option<&CharacterTable>,
     portraits: Option<&PortraitTable>,
     names: Option<&Names>,
@@ -565,7 +565,7 @@ pub fn scripts_from_sources<F: AsRef<str>>(
     let files = files
         .iter()
         .map(|(file, source)| {
-            let (scenes, e) = parse_dlg(file.as_ref(), source);
+            let (scenes, e) = parse_dlg(file.as_ref(), source.as_ref());
             errors.extend(e);
             engine::DialogueFile { scenes }
         })

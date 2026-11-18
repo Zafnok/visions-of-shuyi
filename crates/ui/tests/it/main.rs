@@ -54,6 +54,7 @@ mod guides;
 mod hot_reload;
 mod key_bindings;
 mod key_bindings_screen;
+mod key_caps;
 mod language;
 mod layout_picker;
 mod lessons;

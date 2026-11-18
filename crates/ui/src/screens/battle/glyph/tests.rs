@@ -16,6 +16,8 @@ use crate::screens::battle::view::{
     PanelUnitView, QuestionView, TerrainView, TogglesView, UsesView,
 };
 
+const NARROW: shuyi_assets::font::CellWidths = shuyi_assets::font::CellWidths::NARROW;
+
 /// The glyphs of row `y` from column `from`, `n` of them.
 fn cells(buf: &GlyphBuffer, y: i32, from: i32, n: i32) -> String {
     (from..from + n)
@@ -518,7 +520,7 @@ fn bar(toggles: Option<TogglesView>, message: Option<MessageView>) -> GlyphBuffe
     painted(&quick(), |v| {
         v.toggles = toggles;
         v.message = message;
-        v.help = "the help".to_owned();
+        v.help = "the help".into();
         v.debug_hint = Some("F2 debug".to_owned());
     })
 }
@@ -526,7 +528,7 @@ fn bar(toggles: Option<TogglesView>, message: Option<MessageView>) -> GlyphBuffe
 #[test]
 fn the_toggles_row_has_danger_zone_at_the_left_and_auto_end_in_its_column() {
     let c = ctx();
-    let toggles = TogglesView::new("zoom · danger".to_owned(), "auto".to_owned(), 30);
+    let toggles = TogglesView::new("zoom · danger".into(), "auto".into(), 30, &NARROW);
     let buf = bar(Some(toggles), None);
     let row = cells(&buf, HELP_BAR.y, 0, HELP_BAR.w);
     assert_eq!(row.find("zoom · danger"), Some(1), "{row}");
@@ -564,7 +566,7 @@ fn a_preview_line_is_at_the_left_of_the_toggles_row() {
 #[test]
 fn a_note_is_a_strip_over_the_maps_bottom_row() {
     let c = ctx();
-    let toggles = TogglesView::new("danger".to_owned(), "auto".to_owned(), 30);
+    let toggles = TogglesView::new("danger".into(), "auto".into(), 30, &NARROW);
     let note = MessageView::note("Auto-end: ON".to_owned());
     let buf = bar(Some(toggles), Some(note));
     let strip = cells(&buf, HELP_BAR.y - 1, MAP_VIEW.x, MAP_VIEW.w);

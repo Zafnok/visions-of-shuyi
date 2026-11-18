@@ -20,6 +20,9 @@ mod shop;
 
 use crate::prelude::*;
 
+use shuyi_assets::font::CellWidths;
+use shuyi_ui::text::StyledText;
+
 use trpg_core::{Faction, Pos, StatValue};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};
@@ -76,15 +79,14 @@ pub struct BattleView {
     pub lesson: Option<LessonView>,
     /// The guide's box at the end of the lessons (ticket 0465), over the map.
     pub lessons_end: Option<LessonsEndView>,
-    /// The message: a combat's line or the preview of what is being aimed
-    /// (on the toggles' row), or a note or a warning for a moment (over
-    /// the map, above the bar).
+    /// The line over the help: a combat's message, the preview of what is
+    /// being aimed, or the toast.
     pub message: Option<MessageView>,
-    /// The toggles' row (zoom, danger zone, auto-end, each with its key),
-    /// while the help has its end-turn hint (0445).
+    /// The toggles' row (zoom, danger zone, auto-end, each with its key in
+    /// a key span), while the help has its end-turn hint (0445).
     pub toggles: Option<TogglesView>,
-    /// The help line: what the keys do now.
-    pub help: String,
+    /// The help line: what the keys do now (each key in a key span).
+    pub help: StyledText,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
     /// The attack forecast, while an attack or a spell is aimed at an
@@ -286,7 +288,7 @@ pub struct ObjectiveLine {
     pub text: String,
 }
 
-/// A message: a combat's line, a preview, a note or a warning.
+/// The line over the help.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MessageView {
     /// What it says.
@@ -325,24 +327,29 @@ pub enum MessageKind {
 
 /// The toggles' row over the help (0445): the danger-zone hint (after the
 /// zoom hint, where the map can zoom) from where the help starts, and the
-/// auto-end hint starting in the column where the help's end-turn hint
-/// starts. Columns count characters from where the help starts.
+/// auto-end hint starting in the cell where the help's end-turn hint
+/// starts. Columns count the frame's cells from where the help starts.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TogglesView {
-    /// The zoom and danger-zone hints, at column 0.
-    pub left: String,
-    /// The auto-end hint and its column; `None` if it can't fit on the row.
-    pub auto_end: Option<(String, usize)>,
+    /// The zoom and danger-zone hints, at cell 0.
+    pub left: StyledText,
+    /// The auto-end hint and its cell; `None` if it can't fit on the row.
+    pub auto_end: Option<(StyledText, usize)>,
 }
 
 impl TogglesView {
-    /// The row for `left` and `auto_end`, auto-end in column `end_turn`;
-    /// one separator after `left` instead if that would overlap `left` or
-    /// run off the row, and left out if it doesn't fit there either.
-    pub fn new(left: String, auto_end: String, end_turn: usize) -> Self {
-        let cells = |s: &str| s.chars().count();
-        let after = cells(&left) + cells(SEPARATOR);
-        let fits = |column: usize| column + cells(&auto_end) <= Self::ROOM;
+    /// The row for `left` and `auto_end` as `widths` measure them,
+    /// auto-end in cell `end_turn`; one separator after `left` instead if
+    /// that would overlap `left` or run off the row, and left out if it
+    /// doesn't fit there either.
+    pub fn new(
+        left: StyledText,
+        auto_end: StyledText,
+        end_turn: usize,
+        widths: &CellWidths,
+    ) -> Self {
+        let after = left.width(widths) + StyledText::from(SEPARATOR).width(widths);
+        let fits = |column: usize| column + auto_end.width(widths) <= Self::ROOM;
         let column = if end_turn >= after && fits(end_turn) {
             Some(end_turn)
         } else {
@@ -354,8 +361,8 @@ impl TogglesView {
         }
     }
 
-    /// The characters the row has for its text: the bar's width, less a
-    /// blank column at each end.
+    /// The cells the row has for its text: the bar's width, less a blank
+    /// cell at each end.
     pub const ROOM: usize = HELP_BAR.w.unsigned_abs() as usize - 2;
 }
 
@@ -364,7 +371,15 @@ impl BattleView {
     /// Every line of text the view shows, for tests asking whether the
     /// screen shows something.
     pub fn texts(&self) -> Vec<String> {
-        let mut texts: Vec<String> = self.own_texts().into_iter().map(str::to_owned).collect();
+        let mut texts = vec![self.help.plain()];
+        if let Some(t) = &self.toggles {
+            texts.push(t.left.plain());
+            texts.extend(t.auto_end.as_ref().map(|(a, _)| a.plain()));
+        }
+        texts.extend(self.tip.iter().map(|t| t.close.plain()));
+        let items = self.lesson.iter().flat_map(|l| &l.items);
+        texts.extend(items.map(|i| i.label.plain()));
+        texts.extend(self.own_texts().into_iter().map(str::to_owned));
         // The menu's lines, in English.
         let menu = self.menu.iter().flat_map(|m| &m.menu.items);
         texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
@@ -383,11 +398,7 @@ impl BattleView {
 
     /// The lines of text of the parts with no view type of their own.
     fn own_texts(&self) -> Vec<&str> {
-        let mut texts: Vec<&str> = vec![&self.help];
-        if let Some(t) = &self.toggles {
-            texts.push(&t.left);
-            texts.extend(t.auto_end.as_ref().map(|(a, _)| a.as_str()));
-        }
+        let mut texts: Vec<&str> = Vec::new();
         if let Some(h) = self.menu.as_ref().and_then(|m| m.header.as_ref()) {
             texts.push(&h.name);
             texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));
@@ -422,13 +433,12 @@ impl BattleView {
             texts.extend([b.title.as_str(), &b.subtitle]);
         }
         if let Some(t) = &self.tip {
-            texts.extend([t.title.as_str(), &t.heading, &t.close]);
+            texts.extend([t.title.as_str(), &t.heading]);
             texts.extend(t.lines.iter().map(String::as_str));
         }
         if let Some(l) = &self.lesson {
             texts.extend([l.title.as_str(), &l.heading, &l.progress]);
             texts.extend(l.lines.iter().map(String::as_str));
-            texts.extend(l.items.iter().map(|i| i.label.as_str()));
         }
         texts.extend(self.message.as_ref().map(|m| m.text.as_str()));
         texts

@@ -66,7 +66,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-axxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaxxxxxxxxa
+axxxxxxyyyyyyyyyyxyyyyyyyyyyyxyyyyyaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyya
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -91,7 +91,8 @@ t = fg:fort bg:fort_bg
 u = fg:player bg:grass_bg
 v = fg:stone bg:stone_bg
 w = fg:panel_bg bg:panel_border_focus
-x = fg:text_dim bg:black
+x = fg:text bg:key_bg
+y = fg:text_dim bg:black
 --- overlays ---
 over  257,222 14x2  hp_high
 over  289,254 14x2  hp_high

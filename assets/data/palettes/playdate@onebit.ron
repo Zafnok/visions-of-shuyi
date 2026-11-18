@@ -25,6 +25,11 @@
         "panel_border": (fg: Black),
         "panel_border_focus": (fg: Black),
 
+        // Key caps: none on the Playdate (0256).
+        "key": (fg: Black),
+        "key_bg": (fg: White),
+        "key_edge": (fg: Black),
+
         // Factions: the names' colour in text. The map skin draws units with
         // its own names (map_*, below).
         "player": (fg: Black),

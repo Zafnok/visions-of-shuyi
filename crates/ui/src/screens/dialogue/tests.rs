@@ -428,12 +428,16 @@ fn the_page_waits_once_revealed() {
     assert!(s.view(&c).text.waiting.is_none());
     press(&mut s, &mut c, Action::Confirm);
     let waiting = s.view(&c).text.waiting;
-    let log_hint = c.text_with("dialogue.log_hint", &[]);
+    // The keys in key spans, drawn as key caps (ticket 0254).
+    let mut key = shuyi_ui::text::StyledText::new();
+    key.push_key("f");
+    let mut log_hint = shuyi_ui::text::StyledText::new();
+    log_hint.push_key("b").push_plain(" log");
     assert_eq!(
         waiting,
         Some({
-            let mut wait = WaitView::new("f", true);
-            wait.log_hint = Some(log_hint.into());
+            let mut wait = WaitView::new(key, true);
+            wait.log_hint = Some(log_hint);
             wait
         })
     );

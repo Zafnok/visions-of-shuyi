@@ -66,7 +66,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhha
+ahhhhhhiiiiiiiihiiiiiiiiiiiiihiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiia
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -75,7 +75,8 @@ d = fg:text_highlight bg:panel_bg
 e = fg:player bg:panel_bg
 f = fg:hp_high bg:panel_bg
 g = fg:text_dim bg:panel_bg
-h = fg:text_dim bg:black
+h = fg:text bg:key_bg
+i = fg:text_dim bg:black
 --- overlays ---
 under sprite 160,176 16x16  tilesets/test_auto.png 144,0 16x16
 under sprite 176,176 16x16  tilesets/test_auto.png 144,0 16x16

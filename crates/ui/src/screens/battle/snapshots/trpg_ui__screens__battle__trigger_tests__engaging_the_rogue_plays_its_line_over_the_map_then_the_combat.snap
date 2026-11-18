@@ -65,7 +65,7 @@ fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccf
 fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccf
 fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccf
-fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccchhhhhccchcgccf
+fccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccchiiiiccchcgccf
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 --- legend ---
 a = fg:#534e43 bg:#0b0907
@@ -75,7 +75,8 @@ d = fg:#32435a bg:#0b0907
 e = fg:#552a20 bg:#0b0907
 f = fg:panel_border bg:panel_bg
 g = fg:text_highlight bg:panel_bg
-h = fg:text_dim bg:panel_bg
+h = fg:text bg:key_bg
+i = fg:text_dim bg:panel_bg
 --- overlays ---
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 bright=102 clip=64,0 672x80
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 bright=102 clip=64,368 456x16

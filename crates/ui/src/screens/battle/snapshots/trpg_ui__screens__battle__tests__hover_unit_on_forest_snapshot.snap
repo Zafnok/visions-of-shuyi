@@ -32,8 +32,8 @@ expression: "render(&knight_in_forest(), &c).to_snapshot(&c.palette)"
                                                                       │                            │
                                                                       │ Gold 0                     │
                                                                       └────────────────────────────┘
- w danger zone: OFF                                                 Shift+Space auto-end: OFF       
- f select · e info · s next unit · r rewind · d menu                Space end turn         F2 debug 
+ w danger zone: OFF                                                   Shift+Space auto-end: OFF     
+ f select · e info · s next unit · r rewind · d menu             Space end turn            F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcddddddcccccccccccccccccccccb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-azzzzzzzzzzzzzzzzzzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaazzzzzzzzzzzzzzzzzzzzzzzzzaaaaaaa
-azzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzaaaaaaaaazzzzzzzza
+azAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaazzzzzzzzzzzAAAAAAAAAAAAAAaaaaa
+azAAAAAAAAAAzAAAAAAAAzAAAAAAAAAAAAAzAAAAAAAAAAzAAAAAAAAAAAAAAAAAAzzzzzAAAAAAAAAaaaaaaaaaaaaAAAAAAAAa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -93,7 +93,8 @@ v = fg:player bg:forest_bg
 w = fg:player bg:grass_bg
 x = fg:floor bg:floor_bg
 y = fg:wood bg:stone_bg
-z = fg:text_dim bg:black
+z = fg:text bg:key_bg
+A = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  177,270 6x2  hp_mid

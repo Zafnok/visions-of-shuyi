@@ -126,9 +126,9 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
         }
     }
     assert!(
-        s.status(&c).starts_with("w danger zone: ON"),
+        s.status(&c).plain().starts_with("w danger zone: ON"),
         "{}",
-        s.status(&c)
+        s.status(&c).plain()
     );
     // A selected unit's ranges go over it.
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -145,7 +145,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
     // The toggle works while a unit is selected, too.
     press(&mut s, &mut c, &[Action::DangerZone]);
     assert_eq!(s.danger(), None);
-    assert!(s.status(&c).starts_with("w danger zone: OFF"));
+    assert!(s.status(&c).plain().starts_with("w danger zone: OFF"));
 }
 
 #[test]
@@ -369,7 +369,7 @@ fn the_battle_is_drawn_in_the_players_language() {
     // The toggles are hidden while a menu is open (0445); their words
     // come from the pack too.
     assert!(!shows(&shouted, "DANGER ZONE"));
-    assert!(s.status(&c).contains("DANGER ZONE: OFF"));
+    assert!(s.status(&c).plain().contains("DANGER ZONE: OFF"));
     // Drawing changes nothing that is played.
     assert_eq!(s.mode(), &before);
 }
@@ -602,7 +602,7 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     // phase.
     let mut s = quick();
     assert!(!s.auto_end());
-    assert!(s.status(&c).ends_with("Shift+Space auto-end: OFF"));
+    assert!(s.status(&c).plain().ends_with("Shift+Space auto-end: OFF"));
     for i in PLAYERS {
         wait_unit(&mut s, i);
     }
@@ -631,7 +631,7 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     assert_eq!(s.toast(), Some("Auto-end: ON"));
     let message = s.view(&c).message.map(|m| m.text);
     assert_eq!(message.as_deref(), Some("Auto-end: ON"));
-    assert!(s.status(&c).ends_with("auto-end: ON"));
+    assert!(s.status(&c).plain().ends_with("auto-end: ON"));
     frame(&mut s, &mut c, &[], TOAST_S / 2.0);
     assert!(s.toast().is_some());
     frame(&mut s, &mut c, &[], TOAST_S / 2.0);

@@ -66,7 +66,7 @@ abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
-ghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
+ghiiiiiiiiiiiiihiiiiiiiiiiiihiiiiiiggggggggggggggggggggggggggggggggggggggggggggggggggggggggiiiiiiiig
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text bg:panel_bg
@@ -75,4 +75,5 @@ d = fg:enemy bg:panel_bg
 e = fg:text_highlight bg:panel_bg
 f = fg:hp_high bg:panel_bg
 g = fg:text bg:black
-h = fg:text_dim bg:black
+h = fg:text bg:key_bg
+i = fg:text_dim bg:black

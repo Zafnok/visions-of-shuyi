@@ -68,7 +68,6 @@ pub mod walk;
 use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::cell::{RefCell, RefMut};
-use shuyi_ui::text::ToArg;
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -113,9 +112,12 @@ use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, LessonsEndView, TipView};
-use crate::widgets::help::{SEPARATOR, hint_column, key_name, pad_last_hint};
+use crate::widgets::help::{
+    action_key, frame_widths, hint_column, join_hints, key_pair, pad_last_hint, text_with_keys,
+};
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
+use shuyi_ui::text::StyledText;
 
 /// The battle screen's skins (ADR-0083): the PC's glyph look, the
 /// Playdate's map over the whole screen with its corner pop-ups (ticket
@@ -2153,9 +2155,9 @@ impl BattleScreen {
 
     /// The help line of a tip, the battle notes, EXP or level-up page, or
     /// banner on screen.
-    fn overlay_help(&self, ctx: &Ctx) -> Option<String> {
+    fn overlay_help(&self, ctx: &Ctx) -> Option<StyledText> {
         if self.shown_tip().is_some() || self.notes_open() {
-            return Some(ctx.text_with("battle.help.close", &[]));
+            return Some(ctx.text_styled("battle.help.close", &[]));
         }
         if let Some(p) = self.progress() {
             return Some(progress::help(ctx, p));
@@ -2164,25 +2166,34 @@ impl BattleScreen {
             BannerKind::Outcome(_) | BannerKind::Objective => "battle.help.continue",
             BannerKind::Phase { .. } => "battle.help.skip",
         };
-        Some(ctx.text_with(key, &[]))
+        Some(ctx.text_styled(key, &[]))
     }
 
     /// The help line for the mode and what is under the cursor, e.g. `f
     /// select · e info · s next unit · r rewind · d back` over a ready unit while
-    /// browsing. Key names come from the keymap.
+    /// browsing. Key names come from the keymap; [`help_styled`] has each
+    /// in a key span.
+    ///
+    /// [`help_styled`]: Self::help_styled
     pub fn help(&self, ctx: &Ctx) -> String {
+        self.help_styled(ctx).plain()
+    }
+
+    /// [`help`](Self::help), each key's name in a key span, drawn as a
+    /// key cap (ticket 0254).
+    pub fn help_styled(&self, ctx: &Ctx) -> StyledText {
         self.help_parts(ctx).0
     }
 
-    /// [`help`](Self::help), and the column (in characters from the
-    /// line's start) where its end-turn hint starts, if it has one: only
-    /// the browsing help does (0445).
-    fn help_parts(&self, ctx: &Ctx) -> (String, Option<usize>) {
+    /// [`help_styled`](Self::help_styled), and the cell (from the line's
+    /// start, as the frame measures it) where its end-turn hint starts, if
+    /// it has one: only the browsing help does (0445).
+    fn help_parts(&self, ctx: &Ctx) -> (StyledText, Option<usize>) {
         if let Some(line) = self.overlay_help(ctx) {
             return (line, None);
         }
         if self.lessons_end_shown(ctx) {
-            return (ctx.text_with("battle.lessons_end.help", &[]), None);
+            return (ctx.text_styled("battle.lessons_end.help", &[]), None);
         }
         let key = match &self.mode {
             Mode::Idle { threat } => {
@@ -2200,9 +2211,9 @@ impl BattleScreen {
             Mode::EndTurnPrompt { .. } => {
                 let km = ctx.help_keys();
                 let [accept, also] = split_keys::help_end_turn_accept_actions(km);
-                let (accept, also) = (key_name(km, accept), key_name(km, also));
-                let keys = [("accept", &accept as &dyn ToArg), ("also", &also)];
-                return (ctx.text_with("battle.help.end_turn", &keys), None);
+                let (accept, also) = (action_key(km, accept), action_key(km, also));
+                let keys = [("accept", &accept), ("also", &also)];
+                return (text_with_keys(ctx, "battle.help.end_turn", &keys), None);
             }
             Mode::Info { .. } => "battle.help.info",
             Mode::Selected(sel) => {
@@ -2256,25 +2267,21 @@ impl BattleScreen {
                 }
             }
         };
-        (ctx.text_with(key, &[]), None)
+        (ctx.text_styled(key, &[]), None)
     }
 
     /// The help line while picking an attack's target: the cursor keys
     /// pick the target, or left/right swap the weapon or spell and up/down
     /// pick the target when several can make the attack (0430, 0442).
     /// Confirm reads `cast` for a spell.
-    fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
+    fn help_targeting(ctx: &Ctx, t: &Targeting) -> StyledText {
         let km = ctx.help_keys();
-        let plain = |key| ctx.text_with(key, &[]);
+        let plain = |key| ctx.text_styled(key, &[]);
         let mut hints = if t.can_swap() {
-            let target = format!(
-                "{}/{}",
-                key_name(km, Action::CursorUp),
-                key_name(km, Action::CursorDown)
-            );
+            let target = key_pair(km, Action::CursorUp, Action::CursorDown);
             vec![
                 Self::swap_hint(ctx, "battle.hint.swap"),
-                ctx.text_with("battle.hint.target", &[("keys", &target)]),
+                text_with_keys(ctx, "battle.hint.target", &[("keys", &target)]),
             ]
         } else {
             vec![plain("battle.hint.next_target")]
@@ -2284,28 +2291,26 @@ impl BattleScreen {
             Equipped::Spell(_) => "battle.hint.cast",
         }));
         hints.push(plain("battle.hint.back"));
-        hints.join(SEPARATOR)
+        join_hints(hints)
     }
 
     /// The text `key` with `{keys}` the keys that swap the weapon, as two
     /// keys that are not one action: `Left/Right swap` in the help line,
     /// `Left/Right weapon` on the forecast (0463).
-    fn swap_hint(ctx: &Ctx, key: &str) -> String {
-        let km = ctx.help_keys();
-        let (left, right) = (Action::CursorLeft, Action::CursorRight);
-        let keys = format!("{}/{}", key_name(km, left), key_name(km, right));
-        ctx.text_with(key, &[("keys", &keys)])
+    fn swap_hint(ctx: &Ctx, key: &str) -> StyledText {
+        let keys = key_pair(ctx.help_keys(), Action::CursorLeft, Action::CursorRight);
+        text_with_keys(ctx, key, &[("keys", &keys)])
     }
 
     /// The help line while browsing, over what is under the cursor; `back`
     /// is the hint of the Cancel key. Its last hint, end turn, starts in
-    /// the same column whatever is under the cursor (Nick, 0445): where
-    /// the longest of the four forms puts it, the others padded with
-    /// spaces up to it. Returns the line and that column.
-    fn help_idle(&self, ctx: &Ctx, back: &str) -> (String, usize) {
+    /// the same cell whatever is under the cursor (Nick, 0445): where the
+    /// longest of the four forms puts it, the others padded with spaces up
+    /// to it. Returns the line and that cell.
+    fn help_idle(&self, ctx: &Ctx, back: &str) -> (StyledText, usize) {
         // Each hint's text once: the four forms share them, and this runs
-        // every frame (the Playdate's frame budget, `cargo shuyi bench`).
-        let text = |key: &str| ctx.text_with(key, &[]);
+        // every frame.
+        let text = |key: &str| ctx.text_styled(key, &[]);
         let [moves, select, range, info, menu, next, back, end] = [
             "battle.hint.move",
             "battle.hint.select",
@@ -2318,33 +2323,35 @@ impl BattleScreen {
         ]
         .map(|key| Some(text(key)));
         let rewind = self.can_open_rewind().then(|| text("battle.hint.rewind"));
-        let hint = Option::as_deref;
-        let tail = [hint(&next), hint(&rewind), hint(&back), hint(&end)];
-        let (moves, info) = (hint(&moves), hint(&info));
+        let tail = [&next, &rewind, &back, &end];
         // Over a ready unit of ours, an enemy, another unit, an empty tile.
         let forms = [
-            [None, hint(&select), info],
-            [moves, hint(&range), info],
-            [moves, None, info],
-            [moves, hint(&menu), None],
+            [&None, &select, &info],
+            [&moves, &range, &info],
+            [&moves, &None, &info],
+            [&moves, &menu, &None],
         ]
-        .map(|head| -> Vec<&str> { head.into_iter().chain(tail).flatten().collect() });
+        .map(|head| -> Vec<StyledText> {
+            let hints = head.into_iter().chain(tail).flatten();
+            hints.cloned().collect()
+        });
         let form = match self.hovered() {
             Some(u) if self.is_ready(u) && u.faction == Faction::Player => 0,
             Some(u) if u.faction != Faction::Player => 1,
             Some(_) => 2,
             None => 3,
         };
-        let end_of = |hints: &Vec<&str>| hint_column(hints, hints.len() - 1);
+        let widths = frame_widths(ctx);
+        let end_of = |hints: &Vec<StyledText>| hint_column(hints, hints.len() - 1, &widths);
         let column = forms.iter().map(end_of).max().unwrap_or(0);
-        (pad_last_hint(&forms[form], column), column)
+        (pad_last_hint(&forms[form], column, &widths), column)
     }
 
     /// The toggles' hints at the left of the message row: the Zoom map
     /// key and `zoom: 2×` (only under a map skin that can zoom), then the
     /// Danger zone key and `danger zone: OFF`, each key named from the
     /// active keymap.
-    fn danger_hint(&self, ctx: &Ctx) -> String {
+    fn danger_hint(&self, ctx: &Ctx) -> StyledText {
         let zoom = ctx.game.map_skin.zoom().map(|zoom| match zoom {
             MapZoom::X1 => "battle.status.zoom_x1",
             MapZoom::X2 => "battle.status.zoom_x2",
@@ -2354,34 +2361,30 @@ impl BattleScreen {
         } else {
             "battle.status.danger_off"
         };
-        let hints: Vec<String> = zoom
-            .into_iter()
-            .chain([danger])
-            .map(|key| ctx.text_with(key, &[]))
-            .collect();
-        hints.join(SEPARATOR)
+        let hints = zoom.into_iter().chain([danger]);
+        join_hints(hints.map(|key| ctx.text_styled(key, &[])))
     }
 
     /// The Auto-end key and `auto-end: ON`, the key named from the active
     /// keymap.
-    fn auto_end_hint(&self, ctx: &Ctx) -> String {
+    fn auto_end_hint(&self, ctx: &Ctx) -> StyledText {
         let key = if self.auto_end {
             "battle.status.auto_end_on"
         } else {
             "battle.status.auto_end_off"
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The toggles' hints in one line, as they read left to right: zoom,
     /// danger zone, auto-end.
     #[cfg(test)]
-    pub fn status(&self, ctx: &Ctx) -> String {
-        [self.danger_hint(ctx), self.auto_end_hint(ctx)].join(SEPARATOR)
+    pub fn status(&self, ctx: &Ctx) -> StyledText {
+        join_hints([self.danger_hint(ctx), self.auto_end_hint(ctx)])
     }
 
     /// The toggles' row (0445): shown only while the help has its
-    /// end-turn hint (starting in column `end_turn`) and no combat or
+    /// end-turn hint (starting in cell `end_turn`) and no combat or
     /// preview line is up, auto-end above end turn.
     fn toggles(
         &self,
@@ -2393,11 +2396,8 @@ impl BattleScreen {
         if message.is_some_and(|m| m.kind == MessageKind::Said) {
             return None;
         }
-        Some(TogglesView::new(
-            self.danger_hint(ctx),
-            self.auto_end_hint(ctx),
-            column,
-        ))
+        let row = (self.danger_hint(ctx), self.auto_end_hint(ctx));
+        Some(TogglesView::new(row.0, row.1, column, &frame_widths(ctx)))
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -2704,7 +2704,7 @@ impl BattleScreen {
         let forecast = self.forecast().and_then(|t| {
             let swap = t
                 .can_swap()
-                .then(|| Self::swap_hint(ctx, "battle.forecast.swap"));
+                .then(|| Self::swap_hint(ctx, "battle.forecast.swap").plain());
             forecast::view(told, t).map(|f| ForecastView { swap, ..f })
         });
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
@@ -2722,7 +2722,7 @@ impl BattleScreen {
         let (help, end_turn) = if bar {
             self.help_parts(ctx)
         } else {
-            (String::new(), None)
+            (StyledText::new(), None)
         };
         let message = self.message();
         BattleView {

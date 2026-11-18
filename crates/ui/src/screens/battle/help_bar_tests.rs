@@ -15,8 +15,30 @@ use super::view::TogglesView;
 use super::*;
 use crate::harness::Harness;
 use crate::input::{Chord, Device, Key, PadKind};
-use crate::screen::tests::ctx;
 use crate::screens::battle::testing::wait;
+use crate::widgets::help::{SEPARATOR, key_name};
+
+/// Where [`TogglesView::new`] puts the auto-end hint `auto_end` after
+/// `left`, end turn in cell `end_turn`, in plain cells.
+fn row_of(
+    left: impl Into<StyledText>,
+    auto_end: impl Into<StyledText>,
+    end_turn: usize,
+) -> Option<(String, usize)> {
+    let widths = shuyi_assets::font::CellWidths::NARROW;
+    let t = TogglesView::new(left.into(), auto_end.into(), end_turn, &widths);
+    t.auto_end.map(|(text, column)| (text.plain(), column))
+}
+
+/// The test context with no key caps: [`render`]'s frame draws a key in
+/// its own cells, as the help's columns are then measured. With caps the
+/// frame and the columns both count a cap's extra cells (the key-caps
+/// integration test checks that frame).
+fn ctx() -> Ctx {
+    let mut c = crate::screen::tests::ctx();
+    c.game.key_caps = false;
+    c
+}
 
 /// The glyphs of row `y`.
 fn row(buf: &GlyphBuffer, y: i32) -> String {
@@ -203,25 +225,25 @@ fn a_failed_save_is_a_warning() {
 fn auto_end_falls_back_one_separator_after_danger_zone() {
     let sep = SEPARATOR.chars().count();
     // End turn's column would overlap the danger-zone hint.
-    let t = TogglesView::new("w danger zone: OFF".to_owned(), "a".to_owned(), 10);
-    assert_eq!(t.auto_end, Some(("a".to_owned(), 18 + sep)));
+    let t = row_of("w danger zone: OFF".to_owned(), "a".to_owned(), 10);
+    assert_eq!(t, Some(("a".to_owned(), 18 + sep)));
     // ... or run off the row.
-    let t = TogglesView::new("d".to_owned(), "auto-end".to_owned(), TogglesView::ROOM - 3);
-    assert_eq!(t.auto_end, Some(("auto-end".to_owned(), 1 + sep)));
+    let t = row_of("d".to_owned(), "auto-end".to_owned(), TogglesView::ROOM - 3);
+    assert_eq!(t, Some(("auto-end".to_owned(), 1 + sep)));
     // In its column when it fits.
-    let t = TogglesView::new("d".to_owned(), "auto-end".to_owned(), 40);
-    assert_eq!(t.auto_end, Some(("auto-end".to_owned(), 40)));
+    let t = row_of("d".to_owned(), "auto-end".to_owned(), 40);
+    assert_eq!(t, Some(("auto-end".to_owned(), 40)));
     // The row holds 98 characters (columns 1 to 98 of 100): ending on the
     // 98th fits, one more falls back.
     assert_eq!(TogglesView::ROOM, 98);
-    let t = TogglesView::new("d".to_owned(), "auto-end".to_owned(), 90);
-    assert_eq!(t.auto_end, Some(("auto-end".to_owned(), 90)));
-    let t = TogglesView::new("d".to_owned(), "auto-end!".to_owned(), 90);
-    assert_eq!(t.auto_end, Some(("auto-end!".to_owned(), 1 + sep)));
+    let t = row_of("d".to_owned(), "auto-end".to_owned(), 90);
+    assert_eq!(t, Some(("auto-end".to_owned(), 90)));
+    let t = row_of("d".to_owned(), "auto-end!".to_owned(), 90);
+    assert_eq!(t, Some(("auto-end!".to_owned(), 1 + sep)));
     // Left out when it fits nowhere.
     let long = "x".repeat(TogglesView::ROOM);
-    let t = TogglesView::new(long.clone(), "auto-end".to_owned(), 40);
-    assert_eq!(t.auto_end, None);
+    let t = row_of(long.clone(), "auto-end".to_owned(), 40);
+    assert_eq!(t, None);
 }
 
 proptest! {
@@ -234,8 +256,8 @@ proptest! {
         auto_end in 1usize..40,
         end_turn in 0usize..100,
     ) {
-        let t = TogglesView::new("d".repeat(danger), "a".repeat(auto_end), end_turn);
-        if let Some((text, column)) = &t.auto_end {
+        let t = row_of("d".repeat(danger), "a".repeat(auto_end), end_turn);
+        if let Some((text, column)) = &t {
             let sep = SEPARATOR.chars().count();
             prop_assert!(*column >= danger + sep);
             prop_assert!(column + text.chars().count() <= TogglesView::ROOM);
