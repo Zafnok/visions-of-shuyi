@@ -1,5 +1,5 @@
 ---
-id: "1287"
+id: "1292"
 title: "A tip that misses its moment waits for the next one, not for a key press"
 type: tuning
 milestone: M3 Battle UI
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1287 — A tip that misses its moment waits for the next one, not for a key press
+# 1292 — A tip that misses its moment waits for the next one, not for a key press
 
 ## Context
 
@@ -85,6 +85,10 @@ Act 1 playtest's checklist (1064).
   notes.
 - What a tip says, its triggers' conditions, the Guides list.
 - The tip box over the Load Game and Profile screens (`tips/screen.rs`).
+- Moving the guide out of the battle screen (1291). Either order works:
+  if 1291 is done, the tip logic named here is in
+  `screens/battle/guide.rs` and `triggers.rs`; if this lands first, 1291
+  moves the new, smaller logic.
 
 ## Implementation steps
 

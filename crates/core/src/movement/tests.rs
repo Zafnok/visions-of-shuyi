@@ -748,6 +748,86 @@ fn a_unit_that_never_moves_threatens_only_from_its_own_tile() {
 }
 
 #[test]
+fn a_unit_that_never_moves_threatens_its_tile_and_what_its_ranges_reach_from_it() {
+    use crate::ai::AiBehavior;
+    // Mov 5 and a range 1-2 weapon, in the middle of an open field.
+    let mut s = scene(
+        &[
+            "@........",
+            ".........",
+            ".........",
+            ".........",
+            "....e....",
+            ".........",
+            ".........",
+            ".........",
+            ".........",
+        ],
+        "foot",
+        5,
+    );
+    let enemy = UnitId(1);
+    let tiles = |s: &Scene| {
+        threat_tiles(&s.map, &s.terrain, &s.classes, &s.units, enemy, &[(1, 2)]).unwrap()
+    };
+    s.units[1].ai = AiBehavior::Stationary;
+    let still = tiles(&s);
+    assert_eq!(still.iter().count(), 13);
+    assert!(still.iter().all(|t| Pos::manhattan(t, p(4, 4)) <= 2));
+    assert_eq!(
+        s.draw(&still)[2..7],
+        [
+            "....*....",
+            "...***...",
+            "..*****..",
+            "...***...",
+            "....*...."
+        ]
+    );
+    // No weapon: nothing, as for one that moves.
+    let none = threat_tiles(&s.map, &s.terrain, &s.classes, &s.units, enemy, &[]);
+    assert!(none.unwrap().is_empty());
+    // One that moves to attack threatens its whole threat area.
+    for ai in [AiBehavior::Guard, AiBehavior::Aggressive] {
+        s.units[1].ai = ai;
+        let area = s.threat(enemy, &[(1, 2)]).unwrap();
+        assert_eq!(tiles(&s), area, "{ai:?}");
+        assert!(area.iter().count() > 13, "{ai:?}");
+    }
+    assert_eq!(
+        threat_tiles(
+            &s.map,
+            &s.terrain,
+            &s.classes,
+            &s.units,
+            UnitId(9),
+            &[(1, 2)]
+        ),
+        Err(MoveError::UnknownUnit(UnitId(9)))
+    );
+}
+
+#[test]
+fn the_danger_zone_counts_a_unit_that_never_moves_only_from_its_tile() {
+    use crate::ai::AiBehavior;
+    let mut s = scene(&["@......e"], "foot", 5);
+    let zone = |s: &Scene| {
+        danger_zone(
+            &s.map,
+            &s.terrain,
+            &s.classes,
+            &s.units,
+            Faction::Player,
+            |_| vec![(1, 2)],
+        )
+        .unwrap()
+    };
+    assert_eq!(s.draw(&zone(&s)), ["********"]);
+    s.units[1].ai = AiBehavior::Stationary;
+    assert_eq!(s.draw(&zone(&s)), ["@....***"]);
+}
+
+#[test]
 fn threats_report_bad_units() {
     let mut s = scene(&["@.e"], "foot", 1);
     let ask = |s: &Scene, id| {
@@ -1203,6 +1283,47 @@ proptest! {
             }
         }
         prop_assert_eq!(listed, Ok(expected));
+    }
+
+    /// A tile the mover can stand on is in the danger zone exactly when
+    /// [`threats_at`] lists someone for it standing there (ticket 0450),
+    /// with units that never move and each unit's own ranges.
+    #[test]
+    fn the_danger_zone_holds_a_tile_exactly_when_threats_at_lists_someone(
+        s in arb_scene(),
+        pick in any::<prop::sample::Index>(),
+        units in prop::collection::vec(
+            (any::<bool>(), prop::option::of((0u32..3, 0u32..3))),
+            8,
+        ),
+    ) {
+        let mut s = s;
+        // A tile of the map no other unit stands on.
+        let free: Vec<Pos> = s
+            .map
+            .tiles
+            .positions()
+            .filter(|&t| s.units.iter().skip(1).all(|u| u.pos != t))
+            .collect();
+        prop_assume!(!free.is_empty());
+        let at = free[pick.index(free.len())];
+        let mut ranges = BTreeMap::new();
+        for (u, &(still, range)) in s.units.iter_mut().zip(&units) {
+            if still {
+                u.ai = crate::ai::AiBehavior::Stationary;
+            }
+            let range = range.map(|(min, len)| vec![(min, min + len)]);
+            ranges.insert(u.id, range.unwrap_or_default());
+        }
+        s.units[0].pos = at;
+        let range = |u: &Unit| ranges[&u.id].clone();
+        let faction = s.mover().faction;
+        let zone = danger_zone(&s.map, &s.terrain, &s.classes, &s.units, faction, range);
+        let listed = threats_at(&s.map, &s.terrain, &s.classes, &s.units, MOVER, at, range);
+        prop_assert_eq!(
+            zone.map(|z| z.contains(at)),
+            listed.map(|l| !l.is_empty())
+        );
     }
 
     /// The planner answers as [`threats_at`] does, for any unit and tile,

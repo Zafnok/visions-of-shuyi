@@ -340,6 +340,18 @@ impl Harness {
         self.map_scene().map(|s| s.path).unwrap_or_default()
     }
 
+    /// Draws a hint's keys as key caps, as the game does (they are words
+    /// in tests by default, ticket 0254).
+    pub fn with_key_caps(&mut self) -> &mut Self {
+        self.ctx_mut().game.key_caps = true;
+        // The frame on screen too, not only the next one: `snapshot_as`
+        // is the engine harness's public call that redraws, here with the
+        // same device, no time passing.
+        let device = self.ctx().device;
+        let _ = self.snapshot_as(device);
+        self
+    }
+
     /// Turns the one-time tips on (they are off in tests by default).
     pub fn with_tips(&mut self) -> &mut Self {
         self.ctx_mut().game.tips_enabled = true;
@@ -395,6 +407,9 @@ fn embedded_ctx() -> Ctx {
     match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.debug_tools = true;
+            // A hint's keys as their words, not caps: tests read what it
+            // says ([`Harness::with_key_caps`] for its look).
+            ctx.game.key_caps = false;
             // New Game plays the small test chapter, not the story.
             ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
             ctx

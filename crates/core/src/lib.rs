@@ -81,7 +81,7 @@ pub use magic::{Affinity, Element};
 pub use map::{BattleMap, TileFeature};
 pub use movement::{
     AttackRange, MoveError, PathError, Reach, ThreatAreas, ThreatPlanner, TileSet, area_tiles,
-    attack_tiles, danger_zone, path_cost, reachable, threat_area, threats_at,
+    attack_tiles, danger_zone, path_cost, reachable, threat_area, threat_tiles, threats_at,
 };
 pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable, WeaponAt};
 pub use progression::{

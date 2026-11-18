@@ -409,7 +409,7 @@ impl ClassChangeScreen {
                 hints.join(SEPARATOR)
             }
             Stage::Confirming(_) => ctx.text_with("class_change.help.confirming", &[]),
-            Stage::Result(p) => progress::help(ctx, p),
+            Stage::Result(p) => progress::help(ctx, p).plain(),
             Stage::Done => String::new(),
         }
     }

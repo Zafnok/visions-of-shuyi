@@ -4,6 +4,7 @@
 
 use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
+use shuyi_ui::text::StyledText;
 use trpg_content::TipTrigger;
 use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
 
@@ -113,13 +114,13 @@ fn the_tip_box_is_the_guides() {
     assert!(view.lines[0].starts_with("Over to you. Steer the cursor onto"));
     // Her line names no key; the instructions under it do (0475).
     assert_eq!(
-        view.how,
+        view.how.iter().map(StyledText::plain).collect::<Vec<_>>(),
         [
             "Move the cursor: arrows. Pick up a unit: f",
             "Next unit to act: s. A unit's details: e"
         ]
     );
-    assert_eq!(view.close, "f close");
+    assert_eq!(view.close.plain(), "f close");
     // With the guide's portrait (the bought art), the face.
     let mut guide = c.game.content.portraits["test_lord"].clone();
     let smile = guide.expressions[1].clone();

@@ -292,7 +292,7 @@ impl OneBit {
     }
 
     fn check(&mut self, h: &Harness) {
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH);
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH);
         let Some(font) = bits.and_then(|bits| onebit::Font::new(&self.atlas, bits).ok()) else {
             panic!("no one-bit font");
         };
@@ -890,7 +890,7 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     h.pad("East");
     let rewind = view_of(&h, RewindScreen::view);
     assert!(rewind.list.prompt.is_some());
-    assert_eq!(rewind.help, "A rewind · B back");
+    assert_eq!(rewind.help.plain(), "A rewind · B back");
     h.pad("West West");
     assert!(h.screen::<RewindScreen>().is_none());
 }

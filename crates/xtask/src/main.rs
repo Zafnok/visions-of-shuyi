@@ -43,6 +43,8 @@ mod tileset_ron;
 mod title_art;
 mod voice;
 mod voice_test;
+#[cfg(test)]
+mod workflow_guard;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -1099,6 +1101,54 @@ mod tests {
         // A file name in playdate_images' test of a made-up bundle, not read.
         assert!(read.remove("assets/battlers/README.md").is_some());
         assert_eq!(listed, read, "changes.yml's `read by` lines");
+    }
+
+    /// No workflow job that checks out the private files keeps a build of
+    /// them in the Actions cache or an artifact, which a fork's pull request
+    /// can read (ADR-0117 §4, ticket 0171).
+    #[test]
+    fn no_job_with_private_files_caches_or_uploads_a_build() {
+        let dir = repo_root().join(".github/workflows");
+        let mut problems = Vec::new();
+        let mut guarded = 0;
+        for entry in std::fs::read_dir(&dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_none_or(|e| e != "yml") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap();
+            let file = path.file_name().unwrap().to_string_lossy().into_owned();
+            guarded += text.matches("Swatinem/rust-cache@").count();
+            problems.extend(workflow_guard::check(&file, &text));
+        }
+        assert!(guarded >= 10, "{guarded}");
+        assert!(
+            problems.is_empty(),
+            "{}",
+            problems.join(
+                "
+"
+            )
+        );
+        // Each upload the check allows is still there.
+        for (file, job, upload) in workflow_guard::ALLOWED_UPLOADS {
+            let text = std::fs::read_to_string(dir.join(file)).unwrap();
+            assert!(
+                text.contains(&format!(
+                    "
+  {job}:
+"
+                )),
+                "{file}: {job}"
+            );
+            assert!(
+                text.contains(&format!(
+                    "path: {upload}
+"
+                )),
+                "{file}: {upload}"
+            );
+        }
     }
 
     /// Cargo links every file directly under a crate's `tests/` as its own

@@ -30,11 +30,13 @@ Why Terminus:
 
 The three atlas files are **generated**; never edit them by hand. The sources are
 in `assets-src/fonts/` (outside `assets/`, so they aren't embedded in the
-game): `ter-u16n.bdf`, the font, and `pad-shapes.bdf` and `tile-shapes.bdf`,
-our own extra glyphs (below). To regenerate:
+game): `ter-u16n.bdf`, the font, `pad-shapes.bdf` and `tile-shapes.bdf`,
+our own extra glyphs (below), and `ter-u16b.bdf`, Terminus's bold face
+from the same release, which key caps draw a key's name with (ticket 0254,
+`docs/design/look-and-feel.md`, *Key names in hints*). To regenerate:
 
 ```bash
-cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf assets/fonts
+cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf assets/fonts
 ```
 
 A test in `xtask` fails if the committed atlas differs from what the tool

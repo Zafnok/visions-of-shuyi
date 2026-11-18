@@ -576,6 +576,7 @@ mod tests {
             DoneWhen::Attacked,
             DoneWhen::ForecastOpened,
             DoneWhen::ArtsOpened,
+            DoneWhen::ArtAttacked,
             DoneWhen::TileAimed,
             DoneWhen::UnitMoved,
             DoneWhen::ThreatPointed,

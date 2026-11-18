@@ -110,7 +110,8 @@ New Game asks the player how familiar they are, with three answers:
   moment no unit left could do what it still asks, and comes back on a
   later turn. "Could do it": Attacking, some unit left could reach an
   enemy; Combat Arts, some unit left has an art it could use from a tile
-  it can reach; Spells that change tiles, some unit left could aim a spell
+  it can reach (for its attack item, Overwatch, which is no attack,
+  doesn't count); Spells that change tiles, some unit left could aim a spell
   at a tile; Selecting a unit and Threat arrows, any unit left. For
   example: on turn 1 the Sergeant attacks the Brigand and nobody else can
   reach an enemy, so Combat Arts waits for a later turn and the turn can
@@ -150,7 +151,18 @@ New Game asks the player how familiar they are, with three answers:
   The lesson opens and closes the rewind screen; it doesn't spend a charge.
   *Claude's starting rule.*
 - **Threat arrows**: which enemies can reach the tile you're moving to.
-- **Combat Arts**: their own menu, and that some cost uses per battle.
+- **Combat Arts**: their own menu, and that an art is an attack, not a
+  buff (Nick, 2026-11-08, after a playtest: "We should make it clear Arts
+  are special attacks NOT just buffs that don't end your turn. My friend
+  thought Arts are buffs that do nothing bc they end your turn. But they
+  are buffed special attacks (attack tied to the art). Make it more clear
+  probably Vix forced tutorial or smth"). Two items: open Arts in the
+  unit's menu, then attack with an art (or a weapon active from that
+  menu); a plain attack ticks nothing. The text says an art is the attack
+  itself, every strike of that one fight boosted, paid in weapon wear
+  (uses per battle are spells' and non-attack actives', so it no longer
+  says them). *Claude's starting rules* (ticket 0490), for the Act 1
+  playtest.
 - **Terrain magic**: a spell can change a tile (Fire can burn a forest).
   Chapter 1 doesn't script it (`assets-private/story/design/chapter-1.md`, *Extras*), so this lesson
   waits for the first time it can happen, in whichever battle.

@@ -902,6 +902,10 @@ fn the_notices_name_the_games_works_and_license_texts() {
     }
 }
 
+/// Terminus's bold face, the atlas's bold glyphs for key caps (ticket
+/// 0254), relative to the repo root.
+const BOLD: &str = "assets-src/fonts/ter-u16b.bdf";
+
 /// The font sources the committed atlas is built from, relative to the
 /// repo root: Terminus, then our own extra glyphs (the controller
 /// buttons, the building tiles).
@@ -998,12 +1002,13 @@ fn committed_atlas_is_up_to_date() {
     options.fonts = fonts.to_vec();
     options.out_dir = dir.clone();
     options.chars = chars;
+    options.bold = Some(root.join(BOLD));
     let msg = shuyi_cli::font_atlas::run(&options).unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
-    let rerun = "rerun `cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf \
-                 assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf \
-                 assets/fonts`";
+    let rerun = "rerun `cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf \
+                 assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf \
+                 assets-src/fonts/tile-shapes.bdf assets/fonts`";
     assert_eq!(
         read(&dir.join("atlas.ron")),
         read(&root.join("assets/fonts/atlas.ron")),
@@ -1033,8 +1038,9 @@ fn the_one_bit_atlas_matches_the_png() {
     let bits = fs::read(fonts.join(ONE_BIT_FILE)).unwrap();
     let to_usize = |v: u32| usize::try_from(v).unwrap();
     let rows = to_usize(def.cell_h);
-    assert_eq!(bits.len(), def.glyphs.len() * rows);
-    for (&c, &index) in &def.glyphs {
+    // The regular glyphs and the bold ones (key caps, ticket 0254).
+    assert_eq!(bits.len(), (def.glyphs.len() + def.bold.len()) * rows);
+    for (&c, &index) in def.glyphs.iter().chain(&def.bold) {
         let cell = def.cell_rect(index);
         for row in 0..cell.h {
             let byte = bits[to_usize(index) * rows + to_usize(row)];
@@ -1433,6 +1439,76 @@ fn the_baked_pack_holds_every_file_of_the_embedded_bundle_with_the_same_bytes() 
     // The Playdate's files are its own (ADR-0070).
     assert!(Trpg.bake(Some(PLAYDATE)).is_err());
     assert!(Trpg.bake(Some("desktop")).is_ok());
+}
+
+/// Ticket 1284: the baked pack read file by file (its index alone, and a
+/// layer that reads, checks and unpacks a file each time it is asked,
+/// handing it out owned) reads every file the embedded bundle holds, with
+/// the same bytes, and the game's content loads from it as from the
+/// embedded files: the loaders keep no file the bundle hands out.
+#[test]
+fn the_baked_pack_read_file_by_file_reads_what_the_embedded_bundle_does() {
+    use shuyi_assets::pack::{InMemory, Index};
+    use trpg_content::bundle::{self, Bundle, PACK_STAMP};
+    let made = pack_bake();
+    let baked = made
+        .bake
+        .bake(&made.formats, &made.bundle, None)
+        .unwrap_or_else(|e| panic!("{e:?}"));
+    let bytes: &'static [u8] = Box::leak(baked.bytes.into_boxed_slice());
+    let index = Index::read(bytes, PACK_STAMP).unwrap_or_else(|e| panic!("{e}"));
+    let source: &'static InMemory = Box::leak(Box::new(InMemory::new(bytes)));
+    let layer = index.into_layer(bundle::DISPLAY_ROOT, source);
+    let read: &'static Bundle = Box::leak(Box::new(Bundle::new(vec![layer])));
+    let embedded: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::pack_layers())));
+    let paths = embedded.files_under("");
+    assert_eq!(read.files_under(""), paths);
+    for path in &paths {
+        assert_eq!(read.bytes(path), embedded.bytes(path), "{path}");
+    }
+    assert!(layer.problems().is_empty(), "{:?}", layer.problems());
+    let from_pack = bundle::reading(read, trpg_content::load_embedded);
+    let from_tables = bundle::reading(embedded, trpg_content::load_embedded);
+    let (from_pack, from_tables) = (from_pack.unwrap(), from_tables.unwrap());
+    assert_eq!(from_pack.dialogue.scenes, from_tables.dialogue.scenes);
+    assert_eq!(from_pack.battles, from_tables.battles);
+    assert_eq!(from_pack.chapters, from_tables.chapters);
+}
+
+/// Ticket 1284: a pack with one file changed since the bake refuses that
+/// file when it is read (it reads as missing, and the layer lists it once
+/// for the log) and reads every other file.
+#[test]
+fn a_pack_read_file_by_file_refuses_a_changed_file_and_reads_the_rest() {
+    use shuyi_assets::pack::{InMemory, Index};
+    use trpg_content::bundle::{self, Bundle, PACK_STAMP};
+    let made = pack_bake();
+    let mut bytes = made
+        .bake
+        .bake(&made.formats, &made.bundle, None)
+        .unwrap_or_else(|e| panic!("{e:?}"))
+        .bytes;
+    let changed = "data/keymap.ron";
+    let index = Index::read(&bytes, PACK_STAMP).unwrap_or_else(|e| panic!("{e}"));
+    let at = index
+        .file_range(changed)
+        .expect("the keymap is in the pack")
+        .start;
+    let at = usize::try_from(at).unwrap();
+    bytes[at] ^= 0xff;
+    let bytes: &'static [u8] = Box::leak(bytes.into_boxed_slice());
+    let source: &'static InMemory = Box::leak(Box::new(InMemory::new(bytes)));
+    let layer = index.into_layer(bundle::DISPLAY_ROOT, source);
+    let read = Bundle::new(vec![layer]);
+    let embedded = Bundle::new(bundle::pack_layers());
+    assert_eq!(read.bytes(changed), None);
+    let problems = layer.problems();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!(problems[0].path, changed);
+    for path in embedded.files_under("").iter().filter(|p| **p != changed) {
+        assert_eq!(read.bytes(path), embedded.bytes(path), "{path}");
+    }
+    assert_eq!(layer.problems().len(), 1);
 }
 
 /// Ticket 1265: the disclosure parts name every file of the pack the full

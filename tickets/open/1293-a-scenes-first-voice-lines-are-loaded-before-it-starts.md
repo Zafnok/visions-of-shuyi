@@ -1,5 +1,5 @@
 ---
-id: "1288"
+id: "1293"
 title: "A scene's first voice lines are loaded before it starts, from the title and each save"
 type: bug
 milestone: M6 Story & dialogue
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1288 — A scene's first voice lines are loaded before it starts, from the title and each save
+# 1293 — A scene's first voice lines are loaded before it starts, from the title and each save
 
 ## Context
 
@@ -76,6 +76,11 @@ checklist (1064).
   leaves; check that doesn't let a scene's kept lines go before the
   scene preloads them.
 - Any line's text or clip (dialogue writing is paused, 0766).
+- The out-of-battle tips' lines (1291 keeps them loaded on the title).
+  Either order works, but the engine keeps one set: if 1291 is done,
+  the title's kept set is its tips' lines plus the scenes' first lines,
+  from one owner; if this lands first, 1291 adds its tips' lines to this
+  ticket's set instead of sending its own.
 
 ## Implementation steps
 

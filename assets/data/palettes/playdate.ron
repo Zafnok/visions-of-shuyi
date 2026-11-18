@@ -28,6 +28,12 @@
     "panel_border": "#000000",
     "panel_border_focus": "#000000",
 
+    // Key caps: the Playdate draws none (0256), so a key's name reads
+    // as the text around it.
+    "key": "#000000",
+    "key_bg": "#ffffff",
+    "key_edge": "#000000",
+
     // Factions: the names' colour in text. The map skin draws units with
     // its own names (map_*, below).
     "player": "#000000",

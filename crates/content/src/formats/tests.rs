@@ -64,7 +64,7 @@ type Parser<T> = fn(&str, &str) -> Result<T, Vec<ContentError>>;
 fn each_table_is_its_parser_on_the_real_file() {
     fn same<T: DataTable + PartialEq + core::fmt::Debug>(path: &str, parse: Parser<T>) {
         let source = bundle::file(path).unwrap_or_default();
-        let parsed = parse(&bundle::display_path(path), source);
+        let parsed = parse(&bundle::display_path(path), &source);
         assert!(parsed.is_ok(), "{path}: {parsed:?}");
         assert_eq!(table::<T>(path), parsed, "{path}");
     }
