@@ -669,11 +669,10 @@ fn a_storage_that_refuses_everything_still_plays_and_says_why_it_cant_save() {
     let before = battle_text(&h);
     suspend(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert!(
-        shows(&h, &format!("Save storage error: {REFUSED}")),
-        "{}",
-        h.snapshot()
-    );
+    // A warning, in a box wrapped inside the map (0445).
+    let last = REFUSED.rsplit(' ').next().unwrap_or_default();
+    assert!(shows(&h, "Save storage error:"), "{}", h.snapshot());
+    assert!(shows(&h, &format!("│ {last}")), "{}", h.snapshot());
     assert_eq!(battle_text(&h), before);
     h.wait(2.0);
     // A save in a slot after the victory says why too, and the slots stay.

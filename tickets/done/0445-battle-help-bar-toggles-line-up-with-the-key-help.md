@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-17
 ---
 
 # 0445 — Battle help bar: the toggles line up with the key help
@@ -152,23 +152,23 @@ on 1064's checklist.
 
 ## Acceptance criteria
 
-- [ ] Browsing over a ready unit of ours with the right-handed layout: row
+- [x] Browsing over a ready unit of ours with the right-handed layout: row
       30 has `w danger zone: OFF` from column 1 and
       `Shift+Space auto-end: OFF` starting in the column where
       `Space end turn` starts on row 31 (a test names both columns from
       the frame, not from the code under test).
-- [ ] The same holds with the left-handed layout, with End turn rebound to
+- [x] The same holds with the left-handed layout, with End turn rebound to
       a longer key, and with a controller.
-- [ ] Each case Nick decided in step 1 (a message showing; no end-turn
+- [x] Each case Nick decided in step 1 (a message showing; no end-turn
       hint) has a test of what the row shows.
-- [ ] For every mode of the battle screen in the existing snapshot tests,
+- [x] For every mode of the battle screen in the existing snapshot tests,
       the two hints, the message and the debug hint never overlap and stay
       inside the row.
-- [ ] `cargo xtask check-keys` and `check-text` pass; no key is written as
+- [x] `cargo xtask check-keys` and `check-text` pass; no key is written as
       a literal.
-- [ ] Only rows 30 and 31 changed in the snapshots.
-- [ ] `look-and-feel.md` records Nick's answers.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Only rows 30 and 31 changed in the snapshots.
+- [x] `look-and-feel.md` records Nick's answers.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -182,5 +182,81 @@ on 1064's checklist.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answers** (2026-11-17, from real Quick Battle frames, recorded
+in `look-and-feel.md` *Screen layout*, the open sub-question removed):
+
+- Auto-end's column: option (c). While browsing, `end turn` is padded
+  out to one column (where the longest of the four browsing help lines
+  puts it) and auto-end sits right above it; with no end-turn hint (a
+  unit selected, a menu, a prompt, aiming, a fight, the enemy phase, a
+  banner) both toggle hints are hidden.
+- The zoom hint (0439, done) goes first, at the left:
+  `q zoom: 2× · w danger zone: OFF`.
+- Messages: none of the three suggestions. Nick: "toast in a different
+  part like a new row under or on top of the banner which appears
+  briefly", then "for INFO level like Auto-End ON it can be 1, for
+  WARN/ERR level messages probably 4 but left aligned", and for a long
+  warning "Wrap inside the map". So a note (`Auto-end: ON`, what a unit
+  picked up) shows on a shaded strip over the map's bottom row, and a
+  warning (the suspend save failing) in a box at the map's bottom left,
+  wrapped inside the map's width. A preview while aiming and a fight's
+  lines stay at the left of the toggles' row ("as it is today but make it
+  not conflict with any new additions"): the toggles are hidden then.
+- Nick also wants the preview in the side panel "somehow": follow-up
+  **1286** (a decision with mockups, then the build).
+
+**What was built**
+
+- `widgets/help.rs`: `hint_column` (where hint *i* starts, counted from
+  the hints, in characters) and `pad_last_hint`.
+- `BattleScreen`: `help_idle` builds the four browsing forms and pads
+  end turn to the longest's column; `help_parts` returns the help and
+  that column; `status` split into `danger_hint` and `auto_end_hint`
+  (`status` kept for tests); `toggles` builds the row's view.
+- The view: `TogglesView` (the left hint, and auto-end with its column,
+  falling back one separator after the left hint if it would overlap it
+  or run off the row, left out if it fits nowhere) replaces `status`;
+  `MessageKind::Warning` beside `Said` and `Toast`; the toast keeps its
+  kind (`MessageView::note`, `MessageView::warning`). The suspend save's
+  failure is the one warning today.
+- The glyph skin paints the row, the note strip and the warning box. The
+  picture look uses the same bar. The Playdate's own message window is
+  unchanged.
+
+**Deviations**
+
+- The message part grew past the ticket's three options because Nick
+  picked a new one (above).
+- Two test snapshots in the private repository changed, row 30 only (the
+  toggles hidden under the lessons' box): the Chapter 1 lessons box
+  (Zafnok/visions-of-shuyi-assets#15) and 0490's Combat Arts lesson,
+  which merged in the meantime (#17).
+- 0254 (key caps) merged into `main` while this was open: the help and
+  the toggles are styled text, and the end-turn column is measured as the
+  frame measures it, a key cap's extra cells included.
+- Tests that compare help text now read it through `unpadded` (the
+  padding read as a separator); the columns themselves are checked by the
+  new `help_bar_tests`.
+- `crates/ui/README.md` doesn't describe the bar: unchanged.
+
+**For the Act 1 playtest (1064)**, things to judge by playing:
+
+- The toggles disappear while a unit is selected, in menus and under the
+  phase banner, and come back when browsing. The zoom key still works
+  while they are hidden.
+- The gap before `end turn` over a ready unit (about a dozen spaces).
+- Notes and warnings cover the map's bottom row(s) for their few
+  seconds.
+- *The agent's starting rules:* the note's strip spans the map's width
+  and wraps upward if a note is wider; the note and warning colours are
+  the toast's highlight colour on the panel colour, as in the frames Nick
+  saw.
+
+- With a controller, the padded `Start end turn` reaches the debug
+  hint's place, and the debug hint (debug builds only) hides itself as
+  it always does when its place is taken.
+
+Engine friction: estimate 150 production lines (judged by the map menu's
+info box, `MapInfoView`, and its paint), measured 170 (1.1×), under 2×;
+signals: workaround no · third copy no · budget no.
+PR size: estimate 900, measured 1,201.

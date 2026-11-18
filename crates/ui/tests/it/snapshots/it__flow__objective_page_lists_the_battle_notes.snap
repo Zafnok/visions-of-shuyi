@@ -32,7 +32,7 @@ expression: h.snapshot()
          ║                                                 ║          │                            │
          ╚═════════════════════════════════════════════════╝          │ Gold 0                     │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+                                                                                                    
  d back                                                                                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -65,7 +65,7 @@ aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccc
 aaaaaaaaabcccccccccccccccccccccccccccccccccccccccccccccccccbaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasttttttttttttttttttttssssssssssstttttttttttttta
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 astttttaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatttttttta
 --- legend ---
 a = fg:text bg:black

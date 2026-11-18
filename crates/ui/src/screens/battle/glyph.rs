@@ -34,6 +34,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
+use crate::screens::playdate::wrap as wrap_words;
 use crate::tips as tip_box;
 use crate::tips::{LessonView, LessonsEndView};
 use crate::widgets::menu::{self, MenuView};
@@ -703,24 +704,75 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer)
     }
 }
 
-/// Paints the bar under the map and panel: the toggles' state at the right
-/// of the message row, the message at its left, then the help row.
+/// Paints the bar under the map and panel (0445): the toggles' row, the
+/// danger-zone hint from where the help starts and auto-end above the
+/// help's end turn, or a combat's or a preview's line at its left; then
+/// the help row. A note or a warning is painted over the map just above
+/// the bar.
 fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
     buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
-    let w = i32::try_from(view.status.width(buf.widths())).unwrap_or(0);
-    let colors = ctx.palette.text_colors_on(c(UiColor::TextDim), black);
-    buf.print_styled(HELP_BAR.w - 1 - w, HELP_BAR.y, &view.status, colors);
-    if let Some(m) = &view.message {
-        let color = match m.kind {
-            MessageKind::Said => UiColor::Text,
-            MessageKind::Toast => UiColor::TextHighlight,
-        };
-        buf.print(1, HELP_BAR.y, &m.text, c(color), black);
+    if let Some(t) = &view.toggles {
+        let colors = || ctx.palette.text_colors_on(c(UiColor::TextDim), black);
+        buf.print_styled(1, HELP_BAR.y, &t.left, colors());
+        if let Some((auto_end, column)) = &t.auto_end {
+            let x = 1 + i32::try_from(*column).unwrap_or(0);
+            buf.print_styled(x, HELP_BAR.y, auto_end, colors());
+        }
+    }
+    match &view.message {
+        Some(m) if m.kind == MessageKind::Said => {
+            buf.print(1, HELP_BAR.y, &m.text, c(UiColor::Text), black);
+        }
+        Some(m) if m.kind == MessageKind::Toast => paint_note(ctx, &m.text, buf),
+        Some(m) => paint_warning(ctx, &m.text, buf),
+        None => {}
     }
     paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
 }
+
+/// Paints a note on a shaded strip across the map's bottom rows, just
+/// above the bar: one row, more if it has to wrap to the map's width.
+fn paint_note(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
+    let lines = wrap_words(text, MESSAGE_W);
+    let rows = i32::try_from(lines.len()).unwrap_or(1);
+    let top = HELP_BAR.y - rows;
+    buf.fill_rect(
+        Rect::new(MAP_VIEW.x, top, MAP_VIEW.w, rows),
+        Cell::new(' ', fg, bg),
+    );
+    for (y, line) in (top..).zip(&lines) {
+        buf.print(MAP_VIEW.x + 1, y, line, fg, bg);
+    }
+}
+
+/// Paints a warning in a box at the map's bottom left, just above the
+/// bar, wrapped to fit inside the map.
+fn paint_warning(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
+    let lines = wrap_words(text, WARNING_W);
+    let cells = |s: &String| i32::try_from(s.chars().count()).unwrap_or(0);
+    let w = lines.iter().map(cells).max().unwrap_or(0) + 4;
+    let h = i32::try_from(lines.len()).unwrap_or(1) + 2;
+    let rect = Rect::new(MAP_VIEW.x, HELP_BAR.y - h, w, h);
+    let look = PanelLook::new(BoxStyle::Single, fg, bg);
+    buf.panel(rect, &look.with_border(fg), None);
+    for (y, line) in (rect.y + 1..).zip(&lines) {
+        buf.print(rect.x + 2, y, line, fg, bg);
+    }
+}
+
+/// The widest line of a note: the map's width less a blank column each
+/// side.
+const MESSAGE_W: usize = MAP_VIEW.w.unsigned_abs() as usize - 2;
+
+/// The widest line of a warning: the map's width less the box's border
+/// and a blank column each side.
+const WARNING_W: usize = MAP_VIEW.w.unsigned_abs() as usize - 4;
 
 #[cfg(test)]
 pub(crate) mod tests;

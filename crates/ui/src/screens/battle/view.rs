@@ -20,6 +20,7 @@ mod shop;
 
 use crate::prelude::*;
 
+use shuyi_assets::font::CellWidths;
 use shuyi_ui::text::StyledText;
 
 use trpg_core::{Faction, Pos, StatValue};
@@ -39,9 +40,11 @@ pub use self::rewind::{RewindScreenView, RewindView};
 pub use self::shop::{SellConfirmView, ShopLineView, ShopScreenView};
 use super::HealPopup;
 use super::banner::BannerKind;
+use super::layout::HELP_BAR;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
 use crate::tips::{LessonView, LessonsEndView, TipView};
+use crate::widgets::help::SEPARATOR;
 use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
@@ -79,9 +82,9 @@ pub struct BattleView {
     /// The line over the help: a combat's message, the preview of what is
     /// being aimed, or the toast.
     pub message: Option<MessageView>,
-    /// The toggles' state (zoom, danger zone, auto-end), each with its
-    /// key (each key in a key span, ticket 0254).
-    pub status: StyledText,
+    /// The toggles' row (zoom, danger zone, auto-end, each with its key in
+    /// a key span), while the help has its end-turn hint (0445).
+    pub toggles: Option<TogglesView>,
     /// The help line: what the keys do now (each key in a key span).
     pub help: StyledText,
     /// The debug tools' key, when they are on.
@@ -294,13 +297,73 @@ pub struct MessageView {
     pub kind: MessageKind,
 }
 
-/// What the message line says.
+impl MessageView {
+    /// A note for a moment, `text`.
+    pub fn note(text: String) -> Self {
+        let kind = MessageKind::Toast;
+        Self { text, kind }
+    }
+
+    /// A warning or an error for a moment, `text`.
+    pub fn warning(text: String) -> Self {
+        let kind = MessageKind::Warning;
+        Self { text, kind }
+    }
+}
+
+/// What a message is, which says where it shows (Nick, 0445).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageKind {
-    /// What a combat says or what the thing aimed will do.
+    /// What a combat says or what the thing aimed will do: at the left of
+    /// the toggles' row, while it lasts.
     Said,
-    /// A short message for a moment (a toggle flipped).
+    /// A note for a moment (a toggle flipped, a thing picked up): on a
+    /// strip over the map's bottom row.
     Toast,
+    /// A warning or an error for a moment (the save failed): in a box at
+    /// the map's bottom left, wrapped to the map's width.
+    Warning,
+}
+
+/// The toggles' row over the help (0445): the danger-zone hint (after the
+/// zoom hint, where the map can zoom) from where the help starts, and the
+/// auto-end hint starting in the cell where the help's end-turn hint
+/// starts. Columns count the frame's cells from where the help starts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TogglesView {
+    /// The zoom and danger-zone hints, at cell 0.
+    pub left: StyledText,
+    /// The auto-end hint and its cell; `None` if it can't fit on the row.
+    pub auto_end: Option<(StyledText, usize)>,
+}
+
+impl TogglesView {
+    /// The row for `left` and `auto_end` as `widths` measure them,
+    /// auto-end in cell `end_turn`; one separator after `left` instead if
+    /// that would overlap `left` or run off the row, and left out if it
+    /// doesn't fit there either.
+    pub fn new(
+        left: StyledText,
+        auto_end: StyledText,
+        end_turn: usize,
+        widths: &CellWidths,
+    ) -> Self {
+        let after = left.width(widths) + StyledText::from(SEPARATOR).width(widths);
+        let fits = |column: usize| column + auto_end.width(widths) <= Self::ROOM;
+        let column = if end_turn >= after && fits(end_turn) {
+            Some(end_turn)
+        } else {
+            fits(after).then_some(after)
+        };
+        Self {
+            left,
+            auto_end: column.map(|c| (auto_end, c)),
+        }
+    }
+
+    /// The cells the row has for its text: the bar's width, less a blank
+    /// cell at each end.
+    pub const ROOM: usize = HELP_BAR.w.unsigned_abs() as usize - 2;
 }
 
 #[cfg(test)]
@@ -308,7 +371,11 @@ impl BattleView {
     /// Every line of text the view shows, for tests asking whether the
     /// screen shows something.
     pub fn texts(&self) -> Vec<String> {
-        let mut texts = vec![self.status.plain(), self.help.plain()];
+        let mut texts = vec![self.help.plain()];
+        if let Some(t) = &self.toggles {
+            texts.push(t.left.plain());
+            texts.extend(t.auto_end.as_ref().map(|(a, _)| a.plain()));
+        }
         texts.extend(self.tip.iter().map(|t| t.close.plain()));
         let items = self.lesson.iter().flat_map(|l| &l.items);
         texts.extend(items.map(|i| i.label.plain()));
