@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: ["0254"]
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 0257 — Key caps on the other screens
@@ -102,18 +102,18 @@ saves, and move the rest to a new ticket.
 
 ## Acceptance criteria
 
-- [ ] No view a player sees on the PC names a key in plain text: the grep
+- [x] No view a player sees on the PC names a key in plain text: the grep
       of step 1 finds only `.plain()` for tests, the Playdate's skins and
       the debug tools.
-- [ ] A test per switched view finds the keys `key_name` gives, in order.
-- [ ] `grep -n "help.load_\|help.list_\|help.add_" assets/lang/en/ui.ron`
+- [x] A test per switched view finds the keys `key_name` gives, in order.
+- [x] `grep -n "help.load_\|help.list_\|help.add_" assets/lang/en/ui.ron`
       finds nothing, and no view outside the battle, the debug tools and
       the story preview has a `help: String` field.
-- [ ] The Load Game list on the web (no saves folder to open) gives the
+- [x] The Load Game list on the web (no saves folder to open) gives the
       desktop's hint list with the folder hint `shown: false`, not
       another text key (test).
-- [ ] With a controller in use, hints read as today.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] With a controller in use, hints read as today.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -123,9 +123,27 @@ saves, and move the rest to a new ticket.
 
 ## Completion notes
 
-*(In progress: the first part below landed before the friction sweep changed the approach; the hint lists follow in this PR.)*
+Done on 2026-11-18, in one PR (no split). The friction sweep of
+2026-11-17 rewrote this ticket (hint lists) while its PR was open: the
+key spans below were done first, the hint lists after.
 
-Done on 2026-11-17, in one PR (no split: 919 changed lines).
+- **Hint lists** (`widgets::help::HelpBar`): an ordered list of hints,
+  each `(text key, shown)`, whose `line` joins the shown ones with the
+  separator. One deviation from the scope's sketch: a hint is one text
+  key holding its own key and verb (`hint.back`: `{Cancel} back`), as the
+  battle's `battle.hint.*` already are, not an action plus a verb-only
+  key, so a language can put the key after the verb. Twelve shared
+  `hint.*` keys (English and the test pack). The combination keys are
+  gone: `save.help.load*` (the Load Game list's `load_bar`: export,
+  import and open folder shown as the state allows), `profile.help.
+  list_export*` and `add_import` (`ProfileScreen::help_bar`, over the
+  engine's own `profile.help.list`/`add`, which stay), and
+  Preparations' `prep.help.tabs*`/`fight*` (Leave shown when the
+  battle can be left). The other screens' help keys each name one
+  state's verbs, not a combination, so they stay one styled key each;
+  moving every bar onto `hint.*` keys is for a later sweep, as the
+  scope allows for the battle's. *Fitting* is the engine's: a line too
+  wide is cut at the row by `print_centred_styled` (no hint is dropped).
 
 - **Switched to key spans**, each view's help line a `StyledText` built
   with `ctx.text_styled` (or `key_pair`, `text_with_keys`, `join_hints`
@@ -173,8 +191,9 @@ Done on 2026-11-17, in one PR (no split: 919 changed lines).
 
 Size: estimate 250 production lines (about 8 a screen for 20 screens and
 the battle's two hints, judged by 0254's town and rewind switches);
-measured 248 added, 131 removed (`code-lines`), 1.0×. PR size 919
-changed lines.
+measured 248 added, 131 removed (`code-lines`), 1.0×, before the hint
+lists; with them 316 added, 161 removed against 330 (the ticket adds
+about 80 for the hint list), 1.0×. PR size 1,234 changed lines.
 
 *Claude's starting rules:* none (no gameplay).
 

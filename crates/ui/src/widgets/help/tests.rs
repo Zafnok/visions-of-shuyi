@@ -253,3 +253,21 @@ fn spans_of_a_name_that_is_no_action_panics() {
     let c = ctx();
     let _ = spans_of(c.help_keys(), &["NoSuchAction"]);
 }
+
+/// A help bar (0257): its shown hints in order with the separator, a
+/// hidden one left out with no separator of its own.
+#[test]
+fn a_help_bar_joins_its_shown_hints_and_leaves_out_the_hidden() {
+    let c = ctx();
+    let bar = HelpBar::new()
+        .hint("hint.choose")
+        .hint("hint.load")
+        .hint_if("hint.open_folder", false)
+        .hint("hint.back");
+    let line = bar.line(&c);
+    assert_eq!(line.plain(), "arrows choose · f load · d back");
+    assert_eq!(keys(&line), ["arrows", "f", "d"]);
+    let hidden: Vec<_> = bar.hints().iter().filter(|(_, s)| !s).collect();
+    assert_eq!(hidden, [&("hint.open_folder", false)]);
+    assert_eq!(HelpBar::new().line(&c), StyledText::new());
+}

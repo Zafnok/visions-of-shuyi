@@ -562,10 +562,10 @@ fn export_asks_then_offers_the_save_and_hears_where_it_went() {
     let mut s = SlotPickerScreen::load(&c);
     assert_eq!(s.focused_slot(), 2);
     assert!(s.view(&c).place.is_some());
-    assert_eq!(
-        s.help(&c).plain(),
-        c.text_with("save.help.load_export_folder", &[])
-    );
+    // Every hint of the Load Game bar shown (0257).
+    let bar = s.load_bar(&c);
+    assert!(bar.hints().iter().all(|(_, shown)| *shown), "{bar:?}");
+    assert_eq!(s.help(&c), bar.line(&c));
     press(&mut s, &mut c, &[Action::Info]);
     assert!(s.is_asking_export());
     assert!(s.view(&c).export_question.is_some());
@@ -620,10 +620,16 @@ fn export_is_only_for_a_save_that_loads() {
     assert_eq!(file_requests(&mut c), [] as [String; 0]);
 
     let mut s = SlotPickerScreen::load(&c).at(3);
-    assert_eq!(
-        s.help(&c).plain(),
-        c.text_with("save.help.load_folder", &[])
-    );
+    let empty = [
+        ("hint.choose", true),
+        ("hint.load", true),
+        ("hint.export", false),
+        ("hint.import", true),
+        ("hint.open_folder", true),
+        ("hint.back", true),
+    ];
+    assert_eq!(s.load_bar(&c).hints(), empty);
+    assert_eq!(s.help(&c), s.load_bar(&c).line(&c));
     press(&mut s, &mut c, &[Action::Info]);
     assert!(!s.is_asking_export());
 
@@ -632,10 +638,19 @@ fn export_is_only_for_a_save_that_loads() {
     };
     let mut s = SlotPickerScreen::load(&c);
     assert_eq!(s.view(&c).place, None);
-    assert_eq!(
-        s.help(&c).plain(),
-        c.text_with("save.help.load_export", &[])
-    );
+    // Acceptance (0257): the web's bar is the desktop's, the folder hint
+    // not shown, not another text key.
+    let web = [
+        ("hint.choose", true),
+        ("hint.load", true),
+        ("hint.export", true),
+        ("hint.import", true),
+        ("hint.open_folder", false),
+        ("hint.back", true),
+    ];
+    assert_eq!(s.load_bar(&c).hints(), web);
+    assert_eq!(s.help(&c), s.load_bar(&c).line(&c));
+    assert!(!s.help(&c).plain().contains("folder"));
     press(&mut s, &mut c, &[Action::WorldFind]);
     assert_eq!(file_requests(&mut c), [] as [String; 0]);
 }

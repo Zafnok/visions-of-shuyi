@@ -23,6 +23,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use crate::widgets::help::HelpBar;
 use shuyi_ui::text::StyledText;
 pub use view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 
@@ -431,7 +432,6 @@ impl SlotPickerScreen {
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> StyledText {
         // A slot with something in it says so before it is chosen.
-        let folder = save_files::place(&ctx.platform).is_some();
         let key = if self.is_asking_export() {
             "save.help.export_question"
         } else if self.is_asking() {
@@ -440,18 +440,26 @@ impl SlotPickerScreen {
             "save.help.overwrite"
         } else if self.is_saving() {
             "save.help.save_here"
-        } else if self.can_export(ctx) && folder {
-            "save.help.load_export_folder"
-        } else if self.can_export(ctx) {
-            "save.help.load_export"
-        } else if folder {
-            "save.help.load_folder"
-        } else if ImportScreen::can_open(ctx) {
-            "save.help.load_import"
         } else {
-            "save.help.load"
+            return self.load_bar(ctx).line(ctx);
         };
         ctx.text_styled(key, &[])
+    }
+
+    /// The help bar of the Load Game list (ticket 0257): export where a
+    /// save can be, import where a file can be (or a save exported), and
+    /// open folder where the saves are in one (not on the web).
+    pub fn load_bar(&self, ctx: &Ctx) -> HelpBar {
+        let folder = save_files::place(&ctx.platform).is_some();
+        let export = self.can_export(ctx);
+        let import = export || folder || ImportScreen::can_open(ctx);
+        HelpBar::new()
+            .hint("hint.choose")
+            .hint("hint.load")
+            .hint_if("hint.export", export)
+            .hint_if("hint.import", import)
+            .hint_if("hint.open_folder", folder)
+            .hint("hint.back")
     }
 
     /// The screen as it is now, as plain data for a skin to paint

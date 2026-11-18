@@ -15,6 +15,7 @@
 pub mod playdate;
 
 use crate::prelude::*;
+use crate::widgets::help::HelpBar;
 use core::ops::Deref;
 pub use shuyi_ui::screens::profiles::*;
 
@@ -34,14 +35,6 @@ use trpg_content::TipTrigger;
 
 /// The engine's profiles screen on this game.
 pub type ProfileList = ProfilesScreen<Shuyi>;
-
-/// Text key of the help line on a profile that can be exported.
-const HELP_EXPORT: &str = "profile.help.list_export";
-/// Text key of that help line where the saves are in a folder.
-const HELP_EXPORT_FOLDER: &str = "profile.help.list_export_folder";
-/// Text key of the help line on the row that adds a profile, where a file
-/// can be imported as one.
-const HELP_ADD_IMPORT: &str = "profile.help.add_import";
 
 /// The Profile screen: the engine's list ([`ProfileList`], which it
 /// derefs to) with the export key and the place line.
@@ -131,23 +124,36 @@ impl ProfileScreen {
         self.notice.heard(exported);
     }
 
+    /// The help bar where this game's keys add to the engine's list (ticket
+    /// 0257): on a profile that can be exported (and open its folder where
+    /// the saves are in one), and on the row that adds a profile where a
+    /// file can be imported as one. `None`: the engine's own line.
+    pub fn help_bar(&self, ctx: &Ctx, folder: bool) -> Option<HelpBar> {
+        let alone = self.list_alone(ctx);
+        if alone && self.exportable(ctx).is_some() {
+            let bar = HelpBar::new()
+                .hint("hint.move")
+                .hint("hint.pick")
+                .hint("hint.export")
+                .hint("hint.import")
+                .hint_if("hint.open_folder", folder)
+                .hint("hint.back");
+            return Some(bar);
+        }
+        let adding = alone
+            && self.list.focused(ctx) == RowKind::Add
+            && ctx.profiles().all().len() < MAX_PROFILES
+            && ImportScreen::can_open(ctx);
+        let bar = HelpBar::new().hint("hint.move").hint("hint.add");
+        adding.then(|| bar.hint("hint.import").hint("hint.back"))
+    }
+
     /// The screen as it is now, as plain data for a skin to paint.
     pub fn view(&self, ctx: &Ctx) -> ProfileView {
         let mut list = self.list.view(ctx);
         let place = files::place_view(ctx);
-        if self.list_alone(ctx) && self.exportable(ctx).is_some() {
-            let key = if place.is_some() {
-                HELP_EXPORT_FOLDER
-            } else {
-                HELP_EXPORT
-            };
-            list.help = ctx.text_styled(key, &[]);
-        } else if self.list_alone(ctx)
-            && self.list.focused(ctx) == RowKind::Add
-            && ctx.profiles().all().len() < MAX_PROFILES
-            && ImportScreen::can_open(ctx)
-        {
-            list.help = ctx.text_styled(HELP_ADD_IMPORT, &[]);
+        if let Some(bar) = self.help_bar(ctx, place.is_some()) {
+            list.help = bar.line(ctx);
         }
         if list.message.is_none() {
             list.message.clone_from(&self.imported);
