@@ -59,7 +59,7 @@ None. Tests only; nothing a player sees changes.
   350-420 test lines removed.
 
 **Out (do not do):**
-- Moving behavior asserts from cells to views (1237 does that).
+- Moving behavior asserts from cells to views (1237 and 1289 do that).
 - The `map_scene`/`map_scene_in`/`map_text` method and free-function
   pairs in `harness.rs` (about 9 lines; the MCP tools hold a `Core`).
 - Helpers with another job (`title_cinematic.rs`'s `Shows`,

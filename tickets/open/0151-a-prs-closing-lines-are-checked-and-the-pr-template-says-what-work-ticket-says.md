@@ -50,8 +50,8 @@ None.
   deleted if §6 is enough. Say which and why.
 
 **Out (do not do):**
-- Judging whether an estimate came before the code (0148's skill text
-  covers that).
+- Judging whether an estimate came before the code (0181: the
+  `estimate_lines` key and the pr-size hook's nudge).
 - The friction log's rows (1257).
 
 ## Implementation steps

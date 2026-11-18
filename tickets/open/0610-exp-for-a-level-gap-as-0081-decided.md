@@ -6,7 +6,7 @@ milestone: M5 Progression
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
-blocked_by: ["0081"]
+blocked_by: ["0081", "0527", "0531"]
 nick_input: answer-first
 completed:
 ---
@@ -82,9 +82,9 @@ goes on the Act 1 playtest's checklist (1064).
 - Class points, heal and tile-cast EXP, the unused-rewind bonus, unless
   0081 says the cut applies to them.
 - The level pace (`exp_pace`) itself.
-- **0527** (the bots' per-unit report): either order. If it is done
-  first, its per-unit EXP shares before and after go in the PR; if not,
-  the arrival army's levels are enough.
+- **0527** (the bots' per-unit report) and **0531** come first
+  (`blocked_by`): 0527's per-unit EXP shares before and after go in the
+  PR.
 - **0333** (armour), **0870** (Joss), **0528** (the AI): either order;
   whichever lands second re-records the playthroughs and re-runs the
   bands with the first in.
