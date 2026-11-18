@@ -25,7 +25,7 @@ use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use super::units::{faction_color, paint_hp_bar};
 use super::view::{
     BannerView, BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind,
-    NotesView, ObjectiveLine, PanelCellView, PanelUnitView, PanelView,
+    NotesView, ObjectiveLine, PanelCellView, PanelPreviewView, PanelUnitView, PanelView,
 };
 use super::{PopupKind, objective, stage};
 use crate::color::{Rgb, UiColor};
@@ -33,7 +33,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
-use crate::screens::playdate::wrap as wrap_words;
+use crate::screens::playdate::{to_i32, wrap as wrap_words};
 use crate::tips as tip_box;
 use crate::tips::{LessonView, LessonsEndView};
 use crate::widgets::menu::{self, MenuView};
@@ -331,34 +331,28 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     };
     let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg));
     buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
+    // The aimed preview's block first; the rest moves down under it.
+    let dy = panel
+        .preview
+        .as_ref()
+        .map_or(0, |p| paint_panel_preview(ctx, p, buf));
+    let top = TERRAIN_ROW + dy;
     if let Some(t) = &panel.terrain {
         // check-text: not a data name (the view's own)
         print_clipped(
             buf,
-            (TEXT_X, TERRAIN_ROW),
+            (TEXT_X, top),
             TEXT_W,
             &t.name,
             c(UiColor::TextHighlight),
         );
-        print_clipped(
-            buf,
-            (TEXT_X, TERRAIN_ROW + 1),
-            TEXT_W,
-            &t.bonuses,
-            c(UiColor::Text),
-        );
+        print_clipped(buf, (TEXT_X, top + 1), TEXT_W, &t.bonuses, c(UiColor::Text));
         if let Some(heals) = &t.heals {
-            print_clipped(
-                buf,
-                (TEXT_X, TERRAIN_ROW + 2),
-                TEXT_W,
-                heals,
-                c(UiColor::Text),
-            );
+            print_clipped(buf, (TEXT_X, top + 2), TEXT_W, heals, c(UiColor::Text));
         }
     }
     if let Some(unit) = &panel.unit {
-        paint_panel_unit(ctx, unit, buf);
+        paint_panel_unit(ctx, unit, buf, dy);
     }
     print_clipped(
         buf,
@@ -369,11 +363,36 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     );
 }
 
-/// The unit block: name (faction colour), class and level, HP with a bar,
-/// faction.
-fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
+/// The aimed spell, item or skill's block at the top of the side panel
+/// (1286, `look-and-feel.md` *Side panel*): its name, what it will do
+/// wrapped to the panel, then a rule. The rows it takes.
+fn paint_panel_preview(ctx: &Ctx, preview: &PanelPreviewView, buf: &mut GlyphBuffer) -> i32 {
     let c = |u| ctx.palette.get(u);
-    let y = UNIT_ROW;
+    // check-text: not a data name (the view's own)
+    let title = &preview.title;
+    print_clipped(
+        buf,
+        (TEXT_X, TERRAIN_ROW),
+        TEXT_W,
+        title,
+        c(UiColor::TextHighlight),
+    );
+    let mut y = TERRAIN_ROW + 1;
+    for line in wrap_words(&preview.text, TEXT_W) {
+        print_clipped(buf, (TEXT_X, y), TEXT_W, &line, c(UiColor::Text));
+        y += 1;
+    }
+    let rule = "─".repeat(TEXT_W);
+    print_clipped(buf, (TEXT_X, y), TEXT_W, &rule, c(UiColor::PanelBorder));
+    // The title, the lines and the rule.
+    y + 1 - TERRAIN_ROW
+}
+
+/// The unit block: name (faction colour), class and level, HP with a bar,
+/// faction; `dy` rows down, under the aimed preview's block.
+fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, dy: i32) {
+    let c = |u| ctx.palette.get(u);
+    let y = UNIT_ROW + dy;
     // check-text: not a data name (the view's own)
     print_clipped(
         buf,
@@ -389,11 +408,7 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         &unit.class_level,
         c(UiColor::Text),
     );
-    let hp = format!("{} {}/{}", unit.hp_name, unit.hp, unit.max);
-    print_clipped(buf, (TEXT_X, y + 2), TEXT_W, &hp, c(UiColor::Text));
-    let bar = Rect::new(HP_BAR_X, y + 2, HP_BAR_CELLS, 1);
-    let bg = c(UiColor::PanelBg);
-    paint_hp_bar(buf, &ctx.palette, bar, (unit.hp, unit.max), bg);
+    paint_panel_hp(ctx, unit, buf, y + 2);
     print_clipped(
         buf,
         (TEXT_X, y + 3),
@@ -402,7 +417,7 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         c(UiColor::TextDim),
     );
     // A blank row, the stats, a blank row, the weapon, the combat numbers.
-    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW);
+    let below = paint_panel_cells(ctx, &unit.stats, buf, STATS_ROW + dy);
     let weapon_row = below + 1;
     match &unit.weapon {
         Some(weapon) => paint_panel_weapon(ctx, weapon, buf, weapon_row),
@@ -415,6 +430,39 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
         ),
     }
     paint_panel_cells(ctx, &unit.combat, buf, weapon_row + 1);
+}
+
+/// The HP line at row `y` with its bar: `HP 6/17`, or with a heal aimed
+/// at the unit `HP 6 → 17/17` lit, the bar after it showing the HP it
+/// would have (1286).
+fn paint_panel_hp(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, y: i32) {
+    let c = |u| ctx.palette.get(u);
+    let (hp, shown, color) = match unit.hp_then {
+        Some(then) => (
+            format!("{} {} → {}/{}", unit.hp_name, unit.hp, then, unit.max),
+            then,
+            UiColor::TextHighlight,
+        ),
+        None => (
+            format!("{} {}/{}", unit.hp_name, unit.hp, unit.max),
+            unit.hp,
+            UiColor::Text,
+        ),
+    };
+    print_clipped(buf, (TEXT_X, y), TEXT_W, &hp, c(color));
+    // The bar where it always is, or after a longer line, kept inside
+    // (none when no cell is left: the meter draws no cell then).
+    let text_end = TEXT_X + to_i32(hp.chars().count()) + 1;
+    let x = HP_BAR_X.max(text_end);
+    let cells = HP_BAR_CELLS.min(TEXT_X + to_i32(TEXT_W) - x);
+    let bar = Rect::new(x, y, cells, 1);
+    paint_hp_bar(
+        buf,
+        &ctx.palette,
+        bar,
+        (shown, unit.max),
+        c(UiColor::PanelBg),
+    );
 }
 
 /// Paints `cells` two to a row from row `top`, the names dim and the

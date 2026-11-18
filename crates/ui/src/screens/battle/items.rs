@@ -201,16 +201,27 @@ impl ItemTargeting {
         }
     }
 
+    /// The name of the item being used (`Potion`).
+    pub fn name(&self, state: &BattleState, words: Words<'_>) -> String {
+        item_name(state, words, &self.used().item)
+    }
+
     /// The preview line, e.g. `Potion on Rex: HP 12 → 22`.
     pub fn preview(&self, state: &BattleState, words: Words<'_>) -> String {
-        let item = &self.used().item;
-        let name = item_name(state, words, item);
+        let name = self.name(state, words);
         let Some(target) = state.unit(self.target()) else {
             return name;
         };
-        let effect = state.items().consumable(item).map(|c| c.effect);
-        let gain = effect.map_or(0, |e| heal_amount(e, target.hp, target.stats.hp));
+        let gain = self.heal(state).map_or(0, |(_, gain)| gain);
         heal_preview(words, &name, target, gain)
+    }
+
+    /// The unit the item is aimed at and the HP it would gain; `None`
+    /// if the item isn't a consumable or the unit is gone.
+    pub fn heal(&self, state: &BattleState) -> Option<(UnitId, StatValue)> {
+        let target = state.unit(self.target())?;
+        let effect = state.items().consumable(&self.used().item)?.effect;
+        Some((target.id, heal_amount(effect, target.hp, target.stats.hp)))
     }
 }
 
