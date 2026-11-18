@@ -49,13 +49,18 @@ mod tests {
             let cells = (0..i32::from(buf.width())).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
             cells.collect::<String>().trim().to_owned()
         };
-        let mid = i32::from(buf.height()) / 2;
-        let rows: Vec<String> = ROWS.iter().map(|dy| text_at(mid + dy)).collect();
-        assert_eq!(rows[1], "Chapter 4");
-        assert_eq!(rows[2], "The Hound's Country");
-        assert_eq!(rows[0], rule(RULE_HALF));
-        assert_eq!(rows[3], rows[0]);
+        // The Playdate's 15 rows, top to bottom: the rule, a blank row, the
+        // line, a blank row, the name, a blank row, the rule, around the
+        // middle row (7); the rest blank.
+        let rule = rule(RULE_HALF);
+        let mut want = vec![String::new(); usize::from(buf.height())];
+        want[3].clone_from(&rule);
+        want[5] = "Chapter 4".to_owned();
+        want[7] = "The Hound's Country".to_owned();
+        want[9].clone_from(&rule);
+        let rows: Vec<String> = (0..i32::from(buf.height())).map(text_at).collect();
+        assert_eq!(rows, want);
         assert_eq!(buf.sprites().len(), 0);
-        assert!(rule(RULE_HALF).chars().count() <= usize::from(buf.width()));
+        assert!(rule.chars().count() <= usize::from(buf.width()));
     }
 }
