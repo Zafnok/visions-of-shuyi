@@ -187,14 +187,11 @@ pub fn check_pull(json: &str) -> Result<Pull, String> {
              GitHub first"
         ));
     }
-    let files = v["files"]
-        .as_array()
-        .map(|f| {
-            f.iter()
-                .filter_map(|f| f["path"].as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
+    let files = v["files"].as_array().map_or_default(|f| {
+        f.iter()
+            .filter_map(|f| f["path"].as_str().map(str::to_owned))
+            .collect()
+    });
     Ok(Pull {
         number,
         title: text("title"),

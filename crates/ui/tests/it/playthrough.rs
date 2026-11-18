@@ -342,8 +342,7 @@ pub fn record_where(
     let (outcome, turn) = (state.outcome(), state.turn());
     let houses = state
         .village()
-        .map(|v| format!("; houses saved: {} of {}", v.saved(), v.total()))
-        .unwrap_or_default();
+        .map_or_default(|v| format!("; houses saved: {} of {}", v.saved(), v.total()));
     out.push(format!(
         "    // {outcome:?} on turn {turn}; lost: {:?}{houses}",
         lost(&state)

@@ -241,11 +241,7 @@ impl WorldMapScreen {
     /// The world map of `campaign` (on it, [`Campaign::world`]), the cursor
     /// on the army; the campaign began at clock time `started_at`.
     pub fn new(campaign: Campaign, started_at: f64) -> Self {
-        let cursor = campaign
-            .world
-            .as_ref()
-            .map(|w| w.at.clone())
-            .unwrap_or_default();
+        let cursor = campaign.world.as_ref().map_or_default(|w| w.at.clone());
         Self {
             campaign,
             cursor,
@@ -717,7 +713,7 @@ impl WorldMapScreen {
                 .get(&map_cue)
                 .map(|t| f64::from(t.length_ms) / 1000.0);
             let fade_s = f64::from(FADE_OUT_MS) / 1000.0;
-            let tracks = length.map(|l| vec![(map_cue, l)]).unwrap_or_default();
+            let tracks = length.map_or_default(|l| vec![(map_cue, l)]);
             if let Some((music, cue)) = CampMusic::start(tracks, 0, fade_s, ctx.clock_s) {
                 self.music = Some(music.with_quiet(QUIET_S));
                 ask(ctx, &cue);

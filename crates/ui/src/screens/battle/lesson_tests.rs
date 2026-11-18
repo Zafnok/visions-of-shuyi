@@ -464,11 +464,7 @@ fn each_condition_ticks_where_it_happens() {
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(skirmish_charged(&ctx(), 30, 2))));
     h.with_lessons();
     h.ctx_mut().game.content.lessons.lessons = vec![lesson("all", LessonLevel::Full, &items)];
-    let ticks = |h: &Harness| {
-        h.battle()
-            .map(|b| b.lesson_ticks().to_vec())
-            .unwrap_or_default()
-    };
+    let ticks = |h: &Harness| h.battle().map_or_default(|b| b.lesson_ticks().to_vec());
     h.wait(0.1);
     assert_eq!(h.battle().and_then(BattleScreen::shown_lesson), Some("all"));
     // The lord selected, moved one step right, its action menu open.
@@ -625,9 +621,7 @@ fn harness_only(state: BattleState, items: &[DoneWhen]) -> Harness {
 }
 
 fn harness_ticks(h: &Harness) -> Vec<bool> {
-    h.battle()
-        .map(|b| b.lesson_ticks().to_vec())
-        .unwrap_or_default()
+    h.battle().map_or_default(|b| b.lesson_ticks().to_vec())
 }
 
 /// A heal aimed at an ally is no tile aimed at: only a spell on a tile

@@ -246,7 +246,7 @@ fn a_tip_says_its_line_and_the_next_box_takes_over() {
     h.ctx_mut().set_voice_manifest(&manifest);
     let content = &h.game().ctx().game.content;
     let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
-    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let tip = tip.map_or_default(|t| t.text.clone());
     let lesson = content.lessons.lessons[0].text.clone();
     to_battle_answering_voices(&mut h, "f");
     assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstBattleStart));
@@ -295,7 +295,7 @@ fn the_battle_keeps_her_lines_before_her_box_asks_for_one() {
     h.ctx_mut().set_voice_manifest(&manifest);
     let content = &h.game().ctx().game.content;
     let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
-    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let tip = tip.map_or_default(|t| t.text.clone());
     let lesson = content.lessons.lessons[0].text.clone();
     let line = trpg_content::voice::guide_line;
     let mut every: Vec<_> = content.tips.tips.iter().map(|t| line(&t.text)).collect();

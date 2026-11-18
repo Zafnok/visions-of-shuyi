@@ -1009,8 +1009,8 @@ impl Unit {
     ) -> Vec<ItemId> {
         let slots = usize::from(class.weapon_slots).min(WEAPON_SLOTS);
         let mut stowed = Vec::new();
-        for slot in slots..WEAPON_SLOTS {
-            if let Some(copy) = self.loadout.weapons[slot].take() {
+        for weapon in self.loadout.weapons.iter_mut().skip(slots) {
+            if let Some(copy) = weapon.take() {
                 stowed.push(copy.def.clone());
                 stock.weapons.push(copy);
             }

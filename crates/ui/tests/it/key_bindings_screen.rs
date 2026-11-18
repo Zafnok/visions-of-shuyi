@@ -40,7 +40,7 @@ fn open(layout: Layout) -> Harness {
 /// and Reset tips).
 fn reopen(h: &mut Harness) {
     let km = h.game().ctx().keymap.clone();
-    let key = |a| km.primary(a).map(|c| c.to_string()).unwrap_or_default();
+    let key = |a| km.primary(a).map_or_default(|c| c.to_string());
     let (up, down) = (key(Action::CursorUp), key(Action::CursorDown));
     let confirm = key(Action::Confirm);
     h.keys(&format!("{down} {down} {confirm} {up} {up} {up} {confirm}"));

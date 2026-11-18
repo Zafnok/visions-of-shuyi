@@ -322,9 +322,7 @@ fn two_reply_choice_snapshot() {
     let mut h = Harness::with_screen(Box::new(DialogueScreen::new(
         &scene,
         lead,
-        trpg_content::load_embedded()
-            .map(|c| c.names)
-            .unwrap_or_default(),
+        trpg_content::load_embedded().map_or_default(|c| c.names),
         &Present::Everyone,
     )));
     h.keys("f f f f");
@@ -357,7 +355,7 @@ fn music_scene() -> Harness {
     };
     let content = trpg_content::load_embedded();
     assert!(content.is_ok());
-    let names = content.map(|c| c.names).unwrap_or_default();
+    let names = content.map_or_default(|c| c.names);
     Harness::with_screen(Box::new(DialogueScreen::new(
         &scene,
         LeadProfile::new("Ellery", LeadGender::Male),

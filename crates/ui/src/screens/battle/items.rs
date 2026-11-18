@@ -119,8 +119,7 @@ pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) ->
             let effect = state
                 .items()
                 .consumable(&g.item)
-                .map(|c| effect_text(words, c.effect))
-                .unwrap_or_default();
+                .map_or_default(|c| effect_text(words, c.effect));
             let text = format!(
                 "{:<w$} ×{}  {effect}",
                 name(g),
