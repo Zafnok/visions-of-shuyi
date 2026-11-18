@@ -164,7 +164,7 @@ fn world_fight(ctx: &Ctx, campaign: &Campaign) -> Option<(String, ChapterDef)> {
             let current = content.chapters.get(&campaign.chapter);
             ChapterDef {
                 id: world.at.clone(),
-                title: current.map(|c| c.title.clone()).unwrap_or_default(),
+                title: current.map_or_default(|c| c.title.clone()),
                 number: current.and_then(|c| c.number),
                 opening_scenes: Vec::new(),
                 intro_scenes: quest.intro_scenes.clone(),

@@ -1,6 +1,8 @@
 // The test pack's screen text: each entry is the English in capitals.
 // Kept on purpose: `title.continue` is stale (its `source` is not
 // today's English) and `title.credits` is missing, so both show in English.
+// The tag `test` has no plural rules, so a plural's only category is
+// `other` (and `=N`): a `one` branch is refused when the pack loads.
 [
     (key: "hint.move", source: "{Cursor} move", text: "{Cursor} MOVE"),
     (key: "hint.choose", source: "{Cursor} choose", text: "{Cursor} CHOOSE"),
@@ -600,7 +602,7 @@
     (
         key: "save.army",
         source: "{count, plural, one {# unit} other {# units}}",
-        text: "{count, plural, one {# UNIT} other {# UNITS}}",
+        text: "{count, plural, other {# UNITS}}",
     ),
     (key: "save.range", source: "{first}-{last} of {count}", text: "{first}-{last} OF {count}"),
     (
@@ -978,7 +980,7 @@
     (
         key: "battle.end_turn_question",
         source: "End turn with {ready, plural, one {# unit} other {# units}} ready?",
-        text: "END TURN WITH {ready, plural, one {# UNIT} other {# UNITS}} READY?",
+        text: "END TURN WITH {ready, plural, other {# UNITS}} READY?",
     ),
     (key: "battle.menu.attack", source: "Attack", text: "ATTACK"),
     (key: "battle.menu.arts", source: "Arts", text: "ARTS"),
@@ -1358,13 +1360,13 @@
     (
         key: "battle.rewind.charges",
         source: "{left} of {charges, plural, one {# charge} other {# charges}} left",
-        text: "{left} OF {charges, plural, one {# CHARGE} other {# CHARGES}} LEFT",
+        text: "{left} OF {charges, plural, other {# CHARGES}} LEFT",
     ),
     (key: "battle.rewind.nothing", source: "Nothing to rewind yet", text: "NOTHING TO REWIND YET"),
     (
         key: "battle.rewind.use",
         source: "Use 1 of {left, plural, one {# charge} other {# charges}}?",
-        text: "USE 1 OF {left, plural, one {# CHARGE} other {# CHARGES}}?",
+        text: "USE 1 OF {left, plural, other {# CHARGES}}?",
     ),
     (key: "battle.rewind.line", source: "Turn {turn} · {what}", text: "TURN {turn} · {what}"),
     (key: "battle.rewind.waited", source: "{who} waited", text: "{who} WAITED"),
@@ -1428,7 +1430,7 @@
     (
         key: "battle.rewind.hits",
         source: "{n, plural, =0 {missed} one {hit, {dmg} dmg} other {# hits, {dmg} dmg}}",
-        text: "{n, plural, =0 {MISSED} one {HIT, {dmg} DMG} other {# HITS, {dmg} DMG}}",
+        text: "{n, plural, =0 {MISSED} other {# HITS, {dmg} DMG}}",
     ),
     (key: "battle.rewind.defeated", source: "{result}, defeated", text: "{result}, DEFEATED"),
     (

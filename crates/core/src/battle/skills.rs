@@ -385,8 +385,7 @@ impl BattleState {
             return Vec::new();
         };
         self.unit(pending.unit)
-            .map(|u| self.move_after_paths(u, pending.tiles))
-            .unwrap_or_default()
+            .map_or_default(|u| self.move_after_paths(u, pending.tiles))
             .iter()
             .filter_map(|path| path.last().copied())
             .collect()
@@ -422,8 +421,7 @@ impl BattleState {
             return Ok(None);
         };
         self.unit(id)
-            .map(|u| self.move_after_paths(u, pending.tiles))
-            .unwrap_or_default()
+            .map_or_default(|u| self.move_after_paths(u, pending.tiles))
             .into_iter()
             .find(|path| path.last() == Some(&to))
             .map(Some)

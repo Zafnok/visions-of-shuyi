@@ -208,7 +208,7 @@ mod tests {
         assert!(files.music.is_none());
         let m = load().unwrap_or_default();
         let file = m.sounds.values().flat_map(|s| &s.files).next();
-        let file = file.map(String::as_str).unwrap_or_default();
+        let file = file.map_or_default(String::as_str);
         assert_eq!(
             (files.sound)(file).as_deref(),
             bundle::bytes(&sound_path(file)).as_deref()

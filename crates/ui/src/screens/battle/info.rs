@@ -150,8 +150,8 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
             .movement_types
             .get(usize::from(c.movement_type.0))
     });
-    let tags = class.map(|c| c.tags).unwrap_or_default();
-    let affinities = class.map(|c| c.affinities.as_slice()).unwrap_or_default();
+    let tags = class.map_or_default(|c| c.tags);
+    let affinities = class.map_or_default(|c| c.affinities.as_slice());
     let listed = listed_stats((state, words), unit);
     let effects = unit
         .effects

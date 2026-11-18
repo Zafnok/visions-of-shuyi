@@ -325,10 +325,10 @@ fn the_pages_play_by_themselves_and_holding_confirm_speeds_them_up() {
     step(&mut s, &mut c, &[Confirm, Confirm]);
     let frame = |dt, held: &[Action]| FrameInput::new(vec![], dt, held.to_vec());
     s.update(&mut c, &frame(0.1, &[]));
-    let t = s.progress().map(Progress::time).unwrap_or_default();
+    let t = s.progress().map_or_default(Progress::time);
     assert!((t - 0.1).abs() < 1e-5, "{t}");
     s.update(&mut c, &frame(0.1, &[Confirm]));
-    let t = s.progress().map(Progress::time).unwrap_or_default();
+    let t = s.progress().map_or_default(Progress::time);
     assert!((t - 0.5).abs() < 1e-5, "{t}");
     // Played to its end, the page still waits for a key.
     let t = s.update(&mut c, &frame(60.0, &[]));

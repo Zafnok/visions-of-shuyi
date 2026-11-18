@@ -1344,9 +1344,8 @@ mod tests {
             Faction::Player,
             Pos::new(0, 0),
         );
-        let spells: Vec<String> = mage
-            .map(|u| u.learned.iter().map(|s| s.0.clone()).collect())
-            .unwrap_or_default();
+        let spells: Vec<String> =
+            mage.map_or_default(|u| u.learned.iter().map(|s| s.0.clone()).collect());
         assert_eq!(spells, ["fire", "frost", "heal"]);
     }
 }

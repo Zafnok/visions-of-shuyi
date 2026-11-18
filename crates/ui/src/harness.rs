@@ -331,13 +331,13 @@ impl Harness {
     /// The ranges the battle map shows on `pos` ([`MapScene::tints_at`]).
     pub fn tints_at(&self, pos: Pos) -> Vec<RangeName> {
         let scene = self.map_scene();
-        scene.map(|s| s.tints_at(pos)).unwrap_or_default()
+        scene.map_or_default(|s| s.tints_at(pos))
     }
 
     /// The selected unit's path on the battle map, its own tile first;
     /// empty with none.
     pub fn path(&self) -> Vec<Pos> {
-        self.map_scene().map(|s| s.path).unwrap_or_default()
+        self.map_scene().map_or_default(|s| s.path)
     }
 
     /// Draws a hint's keys as key caps, as the game does (they are words

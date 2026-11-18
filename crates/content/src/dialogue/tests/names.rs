@@ -268,7 +268,7 @@ fn readme_names_example_is_valid() {
     let table = from_sources(&[("README.md", example)], None, None, Some(&names()), None);
     assert!(table.is_ok(), "{table:?}");
     let scene = table.unwrap_or_default().scenes.remove("ch01_road");
-    let steps = scene.map(|s| s.steps).unwrap_or_default();
+    let steps = scene.map_or_default(|s| s.steps);
     let shown: Vec<String> = steps
         .iter()
         .filter_map(|s| match s {

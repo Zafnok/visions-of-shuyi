@@ -89,13 +89,11 @@ impl Technique {
             Technique::Art(id) => state
                 .arts()
                 .get(id)
-                .map(|a| art_effect_text(words, a))
-                .unwrap_or_default(),
+                .map_or_default(|a| art_effect_text(words, a)),
             Technique::Active(id) => state
                 .skills()
                 .get(id)
-                .map(|s| effect_text(words, s))
-                .unwrap_or_default(),
+                .map_or_default(|s| effect_text(words, s)),
         }
     }
 }

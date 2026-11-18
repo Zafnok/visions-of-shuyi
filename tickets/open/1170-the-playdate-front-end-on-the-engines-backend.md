@@ -164,6 +164,16 @@ Tests verify behavior; subjective startup/sound/save/menu feel goes to
 - `shuyi_platform::Start`/`shuyi_playdate::main!`, the game's existing
   loading card/data setup, one-bit look, saved settings and stack size.
   Use the engine's SDK, allocator, panic path, driver, storage and audio.
+- **From engine #501 (3316, the pin move of 2026-11-18):** the load in
+  steps goes through the engine's `App::load_steps`, so the game's own
+  step loop (`pd/entry.rs`'s `Step::Load` and `Loading`) goes. A step
+  that can report its units returns `Progress::Of { done, of }`, which
+  draws a bar on the engine's card (the Playdate's display redraws it
+  only when its filled part moves). The bar changes the card's look: ask
+  Nick (`ask-nick`, the card with and without the bar) before reporting
+  `Of`; without his yes, the steps report no count and the card looks as
+  today. The loading report's card time (`report.rs`'s `card_shown`)
+  stays.
 - Wire the game's project/audio/bake adapters and library feature to
   `shuyi export playdate`; preserve selected Playdate music, 4x4 Bayer
   stretch/dither policy, data folder and menu/keymap semantics. A/B moved

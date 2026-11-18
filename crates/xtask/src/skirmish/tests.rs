@@ -153,7 +153,7 @@ fn a_skirmish_end_to_end_writes_valid_files_and_the_same_ones_again() {
     // With no chapter given, the army is the story's last chapter's.
     let content = trpg_content::load_embedded().expect("content");
     let chapters = trpg_bots::story_chapters(&content);
-    let story_last = chapters.last().map(|c| c.id.as_str()).unwrap_or_default();
+    let story_last = chapters.last().map_or_default(|c| c.id.as_str());
     assert!(
         battle.contains(&format!("bots_army: (chapter: \"{story_last}\", level: 5)")),
         "{battle}"
