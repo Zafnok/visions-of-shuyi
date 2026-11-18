@@ -24,22 +24,20 @@ std::thread_local! {
 /// Whether `scene`, named by a file, is a problem: it isn't in `dialogue`,
 /// and the load isn't of only some scripts, which notes it instead.
 pub(crate) fn missing(dialogue: &DialogueTable, scene: &str) -> bool {
-    dialogue.get(scene).is_none() && !noted(scene)
+    let here = dialogue.get(scene).is_some();
+    #[cfg(feature = "std")]
+    let here = here || noted(scene);
+    !here
 }
 
 /// Whether a load of only some scripts runs on this thread, and so notes
-/// `scene` as not here instead.
+/// `scene` as not here instead. Without `std` every load is of all the
+/// scripts.
 #[cfg(feature = "std")]
 fn noted(scene: &str) -> bool {
     NOT_HERE
         .with_borrow_mut(|n| n.as_mut().map(|n| n.insert(scene.to_owned())))
         .is_some()
-}
-
-/// Without `std` every load is of all the scripts.
-#[cfg(not(feature = "std"))]
-fn noted(_scene: &str) -> bool {
-    false
 }
 
 /// Puts back the load before it: the one a [`with_some_scenes`] ran in,
