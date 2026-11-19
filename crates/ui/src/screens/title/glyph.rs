@@ -203,8 +203,6 @@ pub fn ember(i: u64, millis: u32, frame: (u32, u32)) -> Option<Ember> {
     let start = sx + (unit(rise, 0) * 2.0 - 1.0) * EMBER_SPREAD;
     let drift = (unit(rise, 16) * 2.0 - 1.0) * EMBER_DRIFT * age;
     let sway = 0.8 * ((age * 2.0 + unit(rise, 32)) * TAU).sin() * age;
-    // Whole until EMBER_GLOW of the rise, then fading.
-    let brightness = 1.0 - (age - EMBER_GLOW).max(0.0) * 1.8;
     #[allow(clippy::cast_possible_truncation)] // a cell on the console
     let (x, y) = (
         (start + drift + sway).round() as i32,
@@ -216,13 +214,27 @@ pub fn ember(i: u64, millis: u32, frame: (u32, u32)) -> Option<Ember> {
     let (glyph, color) = EMBER_KINDS[kind];
     let cols = i32::from(ConsoleSpec::PC.cols);
     let shows = (0..cols).contains(&x) && (0..EMBER_ROWS).contains(&y);
-    (brightness > EMBER_GONE && shows).then_some(Ember {
+    let brightness = ember_glow(age)?;
+    shows.then_some(Ember {
         x,
         y,
         glyph,
         color,
         brightness,
     })
+}
+
+/// How bright an ember `age` of the way up its rise is (0 to 1): whole
+/// until [`EMBER_GLOW`] of it, then fading.
+fn ember_fade(age: f32) -> f32 {
+    1.0 - (age - EMBER_GLOW).max(0.0) * 1.8
+}
+
+/// [`ember_fade`], while it is brighter than [`EMBER_GONE`]: `None` once
+/// the ember is gone.
+fn ember_glow(age: f32) -> Option<f32> {
+    let brightness = ember_fade(age);
+    (brightness > EMBER_GONE).then_some(brightness)
 }
 
 /// The embers that show `millis` after the title appeared, over the
@@ -682,6 +694,23 @@ mod tests {
             })
             .to_vec();
         assert_eq!(paths, EMBER_PATHS);
+    }
+
+    /// An ember is gone the moment it fades to [`EMBER_GONE`], not after.
+    #[test]
+    fn an_ember_is_gone_as_it_fades_to_the_last_light() {
+        assert_eq!(ember_glow(0.0), Some(1.0));
+        assert_eq!(ember_glow(EMBER_GLOW), Some(1.0));
+        assert_eq!(ember_glow(1.0), None);
+        // The one moment of a rise whose light is EMBER_GONE exactly.
+        let mut age: f32 = 0.88;
+        while ember_fade(age) > EMBER_GONE {
+            age = f32::from_bits(age.to_bits() + 1);
+        }
+        assert!((ember_fade(age) - EMBER_GONE).abs() < f32::EPSILON, "{age}");
+        assert_eq!(ember_glow(age), None);
+        let before = f32::from_bits(age.to_bits() - 1);
+        assert!(ember_glow(before).is_some());
     }
 
     #[test]
