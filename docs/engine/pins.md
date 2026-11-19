@@ -457,3 +457,14 @@ Nothing for the game: 6 PRs (#461, #464, #466, #467, #470, #473). #461 ships the
 | #503 | 2268 | A message's walk borrows its values | adopt → 1299 (the game's fills take it at the pin with no change, all through `&dyn ToArg`; 1299 measures it with 2266's) |
 
 Nothing for the game: 13 PRs (#401, #403, #414, #480, #483, #484, #488, #489, #491, #492, #493, #500, #502). #401 moved the engine to Rust 1.100, so the game's toolchain moves with it (`rust-toolchain.toml`, `rust-version`, ADR-0070's line), clippy 1.100's new `map_or_default` and `needless_range_loop` findings are fixed as it suggests, and cargo 1.100's unused workspace dependencies (`hashbrown`, `thiserror`) are removed; #483 is ticket 3219's file, #485's ticket; #491 finds the Windows window once, with nothing the game sees; #403, #414 and the rest are the engine's book, CI, skills and dependency bumps.
+
+## 2026-11-18: 60a7ca47 → c0da2ec7 (4 engine PRs), #767
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #504 | 2098 | Public API with no second user hidden or moved out before the first release | fixed: nothing to change (searched `crates/` for `recipient`, `PackMark`, `pack::Raw`, `image::mark`, `run_game_checked`, `PageCheck`, `page_check` and `report_check`: none) |
+| #506 | 3406 | A `shuyi new` game's tag release is a draft unless `PUBLISH_ON_GITHUB`, its debug files in `<tag>-debug` (a `Behaviour:` line only) | fixed: nothing to change (keeps the game's own rule: its `release.yml` isn't the template's, makes no GitHub Release since 0920 and keeps the debug files in a private repository; searched `.github/workflows/` for `PUBLISH_ON_GITHUB` and `-debug`: none) |
+| #505 | 3224 | Ranges that spread out when opened, a wave of light, one outline and relief (`RangeShow`, `MapScene::ranges_shown`) | fixed: the sprite skin's `every_field_is_listed` names `ranges_shown` (the game sets none and draws the tint, as before); adopt → 0923 (its open PR #766 offers the looks in Options; it rebases on this pin rather than moving it) |
+| #507 | 0923 | The Options panel may rise to the screen's top row (`api: none`, in `shuyi-ui`'s Options skin) | fixed: nothing to change (the game's Options rows fit below row 1 today, so its panel and snapshots are unchanged; 0923's new row is what needs the room); adopt → 0923 |
+
+Nothing for the game: 0 PRs.
