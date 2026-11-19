@@ -477,3 +477,11 @@ Nothing for the game: 0 PRs.
 | #510 | 3225 | The options glyph skin's rows scroll when they don't fit above the message (`api: none`, in `shuyi-ui`'s Options skin) | fixed: nothing to change (the game's public build's Options rows fit, so its panel and snapshots are unchanged); unblocks 1301 (its engine step and pin step struck: the picture build's two more rows now scroll) |
 
 Nothing for the game: 1 PR (#508, the engine's book and its playground Codespace, which the game doesn't build).
+
+## 2026-11-19: d10d1950 → 7a7d7b0c (1 engine PR), #773
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #511 | 3226 | The options glyph skin's value column leaves room for the longest label and its arrow (`api: none`, in `shuyi-ui`'s Options skin) | unblocks 1302 (this PR: the title's Options snapshot moves every value one cell right, as "Voice on hover in the log" is 25 cells; `engine#3226` out of its `blocked_by`) |
+
+Nothing for the game: 0 PRs.

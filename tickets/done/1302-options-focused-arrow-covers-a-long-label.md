@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-19
 ---
 
 # 1302 — The focused value's arrow no longer covers a long Options label
@@ -46,8 +46,8 @@ Nick's and the writer's); the Playdate's skin.
 
 ## Acceptance criteria
 
-- [ ] With "Voice on hover in the log" focused, its whole label shows.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] With "Voice on hover in the log" focused, its whole label shows.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -58,4 +58,20 @@ Nick's and the writer's); the Playdate's skin.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Engine: ticket 3226, Zafnok/shuyi-engine#511. The options glyph skin puts
+the values' column at its usual place (30 cells into the panel), or
+further right when the longest label needs it, the same for every row so
+the values stay lined up and don't move as the list scrolls. A focused
+label then ends right before its `◄`. Labels of 24 cells or fewer paint as
+before. Engine test: `the_longest_label_focused_is_painted_whole`.
+
+Game: the pin moves `d10d1950 → 7a7d7b0c` (only #511; its ledger section
+in `docs/engine/pins.md`). 1301's focused-row walk matches whole labels;
+the title's Options snapshot moves every value one cell right, as "Voice
+on hover in the log" is 25 cells.
+
+Not done: the column isn't capped by the panel's width, so a label of
+about 30 cells (a long translation) would push a volume slider past the
+panel's border. No label is that long today; the panel would need to grow.
+
+No gameplay rules decided: layout only.

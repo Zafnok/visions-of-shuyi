@@ -1064,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "shuyi"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "shuyi-app",
  "shuyi-assets",
@@ -1076,12 +1076,12 @@ dependencies = [
 [[package]]
 name = "shuyi-alloc-count"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 
 [[package]]
 name = "shuyi-app"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "gilrs",
  "macroquad",
@@ -1100,7 +1100,7 @@ dependencies = [
 [[package]]
 name = "shuyi-assets"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "include_dir",
  "libm",
@@ -1117,7 +1117,7 @@ dependencies = [
 [[package]]
 name = "shuyi-cli"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -1144,7 +1144,7 @@ dependencies = [
 [[package]]
 name = "shuyi-core"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "schemars",
  "serde",
@@ -1153,7 +1153,7 @@ dependencies = [
 [[package]]
 name = "shuyi-platform"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "ron",
  "schemars",
@@ -1168,7 +1168,7 @@ dependencies = [
 [[package]]
 name = "shuyi-ui"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=d10d19504002e52336622ab5bbefa296a613b41c#d10d19504002e52336622ab5bbefa296a613b41c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=7a7d7b0c0e57d57b38c7370896a096111bbef8e1#7a7d7b0c0e57d57b38c7370896a096111bbef8e1"
 dependencies = [
  "libm",
  "ron",
