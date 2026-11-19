@@ -469,7 +469,7 @@ Nothing for the game: 13 PRs (#401, #403, #414, #480, #483, #484, #488, #489, #4
 
 Nothing for the game: 0 PRs.
 
-## 2026-11-19: c0da2ec7 → d10d1950 (3 engine PRs), #PRNUM
+## 2026-11-19: c0da2ec7 → d10d1950 (3 engine PRs), #770
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
