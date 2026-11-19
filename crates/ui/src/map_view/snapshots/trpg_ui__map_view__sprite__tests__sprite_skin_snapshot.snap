@@ -6,7 +6,13 @@ under sprite 16,24 24x24  tilesets/test.png 0,0 24x24
 under sprite 40,24 24x24  tilesets/test.png 96,0 24x24
 under sprite 16,48 24x24  tilesets/test.png 0,0 24x24
 under sprite 40,48 24x24  tilesets/test.png 0,0 24x24
-under sprite 16,24 24x24  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
+under sprite 16,24 24x24  tilesets/test.png 0,0 24x24 opacity=140 solid=move_range
+under 18,48 24x2  #0b111a
+under 40,26 2x24  #0b111a
+under 16,24 24x1  #9fabbb
+under 39,24 1x24  #9fabbb
+under 16,47 24x1  #9fabbb
+under 16,24 1x24  #9fabbb
 under sprite 40,24 24x24  tilesets/test.png 96,0 24x24 opacity=96 solid=forest
 under 27,48 3x14  path
 over  sprite 16,21 24x24  tilesets/test.png 168,120 24x24 solid=player_outline clip=16,24 24x21

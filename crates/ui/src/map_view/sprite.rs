@@ -180,6 +180,7 @@ pub(crate) mod tests {
     use crate::map_view::threat;
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
+    use shuyi_ui::grid::scene::RangesShown;
     use shuyi_ui::grid::{Ends, MapEdges};
 
     /// The picture of mix `m` in a test layer: one rectangle of the test
@@ -864,9 +865,6 @@ pub(crate) mod tests {
             "path",
             "threat",
             "clock_ms",
-            // When the ranges opened, for the engine's spreading look
-            // (engine#3224): the game sets none yet and its skins draw the
-            // tint, which shows no spread; 0923 gives it a feature.
             "ranges_shown",
         ];
         assert_eq!(fields(&format!("{scene:#?}")), scene_fields);
@@ -962,6 +960,13 @@ pub(crate) mod tests {
         for kind in range::ALL {
             out.push(feature("range", &move |s| s.tint([p(0, 0)], kind)));
         }
+        // Ranges opened this moment haven't spread to their tile yet
+        // (ticket 0923).
+        let opened = RangesShown::new(p(0, 0), 0);
+        let mut spread = feature("ranges shown", &move |s| s.ranges_shown = Some(opened));
+        spread.without.tint([p(0, 0)], range::MOVE);
+        spread.with.tint([p(0, 0)], range::MOVE);
+        out.push(spread);
         let styles = [
             CursorStyle::Corners,
             CursorStyle::LargeCorners,
@@ -990,7 +995,8 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 23 + 5 + 6);
+            // The fields, the ranges, the cursors and the spread (0923).
+            assert_eq!(features.len(), 23 + 5 + 6 + 1);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));
@@ -1122,7 +1128,10 @@ pub(crate) mod tests {
                 _ => "other",
             })
             .collect();
-        let mut expect = vec!["path"];
+        // First, under everything, the move tile's outline and its slab's
+        // shadow (ticket 0923: four sides, and below and right).
+        let mut expect = vec!["bar"; 6];
+        expect.push("path");
         expect.extend(["sprite"; 5]);
         expect.push("bar");
         expect.extend(["path"; 6]);

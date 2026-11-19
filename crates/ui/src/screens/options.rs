@@ -45,8 +45,8 @@ use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
-    AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, Settings,
-    ThreatArrows, TownsOpen,
+    AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, RangeStyle,
+    Settings, ThreatArrows, TownsOpen,
 };
 use crate::tips::reset_tips;
 
@@ -132,6 +132,9 @@ pub enum Row {
     /// [`ShuyiSettings::threat_arrows`](crate::ShuyiSettings::threat_arrows)
     /// (ticket 0908).
     ThreatArrows,
+    /// [`ShuyiSettings::range_style`](crate::ShuyiSettings::range_style)
+    /// (ticket 0923).
+    RangeStyle,
     /// [`ShuyiSettings::portrait_style`](crate::ShuyiSettings::portrait_style)
     /// (only on the Playdate).
     PortraitStyle,
@@ -174,7 +177,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 26] = [
+    pub const ALL: [Row; 27] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -185,6 +188,7 @@ impl Row {
         Row::MapLook,
         Row::MapZoom,
         Row::ThreatArrows,
+        Row::RangeStyle,
         Row::PortraitStyle,
         Row::Intro,
         Row::Towns,
@@ -217,6 +221,7 @@ impl Row {
             Row::MapLook => "options.row.map_look",
             Row::MapZoom => "options.row.map_zoom",
             Row::ThreatArrows => "options.row.threat_arrows",
+            Row::RangeStyle => "options.row.range_style",
             Row::PortraitStyle => "options.row.portrait_style",
             Row::Intro => "options.row.intro",
             Row::Towns => "options.row.towns",
@@ -265,6 +270,7 @@ impl Row {
             Row::MapLook => choice::<MapLook>(self),
             Row::MapZoom => choice::<MapZoom>(self),
             Row::ThreatArrows => choice::<ThreatArrows>(self),
+            Row::RangeStyle => choice::<RangeStyle>(self),
             Row::PortraitStyle => choice::<PortraitStyle>(self),
             Row::Theme => choice::<Theme>(self),
             Row::CombatAnimations => OptionRow::new(
@@ -583,6 +589,19 @@ impl Named for ThreatArrows {
     }
     fn put(self, s: &mut Settings) {
         s.game.threat_arrows = self;
+    }
+}
+
+impl Named for RangeStyle {
+    const ALL: &'static [Self] = &RangeStyle::ALL;
+    fn key(self) -> &'static str {
+        RangeStyle::key(self)
+    }
+    fn get(s: &Settings) -> Self {
+        s.game.range_style
+    }
+    fn put(self, s: &mut Settings) {
+        s.game.range_style = self;
     }
 }
 

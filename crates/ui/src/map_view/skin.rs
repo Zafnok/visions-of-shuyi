@@ -15,7 +15,8 @@ use super::scene::{MapScene, TerrainLooks, UnitView};
 use super::sprite::SpriteUnits;
 use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::screen::Ctx;
-use crate::settings::{MapZoom, ThreatArrows};
+use crate::settings::{MapZoom, RangeStyle, ThreatArrows};
+use shuyi_ui::grid::glyph::GlyphSkin;
 
 /// Calls `paint` with what the kit's skins paint with in `ctx`: its
 /// palette, this game's terrains and its lights.
@@ -101,16 +102,15 @@ impl MapSkin {
     }
 
     /// The same skin, at the same zoom, drawing the threat arrows as
-    /// `arrows` (ticket 0908).
+    /// `arrows` (ticket 0908) and the ranges as `ranges` (ticket 0923).
     #[must_use]
-    pub fn with_threat_arrows(&self, arrows: ThreatArrows) -> Self {
-        let shape = arrows.shape();
+    pub fn with_marks(&self, arrows: ThreatArrows, ranges: RangeStyle) -> Self {
+        let (shape, show) = (arrows.shape(), ranges.show());
+        let glyph = |skin: GlyphSkin| skin.with_threat_shape(shape).with_range_show(show);
         let skin = match &self.units {
-            Units::Glyph => Self::new(Rc::new(GLYPH.with_threat_shape(shape)), Units::Glyph),
-            Units::OneBit => Self::new(Rc::new(ONE_BIT.with_threat_shape(shape)), Units::OneBit),
-            Units::Sprite(tileset) => {
-                Self::sprite_on(Tileset::clone(tileset), GLYPH.with_threat_shape(shape))
-            }
+            Units::Glyph => Self::new(Rc::new(glyph(GLYPH)), Units::Glyph),
+            Units::OneBit => Self::new(Rc::new(glyph(ONE_BIT)), Units::OneBit),
+            Units::Sprite(tileset) => Self::sprite_on(Tileset::clone(tileset), glyph(GLYPH)),
         };
         match self.zoom() {
             Some(zoom) => skin.at_zoom(zoom).unwrap_or(skin),

@@ -211,7 +211,9 @@ fn every_bought_file_has_a_credit() {
             "Tiny Tales",
             "Shironejiya battle pictures (the materials in this game may not be reused)",
             "Classes and Mobs pixel-art TRPG pieces",
-            "Fantasy Battle Pack"
+            "Fantasy Battle Pack",
+            // The title's campfire (ticket 0922).
+            "Idylwild's Chromatic Campfires",
         ]
     );
 }

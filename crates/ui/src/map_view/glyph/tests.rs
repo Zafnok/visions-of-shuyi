@@ -148,7 +148,8 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     scene.path = vec![p(2, 2), p(3, 2)];
     scene.cursor = Some(CursorView::new(p(3, 2), 1.0, CursorStyle::Corners));
     // Straight arrows (an option since ticket 0908; the default is below).
-    let straight = MapSkin::glyph().with_threat_arrows(crate::ThreatArrows::Straight);
+    let straight =
+        MapSkin::glyph().with_marks(crate::ThreatArrows::Straight, crate::RangeStyle::Slab);
     let mut buf = blank();
     straight.paint(&c, &scene, area, &mut buf);
     let before = buf.overlays();
@@ -199,7 +200,7 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     for arrows in crate::ThreatArrows::ALL {
         let mut buf = blank();
         MapSkin::glyph()
-            .with_threat_arrows(arrows)
+            .with_marks(arrows, crate::RangeStyle::Slab)
             .paint(&c, &scene, area, &mut buf);
         assert_eq!(
             &buf.overlays()[before.len()..],
@@ -265,7 +266,7 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
     scene.path = vec![p(2, 2), p(3, 2)];
     scene.cursor = Some(CursorView::new(p(5, 2), 1.0, CursorStyle::Corners));
     let mut buf = blank();
-    MapSkin::glyph().paint(&c, &scene, area, &mut buf);
+    still().paint(&c, &scene, area, &mut buf);
     let cell = |x, y| *buf.get(x, y).unwrap();
     // Tile (2, 2) at cells (10, 5) and (11, 5): plain.
     assert_eq!(cell(10, 5), Cell::new(plain.glyphs[0], fg, bg));
@@ -377,7 +378,7 @@ fn a_changed_tile_flashes_and_a_tile_a_spell_would_change_shows_what_it_becomes(
     scene.tile_mut(p(2, 0)).unwrap().becomes = display.id_of("forest");
     scene.tile_mut(p(3, 0)).unwrap().becomes = Some(TerrainId(999));
     let mut buf = blank();
-    MapSkin::glyph().paint(&c, &scene, Rect::new(0, 0, 10, 1), &mut buf);
+    still().paint(&c, &scene, Rect::new(0, 0, 10, 1), &mut buf);
     let cell = |x| *buf.get(x, 0).unwrap();
     let (glyphs, fg, bg) = plain;
     let attack = pal.get(UiColor::AttackRange);
@@ -558,4 +559,61 @@ proptest! {
             prop_assert_eq!(seen.intersect(&px), Some(seen), "{:?} in {:?}", item, area);
         }
     }
+}
+
+/// The glyph skin with the ranges in still tints (ticket 0923's Still,
+/// the look before it): for the tests of what tints a tile and in which
+/// order.
+fn still() -> MapSkin {
+    MapSkin::glyph().with_marks(crate::ThreatArrows::Arcs, crate::RangeStyle::Still)
+}
+
+/// Whether `a` and `b` have the same cells.
+fn same_cells(a: &GlyphBuffer, b: &GlyphBuffer) -> bool {
+    (0..32).all(|y| (0..100).all(|x| a.get(x, y) == b.get(x, y)))
+}
+
+/// Ticket 0923: by default a selected unit's ranges spread out from it,
+/// outlined, and glint; Still tints them at once and draws nothing over
+/// them, as before.
+#[test]
+fn the_ranges_spread_from_the_unit_then_glint_by_default() {
+    use shuyi_ui::grid::scene::RangesShown;
+    let c = ctx();
+    let area = Rect::new(10, 5, 8, 3);
+    let mut scene = MapScene::new(p(2, 2), (4, 3));
+    scene.set_terrain(|_| Some(TerrainId(0)));
+    let ground = scene.clone();
+    scene.tint([p(2, 2), p(3, 2), p(4, 2)], range::MOVE);
+    scene.tint([p(5, 2)], range::ATTACK);
+    scene.ranges_shown = Some(RangesShown::new(p(2, 2), 1000));
+    let at = |skin: &MapSkin, scene: &MapScene, ms| {
+        let mut scene = scene.clone();
+        scene.clock_ms = ms;
+        let mut buf = blank();
+        skin.paint(&c, &scene, area, &mut buf);
+        buf
+    };
+    let skin = MapSkin::glyph();
+    let bare = at(&skin, &ground, 1000);
+    // Opened this moment: nothing shows yet.
+    let opening = at(&skin, &scene, 1000);
+    assert!(same_cells(&opening, &bare));
+    assert!(opening.overlays().is_empty(), "{:?}", opening.overlays());
+    // The unit's own tile first, the attack tile three steps later.
+    let first = at(&skin, &scene, 1060);
+    assert!(!same_cells(&first, &bare));
+    assert!(!first.overlays().is_empty(), "no outline yet");
+    let all = at(&skin, &scene, 5000);
+    assert!(all.overlays().len() > first.overlays().len());
+    // Two moments of the glint: the tints differ, the outline doesn't.
+    let later = at(&skin, &scene, 5900);
+    assert!(!same_cells(&all, &later));
+    assert_eq!(all.overlays(), later.overlays());
+    // Still: everything at once, nothing over the tints, and still.
+    let still = MapSkin::glyph().with_marks(crate::ThreatArrows::Arcs, crate::RangeStyle::Still);
+    let now = at(&still, &scene, 1000);
+    assert!(!same_cells(&now, &bare));
+    assert!(now.overlays().is_empty(), "{:?}", now.overlays());
+    assert!(same_cells(&now, &at(&still, &scene, 5900)));
 }

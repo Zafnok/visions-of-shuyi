@@ -56,7 +56,8 @@ pub const ONE_BIT: GlyphSkin = GlyphSkin::new(
         })
         .with_side_cells(1),
 )
-.with_threat_shape(GLYPH.threat_shape);
+.with_threat_shape(GLYPH.threat_shape)
+.with_range_show(GLYPH.range_show);
 
 /// This game's units as the Playdate's skin shows them
 /// ([`units::draw_unit`]), over the danger zone's dashed edge.

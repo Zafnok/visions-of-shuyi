@@ -10,11 +10,11 @@ expression: h.snapshot()
 ║  Auto-end turn           Off                   ║
 ║  Cursor                  Corners               ║
 ║  Threat arrows           Arcs                  ║
+║  Range look              Slab                  ║
 ║  Portrait style          Dots                  ║
 ║  Intro                   On                    ║
 ║  Music volume            █████████▒  97        ║
 ║  Sound volume            █████████▒  97        ║
-║  Key bindings                                  ║
 ╚══════════════════════════════════════════════▼═╝
           D-pad move · A change · B back          
 --- colours ---

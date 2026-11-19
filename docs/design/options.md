@@ -75,6 +75,17 @@ Nick's.
   from before it loads as Arcs *(Claude's starting rules)*. `Restore
   defaults` puts it back to Arcs.
 
+### Range look
+
+- **Range look: Slab / Shimmer / Glint / Raised tiles / Still** (ticket
+  0923; `look-and-feel.md`, *Range tiles*): how a selected unit's move
+  and attack ranges show. It starts at **Slab** (Nick, 2026-11-18: "can
+  have each of these as options I think, and maybe H as the default";
+  "Yes, add Still").
+- The row is under `Threat arrows` on the PC and on the Playdate, and a
+  save from before it loads as Slab *(Claude's starting rules)*.
+  `Restore defaults` puts it back to Slab.
+
 ### Intro
 
 - **Intro: On / Off** (ticket 0844; `title-screen.md`, *Intro cinematic*):
