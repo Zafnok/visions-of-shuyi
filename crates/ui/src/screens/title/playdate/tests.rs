@@ -53,7 +53,7 @@ fn view(c: &Ctx) -> TitleView {
         picture: FULL,
         menu_opacity: FULL,
         backdrop: Some(backdrop(c)),
-        sparks: Some(1234),
+        embers: Some(1234),
         prompt: None,
         menu: Some(MenuView::new(items)),
         notice: None,

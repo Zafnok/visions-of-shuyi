@@ -724,7 +724,7 @@ fn the_music_follows_suspend_and_continue() {
     let music = |h: &Harness| -> Vec<String> {
         h.audio_requests()
             .iter()
-            .filter(|r| !matches!(r, trpg_ui::AudioRequest::PlaySound { .. }))
+            .filter(|r| crate::is_music(r))
             .map(|r| r.cue().unwrap_or("-").to_owned())
             .collect()
     };

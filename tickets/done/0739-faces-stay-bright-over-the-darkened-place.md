@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-18
 ---
 
 # 0739 — Faces over a darkened place
@@ -74,10 +74,10 @@ the portraits' art.
 
 ## Acceptance criteria
 
-- [ ] Nick answered; recorded.
-- [ ] The dialogue view/skin draw faces per the answers (tests read the
+- [x] Nick answered; recorded.
+- [x] The dialogue view/skin draw faces per the answers (tests read the
       view's dim values, not cells, except the one look snapshot).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,4 +86,35 @@ the portraits' art.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Asked 2026-11-18 with real frames (picture look, bought portraits) of
+the yard and the study: the listener not dimmed / 80% / as today (55%);
+faces during narration at full brightness / hidden / dimmed; the place at
+40% / 50% / 60%. Nick kept all three as they are:
+
+> "I have no problem with the listener face as it is today. the concern is
+> that the ambient lighting bleeds into the dialogue boxes. like in the
+> study" · "again no concern here" · "this is not the problem. the problem
+> is the study has its dialogue boxes being a ridiculously low
+> brightness." (seen in the web build)
+
+- **No code change.** `LISTENER_DIM` (0.45), the narration dimming and
+  `PLACE_BRIGHTNESS` (0.4) stay. The existing tests already pin them:
+  `the_speaker_is_bright_and_the_listener_dimmed_and_mirrored`,
+  `narration_dims_both_and_starts_at_the_speech_column` and
+  `the_place_is_painted_by_the_map_skin_darkened_under_the_talk`
+  (`crates/ui/src/screens/dialogue/glyph/tests.rs`), and the place
+  snapshots of `crates/ui/tests/it/places.rs`.
+- **Question 4 (the title cinematic) was not asked:** its talk shots are
+  painted by the dialogue skin, so they follow the same rules, and the
+  title fades the cinematic only while it comes in from black at its
+  start, over a map shot. No talk shot is ever faded as a whole (the
+  ticket's reading of `cinematic.rs` predates the engine carve).
+- **What Nick actually saw** was the study's faces and text boxes dark
+  in the web build of the October playtest. Checked 2026-11-18: in
+  today's build they are as bright as over the yard, in the web build
+  (its canvas read back in the browser), the desktop window (the engine's
+  capture mode: the window matches the raster exactly) and `cargo shuyi
+  frame-png` (picture, glyph and Playdate looks). Shown the web capture,
+  Nick confirmed it was the old build: nothing left to fix.
+- Recorded in `docs/design/look-and-feel.md`, *Places behind
+  conversations*, "The faces over a darkened place".

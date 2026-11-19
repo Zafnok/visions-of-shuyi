@@ -15,8 +15,10 @@
 //! - **One bit has no fades**: the menu shows while it is at least half
 //!   solid, the title's picture while it is, and the cinematic once it is
 //!   at least half bright, so each cuts in or out at the middle of its
-//!   fade; between the picture and the cinematic the screen is black. No sparks: dots are lost in the
-//!   backdrop's dither.
+//!   fade; between the picture and the cinematic the screen is black.
+//!   No embers (dots are lost in the backdrop's dither), and no campfire
+//!   or crackle until Nick decides (ticket 0924): its bundle leaves the
+//!   fire out.
 //!
 //! A sprite is drawn over the cells' backgrounds, so the backdrop and the
 //! logo are clipped around the menu's window ([`around`]).

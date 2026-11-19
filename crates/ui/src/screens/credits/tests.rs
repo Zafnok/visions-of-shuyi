@@ -411,7 +411,11 @@ fn the_games_credits_show_title_author_license_and_link() {
     assert!(texts(&s).contains(&"Sound effects"));
     assert!(texts(&s).contains(&"Fonts"));
     assert!(!texts(&s).contains(&"Software"), "hidden for now");
-    assert!(!texts(&s).contains(&"Art"), "no bought art in a gate");
+    // No bought art in a gate: the free campfire is the Art section's
+    // only work (ticket 0922).
+    let art = c.game.content.credits.in_group(CreditGroup::Art).count();
+    assert_eq!(art, 1);
+    assert!(texts(&s).contains(&"Art"));
 }
 
 /// The voices are credited, as AI-generated and by their tools, after the

@@ -22,6 +22,31 @@ macro_rules! assert_private_snapshot {
     }};
 }
 
+/// The sound cues `h` played once since its audio was last cleared, in
+/// order: [`Harness::sounds`](trpg_ui::harness::Harness) without the
+/// sounds started to loop, such as the title's campfire (ticket 0922).
+fn one_shots(h: &trpg_ui::harness::Harness) -> Vec<String> {
+    h.audio_requests()
+        .into_iter()
+        .filter_map(|r| match r {
+            trpg_ui::audio::AudioRequest::PlaySound { cue, .. } => Some(cue),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Whether `r` asks for music (a track or a stop), not a sound.
+fn is_music(r: &trpg_ui::audio::AudioRequest) -> bool {
+    use trpg_ui::audio::AudioRequest;
+    !matches!(
+        r,
+        AudioRequest::PlaySound { .. }
+            | AudioRequest::StartSound { .. }
+            | AudioRequest::StopSound { .. }
+            | AudioRequest::SoundVolume { .. }
+    )
+}
+
 /// `line` with each run of three or more spaces read as the separator
 /// `·`: the bar under the battle map lines its hints up in columns with
 /// spaces (ticket 0445), and a test names them in order.

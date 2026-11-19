@@ -8,6 +8,9 @@
     // `cargo xtask lettering` into chapter_name.{png,ron} and
     // chapter_line.{png,ron} here.
     lettering: Some((heading: "chapter_name", line: "chapter_line")),
+    // The campfire in the bottom-left corner, four frames side by side
+    // (ticket 0922; Idylwild's Chromatic Campfires, CC0).
+    campfire: Some((file: "campfire.png", frames: 4)),
     backdrops: [
         "fields_a_dusk.png",
         "fields_a_night.png",

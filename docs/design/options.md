@@ -91,8 +91,8 @@ Nick's.
 - **Intro: On / Off** (ticket 0844; `title-screen.md`, *Intro cinematic*):
   whether the title plays its cinematic when left alone. It starts **On**
   (Nick, 2026-10-16: "Yes, an on/off setting"; not "only the first time").
-  Off, the title stays on the logo, backdrop, sparks and menu, and the
-  song keeps looping.
+  Off, the title stays on the logo, backdrop, campfire, embers and menu,
+  and the song and the crackle keep looping.
 - The row is under `Map zoom` (above `Colors`), on the title's Options
   and in battle alike (it does nothing in battle) (*Claude's starting
   rule*). The Playdate leaves it out until it has the cinematic (1044).

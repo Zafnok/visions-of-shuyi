@@ -129,11 +129,11 @@ fn the_pan_moves_the_middle_of_the_screen_from_one_point_to_the_other() {
     ));
     assert_eq!(
         player.frame(&ctx, 16.0, SCREEN),
-        Frame::Logo { sparks: None }
+        Frame::Logo { embers: None }
     );
     assert_eq!(
         player.frame(&ctx, 19.999, SCREEN),
-        Frame::Logo { sparks: None }
+        Frame::Logo { embers: None }
     );
     assert!(near(origin(20.0), (0.0, 0.0)));
     assert!(near(origin(23.0), (12.0, 0.0)));
@@ -175,25 +175,25 @@ fn a_pan_goes_both_ways_at_its_own_zoom() {
 }
 
 #[test]
-fn the_logo_shot_carries_the_sparks_time_when_screens_move() {
+fn the_logo_shot_carries_the_embers_time_when_screens_move() {
     let mut ctx = ctx();
     let player = player(&ctx);
     assert_eq!(
         player.frame(&ctx, 17.25, SCREEN),
-        Frame::Logo { sparks: None }
+        Frame::Logo { embers: None }
     );
     ctx.idle_motion = IdleMotion::On;
     assert_eq!(
         player.frame(&ctx, 17.25, SCREEN),
         Frame::Logo {
-            sparks: Some(17250)
+            embers: Some(17250)
         }
     );
-    // The same moment a round later: the same sparks.
+    // The same moment a round later: the same embers.
     assert_eq!(
         player.frame(&ctx, 37.25, SCREEN),
         Frame::Logo {
-            sparks: Some(17250)
+            embers: Some(17250)
         }
     );
     // The pan has none.
@@ -239,17 +239,18 @@ fn the_logo_shot_is_the_titles_own_picture() {
     let mut ctx = ctx();
     let backdrop = ctx.game.content.title.backdrops.get(1).copied();
     assert!(backdrop.is_some());
-    for (motion, sparks) in [(IdleMotion::Off, None), (IdleMotion::On, Some(17250))] {
+    for (motion, embers) in [(IdleMotion::Off, None), (IdleMotion::On, Some(17250))] {
         ctx.idle_motion = motion;
         // With no backdrop given, the logo is on none.
         for given in [None, backdrop] {
             let player = player(&ctx).with_backdrop(given);
             let buf = draw(&ctx, &player, 17.25, 1.0);
             let mut title = draw(&ctx, &player, 0.0, 1.0);
-            glyph::paint_logo(&ctx, given, sparks, &mut title);
+            glyph::paint_logo(&ctx, given, embers, &mut title);
             assert_eq!(buf, title);
             assert!(buf.backdrop().is_none());
-            assert_eq!(buf.sprites().len(), if given.is_some() { 4 } else { 1 });
+            // The backdrop's three, the campfire and the logo.
+            assert_eq!(buf.sprites().len(), if given.is_some() { 5 } else { 2 });
         }
     }
 }
@@ -290,11 +291,11 @@ fn brightness_fades_the_whole_frame_cells_and_items_alike() {
     assert_eq!(cell(&half).fg, cell(&full).fg.scale(0.5));
     assert_eq!(cell(&half).bg, cell(&full).bg.scale(0.5));
     assert_eq!(cell(&half).glyph, cell(&full).glyph);
-    // The logo: its sprites (the backdrop's three, then the logo) are
-    // half as bright.
+    // The logo: its sprites (the backdrop's three, the campfire, then the
+    // logo) are half as bright.
     let half = draw(&ctx, &player, 17.0, 0.5);
     let brightness: Vec<u8> = half.sprites().iter().map(|s| s.brightness).collect();
-    assert_eq!(brightness, [128; 4]);
+    assert_eq!(brightness, [128; 5]);
     // Black is black.
     let black = draw(&ctx, &player, 17.0, 0.0);
     assert!(black.sprites().iter().all(|s| s.brightness == 0));
@@ -573,7 +574,7 @@ fn a_cinematic_or_battle_that_is_not_there() {
     // The logo still plays.
     assert_eq!(
         player.frame(&ctx, 17.0, SCREEN),
-        Frame::Logo { sparks: None }
+        Frame::Logo { embers: None }
     );
 }
 

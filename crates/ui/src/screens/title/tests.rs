@@ -104,7 +104,7 @@ fn music_of(t: &mut TitleScreen, c: &mut Ctx, actions: &[Action]) -> Vec<String>
     c.audio
         .take()
         .iter()
-        .filter(|r| !matches!(r, AudioRequest::PlaySound { .. }))
+        .filter(|r| matches!(r, AudioRequest::PlayMusic { .. } | AudioRequest::StopMusic))
         .map(|r| r.cue().unwrap_or("-").to_owned())
         .collect()
 }
@@ -508,7 +508,7 @@ fn the_first_frame_shows_the_names_the_menu_and_the_help() {
             .backdrops
             .contains(&view.backdrop.unwrap())
     );
-    assert_eq!(view.sparks, None);
+    assert_eq!(view.embers, None);
     assert_eq!(view.prompt, None);
     assert_eq!(view.notice, None);
     assert_eq!(
@@ -797,32 +797,32 @@ fn one_backdrop_is_shown_every_launch_and_none_is_none() {
 }
 
 #[test]
-fn the_sparks_follow_how_long_the_title_was_updated() {
+fn the_embers_follow_how_long_the_title_was_updated() {
     let mut c = ctx();
     let mut t = TitleScreen::new(&c);
     // Only with idle motion on (the game; not a test that doesn't ask).
     t.update(&mut c, &tick(0.25));
-    assert_eq!(t.view(&c).sparks, None);
+    assert_eq!(t.view(&c).embers, None);
     c.idle_motion = IdleMotion::On;
-    assert_eq!(t.view(&c).sparks, Some(250));
+    assert_eq!(t.view(&c).embers, Some(250));
     t.update(&mut c, &tick(0.5));
-    assert_eq!(t.view(&c).sparks, Some(750));
+    assert_eq!(t.view(&c).embers, Some(750));
     // A frame that isn't a time, or goes backwards, adds nothing.
     for bad in [f32::NAN, f32::INFINITY, -1.0] {
         t.update(&mut c, &tick(bad));
-        assert_eq!(t.view(&c).sparks, Some(750), "{bad}");
+        assert_eq!(t.view(&c).embers, Some(750), "{bad}");
     }
     // It runs while the prompt waits, too, from 0.
     let mut c = ctx();
     c.idle_motion = IdleMotion::On;
     c.key_prompt = KeyPrompt::Waiting;
     let mut t = TitleScreen::new(&c);
-    assert_eq!(t.view(&c).sparks, Some(0));
+    assert_eq!(t.view(&c).embers, Some(0));
     t.update(&mut c, &tick(1.0));
-    assert_eq!(t.view(&c).sparks, Some(1000));
+    assert_eq!(t.view(&c).embers, Some(1000));
     // A very long time stops at the biggest number.
     t.time = 1.0e30;
-    assert_eq!(t.view(&c).sparks, Some(u32::MAX));
+    assert_eq!(t.view(&c).embers, Some(u32::MAX));
 }
 
 /// A frame of `dt` seconds with the title song `position` seconds in.
@@ -943,15 +943,24 @@ fn left_alone_the_menu_goes_to_black_and_the_cinematic_comes_in() {
     let shown = t.view(&c).cinematic.unwrap().player;
     assert_eq!(*shown, want.with_backdrop(t.backdrop));
     assert!(t.backdrop.is_some());
-    // Nothing was asked of the audio but the song, once.
+    // Nothing was asked of the audio but the song, once, and the
+    // campfire's crackle with it (ticket 0922), which faded out with the
+    // picture: the queue no longer has it.
+    let asked: Vec<_> = c
+        .audio
+        .take()
+        .iter()
+        .map(|r| r.cue().map(str::to_owned))
+        .collect();
     assert_eq!(
-        c.audio.take(),
-        [AudioRequest::play_music(TITLE_MUSIC.to_owned(), None)]
+        asked,
+        [Some(TITLE_MUSIC.to_owned()), Some(FIRE_SOUND.to_owned())]
     );
+    assert!(t.crackle.is_none());
 }
 
 /// At the logo shot the menu fades in over [`FADE_IN_SECS`] and the
-/// sparks go on from the cinematic's; it stays until the song loops.
+/// embers go on from the cinematic's; it stays until the song loops.
 #[test]
 fn the_menu_fades_in_on_the_logo_and_out_at_the_loop() {
     let mut c = ctx();
@@ -966,10 +975,10 @@ fn the_menu_fades_in_on_the_logo_and_out_at_the_loop() {
         (&None, FULL, 0)
     );
     assert!(view.menu.is_some() && view.help.is_some());
-    assert_eq!(view.sparks, Some(115_800));
+    assert_eq!(view.embers, Some(115_800));
     song_tick(&mut t, &mut c, 115.925, 0.125);
     assert_eq!(t.view(&c).menu_opacity, 64);
-    assert_eq!(t.view(&c).sparks, Some(115_925));
+    assert_eq!(t.view(&c).embers, Some(115_925));
     song_tick(&mut t, &mut c, 116.3, 0.375);
     assert_eq!(t.view(&c).menu_opacity, FULL);
     // Far longer than 15 seconds: it waits for the loop.
@@ -1009,12 +1018,18 @@ fn a_press_skips_the_cinematic_and_nothing_else() {
     let mut c = ctx();
     let mut t = in_cinematic(&mut c, 40.0);
     assert_eq!(outcome_in(&mut t, &mut c, &[Action::Confirm]), "None");
+    let asked = c.audio.take();
     assert_eq!(
-        c.audio.take(),
+        asked[..2],
         [
             AudioRequest::play_sound(TITLE_SKIP_SOUND.to_owned(), 1.0),
             AudioRequest::StopMusic
         ]
+    );
+    // The logo is the title's picture: its fire crackles in the silence.
+    assert_eq!(
+        asked[2..].iter().map(AudioRequest::cue).collect::<Vec<_>>(),
+        [Some(FIRE_SOUND)]
     );
     assert_eq!(playing(&t, &c), None);
     assert_eq!(t.view(&c).menu_opacity, FULL);
@@ -1097,10 +1112,14 @@ fn a_press_restarts_the_wait_and_ends_the_fade() {
     assert!(matches!(t.phase, Phase::FromBlack { .. }));
     c.audio.take();
     t.update(&mut c, &input(&[CursorDown]));
-    assert_eq!(
-        c.audio.take(),
-        [] as [shuyi_ui::audio::AudioRequest<trpg_content::Variant>; 0]
-    );
+    // No menu sound: only the title's picture, and its fire, back.
+    let asked: Vec<_> = c
+        .audio
+        .take()
+        .iter()
+        .map(|r| r.cue().map(str::to_owned))
+        .collect();
+    assert_eq!(asked, [Some(FIRE_SOUND.to_owned())]);
     assert_eq!(t.phase, Phase::MENU);
     assert_eq!(t.menu.focus(), 3);
     assert_eq!(t.view(&c).menu_opacity, FULL);
@@ -1376,4 +1395,44 @@ fn the_help_line_holds_its_keys_in_order() {
     let c = ctx();
     let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
     assert_eq!(key_spans(&TitleScreen::help(&c)), want);
+}
+
+/// The campfire's crackle (ticket 0922) starts with the title song and
+/// keeps sounding under the menu; New Game fades it out as the game flow
+/// opens over the title.
+#[test]
+fn the_crackle_plays_under_the_menu_and_stops_when_the_game_opens() {
+    let mut c = ctx();
+    let mut t = TitleScreen::new(&c);
+    song_tick(&mut t, &mut c, 0.0, 0.0);
+    let id = t.crackle.unwrap_or_else(|| panic!("no crackle"));
+    assert!(c.audio.sound_is_live(id));
+    for position in [1.0, 5.0, 10.0] {
+        song_tick(&mut t, &mut c, position, 1.0);
+        assert_eq!(t.crackle, Some(id), "{position}");
+    }
+    let opened = outcome_in(&mut t, &mut c, &[Action::Confirm]);
+    assert!(opened.starts_with("Push"), "{opened}");
+    assert_eq!(t.crackle, None);
+    // Fading out over the picture's time to black, then gone.
+    assert!(c.audio.sound_is_live(id));
+    c.audio.advance(TO_BLACK_SECS + 0.01);
+    assert!(!c.audio.sound_is_live(id));
+    assert_eq!(
+        f64::from(FIRE_FADE_MS),
+        f64::from(TO_BLACK_SECS * 1000.0).round()
+    );
+}
+
+/// A title with no fire (the Playdate's bundle leaves it out) plays no
+/// crackle.
+#[test]
+fn no_fire_no_crackle() {
+    let mut c = ctx();
+    c.game.content.title.campfire = None;
+    let mut t = TitleScreen::new(&c);
+    song_tick(&mut t, &mut c, 0.0, 0.0);
+    song_tick(&mut t, &mut c, 1.0, 1.0);
+    assert_eq!(t.crackle, None);
+    assert!(c.audio.take().iter().all(|r| r.cue() != Some(FIRE_SOUND)));
 }

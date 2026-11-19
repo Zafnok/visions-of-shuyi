@@ -1044,7 +1044,13 @@ mod tests {
         assert_eq!(game.frame(&[down(Key::F)], 0.0).audio, []);
         assert_eq!(game.screens(), ["title"]);
         let title = AudioRequest::play_music("title", None);
-        assert_eq!(game.frame(&[RawInputEvent::Up(Key::F)], 0.0).audio, [title]);
+        let back = game.frame(&[RawInputEvent::Up(Key::F)], 0.0).audio;
+        assert_eq!(back[0], title);
+        // And the title's campfire with it (ticket 0922).
+        assert_eq!(
+            back[1..].iter().map(AudioRequest::cue).collect::<Vec<_>>(),
+            [Some("title_campfire")]
+        );
         assert_eq!(game.frame(&[], 0.1).audio, []);
     }
 }

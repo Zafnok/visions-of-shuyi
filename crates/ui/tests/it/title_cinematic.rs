@@ -242,7 +242,15 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     let player = CinematicPlayer::new(h.game().ctx(), "title", None).unwrap();
     let fight = player.sounds(TEST_FIGHT, 74.499);
     assert_ne!(fight, Vec::<String>::new());
-    assert_eq!(h.sounds(), fight);
+    assert_eq!(crate::one_shots(&h), fight);
+    // The campfire's crackle (ticket 0922): with the menu, then again with
+    // the logo, where the title's picture is back.
+    let looped: Vec<String> = h
+        .sounds()
+        .into_iter()
+        .filter(|cue| !fight.contains(&cue.as_str()))
+        .collect();
+    assert_eq!(looped, ["title_campfire"; 2]);
 }
 
 /// Ticket 0843: going idle, the frames go from the menu to black, then
@@ -350,7 +358,7 @@ fn a_press_at_14_seconds_keeps_the_menu_another_15() {
     h.keys("Down");
     assert_eq!(shows(&h), Shows::Menu(255));
     assert_eq!(focused(&h).as_deref(), Some("Quick Battle"));
-    assert_eq!(h.sounds(), ["menu_move"]);
+    assert_eq!(crate::one_shots(&h), ["menu_move"]);
 }
 
 /// Rule 4: a press during the cinematic plays the skip sound, stops the
@@ -364,14 +372,18 @@ fn a_press_during_the_cinematic_skips_to_the_logo_and_the_silence() {
         assert_alone_at(&h, 40.0);
         h.clear_audio();
         h.keys(press);
-        assert_eq!(h.sounds(), ["hit_sword"], "{press}");
+        assert_eq!(crate::one_shots(&h), ["hit_sword"], "{press}");
+        // And the logo's campfire crackles again (ticket 0922).
+        let asked = h.audio_requests();
         assert_eq!(
-            h.audio_requests(),
+            asked[..2],
             [
                 AudioRequest::play_sound("hit_sword", 1.0),
                 AudioRequest::StopMusic
             ]
         );
+        assert_eq!(asked[2].cue(), Some("title_campfire"), "{asked:?}");
+        assert_eq!(asked.len(), 3, "{asked:?}");
         // The logo and the menu at once; the press chose and moved nothing.
         assert_eq!(shows(&h), Shows::Menu(255), "{press}");
         assert_eq!(h.screens(), ["title"], "{press}");
@@ -421,7 +433,7 @@ fn after_a_skip_the_menu_works_and_a_second_skip_is_another_press() {
     wait_until(&mut h, 16.5);
     assert_alone_at(&h, 16.5);
     h.clear_audio().pad("South");
-    assert_eq!(h.sounds(), ["hit_sword"]);
+    assert_eq!(crate::one_shots(&h), ["hit_sword"]);
     assert_eq!(shows(&h), Shows::Menu(255));
     assert_eq!(h.screens(), ["title"]);
     // Out and back before the song has faded out (half a second, as any
