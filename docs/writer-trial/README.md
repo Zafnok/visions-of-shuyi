@@ -50,6 +50,21 @@ every `@choice`, `@if` and `@scene` needs its closing line. 0768 puts the
 editor colors and indenting in the packet; until its folder
 (`tools/vscode-dlg/`) is there, `trial-packet` refuses to make a packet.
 
+**Two more before the first packet** (from the test audit, 2026-11-19):
+
+- **0775**: the demo and the web preview are pushed together, by hand, from one
+  commit. Until it lands, Story kit republishes the preview by itself every
+  night while the demo moves only when you run the Demo workflow, so
+  applicants would get a new preview mid-trial, built from a different
+  commit than the demo.
+- **1303**: unnamed enemies show the soldier face in unit info. Until it
+  lands, every Red Company enemy but Harl shows a `portrait` placeholder box.
+
+Test as an applicant in a **new Chrome profile** (or after clearing the site
+data of `html-classic.itch.zone`), in a normal window. A private or incognito
+window may refuse itch's game frame its storage, so settings and a suspended
+battle would vanish for a reason applicants won't have.
+
 For each applicant, after they signed both agreements with Ibasho Corp. (the
 confidentiality agreement and the Writer Trial and AI Voice Acknowledgment):
 

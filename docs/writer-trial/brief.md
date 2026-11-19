@@ -75,7 +75,8 @@ game makes the text bigger.
 In the demo, a battle in progress is kept only if you **Suspend** it
 (from the map menu) before you leave. Reloading the page, closing
 the tab, or the browser putting a background tab to sleep loses an
-unsuspended battle.
+unsuspended battle. Use a normal browser window, not a private or incognito
+one: a private window may not keep your settings or a suspended battle.
 
 1. Open the script preview's page (the link and password are in
    `START-HERE.txt`) and drag `dialogue/ch01.dlg` onto the game itself.

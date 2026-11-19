@@ -338,6 +338,16 @@ should not be expected to be technical". It is (reaction lines indented
 by exactly two spaces; every block closed), so no packet goes out until
 0768's folder is in it (`docs/writer-trial/README.md` says so).
 
+**0775 and 1303 come before the first packet** (the test audit of
+2026-11-19, which filed 17 tickets for what it found in the demo): the
+preview republishes itself nightly while the demo moves by hand, and
+unnamed enemies show a placeholder box in unit info. Both need no
+decision from Nick. The rest of what the audit found is in those tickets
+(0090-0093, 0774-0777, 0879, 0926-0932) and in
+`dist/trial/test-checklist.md`, none of it blocking. If 0774 lands, the
+demo's storage gets a name of its own, which resets each applicant's demo
+settings once.
+
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
 (`docs/engine/friction.md`).
 
