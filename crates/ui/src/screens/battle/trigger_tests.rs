@@ -627,3 +627,29 @@ fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
     assert!(view.overlay);
     assert_eq!(view.place, None);
 }
+
+/// Ticket 1296: a scene fired by a combat and waiting in its playback
+/// (the rogue's half-HP line, after its engage line) is kept loaded,
+/// though its trigger is spent.
+#[test]
+fn a_scene_waiting_in_a_combat_is_kept_loaded() {
+    let mut h = lord_attacks_rogue(22);
+    close_line(&mut h);
+    let scene = &h.game().ctx().game.content.dialogue.scenes["test_rogue_half"];
+    let line = scene.lines()[0];
+    let (id, text) = (line.id.clone(), line.text.to_owned());
+    h.ctx_mut().set_voice_manifest(&format!(
+        "(clips: [(line: \"{id}\", spoken: \"{text}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])"
+    ));
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    let battle = h.battle().expect("the battle");
+    assert!(matches!(battle.mode(), Mode::Combat(_)));
+    let half = battle
+        .state()
+        .triggers()
+        .iter()
+        .position(|t| t.scene == "test_rogue_half");
+    assert!(half.is_some_and(|i| battle.state().has_fired(i)));
+    let lines = battle.coming_scene_lines(h.game().ctx());
+    assert!(lines.contains(&id), "{lines:?}");
+}

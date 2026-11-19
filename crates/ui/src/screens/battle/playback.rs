@@ -443,6 +443,11 @@ impl Playback {
         self.step(next).map_or_else(|| self.total(), |s| s.start)
     }
 
+    /// The triggered scenes not taken yet, in order.
+    pub fn waiting_scenes(&self) -> &[SceneCue] {
+        &self.scenes[self.played..]
+    }
+
     /// The scene the clock has reached, if not taken yet, for the battle
     /// screen to play; the playback goes on after it.
     pub fn take_scene(&mut self) -> Option<SceneCue> {

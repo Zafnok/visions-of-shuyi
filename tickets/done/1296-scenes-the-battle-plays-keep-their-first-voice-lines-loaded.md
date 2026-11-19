@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["1293"]
 nick_input: none
-completed:
+completed: 2026-11-18
 ---
 
 # 1296 — Scenes the battle plays, and a world-map battle's intro, keep their first voice lines loaded
@@ -87,17 +87,17 @@ Expected size: about 60 production lines (one list of scenes, one
 
 ## Acceptance criteria
 
-- [ ] A test shows the battle's first `KeepVoices` holds the first lines
+- [x] A test shows the battle's first `KeepVoices` holds the first lines
       of `test_battle`'s trigger scenes (or a test battle given one) and
       the guide's lines.
-- [ ] A test shows a scene the battle plays has its first line in the
+- [x] A test shows a scene the battle plays has its first line in the
       last set kept before its `PlayVoice`.
-- [ ] A test shows the world map keeps a reachable battle's intro lines,
+- [x] A test shows the world map keeps a reachable battle's intro lines,
       and the scene's first line is kept when its box asks for it.
-- [ ] In the non-release web build (`cargo shuyi web`) served with every
+- [x] In the non-release web build (`cargo shuyi web`) served with every
       clip held 0.5 s, Chapter 1's `ch01_first_turn` first line is
       fetched before its box shows (the server's log).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -108,4 +108,74 @@ Expected size: about 60 production lines (one list of scenes, one
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**The battle** (`screens/battle/scene_voices.rs`). 1291 isn't done, so
+the scenes' lines join the guide's in the set `GuideVoice::show` sends
+(`BattleScreen::coming_voice_lines`: guide + scenes). The scenes kept:
+
+- those already fired and waiting their turn (a combat playback's
+  untaken scenes, `Playback::waiting_scenes`, then the queue's), told
+  for those on the map when they fired. A turn-1 scene fires as the
+  battle is set up, before its first frame, so without this
+  `ch01_first_turn` would never have been kept;
+- those the triggers may still fire, told for those on the map now: not
+  a `once` trigger that fired, a `TurnStart` whose turn has passed, a
+  `UnitFell` for the other mode, or one about a character neither on
+  the map nor among the reinforcements to come.
+
+The set is built only when it was due already (first frame, the
+guide's box changing, back on top). One addition: on the frame the
+battle pushes a scene, the guide's set used to be rebuilt if her box
+went away (the push hides it), which would have dropped the scene's own
+lines (its trigger is spent and it has left the queue). Now a frame that
+covers the battle doesn't rebuild the set, except for the scene it
+pushes, whose first lines (`pushed_lines`) stay in it.
+
+**The world map** keeps the intro's first lines of every battle the
+army's next move may start (`flow::world_battle_lines`): its own place
+(Enter) and wherever one Travel would end as the rules route it
+(`WorldMap::route`, which stops at a guarding battle). Deviation: the
+ticket said "the map's own neighbours"; a Travel goes any number of
+roads, so the honest set is every place one move can end at. It is
+resent when the army moves (the rules move it as it sets off) and
+after a screen over the map. `chapter_opening` didn't need to be
+`pub(crate)`: the battle's chapter comes from the flow's `world_fight`,
+made reachable from `first_lines` (a child of `flow`).
+
+**docs/voice.md:** the two cases added to the list; "Not covered" is
+down to a victory scene with no results screen before it.
+
+**Tests.** Unit (`battle/scene_voice_tests.rs`): the Quick Battle's
+first set holds every trigger scene's lines but the Casual retreat
+line, and the guide's; scenes that can't play are left out (a character
+not on the map or coming, a passed turn); a fired, queued scene stays
+kept up to the frame it is pushed. Unit (`flow/first_lines/tests.rs`):
+`world_battle_lines` from home, from the battle's place, and off the
+map; through the flow, the map keeps the intro's line and it is in the
+last set before its `PlayVoice`. Integration (`tests/it/battle.rs`): a
+turn-1 scene over the test chapter's battle, its line in the last set
+kept before its `PlayVoice`. Each fails with the change taken out.
+
+**Web check.** `cargo shuyi web` (non-release), served by a Python
+server holding every `.ogg` 0.5 s with `Cache-Control: no-store`,
+logging each request; played in the browser pane: New Game, Classic,
+familiar with this game, voices yes, the default lead, Chapter 1's two
+scenes skipped. Log, seconds from the server's start:
+
+- 62.2–63.2: the battle's first frame, under its objective banner:
+  `ch01_first_turn_01eff056`, the boss's engage and half-HP scenes and
+  the Classic death scenes (no retreat lines), then the guide's lines.
+- About 75: the two banners closed, the scene's box on screen
+  ("Kid. Boots holding?..."). No request: the clip had loaded 12 s
+  before.
+
+**Engine friction:** estimate 60 (one list of scenes, one `KeptVoices`
+on the map, judged by 1293's `coming_lines`), measured 167 (2.8×), accepted: the
+lines are the game's own rules of which trigger may still fire (one
+arm per trigger kind), the scenes fired and waiting, and where one
+Travel ends; nothing the engine should hold. A row in
+`docs/engine/friction.md`. Signals: workaround no · third copy no ·
+budget no.
+
+**Follow-up tickets:** none.
+
+No gameplay rule was decided.

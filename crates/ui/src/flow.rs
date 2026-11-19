@@ -113,7 +113,7 @@ use crate::screens::voices_question::VoicesQuestionScreen;
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen, WorldBattle, WorldMapScreen};
 use crate::screens::{CampScreen, ChapterCardScreen};
 use crate::storage::Storage;
-pub use first_lines::{KeptVoices, Start, opening_lines, opening_scene};
+pub use first_lines::{KeptVoices, Start, opening_lines, opening_scene, world_battle_lines};
 use first_lines::{chapter_opening, first_told};
 
 /// The Preparations shop of `chapter`'s battle (ticket 0443): what its

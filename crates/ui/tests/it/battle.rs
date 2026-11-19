@@ -962,3 +962,56 @@ fn a_foot_unit_beside_a_river_shows_the_wading_tip_once() {
     h.keys("d f");
     assert!(!close(&mut h).contains(&TipTrigger::FirstWadeInReach));
 }
+
+/// Ticket 1296: a scene the battle plays over itself has its first line in
+/// the last set the game keeps loaded before the line's box asks for its
+/// clip (on the web a clip is fetched, and one not loaded in time is
+/// skipped). The test chapter's battle is given a turn-1 scene, its line
+/// voiced, as Chapter 1's `ch01_first_turn` is.
+#[test]
+fn a_scene_over_the_battle_has_its_first_line_kept_before_it_plays() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    let battle = h.ctx_mut().game.content.battles.get_mut("test");
+    let battle = battle.unwrap_or_else(|| panic!("no test battle"));
+    battle.triggers.push(Trigger {
+        when: TriggerWhen::TurnStart {
+            turn: 1,
+            phase: Phase::Player,
+        },
+        scene: "test_turn_3".into(),
+        once: true,
+    });
+    battle.battle_notes.clear();
+    let content = &h.game().ctx().game.content;
+    let lines = content.dialogue.scenes["test_turn_3"].lines();
+    let line = lines[0].id.clone();
+    let manifest = format!(
+        "(clips: [(line: \"{line}\", spoken: \"{}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])",
+        lines[0].text
+    );
+    h.ctx_mut().set_voice_manifest(&manifest);
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    // New Game, Classic, Not familiar, voices on, the default lead; the
+    // intro scenes skipped; the objective's and turn 1's banners closed.
+    h.keys("f f f");
+    assert_eq!(h.top_screen(), "voices_question");
+    h.keys("f Up f");
+    skip_scenes(&mut h);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    h.keys("f f").wait(0.5);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
+    let requests = h.audio_requests();
+    let played = requests
+        .iter()
+        .position(|r| matches!(r, AudioRequest::PlayVoice { line: l, .. } if *l == line));
+    let played = played.unwrap_or_else(|| panic!("{line} never asked for: {requests:?}"));
+    let last_kept = requests[..played].iter().rev().find_map(|r| match r {
+        AudioRequest::KeepVoices { lines } => Some(lines),
+        _ => None,
+    });
+    let last_kept = last_kept.unwrap_or_else(|| panic!("nothing kept: {requests:?}"));
+    assert!(
+        last_kept.iter().any(|(l, _)| *l == line),
+        "{line} not in {last_kept:?}"
+    );
+}
