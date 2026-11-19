@@ -476,6 +476,16 @@ pub fn test_part(path: &str) -> Option<(String, Cow<'static, str>)> {
     install().test_part(path)
 }
 
+/// Whether every file of the game's bundle can be read now (engine
+/// ADR-0128 §3): always in a build that embeds its files or reads its pack
+/// whole; on the web, once the page has streamed the whole pack in (engine
+/// #509), or its fetch broke. The start waits on it before its load reads
+/// a file (`trpg_ui::start`).
+#[must_use]
+pub fn arrived() -> bool {
+    install().arrived("")
+}
+
 /// Returns the raw bytes of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), e.g. an image, or `None` if it is missing.
 /// Borrowed or owned as [`file()`]'s text is.
@@ -755,6 +765,53 @@ mod tests {
         reading(on_demand, || {
             assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
             assert_eq!(lent_bytes("a.txt"), None);
+        });
+    }
+
+    /// Engine #509: on the web the page streams the pack in after the game
+    /// starts. `arrived` is false until its last byte is in, which the
+    /// start waits on before its load reads a file; embedded files have
+    /// arrived at once.
+    #[test]
+    fn arrived_waits_for_the_last_byte_of_a_streamed_pack() {
+        use core::sync::atomic::{AtomicUsize, Ordering};
+        use shuyi_assets::pack::{self, Content, Index, PackInfo, Source, SourceError};
+        /// A pack whose first `got` bytes have arrived.
+        struct Streaming {
+            bytes: &'static [u8],
+            got: AtomicUsize,
+        }
+        impl Source for Streaming {
+            fn read(&self, at: u64, into: &mut [u8]) -> Result<(), SourceError> {
+                let at = usize::try_from(at).unwrap_or(usize::MAX);
+                let end = at.saturating_add(into.len());
+                if end > self.got.load(Ordering::SeqCst) {
+                    return Err(SourceError::NotYet);
+                }
+                into.copy_from_slice(&self.bytes[at..end]);
+                Ok(())
+            }
+            fn arrived(&self, at: u64, len: u64) -> bool {
+                let got = u64::try_from(self.got.load(Ordering::SeqCst)).unwrap_or(u64::MAX);
+                at.saturating_add(len) <= got
+            }
+        }
+        assert!(arrived(), "embedded files are all here");
+        let info = PackInfo::new("t", None, shuyi_core::ContentHash::default());
+        let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
+        let packed: &'static [u8] = pack::write(&info, &files).leak();
+        let index = Index::read(packed, "t").unwrap();
+        let source: &'static Streaming = Box::leak(Box::new(Streaming {
+            bytes: packed,
+            got: AtomicUsize::new(packed.len() - 1),
+        }));
+        let streamed = leaked(vec![index.into_layer(DISPLAY_ROOT, source)]);
+        reading(streamed, || {
+            assert!(!arrived());
+            assert_eq!(bytes("a.txt"), None, "missing for now");
+            source.got.store(packed.len(), Ordering::SeqCst);
+            assert!(arrived());
+            assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
         });
     }
 

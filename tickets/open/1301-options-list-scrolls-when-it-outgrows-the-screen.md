@@ -49,9 +49,11 @@ question for Nick); the Playdate's skin.
 
 ## Implementation steps
 
-1. Engine: the options glyph skin scrolls its rows when they don't fit
-   between `TOP_MIN` and the message row; the engine's tests.
-2. Game: move the pin; the options integration tests with the bought
+1. ~~Engine: the options glyph skin scrolls its rows when they don't fit
+   between `TOP_MIN` and the message row; the engine's tests.~~ Done by
+   engine #510 (ticket 3225).
+2. Game: ~~move the pin~~ (done by the pin move of 2026-11-19, engine
+   #510, engine ticket 3225); the options integration tests with the bought
    pictures' rows (Map look, Map zoom) still show the message.
 
 ## Acceptance criteria
