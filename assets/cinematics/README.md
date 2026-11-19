@@ -147,7 +147,7 @@ gone.
 
 ### `Logo`
 
-The title's logo over the title's backdrop, with its sparks
+The title's logo over the title's backdrop, with its campfire and embers
 (`assets/title/README.md`), drawn by the title screen's own code.
 
 ### `Talk(scene, first, count)`

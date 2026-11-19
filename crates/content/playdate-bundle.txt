@@ -36,3 +36,8 @@ title/chapter_name.png
 title/chapter_name.ron
 title/chapter_line.png
 title/chapter_line.ron
+
+# The title's campfire (ticket 0922): the Playdate's title is decided by a
+# ticket of its own (0924); the title art loads without it, and with no
+# fire the title plays no crackle.
+title/campfire.png

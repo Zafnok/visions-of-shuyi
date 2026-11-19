@@ -110,6 +110,7 @@ DOWNLOADS = [
     ("freesound/421135_5820033-hq.ogg", FS + "421/421135_5820033-hq.ogg", "f3f6e0b742917da0754f68cc9cc68beab13ccc3e2ed24a0697cc36c2204afb28"),
     ("freesound/384890_984733-hq.ogg", FS + "384/384890_984733-hq.ogg", "5d20c49236fd1f3cacb3e0408e0a25632a1e98f7836b8cb33d61a6587a48827c"),
     ("freesound/274898_4869300-hq.ogg", FS + "274/274898_4869300-hq.ogg", "d8e6a07ec5f1e9fecbcf2eb17dc66c87ca5b8b8aa6454a0e094ffb716bf7e168"),
+    ("freesound/729396_12863902-hq.ogg", FS + "729/729396_12863902-hq.ogg", "6071be52747563d6b7ac515cedce56b589bac4af8421829c20e3559062f10bc1"),
 ]
 
 # (game file in music/, original, file inside the zip or None)
@@ -180,6 +181,25 @@ MUSIC_CUTS = {
     "battle_music.ogg": "atrim=start=4.6:end=88.6,asetpts=PTS-STARTPTS",
 }
 
+# A loop of `length` s from `start` s: the `fade` s after it are faded
+# into its start, so that its end runs on into its start without a seam.
+def loop_cut(start, length, fade):
+    end = start + length
+    return (f"asplit=2[head][tail];"
+            f"[head]atrim=start={start}:end={end},asetpts=PTS-STARTPTS,afade=t=in:d={fade}[h];"
+            f"[tail]atrim=start={end}:end={end + fade},asetpts=PTS-STARTPTS,afade=t=out:d={fade}[t];"
+            f"[h][t]amix=inputs=2:normalize=0:duration=longest")
+
+
+# The campfire, as Nick heard it when he picked it (ticket 0922): the low
+# rumble cut, the pops evened out by the light compressor (4:1), a limiter
+# and ffmpeg's loudness normaliser (which evens it out further); then the
+# loop, and a limiter on the seam.
+CAMPFIRE_LOOP = ("highpass=f=60,"
+                 "acompressor=threshold=-28dB:ratio=4:attack=2:release=120:makeup=4,"
+                 "alimiter=limit=0.7,loudnorm=I=-18:TP=-2,aresample=44100,"
+                 + loop_cut(60, 40, 2) + ",alimiter=limit=0.8:level=0")
+
 # (game file in assets/audio/sfx/, original, extra ffmpeg filters before
 # the leading-silence trim, or None)
 SFX = [
@@ -204,6 +224,11 @@ SFX = [
     # WALK_TILES_PER_S), so a step sound fires every ~83 ms.
     ("galloping_horse_step.ogg", "freesound/274898_4869300-hq.ogg",
      "atrim=start=0.895:end=1.035,asetpts=PTS-STARTPTS,afade=t=out:st=0.105:d=0.035"),
+    # The title's campfire (ticket 0922), looped under the title song.
+    # Nick: "less popping and a higher volume base sound", and he picked
+    # the light compressor (4:1) of four strengths. The 40 s from 1:00,
+    # its next 2 s faded into its start so that it loops without a seam.
+    ("campfire_02.ogg", "freesound/729396_12863902-hq.ogg", CAMPFIRE_LOOP),
 ]
 
 

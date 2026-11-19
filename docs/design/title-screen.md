@@ -3,9 +3,10 @@
 Decided: 2026-09-30
 Source: ticket 0034
 
-> **The title's look** (the logo, its backdrops, the sparks; no line
-> under the title; the music starts at once) is decided in
-> [`look-and-feel.md`](look-and-feel.md), *Title screen* (ticket 0811).
+> **The title's look** (the logo, its backdrops, the campfire and its
+> embers and crackle; no line under the title; the music starts at once)
+> is decided in [`look-and-feel.md`](look-and-feel.md), *Title screen*
+> (tickets 0811 and 0922).
 > The small text mockups below predate it: where they show `Visions of
 > Shuyi` and `an ASCII tactics game` as text, the game now shows the
 > logo picture and no second line.
@@ -262,7 +263,7 @@ B a map made just for the cinematic):
 > 3A but make sure to clearly document in 1010 that it updates the
 > cinematic or make a new ticket dependent on both this and 1010
 
-A setting in Options to turn the cinematic off (yes / no / later): "Later", then "Yes, an on/off setting" (see *Open sub-questions*, ticket 0844): Options has **Intro: On / Off**, On by default. Off, the title never goes idle into the cinematic: it keeps the logo, the backdrop, the sparks and the menu, and the song loops under them. The Playdate has the row too since it has the cinematic (ticket 1044).
+A setting in Options to turn the cinematic off (yes / no / later): "Later", then "Yes, an on/off setting" (see *Open sub-questions*, ticket 0844): Options has **Intro: On / Off**, On by default. Off, the title never goes idle into the cinematic: it keeps the logo, the backdrop, the campfire and its embers and the menu, and the song and the crackle loop under them. The Playdate has the row too since it has the cinematic (ticket 1044).
 
 ### The title song
 
@@ -370,7 +371,9 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 - **The timer only runs on the title itself**, not while Load Game, Options
   or another screen is open over it.
 - **Fades** (ticket 0843): the menu and the title's picture go to black
-  over 0.2 seconds (*the agent's starting rule*), then the cinematic fades
+  over 0.2 seconds (*the agent's starting rule*), the campfire with them
+  and its crackle fading out over the same 0.2 seconds (Nick, ticket
+  0922: "With the picture"), then the cinematic fades
   in from black over half a second (*tunable*); on the logo the menu
   fades in over half a second (*tunable*). **15 seconds** is Nick's
   number (*tunable*).

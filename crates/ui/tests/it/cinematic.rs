@@ -171,7 +171,7 @@ fn the_test_cinematic_plays_cuts_to_the_logo_and_loops() {
     assert_snapshot!("cinematic_faces", faces);
     // The logo: a hard cut again.
     h.wait(16.5 - time(&h));
-    assert_eq!(frame(&h), Frame::Logo { sparks: None });
+    assert_eq!(frame(&h), Frame::Logo { embers: None });
     assert_eq!(scene(&h), None);
     let logo = h.snapshot();
     assert!(!logo.contains("--- backdrop"));
