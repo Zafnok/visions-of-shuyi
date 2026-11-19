@@ -1416,6 +1416,8 @@ fn the_baked_pack_holds_every_file_of_the_embedded_bundle_with_the_same_bytes() 
     use shuyi_assets::pack::Pack;
     use trpg_content::bundle::{self, Bundle, PACK_STAMP};
     let made = pack_bake();
+    // Ticket 1298: the first load reads every folder, so none is laid first.
+    assert!(made.bake.firsts().is_empty(), "{:?}", made.bake.firsts());
     let baked = made
         .bake
         .bake(&made.formats, &made.bundle, None)

@@ -81,8 +81,9 @@ fn load(setup: Setup, startup: Result<Startup, String>) -> Result<Game, String> 
 /// build that embeds its files or reads its pack whole; on the web, a frame
 /// at a time behind the card while the page streams the pack in (engine
 /// #509), so the load reads every file as it did when the page fetched the
-/// whole pack before the game started. Laying the title's files first and
-/// starting on them is ticket 1298.
+/// whole pack before the game started. The first load reads every folder
+/// and the page has the pack long before its `.wasm` (ticket 1298 measured
+/// it), so the start waits for the whole pack, not for folders laid first.
 pub(crate) fn when_files_arrived(
     card: Card,
     look: fn(&Shuyi) -> Look<'_>,

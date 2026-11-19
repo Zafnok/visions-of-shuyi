@@ -104,6 +104,7 @@ mod skirmishes;
 mod split_keys;
 mod sprite_test;
 mod story_preview;
+mod streamed_pack;
 mod threat;
 mod title;
 mod title_cinematic;
