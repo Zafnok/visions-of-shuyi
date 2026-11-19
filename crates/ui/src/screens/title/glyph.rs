@@ -213,9 +213,10 @@ pub fn ember(i: u64, millis: u32, frame: (u32, u32)) -> Option<Ember> {
         (start + drift + sway).round() as i32,
         (sy - age * life).round() as i32,
     );
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0 to 4
+    // 0 to 4: one of the five kinds.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let kind = (unit(rise, 48) * 4.99) as usize;
-    let (glyph, color) = EMBER_KINDS[kind.min(EMBER_KINDS.len() - 1)];
+    let (glyph, color) = EMBER_KINDS[kind];
     let cols = i32::from(ConsoleSpec::PC.cols);
     let shows = (0..cols).contains(&x) && (0..EMBER_ROWS).contains(&y);
     (brightness > EMBER_GONE && shows).then_some(Ember {
@@ -651,6 +652,11 @@ mod tests {
         assert!(lights.iter().any(|&b| b < 220) && lights.iter().any(|&b| b > 245));
         // However long the title is left open.
         assert!((200..=FULL).contains(&fire_sprite(&fire, Some(u32::MAX)).brightness));
+        // Quick: within a few tenths of a second (pinned from the first run).
+        let quick: Vec<u8> = [0, 100, 200, 300, 400]
+            .map(|ms| fire_sprite(&fire, Some(ms)).brightness)
+            .to_vec();
+        assert_eq!(quick, FLICKER_PINS);
     }
 
     /// Pinned by hand from the first run: a change to where embers are is
@@ -687,12 +693,15 @@ mod tests {
                     e.y
                 );
                 assert!(e.brightness > EMBER_GONE && e.brightness <= 1.0);
-                // Bright as it leaves the fire.
+                // Bright as it leaves the fire, and near its middle: an
+                // ember drifts aside only as it rises.
                 if y >= sy - 1.5 {
                     assert!(
                         (e.brightness - 1.0).abs() < f32::EPSILON,
                         "ember {i} at {t}"
                     );
+                    let near = EMBER_SPREAD + 1.5;
+                    assert!((x - sx).abs() <= near, "ember {i} x {} at {t}", e.x);
                 }
                 faded |= e.brightness < 0.9;
                 whole |= (e.brightness - 1.0).abs() < f32::EPSILON;
@@ -1285,6 +1294,8 @@ mod tests {
         }
         assert_eq!(band, 3 * (5 + 2 * (5 + 11 + 2)));
     }
+
+    const FLICKER_PINS: [u8; 5] = [230, 250, 250, 235, 224];
 
     const EMBER_PINS: [Option<Ember>; 4] = [
         Some(Ember {
