@@ -379,7 +379,11 @@ impl GameTools for Trpg {
     }
 }
 
-/// What [`Trpg::bake`] bakes for the desktops and the web.
+/// What [`Trpg::bake`] bakes for the desktops and the web. It lays no
+/// folder first (`Bake::first`, engine ADR-0128 §3): the start's load
+/// reads and checks every folder before the title, and on the web the
+/// page has the whole pack about 2.5 s before the `.wasm` it fetches beside
+/// it (ticket 1298), so a folder laid first would start nothing sooner.
 pub fn pack_bake() -> GameBake {
     GameBake::new(
         Bake::new(trpg_content::bundle::PACK_STAMP),

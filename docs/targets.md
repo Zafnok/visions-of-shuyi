@@ -101,6 +101,28 @@ with the table above (PR #681, ticket 0916, the first package `wasm-opt
 -Oz` shrank, had its `.wasm` at 8.2 MB from 10.5 and the package at
 8.7 MB).
 
+### The web's start
+
+Ticket 1298 timed CI's release web package at the engine pin of
+2026-11-19 (d10d1950), served on one shared 25 Mbit/s link, in the
+built-in browser, two runs:
+
+| Moment | Time |
+| --- | ---: |
+| The pack (1.19 MB) all in | 0.83–0.87 s |
+| The `.wasm` (8.65 MB) all in, the game's first step | 3.35–3.37 s |
+| The loading card | 3.45 s |
+| The title (after the 130 ms load) | 3.63 s |
+
+The page fetches the pack and the `.wasm` together, and the game can't
+step until its `.wasm` is in, so the pack has arrived about 2.5 s
+before the first step: streaming it, or laying the title's folders
+first (`Bake::first`), saves nothing. The load before the title reads
+96% of the pack's bytes too (1,353,099 of 1,409,838 with the game's
+content). The start waits for the whole pack (`trpg_ui::start`) and the
+bake lays no folder first. CI's package has no game content (ADR-0117),
+so its load stops at a content error at the moment the title would show.
+
 ## Over budget
 
 The numbers in bold are over their budgets. The budgets stay; a ticket
