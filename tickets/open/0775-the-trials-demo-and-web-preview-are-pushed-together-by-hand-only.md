@@ -33,7 +33,7 @@ So during a trial week:
 
 The fix: a trial's pages change only when Nick runs one workflow by hand, and both pages come from the same commit.
 
-This ticket blocks the writer trial (0766): applicants use the preview every day of the trial, so it must not change under them.
+It doesn't block the writer trial (0766): 0778, a two-line stopgap, makes the preview's push by hand only, so it can't change under the applicants; this ticket then moves it into demo.yml so both pages come from one commit.
 
 Related:
 - `docs/releasing.md`: *The demo's itch.io pages* (line 296) and *The script preview's itch.io page* (line 343, whose "Push it" bullet at line 357 describes the nightly push).
