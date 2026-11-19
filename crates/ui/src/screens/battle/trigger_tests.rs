@@ -636,7 +636,7 @@ fn a_scene_waiting_in_a_combat_is_kept_loaded() {
     let mut h = lord_attacks_rogue(22);
     close_line(&mut h);
     let scene = &h.game().ctx().game.content.dialogue.scenes["test_rogue_half"];
-    let line = scene.lines()[0].clone();
+    let line = scene.lines()[0];
     let (id, text) = (line.id.clone(), line.text.to_owned());
     h.ctx_mut().set_voice_manifest(&format!(
         "(clips: [(line: \"{id}\", spoken: \"{text}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])"
