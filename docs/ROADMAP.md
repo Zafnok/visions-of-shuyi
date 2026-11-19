@@ -478,8 +478,9 @@ recruit joins outside battle.
   shows the unit's portrait · **1292** a tip that misses its moment waits
   for the next one, not for a key press · **1293** a scene's first voice
   lines are loaded before it starts · **1296** so are those of the scenes
-  the battle plays and a world-map battle's intro (from 1293). All before
-  **0766** sends the demo
+  the battle plays and a world-map battle's intro (from 1293) · from
+  0766's test audit of the demo (2026-11-19): **1303** unnamed enemies
+  show the soldier face in unit info. All before **0766** sends the demo
   out.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
