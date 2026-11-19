@@ -5,8 +5,8 @@ type: bug
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
-blocked_by: []
+status: in-progress
+blocked_by: ["engine#3226"]
 nick_input: none
 completed:
 ---
@@ -58,4 +58,15 @@ Nick's and the writer's); the Playdate's skin.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+*(In progress, 2026-11-19.)* Engine side done: engine ticket 3226,
+Zafnok/shuyi-engine#511 (the options glyph skin's value column moves right
+for the longest label; labels of 24 cells or fewer paint as before; all
+engine gates pass). Game side on branch
+`claude/options-arrow-label-coverage-20d58d`, built against the patch: the
+1301 focused-row walk now matches whole labels, and the title-options
+snapshot moves every value one cell right (the longest label, "Voice on
+hover in the log", is 25 cells); the options tests pass.
+
+Left: once Nick merges #511, a session of its own moves the pin to the
+engine's `main` (`engine-change` §3.6, `engine-pin` review and ledger),
+runs the gates, archives this ticket and opens the game PR.

@@ -1005,11 +1005,9 @@ fn with_pictures_the_focused_row_is_always_on_screen() {
             .screen::<OptionsScreen>()
             .unwrap()
             .view(h.game().ctx());
-        // The start of its label: a focused value's arrow may cover the
-        // last letter of a long one.
-        let label: String = view
-            .focused()
-            .map_or_default(|r| r.label.chars().take(20).collect());
+        // Its whole label: a focused value's arrow never covers the end
+        // of a long one (ticket 1302).
+        let label = view.focused().map_or_default(|r| r.label.clone());
         let (lines, help) = screen_lines(&h);
         assert!(
             lines.iter().any(|l| l.contains(&label)),
